@@ -9,8 +9,8 @@ npm update
 npm start
 ```
 
-to start a local testing instance of KiriMoto on port 8080
-access KiriMoto on the url http://localhost:8080/kiri
+to start a local testing instance of KiriMoto on port 8080.
+then access KiriMoto on http://localhost:8080/kiri
 
 ## Other Start Options
 
