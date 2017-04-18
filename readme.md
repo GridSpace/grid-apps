@@ -10,6 +10,7 @@ npm start
 ```
 
 to start a local testing instance of KiriMoto on port 8080
+access KiriMoto on the url http://localhost:8080/kiri
 
 ## Other Start Options
 
@@ -18,4 +19,4 @@ npm run-script start-web
 ```
 serves code as obfuscated, compressed bundles. this is the mode used to run on a public
 web site, so you can't use "localhost" to test. to accomodate this, alias "debug" to 127.0.0.1
-then access KiriMoto on http://debug:8080
+then access KiriMoto on http://debug:8080/kiri
