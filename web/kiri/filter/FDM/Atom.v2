@@ -1,0 +1,26 @@
+{
+    "pre":[
+        "M104 S{temp}     ; set extruder temperature",
+        "M140 S{bed_temp} ; set bed temperature",
+        "G28              ; Home",
+        "G1 F5000 Z50     ; lift nozzle",
+        "G0 X0 Y-100 Z50  ; parking",
+        "G0 Z20           ; parking",
+        "G92 E0           ; zero the extruded length",
+        "G1 F200 E3       ; extrude 3mm of feed stock"
+    ],
+    "post":[
+        "M107             ; turn off filament cooling fan",
+        "M104 S0          ; turn off right extruder",
+        "M140 S0          ; turn off bed"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": true,
+        "bed_width": 210,
+        "bed_depth": 210,
+        "build_height": 320
+    }
+}

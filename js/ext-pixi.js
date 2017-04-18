@@ -1,0 +1,1 @@
+../node_modules/pixi.js/bin/pixi.js

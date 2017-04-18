@@ -1,0 +1,24 @@
+{
+    "file-ext": "ngc",
+    "token-space": " ",
+    "strip-comments": true,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+		"M03 S20000 ; spindle on"
+    ],
+    "post":[
+		"M05 ; spindle off",
+        "M30 ; program end"
+    ],
+    "tool-change":[
+        "M6 T{tool} ; change tool to '{tool_name}'"
+    ],
+	"dwell":[
+		"G4 P{time} ; dwell for {time}ms"
+	],
+	"settings": {
+		"bed_width": 400,
+		"bed_depth": 400
+	}
+}

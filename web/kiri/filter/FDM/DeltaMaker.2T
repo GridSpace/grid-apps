@@ -1,0 +1,30 @@
+{
+    "pre":[
+        "M104 S{temp} T0 ; set extruder temperature",
+        "G21             ; Make sure we're in metric mode",
+        "G90             ; set absolute positioning mode",
+        "M83             ; set relative positioning for extruder",
+        "G28             ; home axes",
+        "G92 E0          ; zero the extruded",
+        "M109 S{temp} T0 ; wait for extruder to reach target temp",
+        "G1 F200 E3.5    ; set feed speed, prime nozzle",
+        "G92 E0          ; zero the extruded",
+        "G1 Z30          ; position near the bed before first position"
+    ],
+    "post":[
+        "G28             ; home axes",
+        "M104 S0 T0      ; turn off right extruder",
+        "M140 S0 T0      ; turn off bed",
+        "M84             ; disable stepper motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "nozzle_size": 0.5,
+        "origin_center": true,
+        "bed_width": 240,
+        "bed_depth": 240,
+        "build_height": 480
+    }
+}

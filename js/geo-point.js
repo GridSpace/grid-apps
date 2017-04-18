@@ -1,0 +1,645 @@
+"use strict";
+
+var gs_base_point = {
+    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
+};
+
+(function() {
+
+    if (!self.base) self.base = {};
+    if (self.base.Point) return;
+
+    /**
+     *
+     * @param {number} x
+     * @param {number} y
+     * @param {number} z
+     * @param {String} [key]
+     * @constructor
+     */
+    function Point(x,y,z,key,CP) {
+        // todo make more efficient for cloning when all 5 params are passed
+        if (CP) {
+            this.x = x || (CP.X / CONF.clipper) || 0;
+            this.y = y || (CP.Y / CONF.clipper) || 0;
+            this.z = z || 0;
+            this.X = CP.X;
+            this.Y = CP.Y;
+            this.key = null;
+        } else {
+            this.x = x;
+            this.y = y;
+            this.z = z || 0;
+            this.X = (x * CONF.clipper);
+            this.Y = (y * CONF.clipper);
+            this.key = key || [x, y, z].toString();
+        }
+        this.poly = null; // parent polygon
+        this.dist = 0.0; // for group intersection sorting and tests
+        this.p1 = null; // used in sliceIntersect(), connectLines() and intersect()
+        this.p2 = null; // used in sliceIntersect(), connectLines() and intersect()
+        this.pos = 0; // position in group
+        this.mod = 0; // group length (for modulus of pos)
+        this.del = false; // for culling
+        this.group = null; // for grouping in slice intersect, offset lines in trace
+    }
+
+    var    BASE = self.base,
+        UTIL = BASE.util,
+        CONF = BASE.config,
+        KEYS = BASE.key,
+        ROUND = UTIL.round,
+        PoP = Point.prototype;
+
+    BASE.Point = Point;
+    BASE.newPoint = newPoint;
+
+    /** ******************************************************************
+     * Point Prototype Functions
+     ******************************************************************* */
+
+    PoP.setZ = function(z) {
+        this.z = z;
+        return this;
+    }
+
+    PoP.swapXZ = function() {
+        var p = this,
+            t = p.x;
+        p.x = p.z;
+        p.z = t;
+    };
+
+    PoP.swapYZ = function() {
+        var p = this,
+            t = p.y;
+        p.y = p.z;
+        p.z = t;
+    };
+
+    PoP.round = function(precision) {
+        return newPoint(ROUND(this.x,precision), ROUND(this.y,precision), ROUND(this.z,precision));
+    };
+
+    PoP.addFacet = function(facet) {
+        if (!this.group) this.group = [];
+        this.group.push(facet);
+        return this;
+    };
+
+    PoP.rekey = function() {
+        this.key = [this.x,this.y,this.z].join(',');
+    };
+
+    PoP.toString = function() {
+        return this.key;
+    };
+
+    /**
+     * @returns {Point}
+     */
+    PoP.clone = function() {
+        return newPoint(this.x, this.y, this.z, this.key);
+    };
+
+    /**
+     * @param {Point} p
+     * @returns {Slope}
+     */
+    PoP.slopeTo = function(p) {
+        return BASE.newSlope(this, p);
+    };
+
+    /**
+     *
+     * @param {Point} p
+     * @param {String} [k]
+     * @returns {Line}
+     */
+    PoP.lineTo = function(p, k) {
+        return BASE.newLine(this, p, k);
+    };
+
+    /**
+     * @param {Point} p
+     * @param {number} [dist]
+     * @returns {boolean}
+     */
+    PoP.isNear = function(p, dist) {
+        return UTIL.isCloseTo(this.x, p.x, dist) && UTIL.isCloseTo(this.y, p.y, dist);
+    };
+
+    /**
+     * return distance to line connecting points p1, p2
+     * distance is calculated on the perpendicular (normal) to line
+     *
+     * @param {Point} p1
+     * @param {Point} p2
+     * @returns {number}
+     */
+    PoP.distToLine = function(p1, p2) {
+        return Math.sqrt(this.distToLineSq(p1, p2));
+    };
+
+    /**
+     * return square of distance to line connecting points p1, p2
+     * distance is calculated on the perpendicular (normal) to line
+     *
+     * @param {Point} p1
+     * @param {Point} p2
+     * @returns {number}
+     */
+    PoP.distToLineSq = function(p1, p2) {
+        var p = this,
+            d = UTIL.distSq(p1, p2);
+
+        var t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / d;
+
+        if (t < 0) return UTIL.distSq(p, p1);
+        if (t > 1) return UTIL.distSq(p, p2);
+
+        return UTIL.distSqv2(p.x, p.y, p1.x + t * (p2.x - p1.x), p1.y + t * (p2.y - p1.y));
+    };
+
+    /**
+     *
+     * @param {Point} p1
+     * @param {Point} p2
+     * @param {number} dist2
+     * @returns {boolean}
+     */
+    PoP.withinDist2 = function(p1, p2, dist2) {
+        var ll2 = p1.distToSq2D(p2),
+            dp1 = this.distToSq2D(p1),
+            dp2 = this.distToSq2D(p2);
+        // if the line segment described is less than dist2
+        // then add dist2 to ll2. if this point is not closer
+        // than newll2 to either point, then it can't be closer
+        // to the described segment than dist2
+        if (ll2 < dist2) {
+            ll2 += dist2;
+            if (dp1 > ll2 && dp2 > ll2) return false;
+        }
+        // if point is farther from each point that the distance
+        // between the points and that distance is greater than dist2
+        // then it's not possible for the point to be closer than
+        // dist2 to the described line segment.
+        if (dp1 > ll2 && dp2 > ll2) return false;
+        return this.distToLineSq(p1, p2) < dist2;
+    };
+
+    /**
+     * @param {Point} p2
+     * @returns {Point}
+     */
+    PoP.midPointTo = function(p2) {
+        return newPoint((this.x + p2.x)/2, (this.y + p2.y)/2, this.z);
+    };
+
+    /**
+     * @param {Point} p2
+     * @returns {Point}
+     */
+    PoP.midPointTo3D = function(p2) {
+        return newPoint(
+            (this.x + p2.x)/2,
+            (this.y + p2.y)/2,
+            (this.z + p2.z)/2
+        );
+    };
+
+    /**
+     * non-scale corrected version of follow()
+     *
+     * @param slope
+     * @param mult
+     * @returns {Point}
+     */
+    PoP.projectOnSlope = function(slope, mult) {
+        return newPoint(
+            this.x + slope.dx * mult,
+            this.y + slope.dy * mult,
+            this.z);
+    };
+
+    PoP.followTo = function(point, mult) {
+        return this.follow(this.slopeTo(point), mult);
+    };
+
+    /**
+     * return a point along the line this from point to p2
+     * but offset by a distance.  positive distances are
+     * closer to this point.
+     *
+     * @param p2
+     * @param dist
+     */
+    PoP.offsetPointFrom = function(p2, dist) {
+        var    p1 = this,
+            dx = p2.x - p1.x,
+            dy = p2.y - p1.y,
+            ls = dist / Math.sqrt(dx * dx + dy * dy),
+            ox = dx * ls,
+            oy = dy * ls;
+        return newPoint(p2.x - ox, p2.y - oy, p2.z, KEYS.NONE);
+    };
+
+    /**
+     * @param {Point} p2
+     * @param {number} offset
+     * @returns {Line}
+     */
+    PoP.offsetLineTo = function(p2, offset) {
+        var    p1 = this,
+            dx = p2.x - p1.x,
+            dy = p2.y - p1.y,
+            ls = offset / Math.sqrt(dx * dx + dy * dy),
+            ox = dx * ls,
+            oy = dy * ls,
+            np1 = newPoint(p1.x - oy, p1.y + ox, p1.z, KEYS.NONE),
+            np2 = newPoint(p2.x - oy, p2.y + ox, p2.z, KEYS.NONE);
+        np1.op = p1;
+        np2.op = p2;
+        return BASE.newLine(np1, np2, KEYS.NONE);
+    };
+
+
+    /**
+     * checks if a point is inside of a polygon
+     * does not check children/holes
+     *
+     * @param {Polygon} poly
+     * @returns {boolean}
+     */
+    PoP.inPolygon = function(poly) {
+        if (!poly.bounds.containsXY(this.x, this.y)) return false;
+
+        var p = poly.points, pl = p.length, p1, p2, i, inside = false;
+
+        for (i=0; i<pl; i++) {
+            p1 = p[i];
+            p2 = p[(i+1)%pl];
+            if ((p1.y >= this.y) != (p2.y >= this.y) &&
+                (this.x <= (p2.x - p1.x) * (this.y - p1.y) / (p2.y - p1.y) + p1.x))
+            {
+                inside = !inside;
+            }
+        }
+
+        return inside;
+    };
+
+    /**
+     * returns true if the point is inside of a polygon but
+     * not inside any of it's children
+     *
+     * @param {Polygon | Polygon[]} poly
+     * @return {boolean} true if inside outer but not inner
+     */
+    PoP.isInPolygon = function(poly) {
+        var point = this, i;
+        if (Array.isArray(poly)) {
+            for (i=0; i<poly.length; i++) {
+                if (point.isInPolygon(poly[i])) return true;
+            }
+            return false;
+        }
+        var holes = poly.inner;
+        if (point.inPolygon(poly) || point.nearPolygon(poly, CONF.precision_merge_sq)) {
+            for (i=0; holes && i < holes.length; i++) {
+                if (point.inPolygon(holes[i]) && !point.nearPolygon(holes[i], CONF.precision_merge_sq)) return false;
+            }
+            return true;
+        }
+        return false;
+    };
+
+    /**
+    * returns true if the point is inside of a polygon but
+    * not inside any of it's children
+     *
+     * @param {Polygon | Polygon[]} poly
+     * @return {boolean} true if inside outer but not inner
+     */
+    PoP.isInPolygonOnly = function(poly) {
+        var point = this, i;
+        if (Array.isArray(poly)) {
+            for (i=0; i<poly.length; i++) {
+                if (point.isInPolygonOnly(poly[i])) return true;
+            }
+            return false;
+        }
+        var holes = poly.inner;
+        if (point.inPolygon(poly)) {
+            for (i=0; holes && i < holes.length; i++) {
+                if (point.inPolygon(holes[i])) return false;
+            }
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * checks if point is near polygon edge.  distance is squared.
+     *
+     * @param {Polygon} poly
+     * @param {number} dist2
+     * @param {boolean} [inner] process inner polygons
+     * @returns {boolean}
+     */
+    PoP.nearPolygon = function(poly, dist2, inner) {
+        // throw new Error("nearPolygon");
+        for (var i=0, p=poly.points, pl=p.length ; i<pl; i++) {
+            if (this.withinDist2(p[i], p[(i+1)%pl], dist2)) {
+                return true;
+            }
+        }
+        if (inner && poly.inner) {
+            for (var i=0; i<poly.inner.length; i++) {
+                if (this.nearPolygon(poly.inner[i], dist2)) return true;
+            }
+        }
+        return false;
+    };
+
+    /**
+     * returns true if point will not be trimmed later
+     *
+     * @param {Polygon} poly
+     * @param {number} offset
+     * @param {number} mindist2
+     * @returns {boolean}
+     */
+    PoP.insideOffset = function(poly, offset, mindist2) {
+        return this.inPolygon(poly) === (offset > 0) && !this.nearPolygon(poly, mindist2);
+    };
+
+    /**
+     * returns a new point following given slope for given distance
+     * same as projectOnSlope() but scaled
+     *
+     * @param {Slope} slope
+     * @param {number} distance
+     * @returns {Point}
+     */
+    PoP.follow = function(slope, distance) {
+        var ls = distance / Math.sqrt(slope.dx * slope.dx + slope.dy * slope.dy);
+        return newPoint(this.x + slope.dx * ls, this.y + slope.dy * ls, this.z);
+    };
+
+    /**
+     * for point, return z-plane intersecting point on line to next point
+     *
+     * @param {Point} p
+     * @param {number} z
+     * @returns {Point}
+     */
+    PoP.intersectZ = function(p, z) {
+        var    dx = p.x - this.x,
+            dy = p.y - this.y,
+            dz = p.z - this.z,
+            pct = 1 - ((p.z - z) / dz);
+        return newPoint(this.x + dx * pct, this.y + dy * pct, this.z + dz * pct);
+    };
+
+    /**
+     * @param {Point} p
+     * @returns {boolean}
+     */
+    PoP.isEqual2D = function(p) {
+        return this === p || (this.x === p.x && this.y === p.y);
+    };
+
+    /**
+     * returns true if points are close enough to be considered equivalent
+     *
+     * @param {Point} p
+     * @returns {boolean}
+     */
+    PoP.isMergable2D = function(p) {
+        return this.isEqual2D(p) || (this.distToSq2D(p) < CONF.precision_merge_sq);
+    };
+
+    /**
+     * compares 3D point
+     *
+     * @param {Point} p
+     * @returns {boolean}
+     */
+    PoP.isEqual = function(p) {
+        return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
+    };
+
+    /**
+     * returns true if points are close enough to be considered equivalent
+     *
+     * @param {Point} p
+     * @returns {boolean}
+     */
+    PoP.isMergable3D = function(p) {
+        return this.isEqual(p) || (this.distToSq3D(p) < CONF.precision_merge_sq);
+    };
+
+    /**
+     * return true if point is inside 2D square size dist*2 around p
+     *
+     * @param {Point} p
+     * @param {number} dist
+     * @returns {boolean}
+     */
+    PoP.isInBox = function(p, dist) {
+        return Math.abs(this.x - p.x) < dist && Math.abs(this.y - p.y) < dist;
+    };
+
+    /**
+     * return min distance from point to a polygon
+     * stops searching if any point is closer than threshold
+     *
+     * @param {Polygon} poly
+     * @param {number} [threshold] stop looking if under threshold
+     */
+    PoP.distToPolySegments = function(poly, threshold) {
+        var point = this,
+            mindist = Infinity;
+        poly.forEachSegment(function(p1, p2) {
+            const nextdist = Math.min(mindist, point.distToLine(p1, p2));
+            mindist = Math.min(nextdist, mindist);
+            // returning true terminates forEachSegment()
+            if (mindist <= threshold) return true;
+        });
+        return mindist;
+    };
+
+    /**
+     * @param {Polygon} poly
+     * @param {number} [threshold] stop looking if under threshold
+     */
+    PoP.distToPolyPoints = function(poly, threshold) {
+        var point = this, mindist = Infinity;
+        poly.forEachPoint(function(pp) {
+            mindist = Math.min(mindist, point.distTo2D(pp));
+            if (mindist < threshold) return true;
+        });
+        return mindist;
+    };
+
+    /**
+     * @param {Point[]} points
+     * @param {number} max
+     * @returns {Point} nearest point (less than max) from array to this point
+     */
+    PoP.nearestTo = function(points, max) {
+        if (!max) throw "missing max";
+        var mind = Infinity,
+            minp = null,
+            i, p, d;
+        for (i=0; i<points.length; i++) {
+            p = points[i];
+            if (p === this || p.del) continue;
+            d = this.distToSq2D(p);
+            if (d < max && d < mind) {
+                mind = d;
+                minp = p;
+            }
+        }
+        return minp;
+    };
+
+    /**
+     * @param {Point[]} points
+     * @return {number} average square dist to cloud of points
+     */
+    PoP.averageDistTo = function(points) {
+        var sum = 0.0, count = 0, i;
+        for (i = 0; i < points.length; i++) {
+            if (points[i] != this) {
+                sum += this.distToSq2D(points[i]);
+                count++;
+            }
+        }
+        return sum / count;
+    };
+
+    /**
+     * dist to point in 2D
+     *
+     * @param {Point} p
+     * @returns {number}
+     */
+    PoP.distTo2D = function(p) {
+        var    dx = this.x - p.x,
+            dy = this.y - p.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    /**
+     * square of distance in 2D
+     *
+     * @param {Point} p
+     * @returns {number}
+     */
+    PoP.distToSq2D = function(p) {
+        var    dx = this.x - p.x,
+            dy = this.y - p.y;
+        return dx * dx + dy * dy;
+    };
+
+    PoP.distTo3D = function(p) {
+        var    dx = this.x - p.x,
+            dy = this.y - p.y,
+            dz = this.z - p.z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    };
+
+    /**
+     * square of distance in 3D
+     *
+     * @param {Point} p
+     * @returns {number}
+     */
+    PoP.distToSq3D = function(p) {
+        var    dx = this.x - p.x,
+            dy = this.y - p.y,
+            dz = this.z - p.z;
+        return dx * dx + dy * dy + dz * dz;
+    };
+
+    /**
+     * returns true if point is inside triangle described by three points
+     *
+     * @param {Point} a
+     * @param {Point} b
+     * @param {Point} c
+     * @returns {boolean}
+     */
+    PoP.inTriangle = function(a, b, c) {
+        var as_x = this.x - a.x,
+            as_y = this.y - a.y,
+            s_ab = (b.x - a.x) * as_y - (b.y - a.y) * as_x > 0;
+        if ((c.x - a.x) * as_y - (c.y - a.y) * as_x > 0 == s_ab) return false;
+        if ((c.x - b.x) * (this.y - b.y) - (c.y - b.y) * (this.x - b.x) > 0 != s_ab) return false;
+        return true;
+    };
+
+    /**
+     * returns true if point is on a line described by two points.
+     * test sum of distances p1->this + this->p2 ~= p1->p2 whens
+     * slopes from p1->this same as this->p2
+     *
+     * @param {Point} p1
+     * @param {Point} p2
+     * @returns {boolean}
+     */
+    PoP.onLine = function(p1, p2) {
+        return this.distToLine(p1, p2) < CONF.precision_point_on_line;
+    };
+
+    /**
+     *
+     * @param {THREE.Vector3} delta
+     * @return {Point} new offset point
+     */
+    PoP.add = function(delta) {
+        return newPoint(this.x + delta.x, this.y + delta.y, this.z + delta.z);
+    };
+
+    /**
+     *
+     * @param {THREE.Vector3} delta
+     * @return {Point} new offset point
+     */
+    PoP.sub = function(delta) {
+        return newPoint(this.x - delta.x, this.y - delta.y, this.z - delta.z);
+    };
+
+    /**
+      *
+     * @param {THREE.Vector3} delta
+     */
+    PoP.move = function(delta) {
+        this.x += delta.x;
+        this.y += delta.y;
+        this.z += delta.z;
+        this.X += delta.x * CONF.clipper;
+        this.Y += delta.y * CONF.clipper;
+        return this;
+    };
+
+    /** ******************************************************************
+     * Connect to base and Helpers
+     ******************************************************************* */
+
+    /**
+     *
+     * @param {number} x
+     * @param {number} y
+     * @param {number} z
+     * @param {String} [key]
+     * @param {Object} [CP] clipper point
+     * @returns {Point}
+     */
+    function newPoint(x, y, z, key, CP) {
+        return new Point(x, y, z, key, CP);
+    }
+
+})();

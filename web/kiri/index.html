@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="copyright" content="stewart allen [stewart@neuron.com]">
+    <meta name="description" content="3d slice modeler, gcode and CNC toolpath generator">
+    <meta name="keywords" content="3d slicer,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode" />
+    <meta name="author" content="Stewart Allen">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:description" content="Kiri:Moto is a unique multi-modal 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters. Advanted layer view helps debug prints ahead of time.">
+    <meta property="og:title" content="Cloud-based Slicer for Makers">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grid.space/kiri">
+    <meta property="og:image" content="https://grid.space/img/logo_km_og.png">
+    <title>Kiri:Moto</title>
+    <link rel="icon" href="/kiri/favicon.ico">
+    <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png">
+    <link rel="stylesheet" type="text/css" href="/moto/style.css">
+    <link rel="stylesheet" type="text/css" href="/kiri/style.css">
+</head>
+<body>
+    <script>
+    /* because TWEEN complains */
+    module = {};
+    </script>
+<!--{kiri}-->
+    <!-- app title home page links -->
+    <div id="appid">
+        <span><a href="#" id="kiri">Kiri:Moto</a> by <a href="/" target="home">Grid.Space</a></span>
+    </div>
+    <!-- left control menu -->
+    <div id="control-left" class="control"><div id="assets"></div></div>
+    <!-- right control menu -->
+    <div id="control-right" class="control"><div id="control"></div></div>
+    <!-- SPJS gcode sender -->
+    <div id="sender">
+        <div id="sender-bar">
+            <button id="sender-spjs">?</button>
+            <button id="sender-close">X</button>
+        </div>
+        <span>direct device control</span>
+        <div class="sender-sel">
+            <table>
+                <tr>
+                    <th colspan="2" class="flow-row">
+                        <input class="flow-grow" id="sender-host" size="30" spellcheck="false" placeholder="host:port of SPJS server" />
+                    </th>
+                    <td> <button id="sender-connect">connect</button> </td>
+                </tr>
+                <tr>
+                    <th class="flow-row">
+                        <select class="flow-grow" id="sender-port" disabled="true"><option>select port</option></select> &nbsp;
+                        <select id="sender-mode" disabled="true">
+                            <option id="mode-option">set mode</option>
+                            <option value="grbl">grbl</option>
+                            <option value="tinyg">tinyg</option>
+                        </select>
+                    </th>
+                    <td> <button id="sender-port-close">close</button> </td>
+                </tr>
+            </table>
+        </div>
+        <div class="sender-sel"> <div id="sender-log"></div> </div>
+        <div class="sender-sel" id="sender-cc">
+            <table>
+                <tr>
+                    <th>
+                        <label>status</label>
+                        <input id="sender-status" size="5" disabled="true" />
+                        <label>send</label>
+                        <input id="sender-command" size="30" />
+                    </th>
+                </tr>
+                <tr>
+                    <th class="flow-row" id="sender-quick">
+                        <button id="sender-ctrlx">soft reset</button> &nbsp;
+                        <button id="sender-hold">feed hold</button> &nbsp;
+                        <button id="sender-resume">feed resume</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="sender-sel flow-row flow-space-between" id="sender-pad">
+            <div>
+            <table>
+                <tr><th>
+                    <button id="sjx-">X-</button>
+                    <button id="sjx+">X+</button>
+                </th></tr>
+                <tr><th>
+                    <button id="sjy-">Y-</button>
+                    <button id="sjy+">Y+</button>
+                </th></tr>
+                <tr><th>
+                    <button id="sjz-">Z-</button>
+                    <button id="sjz+">Z+</button>
+                </th></tr>
+            </table>
+        </div><div>
+            <table>
+                <tr><th> <label>jog</label><input id="sender-jog" size="4" value="1" title="jog distance in mm" /><label>mm</label> </th></tr>
+                <tr><th> <button id="sender-set-zero">zero out axes</button> </th></tr>
+                <tr><th> <button id="sender-goto-zero">goto zero axis</button> </th></tr>
+            </table>
+        </div><div>
+            <table>
+                <tr><th><label>X</label> <input id="saxi" disabled="true" size="9" /> <input id="srxi" disabled="true" size="9" /></th></tr>
+                <tr><th><label>Y</label> <input id="sayi" disabled="true" size="9" /> <input id="sryi" disabled="true" size="9" /></th></tr>
+                <tr><th><label>Z</label> <input id="sazi" disabled="true" size="9" /> <input id="srzi" disabled="true" size="9" /></th></tr>
+            </table>
+        </div>
+        </div>
+        <div class="sender-sel" id="sender-control">
+            <table>
+                <tr><td>
+                    <label>gcode control</label>
+                    <div id="sender-control-buttons">
+                        <button id="sender-gc-send">send</button>
+                        <button id="sender-gc-pause">pause</button>
+                        <button id="sender-gc-abort">abort</button>
+                        : <button id="sender-gc-runbox">runbox</button>
+                    </div>
+                </td></tr>
+                <tr><td class="flow-row flow-space-between">
+                    <div><label>queue</label><input id="sender-gc-queue" disabled="true" size="9" /> </div>
+                    <div><label>sent</label><input id="sender-gc-sent" disabled="true" size="9" /> </div>
+                    <div><label>total</label><input id="sender-gc-lines" disabled="true" size="9" /> </div>
+                </td></tr>
+            </table>
+        </div>
+    </div>
+    <!-- all modal dialogs -->
+    <div id="modal">
+        <div id="help"></div>
+        <!-- changeable print dialog -->
+        <div id="print"></div>
+        <!-- hidden file input loader -->
+        <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
+    </div>
+    <!-- 3js -->
+    <div id="container"></div>
+    <!-- progress bar -->
+    <div id="loading"><div id="progress"><span id="prostatus">status</span></div></div>
+    <!-- file load catalog -->
+    <div id="catalog" class="dialog">
+        <div id="catalogBody" class="flow-col">
+            <span id="localCache">local cache</span>
+            <div id="catalogList"></div>
+        </div>
+    </div>
+    <!-- settings load dialog -->
+    <div id="settings" class="dialog">
+        <div id="settingsBody" class="flow-col">
+            <span id="settingsCache">saved settings</span>
+            <div id="settingsList"></div>
+        </div>
+    </div>
+    <!-- GCode filter editor -->
+    <div id="devices" class="dialog">
+        <div id="devices-body" class="flow-col">
+            <div id="device-labels" class="flow-row">
+                <span>device</span>
+                <span>settings</span>
+            </div>
+            <div id="device-cols" class="flow-row">
+                <div id="device-list" class="flow-col">
+                    <select id="device-select" size="15"></select>
+                </div>
+                <div id="device-info">
+                    <div id="device"></div>
+                </div>
+            </div>
+            <div id="device-action" class="flow-row">
+                <button id="device-add">+</button>
+                <button id="device-del">-</button>
+                <span id="device-spacer"></span>
+                <button id="device-save">save</button>
+                <button id="device-close">close</button>
+            </div>
+        </div>
+    </div>
+    <!-- CAM tools dialog -->
+    <div id="tools" class="dialog">
+        <div id="tools-body" class="flow-col">
+            <div id="tool-labels" class="flow-row">
+                <span>tools</span>
+                <span>details</span>
+            </div>
+            <div id="tool-cols" class="flow-row">
+                <div id="tool-list" class="flow-col">
+                    <select id="tool-select" size="15"></select>
+                </div>
+                <div id="tool-info" class="flow-col">
+                    <div class="flow-row"><label>type</label>
+                        <select id="tool-type">
+                            <option value="endmill" selected>endmill</option>
+                            <option value="ballmill">ballmill</option>
+                        </select>
+                    </div>
+                    <div class="flow-row"><label>name</label><input id="tool-name" size=8></input></div>
+                    <div class="flow-row"><label>tool #</label><input id="tool-num" size=5></input></div>
+                    <div class="flow-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
+                    <div class="grouphead">flute</div>
+                    <div class="flow-row" title="flute diameter"><label>diameter</label><input id="tool-fdiam" size=5></input></div>
+                    <div class="flow-row" title="flute length"><label>length</label><input id="tool-flen" size=5></input></div>
+                    <div class="grouphead">shaft</div>
+                    <div class="flow-row" title="shaft diameter"><label>diameter</label><input id="tool-sdiam" size=5></input></div>
+                    <div class="flow-row" title="shaft length"><label>length</label><input id="tool-slen" size=5></input></div>
+                </div>
+            </div>
+            <div id="tool-action" class="flow-row">
+                <button id="tool-add">+</button>
+                <button id="tool-del">-</button>
+                <span id="tool-spacer"></span>
+                <button id="tools-save">save</button>
+                <button id="tools-close">done</button>
+            </div>
+        </div>
+    </div>
+    <!-- selection info -->
+    <div id="selection">
+        <span>
+            <label class="label">width:</label><label id="sel_width" class="value">mm</label>
+            <label class="label">depth:</label><label id="sel_depth" class="value">mm</label>
+            <label class="label">height:</label><label id="sel_height" class="value">mm</label>
+            &nbsp;&nbsp;
+            <label class="label">scale</label>
+            <label class="label">x</label><input id="scale_x" size="3" value="1"/>
+            <label class="label">y</label><input id="scale_y" size="3" value="1"/>
+            <label class="label">z</label><input id="scale_z" size="3" value="1"/>
+            <label class="label">uniform</label><input type="checkbox" id="scale_uni" checked>
+            &nbsp;&nbsp;
+            <label class="label">rotate</label>
+            <button id="x+" title="hold SHIFT to rotate 5 degrees">x+</button><button id="x-" title="hold SHIFT to rotate 5 degrees">x-</button>
+            <button id="y+" title="hold SHIFT to rotate 5 degrees">y+</button><button id="y-" title="hold SHIFT to rotate 5 degrees">y-</button>
+            <button id="z+" title="hold SHIFT to rotate 5 degrees">z+</button><button id="z-" title="hold SHIFT to rotate 5 degrees">z-</button>
+        </span>
+    </div>
+    <!-- layer slider -->
+    <div id="layer-view" class="flow-row">
+        <span>
+        <button id="layer-toggle">layers</button>
+        <div id="layers"></div>
+        <input id="layer-id" size="4">
+        <input id="layer-slider" type="range">
+        <button id="layer-range"> section</button>
+        <input id="layer-span" size="4" value="1">
+        </span>
+    </div>
+</body>
+</html>

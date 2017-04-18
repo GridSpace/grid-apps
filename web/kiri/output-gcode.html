@@ -1,0 +1,47 @@
+<button id="print-close">X</button>
+
+<span id="print-title">output options</span>
+
+<div>
+    <table id="print-info">
+        <tr><th>file name</th><td><input id="print-filename" size="30" spellcheck="false" /></td></tr>
+        <tr><th>file size (bytes)</th><td><input id="print-filesize" size="10" disabled="true" /></td></tr>
+        <tr id="mill-info"><th>estimated mill time (h:m:s)</th><td><input id="mill-time" size="10" disabled="true" /></td></tr>
+    </table>
+</div>
+
+<div id="print-filament-row">
+    <table>
+        <tr><th>filament used (mm)</th><td><input id="print-filament" size="10" disabled="true" /></td></tr>
+        <tr><th>filament density (g/cm^3)</th><td><input id="print-density" size="10" value="1.25" /></td></tr>
+        <tr><th>printed weight (g)</th><td><input id="print-weight" size="10" disabled="true" /></td></tr>
+        <tr><th>estimated print time (h:m:s)</th><td><input id="print-time" size="10" disabled="true" /></td></tr>
+    </table>
+</div>
+
+<div class="print-sel">
+    <table><tr><th>
+        <button id="print-download">download gcode file</button>
+        <button id="print-serial">use gcode sender</button>
+    </th></tr></table>
+</div>
+
+<div class="print-sel" id="send-to-octoprint">
+    <table>
+        <tr><th colspan="2"><button id="print-octoprint">send to octoprint</button></th></tr>
+        <tr id="ophost"><th>host:port</th><td><input id="octo-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+        <tr id="opapik"><th>api key</th><td><input id="octo-apik" size="35" /></td></tr>
+        <!--<tr><th>options</th><td><input type="checkbox" id="octo-print">start print</td></tr>-->
+        <tr id="ophint"><td colspan="2"><span id="octo-hint"><a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a> must be enabled in API settings</span></td></tr>
+    </table>
+</div>
+
+<div class="print-sel" id="send-to-gridprint">
+    <table>
+        <tr><th colspan="2"><button id="print-gridprint">send to grid:print</button></th></tr>
+        <tr><th>host:port</th><td><input id="grid-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+        <tr><th>api key</th><td><input id="grid-apik" size="35" /></td></tr>
+        <tr><th>target</th><td><input id="grid-target" size="35" /></td></tr>
+        <tr><td colspan="2"><span id="grid-hint">setup <a href="https://github.com/stewartoallen/grid-print" target="_help">grid:print</a> for your network</span></td></tr>
+    </table>
+</div>

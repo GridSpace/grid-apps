@@ -1,0 +1,37 @@
+{
+    "pre":[
+        "G1 Z15.0 F12000         ; move the platform down 15mm",
+        "G1 X150 Y5 F12000       ; center extruder on X",
+        "M107                    ; turn off filament cooling fan",
+        "M83                     ; use relative positioning for extruder",
+        "M104 S{temp}            ; set extruder temperature",
+        "G21                     ; use metric values",
+        "G90                     ; use absolute positioning mode",
+        "G28                     ; move to endstops",
+        "G29                     ; perform auto-levelling",
+        "M109 S{temp}            ; wait for extruder to reach target temp",
+        "G1 X150 Y5 Z0.3         ; move the platform to purge extrusion",
+        "G92 E0                  ; zero the extruded length",
+        "G1 F200 X250 E30        ; extrude 30mm of feed stock",
+        "G92 E0                  ; zero the extruded length again",
+        "G1 X150 Y150 Z25 F12000 ; center head for print",
+        "G1 F12000               ; set head seek rate"
+    ],
+    "post":[
+        "G1 E-1 F300             ; retract the filament to release pressure",
+        "G1 Z{z_max} E-5 F1200   ; drop bed, retract more filament",
+        "G28 X0 Y0               ; move X/Y to min endstops",
+        "M107                    ; turn off filament cooling fan",
+        "M104 S0                 ; turn off extruder",
+        "M84                     ; disable stepper motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": false,
+        "bed_width": 305,
+        "bed_depth": 305,
+        "build_height": 305
+    }
+}

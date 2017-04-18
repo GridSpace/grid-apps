@@ -1,0 +1,44 @@
+{
+    "pre":[
+        "M73 P0          ; set progress to 0%",
+        "G90             ; set absolute positioning mode",
+        "M83             ; set relative positioning for extruder",
+        "M104 S{temp} T0 ; set extruder temperature for T0 (tool 0)",
+        "M127            ; close extruder valve (if it has one)",
+        "G162 X Y F3000  ; move X,Y axis to maximum position at speed 3000 (top/right of table)",
+        "G161 Z F1200    ; move Z axis to minimum position as speed 1200 (bottom)",
+        "G92 Z-5         ; set Z axis value to -5 (no move)",
+        "G1 Z0           ; move Z axis to 0 (lifting it 5mm off endstop)",
+        "G161 Z F100     ; move Z axis to minimum position at speed 100",
+        "M132 X Y Z A B  ; load EEPROM home offsets for all axis",
+        "G1 X{left} Y{bottom+10} Z30 F9000 ; move to wait position off table",
+        "G130 X20 Y20 Z20 A20 B20  ; lower stepper Vrefs to give more juice to the extruder heater",
+        "M133 T0         ; wait for extruder T0 temperature to stabilize",
+        "G130 X127 Y127 Z40 A127 B127 ; default stepper Vrefs now that extruder is hot",
+        "G92 A0          ; set extruder position value to 0 (no move)",
+        "G1 Z0.4         ; move nozzle just above the bed height",
+        "G1 E25 F300     ; purge extruder for 25mm at speed 300",
+        "G1 X{left+10} Y{bottom+10} Z0.15 F1200 ; slow wipe",
+        "G1 X{left+15} Y{bottom+15} Z0.5 F1200  ; lift",
+        "G92 A0          ; set extruder position value to 0 (no move)",
+        "M135 T0         ; set toolhead 0"
+    ],
+    "post":[
+        "M127            ; stop filament cooling fan",
+        "M73 P100        ; set build progress to 100%",
+        "G1 Z150 F1000   ; send Z axis to bottom (engaging end stop)",
+        "G162 X Y F3000  ; move X,Y axis to maximum position at speed 3000 (top/right of table)",
+        "M18             ; disable all stepper motors",
+        "M72 P1          ; play song 1 (tada)"
+    ],
+    "cmd":{
+        "fan_power": "M126 S{fan_speed}",
+        "progress": "M73 P{progress}"
+    },
+    "settings":{
+        "origin_center": true,
+        "bed_width": 300,
+        "bed_depth": 175,
+        "build_height": 150
+    }
+}
