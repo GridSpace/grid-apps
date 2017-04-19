@@ -1,3 +1,5 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
 (function() {
@@ -27,8 +29,10 @@
         return this.mirror(2);
     };
 
+    // fast mirror of vertices given axis array offset
+    // array elements are repeating [x,y,z,x,y,z,...]
     MP.mirror = function(start) {
-        var    i,
+        var i,
             geo = this.geometry,
             at = geo.attributes,
             pa = at.position.array,
@@ -41,6 +45,7 @@
         return this;
     };
 
+    // center geometry on x,y,z coordinates (defaults to 0,0,0)
     GP.center = function(x,y,z) {
         var box = this.getBoundingBox(),
             mid = box.dim.clone().multiplyScalar(0.5),
@@ -63,13 +68,14 @@
         return this;
     };
 
+    // return cached or refreshed (when update = true) bounding box
     GP.getBoundingBox = function(update) {
-        //if (update) this.boundingBox = null;
         if (update || !this.boundingBox) this.computeBoundingBox();
         this.boundingBox.dim = this.boundingBox.max.clone().sub(this.boundingBox.min);
         return this.boundingBox;
     };
 
+    // uniformly scale any mesh to a max x/y/z dim of 'unit' (defaults to 1)
     GP.unitScale = function(unit) {
         var bbox = this.getBoundingBox(),
             scale = unit || 1;
@@ -97,7 +103,7 @@
     };
 
     THREE.Geometry.fromVertices = function(vertices) {
-        var    geometry = new THREE.BufferGeometry();
+        var geometry = new THREE.BufferGeometry();
         geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
         return geometry;
     };

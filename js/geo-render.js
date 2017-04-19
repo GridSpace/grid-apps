@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base_render = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base_render = exports;
 
 (function() {
 
@@ -36,7 +36,7 @@ var gs_base_render = {
             hash = {},
             added = 0;
         for (var i = 0; i < points.length; i += 3) {
-            var    p1 = points[i],
+            var p1 = points[i],
                 p2 = points[i + 1],
                 p3 = points[i + 2],
                 l1 = newOrderedLine(p1, p2),

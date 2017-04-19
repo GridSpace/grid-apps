@@ -1,15 +1,15 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base_polygon = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base_polygon = exports;
 
 (function() {
 
     if (!self.base) self.base = {};
     if (self.base.Polygon) return;
 
-    var    BASE = self.base,
+    var BASE = self.base,
         CONF = BASE.config,
         UTIL = BASE.util,
         DBUG = BASE.debug,

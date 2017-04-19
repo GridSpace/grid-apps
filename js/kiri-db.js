@@ -1,4 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
+
+var gs_kiri_db = exports;
 
 (function() {
 

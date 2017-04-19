@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_kiri_widget = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_kiri_widget = exports;
 
 (function() {
 
@@ -272,7 +272,7 @@ var gs_kiri_widget = {
             this.points = null;
             return this;
         } else {
-            var    geometry = new THREE.BufferGeometry();
+            var geometry = new THREE.BufferGeometry();
             geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
             return this.loadGeometry(geometry);
         }
@@ -359,7 +359,7 @@ var gs_kiri_widget = {
      * center geometry bottom (on platform) at 0,0,0
      */
     WP.center = function() {
-        var    i = 0,
+        var i = 0,
             mesh = this.mesh,
             geo = mesh.geometry,
             bb = mesh.getBoundingBox(true),
@@ -470,7 +470,7 @@ var gs_kiri_widget = {
     WP.mirror = function() {
         this.setWireframe(false);
         this.clearSlices();
-        var    i,
+        var i,
             o = this.orient,
             geo = this.mesh.geometry,
             at = geo.attributes,

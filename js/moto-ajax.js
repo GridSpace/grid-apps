@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_moto_ajax = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_moto_ajax = exports;
 
 (function() {
     if (!self.moto) self.moto = {};

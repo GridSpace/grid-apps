@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base = exports;
 
 (function() {
 
@@ -241,7 +241,7 @@ var gs_base = {
      * @returns {?Point}
      */
     function intersectRayLine(ro, s1, p1, p2, infinite) {
-        var    keys = BASE.key,
+        var keys = BASE.key,
             p1x = ro.x,
             p1y = ro.y,
             s1x = s1.dx,
@@ -254,7 +254,7 @@ var gs_base = {
             s2y = p4y - p3y,
             d = (s2y * s1x) - (s2x * s1y);
 
-        var    a = p1y - p3y,
+        var a = p1y - p3y,
             b = p1x - p3x,
             n1 = (s2x * a) - (s2y * b),
             n2 = (s1x * a) - (s1y * b);

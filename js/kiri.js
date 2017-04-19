@@ -1,6 +1,5 @@
-/**
- * Copyright 2014-2017 Stewart Allen -- All Rights Reserved
- */
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
 self.kiri = (self.kiri || {});
@@ -1318,7 +1317,7 @@ self.kiri.license = exports.LICENSE;
 
     function widgetSelect(widget, shift) {
         if (viewMode !== VIEWS.ARRANGE) return;
-        var    mesh = widget.mesh,
+        var mesh = widget.mesh,
             sel = (selectedMeshes.indexOf(mesh) >= 0);
         if (sel) {
             if (shift) {
@@ -1622,7 +1621,7 @@ self.kiri.license = exports.LICENSE;
 
     function loadFiles(files) {
         for (var i=0; i<files.length; i++) {
-            var    lower = files[i].name.toLowerCase(),
+            var lower = files[i].name.toLowerCase(),
                 reader = new FileReader(),
                 isstl = lower.indexOf(".stl") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
@@ -2381,7 +2380,7 @@ self.kiri.license = exports.LICENSE;
 
         function keyDownHandler(evt) {
             if (modalShowing()) return false;
-            var    move = evt.altKey ? 5 : 0,
+            var move = evt.altKey ? 5 : 0,
                 deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
             switch (evt.keyCode) {
                 case 8: // delete

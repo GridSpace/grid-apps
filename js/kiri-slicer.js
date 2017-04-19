@@ -323,7 +323,7 @@ var gs_kiri_slicer = exports;
          * @param {number} z
          */
         function sliceZ(z) {
-            var    phash = {},
+            var phash = {},
                 lines = [],
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
                 bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];

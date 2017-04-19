@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_moto_space = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_moto_space = exports;
 
 (function() {
 
@@ -91,7 +91,7 @@ var gs_moto_space = {
     }
 
     function tweenPlatform(w,h,d) {
-        var    from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
+        var from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
             to = {x:w, y:h, z:d},
             gridMajor = gridUnitMajor,
             gridMinor = gridUnitMinor,
@@ -581,7 +581,7 @@ var gs_moto_space = {
             trackPlane.visible = false;
             trackPlane.rotation.x = PI2;
 
-            var    sky = new THREE.Mesh(
+            var sky = new THREE.Mesh(
                     new THREE.BoxGeometry(50000, 50000, 50000, 1, 1, 1),
                     new THREE.MeshBasicMaterial({ color: skyColor, side: THREE.DoubleSide })
                 ),

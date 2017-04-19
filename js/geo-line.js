@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base_line = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base_line = exports;
 
 (function() {
 
@@ -26,7 +26,7 @@ var gs_base_line = {
         this.del = false;
     }
 
-    var    BASE = self.base,
+    var BASE = self.base,
         LiP = Line.prototype;
 
     BASE.Line = Line;

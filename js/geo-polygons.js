@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base_polygons = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base_polygons = exports;
 
 (function() {
 
@@ -446,7 +446,7 @@ var gs_base_polygons = {
         }
 
         // offset polygon to outer traces array
-        var    calcoff = depth === 0 && last ? offset / 2 : offset,
+        var calcoff = depth === 0 && last ? offset / 2 : offset,
             outer = poly.offset(calcoff, []),
             inner = [],
             j;
@@ -494,7 +494,7 @@ var gs_base_polygons = {
      * @returns {Point[]} supplied output or new array
      */
     function fillArea(polys, angle, spacing, output, minLen) {
-        var    i = 1,
+        var i = 1,
             p0 = polys[0],
             zpos = p0.getZ(),
             bounds = p0.bounds.clone(),
@@ -514,7 +514,7 @@ var gs_base_polygons = {
         while (i < polys.length) bounds.merge(polys[i++].bounds);
 
         // ray stepping is an axis from the line perpendicular to the ray
-        var    rayint = output || [],
+        var rayint = output || [],
             stepX = -raySlope.dy,
             stepY = raySlope.dx,
             iterX = ABS(ABS(stepX) > 0 ? bounds.width() / stepX : 0),
@@ -533,7 +533,7 @@ var gs_base_polygons = {
             lines = [];
 
         for (i = 0; i < steps; i++) {
-            var    p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
+            var p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
                 p2 = newPoint(start.x + raySlope.dx * 1000, start.y + raySlope.dy * 1000, zpos, NOKEY);
 
             lines.push([p1,p2]);

@@ -23,10 +23,7 @@
 
 "use strict";
 
-var gs_meta = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved",
-    sendTo:"http://grid.space"
-};
+var gs_meta = exports;
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
@@ -625,10 +622,10 @@ THREE.Face3.prototype.mVisible = function(show) {
                 i;
             for (i=0; add && i<files.length; i++) {
                 if (files[i].name.toLowerCase().indexOf(".stl") < 0) continue;
-                var    reader = new FileReader();
+                var reader = new FileReader();
                 reader.file = files[i];
                 reader.onloadend = function (e) {
-                    var    vertices = new moto.STL().parse(e.target.result);
+                    var vertices = new moto.STL().parse(e.target.result);
                     MDB.putFile(e.target.file.name, vertices);
                 };
                 reader.readAsBinaryString(reader.file);

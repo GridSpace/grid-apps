@@ -441,7 +441,7 @@ var gs_kiri_cam = exports;
                             ((p1.y <= y && p2.y >= y) || // one endpoint left
                              (p2.y <= y && p1.y >= y)) // one endpoint right
                         ) {
-                            var    dy = p1.y - p2.y,
+                            var dy = p1.y - p2.y,
                                 dz = p1.z - p2.z,
                                 pct = (p1.y - y) / dy,
                                 nz = p1.z - (dz * pct);

@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_kiri_codec = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_kiri_codec = exports;
 
 (function() {
 

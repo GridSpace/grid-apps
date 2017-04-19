@@ -1,8 +1,8 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+
 "use strict";
 
-var gs_base_point = {
-    copyright:"stewart allen <stewart@neuron.com> -- all rights reserved"
-};
+var gs_base_point = exports;
 
 (function() {
 
@@ -44,7 +44,7 @@ var gs_base_point = {
         this.group = null; // for grouping in slice intersect, offset lines in trace
     }
 
-    var    BASE = self.base,
+    var BASE = self.base,
         UTIL = BASE.util,
         CONF = BASE.config,
         KEYS = BASE.key,
@@ -235,7 +235,7 @@ var gs_base_point = {
      * @param dist
      */
     PoP.offsetPointFrom = function(p2, dist) {
-        var    p1 = this,
+        var p1 = this,
             dx = p2.x - p1.x,
             dy = p2.y - p1.y,
             ls = dist / Math.sqrt(dx * dx + dy * dy),
@@ -250,7 +250,7 @@ var gs_base_point = {
      * @returns {Line}
      */
     PoP.offsetLineTo = function(p2, offset) {
-        var    p1 = this,
+        var p1 = this,
             dx = p2.x - p1.x,
             dy = p2.y - p1.y,
             ls = offset / Math.sqrt(dx * dx + dy * dy),
@@ -395,7 +395,7 @@ var gs_base_point = {
      * @returns {Point}
      */
     PoP.intersectZ = function(p, z) {
-        var    dx = p.x - this.x,
+        var dx = p.x - this.x,
             dy = p.y - this.y,
             dz = p.z - this.z,
             pct = 1 - ((p.z - z) / dz);
@@ -527,7 +527,7 @@ var gs_base_point = {
      * @returns {number}
      */
     PoP.distTo2D = function(p) {
-        var    dx = this.x - p.x,
+        var dx = this.x - p.x,
             dy = this.y - p.y;
         return Math.sqrt(dx * dx + dy * dy);
     };
@@ -539,13 +539,13 @@ var gs_base_point = {
      * @returns {number}
      */
     PoP.distToSq2D = function(p) {
-        var    dx = this.x - p.x,
+        var dx = this.x - p.x,
             dy = this.y - p.y;
         return dx * dx + dy * dy;
     };
 
     PoP.distTo3D = function(p) {
-        var    dx = this.x - p.x,
+        var dx = this.x - p.x,
             dy = this.y - p.y,
             dz = this.z - p.z;
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -558,7 +558,7 @@ var gs_base_point = {
      * @returns {number}
      */
     PoP.distToSq3D = function(p) {
-        var    dx = this.x - p.x,
+        var dx = this.x - p.x,
             dy = this.y - p.y,
             dz = this.z - p.z;
         return dx * dx + dy * dy + dz * dz;
