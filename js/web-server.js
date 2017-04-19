@@ -907,9 +907,9 @@ function remap(path) {
 }
 
 // load module and call returned function with helper object
-function loadModule(dir) {
-    const modjs = dir + "/init.js";
-    lastmod(modjs) && require(modjs)({
+function initModule(file, dir) {
+    console.log({module:file});
+    require(file)({
         api: api,
         const: {
             script: script,
@@ -951,7 +951,19 @@ function loadModule(dir) {
             reply404: reply404,
             reply: quickReply
         }
-    });
+    })
+}
+
+// add static assets to be served
+function addStatic(dir) {
+    console.log({static:dir});
+    modPaths.push(serveStatic(dir));
+}
+
+// either add module assets to path or require(init.js)
+function loadModule(dir) {
+    const modjs = dir + "/init.js";
+    lastmod(modjs) ? initModule(modjs, dir) : addStatic(dir);
 }
 
 /* *********************************************
@@ -960,7 +972,10 @@ function loadModule(dir) {
 
 // load modules
 lastmod("mod") && fs.readdirSync(currentDir + "/mod").forEach(dir => {
-    loadModule(currentDir + "/mod/" + dir);
+    const fullpath = currentDir + "/mod/" + dir;
+    if (dir.charAt(0) === '.') return;
+    if (!fs.lstatSync(fullpath).isDirectory()) return;
+    loadModule(fullpath);
 });
 
 // create cache dir if missing
