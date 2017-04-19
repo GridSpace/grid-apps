@@ -1,13 +1,12 @@
---( global )--
+# Kiri:Moto todo
 
 * prevent text selection of non-input
 * widget general add-ons (fdm supports, cam tabs)
 * bail on decimation if it's proving ineffective
 * improve decimation speed by avoiding in/out of Point
 * dismissable transient message/alert
-* modal non-alert-based dialog
-* modal spinner
-* ability to cancel slice operations!
+* modal non-alert-based dialog & spinner
+* ability to cancel slice operations
 * server-side processing
 * saving workspace doesn't preserve widget positions
 * move more kiri code (like printing) into modules like serial
@@ -21,7 +20,7 @@
 * remember object's original position/orientation for reset/multi-object import alignment
 * gcode import break up "layers" on z move with no x/y move
 
---( onshape )--
+# Onshape todo
 
 * popup warning when detect 3rd party storage blocked (chrome)
 * watch for changed part version to prompt re-import
@@ -29,7 +28,7 @@
 * remap mouse/kbd to match onshape when running inside?
 * assembly import
 
---( cam )--
+# CAM todo
 
 * ease-in and ease-out especially on tab cut-out start/stop
 * import options: unify bodies.
@@ -59,7 +58,7 @@
 * check normals for downward facing facets. mark top for slice skirt/pancake
 * detect holes thru bottom and cutout outline vs mill out entire void
 
---( fdm )--
+# FDM todo
 
 * implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
 * fan / layer control * update forum
@@ -82,20 +81,21 @@
 * bottom layer of a bridge: underextrude/stretch?
 * dual extruder support
 
---( laser )--
+# Laser todo
 
 * overcuts, radii for drag knives
 * sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
---( reference )--
+
+# References
 
 * shader examples to enable object-clipping
-* -----
+  -----
 * http://jsfiddle.net/LK84y/9/
 * http://www.html5rocks.com/en/tutorials/webgl/shaders/
 
-* more reading
-* -----
+* other
+  -----
 * http://lcamtuf.coredump.cx/gcnc/full/
 * http://www.tcs.fudan.edu.cn/rudolf/Courses/Algorithms/Alg_cs_07w/Webprojects/Zhaobo_hull/
 * https://en.wikipedia.org/wiki/Graham_scan
@@ -103,10 +103,3 @@
 * http://hackaday.com/2016/01/22/pack-your-plywood-cuts-with-genetic-algortihms/
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
-
-* grbl & universal json serial port sender
-* -----
-* https://github.com/johnlauer/serial-port-json-server
-* https://github.com/grbl/grbl/wiki/Interfacing-with-Grbl
-* https://github.com/synthetos/TinyG/wiki/TinyG-Command-Line
-* https://github.com/synthetos/TinyG/wiki/Tinyg-Communications-Programming
