@@ -635,12 +635,10 @@ var gs_base_polygon = exports;
         }
         poly.setOpen();
         poly.push(i1);
-        if (delta < this.length / 2) {
-            this.forEachPoint(function(p, pos) {
-                poly.push(p);
-                if (p === i2.p1) return true;
-            }, true, start);
-        }
+        this.forEachPoint(function(p, pos) {
+            poly.push(p);
+            if (p === i2.p1) return true;
+        }, true, start);
         poly.push(i2);
         return poly;
     };
