@@ -28,6 +28,15 @@ var gs_kiri_cam = exports;
             FACING: 5,
             DRILL: 6
         },
+        MODES = [
+            "unset",
+            "roughing",
+            "finishing",
+            "linear-x",
+            "linear-y",
+            "facing",
+            "drilling"
+        ],
         DEBUG = false,
         MIN = Math.min,
         MAX = Math.max,
@@ -971,6 +980,7 @@ var gs_kiri_cam = exports;
          * @param {number} [tool] tool
          */
         function layerPush(point, emit, speed, tool) {
+            layerOut.mode = lastMode;
             layerOut.push(newOut(point, emit, speed, tool));
         }
 
@@ -1388,6 +1398,7 @@ var gs_kiri_cam = exports;
             pos = { x:null, y:null, z:null, f:null, t:null },
             line,
             cidx,
+            mode = 0,
             point,
             points = 0,
             hasStock = spro.camStockZ && spro.camStockX && spro.camStockY,
@@ -1477,6 +1488,7 @@ var gs_kiri_cam = exports;
             newpos.y = UTIL.round(newpos.y, decimals);
             newpos.z = UTIL.round(newpos.z, decimals);
 
+            // on tool change
             if (out.tool != pos.t) {
                 pos.t = out.tool;
                 consts.tool = pos.t;
@@ -1491,11 +1503,11 @@ var gs_kiri_cam = exports;
                 dz = newpos.z - pos.z,
                 dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-            // drop dup points
+            // drop dup points (all deltas are 0)
             if (!(dx || dy || dz)) {
-                // DBUG.log({dup:newpos,points:points});
                 return;
             }
+
             if (newpos.x !== pos.x) {
                 pos.x = newpos.x;
                 runbox.min.x = Math.min(runbox.min.x, pos.x);
@@ -1518,7 +1530,10 @@ var gs_kiri_cam = exports;
                 pos.f = feed;
                 nl.append(space).append("F").append(feed);
             }
+
+            // update time calculation
             time += pos.f / 60 * dist;
+
             // if (comment && !stripComments) {
             //     nl.append(" ; ").append(comment);
             //     nl.append(" ; ").append(points);
@@ -1528,6 +1543,7 @@ var gs_kiri_cam = exports;
             points++;
         }
 
+        // emit gcode preamble
         filterEmit(gcodes.gcodePre, consts);
 
         // remap points as necessary for origins, offsets, inversions
@@ -1548,6 +1564,11 @@ var gs_kiri_cam = exports;
 
         // emit all points in layer/point order
         print.output.forEach(function (layerout) {
+            if (mode !== layerout.mode) {
+                if (mode && !stripComments) append("; ending " + MODES[mode] + " after " + Math.round(time/60) + " seconds");
+                mode = layerout.mode;
+                if (!stripComments) append("; starting " + MODES[mode]);
+            }
             if (layerout.spindle && layerout.spindle !== spindle) {
                 spindle = layerout.spindle;
                 append((spindle > 0 ? "M3" : "M4") + " S" + Math.abs(spindle));
@@ -1556,10 +1577,12 @@ var gs_kiri_cam = exports;
                 moveTo(out);
             });
         });
+        if (mode && !stripComments) append("; ending " + MODES[mode] + " after " + Math.round(time/60) + " seconds");
 
+        // emit gcode post
         filterEmit(gcodes.gcodePost, consts);
 
-        // force emit of buffer
+        // flush buffered gcode
         append();
 
         print.time = time;
