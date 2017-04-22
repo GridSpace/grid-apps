@@ -6,11 +6,10 @@
 * improve decimation speed by avoiding in/out of Point
 * dismissable transient message/alert
 * modal non-alert-based dialog & spinner
-* ability to cancel slice operations
-* server-side processing
+* ability to cancel slice operations (complicated w/ workers)
+* server-side processing (determine protocol and storage)
 * move more kiri code (like printing) into modules like serial
-* include device profile name in exported gcode comments
-* when deleting last selected part, turn off bottom param editor
+* include device + settings in exported gcode as comments
 * frame api * https://plus.google.com/u/0/+JakobFlierl/posts/hn6eirr6fXC
 * refactor / simplify POLY.expand (put onus on collector)
 * add simple solid (tube-like) rendering in place of lines
@@ -28,8 +27,6 @@
 
 # CAM todo
 
-* time estimation per operation
-* emit gcode comments at the beginning of each operation
 * ease-in and ease-out especially on tab cut-out start/stop
 * import options: unify bodies.
 * milling order option: by operation or by part
@@ -40,7 +37,6 @@
 * linear finishing going back to z top too often
 * fix ease down and re-enable
 * warn when part > stock or cuts go outside bed
-* uncheck origin center for carvey
 * option to skip milling holes that would be drilled
 * sender speed control slider (0%-200%) ?
 * add M03 tool feedrate support (https://forum.grid.space/index.php?p=/discussion/14/s-parameter#latest)
@@ -56,7 +52,6 @@
 * linear x/y scan overflow (y) w/ topo model
 * linear x/y not obeying inset from pocket only
 * check normals for downward facing facets. mark top for slice skirt/pancake
-* detect holes thru bottom and cutout outline vs mill out entire void
 
 # FDM todo
 
@@ -66,19 +61,16 @@
 * run line through center of series of short fills (thin fill optimization)
 * add rafts, thin wall detection, manual supports
 * add skirt to raft option as a simpler way to do rafts
-* fill before shell option (request) ?
 * separate shell speed control
 * wipe on infill should follow the closest enclosing shell poly
-* TAZ from https://code.alephobjects.com/diffusion/P/browse/master/cura/TAZ_flexy_dually_v2/PLA-PVA-support_medium-quality_TAZ_FlexyDually-v2_0.6noz_cura.ini
+* add TAZ profile from https://code.alephobjects.com/diffusion/P/browse/master/cura/TAZ_flexy_dually_v2/PLA-PVA-support_medium-quality_TAZ_FlexyDually-v2_0.6noz_cura.ini
 * add control of shortest line/fill line before culling
-* add retraction distance/speed to gcode profiles
+* add retraction distance/speed to device profiles
 * add min layer time (slowdown or cool-off wait)
 * tops should print inside/out (add odds w/ poly2poly ...)
-* extend support to interior spaces when 0% infill?
+* option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
-* first/last/outline/finish speed settings
 * check for support / brim intersections on first layer
-* bottom layer of a bridge: underextrude/stretch?
 * dual extruder support
 
 # Laser todo

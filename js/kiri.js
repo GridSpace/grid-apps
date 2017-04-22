@@ -372,7 +372,7 @@ self.kiri.license = exports.LICENSE;
             controller:{
                 view: null,
                 zoomSpeed: 1.0,
-                reverseZoom: false
+                reverseZoom: true
             },
             mode: 'FDM'
         },
