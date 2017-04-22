@@ -8,7 +8,6 @@
 * modal non-alert-based dialog & spinner
 * ability to cancel slice operations
 * server-side processing
-* saving workspace doesn't preserve widget positions
 * move more kiri code (like printing) into modules like serial
 * include device profile name in exported gcode comments
 * when deleting last selected part, turn off bottom param editor
@@ -26,10 +25,11 @@
 * watch for changed part version to prompt re-import
 * re-used disk cached version of parts if not changed
 * remap mouse/kbd to match onshape when running inside?
-* assembly import
 
 # CAM todo
 
+* time estimation per operation
+* emit gcode comments at the beginning of each operation
 * ease-in and ease-out especially on tab cut-out start/stop
 * import options: unify bodies.
 * milling order option: by operation or by part
@@ -52,7 +52,7 @@
 * raise z by leave-stock in roughing? if so, see next
 * if (raise z) above, add clear-flats to finishing
 * revisit tabs - just cut polys instead
-* try chunking topo until smaller blocks for processing
+* try chunking topo until smaller blocks for processing (fit in cacheline)
 * linear x/y scan overflow (y) w/ topo model
 * linear x/y not obeying inset from pocket only
 * check normals for downward facing facets. mark top for slice skirt/pancake
