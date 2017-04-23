@@ -55,6 +55,7 @@
 
 # FDM todo
 
+* add lay-flat auto-rotation
 * implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
 * fan / layer control * update forum
 * infill rendering as moves instead of extrusions (firefox?)
