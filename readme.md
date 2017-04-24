@@ -1,12 +1,9 @@
-Start using [Kiri:Moto](https://grid.space/kiri) directly on [Grid.Space](https://grid.space)
+Start using [Kiri:Moto](https://grid.space/kiri) or [Meta:Moto](https://grid.space/meta) directly on [Grid.Space](https://grid.space)
 
-## [Kiri:Moto](https://grid.space/kiri)
+### About
 
-A Unique, Multi-Modal, Cloud-based Slicer
-
-## [Meta:Moto](https://grid.space/meta)
-
-Recursive Block-based Modeling
+* [Kiri:Moto](https://grid.space/kiri) - A Unique, Multi-Modal, Cloud-based Slicer for FDM, CNC and Laser
+* [Meta:Moto](https://grid.space/meta) - Recursive Block-based Modeling
 
 ### Getting Started
 
