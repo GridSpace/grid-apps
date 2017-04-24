@@ -1,4 +1,4 @@
-Start using [Kiri:Moto](https://grid.space/kiri) or [Meta:Moto](https://grid.space/meta) directly on [Grid.Space](https://grid.space)
+[Grid.Space](https://grid.space) hosts live versions of the latest tagged code
 
 ### About
 
