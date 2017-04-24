@@ -30,3 +30,5 @@ then access the apps from http://debug:8080/
 * [Facebook Group](https://www.facebook.com/groups/660020084206828/)
 * [Forums](https://forum.grid.space)
 * [Wiki](https://github.com/GridSpace/KiriMoto/wiki)
+* [Twitter](https://twitter.com/grid_space_3d)
+* [YouTube Tutorials](https://www.youtube.com/c/gridspace)
