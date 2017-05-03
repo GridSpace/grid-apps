@@ -3,6 +3,7 @@
     "version": "1.0.61",
     "description": "grid.space 3d slice & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
+    "license": "SEE LICENCE in license.md",
     "private": false,
     "repository": {
         "type": "git",
@@ -18,18 +19,18 @@
         "start-web": "node js/web-server nolocal"
     },
     "dependencies": {
-        "connect": "3.3.x",
-        "compression": "1.4.x",
-        "serve-static": "1.10.x",
+        "connect": "*",
+        "compression": "*",
+        "serve-static": "*",
         "n3d-threejs": "72.0.x",
         "tween.js": "0.14.x",
-        "uglify-js": "2.7.x",
-        "leveldown": "latest",
-        "levelup": "latest",
-        "validator": "4.2.x",
-        "pixi.js": "3.0.x",
-        "moment": "2.11.x",
-        "request": "2.67.x",
-        "express-useragent": "0.2.x"
+        "uglify-js": "*",
+        "leveldown": "*",
+        "levelup": "*",
+        "validator": "*",
+        "pixi.js": "*",
+        "moment": "*",
+        "request": "*",
+        "express-useragent": "*"
     }
 }
