@@ -27,6 +27,9 @@
 
 # CAM todo
 
+* add imperial / metric units switch in (future) global config options
+* add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
+* pocket order should consider distance as well as size
 * ease-in and ease-out especially on tab cut-out start/stop
 * import options: unify bodies.
 * milling order option: by operation or by part
@@ -76,6 +79,7 @@
 
 # Laser todo
 
+* interior poly offsets are in the wrong direction
 * overcuts, radii for drag knives
 * sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
