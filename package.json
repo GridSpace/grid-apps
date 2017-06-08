@@ -24,7 +24,7 @@
         "serve-static": "*",
         "n3d-threejs": "72.0.x",
         "tween.js": "0.14.x",
-        "uglify-js": "*",
+        "uglify-js": "2.x",
         "leveldown": "*",
         "levelup": "*",
         "validator": "*",
