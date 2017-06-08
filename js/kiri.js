@@ -2519,6 +2519,9 @@ self.kiri.license = exports.LICENSE;
                 case cca('P'): // position widget
                     positionSelection();
                     break;
+                case cca('R'): // position widget
+                    rotateInputSelection();
+                    break;
                 case cca('x'): // export print
                     exportPrint();
                     break;
@@ -2580,6 +2583,20 @@ self.kiri.license = exports.LICENSE;
             for (var i=0; i<children.length; i++) {
                 children[i].setAttribute('class','');
             }
+        }
+
+        function rotateInputSelection() {
+            if (selectedMeshes.length === 0) {
+                alert("select object to rotate");
+                return;
+            }
+            var coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
+                prod = Math.PI / 360,
+                x = parseFloat(coord[0] || 0.0) * prod,
+                y = parseFloat(coord[1] || 0.0) * prod,
+                z = parseFloat(coord[2] || 0.0) * prod;
+
+            rotateSelection(x, y, z);
         }
 
         function positionSelection() {

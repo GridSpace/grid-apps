@@ -1,7 +1,7 @@
 var exports = {
     COPYRIGHT:"Copyright (C) 2014-2017 Stewart Allen <stewart@neuron.com> - All Rights Reserved",
     LICENSE:"Unauthorized copying, modification and re-distribution are strictly prohibited without prior written consent.",
-    VERSION:"1.0.61"
+    VERSION:"1.0.62"
 };
 if (!module) var module = {};
 module.exports = exports;
