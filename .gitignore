@@ -5,3 +5,4 @@ cache
 mod
 *.log
 obj/*.stl
+package-lock.json

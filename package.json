@@ -10,27 +10,36 @@
         "url": "https://github.com/gridspace/apps.git"
     },
     "keywords": [
-            "grid.space", "3d",
-            "kiri:moto", "kirimoto", "kiri", "slicer", "CAM", "laser", "gcode",
-            "meta:moto", "metamoto"
+        "grid.space",
+        "3d",
+        "kiri:moto",
+        "kirimoto",
+        "kiri",
+        "slicer",
+        "CAM",
+        "laser",
+        "gcode",
+        "meta:moto",
+        "metamoto"
     ],
     "scripts": {
         "start": "node js/web-server debug",
-        "start-web": "node js/web-server nolocal"
+        "start-web": "node js/web-server nolocal",
+        "update": "git pull && git submodule update --recursive --remote && npm update"
     },
     "dependencies": {
-        "connect": "*",
-        "compression": "*",
-        "serve-static": "*",
-        "n3d-threejs": "72.0.x",
-        "tween.js": "0.14.x",
-        "uglify-js": "2.x",
+        "compression": "^1.7.0",
+        "connect": "^3.6.3",
+        "express-useragent": "*",
         "leveldown": "*",
-        "levelup": "*",
-        "validator": "*",
-        "pixi.js": "*",
+        "levelup": "^1.3.9",
         "moment": "*",
+        "n3d-threejs": "72.0.x",
+        "pixi.js": "^4.5.4",
         "request": "*",
-        "express-useragent": "*"
+        "serve-static": "^1.12.4",
+        "tween.js": "0.14.x",
+        "uglify-js": "^2.8.29",
+        "validator": "^8.0.0"
     }
 }
