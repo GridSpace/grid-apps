@@ -354,6 +354,8 @@ var gs_kiri_fdm = exports;
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
                 o.append(" E").append(UTIL.round(newpos.e,decimals));
+                // for flashforge finder that uses cumulative extruder position
+                // o.append(" E").append(UTIL.round(outputLength, decimals));
             }
             if (rate && rate != pos.f) {
                 o.append(" F").append(Math.round(rate));
