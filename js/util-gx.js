@@ -1,8 +1,11 @@
+/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+"use strict";
+
 class GXReader {
-    constructor(buffer) {
-        this.buf = buffer;
+    constructor(file) {
+        this.buf = fs.readFileSync(file);
         this.pos = 16;
-        this.magic = buffer.slice(0,16).toString().trim();
+        this.magic = this.buf.slice(0,16).toString().trim();
 
         console.log({
             magic: this.magic,
@@ -49,5 +52,125 @@ class GXReader {
     }
 }
 
-const fs = require('fs');
-const gx = new GXReader(fs.readFileSync(process.argv[2]));
+class LineBuffer {
+
+    constructor(stream) {
+        this.buffer = null;
+        this.stream = stream;
+        this.stream.on("data", data => {
+            if (this.buffer) {
+                this.buffer = Buffer.concat([this.buffer, data]);
+            } else {
+                this.buffer = data;
+            }
+            this.nextLine()
+        });
+    }
+
+    nextLine() {
+        let left = 0;
+        const data = this.buffer;
+        const cr = data.indexOf("\r");
+        const lf = data.indexOf("\n");
+        if (lf && cr + 1 == lf) { left = 1 }
+        if (lf >= 0) {
+            this.stream.emit("line", data.slice(0, lf - left));
+            this.buffer = data.slice(lf + 1);
+            this.nextLine();
+        }
+    }
+
+}
+
+class FFControl {
+    constructor(host, port) {
+        const socket = new net.Socket().connect({
+            host: host,
+            port: port
+        })
+            .on("connect", () => {
+                console.log({connected: [host, port]});
+            })
+            .on("line", line => {
+                line = line.toString();
+                if (line == "ok") {
+                    if (this.next) {
+                        if (this.next.cb) this.next.cb(this.output);
+                    } else {
+                        console.log({reply_no_cmd: this.output});
+                    }
+                    this.doSendTimer();
+                    this.output = [];
+                } else {
+                    this.output.push(line);
+                }
+            })
+            .on("error", (error) => {
+                console.log({error: error});
+            })
+            .on("end", () => {
+                console.log({end: [host,port]});
+            })
+            .on("close", () => {
+                console.log({close: [host,port]});
+            })
+            ;
+
+        socket.lineBuffer = new LineBuffer(socket);
+
+        this.socket = socket;
+        this.queue = [];
+        this.timer = null;
+        this.next = null;
+        this.output = [];
+    }
+
+    sendCommand(cmd, callback) {
+        this.queue.push({cmd: "~" + cmd + "\r\n", cb: callback});
+        this.doSendTimer();
+    }
+
+    doSendTimer() {
+        if (this.timer) return;
+        if (this.queue.length > 0) setTimeout(() => {
+            this.doSend()
+        }, 0);
+    }
+
+    doSend() {
+        const next = this.queue.shift();
+        this.next = next;
+        this.socket.write(next.cmd);
+    }
+}
+
+
+class GXSender {
+    constructor(host, port, file) {
+        const buffer = fs.readFileSync(file);
+        const ctrl = new FFControl(host, port);
+        ctrl.sendCommand("M601 S1", lines => { console.log(lines) });
+    }
+}
+
+const arg = process.argv.slice(2);
+const cmd = arg.shift();
+const net = require('net');
+const fs  = require('fs');
+
+switch (cmd) {
+    case 'read':
+        new GXReader(arg.shift());
+        break;
+    case 'send':
+        new GXSender(arg.shift(), parseInt(arg.shift()), arg.shift());
+        break;
+    default:
+        console.log([
+            "invalid command: " + cmd,
+            "usage:",
+            "  read [file]",
+            "  print [host] [file]"
+        ].join("\n"));
+        break;
+}
