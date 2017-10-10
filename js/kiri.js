@@ -30,6 +30,7 @@ self.kiri.license = exports.LICENSE;
                     bedDepth: 1,
                     bedHeight: 1,
                     maxHeight: 1,
+                    extrudeAbs: 1,
                     filamentSize: 1,
                     nozzleSize: 1,
                     gcodePre: 1,
@@ -2050,6 +2051,7 @@ self.kiri.license = exports.LICENSE;
             setDeviceDepth: UC.newInput("bed depth", {title:"millimeters", convert:UC.toInt}),
             setDeviceHeight: UC.newInput("max height", {title:"max build height\nin millimeters", convert:UC.toInt, modes:FDM}),
             setDeviceMaxSpindle: UC.newInput("max spindle rpm", {title:"max spindle speed\n0 to disable", convert:UC.toInt, modes:CAM}),
+            setDeviceExtrusion: UC.newBoolean("extrusion absolute", onBooleanClick, {title:"extrusion moves absolute"}),
             setDeviceOrigin: UC.newBoolean("origin center", onBooleanClick, {title:"bed origin center"}),
             setDeviceOriginTop: UC.newBoolean("origin top", onBooleanClick, {title:"part z origin top", modes:CAM}),
 
@@ -2697,6 +2699,7 @@ self.kiri.license = exports.LICENSE;
                         filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
                         origin_center: UI.setDeviceOrigin.checked,
                         origin_top: UI.setDeviceOriginTop.checked,
+                        extrude_abs: UI.setDeviceExtrusion.checked,
                         spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
                     },
                     cmd: {
@@ -2733,6 +2736,7 @@ self.kiri.license = exports.LICENSE;
                     maxHeight: valueOf(set.build_height, 150),
                     nozzleSize: valueOf(set.nozzle_size, 0.4),
                     filamentSize: valueOf(set.filament_diameter, 1.75),
+                    extrudeAbs: valueOf(set.extrude_abs, false),
                     spindleMax: valueOf(set.spindle_max, 0),
                     gcodeFan: valueOf(cmd.fan_power, ''),
                     gcodeTrack: valueOf(cmd.progress, ''),
@@ -2758,6 +2762,7 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceWidth.value = dev.bedWidth;
                 UI.setDeviceDepth.value = dev.bedDepth;
                 UI.setDeviceHeight.value = dev.maxHeight;
+                UI.setDeviceExtrusion.checked = dev.extrudeAbs;
                 UI.setDeviceOrigin.checked = proc.outputOriginCenter;
                 // FDM
                 UI.setDeviceFan.value = dev.gcodeFan;
@@ -2780,6 +2785,7 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceDepth,
                  UI.setDeviceWidth,
                  UI.setDeviceHeight,
+                 UI.setDeviceExtrusion,
                  UI.setDeviceOrigin,
                  UI.setDeviceOriginTop,
                  UI.setDeviceFan,

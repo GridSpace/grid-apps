@@ -158,7 +158,7 @@ var gs_moto_space = exports;
 
     function setPlatformSize(width, depth, height) {
         platform.scale.set(width || 300, depth || 175, height || 5);
-        viewControl.maxDistance = Math.max(width,depth) * 2;
+        viewControl.maxDistance = Math.max(width,depth) * 4;
         updatePlatformPosition();
         var y = Math.max(width, height) * 1;
         light1.position.set( width, y,  depth);
