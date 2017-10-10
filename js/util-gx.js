@@ -90,6 +90,8 @@ class FFControl {
         })
             .on("connect", () => {
                 console.log({connected: [host, port]});
+                this.connected = true;
+                this.doSendTimer();
             })
             .on("line", line => {
                 line = line.toString();
@@ -99,8 +101,9 @@ class FFControl {
                     } else {
                         console.log({reply_no_cmd: this.output});
                     }
-                    this.doSendTimer();
                     this.output = [];
+                    this.timer = null;
+                    this.doSendTimer();
                 } else {
                     this.output.push(line);
                 }
@@ -118,6 +121,7 @@ class FFControl {
 
         socket.lineBuffer = new LineBuffer(socket);
 
+        this.connected = false;
         this.socket = socket;
         this.queue = [];
         this.timer = null;
@@ -131,8 +135,8 @@ class FFControl {
     }
 
     doSendTimer() {
-        if (this.timer) return;
-        if (this.queue.length > 0) setTimeout(() => {
+        if (!this.connected || this.timer) return;
+        if (this.queue.length > 0) this.timer = setTimeout(() => {
             this.doSend()
         }, 0);
     }
@@ -150,6 +154,8 @@ class GXSender {
         const buffer = fs.readFileSync(file);
         const ctrl = new FFControl(host, port);
         ctrl.sendCommand("M601 S1", lines => { console.log(lines) });
+        ctrl.sendCommand("M115", lines => { console.log(lines) });
+        ctrl.sendCommand("M27", lines => { console.log(lines) });
     }
 }
 
