@@ -219,14 +219,17 @@ class GXSender {
         const length = uint32b(4096);
         for (let slice = 0; slice < slices; slice++) {
             let chunk = buffer.slice(slice * 4096, slice * 4096 + 4096);
-            if (chunk.length  < 4096) {
-                chunk = Buffer.concat([chunk, new Buffer(4096-chunk.length).fill(0)]);
-            }
             let crc = crc32.unsigned(chunk);
+            let len = chunk.length;
+            if (len  < 4096) {
+                chunk = Buffer.concat([chunk, new Buffer(4096-len).fill(0)]);
+            }
+            // let crc = crc32.unsigned(chunk);
             let block = Buffer.concat([
                 preamble,
                 uint32b(slice),
-                length,
+                uint32b(len),
+                // length,
                 uint32b(crc),
                 chunk
             ]);
