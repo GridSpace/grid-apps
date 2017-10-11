@@ -259,6 +259,67 @@ class GXSender {
     }
 }
 
+class TCPipe {
+    constructor(lport, dhost, dport) {
+        this.server = net.createServer(client => {
+            let last = null;
+            let buf = null;
+            const emit = (socket, buffer) => {
+                console.log("--- " + socket.name + " ---");
+                if (buffer.length > 256) {
+                    console.log(buffer.toString("hex"));
+                } else {
+                    console.log(buffer.toString().trim());
+                }
+            };
+            const onData = (socket, buffer) => {
+                if (last != socket) { emit(socket, buffer); buf = buffer }
+                else { buf = Buffer.concat([buf, buffer]) }
+                last = socket;
+            };
+            client
+                .on("data", data => {
+                    onData(client, data);
+                    socket.write(data);
+                })
+                .on("error", (error) => {
+                    client.end();
+                })
+                .on("end", () => {
+                    client.end();
+                })
+                .on("close", () => {
+                    // ok
+                })
+                ;
+            const socket = new net.Socket().connect({
+                host: dhost,
+                port: dport
+            })
+                .on("data", data => {
+                    onData(socket, data);
+                    client.write(data);
+                })
+                .on("error", (error) => {
+                    socket.end();
+                })
+                .on("end", () => {
+                    socket.end();
+                    emit(last, buf);
+                })
+                .on("close", () => {
+                    // ok
+                })
+                ;
+            client.name = "client";
+            socket.name = "server";
+        })
+            .on("error", error => { console.log(error)} )
+            .listen(lport, () => { })
+            ;
+    }
+}
+
 const crc32 = require('buffer-crc32');
 const net   = require('net');
 const fs    = require('fs');
@@ -267,6 +328,9 @@ const arg = process.argv.slice(2);
 const cmd = arg.shift();
 
 switch (cmd) {
+    case 'pipe':
+        new TCPipe(parseInt(arg.shift()), arg.shift(), parseInt(arg.shift()));
+        break;
     case 'read':
         new GXReader(arg.shift());
         break;
