@@ -52,6 +52,39 @@ class GXReader {
     }
 }
 
+class GXWriter {
+    constructor(gcode, bmp, time, length) {
+        gcode = fs.readFileSync(gcode); // raw gcode
+        bmp = fs.readFileSync(bmp); // any 80x60 pixel bmp
+
+        const header = new Buffer(58);
+        header.write("xgcode 1.0\n\u0000\u0000\u0000\u0000\u0000", 0);
+        header.writeUInt32LE(58, 16); // bmp offset
+        header.writeUInt32LE(58 + bmp.length, 20); // gcode offset
+        header.writeUInt32LE(58 + bmp.length, 24); // gcode offset
+        header.writeUInt32LE(time || 100, 28); // print seconds
+        header.writeUInt32LE(length || 100, 32); // print filament len mm
+        header.writeUInt32LE(  0, 36); // ?
+        header.writeUInt16LE(  1, 40); // ?
+        header.writeUInt16LE(200, 42); // ?
+        header.writeUInt16LE( 20, 44); // ?
+        header.writeUInt16LE(  3, 46); // ?
+        header.writeUInt16LE( 60, 48); // ?
+        header.writeUInt16LE(110, 50); // ?
+        header.writeUInt16LE(220, 52); // ?
+        header.writeUInt16LE(220, 54); // ?
+        header.writeUInt8   (  1, 56); // ?
+        header.writeUInt8   (  1, 57); // ?
+
+        this.output = Buffer.concat([header, bmp, gcode]);
+    }
+
+    write(file) {
+        fs.writeFileSync(file, this.output);
+        return this;
+    }
+}
+
 class LineBuffer {
 
     constructor(stream) {
@@ -150,12 +183,20 @@ class FFControl {
 
 
 class GXSender {
-    constructor(host, port, file) {
+    constructor(file, host, port) {
         const buffer = fs.readFileSync(file);
         const ctrl = new FFControl(host, port);
         ctrl.sendCommand("M601 S1", lines => { console.log(lines) });
         ctrl.sendCommand("M115", lines => { console.log(lines) });
+        ctrl.sendCommand("M119", lines => { console.log(lines) });
+        ctrl.sendCommand("M114", lines => { console.log(lines) });
+        ctrl.sendCommand("M105", lines => { console.log(lines) });
+        ctrl.sendCommand("M650", lines => { console.log(lines) });
         ctrl.sendCommand("M27", lines => { console.log(lines) });
+        // ctrl.sendCommand("M20", lines => { console.log(lines) });
+        // ctrl.sendCommand("M21", lines => { console.log(lines) });
+        // ctrl.sendCommand("M22", lines => { console.log(lines) });
+        // ctrl.sendCommand("M28", lines => { console.log(lines) });
     }
 }
 
@@ -168,14 +209,19 @@ switch (cmd) {
     case 'read':
         new GXReader(arg.shift());
         break;
+    case 'make':
+        let output = arg.shift();
+        new GXWriter(arg.shift(), arg.shift(), parseInt(arg.shift() || 100), parseInt(arg.shift() || 100)).write(output);
+        break;
     case 'send':
-        new GXSender(arg.shift(), parseInt(arg.shift()), arg.shift());
+        new GXSender(arg.shift(), arg.shift(), parseInt(arg.shift()));
         break;
     default:
         console.log([
             "invalid command: " + cmd,
             "usage:",
             "  read [file]",
+            "  make [outfile] [gcode] [bmp] <time> <length>",
             "  print [host] [file]"
         ].join("\n"));
         break;
