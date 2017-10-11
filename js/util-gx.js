@@ -201,14 +201,18 @@ class GXSender {
     constructor(file, host, port, filename) {
         const buffer = fs.readFileSync(file);
         const ctrl = new FFControl(host, port);
-        ctrl.sendCommand("M601 S1", lines => { console.log(lines) });
-        // ctrl.sendCommand("M115", lines => { console.log(lines) });
+        ctrl.sendCommand("M601 S1", lines => { console.log(lines) }); // take control
+        ctrl.sendCommand("M115", lines => { console.log(lines) });
+        ctrl.sendCommand("M650", lines => { console.log(lines) });
+        ctrl.sendCommand("M115", lines => { console.log(lines) });
+        ctrl.sendCommand("M114", lines => { console.log(lines) });
+        ctrl.sendCommand("M27", lines => { console.log(lines) });
+        ctrl.sendCommand("M119", lines => { console.log(lines) });
+        ctrl.sendCommand("M105", lines => { console.log(lines) });
         // ctrl.sendCommand("M119", lines => { console.log(lines) });
-        // ctrl.sendCommand("M114", lines => { console.log(lines) });
         // ctrl.sendCommand("M105", lines => { console.log(lines) });
-        // ctrl.sendCommand("M650", lines => { console.log(lines) });
         // ctrl.sendCommand("M27", lines => { console.log(lines) });
-        filename = " 0:/user/" + (filename || "kirimoto.gx");
+        filename = " 0:/user/" + (filename || "noname.gx");
         ctrl.sendCommand("M28 " + buffer.length + filename, lines => { console.log(lines) });
         const slices = Math.ceil(buffer.length / 4096);
         const preamble = new Buffer([0x5a, 0x5a, 0xa5, 0xa5]);
@@ -232,17 +236,26 @@ class GXSender {
             ctrl.sendBuffer(block, lines => { console.log(lines) });
         }
         ctrl.sendCommand("M29", lines => { console.log(lines) }); // end of send
-        ctrl.sendCommand("M23 " + filename, lines => { console.log(lines) }); // start print
+        ctrl.sendCommand("M23" + filename, lines => { console.log(lines) }); // start print
         this.ctrl = ctrl;
+        this.count = 5;
         this.monitor();
     }
 
     monitor() {
+        if (this.count-- == 0) {
+            this.end();
+            return;
+        }
         const ctrl = this.ctrl;
         ctrl.sendCommand("M119", lines => { console.log(lines) });
         ctrl.sendCommand("M105", lines => { console.log(lines) });
         ctrl.sendCommand("M27", lines => { console.log(lines) });
         setTimeout(() => { this.monitor() }, 1000);
+    }
+
+    end() {
+        this.ctrl.sendCommand("M602", lines => { console.log(lines) }); // control release
     }
 }
 
@@ -262,7 +275,7 @@ switch (cmd) {
         new GXWriter(arg.shift(), arg.shift(), parseInt(arg.shift() || 100), parseInt(arg.shift() || 100)).write(output);
         break;
     case 'send':
-        new GXSender(arg.shift(), arg.shift(), parseInt(arg.shift()));
+        new GXSender(arg.shift(), arg.shift(), parseInt(arg.shift()), arg.shift());
         break;
     default:
         console.log([
