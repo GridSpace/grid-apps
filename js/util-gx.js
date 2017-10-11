@@ -128,7 +128,9 @@ class FFControl {
             })
             .on("line", line => {
                 line = line.toString();
-                if (line == "ok") {
+                let okidx = line.indexOf("ok");
+                if (okidx >= 0) {
+                    if (okidx > 0) this.output.push(line);
                     if (this.next) {
                         if (this.next.cb) this.next.cb(this.output);
                     } else {
@@ -162,6 +164,11 @@ class FFControl {
         this.output = [];
     }
 
+    sendBuffer(buf, callback) {
+        this.queue.push({cmd: buf, cb: callback});
+        this.doSendTimer();
+    }
+
     sendCommand(cmd, callback) {
         this.queue.push({cmd: "~" + cmd + "\r\n", cb: callback});
         this.doSendTimer();
@@ -181,29 +188,70 @@ class FFControl {
     }
 }
 
+function uint32b(val) {
+    return new Buffer([
+        (val >> 24) & 0xff,
+        (val >> 16) & 0xff,
+        (val >>  8) & 0xff,
+        (val >>  0) & 0xff
+    ]);
+}
 
 class GXSender {
-    constructor(file, host, port) {
+    constructor(file, host, port, filename) {
         const buffer = fs.readFileSync(file);
         const ctrl = new FFControl(host, port);
         ctrl.sendCommand("M601 S1", lines => { console.log(lines) });
-        ctrl.sendCommand("M115", lines => { console.log(lines) });
+        // ctrl.sendCommand("M115", lines => { console.log(lines) });
+        // ctrl.sendCommand("M119", lines => { console.log(lines) });
+        // ctrl.sendCommand("M114", lines => { console.log(lines) });
+        // ctrl.sendCommand("M105", lines => { console.log(lines) });
+        // ctrl.sendCommand("M650", lines => { console.log(lines) });
+        // ctrl.sendCommand("M27", lines => { console.log(lines) });
+        filename = " 0:/user/" + (filename || "kirimoto.gx");
+        ctrl.sendCommand("M28 " + buffer.length + filename, lines => { console.log(lines) });
+        const slices = Math.ceil(buffer.length / 4096);
+        const preamble = new Buffer([0x5a, 0x5a, 0xa5, 0xa5]);
+        const length = uint32b(4096);
+        for (let slice = 0; slice < slices; slice++) {
+            let chunk = buffer.slice(slice * 4096, slice * 4096 + 4096);
+            if (chunk.length  < 4096) {
+                chunk = Buffer.concat([chunk, new Buffer(4096-chunk.length).fill(0)]);
+            }
+            let crc = crc32.unsigned(chunk);
+            let block = Buffer.concat([
+                preamble,
+                uint32b(slice),
+                length,
+                uint32b(crc),
+                chunk
+            ]);
+            // console.log(block);
+            // console.log(block.slice(4080));
+            // console.log(block.length);
+            ctrl.sendBuffer(block, lines => { console.log(lines) });
+        }
+        ctrl.sendCommand("M29", lines => { console.log(lines) }); // end of send
+        ctrl.sendCommand("M23 " + filename, lines => { console.log(lines) }); // start print
+        this.ctrl = ctrl;
+        this.monitor();
+    }
+
+    monitor() {
+        const ctrl = this.ctrl;
         ctrl.sendCommand("M119", lines => { console.log(lines) });
-        ctrl.sendCommand("M114", lines => { console.log(lines) });
         ctrl.sendCommand("M105", lines => { console.log(lines) });
-        ctrl.sendCommand("M650", lines => { console.log(lines) });
         ctrl.sendCommand("M27", lines => { console.log(lines) });
-        // ctrl.sendCommand("M20", lines => { console.log(lines) });
-        // ctrl.sendCommand("M21", lines => { console.log(lines) });
-        // ctrl.sendCommand("M22", lines => { console.log(lines) });
-        // ctrl.sendCommand("M28", lines => { console.log(lines) });
+        setTimeout(() => { this.monitor() }, 1000);
     }
 }
 
+const crc32 = require('buffer-crc32');
+const net   = require('net');
+const fs    = require('fs');
+
 const arg = process.argv.slice(2);
 const cmd = arg.shift();
-const net = require('net');
-const fs  = require('fs');
 
 switch (cmd) {
     case 'read':
@@ -222,7 +270,8 @@ switch (cmd) {
             "usage:",
             "  read [file]",
             "  make [outfile] [gcode] [bmp] <time> <length>",
-            "  print [host] [file]"
+            "  send [file] [host] [port] <filename>",
+            "  print [file]"
         ].join("\n"));
         break;
 }
