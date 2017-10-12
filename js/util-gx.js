@@ -224,18 +224,13 @@ class GXSender {
             if (len  < 4096) {
                 chunk = Buffer.concat([chunk, new Buffer(4096-len).fill(0)]);
             }
-            // let crc = crc32.unsigned(chunk);
             let block = Buffer.concat([
                 preamble,
                 uint32b(slice),
                 uint32b(len),
-                // length,
                 uint32b(crc),
                 chunk
             ]);
-            // console.log(block);
-            // console.log(block.slice(4080));
-            // console.log(block.length);
             ctrl.sendBuffer(block, lines => { console.log(lines) });
         }
         ctrl.sendCommand("M29", lines => { console.log(lines) }); // end of send
@@ -327,31 +322,33 @@ const crc32 = require('buffer-crc32');
 const net   = require('net');
 const fs    = require('fs');
 
-const arg = process.argv.slice(2);
-const cmd = arg.shift();
+if (!module.parent) {
+    const arg = process.argv.slice(2);
+    const cmd = arg.shift();
 
-switch (cmd) {
-    case 'pipe':
-        new TCPipe(parseInt(arg.shift()), arg.shift(), parseInt(arg.shift()));
-        break;
-    case 'read':
-        new GXReader(arg.shift());
-        break;
-    case 'make':
-        let output = arg.shift();
-        new GXWriter(arg.shift(), arg.shift(), parseInt(arg.shift() || 100), parseInt(arg.shift() || 100)).write(output);
-        break;
-    case 'send':
-        new GXSender(arg.shift(), arg.shift(), parseInt(arg.shift()), arg.shift());
-        break;
-    default:
-        console.log([
-            "invalid command: " + cmd,
-            "usage:",
-            "  read [file]",
-            "  make [outfile] [gcode] [bmp] <time> <length>",
-            "  send [file] [host] [port] <filename>",
-            "  print [file]"
-        ].join("\n"));
-        break;
+    switch (cmd) {
+        case 'pipe':
+            new TCPipe(parseInt(arg.shift()), arg.shift(), parseInt(arg.shift()));
+            break;
+        case 'read':
+            new GXReader(arg.shift());
+            break;
+        case 'make':
+            let output = arg.shift();
+            new GXWriter(arg.shift(), arg.shift(), parseInt(arg.shift() || 100), parseInt(arg.shift() || 100)).write(output);
+            break;
+        case 'send':
+            new GXSender(arg.shift(), arg.shift(), parseInt(arg.shift()), arg.shift());
+            break;
+        default:
+            console.log([
+                "invalid command: " + cmd,
+                "usage:",
+                "  read [file]",
+                "  make [outfile] [gcode] [bmp] <time> <length>",
+                "  send [file] [host] [port] <filename>",
+                "  print [file]"
+            ].join("\n"));
+            break;
+    }
 }
