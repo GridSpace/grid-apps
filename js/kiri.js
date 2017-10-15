@@ -1027,7 +1027,14 @@ self.kiri.license = exports.LICENSE;
                 setProgress(Math.ceil(evt.loaded/evt.total), "sending");
             });
             filename = $('print-filename').value;
-            xhtr.open("POST", host+"/api/print?filename="+filename+"&target="+target+"&key="+apik);
+            xhtr.open("POST",
+                host + "/api/print?" +
+                "filename=" + filename +
+                "&target=" + target +
+                "&key=" + apik +
+                "&time=" + Math.round(currentPrint.time) +
+                "&length=" + Math.round(currentPrint.distance)
+            );
             xhtr.setRequestHeader("Content-Type", "text/plain");
             xhtr.send(gcode);
             hideModal();
