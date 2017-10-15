@@ -1,0 +1,36 @@
+{
+    "pre":[
+        "M118 X15.00 Y15.00 Z10.00 T0",
+        "M104 S220 T0 ; set nozzle0 temp",
+        "M107 ; fan off",
+        "G90 ; set absolute positioning",
+        "G28 ; move to origin",
+        "M132 X Y Z A B ; set axis limits",
+        "G1 Z50.00 F400",
+        "G161 X Y F3300 ; home axis minimum",
+        "M6 T0 ; tool change t0",
+        "M907 X100 Y100 Z40 A80 B20 ; set digital trimpots",
+        "M108 T0 ; set extruder speed",
+        "M109 S220 T0 ; set temp and wait",
+        "G1 X15.00 Y15.00 F4800 ; preExtrude:0.20",
+        "G1 Z.20 F400 ; preExtruder0"
+    ],
+    "post":[
+        "M104 S0 T0 ; set nozzle0 temp",
+        "G162 Z ; home axes maximum",
+        "G28 X Y ; move to origin",
+        "M132 X Y Z A B ; set axis limits",
+        "G91 ; set relative positioning",
+        "M18 ; disable all steppers"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": true,
+        "extrude_abs": true,
+        "bed_width": 140,
+        "bed_depth": 140,
+        "build_height": 140
+    }
+}
