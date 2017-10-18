@@ -334,7 +334,15 @@ var gs_kiri_fdm = exports;
         append(constReplace("; Bed left:{left} right:{right} top:{top} bottom:{bottom}", consts));
         append("; --- startup ---");
         for (var i=0; i<device.gcodePre.length; i++) {
-            append(constReplace(device.gcodePre[i], consts));
+            var line = device.gcodePre[i];
+            if (line.indexOf('E') > 0) {
+                line.split(' ').forEach(function (tok) {
+                    // use max E position from gcode-preamble
+                    if (tok[0] == 'E') outputLength = Math.max(outputLength, parseFloat(tok.substring(1)));
+                });
+            }
+            if (device.extrudeAbs)
+            append(constReplace(line, consts));
         }
 
         function moveTo(newpos, rate, comment) {
