@@ -257,15 +257,15 @@ var gs_kiri_fdm = exports;
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            time = 0,
-            layer = 0,
             fan_power = device.gcodeFan,
             trackProgress = device.gcodeTrack,
             layer1speed = process.firstLayerSpeed,
-            decimals = 4,
+            time = 0,
+            layer = 0,
             output = [],
             outputLength = 0,
             lastProgress = 0,
+            decimals = 4,
             progress = 0,
             distance = 0,
             emitted = 0,
@@ -273,20 +273,20 @@ var gs_kiri_fdm = exports;
             zinc = process.sliceHeight,
             zpos = zinc * process.firstLayerHeight,
             offset = process.outputOriginCenter ? null : {
-                    x: device.bedWidth/2,
-                    y: device.bedDepth/2
+                x: device.bedWidth/2,
+                y: device.bedDepth/2
             },
             consts = {
-                    temp: process.outputTemp,
-                    temp_bed: process.outputBedTemp,
-                    bed_temp: process.outputBedTemp,
-                    fan_speed: process.outputFanMax,
-                    speed: process.outputFanMax,
-                    top: offset ? device.bedDepth : device.bedDepth/2,
-                    left: offset ? 0 : -device.bedWidth/2,
-                    right: offset ? device.bedWidth : device.bedWidth/2,
-                    bottom: offset ? 0 : -device.bedDepth/2,
-                    z_max: device.maxHeight
+                temp: process.outputTemp,
+                temp_bed: process.outputBedTemp,
+                bed_temp: process.outputBedTemp,
+                fan_speed: process.outputFanMax,
+                speed: process.outputFanMax,
+                top: offset ? device.bedDepth : device.bedDepth/2,
+                left: offset ? 0 : -device.bedWidth/2,
+                right: offset ? device.bedWidth : device.bedWidth/2,
+                bottom: offset ? 0 : -device.bedDepth/2,
+                z_max: device.maxHeight
             },
             shortDist = process.outputShortDistance,
             shortFact = process.outputShortFactor,
@@ -378,7 +378,7 @@ var gs_kiri_fdm = exports;
             append(o.join(''));
         }
 
-        // find total distance traveled by head as approx for progress
+        // calc total distance traveled by head as proxy for progress
         var allout = [],
             totaldistance = 0;
         layers.forEach(function(outs) { allout.appendAll(outs) });
@@ -390,9 +390,9 @@ var gs_kiri_fdm = exports;
             append("; --- layer "+layer+" ---");
             // second layer fan on
             if (layer === 1 && fan_power) append(constReplace(fan_power,consts));
-            // first layer 50% underspeed
             shortMMM = shortFact * maxPrintMMM;
             printMMM = maxPrintMMM;
+            // first layer 50% underspeed
             if (layer === 0) {
                 printMMM *= layer1speed;
                 shortMMM *= layer1speed;
