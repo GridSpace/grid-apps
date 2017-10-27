@@ -18,6 +18,7 @@
         "M107 ; fan off",
         "M104 S0 T0 ; set nozzle0 temp",
         "G162 Z ; home axes maximum",
+        "G28 Z ; lower bed",
         "G28 X Y ; move to origin",
         "M132 X Y Z A B ; set axis limits",
         "M18 ; disable all steppers"
