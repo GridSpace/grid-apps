@@ -14,7 +14,7 @@ var gs_kiri_slice = exports;
         UTIL = BASE.util,
         DBUG = BASE.debug,
         POLY = BASE.polygons,
-        SiP = Slice.prototype,
+        PRO = Slice.prototype,
         fillArea = POLY.fillArea,
         newPoint = BASE.newPoint,
         ROUND = UTIL.round,
@@ -116,7 +116,7 @@ var gs_kiri_slice = exports;
     /**
      * returns a cloned slice the option of a deep clone on the top polys
      */
-    SiP.clone = function(deep) {
+    PRO.clone = function(deep) {
         var from = this,
             slice = newSlice(from.z, from.view);
         from.tops.forEach(function(top) {
@@ -130,7 +130,7 @@ var gs_kiri_slice = exports;
      *
      * @param {THREE.Group} view
      */
-    SiP.addLayers = function(view) {
+    PRO.addLayers = function(view) {
         if (this.layers) return;
 
         // create views client side only
@@ -154,7 +154,7 @@ var gs_kiri_slice = exports;
      *
      * @param {Polygon} poly to merge into a top
      */
-    SiP.mergeTop = function(poly) {
+    PRO.mergeTop = function(poly) {
         var scope = this,
             tops = scope.tops,
             union, i;
@@ -172,7 +172,7 @@ var gs_kiri_slice = exports;
      *
      * @param {Polygon} poly to add
      */
-    SiP.addTop = function(poly) {
+    PRO.addTop = function(poly) {
         var top = new Top(poly);
         this.tops.push(top);
         return top;
@@ -184,7 +184,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherTopPolys = function(out) {
+    PRO.gatherTopPolys = function(out) {
         this.tops.forEach(function(top) {
             out.push(top.poly);
         });
@@ -198,7 +198,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherTopPolyInners = function(out) {
+    PRO.gatherTopPolyInners = function(out) {
         this.tops.forEach(function(top) {
             if (top.poly.inner) out.appendAll(top.poly.inner);
         });
@@ -211,7 +211,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherTraces = function(out) {
+    PRO.gatherTraces = function(out) {
         this.tops.forEach(function(top) {
             out.appendAll(top.traces);
         });
@@ -224,7 +224,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherInner = function(out) {
+    PRO.gatherInner = function(out) {
         this.tops.forEach(function(top) {
             out.appendAll(top.inner);
         });
@@ -237,7 +237,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherOuter = function(out) {
+    PRO.gatherOuter = function(out) {
         this.tops.forEach(function(top) {
             out.appendAll(top.outer);
         });
@@ -250,7 +250,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    SiP.gatherSolids = function(out) {
+    PRO.gatherSolids = function(out) {
         this.tops.forEach(function(top) {
             out.appendAll(top.solids);
         });
@@ -263,7 +263,7 @@ var gs_kiri_slice = exports;
      *
      * @param {Point[]} [lines] array to append to
      */
-    SiP.gatherFillLines = function(lines) {
+    PRO.gatherFillLines = function(lines) {
         this.tops.forEach(function(top) {
             if (top.fill_lines) lines.appendAll(top.fill_lines);
         });
@@ -273,7 +273,7 @@ var gs_kiri_slice = exports;
     /**
      * Clear solid area cache in preparation for a new slicing action
      */
-    SiP.invalidateSolids = function() {
+    PRO.invalidateSolids = function() {
         var solids = this.solids;
         solids.poly = [];
         solids.trimmed = null;
@@ -282,7 +282,7 @@ var gs_kiri_slice = exports;
     /**
      * Clear support cache in preparation for a new slicing calculation
      */
-    SiP.invalidateSupports = function() {
+    PRO.invalidateSupports = function() {
         this.supports = null;
     };
 
@@ -291,7 +291,7 @@ var gs_kiri_slice = exports;
      *
      * @param {number} renderMode
      */
-    SiP.renderOutline = function(renderMode) {
+    PRO.renderOutline = function(renderMode) {
         if (!this.view) return;
 
         var process = KIRI.driver.CAM.process,
@@ -362,7 +362,7 @@ var gs_kiri_slice = exports;
      * @param {number} offsetN all subsequent offsets
      * @param {number} fillOffset
      */
-    SiP.doShells = function(count, offset1, offsetN, fillOffset, vase) {
+    PRO.doShells = function(count, offset1, offsetN, fillOffset, vase) {
         var slice = this;
 
         slice.tops.forEach(function(top) {
@@ -398,7 +398,7 @@ var gs_kiri_slice = exports;
      *
      * @param {number} renderMode
      */
-    SiP.renderShells = function(renderMode) {
+    PRO.renderShells = function(renderMode) {
         var scope = this,
             layers = scope.layers,
             layer = layers.trace,
@@ -440,7 +440,7 @@ var gs_kiri_slice = exports;
     /**
      * Clear fill cache in preparation for a slice or re-slice of a widget
      */
-    SiP.invalidateFill = function() {
+    PRO.invalidateFill = function() {
         this.tops.forEach(function(top) {
             top.fill_lines = null;
             top.fill_sparse = null;
@@ -452,7 +452,7 @@ var gs_kiri_slice = exports;
      *
      * @param {number} minDist
      */
-    SiP.doThinWallDetection = function(mindist) {
+    PRO.doThinWallDetection = function(mindist) {
         this.tops.forEach(function(top) {
             if (top.inner && top.inner.length > 0) {
                 // using next line2line algo from print lib
@@ -468,7 +468,7 @@ var gs_kiri_slice = exports;
      * @param {number} angle
      * @param {number} density
      */
-    SiP.doSolidLayerFill = function(linewidth, angle, density) {
+    PRO.doSolidLayerFill = function(linewidth, angle, density) {
         this.isSolidFill = false;
 
         if (this.tops.length === 0) return;
@@ -493,7 +493,7 @@ var gs_kiri_slice = exports;
     /**
      * Runs in client. Generate solid lines in the correct view layer.
      */
-    SiP.renderSolidFill = function() {
+    PRO.renderSolidFill = function() {
         var layer = this.layers.fill,
             render;
 
@@ -515,7 +515,7 @@ var gs_kiri_slice = exports;
      * @param {number} percent infill 0.0 - 1.0
      * @param {Object} bounds -- TODO calc w/out mesh so it can run in a worker
      */
-    SiP.doSparseLayerFill = function(linewidth, density, percent, bounds) {
+    PRO.doSparseLayerFill = function(linewidth, density, percent, bounds) {
         this.isSparseFill = false;
         if (this.tops.length === 0 || percent === 0.0 || this.isSolidFill) return;
 
@@ -580,7 +580,7 @@ var gs_kiri_slice = exports;
     /**
      * Runs in client. Generate sparse lines in the correct view layer.
      */
-    SiP.renderSparseFill = function() {
+    PRO.renderSparseFill = function() {
         var layer = this.layers.sparse;
 
         layer.clear();
@@ -601,7 +601,7 @@ var gs_kiri_slice = exports;
      * Find difference between fill inset poly on two adjacent layers.
      * Used to calculate bridges, flats and then solid projections.
      */
-    SiP.doDiff = function(minArea) {
+    PRO.doDiff = function(minArea) {
         if (!this.down) return;
 
         var debug = (this.index === DBUG.get('z-index')) && DBUG.get('diff'),
@@ -627,7 +627,7 @@ var gs_kiri_slice = exports;
     /**
     * Runs in client. Generate polygon lines in the correct view layer.
      */
-    SiP.renderDiff = function() {
+    PRO.renderDiff = function() {
         var scope = this,
             layers = scope.layers,
             bridgeLayer = layers.bridge,
@@ -657,14 +657,14 @@ var gs_kiri_slice = exports;
      *
      * @param {Polygon[]} polys
      */
-    SiP.addSolidFills = function(polys) {
+    PRO.addSolidFills = function(polys) {
         this.solids.poly.appendAll(polys);
     };
 
     /**
      * project bottom flats down
      */
-    SiP.projectFlats = function(count) {
+    PRO.projectFlats = function(count) {
         if (this.isSolidFill || !this.down || !this.flats) return;
         projectSolid(this, this.flats, count, false, true);
     };
@@ -672,7 +672,7 @@ var gs_kiri_slice = exports;
     /**
      * project top bridges up
      */
-    SiP.projectBridges = function(count) {
+    PRO.projectBridges = function(count) {
         if (this.isSolidFill || !this.up || !this.bridges) return;
         projectSolid(this, this.bridges, count, true, true);
     };
@@ -681,7 +681,7 @@ var gs_kiri_slice = exports;
      * fill projected areas and store line data
      * @return {boolean} true if filled, false if not
      */
-    SiP.doSolidsFill = function(linewidth, angle, density, minArea) {
+    PRO.doSolidsFill = function(linewidth, angle, density, minArea) {
 
         var minarea = minArea || 1,
             scope = this,
@@ -769,7 +769,7 @@ var gs_kiri_slice = exports;
         return true;
     };
 
-    SiP.renderSolidOutlines = function() {
+    PRO.renderSolidOutlines = function() {
         var layer = this.layers.solid,
             trimmed = this.solids.trimmed;
 
@@ -791,7 +791,7 @@ var gs_kiri_slice = exports;
      * @param {number} expand outer support clip
      * @param {number} offset inner support clip
      */
-    SiP.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset) {
+    PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset) {
         var min = minArea || 0.1,
             size = (pillarSize || 2),
             mergeDist = size * 3, // pillar merge dist
@@ -919,7 +919,7 @@ var gs_kiri_slice = exports;
      * @param {number} density
      * @param {number} offset
      */
-    SiP.doSupportFill = function(linewidth, density, minArea) {
+    PRO.doSupportFill = function(linewidth, density, minArea) {
         // return;
         var slice = this,
             supports = slice.supports,
@@ -965,7 +965,7 @@ var gs_kiri_slice = exports;
     /**
      *
      */
-    SiP.renderSupport = function() {
+    PRO.renderSupport = function() {
         var slice = this,
             layer = slice.layers.support,
             supports = slice.supports;
@@ -987,7 +987,7 @@ var gs_kiri_slice = exports;
      * @param {Point} target
      * @return {Object}
      */
-    SiP.findClosestPointTo = function(target) {
+    PRO.findClosestPointTo = function(target) {
         var min, find;
 
         this.tops.forEach(function(top) {

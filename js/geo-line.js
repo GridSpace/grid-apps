@@ -27,7 +27,7 @@ var gs_base_line = exports;
     }
 
     var BASE = self.base,
-        LiP = Line.prototype;
+        PRO = Line.prototype;
 
     BASE.Line = Line;
     BASE.newLine = newLine;
@@ -40,28 +40,28 @@ var gs_base_line = exports;
     /**
      * @returns {number}
      */
-    LiP.length = function() {
+    PRO.length = function() {
         return Math.sqrt(this.length2());
     };
 
     /**
      * @returns {number} square of length
      */
-    LiP.length2 = function() {
+    PRO.length2 = function() {
         return this.p1.distToSq2D(this.p2);
     };
 
     /**
      * @returns {Slope}
      */
-    LiP.slope = function() {
+    PRO.slope = function() {
         return BASE.newSlope(this.p1.slopeTo(this.p2));
     };
 
     /**
      * @returns {Line}
      */
-    LiP.reverse = function() {
+    PRO.reverse = function() {
         var t = this.p1;
         this.p1 = this.p2;
         this.p2 = t;
@@ -71,7 +71,7 @@ var gs_base_line = exports;
     /**
      * @returns {Point}
      */
-    LiP.midpoint = function() {
+    PRO.midpoint = function() {
         return this.p1.midPointTo(this.p2);
     };
 
@@ -79,7 +79,7 @@ var gs_base_line = exports;
      * @param {Line} line
      * @returns {boolean}
      */
-    LiP.isCollinear = function(line) {
+    PRO.isCollinear = function(line) {
         var p1 = this.p1,
             p2 = this.p2,
             p3 = line.p1,

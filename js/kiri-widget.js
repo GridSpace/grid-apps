@@ -35,7 +35,7 @@ var gs_kiri_widget = exports;
         newPolygon = BASE.newPolygon,
         newOrderedLine = BASE.newOrderedLine,
         time = UTIL.time,
-        WP = Widget.prototype,
+        PRO = Widget.prototype,
         solid_opacity = 1.0,
         nextId = 0;
 
@@ -227,7 +227,7 @@ var gs_kiri_widget = exports;
      * Widget Prototype Functions
      ******************************************************************* */
 
-    WP.saveToCatalog = function(filename) {
+    PRO.saveToCatalog = function(filename) {
         var widget = this;
         var time = UTIL.time();
         KIRI.catalog.putFile(filename, this.getGeoVertices(), function(vertices) {
@@ -239,7 +239,7 @@ var gs_kiri_widget = exports;
         return this;
     };
 
-    WP.saveState = function(ondone) {
+    PRO.saveState = function(ondone) {
         var widget = this;
         KIRI.odb.put('ws-save-'+this.id, {geo:widget.getGeoVertices(), orient:widget.orient}, function(result) {
             widget.saved = time();
@@ -247,7 +247,7 @@ var gs_kiri_widget = exports;
         });
     };
 
-    WP.encodeSlices = function() {
+    PRO.encodeSlices = function() {
         var encoded = [];
         if (this.slices) this.slices.forEach(function(slice) {
             encoded.push(slice.encode());
@@ -255,7 +255,7 @@ var gs_kiri_widget = exports;
         return encoded;
     };
 
-    WP.decodeSlices = function(encoded) {
+    PRO.decodeSlices = function(encoded) {
         this.slices = KIRI.codec.decode(encoded, { mesh:this.mesh });
     };
 
@@ -264,7 +264,7 @@ var gs_kiri_widget = exports;
      * @param {Float32Array} vertices
      * @returns {Widget}
      */
-    WP.loadVertices = function(vertices) {
+    PRO.loadVertices = function(vertices) {
         if (this.mesh) {
             this.mesh.geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
             this.mesh.geometry.computeFaceNormals();
@@ -282,7 +282,7 @@ var gs_kiri_widget = exports;
      * @param {THREE.Geometry} geometry
      * @returns {Widget}
      */
-    WP.loadGeometry = function(geometry) {
+    PRO.loadGeometry = function(geometry) {
         var mesh = new THREE.Mesh(
             geometry,
             new THREE.MeshPhongMaterial({
@@ -312,7 +312,7 @@ var gs_kiri_widget = exports;
      * @param {Point[]} points
      * @returns {Widget}
      */
-    WP.setPoints = function(points) {
+    PRO.setPoints = function(points) {
         this.points = points || null;
         return this;
     };
@@ -320,7 +320,7 @@ var gs_kiri_widget = exports;
     /**
      * remove slice data and their views
      */
-    WP.clearSlices = function() {
+    PRO.clearSlices = function() {
         var slices = this.slices,
             mesh = this.mesh;
         if (slices) {
@@ -334,7 +334,7 @@ var gs_kiri_widget = exports;
     /**
      * @param {number} color
      */
-    WP.setColor = function(color) {
+    PRO.setColor = function(color) {
         var material = this.mesh.material;
         material.color.set(color);
     };
@@ -342,7 +342,7 @@ var gs_kiri_widget = exports;
     /**
      * @param {number} value
      */
-    WP.setOpacity = function(value) {
+    PRO.setOpacity = function(value) {
         var mesh = this.mesh;
         if (value <= 0.0) {
             mesh.material.transparent = solid_opacity < 1.0;
@@ -358,7 +358,7 @@ var gs_kiri_widget = exports;
     /**
      * center geometry bottom (on platform) at 0,0,0
      */
-    WP.center = function() {
+    PRO.center = function() {
         var i = 0,
             mesh = this.mesh,
             geo = mesh.geometry,
@@ -391,7 +391,7 @@ var gs_kiri_widget = exports;
      *
      * @param {number} z position
      */
-    WP.setTopZ = function(z) {
+    PRO.setTopZ = function(z) {
         var mesh = this.mesh,
             pos = this.orient.pos;
         if (z) {
@@ -411,7 +411,7 @@ var gs_kiri_widget = exports;
      * @param {number} z
      * @param {boolean} abs
      */
-    WP.move = function(x, y, z, abs) {
+    PRO.move = function(x, y, z, abs) {
         var mesh = this.mesh,
             pos = this.orient.pos;
         // do not allow moves in pure slice view
@@ -438,7 +438,7 @@ var gs_kiri_widget = exports;
      * @param {number} y
      * @param {number} z
      */
-    WP.scale = function(x, y, z) {
+    PRO.scale = function(x, y, z) {
         var mesh = this.mesh,
             scale = this.orient.scale;
         this.setWireframe(false);
@@ -456,7 +456,7 @@ var gs_kiri_widget = exports;
      * @param {number} y
      * @param {number} z
      */
-    WP.rotate = function(x, y, z) {
+    PRO.rotate = function(x, y, z) {
         this.setWireframe(false);
         this.clearSlices();
         this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0)));
@@ -467,7 +467,7 @@ var gs_kiri_widget = exports;
         rot.z += (z || 0);
     };
 
-    WP.mirror = function() {
+    PRO.mirror = function() {
         this.setWireframe(false);
         this.clearSlices();
         var i,
@@ -486,11 +486,11 @@ var gs_kiri_widget = exports;
         o.mirror = !o.mirror;
     };
 
-    WP.getGeoVertices = function() {
+    PRO.getGeoVertices = function() {
         return this.mesh.geometry.getAttribute('position').array;
     };
 
-    WP.getPoints = function() {
+    PRO.getPoints = function() {
         if (!this.points) {
             // convert and cache points from geometry vertices
             this.points = Widget.verticesToPoints(this.getGeoVertices());
@@ -498,7 +498,7 @@ var gs_kiri_widget = exports;
         return this.points;
     };
 
-    WP.getBoundingBox = function(refresh) {
+    PRO.getBoundingBox = function(refresh) {
         // if (this.mesh) return this.mesh.getBoundingBox();
         if (!this.bounds || refresh) {
             this.bounds = new THREE.Box3();
@@ -507,7 +507,7 @@ var gs_kiri_widget = exports;
         return this.bounds;
     };
 
-    WP.isModified = function() {
+    PRO.isModified = function() {
         return this.modified;
     };
 
@@ -525,7 +525,7 @@ var gs_kiri_widget = exports;
      * @params {Function} [onupdate]
      * @params {boolean} [remote]
      */
-    WP.slice = function(settings, ondone, onupdate, remote) {
+    PRO.slice = function(settings, ondone, onupdate, remote) {
         var widget = this,
             startTime = UTIL.time();
 
@@ -586,7 +586,7 @@ var gs_kiri_widget = exports;
         }
     };
 
-    WP.getCamBounds = function(settings) {
+    PRO.getCamBounds = function(settings) {
         var bounds = this.getBoundingBox().clone();
         bounds.max.z += settings.process.camZTopOffset;
         return bounds;
@@ -597,7 +597,7 @@ var gs_kiri_widget = exports;
      * @param {number} renderMode
      * @param {boolean} cam mode
      */
-    WP.render = function(renderMode, cam) {
+    PRO.render = function(renderMode, cam) {
         var slices = this.slices;
         if (!slices) return;
         // render outline
@@ -616,7 +616,7 @@ var gs_kiri_widget = exports;
         if (!cam) slices.forEach(function(s) { s.renderSupport() });
     };
 
-    WP.hideSlices = function() {
+    PRO.hideSlices = function() {
         var showing = false;
         if (this.slices) this.slices.forEach(function(slice) {
             showing = showing || slice.view.visible;
@@ -625,11 +625,11 @@ var gs_kiri_widget = exports;
         return showing;
     };
 
-    WP.toggleWireframe = function (color, opacity) {
+    PRO.toggleWireframe = function (color, opacity) {
         this.setWireframe(!this.wire, color, opacity);
     };
 
-    WP.setWireframe = function(set, color, opacity) {
+    PRO.setWireframe = function(set, color, opacity) {
         var mesh = this.mesh,
             widget = this;
         if (this.wire) {

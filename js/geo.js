@@ -10,7 +10,6 @@ var gs_base = exports;
     if (self.base.util) return;
 
     var BASE = self.base,
-        ABS = Math.abs,
         round_decimal_precision = 8;
 
     /** ******************************************************************
@@ -93,7 +92,7 @@ var gs_base = exports;
      * @returns {boolean}
      */
     function isCloseTo(v1,v2,dist) {
-        return ABS(v1-v2) <= (dist || BASE.config.precision_merge);
+        return Math.abs(v1-v2) <= (dist || BASE.config.precision_merge);
     }
 
     /**
@@ -141,7 +140,7 @@ var gs_base = exports;
      * @returns {number}
      */
     function offsetPrecision(offset, precision) {
-        return ABS(offset) - precision;
+        return Math.abs(offset) - precision;
     }
 
     /**
@@ -194,8 +193,8 @@ var gs_base = exports;
             d2y = (p4y - p3y), // bd.y
             d = (d2y * d1x) - (d2x * d1y); // det
 
-        //if (ABS(d) < 0.0000000001) {
-        if (ABS(d) < 0.0001) {
+        //if (Math.abs(d) < 0.0000000001) {
+        if (Math.abs(d) < 0.0001) {
             // lines are parallel or collinear
             return test && !parallelok ? null : keys.PARALLEL;
         }
@@ -259,7 +258,7 @@ var gs_base = exports;
             n1 = (s2x * a) - (s2y * b),
             n2 = (s1x * a) - (s1y * b);
 
-        if (ABS(d) < 0.000000000001) {
+        if (Math.abs(d) < 0.000000000001) {
             // lines are parallel or collinear
             return null;
         }

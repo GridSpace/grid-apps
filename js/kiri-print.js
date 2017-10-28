@@ -19,7 +19,7 @@ var gs_kiri_print = exports;
         POLY = BASE.polygons,
         SQRT = Math.sqrt,
         PI = Math.PI,
-        PROTO = Print.prototype,
+        PRO = Print.prototype,
         Polygon = BASE.Polygon,
         newPoint = BASE.newPoint;
 
@@ -46,15 +46,15 @@ var gs_kiri_print = exports;
         this.bounds = null;
     }
 
-    PROTO.newOut = newOut;
-    PROTO.tip2tipEmit = tip2tipEmit;
-    PROTO.extrudePerMM = extrudePerMM;
-    PROTO.constReplace = constReplace;
-    PROTO.poly2polyEmit = poly2polyEmit;
-    PROTO.addPrintPoints = addPrintPoints;
-    PROTO.poly2polyDepthFirstEmit = poly2polyDepthFirstEmit;
+    PRO.newOut = newOut;
+    PRO.tip2tipEmit = tip2tipEmit;
+    PRO.extrudePerMM = extrudePerMM;
+    PRO.constReplace = constReplace;
+    PRO.poly2polyEmit = poly2polyEmit;
+    PRO.addPrintPoints = addPrintPoints;
+    PRO.poly2polyDepthFirstEmit = poly2polyDepthFirstEmit;
 
-    PROTO.parseGCode = function(gcode, offset) {
+    PRO.parseGCode = function(gcode, offset) {
         var lines = gcode
             .toUpperCase()
             .replace("X", " X")
@@ -136,7 +136,7 @@ var gs_kiri_print = exports;
         scope.bytes = gcode.length;
     };
 
-    PROTO.setup = function(remote, onupdate, ondone) {
+    PRO.setup = function(remote, onupdate, ondone) {
         var scope = this,
             settings = scope.settings,
             mode = settings.mode;
@@ -158,7 +158,7 @@ var gs_kiri_print = exports;
         }
     };
 
-    PROTO.exportGCode = function(remote, ondone, online) {
+    PRO.exportGCode = function(remote, ondone, online) {
         var scope = this,
             settings = scope.settings,
             mode = settings.mode;
@@ -184,19 +184,19 @@ var gs_kiri_print = exports;
         }
     };
 
-    PROTO.exportLaserGCode = function() {
+    PRO.exportLaserGCode = function() {
         return KIRI.driver.LASER.exportGCode(this);
     };
 
-    PROTO.exportSVG = function() {
+    PRO.exportSVG = function() {
         return KIRI.driver.LASER.exportSVG(this);
     };
 
-    PROTO.exportDXF = function() {
+    PRO.exportDXF = function() {
         return KIRI.driver.LASER.exportDXF(this);
     };
 
-    PROTO.encodeOutput = function() {
+    PRO.encodeOutput = function() {
         var newout = [], newlayer;
 
         this.output.forEach(function(layerout) {
@@ -209,7 +209,7 @@ var gs_kiri_print = exports;
         return newout;
     };
 
-    PROTO.render = function() {
+    PRO.render = function() {
         var scope = this,
             mode = scope.settings.mode;
 
@@ -224,7 +224,7 @@ var gs_kiri_print = exports;
         }
     };
 
-    PROTO.renderMoves = function(showMoves, moveColor) {
+    PRO.renderMoves = function(showMoves, moveColor) {
         var scope = this, last, view;
         // render layered output
         scope.lines = 0;
@@ -257,17 +257,17 @@ var gs_kiri_print = exports;
         });
     }
 
-    PROTO.getLayerCount = function() {
+    PRO.getLayerCount = function() {
         return this.output.length;
     }
 
-    PROTO.hide = function() {
+    PRO.hide = function() {
         this.layerView.forEach(function(layer) {
             layer.setVisible(false);
         })
     };
 
-    PROTO.showLayer = function(index, show) {
+    PRO.showLayer = function(index, show) {
         if (this.layerView[index]) this.layerView[index].setVisible(show);
     };
 
@@ -300,7 +300,7 @@ var gs_kiri_print = exports;
      * @param {number} [extrude] wipe distance
      * @return {Point} last output point
      */
-    PROTO.polyPrintPath = function(poly, startPoint, output, extrude, wipe) {
+    PRO.polyPrintPath = function(poly, startPoint, output, extrude, wipe) {
         // poly.setClosed();
         poly.setClockwise();
 
@@ -350,7 +350,7 @@ var gs_kiri_print = exports;
      * @param {boolean} isFDM controls whether we emit wipe or not
      * @return {Point} last output point
      */
-    PROTO.slicePrintPath = function(slice, startPoint, offset, output, isFDM) {
+    PRO.slicePrintPath = function(slice, startPoint, offset, output, isFDM) {
         var i,
             preout = [],
             scope = this,

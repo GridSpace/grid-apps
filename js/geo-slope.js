@@ -26,7 +26,7 @@ var gs_base_slope = exports;
     var BASE = self.base,
         CONF = BASE.config,
         ABS = Math.abs,
-        SlP = Slope.prototype,
+        PRO = Slope.prototype,
         DEG2RAD = Math.PI / 180,
         RAD2DEG = 180 / Math.PI;
 
@@ -44,7 +44,7 @@ var gs_base_slope = exports;
      * Slope Prototype Functions
      ******************************************************************* */
 
-    SlP.toString = function() {
+    PRO.toString = function() {
         return [this.dx, this.dy, this.angle].join(',');
     };
 
@@ -52,7 +52,7 @@ var gs_base_slope = exports;
      * @param {Slope} s
      * @returns {boolean}
      */
-    SlP.isSame = function(s) {
+    PRO.isSame = function(s) {
         // if very close to vertical or horizontal, they're the same
         if (ABS(this.dx) <= CONF.precision_merge && ABS(s.dx) <= CONF.precision_merge) return true;
         if (ABS(this.dy) <= CONF.precision_merge && ABS(s.dy) <= CONF.precision_merge) return true;
@@ -66,7 +66,7 @@ var gs_base_slope = exports;
      *
      * @returns {Slope}
      */
-    SlP.normal = function() {
+    PRO.normal = function() {
         var t = this.dx;
         this.dx = -this.dy;
         this.dy = t;
@@ -74,14 +74,14 @@ var gs_base_slope = exports;
         return this;
     };
 
-    SlP.toUnit = function() {
+    PRO.toUnit = function() {
         var max = Math.max(ABS(this.dx), ABS(this.dy));
         this.dx = this.dx / max;
         this.dy = this.dy / max;
         return this;
     };
 
-    SlP.factor = function(f) {
+    PRO.factor = function(f) {
         this.dx *= f;
         this.dy *= f;
         return this;
@@ -92,7 +92,7 @@ var gs_base_slope = exports;
      *
      * @returns {Slope}
      */
-    SlP.invert = function() {
+    PRO.invert = function() {
         this.dx = -this.dx;
         this.dy = -this.dy;
         this.angle = 360 - this.angle;//Math.atan2(this.dy, this.dx) * RAD2DEG;

@@ -23,7 +23,7 @@ var gs_base_polygon = exports;
         DEG2RAD = PI / 180,
         Bounds = BASE.Bounds,
         newPoint = BASE.newPoint,
-        PlP = Polygon.prototype,
+        PRO = Polygon.prototype,
         nest_test_slope = BASE.newSlope(newPoint(0,0,0,KEYS.NONE), newPoint(1,0,0,KEYS.NONE)),
         min_area_mult = 2.0,
         seqid = 1;
@@ -111,7 +111,7 @@ var gs_base_polygon = exports;
      * Polygon Prototype Functions
      ******************************************************************* */
 
-    PlP.createConvexHull = function(points) {
+    PRO.createConvexHull = function(points) {
         function removeMiddle(a, b, c) {
             var cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);
             var dot = (a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y);
@@ -138,7 +138,7 @@ var gs_base_polygon = exports;
         return this;
     };
 
-    PlP.stepsFromRoot = function() {
+    PRO.stepsFromRoot = function() {
         var p = this.parent, steps = 0;
         while (p) {
             if (p.inner && p.inner.length > 1) steps++;
@@ -147,15 +147,15 @@ var gs_base_polygon = exports;
         return steps;
     };
 
-    PlP.first = function() {
+    PRO.first = function() {
         return this.points[0];
     };
 
-    PlP.last = function() {
+    PRO.last = function() {
         return this.points[this.length-1];
     };
 
-    PlP.swap = function(x,y) {
+    PRO.swap = function(x,y) {
         var poly = this,
             points = poly.points,
             length = points.length;
@@ -176,7 +176,7 @@ var gs_base_polygon = exports;
      * @param {boolean} [point] return just the center point
      * @returns {Polygon|Point} a new polygon centered on x=0, y=0, z=0
      */
-    PlP.center = function(point) {
+    PRO.center = function(point) {
         var ap = newPoint(0,0,0,null), np = newPolygon(), pa = this.points;
         pa.forEach(function(p) {
             ap.x += p.x;
@@ -200,7 +200,7 @@ var gs_base_polygon = exports;
     /**
      * @returns {Point} center of a polygon assuming it's a circle
      */
-    PlP.circleCenter = function() {
+    PRO.circleCenter = function() {
         var points = this.points,
             length = points.length,
             incr = Math.floor(length / 3),
@@ -229,7 +229,7 @@ var gs_base_polygon = exports;
      * @param {number} width
      * @param {number} height
      */
-    PlP.centerRectangle = function(center, width, height) {
+    PRO.centerRectangle = function(center, width, height) {
         width /= 2;
         height /= 2;
         this.push(newPoint(center.x - width, center.y - height, center.z));
@@ -247,7 +247,7 @@ var gs_base_polygon = exports;
      * @param {number} points
      * @param {boolean} clockwise
      */
-    PlP.centerCircle = function(center, radius, points, clockwise) {
+    PRO.centerCircle = function(center, radius, points, clockwise) {
         var angle = 0, add = 360 / points;
         if (clockwise) add = -add;
         while (points-- > 0) {
@@ -266,7 +266,7 @@ var gs_base_polygon = exports;
      * @param {THREE.Vector3} offset
      * @returns {Polygon}
      */
-    PlP.move = function(offset) {
+    PRO.move = function(offset) {
         var scope = this,
             bounds = scope.bounds = new Bounds();
         scope.points.forEach(function(p) {
@@ -277,7 +277,7 @@ var gs_base_polygon = exports;
         return scope;
     };
 
-    PlP.scale = function(scale, round) {
+    PRO.scale = function(scale, round) {
         var scope = this,
             bounds = scope.bounds = new Bounds();
         scope.points.forEach(function(p) {
@@ -297,7 +297,7 @@ var gs_base_polygon = exports;
     /**
      * add fill angle hinting from longest segment
      */
-    PlP.hintFillAngle = function() {
+    PRO.hintFillAngle = function() {
         var index = 0,
             points = this.points,
             length = points.length,
@@ -332,7 +332,7 @@ var gs_base_polygon = exports;
      * @param {Boolean} deep
      * @returns {Polygon}
      */
-    PlP.clone = function(deep) {
+    PRO.clone = function(deep) {
         var np = newPolygon(),
             ln = this.length,
             i = 0;
@@ -356,7 +356,7 @@ var gs_base_polygon = exports;
      * @param {number} z
      * @returns {Polygon} this
      */
-    PlP.setZ = function(z) {
+    PRO.setZ = function(z) {
         var ar = this.points,
             ln = ar.length,
             i = 0;
@@ -368,7 +368,7 @@ var gs_base_polygon = exports;
     /**
      * @returns {number} z value of first point
      */
-    PlP.getZ = function() {
+    PRO.getZ = function() {
         return this.points[0].z;
     };
 
@@ -379,7 +379,7 @@ var gs_base_polygon = exports;
      * @param {boolean} [recursive]
      * @param {boolean} [open]
      */
-    PlP.render = function(layer, color, recursive, open) {
+    PRO.render = function(layer, color, recursive, open) {
         layer.poly(this, color, recursive, open);
     };
 
@@ -391,7 +391,7 @@ var gs_base_polygon = exports;
      * @param {number} [z]
      * @returns {Polygon}
      */
-    PlP.add = function(x,y,z) {
+    PRO.add = function(x,y,z) {
         this.push(newPoint(x,y,z));
         return this;
     };
@@ -402,7 +402,7 @@ var gs_base_polygon = exports;
      * @param {Point[]} points
      * @returns {Polygon}
      */
-    PlP.addPoints = function(points) {
+    PRO.addPoints = function(points) {
         var poly = this,
             length = points.length,
             i = 0;
@@ -418,7 +418,7 @@ var gs_base_polygon = exports;
      * @param {Point} p
      * @returns {Point}
      */
-    PlP.push = function(p) {
+    PRO.push = function(p) {
         // clone any point belonging to another polygon
         if (p.poly) p = p.clone();
         p.poly = this;
@@ -434,46 +434,46 @@ var gs_base_polygon = exports;
      * @param {Point} p
      * @returns {Polygon}
      */
-    PlP.append = function(p) {
+    PRO.append = function(p) {
         this.push(p);
         return this;
     };
 
     /** close polygon */
-    PlP.setClosed = function() {
+    PRO.setClosed = function() {
         this.open = false;
         return this;
     };
 
     /** open polygon */
-    PlP.setOpen = function() {
+    PRO.setOpen = function() {
         this.open = true;
         return this;
     };
 
-    PlP.isOpen = function() {
+    PRO.isOpen = function() {
         return this.open;
     };
 
-    PlP.isClosed = function() {
+    PRO.isClosed = function() {
         return !this.open;
     };
 
-    PlP.setClockwise = function() {
+    PRO.setClockwise = function() {
         if (!this.isClockwise()) this.reverse();
         return this;
     };
 
-    PlP.setCounterClockwise = function() {
+    PRO.setCounterClockwise = function() {
         if (this.isClockwise()) this.reverse();
         return this;
     };
 
-    PlP.isClockwise = function() {
+    PRO.isClockwise = function() {
         return this.area(true) > 0;
     };
 
-    PlP.showKey = function() {
+    PRO.showKey = function() {
         return [this.first().key,this.last().key,this.length].join('~~');
     };
 
@@ -484,7 +484,7 @@ var gs_base_polygon = exports;
      * @param [boolean] toLongest
      * @returns {Polygon} self
      */
-    PlP.alignWinding = function(poly, toLongest) {
+    PRO.alignWinding = function(poly, toLongest) {
         if (toLongest && this.length > poly.length) {
             poly.alignWinding(this, false);
         } else if (this.isClockwise() !== poly.isClockwise()) {
@@ -499,7 +499,7 @@ var gs_base_polygon = exports;
      * @param [boolean] toLongest
      * @returns {Polygon} self
      */
-    PlP.opposeWinding = function(poly, toLongest) {
+    PRO.opposeWinding = function(poly, toLongest) {
         if (toLongest && this.length > poly.length) {
             poly.opposeWinding(this, false);
         } else if (this.isClockwise() === poly.isClockwise()) {
@@ -511,7 +511,7 @@ var gs_base_polygon = exports;
      * reverse direction of polygon points.
      * @returns {Polygon} self
      */
-    PlP.reverse = function() {
+    PRO.reverse = function() {
         this.area2 = -this.area2;
         this.points = this.points.reverse();
         return this;
@@ -523,7 +523,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} parent
      * @returns {boolean}
      */
-    PlP.isNested = function(parent) {
+    PRO.isNested = function(parent) {
         if (parent.bounds.contains(this.bounds)) {
             //var int = POLY().rayIntersect(this.bounds.leftMost, nest_test_slope, [parent], false);
             //return int.length % 2 === 1 || this.isInside(parent, CONF.precision_nested_sq);
@@ -532,7 +532,7 @@ var gs_base_polygon = exports;
         return false;
     };
 
-    PlP.forEachPointEaseDown = function(fn, fromPoint) {
+    PRO.forEachPointEaseDown = function(fn, fromPoint) {
         var index = this.findClosestPointTo(fromPoint).index,
             fromZ = fromPoint.z,
             offset = 0,
@@ -573,7 +573,7 @@ var gs_base_polygon = exports;
         return last;
     };
 
-    PlP.forEachPoint = function(fn, close, start) {
+    PRO.forEachPoint = function(fn, close, start) {
         var index = start || 0,
             points = this.points,
             length = points.length,
@@ -588,7 +588,7 @@ var gs_base_polygon = exports;
         }
     };
 
-    PlP.forEachSegment = function(fn, open, start) {
+    PRO.forEachSegment = function(fn, open, start) {
         var index = start || 0,
             points = this.points,
             length = points.length,
@@ -606,7 +606,7 @@ var gs_base_polygon = exports;
     /**
      * returns intersections sorted by closest to lp1
      */
-    PlP.intersections = function(lp1, lp2) {
+    PRO.intersections = function(lp1, lp2) {
         var list = [];
         this.forEachSegment(function(pp1, pp2, ip1, ip2) {
             var int = UTIL.intersect(lp1, lp2, pp1, pp2, BASE.key.SEGINT, false);
@@ -625,7 +625,7 @@ var gs_base_polygon = exports;
     /**
      * emit new open poly between two intersection points
      */
-    PlP.emitSegment = function(i1, i2) {
+    PRO.emitSegment = function(i1, i2) {
         var poly = newPolygon(),
             start = i1.p2.pos,
             end = i2.p1.pos,
@@ -648,7 +648,7 @@ var gs_base_polygon = exports;
      * @param {number} [tolerance]
      * @returns {boolean} any points inside OR on edge
      */
-    PlP.hasPointsInside = function(poly, tolerance) {
+    PRO.hasPointsInside = function(poly, tolerance) {
         if (!poly.overlaps(this)) return false;
 
         var mid, exit = false;
@@ -676,7 +676,7 @@ var gs_base_polygon = exports;
      * @param {number} [tolerance]
      * @returns {boolean} all points inside OR on edge
      */
-    PlP.isInside = function(poly, tolerance) {
+    PRO.isInside = function(poly, tolerance) {
         // throw new Error("isInside");
         if (!(
             // poly.overlaps(this) &&
@@ -710,7 +710,7 @@ var gs_base_polygon = exports;
      * @param {number} [tolerance]
      * @returns {boolean} all points inside poly AND not inside children
      */
-    PlP.contains = function(poly, tolerance) {
+    PRO.contains = function(poly, tolerance) {
         return (poly && poly.isInside(this, tolerance) && poly.isOutsideAll(this.inner, tolerance));
     };
 
@@ -719,7 +719,7 @@ var gs_base_polygon = exports;
      * @param polys
      * @returns {boolean}
      */
-    PlP.containedBySet = function(polys) {
+    PRO.containedBySet = function(polys) {
         if (!polys) return false;
         for (var i=0; i<polys.length; i++) {
             if (polys[i].contains(this)) return true;
@@ -731,7 +731,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} child
      * @returns {Polygon} self
      */
-    PlP.addInner = function(child) {
+    PRO.addInner = function(child) {
         child.parent = this;
         if (this.inner) {
             this.inner.push(child);
@@ -744,14 +744,14 @@ var gs_base_polygon = exports;
     /**
      * @returns {number} number of inner polygons
      */
-    PlP.innerCount = function() {
+    PRO.innerCount = function() {
         return this.inner ? this.inner.length : 0;
     };
 
     /**
      * @returns {boolean} if has 1 or more inner polygons
      */
-    PlP.hasInner = function() {
+    PRO.hasInner = function() {
         return this.inner && this.inner.length > 0;
     };
 
@@ -759,12 +759,12 @@ var gs_base_polygon = exports;
      * remove all inner polygons
      * @returns {Polygon} self
      */
-    PlP.clearInner = function() {
+    PRO.clearInner = function() {
         this.inner = null;
         return this;
     };
 
-    PlP.newUndeleted = function() {
+    PRO.newUndeleted = function() {
         var poly = newPolygon();
         this.forEachPoint(function(p) {
             if (!p.del) poly.push(p);
@@ -776,18 +776,18 @@ var gs_base_polygon = exports;
      * http://www.ehow.com/how_5138742_calculate-circularity.html
      * @returns {number} 0.0 - 1.0 from flat to perfectly circular
      */
-    PlP.circularity = function() {
+    PRO.circularity = function() {
         return (4 * PI * this.area()) / UTIL.sqr(this.perimeter());
     };
 
-    PlP.circularityDeep = function() {
+    PRO.circularityDeep = function() {
         return (4 * PI * this.areaDeep()) / UTIL.sqr(this.perimeter());
     };
 
     /**
      * @returns {number} perimeter length (sum of all segment lengths)
      */
-    PlP.perimeter = function() {
+    PRO.perimeter = function() {
         var len = 0.0;
 
         this.forEachSegment(function(prev,next) {
@@ -797,7 +797,7 @@ var gs_base_polygon = exports;
         return len;
     };
 
-    PlP.perimeterDeep = function() {
+    PRO.perimeterDeep = function() {
         var len = this.perimeter();
         if (this.inner) this.inner.forEach(function(p) { len += p.perimeter() });
         return len;
@@ -811,7 +811,7 @@ var gs_base_polygon = exports;
      * @param {boolean} [raw]
      * @returns {number} area
      */
-    PlP.area = function(raw) {
+    PRO.area = function(raw) {
         if (this.length < 3) return 0;
         if (this.area2 === 0.0) {
             for (var p=this.points,pl=p.length,pi=0,p1,p2; pi<pl; pi++) {
@@ -829,7 +829,7 @@ var gs_base_polygon = exports;
      *
      * @returns {number} area
      */
-    PlP.areaDeep = function() {
+    PRO.areaDeep = function() {
         if (!this.inner) return this.area();
         var i, c = this.inner, a = this.area();
         for (i=0; i<c.length; i++) {
@@ -842,7 +842,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} poly
      * @returns {boolean}
      */
-    PlP.overlaps = function(poly) {
+    PRO.overlaps = function(poly) {
         return this.bounds.overlaps(poly.bounds, CONF.precision_merge);
     };
 
@@ -852,7 +852,7 @@ var gs_base_polygon = exports;
      * @param {number[]} arr
      * @param {number} [z]
      */
-    PlP.fromXYArray = function(arr,z) {
+    PRO.fromXYArray = function(arr,z) {
         var i = 0;
         while (i < arr.length) {
             this.add(arr[i++], arr[i++], z || 0);
@@ -870,7 +870,7 @@ var gs_base_polygon = exports;
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.
      */
-    PlP.clean = function() {
+    PRO.clean = function() {
         var clib = self.ClipperLib,
             clip = clib.Clipper,
             clean = clip.CleanPolygon(this.toClipper()[0], CONF.clipperClean),
@@ -878,7 +878,7 @@ var gs_base_polygon = exports;
         return poly;
     };
 
-    PlP.toClipper = function(inout,debug) {
+    PRO.toClipper = function(inout,debug) {
         var poly = this,
             cur = [],
             out = inout || [];
@@ -908,7 +908,7 @@ var gs_base_polygon = exports;
     /**
      * todo for debugging
      */
-    PlP.dump = function(msg,prec) {
+    PRO.dump = function(msg,prec) {
         var scope = this,
             txt = [JSON.stringify({
                 len:scope.length,
@@ -941,7 +941,7 @@ var gs_base_polygon = exports;
      * @param {Polygon[]} [output]
      * @returns {?Polygon[]} returns output array provided as input or new array if not provided
      */
-    PlP.offset = function(offset, output) {
+    PRO.offset = function(offset, output) {
         return POLY().expand([this], -offset, this.getZ(), output);
     };
 
@@ -954,7 +954,7 @@ var gs_base_polygon = exports;
      * @param {number} [precision]
      * @returns {boolean} true if polygons are, essentially, the same
      */
-    PlP.isEquivalent = function(poly, recurse, precision) {
+    PRO.isEquivalent = function(poly, recurse, precision) {
         // throw new Error("isEquivalent");
         var debug = DBUG.get('circularity');
         if (debug) {
@@ -1023,7 +1023,7 @@ var gs_base_polygon = exports;
      * @param {Point} target
      * @return {Object} {point:point, distance:distance}
      */
-    PlP.findClosestPointTo = function(target) {
+    PRO.findClosestPointTo = function(target) {
         var dist,
             index,
             closest,
@@ -1045,7 +1045,7 @@ var gs_base_polygon = exports;
      * @param {Polygon[]} out
      * @returns {Polygon[]}
      */
-    PlP.flattenTo = function(out) {
+    PRO.flattenTo = function(out) {
         out.push(this);
         if (this.inner) out.appendAll(this.inner);
         return out;
@@ -1055,7 +1055,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    PlP.diff = function(poly) {
+    PRO.diff = function(poly) {
         var fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
             clib = self.ClipperLib,
             ctyp = clib.ClipType,
@@ -1084,7 +1084,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    PlP.mask = function(poly) {
+    PRO.mask = function(poly) {
         var fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
             clib = self.ClipperLib,
             ctyp = clib.ClipType,
@@ -1115,7 +1115,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} poly
      * @returns {?Polygon} intersected polygon or null if no intersection
      */
-    PlP.union = function(poly) {
+    PRO.union = function(poly) {
         if (!this.overlaps(poly)) return null;
 
         var fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
@@ -1147,7 +1147,7 @@ var gs_base_polygon = exports;
      * rotate such that first and last points are the points
      * furthest apart and lowest when there is a tie breaker
      */
-    PlP.spread = function() {
+    PRO.spread = function() {
         var poly = this,
             points = poly.points,
             plen = points.length,

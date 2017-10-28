@@ -49,7 +49,7 @@ var gs_base_point = exports;
         CONF = BASE.config,
         KEYS = BASE.key,
         ROUND = UTIL.round,
-        PoP = Point.prototype;
+        PRO = Point.prototype;
 
     BASE.Point = Point;
     BASE.newPoint = newPoint;
@@ -58,47 +58,47 @@ var gs_base_point = exports;
      * Point Prototype Functions
      ******************************************************************* */
 
-    PoP.setZ = function(z) {
+    PRO.setZ = function(z) {
         this.z = z;
         return this;
     }
 
-    PoP.swapXZ = function() {
+    PRO.swapXZ = function() {
         var p = this,
             t = p.x;
         p.x = p.z;
         p.z = t;
     };
 
-    PoP.swapYZ = function() {
+    PRO.swapYZ = function() {
         var p = this,
             t = p.y;
         p.y = p.z;
         p.z = t;
     };
 
-    PoP.round = function(precision) {
+    PRO.round = function(precision) {
         return newPoint(ROUND(this.x,precision), ROUND(this.y,precision), ROUND(this.z,precision));
     };
 
-    PoP.addFacet = function(facet) {
+    PRO.addFacet = function(facet) {
         if (!this.group) this.group = [];
         this.group.push(facet);
         return this;
     };
 
-    PoP.rekey = function() {
+    PRO.rekey = function() {
         this.key = [this.x,this.y,this.z].join(',');
     };
 
-    PoP.toString = function() {
+    PRO.toString = function() {
         return this.key;
     };
 
     /**
      * @returns {Point}
      */
-    PoP.clone = function() {
+    PRO.clone = function() {
         return newPoint(this.x, this.y, this.z, this.key);
     };
 
@@ -106,7 +106,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {Slope}
      */
-    PoP.slopeTo = function(p) {
+    PRO.slopeTo = function(p) {
         return BASE.newSlope(this, p);
     };
 
@@ -116,7 +116,7 @@ var gs_base_point = exports;
      * @param {String} [k]
      * @returns {Line}
      */
-    PoP.lineTo = function(p, k) {
+    PRO.lineTo = function(p, k) {
         return BASE.newLine(this, p, k);
     };
 
@@ -125,7 +125,7 @@ var gs_base_point = exports;
      * @param {number} [dist]
      * @returns {boolean}
      */
-    PoP.isNear = function(p, dist) {
+    PRO.isNear = function(p, dist) {
         return UTIL.isCloseTo(this.x, p.x, dist) && UTIL.isCloseTo(this.y, p.y, dist);
     };
 
@@ -137,7 +137,7 @@ var gs_base_point = exports;
      * @param {Point} p2
      * @returns {number}
      */
-    PoP.distToLine = function(p1, p2) {
+    PRO.distToLine = function(p1, p2) {
         return Math.sqrt(this.distToLineSq(p1, p2));
     };
 
@@ -149,7 +149,7 @@ var gs_base_point = exports;
      * @param {Point} p2
      * @returns {number}
      */
-    PoP.distToLineSq = function(p1, p2) {
+    PRO.distToLineSq = function(p1, p2) {
         var p = this,
             d = UTIL.distSq(p1, p2);
 
@@ -168,7 +168,7 @@ var gs_base_point = exports;
      * @param {number} dist2
      * @returns {boolean}
      */
-    PoP.withinDist2 = function(p1, p2, dist2) {
+    PRO.withinDist2 = function(p1, p2, dist2) {
         var ll2 = p1.distToSq2D(p2),
             dp1 = this.distToSq2D(p1),
             dp2 = this.distToSq2D(p2);
@@ -192,7 +192,7 @@ var gs_base_point = exports;
      * @param {Point} p2
      * @returns {Point}
      */
-    PoP.midPointTo = function(p2) {
+    PRO.midPointTo = function(p2) {
         return newPoint((this.x + p2.x)/2, (this.y + p2.y)/2, this.z);
     };
 
@@ -200,7 +200,7 @@ var gs_base_point = exports;
      * @param {Point} p2
      * @returns {Point}
      */
-    PoP.midPointTo3D = function(p2) {
+    PRO.midPointTo3D = function(p2) {
         return newPoint(
             (this.x + p2.x)/2,
             (this.y + p2.y)/2,
@@ -215,14 +215,14 @@ var gs_base_point = exports;
      * @param mult
      * @returns {Point}
      */
-    PoP.projectOnSlope = function(slope, mult) {
+    PRO.projectOnSlope = function(slope, mult) {
         return newPoint(
             this.x + slope.dx * mult,
             this.y + slope.dy * mult,
             this.z);
     };
 
-    PoP.followTo = function(point, mult) {
+    PRO.followTo = function(point, mult) {
         return this.follow(this.slopeTo(point), mult);
     };
 
@@ -234,7 +234,7 @@ var gs_base_point = exports;
      * @param p2
      * @param dist
      */
-    PoP.offsetPointFrom = function(p2, dist) {
+    PRO.offsetPointFrom = function(p2, dist) {
         var p1 = this,
             dx = p2.x - p1.x,
             dy = p2.y - p1.y,
@@ -249,7 +249,7 @@ var gs_base_point = exports;
      * @param {number} offset
      * @returns {Line}
      */
-    PoP.offsetLineTo = function(p2, offset) {
+    PRO.offsetLineTo = function(p2, offset) {
         var p1 = this,
             dx = p2.x - p1.x,
             dy = p2.y - p1.y,
@@ -271,7 +271,7 @@ var gs_base_point = exports;
      * @param {Polygon} poly
      * @returns {boolean}
      */
-    PoP.inPolygon = function(poly) {
+    PRO.inPolygon = function(poly) {
         if (!poly.bounds.containsXY(this.x, this.y)) return false;
 
         var p = poly.points, pl = p.length, p1, p2, i, inside = false;
@@ -296,7 +296,7 @@ var gs_base_point = exports;
      * @param {Polygon | Polygon[]} poly
      * @return {boolean} true if inside outer but not inner
      */
-    PoP.isInPolygon = function(poly) {
+    PRO.isInPolygon = function(poly) {
         var point = this, i;
         if (Array.isArray(poly)) {
             for (i=0; i<poly.length; i++) {
@@ -321,7 +321,7 @@ var gs_base_point = exports;
      * @param {Polygon | Polygon[]} poly
      * @return {boolean} true if inside outer but not inner
      */
-    PoP.isInPolygonOnly = function(poly) {
+    PRO.isInPolygonOnly = function(poly) {
         var point = this, i;
         if (Array.isArray(poly)) {
             for (i=0; i<poly.length; i++) {
@@ -347,7 +347,7 @@ var gs_base_point = exports;
      * @param {boolean} [inner] process inner polygons
      * @returns {boolean}
      */
-    PoP.nearPolygon = function(poly, dist2, inner) {
+    PRO.nearPolygon = function(poly, dist2, inner) {
         // throw new Error("nearPolygon");
         for (var i=0, p=poly.points, pl=p.length ; i<pl; i++) {
             if (this.withinDist2(p[i], p[(i+1)%pl], dist2)) {
@@ -370,7 +370,7 @@ var gs_base_point = exports;
      * @param {number} mindist2
      * @returns {boolean}
      */
-    PoP.insideOffset = function(poly, offset, mindist2) {
+    PRO.insideOffset = function(poly, offset, mindist2) {
         return this.inPolygon(poly) === (offset > 0) && !this.nearPolygon(poly, mindist2);
     };
 
@@ -382,7 +382,7 @@ var gs_base_point = exports;
      * @param {number} distance
      * @returns {Point}
      */
-    PoP.follow = function(slope, distance) {
+    PRO.follow = function(slope, distance) {
         var ls = distance / Math.sqrt(slope.dx * slope.dx + slope.dy * slope.dy);
         return newPoint(this.x + slope.dx * ls, this.y + slope.dy * ls, this.z);
     };
@@ -394,7 +394,7 @@ var gs_base_point = exports;
      * @param {number} z
      * @returns {Point}
      */
-    PoP.intersectZ = function(p, z) {
+    PRO.intersectZ = function(p, z) {
         var dx = p.x - this.x,
             dy = p.y - this.y,
             dz = p.z - this.z,
@@ -406,7 +406,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {boolean}
      */
-    PoP.isEqual2D = function(p) {
+    PRO.isEqual2D = function(p) {
         return this === p || (this.x === p.x && this.y === p.y);
     };
 
@@ -416,7 +416,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {boolean}
      */
-    PoP.isMergable2D = function(p) {
+    PRO.isMergable2D = function(p) {
         return this.isEqual2D(p) || (this.distToSq2D(p) < CONF.precision_merge_sq);
     };
 
@@ -426,7 +426,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {boolean}
      */
-    PoP.isEqual = function(p) {
+    PRO.isEqual = function(p) {
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
     };
 
@@ -436,7 +436,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {boolean}
      */
-    PoP.isMergable3D = function(p) {
+    PRO.isMergable3D = function(p) {
         return this.isEqual(p) || (this.distToSq3D(p) < CONF.precision_merge_sq);
     };
 
@@ -447,7 +447,7 @@ var gs_base_point = exports;
      * @param {number} dist
      * @returns {boolean}
      */
-    PoP.isInBox = function(p, dist) {
+    PRO.isInBox = function(p, dist) {
         return Math.abs(this.x - p.x) < dist && Math.abs(this.y - p.y) < dist;
     };
 
@@ -458,7 +458,7 @@ var gs_base_point = exports;
      * @param {Polygon} poly
      * @param {number} [threshold] stop looking if under threshold
      */
-    PoP.distToPolySegments = function(poly, threshold) {
+    PRO.distToPolySegments = function(poly, threshold) {
         var point = this,
             mindist = Infinity;
         poly.forEachSegment(function(p1, p2) {
@@ -474,7 +474,7 @@ var gs_base_point = exports;
      * @param {Polygon} poly
      * @param {number} [threshold] stop looking if under threshold
      */
-    PoP.distToPolyPoints = function(poly, threshold) {
+    PRO.distToPolyPoints = function(poly, threshold) {
         var point = this, mindist = Infinity;
         poly.forEachPoint(function(pp) {
             mindist = Math.min(mindist, point.distTo2D(pp));
@@ -488,7 +488,7 @@ var gs_base_point = exports;
      * @param {number} max
      * @returns {Point} nearest point (less than max) from array to this point
      */
-    PoP.nearestTo = function(points, max) {
+    PRO.nearestTo = function(points, max) {
         if (!max) throw "missing max";
         var mind = Infinity,
             minp = null,
@@ -509,7 +509,7 @@ var gs_base_point = exports;
      * @param {Point[]} points
      * @return {number} average square dist to cloud of points
      */
-    PoP.averageDistTo = function(points) {
+    PRO.averageDistTo = function(points) {
         var sum = 0.0, count = 0, i;
         for (i = 0; i < points.length; i++) {
             if (points[i] != this) {
@@ -526,7 +526,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {number}
      */
-    PoP.distTo2D = function(p) {
+    PRO.distTo2D = function(p) {
         var dx = this.x - p.x,
             dy = this.y - p.y;
         return Math.sqrt(dx * dx + dy * dy);
@@ -538,13 +538,13 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {number}
      */
-    PoP.distToSq2D = function(p) {
+    PRO.distToSq2D = function(p) {
         var dx = this.x - p.x,
             dy = this.y - p.y;
         return dx * dx + dy * dy;
     };
 
-    PoP.distTo3D = function(p) {
+    PRO.distTo3D = function(p) {
         var dx = this.x - p.x,
             dy = this.y - p.y,
             dz = this.z - p.z;
@@ -557,7 +557,7 @@ var gs_base_point = exports;
      * @param {Point} p
      * @returns {number}
      */
-    PoP.distToSq3D = function(p) {
+    PRO.distToSq3D = function(p) {
         var dx = this.x - p.x,
             dy = this.y - p.y,
             dz = this.z - p.z;
@@ -572,7 +572,7 @@ var gs_base_point = exports;
      * @param {Point} c
      * @returns {boolean}
      */
-    PoP.inTriangle = function(a, b, c) {
+    PRO.inTriangle = function(a, b, c) {
         var as_x = this.x - a.x,
             as_y = this.y - a.y,
             s_ab = (b.x - a.x) * as_y - (b.y - a.y) * as_x > 0;
@@ -590,7 +590,7 @@ var gs_base_point = exports;
      * @param {Point} p2
      * @returns {boolean}
      */
-    PoP.onLine = function(p1, p2) {
+    PRO.onLine = function(p1, p2) {
         return this.distToLine(p1, p2) < CONF.precision_point_on_line;
     };
 
@@ -599,7 +599,7 @@ var gs_base_point = exports;
      * @param {THREE.Vector3} delta
      * @return {Point} new offset point
      */
-    PoP.add = function(delta) {
+    PRO.add = function(delta) {
         return newPoint(this.x + delta.x, this.y + delta.y, this.z + delta.z);
     };
 
@@ -608,7 +608,7 @@ var gs_base_point = exports;
      * @param {THREE.Vector3} delta
      * @return {Point} new offset point
      */
-    PoP.sub = function(delta) {
+    PRO.sub = function(delta) {
         return newPoint(this.x - delta.x, this.y - delta.y, this.z - delta.z);
     };
 
@@ -616,7 +616,7 @@ var gs_base_point = exports;
       *
      * @param {THREE.Vector3} delta
      */
-    PoP.move = function(delta) {
+    PRO.move = function(delta) {
         this.x += delta.x;
         this.y += delta.y;
         this.z += delta.z;

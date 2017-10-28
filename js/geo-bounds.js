@@ -27,7 +27,7 @@ var gs_base_bounds = exports;
         ABS = Math.abs,
         MIN = Math.min,
         MAX = Math.max,
-        BoP = Bounds.prototype;
+        PRO = Bounds.prototype;
 
     BASE.Bounds = Bounds;
     BASE.newBounds = newBounds;
@@ -39,7 +39,7 @@ var gs_base_bounds = exports;
     /**
      * @returns {Bounds}
      */
-    BoP.clone = function() {
+    PRO.clone = function() {
         var b = new Bounds();
         b.minx = this.minx;
         b.miny = this.miny;
@@ -48,7 +48,7 @@ var gs_base_bounds = exports;
         return b;
     };
 
-    BoP.equals = function(bounds, margin) {
+    PRO.equals = function(bounds, margin) {
         if (!margin) margin = BASE.config.precision_offset;
         return UTIL.isCloseTo(this.minx, bounds.minx, margin) &&
             UTIL.isCloseTo(this.miny, bounds.miny, margin) &&
@@ -59,7 +59,7 @@ var gs_base_bounds = exports;
     /**
      * @param {Bounds} b
      */
-    BoP.merge = function(b) {
+    PRO.merge = function(b) {
         this.minx = MIN(this.minx, b.minx);
         this.maxx = MAX(this.maxx, b.maxx);
         this.miny = MIN(this.miny, b.miny);
@@ -69,7 +69,7 @@ var gs_base_bounds = exports;
     /**
      * @param {Point} p
      */
-    BoP.update = function(p) {
+    PRO.update = function(p) {
         this.minx = MIN(this.minx, p.x);
         this.maxx = MAX(this.maxx, p.x);
         this.miny = MIN(this.miny, p.y);
@@ -77,15 +77,15 @@ var gs_base_bounds = exports;
         if (this.minx === p.x) this.leftMost = p;
     };
 
-    BoP.contains = function(bounds) {
+    PRO.contains = function(bounds) {
         return bounds.isNested(this);
     };
 
-    BoP.containsXY = function(x,y) {
+    PRO.containsXY = function(x,y) {
         return x >= this.minx && x <= this.maxx && y >= this.miny && y <= this.maxy;
     };
 
-    BoP.containsOffsetXY = function(x,y,offset) {
+    PRO.containsOffsetXY = function(x,y,offset) {
         return x >= this.minx-offset && x <= this.maxx+offset && y >= this.miny-offset && y <= this.maxy+offset;
     };
 
@@ -93,7 +93,7 @@ var gs_base_bounds = exports;
      * @param {Bounds} parent
      * @returns {boolean} true if fully inside parent bounds
      */
-    BoP.isNested = function(parent) {
+    PRO.isNested = function(parent) {
         return (
             this.minx >= parent.minx - CONF.precision_bounds && // min-x
             this.maxx <= parent.maxx + CONF.precision_bounds && // max-x
@@ -107,26 +107,26 @@ var gs_base_bounds = exports;
      * @param {number} precision
      * @returns {boolean}
      */
-    BoP.overlaps = function(b, precision) {
+    PRO.overlaps = function(b, precision) {
         return (
             ABS(this.centerx() - b.centerx()) * 2 - precision < this.width() + b.width() &&
             ABS(this.centery() - b.centery()) * 2 - precision < this.height() + b.height()
         );
     };
 
-    BoP.width = function() {
+    PRO.width = function() {
         return this.maxx - this.minx;
     };
 
-    BoP.height = function() {
+    PRO.height = function() {
         return this.maxy - this.miny;
     };
 
-    BoP.centerx = function() {
+    PRO.centerx = function() {
         return this.minx + this.width() / 2;
     };
 
-    BoP.centery = function() {
+    PRO.centery = function() {
         return this.miny + this.height() / 2;
     };
 
