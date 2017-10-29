@@ -623,7 +623,23 @@ var gs_base_polygon = exports;
     };
 
     /**
-     * emit new open poly between two intersection points
+     * using two points, split polygon into two open polygons
+     * or return null if p1,p2 does not intersect or poly is open
+     */
+    PRO.bisect = function(p1, p2) {
+        if (this.isOpen()) return null;
+
+        var copy = this.clone().setClockwise();
+        
+        var int = copy.intersections(p1, p2);
+        if (!int || int.length !== 2) return  null;
+
+        return [ copy.emitSegment(int[0], int[1]), copy.emitSegment(int[1], int[0]) ];
+    };
+
+    /**
+     * emit new open poly between two intersection points of a clockwise poly.
+     * used in cam tabs and fdm output perimeter traces on infill
      */
     PRO.emitSegment = function(i1, i2) {
         var poly = newPolygon(),
