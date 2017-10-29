@@ -244,7 +244,6 @@ var gs_kiri_fdm = exports;
             }
 
             if (layerout.length) output.append(layerout);
-            // console.log({layer: output.length, len: layerout.length});
             layer++;
             update(layer / maxLayers);
         }

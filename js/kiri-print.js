@@ -376,19 +376,40 @@ var gs_kiri_print = exports;
             }
         }
 
+        function checkBisect(p1, p2, bounds) {
+            if (p1.distTo2D(p2) < minSeek) return;
+            var more = true;
+            bounds.forEach(function(bp) {
+                if (!more) return;
+                var paths = bp.bisect(startPoint, p1);
+                if (!paths || paths.length !== 2) return;
+                var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
+                // console.log({bisect: path.length, z: path.first().z, l:path.perimeter()});
+                path.forEachPoint(function(p) {
+                    preout.push(newOut(p, 0));
+                });
+                more = false;
+            });
+        }
+
         /**
          * @param {Polygon[]} polys
          */
         function outputSparse(polys, fillMult, bounds) {
             if (!polys) return;
-            var lines = [], p1, p2, iter;
-            polys.forEach(function(poly) {
-                poly.forEachSegment(function(p1,p2) {
-                    lines.push(p1.clone());
-                    lines.push(p2.clone());
-                }, true);
+            var proxy = polys.map(function(poly) {
+                return {poly: poly, first: poly.first(), last: poly.last()};
             });
-            outputFills(lines, fillMult, bounds);
+            // var lp = startPoint;
+            startPoint = tip2tipEmit(proxy, startPoint, function(el, point, count) {
+                var poly = el.poly;
+                if (poly.last() === point) poly.reverse();
+                poly.forEachPoint(function(p, i) {
+                    // if (i === 0 && lp) checkBisect(lp, p, bounds);
+                    preout.push(newOut(p, i === 0 ? 0 : fillMult));
+                });
+                // lp = point;
+            });
         }
 
         function outputFills(lines, extrude, bounds) {
@@ -420,26 +441,15 @@ var gs_kiri_print = exports;
                     p1.del = true;
                     p2.del = true;
                     dist = SQRT(startPoint.distToSq2D(p1));
-                    preout.push(newOut(p1, 0));
-                    // preout.push(newOut(p1, dist < minSeek ? seekMult : 0));
 
                     // check for intersection with bounds and if found
                     // follow the shortest path around that bounding poly
-                    if (false && bounds && startPoint && dist > minSeek) {
-                        var more = true;
-                        if (more) bounds.forEach(function(bp) {
-                            var paths = bp.bisect(startPoint, p1);
-                            if (!paths || paths.length !== 2) return;
-                            var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
-// console.log({bisect: path.length, z: path.first().z, l:path.perimeter()});
-                            path.forEachSegment(function(p1, p2) {
-                                preout.push(newOut(p1, 0));
-                                preout.push(newOut(p2, 0));
-                            });
-                            more = false;
-                        });
-                    }
+                    // if (bounds && startPoint && dist > minSeek) {
+                    //     checkBisect(startPoint, p1, bounds);
+                    // }
 
+                    // preout.push(newOut(p1, dist < minSeek ? seekMult : 0));
+                    preout.push(newOut(p1, 0));
                     preout.push(newOut(p2, printMult));
                     startPoint = p2;
                 } else {
@@ -492,12 +502,11 @@ var gs_kiri_print = exports;
                 }
             } else {
                 // top object
-                var inner = next.innerTraces();
-                outputTraces([].appendAll(next.traces).appendAll(inner || []), extrude);
+                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), extrude);
                 // outputTraces(next.traces, extrude);
                 // outputTraces(next.innerTraces(), extrude);
-                outputFills(next.fill_lines, extrude, inner);
-                outputSparse(next.fill_sparse, extrude, inner);
+                outputFills(next.fill_lines, extrude, next.inner);
+                outputSparse(next.fill_sparse, extrude, next.inner);
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
