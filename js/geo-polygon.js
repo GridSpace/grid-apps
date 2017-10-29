@@ -630,7 +630,7 @@ var gs_base_polygon = exports;
         if (this.isOpen()) return null;
 
         var copy = this.clone().setClockwise();
-        
+
         var int = copy.intersections(p1, p2);
         if (!int || int.length !== 2) return  null;
 
@@ -644,11 +644,7 @@ var gs_base_polygon = exports;
     PRO.emitSegment = function(i1, i2) {
         var poly = newPolygon(),
             start = i1.p2.pos,
-            end = i2.p1.pos,
-            delta = end - start;
-        while (delta < 0) {
-            delta += this.length;
-        }
+            end = i2.p1.pos;
         poly.setOpen();
         poly.push(i1);
         this.forEachPoint(function(p, pos) {

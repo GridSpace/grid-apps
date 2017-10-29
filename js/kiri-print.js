@@ -381,10 +381,11 @@ var gs_kiri_print = exports;
             var more = true;
             bounds.forEach(function(bp) {
                 if (!more) return;
-                var paths = bp.bisect(startPoint, p1);
+                var paths = bp.bisect(p1, p2);
                 if (!paths || paths.length !== 2) return;
                 var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
-                // console.log({bisect: path.length, z: path.first().z, l:path.perimeter()});
+                if (p1.distTo2D(path.first() > p1.distTo2D(path.last()))) path.reverse();
+                // console.log(path === paths[0] ? "first" : "last"); // failing on "last"
                 path.forEachPoint(function(p) {
                     preout.push(newOut(p, 0));
                 });
@@ -400,15 +401,15 @@ var gs_kiri_print = exports;
             var proxy = polys.map(function(poly) {
                 return {poly: poly, first: poly.first(), last: poly.last()};
             });
-            // var lp = startPoint;
+            var lp = startPoint;
             startPoint = tip2tipEmit(proxy, startPoint, function(el, point, count) {
                 var poly = el.poly;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
-                    // if (i === 0 && lp) checkBisect(lp, p, bounds);
+                    if (i === 0 && lp) checkBisect(lp, p, bounds);
                     preout.push(newOut(p, i === 0 ? 0 : fillMult));
+                    lp = p;
                 });
-                // lp = point;
             });
         }
 
@@ -494,8 +495,6 @@ var gs_kiri_print = exports;
                 // support polygon
                 next.setZ(z);
                 outputTraces([].appendAll(next).appendAll(next.inner || []), extrude);
-                // outputTraces(next, extrude);
-                // outputTraces(next.inner, extrude);
                 if (next.fills) {
                     next.fills.forEach(function(p) { p.z = z });
                     outputFills(next.fills, extrude, next.inner);
@@ -503,10 +502,8 @@ var gs_kiri_print = exports;
             } else {
                 // top object
                 outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), extrude);
-                // outputTraces(next.traces, extrude);
-                // outputTraces(next.innerTraces(), extrude);
                 outputFills(next.fill_lines, extrude, next.inner);
-                outputSparse(next.fill_sparse, extrude, next.inner);
+                outputSparse(next.fill_sparse, extrude, [next.poly].appendAll(next.poly.inner || []));
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
