@@ -634,7 +634,7 @@ var gs_base_polygon = exports;
         var int = copy.intersections(p1, p2);
         if (!int || int.length !== 2) return  null;
 
-        return [ copy.emitSegment(int[0], int[1]), copy.emitSegment(int[1], int[0]) ];
+        return [ copy.emitSegment(int[0], int[1]), copy.emitSegment(int[1], int[0]).reverse() ];
     };
 
     /**
