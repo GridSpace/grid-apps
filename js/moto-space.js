@@ -519,6 +519,10 @@ var gs_moto_space = exports;
             return WC;
         },
 
+        screenshot: function(format) {
+            return renderer.domElement.toDataURL(format || "image/png");
+        },
+
         init: function(domelement, slider) {
             container = domelement;
 
@@ -528,7 +532,10 @@ var gs_moto_space = exports;
             domelement.style.width = width();
             domelement.style.height = height();
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                preserveDrawingBuffer: true
+            });
             camera = perspective ?
                 new THREE.PerspectiveCamera(perspective, aspect(), 1, 100000) :
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000);

@@ -411,6 +411,7 @@ self.kiri.license = exports.LICENSE;
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
         MODE = MODES.FDM,
         onEvent = {},
+        screenShot = null,
         currentPrint = null,
         selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
@@ -804,8 +805,6 @@ self.kiri.license = exports.LICENSE;
     }
 
     function preparePrint(callback) {
-        setViewMode(VIEWS.PREVIEW);
-
         // kick off slicing it hasn't been done already
         for (var i=0; i < WIDGETS.length; i++) {
             if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
@@ -813,6 +812,8 @@ self.kiri.license = exports.LICENSE;
                 return;
             }
         }
+
+        setViewMode(VIEWS.PREVIEW);
 
         clearPrint();
         saveSettings();
@@ -916,8 +917,8 @@ self.kiri.license = exports.LICENSE;
             KIRI.serial.setGCode(gcode, currentPrint.bounds);
         }
 
-        var pre = MODE === MODES.CAM ? "cnc-" : "print-",
-            filename = pre+(new Date().getTime().toString(36)),
+        var pre = MODE === MODES.CAM ? "cnc" : "print",
+            filename = pre,// + (new Date().getTime().toString(36)),
             fileext = settings.device.gcodeFExt || "gcode",
             octo_host,
             octo_apik,
@@ -1025,13 +1026,20 @@ self.kiri.license = exports.LICENSE;
                 setProgress(Math.ceil(evt.loaded/evt.total), "sending");
             });
             filename = $('print-filename').value;
+            if (screenShot) {
+                var post = new XMLHttpRequest();
+                post.open("POST", host + "/api/image?filename=" + filename);
+                post.setRequestHeader("Content-Type", "text/plain");
+                post.send(screenShot);
+            }
             xhtr.open("POST",
                 host + "/api/print?" +
                 "filename=" + filename +
                 "&target=" + target +
                 "&key=" + apik +
                 "&time=" + Math.round(currentPrint.time) +
-                "&length=" + Math.round(currentPrint.distance)
+                "&length=" + Math.round(currentPrint.distance) +
+                "&image=" + filename
             );
             xhtr.setRequestHeader("Content-Type", "text/plain");
             xhtr.send(gcode);
@@ -1127,6 +1135,11 @@ self.kiri.license = exports.LICENSE;
      * @param {Function} callback
      */
     function prepareSlices(callback) {
+        if (viewMode == VIEWS.ARRANGE) {
+            screenShot = SPACE.screenshot();
+            screenShot = screenShot.substring(screenShot.indexOf(",")+1);
+        }
+
         setViewMode(VIEWS.SLICE);
 
         var selectSave = selectedMeshes.slice();
