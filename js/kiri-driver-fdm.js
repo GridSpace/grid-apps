@@ -44,6 +44,7 @@ var gs_kiri_fdm = exports;
             firstOffset = spri.nozzleSize / 2,
             shellOffset = spri.nozzleSize * spro.sliceShellSpacing,
             fillOffset = shellOffset * settings.synth.fillOffsetMult,
+            fillSpacing = spri.nozzleSize * spro.sliceFillSpacing,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
@@ -101,7 +102,7 @@ var gs_kiri_fdm = exports;
                         spro.sliceFillSparse > 0.95
                     ) && !spro.sliceVase;
                 slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, spro.sliceVase);
-                if (solid) slice.doSolidLayerFill(spri.nozzleSize, sliceFillAngle, spro.sliceFillDensity);
+                if (solid) slice.doSolidLayerFill(fillSpacing, sliceFillAngle);
                 sliceFillAngle += 90.0;
             }, "offsets");
 
@@ -115,7 +116,7 @@ var gs_kiri_fdm = exports;
                     slice.projectBridges(solidLayers);
                 }, "solids");
                 forSlices(0.35, 0.5, function(slice) {
-                    slice.doSolidsFill(spri.nozzleSize, sliceFillAngle, spro.sliceFillDensity, minSolid);
+                    slice.doSolidsFill(fillSpacing, sliceFillAngle, minSolid);
                     sliceFillAngle += 90.0;
                 }, "solids");
             }
@@ -133,7 +134,7 @@ var gs_kiri_fdm = exports;
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!spro.sliceVase && spro.sliceFillSparse > 0.0) {
                 forSlices(0.8, 1.0, function(slice) {
-                    slice.doSparseLayerFill(spri.nozzleSize, spro.sliceFillDensity, spro.sliceFillSparse, widget.getBoundingBox());
+                    slice.doSparseLayerFill(fillSpacing, spro.sliceFillSparse, widget.getBoundingBox());
                 }, "infill");
             }
 

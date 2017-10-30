@@ -468,16 +468,13 @@ var gs_kiri_slice = exports;
      * @param {number} angle
      * @param {number} density
      */
-    PRO.doSolidLayerFill = function(linewidth, angle, density) {
+    PRO.doSolidLayerFill = function(spacing, angle) {
         this.isSolidFill = false;
 
         if (this.tops.length === 0) return;
         if (typeof(angle) != 'number') return;
 
         var debug = (this.index === DBUG.get('z-index')) && DBUG.get('layer-solid');
-
-        // effective nozzle_width: adjusted for desired density
-        var spacing = linewidth * (1 / density);
 
         this.tops.forEach(function(top) {
             if (top.inner && top.inner.length > 0) {
@@ -510,18 +507,16 @@ var gs_kiri_slice = exports;
      * Take output from pluggable sparse infill algorithm and clip to
      * the bounds of the top polygons and their inner solid areas.
      *
-     * @param {number} linewidth (nozzle width)
-     * @param {number} density spacing overlap (0.0 - 1.0)
+     * @param {number} spacing space between fill lines
      * @param {number} percent infill 0.0 - 1.0
      * @param {Object} bounds -- TODO calc w/out mesh so it can run in a worker
      */
-    PRO.doSparseLayerFill = function(linewidth, density, percent, bounds) {
+    PRO.doSparseLayerFill = function(spacing, percent, bounds) {
         this.isSparseFill = false;
         if (this.tops.length === 0 || percent === 0.0 || this.isSolidFill) return;
 
         var scope = this,
             tops = scope.tops,
-            spacing = linewidth * (1 / density),
             clib = self.ClipperLib,
             ctyp = clib.ClipType,
             ptyp = clib.PolyType,
@@ -681,7 +676,7 @@ var gs_kiri_slice = exports;
      * fill projected areas and store line data
      * @return {boolean} true if filled, false if not
      */
-    PRO.doSolidsFill = function(linewidth, angle, density, minArea) {
+    PRO.doSolidsFill = function(spacing, angle, minArea) {
 
         var minarea = minArea || 1,
             scope = this,
@@ -715,9 +710,6 @@ var gs_kiri_slice = exports;
         solids.trimmed = trims;
 
         if (debug) DBUG.log(['project', this.index, polys.length, unioned.length, inner.length]);
-
-        // effective nozzle_width: adjusted for desired density
-        var spacing = linewidth * (1 / density);
 
         // clear old solids and make array for new
         tops.forEach(function(top) { top.solids = [] });
