@@ -1126,7 +1126,7 @@ var gs_kiri_slice = exports;
      */
     function sparseFillHex(target) {
         // compute segment lengths (vert/horiz and 45)
-        var spacing = target.offset(),
+        var spacing = target.offset() / 2,
             vhlen = (1 - target.density()) * 4 + spacing,
             anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7),
             anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7),

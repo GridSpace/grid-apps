@@ -4,23 +4,17 @@
         "M104 S{temp} T0 ; set nozzle0 temp",
         "M107 ; fan off",
         "G90 ; set absolute positioning",
-        "G28 ; move to origin",
         "M132 X Y Z A B ; set axis limits",
-        "M6 T0 ; tool change T0",
         "M907 X100 Y100 Z40 A80 B20 ; set digital trimpots",
-        "M108 T0 ; set extruder speed",
         "; pre-extrude",
         "G1 X-75 Y-75 Z0.35 F400",
-        "G1 X75 E25 F1200",
-        "G1 Y00 E30 F1200"
+        "G1 X75 E25 F1800",
+        "G1 Y00 E20 F2400"
     ],
     "post":[
         "M107 ; fan off",
         "M104 S0 T0 ; set nozzle0 temp",
-        "G162 Z ; home axes maximum",
-        "G28 Z ; lower bed",
-        "G28 X Y ; move to origin",
-        "M132 X Y Z A B ; set axis limits",
+        "G162 Z ; lower bed",
         "M18 ; disable all steppers"
     ],
     "cmd":{
