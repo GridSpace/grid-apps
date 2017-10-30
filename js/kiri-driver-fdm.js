@@ -300,7 +300,7 @@ var gs_kiri_fdm = exports;
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
             emitPerMMLayer1 = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight * process.firstLayerHeight),
             constReplace = print.constReplace,
-            pidx, path, out, lastp, dist, printMMM, shortMMM,
+            pidx, path, out, lastp, laste, dist, printMMM, shortMMM,
             appendAll = function(arr) {
                 arr.forEach(function(line) { append(line) });
             },
@@ -437,15 +437,17 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, outMMM);
                     emitted += emitMM;
                 } else {
-                    if (retOver > 0.0 && dist > retOver) moveTo({e:-retDist}, retSpeed, "ooze retract");
+                    var retract = laste && retOver > 0.0 && dist > retOver;
+                    if (retract) moveTo({e:-retDist}, retSpeed, "ooze retract");
                     moveTo({x:x, y:y}, seekMMM);
-                    if (retOver > 0.0 && dist > retOver) moveTo({e:retDist}, retSpeed, "re-engage");
+                    if (retract) moveTo({e:retDist}, retSpeed, "re-engage");
                     time += (dist / seekMMM) * 60; // seek distance
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                     // approximate compensation for acceleration & deceleration
                     time += (shortDist * 2) / seekMMM / 10 * 60;
                 }
                 lastp = out.point;
+                laste = out.emit;
                 // emit tracked progress
                 if (trackProgress && progress != lastProgress) {
                     append(constReplace(trackProgress, {progress:progress}));

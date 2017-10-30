@@ -298,11 +298,10 @@ var gs_kiri_print = exports;
      * @param {Point} startPoint
      * @param {Array} output
      * @param {number} [extrude] multiplier
-     * @param {number} [extrude] wipe distance
+     * @param {Function} [onfirst] optional fn to call on first point
      * @return {Point} last output point
      */
-    PRO.polyPrintPath = function(poly, startPoint, output, extrude, wipe) {
-        // poly.setClosed();
+    PRO.polyPrintPath = function(poly, startPoint, output, extrude, onfirst) {
         poly.setClockwise();
 
         var mindist = Infinity,
@@ -314,6 +313,7 @@ var gs_kiri_print = exports;
 
         poly.forEachPoint(function(point) {
             if (first) {
+                if (onfirst) onfirst(point);
                 // move from startPoint to point
                 output.push(newOut(point, 0));
                 first = false;
@@ -321,22 +321,6 @@ var gs_kiri_print = exports;
                 output.push(newOut(point, shellMult));
             }
         }, true, closest.index);
-
-        if (wipe) {
-            wipe = Math.min(wipe, poly.perimeter());
-            poly.forEachSegment(function(point, next) {
-                // exit loop when no more wipe
-                if (!(wipe && wipe > 0.1)) return true;
-                dist = point.distTo2D(next);
-                if (dist <= wipe) {
-                    output.push(newOut(next, 0));
-                    wipe -= dist;
-                } else {
-                    output.push(newOut(point.followTo(next, wipe), 0));
-                    return true;
-                }
-            }, false, closest.index);
-        }
 
         return output[output.length - 1].point;
     };
@@ -365,14 +349,16 @@ var gs_kiri_print = exports;
             extrude = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             z = slice.z;
 
-        function outputTraces(poly, extrude, last) {
+        function outputTraces(poly, extrude, bounds) {
             if (!poly) return;
             if (Array.isArray(poly)) {
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, extrude, last);
+                    outputTraces(next, extrude, bounds);
                 });
             } else {
-                startPoint = scope.polyPrintPath(poly, startPoint, preout, extrude, isFDM && last ? wipeDist : 0);
+                startPoint = scope.polyPrintPath(poly, startPoint, preout, extrude, function(point) {
+                    checkBisect(startPoint, point, bounds);
+                });
             }
         }
 
@@ -445,9 +431,9 @@ var gs_kiri_print = exports;
 
                     // check for intersection with bounds and if found
                     // follow the shortest path around that bounding poly
-                    // if (bounds && startPoint && dist > minSeek) {
-                    //     checkBisect(startPoint, p1, bounds);
-                    // }
+                    if (bounds && startPoint && dist > minSeek) {
+                        checkBisect(startPoint, p1, bounds);
+                    }
 
                     // preout.push(newOut(p1, dist < minSeek ? seekMult : 0));
                     preout.push(newOut(p1, 0));
@@ -500,10 +486,11 @@ var gs_kiri_print = exports;
                     outputFills(next.fills, extrude, next.inner);
                 }
             } else {
+                var bounds = [next.poly].appendAll(next.poly.inner || []);
                 // top object
-                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), extrude);
-                outputFills(next.fill_lines, extrude, next.inner);
-                outputSparse(next.fill_sparse, extrude, [next.poly].appendAll(next.poly.inner || []));
+                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), extrude, bounds);
+                outputFills(next.fill_lines, extrude, bounds);
+                outputSparse(next.fill_sparse, extrude, bounds);
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;

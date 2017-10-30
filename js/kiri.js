@@ -74,7 +74,6 @@ self.kiri.license = exports.LICENSE;
                     outputRetractSpeed: 1,
                     outputBrimCount: 1,
                     outputBrimOffset: 1,
-                    outputWipeDistance: 1,
                     outputShortDistance: 1,
                     outputShortFactor: 1,
                     outputClockwise: 1,
@@ -314,7 +313,6 @@ self.kiri.license = exports.LICENSE;
                 outputRetractSpeed: 20,
                 outputBrimCount: 2,
                 outputBrimOffset: 3,
-                outputWipeDistance: 1,
                 outputShortDistance: 5.0,
                 outputShortFactor: 0.2,
 
@@ -2329,7 +2327,6 @@ self.kiri.license = exports.LICENSE;
             outputRetractOver: UC.newInput("retract over", {title:"retract filament for\nnon-print moves\nover this distance\n0 = disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
-            outputWipeDistance: UC.newInput("wipe distance", {title:"wipe at end of loop\nin millimeters", convert:UC.toFloat, modes:FDM}),
             outputShortDistance: UC.newInput("short distance", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
         });
