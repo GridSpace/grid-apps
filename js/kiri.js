@@ -1026,12 +1026,6 @@ self.kiri.license = exports.LICENSE;
                 setProgress(Math.ceil(evt.loaded/evt.total), "sending");
             });
             filename = $('print-filename').value;
-            if (screenShot) {
-                var post = new XMLHttpRequest();
-                post.open("POST", host + "/api/image?filename=" + filename);
-                post.setRequestHeader("Content-Type", "text/plain");
-                post.send(screenShot);
-            }
             xhtr.open("POST",
                 host + "/api/print?" +
                 "filename=" + filename +
@@ -1042,7 +1036,7 @@ self.kiri.license = exports.LICENSE;
                 "&image=" + filename
             );
             xhtr.setRequestHeader("Content-Type", "text/plain");
-            xhtr.send(gcode);
+            xhtr.send(screenShot ? [gcode,screenShot].join("\0") : gcode);
             hideModal();
         }
 
