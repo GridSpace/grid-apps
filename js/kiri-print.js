@@ -475,7 +475,7 @@ var gs_kiri_print = exports;
             if (next instanceof Polygon) {
                 // support polygon
                 next.setZ(z);
-                outputTraces([].appendAll(next).appendAll(next.inner || []));
+                outputTraces([next].appendAll(next.inner || []));
                 if (next.fills) {
                     next.fills.forEach(function(p) { p.z = z });
                     outputFills(next.fills, next.inner);
