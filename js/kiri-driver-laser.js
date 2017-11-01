@@ -102,6 +102,7 @@ var gs_kiri_laser = exports;
             var min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
             layerout.forEach(function(out) {
                 p = out.point;
+                out.point = p.clone(); // b/c first/last point are often shared
                 min.w = Math.min(min.w, p.x);
                 max.w = Math.max(max.w, p.x);
                 min.h = Math.min(min.h, p.y);
@@ -109,6 +110,12 @@ var gs_kiri_laser = exports;
             });
             layerout.w = max.w - min.w;
             layerout.h = max.h - min.h;
+            // shift objects to top/left of w/h bounds
+            layerout.forEach(function(out) {
+                p = out.point;
+                p.x -= min.w;
+                p.y -= min.h;
+            });
         });
 
         // do object layout packing
@@ -123,6 +130,7 @@ var gs_kiri_laser = exports;
             c = output.sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
             p = new MOTO.Pack(ms[0], ms[1], process.outputTileSpacing).fit(c);
 
+        // test different ratios until packed
         while (!p.packed) {
             ms[0] += mi[0];
             ms[1] += mi[1];
@@ -135,7 +143,7 @@ var gs_kiri_laser = exports;
             m.fit.y += m.h / 2 + p.pad;
             m.forEach(function(o, i) {
                 // because first point emitted twice (begin/end)
-                e = o.point = o.point.clone();
+                e = o.point;
                 e.x += p.max.w / 2 - m.fit.x;
                 e.y += p.max.h / 2 - m.fit.y;
                 e.z = 0;
