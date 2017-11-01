@@ -361,7 +361,7 @@ var gs_kiri_print = exports;
         }
 
         function checkBisect(p1, p2, bounds) {
-            if (p1.distTo2D(p2) < minSeek) return;
+            if (!bounds || p1.distTo2D(p2) < minSeek) return;
             var more = true;
             bounds.forEach(function(bp) {
                 if (!more) return;
