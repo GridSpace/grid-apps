@@ -362,17 +362,32 @@ var gs_kiri_print = exports;
 
         function checkBisect(p1, p2, bounds) {
             if (!bounds || p1.distTo2D(p2) < minSeek) return;
-            var more = true;
+            var routes = [];
+            // find bisections and choose shortest
             bounds.forEach(function(bp) {
-                if (!more) return;
                 var paths = bp.bisect(p1, p2);
                 if (!paths || paths.length !== 2) return;
                 var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
                 if (p1.distTo2D(path.first() > p1.distTo2D(path.last()))) path.reverse();
+                routes.push(path);
+            });
+            // sort bisecting paths by those closest to start point (p1)
+            routes.sort((function(o1, o2) {
+                var d1 = Math.min(
+                    o1.first().distTo2D(p1),
+                    o1.last().distTo2D(p1)
+                );
+                var d2 = Math.min(
+                    o2.first().distTo2D(p1),
+                    o2.last().distTo2D(p1)
+                );
+                return d1 - d2;
+            }));
+            // output non-printing bisecting paths
+            routes.forEach(function(path) {
                 path.forEachPoint(function(p) {
                     preout.push(newOut(p, 0));
                 });
-                more = false;
             });
         }
 
@@ -481,8 +496,8 @@ var gs_kiri_print = exports;
                     outputFills(next.fills, next.inner);
                 }
             } else {
-                var bounds = [next.poly].appendAll(next.poly.inner || []);
                 // top object
+                var bounds = POLY.flatten(next.inner);
                 outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
