@@ -438,6 +438,7 @@ self.kiri.license = exports.LICENSE;
         renderMode = 4,
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
+        deviceLock = false,
         local = SETUP.local,
         sliceRemote = !local,
         printRemote = !local,
@@ -2678,7 +2679,9 @@ self.kiri.license = exports.LICENSE;
             return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
         }
 
-        function selectDevice(devicename) {
+        function selectDevice(devicename, lock) {
+            deviceLock = lock;
+            if (lock) UI.setupDevices.style.display = 'none';
             if (inMode('LASER')) return;
             if (isLocalDevice(devicename)) {
                 setDeviceCode(settings.devices[devicename], devicename);
@@ -2998,7 +3001,7 @@ self.kiri.license = exports.LICENSE;
         }
 
         function showDevices() {
-            if (MODE === MODES.LASER) return;
+            if (MODE === MODES.LASER || deviceLock) return;
 
             setViewMode(VIEWS.ARRANGE);
 
@@ -3260,8 +3263,11 @@ self.kiri.license = exports.LICENSE;
                 console.log({octoprint:OCTOPRINT});
             }
 
-            // mode passed in on url
+            // mode passed on url
             var SETMODE = SETUP.mode ? SETUP.mode[0] : null;
+
+            // device name pass on url
+            var DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
             setMode(SETMODE || STARTMODE || settings.mode, SETMODE);
             setControlsVisible(true);
@@ -3294,7 +3300,7 @@ self.kiri.license = exports.LICENSE;
             // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
 
             // ensure settings has gcode
-            selectDevice(currentDeviceName());
+            selectDevice(DEVNAME || currentDeviceName(), DEVNAME);
 
             // ensure field data propagation
             updateSettings();
