@@ -289,6 +289,7 @@ var gs_kiri_fdm = exports;
                 bottom: offset ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight
             },
+            fillBridgeDist = device.nozzleSize * 2,
             shortDist = process.outputShortDistance,
             shortFact = process.outputShortFactor,
             maxPrintMMM = process.outputFeedrate * 60,
@@ -344,6 +345,10 @@ var gs_kiri_fdm = exports;
             }
             if (device.extrudeAbs)
             append(constReplace(line, consts));
+        }
+
+        function dwell(ms) {
+            append("G4 P" + ms);
         }
 
         function moveTo(newpos, rate, comment) {
@@ -405,7 +410,7 @@ var gs_kiri_fdm = exports;
                 out = path[pidx];
                 // if no point in output, it's a dwell command
                 if (!out.point) {
-                    append("G4 P" + out.speed);
+                    dwell(out.speed);
                     continue;
                 }
                 var x = out.point.x,
@@ -438,10 +443,17 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, outMMM);
                     emitted += emitMM;
                 } else {
-                    var retract = laste && retOver > 0.0 && dist > retOver;
-                    if (retract) moveTo({e:-retDist}, retSpeed, "ooze retract");
-                    moveTo({x:x, y:y}, seekMMM);
-                    if (retract) moveTo({e:retDist}, retSpeed, "re-engage");
+                    if (laste && retOver > 0.0 && dist > retOver) {
+                        //
+                        moveTo({e:-retDist}, retSpeed, "ooze retract");
+                        moveTo({x:x, y:y}, seekMMM);
+                        moveTo({e:retDist}, retSpeed, "re-engage");
+                    } else if (lastp && dist <= fillBridgeDist) {
+                        var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
+                        moveTo({x:x, y:y, e:e}, outMMM);
+                    } else {
+                        moveTo({x:x, y:y}, seekMMM);
+                    }
                     time += (dist / seekMMM) * 60; // seek distance
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                     // approximate compensation for acceleration & deceleration
