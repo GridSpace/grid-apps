@@ -661,9 +661,10 @@ self.kiri.license = exports.LICENSE;
         } else {
             forWidgets(function(widget) {
                 if (!widget.slices) return;
-                max = Math.max(max, widget.slices.length - 1);
+                max = Math.max(max, widget.slices.length);
             });
         }
+        max = Math.max(0, max - 1);
         showLayerMax = max;
         if (UI.layerID.convert() > max || showLayerValue > max) {
             showLayerValue = max;
