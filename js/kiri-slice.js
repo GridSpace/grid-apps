@@ -478,7 +478,7 @@ var gs_kiri_slice = exports;
 
         this.tops.forEach(function(top) {
             if (top.inner && top.inner.length > 0) {
-                top.fill_lines = fillArea(top.inner, angle, spacing);
+                top.fill_lines = fillArea(top.inner, angle, spacing, null, 0.00001);
             } else {
                 top.fill_lines = null;
             }
@@ -751,8 +751,8 @@ var gs_kiri_slice = exports;
             if (angfill.length > 0) {
                 top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
                 angfill.forEach(function(af) {
-                    fillArea([af], af.fillang.angle+90, spacing, top.fill_lines);
-                    top.fill_lines_ang.list.push(af.fillang.angle+90);
+                    fillArea([af], af.fillang.angle + 45, spacing, top.fill_lines);
+                    top.fill_lines_ang.list.push(af.fillang.angle + 45);
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }

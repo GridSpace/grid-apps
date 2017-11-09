@@ -295,7 +295,7 @@ var gs_base_polygon = exports;
     };
 
     /**
-     * add fill angle hinting from longest segment
+     * hint fill angle hinting from longest segment
      */
     PRO.hintFillAngle = function() {
         var index = 0,
@@ -320,7 +320,6 @@ var gs_base_polygon = exports;
 
         if (longest && this.circularity() >= mincir) {
             this.fillang = longest.p1.slopeTo(longest.p2).normal();
-            // console.log([this.fillang,this.getZ(),this.id]);
         }
 
         return this.fillang;

@@ -95,7 +95,7 @@ var gs_base_slope = exports;
     PRO.invert = function() {
         this.dx = -this.dx;
         this.dy = -this.dy;
-        this.angle = 360 - this.angle;//Math.atan2(this.dy, this.dx) * RAD2DEG;
+        this.angle = 360 - this.angle;
         return this;
     };
 
