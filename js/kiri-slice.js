@@ -545,7 +545,7 @@ var gs_kiri_slice = exports;
 
         scope.isSparseFill = true;
         // this is pluggable
-        sparseFillHex(target);
+        sparseFillHex(target, true);
         // force emit of last line
         target.newline();
 
@@ -1115,8 +1115,9 @@ var gs_kiri_slice = exports;
      * emitter creates a hex infill pattern and sends to target
      *
      * @param {Object} target
+     * @param {boolean} full continuous walls
      */
-    function sparseFillHex(target) {
+    function sparseFillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
         var spacing = target.offset() / 2,
             vhlen = (1 - target.density()) * 4 + spacing,
@@ -1127,7 +1128,7 @@ var gs_kiri_slice = exports;
             evenZ = target.zIndex() % 2 === 0,
             x, y;
 
-        if (evenZ) {
+        if (full || evenZ) {
             x = bounds.min.x;
             for (;;) {
                 if (even && x > bounds.max.x) break;
