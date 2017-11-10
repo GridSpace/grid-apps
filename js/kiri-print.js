@@ -344,6 +344,7 @@ var gs_kiri_print = exports;
             minSeek = settings.device.nozzleSize * 1.5,
             fillMult = process.outputFillMult,
             shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
+            sparseMult = process.outputSparseMult,
             origin = startPoint.add(offset),
             z = slice.z;
 
@@ -405,7 +406,7 @@ var gs_kiri_print = exports;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
                     if (i === 0 && lp) checkBisect(lp, p, bounds);
-                    preout.push(newOut(p, i === 0 ? 0 : fillMult));
+                    preout.push(newOut(p, i === 0 ? 0 : sparseMult));
                     lp = p;
                 });
             });

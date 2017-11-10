@@ -22,9 +22,10 @@ self.kiri.license = exports.LICENSE;
             SLICE: 2,
             PREVIEW: 3
         },
-        // --------------- settings filters
+        // --------------- settings filters (for loading/saving)
         sf = {
             fdm:{
+                // fields permitted in FDM:Device
                 d:{
                     bedWidth: 1,
                     bedDepth: 1,
@@ -38,6 +39,7 @@ self.kiri.license = exports.LICENSE;
                     gcodeFan: 1,
                     gcodeTrack: 1
                 },
+                // fields permitted in FDM:Process
                 p:{
                     processName: 1,
                     sliceHeight: 1,
@@ -69,6 +71,7 @@ self.kiri.license = exports.LICENSE;
                     outputShellMult: 1,
                     // outputShellSpeed: 1,
                     outputFillMult: 1,
+                    outputSparseMult: 1,
                     outputRetractOver: 1,
                     outputRetractDist: 1,
                     outputRetractSpeed: 1,
@@ -83,6 +86,7 @@ self.kiri.license = exports.LICENSE;
                 }
             },
             cam:{
+                // fields permitted in CAM:Device
                 d:{
                     bedWidth: 1,
                     bedDepth: 1,
@@ -96,6 +100,7 @@ self.kiri.license = exports.LICENSE;
                     gcodeSpace: 1,
                     gcodeStrip: 1
                 },
+                // fields permitted in CAM:Process
                 p:{
                     processName: 1,
                     roughingTool: 1,
@@ -145,10 +150,12 @@ self.kiri.license = exports.LICENSE;
                 }
             },
             laser: {
+                // fields permitted in Laser:Device
                 d:{
                     bedWidth: 1,
                     bedDepth: 1,
                 },
+                // fields permitted in Laser:Process
                 p:{
                     processName: 1,
                     laserOffset: 1,
@@ -163,7 +170,7 @@ self.kiri.license = exports.LICENSE;
                 }
             }
         },
-        // ---------------
+        // --------------- (default)
         settings = {
             tools:[
                 {
@@ -221,6 +228,8 @@ self.kiri.license = exports.LICENSE;
             process:{
                 processName: "default",
 
+                // --- FDM ---
+
                 sliceHeight: 0.25,
                 sliceShells: 2,
                 sliceShellSpacing: 0.9,
@@ -243,11 +252,37 @@ self.kiri.license = exports.LICENSE;
                 sliceTopLayers: 2,
                 sliceVase: false,
 
-                firstLayerHeight: 1.0, // FDM
-                firstLayerSpeed: 0.5, // FDM
+                firstLayerHeight: 1.0,
+                firstLayerSpeed: 0.5,
+
+                outputTemp: 230,
+                outputFanMax: 255,
+                outputBedTemp: 0,
+                outputFeedrate: 100,
+                outputSeekrate: 150,
+                outputShellMult: 1.0,
+                // outputShellSpeed: 1.0,
+                outputFillMult: 1.25,
+                outputSparseMult: 1.5,
+                outputRetractOver: 5.0,
+                outputRetractDist: 0.5,
+                outputRetractSpeed: 20,
+                outputBrimCount: 2,
+                outputBrimOffset: 3,
+                outputShortDistance: 5.0,
+                outputShortFactor: 0.2,
+
+                // --- LASER ---
 
                 laserOffset: 0.25,
                 laserSliceHeight: 1,
+
+                outputTileSpacing: 1, // LASER
+                outputTileScaling: 1, // LASER
+                outputLaserPower: 100, // LASER
+                outputLaserSpeed: 1000, // LASER
+
+                // --- CAM ---
 
                 roughingTool: 1000,
                 roughingSpindle: 1000,
@@ -295,28 +330,9 @@ self.kiri.license = exports.LICENSE;
                 camStockY: 0,
                 camStockZ: 0,
 
-                outputTileSpacing: 1, // LASER
-                outputTileScaling: 1, // LASER
-                outputLaserPower: 100, // LASER
-                outputLaserSpeed: 1000, // LASER
-
-                outputTemp: 230,
-                outputFanMax: 255,
-                outputBedTemp: 0,
-                outputFeedrate: 100,
-                outputSeekrate: 150,
-                outputShellMult: 1.0,
-                // outputShellSpeed: 1.0,
-                outputFillMult: 1.25,
-                outputRetractOver: 5.0,
-                outputRetractDist: 0.5,
-                outputRetractSpeed: 20,
-                outputBrimCount: 2,
-                outputBrimOffset: 3,
-                outputShortDistance: 5.0,
-                outputShortFactor: 0.2,
-
                 outputClockwise: true,
+
+                // --- shared FDM/Laser/CAM ---
 
                 outputOriginCenter: true,
                 outputInvertX: false,
@@ -2297,7 +2313,8 @@ self.kiri.license = exports.LICENSE;
             outputSeekrate: UC.newInput("move speed", {title:"non-print move max speed\nmillimeters / minute", convert:UC.toInt, modes:FDM}),
             // outputShellSpeed: UC.newInput("shell speed", {title:"speed multiplier\n0.1 - 2.0", convert:UC.toFloat, bound:UC.bound(0.1,2.0), modes:FDM}),
             outputShellMult: UC.newInput("shell factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputFillMult: UC.newInput("fill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
+            outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
+            outputSparseMult:  UC.newInput("sparse factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
 
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
