@@ -337,13 +337,12 @@ var gs_kiri_fdm = exports;
         append("; --- startup ---");
         for (var i=0; i<device.gcodePre.length; i++) {
             var line = device.gcodePre[i];
-            if (line.indexOf('E') > 0) {
+            if (device.extrudeAbs && line.indexOf('E') > 0) {
                 line.split(' ').forEach(function (tok) {
                     // use max E position from gcode-preamble
                     if (tok[0] == 'E') outputLength = Math.max(outputLength, parseFloat(tok.substring(1)));
                 });
             }
-            if (device.extrudeAbs)
             append(constReplace(line, consts));
         }
 
