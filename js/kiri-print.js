@@ -21,7 +21,9 @@ var gs_kiri_print = exports;
         PI = Math.PI,
         PRO = Print.prototype,
         Polygon = BASE.Polygon,
-        newPoint = BASE.newPoint;
+        newPoint = BASE.newPoint,
+        lastPoint = null,
+        lastEmit = null;
 
     KIRI.newPrint = function(settings, widgets, id) { return new Print(settings, widgets, id) };
 
@@ -34,7 +36,6 @@ var gs_kiri_print = exports;
         this.id = id || new Date().getTime().toString(36);
         this.settings = settings;
         this.widgets = widgets;
-
         this.group = new THREE.Group();
         this.layerView = [];
 
@@ -46,7 +47,7 @@ var gs_kiri_print = exports;
         this.bounds = null;
     }
 
-    PRO.newOut = newOut;
+    PRO.addOutput = addOutput;
     PRO.tip2tipEmit = tip2tipEmit;
     PRO.extrudePerMM = extrudePerMM;
     PRO.constReplace = constReplace;
@@ -116,11 +117,12 @@ var gs_kiri_print = exports;
                         if (LZ != pos.Z) G0();
                         else move = true;
                     }
-                    seq.push(newOut(
+                    addOutput(
+                        seq,
                         {x:pos.X + off.x, y:pos.Y + off.y, z:pos.Z + off.z},
                         !move,
                         pos.F
-                    ));
+                    );
                     break;
                 case 'M6':
                     break;
@@ -283,13 +285,20 @@ var gs_kiri_print = exports;
     }
 
     /**
+     * @param {Point[]} array of points
      * @param {Point} point
      * @param {number} emit (0=move, !0=filament emit/laser on/cut mode)
      * @param {number} [speed] speed
      * @param {number} [tool] tool
      */
-    function newOut(point, emit, speed, tool) {
-        return new Output(point, emit, speed, tool);
+    function addOutput(array, point, emit, speed, tool) {
+        // drop duplicates (usually intruced by bisections)
+        if (lastPoint && point.x == lastPoint.x && point.y == lastPoint.y && lastEmit == emit) {
+            return;
+        }
+        lastPoint = point;
+        lastEmit = emit;
+        array.push(new Output(point, emit, speed, tool));
     }
 
     /**
@@ -315,10 +324,10 @@ var gs_kiri_print = exports;
             if (first) {
                 if (onfirst) onfirst(point);
                 // move from startPoint to point
-                output.push(newOut(point, 0));
+                addOutput(output, point, 0);
                 first = false;
             } else {
-                output.push(newOut(point, shellMult));
+                addOutput(output, point, shellMult);
             }
         }, true, closest.index);
 
@@ -387,7 +396,7 @@ var gs_kiri_print = exports;
             // output non-printing bisecting paths
             routes.forEach(function(path) {
                 path.forEachPoint(function(p) {
-                    preout.push(newOut(p, 0));
+                    addOutput(preout, p, 0);
                 });
             });
         }
@@ -406,7 +415,7 @@ var gs_kiri_print = exports;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
                     if (i === 0 && lp) checkBisect(lp, p, bounds);
-                    preout.push(newOut(p, i === 0 ? 0 : sparseMult));
+                    addOutput(preout, p, i === 0 ? 0 : sparseMult);
                     lp = p;
                 });
             });
@@ -447,8 +456,8 @@ var gs_kiri_print = exports;
                         checkBisect(startPoint, p1, bounds);
                     }
 
-                    preout.push(newOut(p1, 0));
-                    preout.push(newOut(p2, fillMult));
+                    addOutput(preout, p1, 0);
+                    addOutput(preout, p2, fillMult);
                     startPoint = p2;
                 } else {
                     break;
@@ -526,7 +535,7 @@ var gs_kiri_print = exports;
      */
     function addPrintPoints(input, output, startPoint) {
         if (startPoint && input.length > 0) {
-            output.push(newOut(startPoint, 0));
+            addOutput(output, startPoint, 0);
         }
         output.appendAll(input);
     }
