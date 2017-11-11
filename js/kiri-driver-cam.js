@@ -962,7 +962,7 @@ var gs_kiri_cam = exports;
             nextIsMove = true,
             spindle = 0,
             spindleMax = device.spindleMax,
-            newOut = print.newOut,
+            addOutput = print.addOutput,
             tip2tipEmit = print.tip2tipEmit,
             poly2polyEmit = print.poly2polyEmit,
             poly2polyDepthFirstEmit = print.poly2polyDepthFirstEmit;
@@ -981,7 +981,7 @@ var gs_kiri_cam = exports;
          */
         function layerPush(point, emit, speed, tool) {
             layerOut.mode = lastMode;
-            layerOut.push(newOut(point, emit, speed, tool));
+            addOutput(layerOut, point, emit, speed, tool);
         }
 
         function setTool(toolID, feed, plunge) {
@@ -1140,7 +1140,7 @@ var gs_kiri_cam = exports;
                 }
             } else {
                 // before first point, move cutting head to point above it
-                layerPush(point.clone().setZ(bounds.max.z + zclear), 0, 0, tool.number);
+                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
             }
             // todo synthesize move speed from feed / plunge accordingly
             layerPush(
