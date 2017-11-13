@@ -12,7 +12,6 @@ var gs_base_polygons = exports;
     var BASE = self.base,
         UTIL = BASE.util,
         CONF = BASE.config,
-        DBUG = BASE.debug,
         DEG2RAD = Math.PI / 180,
         ABS = Math.abs,
         SQRT = Math.sqrt,
@@ -438,8 +437,6 @@ var gs_base_polygons = exports;
      * @param {Polygon[]} [first]
      */
     function trace2count(poly, traces, offset, count, depth, last, first) {
-        if (DBUG) DBUG.set('last', count === 1);
-
         if (count === 0) {
             if (last) last.append(poly);
             return;

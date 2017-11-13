@@ -376,8 +376,7 @@ self.kiri.license = exports.LICENSE;
                 layerSparse: true,
                 layerFill: true,
                 layerSupport: true,
-                layerPrint: false,
-                layerDebug: false
+                layerPrint: false
             },
             synth: {
                 // set in updateSettingsFromFields()
@@ -463,10 +462,7 @@ self.kiri.license = exports.LICENSE;
         camTopZ = 0;
 
     DBUG.enable();
-    DBUG.set('print-move');
 
-    if (SETUP.dc) DBUG.set('connect');
-    if (SETUP.zi) DBUG.set('z-index',parseInt(SETUP.zi[0]));
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
 
     KIRI.api = {
@@ -2223,7 +2219,6 @@ self.kiri.license = exports.LICENSE;
             layerSparse: UC.newBoolean("sparse fill", onBooleanClick, {modes:FDM}),
             layerSupport: UC.newBoolean("support", onBooleanClick, {modes:FDM}),
             layerPrint: UC.newBoolean("print", onBooleanClick),
-            layerDebug: UC.newBoolean("debug", onBooleanClick, {hide:!LOCAL}),
 
             settingsGroup: UC.newGroup("settings", control),
             settingsTable: UC.newTableRow([
@@ -3298,14 +3293,6 @@ self.kiri.license = exports.LICENSE;
             STATS.set('seed', SDB[SEED]);
             STATS.add('init');
             // updateActive(true);
-
-            var zdebug = DBUG.get('z-index');
-            if (zdebug) {
-                prepareSlices(function() {
-                    UI.layerRange.checked = true;
-                    showSlices(parseInt(zdebug));
-                });
-            }
 
             // init gcode sender
             KIRI.serial.init();

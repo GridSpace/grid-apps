@@ -436,7 +436,6 @@ var gs_kiri_slicer = exports;
             connect = [],
             search = 1,
             nextMod = 1,
-            debug = (BASE.debug.get('z-index') === index) && BASE.debug.get('connect'),
             bridge = CONF.bridgeLineGapDistance,
             p1, p2;
 
@@ -551,7 +550,6 @@ var gs_kiri_slicer = exports;
                 if (!path.open) closed++; else open++;
             });
 
-            if (debug) DBUG.log({closed:closed, open:open});
             // it gets more complicated with multiple possible output paths
             if (closed > 1 && open === 0) {
                 // add polygon to path (for area sorting)
@@ -563,8 +561,6 @@ var gs_kiri_slicer = exports;
                 // sort descending by length
                 paths.sort(function(a,b) { return b.poly.length - a.poly.length });
 
-                if (debug) DBUG.log({paths:paths});
-
                 // emit polygons largest to smallest
                 // omit polygon if it intersects previously emitted (has del points)
                 paths.forEach(function(path) {
@@ -575,8 +571,6 @@ var gs_kiri_slicer = exports;
                     emit(path.poly);
                     emitted++;
                 });
-
-                if (debug) DBUG.log({longest:longest.length, paths:paths.length, closed:closed, emitted:emitted});
             } else {
                 if (longest.open) {
                     connect.push(longest);

@@ -967,12 +967,6 @@ var gs_base_polygon = exports;
      */
     PRO.isEquivalent = function(poly, recurse, precision) {
         // throw new Error("isEquivalent");
-        var debug = DBUG.get('circularity');
-        if (debug) {
-            DBUG.log(["area", this.area(), poly.area(), UTIL.isCloseTo(this.area(), poly.area(), CONF.precision_poly_area)]);
-            DBUG.log(["circ", this.circularity(), poly.circularity()]);
-            DBUG.log(["boun", this.bounds.equals(poly.bounds, precision || CONF.precision_poly_bounds)]);
-        }
         if (UTIL.isCloseTo(this.area(), poly.area(), precision || CONF.precision_poly_area) &&
             this.bounds.equals(poly.bounds, precision || CONF.precision_poly_bounds))
         {
@@ -980,12 +974,7 @@ var gs_base_polygon = exports;
             var c1 = this.circularity(),
                 c2 = poly.circularity();
             if (ABS(c1-c2) < CONF.precision_circularity && ((1-c1) < CONF.precision_circularity)) {
-                //DBUG.log("detected circle equivalent");
                 return true;
-            } else if (debug) {
-                DBUG.log("fail circularity w/ "+ABS(c2-c1)+" 1-c1="+(1-c1)+" 1-c2="+(1-c2));
-                if (c1 > 1.0) this.dump();
-                if (c2 > 1.0) poly.dump();
             }
 
             if (recurse) {
@@ -1013,7 +1002,6 @@ var gs_base_polygon = exports;
                 });
                 // fail poly if one point is bad
                 if (!pointok) {
-                    if (DBUG.get('equiv')) DBUG.log({min:min, prec:CONF.precision_poly_merge});
                     exit = false;
                     // terminate search
                     return true;

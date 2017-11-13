@@ -12,7 +12,6 @@ var gs_kiri_slice = exports;
     var KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
-        DBUG = BASE.debug,
         POLY = BASE.polygons,
         PRO = Slice.prototype,
         fillArea = POLY.fillArea,
@@ -303,8 +302,7 @@ var gs_kiri_slice = exports;
             tops = slice.tops,
             pbuf = [],
             coloridx = 0,
-            open = (slice.camMode === process.FINISH_X || slice.camMode === process.FINISH_Y),
-            debug = (slice.index === DBUG.get('z-index')) && DBUG.get('outline');
+            open = (slice.camMode === process.FINISH_X || slice.camMode === process.FINISH_Y);
 
         layer.clear();
 
@@ -342,7 +340,6 @@ var gs_kiri_slice = exports;
             case 4:
                 tops.forEach(function(top) {
                     layer.poly(top.poly, colors[0], true, open);
-                    if (debug) top.dump();
                 });
                 break;
         }
@@ -474,8 +471,6 @@ var gs_kiri_slice = exports;
         if (this.tops.length === 0) return;
         if (typeof(angle) != 'number') return;
 
-        var debug = (this.index === DBUG.get('z-index')) && DBUG.get('layer-solid');
-
         this.tops.forEach(function(top) {
             if (top.inner && top.inner.length > 0) {
                 top.fill_lines = fillArea(top.inner, angle, spacing, null, 0.00001);
@@ -599,8 +594,7 @@ var gs_kiri_slice = exports;
     PRO.doDiff = function(minArea) {
         if (!this.down) return;
 
-        var debug = (this.index === DBUG.get('z-index')) && DBUG.get('diff'),
-            top = this,
+        var top = this,
             bottom = this.down;
 
         top.bridges = null;
@@ -611,9 +605,7 @@ var gs_kiri_slice = exports;
             bridges = [],
             flats = [];
 
-        if (debug) DBUG.log(['diff.b4', topInner, bottomInner, DBUG.view]);
         POLY.subtract(topInner, bottomInner, bridges, flats, this.z, minArea);
-        if (debug) DBUG.log(['diff.af', topInner, bottomInner, bridges, flats, DBUG.view]);
 
         top.bridges = bridges;
         bottom.flats = flats;
@@ -682,8 +674,7 @@ var gs_kiri_slice = exports;
             scope = this,
             tops = scope.tops,
             solids = scope.solids,
-            unioned = POLY.union(solids.poly),
-            debug = (this.index === DBUG.get('z-index') && DBUG.get('solid-fills'));
+            unioned = POLY.union(solids.poly);
 
         if (solids.length === 0) return false;
         if (unioned.length === 0) return false;
@@ -708,8 +699,6 @@ var gs_kiri_slice = exports;
         // then merge the resulting solids
         solids.unioned = unioned;
         solids.trimmed = trims;
-
-        if (debug) DBUG.log(['project', this.index, polys.length, unioned.length, inner.length]);
 
         // clear old solids and make array for new
         tops.forEach(function(top) { top.solids = [] });

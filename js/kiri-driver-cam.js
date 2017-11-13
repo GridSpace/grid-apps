@@ -37,7 +37,6 @@ var gs_kiri_cam = exports;
             "facing",
             "drilling"
         ],
-        DEBUG = false,
         MIN = Math.min,
         MAX = Math.max,
         PI = Math.PI,
@@ -221,7 +220,6 @@ var gs_kiri_cam = exports;
                 distance = nextdist;
             }
         });
-        // DBUG.log({z:selected.z, dist:distance, off:selected.z - z});
         return selected;
     }
 
@@ -255,7 +253,6 @@ var gs_kiri_cam = exports;
         slices.forEach(function(slice) {
             if (slice.hasFlats) forced.push(slice);
         })
-        // DBUG.log({forced:forced});
 
         var mid = [];
         forced.forEachPair(function(s1, s2) {
@@ -270,13 +267,11 @@ var gs_kiri_cam = exports;
             if (Math.abs(delta - step) < slop) return;
             // add another step if decimal too high
             if (dec > slop) nstep = delta / Math.ceil(inc);
-            // DBUG.log(['f',delta,step,nstep,delta / nstep]);
             // find closest slices in-between
             for (var zv = s1.z - nstep; zv >= s2.z + nstep/2; zv -= nstep) {
                 mid.push(closestSliceToZ(slices, zv));
             }
         }, 1);
-        // DBUG.log({mid:mid});
 
         forced.appendAll(mid);
         forced.sort(function(s1, s2) { return s2.z - s1.z; });
@@ -284,7 +279,6 @@ var gs_kiri_cam = exports;
         forced = forced.slice(1);
         forced.forEach(function(slice) {
             emit(slice);
-            // DBUG.log(slice.z);
         });
 
         // add to output array
@@ -498,7 +492,6 @@ var gs_kiri_cam = exports;
                                 }
                             }
                         }
-                        if (DEBUG) newtop.push(newPoint(x,y,gridv));
                         newtrace.push(newPoint(x,y,tv));
                         ly = y;
                         lv = gridv;
@@ -545,7 +538,6 @@ var gs_kiri_cam = exports;
                                 }
                             }
                         }
-                        if (DEBUG) newtop.push(newPoint(x,y,gridv));
                         newtrace.push(newPoint(x,y,tv));
                         lx = x;
                         lv = gridv;
@@ -719,7 +711,6 @@ var gs_kiri_cam = exports;
             shellFinish;
 
         if (sliceDepth <= 0.05) {
-            DBUG.log("invalid slice depth: "+sliceDepth);
             return ondone(null);
         }
 
