@@ -455,8 +455,6 @@ self.kiri.license = exports.LICENSE;
         layoutOnAdd = true,
         deviceLock = false,
         local = SETUP.local,
-        sliceRemote = !local,
-        printRemote = !local,
         mouseMoved = false,
         camStock = null,
         camTopZ = 0;
@@ -842,7 +840,7 @@ self.kiri.license = exports.LICENSE;
         }
 
         currentPrint = kiri.newPrint(settings, WIDGETS);
-        currentPrint.setup(printRemote, function(update, status) {
+        currentPrint.setup(true, function(update, status) {
             // on update
             setProgress(update, status);
         }, function() {
@@ -880,7 +878,7 @@ self.kiri.license = exports.LICENSE;
             preparePrint(exportPrint);
             return;
         }
-        currentPrint.exportGCode(printRemote, function(gcode) {
+        currentPrint.exportGCode(true, function(gcode) {
             exportGCode(gcode);
         });
     }
@@ -1164,7 +1162,7 @@ self.kiri.license = exports.LICENSE;
             track = {};
 
         // require topo be sent back from worker for local printing
-        settings.synth.sendTopo = !printRemote;
+        settings.synth.sendTopo = false;
 
         setOpacity(slicing_opacity);
 
@@ -1224,7 +1222,7 @@ self.kiri.license = exports.LICENSE;
                     totalProgress += (track[w.id] || 0);
                 });
                 setProgress(totalProgress / WIDGETS.length, msg);
-            }, sliceRemote);
+            }, true);
         });
     }
 

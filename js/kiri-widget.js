@@ -536,6 +536,7 @@ var gs_kiri_widget = exports;
 
         if (remote) {
 
+            // executed from kiri.js
             KIRI.work.slice(settings, this, function (reply) {
                 if (reply.update) {
                     onupdate(reply.update, reply.updateStatus);
@@ -554,6 +555,7 @@ var gs_kiri_widget = exports;
 
         } else {
 
+            // executed from kiri-worker.js
             widget.clearSlices();
 
             var catchdone = function() {

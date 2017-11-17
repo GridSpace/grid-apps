@@ -144,6 +144,8 @@ var gs_kiri_print = exports;
             mode = settings.mode;
 
         if (remote) {
+
+            // executed from kiri.js
             KIRI.work.printSetup(settings, function(reply) {
                 if (reply.done) {
                     scope.output = reply.output;
@@ -152,11 +154,15 @@ var gs_kiri_print = exports;
                     onupdate(reply.update, reply.updateStatus)
                 }
             });
+
         } else {
+
+            // executed from kiri-worker.js
             var driver = KIRI.driver[mode];
             if (driver) driver.printSetup(scope, onupdate);
             else console.log({missing_print_driver: mode});
             ondone();
+
         }
     };
 
@@ -166,6 +172,8 @@ var gs_kiri_print = exports;
             mode = settings.mode;
 
         if (remote) {
+
+            // executed from kiri.js
             KIRI.work.printGCode(function(reply) {
                 scope.lines = reply.lines;
                 scope.bytes = reply.bytes;
@@ -175,7 +183,10 @@ var gs_kiri_print = exports;
                 ondone(reply.gcode);
             });
             return;
+
         } else {
+
+            // executed from kiri-worker.js
             var driver = KIRI.driver[mode];
             if (driver && driver.printExport) {
                 ondone(driver.printExport(scope, online));
@@ -183,6 +194,7 @@ var gs_kiri_print = exports;
                 console.log({missing_export_driver: mode});
                 ondone(null);
             }
+
         }
     };
 
