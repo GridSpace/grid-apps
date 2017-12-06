@@ -202,8 +202,8 @@ var gs_kiri_print = exports;
         return KIRI.driver.LASER.exportGCode(this);
     };
 
-    PRO.exportSVG = function() {
-        return KIRI.driver.LASER.exportSVG(this);
+    PRO.exportSVG = function(cut_color) {
+        return KIRI.driver.LASER.exportSVG(this, cut_color);
     };
 
     PRO.exportDXF = function() {

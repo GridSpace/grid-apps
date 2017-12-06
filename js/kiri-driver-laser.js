@@ -260,8 +260,9 @@ var gs_kiri_laser = exports;
     /**
      *
      */
-    LASER.exportSVG = function(print) {
+    LASER.exportSVG = function(print, cut_color) {
         var lines = [], dx = 0, dy = 0, my;
+        var color = cut_color || "blue";
 
         exportElements(
             print,
@@ -276,7 +277,7 @@ var gs_kiri_laser = exports;
                 lines.push('<svg width="'+width+'mm" height="'+height+'mm" viewBox="0 0 '+width+' '+height+'" xmlns="http://www.w3.org/2000/svg" version="1.1">');
             },
             function(poly) {
-                lines.push('<polyline points="'+poly.join(' ')+'" fill="none" stroke="blue" stroke-width="0.01mm" />');
+                lines.push('<polyline points="'+poly.join(' ')+'" fill="none" stroke="' + color + '" stroke-width="0.01mm" />');
             },
             function() {
                 lines.push("</svg>");

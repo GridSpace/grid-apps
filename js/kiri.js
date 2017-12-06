@@ -893,7 +893,7 @@ self.kiri.license = exports.LICENSE;
 
         function download_svg() {
             saveAs(new Blob(
-                [currentPrint.exportSVG()],
+                [currentPrint.exportSVG($('print-color').value)],
                 {type:"application/octet-stream"}),
                 $('print-filename').value + ".svg");
         }
