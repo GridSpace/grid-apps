@@ -484,7 +484,7 @@ function handleData(req, res, next) {
  * @param {Function} next
  */
 function handleJS(req, res, next) {
-    if (!req.gs.local) return reply404(req, res);
+    if (!(req.gs.local || clearJS)) return reply404(req, res);
 
     var spath = req.gs.path.substring(1),
         jspos = spath.indexOf(".js"),

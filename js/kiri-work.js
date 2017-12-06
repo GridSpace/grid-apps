@@ -129,15 +129,19 @@ if (self.window) {
     // unified ball via /code/work.js -- otherwise, map "localhost" to "debug"
     // to debug unobfuscated code.  if not, /js/ paths will 404.
     if (host !== 'grid.space' && host !== 'debug') {
-        [
-            "license","ext-n3d","ext-clip","add-array",
-            "add-three","geo","geo-point","geo-debug","geo-bounds",
-            "geo-line","geo-slope","geo-polygon","geo-polygons",
-            "kiri-slice","kiri-slicer","kiri-driver-fdm","kiri-driver-cam",
-            "kiri-driver-laser","kiri-widget","kiri-pack","kiri-print","kiri-codec"
-        ].forEach(function(scr) {
-            importScripts(["/js/",scr,".js","/v"+ver].join(''));
-        })
+        try {
+            [
+                "license","ext-n3d","ext-clip","add-array",
+                "add-three","geo","geo-point","geo-debug","geo-bounds",
+                "geo-line","geo-slope","geo-polygon","geo-polygons",
+                "kiri-slice","kiri-slicer","kiri-driver-fdm","kiri-driver-cam",
+                "kiri-driver-laser","kiri-widget","kiri-pack","kiri-print","kiri-codec"
+            ].forEach(function(scr) {
+                importScripts(["/js/",scr,".js","/v"+ver].join(''));
+            })
+        } catch (e) {
+            console.log("unable to load worker scripts. kiri is likely in debug mode.");
+        }
     } else {
         importScripts("/code/work.js/"+ver);
         base.debug.disable();
