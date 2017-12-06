@@ -422,7 +422,9 @@ var gs_base_polygons = exports;
 
         if (out) out.appendAll(polys);
         if (collector) collector(polys, count);
-        if ((count === 0 || count > 1) && polys.length > 0) expand(polys, distance2 || distance, z, out, count > 0 ? count-1 : 0, distance2, collector);
+        if ((count === 0 || count > 1) && polys.length > 0) {
+            expand(polys, distance2 || distance, z, out, count > 0 ? count-1 : 0, distance2, collector);
+        }
 
         return polys;
     }
