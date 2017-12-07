@@ -84,7 +84,6 @@ var gs_kiri_slice = exports;
         this.poly = polygon; // outline poly
         this.traces = null; // array of offset/inset trace polygons (ordered outer to inner)
         this.inner = null; // array of inner fillable areas (inset from last trace)
-        this.outer = null; // array of outer trace polygons (TODO remove)
         this.fill_lines = null; // solid fill lines (array of points)
         this.fill_sparse = null; // sparse fill area open polygons (poly lines)
         this.solids = null; // solid fill regions in otherwise sparse fill (from solids.trimmed)
@@ -106,6 +105,19 @@ var gs_kiri_slice = exports;
     Top.prototype.clone = function(deep) {
         var top = new Top(this.poly.clone(deep));
         return top;
+    };
+
+    /**
+     * Appends all outermost trace polygons into a given array and returns it
+     *
+     * @param {Polygon[]} out array to populate
+     * @returns {Polygon[]} array of top polygons
+     */
+    Top.prototype.gatherOuter = function(out) {
+        this.traces.forEach(function(trace) {
+            if (trace.depth === 0) out.append(trace);
+        });
+        return out;
     };
 
     /** ******************************************************************
@@ -226,19 +238,6 @@ var gs_kiri_slice = exports;
     PRO.gatherInner = function(out) {
         this.tops.forEach(function(top) {
             out.appendAll(top.inner);
-        });
-        return out;
-    };
-
-    /**
-     * Appends all outermost trace polygons into a given array and returns it
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    PRO.gatherOuter = function(out) {
-        this.tops.forEach(function(top) {
-            out.appendAll(top.outer);
         });
         return out;
     };
@@ -366,7 +365,6 @@ var gs_kiri_slice = exports;
             if (vase) top.poly = top.poly.clone(false);
             top.traces = [];
             top.inner = [];
-            top.outer = [];
             var last = [];
 
             if (count) {
@@ -376,8 +374,6 @@ var gs_kiri_slice = exports;
                     top.traces = last;
                 } else {
                     POLY.expand([top.poly], -offset1, top.poly.getZ(), top.traces, count, -offsetN, function(polys, countNow) {
-                        // first offset is the outer poly group (max count #)
-                        if (count === countNow) top.outer = polys;
                         last = polys;
                         // mark each poly with depth (offset #) starting at 0
                         polys.forEach(function(p) { p.depth = count - countNow });

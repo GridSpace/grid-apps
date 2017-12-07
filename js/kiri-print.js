@@ -519,7 +519,7 @@ var gs_kiri_print = exports;
                 }
             } else {
                 // top object
-                var bounds = POLY.flatten(next.outer);
+                var bounds = POLY.flatten(next.gatherOuter([]));
                 outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
