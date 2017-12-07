@@ -372,6 +372,8 @@ var gs_kiri_print = exports;
             z = slice.z;
 
         function outputWipe(poly) {
+            if (!poly) return;
+
             var closest = poly.findClosestPointTo(startPoint),
                 distance = wipeDistance,
                 last = startPoint;
