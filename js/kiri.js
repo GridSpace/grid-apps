@@ -72,6 +72,7 @@ self.kiri.license = exports.LICENSE;
                     // outputShellSpeed: 1,
                     outputFillMult: 1,
                     outputSparseMult: 1,
+                    outputShellSpeedMult: 1,
                     outputRetractOver: 1,
                     outputRetractDist: 1,
                     outputRetractSpeed: 1,
@@ -264,6 +265,7 @@ self.kiri.license = exports.LICENSE;
                 // outputShellSpeed: 1.0,
                 outputFillMult: 1.25,
                 outputSparseMult: 1.5,
+                outputShellSpeedMult: 1.0,
                 outputRetractOver: 5.0,
                 outputRetractDist: 0.5,
                 outputRetractSpeed: 20,
@@ -2308,6 +2310,7 @@ self.kiri.license = exports.LICENSE;
             outputShellMult: UC.newInput("shell factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
+            outputShellSpeedMult: UC.newInput("finish factor", {title:"outermost shell speed multiplier\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
 
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),

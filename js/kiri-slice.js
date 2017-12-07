@@ -376,7 +376,13 @@ var gs_kiri_slice = exports;
                     POLY.expand([top.poly], -offset1, top.poly.getZ(), top.traces, count, -offsetN, function(polys, countNow) {
                         last = polys;
                         // mark each poly with depth (offset #) starting at 0
-                        polys.forEach(function(p) { p.depth = count - countNow });
+                        polys.forEach(function(p) {
+                            p.depth = count - countNow;
+                            if (p.inner) p.inner.forEach(function(pi) {
+                                // use negative offset for inners
+                                pi.depth = -(count - countNow);
+                            });
+                        });
                     });
                 }
             }

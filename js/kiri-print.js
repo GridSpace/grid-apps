@@ -217,7 +217,7 @@ var gs_kiri_print = exports;
             newlayer = [];
             newout.push(newlayer);
             layerout.forEach(function(out) {
-                if (out.point) newlayer.push({emit:out.emit, point:{x:out.point.x, y:out.point.y, z:out.point.z}});
+                if (out.point) newlayer.push({emit:out.emit, speed:out.speed, point:{x:out.point.x, y:out.point.y, z:out.point.z}});
             });
         });
         return newout;
@@ -314,6 +314,7 @@ var gs_kiri_print = exports;
     }
 
     /**
+     * FDM only. add points in polygon to an output array (print path)
      *
      * @param {Polygon} poly
      * @param {Point} startPoint
@@ -330,16 +331,17 @@ var gs_kiri_print = exports;
             dist,
             first = true,
             settings = this.settings,
-            shellMult = extrude || settings.process.outputShellMult;
+            shellMult = extrude || settings.process.outputShellMult,
+            shellSpeed = settings.process.outputShellSpeedMult || 1;
 
         poly.forEachPoint(function(point) {
             if (first) {
                 if (onfirst) onfirst(point);
                 // move from startPoint to point
-                addOutput(output, point, 0);
+                addOutput(output, point, 0, 1);
                 first = false;
             } else {
-                addOutput(output, point, shellMult);
+                addOutput(output, point, shellMult, poly.depth == 0 ? shellSpeed : 1);
             }
         }, true, closest.index);
 
@@ -520,7 +522,8 @@ var gs_kiri_print = exports;
             } else {
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
+                // outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
+                outputTraces([].appendAll(next.innerTraces() || []).appendAll(next.traces), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
             }
