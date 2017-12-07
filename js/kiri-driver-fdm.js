@@ -206,7 +206,7 @@ var gs_kiri_fdm = exports;
                         tops.push(top.poly.clone());
                     });
                     POLY.nest(tops).forEach(function(poly) {
-                        poly.offset(-process.outputBrimOffset).forEach(function(brim) {
+                        poly.offset(-process.outputBrimOffset+device.nozzleSize/2).forEach(function(brim) {
                             brim.move(widget.mesh.position);
                             brims.push(brim);
                         });
@@ -270,7 +270,9 @@ var gs_kiri_fdm = exports;
             progress = 0,
             distance = 0,
             emitted = 0,
+            retracted = 0,
             pos = {x:0, y:0, z:0, f:0},
+            last = null,
             zinc = process.sliceHeight,
             zpos = zinc * process.firstLayerHeight,
             offset = process.outputOriginCenter ? null : {
@@ -289,7 +291,7 @@ var gs_kiri_fdm = exports;
                 bottom: offset ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight
             },
-            fillBridgeDist = device.nozzleSize * 2,
+            glideBridgeDist = device.nozzleSize * 2,
             shortDist = process.outputShortDistance,
             shortFact = process.outputShortFactor,
             maxPrintMMM = process.outputFeedrate * 60,
@@ -382,7 +384,13 @@ var gs_kiri_fdm = exports;
             if (comment) {
                 o.append(" ; ").append(comment);
             }
-            append(o.join(''));
+            var line = o.join('');
+            if (last == line) {
+                // console.log({dup:line});
+                return;
+            }
+            last = line;
+            append(line);
         }
 
         // calc total distance traveled by head as proxy for progress
@@ -427,6 +435,10 @@ var gs_kiri_fdm = exports;
                 dist = lastp ? lastp.distTo2D(out.point) : 0;
                 distance += dist;
                 progress = Math.round((distance / totaldistance) * 100);
+                if (out.emit && retracted) {
+                    moveTo({e:retracted}, retSpeed, "engage (ooze control)");
+                    retracted = 0;
+                }
                 if (lastp && out.emit) {
                     var outMMM = printMMM,
                         emitMM = emitPerMM * out.emit * dist;
@@ -452,14 +464,13 @@ var gs_kiri_fdm = exports;
                     if (out.speed) {
                         moveMMM = out.speed * 60;
                     }
-                    if (laste && retOver > 0.0 && dist > retOver) {
-                        //
-                        moveTo({e:-retDist}, retSpeed, "ooze retract");
+                    if (out.retract || (laste && retOver > 0.0 && dist > retOver)) {
+                        retracted = retDist;
+                        moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
                         moveTo({x:x, y:y}, moveMMM);
-                        moveTo({e:retDist}, retSpeed, "re-engage");
-                    } else if (lastp && dist <= fillBridgeDist) {
-                        var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
-                        moveTo({x:x, y:y, e:e}, outMMM);
+                    // } else if (lastp && dist <= glideBridgeDist) {
+                    //     var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
+                    //     moveTo({x:x, y:y, e:e}, outMMM);
                     } else {
                         moveTo({x:x, y:y}, moveMMM);
                     }

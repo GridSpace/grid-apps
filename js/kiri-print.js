@@ -217,7 +217,16 @@ var gs_kiri_print = exports;
             newlayer = [];
             newout.push(newlayer);
             layerout.forEach(function(out) {
-                if (out.point) newlayer.push({emit:out.emit, speed:out.speed, point:{x:out.point.x, y:out.point.y, z:out.point.z}});
+                if (out.point) {
+                    // used for presentation only. can drop non-essential
+                    // data to speed up worker -> browser transfer
+                    newlayer.push({
+                        emit: out.emit,
+                        // speed: out.speed,
+                        // retract: out.retract,
+                        point: {x: out.point.x, y: out.point.y, z: out.point.z}
+                    });
+                }
             });
         });
         return newout;
@@ -308,6 +317,9 @@ var gs_kiri_print = exports;
         if (lastPoint && point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
             return;
         }
+        if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
+            console.log(({dup:point, last:lastPoint}));
+        }
         lastPoint = point;
         lastEmit = emit;
         array.push(new Output(point, emit, speed, tool));
@@ -376,7 +388,8 @@ var gs_kiri_print = exports;
 
             var closest = poly.findClosestPointTo(startPoint),
                 distance = wipeDistance,
-                last = startPoint;
+                last = startPoint,
+                steps = 0;
 
             if (!distance) return;
 
@@ -391,6 +404,7 @@ var gs_kiri_print = exports;
                         distance -= last.distTo2D(point);
                     }
                     last = point;
+                    if (steps++ === 0) preout.last().retract = true;
                 }
             }, true, closest.index);
 
@@ -419,7 +433,8 @@ var gs_kiri_print = exports;
                 if (!paths || paths.length !== 2) return;
                 var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
                 if (p1.distTo2D(path.first() > p1.distTo2D(path.last()))) path.reverse();
-                routes.push(path);
+                // cull phantom and short paths
+                if (path.perimeter() > 0.1) routes.push(path);
             });
             // sort bisecting paths by those closest to start point (p1)
             routes.sort((function(o1, o2) {
@@ -536,6 +551,8 @@ var gs_kiri_print = exports;
         }
 
         var all = [].appendAll(slice.supports || []).appendAll(slice.tops || []);
+        var wipe = null;
+        var lastTop = null;
         outputOrderClosest(all || [], function(next) {
             if (next instanceof Polygon) {
                 // support polygon
@@ -545,13 +562,27 @@ var gs_kiri_print = exports;
                     next.fills.forEach(function(p) { p.z = z });
                     outputFills(next.fills, next.inner);
                 }
+                // lastTop = null;
             } else {
+                if (lastTop && lastTop !== next && wipe) {
+                    outputWipe(wipe);
+                    wipe = null;
+                }
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
                 outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
-                outputWipe(next.traces.last());
+                if (next.inner) {
+                    wipe = next.inner.last();
+                    // best to use inner offset for wipe
+                    // outputWipe(next.inner.last());
+                } else {
+                    wipe = next.traces.last();
+                    // otherwise fall back to innermost trace
+                    // outputWipe(next.traces.last());
+                }
+                lastTop = next;
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;

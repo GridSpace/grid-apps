@@ -452,6 +452,7 @@ self.kiri.license = exports.LICENSE;
         sliced_opacity = 0.0,
         sliced_opacity_cam = 0.25,
         // ---------------
+        printSeq = parseInt(SDB['print-seq'] || "0") + 1,
         catalogSize = 0,
         showLayerRange = 0,
         showLayerValue = 0,
@@ -935,7 +936,9 @@ self.kiri.license = exports.LICENSE;
             KIRI.serial.setGCode(gcode, currentPrint.bounds);
         }
 
-        var pre = MODE === MODES.CAM ? "cnc" : "print",
+        SDB['print-seq'] = printSeq++;
+
+        var pre = (MODE === MODES.CAM ? "cnc-" : "print-") + (printSeq.toString().padStart(3,"0")),
             filename = pre,// + (new Date().getTime().toString(36)),
             fileext = settings.device.gcodeFExt || "gcode",
             octo_host,
@@ -1060,7 +1063,7 @@ self.kiri.license = exports.LICENSE;
 
         function download() {
             filename = $('print-filename').value;
-            saveAs(getBlob(), filename+"."+fileext);
+            saveAs(getBlob(), filename + "." + fileext);
         }
 
         function pad(v) {

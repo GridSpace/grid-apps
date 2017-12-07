@@ -59,6 +59,7 @@
 # FDM todo
 
 * add lay-flat auto-rotation
+* add dashed poly output on first connected brim (when offset === 0)
 * implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
 * fan / layer control * update forum
 * infill rendering as moves instead of extrusions (firefox?)
