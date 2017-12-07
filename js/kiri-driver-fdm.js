@@ -447,21 +447,26 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, outMMM);
                     emitted += emitMM;
                 } else {
+                    var moveMMM = seekMMM;
+                    // usually wipe speed override
+                    if (out.speed) {
+                        moveMMM = out.speed * 60;
+                    }
                     if (laste && retOver > 0.0 && dist > retOver) {
                         //
                         moveTo({e:-retDist}, retSpeed, "ooze retract");
-                        moveTo({x:x, y:y}, seekMMM);
+                        moveTo({x:x, y:y}, moveMMM);
                         moveTo({e:retDist}, retSpeed, "re-engage");
                     } else if (lastp && dist <= fillBridgeDist) {
                         var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
                         moveTo({x:x, y:y, e:e}, outMMM);
                     } else {
-                        moveTo({x:x, y:y}, seekMMM);
+                        moveTo({x:x, y:y}, moveMMM);
                     }
-                    time += (dist / seekMMM) * 60; // seek distance
+                    time += (dist / moveMMM) * 60; // seek distance
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                     // approximate compensation for acceleration & deceleration
-                    time += (shortDist * 2) / seekMMM / 10 * 60;
+                    time += (shortDist * 2) / moveMMM / 10 * 60;
                 }
                 lastp = out.point;
                 laste = out.emit;

@@ -326,9 +326,7 @@ var gs_kiri_print = exports;
     PRO.polyPrintPath = function(poly, startPoint, output, extrude, onfirst) {
         poly.setClockwise();
 
-        var mindist = Infinity,
-            closest = poly.findClosestPointTo(startPoint),
-            dist,
+        var closest = poly.findClosestPointTo(startPoint),
             first = true,
             settings = this.settings,
             shellMult = extrude || settings.process.outputShellMult,
@@ -368,8 +366,34 @@ var gs_kiri_print = exports;
             fillMult = process.outputFillMult,
             shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
+            wipeDistance = process.outputWipeDistance,
+            wipeSpeed = process.outputWipeSpeed || 20,
             origin = startPoint.add(offset),
             z = slice.z;
+
+        function outputWipe(poly) {
+            var closest = poly.findClosestPointTo(startPoint),
+                distance = wipeDistance,
+                last = startPoint;
+
+            if (!distance) return;
+
+            while (distance > 0) poly.forEachPoint(function(point) {
+                if (distance > 0) {
+                    var len = last.distTo2D(point);
+                    if (len > distance) {
+                        addOutput(preout, point.offsetPointFrom(last, distance), 0, wipeSpeed);
+                        distance = 0;
+                    } else {
+                        addOutput(preout, point, 0, wipeSpeed);
+                        distance -= last.distTo2D(point);
+                    }
+                    last = point;
+                }
+            }, true, closest.index);
+
+            startPoint = preout[preout.length - 1].point;
+        }
 
         function outputTraces(poly, bounds) {
             if (!poly) return;
@@ -522,10 +546,10 @@ var gs_kiri_print = exports;
             } else {
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                // outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
-                outputTraces([].appendAll(next.innerTraces() || []).appendAll(next.traces), bounds);
+                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
+                outputWipe(next.traces.last());
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
