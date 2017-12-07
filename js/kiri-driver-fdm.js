@@ -432,6 +432,9 @@ var gs_kiri_fdm = exports;
                         emitMM = emitPerMM * out.emit * dist;
                     if (layer === 0) {
                         emitMM = emitPerMMLayer1 * out.emit * dist;
+                    } else if (out.speed && out.speed < process.outputFeedrate) {
+                        // usually outer shell (finish speed) override
+                        outMMM = out.speed * 60;
                     }
                     if (dist < shortDist) {
                         outMMM = shortMMM + ((outMMM - shortMMM) * (dist / shortDist));

@@ -332,16 +332,16 @@ var gs_kiri_print = exports;
             first = true,
             settings = this.settings,
             shellMult = extrude || settings.process.outputShellMult,
-            shellSpeed = settings.process.outputShellSpeedMult || 1;
+            shellSpeed = settings.process.outputFinishrate || 0;
 
         poly.forEachPoint(function(point) {
             if (first) {
                 if (onfirst) onfirst(point);
                 // move from startPoint to point
-                addOutput(output, point, 0, 1);
+                addOutput(output, point, 0, 0);
                 first = false;
             } else {
-                addOutput(output, point, shellMult, poly.depth == 0 ? shellSpeed : 1);
+                addOutput(output, point, shellMult, poly.depth == 0 ? shellSpeed : 0);
             }
         }, true, closest.index);
 
