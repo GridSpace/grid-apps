@@ -16,7 +16,8 @@
 		"G92 E0",
 		"G1 X10 F600",
 		"G1 F140 E29",
-		"G1 Y40 F3000",
+		"G1 F600 E28",
+		"G1 Y20 Z0.05 F2000",
 		";G92 E0",
 		"G1 F6000.00",
 		"M117 Printing...",
@@ -41,8 +42,8 @@
     "settings":{
         "origin_center": false,
         "extrude_abs": true,
-        "bed_width": 305,
-        "bed_depth": 305,
+        "bed_width": 310,
+        "bed_depth": 310,
         "build_height": 305
     }
 }

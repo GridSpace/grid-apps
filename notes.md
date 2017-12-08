@@ -58,25 +58,21 @@
 
 # FDM todo
 
-* add lay-flat auto-rotation
+* solid fill every other line, two passes. minimize heat/sag. better fill between
+* add lay-flat auto-rotation or from selected face
 * add dashed poly output on first connected brim (when offset === 0)
-* implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
+* add hold down fingers option on brim (when offset !== 0)
 * fan / layer control * update forum
 * infill rendering as moves instead of extrusions (firefox?)
-* run line through center of series of short fills (thin fill optimization)
 * add rafts, thin wall detection, manual supports
 * add skirt to raft option as a simpler way to do rafts
-* separate shell speed control
-* wipe on infill should follow the closest enclosing shell poly
+* dual extruder support
 * add TAZ profile from https://code.alephobjects.com/diffusion/P/browse/master/cura/TAZ_flexy_dually_v2/PLA-PVA-support_medium-quality_TAZ_FlexyDually-v2_0.6noz_cura.ini
-* add control of shortest line/fill line before culling
-* add retraction distance/speed to device profiles
 * add min layer time (slowdown or cool-off wait)
-* tops should print inside/out (add odds w/ poly2poly ...)
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
 * check for support / brim intersections on first layer
-* dual extruder support
+* implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
 
 # Laser todo
 

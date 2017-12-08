@@ -296,7 +296,6 @@ var gs_kiri_fdm = exports;
             shortFact = process.outputShortFactor,
             maxPrintMMM = process.outputFeedrate * 60,
             seekMMM = process.outputSeekrate * 60,
-            retOver = process.outputRetractOver,
             retDist = process.outputRetractDist,
             retSpeed = process.outputRetractSpeed * 60,
             // ratio of nozzle area to filament area times
@@ -371,7 +370,7 @@ var gs_kiri_fdm = exports;
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
                 if (device.extrudeAbs) {
-                    // for flashforge finder that uses cumulative extruder position
+                    // for cumulative (absolute) extruder positions
                     o.append(" E").append(UTIL.round(outputLength, decimals));
                 } else {
                     o.append(" E").append(UTIL.round(newpos.e, decimals));
@@ -464,7 +463,7 @@ var gs_kiri_fdm = exports;
                     if (out.speed) {
                         moveMMM = out.speed * 60;
                     }
-                    if (out.retract || (laste && retOver > 0.0 && dist > retOver)) {
+                    if (out.retract) {
                         retracted = retDist;
                         moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
                         moveTo({x:x, y:y}, moveMMM);

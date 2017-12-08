@@ -318,7 +318,7 @@ var gs_kiri_print = exports;
             return;
         }
         if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
-            console.log(({dup:point, last:lastPoint}));
+            // console.log(({dup:point, last:lastPoint}));
         }
         lastPoint = point;
         lastEmit = emit;
@@ -374,7 +374,10 @@ var gs_kiri_print = exports;
             scope = this,
             settings = this.settings,
             process = settings.process,
-            minSeek = settings.device.nozzleSize * 1.5,
+            nozzle = settings.device.nozzleSize,
+            minSeek = nozzle * 1.5,
+            thinWall = nozzle * 1.75,
+            fillSkip = nozzle * 5,
             fillMult = process.outputFillMult,
             shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
@@ -477,21 +480,28 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, point, find, dist;
+            var mindist, p1, p2, dist, dsave, point, find, find2, len, lastout;
             while (lines) {
                 find = null;
+                find2 = null;
                 mindist = Infinity;
                 // find next closes line
                 for (i=0; i<lines.length; i++) {
                     point = lines[i];
                     if (point.del) continue;
-                    dist = SQRT(startPoint.distToSq2D(point));
+                    dist = startPoint.distTo2D(point);
                     if (dist < mindist) {
-                        find = {i:i, p:point};
+                        find2 = find;
+                        find = {i:i, p:point, d:dist};
                         mindist = dist;
                     }
                 }
                 if (find) {
+                    // do 2nd closest fill lines within bigger fill areas
+                    // if (find2 && lastout === 2 && len > thinWall && find2.d < fillSkip) {
+                    //     find = find2;
+                    // }
+
                     // order segment by closest to farthest point
                     if (find.i % 2 === 0) {
                         p1 = find.p;
@@ -500,19 +510,33 @@ var gs_kiri_print = exports;
                         p1 = find.p;
                         p2 = lines[find.i - 1];
                     }
+
                     // mark as used (temporary)
                     p1.del = true;
                     p2.del = true;
-                    dist = SQRT(startPoint.distToSq2D(p1));
+                    dist = startPoint.distTo2D(p1);
+                    len = p1.distTo2D(p2);
 
-                    // check for intersection with bounds and if found
-                    // follow the shortest path around that bounding poly
-                    if (bounds && startPoint && dist > minSeek) {
-                        checkBisect(startPoint, p1, bounds);
+                    // if dist to new segment is less than thinWall
+                    // and segment length is less than thinWall then
+                    // just extrude to midpoint of next segment. this is
+                    // to avoid shaking printer to death.
+                    if (mindist <= thinWall && len <= thinWall) {
+                        p2 = p1.midPointTo(p2);
+                        addOutput(preout, p2, fillMult * (mindist / thinWall));
+                        lastout = 1;
+                    } else {
+                        // check for intersection with bounds and if found
+                        // follow the shortest path around that bounding poly
+                        if (bounds && startPoint && dist > minSeek) {
+                            checkBisect(startPoint, p1, bounds);
+                        }
+
+                        addOutput(preout, p1, 0);
+                        addOutput(preout, p2, fillMult);
+                        lastout = 2;
                     }
 
-                    addOutput(preout, p1, 0);
-                    addOutput(preout, p2, fillMult);
                     startPoint = p2;
                 } else {
                     break;
