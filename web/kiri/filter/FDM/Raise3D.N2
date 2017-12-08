@@ -4,7 +4,6 @@
 		"M140 S{bed_temp}",
 		"M104 T0 S{temp}",
 		"M109 T0 S{temp}",
-		"T0",
 		"M190 S{bed_temp}",
 		"G21",
 		"G90",
