@@ -72,6 +72,7 @@ self.kiri.license = exports.LICENSE;
                     outputShellMult: 1,
                     outputFillMult: 1,
                     outputSparseMult: 1,
+                    outputRetractOver: 1,
                     outputRetractDist: 1,
                     outputRetractSpeed: 1,
                     outputBrimCount: 1,
@@ -265,6 +266,7 @@ self.kiri.license = exports.LICENSE;
                 outputShellMult: 1.0,
                 outputFillMult: 1.25,
                 outputSparseMult: 1.5,
+                outputRetractOver: 5.0,
                 outputRetractDist: 0.5,
                 outputRetractSpeed: 20,
                 outputWipeSpeed: 20,
@@ -2349,6 +2351,7 @@ self.kiri.license = exports.LICENSE;
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
+            outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
             outputWipeSpeed: UC.newInput("wipe speed", {title:"speed while wiping\nnozzle in mm/s", convert:UC.toInt, modes:FDM}),
