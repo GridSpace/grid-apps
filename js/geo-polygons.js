@@ -268,7 +268,7 @@ var gs_base_polygons = exports;
 
         function filter(from, to) {
             from.forEach(function(poly) {
-                if (poly.area() >= min && poly.circularity() > 0.01) {
+                if (poly.area() >= min) {
                     to.push(poly);
                     out.push(poly);
                 }
