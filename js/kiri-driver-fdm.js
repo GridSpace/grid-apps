@@ -241,7 +241,7 @@ var gs_kiri_fdm = exports;
                 if (!closest) break;
                 slices[minidx] = null;
                 // output seek to start point between mesh slices if previous data
-                printPoint = print.slicePrintPath(closest.slice, printPoint.sub(closest.offset), closest.offset, layerout, true);
+                printPoint = print.slicePrintPath(closest.slice, printPoint.sub(closest.offset), closest.offset, layerout, layer);
             }
 
             if (layerout.length) output.append(layerout);
@@ -448,7 +448,7 @@ var gs_kiri_fdm = exports;
                         // usually outer shell (finish speed) override
                         outMMM = out.speed * 60;
                     }
-                    if (dist < shortDist) {
+                    if (layer > 0 && dist < shortDist) {
                         outMMM = shortMMM + ((outMMM - shortMMM) * (dist / shortDist));
                     } else {
                         // approximate compensation for acceleration & deceleration
@@ -464,7 +464,7 @@ var gs_kiri_fdm = exports;
                     if (out.speed) {
                         moveMMM = out.speed * 60;
                     }
-                    if (!retracted && (out.retract || dist >= retOver)) {
+                    if (!retracted && out.retract) {
                         retracted = retDist;
                         moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
                         moveTo({x:x, y:y}, moveMMM);

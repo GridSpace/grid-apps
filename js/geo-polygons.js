@@ -547,7 +547,7 @@ var gs_base_polygons = exports;
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
             ctre.m_AllPolys.forEach(function(poly) {
                 // filter out polygons under min length (0.5mm)
-                if (clib.JS.PerimeterOfPath(poly.m_polygon, false, 1) < minlen) return;
+                // if (clib.JS.PerimeterOfPath(poly.m_polygon, false, 1) < minlen) return;
                 poly.m_polygon.forEach(function(point) {
                     rayint.push(newPoint(null,null,zpos,null,point));
                 });

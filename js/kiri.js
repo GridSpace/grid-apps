@@ -2351,7 +2351,7 @@ self.kiri.license = exports.LICENSE;
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
-            outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
+            // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
             outputWipeSpeed: UC.newInput("wipe speed", {title:"speed while wiping\nnozzle in mm/s", convert:UC.toInt, modes:FDM}),

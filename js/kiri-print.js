@@ -365,10 +365,10 @@ var gs_kiri_print = exports;
      * @param {Point} startPoint start as close as possible to startPoint
      * @param {THREE.Vector3} offset
      * @param {Point[]} output points
-     * @param {boolean} isFDM controls whether we emit wipe or not
+     * @param {Number} layer from 0 to # of layers (slices) in model
      * @return {Point} last output point
      */
-    PRO.slicePrintPath = function(slice, startPoint, offset, output, isFDM) {
+    PRO.slicePrintPath = function(slice, startPoint, offset, output, layer) {
         var i,
             preout = [],
             scope = this,
@@ -377,7 +377,7 @@ var gs_kiri_print = exports;
             nozzle = settings.device.nozzleSize,
             minSeek = nozzle * 1.5,
             thinWall = nozzle * 1.75,
-            fillSkip = nozzle * 5,
+            fillSkip = nozzle * 3,
             fillMult = process.outputFillMult,
             shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
@@ -385,6 +385,10 @@ var gs_kiri_print = exports;
             wipeSpeed = process.outputWipeSpeed || 20,
             origin = startPoint.add(offset),
             z = slice.z;
+
+        function retract() {
+            if (preout.length) preout.last().retract = true;
+        }
 
         function outputWipe(poly) {
             if (!poly) return;
@@ -407,21 +411,30 @@ var gs_kiri_print = exports;
                         distance -= last.distTo2D(point);
                     }
                     last = point;
-                    if (steps++ === 0) preout.last().retract = true;
+                    if (steps++ === 0) retract();
                 }
             }, true, closest.index);
 
             startPoint = preout[preout.length - 1].point;
         }
 
-        function outputTraces(poly, bounds) {
+        function outputTraces(poly, bounds, last) {
             if (!poly) return;
             if (Array.isArray(poly)) {
+                var lastPoly = null;
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, bounds);
+                    outputTraces(next, bounds, lastPoly);
+                    lastPoly = next;
                 });
             } else {
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, shellMult, function(point) {
+                    if (startPoint.distTo2D(point) > fillSkip) {
+                        if (last) {
+                            outputWipe(last)
+                        } else {
+                            retract();
+                        }
+                    }
                     checkBisect(startPoint, point, bounds);
                 });
             }
@@ -480,25 +493,24 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, dsave, point, find, find2, len, lastout;
+            var mindist, p1, p2, dist, point, find, find2, list, len, lastout, pass = 0;
             while (lines) {
-                find = null;
-                find2 = null;
+                list = [];
                 mindist = Infinity;
-                // find next closes line
+                // order all points by distance to last point
                 for (i=0; i<lines.length; i++) {
                     point = lines[i];
                     if (point.del) continue;
                     dist = startPoint.distTo2D(point);
-                    if (dist < mindist) {
-                        find2 = find;
-                        find = {i:i, p:point, d:dist};
-                        mindist = dist;
-                    }
+                    list.push({i:i, p:point, d:dist});
                 }
-                if (find) {
+                if (list.length > 0) {
+                    list.sort(function(a,b) { return a.d - b.d });
+                    find = list[0];
+                    find2 = list[4] || list[3] || list [2] || list[1];
+
                     // do 2nd closest fill lines within bigger fill areas
-                    // if (find2 && lastout === 2 && len > thinWall && find2.d < fillSkip) {
+                    // if (layer === 0 && pass > 0 && find2 && lastout === 2 && len > thinWall) {//} && find2.d <= fillSkip) {
                     //     find = find2;
                     // }
 
@@ -521,9 +533,9 @@ var gs_kiri_print = exports;
                     // and segment length is less than thinWall then
                     // just extrude to midpoint of next segment. this is
                     // to avoid shaking printer to death.
-                    if (mindist <= thinWall && len <= thinWall) {
+                    if (find.d <= thinWall && len <= thinWall) {
                         p2 = p1.midPointTo(p2);
-                        addOutput(preout, p2, fillMult * (mindist / thinWall));
+                        addOutput(preout, p2, fillMult * (find.d / thinWall));
                         lastout = 1;
                     } else {
                         // check for intersection with bounds and if found
@@ -541,6 +553,7 @@ var gs_kiri_print = exports;
                 } else {
                     break;
                 }
+                pass++;
             }
             // clear delete marks so we can re-print later
             if (lines) lines.forEach(function(p) { p.del = false });
