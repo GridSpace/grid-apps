@@ -339,6 +339,7 @@ var gs_kiri_slice = exports;
             case 4:
                 tops.forEach(function(top) {
                     layer.poly(top.poly, colors[0], true, open);
+                    if (top.inner) layer.poly(top.inner, 0x999999, true, null);
                 });
                 break;
         }
