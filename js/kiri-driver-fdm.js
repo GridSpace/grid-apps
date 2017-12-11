@@ -448,12 +448,12 @@ var gs_kiri_fdm = exports;
                         // usually outer shell (finish speed) override
                         outMMM = out.speed * 60;
                     }
-                    if (layer > 0 && dist < shortDist) {
-                        outMMM = shortMMM + ((outMMM - shortMMM) * (dist / shortDist));
-                    } else {
+                    // if (layer > 0 && dist < shortDist) {
+                    //     outMMM = shortMMM + ((outMMM - shortMMM) * (dist / shortDist));
+                    // } else {
                         // approximate compensation for acceleration & deceleration
                         time += (shortDist * 2) / outMMM / 10 * 60;
-                    }
+                    // }
                     // print time
                     time += (dist / outMMM) * 60;
                     moveTo({x:x, y:y, e:emitMM}, outMMM);
