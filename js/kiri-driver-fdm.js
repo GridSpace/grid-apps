@@ -291,9 +291,9 @@ var gs_kiri_fdm = exports;
                 bottom: offset ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight
             },
-            glideBridgeDist = device.nozzleSize * 2,
             shortDist = process.outputShortDistance,
             shortFact = process.outputShortFactor,
+            glideBridgeDist = device.nozzleSize * 2,
             maxPrintMMM = process.outputFeedrate * 60,
             seekMMM = process.outputSeekrate * 60,
             retOver = process.outputRetractOver,
@@ -468,9 +468,10 @@ var gs_kiri_fdm = exports;
                         retracted = retDist;
                         moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
                         moveTo({x:x, y:y}, moveMMM);
-                    // } else if (lastp && dist <= glideBridgeDist) {
-                    //     var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
-                    //     moveTo({x:x, y:y, e:e}, outMMM);
+                    } else if (lastp && dist <= glideBridgeDist) {
+                        // connect ends of infill
+                        var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
+                        moveTo({x:x, y:y, e:e}, outMMM);
                     } else {
                         moveTo({x:x, y:y}, moveMMM);
                     }

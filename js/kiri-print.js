@@ -97,7 +97,7 @@ var gs_kiri_print = exports;
             };
 
         lines.forEach(function(line) {
-            line = line.split(" ");
+            line = line.split(";")[0].split(" ");
             if (line.length < 2) return;
             switch (line.shift()) {
                 case 'G0':
@@ -222,7 +222,7 @@ var gs_kiri_print = exports;
                     // data to speed up worker -> browser transfer
                     newlayer.push({
                         emit: out.emit,
-                        // speed: out.speed,
+                        speed: out.speed,
                         // retract: out.retract,
                         point: {x: out.point.x, y: out.point.y, z: out.point.z}
                     });
@@ -252,15 +252,18 @@ var gs_kiri_print = exports;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
-            var move = [], print = [], z;
-            layerout.forEach(function(out) {
+            var move = [], print = {}, z;
+            layerout.forEach(function(out, index) {
                 if (last) {
                     if (UTIL.distSq(last, out.point) < 0.001 && out.point.z === last.z) {
                         return;
                     }
                     if (out.emit > 0) {
-                        print.push(last);
-                        print.push(out.point);
+                        var spd = out.speed || 3000;
+                        var arr = print[spd] || [];
+                        print[spd] = arr;
+                        arr.push(last);
+                        arr.push(out.point);
                     } else {
                         move.push(last);
                         move.push(out.point);
@@ -273,9 +276,13 @@ var gs_kiri_print = exports;
             });
             view = KIRI.newLayer(scope.group);
             scope.layerView.push(view);
-            // console.log({move:move, print:print});
             if (showMoves) view.lines(move, moveColor);
-            view.lines(print, 0x5566aa);
+            for (var speed in print) {
+                var sint = Math.min(6000, parseInt(speed));
+                var red  = Math.round((sint/6000) * 0xff);
+                var blue = 0xff - red;
+                view.lines(print[speed], (red<<16) | (blue));
+            }
             view.render();
             scope.lines += print.length;
         });
