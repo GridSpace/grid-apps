@@ -222,7 +222,7 @@ var gs_kiri_print = exports;
                     // data to speed up worker -> browser transfer
                     newlayer.push({
                         emit: out.emit,
-                        speed: out.speed,
+                        speed: out.speed * 60,
                         // retract: out.retract,
                         point: {x: out.point.x, y: out.point.y, z: out.point.z}
                     });
@@ -366,7 +366,7 @@ var gs_kiri_print = exports;
      * @param {Point} point
      * @param {number} emit (0=move, !0=filament emit/laser on/cut mode)
      * @param {number} [speed] speed
-     * @param {number} [tool] tool
+     * @param {number} [tool] tool # or nozzle #
      */
     function addOutput(array, point, emit, speed, tool) {
         // drop duplicates (usually intruced by FDM bisections)
@@ -381,6 +381,18 @@ var gs_kiri_print = exports;
         array.push(new Output(point, emit, speed, tool));
     }
 
+    function segmentOutput(output, p1, p2, s1, s2, steps, mult) {
+        var sd = (s2 - s1) / (steps + 1);
+        var dd = p1.distTo2D(p2) / steps;
+        var dist = dd;
+        var spd = s1;
+        while (steps-- > 0) {
+            spd += sd;
+            p1 = p1.offsetPointTo(p2, dd);
+            addOutput(output, p1, mult, spd);
+        }
+    }
+
     /**
      * FDM only. add points in polygon to an output array (print path)
      *
@@ -391,27 +403,50 @@ var gs_kiri_print = exports;
      * @param {Function} [onfirst] optional fn to call on first point
      * @return {Point} last output point
      */
-    PRO.polyPrintPath = function(poly, startPoint, output, extrude, onfirst) {
+    PRO.polyPrintPath = function(poly, startPoint, output, options) {
         poly.setClockwise();
 
-        var closest = poly.findClosestPointTo(startPoint),
+        var options = options || {},
+            process = this.settings.process,
+            shortDist = process.outputShortDistance,
+            shortFact = process.outputShortFactor,
+            shellMult = options.extrude || process.outputShellMult,
+            printSpeed = options.rate || process.outputFeedrate,
+            shortSpeed = printSpeed * shortFact,
+            moveSpeed = process.outputSeekrate,
+            closest = poly.findClosestPointTo(startPoint),
             first = true,
-            settings = this.settings,
-            shellMult = extrude || settings.process.outputShellMult,
-            shellSpeed = settings.process.outputFinishrate || 0;
+            last = startPoint;
 
-        poly.forEachPoint(function(point) {
+        poly.forEachPoint(function(point, pos, points, count) {
             if (first) {
-                if (onfirst) onfirst(point);
+                if (options.onfirst) options.onfirst(point);
                 // move from startPoint to point
-                addOutput(output, point, 0, 0);
+                addOutput(output, point, 0, moveSpeed);
                 first = false;
             } else {
-                addOutput(output, point, shellMult, poly.depth == 0 ? shellSpeed : 0);
+                var dist = last.distTo2D(point);
+                if (options.shorten && dist > options.shorten && count === points.length) {
+                    point = last.offsetPointFrom(point, options.shorten);
+                }
+                if (options.accel && dist >= options.accel) {
+                    var p2 = last.offsetPointTo(point, shortDist),
+                        p3 = last.offsetPointFrom(point, shortDist);
+                    segmentOutput(output, last, p2, shortSpeed, printSpeed, 5, shellMult);
+                    addOutput(output, p3, shellMult, printSpeed);
+                    segmentOutput(output, p3, point, printSpeed, shortSpeed, 5, shellMult);
+                } else
+                if (shortDist && dist < shortDist) {
+                    var shortRate = shortSpeed + (printSpeed - shortSpeed) * (dist / shortDist);
+                    addOutput(output, point, shellMult, shortRate);
+                } else {
+                    addOutput(output, point, shellMult, printSpeed);
+                }
             }
+            last = point;
         }, true, closest.index);
 
-        return output[output.length - 1].point;
+        return output.last().point;
     };
 
     /**
@@ -439,6 +474,9 @@ var gs_kiri_print = exports;
             sparseMult = process.outputSparseMult,
             wipeDistance = process.outputWipeDistance,
             wipeSpeed = process.outputWipeSpeed || 20,
+            firstSpeed = process.firstLayerSpeed * process.outputFeedrate,
+            printSpeed = slice.index === 0 ? firstSpeed : process.outputFeedrate,
+            moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
             z = slice.z;
 
@@ -447,15 +485,14 @@ var gs_kiri_print = exports;
         }
 
         function outputWipe(poly) {
-            if (!poly) return;
+            if (!poly || !wipeDistance) return;
 
             var closest = poly.findClosestPointTo(startPoint),
                 distance = wipeDistance,
                 last = startPoint,
                 steps = 0;
 
-            if (!distance) return;
-
+            retract();
             while (distance > 0) poly.forEachPoint(function(point) {
                 if (distance > 0) {
                     var len = last.distTo2D(point);
@@ -467,7 +504,7 @@ var gs_kiri_print = exports;
                         distance -= last.distTo2D(point);
                     }
                     last = point;
-                    if (steps++ === 0) retract();
+                    // if (steps++ === 0) retract();
                 }
             }, true, closest.index);
 
@@ -483,15 +520,22 @@ var gs_kiri_print = exports;
                     lastPoly = next;
                 });
             } else {
-                startPoint = scope.polyPrintPath(poly, startPoint, preout, shellMult, function(point) {
-                    if (startPoint.distTo2D(point) > fillSkip) {
-                        if (last) {
-                            outputWipe(last)
-                        } else {
-                            retract();
-                        }
+                var finishShell = poly.depth === 0 && slice.index > 0;
+                startPoint = scope.polyPrintPath(poly, startPoint, preout, {
+                    rate: finishShell ? process.outputFinishrate : printSpeed,
+                    accel: finishShell ? process.outputShortDistance * 2 : 0,
+                    shorten: finishShell ? nozzle / 2 : 0,
+                    extrude: shellMult,
+                    onfirst: function(firstPoint) {
+                        // if (startPoint.distTo2D(firstPoint) > fillSkip) {
+                        //     if (last) {
+                        //         outputWipe(last)
+                        //     } else {
+                        //         retract();
+                        //     }
+                        // }
+                        checkBisect(startPoint, firstPoint, bounds);
                     }
-                    checkBisect(startPoint, point, bounds);
                 });
             }
         }
@@ -523,7 +567,7 @@ var gs_kiri_print = exports;
             // output non-printing bisecting paths
             routes.forEach(function(path) {
                 path.forEachPoint(function(p) {
-                    addOutput(preout, p, 0);
+                    addOutput(preout, p, 0, moveSpeed);
                 });
             });
         }
@@ -542,14 +586,14 @@ var gs_kiri_print = exports;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
                     if (i === 0 && lp) checkBisect(lp, p, bounds);
-                    addOutput(preout, p, i === 0 ? 0 : sparseMult);
+                    addOutput(preout, p, i === 0 ? 0 : sparseMult, printSpeed);
                     lp = p;
                 });
             });
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, point, find, find2, list, len, lastout, pass = 0;
+            var mindist, p1, p2, dist, point, find, list, len, lastout, pass = 0;
             while (lines) {
                 list = [];
                 mindist = Infinity;
@@ -563,12 +607,6 @@ var gs_kiri_print = exports;
                 if (list.length > 0) {
                     list.sort(function(a,b) { return a.d - b.d });
                     find = list[0];
-                    find2 = list[4] || list[3] || list [2] || list[1];
-
-                    // do 2nd closest fill lines within bigger fill areas
-                    // if (layer === 0 && pass > 0 && find2 && lastout === 2 && len > thinWall) {//} && find2.d <= fillSkip) {
-                    //     find = find2;
-                    // }
 
                     // order segment by closest to farthest point
                     if (find.i % 2 === 0) {
@@ -591,7 +629,7 @@ var gs_kiri_print = exports;
                     // to avoid shaking printer to death.
                     if (find.d <= thinWall && len <= thinWall) {
                         p2 = p1.midPointTo(p2);
-                        addOutput(preout, p2, fillMult * (find.d / thinWall));
+                        addOutput(preout, p2, fillMult * (find.d / thinWall), printSpeed);
                         lastout = 1;
                     } else {
                         // check for intersection with bounds and if found
@@ -600,8 +638,14 @@ var gs_kiri_print = exports;
                             checkBisect(startPoint, p1, bounds);
                         }
 
-                        addOutput(preout, p1, 0);
-                        addOutput(preout, p2, fillMult);
+                        // bridge ends of fill if they're close together
+                        if (dist < thinWall) {
+                            addOutput(preout, p1, fillMult, printSpeed);
+                        } else {
+                            addOutput(preout, p1, 0, moveSpeed);
+                        }
+
+                        addOutput(preout, p2, fillMult, printSpeed);
                         lastout = 2;
                     }
 
@@ -655,8 +699,8 @@ var gs_kiri_print = exports;
                     next.fills.forEach(function(p) { p.z = z });
                     outputFills(next.fills, next.inner);
                 }
-                // lastTop = null;
             } else {
+                // when skipping between tops, first perform a wipe
                 if (lastTop && lastTop !== next && wipe) {
                     outputWipe(wipe);
                     wipe = null;
@@ -668,18 +712,17 @@ var gs_kiri_print = exports;
                 outputSparse(next.fill_sparse, bounds);
                 if (next.inner) {
                     wipe = next.inner.last();
-                    // best to use inner offset for wipe
-                    // outputWipe(next.inner.last());
                 } else {
                     wipe = next.traces.last();
-                    // otherwise fall back to innermost trace
-                    // outputWipe(next.traces.last());
                 }
                 lastTop = next;
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
         });
+
+        // final wipe before lowering bed
+        if (wipe) outputWipe(wipe);
 
         // offset print points
         for (i=0; i<preout.length; i++) {
@@ -708,7 +751,6 @@ var gs_kiri_print = exports;
     /**
      * emit each element in an array based on
      * the next closest endpoint.
-     * todo replace outputFills() with this
      */
     function tip2tipEmit(array, startPoint, emitter) {
         var mindist, dist, found, count = 0;

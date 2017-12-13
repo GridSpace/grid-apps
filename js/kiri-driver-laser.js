@@ -56,7 +56,7 @@ var gs_kiri_laser = exports;
                     laserOut(pi, object);
                 });
             } else {
-                print.polyPrintPath(poly, start, object, 1);
+                print.polyPrintPath(poly, start, object, {extrude: 1});
             }
         }
 

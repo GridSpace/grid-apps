@@ -227,9 +227,8 @@ var gs_base_point = exports;
     };
 
     /**
-     * return a point along the line this from point to p2
-     * but offset by a distance.  positive distances are
-     * closer to this point.
+     * return a point along the line this from point to p2 offset
+     * by a distance.  positive distances are closer to this point.
      *
      * @param p2
      * @param dist
@@ -242,6 +241,23 @@ var gs_base_point = exports;
             ox = dx * ls,
             oy = dy * ls;
         return newPoint(p2.x - ox, p2.y - oy, p2.z, KEYS.NONE);
+    };
+
+    /**
+     * return a point along the line this from point to p2 offset
+     * by a distance.  positive distances are farther from this point.
+     *
+     * @param p2
+     * @param dist
+     */
+    PRO.offsetPointTo = function(p2, dist) {
+        var p1 = this,
+            dx = p2.x - p1.x,
+            dy = p2.y - p1.y,
+            ls = dist / Math.sqrt(dx * dx + dy * dy),
+            ox = dx * ls,
+            oy = dy * ls;
+        return newPoint(p1.x + ox, p1.y + oy, p2.z, KEYS.NONE);
     };
 
     /**
@@ -262,7 +278,6 @@ var gs_base_point = exports;
         np2.op = p2;
         return BASE.newLine(np1, np2, KEYS.NONE);
     };
-
 
     /**
      * checks if a point is inside of a polygon

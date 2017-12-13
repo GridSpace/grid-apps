@@ -218,7 +218,9 @@ var gs_kiri_fdm = exports;
                 });
 
                 printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
-                    return print.polyPrintPath(poly, startPoint, preout);
+                    return print.polyPrintPath(poly, startPoint, preout, {
+                        rate: process.firstLayerSpeed * process.outputFeedrate
+                    });
                 });
 
                 print.addPrintPoints(preout, layerout, startPoint);
@@ -260,7 +262,6 @@ var gs_kiri_fdm = exports;
             process = settings.process,
             fan_power = device.gcodeFan,
             trackProgress = device.gcodeTrack,
-            layer1speed = process.firstLayerSpeed,
             time = 0,
             layer = 0,
             output = [],
@@ -291,12 +292,7 @@ var gs_kiri_fdm = exports;
                 bottom: offset ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight
             },
-            shortDist = process.outputShortDistance,
-            shortFact = process.outputShortFactor,
-            glideBridgeDist = device.nozzleSize * 2,
-            maxPrintMMM = process.outputFeedrate * 60,
             seekMMM = process.outputSeekrate * 60,
-            retOver = process.outputRetractOver,
             retDist = process.outputRetractDist,
             retSpeed = process.outputRetractSpeed * 60,
             // ratio of nozzle area to filament area times
@@ -304,7 +300,7 @@ var gs_kiri_fdm = exports;
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
             emitPerMMLayer1 = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight * process.firstLayerHeight),
             constReplace = print.constReplace,
-            pidx, path, out, lastp, laste, dist, printMMM, shortMMM,
+            pidx, path, out, speedMMM, emitMM, lastp, laste, dist,
             appendAll = function(arr) {
                 arr.forEach(function(line) { append(line) });
             },
@@ -399,24 +395,27 @@ var gs_kiri_fdm = exports;
         layers.forEach(function(outs) { allout.appendAll(outs) });
         allout.forEachPair(function (o1, o2) {
             totaldistance += o1.point.distTo2D(o2.point);
-        },1);
+        }, 1);
 
         while (layer < layers.length) {
-            append("; --- layer "+layer+" ---");
-            // second layer fan on
-            if (layer === 1 && fan_power) append(constReplace(fan_power,consts));
-            shortMMM = shortFact * maxPrintMMM;
-            printMMM = maxPrintMMM;
-            // first layer 50% underspeed
-            if (layer === 0) {
-                printMMM *= layer1speed;
-                shortMMM *= layer1speed;
-            }
             path = layers[layer];
-            moveTo({z:zpos}, seekMMM);
+
+            append("; --- layer "+layer+" ---");
+
+            // second layer fan on
+            if (layer === 1 && fan_power) {
+                append(constReplace(fan_power,consts));
+            }
+
+            // move up to next layer
+            if (layer > 0) moveTo({z:zpos}, seekMMM);
             zpos += zinc;
+
+            // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
+                speedMMM = (out.speed || process.outputFeedrate) * 60;
+
                 // if no point in output, it's a dwell command
                 if (!out.point) {
                     dwell(out.speed);
@@ -425,6 +424,7 @@ var gs_kiri_fdm = exports;
                 var x = out.point.x,
                     y = out.point.y;
 
+                // adjust for inversions and offsets
                 if (process.outputInvertX) x = -x;
                 if (process.outputInvertY) y = -y;
                 if (offset) {
@@ -433,60 +433,41 @@ var gs_kiri_fdm = exports;
                 }
 
                 dist = lastp ? lastp.distTo2D(out.point) : 0;
-                distance += dist;
-                progress = Math.round((distance / totaldistance) * 100);
+
                 if (out.emit && retracted) {
                     moveTo({e:retracted}, retSpeed, "engage (ooze control)");
                     retracted = 0;
+                    time += (retDist / retSpeed) * 60 * 2; // retraction time
                 }
+
                 if (lastp && out.emit) {
-                    var outMMM = printMMM,
-                        emitMM = emitPerMM * out.emit * dist;
-                    if (layer === 0) {
-                        emitMM = emitPerMMLayer1 * out.emit * dist;
-                    } else if (out.speed && out.speed < process.outputFeedrate) {
-                        // usually outer shell (finish speed) override
-                        outMMM = out.speed * 60;
-                    }
-                    if (layer > 0 && dist < shortDist) {
-                        outMMM = shortMMM + ((outMMM - shortMMM) * (dist / shortDist));
-                    } else {
-                        // approximate compensation for acceleration & deceleration
-                        time += (shortDist * 2) / outMMM / 10 * 60;
-                    }
-                    // print time
-                    time += (dist / outMMM) * 60;
-                    moveTo({x:x, y:y, e:emitMM}, outMMM);
+                    emitMM = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * out.emit * dist;
+                    moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
-                    var moveMMM = seekMMM;
-                    // usually wipe speed override
-                    if (out.speed) {
-                        moveMMM = out.speed * 60;
-                    }
                     if (!retracted && out.retract) {
                         retracted = retDist;
                         moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
-                        moveTo({x:x, y:y}, moveMMM);
-                    } else if (lastp && dist <= glideBridgeDist) {
-                        // connect ends of infill
-                        var e = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * dist;
-                        moveTo({x:x, y:y, e:e}, outMMM);
+                        moveTo({x:x, y:y}, speedMMM);
+                        time += (retDist / retSpeed) * 60 * 2; // retraction time
                     } else {
-                        moveTo({x:x, y:y}, moveMMM);
+                        moveTo({x:x, y:y}, speedMMM);
                     }
-                    time += (dist / moveMMM) * 60; // seek distance
-                    time += (retDist / retSpeed) * 60 * 2; // retraction time
-                    // approximate compensation for acceleration & deceleration
-                    time += (shortDist * 2) / moveMMM / 10 * 60;
                 }
-                lastp = out.point;
-                laste = out.emit;
+
+                // update time and distance
+                time += (dist / speedMMM) * 60;
+                distance += dist;
+                progress = Math.round((distance / totaldistance) * 100);
+
                 // emit tracked progress
                 if (trackProgress && progress != lastProgress) {
                     append(constReplace(trackProgress, {progress:progress}));
                     lastProgress = progress;
                 }
+
+                lastp = out.point;
+                laste = out.emit;
             }
             layer++;
         }
