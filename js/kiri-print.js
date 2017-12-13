@@ -466,16 +466,16 @@ var gs_kiri_print = exports;
             settings = this.settings,
             process = settings.process,
             nozzle = settings.device.nozzleSize,
+            firstLayer = slice.index === 0,
             minSeek = nozzle * 1.5,
             thinWall = nozzle * 1.75,
-            fillSkip = nozzle * 3,
             fillMult = process.outputFillMult,
             shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
             wipeDistance = process.outputWipeDistance,
             wipeSpeed = process.outputWipeSpeed || 20,
             firstSpeed = process.firstLayerSpeed * process.outputFeedrate,
-            printSpeed = slice.index === 0 ? firstSpeed : process.outputFeedrate,
+            printSpeed = firstLayer ? firstSpeed : process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
             z = slice.z;
@@ -485,14 +485,14 @@ var gs_kiri_print = exports;
         }
 
         function outputWipe(poly) {
+            retract();
+
             if (!poly || !wipeDistance) return;
 
             var closest = poly.findClosestPointTo(startPoint),
                 distance = wipeDistance,
-                last = startPoint,
-                steps = 0;
+                last = startPoint;
 
-            retract();
             while (distance > 0) poly.forEachPoint(function(point) {
                 if (distance > 0) {
                     var len = last.distTo2D(point);
@@ -504,7 +504,6 @@ var gs_kiri_print = exports;
                         distance -= last.distTo2D(point);
                     }
                     last = point;
-                    // if (steps++ === 0) retract();
                 }
             }, true, closest.index);
 
@@ -520,20 +519,13 @@ var gs_kiri_print = exports;
                     lastPoly = next;
                 });
             } else {
-                var finishShell = poly.depth === 0 && slice.index > 0;
+                var finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
                     rate: finishShell ? process.outputFinishrate : printSpeed,
                     accel: finishShell ? process.outputShortDistance * 2 : 0,
-                    shorten: finishShell ? nozzle / 2 : 0,
+                    shorten: finishShell && !firstLayer ? nozzle / 2 : 0,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
-                        // if (startPoint.distTo2D(firstPoint) > fillSkip) {
-                        //     if (last) {
-                        //         outputWipe(last)
-                        //     } else {
-                        //         retract();
-                        //     }
-                        // }
                         checkBisect(startPoint, firstPoint, bounds);
                     }
                 });
