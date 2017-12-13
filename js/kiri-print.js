@@ -239,13 +239,59 @@ var gs_kiri_print = exports;
         switch (mode) {
             case 'CAM':
             case 'FDM':
-                scope.renderMoves(true, 0x0088aa);
+                scope.renderMoves(true, 0x777777);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);
                 break;
         }
     };
+
+    // hsv values all = 0 to 1
+    function hsv2rgb(hsv) {
+        var seg  = Math.floor(hsv.h * 6);
+        var rem  = hsv.h - (seg * (1/6));
+        var out = {};
+
+        var p = hsv.v * (1.0 - (hsv.s)              );
+        var q = hsv.v * (1.0 - (hsv.s * rem)        );
+        var t = hsv.v * (1.0 - (hsv.s * (1.0 - rem)));
+
+        switch (seg) {
+            case 0:
+                out.r = hsv.v;
+                out.g = t;
+                out.b = p;
+                break;
+            case 1:
+                out.r = q;
+                out.g = hsv.v;
+                out.b = p;
+                break;
+            case 2:
+                out.r = p;
+                out.g = hsv.v;
+                out.b = t;
+                break;
+            case 3:
+                out.r = p;
+                out.g = q;
+                out.b = hsv.v;
+                break;
+            case 4:
+                out.r = t;
+                out.g = p;
+                out.b = hsv.v;
+                break;
+            case 5:
+                out.r = hsv.v;
+                out.g = p;
+                out.b = q;
+                break;
+        }
+
+        return out;
+    }
 
     PRO.renderMoves = function(showMoves, moveColor) {
         var scope = this, last, view;
@@ -259,7 +305,7 @@ var gs_kiri_print = exports;
                         return;
                     }
                     if (out.emit > 0) {
-                        var spd = out.speed || 3000;
+                        var spd = out.speed || 4000;
                         var arr = print[spd] || [];
                         print[spd] = arr;
                         arr.push(last);
@@ -279,9 +325,12 @@ var gs_kiri_print = exports;
             if (showMoves) view.lines(move, moveColor);
             for (var speed in print) {
                 var sint = Math.min(6000, parseInt(speed));
-                var red  = Math.round((sint/6000) * 0xff);
-                var blue = 0xff - red;
-                view.lines(print[speed], (red<<16) | (blue));
+                var rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
+                view.lines(print[speed],
+                    ((rgb.r * 0xff) << 16) |
+                    ((rgb.g * 0xff) <<  8) |
+                    ((rgb.b * 0xff) <<  0)
+                );
             }
             view.render();
             scope.lines += print.length;
@@ -320,13 +369,13 @@ var gs_kiri_print = exports;
      * @param {number} [tool] tool
      */
     function addOutput(array, point, emit, speed, tool) {
-        // drop duplicates (usually intruced by bisections)
+        // drop duplicates (usually intruced by FDM bisections)
         if (lastPoint && point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
             return;
         }
-        if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
-            // console.log(({dup:point, last:lastPoint}));
-        }
+        // if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
+        //     console.log(({dup:point, last:lastPoint}));
+        // }
         lastPoint = point;
         lastEmit = emit;
         array.push(new Output(point, emit, speed, tool));
@@ -366,7 +415,7 @@ var gs_kiri_print = exports;
     };
 
     /**
-     * create 3d print output path for this slice
+     * FDM only. create 3d print output path for this slice
      *
      * @parma {Slice} slice
      * @param {Point} startPoint start as close as possible to startPoint
