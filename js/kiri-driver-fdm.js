@@ -351,6 +351,9 @@ var gs_kiri_fdm = exports;
         }
 
         function moveTo(newpos, rate, comment) {
+            if (comment) {
+                append(" ; " + comment);
+            }
             var o = ['G1'];
             if (typeof newpos.x === 'number') {
                 pos.x = UTIL.round(newpos.x,decimals);
@@ -376,9 +379,6 @@ var gs_kiri_fdm = exports;
             if (rate && rate != pos.f) {
                 o.append(" F").append(Math.round(rate));
                 pos.f = rate
-            }
-            if (comment) {
-                o.append(" ; ").append(comment);
             }
             var line = o.join('');
             if (last == line) {
@@ -445,14 +445,13 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
-                    if (!retracted && out.retract) {
-                        retracted = retDist;
-                        moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
-                        moveTo({x:x, y:y}, speedMMM);
-                        time += (retDist / retSpeed) * 60 * 2; // retraction time
-                    } else {
-                        moveTo({x:x, y:y}, speedMMM);
-                    }
+                    moveTo({x:x, y:y}, speedMMM);
+                }
+
+                if (!retracted && out.retract) {
+                    retracted = retDist;
+                    moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
+                    time += (retDist / retSpeed) * 60 * 2; // retraction time
                 }
 
                 // update time and distance

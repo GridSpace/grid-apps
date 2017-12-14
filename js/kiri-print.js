@@ -18,6 +18,7 @@ var gs_kiri_print = exports;
         DBUG = BASE.debug,
         POLY = BASE.polygons,
         SQRT = Math.sqrt,
+        SQR = UTIL.sqr,
         PI = Math.PI,
         PRO = Print.prototype,
         Polygon = BASE.Polygon,
@@ -429,13 +430,13 @@ var gs_kiri_print = exports;
                 if (options.shorten && dist > options.shorten && count === points.length) {
                     point = last.offsetPointFrom(point, options.shorten);
                 }
-                if (options.accel && dist >= options.accel) {
-                    var p2 = last.offsetPointTo(point, shortDist),
-                        p3 = last.offsetPointFrom(point, shortDist);
-                    segmentOutput(output, last, p2, shortSpeed, printSpeed, 5, shellMult);
-                    addOutput(output, p3, shellMult, printSpeed);
-                    segmentOutput(output, p3, point, printSpeed, shortSpeed, 5, shellMult);
-                } else
+                // if (options.accel && dist >= options.accel) {
+                //     var p2 = last.offsetPointTo(point, shortDist),
+                //         p3 = last.offsetPointFrom(point, shortDist);
+                //     segmentOutput(output, last, p2, shortSpeed, printSpeed, 5, shellMult);
+                //     addOutput(output, p3, shellMult, printSpeed);
+                //     segmentOutput(output, p3, point, printSpeed, shortSpeed, 5, shellMult);
+                // } else
                 if (shortDist && dist < shortDist) {
                     var shortRate = shortSpeed + (printSpeed - shortSpeed) * (dist / shortDist);
                     addOutput(output, point, shellMult, shortRate);
@@ -960,15 +961,15 @@ var gs_kiri_print = exports;
     }
 
     /**
+     * calculate mm of filament required for a given extrusion length and layer height.
+     *
      * @param noz nozzle diameter
      * @param fil filament diameter
      * @param slice height in mm
-     * @returns filament extruded per mm
+     * @returns mm of filament extruded per mm of length on the layer
      */
     function extrudePerMM(noz, fil, slice) {
-        return ((PI * UTIL.sqr(noz/2)) /
-            (PI * UTIL.sqr(fil/2))) *
-            (slice / noz);
+        return ((PI * SQR(noz/2)) / (PI * SQR(fil/2))) * (slice / noz);
     }
 
     function constOp(tok, consts, opch, op) {
