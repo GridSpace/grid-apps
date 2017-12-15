@@ -732,13 +732,13 @@ var gs_kiri_print = exports;
             return obj instanceof Polygon ? obj : obj.poly;
         });
 
+        // perform last wipe on top layer at end of run
+        if (wipeAfter && wipe) outputWipe(wipe);
+
         // offset print points
         for (i=0; i<preout.length; i++) {
             preout[i].point = preout[i].point.add(offset);
         }
-
-        // perform last wipe on top layer at end of run
-        if (wipeAfter && wipe) outputWipe(wipe);
 
         // add offset points to total print
         addPrintPoints(preout, output, origin);
