@@ -660,26 +660,32 @@ var gs_kiri_print = exports;
          */
         function outputOrderClosest(array, fn, fnp) {
             if (array.length === 1) {
-                return fn(fnp ? fnp(array[0]) : array[0]);
+                return fn(array[0]);
             }
             array = array.slice();
-            var closest, find, next, poly;
+            var closest, find, next, order, poly, lastDepth = 0;
             for (;;) {
+                order = [];
                 closest = null;
                 for (i=0; i<array.length; i++) {
                     next = array[i];
                     if (!next) continue;
                     poly = fnp ? fnp(next) : next;
                     find = poly.findClosestPointTo(startPoint);
-                    if (!closest || find.distance < closest.distance) {
-                        closest = find;
-                        closest.i = i;
-                        closest.next = next;
-                    }
+                    order.push({
+                        i: i,
+                        n: next,
+                        d: find.distance - (poly.depth * thinWall),
+                    });
                 }
-                if (!closest) return;
-                array[closest.i] = null;
-                fn(closest.next);
+                if (order.length === 0) {
+                    return;
+                }
+                order.sort(function(a,b) {
+                    return a.d - b.d;
+                });
+                array[order[0].i] = null;
+                fn(order[0].n);
             }
         }
 
