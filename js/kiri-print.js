@@ -375,7 +375,7 @@ var gs_kiri_print = exports;
             return;
         }
         // if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
-        //     console.log(({dup:point, last:lastPoint}));
+        //     console.log(({dup:point, last:lastPoint, emit: emit, le: lastEmit}));
         // }
         lastPoint = point;
         lastEmit = emit;
@@ -462,10 +462,10 @@ var gs_kiri_print = exports;
      * @param {Point} startPoint start as close as possible to startPoint
      * @param {THREE.Vector3} offset
      * @param {Point[]} output points
-     * @param {Number} layer from 0 to # of layers (slices) in model
+     * @param {Boolean} wipeAfter so we can wipe at the end
      * @return {Point} last output point
      */
-    PRO.slicePrintPath = function(slice, startPoint, offset, output, layer) {
+    PRO.slicePrintPath = function(slice, startPoint, offset, output, wipeAfter) {
         var i,
             preout = [],
             scope = this,
@@ -732,13 +732,13 @@ var gs_kiri_print = exports;
             return obj instanceof Polygon ? obj : obj.poly;
         });
 
-        // final wipe before lowering bed
-        if (wipe) outputWipe(wipe);
-
         // offset print points
         for (i=0; i<preout.length; i++) {
             preout[i].point = preout[i].point.add(offset);
         }
+
+        // perform last wipe on top layer at end of run
+        if (wipeAfter && wipe) outputWipe(wipe);
 
         // add offset points to total print
         addPrintPoints(preout, output, origin);

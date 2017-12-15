@@ -168,11 +168,13 @@ var gs_kiri_fdm = exports;
             layer = 0,
             mesh,
             meshIndex,
+            lastIndex,
             layerout,
             closest,
             mindist,
             minidx,
             find,
+            found,
             mslices,
             slices,
             sliceEntry;
@@ -241,6 +243,7 @@ var gs_kiri_fdm = exports;
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
+                found = 0;
                 closest = null;
                 mindist = Infinity;
                 for (meshIndex = 0; meshIndex < slices.length; meshIndex++) {
@@ -252,11 +255,20 @@ var gs_kiri_fdm = exports;
                         mindist = find.distance;
                         minidx = meshIndex;
                     }
+                    found++;
                 }
                 if (!closest) break;
                 slices[minidx] = null;
                 // output seek to start point between mesh slices if previous data
-                printPoint = print.slicePrintPath(closest.slice, printPoint.sub(closest.offset), closest.offset, layerout, layer);
+                printPoint = print.slicePrintPath(
+                    closest.slice,
+                    printPoint.sub(closest.offset),
+                    closest.offset,
+                    layerout,
+                    // wipe after last layer or between widgets
+                    (lastIndex === minidx && slices.length > 1) || (found === 1 && layer == maxLayers-1)
+                );
+                lastIndex = minidx;
             }
 
             if (layerout.length) output.append(layerout);
