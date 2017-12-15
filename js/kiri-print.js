@@ -475,7 +475,7 @@ var gs_kiri_print = exports;
             sparseMult = process.outputSparseMult,
             wipeDistance = process.outputWipeDistance,
             wipeSpeed = process.outputWipeSpeed || 20,
-            firstSpeed = process.firstLayerSpeed * process.outputFeedrate,
+            firstSpeed = process.firstLayerRate,
             printSpeed = firstLayer ? firstSpeed : process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
@@ -653,7 +653,10 @@ var gs_kiri_print = exports;
         }
 
         /**
-         * given array of polygons, emit them in next closest order
+         * given array of polygons, emit them in next closest order with
+         * the special exception that depth is considered into distance
+         * so that inner polygons are emitted first.
+         *
          * @param {Array} array of Polygon or Polygon wrappers
          * @param {Function} fn
          * @param {Function} fnp convert 'next' object into a Polygon
@@ -786,9 +789,10 @@ var gs_kiri_print = exports;
     }
 
     /**
-     * like tip2tipEmit but accepts an array of
-     * polygons and the next closest point can
-     * be anywhere in the adjacent polygon
+     * like tip2tipEmit but accepts an array of polygons and the next closest
+     * point can be anywhere in the adjacent polygon. should be re-written
+     * to be more like outputOrderClosest() and have the option to account for
+     * depth in determining distance
      */
     function poly2polyEmit(array, startPoint, emitter) {
         var mindist, dist, found, count = 0;

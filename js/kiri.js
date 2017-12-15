@@ -61,8 +61,8 @@ self.kiri.license = exports.LICENSE;
                     sliceBottomLayers: 1,
                     sliceTopLayers: 1,
                     sliceVase: 1,
-                    firstLayerHeight: 1,
-                    firstLayerSpeed: 1,
+                    firstSliceHeight: 1,
+                    firstLayerRate: 1,
                     outputTemp: 1,
                     outputFanMax: 1,
                     outputBedTemp: 1,
@@ -254,8 +254,8 @@ self.kiri.license = exports.LICENSE;
                 sliceTopLayers: 2,
                 sliceVase: false,
 
-                firstLayerHeight: 1.0,
-                firstLayerSpeed: 0.5,
+                firstSliceHeight: 0.25,
+                firstLayerRate: 30,
 
                 outputTemp: 230,
                 outputFanMax: 255,
@@ -995,7 +995,7 @@ self.kiri.license = exports.LICENSE;
             ajax(host+"/api/check?key="+key, function(data) {
                 data = js2o(data);
                 DBUG.log(data);
-                if (!data.done) setTimeout(function() { gridprint_tracker(host,key) }, 1000);
+                if (!data.done && !data.error) setTimeout(function() { gridprint_tracker(host,key) }, 1000);
             });
         }
 
@@ -2234,7 +2234,7 @@ self.kiri.license = exports.LICENSE;
                     UI.settingsLoad =
                     UC.newButton("load", settingsLoad),
                     UI.settingsSave =
-                    UC.newButton("save", settingsSave),
+                    UC.newButton("save", settingsSave)
                 ]
             ]),
 
@@ -2243,7 +2243,6 @@ self.kiri.license = exports.LICENSE;
             bedDepth: UC.newInput("depth", {title:"millimeters", convert:UC.toInt, modes:LASER}),
 
             process: UC.newGroup("process", control, {modes:FDM_LASER}),
-            processName: UC.newInput("name", {modes:[]}),
 
             // 3d print
             sliceHeight: UC.newInput("slice height", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
@@ -2348,8 +2347,8 @@ self.kiri.license = exports.LICENSE;
             sliceSupportEnable: UC.newBoolean("enable", onBooleanClick, {modes:FDM}),
 
             firstLayer: UC.newGroup("first layer", null, {modes:FDM}),
-            firstLayerHeight: UC.newInput("height factor", {title:"0.5 - 2.5\nmultiplier on slice height\nshould be no more\nthan 80% nozzle diam", convert:UC.toFloat, modes:FDM}),
-            firstLayerSpeed: UC.newInput("speed factor", {title:"0.1 - 1.0\nmultiplier on print speed", convert:UC.toFloat, modes:FDM}),
+            firstSliceHeight: UC.newInput("slice height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
+            firstLayerRate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
 

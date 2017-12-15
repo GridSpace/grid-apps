@@ -12,6 +12,7 @@ var gs_kiri_fdm = exports;
 
     var KIRI = self.kiri,
         BASE = self.base,
+        DBUG = BASE.debug,
         UTIL = BASE.util,
         CONF = BASE.config,
         FDM = KIRI.driver.FDM = { },
@@ -48,15 +49,20 @@ var gs_kiri_fdm = exports;
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
-        if (spro.sliceHeight <= 0.01) {
-            DBUG.log("invalid slice height");
-            return ondone(null);
+        if (spro.sliceHeight < 0.01) {
+            return ondone("invalid slice height");
+        }
+
+        if (spro.firstSliceHeight < spro.sliceHeight) {
+            DBUG.log("invalid first layer height < slice height");
+            DBUG.log("reverting to slice height");
+            spro.firstSliceHeight = spro.sliceHeight;
         }
 
         SLICER.sliceWidget(widget, {
             height: spro.sliceHeight,
             view:view,
-            firstHeight: spro.sliceHeight * sout.firstLayerHeight
+            firstHeight: sout.firstSliceHeight
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
@@ -219,11 +225,18 @@ var gs_kiri_fdm = exports;
 
                 printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
                     return print.polyPrintPath(poly, startPoint, preout, {
-                        rate: process.firstLayerSpeed * process.outputFeedrate
+                        rate: process.firstLayerRate,
+                        onfirst: function(point) {
+                            if (preout.length && point.distTo2D(startPoint) > 2) {
+                                // retract between brim r
+                                preout.last().retract = true;
+                            }
+                        }
                     });
                 });
 
                 print.addPrintPoints(preout, layerout, startPoint);
+                preout.last().retract = true;
             }
 
             // iterate over layer slices, find closest widget, print, eliminate
@@ -275,7 +288,7 @@ var gs_kiri_fdm = exports;
             pos = {x:0, y:0, z:0, f:0},
             last = null,
             zinc = process.sliceHeight,
-            zpos = zinc * process.firstLayerHeight,
+            zpos = process.firstSliceHeight,
             offset = process.outputOriginCenter ? null : {
                 x: device.bedWidth/2,
                 y: device.bedDepth/2
@@ -298,7 +311,7 @@ var gs_kiri_fdm = exports;
             // ratio of nozzle area to filament area times
             // ratio of slice height to filament max noodle height
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
-            emitPerMMLayer1 = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight * process.firstLayerHeight),
+            emitPerMMLayer1 = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.firstSliceHeight),
             constReplace = print.constReplace,
             pidx, path, out, speedMMM, emitMM, lastp, laste, dist,
             appendAll = function(arr) {

@@ -430,11 +430,11 @@ var gs_base_polygons = exports;
     }
 
     /**
-     * @param {Polygon} poly
-     * @param {Polygon[]} traces
-     * @param {number} offset
-     * @param {number} count
-     * @param {number} depth
+     * @param {Polygon} poly input
+     * @param {Polygon[]} traces output
+     * @param {number} offset distance to offset
+     * @param {number} count number of offsets
+     * @param {number} depth current depth (count) into offsets
      * @param {Polygon[]} [last]
      * @param {Polygon[]} [first]
      */

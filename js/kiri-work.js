@@ -116,6 +116,7 @@ if (self.window) {
     };
 
 } else {
+
     module = { exports: {} };
 
     var loc = self.location,
@@ -195,25 +196,30 @@ if (self.window) {
                 position: position
             };
 
-            widget.slice(settings, function() {
-                send.data({send_start:time()});
-                send.data({
-                    topo: settings.synth.sendTopo ? widget.topo : null,
-                    stats: widget.stats,
-                    slices: widget.slices.length
-                });
-                widget.slices.forEach(function(slice,index) {
-                    send.data({index:index, slice:slice.encode()});
-                })
-                send.data({send_end:time()});
-                send.done({done:true});
+            widget.slice(settings, function(error) {
+                if (error) {
+                    send.data({error: error});
+                } else {
+                    var slices = widget.slices || [];
+                    send.data({send_start: time()});
+                    send.data({
+                        topo: settings.synth.sendTopo ? widget.topo : null,
+                        stats: widget.stats,
+                        slices: slices.length
+                    });
+                    slices.forEach(function(slice,index) {
+                        send.data({index: index, slice: slice.encode()});
+                    })
+                    send.data({send_end: time()});
+                }
+                send.done({done: true});
                 // cache results for future printing
                 cache[data.id] = widget;
             }, function(update, msg) {
                 now = util.time();
                 if (now - last < 10 && update < 0.99) return;
                 // on update
-                send.data({update:(0.05 + update * 0.95), updateStatus:msg});
+                send.data({update: (0.05 + update * 0.95), updateStatus: msg});
                 last = now;
             });
         },

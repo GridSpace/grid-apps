@@ -551,6 +551,9 @@ var gs_kiri_widget = exports;
                     ondone(true);
                     widget.modified = false;
                 }
+                if (reply.error) {
+                    alert(reply.error);
+                }
             });
 
         } else {
@@ -558,12 +561,17 @@ var gs_kiri_widget = exports;
             // executed from kiri-worker.js
             widget.clearSlices();
 
-            var catchdone = function() {
+            var catchdone = function(error) {
+                if (error) {
+                    return ondone(error);
+                }
+
                 onupdate(1.0, "transferring");
+
                 widget.stats.slice_time = UTIL.time() - startTime;
                 widget.modified = false;
 
-                ondone(true);
+                ondone();
             };
 
             var catchupdate = function(progress, message) {
@@ -583,7 +591,7 @@ var gs_kiri_widget = exports;
                 driver.slice(settings, widget, catchupdate, catchdone);
             } else {
                 DBUG.log('invalid mode: '+settings.mode);
-                ondone(false);
+                ondone('invalid mode: '+settings.mode);
             }
         }
     };
