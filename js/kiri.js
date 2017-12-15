@@ -1860,6 +1860,9 @@ self.kiri.license = exports.LICENSE;
             load.setAttribute('load', sk);
             load.onclick = loadNamedSetting;
             load.appendChild(DOC.createTextNode(sk));
+            if (sk == settings.process.processName) {
+                load.setAttribute('class', 'selected')
+            }
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");
