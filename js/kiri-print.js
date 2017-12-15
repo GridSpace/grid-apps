@@ -659,6 +659,9 @@ var gs_kiri_print = exports;
          * @param {Function} fnp convert 'next' object into a Polygon
          */
         function outputOrderClosest(array, fn, fnp) {
+            if (array.length === 1) {
+                return fn(fnp ? fnp(array[0]) : array[0]);
+            }
             array = array.slice();
             var closest, find, next, poly;
             for (;;) {
