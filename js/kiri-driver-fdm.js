@@ -266,7 +266,7 @@ var gs_kiri_fdm = exports;
                     closest.offset,
                     layerout,
                     // wipe after last layer or between widgets
-                    (lastIndex === minidx && slices.length > 1) || (found === 1 && layer == maxLayers-1)
+                    (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1)
                 );
                 lastIndex = minidx;
             }
