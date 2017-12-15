@@ -478,6 +478,7 @@ var gs_kiri_print = exports;
             firstSpeed = process.firstLayerRate,
             printSpeed = firstLayer ? firstSpeed : process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
+            outerFirst = process.outputOuterFirst,
             origin = startPoint.add(offset),
             z = slice.z;
 
@@ -511,14 +512,12 @@ var gs_kiri_print = exports;
             startPoint = preout[preout.length - 1].point;
         }
 
-        function outputTraces(poly, bounds, last) {
+        function outputTraces(poly, bounds, newTop) {
             if (!poly) return;
             if (Array.isArray(poly)) {
-                var lastPoly = null;
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, bounds, lastPoly);
-                    lastPoly = next;
-                });
+                    outputTraces(next, bounds);
+                }, null, newTop);
             } else {
                 var finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
@@ -661,7 +660,7 @@ var gs_kiri_print = exports;
          * @param {Function} fn
          * @param {Function} fnp convert 'next' object into a Polygon
          */
-        function outputOrderClosest(array, fn, fnp) {
+        function outputOrderClosest(array, fn, fnp, newTop) {
             if (array.length === 1) {
                 return fn(array[0]);
             }
@@ -674,13 +673,15 @@ var gs_kiri_print = exports;
                     next = array[i];
                     if (!next) continue;
                     poly = fnp ? fnp(next) : next;
+                    if (outerFirst && newTop && poly.depth !== 0) continue;
                     find = poly.findClosestPointTo(startPoint);
                     order.push({
                         i: i,
                         n: next,
-                        d: find.distance - (poly.depth * thinWall),
+                        d: find.distance - (poly.depth * thinWall * (outerFirst?0:1)),
                     });
                 }
+                newTop = false;
                 if (order.length === 0) {
                     return;
                 }
@@ -706,13 +707,13 @@ var gs_kiri_print = exports;
                 }
             } else {
                 // when skipping between tops, first perform a wipe
-                if (lastTop && lastTop !== next && wipe) {
+                if (lastTop && wipe) {
                     outputWipe(wipe);
                     wipe = null;
                 }
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
+                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds, !lastTop);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
                 if (next.inner) {
