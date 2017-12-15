@@ -278,7 +278,7 @@ self.kiri.license = exports.LICENSE;
                 outputShortDistance: 5.0,
                 outputShortFactor: 0.2,
                 outputAccelComp: false,
-                outputOuterFirst: true,
+                outputOuterFirst: false,
 
                 // --- LASER ---
 
