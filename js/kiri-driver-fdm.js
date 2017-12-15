@@ -452,7 +452,7 @@ var gs_kiri_fdm = exports;
                 dist = lastp ? lastp.distTo2D(out.point) : 0;
 
                 if (out.emit && retracted) {
-                    moveTo({e:retracted}, retSpeed, "engage (ooze control)");
+                    moveTo({e:retracted}, retSpeed, "engage " + retracted);
                     retracted = 0;
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                 }
@@ -467,7 +467,7 @@ var gs_kiri_fdm = exports;
 
                 if (!retracted && out.retract) {
                     retracted = retDist;
-                    moveTo({e:-retracted}, retSpeed, "retract (ooze control)");
+                    moveTo({e:-retracted}, retSpeed, "retract " + retDist);
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                 }
 
