@@ -74,6 +74,7 @@ var gs_kiri_print = exports;
                 min: { x:Infinity, y:Infinity, z:Infinity}
             },
             seq = [],
+            abs = true,
             move = false,
             E0G0 = false,
             G0 = function() {
@@ -92,15 +93,23 @@ var gs_kiri_print = exports;
                 E: 0.0
             },
             off = {
-                x: offset ? offset.x || 0 : 0,
-                y: offset ? offset.y || 0 : 0,
-                z: offset ? offset.z || 0 : 0
+                X: offset ? offset.x || 0 : 0,
+                Y: offset ? offset.y || 0 : 0,
+                Z: offset ? offset.z || 0 : 0
             };
 
         lines.forEach(function(line) {
             line = line.split(";")[0].split(" ");
             if (line.length < 2) return;
             switch (line.shift()) {
+                case 'G90':
+                    // absolute positioning
+                    abs = true;
+                    break;
+                case 'G91':
+                    // relative positioning
+                    abs = false;
+                    break;
                 case 'G0':
                     G0();
                 case 'G1':
@@ -120,7 +129,7 @@ var gs_kiri_print = exports;
                     }
                     addOutput(
                         seq,
-                        {x:pos.X + off.x, y:pos.Y + off.y, z:pos.Z + off.z},
+                        {x:pos.X + off.X, y:pos.Y + off.Y, z:pos.Z + off.Z},
                         !move,
                         pos.F
                     );

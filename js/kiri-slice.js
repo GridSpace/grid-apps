@@ -1122,6 +1122,7 @@ var gs_kiri_slice = exports;
             bounds = target.bounds(),
             even = true,
             evenZ = target.zIndex() % 2 === 0,
+            maxy = bounds.max.y + (vhlen + anylen * 2),
             x, y;
 
         if (full || evenZ) {
@@ -1131,7 +1132,7 @@ var gs_kiri_slice = exports;
                 if (!even && x > bounds.max.x + anxlen + spacing) break;
                 y = bounds.min.y;
                 target.newline();
-                while (y < bounds.max.y) {
+                while (y <= maxy) {
                     target.emit(x,y);
                     y += vhlen;
                     target.emit(x,y);
