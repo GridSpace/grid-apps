@@ -489,6 +489,7 @@ var gs_kiri_print = exports;
             sparseMult = process.outputSparseMult,
             wipeDistance = process.outputWipeDistance,
             wipeSpeed = process.outputWipeSpeed || 20,
+            finishFactor = process.outputFinishFactor || 0,
             firstSpeed = process.firstLayerRate,
             printSpeed = firstLayer ? firstSpeed : process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
@@ -537,7 +538,7 @@ var gs_kiri_print = exports;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
                     rate: finishShell ? process.outputFinishrate : printSpeed,
                     accel: finishShell,
-                    shorten: finishShell && !firstLayer ? nozzle / 2 : 0,
+                    shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
                         checkBisect(startPoint, firstPoint, bounds);

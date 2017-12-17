@@ -79,6 +79,7 @@ self.kiri.license = exports.LICENSE;
                     outputBrimOffset: 1,
                     outputShortDistance: 1,
                     outputShortFactor: 1,
+                    outputFinishFactor: 1,
                     outputAccelComp: 1,
                     outputOuterFirst: 1,
                     outputWipeSpeed: 1,
@@ -277,6 +278,7 @@ self.kiri.license = exports.LICENSE;
                 outputBrimOffset: 3,
                 outputShortDistance: 5.0,
                 outputShortFactor: 0.2,
+                outputFinishFactor: 0,
                 outputAccelComp: false,
                 outputOuterFirst: false,
 
@@ -2364,6 +2366,7 @@ self.kiri.license = exports.LICENSE;
             outputWipeDistance: UC.newInput("wipe distance", {title:"distance to wipe nozzle after\neach enclosed island completes\nin millimeters. 0 to disable", convert:UC.toInt, modes:FDM}),
             outputShortDistance: UC.newInput("short distance", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
+            outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
             outputAccelComp: UC.newBoolean("acceleration", onBooleanClick, {title: "acceleration compensation\nexperimental", modes:FDM}),
             outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
         });
