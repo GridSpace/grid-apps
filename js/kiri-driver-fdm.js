@@ -237,7 +237,7 @@ var gs_kiri_fdm = exports;
                     });
                 });
 
-                print.addPrintPoints(preout, layerout, startPoint);
+                print.addPrintPoints(preout, layerout, null);
                 preout.last().retract = true;
             }
 
@@ -436,8 +436,8 @@ var gs_kiri_fdm = exports;
                 append(constReplace(fan_power,consts));
             }
 
-            // move up to next layer
-            if (layer > 0) moveTo({z:zpos}, seekMMM);
+            // move Z to layer height
+            moveTo({z:zpos}, seekMMM);
             zpos += zinc;
 
             // iterate through layer outputs
