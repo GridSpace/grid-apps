@@ -238,7 +238,7 @@ var gs_kiri_fdm = exports;
                 });
 
                 print.addPrintPoints(preout, layerout, null);
-                preout.last().retract = true;
+                // preout.last().retract = true;
             }
 
             // iterate over layer slices, find closest widget, print, eliminate
