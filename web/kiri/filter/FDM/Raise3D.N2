@@ -30,7 +30,10 @@
         "M140 S0",
         "G1 X20 Y20 F6000",
         "G1 X0 Y0",
-        "M84"
+        "M84",
+        ";Print Time: {time}",
+        ";Material#1 Used: {material}",
+        ";Material#2 Used: 0.0"
     ],
     "cmd":{
         "fan_power": "M106 S{fan_speed}"

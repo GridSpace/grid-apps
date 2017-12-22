@@ -500,11 +500,15 @@ var gs_kiri_fdm = exports;
             layer++;
         }
 
+        consts.material = UTIL.round(emitted,2);
+        consts.time = UTIL.round(time,2);
+
         append("; --- shutdown ---");
         for (var i=0; i<device.gcodePost.length; i++) {
             append(constReplace(device.gcodePost[i], consts));
         }
-        append("; --- filament used: "+UTIL.round(emitted,decimals)+"mm ---");
+        append("; --- filament used: "  +consts.material + "mm ---");
+        append("; --- print time: " + consts.time + "s ---");
 
         // force emit of buffer
         append();
