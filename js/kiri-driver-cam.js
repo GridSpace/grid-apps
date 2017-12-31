@@ -711,7 +711,7 @@ var gs_kiri_cam = exports;
             shellFinish;
 
         if (sliceDepth <= 0.05) {
-            return ondone(null);
+            return ondone("invalid slice depth");
         }
 
         // cut outside traces at the right points

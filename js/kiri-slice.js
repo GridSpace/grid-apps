@@ -358,12 +358,14 @@ var gs_kiri_slice = exports;
      * @param {number} offset1 first offset
      * @param {number} offsetN all subsequent offsets
      * @param {number} fillOffset
+     * @param {Obejct} options
      */
-    PRO.doShells = function(count, offset1, offsetN, fillOffset, vase) {
-        var slice = this;
+    PRO.doShells = function(count, offset1, offsetN, fillOffset, options) {
+        var slice = this,
+            opt = options || {};
 
         slice.tops.forEach(function(top) {
-            if (vase) top.poly = top.poly.clone(false);
+            if (opt.vase) top.poly = top.poly.clone(false);
             top.traces = [];
             top.inner = [];
             var last = [];
@@ -374,17 +376,46 @@ var gs_kiri_slice = exports;
                     last = [top.poly].clone(true);
                     top.traces = last;
                 } else {
-                    POLY.expand([top.poly], -offset1, top.poly.getZ(), top.traces, count, -offsetN, function(polys, countNow) {
-                        last = polys;
-                        // mark each poly with depth (offset #) starting at 0
-                        polys.forEach(function(p) {
-                            p.depth = count - countNow;
-                            if (p.inner) p.inner.forEach(function(pi) {
-                                // use negative offset for inners
-                                pi.depth = -(count - countNow);
+                    if (opt.thin) {
+                        POLY.expand2(
+                            [top.poly],
+                            -offset1,
+                            -offsetN,
+                            -offset1,
+                            top.traces,
+                            count,
+                            function(polys, countNow) {
+                                last = polys;
+                                // mark each poly with depth (offset #) starting at 0
+                                polys.forEach(function(p) {
+                                    p.depth = count - countNow;
+                                    if (p.inner) p.inner.forEach(function(pi) {
+                                        // use negative offset for inners
+                                        pi.depth = -(count - countNow);
+                                    });
+                                });
+                            },
+                            top.poly.getZ());
+                    } else {
+                        POLY.expand(
+                            [top.poly],
+                            -offset1,
+                            top.poly.getZ(),
+                            top.traces,
+                            count,
+                            -offsetN,
+                            function(polys, countNow) {
+                                last = polys;
+                                // mark each poly with depth (offset #) starting at 0
+                                polys.forEach(function(p) {
+                                    p.depth = count - countNow;
+                                    if (p.inner) p.inner.forEach(function(pi) {
+                                        // use negative offset for inners
+                                        pi.depth = -(count - countNow);
+                                    });
+                                });
                             });
-                        });
-                    });
+                    }
                 }
             }
 

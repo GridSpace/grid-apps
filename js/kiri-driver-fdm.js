@@ -107,7 +107,10 @@ var gs_kiri_fdm = exports;
                         slice.index > slices.length - spro.sliceTopLayers-1 ||
                         spro.sliceFillSparse > 0.95
                     ) && !spro.sliceVase;
-                slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, spro.sliceVase);
+                slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, {
+                    vase: spro.sliceVase,
+                    thin: spro.detectThinWalls
+                });
                 if (solid) slice.doSolidLayerFill(fillSpacing, sliceFillAngle);
                 sliceFillAngle += 90.0;
             }, "offsets");

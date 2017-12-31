@@ -82,6 +82,7 @@ self.kiri.license = exports.LICENSE;
                     outputFinishFactor: 1,
                     outputAccelComp: 1,
                     outputOuterFirst: 1,
+                    detectThinWalls: 1,
                     outputWipeSpeed: 1,
                     outputWipeDistance: 1,
                     outputClockwise: 1,
@@ -281,6 +282,7 @@ self.kiri.license = exports.LICENSE;
                 outputFinishFactor: 0,
                 outputAccelComp: false,
                 outputOuterFirst: false,
+                detectThinWalls: false,
 
                 // --- LASER ---
 
@@ -2369,6 +2371,7 @@ self.kiri.license = exports.LICENSE;
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
             outputAccelComp: UC.newBoolean("acceleration", onBooleanClick, {title: "acceleration compensation\nexperimental", modes:FDM}),
             outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
+            detectThinWalls: UC.newBoolean("thin wall", onBooleanClick, {title: "thin wall detection\nexperimental", modes:FDM}),
         });
 
         function toolUpdate(a,b,c) {

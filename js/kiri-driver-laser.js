@@ -30,8 +30,7 @@ var gs_kiri_laser = exports;
         var proc = settings.process;
 
         if (proc.laserSliceHeight < 0) {
-            DBUG.log("invalid slice height");
-            return ondone(false);
+            return ondone("invalid slice height");
         }
 
         SLICER.sliceWidget(widget, {height: proc.laserSliceHeight}, function(slices) {
@@ -40,7 +39,7 @@ var gs_kiri_laser = exports;
                 slice.doShells(1, -proc.laserOffset);
                 onupdate(0.80 + (index/slices.length) * 0.20);
             });
-            ondone(true);
+            ondone();
         }, function(update) {
             onupdate(0.0 + update * 0.80)
         });
