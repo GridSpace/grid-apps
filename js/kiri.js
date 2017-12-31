@@ -1193,7 +1193,7 @@ self.kiri.license = exports.LICENSE;
 
             widget.stats.progress = 0;
             widget.setColor(widget_slicing_color);
-            widget.slice(settings, function(sliced) {
+            widget.slice(settings, function(sliced, error) {
                 var mark = UTIL.time();
                 // on done
                 widget.render(renderMode, MODE === MODES.CAM);
@@ -1214,7 +1214,7 @@ self.kiri.license = exports.LICENSE;
                     firstMesh = false;
                 }
                 // on the last exit, update ui and call the callback
-                if (--countdown === 0) {
+                if (--countdown === 0 || error) {
                     setProgress(0);
                     showSlices(preserveLayer);
                     if (callback && typeof callback === 'function') callback();
@@ -1222,6 +1222,13 @@ self.kiri.license = exports.LICENSE;
                 }
                 // update slider window
                 onControlResize();
+                // handle slicing errors
+                if (error) {
+                    setViewMode(VIEWS.ARRANGE);
+                    setOpacity(model_opacity);
+                    widgetDeselect();
+                    alert(error);
+                }
             }, function(update, msg) {
                 if (msg !== lastMsg) {
                     var mark = UTIL.time();

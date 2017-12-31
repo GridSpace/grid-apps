@@ -714,6 +714,10 @@ var gs_kiri_cam = exports;
             return ondone("invalid slice depth");
         }
 
+        if (!(procRough || procFinish || procFacing || procDrill)) {
+            return ondone("no processes selected");
+        }
+
         // cut outside traces at the right points
         const addCutoutTabs = function(slice, toolDiam) {
             // too high

@@ -547,12 +547,13 @@ var gs_kiri_widget = exports;
                 if (reply.send_end) widget.stats.load_time = widget.xfer.start - reply.send_end;
                 if (reply.slices) { widget.clearSlices(); widget.slices = [] };
                 if (reply.slice) widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
-                if (reply.done) {
+                if (reply.error) {
+                    widget.cancel = true;
+                    ondone(false, reply.error);
+                }
+                if (reply.done && !widget.cancel) {
                     ondone(true);
                     widget.modified = false;
-                }
-                if (reply.error) {
-                    alert(reply.error);
                 }
             });
 
