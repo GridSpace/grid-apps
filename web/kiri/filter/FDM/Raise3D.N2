@@ -36,7 +36,11 @@
         ";Material#2 Used: 0.0"
     ],
     "cmd":{
-        "fan_power": "M106 S{fan_speed}"
+        "fan_power": "M106 S{fan_speed}",
+        "layer": [
+            ";LAYER:{layer}",
+            ";HEIGHT:{height}"
+        ]
     },
     "settings":{
         "origin_center": false,

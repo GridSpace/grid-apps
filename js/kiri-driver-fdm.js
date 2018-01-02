@@ -289,6 +289,7 @@ var gs_kiri_fdm = exports;
             device = settings.device,
             process = settings.process,
             fan_power = device.gcodeFan,
+            trackLayers = device.gcodeLayer,
             trackProgress = device.gcodeTrack,
             time = 0,
             layer = 0,
@@ -432,7 +433,13 @@ var gs_kiri_fdm = exports;
         while (layer < layers.length) {
             path = layers[layer];
 
-            append("; --- layer "+layer+" ---");
+            if (trackLayers) {
+                trackLayers.forEach(function(line) {
+                    append(constReplace(line, {progress: progress, layer: layer, height: zpos}));
+                });
+            } else {
+                append("; --- layer "+layer+" ---");
+            }
 
             // second layer fan on
             if (layer === 1 && fan_power) {

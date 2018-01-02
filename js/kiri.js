@@ -37,7 +37,8 @@ self.kiri.license = exports.LICENSE;
                     gcodePre: 1,
                     gcodePost: 1,
                     gcodeFan: 1,
-                    gcodeTrack: 1
+                    gcodeTrack: 1,
+                    gcodeLayer: 1
                 },
                 // fields permitted in FDM:Process
                 p:{
@@ -225,6 +226,7 @@ self.kiri.license = exports.LICENSE;
                 gcodePost: [], // footer script
                 gcodeFan: "", // FDM fan command
                 gcodeTrack: "", // FDM progress command
+                gcodeLayer: "", // FDM layer output
                 gcodeDwell: [], // CAM dwell script
                 gcodeChange: [], // CAM tool change script
                 gcodeFExt: "", // CAM file extension
@@ -2106,7 +2108,8 @@ self.kiri.license = exports.LICENSE;
 
             setDevice: UC.newGroup("gcode", $('device')),
             setDeviceFan: UC.newInput("fan power", {title:"set cooling fan power", modes:FDM, size:15}),
-            setDeviceTrack: UC.newInput("progress", {title:"set progress meter (makerbot)", modes:FDM, size:15}),
+            setDeviceTrack: UC.newInput("progress", {title:"output on each % progress", modes:FDM, size:15}),
+            setDeviceLayer: UC.newInput("layer", {title:"output at each layer change", modes:FDM, size:14, height: 2}),
             setDeviceToken: UC.newBoolean("token spacing", null, {title:"gcode token spacing", modes:CAM}),
             setDeviceStrip: UC.newBoolean("strip comments", null, {title:"strip gcode comments", modes:CAM}),
             setDeviceFExt: UC.newInput("file ext", {title:"file name exension", modes:CAM, size:5}),
@@ -2760,7 +2763,8 @@ self.kiri.license = exports.LICENSE;
                     },
                     cmd: {
                         fan_power: UI.setDeviceFan.value,
-                        progress: UI.setDeviceTrack.value
+                        progress: UI.setDeviceTrack.value,
+                        layer: UI.setDeviceLayer.value.split('\n')
                     },
                     pre: UI.setDevicePre.value.split('\n'),
                     post: UI.setDevicePost.value.split('\n'),
@@ -2796,6 +2800,7 @@ self.kiri.license = exports.LICENSE;
                     spindleMax: valueOf(set.spindle_max, 0),
                     gcodeFan: valueOf(cmd.fan_power, ''),
                     gcodeTrack: valueOf(cmd.progress, ''),
+                    gcodeLayer: valueOf(cmd.layer, []),
                     gcodePre: valueOf(code.pre, []),
                     gcodePost: valueOf(code.post, []),
                     gcodeDwell: valueOf(code.dwell, []),
@@ -2823,6 +2828,7 @@ self.kiri.license = exports.LICENSE;
                 // FDM
                 UI.setDeviceFan.value = dev.gcodeFan;
                 UI.setDeviceTrack.value = dev.gcodeTrack;
+                UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
                 UI.setDeviceFilament.value = dev.filamentSize;
                 UI.setDeviceNozzle.value = dev.nozzleSize;
                 // CAM
@@ -2846,6 +2852,7 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceOriginTop,
                  UI.setDeviceFan,
                  UI.setDeviceTrack,
+                 UI.setDeviceLayer,
                  UI.setDeviceFilament,
                  UI.setDeviceNozzle,
                  UI.setDeviceDwell,
