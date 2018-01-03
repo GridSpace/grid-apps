@@ -81,7 +81,7 @@ self.kiri.license = exports.LICENSE;
                     outputShortDistance: 1,
                     outputShortFactor: 1,
                     outputFinishFactor: 1,
-                    outputAccelComp: 1,
+                    outputCooling: 1,
                     outputOuterFirst: 1,
                     detectThinWalls: 1,
                     outputWipeSpeed: 1,
@@ -285,9 +285,9 @@ self.kiri.license = exports.LICENSE;
                 outputShortDistance: 5.0,
                 outputShortFactor: 0.2,
                 outputFinishFactor: 0,
-                outputAccelComp: false,
                 outputOuterFirst: false,
                 detectThinWalls: false,
+                outputCooling: true,
 
                 // --- LASER ---
 
@@ -2339,6 +2339,7 @@ self.kiri.license = exports.LICENSE;
             outputShellMult: UC.newInput("shell factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
+            outputCooling: UC.newBoolean("cooling", onBooleanClick, {title: "enable cooling fan\nafter first layer", modes:FDM}),
 
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
@@ -2382,9 +2383,8 @@ self.kiri.license = exports.LICENSE;
             outputShortDistance: UC.newInput("short distance", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
-            outputAccelComp: UC.newBoolean("acceleration", onBooleanClick, {title: "acceleration compensation\nexperimental", modes:FDM}),
             outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
-            detectThinWalls: UC.newBoolean("thin wall", onBooleanClick, {title: "thin wall detection\nexperimental", modes:FDM}),
+            detectThinWalls: UC.newBoolean("thin wall", onBooleanClick, {title: "thin wall detection\nexperimental", modes:FDM})
         });
 
         function toolUpdate(a,b,c) {

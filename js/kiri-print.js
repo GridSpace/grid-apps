@@ -418,7 +418,6 @@ var gs_kiri_print = exports;
 
         var options = options || {},
             process = this.settings.process,
-            accelComp = process.outputAccelComp,
             shortDist = process.outputShortDistance,
             shortDist2 = process.outputShortDistance * 2,
             shortFact = process.outputShortFactor,
@@ -441,16 +440,6 @@ var gs_kiri_print = exports;
                 if (options.shorten && dist > options.shorten && count === points.length) {
                     point = last.offsetPointFrom(point, options.shorten);
                 }
-                if (accelComp && options.accel && dist >= shortDist) {
-                    var sl = dist > shortDist2 ? shortDist : dist / 2,
-                        ml = dist > shortDist2 ? dist - sl - sl : 0,
-                        ps = dist > shortDist2 ? printSpeed : (sl / shortDist) * printSpeed,
-                        p2 = last.offsetPointTo(point, sl),
-                        p3 = last.offsetPointFrom(point, sl);
-                    segmentOutput(output, last, p2, shortSpeed, ps, 5, shellMult);
-                    if (ml) addOutput(output, p3, shellMult, printSpeed);
-                    segmentOutput(output, p3, point, ps, shortSpeed, 5, shellMult);
-                } else
                 if (shortDist && dist < shortDist) {
                     var shortRate = shortSpeed + (printSpeed - shortSpeed) * (dist / shortDist);
                     addOutput(output, point, shellMult, shortRate);

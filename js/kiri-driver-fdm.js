@@ -442,8 +442,8 @@ var gs_kiri_fdm = exports;
             }
 
             // second layer fan on
-            if (layer === 1 && fan_power) {
-                append(constReplace(fan_power,consts));
+            if (layer === 1 && fan_power && process.outputCooling) {
+                append(constReplace(fan_power, consts));
             }
 
             // move Z to layer height
