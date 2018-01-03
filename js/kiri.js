@@ -179,6 +179,7 @@ self.kiri.license = exports.LICENSE;
         },
         // --------------- (default)
         settings = {
+            // CAM only
             tools:[
                 {
                     id: 1000,
@@ -214,25 +215,27 @@ self.kiri.license = exports.LICENSE;
                     shaft_len: 0
                 }
             ],
+            // FDM/CAM/Laser
             device:{
-                bedWidth: 300,
-                bedDepth: 175,
-                bedHeight: 2.5,
-                maxHeight: 150, // FDM
+                bedWidth: 300,      // FDM/CAM/Laser
+                bedDepth: 175,      // FDM/CAM/Laser
+                bedHeight: 2.5,     // display only (deprecate)
+                maxHeight: 150,     // FDM
                 filamentSize: 1.75, // FDM
-                nozzleSize: 0.4, // FDM
-                spindleMax: 0, // CAM
-                gcodePre: [], // header script
-                gcodePost: [], // footer script
-                gcodeFan: "", // FDM fan command
-                gcodeTrack: "", // FDM progress command
-                gcodeLayer: "", // FDM layer output
-                gcodeDwell: [], // CAM dwell script
-                gcodeChange: [], // CAM tool change script
-                gcodeFExt: "", // CAM file extension
-                gcodeSpace: "", // CAM token spacing
-                gcodeStrip: true // CAM strip comments
+                nozzleSize: 0.4,    // FDM
+                spindleMax: 0,      // CAM
+                gcodePre: [],       // FDM/CAM header script
+                gcodePost: [],      // FDM/CAM footer script
+                gcodeFan: "",       // FDM fan command
+                gcodeTrack: "",     // FDM progress command
+                gcodeLayer: "",     // FDM layer output
+                gcodeDwell: [],     // CAM dwell script
+                gcodeChange: [],    // CAM tool change script
+                gcodeFExt: "",      // CAM file extension
+                gcodeSpace: "",     // CAM token spacing
+                gcodeStrip: true    // CAM strip comments
             },
+            // FDM/CAM/Laser
             process:{
                 processName: "default",
 
@@ -291,9 +294,9 @@ self.kiri.license = exports.LICENSE;
                 laserOffset: 0.25,
                 laserSliceHeight: 1,
 
-                outputTileSpacing: 1, // LASER
-                outputTileScaling: 1, // LASER
-                outputLaserPower: 100, // LASER
+                outputTileSpacing: 1,   // LASER
+                outputTileScaling: 1,   // LASER
+                outputLaserPower: 100,  // LASER
                 outputLaserSpeed: 1000, // LASER
 
                 // --- CAM ---
