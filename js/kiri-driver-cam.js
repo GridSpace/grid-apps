@@ -1212,7 +1212,7 @@ var gs_kiri_cam = exports;
                         if (!top.poly) return;
                         if (!top.traces) return;
                         var polys = [];
-                        top.traces.forEach(function (poly) {
+                        POLY.flatten(top.traces, []).forEach(function (poly) {
                             if (depthFirst) poly = poly.clone(true);
                             poly.layer = depthData.layer;
                             polys.push(poly);
