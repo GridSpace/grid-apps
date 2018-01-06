@@ -76,8 +76,8 @@ function lastmod(path) {
  * @param {Function} fn
  * @returns {*}
  */
-function getCachedFile(filePath, fn) {
-    var cachePath = "cache/"+filePath.replace(/\//g,"_"),
+function getCachedFile(filePath, cachePath, fn) {
+    var cachePath = "cache/" + cachePath.replace(/\//g,'_'),
         cached = fileCache[filePath],
         now = time();
 
@@ -160,16 +160,24 @@ function htmlScript(prefix, list) {
 function concatCode(array) {
     var code = [],
         cached,
-        path;
+        cachepath,
+        filepath;
 
-    array.forEach(file => {
-        path = file.charAt(0) === '/' ? file : codePrefix + file + ".js";
-        cached = getCachedFile(path, function(path) {
-            return uglify.minify(path).code;
+    array.forEach((file, index) => {
+        if (file.charAt(0) === "/") {
+            filepath = file;
+            cachepath = "js_mod" + file.replace(/\//g,'_');
+            array[index] = cachepath.substring(3).replace('.js','');
+            fileMap[cachepath.replace("js_","js/")] = filepath;
+        } else {
+            filepath = codePrefix + file + ".js";
+            cachepath = filepath;
+        }
+        cached = getCachedFile(filepath, cachepath, function(path) {
+            return uglify.minify(filepath).code;
         });
         code.push(cached);
     });
-
     return code.join('');
 }
 
@@ -491,6 +499,10 @@ function handleJS(req, res, next) {
         fpath = jspos > 0 ? spath.substring(0,jspos+3) : spath,
         cached = fileCache[fpath];
 
+    if (fileMap[fpath]) {
+        fpath = fileMap[fpath];
+    }
+
     fs.stat(fpath, (err, f) => {
         if (err || !f) return reply404(req, res);
 
@@ -684,6 +696,7 @@ var ver = require('../js/license.js'),
     startTime = time(),
     codePrefix = "js/",
     fileCache = {},
+    fileMap = {},
     filters_fdm = [],
     filters_cam = [],
     modPaths = [],
