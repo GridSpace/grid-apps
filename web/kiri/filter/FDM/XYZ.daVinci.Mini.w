@@ -23,6 +23,8 @@
     "cmd":{
         "fan_power": "M106 S{fan_speed}"
     },
+    "proc": "btoa",
+    "file-ext": "3w",
     "settings":{
         "origin_center": false,
         "extrude_abs": true,
