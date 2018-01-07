@@ -36,6 +36,8 @@ self.kiri.license = exports.LICENSE;
                     nozzleSize: 1,
                     gcodePre: 1,
                     gcodePost: 1,
+                    gcodeProc: 1,
+                    gcodeFExt: 1,
                     gcodeFan: 1,
                     gcodeTrack: 1,
                     gcodeLayer: 1
@@ -226,6 +228,7 @@ self.kiri.license = exports.LICENSE;
                 spindleMax: 0,      // CAM
                 gcodePre: [],       // FDM/CAM header script
                 gcodePost: [],      // FDM/CAM footer script
+                gcodeProc: "",      // FDM post processor script
                 gcodeFan: "",       // FDM fan command
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: "",     // FDM layer output
@@ -952,11 +955,17 @@ self.kiri.license = exports.LICENSE;
         var pre = (MODE === MODES.CAM ? "cnc-" : "print-") + (printSeq.toString().padStart(3,"0")),
             filename = pre,// + (new Date().getTime().toString(36)),
             fileext = settings.device.gcodeFExt || "gcode",
+            codeproc = settings.device.gcodeProc,
             octo_host,
             octo_apik,
             grid_host,
             grid_apik,
             grid_target;
+
+        // run gcode post processor function (when supplied and valid)
+        if (codeproc && self[codeproc]) {
+            gcode = self[codeproc](gcode);
+        }
 
         function getBlob() {
             return new Blob(
@@ -2810,6 +2819,7 @@ self.kiri.license = exports.LICENSE;
                     gcodeLayer: valueOf(cmd.layer, []),
                     gcodePre: valueOf(code.pre, []),
                     gcodePost: valueOf(code.post, []),
+                    gcodeProc: valueOf(code.proc, ''),
                     gcodeDwell: valueOf(code.dwell, []),
                     gcodeChange: valueOf(code['tool-change'], []),
                     gcodeFExt: valueOf(code['file-ext'], 'gcode'),
