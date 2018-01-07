@@ -2012,6 +2012,8 @@ self.kiri.license = exports.LICENSE;
         settings.mode = mode;
         // restore cached device profile for this mode
         if (settings.cdev[mode]) settings.device = settings.cdev[mode];
+        // update device stat for FDM/CAM
+        STATS.set('dn', settings.filter[mode] || '.laser.');
         MODE = MODES[mode];
         UC.setMode(MODE);
         loadNamedSetting();
@@ -2786,6 +2788,8 @@ self.kiri.license = exports.LICENSE;
 
         function setDeviceCode(code, devicename) {
             try {
+                STATS.set('dn', devicename);
+
                 if (typeof(code) === 'string') code = js2o(code) || {};
 
                 var cmd = code.cmd || {},
