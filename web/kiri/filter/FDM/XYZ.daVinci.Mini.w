@@ -3,6 +3,7 @@
         "T0                     ; select extruder #0",
         "M104 S{temp}           ; set nozzle temp",
         "M109 S{temp}           ; wait for nozzle to heat",
+        "G21                    ; set units to millimeters",
         "M82                    ; absolute extrusion mode",
         "G28                    ; home",
         "G1 Z15 F6000           ; lower platform 15mm",
