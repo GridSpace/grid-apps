@@ -21,6 +21,11 @@ var gs_kiri_fdm = exports;
         newPoint = BASE.newPoint,
         time = UTIL.time;
 
+    // customer gcode post function for XYZ daVinci Mini W
+    self.kiri_fdm_xyz_mini_w = function(gcode, options) {
+        return btoa("; filename = kirimoto.gcode\n; machine = dv1MW0A000\n" + gcode);
+    };
+
     /**
      * DRIVER SLICE CONTRACT
      *

@@ -1,7 +1,5 @@
 {
     "pre":[
-		"; filename = kirimoto.gcode",
-		"; machine = dv1MW0A000",
         "T0                     ; select extruder #0",
         "M104 S{temp}           ; set nozzle temp",
         "M109 S{temp}           ; wait for nozzle to heat",
@@ -23,7 +21,7 @@
     "cmd":{
         "fan_power": "M106 S{fan_speed}"
     },
-    "proc": "btoa",
+    "proc": "kiri_fdm_xyz_mini_w",
     "file-ext": "3w",
     "settings":{
         "origin_center": false,
