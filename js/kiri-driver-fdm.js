@@ -301,7 +301,7 @@ var gs_kiri_fdm = exports;
             output = [],
             outputLength = 0,
             lastProgress = 0,
-            decimals = 4,
+            decimals = 3,
             progress = 0,
             distance = 0,
             emitted = 0,
@@ -395,15 +395,15 @@ var gs_kiri_fdm = exports;
             var o = ['G1'];
             if (typeof newpos.x === 'number') {
                 pos.x = UTIL.round(newpos.x,decimals);
-                o.append(" X").append(pos.x);
+                o.append(" X").append(pos.x.toFixed(decimals));
             }
             if (typeof newpos.y === 'number') {
                 pos.y = UTIL.round(newpos.y,decimals);
-                o.append(" Y").append(pos.y);
+                o.append(" Y").append(pos.y.toFixed(decimals));
             }
             if (typeof newpos.z === 'number') {
                 pos.z = UTIL.round(newpos.z,decimals);
-                o.append(" Z").append(pos.z);
+                o.append(" Z").append(pos.z.toFixed(decimals));
             }
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
@@ -440,7 +440,10 @@ var gs_kiri_fdm = exports;
 
             if (trackLayers) {
                 trackLayers.forEach(function(line) {
-                    append(constReplace(line, {progress: progress, layer: layer, height: zpos}));
+                    append(constReplace(line, {
+                        progress: progress,
+                        layer: layer,
+                        height: zinc.toFixed(3)}));
                 });
             } else {
                 append("; --- layer "+layer+" ---");
