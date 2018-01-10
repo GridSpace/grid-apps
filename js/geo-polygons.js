@@ -386,6 +386,14 @@ var gs_base_polygons = exports;
         return out;
     }
 
+    function sumCirc(polys) {
+        var sum = 0.0;
+        polys.forEach(function(poly) {
+            sum += poly.circularityDeep();
+        });
+        return sum;
+    }
+
     /**
      * @param {Polygon[]} polys
      * @param {number} distance offset
@@ -410,7 +418,8 @@ var gs_base_polygons = exports;
             cjnt = clib.JoinType,
             cety = clib.EndType,
             coff = new clib.ClipperOffset(),
-            ctre = new clib.PolyTree();
+            ctre = new clib.PolyTree(),
+            circ = sumCirc(polys);
 
         polys.forEach(function(poly) {
             var clean = clip.CleanPolygons(poly.toClipper(), CONF.clipperClean);
@@ -439,13 +448,14 @@ var gs_base_polygons = exports;
      * @param {number} dist1 first offset distance
      * @param {number} dist2 2nd thru last offset distance
      * @param {number} over additional offset over then under
-     * @param {Polygon[]} [out] optional collector
-     * @param {number} [count] offset passes (0 == until no space left)
-     * @param {Function} [collector] receives output of each pass
+     * @param {Polygon[]} out optional collector
+     * @param {number} count offset passes (0 == until no space left)
+     * @param {Function} collector receives output of each pass
+     * @param {Function} thins receives output of each pass
      * @param {number} [z] defaults to 0
      * @returns {Polygon[]} last offset
      */
-    function expand2(polys, dist1, dist2, over, out, count, collector, z) {
+    function expand2(polys, dist1, dist2, over, out, count, collector, thins, z) {
         // prepare alignments for clipper lib
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -459,7 +469,8 @@ var gs_base_polygons = exports;
             cjnt = clib.JoinType,
             cety = clib.EndType,
             coff = new clib.ClipperOffset(),
-            ctre = new clib.PolyTree();
+            ctre = new clib.PolyTree(),
+            orig = polys;
 
         // inset
         polys.forEach(function(poly) {
@@ -481,11 +492,22 @@ var gs_base_polygons = exports;
         coff.Execute(ctre, (-over) * fact);
         polys = fromClipperTree(ctre, z);
 
+        // detect possible thin walls
+        if (polys.length && thins) {
+            var circ1 = sumCirc(orig),
+                circ2 = sumCirc(polys),
+                diff = Math.abs(1 - (circ1 / circ2));
+
+            if (diff > 0.2) {
+                thins(orig, polys, diff);
+            }
+        }
+
         // process
         if (out) out.appendAll(polys);
         if (collector) collector(polys, count);
         if ((count === 0 || count > 1) && polys.length > 0) {
-            expand2(polys, dist2 || dist1, dist2, over, out, count > 0 ? count-1 : 0, collector, z);
+            expand2(polys, dist2 || dist1, dist2, over, out, count > 0 ? count-1 : 0, collector, thins, z);
         }
 
         return polys;
@@ -551,10 +573,11 @@ var gs_base_polygons = exports;
      * @param {number} angle (-90 to 90)
      * @param {number} spacing
      * @param {Polygon[]} [output]
-     * @param {numer} minLen
+     * @param {number} [minLen]
+     * @param {number} [maxLen]
      * @returns {Point[]} supplied output or new array
      */
-    function fillArea(polys, angle, spacing, output, minLen) {
+    function fillArea(polys, angle, spacing, output, minLen, maxLen) {
         var i = 1,
             p0 = polys[0],
             zpos = p0.getZ(),
@@ -590,7 +613,8 @@ var gs_base_polygons = exports;
             cfil = clib.PolyFillType,
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
-            minlen = BASE.config.clipper * (minLen || 0.25),
+            minlen = BASE.config.clipper * (minLen || 0),
+            maxlen = BASE.config.clipper * (maxLen || 0),
             lines = [];
 
         for (i = 0; i < steps; i++) {
@@ -608,8 +632,11 @@ var gs_base_polygons = exports;
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
             ctre.m_AllPolys.forEach(function(poly) {
-                // filter out polygons under min length (0.5mm)
-                // if (clib.JS.PerimeterOfPath(poly.m_polygon, false, 1) < minlen) return;
+                if (minlen || maxlen) {
+                    var plen = clib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
+                    if (minlen && plen < minlen) return;
+                    if (maxlen && plen > maxlen) return;
+                }
                 poly.m_polygon.forEach(function(point) {
                     rayint.push(newPoint(null,null,zpos,null,point));
                 });

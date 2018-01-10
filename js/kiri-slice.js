@@ -370,6 +370,10 @@ var gs_kiri_slice = exports;
             top.inner = [];
             var last = [];
 
+            if (opt.thin) {
+                top.thin_fill = [];
+            }
+
             if (count) {
                 // permit offset of 0 for laser
                 if (offset1 === 0) {
@@ -384,6 +388,7 @@ var gs_kiri_slice = exports;
                             -offset1,
                             top.traces,
                             count,
+                            // on each new offset trace ...
                             function(polys, countNow) {
                                 last = polys;
                                 // mark each poly with depth (offset #) starting at 0
@@ -395,6 +400,14 @@ var gs_kiri_slice = exports;
                                     });
                                 });
                             },
+                            // thin wall probe
+                            function(p1, p2) {
+                                // var pall = [].appendAll(p1).appendAll(p2),
+                                //     r1 = fillArea(pall, 45, offsetN, [], offsetN, offsetN * 2),
+                                //     r2 = fillArea(pall, 135, offsetN, [], offsetN, offsetN * 2),
+                                //     rall = top.thin_fill.appendAll(r1).appendAll(r2);
+                                // console.log([slice.index, p1, p2, r1, r2]);
+                            },
                             top.poly.getZ());
                     } else {
                         POLY.expand(
@@ -404,6 +417,7 @@ var gs_kiri_slice = exports;
                             top.traces,
                             count,
                             -offsetN,
+                            // on each new offset trace ...
                             function(polys, countNow) {
                                 last = polys;
                                 // mark each poly with depth (offset #) starting at 0
@@ -511,7 +525,7 @@ var gs_kiri_slice = exports;
 
         this.tops.forEach(function(top) {
             if (top.inner && top.inner.length > 0) {
-                top.fill_lines = fillArea(top.inner, angle, spacing, null, 0.00001);
+                top.fill_lines = fillArea(top.inner, angle, spacing, null);
             } else {
                 top.fill_lines = null;
             }
@@ -759,7 +773,7 @@ var gs_kiri_slice = exports;
 
         // create empty filled line array for each top
         tops.forEach(function(top) {
-            top.fill_lines = [];
+            top.fill_lines = top.thin_fill || [];
             var tofill = [],
                 angfill = [];
             trims.forEach(function(solid) {
