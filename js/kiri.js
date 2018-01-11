@@ -2593,7 +2593,10 @@ self.kiri.license = exports.LICENSE;
                     showSerial(true);
                     break;
                 case cca('U'): // full settings url
-                    storeSettingsToServer();
+                    storeSettingsToServer(true);
+                    break;
+                case cca('u'): // full settings url
+                    loadSettingsFromServer(prompt("settings id to load"));
                     break;
                 case cca('s'): // complete slice
                     prepareSlices();
@@ -2704,8 +2707,8 @@ self.kiri.license = exports.LICENSE;
             moveSelection(x, y, z, true);
         }
 
-        function loadSettingsFromServer() {
-            var hash = LOC.hash.substring(1).split("/");
+        function loadSettingsFromServer(tok) {
+            var hash = tok || LOC.hash.substring(1).split("/");
             if (hash.length === 2) {
                 new moto.Ajax(function(reply) {
                     if (reply) {
@@ -2722,13 +2725,14 @@ self.kiri.license = exports.LICENSE;
             }
         }
 
-        function storeSettingsToServer() {
+        function storeSettingsToServer(display) {
             var set = btoa(JSON.stringify(settings));
             new moto.Ajax(function(reply) {
                 if (reply) {
                     var res = JSON.parse(reply);
                     if (res && res.ver) {
                         LOC.hash = res.space + "/" + res.ver;
+                        if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
                     }
                 } else {
                     updateSpaceState();

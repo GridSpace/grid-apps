@@ -493,7 +493,7 @@ var gs_base_polygons = exports;
         polys = fromClipperTree(ctre, z);
 
         // detect possible thin walls
-        if (polys.length && thins) {
+        if (thins) {
             var circ1 = sumCirc(orig),
                 circ2 = sumCirc(polys),
                 diff = Math.abs(1 - (circ1 / circ2));
@@ -578,6 +578,8 @@ var gs_base_polygons = exports;
      * @returns {Point[]} supplied output or new array
      */
     function fillArea(polys, angle, spacing, output, minLen, maxLen) {
+        if (polys.length === 0) return;
+
         var i = 1,
             p0 = polys[0],
             zpos = p0.getZ(),

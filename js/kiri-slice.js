@@ -348,6 +348,32 @@ var gs_kiri_slice = exports;
     };
 
     /**
+     * given two arrays of points (lines), eliminate intersections of the second
+     * to the first, then return a unified array.
+     *
+     * @param {Point[]} r1
+     * @param {Point[]} r2
+     * @returns {Point[]}
+     */
+    function cullIntersections(r1, r2) {
+        if (!(r1 && r2 && r1.length && r2.length)) return;
+        if (r2.length > r1.length) {
+            var r3 = r1;
+            r1 = r2;
+            r2 = r3;
+        }
+        var valid = r1.slice();
+        outer: for (var i=0; i<r2.length; i += 2) {
+            for (var j=0; j<r1.length; j += 2) {
+                if (UTIL.intersect(r1[j], r1[j+1], r2[i], r2[i+1])) continue outer;
+            }
+            valid.push(r2[i]);
+            valid.push(r2[i+1]);
+        }
+        return valid;
+    }
+
+    /**
      * Compute offset shell polygons. For FDM, the first offset is usually half
      * of the nozzle width.  Each subsequent offset is a full nozzle width.  User
      * parameters control tweaks to these numbers to allow for better shell bonding.
@@ -368,7 +394,8 @@ var gs_kiri_slice = exports;
             if (opt.vase) top.poly = top.poly.clone(false);
             top.traces = [];
             top.inner = [];
-            var last = [];
+            var last = [],
+                z = top.poly.getZ();
 
             if (opt.thin) {
                 top.thin_fill = [];
@@ -402,18 +429,19 @@ var gs_kiri_slice = exports;
                             },
                             // thin wall probe
                             function(p1, p2) {
-                                // var pall = [].appendAll(p1).appendAll(p2),
-                                //     r1 = fillArea(pall, 45, offsetN, [], offsetN, offsetN * 2),
-                                //     r2 = fillArea(pall, 135, offsetN, [], offsetN, offsetN * 2),
-                                //     rall = top.thin_fill.appendAll(r1).appendAll(r2);
-                                // console.log([slice.index, p1, p2, r1, r2]);
+                                var pall = POLY.nest([].appendAll(p1).appendAll(p2), true),
+                                    pnew = POLY.expand(pall, -offset1, z, null, 1),
+                                    r1 = fillArea(pnew, 45, offsetN, [], 0, offsetN * 2),
+                                    r2 = fillArea(pnew, 135, offsetN, [], 0, offsetN * 2),
+                                    rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
+                                // if (rall.length) console.log([slice.index, pnew.length, rall.length]);
                             },
-                            top.poly.getZ());
+                            z);
                     } else {
                         POLY.expand(
                             [top.poly],
                             -offset1,
-                            top.poly.getZ(),
+                            z,
                             top.traces,
                             count,
                             -offsetN,
@@ -610,9 +638,9 @@ var gs_kiri_slice = exports;
                 poly = POLY.fromClipperNode(node, scope.z);
                 tops.forEach(function(top) {
                     // filter out polygons under min length (0.5mm)
-                    if (poly.isInside(top.poly) && poly.perimeter() > 0.5) {
+                    // if (poly.isInside(top.poly) && poly.perimeter() > 0.5) {
                         top.fill_sparse.push(poly);
-                    }
+                    // }
                 });
             });
         }
@@ -796,6 +824,24 @@ var gs_kiri_slice = exports;
                     top.fill_lines_ang.list.push(af.fillang.angle + 45);
                     top.fill_lines_ang.poly.push(af.clone());
                 });
+            }
+        });
+
+        return true;
+    };
+
+    /**
+     * fill thin areas, if present
+     * @return {boolean} true if filled, false if not
+     */
+    PRO.doThinFill = function(spacing, angle) {
+        this.tops.forEach(function(top) {
+            if (top.thin_fill.length > 0) {
+                if (top.fill_lines) {
+                    top.fill_lines.appendAll(top.thin_fill)
+                } else {
+                    top.fill_lines = top.thin_fill;
+                }
             }
         });
 

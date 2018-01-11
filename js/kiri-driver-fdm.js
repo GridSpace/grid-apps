@@ -131,6 +131,7 @@ var gs_kiri_fdm = exports;
                 }, "solids");
                 forSlices(0.35, 0.5, function(slice) {
                     slice.doSolidsFill(fillSpacing, sliceFillAngle, minSolid);
+                    slice.doThinFill(fillSpacing, sliceFillAngle);
                     sliceFillAngle += 90.0;
                 }, "solids");
             }
