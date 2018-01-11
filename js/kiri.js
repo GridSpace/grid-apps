@@ -1725,7 +1725,6 @@ self.kiri.license = exports.LICENSE;
 
     // kiri api
     function putSettings(newset) {
-        console.log({new_settings:newset});
         settings = newset;
         saveSettings()
         restoreWorkspace(null, true);
@@ -2593,7 +2592,7 @@ self.kiri.license = exports.LICENSE;
                 case cca('c'): // open control window
                     showSerial(true);
                     break;
-                case cca('u'): // full settings url
+                case cca('U'): // full settings url
                     storeSettingsToServer();
                     break;
                 case cca('s'): // complete slice
