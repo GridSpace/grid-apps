@@ -836,7 +836,7 @@ var gs_kiri_slice = exports;
      */
     PRO.doThinFill = function(spacing, angle) {
         this.tops.forEach(function(top) {
-            if (top.thin_fill.length > 0) {
+            if (top.thin_fill && top.thin_fill.length > 0) {
                 if (top.fill_lines) {
                     top.fill_lines.appendAll(top.thin_fill)
                 } else {

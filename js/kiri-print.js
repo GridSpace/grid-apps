@@ -426,8 +426,14 @@ var gs_kiri_print = exports;
             shortSpeed = printSpeed * shortFact,
             moveSpeed = process.outputSeekrate,
             closest = poly.findClosestPointTo(startPoint),
+            perimeter = poly.perimeter(),
+            isShort = perimeter < process.outputShortPoly,
             first = true,
             last = startPoint;
+
+        if (isShort) {
+            shortSpeed = shortSpeed + (printSpeed - shortSpeed) * (perimeter / process.outputShortPoly);
+        }
 
         poly.forEachPoint(function(point, pos, points, count) {
             if (first) {
@@ -440,7 +446,9 @@ var gs_kiri_print = exports;
                 if (options.shorten && dist > options.shorten && count === points.length) {
                     point = last.offsetPointFrom(point, options.shorten);
                 }
-                if (shortDist && dist < shortDist) {
+                if (isShort) {
+                    addOutput(output, point, shellMult, shortSpeed);
+                } else if (shortDist && dist < shortDist) {
                     var shortRate = shortSpeed + (printSpeed - shortSpeed) * (dist / shortDist);
                     addOutput(output, point, shellMult, shortRate);
                 } else {
