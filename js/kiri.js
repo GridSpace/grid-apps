@@ -2711,7 +2711,7 @@ self.kiri.license = exports.LICENSE;
         }
 
         function loadSettingsFromServer(tok) {
-            var hash = tok || LOC.hash.substring(1).split("/");
+            var hash = (tok || LOC.hash.substring(1)).split("/");
             if (hash.length === 2) {
                 new moto.Ajax(function(reply) {
                     if (reply) {
