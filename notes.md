@@ -59,7 +59,7 @@
 
 # FDM todo
 
-* add support expand to multi-part spacing
+* add support expand value to multi-part spacing (which defaults to 1mm)
 * add lay-flat auto-rotation or from selected face
 * add rafts, thin wall detection, manual supports
 * check for support / brim intersections on first layer

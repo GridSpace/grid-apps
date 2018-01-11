@@ -10,6 +10,13 @@ self.kiri.license = exports.LICENSE;
 (function () {
     if (kiri.init) return;
 
+    function genID() {
+        while (true) {
+            var k = Math.round(Math.random() * 9999999999).toString(36);
+            if (k.length >= 4 && k.length <= 8) return k;
+        }
+    }
+
     var iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
         // ---------------
         MODES = {
@@ -408,7 +415,9 @@ self.kiri.license = exports.LICENSE;
                 zoomSpeed: 1.0,
                 reverseZoom: true
             },
-            mode: 'FDM'
+            mode: 'FDM',
+            id: genID(),
+            ver: 1
         },
         settingsDefault = settings,
         autoDecimate = true,
@@ -1716,6 +1725,7 @@ self.kiri.license = exports.LICENSE;
 
     // kiri api
     function putSettings(newset) {
+        console.log({new_settings:newset});
         settings = newset;
         saveSettings()
         restoreWorkspace(null, true);
@@ -2583,6 +2593,9 @@ self.kiri.license = exports.LICENSE;
                 case cca('c'): // open control window
                     showSerial(true);
                     break;
+                case cca('u'): // full settings url
+                    storeSettingsToServer();
+                    break;
                 case cca('s'): // complete slice
                     prepareSlices();
                     break;
@@ -2690,6 +2703,38 @@ self.kiri.license = exports.LICENSE;
             }
 
             moveSelection(x, y, z, true);
+        }
+
+        function loadSettingsFromServer() {
+            var hash = LOC.hash.substring(1).split("/");
+            if (hash.length === 2) {
+                new moto.Ajax(function(reply) {
+                    if (reply) {
+                        var res = JSON.parse(reply);
+                        if (res && res.ver && res.rec) {
+                            var set = JSON.parse(atob(res.rec));
+                            set.id = res.space;
+                            set.ver = res.ver;
+                            putSettings(set);
+                            LOC.hash = '';
+                        }
+                    }
+                }).request("/data/"+ hash[0] + "/" + hash[1]);
+            }
+        }
+
+        function storeSettingsToServer() {
+            var set = btoa(JSON.stringify(settings));
+            new moto.Ajax(function(reply) {
+                if (reply) {
+                    var res = JSON.parse(reply);
+                    if (res && res.ver) {
+                        LOC.hash = res.space + "/" + res.ver;
+                    }
+                } else {
+                    updateSpaceState();
+                }
+            }).request("/data/"+ settings.id + "/" + settings.ver, set);
         }
 
         function settingsSave() {
@@ -3367,6 +3412,9 @@ self.kiri.license = exports.LICENSE;
 
             // send init-done event
             sendOnEvent('init-done', STATS);
+
+            // load settings provided in url hash
+            loadSettingsFromServer();
         }
 
         restoreWorkspace(ondone) || checkSeed(ondone) || ondone();
