@@ -2721,6 +2721,7 @@ self.kiri.license = exports.LICENSE;
                             set.id = res.space;
                             set.ver = res.ver;
                             putSettings(set);
+                            triggerSettingsEvent();
                             LOC.hash = '';
                         }
                     }
