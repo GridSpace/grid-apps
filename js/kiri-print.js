@@ -740,7 +740,9 @@ var gs_kiri_print = exports;
         });
 
         // perform last wipe on top layer at end of run
-        if (wipeAfter && wipe) outputWipe(wipe);
+        if (wipeAfter && wipe) {
+            outputWipe(wipe);
+        }
 
         // offset print points
         for (i=0; i<preout.length; i++) {

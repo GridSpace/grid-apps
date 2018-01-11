@@ -637,10 +637,10 @@ var gs_kiri_slice = exports;
             ctre.m_AllPolys.forEach(function(node) {
                 poly = POLY.fromClipperNode(node, scope.z);
                 tops.forEach(function(top) {
-                    // filter out polygons under min length (0.5mm)
-                    // if (poly.isInside(top.poly) && poly.perimeter() > 0.5) {
+                    // use only polygons inside the top
+                    if (poly.isInside(top.poly)) {
                         top.fill_sparse.push(poly);
-                    // }
+                    }
                 });
             });
         }
