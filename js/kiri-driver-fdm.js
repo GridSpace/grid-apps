@@ -330,6 +330,7 @@ var gs_kiri_fdm = exports;
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist,
             retSpeed = process.outputRetractSpeed * 60,
+            retDwell = Math.round((process.outputRetractDwell || 0) * 1000),
             // ratio of nozzle area to filament area times
             // ratio of slice height to filament max noodle height
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
@@ -482,6 +483,7 @@ var gs_kiri_fdm = exports;
 
                 dist = lastp ? lastp.distTo2D(out.point) : 0;
 
+                // perform retraction
                 if (out.emit && retracted) {
                     moveTo({e:retracted}, retSpeed, "engage " + retracted);
                     retracted = 0;
@@ -496,10 +498,12 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y}, speedMMM);
                 }
 
+                // re-engage after post-retraction move
                 if (!retracted && out.retract) {
                     retracted = retDist;
                     moveTo({e:-retracted}, retSpeed, "retract " + retDist);
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
+                    if (retDwell) dwell(retDwell);
                 }
 
                 // update time and distance
