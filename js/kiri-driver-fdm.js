@@ -214,8 +214,7 @@ var gs_kiri_fdm = exports;
             if (layer === 0 && process.outputBrimCount) {
                 var brims = [],
                     polys = [],
-                    preout = [],
-                    startPoint = printPoint;
+                    preout = [];
 
                 widgets.forEach(function(widget) {
                     var tops = [];
@@ -239,7 +238,7 @@ var gs_kiri_fdm = exports;
                         rate: process.firstLayerRate,
                         onfirst: function(point) {
                             if (preout.length && point.distTo2D(startPoint) > 2) {
-                                // retract between brim r
+                                // retract between brims
                                 preout.last().retract = true;
                             }
                         }
@@ -247,7 +246,7 @@ var gs_kiri_fdm = exports;
                 });
 
                 print.addPrintPoints(preout, layerout, null);
-                // preout.last().retract = true;
+                preout.last().retract = true;
             }
 
             // iterate over layer slices, find closest widget, print, eliminate
@@ -390,6 +389,12 @@ var gs_kiri_fdm = exports;
             append("G4 P" + ms);
         }
 
+        function retract() {
+            retracted = retDist;
+            moveTo({e:-retracted}, retSpeed, "retract " + retDist);
+            time += (retDist / retSpeed) * 60 * 2; // retraction time
+        }
+
         function moveTo(newpos, rate, comment) {
             if (comment) {
                 append(" ; " + comment);
@@ -437,6 +442,9 @@ var gs_kiri_fdm = exports;
             totaldistance += o1.point.distTo2D(o2.point);
         }, 1);
 
+        // retract before first move
+        retract();
+
         while (layer < layers.length) {
             path = layers[layer];
 
@@ -483,11 +491,15 @@ var gs_kiri_fdm = exports;
 
                 dist = lastp ? lastp.distTo2D(out.point) : 0;
 
-                // perform retraction
+                // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
                     moveTo({e:retracted}, retSpeed, "engage " + retracted);
                     retracted = 0;
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
+                    if (retDwell) {
+                        dwell(retDwell);
+                        time += retDwell;
+                    }
                 }
 
                 if (lastp && out.emit) {
@@ -498,12 +510,9 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y}, speedMMM);
                 }
 
-                // re-engage after post-retraction move
+                // retract filament
                 if (!retracted && out.retract) {
-                    retracted = retDist;
-                    moveTo({e:-retracted}, retSpeed, "retract " + retDist);
-                    time += (retDist / retSpeed) * 60 * 2; // retraction time
-                    if (retDwell) dwell(retDwell);
+                    retract();
                 }
 
                 // update time and distance

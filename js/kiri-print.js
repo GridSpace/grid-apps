@@ -35,6 +35,7 @@ var gs_kiri_print = exports;
      */
     function Print(settings, widgets, id) {
         this.id = id || new Date().getTime().toString(36);
+
         this.settings = settings;
         this.widgets = widgets;
         this.group = new THREE.Group();
@@ -152,6 +153,9 @@ var gs_kiri_print = exports;
         var scope = this,
             settings = scope.settings,
             mode = settings.mode;
+
+        lastPoint = null;
+        lastEmit = null;
 
         if (remote) {
 
@@ -506,7 +510,6 @@ var gs_kiri_print = exports;
             var closest = poly.findClosestPointTo(startPoint),
                 distance = wipeDistance,
                 last = startPoint;
-
             while (distance > 0) poly.forEachPoint(function(point) {
                 if (distance > 0) {
                     var len = last.distTo2D(point);
@@ -538,6 +541,7 @@ var gs_kiri_print = exports;
                     shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
+                        if (startPoint.distTo2D(firstPoint) > 2) retract();
                         checkBisect(startPoint, firstPoint, bounds);
                     }
                 });
