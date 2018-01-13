@@ -429,12 +429,11 @@ var gs_kiri_slice = exports;
                             },
                             // thin wall probe
                             function(p1, p2) {
-                                var pall = POLY.nest([].appendAll(p1).appendAll(p2), true),
+                                var pall = POLY.nest([].appendAll(p1).appendAll(p2).clone(true)),
                                     pnew = POLY.expand(pall, -offset1, z, null, 1),
                                     r1 = fillArea(pnew, 45, offsetN, [], 0, offsetN * 2),
                                     r2 = fillArea(pnew, 135, offsetN, [], 0, offsetN * 2),
                                     rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
-                                // if (rall.length) console.log([slice.index, pnew.length, rall.length]);
                             },
                             z);
                     } else {
