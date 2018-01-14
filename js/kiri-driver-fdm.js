@@ -211,7 +211,7 @@ var gs_kiri_fdm = exports;
             if (slices.length === 0) break;
 
             // create brim, if specificed in FDM mode (code shared by laser)
-            if (layer === 0 && process.outputBrimCount) {
+            if (layer === 0 && (process.outputBrimCount || process.outputRaft)) {
                 var brims = [],
                     polys = [],
                     preout = [];
@@ -232,26 +232,41 @@ var gs_kiri_fdm = exports;
                     });
                 });
 
+                // merge brims
+                brims = POLY.union(brims);
+
                 // if brim is offset, the expand and shrink to cause brims to merge
                 if (process.outputBrimOffset && brims.length) {
-
+                    var extra = process.sliceSupportExtra + 2;
+                    brims = POLY.expand(brims, extra, 0, null, 1);
+                    brims = POLY.expand(brims, -extra, 0, null, 1);
                 }
 
-                POLY.union(brims).forEach(function(brim) {
-                    POLY.trace2count(brim, polys, -device.nozzleSize, process.outputBrimCount, 0);
-                });
+                // if raft is specified
+                if (process.outputRaft) {
+                    console.log("output raft coming soon");
+                }
 
-                printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
-                    return print.polyPrintPath(poly, startPoint, preout, {
-                        rate: process.firstLayerRate,
-                        onfirst: function(point) {
-                            if (preout.length && point.distTo2D(startPoint) > 2) {
-                                // retract between brims
-                                preout.last().retract = true;
-                            }
-                        }
+                // if using brim vs raft
+                if (process.outputBrimCount) {
+                    // expand brims
+                    brims.forEach(function(brim) {
+                        POLY.trace2count(brim, polys, -device.nozzleSize, process.outputBrimCount, 0);
                     });
-                });
+
+                    // output brim points
+                    printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
+                        return print.polyPrintPath(poly, startPoint, preout, {
+                            rate: process.firstLayerRate,
+                            onfirst: function(point) {
+                                if (preout.length && point.distTo2D(startPoint) > 2) {
+                                    // retract between brims
+                                    preout.last().retract = true;
+                                }
+                            }
+                        });
+                    });
+                }
 
                 print.addPrintPoints(preout, layerout, null);
                 preout.last().retract = true;

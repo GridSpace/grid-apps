@@ -366,7 +366,7 @@ var gs_kiri_slice = exports;
             valid.push(r1[i]);
             valid.push(r1[i+1]);
         }
-        return valid;
+        return valid.length > 2 ? valid : [];
     }
 
     /**

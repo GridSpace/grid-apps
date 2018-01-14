@@ -73,6 +73,7 @@ self.kiri.license = exports.LICENSE;
                     sliceVase: 1,
                     firstSliceHeight: 1,
                     firstLayerRate: 1,
+                    outputRaft: 1,
                     outputTemp: 1,
                     outputFanMax: 1,
                     outputBedTemp: 1,
@@ -277,6 +278,7 @@ self.kiri.license = exports.LICENSE;
 
                 firstSliceHeight: 0.25,
                 firstLayerRate: 30,
+                outputRaft: false,
 
                 outputTemp: 220,
                 outputFanMax: 255,
@@ -2399,6 +2401,7 @@ self.kiri.license = exports.LICENSE;
             firstLayerRate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
+            outputRaft: UC.newBoolean("raft", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion", modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
             // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
