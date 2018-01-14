@@ -340,6 +340,7 @@ var gs_kiri_slice = exports;
                 tops.forEach(function(top) {
                     layer.poly(top.poly, colors[0], true, open);
                     if (top.inner) layer.poly(top.inner, 0x999999, true, null);
+                    // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
                 });
                 break;
         }
@@ -357,18 +358,13 @@ var gs_kiri_slice = exports;
      */
     function cullIntersections(r1, r2) {
         if (!(r1 && r2 && r1.length && r2.length)) return;
-        if (r2.length > r1.length) {
-            var r3 = r1;
-            r1 = r2;
-            r2 = r3;
-        }
-        var valid = r1.slice();
-        outer: for (var i=0; i<r2.length; i += 2) {
-            for (var j=0; j<r1.length; j += 2) {
-                if (UTIL.intersect(r1[j], r1[j+1], r2[i], r2[i+1])) continue outer;
+        var valid = r2.slice();
+        outer: for (var i=0; i<r1.length; i += 2) {
+            for (var j=0; j<r2.length; j += 2) {
+                if (UTIL.intersect(r1[i], r1[i+1], r2[j], r2[j+1], BASE.key.SEGINT)) continue outer;
             }
-            valid.push(r2[i]);
-            valid.push(r2[i+1]);
+            valid.push(r1[i]);
+            valid.push(r1[i+1]);
         }
         return valid;
     }
@@ -392,6 +388,7 @@ var gs_kiri_slice = exports;
 
         slice.tops.forEach(function(top) {
             if (opt.vase) top.poly = top.poly.clone(false);
+            // top.thinner = [];
             top.traces = [];
             top.inner = [];
             var last = [],
@@ -412,7 +409,6 @@ var gs_kiri_slice = exports;
                             [top.poly],
                             -offset1,
                             -offsetN,
-                            -offset1,
                             top.traces,
                             count,
                             // on each new offset trace ...
@@ -428,12 +424,17 @@ var gs_kiri_slice = exports;
                                 });
                             },
                             // thin wall probe
-                            function(p1, p2) {
-                                var pall = POLY.nest([].appendAll(p1).appendAll(p2).clone(true)),
-                                    pnew = POLY.expand(pall, -offset1, z, null, 1),
-                                    r1 = fillArea(pnew, 45, offsetN, [], 0, offsetN * 2),
-                                    r2 = fillArea(pnew, 135, offsetN, [], 0, offsetN * 2),
+                            function(p1, p2, diff, dist) {
+                                var pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
+                                    pnew1 = POLY.expand(pall, -dist, z, null, 1),
+                                    r1 = fillArea(pnew1, 45, offsetN, [], 0, offset1),
+                                    r2 = fillArea(pnew1, 135, offsetN, [], 0, offset1),
+                                    rall = top.thin_fill.appendAll(cullIntersections(r1, r2)),
+                                    pnew2 = POLY.expand(pnew1, -dist, z, null, 1),
+                                    r1 = fillArea(pnew2, 45, offsetN, [], 0, offset1),
+                                    r2 = fillArea(pnew2, 135, offsetN, [], 0, offset1),
                                     rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
+                                // top.thinner.appendAll(pnew1).appendAll(pnew2);
                             },
                             z);
                     } else {

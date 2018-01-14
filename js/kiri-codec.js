@@ -120,6 +120,7 @@ var gs_kiri_codec = exports;
             poly: encode(this.poly, state),
             traces: encode(this.traces, state),
             inner: encode(this.inner, state),
+            // thinner: encode(this.thinner, state),
             solids: encode(this.solids, state),
             fill_lines: encodePointArray(this.fill_lines),
             fill_sparse: encode(this.fill_sparse, state)
@@ -131,6 +132,7 @@ var gs_kiri_codec = exports;
 
         top.traces = decode(v.traces, state);
         top.inner = decode(v.inner, state);
+        // top.thinner = decode(v.thinner, state);
         top.solids = decode(v.solids, state);
         top.fill_lines = decodePointArray(v.fill_lines,state);
         top.fill_sparse = decode(v.fill_sparse, state);

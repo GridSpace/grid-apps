@@ -255,9 +255,9 @@ self.kiri.license = exports.LICENSE;
 
                 sliceHeight: 0.25,
                 sliceShells: 2,
-                sliceShellSpacing: 0.9,
+                sliceShellSpacing: 1,
                 sliceFillAngle: 45,
-                sliceFillOverlap: 0.5,
+                sliceFillOverlap: 0.3,
                 sliceFillSpacing: 1.0,
                 sliceFillSparse: 0.5,
 
@@ -278,20 +278,20 @@ self.kiri.license = exports.LICENSE;
                 firstSliceHeight: 0.25,
                 firstLayerRate: 30,
 
-                outputTemp: 230,
+                outputTemp: 220,
                 outputFanMax: 255,
                 outputBedTemp: 0,
                 outputFeedrate: 100,
                 outputFinishrate: 60,
                 outputSeekrate: 150,
-                outputShellMult: 1.0,
-                outputFillMult: 1.25,
-                outputSparseMult: 1.5,
+                outputShellMult: 1.1,
+                outputFillMult: 1.2,
+                outputSparseMult: 1.3,
                 outputRetractOver: 5.0,
                 outputRetractDist: 0.5,
                 outputRetractSpeed: 20,
-                outputRetractDwell: 0.2,
-                outputWipeSpeed: 20,
+                outputRetractDwell: 50,
+                outputWipeSpeed: 50,
                 outputWipeDistance: 0,
                 outputBrimCount: 2,
                 outputBrimOffset: 3,
@@ -1011,6 +1011,7 @@ self.kiri.license = exports.LICENSE;
             ajax.onreadystatechange = function() {
                 if (ajax.readyState === 4) {
                     var status = ajax.status;
+                    STATS.add('op-'+status);
                     if (status >= 200 && status < 300) {
                         hideModal();
                     } else {
@@ -1062,6 +1063,7 @@ self.kiri.license = exports.LICENSE;
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     var status = xhtr.status;
+                    STATS.add('gp-'+status);
                     if (status >= 200 && status < 300) {
                         var json = js2o(xhtr.responseText);
                         gridprint_tracker(host,json.key);
@@ -1435,7 +1437,7 @@ self.kiri.license = exports.LICENSE;
     function layoutPlatform(event, space) {
         var layout = (viewMode === VIEWS.ARRANGE),
             modified = false,
-            gap = space || 1,
+            gap = space || (1 + settings.process.sliceSupportExtra),
             topZ = MODE === MODES.CAM ? camTopZ : 0;
 
         setViewMode(VIEWS.ARRANGE);
@@ -2402,7 +2404,7 @@ self.kiri.license = exports.LICENSE;
             // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
-            outputRetractDwell: UC.newInput("retract dwell", {title:"time between re-engaging\nfilament and movement\nin seconds", convert:UC.toFloat, modes:FDM}),
+            outputRetractDwell: UC.newInput("retract dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
             outputWipeSpeed: UC.newInput("wipe speed", {title:"speed while wiping\nnozzle in mm/s", convert:UC.toInt, modes:FDM}),
             outputWipeDistance: UC.newInput("wipe distance", {title:"distance to wipe nozzle after\neach enclosed island completes\nin millimeters. 0 to disable", convert:UC.toInt, modes:FDM}),
             outputShortPoly: UC.newInput("short outline", {title:"poly perimeter length\ntriggers short slowdown\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),

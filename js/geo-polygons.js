@@ -447,7 +447,6 @@ var gs_base_polygons = exports;
      * @param {Polygon[]} polys
      * @param {number} dist1 first offset distance
      * @param {number} dist2 2nd thru last offset distance
-     * @param {number} over additional offset over then under
      * @param {Polygon[]} out optional collector
      * @param {number} count offset passes (0 == until no space left)
      * @param {Function} collector receives output of each pass
@@ -455,7 +454,7 @@ var gs_base_polygons = exports;
      * @param {number} [z] defaults to 0
      * @returns {Polygon[]} last offset
      */
-    function expand2(polys, dist1, dist2, over, out, count, collector, thins, z) {
+    function expand2(polys, dist1, dist2, out, count, collector, thins, z) {
         // prepare alignments for clipper lib
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -470,7 +469,8 @@ var gs_base_polygons = exports;
             cety = clib.EndType,
             coff = new clib.ClipperOffset(),
             ctre = new clib.PolyTree(),
-            orig = polys;
+            orig = polys,
+            over = dist1 * 0.45;
 
         // inset
         polys.forEach(function(poly) {
@@ -489,7 +489,7 @@ var gs_base_polygons = exports;
             var simple = clip.SimplifyPolygons(clean, cpft.pftNonZero);
             coff.AddPaths(simple, cjnt.jtMiter, cety.etClosedPolygon);
         });
-        coff.Execute(ctre, (-over) * fact);
+        coff.Execute(ctre, -over * fact);
         polys = fromClipperTree(ctre, z);
 
         // detect possible thin walls
@@ -499,7 +499,7 @@ var gs_base_polygons = exports;
                 diff = Math.abs(1 - (circ1 / circ2));
 
             if (diff > 0.2) {
-                thins(orig, polys, diff);
+                thins(orig, out.length ? polys : null, diff, -over);
             }
         }
 
@@ -507,7 +507,7 @@ var gs_base_polygons = exports;
         if (out) out.appendAll(polys);
         if (collector) collector(polys, count);
         if ((count === 0 || count > 1) && polys.length > 0) {
-            expand2(polys, dist2 || dist1, dist2, over, out, count > 0 ? count-1 : 0, collector, thins, z);
+            expand2(polys, dist2 || dist1, dist2, out, count > 0 ? count-1 : 0, collector, thins, z);
         }
 
         return polys;

@@ -216,18 +216,26 @@ var gs_kiri_fdm = exports;
                     polys = [],
                     preout = [];
 
+                // compute first brim
                 widgets.forEach(function(widget) {
                     var tops = [];
+                    // collect top outer polygons
                     widget.slices[0].tops.forEach(function(top) {
                         tops.push(top.poly.clone());
                     });
+                    // nest and offset tops
                     POLY.nest(tops).forEach(function(poly) {
-                        poly.offset(-process.outputBrimOffset+device.nozzleSize/2).forEach(function(brim) {
+                        poly.offset(-process.outputBrimOffset + device.nozzleSize/2).forEach(function(brim) {
                             brim.move(widget.mesh.position);
                             brims.push(brim);
                         });
                     });
                 });
+
+                // if brim is offset, the expand and shrink to cause brims to merge
+                if (process.outputBrimOffset && brims.length) {
+
+                }
 
                 POLY.union(brims).forEach(function(brim) {
                     POLY.trace2count(brim, polys, -device.nozzleSize, process.outputBrimCount, 0);
@@ -329,7 +337,7 @@ var gs_kiri_fdm = exports;
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist,
             retSpeed = process.outputRetractSpeed * 60,
-            retDwell = Math.round((process.outputRetractDwell || 0) * 1000),
+            retDwell = process.outputRetractDwell || 0,
             // ratio of nozzle area to filament area times
             // ratio of slice height to filament max noodle height
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),

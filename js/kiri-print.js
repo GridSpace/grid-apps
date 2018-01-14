@@ -634,7 +634,7 @@ var gs_kiri_print = exports;
                     // if dist to new segment is less than thinWall
                     // and segment length is less than thinWall then
                     // just extrude to midpoint of next segment. this is
-                    // to avoid shaking printer to death.
+                    // to avoid shaking the printer to death.
                     if (find.d <= thinWall && len <= thinWall) {
                         p2 = p1.midPointTo(p2);
                         addOutput(preout, p2, fillMult * (find.d / thinWall), printSpeed);
@@ -646,7 +646,7 @@ var gs_kiri_print = exports;
                             checkBisect(startPoint, p1, bounds);
                         }
 
-                        // bridge ends of fill if they're close together
+                        // bridge ends of fill when they're close together
                         if (dist < thinWall) {
                             addOutput(preout, p1, fillMult, printSpeed);
                         } else {

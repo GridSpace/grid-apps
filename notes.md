@@ -59,10 +59,8 @@
 
 # FDM todo
 
-* fix thin wall support fill artifacts with complex nested polys
-* post re-engage dwell (on first layer?)
-* add support expand value to multi-part spacing (which defaults to 1mm)
 * add lay-flat auto-rotation or from selected face
+* determine start point from gcode preamble
 * add rafts, manual supports
 * check for support / brim intersections on first layer
 * solid fill every other line, two passes. minimize heat/sag. better fill between
