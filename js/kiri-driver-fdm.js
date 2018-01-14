@@ -169,24 +169,122 @@ var gs_kiri_fdm = exports;
         var widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
+            nozzle = device.nozzleSize,
             process = settings.process,
             mode = settings.mode,
             output = print.output,
             printPoint = newPoint(0,0,0),
+            firstLayerHeight = process.firstSliceHeight,
             maxLayers = 0,
             layer = 0,
+            zoff = 0,
             mesh,
             meshIndex,
             lastIndex,
-            layerout,
             closest,
             mindist,
             minidx,
             find,
             found,
             mslices,
-            slices,
+            layerout = [],
+            slices = [],
             sliceEntry;
+
+        // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
+        if (process.outputBrimCount || process.outputRaft) {
+            var brims = [];
+
+            // compute first brim
+            widgets.forEach(function(widget) {
+                var tops = [];
+                // collect top outer polygons
+                widget.slices[0].tops.forEach(function(top) {
+                    tops.push(top.poly.clone());
+                });
+                // nest and offset tops
+                POLY.nest(tops).forEach(function(poly) {
+                    poly.offset(-process.outputBrimOffset + nozzle / 2).forEach(function(brim) {
+                        brim.move(widget.mesh.position);
+                        brims.push(brim);
+                    });
+                });
+            });
+
+            // merge brims
+            brims = POLY.union(brims);
+
+            // if brim is offset, the expand and shrink to cause brims to merge
+            if (process.outputBrimOffset && brims.length) {
+                var extra = process.sliceSupportExtra + 2;
+                brims = POLY.expand(brims, extra, 0, null, 1);
+                brims = POLY.expand(brims, -extra, 0, null, 1);
+            }
+
+            // if raft is specified
+            if (process.outputRaft) {
+                var offset = newPoint(0,0,0),
+                    height = nozzle;
+
+                var raft = function(height, angle, spacing, speed, extrude) {
+                    var slice = kiri.newSlice(zoff + height / 2);
+                    brims.forEach(function(brim) {
+                        var t = slice.addTop(brim);
+                        t.traces = [ brim ];
+                        t.inner = POLY.expand(t.traces, -nozzle * 0.5, 0, null, 1);
+                        t.fill_lines = POLY.fillArea(t.inner, angle, spacing, []);
+                    })
+                    offset.z = slice.z;
+                    printPoint = print.slicePrintPath(slice, printPoint, offset, layerout, {
+                        speed: speed,
+                        mult: extrude,
+                    });
+                    layerout.height = height;
+                    output.append(layerout);
+                    layerout = [];
+                    zoff += height;
+                };
+
+                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
+                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
+                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.5, process.firstLayerRate / 1, 0.5);
+                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.5, process.firstLayerRate / 1, 0.5);
+
+                // raise first layer off raft slightly to lessen adhesion
+                firstLayerHeight += nozzle / 6;
+            }
+            // raft excludes brims
+            else
+            // if using brim vs raft
+            if (process.outputBrimCount) {
+                var polys = [],
+                    preout = [];
+
+                // expand brims
+                brims.forEach(function(brim) {
+                    POLY.trace2count(brim, polys, -nozzle, process.outputBrimCount, 0);
+                });
+
+                // output brim points
+                printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
+                    return print.polyPrintPath(poly, startPoint, preout, {
+                        rate: process.firstLayerRate,
+                        onfirst: function(point) {
+                            if (preout.length && point.distTo2D(startPoint) > 2) {
+                                // retract between brims
+                                preout.last().retract = true;
+                            }
+                        }
+                    });
+                });
+
+                print.addPrintPoints(preout, layerout, null);
+
+                if (preout.length) {
+                    preout.last().retract = true;
+                }
+            }
+        }
 
         // find max layers (for updates)
         widgets.forEach(function(widget) {
@@ -195,9 +293,6 @@ var gs_kiri_fdm = exports;
 
         // for each layer until no layers are found
         for (;;) {
-            slices = [];
-            layerout = [];
-
             // create list of mesh slice arrays with their platform offsets
             for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
                 mesh = widgets[meshIndex].mesh;
@@ -209,68 +304,6 @@ var gs_kiri_fdm = exports;
             }
 
             if (slices.length === 0) break;
-
-            // create brim, if specificed in FDM mode (code shared by laser)
-            if (layer === 0 && (process.outputBrimCount || process.outputRaft)) {
-                var brims = [],
-                    polys = [],
-                    preout = [];
-
-                // compute first brim
-                widgets.forEach(function(widget) {
-                    var tops = [];
-                    // collect top outer polygons
-                    widget.slices[0].tops.forEach(function(top) {
-                        tops.push(top.poly.clone());
-                    });
-                    // nest and offset tops
-                    POLY.nest(tops).forEach(function(poly) {
-                        poly.offset(-process.outputBrimOffset + device.nozzleSize/2).forEach(function(brim) {
-                            brim.move(widget.mesh.position);
-                            brims.push(brim);
-                        });
-                    });
-                });
-
-                // merge brims
-                brims = POLY.union(brims);
-
-                // if brim is offset, the expand and shrink to cause brims to merge
-                if (process.outputBrimOffset && brims.length) {
-                    var extra = process.sliceSupportExtra + 2;
-                    brims = POLY.expand(brims, extra, 0, null, 1);
-                    brims = POLY.expand(brims, -extra, 0, null, 1);
-                }
-
-                // if raft is specified
-                if (process.outputRaft) {
-                    console.log("output raft coming soon");
-                }
-
-                // if using brim vs raft
-                if (process.outputBrimCount) {
-                    // expand brims
-                    brims.forEach(function(brim) {
-                        POLY.trace2count(brim, polys, -device.nozzleSize, process.outputBrimCount, 0);
-                    });
-
-                    // output brim points
-                    printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
-                        return print.polyPrintPath(poly, startPoint, preout, {
-                            rate: process.firstLayerRate,
-                            onfirst: function(point) {
-                                if (preout.length && point.distTo2D(startPoint) > 2) {
-                                    // retract between brims
-                                    preout.last().retract = true;
-                                }
-                            }
-                        });
-                    });
-                }
-
-                print.addPrintPoints(preout, layerout, null);
-                preout.last().retract = true;
-            }
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
@@ -290,21 +323,28 @@ var gs_kiri_fdm = exports;
                 }
                 if (!closest) break;
                 slices[minidx] = null;
+                closest.offset.z = zoff;
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     closest.slice,
                     printPoint.sub(closest.offset),
                     closest.offset,
                     layerout,
-                    // wipe after last layer or between widgets
-                    (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1)
+                    {
+                        // wipe after last layer or between widgets
+                        wipeAfter: (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1)
+                    }
                 );
                 lastIndex = minidx;
             }
 
+            layerout.height = layer === 0 ? firstLayerHeight : process.sliceHeight;
             if (layerout.length) output.append(layerout);
             layer++;
             update(layer / maxLayers);
+
+            slices = [];
+            layerout = [];
         }
     };
 
@@ -331,8 +371,7 @@ var gs_kiri_fdm = exports;
             retracted = 0,
             pos = {x:0, y:0, z:0, f:0},
             last = null,
-            zinc = process.sliceHeight,
-            zpos = process.firstSliceHeight,
+            zpos = 0,
             offset = process.outputOriginCenter ? null : {
                 x: device.bedWidth/2,
                 y: device.bedDepth/2
@@ -476,7 +515,7 @@ var gs_kiri_fdm = exports;
                     append(constReplace(line, {
                         progress: progress,
                         layer: layer,
-                        height: zinc.toFixed(3)}));
+                        height: path.height.toFixed(3)}));
                 });
             } else {
                 append("; --- layer "+layer+" ---");
@@ -488,8 +527,8 @@ var gs_kiri_fdm = exports;
             }
 
             // move Z to layer height
+            zpos += path.height;
             moveTo({z:zpos}, seekMMM);
-            zpos += zinc;
 
             // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {

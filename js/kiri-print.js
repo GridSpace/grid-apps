@@ -472,11 +472,12 @@ var gs_kiri_print = exports;
      * @param {Point} startPoint start as close as possible to startPoint
      * @param {THREE.Vector3} offset
      * @param {Point[]} output points
-     * @param {Boolean} wipeAfter so we can wipe at the end
+     * @param {Object} [options] object
      * @return {Point} last output point
      */
-    PRO.slicePrintPath = function(slice, startPoint, offset, output, wipeAfter) {
+    PRO.slicePrintPath = function(slice, startPoint, offset, output, options) {
         var i,
+            opt = options || {},
             preout = [],
             scope = this,
             settings = this.settings,
@@ -485,14 +486,14 @@ var gs_kiri_print = exports;
             firstLayer = slice.index === 0,
             minSeek = nozzle * 1.5,
             thinWall = nozzle * 1.75,
-            fillMult = process.outputFillMult,
-            shellMult = process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
+            fillMult = opt.mult || process.outputFillMult,
+            shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
             wipeDistance = process.outputWipeDistance,
             wipeSpeed = process.outputWipeSpeed || 20,
             finishFactor = process.outputFinishFactor || 0,
-            firstSpeed = process.firstLayerRate,
-            printSpeed = firstLayer ? firstSpeed : process.outputFeedrate,
+            finishSpeed = opt.speed || process.outputFinishrate,
+            printSpeed = opt.speed || (firstLayer ? process.firstLayerRate : process.outputFeedrate),
             moveSpeed = process.outputSeekrate,
             outerFirst = process.outputOuterFirst,
             origin = startPoint.add(offset),
@@ -536,7 +537,7 @@ var gs_kiri_print = exports;
             } else {
                 var finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
-                    rate: finishShell ? process.outputFinishrate : printSpeed,
+                    rate: finishShell ? finishSpeed : printSpeed,
                     accel: finishShell,
                     shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
                     extrude: shellMult,
@@ -744,7 +745,7 @@ var gs_kiri_print = exports;
         });
 
         // perform last wipe on top layer at end of run
-        if (wipeAfter && wipe) {
+        if (opt.wipeAfter && wipe) {
             outputWipe(wipe);
         }
 

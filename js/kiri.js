@@ -2401,7 +2401,6 @@ self.kiri.license = exports.LICENSE;
             firstLayerRate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
-            outputRaft: UC.newBoolean("raft", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion", modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
             // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
@@ -2415,7 +2414,10 @@ self.kiri.license = exports.LICENSE;
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
             outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
-            detectThinWalls: UC.newBoolean("thin wall", onBooleanClick, {title: "thin wall detection\nexperimental", modes:FDM})
+
+            experimental: UC.newGroup("experimental", null, {modes:FDM}),
+            detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM}),
+            outputRaft: UC.newBoolean("raft layer", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM})
         });
 
         function toolUpdate(a,b,c) {
