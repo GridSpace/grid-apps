@@ -404,6 +404,7 @@ var gs_kiri_fdm = exports;
             retDist = process.outputRetractDist,
             retSpeed = process.outputRetractSpeed * 60,
             retDwell = process.outputRetractDwell || 0,
+            timeDwell = retDwell / 1000,
             // ratio of nozzle area to filament area times
             // ratio of slice height to filament max noodle height
             emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
@@ -572,7 +573,7 @@ var gs_kiri_fdm = exports;
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                     if (retDwell) {
                         dwell(retDwell);
-                        time += retDwell;
+                        time += timeDwell;
                     }
                 }
 
