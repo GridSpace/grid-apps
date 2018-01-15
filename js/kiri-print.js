@@ -387,9 +387,6 @@ var gs_kiri_print = exports;
         if (lastPoint && point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
             return;
         }
-        // if (lastPoint && UTIL.round(point.x,4) == UTIL.round(lastPoint.x,4) && UTIL.round(point.y,4) == UTIL.round(lastPoint.y,4)) {
-        //     console.log(({dup:point, last:lastPoint, emit: emit, le: lastEmit}));
-        // }
         lastPoint = point;
         lastEmit = emit;
         array.push(new Output(point, emit, speed, tool));
@@ -483,7 +480,7 @@ var gs_kiri_print = exports;
             settings = this.settings,
             process = settings.process,
             nozzle = settings.device.nozzleSize,
-            firstLayer = slice.index === 0,
+            firstLayer = opt.first || false,
             minSeek = nozzle * 1.5,
             thinWall = nozzle * 1.75,
             fillMult = opt.mult || process.outputFillMult,

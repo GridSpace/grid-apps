@@ -59,6 +59,7 @@
 
 # FDM todo
 
+* fix slow seek to first point (raft) and wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
 * determine start point from gcode preamble
 * add rafts, manual supports

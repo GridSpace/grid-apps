@@ -193,7 +193,8 @@ var gs_kiri_fdm = exports;
 
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
         if (process.outputBrimCount || process.outputRaft) {
-            var brims = [];
+            var brims = [],
+                offset = process.outputBrimOffset || (process.outputRaft ? 4 : 0);
 
             // compute first brim
             widgets.forEach(function(widget) {
@@ -204,7 +205,7 @@ var gs_kiri_fdm = exports;
                 });
                 // nest and offset tops
                 POLY.nest(tops).forEach(function(poly) {
-                    poly.offset(-process.outputBrimOffset + nozzle / 2).forEach(function(brim) {
+                    poly.offset(-offset + nozzle / 2).forEach(function(brim) {
                         brim.move(widget.mesh.position);
                         brims.push(brim);
                     });
@@ -215,7 +216,7 @@ var gs_kiri_fdm = exports;
             brims = POLY.union(brims);
 
             // if brim is offset, the expand and shrink to cause brims to merge
-            if (process.outputBrimOffset && brims.length) {
+            if (offset && brims.length) {
                 var extra = process.sliceSupportExtra + 2;
                 brims = POLY.expand(brims, extra, 0, null, 1);
                 brims = POLY.expand(brims, -extra, 0, null, 1);
@@ -226,9 +227,14 @@ var gs_kiri_fdm = exports;
                 var offset = newPoint(0,0,0),
                     height = nozzle;
 
+                // cause first point of raft to be used
+                printPoint = null;
+
                 var raft = function(height, angle, spacing, speed, extrude) {
                     var slice = kiri.newSlice(zoff + height / 2);
                     brims.forEach(function(brim) {
+                        // use first point of first brim as start point
+                        if (printPoint === null) printPoint = brim.first();
                         var t = slice.addTop(brim);
                         t.traces = [ brim ];
                         t.inner = POLY.expand(t.traces, -nozzle * 0.5, 0, null, 1);
@@ -241,14 +247,15 @@ var gs_kiri_fdm = exports;
                     });
                     layerout.height = height;
                     output.append(layerout);
+
                     layerout = [];
                     zoff += height;
                 };
 
-                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
-                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
-                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.5, process.firstLayerRate / 1, 0.5);
-                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.5, process.firstLayerRate / 1, 0.5);
+                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 4.0, process.firstLayerRate / 3, 3.5);
+                // raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
+                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.6, process.firstLayerRate / 2, 0.5);
+                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.6, process.firstLayerRate / 2, 0.5);
 
                 // raise first layer off raft slightly to lessen adhesion
                 firstLayerHeight += nozzle / 6;
@@ -332,7 +339,9 @@ var gs_kiri_fdm = exports;
                     layerout,
                     {
                         // wipe after last layer or between widgets
-                        wipeAfter: (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1)
+                        wipeAfter: (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1),
+                        // only use first layer settings in the absence of a raft
+                        first: closest.slice.index === 0 && !process.outputRaft
                     }
                 );
                 lastIndex = minidx;
