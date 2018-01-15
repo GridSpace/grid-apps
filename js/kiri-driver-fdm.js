@@ -238,6 +238,9 @@ var gs_kiri_fdm = exports;
                         var t = slice.addTop(brim);
                         t.traces = [ brim ];
                         t.inner = POLY.expand(t.traces, -nozzle * 0.5, 0, null, 1);
+                        // tweak bounds for fill to induce an offset
+                        t.inner[0].bounds.minx -= nozzle/2;
+                        t.inner[0].bounds.maxx += nozzle/2;
                         t.fill_lines = POLY.fillArea(t.inner, angle, spacing, []);
                     })
                     offset.z = slice.z;
@@ -252,13 +255,13 @@ var gs_kiri_fdm = exports;
                     zoff += height;
                 };
 
-                raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 4.0, process.firstLayerRate / 3, 3.5);
-                // raft(nozzle/1, process.sliceFillAngle + 90,   nozzle * 3.5, process.firstLayerRate / 3, 3.5);
-                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.6, process.firstLayerRate / 2, 0.5);
-                raft(nozzle/3, process.sliceFillAngle + 22.5, nozzle * 0.6, process.firstLayerRate / 2, 0.5);
+                raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 6.0, process.firstLayerRate / 3, 4);
+                raft(nozzle/2, process.sliceFillAngle + 90, nozzle * 3.0, process.outputFeedrate, 1.0);
+                raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.0);
+                raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.0);
 
                 // raise first layer off raft slightly to lessen adhesion
-                firstLayerHeight += nozzle / 6;
+                firstLayerHeight += 0.2;
             }
             // raft excludes brims
             else
@@ -341,7 +344,7 @@ var gs_kiri_fdm = exports;
                         // wipe after last layer or between widgets
                         wipeAfter: (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1),
                         // only use first layer settings in the absence of a raft
-                        first: closest.slice.index === 0 && !process.outputRaft
+                        first: closest.slice.index === 0
                     }
                 );
                 lastIndex = minidx;
