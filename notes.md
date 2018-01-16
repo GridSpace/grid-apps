@@ -59,6 +59,8 @@
 
 # FDM todo
 
+* fix thin fill
+* convert moves to G0 (where supported)
 * fix slow seek to first point (raft) and wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
 * determine start point from gcode preamble

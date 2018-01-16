@@ -489,8 +489,6 @@ var gs_kiri_print = exports;
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
-            wipeDistance = process.outputWipeDistance,
-            wipeSpeed = process.outputWipeSpeed || 20,
             finishFactor = process.outputFinishFactor || 0,
             finishSpeed = opt.speed || process.outputFinishrate,
             printSpeed = opt.speed || (firstLayer ? process.firstLayerRate : process.outputFeedrate),
@@ -501,31 +499,6 @@ var gs_kiri_print = exports;
 
         function retract() {
             if (preout.length) preout.last().retract = true;
-        }
-
-        function outputWipe(poly) {
-            retract();
-
-            if (!poly || !wipeDistance) return;
-
-            var closest = poly.findClosestPointTo(startPoint),
-                distance = wipeDistance,
-                last = startPoint;
-            while (distance > 0) poly.forEachPoint(function(point) {
-                if (distance > 0) {
-                    var len = last.distTo2D(point);
-                    if (len > distance) {
-                        addOutput(preout, point.offsetPointFrom(last, distance), 0, wipeSpeed);
-                        distance = 0;
-                    } else {
-                        addOutput(preout, point, 0, wipeSpeed);
-                        distance -= last.distTo2D(point);
-                    }
-                    last = point;
-                }
-            }, true, closest.index);
-
-            startPoint = preout[preout.length - 1].point;
         }
 
         function outputTraces(poly, bounds) {
@@ -543,42 +516,9 @@ var gs_kiri_print = exports;
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
                         if (startPoint.distTo2D(firstPoint) > retractDist) retract();
-                        // checkBisect(startPoint, firstPoint, bounds);
                     }
                 });
             }
-        }
-
-        function checkBisect(p1, p2, bounds) {
-            if (!bounds || p1.distTo2D(p2) < minSeek) return;
-            var routes = [];
-            // find bisections and choose shortest
-            bounds.forEach(function(bp) {
-                var paths = bp.bisect(p1, p2);
-                if (!paths || paths.length !== 2) return;
-                var path = paths[0].perimeter() < paths[1].perimeter() ? paths[0] : paths[1];
-                if (p1.distTo2D(path.first() > p1.distTo2D(path.last()))) path.reverse();
-                // cull phantom and short paths
-                if (path.perimeter() > 0.1) routes.push(path);
-            });
-            // sort bisecting paths by those closest to start point (p1)
-            routes.sort((function(o1, o2) {
-                var d1 = Math.min(
-                    o1.first().distTo2D(p1),
-                    o1.last().distTo2D(p1)
-                );
-                var d2 = Math.min(
-                    o2.first().distTo2D(p1),
-                    o2.last().distTo2D(p1)
-                );
-                return d1 - d2;
-            }));
-            // output non-printing bisecting paths
-            routes.forEach(function(path) {
-                path.forEachPoint(function(p) {
-                    addOutput(preout, p, 0, moveSpeed);
-                });
-            });
         }
 
         /**
@@ -594,7 +534,6 @@ var gs_kiri_print = exports;
                 var poly = el.poly;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
-                    // if (i === 0 && lp) checkBisect(lp, p, bounds);
                     if (i === 0 && lp && lp.distTo2D(p) > retractDistSparse) retract();
                     addOutput(preout, p, i === 0 ? 0 : sparseMult, printSpeed);
                     lp = p;
@@ -643,12 +582,6 @@ var gs_kiri_print = exports;
                         lastout = 1;
                     } else {
                         if (dist > retractDist) retract();
-
-                        // check for intersection with bounds and if found
-                        // follow the shortest path around that bounding poly
-                        // if (bounds && startPoint && dist > minSeek) {
-                        //     checkBisect(startPoint, p1, bounds);
-                        // }
 
                         // bridge ends of fill when they're close together
                         if (dist < thinWall) {
