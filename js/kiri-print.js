@@ -232,12 +232,13 @@ var gs_kiri_print = exports;
             newout.push(newlayer);
             layerout.forEach(function(out) {
                 if (out.point) {
-                    // used for presentation only. can drop non-essential
-                    // data to speed up worker -> browser transfer
+                    // used for renderMoves client side. can drop non-essential
+                    // data to speed up worker -> browser transfer. perhaps a
+                    // more compact encoding (arrays, etc)
                     newlayer.push({
                         emit: out.emit,
                         speed: out.speed * 60,
-                        // retract: out.retract,
+                        retract: out.retract,
                         point: {x: out.point.x, y: out.point.y, z: out.point.z}
                     });
                 }
@@ -481,8 +482,10 @@ var gs_kiri_print = exports;
             process = settings.process,
             nozzle = settings.device.nozzleSize,
             firstLayer = opt.first || false,
-            minSeek = nozzle * 1.5,
-            thinWall = nozzle * 1.75,
+            minSeek = nozzle * (opt.minSeek || 1.5),
+            thinWall = nozzle * (opt.thinWall || 1.75),
+            retractDist = opt.retractOver || 2,
+            retractDistSparse = opt.retractOverSparse || 5,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
@@ -525,12 +528,12 @@ var gs_kiri_print = exports;
             startPoint = preout[preout.length - 1].point;
         }
 
-        function outputTraces(poly, bounds, newTop) {
+        function outputTraces(poly, bounds) {
             if (!poly) return;
             if (Array.isArray(poly)) {
                 outputOrderClosest(poly, function(next) {
                     outputTraces(next, bounds);
-                }, null, newTop);
+                }, null);
             } else {
                 var finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
@@ -539,8 +542,8 @@ var gs_kiri_print = exports;
                     shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
-                        if (startPoint.distTo2D(firstPoint) > 2) retract();
-                        checkBisect(startPoint, firstPoint, bounds);
+                        if (startPoint.distTo2D(firstPoint) > retractDist) retract();
+                        // checkBisect(startPoint, firstPoint, bounds);
                     }
                 });
             }
@@ -591,7 +594,8 @@ var gs_kiri_print = exports;
                 var poly = el.poly;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
-                    if (i === 0 && lp) checkBisect(lp, p, bounds);
+                    // if (i === 0 && lp) checkBisect(lp, p, bounds);
+                    if (i === 0 && lp && lp.distTo2D(p) > retractDistSparse) retract();
                     addOutput(preout, p, i === 0 ? 0 : sparseMult, printSpeed);
                     lp = p;
                 });
@@ -638,11 +642,13 @@ var gs_kiri_print = exports;
                         addOutput(preout, p2, fillMult * (find.d / thinWall), printSpeed);
                         lastout = 1;
                     } else {
+                        if (dist > retractDist) retract();
+
                         // check for intersection with bounds and if found
                         // follow the shortest path around that bounding poly
-                        if (bounds && startPoint && dist > minSeek) {
-                            checkBisect(startPoint, p1, bounds);
-                        }
+                        // if (bounds && startPoint && dist > minSeek) {
+                        //     checkBisect(startPoint, p1, bounds);
+                        // }
 
                         // bridge ends of fill when they're close together
                         if (dist < thinWall) {
@@ -708,7 +714,6 @@ var gs_kiri_print = exports;
         }
 
         var all = [].appendAll(slice.supports || []).appendAll(slice.tops || []);
-        var wipe = null;
         var lastTop = null;
         outputOrderClosest(all || [], function(next) {
             if (next instanceof Polygon) {
@@ -720,31 +725,16 @@ var gs_kiri_print = exports;
                     outputFills(next.fills, next.inner);
                 }
             } else {
-                // when skipping between tops, first perform a wipe
-                if (lastTop && wipe) {
-                    outputWipe(wipe);
-                    wipe = null;
-                }
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds, !lastTop);
+                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
-                if (next.inner) {
-                    wipe = next.inner.last();
-                } else {
-                    wipe = next.traces.last();
-                }
                 lastTop = next;
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
         });
-
-        // perform last wipe on top layer at end of run
-        if (opt.wipeAfter && wipe) {
-            outputWipe(wipe);
-        }
 
         // offset print points
         for (i=0; i<preout.length; i++) {

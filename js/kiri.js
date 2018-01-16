@@ -2368,6 +2368,7 @@ self.kiri.license = exports.LICENSE;
             outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputCooling: UC.newBoolean("cooling", onBooleanClick, {title: "enable cooling fan\nafter first layer", modes:FDM}),
+            outputRaft: UC.newBoolean("raft layer", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
 
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
@@ -2414,10 +2415,7 @@ self.kiri.license = exports.LICENSE;
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
             outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
-
-            experimental: UC.newGroup("experimental", null, {modes:FDM}),
-            detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM}),
-            outputRaft: UC.newBoolean("raft layer", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM})
+            detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
         });
 
         function toolUpdate(a,b,c) {

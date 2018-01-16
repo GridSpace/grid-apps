@@ -262,6 +262,9 @@ var gs_kiri_fdm = exports;
 
                 // raise first layer off raft slightly to lessen adhesion
                 firstLayerHeight += 0.2;
+
+                // retract after last raft layer
+                output.last().last().retract = true;
             }
             // raft excludes brims
             else
@@ -332,6 +335,10 @@ var gs_kiri_fdm = exports;
                     found++;
                 }
                 if (!closest) break;
+                // retract between widgets
+                if (layerout.length && minidx !== lastIndex) {
+                    layerout.last().retract = true;
+                }
                 slices[minidx] = null;
                 closest.offset.z = zoff;
                 // output seek to start point between mesh slices if previous data
@@ -340,12 +347,7 @@ var gs_kiri_fdm = exports;
                     printPoint.sub(closest.offset),
                     closest.offset,
                     layerout,
-                    {
-                        // wipe after last layer or between widgets
-                        wipeAfter: (found > 1 && slices.length > 1) || (found === 1 && layer == maxLayers-1),
-                        // only use first layer settings in the absence of a raft
-                        first: closest.slice.index === 0
-                    }
+                    { first: closest.slice.index === 0 }
                 );
                 lastIndex = minidx;
             }
@@ -354,6 +356,10 @@ var gs_kiri_fdm = exports;
             if (layerout.length) output.append(layerout);
             layer++;
             update(layer / maxLayers);
+            // retract after last layer
+            if (layer === maxLayers) {
+                layerout.last().retract = true;
+            }
 
             slices = [];
             layerout = [];
