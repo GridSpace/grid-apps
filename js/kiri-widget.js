@@ -552,8 +552,8 @@ var gs_kiri_widget = exports;
                     ondone(false, reply.error);
                 }
                 if (reply.done && !widget.cancel) {
-                    ondone(true);
                     widget.modified = false;
+                    ondone(true);
                 }
             });
 

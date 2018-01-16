@@ -468,6 +468,7 @@ var gs_kiri_fdm = exports;
 
         function dwell(ms) {
             append("G4 P" + ms);
+            time += timeDwell;
         }
 
         function retract() {
@@ -480,7 +481,7 @@ var gs_kiri_fdm = exports;
             if (comment) {
                 append(" ; " + comment);
             }
-            var o = ['G1'];
+            var o = [!rate && !newpos.e ? 'G0' : 'G1'];
             if (typeof newpos.x === 'number') {
                 pos.x = UTIL.round(newpos.x,decimals);
                 o.append(" X").append(pos.x.toFixed(decimals));
@@ -579,7 +580,6 @@ var gs_kiri_fdm = exports;
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
                     if (retDwell) {
                         dwell(retDwell);
-                        time += timeDwell;
                     }
                 }
 
@@ -588,7 +588,7 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
-                    moveTo({x:x, y:y}, speedMMM);
+                    moveTo({x:x, y:y}, seekMMM);
                 }
 
                 // retract filament
@@ -596,7 +596,7 @@ var gs_kiri_fdm = exports;
                     retract();
                 }
 
-                // update time and distance
+                // update time and distance (should calc in moveTo() instead)
                 time += (dist / speedMMM) * 60;
                 distance += dist;
                 progress = Math.round((distance / totaldistance) * 100);

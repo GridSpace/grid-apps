@@ -405,9 +405,8 @@ var gs_kiri_slice = exports;
                     top.traces = last;
                 } else {
                     if (opt.thin) {
-                        var sq2 = Math.sqrt(2),
-                            ons2 = offset1 * sq2,
-                            on2s2 = offsetN * sq2;
+                        var on1s2 = offset1 * 2,
+                            on2s2 = offsetN * 2;
                         POLY.expand2(
                             [top.poly],
                             -offset1,
@@ -428,20 +427,19 @@ var gs_kiri_slice = exports;
                             },
                             // thin wall probe
                             function(p1, p2, diff, dist) {
-                                var ds2 = dist * sq2;
                                 if (p2) {
                                     // nth offset
                                     var pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
                                         pnew1 = POLY.expand(pall, -dist, z, null, 1),
-                                        r1 = fillArea(pnew1, 45, offsetN, [], ds2, on2s2),
-                                        r2 = fillArea(pnew1, 135, offsetN, [], dist, on2s2),
+                                        r1 = fillArea(pnew1, 45, offsetN, [], dist / 2, on2s2),
+                                        r2 = fillArea(pnew1, 135, offsetN, [], dist / 2, on2s2),
                                         rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
                                 } else {
                                     // first offset
                                     var pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
                                         pnew1 = POLY.expand(pall, -dist, z, null, 1),
-                                        r1 = fillArea(pnew1, 45, offsetN, [], 0, ons2),
-                                        r2 = fillArea(pnew1, 135, offsetN, [], 0, ons2),
+                                        r1 = fillArea(pnew1, 45, offsetN, [], 0, on1s2),
+                                        r2 = fillArea(pnew1, 135, offsetN, [], 0, on1s2),
                                         rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
                                 }
                                 // top.thinner.appendAll(pnew1).appendAll(pnew2);

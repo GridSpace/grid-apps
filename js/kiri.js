@@ -1244,8 +1244,8 @@ self.kiri.license = exports.LICENSE;
                 if (--countdown === 0 || error) {
                     setProgress(0);
                     showSlices(preserveLayer);
-                    if (callback && typeof callback === 'function') callback();
                     setOpacity(settings.mode === 'CAM' ? sliced_opacity_cam : sliced_opacity);
+                    if (callback && typeof callback === 'function') callback();
                 }
                 // update slider window
                 onControlResize();
