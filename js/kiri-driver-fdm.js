@@ -597,7 +597,7 @@ var gs_kiri_fdm = exports;
                 }
 
                 // update time and distance (should calc in moveTo() instead)
-                time += (dist / speedMMM) * 60;
+                time += (dist / speedMMM) * 60 * 1.5;
                 distance += dist;
                 progress = Math.round((distance / totaldistance) * 100);
 

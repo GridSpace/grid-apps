@@ -501,6 +501,19 @@ var gs_kiri_print = exports;
             if (preout.length) preout.last().retract = true;
         }
 
+        function intersectsTop(p1, p2) {
+            var int = false;
+            slice.tops.forEach(function(top) {
+                if (!int) top.poly.forEachSegment(function(s1, s2) {
+                    if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
+                        int = true;
+                        return int;
+                    }
+                });
+            });
+            return int;
+        }
+
         function outputTraces(poly, bounds) {
             if (!poly) return;
             if (Array.isArray(poly)) {
@@ -534,7 +547,10 @@ var gs_kiri_print = exports;
                 var poly = el.poly;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
-                    if (i === 0 && lp && lp.distTo2D(p) > retractDistSparse) retract();
+                    // retract if dist trigger and crosses a slice top polygon
+                    if (i === 0 && lp && lp.distTo2D(p) > retractDistSparse && intersectsTop(lp,p)) {
+                        retract();
+                    }
                     addOutput(preout, p, i === 0 ? 0 : sparseMult, printSpeed);
                     lp = p;
                 });
@@ -581,7 +597,10 @@ var gs_kiri_print = exports;
                         addOutput(preout, p2, fillMult * (find.d / thinWall), printSpeed);
                         lastout = 1;
                     } else {
-                        if (dist > retractDist) retract();
+                        // retract if dist trigger and crosses a slice top polygon
+                        if (dist > retractDist && intersectsTop(startPoint, p1)) {
+                            retract();
+                        }
 
                         // bridge ends of fill when they're close together
                         if (dist < thinWall) {
