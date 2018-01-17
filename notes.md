@@ -60,7 +60,7 @@
 # FDM todo
 
 * fix thin fill
-* convert moves to G0 (where supported)
+* add pause at specified layers
 * fix slow seek to first point (raft) and wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
 * determine start point from gcode preamble
@@ -100,3 +100,20 @@
 * http://hackaday.com/2016/01/22/pack-your-plywood-cuts-with-genetic-algortihms/
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
+
+
+# Sample FDM Pause/Unpause ```
+
+; --- pause ---
+G91        ; Relative Positioning
+G0 Z20     ; Move Bed down 20mm
+G90        ; Absolute positioning
+G0 X10 Y10 ; Move to 10,10
+M2000      ; Raise3D N2 Pause command
+
+; --- un-pause ---
+G91        ; Relative Positioning
+G0 Z-20    ; Move Bed up 20mm
+G90        ; Absolute positioning
+
+```

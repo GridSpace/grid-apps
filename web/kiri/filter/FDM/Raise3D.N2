@@ -1,6 +1,6 @@
 {
     "pre":[
-        "M221 T0 S94.00",
+        "M221 T0 S100.00",
         "M140 S{bed_temp}",
         "M104 T0 S{temp}",
         "M109 T0 S{temp}",

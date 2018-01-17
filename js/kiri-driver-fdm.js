@@ -530,7 +530,7 @@ var gs_kiri_fdm = exports;
         while (layer < layers.length) {
             path = layers[layer];
 
-            if (trackLayers) {
+            if (trackLayers && trackLayers.length) {
                 trackLayers.forEach(function(line) {
                     append(constReplace(line, {
                         progress: progress,
@@ -538,7 +538,7 @@ var gs_kiri_fdm = exports;
                         height: path.height.toFixed(3)}));
                 });
             } else {
-                append("; --- layer "+layer+" ---");
+                append("; --- layer " + layer + " (" + path.height.toFixed(3) + " @ " + zpos.toFixed(3) + ") ---");
             }
 
             // second layer fan on
