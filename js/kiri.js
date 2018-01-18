@@ -1435,7 +1435,7 @@ self.kiri.license = exports.LICENSE;
     function layoutPlatform(event, space) {
         var layout = (viewMode === VIEWS.ARRANGE),
             modified = false,
-            gap = space || (1 + settings.process.sliceSupportExtra),
+            gap = space || (1 + (settings.process.sliceSupportExtra || 0)),
             topZ = MODE === MODES.CAM ? camTopZ : 0;
 
         setViewMode(VIEWS.ARRANGE);
