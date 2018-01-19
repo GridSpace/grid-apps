@@ -973,7 +973,8 @@ self.kiri.license = exports.LICENSE;
             octo_apik,
             grid_host,
             grid_apik,
-            grid_target;
+            grid_target,
+            grid_targets = {};
 
         // run gcode post processor function (when supplied and valid)
         if (codeproc && self[codeproc]) {
@@ -1035,7 +1036,8 @@ self.kiri.license = exports.LICENSE;
             });
         }
 
-        function gridprint() {
+        function gridprint_probe(ev) {
+            if (ev && ev.code !== 'Enter') return;
             if (!(grid_host && grid_apik)) return;
 
             var xhtr = new XMLHttpRequest(),
@@ -1043,6 +1045,52 @@ self.kiri.license = exports.LICENSE;
                 apik = grid_apik.value,
                 target = grid_target.value;
 
+            xhtr.onreadystatechange = function() {
+                if (xhtr.readyState === 4) {
+                    if (xhtr.status >= 200 && xhtr.status < 300) {
+                        var res = JSON.parse(xhtr.responseText);
+                        var sel = false;
+                        var html = [];
+                        grid_targets = {};
+                        for (var key in res) {
+                            if (!SDB['grid-target']) {
+                                SDB['grid-target'] = key;
+                                sel = true;
+                            } else {
+                                sel = SDB['grid-target'] === key;
+                            }
+                            grid_targets[html.length] = key;
+                            html.push(
+                                "<option id='gpo-'" + key + " value='" +key + "'" +
+                                (sel ? " selected" : "") +
+                                ">" +
+                                (res[key].comment || key) +
+                                "</option>"
+                            );
+                        }
+                        grid_target.innerHTML = html.join('\n');
+                    } else {
+                        alert("invalid grid-host: " + xhtr.responseText);
+                    }
+                }
+            };
+
+            xhtr.open("GET", host + "/api/targets");
+            xhtr.send();
+        }
+
+        function gridprint() {
+            if (!(grid_host && grid_apik)) return;
+
+            var xhtr = new XMLHttpRequest(),
+                host = grid_host.value,
+                apik = grid_apik.value,
+                target = SDB['grid-target'] || '';
+
+            if (target === '') {
+                alert('invalid or missing target');
+                return;
+            }
             if (host.indexOf("http") !== 0) {
                 alert("host missing protocol (http:// or https://)");
                 return;
@@ -1058,7 +1106,6 @@ self.kiri.license = exports.LICENSE;
 
             SDB['grid-host'] = host.trim();
             SDB['grid-apik'] = apik.trim();
-            SDB['grid-target'] = target.trim();
 
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
@@ -1137,6 +1184,8 @@ self.kiri.license = exports.LICENSE;
             $('print-filename').value = filename;
             $('print-filesize').value = currentPrint.bytes;
             $('print-filament').value = Math.round(currentPrint.distance);
+            $('grid-host').onkeyup = gridprint_probe;
+            $('grid-apik').onkeyup = gridprint_probe;
             calcTime();
             calcWeight();
             octo_host = $('octo-host');
@@ -1152,9 +1201,13 @@ self.kiri.license = exports.LICENSE;
             grid_host = $('grid-host');
             grid_apik = $('grid-apik');
             grid_target = $('grid-target');
+            grid_target.onchange = function(ev) {
+                console.log(grid_targets[grid_target.selectedIndex]);
+                SDB['grid-target'] = grid_targets[grid_target.selectedIndex];
+            };
             grid_host.value = SDB['grid-host'] || '';
             grid_apik.value = SDB['grid-apik'] || '';
-            grid_target.value = SDB['grid-target'] || '';
+            gridprint_probe();
             showModal('print');
         });
     }

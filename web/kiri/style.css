@@ -188,12 +188,6 @@ input[type=range]::-moz-focus-outer {
     color: #fff;
     background-color: #888;
 }
-#opapik {
-    display: none;
-}
-#gpapik {
-    display: none;
-}
 
 /** sender dialog */
 
