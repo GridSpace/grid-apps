@@ -73,6 +73,7 @@ self.kiri.license = exports.LICENSE;
                     sliceVase: 1,
                     firstSliceHeight: 1,
                     firstLayerRate: 1,
+                    firstLayerFillRate: 1,
                     outputRaft: 1,
                     outputTemp: 1,
                     outputFanMax: 1,
@@ -276,6 +277,7 @@ self.kiri.license = exports.LICENSE;
 
                 firstSliceHeight: 0.25,
                 firstLayerRate: 30,
+                firstLayerFillRate: 40,
                 outputRaft: false,
 
                 outputTemp: 220,
@@ -2394,7 +2396,8 @@ self.kiri.license = exports.LICENSE;
 
             firstLayer: UC.newGroup("first layer", null, {modes:FDM}),
             firstSliceHeight: UC.newInput("slice height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
-            firstLayerRate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
+            firstLayerRate: UC.newInput("shell speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
+            firstLayerFillRate: UC.newInput("fill speed", {title:"fill move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
 

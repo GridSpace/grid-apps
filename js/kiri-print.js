@@ -491,7 +491,10 @@ var gs_kiri_print = exports;
             sparseMult = process.outputSparseMult,
             finishFactor = process.outputFinishFactor || 0,
             finishSpeed = opt.speed || process.outputFinishrate,
-            printSpeed = opt.speed || (firstLayer ? process.firstLayerRate : process.outputFeedrate),
+            firstShellSpeed = process.firstLayerRate,
+            firstFillSpeed = process.firstLayerFillRate,
+            printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
+            fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
             moveSpeed = process.outputSeekrate,
             outerFirst = process.outputOuterFirst,
             origin = startPoint.add(offset),
@@ -594,7 +597,7 @@ var gs_kiri_print = exports;
                     // to avoid shaking the printer to death.
                     if (find.d <= thinWall && len <= thinWall) {
                         p2 = p1.midPointTo(p2);
-                        addOutput(preout, p2, fillMult * (find.d / thinWall), printSpeed);
+                        addOutput(preout, p2, fillMult * (find.d / thinWall), fillSpeed);
                         lastout = 1;
                     } else {
                         // retract if dist trigger and crosses a slice top polygon
@@ -604,12 +607,12 @@ var gs_kiri_print = exports;
 
                         // bridge ends of fill when they're close together
                         if (dist < thinWall) {
-                            addOutput(preout, p1, fillMult, printSpeed);
+                            addOutput(preout, p1, fillMult, fillSpeed);
                         } else {
                             addOutput(preout, p1, 0, moveSpeed);
                         }
 
-                        addOutput(preout, p2, fillMult, printSpeed);
+                        addOutput(preout, p2, fillMult, fillSpeed);
                         lastout = 2;
                     }
 
