@@ -1045,6 +1045,8 @@ self.kiri.license = exports.LICENSE;
                 apik = grid_apik.value,
                 target = grid_target.value;
 
+            if (!apik) $('gpapik').style.display = 'none';
+
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     if (xhtr.status >= 200 && xhtr.status < 300) {
@@ -1069,13 +1071,15 @@ self.kiri.license = exports.LICENSE;
                             );
                         }
                         grid_target.innerHTML = html.join('\n');
+                    } else if (xhtr.status === 401) {
+                        $('gpapik').style.display = '';
                     } else {
-                        alert("invalid grid-host: " + xhtr.responseText);
+                        alert("invalid grid-print host");
                     }
                 }
             };
 
-            xhtr.open("GET", host + "/api/targets");
+            xhtr.open("GET", host + "/api/targets?key=" + apik);
             xhtr.send();
         }
 
