@@ -2349,7 +2349,7 @@ self.kiri.license = exports.LICENSE;
             process: UC.newGroup("process", control, {modes:FDM_LASER}),
 
             // 3d print
-            sliceHeight: UC.newInput("slice height", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
+            sliceHeight: UC.newInput("layer height", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
             sliceShells: UC.newInput("shell count", {convert:UC.toInt, modes:FDM}),
             sliceShellSpacing: UC.newInput("shell spacing", {title:"as a percentage of nozzle width\n< 1.0 causes shell overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.5,1.0), modes:FDM}),
             sliceFillOverlap: UC.newInput("fill overlap", {title:"overlap with shell\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
@@ -2442,6 +2442,14 @@ self.kiri.license = exports.LICENSE;
             outputOriginCenter: UC.newBoolean("origin center", onBooleanClick, {modes:CAM_LASER}),
             camOriginTop: UC.newBoolean("origin top", onBooleanClick, {modes:CAM}),
 
+            firstLayer: UC.newGroup("first layer", null, {modes:FDM}),
+            firstSliceHeight: UC.newInput("layer height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
+            firstLayerRate: UC.newInput("shell speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
+            firstLayerFillRate: UC.newInput("fill speed", {title:"fill move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
+            firstLayerPrintMult: UC.newInput("print factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, modes:FDM}),
+            outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
+            outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
+
             support: UC.newGroup("supports", null, {modes:FDM}),
             sliceSupportDensity: UC.newInput("density", {title:"0.0 - 1.0\nrecommended 0.15\n0 to disable", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
             sliceSupportSize: UC.newInput("pillar size", {title:"width in millimeters", bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
@@ -2451,19 +2459,11 @@ self.kiri.license = exports.LICENSE;
             sliceSupportExtra: UC.newInput("expand", {title:"expand support area\nbeyond part boundary\nin millimeters", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportEnable: UC.newBoolean("enable", onBooleanClick, {modes:FDM}),
 
-            firstLayer: UC.newGroup("first layer", null, {modes:FDM}),
-            firstSliceHeight: UC.newInput("slice height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
-            firstLayerRate: UC.newInput("shell speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
-            firstLayerFillRate: UC.newInput("fill speed", {title:"fill move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
-            firstLayerPrintMult: UC.newInput("print factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, modes:FDM}),
-            outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
-            outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
-
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
             // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
-            outputRetractDwell: UC.newInput("retract dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
+            outputRetractDwell: UC.newInput("engage dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
             outputShortPoly: UC.newInput("short outline", {title:"poly perimeter length\ntriggers short slowdown\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortDistance: UC.newInput("short segment", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
