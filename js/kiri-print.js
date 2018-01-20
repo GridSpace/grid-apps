@@ -492,12 +492,19 @@ var gs_kiri_print = exports;
             finishSpeed = opt.speed || process.outputFinishrate,
             firstShellSpeed = process.firstLayerRate,
             firstFillSpeed = process.firstLayerFillRate,
+            firstPrintMult = process.firstLayerPrintMult,
             printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
             fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
             moveSpeed = process.outputSeekrate,
-            outerFirst = process.outputOuterFirst,
             origin = startPoint.add(offset),
             z = slice.z;
+
+        // apply first layer extrusion multipliers
+        if (firstLayer) {
+            fillMult *= firstPrintMult;
+            shellMult *= firstPrintMult;
+            sparseMult *= firstPrintMult;
+        }
 
         function retract() {
             if (preout.length) preout.last().retract = true;
@@ -647,12 +654,11 @@ var gs_kiri_print = exports;
                     next = array[i];
                     if (!next) continue;
                     poly = fnp ? fnp(next) : next;
-                    if (outerFirst && newTop && poly.depth !== 0) continue;
                     find = poly.findClosestPointTo(startPoint);
                     order.push({
                         i: i,
                         n: next,
-                        d: find.distance - (poly.depth * thinWall * (outerFirst?0:1)),
+                        d: find.distance - (poly.depth * thinWall),
                     });
                 }
                 newTop = false;

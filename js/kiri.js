@@ -74,6 +74,7 @@ self.kiri.license = exports.LICENSE;
                     firstSliceHeight: 1,
                     firstLayerRate: 1,
                     firstLayerFillRate: 1,
+                    firstLayerPrintMult: 1,
                     outputRaft: 1,
                     outputTemp: 1,
                     outputFanMax: 1,
@@ -95,7 +96,6 @@ self.kiri.license = exports.LICENSE;
                     outputShortFactor: 1,
                     outputFinishFactor: 1,
                     outputCooling: 1,
-                    outputOuterFirst: 1,
                     detectThinWalls: 1,
                     outputClockwise: 1,
                     outputOriginCenter: 1,
@@ -278,6 +278,7 @@ self.kiri.license = exports.LICENSE;
                 firstSliceHeight: 0.25,
                 firstLayerRate: 30,
                 firstLayerFillRate: 40,
+                firstLayerPrintMult: 1.0,
                 outputRaft: false,
 
                 outputTemp: 220,
@@ -299,7 +300,6 @@ self.kiri.license = exports.LICENSE;
                 outputShortDistance: 5.0,
                 outputShortFactor: 0.2,
                 outputFinishFactor: 0,
-                outputOuterFirst: false,
                 detectThinWalls: false,
                 outputCooling: true,
 
@@ -1121,7 +1121,7 @@ self.kiri.license = exports.LICENSE;
                         ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
                             DBUG.log(data);
-                            alert("print to "+target+" @ "+host+" : "+data.status);
+                            alert("print to "+target+": "+data.status);
                         });
                     } else {
                         alert("grid:print error\nstatus: "+status+"\nmessage: "+xhtr.responseText);
@@ -2455,6 +2455,7 @@ self.kiri.license = exports.LICENSE;
             firstSliceHeight: UC.newInput("slice height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
             firstLayerRate: UC.newInput("shell speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
             firstLayerFillRate: UC.newInput("fill speed", {title:"fill move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
+            firstLayerPrintMult: UC.newInput("print factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
 
@@ -2467,7 +2468,6 @@ self.kiri.license = exports.LICENSE;
             outputShortDistance: UC.newInput("short segment", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
-            outputOuterFirst: UC.newBoolean("outer first", onBooleanClick, {title: "output outermost shell first", modes:FDM}),
             detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
         });
 
