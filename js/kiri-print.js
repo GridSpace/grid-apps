@@ -484,6 +484,7 @@ var gs_kiri_print = exports;
             minSeek = nozzle * (opt.minSeek || 1.5),
             thinWall = nozzle * (opt.thinWall || 1.75),
             retractDist = opt.retractOver || 2,
+            retractDistFill = opt.retractOverSparse || 10,
             retractDistSparse = opt.retractOverSparse || 5,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
@@ -606,8 +607,8 @@ var gs_kiri_print = exports;
                         addOutput(preout, p2, fillMult * (find.d / thinWall), fillSpeed);
                         lastout = 1;
                     } else {
-                        // retract if dist trigger and crosses a slice top polygon
-                        if (dist > retractDist && intersectsTop(startPoint, p1)) {
+                        // retract if dist trigger or crosses a slice top polygon
+                        if (dist > retractDistFill || intersectsTop(startPoint, p1)) {
                             retract();
                         }
 

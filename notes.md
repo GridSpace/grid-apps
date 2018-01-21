@@ -59,6 +59,8 @@
 
 # FDM todo
 
+* use fill spacing for top raft fill spacing
+* add first layer raft offset (addition)
 * fix thin fill
 * add pause at specified layers
 * fix slow seek to first point (raft) and wrong first point in general (all modes)

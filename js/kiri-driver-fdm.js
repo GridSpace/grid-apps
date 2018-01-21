@@ -357,7 +357,7 @@ var gs_kiri_fdm = exports;
             layer++;
             update(layer / maxLayers);
             // retract after last layer
-            if (layer === maxLayers) {
+            if (layer === maxLayers && layerout.length) {
                 layerout.last().retract = true;
             }
 

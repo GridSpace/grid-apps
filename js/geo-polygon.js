@@ -1050,7 +1050,7 @@ var gs_base_polygon = exports;
         return out;
     };
 
-    PRO.shortestSegmentLength() {
+    PRO.shortestSegmentLength = function() {
         var len = Infinity;
         this.forEachSegment(function(p1, p2) {
             len = Math.min(len, p1.distTo2D(p2));
