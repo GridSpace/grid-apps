@@ -59,9 +59,11 @@
 
 # FDM todo
 
+* trim support offset from layer below
+* add support gap layers (defaults to 1)
 * use fill spacing for top raft fill spacing
 * add first layer raft offset (addition)
-* fix thin fill
+* fix thin fill (outside). compute before sparse as separate logic.
 * add pause at specified layers
 * fix slow seek to first point (raft) and wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
