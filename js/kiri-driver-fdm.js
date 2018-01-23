@@ -261,7 +261,7 @@ var gs_kiri_fdm = exports;
                 raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.0);
 
                 // raise first layer off raft slightly to lessen adhesion
-                firstLayerHeight += 0.2;
+                firstLayerHeight += process.outputRaftSpacing || 0;
 
                 // retract after last raft layer
                 output.last().last().retract = true;

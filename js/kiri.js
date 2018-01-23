@@ -76,6 +76,7 @@ self.kiri.license = exports.LICENSE;
                     firstLayerFillRate: 1,
                     firstLayerPrintMult: 1,
                     outputRaft: 1,
+                    outputRaftSpacing: 1,
                     outputTemp: 1,
                     outputFanMax: 1,
                     outputBedTemp: 1,
@@ -280,6 +281,7 @@ self.kiri.license = exports.LICENSE;
                 firstLayerFillRate: 40,
                 firstLayerPrintMult: 1.0,
                 outputRaft: false,
+                outputRaftSpacing: 0.2,
 
                 outputTemp: 220,
                 outputFanMax: 255,
@@ -2422,7 +2424,10 @@ self.kiri.license = exports.LICENSE;
             outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputCooling: UC.newBoolean("cooling", onBooleanClick, {title: "enable cooling fan\nafter first layer", modes:FDM}),
-            outputRaft: UC.newBoolean("raft layer", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
+
+            output: UC.newGroup("raft"),
+            outputRaftSpacing:  UC.newInput("spacing", {title:"additional layer spacing\nbetween 1st layer and raft\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
+            outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
 
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
