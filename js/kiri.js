@@ -1208,7 +1208,6 @@ self.kiri.license = exports.LICENSE;
             grid_apik = $('grid-apik');
             grid_target = $('grid-target');
             grid_target.onchange = function(ev) {
-                console.log(grid_targets[grid_target.selectedIndex]);
                 SDB['grid-target'] = grid_targets[grid_target.selectedIndex];
             };
             grid_host.value = SDB['grid-host'] || '';

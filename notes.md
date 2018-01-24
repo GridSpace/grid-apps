@@ -59,23 +59,20 @@
 
 # FDM todo
 
+* preview doesn't show proper z offsets
 * trim support offset from layer below
 * add support gap layers (defaults to 1)
 * use fill spacing for top raft fill spacing
-* add first layer raft offset (addition)
 * fix thin fill (outside). compute before sparse as separate logic.
 * add pause at specified layers
 * fix slow seek to first point (raft) and wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
+* add manual supports
 * determine start point from gcode preamble
-* add rafts, manual supports
 * check for support / brim intersections on first layer
 * solid fill every other line, two passes. minimize heat/sag. better fill between
-* add dashed poly output on first connected brim (when offset === 0)
 * fan / layer control * update forum
-* add skirt to raft option as a simpler way to do rafts
 * dual extruder support
-* add TAZ profile from https://code.alephobjects.com/diffusion/P/browse/master/cura/TAZ_flexy_dually_v2/PLA-PVA-support_medium-quality_TAZ_FlexyDually-v2_0.6noz_cura.ini
 * add min layer time (slowdown or cool-off wait)
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
@@ -86,7 +83,6 @@
 * interior poly offsets are in the wrong direction
 * overcuts, radii for drag knives
 * sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
-
 
 # References
 
