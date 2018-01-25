@@ -23,8 +23,8 @@
 
 * popup warning when detect 3rd party storage blocked (chrome)
 * watch for changed part version to prompt re-import
-* re-used disk cached version of parts if not changed
-* remap mouse/kbd to match onshape when running inside?
+* re-used cached version of parts if unchanged
+* remap mouse/kbd to match onshape when iframed
 
 # CAM todo
 
@@ -61,26 +61,24 @@
 
 * preview doesn't show proper z offsets
 * trim support offset from layer below
-* add support gap layers (defaults to 1)
 * use fill spacing for top raft fill spacing
 * fix thin fill (outside). compute before sparse as separate logic.
-* add pause at specified layers
-* fix slow seek to first point (raft) and wrong first point in general (all modes)
+* fix wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
+* add pause at specified layers
 * add manual supports
 * determine start point from gcode preamble
 * check for support / brim intersections on first layer
-* solid fill every other line, two passes. minimize heat/sag. better fill between
 * fan / layer control * update forum
 * dual extruder support
 * add min layer time (slowdown or cool-off wait)
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
-* implement gyroid infill * https://en.wikipedia.org/wiki/Gyroid
+* add gyroid infill * https://en.wikipedia.org/wiki/Gyroid
 
 # Laser todo
 
-* interior poly offsets are in the wrong direction
+* interior poly offsets are in the wrong direction?
 * overcuts, radii for drag knives
 * sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 

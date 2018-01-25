@@ -139,7 +139,7 @@ var gs_kiri_fdm = exports;
             // calculations only relevant when supports are enabled
             if (supportEnabled) {
                 forSlices(0.5, 0.7, function(slice) {
-                    slice.doSupport(spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset);
+                    slice.doSupport(spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
                 }, "support");
                 forSlices(0.7, 0.8, function(slice) {
                     slice.doSupportFill(spri.nozzleSize, spro.sliceSupportDensity, supportMinArea);

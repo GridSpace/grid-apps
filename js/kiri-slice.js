@@ -877,8 +877,9 @@ var gs_kiri_slice = exports;
      * @param {number} maxBridge max length before mid supports added
      * @param {number} expand outer support clip
      * @param {number} offset inner support clip
+     * @param {number} gap layers between supports and part
      */
-    PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset) {
+    PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset, gap) {
         var min = minArea || 0.1,
             size = (pillarSize || 2),
             mergeDist = size * 3, // pillar merge dist
@@ -991,7 +992,7 @@ var gs_kiri_slice = exports;
             if (culled.length === 0) break;
 
             // new bridge polys for next pass (skip first layer below)
-            if (depth > 0) down.supports.appendAll(culled);
+            if (depth >= gap) down.supports.appendAll(culled);
 
             supports = culled;
             down = down.down;
