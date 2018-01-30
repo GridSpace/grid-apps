@@ -353,6 +353,7 @@ var gs_kiri_fdm = exports;
                 lastIndex = minidx;
             }
 
+            layerout.layer = layer;
             layerout.height = layer === 0 ? firstLayerHeight : process.sliceHeight;
             if (layerout.length) output.append(layerout);
             layer++;
@@ -412,12 +413,8 @@ var gs_kiri_fdm = exports;
             retSpeed = process.outputRetractSpeed * 60,
             retDwell = process.outputRetractDwell || 0,
             timeDwell = retDwell / 1000,
-            // ratio of nozzle area to filament area times
-            // ratio of slice height to filament max noodle height
-            emitPerMM = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.sliceHeight),
-            emitPerMMLayer1 = print.extrudePerMM(device.nozzleSize, device.filamentSize, process.firstSliceHeight),
             constReplace = print.constReplace,
-            pidx, path, out, speedMMM, emitMM, lastp, laste, dist,
+            pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
             appendAll = function(arr) {
                 arr.forEach(function(line) { append(line) });
             },
@@ -530,6 +527,10 @@ var gs_kiri_fdm = exports;
 
         while (layer < layers.length) {
             path = layers[layer];
+            emitPerMM = print.extrudePerMM(
+                device.nozzleSize,
+                device.filamentSize,
+                path.layer === 0 ? process.firstSliceHeight : path.height);
 
             if (trackLayers && trackLayers.length) {
                 trackLayers.forEach(function(line) {
@@ -585,7 +586,7 @@ var gs_kiri_fdm = exports;
                 }
 
                 if (lastp && out.emit) {
-                    emitMM = (layer === 0 ? emitPerMMLayer1 : emitPerMM) * out.emit * dist;
+                    emitMM = emitPerMM * out.emit * dist;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
