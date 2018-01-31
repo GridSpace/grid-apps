@@ -1,6 +1,6 @@
 # Kiri:Moto todo
 
-* store settings profile used per-device so re-loaded on device switch
+* per-device settings: grid-print target
 * prevent text selection of non-input
 * widget general add-ons (fdm supports, cam tabs)
 * bail on decimation if it's proving ineffective

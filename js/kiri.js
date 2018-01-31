@@ -398,6 +398,9 @@ self.kiri.license = exports.LICENSE;
             // custom devices by name
             devices:{
             },
+            // map of device to last process setting (name)
+            devproc: {
+            },
             layers:{
                 layerOutline: true,
                 layerTrace: true,
@@ -1925,8 +1928,8 @@ self.kiri.license = exports.LICENSE;
         showDialog("catalog");
     }
 
-    function loadNamedSetting(e) {
-        var name = e ? e.target.getAttribute("load") : settings.cproc[getMode()],
+    function loadNamedSetting(e, named) {
+        var name = e ? e.target.getAttribute("load") : named || settings.cproc[getMode()],
             load = settings.sproc[getMode()][name];
         if (!load) return;
         for (var k in load) {
@@ -1935,8 +1938,13 @@ self.kiri.license = exports.LICENSE;
         }
         settings.process.processName = name;
         settings.cproc[getMode()] = name;
+        // associate named process with the current device
+        settings.devproc[currentDeviceName()] = name;
+
         updateFields();
-        hideDialog();
+        if (!named) {
+            hideDialog();
+        }
         updateSettings();
         if (e) triggerSettingsEvent();
     }
@@ -2114,6 +2122,10 @@ self.kiri.license = exports.LICENSE;
         if (MODE !== MODES.FDM) layoutPlatform(0, 1);
         if (then) then();
         triggerSettingsEvent();
+    }
+
+    function currentDeviceName() {
+        return settings.filter[getMode()];
     }
 
     function setControlsVisible(show) {
@@ -2874,10 +2886,6 @@ self.kiri.license = exports.LICENSE;
             return typeof(val) !== 'undefined' ? val : dv;
         }
 
-        function currentDeviceName() {
-            return settings.filter[getMode()];
-        }
-
         // only for local filters
         function updateDeviceCode(override) {
             var oldname = getSelectedDevice(),
@@ -2923,7 +2931,8 @@ self.kiri.license = exports.LICENSE;
 
                 var cmd = code.cmd || {},
                     set = code.settings || {},
-                    local = isLocalDevice(devicename);
+                    local = isLocalDevice(devicename),
+                    dproc = settings.devproc[devicename];
 
                 settings.device = {
                     bedHeight: 2.5,
@@ -3018,6 +3027,9 @@ self.kiri.license = exports.LICENSE;
 
                 settings.filter[getMode()] = devicename;
                 settings.cdev[getMode()] = dev;
+
+                // restore last process associated with this device
+                if (dproc) loadNamedSetting(null, dproc);
 
                 saveSettings();
             } catch (e) {
