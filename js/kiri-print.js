@@ -484,8 +484,6 @@ var gs_kiri_print = exports;
             minSeek = nozzle * (opt.minSeek || 1.5),
             thinWall = nozzle * (opt.thinWall || 1.75),
             retractDist = opt.retractOver || 2,
-            retractDistFill = opt.retractOverSparse || 10,
-            retractDistSparse = opt.retractOverSparse || 5,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
@@ -513,8 +511,8 @@ var gs_kiri_print = exports;
 
         function intersectsTop(p1, p2) {
             var int = false;
-            slice.tops.forEach(function(top) {
-                if (!int) top.poly.forEachSegment(function(s1, s2) {
+            POLY.flatten(slice.gatherTopPolys([])).forEach(function(poly) {
+                if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
                         int = true;
                         return int;
@@ -558,7 +556,7 @@ var gs_kiri_print = exports;
                 if (poly.last() === point) poly.reverse();
                 poly.forEachPoint(function(p, i) {
                     // retract if dist trigger and crosses a slice top polygon
-                    if (i === 0 && lp && lp.distTo2D(p) > retractDistSparse && intersectsTop(lp,p)) {
+                    if (i === 0 && lp && lp.distTo2D(p) > retractDist && intersectsTop(lp,p)) {
                         retract();
                     }
                     addOutput(preout, p, i === 0 ? 0 : sparseMult, printSpeed);
@@ -608,7 +606,7 @@ var gs_kiri_print = exports;
                         lastout = 1;
                     } else {
                         // retract if dist trigger or crosses a slice top polygon
-                        if (dist > retractDistFill || intersectsTop(startPoint, p1)) {
+                        if (dist > retractDist && intersectsTop(startPoint, p1)) {
                             retract();
                         }
 

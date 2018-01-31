@@ -2426,10 +2426,6 @@ self.kiri.license = exports.LICENSE;
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputCooling: UC.newBoolean("cooling", onBooleanClick, {title: "enable cooling fan\nafter first layer", modes:FDM}),
 
-            output: UC.newGroup("raft"),
-            outputRaftSpacing:  UC.newInput("spacing", {title:"additional layer spacing\nbetween 1st layer and raft\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
-            outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
-
             // cam
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin millimeters", convert:UC.toFloat, modes:CAM}),
@@ -2465,6 +2461,10 @@ self.kiri.license = exports.LICENSE;
             sliceSupportArea: UC.newInput("min area", {title:"min area for a\nsupport column\nin millimeters", bound:UC.bound(0.1,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra: UC.newInput("expand", {title:"expand support area\nbeyond part boundary\nin millimeters", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportEnable: UC.newBoolean("enable", onBooleanClick, {modes:FDM}),
+
+            output: UC.newGroup("raft"),
+            outputRaftSpacing:  UC.newInput("spacing", {title:"additional layer spacing\nbetween 1st layer and raft\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
+            outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
             // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
