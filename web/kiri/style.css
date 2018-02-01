@@ -576,3 +576,21 @@ button[import="1"] {
     text-align: left;
     color: rgba(0,0,0,0.85);
 }
+
+.poptext {
+    display: none;
+    position: absolute;
+    margin-left: 55px;
+    border: 5px solid gray;
+    border-radius: 3px;
+    transform: translate(0, -25%);
+}
+.poptext textarea {
+    opacity: 0.95;
+    overflow-y: scroll !important;
+}
+.poptext label {
+    width: 100% !important;
+    text-align: center !important;
+    background-color: #ddd;
+}

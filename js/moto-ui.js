@@ -29,6 +29,9 @@ var gs_moto_ui = exports;
         bound: bound,
         toInt: toInt,
         toFloat: toFloat,
+        hidePop: hidePop,
+        isPopped: isPopped,
+        newText: newTextArea,
         newLabel: newLabel,
         newRange: newRangeField,
         newInput: newInputField,
@@ -156,6 +159,62 @@ var gs_moto_ui = exports;
         return div;
     }
 
+    var lastPop = null;
+
+    function hidePop() {
+        if (lastPop) lastPop.style.display = "none";
+        lastPop = null;
+    }
+
+    function isPopped() {
+        return lastPop !== null;
+    }
+
+    function newTextArea(label, options) {
+        var opt = options || {},
+            row = newDiv(options),
+            btn = DOC.createElement("button"),
+            box = DOC.createElement("div"),
+            pop = DOC.createElement("div"),
+            lbl = DOC.createElement("label"),
+            txt = DOC.createElement("textarea");
+
+        pop.setAttribute("class", "poptext flow-col");
+        box.setAttribute("style", "position: relative");
+        btn.appendChild(box);
+        box.appendChild(pop);
+        pop.appendChild(lbl);
+        pop.appendChild(txt);
+        lbl.appendChild(DOC.createTextNode(label));
+
+        txt.setAttribute("cols", 30);
+        txt.setAttribute("rows", 20);
+        txt.setAttribute("wrap", "off");
+
+        btn.appendChild(DOC.createTextNode("edit"));
+        btn.onclick = function(ev) {
+            ev.stopPropagation();
+            if (ev.target === txt) return;
+            var showing = pop === lastPop;
+            hidePop();
+            if (!showing) {
+                pop.style.display = "flex";
+                lastPop = pop;
+            }
+        };
+        addModeControls(btn, opt);
+        addId(btn, opt);
+
+        lastDiv.appendChild(row);
+        row.appendChild(newLabel(label));
+        row.appendChild(btn);
+        row.setAttribute("class", ["flow-row",lastGroup].join(" "));
+        if (opt.title) row.setAttribute("title", options.title);
+        btn.setVisible = row.setVisible;
+
+        return txt;
+    }
+
     function newInputField(label, options) {
         var row = newDiv(options),
             hide = options && options.hide,
@@ -183,6 +242,9 @@ var gs_moto_ui = exports;
             if (options.bound) ip.bound = options.bound;
             if (options.action) action = options.action;
         }
+        ip.addEventListener('focus', function(event) {
+            hidePop();
+        });
         if (action) {
             ip.addEventListener('keyup', function(event) {
                 if (event.keyCode === 13) action(event);

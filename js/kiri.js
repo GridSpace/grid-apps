@@ -44,6 +44,7 @@ self.kiri.license = exports.LICENSE;
                     gcodePre: 1,
                     gcodePost: 1,
                     gcodeProc: 1,
+                    gcodePause: 1,
                     gcodeFExt: 1,
                     gcodeFan: 1,
                     gcodeTrack: 1,
@@ -239,7 +240,8 @@ self.kiri.license = exports.LICENSE;
                 spindleMax: 0,      // CAM
                 gcodePre: [],       // FDM/CAM header script
                 gcodePost: [],      // FDM/CAM footer script
-                gcodeProc: "",      // FDM post processor script
+                gcodeProc: "",      // FDM post processor script (encoding, etc)
+                gcodePause: [],     // FDM pause script
                 gcodeFan: "",       // FDM fan command
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: "",     // FDM layer output
@@ -1903,7 +1905,7 @@ self.kiri.license = exports.LICENSE;
         ["modal","catalog","devices","tools"].forEach(function(dialog) {
             showing = showing || UI[dialog].style.display === 'block';
         });
-        return showing;
+        return showing || UC.isPopped();
     }
 
     function showModal(which) {
@@ -1918,9 +1920,10 @@ self.kiri.license = exports.LICENSE;
     }
 
     function showDialog(which, force) {
+        UC.hidePop();
         ["catalog","devices","tools","settings"].forEach(function(dialog) {
             var style = UI[dialog].style;
-            style.display = (dialog === which && (force || style.display !== 'block') ? 'block' : 'none');
+            style.display = (dialog === which && (force || style.display !== 'flex') ? 'flex' : 'none');
         });
     }
 
@@ -2210,14 +2213,15 @@ self.kiri.license = exports.LICENSE;
             setDevice: UC.newGroup("gcode", $('device')),
             setDeviceFan: UC.newInput("fan power", {title:"set cooling fan power", modes:FDM, size:15}),
             setDeviceTrack: UC.newInput("progress", {title:"output on each % progress", modes:FDM, size:15}),
-            setDeviceLayer: UC.newInput("layer", {title:"output at each layer change", modes:FDM, size:14, height: 2}),
+            setDeviceLayer: UC.newText("layer", {title:"output at each layer change", modes:FDM, size:14, height: 2}),
             setDeviceToken: UC.newBoolean("token spacing", null, {title:"gcode token spacing", modes:CAM}),
             setDeviceStrip: UC.newBoolean("strip comments", null, {title:"strip gcode comments", modes:CAM}),
             setDeviceFExt: UC.newInput("file ext", {title:"file name exension", modes:CAM, size:5}),
-            setDeviceDwell: UC.newInput("dwell", {title:"gcode dwell script", modes:CAM, size:14, height:2}),
-            setDeviceChange: UC.newInput("tool change", {title:"tool change script", modes:CAM, size:14, height:2}),
-            setDevicePre: UC.newInput("header", {title:"gcode header script", modes:FDM_CAM, size:14, height:3}),
-            setDevicePost: UC.newInput("footer", {title:"gcode footer script", modes:FDM_CAM, size:14, height:3}),
+            setDeviceDwell: UC.newText("dwell", {title:"gcode dwell script", modes:CAM, size:14, height:2}),
+            setDeviceChange: UC.newText("tool change", {title:"tool change script", modes:CAM, size:14, height:2}),
+            setDevicePause: UC.newText("pause", {title:"gcode pause script", modes:FDM, size:14, height:3}),
+            setDevicePre: UC.newText("header", {title:"gcode header script", modes:FDM_CAM, size:14, height:3}),
+            setDevicePost: UC.newText("footer", {title:"gcode footer script", modes:FDM_CAM, size:14, height:3}),
 
             tools: $('tools'),
             toolsSave: $('tools-save'),
@@ -2910,7 +2914,8 @@ self.kiri.license = exports.LICENSE;
                     },
                     pre: UI.setDevicePre.value.split('\n'),
                     post: UI.setDevicePost.value.split('\n'),
-                    'dwell': UI.setDeviceDwell.value.split('\n'),
+                    pause: UI.setDevicePause.value.split('\n'),
+                    dwell: UI.setDeviceDwell.value.split('\n'),
                     'tool-change': UI.setDeviceChange.value.split('\n'),
                     'file-ext': UI.setDeviceFExt.value,
                     'token-space': UI.setDeviceToken.checked ? ' ' : '',
@@ -2949,6 +2954,7 @@ self.kiri.license = exports.LICENSE;
                     gcodePre: valueOf(code.pre, []),
                     gcodePost: valueOf(code.post, []),
                     gcodeProc: valueOf(code.proc, ''),
+                    gcodePause: valueOf(code.pause, []),
                     gcodeDwell: valueOf(code.dwell, []),
                     gcodeChange: valueOf(code['tool-change'], []),
                     gcodeFExt: valueOf(code['file-ext'], 'gcode'),
@@ -2966,6 +2972,7 @@ self.kiri.license = exports.LICENSE;
                 // common
                 UI.setDevicePre.value = dev.gcodePre.join('\n');
                 UI.setDevicePost.value = dev.gcodePost.join('\n');
+                UI.setDevicePause.value = dev.gcodePause.join('\n');
                 UI.setDeviceWidth.value = dev.bedWidth;
                 UI.setDeviceDepth.value = dev.bedDepth;
                 UI.setDeviceHeight.value = dev.maxHeight;
@@ -2990,6 +2997,7 @@ self.kiri.license = exports.LICENSE;
                  UI.deviceName,
                  UI.setDevicePre,
                  UI.setDevicePost,
+                 UI.setDevicePause,
                  UI.setDeviceDepth,
                  UI.setDeviceWidth,
                  UI.setDeviceHeight,
@@ -3034,7 +3042,7 @@ self.kiri.license = exports.LICENSE;
                 saveSettings();
             } catch (e) {
                 console.log({error:e, device:code});
-                alert("invalid or deprecated device. please select a new device.");
+                // alert("invalid or deprecated device. please select a new device.");
                 showDevices();
             }
             clearWidgetCache();
@@ -3042,6 +3050,9 @@ self.kiri.license = exports.LICENSE;
         }
 
         function renderDevices(devices) {
+            UI.devices.onclick = UC.hidePop;
+            UC.hidePop();
+
             var selectedIndex = -1,
                 selected = currentDeviceName(),
                 devs = settings.devices;
