@@ -1920,7 +1920,10 @@ self.kiri.license = exports.LICENSE;
     }
 
     function showDialog(which, force) {
-        UC.hidePop();
+        if (UC.isPopped()) {
+            UC.hidePop();
+            return;
+        }
         ["catalog","devices","tools","settings"].forEach(function(dialog) {
             var style = UI[dialog].style;
             style.display = (dialog === which && (force || style.display !== 'flex') ? 'flex' : 'none');
