@@ -1083,7 +1083,7 @@ self.kiri.license = exports.LICENSE;
                     } else if (xhtr.status === 401) {
                         $('gpapik').style.display = '';
                     } else {
-                        alert("invalid grid-print host");
+                        console.log("invalid grid-print host");
                     }
                 }
             };
