@@ -496,6 +496,7 @@ var gs_kiri_print = exports;
             fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
+            antiBacklash = process.antiBacklash,
             z = slice.z;
 
         // apply first layer extrusion multipliers
@@ -566,15 +567,17 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, point, find, list, len, lastout, pass = 0;
+            var mindist, p1, p2, dist, point, find, list, len, lastout, pass = 0, origin;
+
             while (lines) {
                 list = [];
                 mindist = Infinity;
+                origin = antiBacklash && pass === 0 ? lines.origin : startPoint;
                 // order all points by distance to last point
                 for (i=0; i<lines.length; i++) {
                     point = lines[i];
                     if (point.del) continue;
-                    dist = startPoint.distTo2D(point);
+                    dist = origin.distTo2D(point);
                     list.push({i:i, p:point, d:dist});
                 }
                 if (list.length > 0) {
@@ -590,10 +593,11 @@ var gs_kiri_print = exports;
                         p2 = lines[find.i - 1];
                     }
 
+                    dist = startPoint.distTo2D(p1);
+
                     // mark as used (temporary)
                     p1.del = true;
                     p2.del = true;
-                    dist = startPoint.distTo2D(p1);
                     len = p1.distTo2D(p2);
 
                     // if dist to new segment is less than thinWall
@@ -608,6 +612,11 @@ var gs_kiri_print = exports;
                         // retract if dist trigger or crosses a slice top polygon
                         if (dist > retractDist && intersectsTop(startPoint, p1)) {
                             retract();
+                        }
+
+                        // anti-backlash take out slack by moving toward origin
+                        if (antiBacklash && dist > retractDist) {
+                            addOutput(preout, p1.add({x:1,y:-1,z:0}), 0, moveSpeed);
                         }
 
                         // bridge ends of fill when they're close together

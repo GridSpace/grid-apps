@@ -619,6 +619,9 @@ var gs_base_polygons = exports;
             maxlen = BASE.config.clipper * (maxLen || 0),
             lines = [];
 
+        // store origin as start/affinity point for fill
+        rayint.origin = newPoint(start.x, start.y, start.z);
+
         for (i = 0; i < steps; i++) {
             var p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
                 p2 = newPoint(start.x + raySlope.dx * 1000, start.y + raySlope.dy * 1000, zpos, NOKEY);
