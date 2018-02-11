@@ -621,6 +621,7 @@ var gs_base_polygons = exports;
 
         // store origin as start/affinity point for fill
         rayint.origin = newPoint(start.x, start.y, start.z);
+        rayint.mindex = Infinity;
 
         for (i = 0; i < steps; i++) {
             var p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
@@ -628,7 +629,7 @@ var gs_base_polygons = exports;
 
             // store origin line for distance tests in print
             if (i == 0) rayint.oline = [p1,p2];
-            
+
             lines.push([p1,p2]);
             start.x += stepX;
             start.y += stepY;
@@ -637,6 +638,8 @@ var gs_base_polygons = exports;
         clip.AddPaths(lines, ptyp.ptSubject, false);
         clip.AddPaths(toClipper(polys), ptyp.ptClip, true);
 
+        lines = [];
+
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
             ctre.m_AllPolys.forEach(function(poly) {
                 if (minlen || maxlen) {
@@ -644,11 +647,27 @@ var gs_base_polygons = exports;
                     if (minlen && plen < minlen) return;
                     if (maxlen && plen > maxlen) return;
                 }
-                poly.m_polygon.forEach(function(point) {
-                    rayint.push(newPoint(null,null,zpos,null,point));
-                });
+                var p1 = newPoint(null,null,zpos,null,poly.m_polygon[0]);
+                var p2 = newPoint(null,null,zpos,null,poly.m_polygon[1]);
+                var od = Math.round(rayint.origin.distToLine(p1,p2) / spacing);
+                rayint.mindex = Math.min(rayint.mindex, od);
+                lines.push([p1, p2, od]);
+                // poly.m_polygon.forEach(function(point) {
+                //     rayint.push(newPoint(null,null,zpos,null,point));
+                // });
             });
         }
+
+        lines.sort(function(a,b) {
+            return a[2] - b[2];
+        })
+
+        lines.forEach(function(line, index) {
+            line[0].index = line[2];
+            line[1].index = line[2];
+            rayint.push(line[0]);
+            rayint.push(line[1]);
+        })
 
         return rayint;
     }

@@ -569,8 +569,12 @@ var gs_kiri_print = exports;
         function outputFills(lines, bounds) {
             var mindist, p1, p2, dist, point, find, list, len, lastout, origin, lastDist2Origin,
                 skip = false,
-                pass = 0;
-
+                pass = 0,
+                marked = 0,
+                lastIndex = null,
+                nextIndex = lines.mindex;
+var time = new Date().getTime();
+var scans = 0, sorts = 0;
             while (lines) {
                 list = [];
                 mindist = Infinity;
@@ -578,11 +582,23 @@ var gs_kiri_print = exports;
                 // order all points by distance to last point
                 for (i=0; i<lines.length; i++) {
                     point = lines[i];
+                    if (lastIndex && point.index < lastIndex) continue;
+                    if (nextIndex > lines.mindex && point.index > nextIndex) break;
                     if (point.del) continue;
                     dist = origin.distTo2D(point);
-                    list.push({i:i, p:point, d:dist});
+                    list.push({i:i, p:point, d:origin.distTo2D(point)});
+scans++;
+                }
+                // restart near origin if some still unmarked
+                if (list.length === 0 && marked < lines.length) {
+                    lastIndex = null;
+                    nextIndex = lines.mindex;
+                    continue;
                 }
                 if (list.length > 0) {
+// scans += list.length;
+sorts++;
+console.log({sorting:list.length, ni:nextIndex, ll:lines.lenght});
                     list.sort(function(a,b) { return a.d - b.d });
                     find = list[0];
 
@@ -598,23 +614,28 @@ var gs_kiri_print = exports;
                     dist = startPoint.distTo2D(p1);
 
                     // find next closest to fill origin on seek
-                    if (antiBacklash) {
-                        var dist2Origin = p1.distToLine(lines.oline[0], lines.oline[1]);
-                        if (!skip) {
-                            if (lastDist2Origin && dist2Origin < lastDist2Origin) {
-                                lastDist2Origin = null;
-                                skip = true;
-                                continue;
-                            }
-                        }
-                        lastDist2Origin = dist2Origin;
-                    }
-                    skip = false;
+                    // if (antiBacklash) {
+                    //     var dist2Origin = p1.distToLine(lines.oline[0], lines.oline[1]);
+                    //     if (!skip) {
+                    //         if (lastDist2Origin && dist2Origin < lastDist2Origin) {
+                    //             lastDist2Origin = null;
+                    //             skip = true;
+                    //             continue;
+                    //         }
+                    //     }
+                    //     lastDist2Origin = dist2Origin;
+                    // }
+                    // skip = false;
 
                     // mark as used (temporary)
                     p1.del = true;
                     p2.del = true;
                     len = p1.distTo2D(p2);
+                    marked += 2;
+
+                    // scan up to next index on next pass
+                    lastIndex = p1.index;
+                    nextIndex = p1.index + 1;
 
                     // if dist to new segment is less than thinWall
                     // and segment length is less than thinWall then
@@ -654,6 +675,7 @@ var gs_kiri_print = exports;
             }
             // clear delete marks so we can re-print later
             if (lines) lines.forEach(function(p) { p.del = false });
+console.log({ftime: new Date().getTime() - time, scans:scans, sorts:sorts});
         }
 
         /**
