@@ -567,12 +567,14 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, point, find, list, len, lastout, pass = 0, origin;
+            var mindist, p1, p2, dist, point, find, list, len, lastout, origin, lastDist2Origin,
+                skip = false,
+                pass = 0;
 
             while (lines) {
                 list = [];
                 mindist = Infinity;
-                origin = antiBacklash && pass === 0 ? lines.origin : startPoint;
+                origin = skip || (antiBacklash && pass === 0) ? lines.origin : startPoint;
                 // order all points by distance to last point
                 for (i=0; i<lines.length; i++) {
                     point = lines[i];
@@ -595,6 +597,20 @@ var gs_kiri_print = exports;
 
                     dist = startPoint.distTo2D(p1);
 
+                    // find next closest to fill origin on seek
+                    if (antiBacklash) {
+                        var dist2Origin = p1.distToLine(lines.oline[0], lines.oline[1]);
+                        if (!skip) {
+                            if (lastDist2Origin && dist2Origin < lastDist2Origin) {
+                                lastDist2Origin = null;
+                                skip = true;
+                                continue;
+                            }
+                        }
+                        lastDist2Origin = dist2Origin;
+                    }
+                    skip = false;
+
                     // mark as used (temporary)
                     p1.del = true;
                     p2.del = true;
@@ -616,7 +632,7 @@ var gs_kiri_print = exports;
 
                         // anti-backlash take out slack by moving toward origin
                         if (antiBacklash && dist > retractDist) {
-                            addOutput(preout, p1.add({x:1,y:-1,z:0}), 0, moveSpeed);
+                            addOutput(preout, p1.add({x:2,y:-2,z:0}), 0, moveSpeed);
                         }
 
                         // bridge ends of fill when they're close together

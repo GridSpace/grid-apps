@@ -626,8 +626,10 @@ var gs_base_polygons = exports;
             var p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
                 p2 = newPoint(start.x + raySlope.dx * 1000, start.y + raySlope.dy * 1000, zpos, NOKEY);
 
+            // store origin line for distance tests in print
+            if (i == 0) rayint.oline = [p1,p2];
+            
             lines.push([p1,p2]);
-
             start.x += stepX;
             start.y += stepY;
         }
