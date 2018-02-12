@@ -570,6 +570,7 @@ var gs_kiri_print = exports;
             var p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
                 start = 0,
+                skip = false,
                 lastIndex = -1;
 
             while (lines && marked < lines.length) {
@@ -611,16 +612,17 @@ var gs_kiri_print = exports;
                     continue;
                 }
 
-                // set next starting point
-                lastIndex = p1.index;
-
-                // mark as used (temporary)
-                p1.del = true;
-                p2.del = true;
-                marked += 2;
-
                 dist = startPoint.distTo2D(p1);
                 len = p1.distTo2D(p2);
+
+                // go back to start when dist > retractDist
+                if (!skip && dist > retractDist) {
+                    skip = true;
+                    start = 0;
+                    lastIndex = -1;
+                    continue;
+                }
+                skip = false;
 
                 // if dist to new segment is less than thinWall
                 // and segment length is less than thinWall then
@@ -650,8 +652,15 @@ var gs_kiri_print = exports;
                     addOutput(preout, p2, fillMult, fillSpeed);
                 }
 
+                // mark as used (temporarily)
+                p1.del = true;
+                p2.del = true;
+
+                lastIndex = p1.index;
                 startPoint = p2;
+                marked += 2;
             }
+
             // clear delete marks so we can re-print later
             if (lines) lines.forEach(function(p) { p.del = false });
         }
