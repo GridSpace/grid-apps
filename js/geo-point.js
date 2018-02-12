@@ -138,7 +138,8 @@ var gs_base_point = exports;
      * @returns {number}
      */
     PRO.distToLine = function(p1, p2) {
-        return Math.sqrt(this.distToLineSq(p1, p2));
+        return p2l(this, p1, p2);
+        // return Math.sqrt(this.distToLineSq(p1, p2));
     };
 
     /**
@@ -160,6 +161,32 @@ var gs_base_point = exports;
 
         return UTIL.distSqv2(p.x, p.y, p1.x + t * (p2.x - p1.x), p1.y + t * (p2.y - p1.y));
     };
+
+    // ---( begin fix distToLine )---
+
+    function dot(u, v) {
+        return u.x * v.x + u.y * v.y;
+    }
+
+    function norm(v) {
+        return Math.sqrt(dot(v,v));
+    }
+
+    function d(u, v) {
+        return norm({x: u.x - v.x, y: u.y - v.y});
+    }
+
+    function p2l(p, l1, l2) {
+        var v = {x: l2.x - l1.x, y: l2.y - l1.y};
+        var w = {x: p.x - l1.x, y: p.y - l1.y};
+        var c1 = dot(w, v);
+        var c2 = dot(v, v);
+        var b = c1 / c2;
+        var pb = {x: l1.x + b * v.x, y: l1.y + b * v.y};
+        return d(p, pb);
+    }
+
+    // ---( end fix distToLine )---
 
     /**
      *

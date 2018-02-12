@@ -366,6 +366,10 @@ var gs_kiri_slice = exports;
             valid.push(r1[i]);
             valid.push(r1[i+1]);
         }
+        // add index to point for fill order storeSettingsToServer
+        for (var k=0; k<valid.length; k++) {
+            valid[k].index = Infinity;
+        }
         return valid.length > 2 ? valid : [];
     }
 

@@ -567,115 +567,93 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, bounds) {
-            var mindist, p1, p2, dist, point, find, list, len, lastout, origin, lastDist2Origin,
-                skip = false,
-                pass = 0,
+            var p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
-                lastIndex = null,
-                nextIndex = lines.mindex;
-var time = new Date().getTime();
-var scans = 0, sorts = 0;
-            while (lines) {
-                list = [];
+                start = 0,
+                lastIndex = -1;
+
+            while (lines && marked < lines.length) {
+                found = false;
+                group = null;
                 mindist = Infinity;
-                origin = skip || (antiBacklash && pass === 0) ? lines.origin : startPoint;
+
                 // order all points by distance to last point
-                for (i=0; i<lines.length; i++) {
-                    point = lines[i];
-                    if (lastIndex && point.index < lastIndex) continue;
-                    if (nextIndex > lines.mindex && point.index > nextIndex) break;
-                    if (point.del) continue;
-                    dist = origin.distTo2D(point);
-                    list.push({i:i, p:point, d:origin.distTo2D(point)});
-scans++;
+                for (i=start; i<lines.length; i += 2) {
+                    p = lines[i];
+                    if (p.del) continue;
+                    if (group === null && p.index > lastIndex) {
+                        group = p.index;
+                    }
+                    if (group !== null) {
+                        if (p.index !== group) break;
+                        if (p.index % 2 === 0) {
+                            t1 = lines[i];
+                            t2 = lines[i+1];
+                        } else {
+                            t2 = lines[i];
+                            t1 = lines[i+1];
+                        }
+                        dist = Math.min(t1.distTo2D(startPoint), t2.distTo2D(startPoint));
+                        if (dist < mindist) {
+                            p1 = t1;
+                            p2 = t2;
+                            mindist = dist;
+                        }
+                        start = i;
+                        found = true;
+                    }
                 }
-                // restart near origin if some still unmarked
-                if (list.length === 0 && marked < lines.length) {
-                    lastIndex = null;
-                    nextIndex = lines.mindex;
+
+                // go back to start and try again
+                if (!found) {
+                    start = 0;
+                    lastIndex = -1;
                     continue;
                 }
-                if (list.length > 0) {
-// scans += list.length;
-sorts++;
-console.log({sorting:list.length, ni:nextIndex, ll:lines.lenght});
-                    list.sort(function(a,b) { return a.d - b.d });
-                    find = list[0];
 
-                    // order segment by closest to farthest point
-                    if (find.i % 2 === 0) {
-                        p1 = find.p;
-                        p2 = lines[find.i + 1];
-                    } else {
-                        p1 = find.p;
-                        p2 = lines[find.i - 1];
-                    }
+                // set next starting point
+                lastIndex = p1.index;
 
-                    dist = startPoint.distTo2D(p1);
+                // mark as used (temporary)
+                p1.del = true;
+                p2.del = true;
+                marked += 2;
 
-                    // find next closest to fill origin on seek
-                    // if (antiBacklash) {
-                    //     var dist2Origin = p1.distToLine(lines.oline[0], lines.oline[1]);
-                    //     if (!skip) {
-                    //         if (lastDist2Origin && dist2Origin < lastDist2Origin) {
-                    //             lastDist2Origin = null;
-                    //             skip = true;
-                    //             continue;
-                    //         }
-                    //     }
-                    //     lastDist2Origin = dist2Origin;
-                    // }
-                    // skip = false;
+                dist = startPoint.distTo2D(p1);
+                len = p1.distTo2D(p2);
 
-                    // mark as used (temporary)
-                    p1.del = true;
-                    p2.del = true;
-                    len = p1.distTo2D(p2);
-                    marked += 2;
-
-                    // scan up to next index on next pass
-                    lastIndex = p1.index;
-                    nextIndex = p1.index + 1;
-
-                    // if dist to new segment is less than thinWall
-                    // and segment length is less than thinWall then
-                    // just extrude to midpoint of next segment. this is
-                    // to avoid shaking the printer to death.
-                    if (find.d <= thinWall && len <= thinWall) {
-                        p2 = p1.midPointTo(p2);
-                        addOutput(preout, p2, fillMult * (find.d / thinWall), fillSpeed);
-                        lastout = 1;
-                    } else {
-                        // retract if dist trigger or crosses a slice top polygon
-                        if (dist > retractDist && intersectsTop(startPoint, p1)) {
-                            retract();
-                        }
-
-                        // anti-backlash take out slack by moving toward origin
-                        if (antiBacklash && dist > retractDist) {
-                            addOutput(preout, p1.add({x:2,y:-2,z:0}), 0, moveSpeed);
-                        }
-
-                        // bridge ends of fill when they're close together
-                        if (dist < thinWall) {
-                            addOutput(preout, p1, fillMult, fillSpeed);
-                        } else {
-                            addOutput(preout, p1, 0, moveSpeed);
-                        }
-
-                        addOutput(preout, p2, fillMult, fillSpeed);
-                        lastout = 2;
-                    }
-
-                    startPoint = p2;
+                // if dist to new segment is less than thinWall
+                // and segment length is less than thinWall then
+                // just extrude to midpoint of next segment. this is
+                // to avoid shaking the printer to death.
+                if (dist <= thinWall && len <= thinWall) {
+                    p2 = p1.midPointTo(p2);
+                    addOutput(preout, p2, fillMult * (dist / thinWall), fillSpeed);
                 } else {
-                    break;
+                    // retract if dist trigger or crosses a slice top polygon
+                    if (dist > retractDist && intersectsTop(startPoint, p1)) {
+                        retract();
+                    }
+
+                    // anti-backlash on longer move
+                    if (antiBacklash && dist > retractDist) {
+                        addOutput(preout, p1.add({x:2,y:-2,z:0}), 0, moveSpeed);
+                    }
+
+                    // bridge ends of fill when they're close together
+                    if (dist < thinWall) {
+                        addOutput(preout, p1, fillMult, fillSpeed);
+                    } else {
+                        addOutput(preout, p1, 0, moveSpeed);
+                    }
+
+                    addOutput(preout, p2, fillMult, fillSpeed);
                 }
-                pass++;
+
+                startPoint = p2;
             }
             // clear delete marks so we can re-print later
             if (lines) lines.forEach(function(p) { p.del = false });
-console.log({ftime: new Date().getTime() - time, scans:scans, sorts:sorts});
         }
 
         /**
