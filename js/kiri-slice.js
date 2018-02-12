@@ -408,7 +408,7 @@ var gs_kiri_slice = exports;
                     last = [top.poly].clone(true);
                     top.traces = last;
                 } else {
-                    if (opt.thin) {
+                    if (false && opt.thin) {
                         var on1s2 = offset1 * 2,
                             on2s2 = offsetN * 2;
                         POLY.expand2(
