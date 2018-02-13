@@ -645,7 +645,7 @@ var gs_kiri_print = exports;
 
                     // anti-backlash on longer move
                     if (antiBacklash && dist > retractDist) {
-                        addOutput(preout, p1.add({x:2,y:-2,z:0}), 0, moveSpeed);
+                        addOutput(preout, p1.add({x:antiBacklash,y:-antiBacklash,z:0}), 0, moveSpeed);
                     }
 
                     // bridge ends of fill when they're close together

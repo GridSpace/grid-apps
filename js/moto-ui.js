@@ -87,6 +87,7 @@ var gs_moto_ui = exports;
 
     function toInt() {
         var nv = this.value !== '' ? parseInt(this.value) : null;
+        if (isNaN(nv)) nv = 0;
         if (nv !== null && this.bound) nv = this.bound(nv);
         this.value = nv;
         return nv;
@@ -101,6 +102,7 @@ var gs_moto_ui = exports;
 
     function bound(low,high) {
         return function(v) {
+            if (isNaN(v)) return low;
             return v < low ? low : v > high ? high : v;
         };
     }

@@ -308,7 +308,7 @@ self.kiri.license = exports.LICENSE;
                 outputShortFactor: 0.2,
                 outputFinishFactor: 0,
                 detectThinWalls: false,
-                antiBacklash: false,
+                antiBacklash: 2,
                 outputCooling: true,
 
                 // --- LASER ---
@@ -2496,7 +2496,7 @@ self.kiri.license = exports.LICENSE;
             outputShortDistance: UC.newInput("short segment", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
-            antiBacklash: UC.newBoolean("anti-backlash", onBooleanClick, {title: "use micro-movements to cancel\nbacklash during fills", modes:FDM}),
+            antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
         });
 
