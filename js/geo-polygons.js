@@ -661,6 +661,7 @@ var gs_base_polygons = exports;
             rayint.push(line[0]);
             rayint.push(line[1]);
         })
+
         return rayint;
     }
 

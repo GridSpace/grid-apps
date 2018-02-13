@@ -837,8 +837,8 @@ var gs_kiri_slice = exports;
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }
-        });
 
+        });
         return true;
     };
 

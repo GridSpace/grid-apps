@@ -624,6 +624,12 @@ var gs_kiri_print = exports;
                 }
                 skip = false;
 
+                // mark as used (temporarily)
+                p1.del = true;
+                p2.del = true;
+                marked += 2;
+                lastIndex = p1.index;
+
                 // if dist to new segment is less than thinWall
                 // and segment length is less than thinWall then
                 // just extrude to midpoint of next segment. this is
@@ -652,13 +658,7 @@ var gs_kiri_print = exports;
                     addOutput(preout, p2, fillMult, fillSpeed);
                 }
 
-                // mark as used (temporarily)
-                p1.del = true;
-                p2.del = true;
-
-                lastIndex = p1.index;
                 startPoint = p2;
-                marked += 2;
             }
 
             // clear delete marks so we can re-print later
