@@ -101,10 +101,10 @@ self.kiri.license = exports.LICENSE;
                     outputCooling: 1,
                     // detectThinWalls: 1,
                     antiBacklash: 1,
-                    // outputClockwise: 1,
-                    // outputOriginCenter: 1,
-                    // outputInvertX: 1,
-                    // outputInvertY: 1
+                    outputClockwise: 1,
+                    outputOriginCenter: 1,
+                    outputInvertX: 1,
+                    outputInvertY: 1
                 }
             },
             cam:{
