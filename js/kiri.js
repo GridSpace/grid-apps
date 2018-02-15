@@ -1938,14 +1938,17 @@ self.kiri.license = exports.LICENSE;
 
     function loadNamedSetting(e, named) {
         var name = e ? e.target.getAttribute("load") : named || settings.cproc[getMode()],
-            load = settings.sproc[getMode()][name];
+            load = settings.sproc[getMode()][name],
+            mode = getMode();
         if (!load) return;
         for (var k in load) {
             if (!load.hasOwnProperty(k)) continue;
+            // prevent stored process from overwriting device defaults
+            if (k === "outputOriginCenter" && mode == "FDM") continue;
             settings.process[k] = load[k];
         }
         settings.process.processName = name;
-        settings.cproc[getMode()] = name;
+        settings.cproc[mode] = name;
         // associate named process with the current device
         settings.devproc[currentDeviceName()] = name;
 
