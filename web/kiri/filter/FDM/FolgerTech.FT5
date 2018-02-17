@@ -7,12 +7,11 @@
         "M107                ; turn off filament cooling fan",
         "G28                 ; home axes",
         "G92 X0 Y0 Z0 E0     ; reset all axes positions",
-        "G1 X0 Y0 Z3         ; move xy to 0,0 and z 3mm over bed",
+        "G1 X0 Y5 Z3         ; move XY to 0,5 and Z 3mm over bed",
         "M190 S{bed_temp} T0 ; wait for bed to reach target temp",
         "M109 S{temp} T0     ; wait for extruder to reach target temp",
         "G0 Z0.25            ; position 0.25mm over bed",
-        "G1 X100 E15 F600    ; purge 15mm from extruder",
-        "G1 X200 E30 F600    ; purge 15mm from extruder"
+        "G1 X100 E30 F600    ; purge 30mm from extruder"
     ],
     "post":[
         "M107                ; turn off filament cooling fan",
