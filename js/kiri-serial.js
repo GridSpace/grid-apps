@@ -92,7 +92,10 @@ var gs_kiri_serial = exports;
             rpz = $('srzi'),
             wpx = $('saxi'),
             wpy = $('sayi'),
-            wpz = $('sazi');
+            wpz = $('sazi'),
+            WCO = {x:0, y:0, z:0},
+            WPOS = {x:0, y:0, z:0},
+            MPOS = {x:0, y:0, z:0};
 
         senderDialog = $('sender');
         senderStatus = $('sender-status');
@@ -201,19 +204,25 @@ var gs_kiri_serial = exports;
                     tv = dmt[1].split(",");
                     switch (tt) {
                         case 'MPos':
-                            rpx.value = tv[0];
-                            rpy.value = tv[1];
-                            rpz.value = tv[2];
+                            MPOS.x = parseFloat(tv[0]);
+                            MPOS.y = parseFloat(tv[1]);
+                            MPOS.z = parseFloat(tv[2]);
+                            WPOS.x = MPOS.x - WCO.x;
+                            WPOS.y = MPOS.y - WCO.y;
+                            WPOS.z = MPOS.z - WCO.z;
                             break;
-                        case 'MPos':
-                            wpx.value = tv[0];
-                            wpy.value = tv[1];
-                            wpz.value = tv[2];
+                        case 'WPos':
+                            WPOS.x = parseFloat(tv[0]);
+                            WPOS.y = parseFloat(tv[1]);
+                            WPOS.z = parseFloat(tv[2]);
+                            MPOS.x = WPOS.x + WCO.x;
+                            MPOS.y = WPOS.y + WCO.y;
+                            MPOS.z = WPOS.z + WCO.z;
                             break;
                         case 'WCO':
-                            wpx.value = tv[0];
-                            wpy.value = tv[1];
-                            wpz.value = tv[2];
+                            WCO.x = parseFloat(tv[0]);
+                            WCO.y = parseFloat(tv[1]);
+                            WCO.z = parseFloat(tv[2]);
                             break;
                         case 'FS':
                             break;
@@ -221,6 +230,12 @@ var gs_kiri_serial = exports;
                             break;
                     }
                 }
+                rpx.value = MPOS.x.toFixed(3);
+                rpy.value = MPOS.y.toFixed(3);
+                rpz.value = MPOS.z.toFixed(3);
+                wpx.value = WPOS.x.toFixed(3);
+                wpy.value = WPOS.y.toFixed(3);
+                wpz.value = WPOS.z.toFixed(3);
             } else
             if (dm.charAt(0) === '{') {
                 // tinyg status update

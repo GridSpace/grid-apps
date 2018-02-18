@@ -293,6 +293,9 @@ input[type=range]::-moz-focus-outer {
 #sender-quick button {
     flex-grow: 1;
 }
+#sender-coordinates input {
+    text-align: right;
+}
 
 /** help dialog */
 
