@@ -175,9 +175,9 @@ var gs_kiri_serial = exports;
             if (dm.charAt(0) === '<') {
                 // grbl status update
                 dm = dm.substring(1,dm.length-2);
-                dm = dm.split(',');
+                dm = dm.split('|');
                 // console.log(dm);
-                status = dm[0];
+                status = dm.shift();
                 senderStatus.value = status;
                 switch (status) {
                     case 'Idle':
@@ -194,12 +194,33 @@ var gs_kiri_serial = exports;
                         senderStatus.style.color = '#880';
                         break;
                 }
-                rpx.value = dm[1].split(':')[1];
-                rpy.value = dm[2];
-                rpz.value = dm[3];
-                wpx.value = dm[4].split(':')[1];
-                wpy.value = dm[5];
-                wpz.value = dm[6];
+                var dmt, tt, tv;
+                while (dmt = dm.shift()) {
+                    dmt = dmt.split(":");
+                    tt = dmt[0];
+                    tv = dmt[1].split(",");
+                    switch (tt) {
+                        case 'MPos':
+                            rpx.value = tv[0];
+                            rpy.value = tv[1];
+                            rpz.value = tv[2];
+                            break;
+                        case 'MPos':
+                            wpx.value = tv[0];
+                            wpy.value = tv[1];
+                            wpz.value = tv[2];
+                            break;
+                        case 'WCO':
+                            wpx.value = tv[0];
+                            wpy.value = tv[1];
+                            wpz.value = tv[2];
+                            break;
+                        case 'FS':
+                            break;
+                        case 'Ov':
+                            break;
+                    }
+                }
             } else
             if (dm.charAt(0) === '{') {
                 // tinyg status update
