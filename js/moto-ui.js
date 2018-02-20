@@ -195,19 +195,9 @@ var gs_moto_ui = exports;
         btn.appendChild(DOC.createTextNode("edit"));
         btn.onclick = function(ev) {
             btn.parentNode.appendChild(box);
-            btn.parentNode.onclick = function(ev) {
-                ev.stopPropagation();
-                if (ev.target === txt) return;
-                var showing = pop === lastPop;
-                hidePop();
-                if (!showing) {
-                    pop.style.display = "flex";
-                    lastPop = pop;
-                    txt.focus();
-                }
-            };
-
+            btn.parentNode.onclick = btn.onclick;
             ev.stopPropagation();
+            // drop clicks on TextArea
             if (ev.target === txt) return;
             var showing = pop === lastPop;
             hidePop();
