@@ -746,9 +746,13 @@ self.kiri.license = exports.LICENSE;
     }
 
     function showSlice(index, range, layer) {
-        return range ?
-            (index <= layer && index > layer-range) : (index <= layer);
-            MODE === MODES.CAM ? (index >= layer) : (index <= layer);
+        if (range) {
+            return index <= layer && index > layer-range;
+        } else if (MODE === MODES.CAM) {
+            return index >= layer;
+        } else {
+            return index <= layer;
+        }
     }
 
     /**

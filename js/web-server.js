@@ -848,10 +848,12 @@ const api = {
     },
 
     "filters-fdm": (req, res, next) => {
+        res.setHeader("Content-Type", "application/javascript");
         res.end(obj2string(filters_fdm));
     },
 
     "filters-cam": (req, res, next) => {
+        res.setHeader("Content-Type", "application/javascript");
         res.end(obj2string(filters_cam));
     }
 
