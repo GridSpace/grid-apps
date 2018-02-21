@@ -102,6 +102,7 @@ self.kiri.license = exports.LICENSE;
                     // detectThinWalls: 1,
                     antiBacklash: 1,
                     gcodeKFactor: 1,
+                    gcodePauseLayers: 1,
                     outputClockwise: 1,
                     outputOriginCenter: 1,
                     outputInvertX: 1,
@@ -311,6 +312,7 @@ self.kiri.license = exports.LICENSE;
                 detectThinWalls: false,
                 antiBacklash: 2,
                 gcodeKFactor: 0,
+                gcodePauseLayers: "",
                 outputCooling: true,
 
                 // --- LASER ---
@@ -2510,6 +2512,7 @@ self.kiri.license = exports.LICENSE;
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),
             gcodeKFactor: UC.newInput("k-factor", {title: "aka linear advance\nuse {kfactor} in gcode", convert:UC.toInt, modes:FDM}),
+            gcodePauseLayers: UC.newInput("pause layers", {title: "comma-separated list of layers\nto inject pause commands between", modes:FDM}),
 
         });
 

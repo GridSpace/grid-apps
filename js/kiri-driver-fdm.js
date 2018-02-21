@@ -381,6 +381,8 @@ var gs_kiri_fdm = exports;
             trackProgress = device.gcodeTrack,
             time = 0,
             layer = 0,
+            pause = [],
+            pauseCmd = device.gcodePause,
             output = [],
             outputLength = 0,
             lastProgress = 0,
@@ -422,6 +424,11 @@ var gs_kiri_fdm = exports;
             append,
             lines = 0,
             bytes = 0;
+
+        (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
+            var v = parseInt(lv);
+            if (v >= 0) pause.push(v);
+        });
 
         if (online) {
             append = function(line) {
@@ -533,15 +540,21 @@ var gs_kiri_fdm = exports;
                 device.filamentSize,
                 path.layer === 0 ? process.firstSliceHeight : path.height);
 
+            consts.layer = layer;
+            consts.height = path.height.toFixed(3);
+
+            if (pauseCmd && pause.indexOf(layer) >= 0) {
+                for (var i=0; i<pauseCmd.length; i++) {
+                    append(constReplace(pauseCmd[i], consts));
+                }
+            }
+
             if (trackLayers && trackLayers.length) {
                 trackLayers.forEach(function(line) {
-                    append(constReplace(line, {
-                        progress: progress,
-                        layer: layer,
-                        height: path.height.toFixed(3)}));
+                    append(constReplace(line, consts));
                 });
             } else {
-                append("; --- layer " + layer + " (" + path.height.toFixed(3) + " @ " + zpos.toFixed(3) + ") ---");
+                append("; --- layer " + layer + " (" + consts.height + " @ " + zpos.toFixed(3) + ") ---");
             }
 
             // second layer fan on
@@ -602,11 +615,11 @@ var gs_kiri_fdm = exports;
                 // update time and distance (should calc in moveTo() instead)
                 time += (dist / speedMMM) * 60 * 1.5;
                 distance += dist;
-                progress = Math.round((distance / totaldistance) * 100);
+                consts.progress = progress = Math.round((distance / totaldistance) * 100);
 
                 // emit tracked progress
                 if (trackProgress && progress != lastProgress) {
-                    append(constReplace(trackProgress, {progress:progress}));
+                    append(constReplace(trackProgress, consts));
                     lastProgress = progress;
                 }
 
