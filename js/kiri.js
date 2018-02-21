@@ -2492,7 +2492,7 @@ self.kiri.license = exports.LICENSE;
             sliceSupportExtra: UC.newInput("expand", {title:"expand support area\nbeyond part boundary\nin millimeters", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportEnable: UC.newBoolean("enable", onBooleanClick, {modes:FDM}),
 
-            output: UC.newGroup("raft"),
+            output: UC.newGroup("raft", null, {modes:FDM}),
             outputRaftSpacing:  UC.newInput("spacing", {title:"additional layer spacing\nbetween 1st layer and raft\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
             outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
 
