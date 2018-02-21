@@ -198,13 +198,16 @@ var gs_moto_ui = exports;
             btn.parentNode.onclick = btn.onclick;
             ev.stopPropagation();
             // drop clicks on TextArea
-            if (ev.target === txt) return;
-            var showing = pop === lastPop;
-            hidePop();
-            if (!showing) {
-                pop.style.display = "flex";
-                lastPop = pop;
-                txt.focus();
+            if (ev.target === txt) {
+                ev.target.focus();
+            } else {
+                var showing = pop === lastPop;
+                hidePop();
+                if (!showing) {
+                    pop.style.display = "flex";
+                    lastPop = pop;
+                    txt.focus();
+                }
             }
         };
         addModeControls(btn, opt);
