@@ -13,8 +13,7 @@ input[type=range]::-moz-focus-outer {
     border-top-left-radius: 5px;
     border-bottom-right-radius: 5px;
     position: fixed;
-    top: 25px;
-    xleft: 25px;
+    top: 5px;
 }
 .dialog span {
     padding: 2px 5px 2px 5px;
@@ -194,7 +193,7 @@ input[type=range]::-moz-focus-outer {
 #sender {
     position: absolute;
     text-align: center;
-    top: 25px;
+    top: 5px;
     right: 0px;
     color: white;
     border: 1px solid white;
