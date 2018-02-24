@@ -487,7 +487,7 @@ self.kiri.license = exports.LICENSE;
         widget_deselected_color = 0xffff00,
         widget_slicing_color = 0xffaaaa,
         widget_cam_preview_color = 0x0055bb,
-        preview_opacity_cam = 1,
+        preview_opacity_cam = 0.25,
         preview_opacity = 0.0,
         model_opacity = 1.0,
         slicing_opacity = 0.5,
@@ -752,8 +752,6 @@ self.kiri.license = exports.LICENSE;
     function showSlice(index, range, layer) {
         if (range) {
             return index <= layer && index > layer-range;
-        } else if (MODE === MODES.CAM) {
-            return index >= layer;
         } else {
             return index <= layer;
         }
