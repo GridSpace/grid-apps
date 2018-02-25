@@ -77,7 +77,7 @@ function lastmod(path) {
  * @returns {*}
  */
 function getCachedFile(filePath, cachePath, fn) {
-    var cachePath = "cache/" + cachePath.replace(/\//g,'_'),
+    var cachePath = ".cache/" + cachePath.replace(/\//g,'_'),
         cached = fileCache[filePath],
         now = time();
 
@@ -996,7 +996,7 @@ lastmod("mod") && fs.readdirSync(currentDir + "/mod").forEach(dir => {
 });
 
 // create cache dir if missing
-lastmod("cache") || mkdirs(["cache"]);
+lastmod(".cache") || mkdirs([".cache"]);
 
 // precache responses
 prepareScripts();
