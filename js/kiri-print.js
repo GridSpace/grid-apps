@@ -496,6 +496,7 @@ var gs_kiri_print = exports;
             fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
+            zhop = process.zHopDistance || 0,
             antiBacklash = process.antiBacklash,
             z = slice.z;
 
@@ -639,7 +640,7 @@ var gs_kiri_print = exports;
                     addOutput(preout, p2, fillMult * (dist / thinWall), fillSpeed);
                 } else {
                     // retract if dist trigger or crosses a slice top polygon
-                    if (dist > retractDist && intersectsTop(startPoint, p1)) {
+                    if (dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
                         retract();
                     }
 

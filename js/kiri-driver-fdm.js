@@ -394,6 +394,7 @@ var gs_kiri_fdm = exports;
             pos = {x:0, y:0, z:0, f:0},
             last = null,
             zpos = 0,
+            zhop = process.zHopDistance || 0,
             offset = process.outputOriginCenter ? null : {
                 x: device.bedWidth/2,
                 y: device.bedDepth/2
@@ -480,6 +481,7 @@ var gs_kiri_fdm = exports;
         function retract() {
             retracted = retDist;
             moveTo({e:-retracted}, retSpeed, "retract " + retDist);
+            if (zhop) moveTo({z:zpos + zhop}, seekMMM, "zhop up");
             time += (retDist / retSpeed) * 60 * 2; // retraction time
         }
 
@@ -591,12 +593,14 @@ var gs_kiri_fdm = exports;
 
                 // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
+                    // when enabled, resume previous Z
+                    if (zhop) moveTo({z:zpos}, seekMMM, "zhop down");
+                    // re-engage retracted filament
                     moveTo({e:retracted}, retSpeed, "engage " + retracted);
                     retracted = 0;
+                    // optional dwell after re-engaging filament to allow pressure to build
+                    if (retDwell) dwell(retDwell);
                     time += (retDist / retSpeed) * 60 * 2; // retraction time
-                    if (retDwell) {
-                        dwell(retDwell);
-                    }
                 }
 
                 if (lastp && out.emit) {

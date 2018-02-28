@@ -88,7 +88,6 @@ self.kiri.license = exports.LICENSE;
                     outputShellMult: 1,
                     outputFillMult: 1,
                     outputSparseMult: 1,
-                    outputRetractOver: 1,
                     outputRetractDist: 1,
                     outputRetractSpeed: 1,
                     outputRetractDwell: 1,
@@ -101,6 +100,7 @@ self.kiri.license = exports.LICENSE;
                     outputCooling: 1,
                     // detectThinWalls: 1,
                     antiBacklash: 1,
+                    zHopDistance: 1,
                     gcodeKFactor: 1,
                     gcodePauseLayers: 1,
                     outputClockwise: 1,
@@ -299,7 +299,6 @@ self.kiri.license = exports.LICENSE;
                 outputShellMult: 1.1,
                 outputFillMult: 1.2,
                 outputSparseMult: 1.3,
-                outputRetractOver: 5.0,
                 outputRetractDist: 1.0,
                 outputRetractSpeed: 40,
                 outputRetractDwell: 30,
@@ -311,6 +310,7 @@ self.kiri.license = exports.LICENSE;
                 outputFinishFactor: 0,
                 detectThinWalls: false,
                 antiBacklash: 2,
+                zHopDistance: 0,
                 gcodeKFactor: 0,
                 gcodePauseLayers: "",
                 outputCooling: true,
@@ -2497,7 +2497,6 @@ self.kiri.license = exports.LICENSE;
             outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
 
             advanced: UC.newGroup("advanced", null, {modes:FDM}),
-            // outputRetractOver: UC.newInput("retract over", {title:"move threshold that\ntriggers retraction\n0 to disable", convert:UC.toFloat, modes:FDM}),
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
             outputRetractDwell: UC.newInput("engage dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
@@ -2506,6 +2505,7 @@ self.kiri.license = exports.LICENSE;
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
             antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
+            zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),
