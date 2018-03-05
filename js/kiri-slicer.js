@@ -103,10 +103,10 @@ var gs_kiri_slicer = exports;
             zMax = options.zmax || Math.ceil(bounds.max.z),
             zInc = options.height,
             zOff = true ? zInc / 2 : 0,
-            zIndexes = [],
-            zList = {},
-            zFlat = {},
-            zScale,
+            zIndexes = [],      // auto-detected z slicing offsets (laser/cam)
+            zList = {},         // list of z indices for auto slicing (laser)
+            zFlat = {},         // area of z offset flat areas (cam)
+            zScale,             // bucket span in z units
             zPos,
             timeStart = time(),
             slices = [],
