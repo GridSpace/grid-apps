@@ -1094,7 +1094,7 @@ self.kiri.license = exports.LICENSE;
                     } else if (xhtr.status === 401) {
                         $('gpapik').style.display = '';
                     } else {
-                        console.log("invalid grid-print host");
+                        console.log("invalid grid:host url");
                     }
                 }
             };
@@ -1144,7 +1144,7 @@ self.kiri.license = exports.LICENSE;
                             alert("print to "+target+": "+data.status);
                         });
                     } else {
-                        alert("grid:print error\nstatus: "+status+"\nmessage: "+xhtr.responseText);
+                        alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText);
                     }
                     setProgress(0);
                 }

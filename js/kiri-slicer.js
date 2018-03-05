@@ -115,6 +115,11 @@ var gs_kiri_slicer = exports;
             i, j = 0, k, p1, p2, p3, px,
             CPRO = KIRI.driver.CAM.process;
 
+        function countZ(z) {
+            z = UTIL.round(z,5);
+            zList[z] = (zList[z] || 0) + 1;
+        }
+
         // gather z-index stats
         // these are used for auto-slicing in laser
         // and to flats detection in CAM mode
@@ -125,20 +130,18 @@ var gs_kiri_slicer = exports;
             zSum += (Math.abs(p1.z - p2.z) + Math.abs(p2.z - p3.z) + Math.abs(p3.z - p1.z));
             // laser auto-detect z slice points
             if (zInc === 0) {
-                zList[UTIL.round(p1.z,5)] = 1;
-                zList[UTIL.round(p2.z,5)] = 1;
-                zList[UTIL.round(p3.z,5)] = 1;
+                countZ(p1.z);
+                countZ(p2.z);
+                countZ(p3.z);
             }
-            // cam auto-detect flats
-            if (options.cam) {
-                if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
-                    var zkey = p1.z < bounds.max.z ? p1.z + 0.001 : p1.z,
-                        area = Math.abs(UTIL.area2(p1,p2,p3))/2;
-                    if (!zFlat[zkey]) {
-                        zFlat[zkey] = area;
-                    } else {
-                        zFlat[zkey] += area;
-                    }
+            // auto-detect flats for cam faces and to avoid slicing directly on flats
+            if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
+                var zkey = UTIL.round(p1.z, 5),
+                    area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
+                if (!zFlat[zkey]) {
+                    zFlat[zkey] = area;
+                } else {
+                    zFlat[zkey] += area;
                 }
             }
         }
@@ -192,7 +195,7 @@ var gs_kiri_slicer = exports;
             for (key in zFlat) {
                 // todo make threshold for flat detection configurable
                 if (!zFlat.hasOwnProperty(key) || zFlat[key] < 100) continue;
-                key = parseFloat(key);
+                key = parseFloat(key) + 0.001;
                 if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(key);
             }
             // sort top down
@@ -318,6 +321,18 @@ var gs_kiri_slicer = exports;
          * @param {number} z
          */
         function sliceZ(z) {
+            z = UTIL.round(z,5);
+
+            // avoid slicing directly on flat faces as it greatly increases
+            // the chances of artifacts, broken joins and excessive path walks
+            if (zFlat[z]) {
+                if (z) {
+                    z -= 0.001;
+                } else {
+                    z += 0.001;
+                }
+            }
+
             var phash = {},
                 lines = [],
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
