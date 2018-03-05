@@ -930,8 +930,8 @@ function initModule(file, dir) {
         api: api,
         const: {
             script: script,
-            moddir: dir,
             rootdir: currentDir,
+            moddir: dir,
             args: args
         },
         util: {
@@ -947,6 +947,11 @@ function initModule(file, dir) {
         db: {
             api: db,
             level: level
+        },
+        inject: {
+            kiri: file => {
+                script.kiri.splice(0, 0, dir + "/" + file);
+            }
         },
         path: {
             any: arg => { modPaths.push(arg) },

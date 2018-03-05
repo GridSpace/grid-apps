@@ -36,6 +36,18 @@
         ";Material#1 Used: {material}",
         ";Material#2 Used: 0.0"
     ],
+    "pause":[
+        "; --- pause begin ---",
+        "G91        ; Relative Positioning",
+        "G0 Z20     ; Move Bed down 20mm",
+        "G90        ; Absolute positioning",
+        "G0 X10 Y10 ; Move to 10,10",
+        "M2000      ; Pause command",
+        "G91        ; Relative Positioning",
+        "G0 Z-20    ; Move Bed up 20mm",
+        "G90        ; Absolute positioning",
+        "; --- pause end ---"
+    ],
     "cmd":{
         "fan_power": "M106 S{fan_speed}",
         "layer": [

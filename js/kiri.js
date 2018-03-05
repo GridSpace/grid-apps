@@ -551,12 +551,15 @@ self.kiri.license = exports.LICENSE;
      ******************************************************************* */
 
     function sendOnEvent(name, data) {
-        if (name && onEvent[name]) onEvent[name](data);
+        if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
+            fn(data);
+        });
     }
 
     function addOnEvent(name, handler) {
         if (name && typeof(name) === 'string' && typeof(handler) === 'function') {
-            onEvent[name] = handler;
+            onEvent[name] = onEvent[name] || [];
+            onEvent[name].push(handler);
         }
     }
 

@@ -201,12 +201,7 @@ var gs_kiri_slicer = exports;
             });
         } else {
             // FDM is the simplest case.  Just offset and slice at
-            // predicable offsets.  First offset is half a slice height.
-            // this was once configurable, but that turned out not to be
-            // terribly useful.  In future, first layer height may be
-            // adjusted separately, but that would also require other
-            // settings changes (flow rate, etc).
-            // ... only this one special case for first layer :)
+            // predicable offsets.
             if (options.firstHeight) {
                 zIndexes.push(options.firstHeight / 2);
                 zMin = options.firstHeight;

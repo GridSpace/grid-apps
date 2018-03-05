@@ -59,9 +59,9 @@
 
 # FDM todo
 
+* adaptive layer heights
 * preview doesn't show proper z offsets
 * trim support offset from layer below
-* optional startpoint based on fill origin when seek > retract distance
 * feather sharp tips by reducing extrusion in area of overlap
 * add option to reduce poly speed to match shortest/slowest segment
   (helps when no k-factor support in firmware)
@@ -69,13 +69,11 @@
 * fix thin fill (outside). compute before sparse as separate logic.
 * fix wrong first point in general (all modes)
 * add lay-flat auto-rotation or from selected face
-* add pause at specified layers
 * add manual supports
 * determine start point from gcode preamble
 * check for support / brim intersections on first layer
 * fan / layer control * update forum
 * dual extruder support
-* add min layer time (slowdown or cool-off wait)
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
 * add gyroid infill * https://en.wikipedia.org/wiki/Gyroid
@@ -106,14 +104,11 @@
 
 # Sample FDM Pause/Unpause ```
 
-; --- pause ---
 G91        ; Relative Positioning
 G0 Z20     ; Move Bed down 20mm
 G90        ; Absolute positioning
 G0 X10 Y10 ; Move to 10,10
 M2000      ; Raise3D N2 Pause command
-
-; --- un-pause ---
 G91        ; Relative Positioning
 G0 Z-20    ; Move Bed up 20mm
 G90        ; Absolute positioning
