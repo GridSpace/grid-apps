@@ -645,7 +645,7 @@ var gs_base_polygons = exports;
                 }
                 var p1 = newPoint(null,null,zpos,null,poly.m_polygon[0]);
                 var p2 = newPoint(null,null,zpos,null,poly.m_polygon[1]);
-                var od = rayint.origin.distToLine(p1,p2) / spacing;
+                var od = rayint.origin.distToLineNew(p1,p2) / spacing;
                 lines.push([p1, p2, od]);
             });
         }

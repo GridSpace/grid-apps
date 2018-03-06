@@ -138,6 +138,11 @@ var gs_base_point = exports;
      * @returns {number}
      */
     PRO.distToLine = function(p1, p2) {
+        // return p2l(this, p1, p2);
+        return Math.sqrt(this.distToLineSq(p1, p2));
+    };
+
+    PRO.distToLineNew = function(p1, p2) {
         return p2l(this, p1, p2);
         // return Math.sqrt(this.distToLineSq(p1, p2));
     };
