@@ -340,6 +340,7 @@ var gs_kiri_fdm = exports;
                 if (layerout.length && minidx !== lastIndex) {
                     layerout.last().retract = true;
                 }
+                layerout.height = layerout.height || closest.slice.height;
                 slices[minidx] = null;
                 closest.offset.z = zoff;
                 // output seek to start point between mesh slices if previous data
@@ -354,7 +355,7 @@ var gs_kiri_fdm = exports;
             }
 
             layerout.layer = layer;
-            layerout.height = layer === 0 ? firstLayerHeight : process.sliceHeight;
+            // layerout.height = layerout.height || (layer === 0 ? firstLayerHeight : process.sliceHeight);
             if (layerout.length) output.append(layerout);
             layer++;
             update(layer / maxLayers);
