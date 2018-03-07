@@ -1070,6 +1070,8 @@ self.kiri.license = exports.LICENSE;
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     if (xhtr.status >= 200 && xhtr.status < 300) {
+                        SDB['grid-host'] = host;
+                        SDB['grid-apik'] = apik;
                         var res = JSON.parse(xhtr.responseText);
                         var sel = false;
                         var html = [];
@@ -1094,6 +1096,8 @@ self.kiri.license = exports.LICENSE;
                     } else if (xhtr.status === 401) {
                         $('gpapik').style.display = '';
                     } else {
+                        SDB.removeItem('grid-host');
+                        SDB.removeItem('grid-apik');
                         console.log("invalid grid:host url");
                     }
                 }
