@@ -232,7 +232,8 @@ var gs_kiri_slicer = exports;
                 zDivMax = Math.floor(zDelta / zInc);
 
                 if (zDivMax && zDivMax < zDivMin) {
-                    zStep = zDelta / (zDivMax + 1);
+                    if (zDelta % zInc > 0.01) zDivMax++;
+                    zStep = zDelta / zDivMax;
                 } else {
                     zStep = zDelta;
                 }
@@ -247,10 +248,12 @@ var gs_kiri_slicer = exports;
             // FDM fixed slicing
             if (options.firstHeight) {
                 zIndexes.push(options.firstHeight / 2);
+                zHeights.push(options.firstHeight);
                 zMin = options.firstHeight;
             }
             for (i = zMin + zOff; i < zMax; i += zInc) {
                 zIndexes.push(i);
+                zHeights.push(zInc);
             }
         }
 
@@ -419,7 +422,7 @@ var gs_kiri_slicer = exports;
             // allow empty slices in CAM swap mode (for topos w/ gaps)
             if (lines.length == 0 && !(options.swapX || options.swapY)) return;
 
-            slice.height = height || z;
+            slice.height = height;
             slice.index = slices.length;
             slice.lines = removeDuplicateLines(lines);
 
