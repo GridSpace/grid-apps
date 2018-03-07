@@ -142,6 +142,13 @@ var gs_base_point = exports;
         return Math.sqrt(this.distToLineSq(p1, p2));
     };
 
+    /**
+     * used exclusively in new fill code. output does not agree with
+     * old distToLine, but is the only method that seems to work for
+     * fill. using new distToLine as a global replacement breaks support
+     * offset clipping. both need to be investigated and a single line
+     * normal distance needs to be formulated to replace both functions.
+     */
     PRO.distToLineNew = function(p1, p2) {
         return p2l(this, p1, p2);
         // return Math.sqrt(this.distToLineSq(p1, p2));

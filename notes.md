@@ -61,8 +61,6 @@
 
 * trim support offset from layer below
 * feather sharp tips by reducing extrusion in area of overlap
-* add option to reduce poly speed to match shortest/slowest segment
-  (helps when no k-factor support in firmware)
 * use fill spacing for top raft fill spacing
 * fix thin fill (outside). compute before sparse as separate logic.
 * fix wrong first point in general (all modes)
