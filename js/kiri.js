@@ -2538,17 +2538,12 @@ self.kiri.license = exports.LICENSE;
             showSlices();
         }
 
-        function clearSelectedText() {
-            var sel = WIN.getSelection();
-            if (sel && sel.rangeCount) sel.collapseToStart();
-        }
-
         function keyUpHandler(evt) {
             switch (evt.keyCode) {
                 // escape
                 case 27:
-                    // clear text selection
-                    clearSelectedText();
+                    // blur text input focus
+                    DOC.activeElement.blur();
                     // dismiss modals
                     hideModal();
                     // deselect widgets
@@ -2624,7 +2619,6 @@ self.kiri.license = exports.LICENSE;
                         evt.preventDefault();
                         widgetDeselect();
                         platformSelectAll();
-                        clearSelectedText();
                     }
                     break;
                 case 83: // 's' for save workspace

@@ -165,6 +165,7 @@ if (self.window) {
         },
 
         cancel: function(data) {
+            // console.log({work_cancel: data});
             if (data.id) {
                 var widget = cache[data.id];
                 if (widget) widget.cancel = true;
