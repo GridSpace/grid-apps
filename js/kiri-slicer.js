@@ -209,6 +209,7 @@ var gs_kiri_slicer = exports;
                 return b-a;
             });
         } else if (zIncMin) {
+            // FDM adaptive slicing
             var zPos = zMin + zIncFirst,
                 zOI = 0,
                 zDelta,
@@ -218,7 +219,7 @@ var gs_kiri_slicer = exports;
                 nextZ;
 
             // first slice is fixed
-            zHeights.push(zPos);
+            zHeights.push(zIncFirst);
             zIndexes.push(zIncFirst / 2);
 
             while (zPos < zMax && zOI < zOrdered.length) {
@@ -230,21 +231,20 @@ var gs_kiri_slicer = exports;
                 zDivMin = Math.floor(zDelta / zIncMin);
                 zDivMax = Math.floor(zDelta / zInc);
 
-                if (zDivMax) {
+                if (zDivMax && zDivMax < zDivMin) {
                     zStep = zDelta / (zDivMax + 1);
                 } else {
                     zStep = zDelta;
                 }
 
                 while (zPos < nextZ) {
-                    zHeights.push(zPos + zStep);
+                    zHeights.push(zStep);
                     zIndexes.push(zPos + zStep / 2);
                     zPos += zStep;
                 }
             }
         } else {
-            // FDM is the simplest case.  Just offset and slice at
-            // predicable offsets.
+            // FDM fixed slicing
             if (options.firstHeight) {
                 zIndexes.push(options.firstHeight / 2);
                 zMin = options.firstHeight;
