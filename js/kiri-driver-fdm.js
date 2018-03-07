@@ -41,16 +41,15 @@ var gs_kiri_fdm = exports;
      */
     FDM.slice = function(settings, widget, onupdate, ondone) {
         var spro = settings.process,
-            spri = settings.device,
-            sout = settings.process,
+            sdev = settings.device,
             update_start = time(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
             doSolidLayers = solidLayers && !spro.sliceVase,
-            firstOffset = spri.nozzleSize / 2,
-            shellOffset = spri.nozzleSize * spro.sliceShellSpacing,
+            firstOffset = sdev.nozzleSize / 2,
+            shellOffset = sdev.nozzleSize * spro.sliceShellSpacing,
             fillOffset = shellOffset * settings.synth.fillOffsetMult,
-            fillSpacing = spri.nozzleSize * spro.sliceFillSpacing,
+            fillSpacing = sdev.nozzleSize * spro.sliceFillSpacing,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
@@ -66,8 +65,9 @@ var gs_kiri_fdm = exports;
 
         SLICER.sliceWidget(widget, {
             height: spro.sliceHeight,
-            view:view,
-            firstHeight: sout.firstSliceHeight
+            minHeight: spro.sliceMinHeight,
+            firstHeight: spro.firstSliceHeight,
+            view: view
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
@@ -142,7 +142,7 @@ var gs_kiri_fdm = exports;
                     slice.doSupport(spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
                 }, "support");
                 forSlices(0.7, 0.8, function(slice) {
-                    slice.doSupportFill(spri.nozzleSize, spro.sliceSupportDensity, supportMinArea);
+                    slice.doSupportFill(sdev.nozzleSize, spro.sliceSupportDensity, supportMinArea);
                 }, "support");
             }
 

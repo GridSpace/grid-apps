@@ -59,8 +59,6 @@
 
 # FDM todo
 
-* adaptive layer heights
-* preview doesn't show proper z offsets
 * trim support offset from layer below
 * feather sharp tips by reducing extrusion in area of overlap
 * add option to reduce poly speed to match shortest/slowest segment

@@ -97,6 +97,7 @@ self.kiri.license = exports.LICENSE;
                     outputShortDistance: 1,
                     outputShortFactor: 1,
                     outputFinishFactor: 1,
+                    sliceMinHeight: 1,
                     outputCooling: 1,
                     // detectThinWalls: 1,
                     antiBacklash: 1,
@@ -308,6 +309,7 @@ self.kiri.license = exports.LICENSE;
                 outputShortDistance: 0.0,
                 outputShortFactor: 0.2,
                 outputFinishFactor: 0,
+                sliceMinHeight: 0,
                 detectThinWalls: false,
                 antiBacklash: 2,
                 zHopDistance: 0,
@@ -2511,8 +2513,9 @@ self.kiri.license = exports.LICENSE;
             outputShortDistance: UC.newInput("short segment", {title:"segment length cutoff\nfor short segments\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
             outputFinishFactor: UC.newInput("finish factor", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
-            antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
+            sliceMinHeight: UC.newInput("min layer", {title: "enables adaptive slicing with\nthis as the min layer height\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
+            antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),

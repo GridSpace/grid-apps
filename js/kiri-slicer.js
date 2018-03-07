@@ -102,12 +102,15 @@ var gs_kiri_slicer = exports;
         var zMin = options.zmin || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
             zInc = options.height,
+            zIncMin = options.minHeight,
+            zIncFirst = options.firstHeight || zInc,
             zOff = true ? zInc / 2 : 0,
+            zHeights = [],      // heights for zIndexes in adaptive mode
             zIndexes = [],      // auto-detected z slicing offsets (laser/cam)
+            zOrdered = [],      // ordered list of Z vertices
             zList = {},         // list of z indices for auto slicing (laser)
             zFlat = {},         // area of z offset flat areas (cam)
             zScale,             // bucket span in z units
-            zPos,
             timeStart = time(),
             slices = [],
             zSum = 0.0,
@@ -129,7 +132,7 @@ var gs_kiri_slicer = exports;
             p3 = points[i++];
             zSum += (Math.abs(p1.z - p2.z) + Math.abs(p2.z - p3.z) + Math.abs(p3.z - p1.z));
             // laser auto-detect z slice points
-            if (zInc === 0) {
+            if (zInc === 0 || zIncMin) {
                 countZ(p1.z);
                 countZ(p2.z);
                 countZ(p3.z);
@@ -172,19 +175,22 @@ var gs_kiri_slicer = exports;
             }
         }
 
-        // create zIndexes array (0 = auto-detect)
+        // we need Z ordered list for laser auto or adaptive fdm slicing
+        if (zInc === 0 || zIncMin) {
+            for (var key in zList) {
+                if (!zList.hasOwnProperty(key)) continue;
+                zOrdered.push(parseFloat(key));
+            }
+            zOrdered.sort(function(a,b) { return a - b});
+        }
+
+        // use Z indices in auto slice mode for laser
         if (zInc === 0) {
             // find unique z-index offsets for slicing
-            var key, zl = [];
-            for (key in zList) {
-                if (!zList.hasOwnProperty(key)) continue;
-                zl.push(parseFloat(key));
-            }
-            zl.sort(function(a,b) { return a - b});
-            for (i = 0; i < zl.length-1; i++) {
+            var zl = zOrdered
+            for (i = 0; i < zl.length - 1; i++) {
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
             }
-            zIndexes.sort(function(a,b) { return a - b});
         } else if (options.cam) {
             // re-divide slice height so that top and
             // bottom slices fall exactly on those faces
@@ -202,6 +208,40 @@ var gs_kiri_slicer = exports;
             zIndexes.sort(function(a,b) {
                 return b-a;
             });
+        } else if (zIncMin) {
+            var zPos = zMin + zIncFirst,
+                zOI = 0,
+                zDelta,
+                zDivMin,
+                zDivMax,
+                zStep,
+                nextZ;
+
+            // first slice is fixed
+            zHeights.push(zPos);
+            zIndexes.push(zIncFirst / 2);
+
+            while (zPos < zMax && zOI < zOrdered.length) {
+                nextZ = zOrdered[zOI++];
+                if (zPos >= nextZ) continue;
+                zDelta = nextZ - zPos;
+                if (zDelta < zIncMin) continue;
+
+                zDivMin = Math.floor(zDelta / zIncMin);
+                zDivMax = Math.floor(zDelta / zInc);
+
+                if (zDivMax) {
+                    zStep = zDelta / (zDivMax + 1);
+                } else {
+                    zStep = zDelta;
+                }
+
+                while (zPos < nextZ) {
+                    zHeights.push(zPos + zStep);
+                    zIndexes.push(zPos + zStep / 2);
+                    zPos += zStep;
+                }
+            }
         } else {
             // FDM is the simplest case.  Just offset and slice at
             // predicable offsets.
@@ -216,8 +256,8 @@ var gs_kiri_slicer = exports;
 
         // create a Slice for each z offset in the zIndexes array
         for (var i = 0; i < zIndexes.length; i++) {
-            zPos = zIndexes[i];
-            sliceZ(zPos);
+            // mark the slice height
+            sliceZ(zIndexes[i], zHeights[i]);
             // kill slicing if onupdate() returns 42
             if (onupdate(i / zIndexes.length) === 42) {
                 return ondone(null);
@@ -319,8 +359,9 @@ var gs_kiri_slicer = exports;
          * add to slices array
          *
          * @param {number} z
+         * @param {number} [height] optional real height (fdm)
          */
-        function sliceZ(z) {
+        function sliceZ(z, height) {
             z = UTIL.round(z,5);
 
             // avoid slicing directly on flat faces as it greatly increases
@@ -378,6 +419,7 @@ var gs_kiri_slicer = exports;
             // allow empty slices in CAM swap mode (for topos w/ gaps)
             if (lines.length == 0 && !(options.swapX || options.swapY)) return;
 
+            slice.height = height || z;
             slice.index = slices.length;
             slice.lines = removeDuplicateLines(lines);
 
