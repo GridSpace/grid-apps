@@ -1,30 +1,39 @@
 # Kiri:Moto todo
 
-* per-device settings: grid-print target
-* prevent text selection of non-input
+* fix slicing cancellation
 * widget general add-ons (fdm supports, cam tabs)
+* extend mesh object to store raw + annotations (rot,scale,pos), share raw data w/ dups, encode/decode
 * bail on decimation if it's proving ineffective
 * improve decimation speed by avoiding in/out of Point
-* dismissable transient message/alert
+* dismissible transient message/alert
 * modal non-alert-based dialog & spinner
-* ability to cancel slice operations (complicated w/ workers)
 * server-side processing (determine protocol and storage)
 * move more kiri code (like printing) into modules like serial
-* include device + settings in exported gcode as comments
-* frame api * https://plus.google.com/u/0/+JakobFlierl/posts/hn6eirr6fXC
 * refactor / simplify POLY.expand (put onus on collector)
 * add simple solid (tube-like) rendering in place of lines
-* extend mesh object to store raw + annotations (rot,scale,pos), share raw data w/ dups, encode/decode
-* cloned objects share same slices data unless rotated
+* cloned objects should share same slice data unless rotated
 * remember object's original position/orientation for reset/multi-object import alignment
-* gcode import break up "layers" on z move with no x/y move
 
-# Onshape todo
+# FDM todo
 
-* popup warning when detect 3rd party storage blocked (chrome)
-* watch for changed part version to prompt re-import
-* re-used cached version of parts if unchanged
-* remap mouse/kbd to match onshape when iframed
+* use fill spacing for top raft fill spacing
+* add lay-flat auto-rotation or from selected face
+* refactor thin fill to use outline and inside poly normal dist to self
+* check for support / brim intersections on first layer
+* determine start point from gcode preamble
+* fix wrong first point in general (all modes)
+* trim support offset from layer below
+* feather sharp tips by reducing extrusion in area of overlap
+* dual extruder support
+* add manual supports
+* fan / layer control * update forum
+* option to support interior bridges when 0% infill
+* fix multiple part layout export offset (resend position @ print time)
+
+# Laser todo
+
+* overcuts, radii for drag knives
+* sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
 # CAM todo
 
@@ -56,29 +65,6 @@
 * linear x/y scan overflow (y) w/ topo model
 * linear x/y not obeying inset from pocket only
 * check normals for downward facing facets. mark top for slice skirt/pancake
-
-# FDM todo
-
-* trim support offset from layer below
-* feather sharp tips by reducing extrusion in area of overlap
-* use fill spacing for top raft fill spacing
-* fix thin fill (outside). compute before sparse as separate logic.
-* fix wrong first point in general (all modes)
-* add lay-flat auto-rotation or from selected face
-* add manual supports
-* determine start point from gcode preamble
-* check for support / brim intersections on first layer
-* fan / layer control * update forum
-* dual extruder support
-* option to support interior bridges when 0% infill
-* fix multiple part layout export offset (resend position @ print time)
-* add gyroid infill * https://en.wikipedia.org/wiki/Gyroid
-
-# Laser todo
-
-* interior poly offsets are in the wrong direction?
-* overcuts, radii for drag knives
-* sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
 # References
 
