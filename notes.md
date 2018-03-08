@@ -1,6 +1,5 @@
 # Kiri:Moto todo
 
-* fix slicing cancellation
 * widget general add-ons (fdm supports, cam tabs)
 * extend mesh object to store raw + annotations (rot,scale,pos), share raw data w/ dups, encode/decode
 * bail on decimation if it's proving ineffective
@@ -29,11 +28,6 @@
 * fan / layer control * update forum
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
-
-# Laser todo
-
-* overcuts, radii for drag knives
-* sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
 # CAM todo
 
@@ -66,20 +60,16 @@
 * linear x/y not obeying inset from pocket only
 * check normals for downward facing facets. mark top for slice skirt/pancake
 
-# References
+# Laser todo
 
-* shader examples to enable object-clipping
-  -----
-* http://jsfiddle.net/LK84y/9/
-* http://www.html5rocks.com/en/tutorials/webgl/shaders/
+* overcuts, radii for drag knives
+* sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
+
+# References
 
 * other
   -----
 * http://lcamtuf.coredump.cx/gcnc/full/
-* http://www.tcs.fudan.edu.cn/rudolf/Courses/Algorithms/Alg_cs_07w/Webprojects/Zhaobo_hull/
-* https://en.wikipedia.org/wiki/Graham_scan
-* http://www.cambam.info/doc/0.9.7/cam/Pocket.aspx
-* http://hackaday.com/2016/01/22/pack-your-plywood-cuts-with-genetic-algortihms/
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
 

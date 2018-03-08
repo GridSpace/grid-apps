@@ -257,9 +257,10 @@ var gs_kiri_slicer = exports;
             }
         }
 
+/* -- synchronous slice -- can't be cancelled --
         // create a Slice for each z offset in the zIndexes array
         for (var i = 0; i < zIndexes.length; i++) {
-            // mark the slice height
+            // slice next layer and add to slices[] array
             sliceZ(zIndexes[i], zHeights[i]);
             // kill slicing if onupdate() returns 42
             if (onupdate(i / zIndexes.length) === 42) {
@@ -283,6 +284,39 @@ var gs_kiri_slicer = exports;
 
         // pass Slices array back to ondone function
         ondone(slices);
+*/
+
+        var sliceIndex = 0;
+
+        function kickSlice() {
+            sliceZ(zIndexes[sliceIndex], zHeights[sliceIndex]);
+            // kill slicing if onupdate() returns 42
+            if (onupdate(sliceIndex / zIndexes.length) === 42) {
+                return ondone(null);
+            }
+            if (++sliceIndex < zIndexes.length) {
+                setTimeout(kickSlice, 0);
+            } else {
+                // for cam, mark top and bottom as mandatory (hasFlats)
+                if (options.cam && slices.length > 0) {
+                    slices[0].hasFlats = true;
+                    slices[slices.length-1].hasFlats = true;
+                }
+
+                // connect slices into linked list for island/bridge projections
+                for (i=1; i<slices.length; i++) {
+                    slices[i-1].up = slices[i];
+                    slices[i].down = slices[i-1];
+                }
+
+                slices.slice_time = time() - timeStart;
+
+                // pass Slices array back to ondone function
+                ondone(slices);
+            }
+        }
+
+        kickSlice();
 
         /** ***** SLICING FUNCTIONS ***** */
 

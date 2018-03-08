@@ -577,7 +577,12 @@ var gs_kiri_widget = exports;
 
             var catchupdate = function(progress, message) {
                 onupdate(progress, message);
-                return widget.cancel ? 42 : 0;
+                if (widget.cancel) {
+                    ondone("canceled");
+                    return 42;
+                } else {
+                    return 0;
+                }
             };
 
             var driver = null;

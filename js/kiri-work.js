@@ -165,13 +165,14 @@ if (self.window) {
         },
 
         cancel: function(data) {
-            // console.log({work_cancel: data});
             if (data.id) {
                 var widget = cache[data.id];
                 if (widget) widget.cancel = true;
             } else {
                 for (var id in cache) {
-                    if (cache.hasOwnProperty(id)) cache[id].cancel = true;
+                    if (cache.hasOwnProperty(id)) {
+                        cache[id].cancel = true;
+                    }
                 }
             }
         },
@@ -188,8 +189,8 @@ if (self.window) {
                 last = util.time(),
                 now;
 
-            // clear previous widget data before reslice
-            delete cache[data.id];
+            // do it here so cancel can work
+            cache[data.id] = widget;
 
             // fake mesh object to satisfy printing
             widget.mesh = {
@@ -199,6 +200,7 @@ if (self.window) {
 
             widget.slice(settings, function(error) {
                 if (error) {
+                    delete cache[data.id];
                     send.data({error: error});
                 } else {
                     var slices = widget.slices || [];
@@ -215,7 +217,7 @@ if (self.window) {
                 }
                 send.done({done: true});
                 // cache results for future printing
-                cache[data.id] = widget;
+                // cache[data.id] = widget;
             }, function(update, msg) {
                 now = util.time();
                 if (now - last < 10 && update < 0.99) return;

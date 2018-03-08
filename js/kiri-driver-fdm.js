@@ -71,7 +71,7 @@ var gs_kiri_fdm = exports;
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
-            onupdate(0.0 + update * 0.5);
+            return onupdate(0.0 + update * 0.5);
         }
 
         function onSliceDone(slices) {
