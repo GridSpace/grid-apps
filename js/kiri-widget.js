@@ -87,8 +87,6 @@ var gs_kiri_widget = exports;
             progress: 0
         };
         this.saved = false;
-        // cancel slice/print ops
-        this.cancel = false;
     }
 
     /** ******************************************************************
@@ -530,7 +528,6 @@ var gs_kiri_widget = exports;
             startTime = UTIL.time();
 
         widget.settings = settings;
-        widget.cancel = false;
 
         onupdate(0.0001, "slicing");
 
@@ -548,10 +545,9 @@ var gs_kiri_widget = exports;
                 if (reply.slices) { widget.clearSlices(); widget.slices = [] };
                 if (reply.slice) widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
                 if (reply.error) {
-                    widget.cancel = true;
                     ondone(false, reply.error);
                 }
-                if (reply.done && !widget.cancel) {
+                if (reply.done) {
                     widget.modified = false;
                     ondone(true);
                 }
@@ -577,12 +573,6 @@ var gs_kiri_widget = exports;
 
             var catchupdate = function(progress, message) {
                 onupdate(progress, message);
-                if (widget.cancel) {
-                    ondone("canceled");
-                    return 42;
-                } else {
-                    return 0;
-                }
             };
 
             var driver = null;

@@ -2551,7 +2551,7 @@ self.kiri.license = exports.LICENSE;
                     // hide all dialogs
                     hideDialog();
                     // cancel slicing
-                    KIRI.work.cancel();
+                    KIRI.work.restart();
                     break;
             }
             return false;

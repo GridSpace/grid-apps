@@ -16,27 +16,14 @@ if (self.window) {
         BASE = self.base,
         seqid = 1,
         running = {},
-        worker = new Worker(pre + "/code/worker.js/" + exports.VERSION);
+        slicing = {},
+        worker = null;
 
     // new moto.Ajax(function(body) {
     //     console.log({body:body});
     //     var blob = new Blob([body], {type : 'application/json'});
     //     worker = new Worker(URL.createObjectURL(blob));
     // }).request(pre + "/code/worker.js/");
-
-    worker.onmessage = function(e) {
-        var now = time(),
-            reply = e.data,
-            record = running[reply.seq],
-            onreply = record.fn;
-
-        if (reply.done) delete running[reply.seq];
-
-        // calculate and replace recv time
-        reply.time_recv = now - reply.time_recv;
-
-        onreply(reply.data, reply);
-    };
 
     function send(fn, data, onreply, async, zerocopy) {
         var seq = seqid++;
@@ -52,6 +39,32 @@ if (self.window) {
     }
 
     KIRI.work = {
+        restart : function() {
+            if (worker) worker.terminate();
+
+            for (var key in slicing) {
+                slicing[key]({error: "cancelled"});
+            }
+            slicing = {};
+            running = {};
+
+            worker = new Worker(pre + "/code/worker.js/" + exports.VERSION);
+
+            worker.onmessage = function(e) {
+                var now = time(),
+                    reply = e.data,
+                    record = running[reply.seq],
+                    onreply = record.fn;
+
+                if (reply.done) delete running[reply.seq];
+
+                // calculate and replace recv time
+                reply.time_recv = now - reply.time_recv;
+
+                onreply(reply.data, reply);
+            };
+        },
+
         decimate : function(vertices, callback) {
             var vertices = vertices.buffer.slice(0);
             send("decimate", vertices, function(output) {
@@ -65,18 +78,16 @@ if (self.window) {
             });
         },
 
-        cancel : function(widget) {
-            send("cancel", widget ? {id:widget.id} : {});
-        },
-
         slice : function(settings, widget, callback) {
             var vertices = widget.getGeoVertices().buffer.slice(0);
+            slicing[widget.id] = callback;
             send("slice", {
                 id: widget.id,
                 settings: settings,
                 vertices: vertices,
                 position: widget.mesh.position
             }, function(reply) {
+                if (reply.done || reply.error) delete slicing[widget.id];
                 callback(reply);
             }, null, [vertices]);
         },
@@ -114,6 +125,9 @@ if (self.window) {
             });
         }
     };
+
+    // start first worker
+    KIRI.work.restart();
 
 } else {
 
@@ -162,19 +176,6 @@ if (self.window) {
             vertices = new Float32Array(vertices),
             vertices = Widget.pointsToVertices(Widget.verticesToPoints(vertices, true));
             send.done(vertices);
-        },
-
-        cancel: function(data) {
-            if (data.id) {
-                var widget = cache[data.id];
-                if (widget) widget.cancel = true;
-            } else {
-                for (var id in cache) {
-                    if (cache.hasOwnProperty(id)) {
-                        cache[id].cancel = true;
-                    }
-                }
-            }
         },
 
         slice: function(data, send) {
