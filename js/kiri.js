@@ -541,6 +541,7 @@ self.kiri.license = exports.LICENSE;
         clearWorker : KIRI.work.clear,
         getSettings : getSettings,
         putSettings : putSettings,
+        ghostDetect : function() { return false },
         hideImport : function() { UI.import.style.display = 'none' },
         mouse : {
             moved : function() { return mouseMoved },
@@ -1009,7 +1010,7 @@ self.kiri.license = exports.LICENSE;
                 {type:"application/octet-stream"});
         }
 
-        function octoprint() {
+        function sendto_octoprint() {
             if (!(octo_host && octo_apik)) return;
 
             var form = new FormData(),
@@ -1050,15 +1051,15 @@ self.kiri.license = exports.LICENSE;
             ajax.send(form);
         }
 
-        function gridprint_tracker(host,key) {
+        function gridhost_tracker(host,key) {
             ajax(host+"/api/check?key="+key, function(data) {
                 data = js2o(data);
                 DBUG.log(data);
-                if (!data.done && !data.error) setTimeout(function() { gridprint_tracker(host,key) }, 1000);
+                if (!data.done && !data.error) setTimeout(function() { gridhost_tracker(host,key) }, 1000);
             });
         }
 
-        function gridprint_probe(ev) {
+        function gridhost_probe(ev) {
             if (ev && ev.code !== 'Enter') return;
             if (!(grid_host && grid_apik)) return;
 
@@ -1068,6 +1069,8 @@ self.kiri.license = exports.LICENSE;
                 target = grid_target.value;
 
             if (!apik) $('gpapik').style.display = 'none';
+
+            if (!host && KIRI.api.ghostDetect(gridhost_probe)) return;
 
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
@@ -1109,7 +1112,7 @@ self.kiri.license = exports.LICENSE;
             xhtr.send();
         }
 
-        function gridprint() {
+        function sendto_gridhost() {
             if (!(grid_host && grid_apik)) return;
 
             var xhtr = new XMLHttpRequest(),
@@ -1143,7 +1146,7 @@ self.kiri.license = exports.LICENSE;
                     STATS.add('gp-'+status);
                     if (status >= 200 && status < 300) {
                         var json = js2o(xhtr.responseText);
-                        gridprint_tracker(host,json.key);
+                        gridhost_tracker(host,json.key);
                         ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
                             DBUG.log(data);
@@ -1205,8 +1208,8 @@ self.kiri.license = exports.LICENSE;
             UI.print.innerHTML = html;
             $('print-close').onclick = hideModal;
             $('print-download').onclick = download;
-            $('print-octoprint').onclick = octoprint;
-            $('print-gridprint').onclick = gridprint;
+            $('print-octoprint').onclick = sendto_octoprint;
+            $('print-gridhost').onclick = sendto_gridhost;
             $('print-serial').onclick = showSerial;
             $('print-serial').style.display = MODE === MODES.CAM ? '' : 'none';
             $('print-filament-row').style.display = MODE === MODES.FDM ? '' : 'none';
@@ -1214,8 +1217,8 @@ self.kiri.license = exports.LICENSE;
             $('print-filename').value = filename;
             $('print-filesize').value = currentPrint.bytes;
             $('print-filament').value = Math.round(currentPrint.distance);
-            $('grid-host').onkeyup = gridprint_probe;
-            $('grid-apik').onkeyup = gridprint_probe;
+            $('grid-host').onkeyup = gridhost_probe;
+            $('grid-apik').onkeyup = gridhost_probe;
             calcTime();
             calcWeight();
             octo_host = $('octo-host');
@@ -1224,7 +1227,7 @@ self.kiri.license = exports.LICENSE;
                 $('ophost').style.display = 'none';
                 $('opapik').style.display = 'none';
                 $('ophint').style.display = 'none';
-                $('send-to-gridprint').style.display = 'none';
+                $('send-to-gridhost').style.display = 'none';
             }
             octo_host.value = SDB['octo-host'] || '';
             octo_apik.value = SDB['octo-apik'] || '';
@@ -1236,7 +1239,7 @@ self.kiri.license = exports.LICENSE;
             };
             grid_host.value = SDB['grid-host'] || '';
             grid_apik.value = SDB['grid-apik'] || '';
-            gridprint_probe();
+            gridhost_probe();
             showModal('print');
         });
     }

@@ -43,7 +43,7 @@ if (self.window) {
             if (worker) worker.terminate();
 
             for (var key in slicing) {
-                slicing[key]({error: "cancelled"});
+                slicing[key]({error: "cancelled slicing"});
             }
             slicing = {};
             running = {};
