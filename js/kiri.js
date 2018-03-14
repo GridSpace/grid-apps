@@ -1059,9 +1059,11 @@ self.kiri.license = exports.LICENSE;
             });
         }
 
-        function gridhost_probe(ev) {
+        function gridhost_probe(ev, host) {
             if (ev && ev.code !== 'Enter') return;
             if (!(grid_host && grid_apik)) return;
+
+            if (host) grid_host.value = host;
 
             var xhtr = new XMLHttpRequest(),
                 host = grid_host.value,
