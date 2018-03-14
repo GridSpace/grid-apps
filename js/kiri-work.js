@@ -39,6 +39,12 @@ if (self.window) {
     }
 
     KIRI.work = {
+        isSlicing : function() {
+            var current = 0;
+            for (var key in slicing) { current++ }
+            return current > 0;
+        },
+
         restart : function() {
             if (worker) worker.terminate();
 
