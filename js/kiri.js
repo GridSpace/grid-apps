@@ -2581,7 +2581,8 @@ self.kiri.license = exports.LICENSE;
             var move = evt.altKey ? 5 : 0,
                 deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
             switch (evt.keyCode) {
-                case 8: // delete
+                case 8: // apple: delete/backspace
+                case 46: // others: delete
                     if (inputHasFocus()) return false;
                     if (selectedMeshes.length > 0) {
                         platformDelete(selectedMeshes);
