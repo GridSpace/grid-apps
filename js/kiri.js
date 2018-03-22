@@ -1301,6 +1301,7 @@ self.kiri.license = exports.LICENSE;
         forWidgets(function(widget) {
             var segtimes = {},
                 segNumber = 0,
+                errored = false,
                 startTime,
                 lastMsg;
 
@@ -1330,7 +1331,7 @@ self.kiri.license = exports.LICENSE;
                     firstMesh = false;
                 }
                 // on the last exit, update ui and call the callback
-                if (--countdown === 0 || error) {
+                if (--countdown === 0 || error || errored) {
                     setProgress(0);
                     showSlices(preserveLayer);
                     setOpacity(settings.mode === 'CAM' ? sliced_opacity_cam : sliced_opacity);
@@ -1339,7 +1340,8 @@ self.kiri.license = exports.LICENSE;
                 // update slider window
                 onControlResize();
                 // handle slicing errors
-                if (error) {
+                if (error && !errored) {
+                    errored = true;
                     setViewMode(VIEWS.ARRANGE);
                     setOpacity(model_opacity);
                     widgetDeselect();

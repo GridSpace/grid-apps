@@ -543,6 +543,8 @@ var gs_kiri_fdm = exports;
                 device.filamentSize,
                 path.layer === 0 ? process.firstSliceHeight : path.height);
 
+            consts.z = zpos.toFixed(2);
+            consts.Z = consts.z;
             consts.layer = layer;
             consts.height = path.height.toFixed(3);
 
@@ -557,7 +559,7 @@ var gs_kiri_fdm = exports;
                     append(constReplace(line, consts));
                 });
             } else {
-                append("; --- layer " + layer + " (" + consts.height + " @ " + zpos.toFixed(3) + ") ---");
+                append("; --- layer " + layer + " (" + consts.height + " @ " + consts.z + ") ---");
             }
 
             // second layer fan on
