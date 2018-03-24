@@ -33,7 +33,7 @@
     ],
     "cmd":{
         "fan_power": "M106 S{fan_speed}",
-        "progress": "M117 {progress}% layer {layer}"
+        "progress": "M117 {progress}% layer {layer} / {layers}"
     },
     "settings":{
         "origin_center": false,

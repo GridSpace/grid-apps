@@ -259,8 +259,10 @@ var gs_kiri_serial = exports;
             var data = msg.data.trim();
             if (data.charAt(0) === '{') {
                 data = js2o(data);
-                // if (data.Cmd) console.log(data);
-                if (data.Cmd && data.Cmd === 'Queued' && data.Data) queueAck(data.Data);
+                if (data.Cmd) console.log(data);
+                if (data.Cmd && data.Cmd === 'Queued' && data.Data) {
+                    queueAck(data.Data);
+                }
                 if (data.QCnt >= 0) {
                     spjsQueueCount = data.QCnt;
                     gcRemoteQueue.value = spjsQueueCount;
@@ -390,6 +392,8 @@ var gs_kiri_serial = exports;
                 }
             }
             drainQueue();
+        } else {
+            console.log("no gcode to send");
         }
     }
 
@@ -529,7 +533,6 @@ var gs_kiri_serial = exports;
 
         while (count++ < sendBatchMax && localQueue.length > 0) {
             next = (nextID++).toString();
-            waitingForAck.push(next);
             line = localQueue.shift();
             if (line.indexOf("M6") === 0) {
                 toolChange = true;
@@ -537,6 +540,7 @@ var gs_kiri_serial = exports;
                 // just stop sending until unpaused
                 if (selectedMode === 'grbl') break;
             }
+            waitingForAck.push(next);
             data.push({D:line, Id:next});
             // for tinyg pause after M6 sent
             if (toolChange) break;

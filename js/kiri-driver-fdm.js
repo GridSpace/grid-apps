@@ -410,8 +410,9 @@ var gs_kiri_fdm = exports;
                 left: offset ? 0 : -device.bedWidth/2,
                 right: offset ? device.bedWidth : device.bedWidth/2,
                 bottom: offset ? 0 : -device.bedDepth/2,
+                kfactor: process.gcodeKFactor || 0,
                 z_max: device.maxHeight,
-                kfactor: process.gcodeKFactor || 0
+                layers: layers.length
             },
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist,
