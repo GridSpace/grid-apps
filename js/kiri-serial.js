@@ -259,7 +259,7 @@ var gs_kiri_serial = exports;
             var data = msg.data.trim();
             if (data.charAt(0) === '{') {
                 data = js2o(data);
-                if (data.Cmd) console.log(data);
+                // if (data.Cmd) console.log(data);
                 if (data.Cmd && data.Cmd === 'Queued' && data.Data) {
                     queueAck(data.Data);
                 }
