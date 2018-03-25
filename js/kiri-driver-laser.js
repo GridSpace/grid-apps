@@ -138,8 +138,8 @@ var gs_kiri_laser = exports;
 
         for (i = 0; i < c.length; i++) {
             m = c[i];
-            m.fit.x += m.w / 2 + p.pad;
-            m.fit.y += m.h / 2 + p.pad;
+            m.fit.x += m.w + p.pad;
+            m.fit.y += m.h + p.pad;
             m.forEach(function(o, i) {
                 // because first point emitted twice (begin/end)
                 e = o.point;

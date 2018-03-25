@@ -406,7 +406,7 @@ var gs_kiri_print = exports;
     }
 
     /**
-     * FDM only. add points in polygon to an output array (print path)
+     * FDM & Laser. add points in polygon to an output array (print path)
      *
      * @param {Polygon} poly
      * @param {Point} startPoint

@@ -1455,7 +1455,7 @@ self.kiri.license = exports.LICENSE;
         widgetSelect(widget, shift);
         platformComputeMaxZ();
         if (nolayout) return;
-        if (layoutOnAdd) layoutPlatform(0);
+        if (layoutOnAdd) layoutPlatform();
     }
 
     function platformDelete(widget) {
@@ -1525,9 +1525,19 @@ self.kiri.license = exports.LICENSE;
 
     function layoutPlatform(event, space) {
         var layout = (viewMode === VIEWS.ARRANGE),
+            proc = settings.process,
             modified = false,
-            gap = space || (1 + (settings.process.sliceSupportExtra || 0)),
             topZ = MODE === MODES.CAM ? camTopZ : 0;
+
+        switch (MODE) {
+            case MODES.CAM:
+            case MODES.LASER:
+                space = space || proc.outputTileSpacing || 1;
+                break;
+            case MODES.FDM:
+                space = space || (proc.sliceSupportExtra || 0) + 1;
+                break;
+        }
 
         setViewMode(VIEWS.ARRANGE);
         hideSlices();
@@ -1535,13 +1545,16 @@ self.kiri.license = exports.LICENSE;
         // do not layout when switching back from slice view
         if (!space && !layout) return SPACE.update();
 
+        // check if any widget has been modified
         forWidgets(function(w) {
             modified |= w.isModified();
         });
 
+        var gap = space;
+
         // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
         if (MODE === MODES.CAM && WIDGETS.length > 1) {
-            var spacing = space || 1, proc = settings.process, CAM = KIRI.driver.CAM;
+            var spacing = space || 1, CAM = KIRI.driver.CAM;
             if (proc.roughingOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.roughingTool));
             if (proc.finishingOn || proc.finishingXOn || proc.finishingYOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.finishingTool));
             gap = spacing * 1.5;
@@ -1553,11 +1566,13 @@ self.kiri.license = exports.LICENSE;
             mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
             c = meshArray().sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
             p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
+
         while (!p.packed) {
             ms[0] += mi[0];
             ms[1] += mi[1];
             p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
         }
+
         for (i = 0; i < c.length; i++) {
             m = c[i];
             m.fit.x += m.w / 2 + p.pad;
@@ -2152,7 +2167,7 @@ self.kiri.license = exports.LICENSE;
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) camStock.material.visible = settings.mode === 'CAM';
         restoreWorkspace(null,true);
-        if (MODE !== MODES.FDM) layoutPlatform(0, 1);
+        if (MODE !== MODES.FDM) layoutPlatform();
         if (then) then();
         triggerSettingsEvent();
     }
