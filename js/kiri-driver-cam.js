@@ -1381,8 +1381,9 @@ var gs_kiri_cam = exports;
             device = settings.device,
             gcodes = settings.device || {},
             space = gcodes.gcodeSpace,
-            stripComments = gcodes.gcodeStrip,
+            stripComments = gcodes.gcodeStrip || false,
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
+            cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
             widget = print.widgets[0],
             bounds = widget.getCamBounds(settings),
@@ -1566,7 +1567,12 @@ var gs_kiri_cam = exports;
             }
             if (layerout.spindle && layerout.spindle !== spindle) {
                 spindle = layerout.spindle;
-                append((spindle > 0 ? "M3" : "M4") + " S" + Math.abs(spindle));
+                if (spindle > 0) {
+                    filterEmit(cmdSpindle, {speed: Math.abs(spindle)});
+                } else {
+                    append("M4");
+                }
+                // append((spindle > 0 ? "M3" : "M4") + " S" + Math.abs(spindle));
             }
             layerout.forEach(function(out) {
                 moveTo(out);

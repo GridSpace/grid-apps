@@ -121,6 +121,7 @@ self.kiri.license = exports.LICENSE;
                     gcodePost: 1,
                     gcodeDwell: 1,
                     gcodeChange: 1,
+                    gcodeSpindle: 1,
                     gcodeFExt: 1,
                     gcodeSpace: 1,
                     gcodeStrip: 1
@@ -249,8 +250,9 @@ self.kiri.license = exports.LICENSE;
                 gcodeFan: "",       // FDM fan command
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: "",     // FDM layer output
-                gcodeDwell: [],     // CAM dwell script
-                gcodeChange: [],    // CAM tool change script
+                gcodeDwell: ["G4 P{time}"],     // CAM dwell script
+                gcodeChange: ["M6 T{tool}"],    // CAM tool change script
+                gcodeSpindle: ["M3 S{speed}"],  // CAM spindle speed
                 gcodeFExt: "",      // CAM file extension
                 gcodeSpace: "",     // CAM token spacing
                 gcodeStrip: true    // CAM strip comments
@@ -2264,6 +2266,7 @@ self.kiri.license = exports.LICENSE;
             setDeviceFExt: UC.newInput("file ext", {title:"file name exension", modes:CAM, size:5}),
             setDeviceDwell: UC.newText("dwell", {title:"gcode dwell script", modes:CAM, size:14, height:2}),
             setDeviceChange: UC.newText("tool change", {title:"tool change script", modes:CAM, size:14, height:2}),
+            setDeviceSpindle: UC.newText("spindle speed", {title:"set spindle speed", modes:CAM, size:14, height:2}),
             setDevicePause: UC.newText("pause", {title:"gcode pause script", modes:FDM, size:14, height:3}),
             setDevicePre: UC.newText("header", {title:"gcode header script", modes:FDM_CAM, size:14, height:3}),
             setDevicePost: UC.newText("footer", {title:"gcode footer script", modes:FDM_CAM, size:14, height:3}),
@@ -2956,6 +2959,7 @@ self.kiri.license = exports.LICENSE;
                     cmd: {
                         fan_power: UI.setDeviceFan.value,
                         progress: UI.setDeviceTrack.value,
+                        spindle: UI.setDeviceSpindle.value.split('\n'),
                         layer: UI.setDeviceLayer.value.split('\n')
                     },
                     pre: UI.setDevicePre.value.split('\n'),
@@ -3002,6 +3006,7 @@ self.kiri.license = exports.LICENSE;
                     gcodeProc: valueOf(code.proc, ''),
                     gcodePause: valueOf(code.pause, []),
                     gcodeDwell: valueOf(code.dwell, []),
+                    gcodeSpindle: valueOf(cmd.spindle, []),
                     gcodeChange: valueOf(code['tool-change'], []),
                     gcodeFExt: valueOf(code['file-ext'], 'gcode'),
                     gcodeSpace: valueOf(code['token-space'], ''),
@@ -3032,6 +3037,7 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceNozzle.value = dev.nozzleSize;
                 // CAM
                 UI.setDeviceMaxSpindle.value = dev.spindleMax;
+                UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
                 UI.setDeviceDwell.value = dev.gcodeDwell.join('\n');
                 UI.setDeviceChange.value = dev.gcodeChange.join('\n');
                 UI.setDeviceFExt.value = dev.gcodeFExt;
@@ -3055,6 +3061,8 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceLayer,
                  UI.setDeviceFilament,
                  UI.setDeviceNozzle,
+                 UI.setDeviceMaxSpindle,
+                 UI.setDeviceSpindle,
                  UI.setDeviceDwell,
                  UI.setDeviceChange,
                  UI.setDeviceFExt,
