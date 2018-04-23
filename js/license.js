@@ -1,6 +1,6 @@
 var exports = {
-    COPYRIGHT:"Copyright (C) 2014-2017 Stewart Allen <stewart@neuron.com> - All Rights Reserved",
-    LICENSE:"Unauthorized copying, modification and re-distribution are strictly prohibited without prior written consent.",
+    COPYRIGHT:"Copyright (C) 2014-2018 Stewart Allen <sa@grid.space> - All Rights Reserved",
+    LICENSE:"See the license.md file included with the source distribution",
     VERSION:"1.2.2"
 };
 if (!module) var module = {};

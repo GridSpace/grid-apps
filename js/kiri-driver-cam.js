@@ -828,7 +828,7 @@ var gs_kiri_cam = exports;
                 slices.forEach(function(slice) {
                     var inner = slice.gatherTopPolyInners([]);
                     inner.forEach(function(poly) {
-                        if (poly.circularity() >= 0.995 && Math.abs(poly.area() - area) <= areaDelta) {
+                        if (poly.circularity() >= 0.99 && Math.abs(poly.area() - area) <= areaDelta) {
                             var center = poly.circleCenter(),
                                 merged = false,
                                 closest = Infinity,
