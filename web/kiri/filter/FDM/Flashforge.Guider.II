@@ -1,0 +1,33 @@
+{
+    "pre":[
+        "M118 X15.00 Y15.00 Z10.00 T0",
+        "M104 S{temp} T0",
+        "M140 S{bed_temp}",
+        "M107",
+        "G90",
+        "M132 X Y Z A B",
+        "M907 X100 Y100 Z40 A80 B20",
+        "M190 S{bed_temp}",
+        "M109 S{temp} T0",
+        "; pre-extrude",
+        "G1 X-140 Y-115 Z0.35 F400",
+        "G1 Y50 E120 F1800"
+    ],
+    "post":[
+        "M107",
+        "M104 S0 T0",
+        "M140 S0",
+        "G162 Z",
+        "M18"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": true,
+        "extrude_abs": true,
+        "bed_width": 280,
+        "bed_depth": 250,
+        "build_height": 300
+    }
+}
