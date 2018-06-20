@@ -567,7 +567,7 @@ var gs_kiri_print = exports;
             });
         }
 
-        function outputFills(lines, bounds) {
+        function outputFills(lines, bounds, fast) {
             var p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
                 start = 0,
@@ -617,7 +617,7 @@ var gs_kiri_print = exports;
                 len = p1.distTo2D(p2);
 
                 // go back to start when dist > retractDist
-                if (!skip && dist > retractDist) {
+                if (!fast && !skip && dist > retractDist) {
                     skip = true;
                     start = 0;
                     lastIndex = -1;
@@ -716,7 +716,7 @@ var gs_kiri_print = exports;
                 outputTraces([next].appendAll(next.inner || []));
                 if (next.fills) {
                     next.fills.forEach(function(p) { p.z = z });
-                    outputFills(next.fills, next.inner);
+                    outputFills(next.fills, next.inner, true);
                 }
             } else {
                 // top object
