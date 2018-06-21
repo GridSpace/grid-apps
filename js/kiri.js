@@ -1944,7 +1944,8 @@ self.kiri.license = exports.LICENSE;
     function modalShowing() {
         var showing = false;
         ["modal","catalog","devices","tools"].forEach(function(dialog) {
-            showing = showing || UI[dialog].style.display === 'block';
+            var state = UI[dialog].style.display
+            showing = showing || state !== 'none';
         });
         return showing || UC.isPopped();
     }
