@@ -328,7 +328,8 @@ function setup(req, res, next) {
     if (time - rec.saved > ipSaveDelay) db.get(dbikey)
         .then(dbrec => {
             // only on the first pull from disk
-            if (dbrec && rec.saved === 0) {
+            if (dbrec.first && dbrec.hits && dbrec.last &&
+                    dbrec.api && rec.saved === 0) {
                 rec.first = dbrec.first;
                 rec.hits += dbrec.hits;
                 rec.last = dbrec.last.appendAll(rec.last);
