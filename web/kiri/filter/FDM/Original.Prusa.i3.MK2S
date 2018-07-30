@@ -11,7 +11,8 @@
         "M104 S{temp} ; set extruder actual required temp",
         "M109 S{temp} ; wait for extruder actual required temp",
         "G1 X60.0 E9.0  F1000.0 ; intro line",
-        "G1 X100.0 E12.5  F1000.0 ; intro line"
+        "G1 X100.0 E12.5  F1000.0 ; intro line",
+        "M900 K{kfactor} ; set Linear Advance factor, see https://www.prusaprinters.org/fw-3-1-0-linear-advance-drivers-1-9-1/"
     ],
     "post":[
         "G4 ; wait",
