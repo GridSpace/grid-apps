@@ -1,0 +1,35 @@
+{
+    "pre":[
+        "M83 ; extruder relative mode",
+        "M104 S160 ; set extruder to a temporary high enough temp",
+        "M140 S{bed_temp} ; set bed temp",
+        "M190 S{bed_temp} ; wait for bed temp",
+        "M109 S160 ; wait for extruder temporary high enough temp",
+        "G28 W ; home all without mesh bed level",
+        "G80 ; mesh bed leveling",
+        "G1 Y-3.0 F1000.0 ; go outside print area",
+        "M104 S{temp} ; set extruder actual required temp",
+        "M109 S{temp} ; wait for extruder actual required temp",
+        "G1 X60.0 E9.0  F1000.0 ; intro line",
+        "G1 X100.0 E12.5  F1000.0 ; intro line",
+        "M900 K{kfactor} ; set Linear Advance factor, see https://www.prusaprinters.org/fw-3-1-0-linear-advance-drivers-1-9-1/"
+    ],
+    "post":[
+        "G4 ; wait",
+        "M104 S0 ; turn off temperature",
+        "M140 S0 ; turn off heatbed",
+        "M107 ; turn off fan",
+        "G1 X0 Y200; home X axis",
+        "G1 E-1 F900",
+        "M84 ; disable motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": false,
+        "bed_width": 250,
+        "bed_depth": 210,
+        "build_height": 210
+    }
+}
