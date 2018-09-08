@@ -2730,7 +2730,7 @@ self.kiri.license = exports.LICENSE;
                     showSerial(true);
                     break;
                 case cca('i'): // single settings edit
-                    var v = prompt(`edit "${settings.process.processName}"`, JSON.stringify(settings.process));
+                    var v = prompt('edit "'+settings.process.processName+'"', JSON.stringify(settings.process));
                     if (v) {
                         try {
                             settings.process = JSON.parse(v);
