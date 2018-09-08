@@ -6,7 +6,7 @@
         "M107                ; turn off filament cooling fan",
         "G28                 ; home axes",
         "G92 X0 Y0 Z0 E0     ; reset all axes positions",
-        "G1 X0 Y0 Z0.25 F180 ; move xy to 0,0 and z 0.25mm over bed",
+        "G1 X0 Y0 Z20 F180   ; move xy to 0,0 and z 20mm over bed",
         "G92 E0              ; zero the extruded",
         "M109 S{temp} T0     ; wait for extruder to reach target temp",
         "G1 E15 F200         ; purge 15mm from extruder",
@@ -17,7 +17,7 @@
     "post":[
         "M107                ; turn off filament cooling fan",
         "M104 S0 T0          ; turn off right extruder",
-        "G1 Z{z_max} F1200   ; drop bed",
+        "G1 Z{z_max} F180    ; drop bed",
         "G28 X0 Y0           ; home XY axes",
         "M84                 ; disable stepper motors"
     ],
