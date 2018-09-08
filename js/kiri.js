@@ -2729,6 +2729,18 @@ self.kiri.license = exports.LICENSE;
                 case cca('c'): // open control window
                     showSerial(true);
                     break;
+                case cca('i'): // single settings edit
+                    let v = prompt(`edit "${settings.process.processName}"`, JSON.stringify(settings.process));
+                    if (v) {
+                        try {
+                            settings.process = JSON.parse(v);
+                            updateFields();
+                        } catch (e) {
+                            console.log(e);
+                            alert("invalid settings format");
+                        }
+                    }
+                    break;
                 case cca('U'): // full settings url
                     storeSettingsToServer(true);
                     break;
