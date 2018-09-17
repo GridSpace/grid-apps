@@ -716,7 +716,6 @@ var ver = require('../js/license.js'),
     script = {
         kiri : [
             "license",
-            "ext-n3d",
             "ext-clip",
             "ext-tween",
             "ext-fsave",
@@ -755,7 +754,6 @@ var ver = require('../js/license.js'),
         ],
         meta : [
             "license",
-            "ext-n3d",
             "ext-tween",
             "ext-fsave",
             "add-array",
@@ -772,7 +770,6 @@ var ver = require('../js/license.js'),
         ],
         work : [
             "license",
-            "ext-n3d",
             "ext-clip",
             "add-array",
             "add-three",
