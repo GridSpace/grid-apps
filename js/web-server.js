@@ -174,7 +174,7 @@ function concatCode(array) {
             cachepath = filepath;
         }
         cached = getCachedFile(filepath, cachepath, function(path) {
-            return uglify.minify(filepath).code;
+            return minify(filepath);
         });
         code.push(cached);
     });
@@ -488,6 +488,16 @@ function handleData(req, res, next) {
     }
 }
 
+function minify(path) {
+    let code = fs.readFileSync(path);
+    let mini = uglify.minify(code.toString());
+    if (mini.error) {
+        console.trace(mini.error);
+        throw mini.error;
+    }
+    return mini.code;
+}
+
 /**
  * @param {Object} req
  * @param {Object} res
@@ -523,7 +533,7 @@ function handleJS(req, res, next) {
                 return;
             } else {
                 var start = new Date().getTime(),
-                    code = uglify.minify([fpath]).code,
+                    code = minify(fpath),
                     end = new Date().getTime();
 
                 log({minify:fpath, in:f.size, out:code.length,  time:(end-start)});
@@ -686,7 +696,7 @@ var ver = require('../js/license.js'),
     spawn = require('child_process').spawn,
     level = require('levelup')('./persist/', {valueEncoding:"json"}),
     https = require('https'),
-    uglify = require('uglify-js'),
+    uglify = require('uglify-es'),
     connect = require('connect'),
     request = require('request'),
     serveStatic = require('serve-static'),
@@ -963,7 +973,7 @@ function initModule(file, dir) {
                 if (clearJS) {
                     code[endpoint] = fs.readFileSync(path);
                 } else {
-                    code[endpoint] = uglify.minify(path).code;
+                    code[endpoint] = minify(path);
                 }
             }
         },
