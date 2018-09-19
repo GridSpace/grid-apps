@@ -783,6 +783,7 @@ var ver = require('../js/license.js'),
         ],
         work : [
             "license",
+            "ext-n3d",
             "ext-clip",
             "add-array",
             "add-three",
