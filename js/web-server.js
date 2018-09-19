@@ -504,7 +504,9 @@ function minify(path) {
  * @param {Function} next
  */
 function handleJS(req, res, next) {
-    if (!(req.gs.local || clearJS)) return reply404(req, res);
+    if (!(req.gs.local || clearJS || clearOK.indexOf(req.gs.path) >= 0)) {
+        return reply404(req, res);
+    }
 
     var spath = req.gs.path.substring(1),
         jspos = spath.indexOf(".js"),
@@ -516,14 +518,18 @@ function handleJS(req, res, next) {
     }
 
     fs.stat(fpath, (err, f) => {
-        if (err || !f) return reply404(req, res);
+        if (err || !f) {
+            return reply404(req, res);
+        }
 
         var mtime = f.mtime.getTime();
 
         if (!cached || cached.mtime != mtime) {
             if (clearJS) {
                 fs.readFile(fpath, null, function(err, code) {
-                    if (err) return reply404(req,res);
+                    if (err) {
+                        return reply404(req,res);
+                    }
                     serveCode(req, res, fileCache[fpath] = {
                         clear: true,
                         mtime: mtime,
@@ -560,7 +566,9 @@ function handleCode(req, res, next) {
         key = req.gs.path.split('/')[2].split('.')[0],
         js = code[key];
 
-    if (!js) return reply404(req, res);
+    if (!js) {
+        return reply404(req, res);
+    }
 
     addCorsHeaders(req, res);
     serveCode(req, res, {
@@ -586,7 +594,9 @@ function ifModifiedDate(req) {
  * @param {Obejct} code
  */
 function serveCode(req, res, code) {
-    if (code.deny) return reply404(req, res);
+    if (code.deny) {
+        return reply404(req, res);
+    }
 
     var imd = ifModifiedDate(req);
     if (imd && code.mtime <= imd && !code.nocache) {
@@ -713,6 +723,9 @@ var ver = require('../js/license.js'),
     filters_cam = [],
     modPaths = [],
     ipCache = {},
+    clearOK = [
+        '/js/ext-three.js'
+    ],
     script = {
         kiri : [
             "license",
