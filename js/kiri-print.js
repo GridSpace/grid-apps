@@ -385,7 +385,7 @@ var gs_kiri_print = exports;
      */
     function addOutput(array, point, emit, speed, tool) {
         // drop duplicates (usually intruced by FDM bisections)
-        if (lastPoint && point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
+        if (lastPoint && point && point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
             return;
         }
         lastPoint = point;
