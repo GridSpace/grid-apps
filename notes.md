@@ -31,6 +31,7 @@
 
 # CAM todo
 
+* optimize away topo generation (for z hop/move) when part is flat
 * add imperial / metric units switch in (future) global config options
 * add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * pocket order should consider distance as well as size
