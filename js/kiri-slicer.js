@@ -139,7 +139,7 @@ var gs_kiri_slicer = exports;
             }
             // auto-detect flats for cam faces and to avoid slicing directly on flats
             if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
-                var zkey = UTIL.round(p1.z, 5),
+                var zkey = p1.z.toFixed(5),
                     area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
                 if (!zFlat[zkey]) {
                     zFlat[zkey] = area;
@@ -201,8 +201,7 @@ var gs_kiri_slicer = exports;
             for (key in zFlat) {
                 // todo make threshold for flat detection configurable
                 if (!zFlat.hasOwnProperty(key) || zFlat[key] < 100) continue;
-                key = parseFloat(key) + 0.001;
-                if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(key);
+                if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(parseFloat(key));
             }
             // sort top down
             zIndexes.sort(function(a,b) {
@@ -362,24 +361,19 @@ var gs_kiri_slicer = exports;
          * @param {number} [height] optional real height (fdm)
          */
         function sliceZ(z, height) {
-            z = UTIL.round(z,5);
-
-            // avoid slicing directly on flat faces as it greatly increases
-            // the chances of artifacts, broken joins and excessive path walks
-            if (zFlat[z]) {
-                if (z) {
-                    z -= 0.001;
-                } else {
-                    z += 0.001;
-                }
-            }
-
             var phash = {},
                 lines = [],
+                onflat = zFlat[z.toFixed(5)] > 0,
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
                 bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];
 
             if (!bucket) return;
+
+            if (onflat) {
+                // annotate slices with cam flats for finishing waterlines
+                if (options.cam) slice.hasFlats = true;
+                z += 0.001;
+            }
 
             // iterate over matching buckets for this z offset
             for (var i = 0; i < bucket.length;) {
@@ -422,9 +416,6 @@ var gs_kiri_slicer = exports;
             slice.height = height;
             slice.index = slices.length;
             slice.lines = removeDuplicateLines(lines);
-
-            // annotate slices with cam flats for finishing waterlines
-            if (options.cam) slice.hasFlats = zFlat[z] > 0;
 
             // for topo slices, we just need the raw lines
             if (!topoMode) {
