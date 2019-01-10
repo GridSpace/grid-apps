@@ -276,7 +276,7 @@ var gs_kiri_cam = exports;
         forced.appendAll(mid);
         forced.sort(function(s1, s2) { return s2.z - s1.z; });
         // drop first/top slice (because it's not an actual cut)
-        forced = forced.slice(1);
+        //forced = forced.slice(1);
         forced.forEach(function(slice) {
             emit(slice);
         });
@@ -921,7 +921,7 @@ var gs_kiri_cam = exports;
             widgetCount = widgetArray.length,
             widget = widgetArray[widgetIndex];
 
-        if (widgetIndex >= widgetCount || !widget || !widget.getCamBounds) return;
+        if (widgetIndex >= widgetCount || !widget) return;
 
         var slices = widget.slices,
             bounds = widget.getCamBounds(settings),
@@ -1370,6 +1370,8 @@ var gs_kiri_cam = exports;
      * @returns {Array} gcode lines
      */
     function printExport(print, online) {
+        var widget = print.widgets[0];
+
         if (!widget) return;
 
         var i,
@@ -1387,7 +1389,6 @@ var gs_kiri_cam = exports;
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
-            widget = print.widgets[0],
             bounds = widget.getCamBounds(settings),
             bed = settings.device,
             spro = settings.process,
