@@ -921,7 +921,7 @@ var gs_kiri_cam = exports;
             widgetCount = widgetArray.length,
             widget = widgetArray[widgetIndex];
 
-        if (widgetIndex >= widgetCount || !widget) return;
+        if (widgetIndex >= widgetCount || !widget || !widget.getCamBounds) return;
 
         var slices = widget.slices,
             bounds = widget.getCamBounds(settings),
@@ -1370,6 +1370,8 @@ var gs_kiri_cam = exports;
      * @returns {Array} gcode lines
      */
     function printExport(print, online) {
+        if (!widget) return;
+
         var i,
             time = 0,
             lines = 0,
