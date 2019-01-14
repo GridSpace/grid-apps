@@ -200,7 +200,7 @@ var gs_kiri_slicer = exports;
             }
             for (key in zFlat) {
                 // todo make threshold for flat detection configurable
-                if (!zFlat.hasOwnProperty(key) || zFlat[key] < 100) continue;
+                if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10) continue;
                 if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(parseFloat(key));
             }
             // sort top down
