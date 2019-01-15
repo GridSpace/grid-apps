@@ -4,6 +4,9 @@ th, tr, td, span, div, label, button {
 input[type=range]::-moz-focus-outer {
     border: 0;
 }
+select {
+    outline: none;
+}
 .dialog {
     display: none;
     color: black;
