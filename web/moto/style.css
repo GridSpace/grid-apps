@@ -20,7 +20,7 @@ body,div {
 }
 label {
     font-size: 14px;
-    border-bottom: 1px solid #888;
+    border-bottom: 1px solid #ddd;
     margin-right: 2px;
 }
 canvas {
@@ -32,9 +32,8 @@ button {
     outline: none;
     max-width: 25ex;
     border: 1px solid rgba(220,220,220,0.8);
-    border-top-left-radius: 3px;
-    border-bottom-right-radius: 3px;
-    background-color: rgba(210,210,210,0.8);
+    border-radius: 3px;
+    background-color: white;
 }
 button:hover {
     background-color: #eee;
@@ -89,16 +88,18 @@ button[del] {
     width: 33.33%;
 }
 .grouphead {
-    color: #fff;
-    border-radius: 4px;
+    color: black;
+    background-color: rgba(170,221,255,0.75);
+    border: 1px solid #ccc;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
     padding: 4px 5px 3px 5px;
     margin-top: 3px;
     margin-bottom: 1px;
     text-align: center;
     text-transform: uppercase;
     font-size: 10pt;
-    font-weight: normal;
-    background-color: rgba(0,0,0,0.75);
+    font-weight: bold;
 }
 .grouphead:hover {
     cursor: default;
@@ -122,9 +123,8 @@ button[del] {
 }
 .buton {
     font-weight: bold;
-    background-color: #fff;
+    background-color: #fec;
 }
-
 .flow-row {
     position: relative;
     -webkit-flex-direction: row;
@@ -163,12 +163,13 @@ button[del] {
 }
 
 .control input {
-    background-color: #ddd;
+    background-color: #eee;
     margin-bottom: 1px;
     text-align: right;
 }
 .control input:focus {
-    background-color: #dee;
+    background-color: #fec;
+    outline: none;
 }
 .control input[disabled] {
     background-color: #aaa;
@@ -197,14 +198,15 @@ button[del] {
     position: fixed;
     z-index: 10000;
     color: #eee;
-    top: 0px;
+    top: 5px;
     left: 0px;
-    bottom: 0px;
     padding: 5px;
-    border-top: 1px solid #bbb;
-    border-right: 1px solid #bbb;
-    border-bottom: 1px solid #bbb;
-    background-color: rgba(20,20,20,0.5);
+    border-top: 3px solid #ddd;
+    border-right: 3px solid #ddd;
+    border-bottom: 3px solid #ddd;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    background-color: white;
     overflow-y: scroll;
 }
 #control-left::-webkit-scrollbar {
@@ -216,15 +218,17 @@ button[del] {
 #control-right {
     position: fixed;
     z-index: 10000;
-    top: 0px;
+    top: 5px;
     right: 0px;
-    bottom: 0px;
+    bottom: 5px;
     padding: 5px;
-    border-top: 1px solid #bbb;
-    border-left: 1px solid #bbb;
-    border-bottom: 1px solid #bbb;
-    background-color: rgba(20,20,20,.5);
-    color: #eee;
+    border-top: 3px solid #ddd;
+    border-left: 3px solid #ddd;
+    border-bottom: 3px solid #ddd;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    background-color: white;
+    color: #222;
     overflow-y: scroll;
     overflow-x: visible;
 }
@@ -258,7 +262,7 @@ button[del] {
 #welcome {
     color: white;
     padding: 10px;
-    border: 1px solid white;
+    border: 10px solid white;
     background-color: rgba(20,20,20,0.75);
     position: fixed;
     top: 50px;
