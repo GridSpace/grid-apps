@@ -13,7 +13,7 @@ select {
     padding: 10px;
     border: 3px solid #ddd;
     border-radius: 3px;
-    background-color: rgba(255,255,255,0.9);
+    background-color: rgba(255,255,255,0.75);
     position: fixed;
     top: 5px;
 }
@@ -200,7 +200,7 @@ select {
     color: b;acl;
     border: 3px solid #ddd;
     border-radius: 3px;
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.75);
     padding: 10px;
     display: none;
 }
