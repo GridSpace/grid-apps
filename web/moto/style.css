@@ -34,12 +34,12 @@ button {
     border: 1px solid #ccc;
     border-radius: 3px;
     background-color: #eee;
-
     padding: 2px 7px 3px 7px;
     margin-bottom: 2px !important;
 }
 button:hover {
-    background-color: #eee;
+    background-color: #aaa;
+    font-weight: bold;
 }
 button[load] {
     width: 100%;
@@ -125,7 +125,7 @@ button[del] {
 }
 .buton {
     font-weight: bold;
-    background-color: #fec;
+    background-color: #bbb;
 }
 .flow-row {
     position: relative;

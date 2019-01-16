@@ -21,8 +21,7 @@ select {
     padding: 2px 5px 2px 5px;
     margin: 0 5px 5px 5px;
     background-color: #eee;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
     border: 1px solid #aaa;
     text-align: center;
 }
@@ -135,6 +134,9 @@ select {
     background-color: rgba(255,255,255,0.9);
     padding: 10px;
 }
+#print button {
+    font-weight: bold;
+}
 #print-close {
     position: absolute;
     z-index: 200;
@@ -142,16 +144,13 @@ select {
     top: 3px;
 }
 #print > div {
-    border: 1px solid #888;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border: 1px solid #aaa;
+    border-radius: 3px;
     padding: 2px;
     margin: 6px 0 6px 0;
 }
 #print .print-sel:hover {
-    border: 1px solid yellow;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border: 1px solid #555;
 }
 #print table {
     width: 100%;
@@ -198,9 +197,10 @@ select {
     text-align: center;
     top: 5px;
     right: 0px;
-    color: white;
-    border: 1px solid white;
-    background-color: rgba(20,20,20,0.75);
+    color: b;acl;
+    border: 3px solid #ddd;
+    border-radius: 3px;
+    background-color: rgba(255,255,255,0.5);
     padding: 10px;
     display: none;
 }
@@ -218,15 +218,13 @@ select {
 }
 #sender > div {
     border: 1px solid #888;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
     padding: 2px;
     margin: 6px 0 6px 0;
 }
 #sender .sender-sel:hover {
     border: 1px solid yellow;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
 }
 #sender table {
     width: 100%;
@@ -350,13 +348,20 @@ button.selected {
 #tools-body {
     height: 100%;
 }
+#tool-labels label {
+    display: block;
+    text-align: center !important;
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 5px;
+    border: 0;
+}
 #tool-labels span {
     width: 200px;
     padding: 2px 5px 2px 5px;
     margin: 0 5px 5px 5px;
     background-color: #eee;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
     border: 1px solid #aaa;
     text-align: center;
 }
@@ -365,14 +370,16 @@ button.selected {
     padding: 5px;
     margin: 5px;
     border: 1px solid #aaa;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
 }
 #tool-info > div {
     margin-top: 2px;
     margin-bottom: 2px;
     flex-basis: auto;
     flex-shrink: 0;
+}
+#tool-action {
+    padding: 3px 3px 0 3px;
 }
 #tool-action > button {
     text-align: center;
@@ -429,8 +436,7 @@ button.selected {
     padding: 2px 5px 2px 5px;
     margin: 0 5px 5px 5px;
     background-color: #eee;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-radius: 5px;
     border: 1px solid #aaa;
     text-align: center;
 }
@@ -448,12 +454,23 @@ button.selected {
     flex-shrink: 0;
     position: relative;
 }
+#device-action {
+    padding: 3px 3px 0 3px;
+}
 #device-action > button {
     text-align: center;
 }
 #device-action > span {
     flex-grow: 1;
     width: 100%;
+}
+#device-labels label {
+    display: block;
+    text-align: center !important;
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 5px;
+    border: 0;
 }
 #devices label {
     text-align: left;
@@ -517,6 +534,12 @@ button[import="1"] {
 #catalogBody div::-webkit-scrollbar {
     display: none;
 }
+#catalogBody label {
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 10px;
+    border: 0;
+}
 #catalogList {
     overflow-y: scroll;
     overflow-x: hidden;
@@ -530,6 +553,12 @@ button[import="1"] {
 /** saved settings list */
 #settings button {
     margin: 1px;
+}
+#settingsBody label {
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 10px;
+    border: 0;
 }
 
 /** layer slider and controls */
