@@ -90,19 +90,20 @@ select {
     top: 30px;
     left: 20%;
     right: 20%;
-    border: 2px solid rgba(10,10,10,0.25);
-    border-radius: 5px;
     margin: 2px;
     background-color: rgba(200,200,200,0.75);
+    border: 3px solid rgba(200,200,200,0.5);
+    border-radius: 5px;
     text-align: center;
     display: none;
 }
 #progress {
     position: relative;
-    width: 1%;
-    height: 100%;
     background-color: #f00;
     text-align: left;
+    padding: 5px;
+    height: 100%;
+    width: 1%;
 }
 #progress > span {
     color: white;
@@ -162,6 +163,7 @@ select {
 }
 .print-gcode > button {
     margin: 0 2px 0 2px !important;
+    height: 30px;
 }
 .print-sel > button {
     max-width: 1000px;
@@ -670,6 +672,36 @@ button[import="1"] {
     background-color: rgba(0,0,0,0.8);
     padding: 3px 0 3px 0;
     color: white;
+}
+
+#alert-area {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+}
+#alert-border {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    background-color: rgba(255,230,230,0.8);
+    border: 3px solid rgba(255,200,200,0.5);
+    border-radius: 5px;
+}
+#alert-text {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    font-weight: bold;
+    color: black;
+    margin: 5px;
+}
+#alert-text p {
+    margin: 5px;
 }
 
 .flex {

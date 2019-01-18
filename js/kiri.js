@@ -280,7 +280,7 @@ self.kiri.license = exports.LICENSE;
                 sliceSupportExtra: 0,
                 sliceSupportSpan: 6,
 
-                sliceSolidMinArea: 5,
+                sliceSolidMinArea: 1,
                 sliceSolidLayers: 3,
                 sliceBottomLayers: 2,
                 sliceTopLayers: 3,
@@ -510,7 +510,8 @@ self.kiri.license = exports.LICENSE;
         local = SETUP.local,
         mouseMoved = false,
         camStock = null,
-        camTopZ = 0;
+        camTopZ = 0,
+        alerts = [];
 
     DBUG.enable();
 
@@ -554,6 +555,26 @@ self.kiri.license = exports.LICENSE;
     /** ******************************************************************
      * Stats accumulator
      ******************************************************************* */
+
+    window.alert = function alert(message, time) {
+        alerts.push([message, Date.now(), time]);
+        updateAlerts();
+    }
+
+    setInterval(updateAlerts, 1000);
+
+    function updateAlerts() {
+        let now = Date.now();
+        while (alerts.length && now - alerts[0][1] > alerts[0][2] || 5000) {
+            alerts.shift();
+        }
+        if (alerts.length) {
+            $('alert-text').innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
+            $('alert-area').style.display = 'flex';
+        } else {
+            $('alert-area').style.display = 'none';
+        }
+    }
 
     function sendOnEvent(name, data) {
         if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
@@ -1160,10 +1181,10 @@ self.kiri.license = exports.LICENSE;
                         ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
                             DBUG.log(data);
-                            alert("print to "+target+": "+data.status);
+                            alert("print to "+target+": "+data.status, 10000);
                         });
                     } else {
-                        alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText);
+                        alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
                     }
                     setProgress(0);
                 }
@@ -2430,7 +2451,7 @@ self.kiri.license = exports.LICENSE;
             sliceFillSpacing: UC.newInput("fill spacing", {title:"for solid fill areas\nas a percentage of nozzle width\n< 1.0 causes fill overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             sliceFillAngle: UC.newInput("fill angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
             sliceFillSparse: UC.newInput("fill ratio", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            sliceSolidMinArea: UC.newInput("solid area", {title:"minimum area (cm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),
+            sliceSolidMinArea: UC.newInput("solid area", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),
             sliceSolidLayers: UC.newInput("solid layers", {title:"flat area fill projections\nbased on layer deltas", convert:UC.toInt, modes:FDM}),
             sliceBottomLayers: UC.newInput("base layers", {title:"bottom solid layer count", convert:UC.toInt, modes:FDM}),
             sliceTopLayers: UC.newInput("top layers", {title:"top solid layer count", convert:UC.toInt, modes:FDM}),
