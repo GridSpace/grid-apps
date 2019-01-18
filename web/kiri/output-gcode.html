@@ -6,7 +6,7 @@
     <table id="print-info">
         <tr><th>file name</th><td><input id="print-filename" size="30" spellcheck="false" /></td></tr>
         <tr><th>file size (bytes)</th><td><input id="print-filesize" size="10" disabled="true" /></td></tr>
-        <tr id="mill-info"><th>estimated mill time (h:m:s)</th><td><input id="mill-time" size="10" disabled="true" /></td></tr>
+        <tr id="mill-info"><th>estimate (h:m:s)</th><td><input id="mill-time" size="10" disabled="true" /></td></tr>
     </table>
 </div>
 
@@ -15,36 +15,35 @@
         <tr><th>filament used (mm)</th><td><input id="print-filament" size="10" disabled="true" /></td></tr>
         <tr><th>filament density (g/cm^3)</th><td><input id="print-density" size="10" value="1.25" /></td></tr>
         <tr><th>printed weight (g)</th><td><input id="print-weight" size="10" disabled="true" /></td></tr>
-        <tr><th>estimated print time (h:m:s)</th><td><input id="print-time" size="10" disabled="true" /></td></tr>
+        <tr><th>estimate (h:m:s)</th><td><input id="print-time" size="10" disabled="true" /></td></tr>
     </table>
 </div>
 
-<div class="print-sel">
-    <table><tr><th>
-        <button id="print-download">download .gcode</button>
-        <button id="print-serial">use gcode sender</button>
-    </th></tr></table>
+<div class="print-sel print-gcode flex frow">
+    <span><label>gcode</label></span>
+    <button id="print-download" class="fgro">download</button>
+    <button id="print-serial" class="fgro">use gcode sender</button>
 </div>
 
-<div class="print-sel" id="send-to-octoprint">
+<div class="print-sel flex frow" id="send-to-octoprint">
+    <span><label>octoprint</label></span>
     <table>
-        <tr><th colspan="2"><button id="print-octoprint">send to octoprint</button></th></tr>
-        <tr id="ophost"><th>host:port</th><td><input id="octo-host" size="35" placeholder="http(s)://host:port" /></td></tr>
-        <tr id="opapik"><th>api key</th><td><input id="octo-apik" size="35" /></td></tr>
-        <!--<tr><th>options</th><td><input type="checkbox" id="octo-print">start print</td></tr>-->
+        <tr id="ophost"><th>host</th><td><input id="octo-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+        <tr id="opapik"><th>key</th><td><input id="octo-apik" size="35" /></td></tr>
         <tr id="ophint"><td colspan="2"><span id="octo-hint"><a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a> must be enabled in API settings</span></td></tr>
     </table>
+    <button id="print-octoprint" class="print-send">send</button>
 </div>
 
-<div class="print-sel" id="send-to-gridhost">
+<div class="print-sel flex frow" id="send-to-gridhost">
+    <span><label>grid:host</label></span>
     <table>
-        <tr><th colspan="2"><button id="print-gridhost">send to grid:host</button></th></tr>
-        <tr><th>host:port</th><td><input id="grid-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+        <tr><th>host</th><td><input id="grid-host" size="35" placeholder="http(s)://host:port" /></td></tr>
         <tr id="gpapik"><th>api key</th><td><input id="grid-apik" size="35" /></td></tr>
         <tr><th>target</th><td>
-            <!--<input id="grid-target" size="35" />-->
             <select id="grid-target"></select>
         </td></tr>
         <tr><td colspan="2"><span id="grid-hint">setup <a href="https://github.com/GridSpace/grid-host" target="_help">grid:host</a> for your network</span></td></tr>
     </table>
+    <button id="print-gridhost" class="print-send">send</button>
 </div>

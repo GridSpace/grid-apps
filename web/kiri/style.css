@@ -149,6 +149,46 @@ select {
     padding: 2px;
     margin: 6px 0 6px 0;
 }
+.print-sel {
+    position: relative;
+    margin-top: 15px !important;
+    padding: 15px 5px 10px 5px !important;
+}
+.print-send {
+    margin: 0 0 0 5px !important;
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+}
+.print-gcode > button {
+    margin: 0 2px 0 2px !important;
+}
+.print-sel > button {
+    max-width: 1000px;
+    flex-basis: 100px;
+}
+.print-sel > span {
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+}
+.print-sel > span > label {
+    background-color: rgba(255,255,255,0.9);
+    font-size: 15px;
+    padding: 0 5px 0 5px;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 1px solid #aaa;
+    border-right: 1px solid #aaa;
+    border-radius: 5px;
+}
+.print-sel td,th {
+    padding: 2px;
+}
+.print-sel th {
+    text-align: right !important;
+}
 #print .print-sel:hover {
     border: 1px solid #555;
 }
@@ -630,4 +670,20 @@ button[import="1"] {
     background-color: rgba(0,0,0,0.8);
     padding: 3px 0 3px 0;
     color: white;
+}
+
+.flex {
+    display: flex;
+}
+
+.frow {
+    flex-direction: row;
+}
+
+.fcol {
+    flex-direction: column;
+}
+
+.fgro {
+    flex-grow: 1;
 }

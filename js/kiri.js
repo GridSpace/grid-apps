@@ -879,7 +879,13 @@ self.kiri.license = exports.LICENSE;
         // kick off slicing it hasn't been done already
         for (var i=0; i < WIDGETS.length; i++) {
             if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                prepareSlices(function() { preparePrint(callback) });
+                prepareSlices(function() {
+                    if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
+                        alert("nothing to print");
+                    } else {
+                        preparePrint(callback);
+                    }
+                });
                 return;
             }
         }
