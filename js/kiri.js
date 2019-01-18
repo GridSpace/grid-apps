@@ -556,7 +556,7 @@ self.kiri.license = exports.LICENSE;
      * Stats accumulator
      ******************************************************************* */
 
-    window.alert = function alert(message, time) {
+    function alert2(message, time) {
         alerts.push([message, Date.now(), time]);
         updateAlerts();
     }
@@ -908,7 +908,7 @@ self.kiri.license = exports.LICENSE;
             if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
                 prepareSlices(function() {
                     if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                        alert("nothing to print");
+                        alert2("nothing to print");
                     } else {
                         preparePrint(callback);
                     }
@@ -1054,11 +1054,11 @@ self.kiri.license = exports.LICENSE;
                 apik = octo_apik.value;
 
             if (host.indexOf("http") !== 0) {
-                alert("host missing protocol (http:// or https://)");
+                alert2("host missing protocol (http:// or https://)");
                 return;
             }
             if (SECURE && !isSecure(host)) {
-                alert("host must begin with 'https' on a secure site");
+                alert2("host must begin with 'https' on a secure site");
                 return;
             }
 
@@ -1074,7 +1074,7 @@ self.kiri.license = exports.LICENSE;
                     if (status >= 200 && status < 300) {
                         hideModal();
                     } else {
-                        alert("octoprint error\nstatus: "+status+"\nmessage: "+ajax.responseText);
+                        alert2("octoprint error\nstatus: "+status+"\nmessage: "+ajax.responseText);
                     }
                 }
             };
@@ -1158,19 +1158,19 @@ self.kiri.license = exports.LICENSE;
                 target = SDB['grid-target'] || '';
 
             if (target === '') {
-                alert('invalid or missing target');
+                alert2('invalid or missing target');
                 return;
             }
             if (host.indexOf("http") !== 0) {
-                alert("host missing protocol (http:// or https://)");
+                alert2("host missing protocol (http:// or https://)");
                 return;
             }
             if (host.indexOf("://") < 0) {
-                alert("host:port malformed");
+                alert2("host:port malformed");
                 return;
             }
             if (SECURE && !isSecure(host)) {
-                alert("host must begin with 'https' on a secure site");
+                alert2("host must begin with 'https' on a secure site");
                 return;
             }
 
@@ -1187,10 +1187,10 @@ self.kiri.license = exports.LICENSE;
                         ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
                             DBUG.log(data);
-                            alert("print to "+target+": "+data.status, 600);
+                            alert2("print to "+target+": "+data.status, 600);
                         });
                     } else {
-                        alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
+                        alert2("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
                     }
                     setProgress(0);
                 }
@@ -1380,7 +1380,7 @@ self.kiri.license = exports.LICENSE;
                     setViewMode(VIEWS.ARRANGE);
                     setOpacity(model_opacity);
                     widgetDeselect();
-                    alert(error);
+                    alert2(error);
                 }
             }, function(update, msg) {
                 if (msg !== lastMsg) {
@@ -1860,7 +1860,7 @@ self.kiri.license = exports.LICENSE;
             loadFiles(event.target.files);
         };
         $('load-file').click();
-        // alert("drag/drop STL files onto platform to import\nreload page to return to last saved state");
+        // alert2("drag/drop STL files onto platform to import\nreload page to return to last saved state");
     }
 
     // kiri api
@@ -2775,7 +2775,7 @@ self.kiri.license = exports.LICENSE;
                             updateFields();
                         } catch (e) {
                             console.log(e);
-                            alert("invalid settings format");
+                            alert2("invalid settings format");
                         }
                     }
                     break;
@@ -2862,7 +2862,7 @@ self.kiri.license = exports.LICENSE;
 
         function rotateInputSelection() {
             if (selectedMeshes.length === 0) {
-                alert("select object to rotate");
+                alert2("select object to rotate");
                 return;
             }
             var coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
@@ -2876,7 +2876,7 @@ self.kiri.license = exports.LICENSE;
 
         function positionSelection() {
             if (selectedMeshes.length === 0) {
-                alert("select object to position");
+                alert2("select object to position");
                 return;
             }
             var center = settings.process.outputOriginCenter,
@@ -2920,7 +2920,7 @@ self.kiri.license = exports.LICENSE;
                     var res = JSON.parse(reply);
                     if (res && res.ver) {
                         LOC.hash = res.space + "/" + res.ver;
-                        if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
+                        if (display) alert2("unique settings id is: " + res.space + "/" + res.ver);
                     }
                 } else {
                     updateSpaceState();
@@ -3147,7 +3147,7 @@ self.kiri.license = exports.LICENSE;
                 saveSettings();
             } catch (e) {
                 console.log({error:e, device:code});
-                // alert("invalid or deprecated device. please select a new device.");
+                // alert2("invalid or deprecated device. please select a new device.");
                 showDevices();
             }
             clearWidgetCache();
