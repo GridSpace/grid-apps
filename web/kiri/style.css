@@ -687,15 +687,20 @@ button[import="1"] {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 50%;
+    min-width: 25%;
+    max-width: 50%;
     background-color: rgba(255,230,230,0.8);
     border: 3px solid rgba(255,200,200,0.5);
     border-radius: 5px;
 }
+#alert-border:hover {
+    background-color: rgba(255,230,230,0.9);
+    border: 3px solid rgba(255,200,200,0.95);
+}
 #alert-text {
     display: flex;
     flex-direction: column;
-    text-align: center;
+    text-align: left;
     font-weight: bold;
     color: black;
     margin: 5px;

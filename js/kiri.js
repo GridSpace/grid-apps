@@ -511,7 +511,7 @@ self.kiri.license = exports.LICENSE;
         mouseMoved = false,
         camStock = null,
         camTopZ = 0,
-        alerts = [];
+        alerts = [ [ "version " + kiri.version, Date.now() ] ];
 
     DBUG.enable();
 
@@ -561,18 +561,24 @@ self.kiri.license = exports.LICENSE;
         updateAlerts();
     }
 
-    setInterval(updateAlerts, 1000);
-
-    function updateAlerts() {
+    function updateAlerts(clear) {
+        if (clear) {
+            alerts = [];
+        }
         let now = Date.now();
-        while (alerts.length && now - alerts[0][1] > alerts[0][2] || 5000) {
+        // filter out by age
+        alerts = alerts.filter(alert => {
+            return (now - alert[1]) < ((alert[2] || 5) * 1000);
+        });
+        // limit to 5 showing
+        while (alerts.length > 5) {
             alerts.shift();
         }
-        if (alerts.length) {
-            $('alert-text').innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
-            $('alert-area').style.display = 'flex';
+        if (alerts.length > 0) {
+            UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
+            UI.alert.dialog.style.display = 'flex';
         } else {
-            $('alert-area').style.display = 'none';
+            UI.alert.dialog.style.display = 'none';
         }
     }
 
@@ -1181,7 +1187,7 @@ self.kiri.license = exports.LICENSE;
                         ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
                             DBUG.log(data);
-                            alert("print to "+target+": "+data.status, 10000);
+                            alert("print to "+target+": "+data.status, 600);
                         });
                     } else {
                         alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
@@ -2265,6 +2271,11 @@ self.kiri.license = exports.LICENSE;
             modal: $('modal'),
             print: $('print'),
             help: $('help'),
+
+            alert: {
+                dialog: $('alert-area'),
+                text: $('alert-text')
+            },
 
             devices: $('devices'),
             deviceAdd: $('device-add'),
@@ -3607,6 +3618,13 @@ self.kiri.license = exports.LICENSE;
 
             // load settings provided in url hash
             loadSettingsFromServer();
+
+            // clear alerts as they build up
+            setInterval(updateAlerts, 1000);
+
+            UI.alert.dialog.onclick = function() {
+                updateAlerts(true);
+            };
         }
 
         restoreWorkspace(ondone) || checkSeed(ondone) || ondone();
