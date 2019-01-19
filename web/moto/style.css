@@ -39,7 +39,7 @@ button {
 }
 button:hover {
     background-color: #aaa;
-    font-weight: bold;
+    color: black;
 }
 button[load] {
     width: 100%;

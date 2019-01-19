@@ -91,23 +91,23 @@ select {
     left: 20%;
     right: 20%;
     margin: 2px;
-    background-color: rgba(200,200,200,0.75);
+    background-color: rgba(200,200,200,0.65);
     border: 3px solid rgba(200,200,200,0.5);
     border-radius: 5px;
     text-align: center;
     display: none;
 }
 #progress {
+    display: flex;
     position: relative;
-    background-color: #f00;
     text-align: left;
-    padding: 5px;
-    height: 100%;
-    width: 1%;
+    background-color: rgba(255,0,0,0.75);
+    width: 100%;
 }
-#progress > span {
+#prostatus {
     color: white;
-    padding-left: 10px;
+    padding: 5px;
+    margin: 5px;
 }
 #modal {
     z-index: 20000;
@@ -608,45 +608,48 @@ button[import="1"] {
 #layer-view {
     display: none;
     position: fixed;
-    left: 0;
-    right: 0;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
     bottom: 0;
-    height: 25px;
-    text-align: center;
-    vertical-align: middle;
-}
-#layer-view span {
-    position: relative;
-    border-radius: 5px;
-    padding: 3px 8px 8px 8px;
+    left: 20%;
+    right: 20%;
+    margin: 0;
+    padding: 4px;
     background-color: rgba(170,221,255,0.75);
-    color: rgba(0,0,0,0.5);
-}
-#layer-view input {
-    vertical-align: middle;
+    border: 1px solid #ccc;
+    border-bottom: 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 #layer-view button {
-    position: relative;
-    margin-left: 1px;
+    margin: 0 !important;
     border: 1px solid rgba(255,255,255,0.75);
+}
+#layer-view input {
+    border-width: 1px;
+    padding: 2px;
+}
+#layer-view > button,input {
+    margin-left: 4px !important;
+    margin-right: 4px !important;
 }
 #layer-slider {
     border: 0;
     margin: 0;
     padding: 0;
-    height: 100%;
-    width: 50%;
+    flex-grow: 1;
 }
 #layers {
     display: none;
     position: fixed;
     bottom: 25px;
-    background-color: rgba(0,0,0,0.2);
-    border: 1px solid rgba(0,0,0,0.5);
+    background-color: rgba(170,221,255,0.75);
+    border: 1px solid rgba(0,0,0,0.2);
     border-radius: 3px;
     padding: 6px;
-    -webkit-transform: translate(-10px, 0);
-    transform: translate(-10px, 0);
+    -webkit-transform: translate(-9px, -5px);
+    transform: translate(-9px, -5px);
 }
 #layers label {
     text-align: left;
@@ -679,7 +682,7 @@ button[import="1"] {
     justify-content: center;
     align-items: center;
     position: fixed;
-    bottom: 30px;
+    bottom: 40px;
     left: 0;
     right: 0;
 }
@@ -689,13 +692,13 @@ button[import="1"] {
     align-items: center;
     min-width: 25%;
     max-width: 50%;
-    background-color: rgba(255,230,230,0.8);
-    border: 3px solid rgba(255,200,200,0.5);
+    background-color: rgba(230,245,255,0.8);
+    border: 3px solid rgba(200,215,255,0.6);
     border-radius: 5px;
 }
 #alert-border:hover {
-    background-color: rgba(255,230,230,0.9);
-    border: 3px solid rgba(255,200,200,0.95);
+    background-color: rgba(230,245,255,0.9);
+    border: 3px solid rgba(200,215,255,0.95);
 }
 #alert-text {
     display: flex;

@@ -264,7 +264,7 @@ self.kiri.license = exports.LICENSE;
                 // --- FDM ---
 
                 sliceHeight: 0.25,
-                sliceShells: 2,
+                sliceShells: 3,
                 sliceShellSpacing: 1.0,
                 sliceFillAngle: 45,
                 sliceFillOverlap: 0.3,
@@ -282,7 +282,7 @@ self.kiri.license = exports.LICENSE;
 
                 sliceSolidMinArea: 1,
                 sliceSolidLayers: 3,
-                sliceBottomLayers: 2,
+                sliceBottomLayers: 3,
                 sliceTopLayers: 3,
                 sliceVase: false,
 
@@ -299,22 +299,22 @@ self.kiri.license = exports.LICENSE;
                 outputFeedrate: 80,
                 outputFinishrate: 60,
                 outputSeekrate: 100,
-                outputShellMult: 1.1,
+                outputShellMult: 1.2,
                 outputFillMult: 1.2,
-                outputSparseMult: 1.3,
+                outputSparseMult: 1.2,
                 outputRetractDist: 1.0,
                 outputRetractSpeed: 40,
                 outputRetractDwell: 30,
                 outputBrimCount: 2,
                 outputBrimOffset: 2,
-                outputShortPoly: 15.0,
+                outputShortPoly: 30.0,
                 outputShortDistance: 0.0,
                 outputShortFactor: 0.2,
                 outputFinishFactor: 0,
                 sliceMinHeight: 0,
                 detectThinWalls: false,
-                antiBacklash: 2,
-                zHopDistance: 0,
+                antiBacklash: 1,
+                zHopDistance: 0.2,
                 gcodeKFactor: 0,
                 gcodePauseLayers: "",
                 outputCooling: true,
@@ -2156,12 +2156,12 @@ self.kiri.license = exports.LICENSE;
                 UI.modeArrange.setAttribute("class","buton");
                 break;
             case VIEWS.SLICE:
-                UI.layerView.style.display = 'block';
+                UI.layerView.style.display = 'flex';
                 UI.modeSlice.setAttribute("class","buton");
                 updateSliderMax();
                 break;
             case VIEWS.PREVIEW:
-                UI.layerView.style.display = 'block';
+                UI.layerView.style.display = 'flex';
                 UI.modePreview.setAttribute("class","buton");
                 break;
             default:
