@@ -36,14 +36,6 @@ THREE.Material.prototype.motoSetup = function() {
     return this;
 };
 
-THREE.MeshFaceMaterial.prototype.mSet = function(idx, mat) {
-    this.materials[idx] = mat;
-};
-
-THREE.MeshFaceMaterial.prototype.mVisible = function(idx, show) {
-    this.materials[idx] = show ? this.materials[idx].m_show : this.materials[idx].m_hide;
-};
-
 THREE.Face3.prototype.mVisible = function(show) {
     this.onface.cube.showHideFace(this.materialIndex, show);
 };
@@ -905,9 +897,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         this.synth = synth;
         this.selected = false;
 
-        this.materials = new THREE.MeshFaceMaterial([
+        this.materials = [
             boxMaterial, boxMaterial, boxMaterial, boxMaterial, boxMaterial, boxMaterial
-        ]);
+        ];
 
         this.box = new THREE.BoxGeometry(1,1,1,1,1,1);
         this.boxM = new THREE.Mesh(this.box, this.materials);
@@ -1057,11 +1049,11 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setFaceMaterial = function(index, mat) {
-        // this.materials.mSet(index, mat);
+        this.materials[index] = mat;
     };
 
     CP.showHideFace = function(index, show) {
-        // this.materials.mVisible(index, show);
+        this.materials[index].visible = show;
     };
 
     CP.canMoveTo = function(delta) {
