@@ -1057,11 +1057,11 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setFaceMaterial = function(index, mat) {
-        this.materials.mSet(index, mat);
+        // this.materials.mSet(index, mat);
     };
 
     CP.showHideFace = function(index, show) {
-        this.materials.mVisible(index, show);
+        // this.materials.mVisible(index, show);
     };
 
     CP.canMoveTo = function(delta) {

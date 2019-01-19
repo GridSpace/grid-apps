@@ -57,7 +57,7 @@ select {
     color: black;
 }
 #selection button {
-    margin-left: 1px;
+    margin: 0 2px 0 2px !important;
     border: 1px solid rgba(255,255,255,0.75);
 }
 #appid {
@@ -660,21 +660,29 @@ button[import="1"] {
     display: none;
     position: absolute;
     margin-left: 30px;
-    border: 3px solid gray;
+    border: 3px solid #ddd;
     border-radius: 3px;
     transform: translate(0, -25%);
+    flex-direction: column;
+    align-items: stretch;
     z-Index: 10000;
-}
-.poptext textarea {
-    opacity: 0.95;
-    overflow-y: scroll !important;
 }
 .poptext label {
     width: 100% !important;
     text-align: center !important;
-    background-color: rgba(0,0,0,0.8);
+    border-top: 1px solid #888;
+    border-left: 1px solid #888;
+    border-right: 1px solid #888;
+    background-color: rgba(170,221,255,0.75);
     padding: 3px 0 3px 0;
-    color: white;
+    margin: 0;
+    color: black;
+}
+.poptext textarea {
+    flex-grow: 1;
+    opacity: 0.95;
+    outline: none;
+    overflow-y: scroll !important;
 }
 
 #alert-area {
