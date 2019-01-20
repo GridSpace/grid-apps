@@ -1,0 +1,141 @@
+<html>
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        #test {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #gyroid > div {
+            display: flex;
+            flex-direction: row;
+        }
+        #gyroid > div > div {
+            min-width: 3px;
+            min-height: 3px;
+        }
+    </style>
+    <script>
+        let PI2 = Math.PI * 2;
+        let rez = 150;
+        let inc = PI2/rez;
+        let epsilon = 0;
+        let zcache = {};
+
+        function $(id) {
+            return document.getElementById(id);
+        }
+
+        function init() {
+            $('zval').max = rez;
+            for (let z=0; z<PI2; z += inc) {
+                generate(z);
+            }
+            render(0);
+        }
+
+        function update() {
+            let z = $('zval').value;
+            render((z / rez) * PI2);
+        }
+
+        function generate(z) {
+            let zkey = z.toFixed(8);
+            let cached = zcache[zkey];
+
+            if (cached) {
+                return cached;
+            }
+
+            let edge = [];
+            let vals = [];
+            let points = 0;
+            let points_lr = 0;
+            let points_td = 0;
+            for (let x=0; x<PI2; x += inc) {
+                let vrow = []; // raw values row
+                let erow = []; // edge values row
+                edge.push(erow);
+                vals.push(vrow);
+                for (let y=0; y<PI2; y += inc) {
+                    erow.push(0);
+                    vrow.push(
+                        Math.sin(x) * Math.cos(y) +
+                        Math.sin(y) * Math.cos(z) +
+                        Math.sin(z) * Math.cos(x)
+                    );
+                }
+            }
+
+            // left-right threshold search (red)
+            vals.forEach((vrow, rowi) => {
+                let erow = edge[rowi];
+                let lval = vrow[vrow.length - 1];
+                vrow.forEach((val, vali) => {
+                    if (lval <= epsilon && val >= epsilon) {
+                        erow[vali] = 1;
+                        points++;
+                        points_lr++;
+                    }
+                    lval = val;
+                })
+            });
+
+            // top-down threshold search (green)
+            for (let x=0; x<rez; x++) {
+                let lval = vals[vals.length-1][x];
+                for (let y=0; y<rez; y++) {
+                    let val = vals[y][x];
+                    if (lval <= epsilon && val >= epsilon) {
+                        if (edge[y][x]) {
+                            edge[y][x] = 3;
+                        } else {
+                            edge[y][x] = 2;
+                            points++
+                        }
+                        points_td++;
+                    }
+                    lval = val;
+                }
+            }
+
+            // left-right poly create
+
+            // top-down poly create
+
+            console.log({zkey, points, points_lr, points_td});
+            return (zcache[zkey] = edge);
+        }
+
+        function render(z) {
+            let edge = generate(z);
+            let html = [];
+            edge.forEach(row => {
+                html.push('<div>');
+                row.forEach(val => {
+                    let {r, g, b} = {r: 0, b: 0, g: 0};
+                    if (val === 1) r = 255;
+                    if (val === 2) g = 255;
+                    if (val === 3) b = 255;
+                    let style = `background-color: rgb(${r},${g},${b})`;
+                    html.push(`<div style="${style}""></div>`);
+                });
+                html.push('</div>');
+            });
+
+            $('gyroid').innerHTML = html.join('');
+        }
+    </script>
+</head>
+<body onload="init()">
+    <div id="test">
+        <div id="gyroid"></div>
+        <input id="zval" type="range" min="0" max="200" value="0" oninput="update()"/>
+    </div>
+</body>
+</html>
