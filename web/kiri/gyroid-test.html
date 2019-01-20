@@ -10,6 +10,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: stretch;
         }
         #gyroid > div {
             display: flex;
@@ -19,12 +20,19 @@
             min-width: 3px;
             min-height: 3px;
         }
+        #stats {
+            text-align: center;
+        }
+        #stats > input {
+            pointer-events: none;
+            outline: none;
+            width: 5em;
+        }
     </style>
     <script>
         let PI2 = Math.PI * 2;
         let rez = 150;
         let inc = PI2/rez;
-        let epsilon = 0;
         let zcache = {};
 
         function $(id) {
@@ -77,7 +85,7 @@
                 let erow = edge[rowi];
                 let lval = vrow[vrow.length - 1];
                 vrow.forEach((val, vali) => {
-                    if (lval <= epsilon && val >= epsilon) {
+                    if (lval <= 0 && val >= 0) {
                         erow[vali] = 1;
                         points++;
                         points_lr++;
@@ -91,7 +99,7 @@
                 let lval = vals[vals.length-1][x];
                 for (let y=0; y<rez; y++) {
                     let val = vals[y][x];
-                    if (lval <= epsilon && val >= epsilon) {
+                    if (lval <= 0 && val >= 0) {
                         if (edge[y][x]) {
                             edge[y][x] = 3;
                         } else {
@@ -108,13 +116,17 @@
 
             // top-down poly create
 
-            console.log({zkey, points, points_lr, points_td});
-            return (zcache[zkey] = edge);
+            return zcache[zkey] = {edge, points, points_lr, points_td};
         }
 
         function render(z) {
-            let edge = generate(z);
             let html = [];
+            let { edge, points, points_lr, points_td } = generate(z);
+            console.log({z, points, points_lr, points_td});
+            $('points').value = points;
+            $('points_lr').value = points_lr;
+            $('points_td').value = points_td;
+            $('direction').value = points_td > points_lr ? 'lr' : 'td';
             edge.forEach(row => {
                 html.push('<div>');
                 row.forEach(val => {
@@ -136,6 +148,13 @@
     <div id="test">
         <div id="gyroid"></div>
         <input id="zval" type="range" min="0" max="200" value="0" oninput="update()"/>
+        <div id="stats">
+            <input id="points"></input>
+            <input id="points_lr"></input>
+            <input id="points_td"></input>
+            <input id="direction"></input>
+            <input id="polys"></input>
+        </div>
     </div>
 </body>
 </html>
