@@ -1,7 +1,8 @@
 # Kiri:Moto todo
 
 * widget general add-ons (fdm supports, cam tabs)
-* extend mesh object to store raw + annotations (rot,scale,pos), share raw data w/ dups, encode/decode
+* extend mesh object to store raw + annotations (rot,scale,pos)
+*    share raw data w/ dups, encode/decode
 * bail on decimation if it's proving ineffective
 * improve decimation speed by avoiding in/out of Point
 * dismissible transient message/alert
@@ -15,6 +16,7 @@
 
 # FDM todo
 
+* sin_x * cos_y + sin_y * cos_z + sin_z * cos_x = 0
 * use fill spacing for top raft fill spacing
 * add lay-flat auto-rotation or from selected face
 * refactor thin fill to use outline and inside poly normal dist to self
@@ -31,6 +33,7 @@
 
 # CAM todo
 
+* refactor slicing around flats w/ interpolation instead of culling
 * optimize away topo generation (for z hop/move) when part is flat
 * add imperial / metric units switch in (future) global config options
 * add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
