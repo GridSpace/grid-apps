@@ -60,6 +60,7 @@ self.kiri.license = exports.LICENSE;
                     sliceFillOverlap: 1,
                     sliceFillSpacing: 1,
                     sliceFillSparse: 1,
+                    sliceFillGyroid: 1,
                     sliceSupportEnable: 1,
                     sliceSupportDensity: 1,
                     sliceSupportOffset: 1,
@@ -270,6 +271,7 @@ self.kiri.license = exports.LICENSE;
                 sliceFillOverlap: 0.3,
                 sliceFillSpacing: 1.0,
                 sliceFillSparse: 0.5,
+                sliceFillGyroid: false,
 
                 sliceSupportEnable: false,
                 sliceSupportDensity: 0.25,
@@ -2462,6 +2464,7 @@ self.kiri.license = exports.LICENSE;
             sliceFillSpacing: UC.newInput("fill spacing", {title:"for solid fill areas\nas a percentage of nozzle width\n< 1.0 causes fill overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             sliceFillAngle: UC.newInput("fill angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
             sliceFillSparse: UC.newInput("fill ratio", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
+            sliceFillGyroid: UC.newBoolean("fill gyroid", onBooleanClick, {modes:FDM}),
             sliceSolidMinArea: UC.newInput("solid area", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),
             sliceSolidLayers: UC.newInput("solid layers", {title:"flat area fill projections\nbased on layer deltas", convert:UC.toInt, modes:FDM}),
             sliceBottomLayers: UC.newInput("base layers", {title:"bottom solid layer count", convert:UC.toInt, modes:FDM}),

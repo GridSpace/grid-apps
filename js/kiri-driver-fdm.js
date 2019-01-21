@@ -65,7 +65,7 @@ var gs_kiri_fdm = exports;
 
         SLICER.sliceWidget(widget, {
             height: spro.sliceHeight,
-            minHeight: spro.sliceMinHeight,
+            minHeight: spro.sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
             firstHeight: spro.firstSliceHeight,
             view: view
         }, onSliceDone, onSliceUpdate);
@@ -149,7 +149,13 @@ var gs_kiri_fdm = exports;
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!spro.sliceVase && spro.sliceFillSparse > 0.0) {
                 forSlices(0.8, 1.0, function(slice) {
-                    slice.doSparseLayerFill(fillSpacing, spro.sliceFillSparse, widget.getBoundingBox());
+                    slice.doSparseLayerFill({
+                        spacing: fillSpacing,
+                        density: spro.sliceFillSparse,
+                        bounds: widget.getBoundingBox(),
+                        height: spro.sliceHeight,
+                        type: spro.sliceFillGyroid ? 'gyroid' : 'hex'
+                    });
                 }, "infill");
             }
 

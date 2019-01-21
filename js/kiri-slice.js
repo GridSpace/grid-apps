@@ -593,14 +593,16 @@ var gs_kiri_slice = exports;
     /**
      * Take output from pluggable sparse infill algorithm and clip to
      * the bounds of the top polygons and their inner solid areas.
-     *
-     * @param {number} spacing space between fill lines
-     * @param {number} percent infill 0.0 - 1.0
-     * @param {Object} bounds -- TODO calc w/out mesh so it can run in a worker
      */
-    PRO.doSparseLayerFill = function(spacing, percent, bounds) {
+    PRO.doSparseLayerFill = function(options) {
+        let spacing = options.spacing,  // spacing space between fill lines
+            density = options.density,  // density of infill 0.0 - 1.0
+            bounds = options.bounds,    // bounding box of widget
+            height = options.height,    // z layer height
+            type = options.type || 'hex';
+
         this.isSparseFill = false;
-        if (this.tops.length === 0 || percent === 0.0 || this.isSolidFill) return;
+        if (this.tops.length === 0 || density === 0.0 || this.isSolidFill) return;
 
         var scope = this,
             tops = scope.tops,
@@ -619,8 +621,9 @@ var gs_kiri_slice = exports;
                 bounds: function() { return bounds },
                 zIndex: function() { return scope.index },
                 zValue: function() { return scope.z },
-                density: function() { return percent },
+                zHeight: function() { return height },
                 offset: function() { return spacing },
+                density: function() { return density },
                 emit: function(x,y) { line.push(newPoint(x,y,scope.z)) },
                 newline: function() {
                     if (line.length > 0) {
@@ -631,8 +634,13 @@ var gs_kiri_slice = exports;
             };
 
         scope.isSparseFill = true;
-        // this is pluggable
-        sparseFillHex(target, true);
+
+        // use specified fill type
+        switch (type) {
+            case 'hex': sparseFillHex(target, true); break;
+            case 'gyroid': sparseFillGyroid(target); break;
+        }
+
         // force emit of last line
         target.newline();
 
@@ -1278,6 +1286,32 @@ var gs_kiri_slice = exports;
                 target.newline();
             }
         }
+    }
+
+    function sparseFillGyroid(target) {
+        let bounds = target.bounds();
+        let height = target.zHeight();
+        let span_x = bounds.max.x - bounds.min.x;
+        let span_y = bounds.max.y - bounds.min.y;
+        let density = target.density();
+        let tile = 1 + (1 - density) * 15;
+        let tile_x = span_x / tile;
+        let tile_y = span_y / tile;
+        let tile_z = 1 / tile;
+        let gyroid = BASE.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
+
+        gyroid.polys.forEach(poly => {
+            for (let tx=0; tx<=tile_x; tx++) {
+                for (let ty=0; ty<=tile_y; ty++) {
+                    target.newline();
+                    let bx = tx * tile + bounds.min.x;
+                    let by = ty * tile + bounds.min.y;
+                    poly.forEach(point => {
+                        target.emit(bx + point.x * tile, by + point.y * tile);
+                    });
+                }
+            }
+        });
     }
 
     function newTop(poly) {
