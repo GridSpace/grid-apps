@@ -46,7 +46,7 @@ var gs_base_gyroid = exports;
             let erow = edge[y];
             let lval = vrow[vrow.length - 1];
             vrow.forEach((val, x) => {
-                if (lval <= 0 && val >= 0) {
+                if ((lval <= 0 && val >= 0) || (lval >= 0 && val <= 0)) {
                     erow[x] = 1;
                     points++;
                     points_lr++;
