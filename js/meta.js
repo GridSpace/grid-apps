@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Stewart Allen -- All Rights Reserved
+ * Copyright 2014-2019 Stewart Allen -- All Rights Reserved
  *
  * TODO add history segment on right for quick rollback
  * TODO save-as for harder fork of model

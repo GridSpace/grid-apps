@@ -1,4 +1,4 @@
-/** Copyright 2014-2017 Stewart Allen -- All Rights Reserved */
+/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
 
 "use strict";
 
