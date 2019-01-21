@@ -219,16 +219,6 @@
                     html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
                 });
             });
-            // edge.forEach((row,y) => {
-            //     row.forEach((val,x) => {
-            //         let color = 'black';
-            //         if (val === 1) color = 'red';
-            //         if (val === 2) color = 'green';
-            //         if (val === 3) color = 'blue';
-            //         if (val === 0) return;
-            //         html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
-            //     });
-            // });
             html.push('</g>');
 
             html.push('</svg>');
