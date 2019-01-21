@@ -139,7 +139,37 @@ var gs_base_gyroid = exports;
             } while (added);
         } while (cleared < sparse.length);
 
-        return {edge, points, dir, polys};
+        return {edge, points, dir, polys: polys.map(poly => filter(poly))};
+    }
+
+    function filter(poly) {
+        if (poly.length === 1) {
+            return poly;
+        }
+        let nuchain = [];
+        let e1 = poly[0];
+        let e2 = null;
+        let last = poly.length - 1;
+        for (let i=1; i<poly.length; i++) {
+            let el = poly[i];
+            if (e1.x === el.x || e1.y === el.y) {
+                e2 = el;
+                if (i < last) {
+                    continue;
+                }
+            }
+            if (e2) {
+                nuchain.push({x:(e1.x + e2.x)/2, y:(e1.y + e2.y)/2});
+                e2 = null;
+            } else {
+                nuchain.push(e1);
+                if (i === last) {
+                    nuchain.push(el);
+                }
+            }
+            e1 = el;
+        }
+        return nuchain;
     }
 
     function dist(a, b, dir) {
