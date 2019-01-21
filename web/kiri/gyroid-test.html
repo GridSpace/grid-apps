@@ -6,8 +6,8 @@
     <meta name="keywords" content="gyroid,infill" />
     <meta name="author" content="Stewart Allen">
     <meta name="robots" content="noindex, nofollow">
-    <meta property="og:description" content="gyroid infill code playground">
-    <meta property="og:title" content="gyroid infill code playground">
+    <meta property="og:description" content="algorithm testing sandbox">
+    <meta property="og:title" content="gyroid infill playground">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://grid.space/kiri/gyroid-test.html">
     <title>gyroid testing</title>
@@ -126,6 +126,7 @@
                 }
             }
 
+            // deterime prevailing direction for chaining
             let dir = points_td > points_lr ? 'lr' : 'td';
 
             // create sparse representation
@@ -144,13 +145,14 @@
                 return b.dist - a.dist;
             });
 
-            // join sparse by distance
+            // join sparse points array by closest distance
             let polys = [];
             let chain;
             let added;
             let cleared = 0;
             let maxdist = rez * 0.05;
-            if (true) do {
+
+            do {
                 chain = null;
                 for (let i=0; i<sparse.length; i++) {
                     if (sparse[i]) {
@@ -196,6 +198,7 @@
         function dist(a, b, dir) {
             let dx = a.x - b.x;
             let dy = a.y - b.y;
+            // bias distance by prevailing direction of discovery to join stragglers
             if (dir === 'lr') dx = dx / 2;
             if (dir === 'td') dy = dy / 2;
             return Math.sqrt(dx * dx + dy * dy);
@@ -206,21 +209,12 @@
             let wh = size / rez;
             let html = [`<svg width=${size} height=${size}>`];
             let { edge, points, dir, polys } = generate(z);
-            console.log({z, points, dir, polys });
+
             $('points').value = points;
             $('direction').value = dir;
             $('polys').value = polys.length;
 
-            polys.forEach(poly => {
-                let points = poly
-                    .map(point => [point.x * wh + wh / 2, point.y * wh + wh / 2]
-                    .join(',')).join(' ');
-                let x = poly[0].x - 1;
-                let y = poly[0].y - 1;
-                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:purple;stroke-width:0"/>`);
-                html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
-            });
-
+            // raw threshold points
             html.push('<g>');
             polys.forEach(poly => {
                 poly.forEach(point => {
@@ -229,6 +223,19 @@
                     let color = ['black','red','green','blue'][point.val];
                     html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
                 });
+            });
+            html.push('</g>');
+
+            // points joined into poly lines
+            html.push('<g>');
+            polys.forEach(poly => {
+                let points = poly
+                    .map(point => [point.x * wh + wh / 2, point.y * wh + wh / 2]
+                    .join(',')).join(' ');
+                let x = poly[0].x - 1;
+                let y = poly[0].y - 1;
+                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:purple;stroke-width:0"/>`);
+                html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
             });
             html.push('</g>');
 
