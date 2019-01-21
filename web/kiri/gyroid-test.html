@@ -28,11 +28,14 @@
             outline: none;
             width: 5em;
         }
+        svg {
+            border: 1px solid #888;
+        }
     </style>
     <script>
         let PI2 = Math.PI * 2;
-        let rez = 150;
-        let inc = PI2/rez;
+        let rez = 200;
+        let inc = PI2 / rez;
         let zcache = {};
 
         function $(id) {
@@ -81,12 +84,12 @@
             }
 
             // left-right threshold search (red)
-            vals.forEach((vrow, rowi) => {
-                let erow = edge[rowi];
+            vals.forEach((vrow, y) => {
+                let erow = edge[y];
                 let lval = vrow[vrow.length - 1];
-                vrow.forEach((val, vali) => {
+                vrow.forEach((val, x) => {
                     if (lval <= 0 && val >= 0) {
-                        erow[vali] = 1;
+                        erow[x] = 1;
                         points++;
                         points_lr++;
                     }
@@ -112,33 +115,123 @@
                 }
             }
 
-            // left-right poly create
+            let dir = points_td > points_lr ? 'lr' : 'td';
 
-            // top-down poly create
+            // create sparse representation
+            let sparse = [];
+            let center = rez / 2;
+            edge.forEach((row,y) => {
+                row.forEach((val,x) => {
+                    if (val) {
+                        let dx = Math.abs(x - center);
+                        let dy = Math.abs(y - center);
+                        sparse.push({x, y, val, dist: Math.max(dx,dy)});
+                    }
+                });
+            });
+            sparse.sort((a,b) => {
+                return b.dist - a.dist;
+            });
 
-            return zcache[zkey] = {edge, points, points_lr, points_td};
+            // join sparse by distance
+            let polys = [];
+            let chain;
+            let added;
+            let cleared = 0;
+            let maxdist = rez * 0.05;
+            if (true) do {
+                chain = null;
+                for (let i=0; i<sparse.length; i++) {
+                    if (sparse[i]) {
+                        chain = [ sparse[i] ];
+                        polys.push(chain);
+                        sparse[i] = null;
+                        cleared++;
+                        break;
+                    }
+                }
+                do {
+                    added = false;
+                    let target = chain[chain.length - 1];
+                    let cl_elm = null;
+                    let cl_idx = null;
+                    let cl_dst = Infinity;
+                    for (let i=0; i<sparse.length; i++) {
+                        let test_el = sparse[i];
+                        if (test_el) {
+                            let dst = dist(target, test_el, dir);
+                            if (cl_idx === null || dst < cl_dst) {
+                                cl_idx = i;
+                                cl_elm = test_el;
+                                cl_dst = dst;
+                            }
+                        }
+                    }
+                    if (cl_elm) {
+                        if (cl_dst > maxdist) {
+                            break;
+                        }
+                        sparse[cl_idx] = null;
+                        cleared++;
+                        chain.push(cl_elm);
+                        added = true;
+                    }
+                } while (added);
+            } while (cleared < sparse.length);
+
+            return zcache[zkey] = {edge, points, dir, polys};
+        }
+
+        function dist(a, b, dir) {
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            if (dir === 'lr') dx = dx / 2;
+            if (dir === 'td') dy = dy / 2;
+            return Math.sqrt(dx * dx + dy * dy);
         }
 
         function render(z) {
-            let html = [];
-            let { edge, points, points_lr, points_td } = generate(z);
-            console.log({z, points, points_lr, points_td});
+            let size = 800;
+            let wh = size / rez;
+            let html = [`<svg width=${size} height=${size}>`];
+            let { edge, points, dir, polys } = generate(z);
+            console.log({z, points, dir, polys });
             $('points').value = points;
-            $('points_lr').value = points_lr;
-            $('points_td').value = points_td;
-            $('direction').value = points_td > points_lr ? 'lr' : 'td';
-            edge.forEach(row => {
-                html.push('<div>');
-                row.forEach(val => {
-                    let {r, g, b} = {r: 0, b: 0, g: 0};
-                    if (val === 1) r = 255;
-                    if (val === 2) g = 255;
-                    if (val === 3) b = 255;
-                    let style = `background-color: rgb(${r},${g},${b})`;
-                    html.push(`<div style="${style}""></div>`);
-                });
-                html.push('</div>');
+            $('direction').value = dir;
+            $('polys').value = polys.length;
+
+            polys.forEach(poly => {
+                let points = poly
+                    .map(point => [point.x * wh + wh / 2, point.y * wh + wh / 2]
+                    .join(',')).join(' ');
+                let x = poly[0].x - 1;
+                let y = poly[0].y - 1;
+                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:purple;stroke-width:0"/>`);
+                html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
             });
+
+            html.push('<g>');
+            polys.forEach(poly => {
+                poly.forEach(point => {
+                    let x = point.x;
+                    let y = point.y;
+                    let color = ['black','red','green','blue'][point.val];
+                    html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+                });
+            });
+            // edge.forEach((row,y) => {
+            //     row.forEach((val,x) => {
+            //         let color = 'black';
+            //         if (val === 1) color = 'red';
+            //         if (val === 2) color = 'green';
+            //         if (val === 3) color = 'blue';
+            //         if (val === 0) return;
+            //         html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+            //     });
+            // });
+            html.push('</g>');
+
+            html.push('</svg>');
 
             $('gyroid').innerHTML = html.join('');
         }
@@ -150,8 +243,6 @@
         <input id="zval" type="range" min="0" max="200" value="0" oninput="update()"/>
         <div id="stats">
             <input id="points"></input>
-            <input id="points_lr"></input>
-            <input id="points_td"></input>
             <input id="direction"></input>
             <input id="polys"></input>
         </div>
