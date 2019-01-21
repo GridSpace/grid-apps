@@ -220,7 +220,7 @@
                 poly.forEach(point => {
                     let x = point.x;
                     let y = point.y;
-                    let color = ['black','red','green','blue'][point.val];
+                    let color = ['black','#f00a','#0f0a','#00fa'][point.val];
                     html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
                 });
             });
@@ -234,7 +234,7 @@
                     .join(',')).join(' ');
                 let x = poly[0].x - 1;
                 let y = poly[0].y - 1;
-                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:purple;stroke-width:0"/>`);
+                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:#f0f5;stroke-width:0"/>`);
                 html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
             });
             html.push('</g>');
