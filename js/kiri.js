@@ -2923,7 +2923,7 @@ self.kiri.license = exports.LICENSE;
                     var res = JSON.parse(reply);
                     if (res && res.ver) {
                         LOC.hash = res.space + "/" + res.ver;
-                        if (display) alert2("unique settings id is: " + res.space + "/" + res.ver);
+                        if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
                     }
                 } else {
                     updateSpaceState();
