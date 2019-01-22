@@ -60,7 +60,7 @@ var gs_base_gyroid = exports;
             let lval = vals[vals.length-1][x];
             for (let y=0; y<rez; y++) {
                 let val = vals[y][x];
-                if (lval <= 0 && val >= 0) {
+                if ((lval <= 0 && val >= 0) || (lval >= 0 && val <= 0)) {
                     if (edge[y][x]) {
                         edge[y][x] = 3;
                     } else {
@@ -119,7 +119,7 @@ var gs_base_gyroid = exports;
                 for (let i=0; i<sparse.length; i++) {
                     let test_el = sparse[i];
                     if (test_el) {
-                        let dst = dist(target, test_el, dir);
+                        let dst = distTo(target, test_el, dir);
                         if (cl_idx === null || dst < cl_dst) {
                             cl_idx = i;
                             cl_elm = test_el;
@@ -139,73 +139,49 @@ var gs_base_gyroid = exports;
             } while (added);
         } while (cleared < sparse.length);
 
-        return {edge, points, dir, polys: polys.map(poly => filter(poly,inc))};
+        let psimple = polys
+            .map(poly => filter(poly, 0))
+            .map(poly => filter(poly, inc));
+
+        return {edge, points, dir, polys: psimple};
     }
 
-    // merge x/y co-linear
-    function filter(poly,inc) {
-        if (poly.length === 1) {
+    // merge co-linear and distance threshold
+    function filter(poly, inc) {
+        if (poly.length <= 2) {
             return poly;
         }
-        let nuchain = [];
-        let e1 = poly[0];
+        let nupoly = [ poly[0] ];
+        let e1 = poly[1];
         let e2 = null;
-        let last = poly.length - 1;
+        let last = poly.length - 2;
         for (let i=1; i<poly.length; i++) {
             let el = poly[i];
-            if (e1.x === el.x || e1.y === el.y) {
+            let drop = inc ?
+                (distTo(e1, el) <= inc) :
+                (e1.x === el.x || e1.y === el.y);
+            if (drop) {
                 e2 = el;
                 if (i < last) {
                     continue;
                 }
             }
             if (e2) {
-                nuchain.push({x:(e1.x + e2.x)/2, y:(e1.y + e2.y)/2});
+                nupoly.push({x:(e1.x + e2.x)/2, y:(e1.y + e2.y)/2});
                 e2 = null;
             } else {
-                nuchain.push(e1);
+                nupoly.push(e1);
                 if (i === last) {
-                    nuchain.push(el);
+                    nupoly.push(el);
                 }
             }
             e1 = el;
         }
-        return filter2(nuchain,inc);
+        nupoly.push(poly[poly.length-1]);
+        return nupoly;
     }
 
-    // merge points within radius
-    function filter2(poly,inc) {
-        if (poly.length === 1) {
-            return poly;
-        }
-        let nuchain = [];
-        let e1 = poly[0];
-        let e2 = null;
-        let last = poly.length - 1;
-        let merge = inc;
-        for (let i=1; i<poly.length; i++) {
-            let el = poly[i];
-            if (dist(e1, el) <= merge) {
-                e2 = el;
-                if (i < last) {
-                    continue;
-                }
-            }
-            if (e2) {
-                nuchain.push({x:(e1.x + e2.x)/2, y:(e1.y + e2.y)/2});
-                e2 = null;
-            } else {
-                nuchain.push(e1);
-                if (i === last) {
-                    nuchain.push(el);
-                }
-            }
-            e1 = el;
-        }
-        return nuchain;
-    }
-
-    function dist(a, b, dir) {
+    function distTo(a, b, dir) {
         let dx = a.x - b.x;
         let dy = a.y - b.y;
         // bias distance by prevailing direction of discovery to join stragglers

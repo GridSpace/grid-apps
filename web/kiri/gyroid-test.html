@@ -97,23 +97,23 @@
             // left-right threshold search (red)
             vals.forEach((vrow, y) => {
                 let erow = edge[y];
-                let lval = vrow[vrow.length - 1];
-                vrow.forEach((val, x) => {
-                    if ((lval <= 0 && val >= 0) || (lval >= 0 && val <= 0)) {
+                let v0 = vrow[vrow.length - 1];
+                vrow.forEach((v1, x) => {
+                    if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
                         erow[x] = 1;
                         points++;
                         points_lr++;
                     }
-                    lval = val;
+                    v0 = v1;
                 })
             });
 
             // top-down threshold search (green)
             for (let x=0; x<rez; x++) {
-                let lval = vals[vals.length-1][x];
+                let v0 = vals[vals.length-1][x];
                 for (let y=0; y<rez; y++) {
-                    let val = vals[y][x];
-                    if (lval <= 0 && val >= 0) {
+                    let v1 = vals[y][x];
+                    if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
                         if (edge[y][x]) {
                             edge[y][x] = 3;
                         } else {
@@ -122,7 +122,7 @@
                         }
                         points_td++;
                     }
-                    lval = val;
+                    v0 = v1;
                 }
             }
 
@@ -144,6 +144,9 @@
             sparse.sort((a,b) => {
                 return b.dist - a.dist;
             });
+
+            // preserve sparse points for rendering
+            let raw = sparse.slice();
 
             // join sparse points array by closest distance
             let polys = [];
@@ -195,17 +198,17 @@
             // simplify poly
             polys = polys.map(poly => filter(poly));
 
-            return zcache[zkey] = {edge, points, dir, polys};
+            return zcache[zkey] = { raw, points, dir, polys };
         }
 
         function filter(poly) {
-            if (poly.length === 1) {
+            if (poly.length <= 2) {
                 return poly;
             }
-            let nuchain = [];
-            let e1 = poly[0];
+            let nuchain = [ poly[0] ];
+            let e1 = poly[1];
             let e2 = null;
-            let last = poly.length - 1;
+            let last = poly.length - 2;
             for (let i=1; i<poly.length; i++) {
                 let el = poly[i];
                 if (e1.x === el.x || e1.y === el.y) {
@@ -225,6 +228,7 @@
                 }
                 e1 = el;
             }
+            nuchain.push(poly[poly.length-1]);
             return nuchain;
         }
 
@@ -238,10 +242,10 @@
         }
 
         function render(z) {
-            let size = 800;
+            let size = 600;
             let wh = size / rez;
             let html = [`<svg width=${size} height=${size}>`];
-            let { edge, points, dir, polys } = generate(z);
+            let { raw, points, dir, polys } = generate(z);
 
             $('points').value = points;
             $('direction').value = dir;
@@ -249,14 +253,20 @@
 
             // raw threshold points
             html.push('<g>');
-            polys.forEach(poly => {
-                poly.forEach(point => {
-                    let x = point.x;
-                    let y = point.y;
-                    let color = ['black','#f00a','#0f0a','#00fa'][point.val];
-                    html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
-                });
-            });
+            raw.forEach(point => {
+                let x = point.x;
+                let y = point.y;
+                let color = ['black','#f00a','#0f0a','#00fa'][point.val];
+                html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+            })
+            // polys.forEach(poly => {
+            //     poly.forEach(point => {
+            //         let x = point.x;
+            //         let y = point.y;
+            //         let color = ['black','#f00a','#0f0a','#00fa'][point.val];
+            //         html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+            //     });
+            // });
             html.push('</g>');
 
             // points joined into poly lines
