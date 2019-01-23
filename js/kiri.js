@@ -1092,7 +1092,9 @@ self.kiri.license = exports.LICENSE;
             ajax(host+"/api/check?key="+key, function(data) {
                 data = js2o(data);
                 DBUG.log(data);
-                if (!data.done && !data.error) setTimeout(function() { gridhost_tracker(host,key) }, 1000);
+                if (!(data.done || data.error)) {
+                    setTimeout(function() { gridhost_tracker(host,key) }, 1000);
+                }
             });
         }
 
