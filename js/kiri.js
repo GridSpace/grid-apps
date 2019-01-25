@@ -78,6 +78,7 @@ self.kiri.license = exports.LICENSE;
                     firstLayerRate: 1,
                     firstLayerFillRate: 1,
                     firstLayerPrintMult: 1,
+                    firstLayerNozzleTemp: 1,
                     outputRaft: 1,
                     outputRaftSpacing: 1,
                     outputTemp: 1,
@@ -294,6 +295,7 @@ self.kiri.license = exports.LICENSE;
                 firstLayerPrintMult: 1.0,
                 outputRaft: false,
                 outputRaftSpacing: 0.2,
+                firstLayerNozzleTemp: 0,
 
                 outputTemp: 220,
                 outputFanMax: 255,
@@ -2466,12 +2468,12 @@ self.kiri.license = exports.LICENSE;
             sliceFillSpacing: UC.newInput("fill spacing", {title:"for solid fill areas\nas a percentage of nozzle width\n< 1.0 causes fill overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             sliceFillAngle: UC.newInput("fill angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
             sliceFillSparse: UC.newInput("fill ratio", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            sliceFillGyroid: UC.newBoolean("fill gyroid", onBooleanClick, {title: "best with fine layers\nand large interior voids", modes:FDM}),
             sliceSolidMinArea: UC.newInput("solid area", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),
             sliceSolidLayers: UC.newInput("solid layers", {title:"flat area fill projections\nbased on layer deltas", convert:UC.toInt, modes:FDM}),
             sliceBottomLayers: UC.newInput("base layers", {title:"bottom solid layer count", convert:UC.toInt, modes:FDM}),
             sliceTopLayers: UC.newInput("top layers", {title:"top solid layer count", convert:UC.toInt, modes:FDM}),
             sliceVase: UC.newBoolean("vase mode", onBooleanClick, {modes:FDM}),
+            sliceFillGyroid: UC.newBoolean("gyroid infill", onBooleanClick, {title: "best with fine layers\nand large interior voids", modes:FDM}),
 
             // laser
             laserOffset: UC.newInput("cut offset", {title:"millimeters\nadjust for beam width", convert:UC.toFloat, modes:LASER}),
@@ -2559,6 +2561,7 @@ self.kiri.license = exports.LICENSE;
             firstLayerPrintMult: UC.newInput("print factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, modes:FDM}),
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
+            firstLayerNozzleTemp: UC.newInput("nozzle temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
 
             support: UC.newGroup("supports", null, {modes:FDM}),
             sliceSupportDensity: UC.newInput("density", {title:"0.0 - 1.0\nrecommended 0.15\n0 to disable", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),

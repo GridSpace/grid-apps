@@ -407,7 +407,7 @@ var gs_kiri_fdm = exports;
                 y: device.bedDepth/2
             },
             consts = {
-                temp: process.outputTemp,
+                temp: process.firstLayerNozzleTemp || process.outputTemp,
                 temp_bed: process.outputBedTemp,
                 bed_temp: process.outputBedTemp,
                 fan_speed: process.outputFanMax,
@@ -569,9 +569,17 @@ var gs_kiri_fdm = exports;
                 append("; --- layer " + layer + " (" + consts.height + " @ " + consts.z + ") ---");
             }
 
-            // second layer fan on
-            if (layer === 1 && fan_power && process.outputCooling) {
-                append(constReplace(fan_power, consts));
+            // second layer transitions
+            if (layer === 1) {
+                // second layer fan on
+                if (fan_power && process.outputCooling) {
+                    append(constReplace(fan_power, consts));
+                }
+                // update temp if first layer temp specified
+                if (process.firstLayerNozzleTemp) {
+                    consts.temp = process.outputTemp;
+                    append(constReplace("M104 S{temp} T0", consts));
+                }
             }
 
             // move Z to layer height
