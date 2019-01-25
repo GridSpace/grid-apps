@@ -155,6 +155,9 @@ select {
     margin-top: 15px !important;
     padding: 15px 5px 10px 5px !important;
 }
+.print-sel > div {
+    flex-grow: 1;
+}
 .print-send {
     margin: 0 0 0 5px !important;
     width: 50px !important;

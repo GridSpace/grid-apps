@@ -27,23 +27,29 @@
 
 <div class="print-sel flex frow" id="send-to-octoprint">
     <span><label>octoprint</label></span>
-    <table>
-        <tr id="ophost"><th>host</th><td><input id="octo-host" size="35" placeholder="http(s)://host:port" /></td></tr>
-        <tr id="opapik"><th>key</th><td><input id="octo-apik" size="35" /></td></tr>
-        <tr id="ophint"><td colspan="2"><span id="octo-hint"><a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a> must be enabled in API settings</span></td></tr>
-    </table>
+    <div>
+        <table>
+            <tr id="ophost"><th>host</th><td><input id="octo-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+            <tr id="opapik"><th>key</th><td><input id="octo-apik" size="35" /></td></tr>
+            <tr id="ophint"><td colspan="2">
+                <span id="octo-hint">
+                    <a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a>
+                     must be enabled in API settings
+                 </span>
+             </td></tr>
+        </table>
+    </div>
     <button id="print-octoprint" class="print-send">send</button>
 </div>
 
 <div class="print-sel flex frow" id="send-to-gridhost">
     <span><label>grid:host</label></span>
-    <table>
-        <tr><th>host</th><td><input id="grid-host" size="35" placeholder="http(s)://host:port" /></td></tr>
-        <tr id="gpapik"><th>api key</th><td><input id="grid-apik" size="35" /></td></tr>
-        <tr><th>target</th><td>
-            <select id="grid-target"></select>
-        </td></tr>
-        <tr><td colspan="2"><span id="grid-hint">setup <a href="https://github.com/GridSpace/grid-host" target="_help">grid:host</a> for your network</span></td></tr>
-    </table>
+    <div>
+        <table>
+            <tr><th>host</th><td><input id="grid-host" size="35" placeholder="http(s)://host:port" /></td></tr>
+            <tr><th>target</th><td><select id="grid-target"></select></td></tr>
+            <tr><td colspan="2"><span id="grid-hint">setup <a href="https://github.com/GridSpace/grid-host" target="_help">grid:host</a> for your network</span></td></tr>
+        </table>
+    </div>
     <button id="print-gridhost" class="print-send">send</button>
 </div>
