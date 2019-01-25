@@ -468,8 +468,12 @@ var gs_kiri_fdm = exports;
             append("; " + pk + " = " + process[pk]);
         }
         append("; --- startup ---");
+        let t0 = false;
+        let t1 = false;
         for (var i=0; i<device.gcodePre.length; i++) {
             var line = device.gcodePre[i];
+            if (line.indexOf('T0') >= 0) t0 = true;
+            if (line.indexOf('T1') >= 0) t1 = true;
             if (device.extrudeAbs && line.indexOf('E') > 0) {
                 line.split(";")[0].split(' ').forEach(function (tok) {
                     // use max E position from gcode-preamble
@@ -578,7 +582,8 @@ var gs_kiri_fdm = exports;
                 // update temp if first layer temp specified
                 if (process.firstLayerNozzleTemp) {
                     consts.temp = process.outputTemp;
-                    append(constReplace("M104 S{temp} T0", consts));
+                    if (t0) append(constReplace("M104 S{temp} T0", consts));
+                    if (t1) append(constReplace("M104 S{temp} T1", consts));
                 }
             }
 
