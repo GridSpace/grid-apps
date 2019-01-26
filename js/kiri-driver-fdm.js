@@ -468,8 +468,8 @@ var gs_kiri_fdm = exports;
             append("; " + pk + " = " + process[pk]);
         }
         append("; --- startup ---");
-        let t0 = false;
-        let t1 = false;
+        var t0 = false;
+        var t1 = false;
         for (var i=0; i<device.gcodePre.length; i++) {
             var line = device.gcodePre[i];
             if (line.indexOf('T0') >= 0) t0 = true;
