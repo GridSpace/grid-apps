@@ -105,6 +105,7 @@ self.kiri.license = exports.LICENSE;
                     antiBacklash: 1,
                     zHopDistance: 1,
                     gcodeKFactor: 1,
+                    gcodeNozzle: 1,
                     gcodePauseLayers: 1,
                     outputClockwise: 1,
                     outputOriginCenter: 1,
@@ -320,6 +321,7 @@ self.kiri.license = exports.LICENSE;
                 antiBacklash: 1,
                 zHopDistance: 0.2,
                 gcodeKFactor: 0,
+                gcodeNozzle: 0,
                 gcodePauseLayers: "",
                 outputCooling: true,
 
@@ -2592,6 +2594,7 @@ self.kiri.license = exports.LICENSE;
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),
             gcodeKFactor: UC.newInput("k-factor", {title: "aka linear advance\nuse {kfactor} in gcode", convert:UC.toInt, modes:FDM}),
+            gcodeNozzle: UC.newInput("nozzle", {title: "select output nozzle", convert:UC.toInt, modes:FDM}),
             gcodePauseLayers: UC.newInput("pause layers", {title: "comma-separated list of layers\nto inject pause commands before", modes:FDM})
         });
 

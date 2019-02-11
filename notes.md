@@ -16,7 +16,7 @@
 
 # FDM todo
 
-* sin_x * cos_y + sin_y * cos_z + sin_z * cos_x = 0
+* first layer support speed should be same as shell speed
 * use fill spacing for top raft fill spacing
 * add lay-flat auto-rotation or from selected face
 * refactor thin fill to use outline and inside poly normal dist to self

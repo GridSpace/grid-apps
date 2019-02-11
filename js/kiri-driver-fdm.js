@@ -417,6 +417,8 @@ var gs_kiri_fdm = exports;
                 right: offset ? device.bedWidth : device.bedWidth/2,
                 bottom: offset ? 0 : -device.bedDepth/2,
                 kfactor: process.gcodeKFactor || 0,
+                nozzle: process.gcodeNozzle || 0,
+                tool: process.gcodeNozzle || 0,
                 z_max: device.maxHeight,
                 layers: layers.length
             },
