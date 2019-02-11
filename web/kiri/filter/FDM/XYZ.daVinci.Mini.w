@@ -1,6 +1,6 @@
 {
     "pre":[
-        "T0                     ; select extruder #0",
+        "T{tool}                ; select extruder #0",
         "M104 S{temp}           ; set nozzle temp",
         "M109 S{temp}           ; wait for nozzle to heat",
         "G21                    ; set units to millimeters",

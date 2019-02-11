@@ -1,9 +1,9 @@
 {
     "pre":[
-        "M104 S{temp} T0     ; set extruder temperature",
-        "M140 S{bed_temp} T0 ; set bed temperature",
-        "M190 S{bed_temp} T0 ; set bed temperature",
-        "M109 S{temp} T0     ; set extruder temperature",
+        "M104 S{temp} T{tool}     ; set extruder temperature",
+        "M140 S{bed_temp} T{tool} ; set bed temperature",
+        "M190 S{bed_temp} T{tool} ; set bed temperature",
+        "M109 S{temp} T{tool}     ; set extruder temperature",
         "M901 S35            ; set chamber temperature to 35 (standard)",
         "G90                 ; set absolute positioning mode",
         "M82                 ; set absolute positioning for extruder",
@@ -18,7 +18,7 @@
     ],
     "post":[
         "M107                ; turn off filament cooling fan",
-        "M104 S0 T0          ; turn off right extruder",
+        "M104 S0 T{tool}     ; turn off right extruder",
         "M140 S0             ; turn off bed",
         "M904                ; park extruder",
         "M84                 ; disable stepper motors"

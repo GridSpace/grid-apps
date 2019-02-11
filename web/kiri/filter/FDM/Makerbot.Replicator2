@@ -3,7 +3,7 @@
         "M73 P0          ; set progress to 0%",
         "G90             ; set absolute positioning mode",
         "M83             ; set relative positioning for extruder",
-        "M104 S{temp} T0 ; set extruder temperature for T0 (tool 0)",
+        "M104 S{temp} T{tool} ; set extruder temperature for T{tool} (tool 0)",
         "M127            ; close extruder valve (if it has one)",
         "G162 X Y F3000  ; move X,Y axis to maximum position at speed 3000 (top/right of table)",
         "G161 Z F1200    ; move Z axis to minimum position as speed 1200 (bottom)",
@@ -13,7 +13,7 @@
         "M132 X Y Z A B  ; load EEPROM home offsets for all axis",
         "G1 X{left} Y{bottom+10} Z30 F9000 ; move to wait position off table",
         "G130 X20 Y20 Z20 A20 B20  ; lower stepper Vrefs to give more juice to the extruder heater",
-        "M133 T0         ; wait for extruder T0 temperature to stabilize",
+        "M133 T{tool}    ; wait for extruder T{tool} temperature to stabilize",
         "G130 X127 Y127 Z40 A127 B127 ; default stepper Vrefs now that extruder is hot",
         "G92 A0          ; set extruder position value to 0 (no move)",
         "G1 Z0.4         ; move nozzle just above the bed height",
@@ -21,7 +21,7 @@
         "G1 X{left+10} Y{bottom+10} Z0.15 F1200 ; slow wipe",
         "G1 X{left+15} Y{bottom+15} Z0.5 F1200  ; lift",
         "G92 A0          ; set extruder position value to 0 (no move)",
-        "M135 T0         ; set toolhead 0"
+        "M135 T{tool}    ; set toolhead 0"
     ],
     "post":[
         "M127            ; stop filament cooling fan",

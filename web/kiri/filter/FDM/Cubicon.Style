@@ -1,10 +1,10 @@
 {
     "pre":[
-        "T0                     ; select extruder #0",
+        "T{tool}                ; select extruder #0",
         "M104 S{temp}           ; set nozzle temp",
-        "M140 S{bed_temp} T0    ; set bed temperature",
+        "M140 S{bed_temp} T{tool} ; set bed temperature",
         "M109 S{temp}           ; wait for nozzle to heat",
-        "S210 T0                ; wait for heating?",
+        "S210 T{tool}           ; wait for heating?",
         "M82                    ; absolute extrusion mode",
         "G28                    ; home",
         "G1 Z15 F6000           ; lower platform 15mm",
@@ -13,7 +13,7 @@
     ],
     "post":[
         "M107                   ; turn off filament cooling fan",
-        "M104 S0 T0             ; turn off right extruder",
+        "M104 S0 T{tool}        ; turn off right extruder",
         "M140 S0                ; turn off bed",
         "M904                   ; park extruder",
         "M84                    ; disable stepper motors"
