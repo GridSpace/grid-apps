@@ -584,8 +584,13 @@ var gs_kiri_fdm = exports;
                 // update temp if first layer temp specified
                 if (process.firstLayerNozzleTemp) {
                     consts.temp = process.outputTemp;
-                    if (t0) append(constReplace("M104 S{temp} T0", consts));
-                    if (t1) append(constReplace("M104 S{temp} T1", consts));
+                    if (t0) {
+                        append(constReplace("M104 S{temp} T0", consts));
+                    } else if (t1) {
+                        append(constReplace("M104 S{temp} T1", consts));
+                    } else {
+                        append(constReplace("M104 S{temp} T{tool}", consts));
+                    }
                 }
             }
 
