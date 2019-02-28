@@ -1124,9 +1124,11 @@ self.kiri.license = exports.LICENSE;
                         SDB['grid-apik'] = apik;
                         var res = JSON.parse(xhtr.responseText);
                         var sel = false;
+                        var first = null;
                         var html = [];
                         grid_targets = {};
                         for (var key in res) {
+                            first = first || key;
                             if (!SDB['grid-target']) {
                                 SDB['grid-target'] = key;
                                 sel = true;
@@ -1141,6 +1143,9 @@ self.kiri.license = exports.LICENSE;
                                 (res[key].comment || key) +
                                 "</option>"
                             );
+                        }
+                        if (!sel) {
+                            SDB['grid-target'] = first;
                         }
                         grid_target.innerHTML = html.join('\n');
                     } else if (xhtr.status === 401) {
