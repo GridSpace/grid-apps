@@ -541,7 +541,9 @@ var gs_kiri_print = exports;
                     shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
-                        if (startPoint.distTo2D(firstPoint) > retractDist) retract();
+                        if (startPoint.distTo2D(firstPoint) > retractDist) {
+                            retract();
+                        }
                     }
                 });
             }
@@ -724,7 +726,24 @@ var gs_kiri_print = exports;
             } else {
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
+                // outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
+
+                // outside in
+                (next.traces || []).sort(function(a,b) {
+                    return a.perimeter() > b.perimeter() ? -1 : 1;
+                }).forEach(function(poly, index) {
+                    outputTraces(poly, bounds);
+                });
+                // outputTraces([].appendAll(next.traces) || []), bounds); // outer first
+
+                // inside out
+                // (next.innerTraces() || []).sort(function(a,b) {
+                //     return a.perimeter() > b.perimeter() ? 1 : -1;
+                // }).forEach(function(poly, index) {
+                //     outputTraces(poly, bounds);
+                // });
+                outputTraces([].appendAll(next.innerTraces() || []), bounds); // inner last
+
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
                 lastTop = next;

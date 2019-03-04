@@ -1,0 +1,41 @@
+{
+    "pre":[
+        "M117 Heating                 ; announce heating",
+        "M107                         ; turn off filament cooling fan",
+        "M104 S{temp} T0              ; set extruder temperature",
+        "M140 S{bed_temp} T0          ; set bed temperature",
+        "G90                          ; set absolute positioning mode",
+        "M83                          ; set relative positioning for extruder",
+        "G28                          ; home axes",
+        "G1 F3000                     ; set default move speed",
+        "G1 X-8 Y-17 Z0               ; move to XY heating point",
+        "M190 S{bed_temp} T0          ; wait for bed to reach target temp",
+        "M109 S{temp} T0              ; wait for extruder to reach target temp",
+        "M117 Purge                   ; announce purge",
+        "G92 E0                       ; set extruder position to 0",
+        "G1 E50 F350                  ; purge 50mm from extruder",
+        "G1 X0 Y0 Z0 F3000            ; move to origin / wipe",
+        "M117 Start Print             ; announce start of print"
+    ],
+    "post":[
+        "M117 Done           ; announce done",
+        "M107                ; turn off filament cooling fan",
+        "M104 S0 T0          ; turn off extruder",
+        "M140 S0 T0          ; turn off bed",
+        "G91                 ; relative movement",
+        "G1 Z10 F1200        ; drop bed 10mm",
+        "G90                 ; absolute positioning",
+        "G28 X0 Y0           ; home XY axes",
+        "M84                 ; disable stepper motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}",
+        "progress": "M117 {progress}% layer {layer} / {layers}"
+    },
+    "settings":{
+        "origin_center": false,
+        "bed_width": 300,
+        "bed_depth": 300,
+        "build_height": 300
+    }
+}
