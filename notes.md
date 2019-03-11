@@ -16,6 +16,7 @@
 
 # FDM todo
 
+* expand internal supporting flats
 * first layer support speed should be same as shell speed
 * use fill spacing for top raft fill spacing
 * add lay-flat auto-rotation or from selected face
