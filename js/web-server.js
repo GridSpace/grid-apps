@@ -704,7 +704,9 @@ var ver = require('../js/license.js'),
     valid = require('validator'),
     agent = require('express-useragent'),
     spawn = require('child_process').spawn,
-    level = require('levelup')('./persist/', {valueEncoding:"json"}),
+    levelup = require('levelup'),
+    leveldown = require('leveldown'),
+    level = levelup(leveldown('./persist/'), {valueEncoding:"json"}),
     https = require('https'),
     uglify = require('uglify-es'),
     connect = require('connect'),
@@ -815,6 +817,15 @@ var ver = require('../js/license.js'),
     code = {},
     inject = {},
     injectKeys = ["kiri", "meta"];
+
+// level.createReadStream().on('data', o => {
+//     let k = o.key.toString();
+//     let v = o.value.toString();
+//     if (v.length > 80) {
+//         v = `[${v.length}] ${v.substring(0,70)}...`;
+//     }
+//     console.log(`${k} = ${v}`);
+// });
 
 /* *********************************************
  * Promises-based leveldb interface
