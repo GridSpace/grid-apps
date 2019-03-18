@@ -16,6 +16,7 @@
 
 # FDM todo
 
+* store/recover grid:print target against printer selected in device
 * expand internal supporting flats
 * first layer support speed should be same as shell speed
 * use fill spacing for top raft fill spacing
