@@ -343,6 +343,9 @@ function setup(req, res, next) {
                 rec.putTO = null;
                 db.put(dbikey, dbrec);
             }, ipSaveDelay);
+        })
+        .catch(error => {
+            console.log({dbikey, error});
         });
 
     // absolute limit on client requests per minute
@@ -704,9 +707,7 @@ var ver = require('../js/license.js'),
     valid = require('validator'),
     agent = require('express-useragent'),
     spawn = require('child_process').spawn,
-    levelup = require('levelup'),
-    leveldown = require('leveldown'),
-    level = levelup(leveldown('./persist/'), {valueEncoding:"json"}),
+    level = require('level')('./persist', {valueEncoding:"json"}),
     https = require('https'),
     uglify = require('uglify-es'),
     connect = require('connect'),

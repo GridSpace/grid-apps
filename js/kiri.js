@@ -1124,6 +1124,7 @@ self.kiri.license = exports.LICENSE;
                         SDB['grid-apik'] = apik;
                         var res = JSON.parse(xhtr.responseText);
                         var sel = false;
+                        var match = false;
                         var first = null;
                         var html = [];
                         grid_targets = {};
@@ -1135,6 +1136,7 @@ self.kiri.license = exports.LICENSE;
                             } else {
                                 sel = SDB['grid-target'] === key;
                             }
+                            match = match || sel;
                             grid_targets[html.length] = key;
                             html.push(
                                 "<option id='gpo-'" + key + " value='" +key + "'" +
@@ -1144,7 +1146,7 @@ self.kiri.license = exports.LICENSE;
                                 "</option>"
                             );
                         }
-                        if (!sel) {
+                        if (!match) {
                             SDB['grid-target'] = first;
                         }
                         grid_target.innerHTML = html.join('\n');
