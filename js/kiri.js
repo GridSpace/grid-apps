@@ -1828,7 +1828,6 @@ self.kiri.license = exports.LICENSE;
         // store camera view
         var view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
-
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 
@@ -2035,8 +2034,12 @@ self.kiri.license = exports.LICENSE;
         }
         settings.process.processName = name;
         settings.cproc[mode] = name;
+
         // associate named process with the current device
         settings.devproc[currentDeviceName()] = name;
+
+        // update selection display
+        $('selected-process').innerHTML = name;
 
         updateFields();
         if (!named) {
@@ -2986,6 +2989,7 @@ self.kiri.license = exports.LICENSE;
                     setDeviceCode(code, devicename);
                 });
             }
+            $('selected-device').innerHTML = devicename;
         }
 
         function valueOf(val, dv) {
