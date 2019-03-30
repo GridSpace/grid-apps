@@ -880,6 +880,7 @@ self.kiri.license = exports.LICENSE;
             }
         }
 
+        DOC.activeElement.blur();
         SPACE.update();
     }
 
@@ -1023,10 +1024,6 @@ self.kiri.license = exports.LICENSE;
     }
 
     function exportGCode(gcode) {
-        if (MODE === MODES.CAM) {
-            KIRI.serial.setGCode(gcode, currentPrint.bounds);
-        }
-
         SDB['print-seq'] = printSeq++;
 
         var pre = (MODE === MODES.CAM ? "cnc-" : "print-") + (printSeq.toString().padStart(3,"0")),
@@ -1262,8 +1259,6 @@ self.kiri.license = exports.LICENSE;
             $('print-download').onclick = download;
             $('print-octoprint').onclick = sendto_octoprint;
             $('print-gridhost').onclick = sendto_gridhost;
-            $('print-serial').onclick = showSerial;
-            $('print-serial').style.display = MODE === MODES.CAM ? '' : 'none';
             $('print-filament-row').style.display = MODE === MODES.FDM ? '' : 'none';
             $('mill-info').style.display = MODE === MODES.CAM ? '' : 'none';
             $('print-filename').value = filename;
@@ -1275,6 +1270,11 @@ self.kiri.license = exports.LICENSE;
             calcWeight();
             octo_host = $('octo-host');
             octo_apik = $('octo-apik');
+            if (MODE === MODES.CAM) {
+                $('send-to-octoprint').style.display = 'none';
+            } else {
+                $('send-to-octoprint').style.display = '';
+            }
             if (OCTOPRINT) {
                 $('ophost').style.display = 'none';
                 $('opapik').style.display = 'none';
@@ -2110,17 +2110,6 @@ self.kiri.license = exports.LICENSE;
         UI.modal.style.display = 'none';
     }
 
-    function showSerial(toggle) {
-        if (MODE !== MODES.CAM) return;
-        hideModal();
-        if (toggle === true) {
-            KIRI.serial.toggle();
-        } else {
-            KIRI.serial.show();
-        }
-        STATS.add('d-sender');
-    }
-
     function showHelpLocal() {
         showHelp("/kiri/help-kiri.html");
     }
@@ -2183,6 +2172,7 @@ self.kiri.license = exports.LICENSE;
                 DBUG.log("invalid view mode: "+mode);
                 return;
         }
+        DOC.activeElement.blur();
     }
 
     function inMode(mode) {
@@ -2781,9 +2771,6 @@ self.kiri.license = exports.LICENSE;
                     break;
                 case cca('C'): // refresh catalog
                     CATALOG.refresh();
-                    break;
-                case cca('c'): // open control window
-                    showSerial(true);
                     break;
                 case cca('i'): // single settings edit
                     var v = prompt('edit "'+settings.process.processName+'"', JSON.stringify(settings.process));
@@ -3612,9 +3599,6 @@ self.kiri.license = exports.LICENSE;
             STATS.set('seed', SDB[SEED]);
             STATS.add('init');
             // updateActive(true);
-
-            // init gcode sender
-            KIRI.serial.init();
 
             // place version number a couple of places to help users
             UI.helpButton.title = "version " + KIRI.version;

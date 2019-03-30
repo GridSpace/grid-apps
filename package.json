@@ -27,20 +27,20 @@
     },
     "dependencies": {
         "buffer-crc32": "^0.2.13",
-        "compression": "^1.7.3",
+        "compression": "^1.7.4",
         "connect": "^3.6.6",
         "express-useragent": "^1.0.12",
         "level": "^4.0.0",
-        "levelup": "^4.0.0",
         "leveldown": "^4.0.2",
-        "moment": "^2.22.2",
+        "levelup": "^4.0.0",
+        "moment": "^2.24.0",
         "n3d-threejs": "^72.0.0",
-        "three": "^0.96.0",
-        "pixi.js": "^4.8.2",
+        "pixi.js": "^4.8.7",
         "request": "^2.88.0",
         "serve-static": "^1.13.2",
+        "three": "^0.96.0",
         "tween.js": "^0.14.0",
-        "uglify-es": "^3.3.9",
+        "uglify-es": "^3.3.10",
         "validator": "^8.2.0"
     }
 }
