@@ -298,7 +298,7 @@ self.kiri.license = exports.LICENSE;
                 outputRaftSpacing: 0.2,
                 firstLayerNozzleTemp: 0,
 
-                outputTemp: 220,
+                outputTemp: 200,
                 outputFanMax: 255,
                 outputBedTemp: 0,
                 outputFeedrate: 80,
