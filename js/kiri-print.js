@@ -450,10 +450,7 @@ var gs_kiri_print = exports;
                 if (options.shorten && dist > options.shorten && count === points.length) {
                     point = last.offsetPointFrom(point, options.shorten);
                 }
-                if (shortDist && dist < shortDist) {
-                    var shortRate = shortSpeed + (printSpeed - shortSpeed) * (dist / shortDist);
-                    addOutput(output, point, shellMult, shortRate);
-                } else if (isShort) {
+                if (isShort) {
                     addOutput(output, point, shellMult, shortSpeed);
                 } else  {
                     addOutput(output, point, shellMult, printSpeed);
