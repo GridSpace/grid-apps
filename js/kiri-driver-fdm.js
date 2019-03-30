@@ -408,8 +408,8 @@ var gs_kiri_fdm = exports;
             },
             consts = {
                 temp: process.firstLayerNozzleTemp || process.outputTemp,
-                temp_bed: process.outputBedTemp,
-                bed_temp: process.outputBedTemp,
+                temp_bed: process.firstLayerBedTemp || process.outputBedTemp,
+                bed_temp: process.firstLayerBedTemp || process.outputBedTemp,
                 fan_speed: process.outputFanMax,
                 speed: process.outputFanMax,
                 top: offset ? device.bedDepth : device.bedDepth/2,
@@ -580,7 +580,7 @@ var gs_kiri_fdm = exports;
                 if (fan_power && process.outputCooling) {
                     append(constReplace(fan_power, consts));
                 }
-                // update temp if first layer temp specified
+                // update temps when first layer overrides are present
                 if (process.firstLayerNozzleTemp) {
                     consts.temp = process.outputTemp;
                     if (t0) {
@@ -590,6 +590,10 @@ var gs_kiri_fdm = exports;
                     } else {
                         append(constReplace("M104 S{temp} T{tool}", consts));
                     }
+                }
+                if (process.firstLayerBedTemp) {
+                    consts.bed_temp = consts.temp_bed = process.outputBedTemp;
+                    append(constReplace("M140 S{temp_bed} T0", consts));
                 }
             }
 

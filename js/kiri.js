@@ -79,6 +79,7 @@ self.kiri.license = exports.LICENSE;
                     firstLayerFillRate: 1,
                     firstLayerPrintMult: 1,
                     firstLayerNozzleTemp: 1,
+                    firstLayerBedTemp: 1,
                     outputRaft: 1,
                     outputRaftSpacing: 1,
                     outputTemp: 1,
@@ -295,6 +296,7 @@ self.kiri.license = exports.LICENSE;
                 outputRaft: false,
                 outputRaftSpacing: 0.2,
                 firstLayerNozzleTemp: 0,
+                firstLayerBedTemp: 0,
 
                 outputTemp: 200,
                 outputFanMax: 255,
@@ -2521,8 +2523,8 @@ self.kiri.license = exports.LICENSE;
             outputLaserPower: UC.newInput("power", {title:"0 - 100 %", convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
             outputLaserSpeed: UC.newInput("speed", {title:"millimeters / minute", convert:UC.toInt, modes:LASER}),
 
-            outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
             outputTemp: UC.newInput("nozzle temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
+            outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
             outputFeedrate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toInt, modes:FDM}),
             outputFinishrate: UC.newInput("finish speed", {title:"outermost shell speed\nmillimeters / minute", convert:UC.toInt, modes:FDM}),
             outputSeekrate: UC.newInput("move speed", {title:"non-print move speed\nmillimeters / minute\n0 = enable G0 moves", convert:UC.toInt, modes:FDM}),
@@ -2557,6 +2559,7 @@ self.kiri.license = exports.LICENSE;
             outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
             outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
             firstLayerNozzleTemp: UC.newInput("nozzle temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
+            firstLayerBedTemp: UC.newInput("bed temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
 
             support: UC.newGroup("supports", null, {modes:FDM}),
             sliceSupportDensity: UC.newInput("density", {title:"0.0 - 1.0\nrecommended 0.15\n0 to disable", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
