@@ -574,7 +574,7 @@ var gs_kiri_fdm = exports;
                 append("; --- layer " + layer + " (" + consts.height + " @ " + consts.z + ") ---");
             }
 
-            if (layer > 0 && device.layerRetract) {
+            if (layer > 0 && process.layerRetract) {
                 retract();
             }
 

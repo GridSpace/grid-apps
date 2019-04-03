@@ -41,7 +41,6 @@ self.kiri.license = exports.LICENSE;
                     extrudeAbs: 1,
                     filamentSize: 1,
                     nozzleSize: 1,
-                    layerRetract: 1,
                     gcodePre: 1,
                     gcodePost: 1,
                     gcodeProc: 1,
@@ -106,6 +105,7 @@ self.kiri.license = exports.LICENSE;
                     // detectThinWalls: 1,
                     antiBacklash: 1,
                     zHopDistance: 1,
+                    layerRetract: 1,
                     gcodeNozzle: 1,
                     gcodePauseLayers: 1,
                     outputClockwise: 1,
@@ -246,7 +246,6 @@ self.kiri.license = exports.LICENSE;
                 maxHeight: 150,     // FDM
                 filamentSize: 1.75, // FDM
                 nozzleSize: 0.4,    // FDM
-                layerRetract: false,// FDM
                 spindleMax: 0,      // CAM
                 gcodePre: [],       // FDM/CAM header script
                 gcodePost: [],      // FDM/CAM footer script
@@ -323,6 +322,7 @@ self.kiri.license = exports.LICENSE;
                 detectThinWalls: false,
                 antiBacklash: 1,
                 zHopDistance: 0.2,
+                layerRetract: 1,
                 gcodeNozzle: 0,
                 gcodePauseLayers: "",
                 outputCooling: true,
@@ -2305,7 +2305,6 @@ self.kiri.license = exports.LICENSE;
             setDeviceExtrusion: UC.newBoolean("extrude absolute", onBooleanClick, {title:"extrusion moves absolute"}),
             setDeviceOrigin: UC.newBoolean("origin center", onBooleanClick, {title:"bed origin center"}),
             setDeviceOriginTop: UC.newBoolean("origin top", onBooleanClick, {title:"part z origin top", modes:CAM}),
-            setDeviceLayerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"retract between layers"}),
 
             setDevice: UC.newGroup("gcode", $('device')),
             setDeviceFan: UC.newInput("fan power", {title:"set cooling fan power", modes:FDM, size:15}),
@@ -2595,6 +2594,7 @@ self.kiri.license = exports.LICENSE;
             zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
+            layerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"force filament retraction\nbetween layers", modes:FDM}),
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),
             gcodeNozzle: UC.newInput("nozzle", {title: "select output nozzle", convert:UC.toInt, modes:FDM}),
@@ -3017,7 +3017,6 @@ self.kiri.license = exports.LICENSE;
                         origin_center: UI.setDeviceOrigin.checked,
                         origin_top: UI.setDeviceOriginTop.checked,
                         extrude_abs: UI.setDeviceExtrusion.checked,
-                        layer_retract: UI.setDeviceLayerRetract.checked,
                         spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
                     },
                     cmd: {
@@ -3059,7 +3058,6 @@ self.kiri.license = exports.LICENSE;
                     bedDepth: valueOf(set.bed_depth, 175),
                     maxHeight: valueOf(set.build_height, 150),
                     nozzleSize: valueOf(set.nozzle_size, 0.4),
-                    layerRetract: valueOf(set.layer_retract, false),
                     filamentSize: valueOf(set.filament_diameter, 1.75),
                     extrudeAbs: valueOf(set.extrude_abs, false),
                     spindleMax: valueOf(set.spindle_max, 0),
@@ -3100,7 +3098,6 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
                 UI.setDeviceFilament.value = dev.filamentSize;
                 UI.setDeviceNozzle.value = dev.nozzleSize;
-                UI.setDeviceLayerRetract.checked = dev.layerRetract;
                 // CAM
                 UI.setDeviceMaxSpindle.value = dev.spindleMax;
                 UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
@@ -3120,7 +3117,6 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceWidth,
                  UI.setDeviceHeight,
                  UI.setDeviceExtrusion,
-                 UI.setDeviceLayerRetract,
                  UI.setDeviceOrigin,
                  UI.setDeviceOriginTop,
                  UI.setDeviceFan,
