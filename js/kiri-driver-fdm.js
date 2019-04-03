@@ -574,6 +574,10 @@ var gs_kiri_fdm = exports;
                 append("; --- layer " + layer + " (" + consts.height + " @ " + consts.z + ") ---");
             }
 
+            if (layer > 0 && device.layerRetract) {
+                retract();
+            }
+
             // second layer transitions
             if (layer === 1) {
                 // second layer fan on

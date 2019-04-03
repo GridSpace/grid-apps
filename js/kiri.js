@@ -41,6 +41,7 @@ self.kiri.license = exports.LICENSE;
                     extrudeAbs: 1,
                     filamentSize: 1,
                     nozzleSize: 1,
+                    layerRetract: 1,
                     gcodePre: 1,
                     gcodePost: 1,
                     gcodeProc: 1,
@@ -98,7 +99,8 @@ self.kiri.license = exports.LICENSE;
                     outputBrimOffset: 1,
                     outputShortPoly: 1,
                     outputShortFactor: 1,
-                    outputFinishFactor: 1,
+                    outputCoastDist: 1,
+                    outputWipeDistance: 1,
                     sliceMinHeight: 1,
                     outputCooling: 1,
                     // detectThinWalls: 1,
@@ -244,6 +246,7 @@ self.kiri.license = exports.LICENSE;
                 maxHeight: 150,     // FDM
                 filamentSize: 1.75, // FDM
                 nozzleSize: 0.4,    // FDM
+                layerRetract: false,// FDM
                 spindleMax: 0,      // CAM
                 gcodePre: [],       // FDM/CAM header script
                 gcodePost: [],      // FDM/CAM footer script
@@ -314,7 +317,8 @@ self.kiri.license = exports.LICENSE;
                 outputBrimOffset: 2,
                 outputShortPoly: 30.0,
                 outputShortFactor: 0.2,
-                outputFinishFactor: 0,
+                outputCoastDist: 0,
+                outputWipeDistance: 0,
                 sliceMinHeight: 0,
                 detectThinWalls: false,
                 antiBacklash: 1,
@@ -2298,9 +2302,10 @@ self.kiri.license = exports.LICENSE;
             setDeviceDepth: UC.newInput("bed depth", {title:"millimeters", convert:UC.toInt}),
             setDeviceHeight: UC.newInput("max height", {title:"max build height\nin millimeters", convert:UC.toInt, modes:FDM}),
             setDeviceMaxSpindle: UC.newInput("max spindle rpm", {title:"max spindle speed\n0 to disable", convert:UC.toInt, modes:CAM}),
-            setDeviceExtrusion: UC.newBoolean("extrusion absolute", onBooleanClick, {title:"extrusion moves absolute"}),
+            setDeviceExtrusion: UC.newBoolean("extrude absolute", onBooleanClick, {title:"extrusion moves absolute"}),
             setDeviceOrigin: UC.newBoolean("origin center", onBooleanClick, {title:"bed origin center"}),
             setDeviceOriginTop: UC.newBoolean("origin top", onBooleanClick, {title:"part z origin top", modes:CAM}),
+            setDeviceLayerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"retract between layers"}),
 
             setDevice: UC.newGroup("gcode", $('device')),
             setDeviceFan: UC.newInput("fan power", {title:"set cooling fan power", modes:FDM, size:15}),
@@ -2584,7 +2589,8 @@ self.kiri.license = exports.LICENSE;
             outputRetractDwell: UC.newInput("engage dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
             outputShortPoly: UC.newInput("short outline", {title:"poly perimeter length\ntriggers short slowdown\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM}),
             outputShortFactor: UC.newInput("short factor", {title:"max speed reduction factor\nfor short segments\nas % of print speed", bound:UC.bound(0.05,1), convert:UC.toFloat, modes:FDM}),
-            outputFinishFactor: UC.newInput("short end", {title:"% of nozzle diameter to\nshorten finish path by\nvalues of 0-1", bound:UC.bound(0.0,1), convert:UC.toFloat, modes:FDM}),
+            outputCoastDist: UC.newInput("coast", {title:"non-printing end\nof perimeter shells\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
+            // outputWipeDistance: UC.newInput("wipe", {title:"non-printing move at\close of polygon\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
             sliceMinHeight: UC.newInput("min layer", {title: "enables adaptive slicing with\nthis as the min layer height\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
@@ -3011,6 +3017,7 @@ self.kiri.license = exports.LICENSE;
                         origin_center: UI.setDeviceOrigin.checked,
                         origin_top: UI.setDeviceOriginTop.checked,
                         extrude_abs: UI.setDeviceExtrusion.checked,
+                        layer_retract: UI.setDeviceLayerRetract.checked,
                         spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
                     },
                     cmd: {
@@ -3052,6 +3059,7 @@ self.kiri.license = exports.LICENSE;
                     bedDepth: valueOf(set.bed_depth, 175),
                     maxHeight: valueOf(set.build_height, 150),
                     nozzleSize: valueOf(set.nozzle_size, 0.4),
+                    layerRetract: valueOf(set.layer_retract, false),
                     filamentSize: valueOf(set.filament_diameter, 1.75),
                     extrudeAbs: valueOf(set.extrude_abs, false),
                     spindleMax: valueOf(set.spindle_max, 0),
@@ -3092,6 +3100,7 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
                 UI.setDeviceFilament.value = dev.filamentSize;
                 UI.setDeviceNozzle.value = dev.nozzleSize;
+                UI.setDeviceLayerRetract.checked = dev.layerRetract;
                 // CAM
                 UI.setDeviceMaxSpindle.value = dev.spindleMax;
                 UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
@@ -3111,6 +3120,7 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceWidth,
                  UI.setDeviceHeight,
                  UI.setDeviceExtrusion,
+                 UI.setDeviceLayerRetract,
                  UI.setDeviceOrigin,
                  UI.setDeviceOriginTop,
                  UI.setDeviceFan,

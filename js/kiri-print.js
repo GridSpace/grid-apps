@@ -254,7 +254,7 @@ var gs_kiri_print = exports;
         switch (mode) {
             case 'CAM':
             case 'FDM':
-                scope.renderMoves(true, 0x777777);
+                scope.renderMoves(true, 0xdddddd);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);
@@ -337,7 +337,9 @@ var gs_kiri_print = exports;
             });
             view = KIRI.newLayer(scope.group);
             scope.layerView.push(view);
-            if (showMoves) view.lines(move, moveColor);
+            if (showMoves) {
+                view.lines(move, moveColor);
+            }
             for (var speed in print) {
                 var sint = Math.min(6000, parseInt(speed));
                 var rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
@@ -431,30 +433,35 @@ var gs_kiri_print = exports;
             moveSpeed = process.outputSeekrate,
             closest = poly.findClosestPointTo(startPoint),
             perimeter = poly.perimeter(),
-            isShort = perimeter < process.outputShortPoly,
             first = true,
-            last = startPoint;
+            last = startPoint,
+            wipeDist = options.wipe || 0,
+            coastDist = options.coast || 0;
 
-        if (isShort) {
-            shortSpeed = shortSpeed + (printSpeed - shortSpeed) * (perimeter / process.outputShortPoly);
+        // if short, use calculated print speed based on sliding scale
+        if (perimeter < process.outputShortPoly) {
+            printSpeed = shortSpeed + (printSpeed - shortSpeed) * (perimeter / process.outputShortPoly);
         }
 
         poly.forEachPoint(function(point, pos, points, count) {
             if (first) {
-                if (options.onfirst) options.onfirst(point);
+                if (options.onfirst) {
+                    options.onfirst(point);
+                }
                 // move from startPoint to point
                 addOutput(output, point, 0, moveSpeed);
                 first = false;
             } else {
-                var dist = last.distTo2D(point);
-                if (options.shorten && dist > options.shorten && count === points.length) {
-                    point = last.offsetPointFrom(point, options.shorten);
+                var seglen = last.distTo2D(point);
+                if (coastDist && shellMult && perimeter - seglen <= coastDist) {
+                    var delta = perimeter - coastDist;
+                    var offset = seglen - delta;
+                    var offPoint = last.offsetPointFrom(point, offset)
+                    addOutput(output, offPoint, shellMult, printSpeed);
+                    shellMult = 0;
                 }
-                if (isShort) {
-                    addOutput(output, point, shellMult, shortSpeed);
-                } else  {
-                    addOutput(output, point, shellMult, printSpeed);
-                }
+                perimeter -= seglen;
+                addOutput(output, point, shellMult, printSpeed);
             }
             last = point;
         }, true, closest.index);
@@ -487,7 +494,7 @@ var gs_kiri_print = exports;
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             sparseMult = process.outputSparseMult,
-            finishFactor = process.outputFinishFactor || 0,
+            coastDist = process.outputCoastDist || 0,
             finishSpeed = opt.speed || process.outputFinishrate,
             firstShellSpeed = process.firstLayerRate,
             firstFillSpeed = process.firstLayerFillRate,
@@ -535,7 +542,8 @@ var gs_kiri_print = exports;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
                     rate: finishShell ? finishSpeed : printSpeed,
                     accel: finishShell,
-                    shorten: finishShell && !firstLayer ? nozzle * finishFactor : 0,
+                    wipe: process.outputWipeDistance || 0,
+                    coast: firstLayer ? 0 : coastDist,
                     extrude: shellMult,
                     onfirst: function(firstPoint) {
                         if (startPoint.distTo2D(firstPoint) > retractDist) {
