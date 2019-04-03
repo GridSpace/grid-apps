@@ -1116,6 +1116,8 @@ self.kiri.license = exports.LICENSE;
 
             if (!host && KIRI.api.ghostDetect(gridhost_probe)) return;
 
+            if (!host) return;
+
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     if (xhtr.status >= 200 && xhtr.status < 300) {
