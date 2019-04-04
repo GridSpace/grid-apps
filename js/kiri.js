@@ -882,7 +882,6 @@ self.kiri.license = exports.LICENSE;
             }
         }
 
-        DOC.activeElement.blur();
         SPACE.update();
     }
 
