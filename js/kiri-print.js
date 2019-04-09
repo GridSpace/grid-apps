@@ -254,7 +254,7 @@ var gs_kiri_print = exports;
         switch (mode) {
             case 'CAM':
             case 'FDM':
-                scope.renderMoves(true, 0xdddddd);
+                scope.renderMoves(true, 0x888888);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);
