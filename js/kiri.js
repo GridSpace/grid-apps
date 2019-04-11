@@ -459,6 +459,7 @@ self.kiri.license = exports.LICENSE;
         BASE = SELF.base,
         UTIL = BASE.util,
         DBUG = BASE.debug,
+        LANG = KIRI.lang.current,
         // ---------------
         WIN    = SELF.window,
         DOC    = SELF.document,
@@ -518,12 +519,14 @@ self.kiri.license = exports.LICENSE;
         local = SETUP.local,
         mouseMoved = false,
         camStock = null,
-        camTopZ = 0,
-        alerts = [ [ "version " + kiri.version, Date.now() ] ];
+        camTopZ = 0;
 
     DBUG.enable();
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
+    if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
+
+    var alerts = [ [ `${LANG.version} ${kiri.version}`, Date.now() ] ];
 
     KIRI.api = {
         ui : UI,
@@ -2296,9 +2299,9 @@ self.kiri.license = exports.LICENSE;
             deviceSelect: $('device-select'),
 
             device: UC.newGroup("device", $('device')),
-            deviceName: UC.newInput("name", {size:20}),
-            setDeviceFilament: UC.newInput("filament", {title:"diameter in millimeters", convert:UC.toFloat, modes:FDM}),
-            setDeviceNozzle: UC.newInput("nozzle", {title:"diameter in millimeters", convert:UC.toFloat, modes:FDM}),
+            deviceName: UC.newInput(LANG.dev_name, {size:20}),
+            setDeviceFilament: UC.newInput(LANG.dev_filament, {title:LANG.dev_fil_desc, convert:UC.toFloat, modes:FDM}),
+            setDeviceNozzle: UC.newInput(LANG.dev_nozzle, {title:LANG.dev_noz_desc, convert:UC.toFloat, modes:FDM}),
             setDeviceWidth: UC.newInput("bed width", {title:"millimeters", convert:UC.toInt}),
             setDeviceDepth: UC.newInput("bed depth", {title:"millimeters", convert:UC.toInt}),
             setDeviceHeight: UC.newInput("max height", {title:"max build height\nin millimeters", convert:UC.toInt, modes:FDM}),
