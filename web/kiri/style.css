@@ -441,7 +441,10 @@ button.selected {
     display: none;
 }
 #device-list option[local="1"] {
-    color: #55f;
+    color: #55d;
+}
+#device-list option[favorite="1"] {
+    font-weight: bold;
 }
 #device label {
     white-space: nowrap;

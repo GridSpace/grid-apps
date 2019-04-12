@@ -418,6 +418,9 @@ self.kiri.license = exports.LICENSE;
             // custom devices by name
             devices:{
             },
+            // favorite devices
+            favorites:{
+            },
             // map of device to last process setting (name)
             devproc: {
             },
@@ -519,7 +522,8 @@ self.kiri.license = exports.LICENSE;
         local = SETUP.local,
         mouseMoved = false,
         camStock = null,
-        camTopZ = 0;
+        camTopZ = 0,
+        showFavorites = SDB['dev-favorites'] === 'true';
 
     DBUG.enable();
 
@@ -2297,6 +2301,8 @@ self.kiri.license = exports.LICENSE;
             deviceSave: $('device-save'),
             deviceClose: $('device-close'),
             deviceSelect: $('device-select'),
+            deviceFavorites: $('device-favorites'),
+            deviceAll: $('device-all'),
 
             device: UC.newGroup("device", $('device')),
             deviceName: UC.newInput(LANG.dev_name, {size:20}),
@@ -2984,6 +2990,10 @@ self.kiri.license = exports.LICENSE;
             // return localFilters.contains(devicename);
         }
 
+        function isFavoriteDevice(devicename) {
+            return settings.favorites[devicename] ? true : false;
+        }
+
         function getSelectedDevice() {
             return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
         }
@@ -3209,12 +3219,37 @@ self.kiri.license = exports.LICENSE;
                 showDevices();
             };
 
+            UI.deviceAll.onclick = function() {
+                showFavorites = SDB['dev-favorites'] = false;
+                showDevices();
+            };
+            UI.deviceFavorites.onclick = function() {
+                showFavorites = SDB['dev-favorites'] = true;
+                showDevices();
+            };
+
             UI.deviceSelect.innerHTML = '';
             devices.forEach(function(device, index) {
-                var opt = DOC.createElement('option');
+                var opt = DOC.createElement('option'),
+                    fav = isFavoriteDevice(device),
+                    loc = isLocalDevice(device);
+                if (showFavorites && !(fav || loc)) {
+                    return;
+                }
                 opt.appendChild(DOC.createTextNode(device));
                 opt.onclick = function() { selectDevice(device) };
-                if (isLocalDevice(device)) opt.setAttribute("local", 1);
+                opt.ondblclick = function() {
+                    if (settings.favorites[device]) {
+                        delete settings.favorites[device];
+                    } else {
+                        settings.favorites[device] = true;
+                    }
+                    showDevices();
+                };
+                if (!showFavorites) {
+                    if (fav) opt.setAttribute("favorite", 1);
+                    if (loc) opt.setAttribute("local", 1);
+                }
                 UI.deviceSelect.appendChild(opt);
                 if (device === selected) selectedIndex = index;
             });
