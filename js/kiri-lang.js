@@ -33,10 +33,24 @@ var gs_kiri_lang = exports;
     LANG.en = {
         version:        "version",
         dev_name:       "name",
-        dev_filament:   "filament",
+        dev_fil:        "filament",
         dev_fil_desc:   "diameter in millimeters",
-        dev_nozzle:     "nozzle",
-        dev_noz_desc:   "diameter in millimeters"
+        dev_nozl:       "nozzle",
+        dev_nozl_desc:  "diameter in millimeters",
+        dev_bedw:       "bed width",
+        dev_bedw_desc:  "millimeters",
+        dev_bedd:       "bed depth",
+        dev_bedd_desc:  "millimeters",
+        dev_bedhm:      "max height",
+        dev_bedhm_desc: "max build height\nin millimeters",
+        dev_spmax:      "max spindle rpm",
+        dev_spmax_desc: "max spindle speed\n0 to disable",
+        dev_extab:      "extrude absolute",
+        dev_extab_desc: "extrusion moves absolute",
+        dev_orgc:       "origin center",
+        dev_orgc_desc:  "bed origin center",
+        dev_orgt:       "origin top",
+        dev_orgt_desc:  "part z origin top"
     };
 
     LANG.test = {
