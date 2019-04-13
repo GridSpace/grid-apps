@@ -3229,6 +3229,9 @@ self.kiri.license = exports.LICENSE;
             };
 
             UI.deviceSelect.innerHTML = '';
+            let incr = 0;
+            let found = false;
+            let first = devices[0];
             devices.forEach(function(device, index) {
                 var opt = DOC.createElement('option'),
                     fav = isFavoriteDevice(device),
@@ -3236,13 +3239,20 @@ self.kiri.license = exports.LICENSE;
                 if (showFavorites && !(fav || loc)) {
                     return;
                 }
+                if (incr === 0) {
+                    first = device;
+                }
                 opt.appendChild(DOC.createTextNode(device));
                 opt.onclick = function() { selectDevice(device) };
                 opt.ondblclick = function() {
                     if (settings.favorites[device]) {
-                        delete settings.favorites[device];
+                        if (confirm(`remove "${device}" from favorites`)) {
+                            delete settings.favorites[device];
+                        }
                     } else {
-                        settings.favorites[device] = true;
+                        if (confirm(`add "${device}" to favorites`)) {
+                            settings.favorites[device] = true;
+                        }
                     }
                     showDevices();
                 };
@@ -3251,7 +3261,11 @@ self.kiri.license = exports.LICENSE;
                     if (loc) opt.setAttribute("local", 1);
                 }
                 UI.deviceSelect.appendChild(opt);
-                if (device === selected) selectedIndex = index;
+                if (device === selected) {
+                    selectedIndex = incr;
+                    found = true;
+                }
+                incr++;
             });
 
             if (selectedIndex >= 0) {
@@ -3259,7 +3273,7 @@ self.kiri.license = exports.LICENSE;
                 selectDevice(selected);
             } else {
                 UI.deviceSelect.selectedIndex = 0;
-                selectDevice(devices[0]);
+                selectDevice(first);
             }
 
             showDialog('devices', true);

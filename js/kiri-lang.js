@@ -15,16 +15,29 @@ var gs_kiri_lang = exports;
     LANG.set = (key) => {
         if (LANG[key]) {
             let map = LANG[key];
+            let missing = [];
+            let invalid = [];
             // default to EN values when missing
             Object.keys(LANG.en).forEach(key => {
                 if (!map[key]) {
                     map[key] = LANG.en[key];
+                    missing.push(key);
                 }
             });
             // update current map from chosen map
             Object.keys(map).forEach(key => {
-                LANG.current[key] = map[key];
+                if (LANG.en[key]) {
+                    LANG.current[key] = map[key];
+                } else {
+                    invalid.push(key);
+                }
             });
+            if (missing.length) {
+                console.log(`language map "${key}" missing keys [${missing.length}]: ${missing.join(', ')}`);
+            }
+            if (invalid.length) {
+                console.log(`language map "${key}" invalid keys [${invalid.length}]: ${invalid.join(', ')}`);
+            }
         }
     }
 
@@ -54,6 +67,7 @@ var gs_kiri_lang = exports;
     };
 
     LANG.test = {
+        bogus:          "not a valid key",
         version:        "_version_",
         dev_name:       "_name_"
     };
