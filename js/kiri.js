@@ -1587,6 +1587,7 @@ self.kiri.license = exports.LICENSE;
         var layout = (viewMode === VIEWS.ARRANGE),
             proc = settings.process,
             modified = false,
+            oldmode = viewMode,
             topZ = MODE === MODES.CAM ? camTopZ : 0;
 
         switch (MODE) {
@@ -1601,6 +1602,12 @@ self.kiri.license = exports.LICENSE;
 
         setViewMode(VIEWS.ARRANGE);
         hideSlices();
+
+        // only auto-layout when in arrange mode
+        if (oldmode !== VIEWS.ARRANGE) {
+            SPACE.update();
+            return;
+        }
 
         // do not layout when switching back from slice view
         if (!space && !layout) return SPACE.update();
