@@ -45,6 +45,7 @@ var gs_kiri_lang = exports;
     // map for any missing key/value pairs
     LANG.en = {
         version:        "version",
+
         dev_name:       "name",
         dev_fil:        "filament",
         dev_fil_desc:   "diameter in millimeters",
@@ -63,7 +64,32 @@ var gs_kiri_lang = exports;
         dev_orgc:       "origin center",
         dev_orgc_desc:  "bed origin center",
         dev_orgt:       "origin top",
-        dev_orgt_desc:  "part z origin top"
+        dev_orgt_desc:  "part z origin top",
+        dev_fanp:       "fan power",
+        dev_fanp_desc:  "set cooling fan power",
+        dev_prog:       "progress",
+        dev_prog_desc:  "output on each % progress",
+        dev_layer:      "layer",
+        dev_layer_desc: "output at each\nlayer change",
+        dev_token:      "token spacing",
+        dev_token_desc: "gcode token spacer",
+        dev_strip:      "strip comments",
+        dev_strip_desc: "strip gcode comments",
+        dev_fext:       "file ext",
+        dev_fext_desc:  "file name extension",
+        dev_dwell:      "dwell",
+        dev_dwell_desc: "gcode dwell script",
+        dev_tool:       "tool change",
+        dev_tool_desc:  "tool change script",
+        dev_speed:      "spindle speed",
+        dev_speed_desc: "set spindle speed",
+        dev_pause:      "pause",
+        dev_pause_desc: "gcode pause script",
+        dev_head:       "header",
+        dev_head_desc:  "gcode header script",
+        dev_foot:       "footer",
+        dev_foot_desc:  "gcode footer script"
+
     };
 
     LANG.test = {

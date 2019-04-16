@@ -530,7 +530,7 @@ self.kiri.license = exports.LICENSE;
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
 
-    var alerts = [ [ `${LANG.version} ${kiri.version}`, Date.now() ] ];
+    var alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
 
     KIRI.api = {
         ui : UI,
@@ -2144,7 +2144,7 @@ self.kiri.license = exports.LICENSE;
         ajax(local, function(html) {
             UI.help.innerHTML = html;
             $('help-close').onclick = hideModal;
-            $('kiri-version').innerHTML = '<i>version '+kiri.version+"</i>";
+            $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
             showModal('help');
             STATS.add('d-help');
         });
@@ -2324,18 +2324,18 @@ self.kiri.license = exports.LICENSE;
             setDeviceOriginTop: UC.newBoolean(LANG.dev_orgt, onBooleanClick, {title:LANG.dev_orgt_desc, modes:CAM}),
 
             setDevice: UC.newGroup("gcode", $('device')),
-            setDeviceFan: UC.newInput("fan power", {title:"set cooling fan power", modes:FDM, size:15}),
-            setDeviceTrack: UC.newInput("progress", {title:"output on each % progress", modes:FDM, size:15}),
-            setDeviceLayer: UC.newText("layer", {title:"output at each layer change", modes:FDM, size:14, height: 2}),
-            setDeviceToken: UC.newBoolean("token spacing", null, {title:"gcode token spacing", modes:CAM}),
-            setDeviceStrip: UC.newBoolean("strip comments", null, {title:"strip gcode comments", modes:CAM}),
-            setDeviceFExt: UC.newInput("file ext", {title:"file name exension", modes:CAM, size:5}),
-            setDeviceDwell: UC.newText("dwell", {title:"gcode dwell script", modes:CAM, size:14, height:2}),
-            setDeviceChange: UC.newText("tool change", {title:"tool change script", modes:CAM, size:14, height:2}),
-            setDeviceSpindle: UC.newText("spindle speed", {title:"set spindle speed", modes:CAM, size:14, height:2}),
-            setDevicePause: UC.newText("pause", {title:"gcode pause script", modes:FDM, size:14, height:3}),
-            setDevicePre: UC.newText("header", {title:"gcode header script", modes:FDM_CAM, size:14, height:3}),
-            setDevicePost: UC.newText("footer", {title:"gcode footer script", modes:FDM_CAM, size:14, height:3}),
+            setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:15}),
+            setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:15}),
+            setDeviceLayer: UC.newText(LANG.dev_layer, {title:LANG.dev_layer_desc, modes:FDM, size:14, height: 2}),
+            setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM}),
+            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM}),
+            setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM, size:5}),
+            setDeviceDwell: UC.newText(LANG.dev_dwell, {title:LANG.dev_dwell_desc, modes:CAM, size:14, height:2}),
+            setDeviceChange: UC.newText(LANG.dev_tool, {title:LANG.dev_tool_desc, modes:CAM, size:14, height:2}),
+            setDeviceSpindle: UC.newText(LANG.dev_speed, {title:LANG.dev_speed_desc, modes:CAM, size:14, height:2}),
+            setDevicePause: UC.newText(LANG.dev_pause, {title:LANG.dev_pause_desc, modes:FDM, size:14, height:3}),
+            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, modes:FDM_CAM, size:14, height:3}),
+            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, modes:FDM_CAM, size:14, height:3}),
 
             tools: $('tools'),
             toolsSave: $('tools-save'),
@@ -3662,13 +3662,13 @@ self.kiri.license = exports.LICENSE;
             if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
             STATS.del('upgrade');
 
-            if (!SETUP.s) console.log("kiri | init main | "+kiri.version);
+            if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
             STATS.set('seed', SDB[SEED]);
             STATS.add('init');
             // updateActive(true);
 
             // place version number a couple of places to help users
-            UI.helpButton.title = "version " + KIRI.version;
+            UI.helpButton.title = `${LANG.version} ` + KIRI.version;
 
             // setup tab visibility watcher
             // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
