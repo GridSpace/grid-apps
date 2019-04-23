@@ -105,7 +105,7 @@ self.kiri.license = exports.LICENSE;
                     // detectThinWalls: 1,
                     antiBacklash: 1,
                     zHopDistance: 1,
-                    layerRetract: 1,
+                    outputLayerRetract: 1,
                     gcodeNozzle: 1,
                     gcodePauseLayers: 1,
                     outputClockwise: 1,
@@ -322,7 +322,7 @@ self.kiri.license = exports.LICENSE;
                 detectThinWalls: false,
                 antiBacklash: 1,
                 zHopDistance: 0.2,
-                layerRetract: 1,
+                outputLayerRetract: false,
                 gcodeNozzle: 0,
                 gcodePauseLayers: "",
                 outputCooling: true,
@@ -2611,7 +2611,7 @@ self.kiri.license = exports.LICENSE;
             zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
             antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM})
-            layerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"force filament retraction\nbetween layers", modes:FDM}),
+            outputLayerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"force filament retraction\nbetween layers", modes:FDM}),
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM}),
             gcodeNozzle: UC.newInput("nozzle", {title: "select output nozzle", convert:UC.toInt, modes:FDM}),

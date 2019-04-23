@@ -8,12 +8,11 @@
         "M83                          ; set relative positioning for extruder",
         "G28                          ; home axes",
         "G1 F3000                     ; set default move speed",
-        "G1 X-8 Y-17 Z0               ; move to XY heating point",
         "M190 S{bed_temp} T0          ; wait for bed to reach target temp",
         "M109 S{temp} T0              ; wait for extruder to reach target temp",
         "M117 Purge                   ; announce purge",
         "G92 E0                       ; set extruder position to 0",
-        "G1 E50 F350                  ; purge 50mm from extruder",
+        "G1 E30 F300                  ; purge 30mm from extruder",
         "G1 X0 Y0 Z0 F3000            ; move to origin / wipe",
         "M117 Start Print             ; announce start of print"
     ],
