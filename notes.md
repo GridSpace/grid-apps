@@ -1,5 +1,6 @@
 # Kiri:Moto todo
 
+* better small screen support (on screen button for hiding side panels, compact selectors)
 * widget general add-ons (fdm supports, cam tabs)
 * extend mesh object to store raw + annotations (rot,scale,pos)
 *    share raw data w/ dups, encode/decode

@@ -1167,7 +1167,7 @@ self.kiri.license = exports.LICENSE;
                 }
             };
 
-            xhtr.open("GET", host + "/api/targets?key=" + apik);
+            xhtr.open("GET", host + "/api/active?key=" + apik);
             xhtr.send();
         }
 
