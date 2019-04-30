@@ -301,10 +301,14 @@ function setup(req, res, next) {
             // prevent overlapping lookups
             // for the same address
             rec.host = 'unknown';
-            dns.reverse(ipaddr,(err,addr) => {
-                rec.host = addr;
-                // if (addr) log({ip:ipaddr, addr:addr});
-            });
+            try {
+                dns.reverse(ipaddr, (err,addr) => {
+                    rec.host = addr;
+                    // if (addr) log({ip:ipaddr, addr:addr});
+                });
+            } catch (e) {
+                console.log({dns_err: e, ipaddr})
+            }
         }
     }
 
