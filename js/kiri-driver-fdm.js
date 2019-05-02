@@ -45,11 +45,12 @@ var gs_kiri_fdm = exports;
             update_start = time(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
-            doSolidLayers = solidLayers && !spro.sliceVase,
+            vaseMode = spro.sliceFillType === 'vase',
+            doSolidLayers = solidLayers && !vaseMode,
             firstOffset = sdev.nozzleSize / 2,
             shellOffset = sdev.nozzleSize * spro.sliceShellSpacing,
             fillOffset = shellOffset * settings.synth.fillOffsetMult,
-            fillSpacing = sdev.nozzleSize * spro.sliceFillSpacing,
+            fillSpacing = sdev.nozzleSize,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
@@ -111,9 +112,9 @@ var gs_kiri_fdm = exports;
                         slice.index < spro.sliceBottomLayers ||
                         slice.index > slices.length - spro.sliceTopLayers-1 ||
                         spro.sliceFillSparse > 0.95
-                    ) && !spro.sliceVase;
+                    ) && !vaseMode;
                 slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, {
-                    vase: spro.sliceVase,
+                    vase: vaseMode,
                     thin: false && spro.detectThinWalls
                 });
                 if (solid) slice.doSolidLayerFill(fillSpacing, sliceFillAngle);
@@ -147,14 +148,14 @@ var gs_kiri_fdm = exports;
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
-            if (!spro.sliceVase && spro.sliceFillSparse > 0.0) {
+            if (!vaseMode && spro.sliceFillSparse > 0.0) {
                 forSlices(0.8, 1.0, function(slice) {
                     slice.doSparseLayerFill({
                         spacing: fillSpacing,
                         density: spro.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
                         height: spro.sliceHeight,
-                        type: spro.sliceFillGyroid ? 'gyroid' : 'hex'
+                        type: spro.sliceFillType
                     });
                 }, "infill");
             }

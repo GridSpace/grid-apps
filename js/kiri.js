@@ -58,9 +58,8 @@ self.kiri.license = exports.LICENSE;
                     sliceShellSpacing: 1,
                     sliceFillAngle: 1,
                     sliceFillOverlap: 1,
-                    sliceFillSpacing: 1,
                     sliceFillSparse: 1,
-                    sliceFillGyroid: 1,
+                    sliceFillType: 1,
                     sliceSupportEnable: 1,
                     sliceSupportDensity: 1,
                     sliceSupportOffset: 1,
@@ -73,7 +72,6 @@ self.kiri.license = exports.LICENSE;
                     sliceSolidLayers: 1,
                     sliceBottomLayers: 1,
                     sliceTopLayers: 1,
-                    sliceVase: 1,
                     firstSliceHeight: 1,
                     firstLayerRate: 1,
                     firstLayerFillRate: 1,
@@ -202,6 +200,17 @@ self.kiri.license = exports.LICENSE;
         },
         // --------------- (default)
         settings = {
+            infill:[
+                {
+                    name: "vase"
+                },
+                {
+                    name: "hex"
+                },
+                {
+                    name: "gyroid"
+                }
+            ],
             // CAM only
             tools:[
                 {
@@ -272,9 +281,8 @@ self.kiri.license = exports.LICENSE;
                 sliceShellSpacing: 1.0,
                 sliceFillAngle: 45,
                 sliceFillOverlap: 0.3,
-                sliceFillSpacing: 1.0,
                 sliceFillSparse: 0.5,
-                sliceFillGyroid: false,
+                sliceFillType: "hex",
 
                 sliceSupportEnable: false,
                 sliceSupportDensity: 0.25,
@@ -289,7 +297,6 @@ self.kiri.license = exports.LICENSE;
                 sliceSolidLayers: 3,
                 sliceBottomLayers: 3,
                 sliceTopLayers: 3,
-                sliceVase: false,
 
                 firstSliceHeight: 0.25,
                 firstLayerRate: 30,
@@ -1707,6 +1714,7 @@ self.kiri.license = exports.LICENSE;
         var key, val;
 
         fillMissingSettings(settingsDefault, settings);
+        settings.infill = settingsDefault.infill;
 
         for (key in scope) {
             if (!scope.hasOwnProperty(key)) continue;
@@ -1721,11 +1729,16 @@ self.kiri.license = exports.LICENSE;
                 } else if (typ === 'select-one') {
                     uie.innerHTML = '<option></option>';
                     var chosen = null;
-                    settings.tools.forEach(function(tool,index) {
-                        if (val === tool.id) chosen = index+1;
+                    var source = uie.parentNode.getAttribute('source');
+                    var list = settings[source];
+                    list.forEach(function(tool, index) {
+                        let id = tool.id || tool.name;
+                        if (val === id) {
+                            chosen = index + 1;
+                        }
                         var opt = DOC.createElement('option');
                         opt.appendChild(DOC.createTextNode(tool.name));
-                        opt.setAttribute('value', tool.id);
+                        opt.setAttribute('value', id);
                         uie.appendChild(opt);
                     });
                     if (chosen) uie.selectedIndex = chosen;
@@ -1750,7 +1763,8 @@ self.kiri.license = exports.LICENSE;
             if (!scope.hasOwnProperty(key)) continue;
             if (UI.hasOwnProperty(key)) {
                 var nval = null,
-                    uie = UI[key];
+                    uie = UI[key],
+                    src = uie.parentNode.getAttribute('source');
                 // skip empty UI values
                 if (!uie || uie === '') continue;
                 if (uie.type === 'text') {
@@ -1759,7 +1773,10 @@ self.kiri.license = exports.LICENSE;
                     nval = UI[key].checked;
                 } else if (uie.type === 'select-one') {
                     if (uie.selectedIndex > 0) {
-                        nval = parseInt(uie.options[uie.selectedIndex].value);
+                        nval = uie.options[uie.selectedIndex].value;
+                        if (src === 'tools') {
+                            nval = parseInt(nval);
+                        }
                     }
                 }
                 if (scope[key] != nval) {
@@ -2479,22 +2496,22 @@ self.kiri.license = exports.LICENSE;
             bedWidth: UC.newInput("width", {title:"millimeters", convert:UC.toInt, modes:LASER}),
             bedDepth: UC.newInput("depth", {title:"millimeters", convert:UC.toInt, modes:LASER}),
 
-            process: UC.newGroup("process", control, {modes:FDM_LASER}),
+            process: UC.newGroup("slicing", control, {modes:FDM_LASER}),
 
             // 3d print
             sliceHeight: UC.newInput("layer height", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
             sliceShells: UC.newInput("shell count", {convert:UC.toInt, modes:FDM}),
             sliceShellSpacing: UC.newInput("shell spacing", {title:"as a percentage of nozzle width\n< 1.0 causes shell overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.5,1.0), modes:FDM}),
-            sliceFillOverlap: UC.newInput("fill overlap", {title:"overlap with shell\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            sliceFillSpacing: UC.newInput("fill spacing", {title:"for solid fill areas\nas a percentage of nozzle width\n< 1.0 causes fill overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            sliceFillAngle: UC.newInput("fill angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
-            sliceFillSparse: UC.newInput("fill ratio", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
             sliceSolidMinArea: UC.newInput("solid area", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),
             sliceSolidLayers: UC.newInput("solid layers", {title:"flat area fill projections\nbased on layer deltas", convert:UC.toInt, modes:FDM}),
             sliceBottomLayers: UC.newInput("base layers", {title:"bottom solid layer count", convert:UC.toInt, modes:FDM}),
             sliceTopLayers: UC.newInput("top layers", {title:"top solid layer count", convert:UC.toInt, modes:FDM}),
-            sliceVase: UC.newBoolean("vase mode", onBooleanClick, {modes:FDM}),
-            sliceFillGyroid: UC.newBoolean("gyroid infill", onBooleanClick, {title: "best with fine layers\nand large interior voids", modes:FDM}),
+
+            process: UC.newGroup("fill", control, {modes:FDM}),
+            sliceFillOverlap: UC.newInput("shell overlap", {title:"overlap with shell\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
+            sliceFillAngle: UC.newInput("solid angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
+            sliceFillSparse: UC.newInput("percentage", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
+            sliceFillType: UC.newSelectField("type", {modes:FDM}, "infill"),
 
             // laser
             laserOffset: UC.newInput("cut offset", {title:"millimeters\nadjust for beam width", convert:UC.toFloat, modes:LASER}),

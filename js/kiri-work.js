@@ -154,8 +154,8 @@ if (self.window) {
             [
                 "license","ext-n3d","ext-clip","add-array",
                 "add-three","geo","geo-point","geo-debug","geo-bounds",
-                "geo-line","geo-slope","geo-polygon","geo-polygons", "geo-gyroid",
-                "kiri-slice","kiri-slicer","kiri-driver-fdm","kiri-driver-cam",
+                "geo-line","geo-slope","geo-polygon","geo-polygons","geo-gyroid",
+                "kiri-fill","kiri-slice","kiri-slicer","kiri-driver-fdm","kiri-driver-cam",
                 "kiri-driver-laser","kiri-widget","kiri-pack","kiri-print","kiri-codec"
             ].forEach(function(scr) {
                 importScripts(["/js/",scr,".js","/v"+ver].join(''));

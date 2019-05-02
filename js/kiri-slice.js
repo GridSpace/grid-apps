@@ -10,16 +10,15 @@ var gs_kiri_slice = exports;
     if (self.kiri.Slice) return;
 
     var KIRI = self.kiri,
+        FILL = KIRI.fill,
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
         PRO = Slice.prototype,
         fillArea = POLY.fillArea,
         newPoint = BASE.newPoint,
-        ROUND = UTIL.round,
         MIN = Math.min,
         MAX = Math.max,
-        DEG2RAD = Math.PI / 180,
         NOKEY = BASE.key.NONE,
         outline_colors = [0xffff00, 0x00ffff, 0xff00ff, 0xff0000, 0x00ff00, 0x0000ff, 0xffffff, 0x000000],
         trace_color = 0x000000,
@@ -636,9 +635,8 @@ var gs_kiri_slice = exports;
         scope.isSparseFill = true;
 
         // use specified fill type
-        switch (type) {
-            case 'hex': sparseFillHex(target, true); break;
-            case 'gyroid': sparseFillGyroid(target); break;
+        if (type && FILL[type]) {
+            FILL[type](target);
         }
 
         // force emit of last line
@@ -1217,101 +1215,6 @@ var gs_kiri_slice = exports;
                 renderPolygon(layer, inner, colors, idx + 1, false, open);
             });
         }
-    }
-
-    /**
-     * emitter creates a hex infill pattern and sends to target
-     *
-     * @param {Object} target
-     * @param {boolean} full continuous walls
-     */
-    function sparseFillHex(target, full) {
-        // compute segment lengths (vert/horiz and 45)
-        var spacing = target.offset() / 2,
-            vhlen = (1 - target.density()) * 4 + spacing,
-            anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7),
-            anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7),
-            bounds = target.bounds(),
-            even = true,
-            evenZ = target.zIndex() % 2 === 0,
-            maxy = bounds.max.y + (vhlen + anylen * 2),
-            x, y;
-
-        if (full || evenZ) {
-            x = bounds.min.x;
-            for (;;) {
-                if (even && x > bounds.max.x) break;
-                if (!even && x > bounds.max.x + anxlen + spacing) break;
-                y = bounds.min.y;
-                target.newline();
-                while (y <= maxy) {
-                    target.emit(x,y);
-                    y += vhlen;
-                    target.emit(x,y);
-                    if (even) x += anxlen; else x -= anxlen;
-                    y += anylen;
-                    target.emit(x,y);
-                    y += vhlen;
-                    target.emit(x,y);
-                    if (even) x -= anxlen; else x += anxlen;
-                    y += anylen;
-                }
-                x += spacing;
-                if (even) x += (anxlen * 2);
-                even = !even;
-                target.newline();
-            }
-        } else {
-            y = bounds.min.y + vhlen;
-            for (;;) {
-                if (even && y > bounds.max.y) break;
-                if (!even && y > bounds.max.y + anylen) break;
-                x = bounds.min.x;
-                target.newline();
-                while (x < bounds.max.x) {
-                    target.emit(x,y);
-                    if (even) y += anylen; else y -= anylen;
-                    x += anxlen;
-                    target.emit(x,y);
-                    x += spacing;
-                    target.emit(x,y);
-                    if (even) y -= anylen; else y += anylen;
-                    x += anxlen;
-                    target.emit(x,y);
-                    x += spacing;
-                }
-                y += vhlen;
-                if (even) y += (anylen * 2);
-                even = !even;
-                target.newline();
-            }
-        }
-    }
-
-    function sparseFillGyroid(target) {
-        let bounds = target.bounds();
-        let height = target.zHeight();
-        let span_x = bounds.max.x - bounds.min.x;
-        let span_y = bounds.max.y - bounds.min.y;
-        let density = target.density();
-        let tile = 1 + (1 - density) * 15;
-        let tile_x = span_x / tile;
-        let tile_y = span_y / tile;
-        let tile_z = 1 / tile;
-        let gyroid = BASE.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
-
-        gyroid.polys.forEach(poly => {
-            for (let tx=0; tx<=tile_x; tx++) {
-                for (let ty=0; ty<=tile_y; ty++) {
-                    target.newline();
-                    let bx = tx * tile + bounds.min.x;
-                    let by = ty * tile + bounds.min.y;
-                    poly.forEach(point => {
-                        target.emit(bx + point.x * tile, by + point.y * tile);
-                    });
-                }
-            }
-        });
     }
 
     function newTop(poly) {

@@ -291,7 +291,7 @@ var gs_moto_ui = exports;
         return ip;
     }
 
-    function newSelectField(label, options) {
+    function newSelectField(label, options, source) {
         var row = newDiv(options),
             ip = DOC.createElement('select'),
             hide = options && options.hide,
@@ -299,6 +299,7 @@ var gs_moto_ui = exports;
         lastDiv.appendChild(row);
         row.appendChild(newLabel(label));
         row.appendChild(ip);
+        row.setAttribute("source", source || "tools");
         row.setAttribute("class", ["flow-row",lastGroup].join(" "));
         row.style.display = hide ? 'none' : '';
         if (options) {
