@@ -33,7 +33,7 @@ var gs_kiri_fill = exports;
      */
     function fillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
-        let spacing = target.offset() / 2;
+        let spacing = target.offset();
         let vhlen = (1 - target.density()) * 4 + spacing;
         let anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7);
         let anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7);
@@ -126,7 +126,7 @@ var gs_kiri_fill = exports;
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
         let density = target.density();
-        let offset = target.offset();
+        let offset = target.offset() / 2;
         let tile = 1 + (1 - density) * 3;
         let tile_x = tile + offset;
         let tile_xc = span_x / tile_x;
@@ -177,14 +177,11 @@ var gs_kiri_fill = exports;
         }
 
         for (let tx=0; tx<=tile_xc; tx++) {
+            let bx = tx * tile_x + bounds.min.x;
+            let xp = bx + tile_x - line_w/2 - offset/2;
             target.newline();
-            for (let ty=0; ty<=tile_yc; ty++) {
-                let bx = tx * tile_x + bounds.min.x;
-                let by = ty * tile + bounds.min.y;
-                let xp = bx + tile_x - line_w/2 - offset/2;
-                target.emit(xp, by);
-                target.emit(xp, by + tile);
-            }
+            target.emit(xp, bounds.min.y);
+            target.emit(xp, bounds.max.y);
         }
     }
 
