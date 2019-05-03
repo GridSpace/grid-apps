@@ -9,7 +9,7 @@ var gs_kiri_fill = exports;
     if (!self.kiri) self.kiri = {};
     if (self.kiri.fill) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
         ROUND = UTIL.round,
@@ -33,15 +33,15 @@ var gs_kiri_fill = exports;
      */
     function fillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
-        let spacing = target.offset() / 2,
-            vhlen = (1 - target.density()) * 4 + spacing,
-            anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7),
-            anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7),
-            bounds = target.bounds(),
-            even = true,
-            evenZ = target.zIndex() % 2 === 0,
-            maxy = bounds.max.y + (vhlen + anylen * 2),
-            x, y;
+        let spacing = target.offset() / 2;
+        let vhlen = (1 - target.density()) * 4 + spacing;
+        let anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7);
+        let anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7);
+        let bounds = target.bounds();
+        let even = true;
+        let evenZ = target.zIndex() % 2 === 0;
+        let maxy = bounds.max.y + (vhlen + anylen * 2);
+        let x, y;
 
         if (full || evenZ) {
             x = bounds.min.x;
@@ -126,23 +126,23 @@ var gs_kiri_fill = exports;
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
         let density = target.density();
-        let tile = 1 + (1 - density) * 5;
-        let tile_x = span_x / tile;
-        let tile_y = span_y / tile;
-        let tile_z = 1 / tile;
-        let offset = target.offset() / 2;
+        let offset = target.offset();
+        let tile = 1 + (1 - density) * 3;
+        let tile_x = tile + offset;
+        let tile_xc = span_x / tile_x;
+        let tile_yc = span_y / tile;
 
-        for (let tx=0; tx<=tile_x; tx++) {
+        for (let tx=0; tx<=tile_xc; tx++) {
             target.newline();
-            for (let ty=0; ty<=tile_y; ty++) {
-                let bx = tx * tile + bounds.min.x;
+            for (let ty=0; ty<=tile_yc; ty++) {
+                let bx = tx * tile_x + bounds.min.x;
                 let by = ty * tile + bounds.min.y;
                 if ((tx + ty) % 2) {
-                    target.emit(bx + offset, by);
-                    target.emit(bx + tile - offset, by + tile);
+                    target.emit(bx, by);
+                    target.emit(bx + tile_x - offset, by + tile);
                 } else {
-                    target.emit(bx + tile - offset, by);
-                    target.emit(bx + offset, by + tile);
+                    target.emit(bx + tile_x - offset, by);
+                    target.emit(bx, by + tile);
                 }
             }
         }
@@ -154,35 +154,36 @@ var gs_kiri_fill = exports;
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
         let density = target.density();
-        let tile = 1 + (1 - density) * 5;
-        let tile_x = span_x / tile;
-        let tile_y = span_y / tile;
-        let tile_z = 1 / tile;
-        let line_w = target.lineWidth() / 2;
         let offset = target.offset();
+        let line_w = target.lineWidth() / 2;
+        let tile = 1 + (1 - density) * 3;
+        let tile_x = tile + offset*2 + line_w;
+        let tile_xc = span_x / tile_x;
+        let tile_yc = span_y / tile;
 
-        for (let tx=0; tx<=tile_x; tx++) {
+        for (let tx=0; tx<=tile_xc; tx++) {
             target.newline();
-            for (let ty=0; ty<=tile_y; ty++) {
-                let bx = tx * tile + bounds.min.x;
+            for (let ty=0; ty<=tile_yc; ty++) {
+                let bx = tx * tile_x + bounds.min.x;
                 let by = ty * tile + bounds.min.y;
                 if ((tx + ty) % 2) {
                     target.emit(bx, by);
-                    target.emit(bx + tile - offset - line_w, by + tile);
+                    target.emit(bx + tile_x - offset - line_w, by + tile);
                 } else {
-                    target.emit(bx + tile - offset - line_w, by);
+                    target.emit(bx + tile_x - offset - line_w, by);
                     target.emit(bx, by + tile);
                 }
             }
         }
 
-        for (let tx=0; tx<=tile_x; tx++) {
+        for (let tx=0; tx<=tile_xc; tx++) {
             target.newline();
-            for (let ty=0; ty<=tile_y; ty++) {
-                let bx = tx * tile + bounds.min.x;
+            for (let ty=0; ty<=tile_yc; ty++) {
+                let bx = tx * tile_x + bounds.min.x;
                 let by = ty * tile + bounds.min.y;
-                target.emit(bx + tile - line_w, by);
-                target.emit(bx + tile - line_w, by + tile);
+                let xp = bx + tile_x - line_w/2 - offset/2;
+                target.emit(xp, by);
+                target.emit(xp, by + tile);
             }
         }
     }
