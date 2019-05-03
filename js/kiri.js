@@ -201,15 +201,11 @@ self.kiri.license = exports.LICENSE;
         // --------------- (default)
         settings = {
             infill:[
-                {
-                    name: "vase"
-                },
-                {
-                    name: "hex"
-                },
-                {
-                    name: "gyroid"
-                }
+                { name: "vase" },
+                { name: "hex" },
+                { name: "grid" },
+                { name: "gyroid" },
+                { name: "triangle" }
             ],
             // CAM only
             tools:[
@@ -2508,10 +2504,10 @@ self.kiri.license = exports.LICENSE;
             sliceTopLayers: UC.newInput("top layers", {title:"top solid layer count", convert:UC.toInt, modes:FDM}),
 
             process: UC.newGroup("fill", control, {modes:FDM}),
-            sliceFillOverlap: UC.newInput("shell overlap", {title:"overlap with shell\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            sliceFillAngle: UC.newInput("solid angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
-            sliceFillSparse: UC.newInput("percentage", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
             sliceFillType: UC.newSelectField("type", {modes:FDM}, "infill"),
+            sliceFillSparse: UC.newInput("percentage", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
+            sliceFillAngle: UC.newInput("solid angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM}),
+            sliceFillOverlap: UC.newInput("shell overlap", {title:"overlap with shell\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
 
             // laser
             laserOffset: UC.newInput("cut offset", {title:"millimeters\nadjust for beam width", convert:UC.toFloat, modes:LASER}),

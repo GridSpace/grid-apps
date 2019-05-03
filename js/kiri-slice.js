@@ -390,7 +390,9 @@ var gs_kiri_slice = exports;
             opt = options || {};
 
         slice.tops.forEach(function(top) {
-            if (opt.vase) top.poly = top.poly.clone(false);
+            if (opt.vase) {
+                top.poly = top.poly.clone(false);
+            }
             // top.thinner = [];
             top.traces = [];
             top.inner = [];
@@ -617,6 +619,7 @@ var gs_kiri_slice = exports;
             line = [],
             // callback passed to pluggable infill algorithm
             target = {
+                lineWidth: function() { return options.lineWidth },
                 bounds: function() { return bounds },
                 zIndex: function() { return scope.index },
                 zValue: function() { return scope.z },

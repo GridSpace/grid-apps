@@ -15,12 +15,14 @@ var gs_kiri_fill = exports;
         ROUND = UTIL.round,
         DEG2RAD = Math.PI / 180,
         FILL = self.kiri.fill = {
-            hex: sparseFillHexFull,
-            gyroid: sparseFillGyroid
+            hex: fillHexFull,
+            grid: fillGrid,
+            gyroid: fillGyroid,
+            triangle: fillTriangle
         };
 
-    function sparseFillHexFull(target) {
-        sparseFillHex(target, true);
+    function fillHexFull(target) {
+        fillHex(target, true);
     }
 
     /**
@@ -29,9 +31,9 @@ var gs_kiri_fill = exports;
      * @param {Object} target
      * @param {boolean} full continuous walls
      */
-    function sparseFillHex(target, full) {
+    function fillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
-        var spacing = target.offset() / 2,
+        let spacing = target.offset() / 2,
             vhlen = (1 - target.density()) * 4 + spacing,
             anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7),
             anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7),
@@ -92,7 +94,7 @@ var gs_kiri_fill = exports;
         }
     }
 
-    function sparseFillGyroid(target) {
+    function fillGyroid(target) {
         let bounds = target.bounds();
         let height = target.zHeight();
         let span_x = bounds.max.x - bounds.min.x;
@@ -117,5 +119,73 @@ var gs_kiri_fill = exports;
             }
         });
     }
+
+    function fillGrid(target) {
+        let bounds = target.bounds();
+        let height = target.zHeight();
+        let span_x = bounds.max.x - bounds.min.x;
+        let span_y = bounds.max.y - bounds.min.y;
+        let density = target.density();
+        let tile = 1 + (1 - density) * 5;
+        let tile_x = span_x / tile;
+        let tile_y = span_y / tile;
+        let tile_z = 1 / tile;
+        let offset = target.offset() / 2;
+
+        for (let tx=0; tx<=tile_x; tx++) {
+            target.newline();
+            for (let ty=0; ty<=tile_y; ty++) {
+                let bx = tx * tile + bounds.min.x;
+                let by = ty * tile + bounds.min.y;
+                if ((tx + ty) % 2) {
+                    target.emit(bx + offset, by);
+                    target.emit(bx + tile - offset, by + tile);
+                } else {
+                    target.emit(bx + tile - offset, by);
+                    target.emit(bx + offset, by + tile);
+                }
+            }
+        }
+    }
+
+    function fillTriangle(target) {
+        let bounds = target.bounds();
+        let height = target.zHeight();
+        let span_x = bounds.max.x - bounds.min.x;
+        let span_y = bounds.max.y - bounds.min.y;
+        let density = target.density();
+        let tile = 1 + (1 - density) * 5;
+        let tile_x = span_x / tile;
+        let tile_y = span_y / tile;
+        let tile_z = 1 / tile;
+        let line_w = target.lineWidth() / 2;
+        let offset = target.offset();
+
+        for (let tx=0; tx<=tile_x; tx++) {
+            target.newline();
+            for (let ty=0; ty<=tile_y; ty++) {
+                let bx = tx * tile + bounds.min.x;
+                let by = ty * tile + bounds.min.y;
+                if ((tx + ty) % 2) {
+                    target.emit(bx, by);
+                    target.emit(bx + tile - offset - line_w, by + tile);
+                } else {
+                    target.emit(bx + tile - offset - line_w, by);
+                    target.emit(bx, by + tile);
+                }
+            }
+        }
+
+        for (let tx=0; tx<=tile_x; tx++) {
+            target.newline();
+            for (let ty=0; ty<=tile_y; ty++) {
+                let bx = tx * tile + bounds.min.x;
+                let by = ty * tile + bounds.min.y;
+                target.emit(bx + tile - line_w, by);
+                target.emit(bx + tile - line_w, by + tile);
+            }
+        }
+    }
+
 
 })();

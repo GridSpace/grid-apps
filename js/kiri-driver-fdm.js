@@ -151,7 +151,8 @@ var gs_kiri_fdm = exports;
             if (!vaseMode && spro.sliceFillSparse > 0.0) {
                 forSlices(0.8, 1.0, function(slice) {
                     slice.doSparseLayerFill({
-                        spacing: fillSpacing,
+                        lineWidth: sdev.nozzleSize,
+                        spacing: fillOffset,
                         density: spro.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
                         height: spro.sliceHeight,
