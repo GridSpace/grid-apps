@@ -426,11 +426,10 @@ var gs_kiri_print = exports;
         var options = options || {},
             process = this.settings.process,
             shortDist = process.outputShortDistance,
-            shortFact = process.outputShortFactor,
             shellMult = options.extrude || process.outputShellMult,
             printSpeed = options.rate || process.outputFeedrate,
-            shortSpeed = printSpeed * shortFact,
             moveSpeed = process.outputSeekrate,
+            minSpeed = process.outputMinSpeed,
             closest = poly.findClosestPointTo(startPoint),
             perimeter = poly.perimeter(),
             first = true,
@@ -440,7 +439,7 @@ var gs_kiri_print = exports;
 
         // if short, use calculated print speed based on sliding scale
         if (perimeter < process.outputShortPoly) {
-            printSpeed = shortSpeed + (printSpeed - shortSpeed) * (perimeter / process.outputShortPoly);
+            printSpeed = minSpeed + (printSpeed - minSpeed) * (perimeter / process.outputShortPoly);
         }
 
         poly.forEachPoint(function(point, pos, points, count) {
