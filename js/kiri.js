@@ -740,13 +740,13 @@ self.kiri.license = exports.LICENSE;
 
     function meshArray() {
         var out = [];
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             out.push(widget.mesh);
         });
         return out;
     }
 
-    function forWidgets(f) {
+    function forAllWidgets(f) {
         WIDGETS.slice().forEach(function(widget) {
             f(widget);
         });
@@ -763,7 +763,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function toggleWireframe(color, opacity) {
-        forWidgets(function(w) { w.toggleWireframe(color, opacity) });
+        forAllWidgets(function(w) { w.toggleWireframe(color, opacity) });
         SPACE.update();
     }
 
@@ -772,7 +772,7 @@ self.kiri.license = exports.LICENSE;
         if (viewMode === VIEWS.PREVIEW && currentPrint) {
             max = currentPrint.getLayerCount();
         } else {
-            forWidgets(function(widget) {
+            forAllWidgets(function(widget) {
                 if (!widget.slices) return;
                 max = Math.max(max, widget.slices.length);
             });
@@ -794,7 +794,7 @@ self.kiri.license = exports.LICENSE;
     function hideSlices() {
         var showing = false;
         setOpacity(model_opacity);
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             widget.setWireframe(false);
             showing = widget.hideSlices() || showing;
         });
@@ -841,7 +841,7 @@ self.kiri.license = exports.LICENSE;
         showLayerRange = range;
         showLayerValue = layer;
 
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             if (print) return widget.hideSlices();
 
             slices = widget.slices;
@@ -895,13 +895,6 @@ self.kiri.license = exports.LICENSE;
         SPACE.update();
     }
 
-    function newButton(name,action) {
-        var b = DOC.createElement("button");
-        b.appendChild(DOC.createTextNode(name));
-        b.onclick = action;
-        return b;
-    }
-
     function loadGCode(gcode) {
         setViewMode(VIEWS.PREVIEW);
         clearPrint();
@@ -942,7 +935,7 @@ self.kiri.license = exports.LICENSE;
 
         if (MODE === MODES.CAM) {
             setOpacity(preview_opacity_cam);
-            forWidgets(function(widget) {
+            forAllWidgets(function(widget) {
                 widget.setColor(widget_cam_preview_color);
             });
         } else {
@@ -1324,7 +1317,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function clearSlices() {
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             widget.slices = null;
         });
     }
@@ -1361,7 +1354,7 @@ self.kiri.license = exports.LICENSE;
         setOpacity(slicing_opacity);
 
         // for each widget, slice
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             var segtimes = {},
                 segNumber = 0,
                 errored = false,
@@ -1421,7 +1414,7 @@ self.kiri.license = exports.LICENSE;
                 // on update
                 track[widget.id] = update;
                 totalProgress = 0;
-                forWidgets(function(w) {
+                forAllWidgets(function(w) {
                     totalProgress += (track[w.id] || 0);
                 });
                 setProgress(totalProgress / WIDGETS.length, msg);
@@ -1459,7 +1452,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function setOpacity(value) {
-        forWidgets(function (w) { w.setOpacity(value) });
+        forAllWidgets(function (w) { w.setOpacity(value) });
         UI.viewModelOpacity.value = value * 100;
         SPACE.update();
     }
@@ -1506,7 +1499,7 @@ self.kiri.license = exports.LICENSE;
 
     function platformComputeMaxZ() {
         var maxZ = 0;
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             maxZ = Math.max(maxZ, widget.mesh.getBoundingBox().max.z);
         });
         SPACE.platform.setMaxZ(maxZ);
@@ -1540,7 +1533,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function platformSelectAll() {
-        forWidgets(function(w) { widgetSelect(w, true) })
+        forAllWidgets(function(w) { widgetSelect(w, true) })
     }
 
     function widgetSelect(widget, shift) {
@@ -1572,7 +1565,7 @@ self.kiri.license = exports.LICENSE;
     function widgetDeselect(widget) {
         if (viewMode !== VIEWS.ARRANGE) return;
         if (!widget) {
-            forWidgets(function(widget) {
+            forAllWidgets(function(widget) {
                 widgetDeselect(widget);
             });
             return;
@@ -1616,7 +1609,7 @@ self.kiri.license = exports.LICENSE;
         if (!space && !layout) return SPACE.update();
 
         // check if any widget has been modified
-        forWidgets(function(w) {
+        forAllWidgets(function(w) {
             modified |= w.isModified();
         });
 
@@ -1789,7 +1782,7 @@ self.kiri.license = exports.LICENSE;
 
     function camUpdateWidgetZ() {
         var ztop = MODE === MODES.CAM ? camTopZ : 0;
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             widget.setTopZ(ztop);
         });
     }
@@ -1867,7 +1860,7 @@ self.kiri.license = exports.LICENSE;
         saveSettings();
         var newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
             widget.saveState();
@@ -1994,7 +1987,7 @@ self.kiri.license = exports.LICENSE;
 
         if (skipwidgets) return;
 
-        forWidgets(function(widget) {
+        forAllWidgets(function(widget) {
             platformDelete(widget);
         });
 

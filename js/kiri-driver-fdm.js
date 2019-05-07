@@ -211,6 +211,10 @@ var gs_kiri_fdm = exports;
                 widget.slices[0].tops.forEach(function(top) {
                     tops.push(top.poly.clone());
                 });
+                // collect support polygons
+                widget.slices[0].supports.forEach(function(support) {
+                    tops.push(support.clone());
+                });
                 // nest and offset tops
                 POLY.nest(tops).forEach(function(poly) {
                     poly.offset(-offset + nozzle / 2).forEach(function(brim) {
