@@ -212,6 +212,7 @@ var gs_kiri_fdm = exports;
                     tops.push(top.poly.clone());
                 });
                 // collect support polygons
+                if (widget.slices[0].supports)
                 widget.slices[0].supports.forEach(function(support) {
                     tops.push(support.clone());
                 });
