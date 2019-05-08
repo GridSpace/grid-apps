@@ -895,24 +895,24 @@ var gs_kiri_slice = exports;
     PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset, gap) {
         var min = minArea || 0.1,
             size = (pillarSize || 2),
+            slice = this,
             mergeDist = size * 3, // pillar merge dist
-            top = this,
-            tops = top.gatherTopPolys([]),
+            tops = slice.gatherTopPolys([]),
             trimTo = tops;
 
         // creates outer clip offset from tops
-        if (expand) POLY.expand(tops, expand, top.z, trimTo = []);
+        if (expand) POLY.expand(tops, expand, slice.z, trimTo = []);
 
         // create inner clip offset from tops
-        POLY.expand(tops, offset, top.z, top.offsets = []);
+        POLY.expand(tops, offset, slice.z, slice.offsets = []);
 
         // skip support detection for bottom layer
-        if (!top.down) return;
+        if (!slice.down) return;
 
-        var traces = POLY.flatten(top.gatherTraces([])),
-            fill = top.gatherFillLines([]),
+        var traces = POLY.flatten(slice.gatherTraces([])),
+            fill = slice.gatherFillLines([]),
             points = [],
-            down = top.down,
+            down = slice.down,
             down_tops = down.gatherTopPolys([]),
             down_traces = POLY.flatten(down.gatherTraces([]));
 
@@ -993,7 +993,7 @@ var gs_kiri_slice = exports;
                 culled = [];
 
             // clip supports to shell offsets
-            POLY.subtract(supports, down.gatherTopPolys([]), trimmed, null, top.z, min);
+            POLY.subtract(supports, down.gatherTopPolys([]), trimmed, null, slice.z, min);
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
