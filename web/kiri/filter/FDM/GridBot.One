@@ -12,8 +12,8 @@
         "M109 S{temp} T0              ; wait for extruder to reach target temp",
         "M117 Purge                   ; announce purge",
         "G92 E0                       ; set extruder position to 0",
-        "G1 E30 F300                  ; purge 30mm from extruder",
-        "G1 X0 Y0 Z0 F3000            ; move to origin / wipe",
+        "G1 E20 F250                  ; purge 20mm from extruder",
+        "G1 X0 Y0 Z0 E1 F3000         ; move to origin / wipe",
         "M117 Start Print             ; announce start of print"
     ],
     "post":[
