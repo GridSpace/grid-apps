@@ -15,6 +15,7 @@
 
 # FDM todo
 
+* adaptive column to compensate for fine or layers that finish too quickly and melt
 * store/recover grid:print target against printer selected in device
 * expand internal supporting flats
 * first layer support speed should be same as shell speed

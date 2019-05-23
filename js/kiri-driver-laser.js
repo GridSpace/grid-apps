@@ -59,12 +59,21 @@ var gs_kiri_laser = exports;
             }
         }
 
+        var breakout = true;
+        var object = [];
+
         slice.tops.forEach(function(top) {
-            var object = [];
             laserOut(top.traces, object);
             laserOut(top.innerTraces(), object);
-            objects.push(object);
+            if (breakout) {
+                objects.push(object);
+                objects = [];
+            }
         });
+
+        if (!breakout) {
+            objects.push(object);
+        }
     };
 
     /**

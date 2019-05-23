@@ -2280,7 +2280,7 @@ self.kiri.license = exports.LICENSE;
         WIN.addEventListener("resize", onWindowResize);
 
         SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(0xf8f8f8);
+        SPACE.setSkyColor(0xffffff);
         SPACE.init(container, function (delta) {
             if (showLayerMax === 0) return;
             if (settings.controller.reverseZoom) delta = -delta;
@@ -2521,7 +2521,8 @@ self.kiri.license = exports.LICENSE;
             firstLayerBedTemp: UC.newInput("bed temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
 
             laserOffset: UC.newInput("cut offset", {title:"millimeters\nadjust for beam width", convert:UC.toFloat, modes:LASER}),
-            laserSliceHeight: UC.newInput("layer height", {title:"millimeters\n0 = auto/detect", convert:UC.toFloat, modes:LASER}),
+            laserSliceHeight: UC.newInput("height", {title:"millimeters\n0 = auto/detect", convert:UC.toFloat, modes:LASER}),
+            laserSliceSingle: UC.newBoolean("single", onBooleanClick, {title:"perform one slice\nat specified height", modes:LASER}),
 
             roughing: UC.newGroup("roughing", null, {modes:CAM}),
             roughingTool: UC.newSelectField("tool", {modes:CAM}),
@@ -2569,6 +2570,7 @@ self.kiri.license = exports.LICENSE;
             outputTileScaling: UC.newInput("scaling", {title:"multiplier (0.1 to 100)", convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
             outputLaserPower: UC.newInput("power", {title:"0 - 100 %", convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
             outputLaserSpeed: UC.newInput("speed", {title:"millimeters / minute", convert:UC.toInt, modes:LASER}),
+            outputLaserGroup: UC.newBoolean("group", onBooleanClick, {title:"retain layer as\nsingle grouped object", modes:LASER}),
 
             outputTemp: UC.newInput("nozzle temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
             outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
