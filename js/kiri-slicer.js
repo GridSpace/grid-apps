@@ -184,8 +184,11 @@ var gs_kiri_slicer = exports;
             zOrdered.sort(function(a,b) { return a - b});
         }
 
-        // use Z indices in auto slice mode for laser
-        if (zInc === 0) {
+        if (options.single) {
+            // usually for laser single slice
+            zIndexes.push(zMin + zInc);
+        } else if (zInc === 0) {
+            // use Z indices in auto slice mode for laser
             // find unique z-index offsets for slicing
             var zl = zOrdered
             for (i = 0; i < zl.length - 1; i++) {

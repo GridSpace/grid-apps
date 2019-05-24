@@ -33,7 +33,7 @@ var gs_kiri_laser = exports;
             return ondone("invalid slice height");
         }
 
-        SLICER.sliceWidget(widget, {height: proc.laserSliceHeight}, function(slices) {
+        SLICER.sliceWidget(widget, {height: proc.laserSliceHeight, single: proc.laserSliceSingle}, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
                 slice.doShells(1, -proc.laserOffset);
@@ -59,7 +59,7 @@ var gs_kiri_laser = exports;
             }
         }
 
-        var breakout = true;
+        var breakout = !print.settings.process.outputLaserGroup;
         var object = [];
 
         slice.tops.forEach(function(top) {
@@ -67,7 +67,7 @@ var gs_kiri_laser = exports;
             laserOut(top.innerTraces(), object);
             if (breakout) {
                 objects.push(object);
-                objects = [];
+                object = [];
             }
         });
 

@@ -188,10 +188,12 @@ self.kiri.license = exports.LICENSE;
                     processName: 1,
                     laserOffset: 1,
                     laserSliceHeight: 1,
+                    laserSliceSingle: 1,
                     outputTileSpacing: 1,
                     outputTileScaling: 1,
                     outputLaserPower: 1,
                     outputLaserSpeed: 1,
+                    outputLaserGroup: 1,
                     outputOriginCenter: 1,
                     outputInvertX: 1,
                     outputInvertY: 1
@@ -334,11 +336,13 @@ self.kiri.license = exports.LICENSE;
 
                 laserOffset: 0.25,
                 laserSliceHeight: 1,
+                laserSliceSingle: false,
 
-                outputTileSpacing: 1,   // LASER
-                outputTileScaling: 1,   // LASER
-                outputLaserPower: 100,  // LASER
-                outputLaserSpeed: 1000, // LASER
+                outputTileSpacing: 1,
+                outputTileScaling: 1,
+                outputLaserPower: 100,
+                outputLaserSpeed: 1000,
+                outputLaserGroup: true,
 
                 // --- CAM ---
 
@@ -1016,9 +1020,11 @@ self.kiri.license = exports.LICENSE;
         }
 
         ajax("/kiri/output-laser.html", function(html) {
+            let segments = 0;
+            currentPrint.output.forEach(layer => { segments += layer.length });
             UI.print.innerHTML = html;
             $('print-filename').value = filename;
-            $('print-lines').value = currentPrint.lines;
+            $('print-lines').value = segments;
             $('print-close').onclick = hideModal;
             $('print-svg').onclick = download_svg;
             $('print-dxf').onclick = download_dxf;
@@ -2063,8 +2069,9 @@ self.kiri.license = exports.LICENSE;
         // associate named process with the current device
         settings.devproc[currentDeviceName()] = name;
 
-        // update selection display
+        // update selection display (off for laser)
         $('selected-process').innerHTML = name;
+        $('selected').style.display = (mode !== 'LASER') ? 'block' : 'none';
 
         updateFields();
         if (!named) {
@@ -2570,7 +2577,7 @@ self.kiri.license = exports.LICENSE;
             outputTileScaling: UC.newInput("scaling", {title:"multiplier (0.1 to 100)", convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
             outputLaserPower: UC.newInput("power", {title:"0 - 100 %", convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
             outputLaserSpeed: UC.newInput("speed", {title:"millimeters / minute", convert:UC.toInt, modes:LASER}),
-            outputLaserGroup: UC.newBoolean("group", onBooleanClick, {title:"retain layer as\nsingle grouped object", modes:LASER}),
+            outputLaserGroup: UC.newBoolean("layer group", onBooleanClick, {title:"retain layer as\nsingle grouped object", modes:LASER}),
 
             outputTemp: UC.newInput("nozzle temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
             outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
