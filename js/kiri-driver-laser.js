@@ -186,8 +186,8 @@ var gs_kiri_laser = exports;
             });
         });
 
-        // normalize against origin lower left
         if (!process.outputOriginCenter) {
+            // normalize against origin lower left
             output.forEach(function(layer) {
                 layer.forEach(function(out) {
                     point = out.point;
@@ -197,6 +197,21 @@ var gs_kiri_laser = exports;
             });
             max.x = max.x - min.x;
             max.y = max.y - min.y;
+            min.x = 0;
+            min.y = 0;
+        } else {
+            // normalize against center of build area
+            let w = print.settings.device.bedWidth;
+            let h = print.settings.device.bedDepth;
+            output.forEach(function(layer) {
+                layer.forEach(function(out) {
+                    point = out.point;
+                    point.x += w/2;
+                    point.y += h/2;
+                });
+            });
+            max.x = w;
+            max.y = h;
             min.x = 0;
             min.y = 0;
         }
