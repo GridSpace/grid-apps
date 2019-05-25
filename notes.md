@@ -15,6 +15,7 @@
 
 # FDM todo
 
+* apply finish speed to exposed top and underside flat areas
 * adaptive column to compensate for fine or layers that finish too quickly and melt
 * store/recover grid:print target against printer selected in device
 * expand internal supporting flats

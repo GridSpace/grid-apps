@@ -585,12 +585,13 @@ var gs_kiri_fdm = exports;
                 retract();
             }
 
+            // enable fan at fan layer
+            if (fan_power && layer === process.outputFanLayer) {
+                append(constReplace(fan_power, consts));
+            }
+
             // second layer transitions
             if (layer === 1) {
-                // second layer fan on
-                if (fan_power && process.outputCooling) {
-                    append(constReplace(fan_power, consts));
-                }
                 // update temps when first layer overrides are present
                 if (process.firstLayerNozzleTemp) {
                     consts.temp = process.outputTemp;

@@ -89,6 +89,7 @@ self.kiri.license = exports.LICENSE;
                     outputShellMult: 1,
                     outputFillMult: 1,
                     outputSparseMult: 1,
+                    outputFanLayer: 1,
                     outputRetractDist: 1,
                     outputRetractSpeed: 1,
                     outputRetractDwell: 1,
@@ -99,7 +100,6 @@ self.kiri.license = exports.LICENSE;
                     outputCoastDist: 1,
                     outputWipeDistance: 1,
                     sliceMinHeight: 1,
-                    outputCooling: 1,
                     // detectThinWalls: 1,
                     antiBacklash: 1,
                     zHopDistance: 1,
@@ -314,6 +314,7 @@ self.kiri.license = exports.LICENSE;
                 outputShellMult: 1.2,
                 outputFillMult: 1.2,
                 outputSparseMult: 1.2,
+                outputFanLayer: 1,
                 outputRetractDist: 1.0,
                 outputRetractSpeed: 40,
                 outputRetractDwell: 30,
@@ -330,7 +331,6 @@ self.kiri.license = exports.LICENSE;
                 outputLayerRetract: false,
                 gcodeNozzle: 0,
                 gcodePauseLayers: "",
-                outputCooling: true,
 
                 // --- LASER ---
 
@@ -2587,7 +2587,7 @@ self.kiri.license = exports.LICENSE;
             outputShellMult: UC.newInput("shell factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputCooling: UC.newBoolean("cooling", onBooleanClick, {title: "enable cooling fan\nafter first layer", modes:FDM}),
+            outputFanLayer:  UC.newInput("fan layer", {title:"layer to enable fan", convert:UC.toInt, bound:UC.bound(0,100), modes:FDM}),
 
             camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin millimeters", convert:UC.toFloat, modes:CAM}),
