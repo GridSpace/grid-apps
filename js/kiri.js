@@ -2070,6 +2070,7 @@ self.kiri.license = exports.LICENSE;
         settings.devproc[currentDeviceName()] = name;
 
         // update selection display (off for laser)
+        $('selected-device').innerHTML = currentDeviceName();
         $('selected-process').innerHTML = name;
         $('selected').style.display = (mode !== 'LASER') ? 'block' : 'none';
 
@@ -2527,7 +2528,7 @@ self.kiri.license = exports.LICENSE;
             firstLayerNozzleTemp: UC.newInput("nozzle temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
             firstLayerBedTemp: UC.newInput("bed temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM}),
 
-            laserOffset: UC.newInput("cut offset", {title:"millimeters\nadjust for beam width", convert:UC.toFloat, modes:LASER}),
+            laserOffset: UC.newInput("offset", {title:"nadjust for beam width\nin millimeters", convert:UC.toFloat, modes:LASER}),
             laserSliceHeight: UC.newInput("height", {title:"millimeters\n0 = auto/detect", convert:UC.toFloat, modes:LASER}),
             laserSliceSingle: UC.newBoolean("single", onBooleanClick, {title:"perform one slice\nat specified height", modes:LASER}),
 
