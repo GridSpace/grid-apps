@@ -330,6 +330,7 @@ var gs_kiri_fdm = exports;
                 }
             }
 
+            // exit if no slices
             if (slices.length === 0) break;
 
             // iterate over layer slices, find closest widget, print, eliminate

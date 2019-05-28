@@ -7,16 +7,15 @@
 * bail on decimation if it's proving ineffective
 * improve decimation speed by avoiding in/out of Point
 * server-side processing (determine protocol and storage)
-* move more kiri code (like printing) into modules like serial
+* move printing/output into module
 * refactor / simplify POLY.expand (put onus on collector)
-* add simple solid (tube-like) rendering in place of lines
 * cloned objects should share same slice data unless rotated
 * remember object's original position/orientation for reset/multi-object import alignment
 
 # FDM todo
 
-* apply finish speed to exposed top and underside flat areas
 * adaptive column to compensate for fine or layers that finish too quickly and melt
+* apply finish speed to exposed top and underside flat areas
 * store/recover grid:print target against printer selected in device
 * expand internal supporting flats
 * first layer support speed should be same as shell speed
@@ -30,8 +29,6 @@
 * feather sharp tips by reducing extrusion in area of overlap
 * dual extruder support
 * add manual supports
-* fan / layer control
-* update forum
 * option to support interior bridges when 0% infill
 * fix multiple part layout export offset (resend position @ print time)
 

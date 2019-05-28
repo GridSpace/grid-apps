@@ -32,7 +32,6 @@ var gs_base_polygons = exports;
         expand : expand,
         union : union,
         nest : nest,
-        dump : dump,
         diff : doDiff,
         filter : filter,
         toClipper : toClipper,
@@ -105,16 +104,6 @@ var gs_base_polygons = exports;
             }
         });
         return output;
-    }
-
-    function dump(poly) {
-        if (Array.isArray(poly)) {
-            poly.forEach(function(p) { dump(p) });
-        } else {
-            console.group({id:poly.id, area:poly.area(), depth:poly.depth, inner:(poly.inner ? poly.inner.length : null)});
-            if (poly.inner) dump(poly.inner);
-            console.groupEnd();
-        };
     }
 
     /**

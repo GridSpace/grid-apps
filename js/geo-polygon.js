@@ -917,33 +917,6 @@ var gs_base_polygon = exports;
     };
 
     /**
-     * todo for debugging
-     */
-    PRO.dump = function(msg,prec) {
-        var scope = this,
-            txt = [JSON.stringify({
-                len:scope.length,
-                area:scope.areaDeep(),
-                perim:scope.perimeterDeep(),
-                circ:scope.circularityDeep(),
-                inner:(scope.inner ? scope.inner.length : 0),
-                cw:scope.isClockwise(),
-                open:scope.isOpen(),
-                id:scope.id
-            })],
-            out = [], i = 0, p;
-        while (i<scope.points.length) {
-            p = scope.points[i++];
-            out.appendAll([UTIL.round(p.x,prec||5), UTIL.round(p.y,prec||5)]);
-        }
-        txt.push('['+out.join(',')+']');
-        DBUG.log((msg ? msg : '')+txt.join('\n'));
-        if (scope.inner) {
-            scope.inner.forEach(function(p) { p.dump("-- ",prec) });
-        }
-    };
-
-    /**
      * return offset polygon(s) from original using distance.  may result in
      * more than one new polygon if trace is self-intersecting or null if new
      * polygon is too small or offset is otherwise not possible due to geometry.
