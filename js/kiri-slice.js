@@ -472,6 +472,8 @@ var gs_kiri_slice = exports;
                             });
                     }
                 }
+            } else {
+                last = [top.poly];
             }
 
             // generate fill offset poly set from last offset to top.inner
