@@ -14,6 +14,7 @@
 
 # FDM todo
 
+* first layer segment large flat areas for better fill reliability
 * adaptive column to compensate for fine or layers that finish too quickly and melt
 * apply finish speed to exposed top and underside flat areas
 * store/recover grid:print target against printer selected in device

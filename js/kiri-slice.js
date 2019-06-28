@@ -390,6 +390,13 @@ var gs_kiri_slice = exports;
             opt = options || {};
 
         slice.tops.forEach(function(top) {
+            var top_poly = [ top.poly ];
+
+            if (slice.index === 0) {
+                // console.log({slice_top_0: top_poly, count});
+                // segment polygon
+            }
+
             if (opt.vase) {
                 top.poly = top.poly.clone(false);
             }
@@ -406,14 +413,14 @@ var gs_kiri_slice = exports;
             if (count) {
                 // permit offset of 0 for laser
                 if (offset1 === 0) {
-                    last = [top.poly].clone(true);
+                    last = top_poly.clone(true);
                     top.traces = last;
                 } else {
                     if (opt.thin) {
                         var on1s2 = offset1 * 2,
                             on2s2 = offsetN * 2;
                         POLY.expand2(
-                            [top.poly],
+                            top_poly,
                             -offset1,
                             -offsetN,
                             top.traces,
@@ -452,7 +459,7 @@ var gs_kiri_slice = exports;
                             z);
                     } else {
                         POLY.expand(
-                            [top.poly],
+                            top_poly,
                             -offset1,
                             z,
                             top.traces,
