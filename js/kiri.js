@@ -2052,6 +2052,21 @@ self.kiri.license = exports.LICENSE;
         showDialog("catalog");
     }
 
+    function editNamedSetting(e) {
+        var mode = getMode(),
+            name = e.target.getAttribute("name"),
+            load = settings.sproc[mode][name],
+            edit = prompt(`settings for "${name}"`, JSON.stringify(load));
+
+        if (edit) {
+            try {
+                settings.sproc[mode][name] = JSON.parse(edit);
+            } catch (e) {
+                alert('malformed settings object');
+            }
+        }
+    }
+
     function loadNamedSetting(e, named) {
         var name = e ? e.target.getAttribute("load") : named || settings.cproc[getMode()],
             load = settings.sproc[getMode()][name],
@@ -2099,6 +2114,7 @@ self.kiri.license = exports.LICENSE;
         list.sort().forEach(function(sk) {
             var row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
+                edit = DOC.createElement('button'),
                 del = DOC.createElement('button'),
                 name = sk;
 
@@ -2114,7 +2130,13 @@ self.kiri.license = exports.LICENSE;
             del.onclick = deleteNamedSetting;
             del.appendChild(DOC.createTextNode('x'));
 
+            edit.innerHTML = '&uarr;';
+            edit.setAttribute('name', sk);
+            edit.setAttribute('title', 'edit');
+            edit.onclick = editNamedSetting;
+
             row.setAttribute("class", "flow-row");
+            row.appendChild(edit);
             row.appendChild(load);
             row.appendChild(del);
             table.appendChild(row);
