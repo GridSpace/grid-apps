@@ -2061,6 +2061,9 @@ self.kiri.license = exports.LICENSE;
         if (edit) {
             try {
                 settings.sproc[mode][name] = JSON.parse(edit);
+                if (name === settings.process.processName) {
+                    loadNamedSetting(null, name);
+                }
             } catch (e) {
                 alert('malformed settings object');
             }
@@ -2068,16 +2071,19 @@ self.kiri.license = exports.LICENSE;
     }
 
     function loadNamedSetting(e, named) {
-        var name = e ? e.target.getAttribute("load") : named || settings.cproc[getMode()],
-            load = settings.sproc[getMode()][name],
-            mode = getMode();
+        var mode = getMode(),
+            name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
+            load = settings.sproc[mode][name];
+
         if (!load) return;
+
         for (var k in load) {
             if (!load.hasOwnProperty(k)) continue;
             // prevent stored process from overwriting device defaults
             if (k === "outputOriginCenter" && mode == "FDM") continue;
             settings.process[k] = load[k];
         }
+
         settings.process.processName = name;
         settings.cproc[mode] = name;
 
