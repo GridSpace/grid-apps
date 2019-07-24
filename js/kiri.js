@@ -2064,6 +2064,7 @@ self.kiri.license = exports.LICENSE;
                 if (name === settings.process.processName) {
                     loadNamedSetting(null, name);
                 }
+                saveSettings();
             } catch (e) {
                 alert('malformed settings object');
             }
