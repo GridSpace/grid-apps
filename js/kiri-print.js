@@ -59,13 +59,13 @@ var gs_kiri_print = exports;
 
     PRO.parseSVG = function(code, offset) {
         let scope = this,
+            svg = new DOMParser().parseFromString(code, 'text/xml'),
+            lines = [...svg.getElementsByTagName('polyline')],
             output = scope.output = [],
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
             };
-        let svg = new DOMParser().parseFromString(code, 'text/xml');
-        let lines = [...svg.getElementsByTagName('polyline')];
         lines.forEach(line => {
             let seq = [];
             let points = [...line.points];
@@ -85,6 +85,7 @@ var gs_kiri_print = exports;
             output.push(seq);
         });
         scope.lines = lines.length;
+        scope.bytes = code.length;
     };
 
     PRO.parseGCode = function(gcode, offset) {
@@ -216,7 +217,6 @@ var gs_kiri_print = exports;
             mode = settings.mode;
 
         if (remote) {
-
             // executed from kiri.js
             KIRI.work.printGCode(function(reply) {
                 scope.lines = reply.lines;

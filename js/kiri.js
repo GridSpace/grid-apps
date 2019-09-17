@@ -924,6 +924,11 @@ self.kiri.license = exports.LICENSE;
         showSlices();
         switch (type) {
             case 'svg':
+                currentPrint.exportGCode(false, gcode => {
+                    // console.log({svg_to_gcode: gcode});
+                }, line => {
+                    // console.log({gcode_line: line});
+                });
                 break;
             default:
                 exportGCode(code);
