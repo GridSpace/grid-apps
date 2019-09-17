@@ -899,22 +899,36 @@ self.kiri.license = exports.LICENSE;
         SPACE.update();
     }
 
-    function loadGCode(gcode) {
+    function loadCode(code, type) {
         setViewMode(VIEWS.PREVIEW);
         clearPrint();
         setOpacity(0);
         currentPrint = kiri.newPrint(settings, []);
-        currentPrint.parseGCode(gcode, settings.process.outputOriginCenter ? null : {
+        let offset = settings.process.outputOriginCenter ? null : {
             x: -settings.device.bedWidth / 2,
             y: -settings.device.bedDepth / 2,
-        });
+        };
+        switch (type) {
+            case 'svg':
+                currentPrint.parseSVG(code, offset);
+                break;
+            default:
+                currentPrint.parseGCode(code, offset);
+                break;
+        }
         currentPrint.render();
         SPACE.platform.add(currentPrint.group);
         SPACE.update();
         UI.layerPrint.checked = true;
         updateSliderMax(true);
         showSlices();
-        exportGCode(gcode);
+        switch (type) {
+            case 'svg':
+                break;
+            default:
+                exportGCode(code);
+                break;
+        }
     }
 
     function preparePrint(callback) {
@@ -1879,19 +1893,20 @@ self.kiri.license = exports.LICENSE;
 
     function loadFiles(files) {
         for (var i=0; i<files.length; i++) {
-            var lower = files[i].name.toLowerCase(),
-                reader = new FileReader(),
+            var reader = new FileReader(),
+                lower = files[i].name.toLowerCase(),
                 isstl = lower.indexOf(".stl") > 0,
+                issvg = lower.indexOf(".svg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
-                if (isstl)
-                platformAdd(
+                if (isstl) platformAdd(
                     newWidget()
                     .loadVertices(new MOTO.STL().parse(e.target.result))
                     .saveToCatalog(e.target.file.name)
                 );
-                if (isgcode) loadGCode(e.target.result);
+                if (isgcode) loadCode(e.target.result, 'gcode');
+                if (issvg) loadCode(e.target.result, 'svg');
             };
             reader.readAsBinaryString(reader.file);
         }

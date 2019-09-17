@@ -57,6 +57,36 @@ var gs_kiri_print = exports;
     PRO.addPrintPoints = addPrintPoints;
     PRO.poly2polyDepthFirstEmit = poly2polyDepthFirstEmit;
 
+    PRO.parseSVG = function(code, offset) {
+        let scope = this,
+            output = scope.output = [],
+            bounds = scope.bounds = {
+                max: { x:-Infinity, y:-Infinity, z:-Infinity},
+                min: { x:Infinity, y:Infinity, z:Infinity}
+            };
+        let svg = new DOMParser().parseFromString(code, 'text/xml');
+        let lines = [...svg.getElementsByTagName('polyline')];
+        lines.forEach(line => {
+            let seq = [];
+            let points = [...line.points];
+            points.forEach(point => {
+                if (offset) {
+                    point.x += offset.x;
+                    point.y += offset.y;
+                }
+                if (point.x) bounds.min.x = Math.min(bounds.min.x, point.x);
+                if (point.x) bounds.max.x = Math.max(bounds.max.x, point.x);
+                if (point.y) bounds.min.y = Math.min(bounds.min.y, point.y);
+                if (point.y) bounds.max.y = Math.max(bounds.max.y, point.y);
+                if (point.z) bounds.min.z = Math.min(bounds.min.z, point.z);
+                if (point.z) bounds.max.z = Math.max(bounds.max.z, point.z);
+                addOutput(seq, point, seq.length > 0);
+            });
+            output.push(seq);
+        });
+        scope.lines = lines.length;
+    };
+
     PRO.parseGCode = function(gcode, offset) {
         var lines = gcode
             .toUpperCase()
