@@ -13,7 +13,12 @@ Array.prototype.appendAll = function(a) {
 
 const helper = {
     log: function() {
-        console.log(moment().format('YYMMDD.HHmmss'), [...arguments].map(v => util.inspect(v, {breakLength:Infinity, colors:true})).join(' '));
+        console.log(
+            moment().format('YYMMDD.HHmmss'),
+            [...arguments]
+                .map(v => util.inspect(v, {breakLength:Infinity, colors:clearJS}))
+                .join(' ')
+        );
     }
 };
 
