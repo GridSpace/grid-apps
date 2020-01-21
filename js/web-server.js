@@ -324,6 +324,9 @@ function setup(req, res, next) {
         query: parsed.query,
     };
 
+    // fixup local addrs
+    if (req.gs.local) req.gs.ip = "::1";
+
     // track clients & show first instance of IP
     rec.last.push(time);
     rec.hits++;
