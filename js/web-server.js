@@ -16,15 +16,21 @@ const helper = {
         console.log(
             moment().format('YYMMDD.HHmmss'),
             [...arguments]
-                .map(v => util.inspect(v, {breakLength:Infinity, colors:clearJS}))
+                .map(v => util.inspect(v, {
+                    maxArrayLength: null,
+                    breakLength: Infinity,
+                    colors: debug,
+                    compact: true,
+                    sorted: true,
+                    depth: null
+                }))
                 .join(' ')
         );
     }
 };
 
 function log(o) {
-    if (!o.time) o.time = time();
-    helper.log(obj2string(o));
+    helper.log(o);
 }
 
 function promise(resolve, reject) {
@@ -525,7 +531,7 @@ function minify(path) {
  * @param {Function} next
  */
 function handleJS(req, res, next) {
-    if (!(req.gs.local || clearJS || clearOK.indexOf(req.gs.path) >= 0)) {
+    if (!(req.gs.local || debug || clearOK.indexOf(req.gs.path) >= 0)) {
         return reply404(req, res);
     }
 
@@ -546,7 +552,7 @@ function handleJS(req, res, next) {
         var mtime = f.mtime.getTime();
 
         if (!cached || cached.mtime != mtime) {
-            if (clearJS) {
+            if (debug) {
                 fs.readFile(fpath, null, function(err, code) {
                     if (err) {
                         return reply404(req,res);
@@ -704,15 +710,15 @@ function rewriteHTML(req, res, next) {
  * Setup / Global
  ********************************************* */
 
-var clearJS = false,
-    noLocal = false
+var debug = false,
+    nolocal = false
     port = 8080,
     args = process.argv.slice(2);
 
 args.forEach((arg, index) => {
     switch (arg) {
-        case 'nolocal': noLocal = true; break;
-        case 'debug': clearJS = true; break;
+        case 'nolocal': nolocal = true; break;
+        case 'debug': debug = true; break;
         case 'port': port = process.argv[index+3]; break;
     }
 });
@@ -734,7 +740,7 @@ var ver = require('../js/license.js'),
     serveStatic = require('serve-static'),
     compression = require('compression')(),
     querystring = require('querystring'),
-    ipLocal = noLocal ? [] : ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
+    ipLocal = nolocal ? [] : ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
     currentDir = process.cwd(),
     ipSaveDelay = 2000,
     startTime = time(),
@@ -840,15 +846,6 @@ var ver = require('../js/license.js'),
     code = {},
     inject = {},
     injectKeys = ["kiri", "meta"];
-
-// level.createReadStream().on('data', o => {
-//     let k = o.key.toString();
-//     let v = o.value.toString();
-//     if (v.length > 80) {
-//         v = `[${v.length}] ${v.substring(0,70)}...`;
-//     }
-//     helper.log(`${k} = ${v}`);
-// });
 
 /* *********************************************
  * Promises-based leveldb interface
@@ -1017,7 +1014,7 @@ function initModule(file, dir) {
             full: arg => { modPaths.push(fullpath(arg)) },
             static: arg => { modPaths.push(serveStatic(arg)) },
             code: (endpoint, path) => {
-                if (clearJS) {
+                if (debug) {
                     code[endpoint] = fs.readFileSync(path);
                 } else {
                     code[endpoint] = minify(path);
@@ -1095,5 +1092,4 @@ handler.use(fullpath({
     .listen(port);
 
 helper.log("------------------------------------------");
-helper.log({port, debug: clearJS, nolocal: noLocal});
-helper.log({version: ver.VERSION});
+helper.log({port, debug, nolocal, version: ver.VERSION});
