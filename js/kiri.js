@@ -566,6 +566,7 @@ self.kiri.license = exports.LICENSE;
         clearWorker : KIRI.work.clear,
         getSettings : getSettings,
         putSettings : putSettings,
+        gridDetect : function() { return false },
         ghostDetect : function() { return false },
         hideImport : function() { UI.import.style.display = 'none' },
         mouse : {
