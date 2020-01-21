@@ -1065,7 +1065,9 @@ self.kiri.license = exports.LICENSE;
             grid_host,
             grid_apik,
             grid_target,
-            grid_targets = {};
+            grid_targets = {},
+            grid_local,
+            grid_uuid;
 
         // run gcode post processor function (when supplied and valid)
         if (codeproc && self[codeproc]) {
@@ -1127,6 +1129,50 @@ self.kiri.license = exports.LICENSE;
                     setTimeout(function() { gridhost_tracker(host,key) }, 1000);
                 }
             });
+        }
+
+        function gridlocal_probe(ev, devs) {
+            if (ev && ev.code !== 'Enter') return;
+
+            if (!devs && KIRI.api.gridDetect(gridlocal_probe)) return;
+
+            grid_local = devs;
+
+            let html = [];
+            for (let uuid in devs) {
+                let dev = devs[uuid];
+                html.push(`<option id="gl-${uuid}" value="${uuid}">${dev.stat.device.name}</option>`);
+            }
+            $('grid-local').innerHTML = html.join('\n');
+        }
+
+        function sendto_gridlocal() {
+            let uuid = $('grid-local').value;
+            let dev = grid_local[uuid];
+            if (dev) {
+                let file = $('print-filename').value;
+                fetch(
+                    `/api/grid_send?uuid=${uuid}&file=${encodeURIComponent(file + "." + fileext)}`,
+                    {method: "POST", body: gcode}
+                )
+                .then(t => t.text())
+                .then(t => {
+                    console.log({grid_spool_said: t});
+                })
+                .catch(e => {
+                    console.log({grid_local_spool_error: e});
+                })
+                .finally(() => {
+                    hideModal();
+                });
+            }
+        }
+
+        function admin_gridlocal() {
+            let dev = grid_local[$('grid-local').value];
+            if (dev && dev.stat.device.addr) {
+                window.open(`http://${dev.stat.device.addr[0]}:4080`, "_grid_admin");
+            }
         }
 
         function gridhost_probe(ev, host) {
@@ -1291,6 +1337,8 @@ self.kiri.license = exports.LICENSE;
             $('print-download').onclick = download;
             $('print-octoprint').onclick = sendto_octoprint;
             $('print-gridhost').onclick = sendto_gridhost;
+            $('print-gridlocal').onclick = sendto_gridlocal;
+            $('admin-gridlocal').onclick = admin_gridlocal;
             $('print-filament-row').style.display = MODE === MODES.FDM ? '' : 'none';
             $('mill-info').style.display = MODE === MODES.CAM ? '' : 'none';
             $('print-filename').value = filename;
@@ -1324,6 +1372,7 @@ self.kiri.license = exports.LICENSE;
             grid_host.value = SDB['grid-host'] || '';
             grid_apik.value = SDB['grid-apik'] || '';
             gridhost_probe();
+            gridlocal_probe();
             showModal('print');
         });
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2019 Stewart Allen -- All Rights Reserved
+ * Copyright Stewart Allen -- All Rights Reserved
  */
 
 Array.prototype.contains = function(v) {
@@ -11,9 +11,15 @@ Array.prototype.appendAll = function(a) {
     return this;
 };
 
+const helper = {
+    log: function() {
+        console.log(moment().format('YYMMDD.HHmmss'), [...arguments].map(v => util.inspect(v, {breakLength:Infinity, colors:true})).join(' '));
+    }
+};
+
 function log(o) {
     if (!o.time) o.time = time();
-    console.log(obj2string(o));
+    helper.log(obj2string(o));
 }
 
 function promise(resolve, reject) {
@@ -101,7 +107,7 @@ function getCachedFile(filePath, cachePath, fn) {
         if (cmod >= smod) {
             cacheData = fs.readFileSync(cachePath);
         } else {
-            console.log({update_cache:filePath});
+            helper.log({update_cache:filePath});
             cacheData = fn(filePath);
             fs.writeFileSync(cachePath, cacheData);
         }
@@ -213,7 +219,7 @@ function remoteIP(req) {
             req.socket.remoteAddress ||
             req.connection.remoteAddress,
         ipa = ip.split(',');
-    // if (ipa.length > 1) console.log({remote:ipa});
+    // if (ipa.length > 1) helper.log({remote:ipa});
     return ipa[0];
 }
 
@@ -291,7 +297,7 @@ function setup(req, res, next) {
     try {
         ua = agent.parse(req.headers['user-agent'] || '');
     } catch (e) {
-        console.log("ua parse error on : "+req.headers['user-agent']);
+        helper.log("ua parse error on : "+req.headers['user-agent']);
     }
 
     // cache it
@@ -307,7 +313,7 @@ function setup(req, res, next) {
                     // if (addr) log({ip:ipaddr, addr:addr});
                 });
             } catch (e) {
-                console.log({dns_err: e, ipaddr})
+                helper.log({dns_err: e, ipaddr})
             }
         }
     }
@@ -352,7 +358,7 @@ function setup(req, res, next) {
             }, ipSaveDelay);
         })
         .catch(error => {
-            console.log({dbikey, error});
+            helper.log({dbikey, error});
         });
 
     // absolute limit on client requests per minute
@@ -716,6 +722,7 @@ var ver = require('../js/license.js'),
     spawn = require('child_process').spawn,
     level = require('level')('./persist', {valueEncoding:"json"}),
     https = require('https'),
+    moment = require('moment'),
     uglify = require('uglify-es'),
     connect = require('connect'),
     request = require('request'),
@@ -835,7 +842,7 @@ var ver = require('../js/license.js'),
 //     if (v.length > 80) {
 //         v = `[${v.length}] ${v.substring(0,70)}...`;
 //     }
-//     console.log(`${k} = ${v}`);
+//     helper.log(`${k} = ${v}`);
 // });
 
 /* *********************************************
@@ -886,7 +893,7 @@ const api = {
         // allow 60 calls in 60 seconds
         if (limit(req.gs.iprec.api, 60, 60000) && !req.gs.local) {
             quickReply(res, 503, "rate limited");
-            try { log({rate_limit_api: req.gs.ip}); } catch (e) { console.log(e) }
+            try { log({rate_limit_api: req.gs.ip}); } catch (e) { helper.log(e) }
         } else {
             next();
         }
@@ -970,7 +977,7 @@ function remap(path) {
 
 // load module and call returned function with helper object
 function initModule(file, dir) {
-    console.log({module:file});
+    helper.log({module:file});
     require(file)({
         api: api,
         const: {
@@ -980,7 +987,7 @@ function initModule(file, dir) {
             args: args
         },
         util: {
-            log: log,
+            log: helper.log,
             time: time,
             guid: guid,
             mkdirs: mkdirs,
@@ -1023,7 +1030,7 @@ function initModule(file, dir) {
 
 // add static assets to be served
 function addStatic(dir) {
-    console.log({static:dir});
+    helper.log({static:dir});
     modPaths.push(serveStatic(dir));
 }
 
@@ -1082,7 +1089,6 @@ handler.use(fullpath({
     .use(serveStatic(currentDir + "/web/"))
     .listen(port);
 
-console.log("------------------------------------------");
-console.log(new Date());
-console.log("port="+port+" debug="+clearJS+" nolocal="+noLocal);
-console.log("version="+ver.VERSION);
+helper.log("------------------------------------------");
+helper.log({port, debug: clearJS, nolocal: noLocal});
+helper.log({version: ver.VERSION});
