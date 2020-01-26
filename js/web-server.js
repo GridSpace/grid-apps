@@ -986,7 +986,8 @@ function initModule(file, dir) {
             script: script,
             rootdir: currentDir,
             moddir: dir,
-            args: args
+            args: args,
+            debug: debug
         },
         util: {
             log: helper.log,
