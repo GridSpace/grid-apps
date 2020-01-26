@@ -1050,7 +1050,8 @@ function loadModule(dir) {
 lastmod("mod") && fs.readdirSync(currentDir + "/mod").forEach(dir => {
     const fullpath = currentDir + "/mod/" + dir;
     if (dir.charAt(0) === '.') return;
-    if (!fs.lstatSync(fullpath).isDirectory()) return;
+    const stats = fs.lstatSync(fullpath);
+    if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
     loadModule(fullpath);
 });
 
