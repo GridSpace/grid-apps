@@ -1022,6 +1022,7 @@ function initModule(file, dir) {
             }
         },
         handler: {
+            addCORS: addCorsHeaders,
             static: serveStatic,
             redirect: redirect,
             reply404: reply404,
