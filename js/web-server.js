@@ -895,7 +895,7 @@ const api = {
         // allow 60 calls in 60 seconds
         if (limit(req.gs.iprec.api, 60, 60000) && !req.gs.local) {
             quickReply(res, 503, "rate limited");
-            try { log({rate_limit_api: req.gs.ip}); } catch (e) { helper.log(e) }
+            try { log({rate_limit_api: req.gs.ip, url: req.gs.url}); } catch (e) { helper.log(e) }
         } else {
             next();
         }
