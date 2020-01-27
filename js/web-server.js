@@ -1020,7 +1020,9 @@ function initModule(file, dir) {
                 } else {
                     code[endpoint] = minify(path);
                 }
-            }
+            },
+            redir: redir,
+            remap: remap
         },
         handler: {
             addCORS: addCorsHeaders,
