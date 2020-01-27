@@ -1042,6 +1042,9 @@ function addStatic(dir) {
 
 // either add module assets to path or require(init.js)
 function loadModule(dir) {
+    if (lastmod(dir + "/.ignore")) {
+        return;
+    }
     const modjs = dir + "/init.js";
     lastmod(modjs) ? initModule(modjs, dir) : addStatic(dir);
 }
