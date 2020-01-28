@@ -760,26 +760,28 @@ var gs_kiri_print = exports;
             } else {
                 // top object
                 var bounds = POLY.flatten(next.gatherOuter([]));
-                // outputTraces([].appendAll(next.traces).appendAll(next.innerTraces() || []), bounds);
 
-                // outside in
+                let dir = -1; // 1 == inside out, -1 == outside-in
+
+                // output inner polygons
+                if (dir === 1)
+                outputTraces([].appendAll(next.innerTraces() || []), bounds);
+
+                // sort perimeter polygon by length to go out-to-in or in-to-out
                 (next.traces || []).sort(function(a,b) {
-                    return a.perimeter() > b.perimeter() ? -1 : 1;
+                    return a.perimeter() > b.perimeter() ? dir : -dir;
                 }).forEach(function(poly, index) {
                     outputTraces(poly, bounds);
                 });
-                // outputTraces([].appendAll(next.traces) || []), bounds); // outer first
 
-                // inside out
-                // (next.innerTraces() || []).sort(function(a,b) {
-                //     return a.perimeter() > b.perimeter() ? 1 : -1;
-                // }).forEach(function(poly, index) {
-                //     outputTraces(poly, bounds);
-                // });
-                outputTraces([].appendAll(next.innerTraces() || []), bounds); // inner last
+                // output inner polygons
+                if (dir === -1)
+                outputTraces([].appendAll(next.innerTraces() || []), bounds);
 
+                // then output solid and sparse fill
                 outputFills(next.fill_lines, bounds);
                 outputSparse(next.fill_sparse, bounds);
+
                 lastTop = next;
             }
         }, function(obj) {
