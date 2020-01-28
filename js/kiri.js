@@ -1170,8 +1170,9 @@ self.kiri.license = exports.LICENSE;
 
         function admin_gridlocal() {
             let dev = grid_local[$('grid-local').value];
-            if (dev && dev.stat.device.addr) {
-                window.open(`http://${dev.stat.device.addr[0]}:4080`, "_grid_admin");
+            if (dev && dev.stat && dev.stat.device) {
+                let dsd = dev.stat.device;
+                window.open(`http://${dsd.addr[0]}:${dsd.port || 4080}`, "_grid_admin");
             }
         }
 
