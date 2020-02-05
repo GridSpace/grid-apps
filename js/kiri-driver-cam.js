@@ -1531,7 +1531,7 @@ var gs_kiri_cam = exports;
             }
 
             // update time calculation
-            time += pos.f / 60 * dist;
+            time += (dist / (pos.f || 1000)) * 60;
 
             // if (comment && !stripComments) {
             //     nl.append(" ; ").append(comment);
