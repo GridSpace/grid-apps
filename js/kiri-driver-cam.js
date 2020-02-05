@@ -1388,7 +1388,7 @@ var gs_kiri_cam = exports;
             stripComments = gcodes.gcodeStrip || false,
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
-            cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
+            cmdDwell = gcodes.gcodeDwell || [ "G4 S{time}" ],
             bounds = widget.getCamBounds(settings),
             bed = settings.device,
             spro = settings.process,
@@ -1478,7 +1478,7 @@ var gs_kiri_cam = exports;
             // out.speed = time to dwell in ms
             if (!newpos) {
                 time += out.speed;
-                consts.time = out.speed;
+                consts.time = out.speed / 1000;
                 filterEmit(cmdDwell, consts);
                 return;
             }
