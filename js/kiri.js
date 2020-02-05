@@ -262,7 +262,7 @@ self.kiri.license = exports.LICENSE;
                 gcodeFan: "",       // FDM fan command
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: "",     // FDM layer output
-                gcodeDwell: ["G4 S{time}"],     // CAM dwell script
+                gcodeDwell: ["G4 P{time}"],     // CAM dwell script
                 gcodeChange: ["M6 T{tool}"],    // CAM tool change script
                 gcodeSpindle: ["M3 S{speed}"],  // CAM spindle speed
                 gcodeFExt: "",      // CAM file extension
