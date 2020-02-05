@@ -742,7 +742,7 @@ var gs_kiri_cam = exports;
             const outside = 10000,
                 width = (tabWidth + toolDiam) / 2,
                 // horizontal top cut
-                htl = { x: -outside, y: tabWidth / 2 },
+                htl = { x: -outside, y: width },
                 htr = { x: -htl.x, y: htl.y },
                 // horizontal bottom cut
                 hbl = { x: htl.x, y: -htl.y },

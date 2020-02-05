@@ -2645,7 +2645,7 @@ self.kiri.license = exports.LICENSE;
             finishing: UC.newGroup("finishing", null, {modes:CAM}),
             finishingTool: UC.newSelectField("tool", {modes:CAM}),
             finishingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
-            finishingOver: UC.newInput("step over", {title:"0.05 - 1.0\npercentage of\ntool diameter", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
+            finishingOver: UC.newInput("step over", {title:"0.05 - 1.0\npercentage of\ntool diameter\nfor linear XY", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             finishingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin millimeters\n0 to disable", convert:UC.toFloat, modes:CAM}),
             finishingAngle: UC.newInput("max angle", {title:"angles greater than this\nare considered vertical", convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             finishingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
@@ -3267,6 +3267,7 @@ self.kiri.license = exports.LICENSE;
 
                 // hide spindle fields when device doens't support it
                 [
+                 UI.setDeviceExtrusion,
                  UI.roughingSpindle,
                  UI.finishingSpindle,
                  UI.drillSpindle
