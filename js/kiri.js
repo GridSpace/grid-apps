@@ -131,6 +131,7 @@ self.kiri.license = exports.LICENSE;
                 // fields permitted in CAM:Process
                 p:{
                     processName: 1,
+                    camFastFeed: 1,
                     roughingTool: 1,
                     roughingSpindle: 1,
                     roughingDown: 1,
@@ -345,6 +346,8 @@ self.kiri.license = exports.LICENSE;
                 outputLaserGroup: true,
 
                 // --- CAM ---
+
+                camFastFeed: 6000,
 
                 roughingTool: 1000,
                 roughingSpindle: 1000,
@@ -2631,6 +2634,9 @@ self.kiri.license = exports.LICENSE;
             laserOffset: UC.newInput("offset", {title:"nadjust for beam width\nin millimeters", convert:UC.toFloat, modes:LASER}),
             laserSliceHeight: UC.newInput("height", {title:"millimeters\n0 = auto/detect", convert:UC.toFloat, modes:LASER}),
             laserSliceSingle: UC.newBoolean("single", onBooleanClick, {title:"perform one slice\nat specified height", modes:LASER}),
+
+            camCommon: UC.newGroup("common", null, {modes:CAM}),
+            camFastFeed: UC.newInput("rapid feed", {title:"rapid moves feedrate\nin millimeters / minute", convert:UC.toInt, modes:CAM}),
 
             roughing: UC.newGroup("roughing", null, {modes:CAM}),
             roughingTool: UC.newSelectField("tool", {modes:CAM}),

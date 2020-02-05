@@ -1495,8 +1495,9 @@ var gs_kiri_cam = exports;
                 filterEmit(cmdToolChange, consts);
             }
 
-            var feed = out.speed,
-                nl = [feed ? 'G1' : 'G0'],
+            var speed = out.speed,
+                feed = speed || spro.camFastFeed,
+                nl = [speed ? 'G1' : 'G0'],
                 dx = newpos.x - pos.x,
                 dy = newpos.y - pos.y,
                 dz = newpos.z - pos.z,
