@@ -44,6 +44,13 @@
         <div id="help"></div>
         <!-- changeable print dialog -->
         <div id="print"></div>
+        <!-- local devices dialog -->
+        <div id="local" class="dialog">
+            <button id="local-close" class="modal-x">X</button>
+            <center><b><u>Grid.Local Devices</u></b></center>
+            <br>
+            <div id="local-dev" class="flow-col"></div>
+        </div>
         <!-- hidden file input loader -->
         <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
     </div>
@@ -97,7 +104,7 @@
     </div>
     <!-- CAM tools dialog -->
     <div id="tools" class="dialog">
-        <div id="tools-body" class="flow-col">
+            <div id="tools-body" class="flow-col">
             <div id="tool-labels" class="flow-row">
                 <label>tools</label>
                 <label>details</label>

@@ -2092,17 +2092,13 @@ self.kiri.license = exports.LICENSE;
     }
 
     function modalShowing() {
-        var showing = false;
-        ["modal","catalog","devices","tools"].forEach(function(dialog) {
-            var state = UI[dialog].style.display
-            showing = showing || state !== 'none';
-        });
+        var showing = $('modal').style.display !== 'none';
         return showing || UC.isPopped();
     }
 
     function showModal(which) {
         UI.modal.style.display = 'block';
-        ["print","help"].forEach(function(modal) {
+        ["print","help","local"].forEach(function(modal) {
             UI[modal].style.display = (modal === which ? 'block' : 'none');
         });
     }
@@ -2267,6 +2263,37 @@ self.kiri.license = exports.LICENSE;
         });
     }
 
+    function showLocal() {
+        $('local-close').onclick = hideModal;
+        showModal('local');
+        fetch("/api/grid_local")
+            .then(r => r.json())
+            .then(j => {
+                let bind = [];
+                let html = ['<table>'];
+                html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
+                html.push(`<tbody>`);
+                for (let k in j) {
+                    let r = j[k].stat;
+                    bind.push({uuid: r.device.uuid, host: r.device.addr[0], post: r.device.port});
+                    html.push(`<tr>`);
+                    html.push(`<td>${r.device.name}</td>`);
+                    html.push(`<td>${r.device.mode}</td>`);
+                    html.push(`<td>${r.state}</td>`);
+                    html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
+                    html.push(`</tr>`);
+                }
+                html.push(`</tbody>`);
+                html.push(`</table>`);
+                $('local-dev').innerHTML = html.join('');
+                bind.forEach(rec => {
+                    $(rec.uuid).onclick = () => {
+                        window.open(`http://${rec.host}:${rec.port||4080}/`);
+                    };
+                });
+            });
+    }
+
     function takeFocus(el) {
         DOC.activeElement.blur();
         el = [ el || DOC.body, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.viewModelOpacity, DOC.body ];
@@ -2412,6 +2439,7 @@ self.kiri.license = exports.LICENSE;
             control: control,
             modal: $('modal'),
             print: $('print'),
+            local: $('local'),
             help: $('help'),
 
             alert: {
@@ -2514,7 +2542,10 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("Devices", showDevices, {modes:FDM_CAM})
                 ],[
                     UI.setupTools =
-                    UC.newButton('Tools',   showTools, {modes:CAM}),
+                    UC.newButton("Tools",   showTools, {modes:CAM})
+                ],[
+                    UI.localButton =
+                    UC.newButton("Local",   showLocal, {modes:FDM_CAM})
                 ],[
                     UI.helpButton =
                     UC.newButton("Help",    showHelp)
@@ -2748,6 +2779,24 @@ self.kiri.license = exports.LICENSE;
             showSlices();
         }
 
+        function inputHasFocus() {
+            var active = DOC.activeElement;
+            return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
+        }
+
+        function textAreaHasFocus() {
+            var active = DOC.activeElement;
+            return active && active.nodeName === "TEXTAREA";
+        }
+
+        function inputSize() {
+            return parseInt(DOC.activeElement.size);
+        }
+
+        function cca(c) {
+            return c.charCodeAt(0);
+        }
+
         function keyUpHandler(evt) {
             switch (evt.keyCode) {
                 // escape
@@ -2765,20 +2814,6 @@ self.kiri.license = exports.LICENSE;
                     break;
             }
             return false;
-        }
-
-        function inputHasFocus() {
-            var active = DOC.activeElement;
-            return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
-        }
-
-        function textAreaHasFocus() {
-            var active = DOC.activeElement;
-            return active && active.nodeName === "TEXTAREA";
-        }
-
-        function inputSize() {
-            return parseInt(DOC.activeElement.size);
         }
 
         function keyDownHandler(evt) {
@@ -2850,10 +2885,6 @@ self.kiri.license = exports.LICENSE;
                     }
                     break;
             }
-        }
-
-        function cca(c) {
-            return c.charCodeAt(0);
         }
 
         function keyHandler(evt) {
@@ -2948,6 +2979,9 @@ self.kiri.license = exports.LICENSE;
                     break;
                 case cca('o'): // tools
                     showTools();
+                    break;
+                case cca('c'): // local devices
+                    showLocal();
                     break;
                 case cca('v'): // toggle single slice view mode
                     UI.layerRange.checked = !UI.layerRange.checked;

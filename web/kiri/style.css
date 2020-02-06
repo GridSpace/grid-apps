@@ -120,6 +120,43 @@ select {
     display: none;
 }
 
+.modal-x {
+    position: absolute;
+    z-index: 200;
+    right: 3px;
+    top: 3px;
+}
+
+/** LOCAL DIALOG */
+
+#local {
+    position: fixed;
+    -webkit-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+    text-align: center;
+    top: 50px;
+    left: 50%;
+    color: black;
+    border: 10px solid #ddd;
+    border-radius: 10px;
+    background-color: rgba(255,255,255,0.9);
+    padding: 10px;
+}
+#local-dev table {
+    border-color: separate;
+    border-spacing: 0;
+}
+#local-dev td,th {
+    padding: 5px !important;
+}
+#local-dev thead th {
+    width: 100%;
+    border-bottom: 1px solid #888;
+}
+#local-dev tbody tr:hover {
+    background-color: #eee;
+}
+
 /** PRINT DIALOG */
 
 #print {
@@ -137,12 +174,6 @@ select {
 }
 #print button {
     font-weight: bold;
-}
-#print-close {
-    position: absolute;
-    z-index: 200;
-    right: 3px;
-    top: 3px;
 }
 #print > div {
     border: 1px solid #aaa;
@@ -253,12 +284,6 @@ select {
     border: 10px solid #ddd;
     background-color: rgba(255,255,255,0.9);
     padding: 10px;
-}
-#help-close {
-    position: absolute;
-    z-index: 200;
-    right: 3px;
-    top: 3px;
 }
 #help a {
     color: #68d;
