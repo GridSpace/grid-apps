@@ -853,19 +853,19 @@ var gs_kiri_print = exports;
      * to be more like outputOrderClosest() and have the option to account for
      * depth in determining distance
      */
-    function poly2polyEmit(array, startPoint, emitter) {
-        var mindist, dist, found, count = 0;
+    function poly2polyEmit(array, startPoint, emitter, mark) {
+        var mindist, dist, found, count = 0, marker = mark || 'delete';
         for (;;) {
             found = null;
             mindist = Infinity;
             array.forEach(function(poly) {
-                if (poly.delete) return;
+                if (poly[marker]) return;
                 if (poly.isOpen()) {
                     const d2f = startPoint.distTo2D(poly.first());
                     const d2l = startPoint.distTo2D(poly.first());
                     if (d2f > mindist && d2l > mindist) return;
                     if (d2l < mindist && d2l < d2f) {
-                        poly.reverse();
+                        // poly.reverse();
                         found = {poly:poly, index:0, point:poly.first()};
                     } else if (d2f < mindist) {
                         found = {poly:poly, index:0, point:poly.first()};
@@ -881,7 +881,7 @@ var gs_kiri_print = exports;
                 });
             });
             if (found) {
-                found.poly.delete = true;
+                found.poly[marker] = true;
                 startPoint = emitter(found.poly, found.index, ++count, startPoint) || found.point;
             } else {
                 break;
@@ -889,7 +889,7 @@ var gs_kiri_print = exports;
         }
 
         // undo delete marks
-        array.forEach(function(poly) { poly.delete = false });
+        array.forEach(function(poly) { poly[marker] = false });
 
         return startPoint;
     }
@@ -974,9 +974,10 @@ var gs_kiri_print = exports;
             poolPoly.mark = true;
             const polys = poolPoly.pool.slice().append(poolPoly);
             startPoint = poly2polyEmit(polys, startPoint, emitter);
-            poolPoly.poolsDown.forEach(function(downPool) {
-                emitPool(downPool);
-            });
+            // poolPoly.poolsDown.forEach(function(downPool) {
+            //     emitPool(downPool);
+            // });
+            poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown");
         };
 
         // from the top layer, iterate and descend through all connected pools
