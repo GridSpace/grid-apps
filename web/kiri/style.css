@@ -287,6 +287,7 @@ select {
 }
 #help a {
     color: #68d;
+    font-size: smaller;
 }
 #help a:hover {
     color: #46a;
@@ -297,6 +298,34 @@ select {
 }
 button.selected {
     background-color: white;
+}
+#help-left {
+    border-right: 1px dashed #aaa;
+    padding-right: 10px;
+}
+#help-right {
+    padding-left: 10px;
+}
+#help-body .grouphead {
+    padding: 3px !important;
+}
+#help-body table label {
+    font-family: monospace;
+    border-radius: 3px;
+    margin: 5px 1px 5px 1px !important;
+    padding: 1px 3px 1px 3px;
+    background-color: #ddd;
+}
+#help-body td {
+    margin: 5px;
+    padding: 2px;
+    font-family: monospace;
+}
+#help-body th,td {
+    white-space: nowrap;
+}
+#help-body li {
+    white-space: nowrap;
 }
 
 /** tool dialog */

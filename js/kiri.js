@@ -55,7 +55,6 @@ self.kiri.license = exports.LICENSE;
                     processName: 1,
                     sliceHeight: 1,
                     sliceShells: 1,
-                    sliceShellSpacing: 1,
                     sliceFillAngle: 1,
                     sliceFillOverlap: 1,
                     sliceFillSparse: 1,
@@ -277,7 +276,6 @@ self.kiri.license = exports.LICENSE;
 
                 sliceHeight: 0.25,
                 sliceShells: 3,
-                sliceShellSpacing: 1.0,
                 sliceFillAngle: 45,
                 sliceFillOverlap: 0.3,
                 sliceFillSparse: 0.5,
@@ -2244,7 +2242,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function showHelpLocal() {
-        showHelp("/kiri/help-kiri.html");
+        showHelp("/kiri/help.html");
     }
 
     function showHelp(local) {
@@ -2677,6 +2675,7 @@ self.kiri.license = exports.LICENSE;
             roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
             roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
             roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin millimeters", convert:UC.toFloat, modes:CAM}),
+            camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"plunge cuts will\nspiral down or ease\nalong a linear path\nas they cut downward", modes:CAM}),
             roughingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
 
             finishing: UC.newGroup("finishing", null, {modes:CAM}),
@@ -2732,7 +2731,6 @@ self.kiri.license = exports.LICENSE;
             camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin millimeters", convert:UC.toFloat, modes:CAM}),
             camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin millimeters", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
             camPocketOnly: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
-            // camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"rough plunge cuts\nwill spiral down", modes:CAM}),
             camDepthFirst: UC.newBoolean("depth first", onBooleanClick, {title:"optimize pocket cuts\nwith depth priority", modes:CAM}),
             outputClockwise: UC.newBoolean("clockwise", onBooleanClick, {title:"waterline milling direction", modes:CAM}),
 
@@ -2747,7 +2745,6 @@ self.kiri.license = exports.LICENSE;
             outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament\nfor long moves. in millimeters", convert:UC.toFloat, modes:FDM}),
             outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM}),
             outputRetractDwell: UC.newInput("engage dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM}),
-            sliceShellSpacing: UC.newInput("shell spacing", {title:"as a percentage of nozzle width\n< 1.0 causes shell overlap\nrecommended 0.85 - 1.0", convert:UC.toFloat, bound:UC.bound(0.5,1.0), modes:FDM}),
             outputCoastDist: UC.newInput("shell coast", {title:"non-printing end\nof perimeter shells\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
             // outputWipeDistance: UC.newInput("wipe", {title:"non-printing move at\close of polygon\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
             sliceSolidMinArea: UC.newInput("min solid", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM}),

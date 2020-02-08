@@ -17,10 +17,8 @@
 * first layer segment large flat areas for better fill reliability
 * adaptive column to compensate for fine or layers that finish too quickly and melt
 * apply finish speed to exposed top and underside flat areas
-* store/recover grid:print target against printer selected in device
 * expand internal supporting flats
 * first layer support speed should be same as shell speed
-* use fill spacing for top raft fill spacing
 * add lay-flat auto-rotation or from selected face
 * refactor thin fill to use outline and inside poly normal dist to self
 * check for support / brim intersections on first layer

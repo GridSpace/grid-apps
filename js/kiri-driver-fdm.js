@@ -48,7 +48,7 @@ var gs_kiri_fdm = exports;
             vaseMode = spro.sliceFillType === 'vase',
             doSolidLayers = solidLayers && !vaseMode,
             firstOffset = sdev.nozzleSize / 2,
-            shellOffset = sdev.nozzleSize * spro.sliceShellSpacing,
+            shellOffset = sdev.nozzleSize,
             fillOffset = sdev.nozzleSize * settings.synth.fillOffsetMult,
             fillSpacing = sdev.nozzleSize,
             sliceFillAngle = spro.sliceFillAngle,
