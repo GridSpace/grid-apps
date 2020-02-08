@@ -872,8 +872,9 @@ var gs_kiri_print = exports;
                     }
                     return;
                 }
+                let area = poly.area();
                 poly.forEachPoint(function(point, index) {
-                    dist = startPoint.distTo3D(point);
+                    dist = startPoint.distTo3D(point) * area * area;
                     if (dist < mindist) {
                         found = {poly:poly, index:index, point:point};
                         mindist = dist;
