@@ -92,7 +92,7 @@ button[del] {
 }
 .grouphead {
     color: black;
-    background-color: rgba(170,221,255,0.75);
+    background-color: rgba(170,221,255,0.7);
     border: 1px solid #ccc;
     border-radius: 3px;
     margin-top: 5px;

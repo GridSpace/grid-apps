@@ -1417,6 +1417,8 @@ var gs_kiri_cam = exports;
                     left: offset ? 0 : -bed.bedWidth/2,
                     right: offset ? bed.bedWidth : bed.bedWidth/2,
                     bottom: offset ? 0 : -bed.bedDepth/2,
+                    time_sec: 0,
+                    time_ms: 0,
                     time: 0
             },
             append;
@@ -1478,7 +1480,9 @@ var gs_kiri_cam = exports;
             // out.speed = time to dwell in ms
             if (!newpos) {
                 time += out.speed;
-                consts.time = out.speed / 1000;
+                consts.time_sec = out.speed / 1000;
+                consts.time_ms = out.speed;
+                consts.time = consts.time_sec;
                 filterEmit(cmdDwell, consts);
                 return;
             }
