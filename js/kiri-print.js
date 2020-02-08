@@ -984,9 +984,10 @@ var gs_kiri_print = exports;
         // pools are sorted smallest to largest. pools are polygons with an
         // attached 'pool' array of polygons
         layers.forEach(function(pools) {
-            pools.forEach(function(poolPoly) {
-                emitPool(poolPoly);
-            });
+            // pools.forEach(function(poolPoly) {
+            //     emitPool(poolPoly);
+            // });
+            poly2polyEmit(pools, startPoint, emitPool, "del_ptop");
         })
         return startPoint;
     }
