@@ -15,6 +15,9 @@ var gs_moto_ui = exports;
         hideAction = null,
         inputAction = null,
         hasModes = [],
+        isExpert = [],
+        letMode = null,
+        letExpert = false,
         SDB = moto.KV,
         DOC = SELF.document,
         prefix = "tab";
@@ -26,6 +29,7 @@ var gs_moto_ui = exports;
         hideAction: function(fn) { hideAction = fn; return moto.ui },
         inputAction: function(fn) { inputAction = fn; return moto.ui },
         setMode: setMode,
+        setExpert: setExpert,
         bound: bound,
         toInt: toInt,
         toFloat: toFloat,
@@ -47,9 +51,15 @@ var gs_moto_ui = exports;
     };
 
     function setMode(mode) {
+        letMode = mode;
         hasModes.forEach(function(div) {
             div.setMode(mode);
         });
+    }
+
+    function setExpert(bool) {
+        letExpert = bool;
+        setMode(letMode);
     }
 
     function isControlGroupVisible(label, key) {
@@ -125,6 +135,7 @@ var gs_moto_ui = exports;
     }
 
     function addModeControls(el, options) {
+        options = options || {};
         el.__show = true;
         el.__modeSave = null;
         el.showMe = function() {
@@ -144,12 +155,13 @@ var gs_moto_ui = exports;
             else el.hideMe();
         };
         el.setMode = function(mode) {
-            el.setVisible(el.modes.contains(mode));
+            let show = options.expert === undefined || (options.expert === letExpert);
+            el.setVisible(el.modes.contains(mode) && show);
         }
-        el.hasMode = function(mode) {
-            return el.modes.contains(mode);
-        }
-        if (options && options.modes) {
+        // el.hasMode = function(mode) {
+        //     return el.modes.contains(mode);
+        // }
+        if (options.modes) {
             el.modes = options.modes;
             hasModes.push(el);
         }
