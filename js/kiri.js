@@ -2551,7 +2551,7 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("Local",   showLocal, {modes:FDM_CAM})
                 ],[
                     UI.helpButton =
-                    UC.newButton("Help",    showHelp)
+                    UC.newButton("Help",    showHelpLocal)
                 ]
             ]),
             wsFunc: UC.newGroup('function'),
