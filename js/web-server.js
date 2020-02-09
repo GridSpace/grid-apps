@@ -53,7 +53,7 @@ function time() {
  * @param {String[]} path
  */
 function mkdirs(path) {
-    var root = "";
+    let root = "";
     path.forEach(seg => {
         if (root) {
             root = root + "/" + seg;
@@ -93,14 +93,14 @@ function lastmod(path) {
  * @param {Function} fn
  * @returns {*}
  */
-function getCachedFile(filePath, cachePath, fn) {
-    var cachePath = ".cache/" + cachePath.replace(/\//g,'_'),
+function getCachedFile(filePath, cpath, fn) {
+    let cachePath = ".cache/" + cpath.replace(/\//g,'_'),
         cached = fileCache[filePath],
         now = time();
 
     if (cached) {
         if (now - cached.lastcheck > 60000) {
-            var smod = lastmod(filePath),
+            let smod = lastmod(filePath),
                 cmod = cached.mtime;
 
             if (!smod) throw "missing source file";
@@ -111,7 +111,7 @@ function getCachedFile(filePath, cachePath, fn) {
     }
 
     if (!cached) {
-        var smod = lastmod(filePath),
+        let smod = lastmod(filePath),
             cmod = lastmod(cachePath),
             cacheData;
 
@@ -161,7 +161,7 @@ function prepareScripts() {
  * @returns {String}
  */
 function htmlScript(prefix, list) {
-    var code = [];
+    let code = [];
 
     list.forEach(file => {
         code.push('\t<script src="/' + prefix + file + '.js/' + ver.VERSION + '"></script>');
@@ -175,7 +175,7 @@ function htmlScript(prefix, list) {
  * @returns {String}
  */
 function concatCode(array) {
-    var code = [],
+    let code = [],
         cached,
         cachepath,
         filepath;
@@ -206,7 +206,7 @@ function concatCode(array) {
 function getCookieValue(cookie,key) {
     if (!cookie) return null;
     key = (key || "key") + "=";
-    var kpos = cookie.lastIndexOf(key);
+    let kpos = cookie.lastIndexOf(key);
     if (kpos >= 0) {
         return cookie.substring(kpos+key.length).split(';')[0];
     } else {
@@ -226,11 +226,14 @@ function isNotLocal(ip) {
  * @returns {String}
  */
 function remoteIP(req) {
-    var ip = isNotLocal(req.headers['x-forwarded-for']) ||
-            req.socket.remoteAddress ||
-            req.connection.remoteAddress || '',
+    let fwd = req.headers['x-forwarded-for'],
+        sra = req.socket.remoteAddress,
+        cra = req.connection.remoteAddress,
+        ip = isNotLocal(fwd) || sra || cra || '',
         ipa = ip.split(',');
-    // if (ipa.length > 1) helper.log({remote:ipa});
+    if (ip === '' || ipa.length > 1) {
+        helper.log({remote:ipa, fwd, sra, cra});
+    }
     return ipa[0];
 }
 
@@ -269,8 +272,9 @@ function redirect(res, url) {
  * @param {number} timespan
  * @returns {number}
  */
-function limit(array, length, timespan) {
-    var now = time(),
+function limit(array, length, timespan, inc) {
+    let now = time(),
+        add = inc || 1,
         limit = 0;
     // age out entries older than timespan
     while (array.length > 0 && now-array[0] > timespan) {
@@ -278,7 +282,7 @@ function limit(array, length, timespan) {
     }
     // count elements over the limit
     while (array.length > length) {
-        limit++;
+        limit += add;
         array.shift();
     }
     return limit;
@@ -290,7 +294,7 @@ function limit(array, length, timespan) {
  * @param {Function} next
  */
 function setup(req, res, next) {
-    var parsed = url.parse(req.url, true),
+    let parsed = url.parse(req.url, true),
         ipaddr = remoteIP(req),
         dbikey = db.key(["ip",ipaddr]),
         path = parsed.pathname,
@@ -373,7 +377,8 @@ function setup(req, res, next) {
         });
 
     // absolute limit on client requests per minute
-    if (limit(rec.last, 300, 60000) && !req.gs.local) {
+    let rateinc = req.headers.host ? 1 : 50;
+    if (limit(rec.last, 300, 60000, rateinc) && !req.gs.local) {
         res.writeHead(503);
         res.end("rate limited");
         return log({rate_limit:ipaddr, len:rec.last.length});
@@ -405,7 +410,7 @@ function handleData(req, res, next) {
     addCorsHeaders(req, res);
     res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
 
-    var tok = req.url.split('/'),
+    let tok = req.url.split('/'),
         muid = req.headers['x-moto-ajax'],
         space = tok[2] || null,
         version = tok[3],
@@ -413,7 +418,7 @@ function handleData(req, res, next) {
 
     function genKey() {
         while (true) {
-            var k = Math.round(Math.random() * 9999999999).toString(36);
+            let k = Math.round(Math.random() * 9999999999).toString(36);
             if (k.length >= 4 && k.length <= 8) return k;
         }
     }
@@ -458,7 +463,7 @@ function handleData(req, res, next) {
 
     } else if (valid && req.method === 'POST') {
 
-        var dbOwner = null,
+        let dbOwner = null,
             dbVersion = null,
             postBody = null,
             iprec = req.gs.iprec,
@@ -535,7 +540,7 @@ function handleJS(req, res, next) {
         return reply404(req, res);
     }
 
-    var spath = req.gs.path.substring(1),
+    let spath = req.gs.path.substring(1),
         jspos = spath.indexOf(".js"),
         fpath = jspos > 0 ? spath.substring(0,jspos+3) : spath,
         cached = fileCache[fpath];
@@ -549,7 +554,7 @@ function handleJS(req, res, next) {
             return reply404(req, res);
         }
 
-        var mtime = f.mtime.getTime();
+        let mtime = f.mtime.getTime();
 
         if (!cached || cached.mtime != mtime) {
             if (debug) {
@@ -565,7 +570,7 @@ function handleJS(req, res, next) {
                 });
                 return;
             } else {
-                var start = new Date().getTime(),
+                let start = new Date().getTime(),
                     code = minify(fpath),
                     end = new Date().getTime();
 
@@ -589,7 +594,7 @@ function handleJS(req, res, next) {
  * @param {Function} next
  */
 function handleCode(req, res, next) {
-    var cookie = getCookieValue(req.headers.cookie),
+    let cookie = getCookieValue(req.headers.cookie),
         key = req.gs.path.split('/')[2].split('.')[0],
         js = code[key];
 
@@ -605,7 +610,7 @@ function handleCode(req, res, next) {
 }
 
 function ifModifiedDate(req) {
-    var ims = req.headers['if-modified-since'];
+    let ims = req.headers['if-modified-since'];
     if (ims) {
         // because sys time has a higher resolution than
         // seconds converted from IMS header. so give it
@@ -625,14 +630,14 @@ function serveCode(req, res, code) {
         return reply404(req, res);
     }
 
-    var imd = ifModifiedDate(req);
+    let imd = ifModifiedDate(req);
     if (imd && code.mtime <= imd && !code.nocache) {
         res.writeHead(304, "Not Modified");
         res.end();
         return;
     }
 
-    var cacheControl = code.nocache ?
+    let cacheControl = code.nocache ?
         'private, max-age=0' :
         'public, max-age=600';
 
@@ -651,7 +656,7 @@ function serveCode(req, res, code) {
  */
 function rewriteHTML(req, res, next) {
     function sendHTML(entry) {
-        var imd = ifModifiedDate(req);
+        let imd = ifModifiedDate(req);
         if (imd && entry.mtime <= imd) {
             res.writeHead(304, "Not Modified");
             res.end();
@@ -667,7 +672,7 @@ function rewriteHTML(req, res, next) {
     }
 
     if (req.url.indexOf(".html") > 0) {
-        var local = req.gs.local,
+        let local = req.gs.local,
             key = local ? "local_" + req.url : req.url,
             path = "web" + req.gs.path,
             mtime = lastmod(path),
@@ -710,7 +715,7 @@ function rewriteHTML(req, res, next) {
  * Setup / Global
  ********************************************* */
 
-var debug = false,
+let debug = false,
     nolocal = false
     port = 8080,
     args = process.argv.slice(2);
@@ -723,7 +728,7 @@ args.forEach((arg, index) => {
     }
 });
 
-var ver = require('../js/license.js'),
+let ver = require('../js/license.js'),
     fs = require('fs'),
     url = require('url'),
     dns = require('dns'),
@@ -924,7 +929,7 @@ function prepath(pre) {
         pre.uid = pre.uid || guid();
         req.ppi = req.ppi || {};
 
-        var path = req.gs.path,
+        let path = req.gs.path,
             key, fn, i = req.ppi[pre.uid] || 0;
 
         while (i < pre.length) {
@@ -947,7 +952,7 @@ function prepath(pre) {
 // dispatch full fixed paths
 function fullpath(map) {
     return (req, res, next) => {
-        var fn = map[req.gs.path];
+        let fn = map[req.gs.path];
         if (fn) fn(req, res, next);
         else next();
     };
@@ -956,9 +961,9 @@ function fullpath(map) {
 // dispatch full paths based on a prefix and a function map
 function fixedmap(prefix, map) {
     return (req, res, next) => {
-        var path = req.gs.path;
+        let path = req.gs.path;
         if (path.indexOf(prefix) != 0) return next();
-        var fn = map[path.substring(prefix.length)];
+        let fn = map[path.substring(prefix.length)];
         if (fn) fn(req, res, next);
         else next();
     };
@@ -1069,7 +1074,7 @@ lastmod(".cache") || mkdirs([".cache"]);
 prepareScripts();
 
 // create web handler chain
-var handler = connect().use(setup);
+let handler = connect().use(setup);
 
 // add path handlers registered by modules
 modPaths.forEach(fn => {
