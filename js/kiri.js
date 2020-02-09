@@ -555,6 +555,7 @@ self.kiri.license = exports.LICENSE;
         catalog : CATALOG,
         getMode : getMode,
         setMode : setMode,
+        switchMode : switchMode,
         showModal : showModal,
         hideModal : hideModal,
         showDialog : showDialog,
@@ -2343,6 +2344,10 @@ self.kiri.license = exports.LICENSE;
 
     function getMode() {
         return settings.mode;
+    }
+
+    function switchMode(mode) {
+        setMode(mode, updatePlatformSize);
     }
 
     function setMode(mode, lock, then) {

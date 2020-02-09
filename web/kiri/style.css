@@ -284,10 +284,11 @@ select {
     border: 10px solid #ddd;
     background-color: rgba(255,255,255,0.9);
     padding: 10px;
+    font-family: sans-serif;
 }
 #help a {
     color: #68d;
-    font-size: smaller;
+    font-size: smaller !important;
 }
 #help a:hover {
     color: #46a;
@@ -326,6 +327,12 @@ button.selected {
 }
 #help-body li {
     white-space: nowrap;
+}
+#help-post {
+    text-align: center;
+    font-family: monospace;
+    font-style: italic;
+    border-top: 1px dashed #aaa;
 }
 
 /** tool dialog */

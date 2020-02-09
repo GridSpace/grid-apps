@@ -3,13 +3,15 @@
 <div id="help-body" class="flex frow">
 
     <div id="help-left">
+    <p><center><b>Help & Introduction</b></center>
+
     <p>
     <a href="#" title="Kiri-e is the Japanese art of papercutting"><b>Kiri:Moto</b></a>
-    is an extensible, multi-purpose slicing<br> and visualization engine that produces output for:
+    is an extensible, multi-purpose slicing<br> and visualization engine that produces output for
 
-    <li><label>CAM</label> : 3 axis CNC toolpaths
-    <li><label>FDM</label> : GCode for 3D printers
-    <li><label>LASER</label> : DXG / SVG cut paths
+    <li><button onclick="kiri.api.setMode('FDM')">FDM</button> : GCode for 3D printers
+    <li><button onclick="kiri.api.setMode('CAM')">CAM</button> : 3 Axis CNC toolpaths
+    <li><button onclick="kiri.api.setMode('LASER')">LASER</button> : DXG / SVG cut paths
 
     <p>
     <b>File Load and Import</b>
@@ -20,6 +22,7 @@
 
     <p>
     <b>Start Working</b>
+    <li>Consider <a href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">watching a tutorial</a>
     <li>Select device mode (FDM, CAM, Laser)
     <li>Select device profile under Devices
     <li>Set slicing parameters in right menu
@@ -70,9 +73,11 @@
         </table>
         <table>
             <tr><th colspan=2 class="grouphead">Config</th></tr>
-            <tr><td><label>d</label></td><td>Select Device Dialog</td></tr>
-            <tr><td><label>o</label></td><td>Select Tool Dialog</td></tr>
-            <tr><td><label>c</label></td><td>Local Grid Devices</td></tr>
+            <tr><td><label>?</label></td><td>This Help Window</td></tr>
+            <tr><td><label>e</label></td><td>Device Selection</td></tr>
+            <tr><td><label>o</label></td><td>CAM Tool Selection</td></tr>
+            <tr><td><label>c</label></td><td>Grid Local Devices</td></tr>
+            <tr><td></td></tr>
             <tr><th colspan=2 class="grouphead">Object</th></tr>
             <tr><td><label>d</label></td><td>Duplicate</td></tr>
             <tr><td><label>m</label></td><td>Mirror</td></tr>
@@ -95,6 +100,12 @@
             <tr><td><label>option-arrow-right</label></td><td>Move Right 5mm</td></tr>
             <tr><td></td></tr>
         </table>
+        </div>
+
+        <div id="help-post">
+            <br>&lt;ESC&gt; key closes any dialog in Kiri<br>
+            <br>Kiri is already loaded and running on this page
+            <br>Dismiss this help window to start working
         </div>
     </div>
 
