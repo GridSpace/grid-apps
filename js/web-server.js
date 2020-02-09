@@ -228,7 +228,7 @@ function isNotLocal(ip) {
 function remoteIP(req) {
     var ip = isNotLocal(req.headers['x-forwarded-for']) ||
             req.socket.remoteAddress ||
-            req.connection.remoteAddress,
+            req.connection.remoteAddress || '',
         ipa = ip.split(',');
     // if (ipa.length > 1) helper.log({remote:ipa});
     return ipa[0];
