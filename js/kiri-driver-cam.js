@@ -697,6 +697,9 @@ var gs_kiri_cam = exports;
             drillToolDiam = getToolDiameter(conf, proc.drillTool),
             procRough = proc.roughingOn && proc.roughingDown && roughToolDiam,
             procFinish = proc.finishingOn && proc.finishingDown && finishToolDiam,
+            procFinishX = proc.finishingXOn && proc.finishingPlunge && finishToolDiam,
+            procFinishY = proc.finishingYOn && proc.finishingPlunge && finishToolDiam,
+            anyFinish = procFinish || procFinishX || procFinishY,
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
             sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3),
@@ -714,7 +717,7 @@ var gs_kiri_cam = exports;
             return ondone("invalid slice depth");
         }
 
-        if (!(procRough || procFinish || procFacing || procDrill)) {
+        if (!(procRough || anyFinish || procFacing || procDrill)) {
             return ondone("no processes selected");
         }
 
@@ -782,7 +785,7 @@ var gs_kiri_cam = exports;
                 shellRough = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
             }
 
-            if (procFinish && pocketOnly) {
+            if (anyFinish && pocketOnly) {
                 shellFinish = POLY.expand(camShellPolys, -finishToolDiam/2, 0);
             }
 
@@ -813,7 +816,7 @@ var gs_kiri_cam = exports;
                 sliceAll.appendAll(selected);
             }
 
-            if (procFinish) {
+            if (anyFinish) {
                 var selected = [];
                 selectSlices(slices, proc.finishingDown, CPRO.FINISH, selected);
                 sliceAll.appendAll(selected);

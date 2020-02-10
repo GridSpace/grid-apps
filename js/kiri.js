@@ -401,17 +401,17 @@ self.kiri.license = exports.LICENSE;
                 outputInvertX: false,
                 outputInvertY: false
             },
+            // current process name
+            cproc:{
+                FDM: "default",
+                CAM: "default",
+                LASER: "default"
+            },
             // saved processes by name
             sproc:{
                 FDM: {},
                 CAM: {},
                 LASER: {}
-            },
-            // current process name
-            cproc:{
-                FDM: null,
-                CAM: null,
-                LASER: null
             },
             // cached device settings by mode
             cdev: {
@@ -533,6 +533,13 @@ self.kiri.license = exports.LICENSE;
         camTopZ = 0,
         showFavorites = SDB['dev-favorites'] === 'true';
 
+    // seed defaults. will get culled on save
+    settings.sproc.FDM.default = clone(settings.process);
+    settings.sproc.CAM.default = clone(settings.process);
+    settings.sproc.LASER.default = clone(settings.process);
+    settings.cdev.FDM = clone(settings.device);
+    settings.cdev.CAM = clone(settings.device);
+
     DBUG.enable();
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
@@ -580,6 +587,10 @@ self.kiri.license = exports.LICENSE;
     /** ******************************************************************
      * Stats accumulator
      ******************************************************************* */
+
+     function clone(o) {
+         return o ? JSON.parse(JSON.stringify(o)) : o;
+     }
 
     function alert2(message, time) {
         alerts.push([message, Date.now(), time]);
@@ -721,8 +732,12 @@ self.kiri.license = exports.LICENSE;
 
     function cull(o, f) {
         for (var k in o) {
-            if (!o.hasOwnProperty(k)) continue;
-            if (!f.hasOwnProperty(k)) delete o[k];
+            if (!o.hasOwnProperty(k)) {
+                continue;
+            }
+            if (!f.hasOwnProperty(k)) {
+                delete o[k];
+            }
         }
     }
 
@@ -1907,7 +1922,7 @@ self.kiri.license = exports.LICENSE;
         updateCamStock();
     }
 
-    function saveSettings(nocam) {
+    function saveSettings() {
         // remove settings invalid for a given mode (cleanup)
         cull(settings, settingsDefault);
         switch (settings.mode) {
@@ -1922,12 +1937,11 @@ self.kiri.license = exports.LICENSE;
             case 'LASER':
                 cull(settings.device, sf.laser.d);
                 cull(settings.process, sf.laser.p);
-                settings.cdev.LASER = settings.device;
+                settings.cdev.LASER = clone(settings.device);
                 break;
         }
         cull(settings.cdev.FDM, sf.fdm.d);
         cull(settings.cdev.CAM, sf.cam.d);
-
         // store camera view
         var view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
@@ -2021,29 +2035,31 @@ self.kiri.license = exports.LICENSE;
                 UI.reverseZoom.checked = settings.controller.reverseZoom;
             }
             // update/integrate old settings
-            ["FDM","CAM","LASER"].forEach(function(mode) {
-                var key = 'ws-settings-'+mode,
-                    oset = ls2o(key, settings);
-                SDB.removeItem(key);
-                SDB.removeItem('ws-camera-'+mode);
-                // create default settings if missing
-                if (!settings.cproc[mode]) {
-                    // merge bed into device
-                    set(oset.device, oset.bed);
-                    // merge output into process
-                    set(oset.process, oset.output);
-                    settings.cproc[mode] = "default";
-                    settings.sproc[mode].default = oset.process;
-                }
-                // copy device into cdev cache if missing
-                if (!settings.cdev[mode]) settings.cdev[mode] = oset.device;
-                // prefer tools object from CAM settings
-                if (mode === 'CAM' && oset.tools) {
-                    settings.tools = oset.tools;
-                }
-                // restore per-mode filter
-                settings.filter[mode] = oset.filter[mode];
-            });
+//             ["FDM","CAM","LASER"].forEach(function(mode) {
+//                 var key = 'ws-settings-'+mode,
+//                     oset = ls2o(key, settings);
+//                 SDB.removeItem(key);
+//                 SDB.removeItem('ws-camera-'+mode);
+//                 // create default settings if missing
+//                 if (!settings.cproc[mode]) {
+//                     // merge bed into device
+//                     set(oset.device, oset.bed);
+//                     // merge output into process
+//                     set(oset.process, oset.output);
+//                     settings.cproc[mode] = "default";
+//                     settings.sproc[mode].default = clone(oset.process);
+//                 }
+//                 // copy device into cdev cache if missing
+//                 if (!settings.cdev[mode]) {
+//                     settings.cdev[mode] = oset.device;
+//                 }
+//                 // prefer tools object from CAM settings
+//                 if (mode === 'CAM' && oset.tools) {
+//                     settings.tools = oset.tools;
+//                 }
+//                 // restore per-mode filter
+//                 settings.filter[mode] = oset.filter[mode];
+//             });
             // merge custom filters from localstorage into settings
             localFilters.forEach(function(fname) {
                 var fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
@@ -2359,7 +2375,9 @@ self.kiri.license = exports.LICENSE;
         }
         settings.mode = mode;
         // restore cached device profile for this mode
-        if (settings.cdev[mode]) settings.device = settings.cdev[mode];
+        if (settings.cdev[mode]) {
+            settings.device = clone(settings.cdev[mode]);
+        }
         // update device stat for FDM/CAM
         STATS.set('dn', settings.filter[mode] || '.laser.');
         MODE = MODES[mode];
