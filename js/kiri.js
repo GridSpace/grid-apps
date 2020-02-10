@@ -2625,9 +2625,9 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("save", settingsSave)
                 ],[
                     UI.settingsExpert =
-                    UC.newButton("expert", () => { UC.setExpert(true) }, {modes:FDM, expert: false}),
+                    UC.newButton("expert", () => { UC.setExpert(true); SDB.setItem('expert', true) }, {modes:FDM, expert: false}),
                     UI.settingsExpert =
-                    UC.newButton("basic", () => { UC.setExpert(false) }, {modes:FDM, expert: true})
+                    UC.newButton("basic", () => { UC.setExpert(false); SDB.removeItem('expert') }, {modes:FDM, expert: true})
                 ]
             ]),
 
@@ -3826,6 +3826,9 @@ self.kiri.license = exports.LICENSE;
 
             // place version number a couple of places to help users
             UI.helpButton.title = `${LANG.version} ` + KIRI.version;
+
+            // restore expert setting preference
+            UC.setExpert(SDB.getItem('expert') ? true : false);
 
             // setup tab visibility watcher
             // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
