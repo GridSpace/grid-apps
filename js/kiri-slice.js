@@ -660,6 +660,16 @@ var gs_kiri_slice = exports;
             polys.appendAll(top.solids);
         });
 
+        scope.fingerprint = fingerprint(polys);
+        if (scope.down && scope.down.fingerprint && samefinger(scope.down.fingerprint, scope.fingerprint)) {
+            for (let i=0; i<tops.length; i++) {
+                tops[i].fill_sparse = scope.down.tops[i].fill_sparse.map(poly => {
+                    return poly.clone().setZ(scope.z);
+                });
+            }
+            return;
+        }
+
         clip.AddPaths(lines, ptyp.ptSubject, false);
         clip.AddPaths(POLY.toClipper(polys), ptyp.ptClip, true);
 
@@ -674,7 +684,6 @@ var gs_kiri_slice = exports;
                 });
             });
         }
-
     };
 
     /**
@@ -708,6 +717,21 @@ var gs_kiri_slice = exports;
         return out;
     }
 
+    function samefinger(a, b) {
+        if (a.length !== b.length) {
+            return false;
+        }
+        for (let i=0; i<a.length; i += 2) {
+            if (Math.abs(a[i] - b[i]) > 0.001) {
+                return false;
+            }
+            if (Math.abs(a[i+1] - b[i+1]) > 0.0001) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function samesame(a, b) {
         if (a === b) {
             return true;
@@ -720,15 +744,7 @@ var gs_kiri_slice = exports;
         }
         let fingerA = fingerprint(a),
             fingerB = fingerprint(b);
-        for (let i=0; i<fingerA.length; i += 2) {
-            if (Math.abs(fingerA[i] - fingerB[i]) > 0.001) {
-                return false;
-            }
-            if (Math.abs(fingerA[i+1] - fingerB[i+1]) > 0.0001) {
-                return false;
-            }
-        }
-        return true;
+        return samefinger(fingerA, fingerB);
     }
 
     /**
