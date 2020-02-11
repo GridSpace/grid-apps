@@ -697,6 +697,40 @@ var gs_kiri_slice = exports;
         layer.render();
     };
 
+    function fingerprint(polys) {
+        let out = [];
+        polys.sort((a,b) => {
+            return a.area() > b.area();
+        }).forEach(p => {
+            out.push(p.area());
+            out.push(p.perimeter());
+        });
+        return out;
+    }
+
+    function samesame(a, b) {
+        if (a === b) {
+            return true;
+        }
+        if (!a || !b) {
+            return false;
+        }
+        if (a.length !== b.length) {
+            return false;
+        }
+        let fingerA = fingerprint(a),
+            fingerB = fingerprint(b);
+        for (let i=0; i<fingerA.length; i += 2) {
+            if (Math.abs(fingerA[i] - fingerB[i]) > 0.001) {
+                return false;
+            }
+            if (Math.abs(fingerA[i+1] - fingerB[i+1]) > 0.0001) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Find difference between fill inset poly on two adjacent layers.
      * Used to calculate bridges, flats and then solid projections.
@@ -714,6 +748,13 @@ var gs_kiri_slice = exports;
             bottomInner = bottom.gatherInner([]),
             bridges = [],
             flats = [];
+
+        // skip diffing layers that are identical
+        if (samesame(topInner, bottomInner)) {
+            top.bridges = bridges;
+            bottom.flats = flats;
+            return;
+        }
 
         POLY.subtract(topInner, bottomInner, bridges, flats, this.z, minArea);
 
