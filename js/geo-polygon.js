@@ -45,6 +45,7 @@ var gs_base_polygon = exports;
         this.length = 0; // number of points
         this.points = []; // ordered array of points
         this.area2 = 0.0; // computed as 2x area (sign = direction)
+        this.perim = 0.0; // for caching the result
         this.bounds = new Bounds();
         this.inner = null; // array of enclosed polygons (if any)
         this.parent = null; // enclosing parent polygon
@@ -799,13 +800,17 @@ var gs_base_polygon = exports;
      * @returns {number} perimeter length (sum of all segment lengths)
      */
     PRO.perimeter = function() {
+        if (this.perim !== 0.0) {
+            return this.perim;
+        }
+
         var len = 0.0;
 
         this.forEachSegment(function(prev,next) {
             len += SQRT(prev.distToSq2D(next));
         }, this.open);
 
-        return len;
+        return this.perim = len;
     };
 
     PRO.perimeterDeep = function() {

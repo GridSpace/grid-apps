@@ -67,6 +67,7 @@ var gs_kiri_slice = exports;
         this.isSparseFill = false;
         this.camMode = null; // CAM mode
         this.layers = null;
+        this.finger = null; // cached fingerprint
 
         if (view) this.addLayers(view);
     }
@@ -133,6 +134,29 @@ var gs_kiri_slice = exports;
             slice.addTop(top.poly.clone(deep));
         });
         return slice;
+    };
+
+    /**
+     * produces a fingerprint for a slice that should be the same for
+     * layers that are identical. this happens in parts with unchanging
+     * vertical wall regions. this allows us to eliminate expensive diffs
+     * and infill computation when we detect the layers are the same.
+     */
+    PRO.fingerprint = function() {
+        if (this.finger) {
+            return this.finger;
+        }
+        return this.finger = POLY.fingerprint(this.gatherTopPolys([]));
+    };
+
+    /**
+     * returns true if the layers' fingerprints are the same
+     */
+    PRO.fingerprintSame = function(slice) {
+        if (!slice) {
+            return false;
+        }
+        return POLY.fingerprintCompare(this.fingerprint(), slice.fingerprint());
     };
 
     /**
@@ -616,6 +640,7 @@ var gs_kiri_slice = exports;
 
         var scope = this,
             tops = scope.tops,
+            down = scope.down,
             clib = self.ClipperLib,
             ctyp = clib.ClipType,
             ptyp = clib.PolyType,
@@ -660,14 +685,28 @@ var gs_kiri_slice = exports;
             polys.appendAll(top.solids);
         });
 
-        scope.fingerprint = fingerprint(polys);
-        if (scope.down && scope.down.fingerprint && samefinger(scope.down.fingerprint, scope.fingerprint)) {
-            for (let i=0; i<tops.length; i++) {
-                tops[i].fill_sparse = scope.down.tops[i].fill_sparse.map(poly => {
-                    return poly.clone().setZ(scope.z);
-                });
+        scope._fill_finger = POLY.fingerprint(polys);
+
+        let miss = false;
+        // if the layer below has the same fingerprint, we may be able to clone its infill
+        if (scope.fingerprintSame(down)) {
+            // the fill fingerprint can slightly different because of solid projections
+            if (down._fill_finger && POLY.fingerprintCompare(scope._fill_finger, down._fill_finger)) {
+                for (let i=0; i<tops.length; i++) {
+                    // the layer below may not have infill computed if it's solid
+                    if (down.tops[i].fill_sparse) {
+                        tops[i].fill_sparse = down.tops[i].fill_sparse.map(poly => {
+                            return poly.clone().setZ(scope.z);
+                        });
+                    } else {
+                        miss = true;
+                    }
+                }
+                // if any of the fills as missing from below, re-compute
+                if (!miss) {
+                    return;
+                }
             }
-            return;
         }
 
         clip.AddPaths(lines, ptyp.ptSubject, false);
@@ -706,47 +745,6 @@ var gs_kiri_slice = exports;
         layer.render();
     };
 
-    function fingerprint(polys) {
-        let out = [];
-        polys.sort((a,b) => {
-            return a.area() > b.area();
-        }).forEach(p => {
-            out.push(p.area());
-            out.push(p.perimeter());
-        });
-        return out;
-    }
-
-    function samefinger(a, b) {
-        if (a.length !== b.length) {
-            return false;
-        }
-        for (let i=0; i<a.length; i += 2) {
-            if (Math.abs(a[i] - b[i]) > 0.001) {
-                return false;
-            }
-            if (Math.abs(a[i+1] - b[i+1]) > 0.0001) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function samesame(a, b) {
-        if (a === b) {
-            return true;
-        }
-        if (!a || !b) {
-            return false;
-        }
-        if (a.length !== b.length) {
-            return false;
-        }
-        let fingerA = fingerprint(a),
-            fingerB = fingerprint(b);
-        return samefinger(fingerA, fingerB);
-    }
-
     /**
      * Find difference between fill inset poly on two adjacent layers.
      * Used to calculate bridges, flats and then solid projections.
@@ -766,7 +764,7 @@ var gs_kiri_slice = exports;
             flats = [];
 
         // skip diffing layers that are identical
-        if (samesame(topInner, bottomInner)) {
+        if (this.fingerprintSame(bottom)) {
             top.bridges = bridges;
             bottom.flats = flats;
             return;

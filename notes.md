@@ -15,6 +15,7 @@
 # FDM todo
 
 * fingerprint layer once and re-use for infill and layer diffs
+* disable infill fingerprinting for gyroids
 * first layer segment large flat areas for better fill reliability
 * adaptive column to compensate for fine or layers that finish too quickly and melt
 * apply finish speed to exposed top and underside flat areas
@@ -38,7 +39,6 @@
 * optimize away topo generation (for z hop/move) when part is flat
 * add imperial / metric units switch in (future) global config options
 * add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
-* pocket order should consider distance as well as size
 * ease-in and ease-out especially on tab cut-out start/stop
 * import options: unify bodies.
 * milling order option: by operation or by part
@@ -47,16 +47,14 @@
 * improve 'clockwise' setting to take into account spindle direction, etc
 * linear finishing cutting out tabs
 * linear finishing going back to z top too often
-* fix ease down and re-enable
+* fix ease down and re-enable (need failure case)
 * warn when part > stock or cuts go outside bed
 * option to skip milling holes that would be drilled
-* sender speed control slider (0%-200%) ?
 * add M03 tool feedrate support (https://forum.grid.space/index.php?p=/discussion/14/s-parameter#latest)
 * fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * crossing open space check point is outside camshell before returning max z
 * compensate for leave-stock in outside roughing (w/ tabs)
 * fix zooming, workspace thickness for larger workspaces
-* only show toolchange alert/pause after the first M6
 * raise z by leave-stock in roughing? if so, see next
 * if (raise z) above, add clear-flats to finishing
 * revisit tabs - just cut polys instead
