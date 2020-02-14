@@ -97,7 +97,9 @@ var gs_moto_db = exports;
                 }
                 storage.db = request.result;
                 storage.store = storage.db.createObjectStore(name);
-                setTimeout(function() { storage.runQueue() });
+                event.target.transaction.oncomplete = function(event) {
+                    storage.runQueue();
+                };
             };
 
             request.onsuccess = function(event) {
