@@ -703,15 +703,20 @@ var gs_kiri_cam = exports;
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
             sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3),
-            pocketOnly = outp.camPocketOnly,
-            addTabs = proc.camTabsOn && !pocketOnly,
+            // pocketOnly = outp.camPocketOnly,
+            pocketOnlyRough = outp.camPocketOnlyRough,
+            pocketOnlyFinish = outp.camPocketOnlyFinish,
+            // addTabs = proc.camTabsOn && !pocketOnly,
+            addTabsRough = proc.camTabsOn && !pocketOnlyRough,
+            addTabsFinish = proc.camTabsOn && !pocketOnlyFinish,
             tabWidth = proc.camTabsWidth,
             tabHeight = proc.camTabsHeight,
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
             zMin = MAX(bounds.min.z, outp.camZBottom),
             shellRough,
-            shellFinish;
+            shellFinish,
+            facePolys;
 
         if (sliceDepth <= 0.05) {
             return ondone("invalid slice depth");
@@ -778,14 +783,18 @@ var gs_kiri_cam = exports;
                 onupdate(0.25 + update * 0.15, "shelling");
             });
 
-            const camShellPolys = shellRough = camShell.gatherTopPolys([]);
+            const camShellPolys = shellRough = facePolys = camShell.gatherTopPolys([]);
 
-            if (procRough && !pocketOnly) {
+            if (procRough && !pocketOnlyRough) {
                 // expand shell by half tool diameter + stock to leave
-                shellRough = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
+                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
             }
 
-            if (anyFinish && pocketOnly) {
+            if (anyFinish && pocketOnlyRough && !pocketOnlyFinish) {
+                facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
+            }
+
+            if (anyFinish && pocketOnlyFinish) {
                 shellFinish = POLY.expand(camShellPolys, -finishToolDiam/2, 0);
             }
 
@@ -879,15 +888,15 @@ var gs_kiri_cam = exports;
             slice.index = index;
             switch (slice.camMode) {
                 case CPRO.FACING:
-                    createFacingSlices(slice, shellRough, roughToolDiam, proc.roughingOver, pocketOnly);
+                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver, pocketOnlyRough);
                     break;
                 case CPRO.ROUGH:
-                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock, proc.roughingOver, pocketOnly);
-                    if (addTabs) addCutoutTabs(slice, roughToolDiam);
+                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock, proc.roughingOver, pocketOnlyRough);
+                    if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:
-                    createFinishingSlices(slice, shellFinish, finishToolDiam, pocketOnly);
-                    if (addTabs) addCutoutTabs(slice, finishToolDiam);
+                    createFinishingSlices(slice, shellFinish, finishToolDiam, pocketOnlyFinish);
+                    if (addTabsFinish) addCutoutTabs(slice, finishToolDiam);
                     break;
             }
             onupdate(0.40 + (index / sliceAll.length) * 0.10, "finishing")

@@ -138,6 +138,7 @@ self.kiri.license = exports.LICENSE;
                     roughingSpeed: 1,
                     roughingPlunge: 1,
                     roughingStock: 1,
+                    camPocketOnlyRough: 1,
                     roughingOn: 1,
                     finishingTool: 1,
                     finishingSpindle: 1,
@@ -150,6 +151,7 @@ self.kiri.license = exports.LICENSE;
                     finishingXOn: 1,
                     finishingYOn: 1,
                     finishCurvesOnly: 1,
+                    camPocketOnlyFinish: 1,
                     drillTool: 1,
                     drillSpindle: 1,
                     drillDownSpeed: 1,
@@ -354,6 +356,7 @@ self.kiri.license = exports.LICENSE;
                 roughingSpeed: 1000,
                 roughingPlunge: 250,
                 roughingStock: 0,
+                camPocketOnlyRough: false,
                 roughingOn: true,
 
                 finishingTool: 1000,
@@ -367,6 +370,7 @@ self.kiri.license = exports.LICENSE;
                 finishingXOn: true,
                 finishingYOn: true,
                 finishCurvesOnly: false,
+                camPocketOnlyFinish: false,
 
                 drillTool: 1000,
                 drillSpindle: 1000,
@@ -2703,6 +2707,7 @@ self.kiri.license = exports.LICENSE;
             roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
             roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
             roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin millimeters", convert:UC.toFloat, modes:CAM}),
+            camPocketOnlyRough: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"plunge cuts will\nspiral down or ease\nalong a linear path\nas they cut downward", modes:CAM}),
             roughingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
 
@@ -2714,6 +2719,7 @@ self.kiri.license = exports.LICENSE;
             finishingAngle: UC.newInput("max angle", {title:"angles greater than this\nare considered vertical", convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             finishingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
             finishingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
+            camPocketOnlyFinish: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             finishingOn: UC.newBoolean("waterline", onBooleanClick, {title:"contour finishing\ndisabled when pocketing", modes:CAM}),
             finishingXOn: UC.newBoolean("linear x", onBooleanClick, {title:"linear x-axis finishing", modes:CAM}),
             finishingYOn: UC.newBoolean("linear y", onBooleanClick, {title:"linear y-axis finishing", modes:CAM}),
@@ -2758,7 +2764,7 @@ self.kiri.license = exports.LICENSE;
             camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin millimeters", convert:UC.toFloat, modes:CAM}),
             camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin millimeters", convert:UC.toFloat, modes:CAM}),
             camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin millimeters", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
-            camPocketOnly: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
+            // camPocketOnly: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             camDepthFirst: UC.newBoolean("depth first", onBooleanClick, {title:"optimize pocket cuts\nwith depth priority", modes:CAM}),
             outputClockwise: UC.newBoolean("clockwise", onBooleanClick, {title:"waterline milling direction", modes:CAM}),
 
