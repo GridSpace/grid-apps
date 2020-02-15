@@ -1018,7 +1018,7 @@ function initModule(file, dir) {
             pre: arg => { modPaths.push(prepath(arg)) },
             map: arg => { modPaths.push(fixedmap(arg)) },
             full: arg => { modPaths.push(fullpath(arg)) },
-            static: arg => { modPaths.push(serveStatic(arg)) },
+            static: (root, pre) => { modPaths.push(handleStatic(root, pre)) },
             code: (endpoint, path) => {
                 if (debug) {
                     code[endpoint] = fs.readFileSync(path);
@@ -1031,7 +1031,7 @@ function initModule(file, dir) {
         },
         handler: {
             addCORS: addCorsHeaders,
-            static: serveStatic,
+            static: handleStatic,
             redirect: redirect,
             reply404: reply404,
             reply: quickReply
@@ -1039,10 +1039,28 @@ function initModule(file, dir) {
     })
 }
 
+function handleStatic(root, pre) {
+    let statServe = serveStatic(root);
+    return function(req, res, next) {
+        if (pre) {
+            if (req.url.indexOf(pre) === 0) {
+                if (req.url === pre) {
+                    req.url = "/";
+                } else {
+                    req.url = req.url.substring(pre.length);
+                }
+                return statServe(req, res, next);
+            }
+            return next();
+        }
+        statServe(req, res, next);
+    };
+}
+
 // add static assets to be served
-function addStatic(dir) {
+function addStatic(dir, pre) {
     helper.log({static:dir});
-    modPaths.push(serveStatic(dir));
+    modPaths.push(handleStatic(dir, pre));
 }
 
 // either add module assets to path or require(init.js)
@@ -1101,7 +1119,7 @@ handler.use(fullpath({
     .use(fixedmap("/api/", api))
     .use(rewriteHTML)
     .use(compression)
-    .use(serveStatic(currentDir + "/web/"))
+    .use(handleStatic(currentDir + "/web/"))
     .listen(port);
 
 helper.log("------------------------------------------");

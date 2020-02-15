@@ -1971,11 +1971,15 @@ self.kiri.license = exports.LICENSE;
         for (var i=0; i<files.length; i++) {
             var reader = new FileReader(),
                 lower = files[i].name.toLowerCase(),
+                israw = lower.indexOf(".raw") > 0,
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
+                if (israw) platformAdd(
+                    newWidget().loadVertices(JSON.parse(e.target.result).toFloat32())
+                );
                 if (isstl) platformAdd(
                     newWidget()
                     .loadVertices(new MOTO.STL().parse(e.target.result))
