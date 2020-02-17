@@ -1,5 +1,8 @@
 # Kiri:Moto todo
 
+* circular bed support for delta printers
+* hide the bed with a checkbox? indication of part outside printable area?
+* set page background color? or dark mode?
 * better small screen support (on screen button for hiding side panels, compact selectors)
 * widget general add-ons (fdm supports, cam tabs)
 * extend mesh object to store raw + annotations (rot,scale,pos)

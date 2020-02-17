@@ -410,7 +410,7 @@ function handleData(req, res, next) {
     addCorsHeaders(req, res);
     res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
 
-    let tok = req.url.split('/'),
+    let tok = req.gs.url.path.split('/'),
         muid = req.headers['x-moto-ajax'],
         space = tok[2] || null,
         version = tok[3],
@@ -597,7 +597,6 @@ function handleCode(req, res, next) {
     let cookie = getCookieValue(req.headers.cookie),
         key = req.gs.path.split('/')[2].split('.')[0],
         js = code[key];
-
     if (!js) {
         return reply404(req, res);
     }
