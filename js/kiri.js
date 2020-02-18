@@ -2926,10 +2926,7 @@ self.kiri.license = exports.LICENSE;
             var handled = true,
                 style, sel, i, m, bb,
                 ncc = evt.charCode - 48;
-            if (modalShowing()) return false;
-            if (inputHasFocus() && (inputSize() > 10 || (ncc >= 0 && ncc <= 9))) {
-                return false;
-            }
+            if (modalShowing() || inputHasFocus()) return false;
             switch (evt.charCode) {
                 case cca('`'): showSlices(0); break;
                 case cca('0'): showSlices(showLayerMax); break;
