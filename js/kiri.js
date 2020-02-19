@@ -3252,7 +3252,8 @@ self.kiri.license = exports.LICENSE;
                 var cmd = code.cmd || {},
                     set = code.settings || {},
                     local = isLocalDevice(devicename),
-                    dproc = settings.devproc[devicename];
+                    dproc = settings.devproc[devicename],
+                    mode = getMode();
 
                 settings.device = {
                     bedHeight: 2.5,
@@ -3338,6 +3339,7 @@ self.kiri.license = exports.LICENSE;
                  });
 
                 // hide spindle fields when device doens't support it
+                if (mode === 'CAM')
                 [
                  UI.setDeviceExtrusion,
                  UI.roughingSpindle,
@@ -3353,8 +3355,8 @@ self.kiri.license = exports.LICENSE;
                 updateFields();
                 updatePlatformSize();
 
-                settings.filter[getMode()] = devicename;
-                settings.cdev[getMode()] = dev;
+                settings.filter[mode] = devicename;
+                settings.cdev[mode] = dev;
 
                 // restore last process associated with this device
                 if (dproc) loadNamedSetting(null, dproc);

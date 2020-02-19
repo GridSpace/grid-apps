@@ -110,6 +110,7 @@ var gs_kiri_slicer = exports;
             zOrdered = [],      // ordered list of Z vertices
             zList = {},         // list of z indices for auto slicing (laser)
             zFlat = {},         // area of z offset flat areas (cam)
+            zLines = {},        // count of lines flat on a z index
             zScale,             // bucket span in z units
             timeStart = time(),
             slices = [],
@@ -137,6 +138,22 @@ var gs_kiri_slicer = exports;
                 countZ(p2.z);
                 countZ(p3.z);
             }
+            // detect zLines
+            // if (p1.z === p2.z && p1.z > bounds.min.z) {
+            //     let zkey = p1.z.toFixed(5);
+            //     let zval = zLines[zkey];
+            //     zLines[zkey] = (zval || 0) + 1;
+            // }
+            // if (p2.z === p3.z && p2.z > bounds.min.z) {
+            //     let zkey = p2.z.toFixed(5);
+            //     let zval = zLines[zkey];
+            //     zLines[zkey] = (zval || 0) + 1;
+            // }
+            // if (p3.z === p1.z && p3.z > bounds.min.z) {
+            //     let zkey = p3.z.toFixed(5);
+            //     let zval = zLines[zkey];
+            //     zLines[zkey] = (zval || 0) + 1;
+            // }
             // auto-detect flats for cam faces and to avoid slicing directly on flats
             if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
                 var zkey = p1.z.toFixed(5),
