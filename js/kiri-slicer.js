@@ -138,22 +138,24 @@ var gs_kiri_slicer = exports;
                 countZ(p2.z);
                 countZ(p3.z);
             }
-            // detect zLines
-            // if (p1.z === p2.z && p1.z > bounds.min.z) {
-            //     let zkey = p1.z.toFixed(5);
-            //     let zval = zLines[zkey];
-            //     zLines[zkey] = (zval || 0) + 1;
-            // }
-            // if (p2.z === p3.z && p2.z > bounds.min.z) {
-            //     let zkey = p2.z.toFixed(5);
-            //     let zval = zLines[zkey];
-            //     zLines[zkey] = (zval || 0) + 1;
-            // }
-            // if (p3.z === p1.z && p3.z > bounds.min.z) {
-            //     let zkey = p3.z.toFixed(5);
-            //     let zval = zLines[zkey];
-            //     zLines[zkey] = (zval || 0) + 1;
-            // }
+            // detect zLines (curved region tops/bottoms)
+            if (options.cam) {
+                if (p1.z === p2.z && p1.z > bounds.min.z) {
+                    let zkey = p1.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
+                }
+                if (p2.z === p3.z && p2.z > bounds.min.z) {
+                    let zkey = p2.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
+                }
+                if (p3.z === p1.z && p3.z > bounds.min.z) {
+                    let zkey = p3.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
+                }
+            }
             // auto-detect flats for cam faces and to avoid slicing directly on flats
             if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
                 var zkey = p1.z.toFixed(5),
@@ -165,6 +167,26 @@ var gs_kiri_slicer = exports;
                 }
             }
         }
+
+        let zlk, zlv;
+        // detect zLines bottoms and translate to zFlats
+        Object.entries(zLines)
+            .map(v => [v[0], v[1], parseFloat(v[0])])
+            .sort((a,b) => {
+                return a[2] - b[2]
+            })
+            .forEach(zl => {
+                if (zlk) {
+                    if (zlv != zl[1]) {
+                        zFlat[zlk] = zlv;
+                        zlv = zl[1];
+                    }
+                    zlk = zl[0];
+                } else {
+                    zlk = zl[0];
+                    zlv = zl[1];
+                }
+            });
 
         /** bucket polygons into z-bounded groups */
         var bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
@@ -221,7 +243,8 @@ var gs_kiri_slicer = exports;
             for (key in zFlat) {
                 // todo make threshold for flat detection configurable
                 if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10) continue;
-                if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(parseFloat(key));
+                key = parseFloat(key);
+                if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(key);
             }
             // sort top down
             zIndexes.sort(function(a,b) {
