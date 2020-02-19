@@ -28,6 +28,7 @@
     },
     "settings":{
         "origin_center": false,
+        "extrude_abs": true,
         "bed_width": 250,
         "bed_depth": 210,
         "build_height": 210
