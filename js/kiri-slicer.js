@@ -138,55 +138,59 @@ var gs_kiri_slicer = exports;
                 countZ(p2.z);
                 countZ(p3.z);
             }
-            // detect zLines (curved region tops/bottoms)
             if (options.cam) {
-                if (p1.z === p2.z && p1.z > bounds.min.z) {
-                    let zkey = p1.z.toFixed(5);
-                    let zval = zLines[zkey];
-                    zLines[zkey] = (zval || 0) + 1;
-                }
-                if (p2.z === p3.z && p2.z > bounds.min.z) {
-                    let zkey = p2.z.toFixed(5);
-                    let zval = zLines[zkey];
-                    zLines[zkey] = (zval || 0) + 1;
-                }
-                if (p3.z === p1.z && p3.z > bounds.min.z) {
-                    let zkey = p3.z.toFixed(5);
-                    let zval = zLines[zkey];
-                    zLines[zkey] = (zval || 0) + 1;
-                }
-            }
-            // auto-detect flats for cam faces and to avoid slicing directly on flats
-            if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
-                var zkey = p1.z.toFixed(5),
-                    area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
-                if (!zFlat[zkey]) {
-                    zFlat[zkey] = area;
-                } else {
-                    zFlat[zkey] += area;
+                if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
+                    // auto-detect flats for cam faces and to avoid slicing directly on flats
+                    var zkey = p1.z.toFixed(5),
+                        area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
+                    if (!zFlat[zkey]) {
+                        zFlat[zkey] = area;
+                    } else {
+                        zFlat[zkey] += area;
+                    }
+                } else if (false) {
+                    // detect zLines (curved region tops/bottoms)
+                    // mark these layers for ball mills only
+                    if (p1.z === p2.z && p1.z > bounds.min.z) {
+                        let zkey = p1.z.toFixed(5);
+                        let zval = zLines[zkey];
+                        zLines[zkey] = (zval || 0) + 1;
+                    }
+                    if (p2.z === p3.z && p2.z > bounds.min.z) {
+                        let zkey = p2.z.toFixed(5);
+                        let zval = zLines[zkey];
+                        zLines[zkey] = (zval || 0) + 1;
+                    }
+                    if (p3.z === p1.z && p3.z > bounds.min.z) {
+                        let zkey = p3.z.toFixed(5);
+                        let zval = zLines[zkey];
+                        zLines[zkey] = (zval || 0) + 1;
+                    }
                 }
             }
         }
 
-        let zlk, zlv;
-        // detect zLines bottoms and translate to zFlats
-        Object.entries(zLines)
-            .map(v => [v[0], v[1], parseFloat(v[0])])
-            .sort((a,b) => {
-                return a[2] - b[2]
-            })
-            .forEach(zl => {
-                if (zlk) {
-                    if (zlv != zl[1]) {
-                        zFlat[zlk] = zlv;
+        // translate zLines to zFlats
+        if (options.cam) {
+            let zlk, zlv;
+            Object.entries(zLines)
+                .map(v => [v[0], v[1], parseFloat(v[0])])
+                .sort((a,b) => {
+                    return a[2] - b[2]
+                })
+                .forEach(zl => {
+                    if (zlk) {
+                        if (zlv != zl[1]) {
+                            zFlat[zlk] = zlv;
+                            zlv = zl[1];
+                        }
+                        zlk = zl[0];
+                    } else {
+                        zlk = zl[0];
                         zlv = zl[1];
                     }
-                    zlk = zl[0];
-                } else {
-                    zlk = zl[0];
-                    zlv = zl[1];
-                }
-            });
+                });
+        }
 
         /** bucket polygons into z-bounded groups */
         var bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);

@@ -182,7 +182,7 @@ var gs_kiri_fdm = exports;
             mode = settings.mode,
             output = print.output,
             printPoint = newPoint(0,0,0),
-            firstLayerHeight = process.firstSliceHeight,
+            firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
             maxLayers = 0,
             layer = 0,
             zoff = 0,
@@ -561,7 +561,8 @@ var gs_kiri_fdm = exports;
             emitPerMM = print.extrudePerMM(
                 device.nozzleSize,
                 device.filamentSize,
-                path.layer === 0 ? process.firstSliceHeight : path.height);
+                path.layer === 0 ?
+                    (process.firstSliceHeight || process.sliceHeight) : path.height);
 
             consts.z = zpos.toFixed(2);
             consts.Z = consts.z;

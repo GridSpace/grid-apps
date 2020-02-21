@@ -7,6 +7,8 @@
         "M109 S160 ; wait for extruder temporary high enough temp",
         "G28 W ; home all without mesh bed level",
         "G80 ; mesh bed leveling",
+        "G90 ; set absolute positioning mode",
+        "M83 ; set relative positioning for extruder",
         "G1 Y-3.0 F1000.0 ; go outside print area",
         "M104 S{temp} ; set extruder actual required temp",
         "M109 S{temp} ; wait for extruder actual required temp",
@@ -28,7 +30,6 @@
     },
     "settings":{
         "origin_center": false,
-        "extrude_abs": true,
         "bed_width": 250,
         "bed_depth": 210,
         "build_height": 210

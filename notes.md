@@ -17,7 +17,7 @@
 
 # FDM todo
 
-* fingerprint layer once and re-use for infill and layer diffs
+* gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * disable infill fingerprinting for gyroids
 * first layer segment large flat areas for better fill reliability
 * adaptive column to compensate for fine or layers that finish too quickly and melt
