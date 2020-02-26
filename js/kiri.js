@@ -462,7 +462,6 @@ self.kiri.license = exports.LICENSE;
                 view: null,
                 zoomSpeed: 1.0,
                 reverseZoom: true,
-                groupImport: false,
                 freeLayout: true,
                 autoLayout: true
             },
@@ -588,6 +587,10 @@ self.kiri.license = exports.LICENSE;
         mouse : {
             moved : function() { return mouseMoved },
             movedSet : function(b) { mouseMoved = b }
+        },
+        const: {
+            MODES,
+            VIEWS
         }
     };
 
@@ -1900,7 +1903,7 @@ self.kiri.license = exports.LICENSE;
         let sd = settings.process;
         let offset = UI.camStockOffset.checked;
         // create/inject cam stock if stock size other than default
-        if (MODE === MODES.CAM && sd.camStockX && sd.camStockY && sd.camStockZ) {
+        if (MODE === MODES.CAM && sd.camStockX && sd.camStockY && sd.camStockZ && WIDGETS.length) {
             UI.stock.style.display = offset ? 'inline' : 'none';
             let csx = sd.camStockX;
             let csy = sd.camStockY;
@@ -2649,11 +2652,13 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("right", SPACE.view.right)
                 ]
             ]),
+
             layout: UC.newGroup('options'),
             autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
             freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
-            groupImport: UC.newBoolean("group import", booleanSave, {title:"group imports received\nfrom external sources\nlike Onshape", modes:CAM}),
             reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
+
+            appendLeft: UC.checkpoint(),
 
             layers: UC.setGroup($("layers")),
             layerOutline: UC.newBoolean("outline", onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
@@ -2835,7 +2840,6 @@ self.kiri.license = exports.LICENSE;
         function booleanSave() {
             settings.controller.autoLayout = UI.autoLayout.checked;
             settings.controller.freeLayout = UI.freeLayout.checked;
-            settings.controller.groupImport = UI.groupImport.checked;
             settings.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             saveSettings();
@@ -3837,7 +3841,6 @@ self.kiri.license = exports.LICENSE;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             SPACE.platform.setZOff(0.2);
 
-            UI.groupImport.checked = settings.controller.groupImport;
             UI.freeLayout.checked = settings.controller.freeLayout;
             UI.autoLayout.checked = settings.controller.autoLayout;
 

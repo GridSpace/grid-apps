@@ -47,7 +47,9 @@ var gs_moto_ui = exports;
         newRow: newRow,
         newBlank: newBlank,
         newGroup: newGroup,
-        setGroup: setGroup
+        setGroup: setGroup,
+        checkpoint,
+        restore
     };
 
     function setMode(mode) {
@@ -66,6 +68,17 @@ var gs_moto_ui = exports;
         var ls = SDB.getItem(key),
             dv = true;
         return ls ? ls !== 'false' : dv !== undefined ? dv : true;
+    }
+
+    function checkpoint() {
+        return { lastDiv, lastGroup };
+    }
+
+    function restore(opt) {
+        if (opt) {
+            lastDiv = opt.lastDiv;
+            lastGroup = opt.lastGroup;
+        }
     }
 
     function setGroup(div) {
