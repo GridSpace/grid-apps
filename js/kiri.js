@@ -173,6 +173,7 @@ self.kiri.license = exports.LICENSE;
                     camStockX: 1,
                     camStockY: 1,
                     camStockZ: 1,
+                    camStockOffset: 1,
                     outputClockwise: 1,
                     outputOriginCenter: 1,
                     outputInvertX: 1,
@@ -396,6 +397,7 @@ self.kiri.license = exports.LICENSE;
                 camStockX: 0,
                 camStockY: 0,
                 camStockZ: 0,
+                camStockOffset: true,
 
                 outputClockwise: true,
 
@@ -459,7 +461,10 @@ self.kiri.license = exports.LICENSE;
             controller:{
                 view: null,
                 zoomSpeed: 1.0,
-                reverseZoom: true
+                reverseZoom: true,
+                groupImport: false,
+                freeLayout: true,
+                autoLayout: true
             },
             mode: 'FDM',
             id: genID(),
@@ -489,8 +494,6 @@ self.kiri.license = exports.LICENSE;
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB,autoDecimate),
         STATS   = new Stats(SDB),
-        // ACTIVE  = 'kiri-active',
-        // IDLE    = 'kiri-idle',
         SEED    = 'kiri-seed',
         // ---------------
         Widget = kiri.Widget,
@@ -1528,7 +1531,6 @@ self.kiri.license = exports.LICENSE;
     }
 
     function meshUpdateInfo(mesh) {
-        UI.selection.style.display = selectedWidgetCount() ? 'block' : 'none';
         if (!mesh) {
             if (selectedMeshes.length === 0) {
                 UI.selWidth.innerHTML = '0';
@@ -1550,12 +1552,13 @@ self.kiri.license = exports.LICENSE;
 
     function setOpacity(value) {
         forAllWidgets(function (w) { w.setOpacity(value) });
-        UI.viewModelOpacity.value = value * 100;
+        UI.modelOpacity.value = value * 100;
         SPACE.update();
     }
 
     function moveSelection(x, y, z, abs) {
         forSelectedWidgets(function (w) { w.move(x, y, z, abs) });
+        updateCamStock();
         SPACE.update();
     }
 
@@ -1577,12 +1580,14 @@ self.kiri.license = exports.LICENSE;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
         platformComputeMaxZ();
+        updateCamStock(true);
         SPACE.update();
     }
 
     function rotateSelection(x, y, z) {
         forSelectedWidgets(function (w) { w.rotate(x, y, z) });
         platformComputeMaxZ();
+        updateCamStock(true);
         SPACE.update();
     }
 
@@ -1652,6 +1657,7 @@ self.kiri.license = exports.LICENSE;
             widget.setColor(widget_selected_color);
             meshUpdateInfo(mesh);
         }
+        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
         SPACE.update();
     }
 
@@ -1672,12 +1678,14 @@ self.kiri.license = exports.LICENSE;
             sel = (si >= 0);
         if (sel) selectedMeshes.splice(si,1);
         widget.setColor(widget_deselected_color);
+        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
         SPACE.update();
         meshUpdateInfo();
     }
 
     function layoutPlatform(event, space) {
-        var layout = (viewMode === VIEWS.ARRANGE),
+        var auto = UI.autoLayout.checked,
+            layout = (viewMode === VIEWS.ARRANGE && auto),
             proc = settings.process,
             modified = false,
             oldmode = viewMode,
@@ -1703,7 +1711,7 @@ self.kiri.license = exports.LICENSE;
         }
 
         // do not layout when switching back from slice view
-        if (!space && !layout) return SPACE.update();
+        if (!auto || (!space && !layout)) return SPACE.update();
 
         // check if any widget has been modified
         forAllWidgets(function(w) {
@@ -1740,6 +1748,10 @@ self.kiri.license = exports.LICENSE;
             m.widget.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
             m.widget.setTopZ(topZ);
             m.material.visible = true;
+        }
+
+        if (MODE === MODES.CAM) {
+            updateCamStock();
         }
 
         SPACE.update();
@@ -1884,10 +1896,43 @@ self.kiri.license = exports.LICENSE;
         });
     }
 
-    function updateCamStock() {
-        var sd = settings.process;
+    function updateCamStock(refresh) {
+        let sd = settings.process;
+        let offset = UI.camStockOffset.checked;
         // create/inject cam stock if stock size other than default
-        if (sd.camStockX && sd.camStockY && sd.camStockZ) {
+        if (MODE === MODES.CAM && sd.camStockX && sd.camStockY && sd.camStockZ) {
+            UI.stock.style.display = offset ? 'inline' : 'none';
+            let csx = sd.camStockX;
+            let csy = sd.camStockY;
+            let csz = sd.camStockZ;
+            let csox = 0;
+            let csoy = 0;
+            if (offset) {
+                let min = { x: Infinity, y: Infinity, z: 0 };
+                let max = { x: -Infinity, y: -Infinity, z: -Infinity };
+                forAllWidgets(function(widget) {
+                    let wbnd = widget.getBoundingBox(refresh);
+                    let wpos = widget.orient.pos;
+                    min = {
+                        x: Math.min(min.x, wpos.x + wbnd.min.x),
+                        y: Math.min(min.y, wpos.y + wbnd.min.y),
+                        z: 0
+                    };
+                    max = {
+                        x: Math.max(max.x, wpos.x + wbnd.max.x),
+                        y: Math.max(max.y, wpos.y + wbnd.max.y),
+                        z: Math.max(max.z, wbnd.max.z)
+                    };
+                });
+                csx += max.x - min.x;
+                csy += max.y - min.y;
+                csz += max.z - min.z;
+                csox = min.x + ((max.x - min.x) / 2);
+                csoy = min.y + ((max.y - min.y) / 2);
+                $('stock-width').innerText = (csx).toFixed(2);
+                $('stock-depth').innerText = (csy).toFixed(2);
+                $('stock-height').innerText = (csz).toFixed(2);
+            }
             if (!camStock) {
                 var geo = new THREE.BoxGeometry(1, 1, 1);
                 var mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
@@ -1895,15 +1940,18 @@ self.kiri.license = exports.LICENSE;
                 SPACE.platform.add(cube);
                 camStock = cube;
             }
-            camStock.scale.x = sd.camStockX;
-            camStock.scale.y = sd.camStockY;
-            camStock.scale.z = sd.camStockZ;
-            camStock.position.z = sd.camStockZ / 2;
+            camStock.scale.x = csx;
+            camStock.scale.y = csy;
+            camStock.scale.z = csz;
+            camStock.position.x = csox;
+            camStock.position.y = csoy;
+            camStock.position.z = csz / 2;
             camStock.material.visible = settings.mode === 'CAM';
-            camTopZ = sd.camStockZ - sd.camZTopOffset;
+            camTopZ = csz - sd.camZTopOffset;
             camUpdateWidgetZ();
             SPACE.update();
         } else if (camStock) {
+            UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
             SPACE.update();
             camStock = null;
@@ -2042,32 +2090,6 @@ self.kiri.license = exports.LICENSE;
                 SDB.removeItem('ws-camera');
                 UI.reverseZoom.checked = settings.controller.reverseZoom;
             }
-            // update/integrate old settings
-//             ["FDM","CAM","LASER"].forEach(function(mode) {
-//                 var key = 'ws-settings-'+mode,
-//                     oset = ls2o(key, settings);
-//                 SDB.removeItem(key);
-//                 SDB.removeItem('ws-camera-'+mode);
-//                 // create default settings if missing
-//                 if (!settings.cproc[mode]) {
-//                     // merge bed into device
-//                     set(oset.device, oset.bed);
-//                     // merge output into process
-//                     set(oset.process, oset.output);
-//                     settings.cproc[mode] = "default";
-//                     settings.sproc[mode].default = clone(oset.process);
-//                 }
-//                 // copy device into cdev cache if missing
-//                 if (!settings.cdev[mode]) {
-//                     settings.cdev[mode] = oset.device;
-//                 }
-//                 // prefer tools object from CAM settings
-//                 if (mode === 'CAM' && oset.tools) {
-//                     settings.tools = oset.tools;
-//                 }
-//                 // restore per-mode filter
-//                 settings.filter[mode] = oset.filter[mode];
-//             });
             // merge custom filters from localstorage into settings
             localFilters.forEach(function(fname) {
                 var fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
@@ -2319,7 +2341,7 @@ self.kiri.license = exports.LICENSE;
 
     function takeFocus(el) {
         DOC.activeElement.blur();
-        el = [ el || DOC.body, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.viewModelOpacity, DOC.body ];
+        el = [ el || DOC.body, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
         for (var es, i=0; i<el.length; i++) {
             es = el[i];
             es.focus();
@@ -2463,6 +2485,7 @@ self.kiri.license = exports.LICENSE;
             ctrlRight: $('control-right'),
             layerView: $('layer-view'),
             layerSlider: $('layer-slider'),
+            modelOpacity: $('opacity'),
 
             assets: assets,
             control: control,
@@ -2550,6 +2573,10 @@ self.kiri.license = exports.LICENSE;
             scaleY: $('scale_y'),
             scaleZ: $('scale_z'),
             scaleUniform: $('scale_uni'),
+            stock: $('stock'),
+            stockWidth: $('stock-width'),
+            stockDepth: $('stock-width'),
+            stockHeight: $('stock-width'),
 
             mode: UC.newGroup('mode', assets),
             modeTable: UC.newTableRow([
@@ -2622,25 +2649,26 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("right", SPACE.view.right)
                 ]
             ]),
-            viewOpt: UC.newTableRow([[
-                UI.reverseZoom = UC.newBoolean(null, invertMouse, {title:"invert mouse\nscroll zoom"}),
-                UI.viewModelOpacity = UC.newRange(null, {title:"change model opacity"})
-            ]]),
+            layout: UC.newGroup('options'),
+            autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
+            freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
+            groupImport: UC.newBoolean("group import", booleanSave, {title:"group imports received\nfrom external sources\nlike Onshape", modes:CAM}),
+            reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
 
             layers: UC.setGroup($("layers")),
-            layerOutline: UC.newBoolean("outline", onBooleanClick, {modes:LOCAL ? ALL : FDM_LASER}),
-            layerTrace: UC.newBoolean("trace", onBooleanClick, {modes:FDM_LASER}),
-            layerFacing: UC.newBoolean("facing", onBooleanClick, {modes:CAM}),
-            layerRough: UC.newBoolean("roughing", onBooleanClick, {modes:CAM}),
-            layerFinish: UC.newBoolean("finishing", onBooleanClick, {modes:CAM}),
-            layerFinishX: UC.newBoolean("finish x", onBooleanClick, {modes:CAM}),
-            layerFinishY: UC.newBoolean("finish y", onBooleanClick, {modes:CAM}),
-            layerDelta: UC.newBoolean("delta", onBooleanClick, {modes:FDM}),
-            layerSolid: UC.newBoolean("solids", onBooleanClick, {modes:FDM}),
-            layerFill: UC.newBoolean("solid fill", onBooleanClick, {modes:FDM}),
-            layerSparse: UC.newBoolean("sparse fill", onBooleanClick, {modes:FDM}),
-            layerSupport: UC.newBoolean("support", onBooleanClick, {modes:FDM}),
-            layerPrint: UC.newBoolean("print", onBooleanClick),
+            layerOutline: UC.newBoolean("outline", onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
+            layerTrace: UC.newBoolean("trace", onLayerToggle, {modes:FDM_LASER}),
+            layerFacing: UC.newBoolean("facing", onLayerToggle, {modes:CAM}),
+            layerRough: UC.newBoolean("roughing", onLayerToggle, {modes:CAM}),
+            layerFinish: UC.newBoolean("finishing", onLayerToggle, {modes:CAM}),
+            layerFinishX: UC.newBoolean("finish x", onLayerToggle, {modes:CAM}),
+            layerFinishY: UC.newBoolean("finish y", onLayerToggle, {modes:CAM}),
+            layerDelta: UC.newBoolean("delta", onLayerToggle, {modes:FDM}),
+            layerSolid: UC.newBoolean("solids", onLayerToggle, {modes:FDM}),
+            layerFill: UC.newBoolean("solid fill", onLayerToggle, {modes:FDM}),
+            layerSparse: UC.newBoolean("sparse fill", onLayerToggle, {modes:FDM}),
+            layerSupport: UC.newBoolean("support", onLayerToggle, {modes:FDM}),
+            layerPrint: UC.newBoolean("print", onLayerToggle),
 
             settingsGroup: UC.newGroup("settings", control),
             settingsTable: UC.newTableRow([
@@ -2776,6 +2804,7 @@ self.kiri.license = exports.LICENSE;
             camStockX: UC.newInput("width", {title:"width (x) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockY: UC.newInput("depth", {title:"depth (y) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockZ: UC.newInput("height", {title:"height (z) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
+            camStockOffset: UC.newBoolean("offset", onBooleanClick, {title: "use width, depth, height\nas offsets from max\npart size on platform", modes:CAM}),
             outputOriginCenter: UC.newBoolean("origin center", onBooleanClick, {modes:CAM_LASER}),
             camOriginTop: UC.newBoolean("origin top", onBooleanClick, {modes:CAM}),
 
@@ -2803,15 +2832,22 @@ self.kiri.license = exports.LICENSE;
             DBUG.log(['toolUpdate',a,b,c])
         }
 
-        function invertMouse() {
+        function booleanSave() {
+            settings.controller.autoLayout = UI.autoLayout.checked;
+            settings.controller.freeLayout = UI.freeLayout.checked;
+            settings.controller.groupImport = UI.groupImport.checked;
             settings.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             saveSettings();
         }
 
-        function onBooleanClick() {
+        function onLayerToggle() {
             updateSettings();
             showSlices();
+        }
+
+        function onBooleanClick() {
+            updateSettings();
         }
 
         function inputHasFocus() {
@@ -3708,8 +3744,8 @@ self.kiri.license = exports.LICENSE;
         $('z-').onclick = function(ev) { rotateSelection(0,0,ev.shiftKey ? ROT5 : ROT) };
         $('z+').onclick = function(ev) { rotateSelection(0,0,ev.shiftKey ? -ROT5 : -ROT) };
 
-        UI.viewModelOpacity.onchange = UI.viewModelOpacity.onclick = function(ev) {
-            setOpacity(parseInt(UI.viewModelOpacity.value)/100);
+        UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
+            setOpacity(parseInt(UI.modelOpacity.value)/100);
         };
 
         UI.layerSlider.ondblclick = function() {
@@ -3768,10 +3804,11 @@ self.kiri.license = exports.LICENSE;
         });
 
         SPACE.mouse.onDrag(function(delta) {
-            if (delta && MODE === MODES.FDM) {
+            if (delta && UI.freeLayout.checked) {
                 forSelectedWidgets(function(widget) {
                     widget.move(delta.x, delta.y, 0);
                 });
+                updateCamStock();
             } else {
                 return selectedMeshes.length > 0;
             }
@@ -3799,6 +3836,10 @@ self.kiri.license = exports.LICENSE;
             CATALOG.addFileListener(updateCatalog);
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             SPACE.platform.setZOff(0.2);
+
+            UI.groupImport.checked = settings.controller.groupImport;
+            UI.freeLayout.checked = settings.controller.freeLayout;
+            UI.autoLayout.checked = settings.controller.autoLayout;
 
             if (SETUP.s) SETUP.s.forEach(function(lib) {
                 var scr = DOC.createElement('script');

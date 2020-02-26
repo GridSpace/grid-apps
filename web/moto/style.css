@@ -204,7 +204,7 @@ button[del] {
 #control-left {
     position: fixed;
     z-index: 10000;
-    color: #eee;
+    color: black;
     top: 5px;
     left: 0px;
     padding: 5px;

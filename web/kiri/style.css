@@ -34,31 +34,33 @@ select {
     font-family: monospace;
     white-space: pre;
 }
-#selection {
-    display: none;
+#widget-info {
     text-align: center;
     position: fixed;
     width: 100%;
     bottom: 3px;
 }
-#selection span {
+#widget-info span {
     border: 1px solid #ccc;
     border-radius: 5px;
     padding: 3px 8px 8px 8px;
     background-color: rgba(170,221,255,0.75);
     color: rgba(0,0,0,0.5);
 }
-#selection label {
+#widget-info label {
     border: 0;
 }
-#selection .value {
+#widget-info .value {
     font-weight: bold;
     font-style: italic;
     color: black;
 }
-#selection button {
+#widget-info button {
     margin: 0 2px 0 2px !important;
     border: 1px solid rgba(255,255,255,0.75);
+}
+#stock,#selection {
+    display: none;
 }
 #appid {
     text-align: center;
@@ -598,10 +600,15 @@ button[import="1"] {
     margin-left: 4px !important;
     margin-right: 4px !important;
 }
-#layer-slider {
+#opacity {
+    max-width: 75px;
+}
+#layer-slider,#opacity {
     border: 0;
     margin: 0;
     padding: 0;
+}
+#layer-slider {
     flex-grow: 1;
 }
 #layers {

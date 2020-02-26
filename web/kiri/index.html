@@ -141,8 +141,8 @@
         </div>
     </div>
     <!-- selection info -->
-    <div id="selection">
-        <span>
+    <div id="widget-info">
+        <span id="selection">
             <label class="label">width:</label><label id="sel_width" class="value">mm</label>
             <label class="label">depth:</label><label id="sel_depth" class="value">mm</label>
             <label class="label">height:</label><label id="sel_height" class="value">mm</label>
@@ -158,15 +158,22 @@
             <button id="y+" title="hold SHIFT to rotate 5 degrees">y+</button><button id="y-" title="hold SHIFT to rotate 5 degrees">y-</button>
             <button id="z+" title="hold SHIFT to rotate 5 degrees">z+</button><button id="z-" title="hold SHIFT to rotate 5 degrees">z-</button>
         </span>
+        <span id="stock">
+            <label class="label">stock</label>
+            <label id="stock-width" class="value">mm</label> x
+            <label id="stock-depth" class="value">mm</label> x
+            <label id="stock-height" class="value">mm</label>
+        </span>
     </div>
     <!-- layer slider -->
     <div id="layer-view" class="flow-row">
-        <button id="layer-toggle">layers</button>
+        <button id="layer-toggle" title="toggle layers">layers</button>
         <div id="layers"></div>
-        <input id="layer-id" size="4">
-        <input id="layer-slider" type="range">
-        <button id="layer-range">section</button>
-        <input id="layer-span" size="4" value="1">
+        <input id="layer-id" size="4" title="selected layer">
+        <input id="layer-slider" type="range" title="layer selection">
+        <button id="layer-range" title="toggle section view">section</button>
+        <input id="layer-span" size="4" value="1" title="layer span">
+        <input id="opacity" type="range" title="opacity" min=0 max=100>
     </div>
     <!-- alert area -->
     <div id="alert-area">
