@@ -1635,6 +1635,7 @@ self.kiri.license = exports.LICENSE;
         platformComputeMaxZ();
         if (MODE !== MODES.FDM) layoutPlatform();
         SPACE.update();
+        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
     }
 
     function platformSelectAll() {
