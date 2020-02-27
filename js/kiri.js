@@ -2022,7 +2022,7 @@ self.kiri.license = exports.LICENSE;
         for (var i=0; i<files.length; i++) {
             var reader = new FileReader(),
                 lower = files[i].name.toLowerCase(),
-                israw = lower.indexOf(".raw") > 0,
+                israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
@@ -3820,17 +3820,19 @@ self.kiri.license = exports.LICENSE;
 
         function checkSeed(ondone) {
             // skip sample object load in onshape (or any script postload)
-            if (!SDB[SEED] && !SETUP.s) {
-                loadSTL("/obj/cube.stl", function(vert) {
-                    CATALOG.putFile("sample cube.stl", vert);
-                    SDB[SEED] = new Date().getTime();
-                    platformComputeMaxZ();
-                    SPACE.view.home();
-                    setTimeout(saveWorkspace,500);
-                    ondone();
-                    showHelpLocal();
-                });
-                return true;
+            if (!SDB[SEED]) {
+                SDB[SEED] = new Date().getTime();
+                if (!SETUP.s) {
+                    loadSTL("/obj/cube.stl", function(vert) {
+                        CATALOG.putFile("sample cube.stl", vert);
+                        platformComputeMaxZ();
+                        SPACE.view.home();
+                        setTimeout(saveWorkspace,500);
+                        ondone();
+                        showHelpLocal();
+                    });
+                    return true;
+                }
             }
             return false;
         }
