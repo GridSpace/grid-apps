@@ -279,8 +279,29 @@ var gs_moto_ui = exports;
             hidePop();
         });
         if (action) {
+            ip.addEventListener('keydown', function(event) {
+                let key = event.key;
+                if (
+                    (key >= '0' && key <= '9') ||
+                    key === '.' ||
+                    key === '-' ||
+                    key === 'Backspace' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight' ||
+                    key === 'Tab' ||
+                    event.metaKey ||
+                    event.ctrlKey
+                ) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+            });
             ip.addEventListener('keyup', function(event) {
-                if (event.keyCode === 13) action(event);
+                if (event.keyCode === 13) {
+                    // action(event);
+                    ip.blur();
+                }
             });
             ip.addEventListener('blur', function(event) {
                 action(event);
