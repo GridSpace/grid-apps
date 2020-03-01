@@ -1,6 +1,4 @@
-/**
- * Copyright Stewart Allen -- All Rights Reserved
- */
+/** Copyright Stewart Allen -- All Rights Reserved */
 
 Array.prototype.contains = function(v) {
     return this.indexOf(v) >= 0;
@@ -844,7 +842,7 @@ let ver = require('../js/license.js'),
         ],
         worker : [
             "license",
-            "kiri-work"
+            "kiri-worker"
         ]
     },
     code = {},

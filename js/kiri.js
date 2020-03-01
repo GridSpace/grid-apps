@@ -1,5 +1,4 @@
-/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
-
+/** Copyright Stewart Allen -- All Rights Reserved */
 "use strict";
 
 self.kiri = (self.kiri || {});
@@ -37,6 +36,7 @@ self.kiri.license = exports.LICENSE;
                     bedWidth: 1,
                     bedDepth: 1,
                     bedHeight: 1,
+                    bedRound: 1,
                     maxHeight: 1,
                     extrudeAbs: 1,
                     filamentSize: 1,
@@ -253,6 +253,7 @@ self.kiri.license = exports.LICENSE;
                 bedWidth: 300,      // FDM/CAM/Laser
                 bedDepth: 175,      // FDM/CAM/Laser
                 bedHeight: 2.5,     // display only (deprecate)
+                bedRound: false,   // FDM
                 maxHeight: 150,     // FDM
                 filamentSize: 1.75, // FDM
                 nozzleSize: 0.4,    // FDM
@@ -2069,6 +2070,7 @@ self.kiri.license = exports.LICENSE;
         var dev = settings.device,
             width, depth,
             height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
+        SPACE.platform.setRound(dev.bedRound);
         SPACE.platform.setGZOff(height/2 - 0.1);
         SPACE.platform.setSize(
             width = parseInt(dev.bedWidth),
@@ -2441,11 +2443,6 @@ self.kiri.license = exports.LICENSE;
         UI.ctrlRight.style.display = show ? 'block' : 'none';
     }
 
-    function eat(ev) {
-        ev.cancelBubble = true;
-        ev.preventDefault();
-    }
-
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()
      ******************************************************************* */
@@ -2482,6 +2479,7 @@ self.kiri.license = exports.LICENSE;
             showSlices();
         });
         SPACE.platform.onMove(saveSettings);
+        SPACE.platform.setRound(true);
 
         set(UI, {
             container: container,
@@ -2523,6 +2521,7 @@ self.kiri.license = exports.LICENSE;
             setDeviceExtrusion: UC.newBoolean(LANG.dev_extab, onBooleanClick, {title:LANG.dev_extab_desc}),
             setDeviceOrigin: UC.newBoolean(LANG.dev_orgc, onBooleanClick, {title:LANG.dev_orgc_desc}),
             setDeviceOriginTop: UC.newBoolean(LANG.dev_orgt, onBooleanClick, {title:LANG.dev_orgt_desc, modes:CAM}),
+            setDeviceRound: UC.newBoolean(LANG.dev_bedc, onBooleanClick, {title:LANG.dev_bedc_desc, modes:FDM}),
 
             setDevice: UC.newGroup("gcode", $('device')),
             setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:15}),
@@ -3254,6 +3253,7 @@ self.kiri.license = exports.LICENSE;
                     settings: {
                         bed_width: parseInt(UI.setDeviceWidth.value) || 300,
                         bed_depth: parseInt(UI.setDeviceDepth.value) || 175,
+                        bed_circle: UI.setDeviceRound.checked,
                         build_height: parseInt(UI.setDeviceHeight.value) || 150,
                         nozzle_size: parseFloat(UI.setDeviceNozzle.value) || 0.4,
                         filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
@@ -3295,11 +3295,11 @@ self.kiri.license = exports.LICENSE;
                     local = isLocalDevice(devicename),
                     dproc = settings.devproc[devicename],
                     mode = getMode();
-
                 settings.device = {
                     bedHeight: 2.5,
                     bedWidth: valueOf(set.bed_width, 300),
                     bedDepth: valueOf(set.bed_depth, 175),
+                    bedRound: valueOf(set.bed_circle, false),
                     maxHeight: valueOf(set.build_height, 150),
                     nozzleSize: valueOf(set.nozzle_size, 0.4),
                     filamentSize: valueOf(set.filament_diameter, 1.75),
@@ -3336,6 +3336,7 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceHeight.value = dev.maxHeight;
                 UI.setDeviceExtrusion.checked = dev.extrudeAbs;
                 UI.setDeviceOrigin.checked = proc.outputOriginCenter;
+                UI.setDeviceRound.checked = dev.bedRound;
                 // FDM
                 UI.setDeviceFan.value = dev.gcodeFan;
                 UI.setDeviceTrack.value = dev.gcodeTrack;
@@ -3363,6 +3364,7 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceExtrusion,
                  UI.setDeviceOrigin,
                  UI.setDeviceOriginTop,
+                 UI.setDeviceRound,
                  UI.setDeviceFan,
                  UI.setDeviceTrack,
                  UI.setDeviceLayer,

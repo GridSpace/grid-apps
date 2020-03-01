@@ -65,6 +65,8 @@ var gs_kiri_lang = exports;
         dev_orgc_desc:  "bed origin center",
         dev_orgt:       "origin top",
         dev_orgt_desc:  "part z origin top",
+        dev_bedc:       "circular bed",
+        dev_bedc_desc:  "device bed is circular",
         dev_fanp:       "fan power",
         dev_fanp_desc:  "set cooling fan power",
         dev_prog:       "progress",

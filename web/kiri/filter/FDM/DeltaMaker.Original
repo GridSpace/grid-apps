@@ -25,6 +25,7 @@
         "origin_center": true,
         "bed_width": 240,
         "bed_depth": 240,
+        "bed_circle": true,
         "build_height": 260
     }
 }

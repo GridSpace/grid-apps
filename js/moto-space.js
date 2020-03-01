@@ -1,12 +1,11 @@
-/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
-
+/** Copyright Stewart Allen -- All Rights Reserved */
 "use strict";
 
-var gs_moto_space = exports;
+let gs_moto_space = exports;
 
 (function() {
 
-    var WIN = window,
+    let WIN = window,
         DOC = document,
         SCENE = new THREE.Scene(),
         WORLD = new THREE.Group(),
@@ -58,7 +57,16 @@ var gs_moto_space = exports;
         light5,
         camera,
         renderer,
-        container;
+        container,
+        isRound = false,
+        platformMaterial = new THREE.MeshPhongMaterial({
+            color: 0xcccccc,
+            specular: 0xcccccc,
+            shininess: 5,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
 
     /** ******************************************************************
      * TWEENing Functions
@@ -72,7 +80,7 @@ var gs_moto_space = exports;
     tweenit();
 
     function tweenCamPan(x,y,z) {
-        var pos = viewControl.getPosition();
+        let pos = viewControl.getPosition();
         pos.panX = x;
         pos.panY = y;
         pos.panZ = z;
@@ -80,7 +88,7 @@ var gs_moto_space = exports;
     }
 
     function tweenCam(pos) {
-        var tf = function () {
+        let tf = function () {
             viewControl.setPosition(this);
             refresh();
         };
@@ -91,7 +99,7 @@ var gs_moto_space = exports;
     }
 
     function tweenPlatform(w,h,d) {
-        var from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
+        let from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
             to = {x:w, y:h, z:d},
             gridMajor = gridUnitMajor,
             gridMinor = gridUnitMinor,
@@ -128,14 +136,14 @@ var gs_moto_space = exports;
     }
 
     function addEventHandlers(el, pairs) {
-        for (var i=0; i<pairs.length; i += 2) {
+        for (let i=0; i<pairs.length; i += 2) {
             addEventListener(el, pairs[i], pairs[i+1]);
         }
     }
 
     function onEnterKey(el, fn) {
         if (Array.isArray(el)) {
-            for (var i=0; i<el.length; i += 2) onEnterKey(el[i], el[i+1]);
+            for (let i=0; i<el.length; i += 2) onEnterKey(el[i], el[i+1]);
             return;
         }
         addEventListener(el, 'keyup', function(event) {
@@ -144,23 +152,30 @@ var gs_moto_space = exports;
     }
 
     function addLight(x,y,z,i) {
-        var l = new THREE.PointLight(0xffffff, i, 0);
+        let l = new THREE.PointLight(0xffffff, i, 0);
         l.position.set(x,y,z);
         SCENE.add(l);
         return l;
     }
 
     function updatePlatformPosition() {
-        platform.position.y = -platform.scale.z/2 - platformZOff;
-        // platform.position.y = -(platform.scale.z / 2 + platformZOff);
+        if (isRound) {
+            platform.position.y = -platform.scale.y/2 - platformZOff;
+        } else {
+            platform.position.y = -platform.scale.z/2 - platformZOff;
+        }
         requestRefresh();
     }
 
     function setPlatformSize(width, depth, height) {
-        platform.scale.set(width || 300, depth || 175, height || 5);
+        if (isRound) {
+            platform.scale.set(width || 300, height || 5, depth || 175);
+        } else {
+            platform.scale.set(width || 300, depth || 175, height || 5);
+        }
         viewControl.maxDistance = Math.max(width,depth) * 4;
         updatePlatformPosition();
-        var y = Math.max(width, height) * 1;
+        let y = Math.max(width, height) * 1;
         light1.position.set( width, y,  depth);
         light2.position.set(-width, y, -depth);
         light4.position.set( width, light4.position.y, -depth);
@@ -183,29 +198,30 @@ var gs_moto_space = exports;
         gridView = new THREE.Group();
         gridUnitMajor = unitMajor;
         gridUnitMinor = unitMinor;
-        var x = platform.scale.x,
-            y = platform.scale.y,
-            z = platform.scale.z,
+        let x = platform.scale.x,
+            y = isRound ? platform.scale.z : platform.scale.y,
+            z = isRound ? platform.scale.y : platform.scale.z,
             xr = ROUND(x / unitMajor) * unitMajor,
             yr = ROUND(y / unitMajor) * unitMajor,
-            xo = Math.ceil(xr / 2),
-            yo = Math.ceil(yr / 2),
+            xo = isRound ? Math.floor(x/2) : Math.ceil(xr / 2),
+            yo = isRound ? Math.floor(y/2) : Math.ceil(yr / 2),
             w = x / 2,
             h = y / 2,
             d = z / 2,
             zp = -d - platformZOff + gridZOff,
             majors = [], minors = unitMinor ? [] : null, i;
-
         for (i = -xo; i <= xo; i++) {
             if (i >= -w && i <= w) {
-                if (i % unitMajor === 0) majors.append({x:i, y:-h, z:zp}).append({x:i, y:h, z:zp});
-                else if (minors && i % unitMinor === 0) minors.append({x:i, y:-h, z:zp}).append({x:i, y:h, z:zp});
+                let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h;
+                if (i % unitMajor === 0) majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
+                else if (minors && i % unitMinor === 0) minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
             }
         }
         for (i = -yo; i <= yo; i++) {
             if (i >= -h && i <= h) {
-                if (i % unitMajor === 0) majors.append({x:-w, y:i, z:zp}).append({x:w, y:i, z:zp});
-                else if (minors && i % unitMinor === 0) minors.append({x:-w, y:i, z:zp}).append({x:w, y:i, z:zp});
+                let ow = isRound ? Math.sqrt(1-(i/yo)*(i/yo)) * w : w;
+                if (i % unitMajor === 0) majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
+                else if (minors && i % unitMinor === 0) minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
             }
         }
         gridView.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
@@ -259,7 +275,7 @@ var gs_moto_space = exports;
     function keyHandler(evt) {
         if (!defaultKeys || inputHasFocus()) return false;
         if (evt.metaKey) return false;
-        var handled = true;
+        let handled = true;
         switch (evt.charCode) {
             case cca('z'):
                 Space.view.reset();
@@ -296,7 +312,7 @@ var gs_moto_space = exports;
 
     function makeLinesFromPoints(points, color, width) {
         if (points.length % 2 != 0) throw "invalid line : "+points.length;
-        var geo = new THREE.Geometry(),
+        let geo = new THREE.Geometry(),
             i = 0, p1, p2, mesh;
         while (i < points.length) {
             p1 = points[i++];
@@ -313,8 +329,8 @@ var gs_moto_space = exports;
     }
 
     function intersect(objects, recurse) {
-        var lookAt = new THREE.Vector3(mouse.x, mouse.y, 0.0).unproject(camera);
-        var ray = new THREE.Raycaster(camera.position, lookAt.sub(camera.position).normalize());
+        let lookAt = new THREE.Vector3(mouse.x, mouse.y, 0.0).unproject(camera);
+        let ray = new THREE.Raycaster(camera.position, lookAt.sub(camera.position).normalize());
         return ray.intersectObjects(objects, recurse);
     }
 
@@ -326,16 +342,16 @@ var gs_moto_space = exports;
         if (event.target === renderer.domElement) {
             DOC.activeElement.blur();
             event.preventDefault();
-            var selection = null,
+            let selection = null,
                 trackTo = alignedTracking ? trackPlane : platform;
             if (mouseDownSelect) selection = mouseDownSelect();
             if (selection && selection.length > 0) {
                 trackTo.visible = true;
-                var int = intersect(selection.slice().append(trackTo), false);
+                let int = intersect(selection.slice().append(trackTo), false);
                 trackTo.visible = false;
                 if (int.length > 0) {
-                    var trackInt, selectInt;
-                    for (var i=0; i<int.length; i++) {
+                    let trackInt, selectInt;
+                    for (let i=0; i<int.length; i++) {
                         if (!trackInt && int[i].object === trackTo) {
                             trackInt = int[i];
                         } else if (!selectInt && selection.contains(int[i].object)) {
@@ -351,7 +367,7 @@ var gs_moto_space = exports;
                 }
             }
             if (platformClick) {
-                var vis = platform.visible;
+                let vis = platform.visible;
                 platform.visible = true;
                 int = intersect([platform], false);
                 platform.visible = vis;
@@ -371,11 +387,11 @@ var gs_moto_space = exports;
         if (!mouseMoved) {
             event.preventDefault();
             if (!mouseMoved) {
-                var refresh = false,
+                let refresh = false,
                     selection = null;
                 if (mouseUpSelect) selection = mouseUpSelect();
                 if (selection && selection.length > 0) {
-                    var int = intersect(selection, selectRecurse);
+                    let int = intersect(selection, selectRecurse);
                     if (int.length > 0) {
                         mouseUpSelect(int[0], event);
                         refresh = true;
@@ -396,10 +412,10 @@ var gs_moto_space = exports;
     }
 
     function onMouseMove(event) {
-        var int, vis;
+        let int, vis;
         if (viewControl.enabled) {
             event.preventDefault();
-            var selection = mouseHover ? mouseHover() : null;
+            let selection = mouseHover ? mouseHover() : null;
             if (selection && selection.length > 0) {
                 int = intersect(selection, selectRecurse);
                 if (int.length > 0) mouseHover(int[0], event);
@@ -413,13 +429,13 @@ var gs_moto_space = exports;
             }
         } else if (mouseDragPoint && mouseDrag && mouseDrag()) {
             event.preventDefault();
-            var trackTo = alignedTracking ? trackPlane : platform;
+            let trackTo = alignedTracking ? trackPlane : platform;
             trackTo.visible = true;
             int = intersect([trackTo], false);
             trackTo.visible = false;
             if (int.length > 0 && int[0].object === trackTo) {
-                var delta = mouseDragPoint.clone().sub(int[0].point);
-                var offset = mouseDragStart.clone().sub(int[0].point);
+                let delta = mouseDragPoint.clone().sub(int[0].point);
+                let offset = mouseDragStart.clone().sub(int[0].point);
                 mouseDragPoint = int[0].point;
                 mouseDrag({x: -delta.x, y: delta.z}, offset.multiplyVectors(offset, trackDelta));
                 requestRefresh();
@@ -435,7 +451,7 @@ var gs_moto_space = exports;
      * Space Object
      ******************************************************************* */
 
-    var Space = {
+    let Space = {
         alignTracking: alignTracking,
         addEventListener: addEventListener,
         addEventHandlers: addEventHandlers,
@@ -480,7 +496,31 @@ var gs_moto_space = exports;
             size:      function()  { return platform.scale },
             isVisible: function()  { return platform.visible },
 
-            showGrid:  function(b) { gridView.visible = b }
+            showGrid:  function(b) { gridView.visible = b },
+
+            setRound: function(bool) {
+                let current = platform;
+                isRound = bool;
+                if (bool) {
+                    platform = new THREE.Mesh(
+                        new THREE.CylinderGeometry(.5, .5, 1, 60),
+                        platformMaterial
+                    );
+                    platform.rotation.x = 0;
+                } else {
+                    platform = new THREE.Mesh(
+                        new THREE.BoxGeometry(1, 1, 1),
+                        platformMaterial
+                    );
+                    platform.rotation.x = -PI2;
+                }
+
+                platform.position.y = current.position.y;
+                platform.visible = current.visible;
+
+                SCENE.remove(current);
+                SCENE.add(platform);
+            }
         },
 
         view: {
@@ -567,14 +607,7 @@ var gs_moto_space = exports;
 
             platform = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
-                new THREE.MeshPhongMaterial({
-                    color: 0xcccccc,
-                    specular: 0xcccccc,
-                    shininess: 5,
-                    transparent: true,
-                    opacity: 0.6,
-                    side: THREE.DoubleSide
-                })
+                platformMaterial
             );
 
             platform.position.y = platformZOff;
@@ -588,7 +621,7 @@ var gs_moto_space = exports;
             trackPlane.visible = false;
             trackPlane.rotation.x = PI2;
 
-            var sky = new THREE.Mesh(
+            let sky = new THREE.Mesh(
                     new THREE.BoxGeometry(50000, 50000, 50000, 1, 1, 1),
                     new THREE.MeshBasicMaterial({ color: skyColor, side: THREE.DoubleSide })
                 ),
