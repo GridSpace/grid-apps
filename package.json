@@ -22,8 +22,8 @@
     ],
     "scripts": {
         "start": "node js/web-server debug",
-        "start-web": "node js/web-server nolocal",
-        "update": "git pull && git submodule update --recursive --remote && npm update"
+        "start-secure": "node js/web-server nolocal",
+        "update": "git pull && npm i"
     },
     "dependencies": {
         "buffer-crc32": "^0.2.13",

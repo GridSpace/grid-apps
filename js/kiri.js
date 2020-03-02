@@ -463,6 +463,7 @@ self.kiri.license = exports.LICENSE;
                 view: null,
                 zoomSpeed: 1.0,
                 reverseZoom: true,
+                showOrigin: false,
                 freeLayout: true,
                 autoLayout: true
             },
@@ -2066,6 +2067,21 @@ self.kiri.license = exports.LICENSE;
         restoreWorkspace(null, true);
     }
 
+    function updateOrigin() {
+        if (!settings.controller.showOrigin) {
+            SPACE.platform.setOrigin();
+            SPACE.update();
+            return;
+        }
+        if (settings.process.outputOriginCenter) {
+            SPACE.platform.setOrigin(0,0,0);
+        } else {
+            let dev = settings.device;
+            SPACE.platform.setOrigin(-dev.bedWidth/2,dev.bedDepth/2,0);
+        }
+        SPACE.update();
+    }
+
     function updatePlatformSize() {
         var dev = settings.device,
             width, depth,
@@ -2078,6 +2094,7 @@ self.kiri.license = exports.LICENSE;
             height
         );
         SPACE.platform.setHidden(width > 500 || depth > 500);
+        updateOrigin();
     }
 
     function restoreWorkspace(ondone, skipwidgets) {
@@ -2654,6 +2671,7 @@ self.kiri.license = exports.LICENSE;
             ]),
 
             layout: UC.newGroup('options'),
+            showOrigin: UC.newBoolean("show origin", booleanSave, {title:"show device or process origin"}),
             autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
             freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
             reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
@@ -2838,10 +2856,12 @@ self.kiri.license = exports.LICENSE;
         }
 
         function booleanSave() {
+            settings.controller.showOrigin = UI.showOrigin.checked;
             settings.controller.autoLayout = UI.autoLayout.checked;
             settings.controller.freeLayout = UI.freeLayout.checked;
             settings.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
+            updateOrigin();
             saveSettings();
         }
 
@@ -3334,15 +3354,15 @@ self.kiri.license = exports.LICENSE;
                 UI.setDeviceWidth.value = dev.bedWidth;
                 UI.setDeviceDepth.value = dev.bedDepth;
                 UI.setDeviceHeight.value = dev.maxHeight;
-                UI.setDeviceExtrusion.checked = dev.extrudeAbs;
-                UI.setDeviceOrigin.checked = proc.outputOriginCenter;
                 UI.setDeviceRound.checked = dev.bedRound;
+                UI.setDeviceOrigin.checked = proc.outputOriginCenter;
                 // FDM
                 UI.setDeviceFan.value = dev.gcodeFan;
                 UI.setDeviceTrack.value = dev.gcodeTrack;
                 UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
                 UI.setDeviceFilament.value = dev.filamentSize;
                 UI.setDeviceNozzle.value = dev.nozzleSize;
+                UI.setDeviceExtrusion.checked = dev.extrudeAbs;
                 // CAM
                 UI.setDeviceMaxSpindle.value = dev.spindleMax;
                 UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
@@ -3389,7 +3409,7 @@ self.kiri.license = exports.LICENSE;
                  UI.finishingSpindle,
                  UI.drillSpindle
                 ].forEach(function(e) {
-                 e.parentNode.style.display = dev.spindleMax ? 'block' : 'none';
+                 e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
                 });
 
                 UI.deviceSave.disabled =
@@ -3846,6 +3866,7 @@ self.kiri.license = exports.LICENSE;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             SPACE.platform.setZOff(0.2);
 
+            UI.showOrigin.checked = settings.controller.showOrigin;
             UI.freeLayout.checked = settings.controller.freeLayout;
             UI.autoLayout.checked = settings.controller.autoLayout;
 

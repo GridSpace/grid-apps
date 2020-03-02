@@ -39,6 +39,7 @@ let gs_moto_space = exports;
         mouseUpSelect,
         mouseHover,
         mouseDrag,
+        gridOrigin,
         gridUnitMinor,
         gridUnitMajor,
         gridView,
@@ -227,6 +228,74 @@ let gs_moto_space = exports;
         gridView.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
         if (minors) gridView.add(makeLinesFromPoints(minors, colorMinor || 0xcccccc, 1));
         Space.scene.add(gridView);
+    }
+
+    function setOrigin(x, y, z) {
+        if (gridOrigin) {
+            Space.scene.remove(gridOrigin);
+        }
+        if (x === undefined) {
+            gridOrigin = null;
+            return;
+        }
+        let cmat = new THREE.MeshPhongMaterial({
+            color: 0xcceeff,
+            specular: 0xcceeff,
+            shininess: 5,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        let rmat = new THREE.MeshPhongMaterial({
+            color: 0x88aadd,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        let PIP = Math.PI/2;
+        let pi1, pi2, pi3, pi4;
+        gridOrigin = new THREE.Group();
+        gridOrigin.add(pi1 = new THREE.Mesh(
+            new THREE.CircleGeometry(4.6, 50, PIP*0, PIP*1),
+            cmat
+        ));
+        pi1.position.x = 0.25;
+        pi1.position.y = 0.25;
+        gridOrigin.add(pi2 = new THREE.Mesh(
+            new THREE.CircleGeometry(4.6, 50, PIP*1, PIP*1),
+            cmat
+        ));
+        pi2.position.x = -0.25;
+        pi2.position.y = 0.25;
+        gridOrigin.add(pi3 = new THREE.Mesh(
+            new THREE.CircleGeometry(4.6, 50, PIP*2, PIP*1),
+            cmat
+        ));
+        pi3.position.x = -0.25;
+        pi3.position.y = -0.25;
+        gridOrigin.add(pi4 = new THREE.Mesh(
+            new THREE.CircleGeometry(4.6, 50, PIP*3, PIP*1),
+            cmat
+        ));
+        pi4.position.x = 0.25;
+        pi4.position.y = -0.25;
+        gridOrigin.add(new THREE.Mesh(
+            new THREE.RingGeometry(5, 5.5, 50),
+            rmat
+        ));
+        gridOrigin.add(new THREE.Mesh(
+            new THREE.PlaneGeometry(0.5, 10),
+            rmat
+        ));
+        gridOrigin.add(new THREE.Mesh(
+            new THREE.PlaneGeometry(10, 0.5),
+            rmat
+        ));
+        gridOrigin.rotation.x = -PI2;
+        gridOrigin.position.x = x;
+        gridOrigin.position.y = z;
+        gridOrigin.position.z = y;
+        Space.scene.add(gridOrigin);
     }
 
     function refresh() {
@@ -477,6 +546,7 @@ let gs_moto_space = exports;
             tweenTo:   tweenPlatform,
             setSize:   setPlatformSizeUpdateGrid,
             setColor:  setPlatformColor,
+            setOrigin: setOrigin,
             setGrid:   setGrid,
 
             add:       function(o) { WORLD.add(o) },
