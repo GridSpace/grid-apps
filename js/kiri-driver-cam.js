@@ -928,23 +928,23 @@ var gs_kiri_cam = exports;
             settings = print.settings,
             device = settings.device,
             process = settings.process,
+            stock = settings.stock,
             widgetIndex = index || 0,
             widgetArray = print.widgets,
             widgetCount = widgetArray.length,
             widget = widgetArray[widgetIndex];
 
         if (widgetIndex >= widgetCount || !widget) return;
-
         var slices = widget.slices,
             bounds = widget.getCamBounds(settings),
             hasStock = process.camStockZ && process.camStockX && process.camStockY,
             startCenter = process.outputOriginCenter,
             zclear = process.camZClearance || 1,
-            zadd = hasStock ? process.camStockZ - bounds.max.z : 0,
-            zmax = hasStock ? process.camStockZ + zclear : bounds.max.z + zclear,
-            originx = startCenter ? 0 : hasStock ? -process.camStockX / 2 : bounds.min.x,
-            originy = startCenter ? 0 : hasStock ? -process.camStockY / 2 : bounds.min.y,
-            origin = hasStock ? newPoint(originx, originy, process.camStockZ) : newPoint(originx, originy, bounds.max.z + zclear),
+            zadd = hasStock ? stock.z - bounds.max.z : 0,
+            zmax = hasStock ? stock.z + zclear : bounds.max.z + zclear,
+            originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
+            originy = startCenter ? 0 : hasStock ? -stock.y / 2 : bounds.min.y,
+            origin = hasStock ? newPoint(originx, originy, stock.z) : newPoint(originx, originy, bounds.max.z + zclear),
             output = print.output,
             modes = CPRO,
             depthFirst = process.camDepthFirst,
@@ -1413,7 +1413,7 @@ var gs_kiri_cam = exports;
             point,
             points = 0,
             hasStock = spro.camStockZ && spro.camStockX && spro.camStockY,
-            zmax = hasStock ? spro.camStockZ : bounds.max.z,
+            zmax = hasStock ? settings.stock.z : bounds.max.z,
             runbox = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}

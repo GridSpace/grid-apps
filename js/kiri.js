@@ -213,6 +213,7 @@ self.kiri.license = exports.LICENSE;
                 { name: "triangle" }
             ],
             // CAM only
+            stock: {},
             tools:[
                 {
                     id: 1000,
@@ -539,6 +540,7 @@ self.kiri.license = exports.LICENSE;
         mouseMoved = false,
         camStock = null,
         camTopZ = 0,
+        topZ = 0,
         showFavorites = SDB['dev-favorites'] === 'true';
 
     // seed defaults. will get culled on save
@@ -934,10 +936,16 @@ self.kiri.license = exports.LICENSE;
         clearPrint();
         setOpacity(0);
         currentPrint = kiri.newPrint(settings, []);
-        let offset = settings.process.outputOriginCenter ? null : {
+        let center = settings.process.outputOriginCenter;
+        let offset = center ? {x:0, y:0, z:camTopZ} : {
             x: -settings.device.bedWidth / 2,
             y: -settings.device.bedDepth / 2,
         };
+        if (MODE === MODES.CAM && settings.stock.x && !center) {
+            offset.x = -settings.stock.x / 2;
+            offset.y = -settings.stock.y / 2;
+            offset.z = settings.stock.z;
+        }
         switch (type) {
             case 'svg':
                 currentPrint.parseSVG(code, offset);
@@ -1605,11 +1613,11 @@ self.kiri.license = exports.LICENSE;
     }
 
     function platformComputeMaxZ() {
-        var maxZ = 0;
+        topZ = 0;
         forAllWidgets(function(widget) {
-            maxZ = Math.max(maxZ, widget.mesh.getBoundingBox().max.z);
+            topZ = Math.max(topZ, widget.mesh.getBoundingBox().max.z);
         });
-        SPACE.platform.setMaxZ(maxZ);
+        SPACE.platform.setMaxZ(topZ);
     }
 
     function platformAdd(widget, shift, nolayout) {
@@ -1695,7 +1703,7 @@ self.kiri.license = exports.LICENSE;
             proc = settings.process,
             modified = false,
             oldmode = viewMode,
-            topZ = MODE === MODES.CAM ? camTopZ : 0;
+            topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset : 0;
 
         switch (MODE) {
             case MODES.CAM:
@@ -1752,7 +1760,7 @@ self.kiri.license = exports.LICENSE;
             m.fit.x += m.w / 2 + p.pad;
             m.fit.y += m.h / 2 + p.pad;
             m.widget.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
-            m.widget.setTopZ(topZ);
+            // m.widget.setTopZ(topZ);
             m.material.visible = true;
         }
 
@@ -1895,8 +1903,9 @@ self.kiri.license = exports.LICENSE;
         return settings;
     }
 
-    function camUpdateWidgetZ() {
-        var ztop = MODE === MODES.CAM ? camTopZ : 0;
+    function updateWidgetsTopZ() {
+        let camz = MODE === MODES.CAM && settings.stock.z;
+        let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
         forAllWidgets(function(widget) {
             widget.setTopZ(ztop);
         });
@@ -1938,6 +1947,11 @@ self.kiri.license = exports.LICENSE;
                 $('stock-width').innerText = (csx).toFixed(2);
                 $('stock-depth').innerText = (csy).toFixed(2);
                 $('stock-height').innerText = (csz).toFixed(2);
+                settings.stock = {
+                    x: csx,
+                    y: csy,
+                    z: csz
+                };
             }
             if (!camStock) {
                 var geo = new THREE.BoxGeometry(1, 1, 1);
@@ -1953,16 +1967,17 @@ self.kiri.license = exports.LICENSE;
             camStock.position.y = csoy;
             camStock.position.z = csz / 2;
             camStock.material.visible = settings.mode === 'CAM';
-            camTopZ = csz - sd.camZTopOffset;
-            camUpdateWidgetZ();
+            camTopZ = csz;
+            updateWidgetsTopZ();
             SPACE.update();
         } else if (camStock) {
+            settings.stock = {};
             UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
             SPACE.update();
             camStock = null;
-            camTopZ = 0;
-            camUpdateWidgetZ();
+            camTopZ = topZ;
+            updateWidgetsTopZ();
         }
         updateOrigin();
     }
@@ -2078,8 +2093,8 @@ self.kiri.license = exports.LICENSE;
         let x = 0;
         let y = 0;
         let z = 0;
-        if (proc.camOriginTop) {
-            z = camTopZ + proc.camZTopOffset + 0.01;
+        if (MODE === MODES.CAM && proc.camOriginTop) {
+            z = camTopZ + 0.01;
         }
         if (!proc.outputOriginCenter) {
             if (camStock) {
