@@ -1947,11 +1947,6 @@ self.kiri.license = exports.LICENSE;
                 $('stock-width').innerText = (csx).toFixed(2);
                 $('stock-depth').innerText = (csy).toFixed(2);
                 $('stock-height').innerText = (csz).toFixed(2);
-                settings.stock = {
-                    x: csx,
-                    y: csy,
-                    z: csz
-                };
             }
             if (!camStock) {
                 var geo = new THREE.BoxGeometry(1, 1, 1);
@@ -1960,6 +1955,11 @@ self.kiri.license = exports.LICENSE;
                 SPACE.platform.add(cube);
                 camStock = cube;
             }
+            settings.stock = {
+                x: csx,
+                y: csy,
+                z: csz
+            };
             camStock.scale.x = csx;
             camStock.scale.y = csy;
             camStock.scale.z = csz;
