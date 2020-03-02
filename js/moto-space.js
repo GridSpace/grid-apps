@@ -232,10 +232,14 @@ let gs_moto_space = exports;
 
     function setOrigin(x, y, z) {
         if (gridOrigin) {
-            Space.scene.remove(gridOrigin);
+            if (x === gridOrigin.x && y === gridOrigin.y && z === gridOrigin.z) {
+                return;
+            }
+            Space.scene.remove(gridOrigin.group);
         }
         if (x === undefined) {
             gridOrigin = null;
+            Space.update();
             return;
         }
         let cmat = new THREE.MeshPhongMaterial({
@@ -254,48 +258,50 @@ let gs_moto_space = exports;
         });
         let PIP = Math.PI/2;
         let pi1, pi2, pi3, pi4;
-        gridOrigin = new THREE.Group();
-        gridOrigin.add(pi1 = new THREE.Mesh(
+        let group = new THREE.Group();
+        gridOrigin = {x, y, z, group};
+        group.add(pi1 = new THREE.Mesh(
             new THREE.CircleGeometry(4.6, 50, PIP*0, PIP*1),
             cmat
         ));
         pi1.position.x = 0.25;
         pi1.position.y = 0.25;
-        gridOrigin.add(pi2 = new THREE.Mesh(
+        group.add(pi2 = new THREE.Mesh(
             new THREE.CircleGeometry(4.6, 50, PIP*1, PIP*1),
             cmat
         ));
         pi2.position.x = -0.25;
         pi2.position.y = 0.25;
-        gridOrigin.add(pi3 = new THREE.Mesh(
+        group.add(pi3 = new THREE.Mesh(
             new THREE.CircleGeometry(4.6, 50, PIP*2, PIP*1),
             cmat
         ));
         pi3.position.x = -0.25;
         pi3.position.y = -0.25;
-        gridOrigin.add(pi4 = new THREE.Mesh(
+        group.add(pi4 = new THREE.Mesh(
             new THREE.CircleGeometry(4.6, 50, PIP*3, PIP*1),
             cmat
         ));
         pi4.position.x = 0.25;
         pi4.position.y = -0.25;
-        gridOrigin.add(new THREE.Mesh(
+        group.add(new THREE.Mesh(
             new THREE.RingGeometry(5, 5.5, 50),
             rmat
         ));
-        gridOrigin.add(new THREE.Mesh(
+        group.add(new THREE.Mesh(
             new THREE.PlaneGeometry(0.5, 10),
             rmat
         ));
-        gridOrigin.add(new THREE.Mesh(
+        group.add(new THREE.Mesh(
             new THREE.PlaneGeometry(10, 0.5),
             rmat
         ));
-        gridOrigin.rotation.x = -PI2;
-        gridOrigin.position.x = x;
-        gridOrigin.position.y = z;
-        gridOrigin.position.z = y;
-        Space.scene.add(gridOrigin);
+        group.rotation.x = -PI2;
+        group.position.x = x;
+        group.position.y = z;
+        group.position.z = y;
+        Space.scene.add(group);
+        Space.update();
     }
 
     function refresh() {
@@ -565,7 +571,6 @@ let gs_moto_space = exports;
 
             size:      function()  { return platform.scale },
             isVisible: function()  { return platform.visible },
-
             showGrid:  function(b) { gridView.visible = b },
 
             setRound: function(bool) {
@@ -600,14 +605,11 @@ let gs_moto_space = exports;
             front: function()  { tweenCam({left: 0,    up: PI2, panX: 0, panY: panY, panZ: 0}) },
             right: function()  { tweenCam({left: PI2,  up: PI2, panX: 0, panY: panY, panZ: 0}) },
             left:  function()  { tweenCam({left: -PI2, up: PI2, panX: 0, panY: panY, panZ: 0}) },
-
-            panTo: function(x,y,z) { tweenCamPan(x,y,z) },
-
-            setZoom: function(r,v) { viewControl.setZoom(r,v) },
-
             reset: function()    { viewControl.reset(); requestRefresh() },
             load:  function(cam) { viewControl.setPosition(cam) },
-            save:  function()    { return viewControl.getPosition(true) }
+            save:  function()    { return viewControl.getPosition(true) },
+            panTo: function(x,y,z) { tweenCamPan(x,y,z) },
+            setZoom: function(r,v) { viewControl.setZoom(r,v) }
         },
 
         mouse: {

@@ -1964,6 +1964,7 @@ self.kiri.license = exports.LICENSE;
             camTopZ = 0;
             camUpdateWidgetZ();
         }
+        updateOrigin();
     }
 
     function updateFields() {
@@ -2070,16 +2071,26 @@ self.kiri.license = exports.LICENSE;
     function updateOrigin() {
         if (!settings.controller.showOrigin) {
             SPACE.platform.setOrigin();
-            SPACE.update();
             return;
         }
-        if (settings.process.outputOriginCenter) {
-            SPACE.platform.setOrigin(0,0,0);
-        } else {
-            let dev = settings.device;
-            SPACE.platform.setOrigin(-dev.bedWidth/2,dev.bedDepth/2,0);
+        let dev = settings.device;
+        let proc = settings.process;
+        let x = 0;
+        let y = 0;
+        let z = 0;
+        if (proc.camOriginTop) {
+            z = camTopZ + proc.camZTopOffset + 0.01;
         }
-        SPACE.update();
+        if (!proc.outputOriginCenter) {
+            if (camStock) {
+                x = -camStock.scale.x / 2;
+                y = camStock.scale.y / 2;
+            } else {
+                x = -dev.bedWidth / 2;
+                y = dev.bedDepth / 2;
+            }
+        }
+        SPACE.platform.setOrigin(x,y,z);
     }
 
     function updatePlatformSize() {
