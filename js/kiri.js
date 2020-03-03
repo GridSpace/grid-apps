@@ -566,6 +566,7 @@ self.kiri.license = exports.LICENSE;
         ajax : ajax,
         help : showHelp,
         load : loadWidget,
+        alert: alert2,
         focus : takeFocus,
         stats : STATS,
         import : loadFile,
@@ -607,6 +608,9 @@ self.kiri.license = exports.LICENSE;
      }
 
     function alert2(message, time) {
+        if (message === undefined) {
+            return updateAlerts(true);
+        }
         alerts.push([message, Date.now(), time]);
         updateAlerts();
     }
