@@ -8,9 +8,9 @@ let loc = self.location,
     ver = exports.VERSION,
     time = function() { return new Date().getTime() };
     host = loc.hostname,
-    debug = (host !== 'grid.space' && host !== 'debug');
+    debug = host === 'debug';
 
-console.log("kiri | init work | " + ver);
+console.log(`kiri | init work | ${ver}${debug ? ' | debug' : ''}`);
 
 // when running the server in 'web' mode, the obfuscated code is served as a
 // unified ball via /code/work.js -- otherwise, map "localhost" to "debug"
@@ -43,10 +43,10 @@ if (debug) {
             "kiri-print",
             "kiri-codec"
         ].forEach(function(scr) {
-            importScripts(["/js/",scr,".js","/v"+ver].join(''));
+            importScripts(`/js/${scr}.js/${ver}`);
         })
     } catch (e) {
-        console.log("unable to load worker scripts. kiri is likely in debug mode.");
+        console.log("unable to load worker scripts. server is in production mode.");
     }
 } else {
     importScripts("/code/work.js/"+ver);

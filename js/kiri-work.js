@@ -8,8 +8,9 @@ let loc = self.location,
     host = loc.hostname,
     port = loc.port,
     proto = loc.protocol,
-    pre = host.indexOf(".space") > 0 || host === "localhost" ?
-        proto + "//" + host + ":" + port : "",
+    pre = '',
+    // pre = host.indexOf(".space") > 0 || host === "localhost" ?
+    //     proto + "//" + host + ":" + port : "",
     time = function() { return new Date().getTime() },
     KIRI = self.kiri,
     BASE = self.base,
@@ -22,7 +23,8 @@ let loc = self.location,
 //     console.log({body:body});
 //     let blob = new Blob([body], {type : 'application/json'});
 //     worker = new Worker(URL.createObjectURL(blob));
-// }).request(pre + "/code/worker.js/");
+//     console.log({worker})
+// }).request(pre + "/code/worker.js/123");
 
 function send(fn, data, onreply, async, zerocopy) {
     let seq = seqid++;

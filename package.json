@@ -36,7 +36,6 @@
         "moment": "^2.24.0",
         "n3d-threejs": "^72.0.0",
         "pixi.js": "^4.8.7",
-        "request": "^2.88.0",
         "serve-static": "^1.13.2",
         "three": "^0.96.0",
         "tween.js": "^0.14.0",
