@@ -1402,9 +1402,8 @@ var gs_kiri_cam = exports;
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
             bounds = widget.getCamBounds(settings),
-            bed = settings.device,
             spro = settings.process,
-            sout = settings.process,
+            dev = settings.device,
             decimals = 4,
             pos = { x:null, y:null, z:null, f:null, t:null },
             line,
@@ -1418,17 +1417,17 @@ var gs_kiri_cam = exports;
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
             },
-            offset = sout.outputOriginCenter ? null : {
-                    x: bounds.max.x, //bed.bedWidth/2,
-                    y: bounds.max.y //bed.bedDepth/2
+            offset = {
+                    x: -settings.origin.x,
+                    y:  settings.origin.y
             },
             consts = {
                     tool: 0,
                     tool_name: "unknown",
-                    top: offset ? bed.bedDepth : bed.bedDepth/2,
-                    left: offset ? 0 : -bed.bedWidth/2,
-                    right: offset ? bed.bedWidth : bed.bedWidth/2,
-                    bottom: offset ? 0 : -bed.bedDepth/2,
+                    top: offset ? dev.bedDepth : dev.bedDepth/2,
+                    left: offset ? 0 : -dev.bedWidth/2,
+                    right: offset ? dev.bedWidth : dev.bedWidth/2,
+                    bottom: offset ? 0 : -dev.bedDepth/2,
                     time_sec: 0,
                     time_ms: 0,
                     time: 0
@@ -1572,9 +1571,9 @@ var gs_kiri_cam = exports;
                     point.x += offset.x;
                     point.y += offset.y;
                 }
-                if (sout.outputInvertX) point.x = -point.x;
-                if (sout.outputInvertY) point.y = -point.y;
-                if (sout.camOriginTop) point.z = point.z - zmax;
+                if (spro.outputInvertX) point.x = -point.x;
+                if (spro.outputInvertY) point.y = -point.y;
+                if (spro.camOriginTop) point.z = point.z - zmax;
             });
         });
 

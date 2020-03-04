@@ -47,6 +47,7 @@ var gs_kiri_print = exports;
         this.output = [];
         this.distance = 0;
         this.bounds = null;
+        this.imported = null;
     }
 
     PRO.addOutput = addOutput;
@@ -84,6 +85,7 @@ var gs_kiri_print = exports;
             });
             output.push(seq);
         });
+        scope.imported = code;
         scope.lines = lines.length;
         scope.bytes = code.length;
     };
@@ -176,6 +178,7 @@ var gs_kiri_print = exports;
 
         G0();
 
+        scope.imported = gcode;
         scope.lines = lines.length;
         scope.bytes = gcode.length;
     };
@@ -215,6 +218,10 @@ var gs_kiri_print = exports;
         var scope = this,
             settings = scope.settings,
             mode = settings.mode;
+
+        if (scope.imported) {
+            return ondone(scope.imported);
+        }
 
         if (remote) {
             // executed from kiri.js

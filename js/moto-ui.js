@@ -282,6 +282,7 @@ var gs_moto_ui = exports;
             ip.addEventListener('keydown', function(event) {
                 let key = event.key;
                 if (
+                    options.text ||
                     (key >= '0' && key <= '9') ||
                     key === '.' ||
                     key === '-' ||

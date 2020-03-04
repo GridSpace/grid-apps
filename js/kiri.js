@@ -39,6 +39,7 @@ self.kiri.license = exports.LICENSE;
                     bedRound: 1,
                     maxHeight: 1,
                     extrudeAbs: 1,
+                    originCenter: 1,
                     filamentSize: 1,
                     nozzleSize: 1,
                     gcodePre: 1,
@@ -117,6 +118,7 @@ self.kiri.license = exports.LICENSE;
                     bedWidth: 1,
                     bedDepth: 1,
                     bedHeight: 1,
+                    originCenter: 1,
                     spindleMax: 1,
                     gcodePre: 1,
                     gcodePost: 1,
@@ -213,6 +215,7 @@ self.kiri.license = exports.LICENSE;
                 { name: "triangle" }
             ],
             // CAM only
+            origin: {},
             stock: {},
             tools:[
                 {
@@ -254,7 +257,8 @@ self.kiri.license = exports.LICENSE;
                 bedWidth: 300,      // FDM/CAM/Laser
                 bedDepth: 175,      // FDM/CAM/Laser
                 bedHeight: 2.5,     // display only (deprecate)
-                bedRound: false,   // FDM
+                bedRound: false,    // FDM
+                originCenter: false,// FDM/CAM
                 maxHeight: 150,     // FDM
                 filamentSize: 1.75, // FDM
                 nozzleSize: 0.4,    // FDM
@@ -541,6 +545,7 @@ self.kiri.license = exports.LICENSE;
         camStock = null,
         camTopZ = 0,
         topZ = 0,
+        // origin = {x:0, y:0, z:0},
         showFavorites = SDB['dev-favorites'] === 'true';
 
     // seed defaults. will get culled on save
@@ -941,15 +946,12 @@ self.kiri.license = exports.LICENSE;
         setOpacity(0);
         currentPrint = kiri.newPrint(settings, []);
         let center = settings.process.outputOriginCenter;
-        let offset = center ? {x:0, y:0, z:camTopZ} : {
-            x: -settings.device.bedWidth / 2,
-            y: -settings.device.bedDepth / 2,
+        let origin = settings.origin;
+        let offset = {
+            x: origin.x,
+            y: -origin.y,
+            z: origin.z
         };
-        if (MODE === MODES.CAM && settings.stock.x && !center) {
-            offset.x = -settings.stock.x / 2;
-            offset.y = -settings.stock.y / 2;
-            offset.z = settings.stock.z;
-        }
         switch (type) {
             case 'svg':
                 currentPrint.parseSVG(code, offset);
@@ -964,18 +966,6 @@ self.kiri.license = exports.LICENSE;
         UI.layerPrint.checked = true;
         updateSliderMax(true);
         showSlices();
-        switch (type) {
-            case 'svg':
-                currentPrint.exportGCode(false, gcode => {
-                    // console.log({svg_to_gcode: gcode});
-                }, line => {
-                    // console.log({gcode_line: line});
-                });
-                break;
-            default:
-                exportGCode(code);
-                break;
-        }
     }
 
     function preparePrint(callback) {
@@ -1724,12 +1714,13 @@ self.kiri.license = exports.LICENSE;
 
         // only auto-layout when in arrange mode
         if (oldmode !== VIEWS.ARRANGE) {
-            SPACE.update();
-            return;
+            return SPACE.update();
         }
 
         // do not layout when switching back from slice view
-        if (!auto || (!space && !layout)) return SPACE.update();
+        if (!auto || (!space && !layout)) {
+            return SPACE.update();
+        }
 
         // check if any widget has been modified
         forAllWidgets(function(w) {
@@ -1918,8 +1909,10 @@ self.kiri.license = exports.LICENSE;
     function updateCamStock(refresh) {
         let sd = settings.process;
         let offset = UI.camStockOffset.checked;
+        let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
+        camTopZ = topZ;
         // create/inject cam stock if stock size other than default
-        if (MODE === MODES.CAM && sd.camStockX && sd.camStockY && sd.camStockZ && WIDGETS.length) {
+        if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
             UI.stock.style.display = offset ? 'inline' : 'none';
             let csx = sd.camStockX;
             let csy = sd.camStockY;
@@ -2039,6 +2032,7 @@ self.kiri.license = exports.LICENSE;
         oldWidgets.forEach(function(wid) {
             Widget.deleteFromState(wid);
         });
+        alert2("workspace saved", 1);
     }
 
     function loadFiles(files) {
@@ -2088,10 +2082,6 @@ self.kiri.license = exports.LICENSE;
     }
 
     function updateOrigin() {
-        if (!settings.controller.showOrigin) {
-            SPACE.platform.setOrigin();
-            return;
-        }
         let dev = settings.device;
         let proc = settings.process;
         let x = 0;
@@ -2099,17 +2089,28 @@ self.kiri.license = exports.LICENSE;
         let z = 0;
         if (MODE === MODES.CAM && proc.camOriginTop) {
             z = camTopZ + 0.01;
+            if (!camStock) {
+                z += proc.camZTopOffset;
+            }
         }
         if (!proc.outputOriginCenter) {
             if (camStock) {
-                x = -camStock.scale.x / 2;
-                y = camStock.scale.y / 2;
+                x = (-camStock.scale.x / 2) + camStock.position.x;
+                y = (camStock.scale.y / 2) - camStock.position.y;
             } else {
                 x = -dev.bedWidth / 2;
                 y = dev.bedDepth / 2;
             }
+        } else if (camStock) {
+            x = camStock.position.x;
+            y = -camStock.position.y;
         }
-        SPACE.platform.setOrigin(x,y,z);
+        settings.origin = {x, y, z};
+        if (settings.controller.showOrigin) {
+            SPACE.platform.setOrigin(x,y,z);
+        } else {
+            SPACE.platform.setOrigin();
+        }
     }
 
     function updatePlatformSize() {
@@ -2132,7 +2133,7 @@ self.kiri.license = exports.LICENSE;
             toload = ls2o('ws-widgets',[]),
             newset = ls2o('ws-settings'),
             camera = ls2o('ws-camera'),
-            isFDM = (newset || settings).mode === 'FDM';
+            position = true;
 
         if (newset) {
             fillMissingSettings(settingsDefault, newset);
@@ -2168,15 +2169,24 @@ self.kiri.license = exports.LICENSE;
         forAllWidgets(function(widget) {
             platformDelete(widget);
         });
-
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
-                if (widget) platformAdd(widget, 0, isFDM);
+                if (widget) {
+                    platformAdd(widget, 0, position);
+                }
                 if (++loaded === toload.length) {
                     widgetDeselect();
-                    if (ondone) ondone();
+                    if (ondone) {
+                        ondone();
+                        if ((newset || settings).mode != 'CAM') {
+                            setTimeout(() => {
+                                updateWidgetsTopZ();
+                                SPACE.update();
+                            }, 1);
+                        };
+                    }
                 }
-            }, isFDM);
+            }, position);
         });
 
         return toload.length > 0;
@@ -2249,7 +2259,7 @@ self.kiri.license = exports.LICENSE;
         for (var k in load) {
             if (!load.hasOwnProperty(k)) continue;
             // prevent stored process from overwriting device defaults
-            if (k === "outputOriginCenter" && mode == "FDM") continue;
+            //if (k === "outputOriginCenter" && mode == "FDM") continue;
             settings.process[k] = load[k];
         }
 
@@ -2263,6 +2273,11 @@ self.kiri.license = exports.LICENSE;
         $('selected-device').innerHTML = currentDeviceName();
         $('selected-process').innerHTML = name;
         $('selected').style.display = (mode !== 'LASER') ? 'block' : 'none';
+
+        // FDM process settings overridden by device
+        if (mode == "FDM") {
+            settings.process.outputOriginCenter = (settings.device.originCenter || false);
+        }
 
         updateFields();
         if (!named) {
@@ -2476,7 +2491,7 @@ self.kiri.license = exports.LICENSE;
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) camStock.material.visible = settings.mode === 'CAM';
         restoreWorkspace(null,true);
-        if (MODE !== MODES.FDM) layoutPlatform();
+        // if (MODE !== MODES.FDM) layoutPlatform();
         if (then) then();
         triggerSettingsEvent();
     }
@@ -2558,7 +2573,7 @@ self.kiri.license = exports.LICENSE;
             deviceAll: $('device-all'),
 
             device: UC.newGroup("device", $('device')),
-            deviceName: UC.newInput(LANG.dev_name, {size:20}),
+            deviceName: UC.newInput(LANG.dev_name, {size:20, text:true}),
             setDeviceFilament: UC.newInput(LANG.dev_fil, {title:LANG.dev_fil_desc, convert:UC.toFloat, modes:FDM}),
             setDeviceNozzle: UC.newInput(LANG.dev_nozl, {title:LANG.dev_nozl_desc, convert:UC.toFloat, modes:FDM}),
             setDeviceWidth: UC.newInput(LANG.dev_bedw, {title:LANG.dev_bedw_desc, convert:UC.toInt}),
@@ -2909,6 +2924,10 @@ self.kiri.license = exports.LICENSE;
             return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
         }
 
+        function inputTextOK() {
+            return DOC.activeElement === UI.deviceName;
+        }
+
         function textAreaHasFocus() {
             var active = DOC.activeElement;
             return active && active.nodeName === "TEXTAREA";
@@ -2942,7 +2961,9 @@ self.kiri.license = exports.LICENSE;
         }
 
         function keyDownHandler(evt) {
-            if (modalShowing()) return false;
+            if (modalShowing()) {
+                return false;
+            }
             var move = evt.altKey ? 5 : 0,
                 deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
             switch (evt.keyCode) {
@@ -3016,7 +3037,9 @@ self.kiri.license = exports.LICENSE;
             var handled = true,
                 style, sel, i, m, bb,
                 ncc = evt.charCode - 48;
-            if (modalShowing() || inputHasFocus()) return false;
+            if (modalShowing() || inputHasFocus()) {
+                return false;
+            }
             switch (evt.charCode) {
                 case cca('`'): showSlices(0); break;
                 case cca('0'): showSlices(showLayerMax); break;
@@ -3353,6 +3376,7 @@ self.kiri.license = exports.LICENSE;
                     maxHeight: valueOf(set.build_height, 150),
                     nozzleSize: valueOf(set.nozzle_size, 0.4),
                     filamentSize: valueOf(set.filament_diameter, 1.75),
+                    originCenter: valueOf(set.origin_center, false),
                     extrudeAbs: valueOf(set.extrude_abs, false),
                     spindleMax: valueOf(set.spindle_max, 0),
                     gcodeFan: valueOf(cmd.fan_power, ''),
