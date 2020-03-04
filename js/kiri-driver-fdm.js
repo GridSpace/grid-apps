@@ -161,9 +161,9 @@ var gs_kiri_fdm = exports;
                 }, "infill");
             }
 
+            let polish = spro.layerPolishing;
             // experimental polishing
-            if (spro.layerPolishing) {
-console.log({polish:spro.layerPolishing})
+            if (polish) {
                 let px, py;
                 widget.polish = {};
                 // compute x polishing slices
@@ -197,15 +197,19 @@ console.log({polish:spro.layerPolishing})
                 px.forEach(p => pa.appendAll(p));
                 py.forEach(p => pa.appendAll(p));
                 forSlices(1.0, 1.0, slice => {
-                    if (slice.index >= 2) {
-                        let zb = slice.down.down.z;
+                    if (slice.index >= polish) {
+                        let sd = slice;
+                        for (let i=0; i<polish; i++) {
+                            sd = sd.down;
+                        }
+                        let zb = sd.z;
                         let zt = slice.z;
                         let lines = [];
+                        let lastp;
+                        let equal = 0;
+                        let points = 0;
                         pa.forEach(p => {
                             p.forEachSegment((p1, p2) => {
-                                // if (Math.abs(p1.z - p2.z) < 0.01) {
-                                //     return;
-                                // }
                                 // return when both below
                                 if (p1.z < zb && p2.z < zb) {
                                     return;
@@ -242,7 +246,7 @@ console.log({polish:spro.layerPolishing})
                                 }
                                 let slope = BASE.newSlope(p1, p2);
                                 let angle = Math.abs(slope.angle);
-                                if (angle < 160 && angle > 20) {
+                                if (angle > 20 && angle < 160) {
                                     return;
                                 }
                                 let len = p1.distTo2D(p2);
@@ -269,13 +273,19 @@ console.log({polish:spro.layerPolishing})
                                     p1 = BASE.newPoint(p1.x,p1.z,p1.y);
                                     p2 = BASE.newPoint(p2.x,p2.z,p2.y);
                                 }
+                                p1.index = p2.index = 1;
+                                if (lastp && p1.isEqual(lastp)) {
+                                    equal++;
+                                }
                                 lines.push(p1);
-                                lines.push(p2);
+                                lines.push(lastp = p2);
+                                points++;
                             });
                         });
                         if (lines.length && slice.tops.length) {
                             slice.tops[0].polish = lines;
                         }
+                        console.log(slice.z,equal,points);
                     }
                 });
             }
@@ -488,10 +498,14 @@ console.log({polish:spro.layerPolishing})
             }
 
             layerout.layer = layer;
-            // layerout.height = layerout.height || (layer === 0 ? firstLayerHeight : process.sliceHeight);
+
+            // if layer produced output, append to output array
             if (layerout.length) output.append(layerout);
+
+            // notify progress
             layer++;
             update(layer / maxLayers);
+
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
                 layerout.last().retract = true;

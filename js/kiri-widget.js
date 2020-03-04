@@ -636,17 +636,6 @@ var gs_kiri_widget = exports;
         if (!cam) slices.forEach(function(s) { s.renderSparseFill() });
         // render supports
         if (!cam) slices.forEach(function(s) { s.renderSupport() });
-        // render polish (sent in debug mode only)
-        if (this.polish && false) {
-            let layer = KIRI.newLayer(this.mesh.newGroup());
-            this.polish.x.forEach(poly => {
-                layer.poly(poly, 0xff0000, false, false);
-            });
-            this.polish.y.forEach(poly => {
-                layer.poly(poly, 0x0000ff, false, false);
-            });
-            layer.render();
-        }
     };
 
     PRO.hideSlices = function() {

@@ -493,7 +493,8 @@ self.kiri.license = exports.LICENSE;
         DOC    = SELF.document,
         LOC    = SELF.location,
         SETUP  = parseOpt(LOC.search.substring(1)),
-        LOCAL  = LOC.host.indexOf('localhost') === 0,
+        HOST   = LOC.host.split(':'),
+        LOCAL  = HOST[0] === 'localhost' || HOST[0] === 'debug',
         SECURE = isSecure(LOC.protocol),
         // ---------------
         SDB     = MOTO.KV,

@@ -613,12 +613,15 @@ var gs_kiri_print = exports;
             });
         }
 
-        function outputFills(lines, bounds, fast) {
+        function outputFills(lines, options) {
             var p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
                 start = 0,
                 skip = false,
-                lastIndex = -1;
+                lastIndex = -1,
+                opt = options || {},
+                fast = opt.fast || false,
+                fill = opt.fill >= 0 ? opt.fill : fillMult;
 
             while (lines && marked < lines.length) {
                 found = false;
@@ -683,7 +686,7 @@ var gs_kiri_print = exports;
                 // to avoid shaking the printer to death.
                 if (dist <= thinWall && len <= thinWall) {
                     p2 = p1.midPointTo(p2);
-                    addOutput(preout, p2, fillMult * (dist / thinWall), fillSpeed);
+                    addOutput(preout, p2, fill * (dist / thinWall), fillSpeed);
                 } else {
                     // retract if dist trigger or crosses a slice top polygon
                     if (dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
@@ -697,12 +700,12 @@ var gs_kiri_print = exports;
 
                     // bridge ends of fill when they're close together
                     if (dist < thinWall) {
-                        addOutput(preout, p1, fillMult, fillSpeed);
+                        addOutput(preout, p1, fill, fillSpeed);
                     } else {
                         addOutput(preout, p1, 0, moveSpeed);
                     }
 
-                    addOutput(preout, p2, fillMult, fillSpeed);
+                    addOutput(preout, p2, fill, fillSpeed);
                 }
 
                 startPoint = p2;
@@ -762,7 +765,7 @@ var gs_kiri_print = exports;
                 outputTraces([next].appendAll(next.inner || []));
                 if (next.fills) {
                     next.fills.forEach(function(p) { p.z = z });
-                    outputFills(next.fills, next.inner, true);
+                    outputFills(next.fills, {fast: true});
                 }
             } else {
                 // top object
@@ -786,14 +789,20 @@ var gs_kiri_print = exports;
                 outputTraces([].appendAll(next.innerTraces() || []), bounds);
 
                 // then output solid and sparse fill
-                outputFills(next.fill_lines, bounds);
-                outputSparse(next.fill_sparse, bounds);
+                outputFills(next.fill_lines);
+                outputSparse(next.fill_sparse);
 
                 lastTop = next;
             }
         }, function(obj) {
             return obj instanceof Polygon ? obj : obj.poly;
         });
+
+        // produce polishing paths when present
+        if (slice.tops.length) {
+            let polish = slice.tops[0].polish;
+            outputFills(polish, {fast: true, fill:0});
+        }
 
         // offset print points
         for (i=0; i<preout.length; i++) {
