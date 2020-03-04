@@ -123,7 +123,8 @@ var gs_kiri_codec = exports;
             // thinner: encode(this.thinner, state),
             solids: encode(this.solids, state),
             fill_lines: encodePointArray(this.fill_lines),
-            fill_sparse: encode(this.fill_sparse, state)
+            fill_sparse: encode(this.fill_sparse, state),
+            polish: encode(this.polish, state)
         };
     };
 
@@ -134,8 +135,9 @@ var gs_kiri_codec = exports;
         top.inner = decode(v.inner, state);
         // top.thinner = decode(v.thinner, state);
         top.solids = decode(v.solids, state);
-        top.fill_lines = decodePointArray(v.fill_lines,state);
+        top.fill_lines = decodePointArray(v.fill_lines, state);
         top.fill_sparse = decode(v.fill_sparse, state);
+        top.polish = decode(v.polish, state);
 
         return top;
     });

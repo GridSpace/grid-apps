@@ -103,6 +103,7 @@ self.kiri.license = exports.LICENSE;
                     // detectThinWalls: 1,
                     antiBacklash: 1,
                     zHopDistance: 1,
+                    layerPolishing: 1,
                     outputLayerRetract: 1,
                     gcodeNozzle: 1,
                     gcodePauseLayers: 1,
@@ -336,6 +337,7 @@ self.kiri.license = exports.LICENSE;
                 detectThinWalls: false,
                 antiBacklash: 1,
                 zHopDistance: 0.2,
+                layerPolishing: 0,
                 outputLayerRetract: false,
                 gcodeNozzle: 0,
                 gcodePauseLayers: "",
@@ -1870,8 +1872,7 @@ self.kiri.license = exports.LICENSE;
             if (!scope.hasOwnProperty(key)) continue;
             if (UI.hasOwnProperty(key)) {
                 var nval = null,
-                    uie = UI[key],
-                    src = uie.parentNode.getAttribute('source');
+                    uie = UI[key];
                 // skip empty UI values
                 if (!uie || uie === '') continue;
                 if (uie.type === 'text') {
@@ -1881,6 +1882,7 @@ self.kiri.license = exports.LICENSE;
                 } else if (uie.type === 'select-one') {
                     if (uie.selectedIndex > 0) {
                         nval = uie.options[uie.selectedIndex].value;
+                        let src = uie.parentNode.getAttribute('source');
                         if (src === 'tools') {
                             nval = parseInt(nval);
                         }
@@ -2888,7 +2890,8 @@ self.kiri.license = exports.LICENSE;
             outputShortPoly: UC.newInput("slow poly", {title:"polygons shorter than this\nwill have their print speed\nscaled down to min speed\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM, expert: true}),
             zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert: true}),
             antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert: true}),
-            //detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert: true})
+            // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert: true})
+            layerPolishing: LOCAL ? UC.newInput("layer polish", {title:"polish up to specified\n# of layers at a time", bound:UC.bound(0,10), convert:UC.toFloat, modes:FDM, expert: true}) : null,
             outputLayerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"force filament retraction\nbetween layers", modes:FDM, expert: true}),
 
             gcodeVars: UC.newGroup("gcode", null, {modes:FDM, expert: true}),

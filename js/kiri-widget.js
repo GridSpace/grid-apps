@@ -245,17 +245,17 @@ var gs_kiri_widget = exports;
         });
     };
 
-    PRO.encodeSlices = function() {
-        var encoded = [];
-        if (this.slices) this.slices.forEach(function(slice) {
-            encoded.push(slice.encode());
-        });
-        return encoded;
-    };
+    // PRO.encodeSlices = function() {
+    //     var encoded = [];
+    //     if (this.slices) this.slices.forEach(function(slice) {
+    //         encoded.push(slice.encode());
+    //     });
+    //     return encoded;
+    // };
 
-    PRO.decodeSlices = function(encoded) {
-        this.slices = KIRI.codec.decode(encoded, { mesh:this.mesh });
-    };
+    // PRO.decodeSlices = function(encoded) {
+    //     this.slices = KIRI.codec.decode(encoded, { mesh:this.mesh });
+    // };
 
     /**
      *
@@ -538,12 +538,28 @@ var gs_kiri_widget = exports;
                 if (reply.update) {
                     onupdate(reply.update, reply.updateStatus);
                 }
-                if (reply.send_start) widget.xfer = {start: reply.send_start};
-                if (reply.topo) widget.topo = reply.topo;
-                if (reply.stats) widget.stats = reply.stats;
-                if (reply.send_end) widget.stats.load_time = widget.xfer.start - reply.send_end;
-                if (reply.slices) { widget.clearSlices(); widget.slices = [] };
-                if (reply.slice) widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
+                if (reply.send_start) {
+                    widget.xfer = {start: reply.send_start};
+                }
+                if (reply.topo) {
+                    widget.topo = reply.topo;
+                }
+                if (reply.stats) {
+                    widget.stats = reply.stats;
+                }
+                if (reply.send_end) {
+                    widget.stats.load_time = widget.xfer.start - reply.send_end;
+                }
+                if (reply.slices) {
+                    widget.clearSlices();
+                    widget.slices = []
+                };
+                if (reply.slice) {
+                    widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
+                }
+                if (reply.polish) {
+                    widget.polish = KIRI.codec.decode(reply.polish);
+                }
                 if (reply.error) {
                     ondone(false, reply.error);
                 }
@@ -620,6 +636,17 @@ var gs_kiri_widget = exports;
         if (!cam) slices.forEach(function(s) { s.renderSparseFill() });
         // render supports
         if (!cam) slices.forEach(function(s) { s.renderSupport() });
+        // render polish (sent in debug mode only)
+        if (this.polish && false) {
+            let layer = KIRI.newLayer(this.mesh.newGroup());
+            this.polish.x.forEach(poly => {
+                layer.poly(poly, 0xff0000, false, false);
+            });
+            this.polish.y.forEach(poly => {
+                layer.poly(poly, 0x0000ff, false, false);
+            });
+            layer.render();
+        }
     };
 
     PRO.hideSlices = function() {

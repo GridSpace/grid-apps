@@ -49,6 +49,7 @@ var gs_kiri_slicer = exports;
      */
     function slice(points, bounds, options, ondone, onupdate) {
         var topoMode = options.topo,
+            simpleMode = options.simple,
             ox = 0,
             oy = 0;
 
@@ -465,7 +466,7 @@ var gs_kiri_slicer = exports;
             slice.lines = removeDuplicateLines(lines);
 
             // for topo slices, we just need the raw lines
-            if (!topoMode) {
+            if (!topoMode && !simpleMode) {
                 slice.groups = connectLines(slice.lines, slices.length);
                 POLY.nest(slice.groups).forEach(function(top) { slice.addTop(top) });
             }
@@ -492,13 +493,20 @@ var gs_kiri_slicer = exports;
                         line.p1.move(move);
                         line.p2.move(move);
                     }
-                } else {
-                    slice.tops.forEach(function(top) {
-                        top.poly.swap(options.swapX, options.swapY);
-                        top.poly.move(move);
-                        top.poly.inner = null;
+                } else if (simpleMode) {
+                    // fdm polishing mode
+                    slice.groups = connectLines(slice.lines, slices.length);
+                    slice.groups.forEach(poly => {
+                        poly.swap(options.swapX, options.swapY);
+                        poly.move(move);
+                        poly.inner = null;
                     });
-                    drape(slice, options.swapX, options.swapY);
+                    // slice.tops.forEach(function(top) {
+                    //     top.poly.swap(options.swapX, options.swapY);
+                    //     top.poly.move(move);
+                    //     top.poly.inner = null;
+                    // });
+                    // drape(slice, options.swapX, options.swapY);
                 }
             }
 

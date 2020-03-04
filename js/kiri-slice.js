@@ -619,6 +619,7 @@ var gs_kiri_slice = exports;
 
         this.tops.forEach(function(top) {
             if (top.fill_lines) layer.lines(top.fill_lines, fill_color);
+            if (top.polish) layer.lines(top.polish, 0x880000);
         });
 
         layer.render();

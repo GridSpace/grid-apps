@@ -162,7 +162,7 @@ var gs_base_polygon = exports;
             length = points.length;
         poly.bounds = new Bounds();
         for (var i=0; i<length; i++) {
-            p = points[i];
+            let p = points[i];
             if (x) p.swapXZ();
             else if (y) p.swapYZ();
             poly.bounds.update(p);

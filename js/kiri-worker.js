@@ -108,6 +108,9 @@ let dispatch = {
                 slices.forEach(function(slice,index) {
                     send.data({index: index, slice: slice.encode()});
                 })
+                if (debug && widget.polish) {
+                    send.data({polish: kiri.codec.encode(widget.polish)});
+                }
                 send.data({send_end: time()});
             }
             send.done({done: true});

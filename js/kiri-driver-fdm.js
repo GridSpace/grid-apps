@@ -161,6 +161,125 @@ var gs_kiri_fdm = exports;
                 }, "infill");
             }
 
+            // experimental polishing
+            if (spro.layerPolishing) {
+console.log({polish:spro.layerPolishing})
+                let px, py;
+                widget.polish = {};
+                // compute x polishing slices
+                SLICER.sliceWidget(widget, {
+                    height: sdev.nozzleSize,
+                    swapX: true,
+                    swapY: false,
+                    simple: true
+                }, (polish_done => {
+                    px = widget.polish.x = polish_done
+                        .filter(s => s.groups.length)
+                        .map(s => s.groups);
+                }), (polish_update) => {
+                    // console.log({polish_update});
+                });
+                // compute y polishing slices
+                SLICER.sliceWidget(widget, {
+                    height: sdev.nozzleSize,
+                    swapX: false,
+                    swapY: true,
+                    simple: true
+                }, (polish_done => {
+                    py = widget.polish.y = polish_done
+                        .filter(s => s.groups.length)
+                        .map(s => s.groups);
+                }), (polish_update) => {
+                    // console.log({polish_update});
+                });
+                // apply polishing finishes to layers
+                let pa = [];
+                px.forEach(p => pa.appendAll(p));
+                py.forEach(p => pa.appendAll(p));
+                forSlices(1.0, 1.0, slice => {
+                    if (slice.index >= 2) {
+                        let zb = slice.down.down.z;
+                        let zt = slice.z;
+                        let lines = [];
+                        pa.forEach(p => {
+                            p.forEachSegment((p1, p2) => {
+                                // if (Math.abs(p1.z - p2.z) < 0.01) {
+                                //     return;
+                                // }
+                                // return when both below
+                                if (p1.z < zb && p2.z < zb) {
+                                    return;
+                                }
+                                // return when both above
+                                if (p1.z > zt && p2.z > zt) {
+                                    return;
+                                }
+                                // return when vertical
+                                if (p1.x === p2.x && p1.y === p2.y) {
+                                    return;
+                                }
+                                // order points lowest to highest
+                                if (p1.z > p2.z) {
+                                    let t = p2;
+                                    p2 = p1;
+                                    p1 = t;
+                                }
+                                let trimlo = false;
+                                let trimhi = false;
+                                if (p1.z < zb) {
+                                    trimlo = true;
+                                }
+                                if (p2.z > zt) {
+                                    trimhi = true;
+                                }
+                                let xaxis = p1.x === p2.x;
+                                if (xaxis) {
+                                    p1 = BASE.newPoint(p1.y,p1.z,p1.x);
+                                    p2 = BASE.newPoint(p2.y,p2.z,p2.x);
+                                } else {
+                                    p1 = BASE.newPoint(p1.x,p1.z,p1.y);
+                                    p2 = BASE.newPoint(p2.x,p2.z,p2.y);
+                                }
+                                let slope = BASE.newSlope(p1, p2);
+                                let angle = Math.abs(slope.angle);
+                                if (angle < 160 && angle > 20) {
+                                    return;
+                                }
+                                let len = p1.distTo2D(p2);
+                                let np1 = p1;
+                                if (trimlo) {
+                                    let zunder = zb - p1.y;
+                                    let zover = p2.y - zb;
+                                    let zdelt = p2.y - p1.y;
+                                    let pct = zunder / zdelt;
+                                    np1 = p1.follow(slope, len * pct);
+                                }
+                                if (trimhi) {
+                                    let zunder = zt - p1.y;
+                                    let zover = p2.y - zt;
+                                    let zdelt = p2.y - p1.y;
+                                    let pct = zover / zdelt;
+                                    p2 = p2.follow(slope.invert(), len * pct);
+                                }
+                                p1 = np1;
+                                if (xaxis) {
+                                    p1 = BASE.newPoint(p1.z,p1.x,p1.y);
+                                    p2 = BASE.newPoint(p2.z,p2.x,p2.y);
+                                } else {
+                                    p1 = BASE.newPoint(p1.x,p1.z,p1.y);
+                                    p2 = BASE.newPoint(p2.x,p2.z,p2.y);
+                                }
+                                lines.push(p1);
+                                lines.push(p2);
+                            });
+                        });
+                        if (lines.length && slice.tops.length) {
+                            slice.tops[0].polish = lines;
+                        }
+                    }
+                });
+            }
+
             // report slicing complete
             ondone();
         }
