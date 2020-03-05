@@ -549,7 +549,12 @@ var gs_kiri_slice = exports;
                     layer = layers.trace;
                     break;
             }
-            if (top.traces) layer.poly(top.traces, trace_color, true, null);
+            if (top.traces) {
+                layer.poly(top.traces, trace_color, true, null);
+            }
+            if (top.polish) {
+                layer.poly(top.polish, 0x880000, true, null);
+            }
         });
 
         layer.render();
@@ -618,8 +623,9 @@ var gs_kiri_slice = exports;
         layer.clear();
 
         this.tops.forEach(function(top) {
-            if (top.fill_lines) layer.lines(top.fill_lines, fill_color);
-            if (top.polish) layer.lines(top.polish, 0x880000);
+            if (top.fill_lines) {
+                layer.lines(top.fill_lines, fill_color);
+            }
         });
 
         layer.render();

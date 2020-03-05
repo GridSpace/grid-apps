@@ -299,6 +299,10 @@ var gs_kiri_print = exports;
         }
     };
 
+    function pref(a,b) {
+        return a !== undefined ? a : b;
+    }
+
     // hsv values all = 0 to 1
     function hsv2rgb(hsv) {
         var seg  = Math.floor(hsv.h * 6);
@@ -463,7 +467,7 @@ var gs_kiri_print = exports;
         var options = options || {},
             process = this.settings.process,
             shortDist = process.outputShortDistance,
-            shellMult = options.extrude || process.outputShellMult,
+            shellMult = pref(options.extrude, process.outputShellMult),
             printSpeed = options.rate || process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
             minSpeed = process.outputMinSpeed,
@@ -567,11 +571,11 @@ var gs_kiri_print = exports;
             return int;
         }
 
-        function outputTraces(poly, bounds) {
+        function outputTraces(poly, extrude) {
             if (!poly) return;
             if (Array.isArray(poly)) {
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, bounds);
+                    outputTraces(next, extrude);
                 }, null);
             } else {
                 var finishShell = poly.depth === 0 && !firstLayer;
@@ -580,7 +584,7 @@ var gs_kiri_print = exports;
                     accel: finishShell,
                     wipe: process.outputWipeDistance || 0,
                     coast: firstLayer ? 0 : coastDist,
-                    extrude: shellMult,
+                    extrude: pref(extrude, shellMult),
                     onfirst: function(firstPoint) {
                         if (startPoint.distTo2D(firstPoint) > retractDist) {
                             retract();
@@ -775,18 +779,18 @@ var gs_kiri_print = exports;
 
                 // output inner polygons
                 if (dir === 1)
-                outputTraces([].appendAll(next.innerTraces() || []), bounds);
+                outputTraces([].appendAll(next.innerTraces() || []));
 
                 // sort perimeter polygon by length to go out-to-in or in-to-out
                 (next.traces || []).sort(function(a,b) {
                     return a.perimeter() > b.perimeter() ? dir : -dir;
                 }).forEach(function(poly, index) {
-                    outputTraces(poly, bounds);
+                    outputTraces(poly);
                 });
 
                 // output inner polygons
                 if (dir === -1)
-                outputTraces([].appendAll(next.innerTraces() || []), bounds);
+                outputTraces([].appendAll(next.innerTraces() || []));
 
                 // then output solid and sparse fill
                 outputFills(next.fill_lines);
@@ -801,7 +805,9 @@ var gs_kiri_print = exports;
         // produce polishing paths when present
         if (slice.tops.length) {
             let polish = slice.tops[0].polish;
-            outputFills(polish, {fast: true, fill:0});
+            if (polish) {
+                outputTraces(polish, 0);
+            }
         }
 
         // offset print points

@@ -164,8 +164,8 @@ var gs_kiri_fdm = exports;
             let polish = spro.layerPolishing;
             // experimental polishing
             if (polish) {
-                let px, py;
                 widget.polish = {};
+                let pa = [];
                 // compute x polishing slices
                 SLICER.sliceWidget(widget, {
                     height: sdev.nozzleSize,
@@ -173,29 +173,28 @@ var gs_kiri_fdm = exports;
                     swapY: false,
                     simple: true
                 }, (polish_done => {
-                    px = widget.polish.x = polish_done
+                    widget.polish.x = polish_done
                         .filter(s => s.groups.length)
-                        .map(s => s.groups);
+                        .map(s => s.groups)
+                        .forEach(p => pa.appendAll(p));
                 }), (polish_update) => {
                     // console.log({polish_update});
                 });
                 // compute y polishing slices
-                SLICER.sliceWidget(widget, {
-                    height: sdev.nozzleSize,
-                    swapX: false,
-                    swapY: true,
-                    simple: true
-                }, (polish_done => {
-                    py = widget.polish.y = polish_done
-                        .filter(s => s.groups.length)
-                        .map(s => s.groups);
-                }), (polish_update) => {
-                    // console.log({polish_update});
-                });
+                // SLICER.sliceWidget(widget, {
+                //     height: sdev.nozzleSize,
+                //     swapX: false,
+                //     swapY: true,
+                //     simple: true
+                // }, (polish_done => {
+                //     widget.polish.y = polish_done
+                //         .filter(s => s.groups.length)
+                //         .map(s => s.groups)
+                //         .forEach(p => pa.appendAll(p));
+                // }), (polish_update) => {
+                //     // console.log({polish_update});
+                // });
                 // apply polishing finishes to layers
-                let pa = [];
-                px.forEach(p => pa.appendAll(p));
-                py.forEach(p => pa.appendAll(p));
                 forSlices(1.0, 1.0, slice => {
                     if (slice.index >= polish) {
                         let sd = slice;
@@ -204,11 +203,11 @@ var gs_kiri_fdm = exports;
                         }
                         let zb = sd.z;
                         let zt = slice.z;
-                        let lines = [];
-                        let lastp;
-                        let equal = 0;
-                        let points = 0;
+                        let polys = [];
+                        let cont = 0;
                         pa.forEach(p => {
+                            let lastp = undefined;
+                            let poly = [];
                             p.forEachSegment((p1, p2) => {
                                 // return when both below
                                 if (p1.z < zb && p2.z < zb) {
@@ -246,7 +245,7 @@ var gs_kiri_fdm = exports;
                                 }
                                 let slope = BASE.newSlope(p1, p2);
                                 let angle = Math.abs(slope.angle);
-                                if (angle > 20 && angle < 160) {
+                                if (angle > 40 && angle < 140) {
                                     return;
                                 }
                                 let len = p1.distTo2D(p2);
@@ -273,19 +272,27 @@ var gs_kiri_fdm = exports;
                                     p1 = BASE.newPoint(p1.x,p1.z,p1.y);
                                     p2 = BASE.newPoint(p2.x,p2.z,p2.y);
                                 }
-                                p1.index = p2.index = 1;
-                                if (lastp && p1.isEqual(lastp)) {
-                                    equal++;
+                                if (!lastp) {
+                                    poly.push(p1);
+                                    poly.push(p2);
+                                } else if (p1.isEqual(lastp)) {
+                                    poly.push(p2);
+                                    cont++;
+                                } else if (poly.length) {
+                                    polys.push(poly);
+                                    poly = [p1, p2];
                                 }
-                                lines.push(p1);
-                                lines.push(lastp = p2);
-                                points++;
+                                lastp = p2;
                             });
+                            if (poly.length) {
+                                polys.push(poly);
+                            }
                         });
-                        if (lines.length && slice.tops.length) {
-                            slice.tops[0].polish = lines;
+                        if (polys.length && slice.tops.length) {
+                            slice.tops[0].polish = polys
+                                .map(a => BASE.newPolygon(a).setOpen())
+                                .filter(p => p.perimeter() > sdev.nozzleSize);
                         }
-                        console.log(slice.z,equal,points);
                     }
                 });
             }
