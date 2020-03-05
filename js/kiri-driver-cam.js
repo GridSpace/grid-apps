@@ -707,8 +707,8 @@ var gs_kiri_cam = exports;
             pocketOnlyRough = outp.camPocketOnlyRough,
             pocketOnlyFinish = outp.camPocketOnlyFinish,
             // addTabs = proc.camTabsOn && !pocketOnly,
-            addTabsRough = proc.camTabsOn && !pocketOnlyRough,
-            addTabsFinish = proc.camTabsOn && !pocketOnlyFinish,
+            addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
+            addTabsFinish = anyFinish && proc.camTabsOn && !pocketOnlyFinish,
             tabWidth = proc.camTabsWidth,
             tabHeight = proc.camTabsHeight,
             mesh = widget.mesh,
@@ -766,8 +766,14 @@ var gs_kiri_cam = exports;
             var lrtop = trace.intersections(htl, htr),
                 lrbot = trace.intersections(hbl, hbr),
                 tblt = trace.intersections(vtl, vbl),
-                tbrt = trace.intersections(vtr, vbr),
-                tr1 = trace.emitSegment(lrtop[0], tblt[0]),
+                tbrt = trace.intersections(vtr, vbr);
+
+            if (!(lrtop.length && lrbot.length && tblt.length && tbrt.length)) {
+                console.log("unable to compute cutouts");
+                return;
+            }
+
+            var tr1 = trace.emitSegment(lrtop[0], tblt[0]),
                 tr2 = trace.emitSegment(tbrt[0], lrtop[lrtop.length-1]),
                 tr3 = trace.emitSegment(lrbot[lrbot.length-1], tbrt[tbrt.length-1]),
                 tr4 = trace.emitSegment(tblt[tblt.length-1], lrbot[0]);
