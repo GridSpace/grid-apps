@@ -1102,7 +1102,6 @@ modPaths.forEach(fn => {
 handler.use(fullpath({
         "/meta/index.html" : redir("/meta/"),
         "/kiri/index.html" : redir("/kiri/"),
-        "/kiri)"           : redir("/kiri/"),
         "/meta"            : remap("/meta/index.html"),
         "/meta/"           : remap("/meta/index.html"),
         "/kiri"            : remap("/kiri/index.html"),

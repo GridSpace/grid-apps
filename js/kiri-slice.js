@@ -553,7 +553,8 @@ var gs_kiri_slice = exports;
                 layer.poly(top.traces, trace_color, true, null);
             }
             if (top.polish) {
-                layer.poly(top.polish, 0x880000, true, null);
+                layer.poly(top.polish.x, 0x880000, true, null);
+                layer.poly(top.polish.y, 0x880000, true, null);
             }
         });
 

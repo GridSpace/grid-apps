@@ -164,11 +164,14 @@ var gs_kiri_fdm = exports;
             let polish = spro.layerPolishing;
             // experimental polishing
             if (polish) {
+                let polish_layer = Math.floor(polish);
+                let polish_step = Math.max(polish - polish_layer || 1, 0.25);
                 widget.polish = {};
-                let pa = [];
+                let px = [];
+                let py = [];
                 // compute x polishing slices
                 SLICER.sliceWidget(widget, {
-                    height: sdev.nozzleSize,
+                    height: sdev.nozzleSize * polish_step,
                     swapX: true,
                     swapY: false,
                     simple: true
@@ -176,13 +179,13 @@ var gs_kiri_fdm = exports;
                     widget.polish.x = polish_done
                         .filter(s => s.groups.length)
                         .map(s => s.groups)
-                        .forEach(p => pa.appendAll(p));
+                        .forEach(p => px.appendAll(p));
                 }), (polish_update) => {
                     // console.log({polish_update});
                 });
                 // compute y polishing slices
                 SLICER.sliceWidget(widget, {
-                    height: sdev.nozzleSize,
+                    height: sdev.nozzleSize * polish_step,
                     swapX: false,
                     swapY: true,
                     simple: true
@@ -190,21 +193,24 @@ var gs_kiri_fdm = exports;
                     widget.polish.y = polish_done
                         .filter(s => s.groups.length)
                         .map(s => s.groups)
-                        .forEach(p => pa.appendAll(p));
+                        .forEach(p => py.appendAll(p));
                 }), (polish_update) => {
                     // console.log({polish_update});
                 });
                 // apply polishing finishes to layers
                 forSlices(1.0, 1.0, slice => {
-                    if (slice.index >= polish) {
+                    if (slice.index >= polish_layer) {
                         let sd = slice;
-                        for (let i=0; i<polish; i++) {
+                        for (let i=0; i<polish_layer; i++) {
                             sd = sd.down;
                         }
                         let zb = sd.z;
                         let zt = slice.z;
-                        let polys = [];
+                        let pout = [];
                         let cont = 0;
+                        [px, py].forEach(pa => {
+
+                        let polys = [];
                         pa.forEach(p => {
                             let lastp = undefined;
                             let poly = [];
@@ -288,10 +294,20 @@ var gs_kiri_fdm = exports;
                                 polys.push(poly);
                             }
                         });
-                        if (polys.length && slice.tops.length) {
-                            slice.tops[0].polish = polys
-                                .map(a => BASE.newPolygon(a).setOpen())
-                                .filter(p => p.perimeter() > sdev.nozzleSize);
+                        pout.push(polys);
+                        polys = [];
+
+                        });
+
+                        if (pout.length && slice.tops.length) {
+                            slice.tops[0].polish = {
+                                x: pout[0]
+                                    .map(a => BASE.newPolygon(a).setOpen())
+                                    .filter(p => p.perimeter() > sdev.nozzleSize),
+                                y: pout[1]
+                                    .map(a => BASE.newPolygon(a).setOpen())
+                                    .filter(p => p.perimeter() > sdev.nozzleSize)
+                            };
                         }
                     }
                 });
@@ -766,7 +782,8 @@ var gs_kiri_fdm = exports;
                     continue;
                 }
                 var x = out.point.x,
-                    y = out.point.y;
+                    y = out.point.y,
+                    z = out.point.z;
 
                 // adjust for inversions and offsets
                 if (process.outputInvertX) x = -x;
@@ -795,7 +812,7 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
-                    moveTo({x:x, y:y}, seekMMM);
+                    moveTo({x:x, y:y, z:z}, seekMMM);
                 }
 
                 // retract filament

@@ -803,10 +803,13 @@ var gs_kiri_print = exports;
         });
 
         // produce polishing paths when present
-        if (slice.tops.length) {
-            let polish = slice.tops[0].polish;
-            if (polish) {
-                outputSparse(polish, 0);
+        if (slice.tops.length && slice.tops[0].polish) {
+            let {x,y} = slice.tops[0].polish;
+            if (x) {
+                outputSparse(x, 0);
+            }
+            if (y) {
+                outputSparse(y, 0);
             }
         }
 
