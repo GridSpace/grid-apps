@@ -181,19 +181,19 @@ var gs_kiri_fdm = exports;
                     // console.log({polish_update});
                 });
                 // compute y polishing slices
-                // SLICER.sliceWidget(widget, {
-                //     height: sdev.nozzleSize,
-                //     swapX: false,
-                //     swapY: true,
-                //     simple: true
-                // }, (polish_done => {
-                //     widget.polish.y = polish_done
-                //         .filter(s => s.groups.length)
-                //         .map(s => s.groups)
-                //         .forEach(p => pa.appendAll(p));
-                // }), (polish_update) => {
-                //     // console.log({polish_update});
-                // });
+                SLICER.sliceWidget(widget, {
+                    height: sdev.nozzleSize,
+                    swapX: false,
+                    swapY: true,
+                    simple: true
+                }, (polish_done => {
+                    widget.polish.y = polish_done
+                        .filter(s => s.groups.length)
+                        .map(s => s.groups)
+                        .forEach(p => pa.appendAll(p));
+                }), (polish_update) => {
+                    // console.log({polish_update});
+                });
                 // apply polishing finishes to layers
                 forSlices(1.0, 1.0, slice => {
                     if (slice.index >= polish) {
