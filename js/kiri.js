@@ -162,6 +162,8 @@ self.kiri.license = exports.LICENSE;
                     drillDwell: 1,
                     drillLift: 1,
                     drillingOn: 1,
+                    camTabsAngle: 1,
+                    camTabsCount: 1,
                     camTabsWidth: 1,
                     camTabsHeight: 1,
                     camTabsOn: 1,
@@ -389,6 +391,8 @@ self.kiri.license = exports.LICENSE;
                 drillLift: 2,
                 drillingOn: false,
 
+                camTabsAngle: 0,
+                camTabsCount: 4,
                 camTabsWidth: 5,
                 camTabsHeight: 5,
                 camTabsOn: false,
@@ -2838,6 +2842,8 @@ self.kiri.license = exports.LICENSE;
             drillingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
 
             camTabs: UC.newGroup("cutout tabs", null, {modes:CAM}),
+            camTabsAngle: UC.newInput("angle", {title:"starting angle for tab spacing\nin degrees", convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
+            camTabsCount: UC.newInput("count", {title:"number of tabs to use\nwill be spaced evenly\naround the part", convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
             camTabsWidth: UC.newInput("width", {title:"width in millimeters\nperpendicular to part", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
             camTabsHeight: UC.newInput("height", {title:"height in millimeters\nfrom part bottom", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
             camTabsOn: UC.newBoolean("enable", onBooleanClick, {title:"enable or disable tabs\ntab generation skipped when\npocket only mode enabled", modes:CAM}),

@@ -747,39 +747,41 @@ var gs_kiri_cam = exports;
             // for tracing out intersections
             trace.setClockwise();
 
-            const outside = 10000,
-                width = (tabWidth + toolDiam) / 2,
-                // horizontal top cut
-                htl = { x: -outside, y: width },
-                htr = { x: -htl.x, y: htl.y },
-                // horizontal bottom cut
-                hbl = { x: htl.x, y: -htl.y },
-                hbr = { x: -htl.x, y: -htl.y },
-                // vertical left cut
-                vtl = { x: -width, y: outside },
-                vbl = { x: vtl.x, y: -vtl.y },
-                // vertical right cut
-                vtr = { x: -vtl.x, y: vtl.y },
-                vbr = { x: -vtl.x, y: -vtl.y },
-                nutraces = [];
-
-            var lrtop = trace.intersections(htl, htr),
-                lrbot = trace.intersections(hbl, hbr),
-                tblt = trace.intersections(vtl, vbl),
-                tbrt = trace.intersections(vtr, vbr);
-
-            if (!(lrtop.length && lrbot.length && tblt.length && tbrt.length)) {
-                console.log("unable to compute cutouts");
-                return;
+            let count = proc.camTabsCount;
+            let angle = proc.camTabsAngle;
+            let angle_inc = 360 / count;
+            let center = BASE.newPoint(0,0,slice.z);
+            let offset = (tabWidth + toolDiam) / 2;
+            let ints = [];
+            let segs = [];
+            while (count-- > 0) {
+                let slope = BASE.newSlopeFromAngle(angle);
+                let normal = BASE.newSlopeFromAngle(angle + 90);
+                let c1 = center.projectOnSlope(normal, offset);
+                let c2 = center.projectOnSlope(normal, -offset);
+                let o1 = c1.projectOnSlope(slope, 10000);
+                let o2 = c2.projectOnSlope(slope, 10000);
+                let int1 = trace.intersections(c1, o1).pop();
+                let int2 = trace.intersections(c2, o2).pop();
+                if (int1 && int2) {
+                    ints.push(int1);
+                    ints.push(int2);
+                }
+                // segs.push(BASE.newPolygon([c1, o1]).setOpen());
+                // segs.push(BASE.newPolygon([c2, o2]).setOpen());
+                angle -= angle_inc;
             }
-
-            var tr1 = trace.emitSegment(lrtop[0], tblt[0]),
-                tr2 = trace.emitSegment(tbrt[0], lrtop[lrtop.length-1]),
-                tr3 = trace.emitSegment(lrbot[lrbot.length-1], tbrt[tbrt.length-1]),
-                tr4 = trace.emitSegment(tblt[tblt.length-1], lrbot[0]);
-
-            // remove cut trace and replace with open polys
-            slice.tops[0].traces.splice(index, 1, tr1, tr2, tr3, tr4);
+            if (ints.length) {
+                let z = slice.z;
+                ints.push(ints.shift());
+                for (let i=0; i<ints.length; i+=2) {
+                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
+                }
+                // replace intersected trace with segments
+                slice.tops[0].traces.splice(index, 1, ...segs);
+            } else {
+                console.log(`unable to compute tabs for slice @ ${slice.z}`);
+            }
         }
 
         // called when horizontal slicing complete
