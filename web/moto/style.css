@@ -164,6 +164,16 @@ button[del] {
     justify-content: space-between;
 }
 
+:-moz-any(#control-left) {
+ overflow-x: hidden !important;
+ overflow-y: hidden !important;
+}
+:-moz-any(#control-right) {
+ overflow-x: scroll !important;
+ overflow-y: scroll !important;
+ margin-right: -14px !important;
+ margin-bottom: -14px !important;
+}
 .control input {
     background-color: #eee;
     margin-bottom: 1px;
