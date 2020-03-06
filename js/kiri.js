@@ -3381,6 +3381,7 @@ self.kiri.license = exports.LICENSE;
                     local = isLocalDevice(devicename),
                     dproc = settings.devproc[devicename],
                     mode = getMode();
+
                 settings.device = {
                     bedHeight: 2.5,
                     bedWidth: valueOf(set.bed_width, 300),
@@ -3464,9 +3465,9 @@ self.kiri.license = exports.LICENSE;
                  UI.setDeviceFExt,
                  UI.setDeviceToken,
                  UI.setDeviceStrip
-                 ].forEach(function(e) {
+                ].forEach(function(e) {
                     e.disabled = !local;
-                 });
+                });
 
                 // hide spindle fields when device doens't support it
                 if (mode === 'CAM')
@@ -3510,7 +3511,9 @@ self.kiri.license = exports.LICENSE;
                 devs = settings.devices;
 
             for (var local in devs) {
-                if (!(devs.hasOwnProperty(local) && devs[local])) continue;
+                if (!(devs.hasOwnProperty(local) && devs[local])) {
+                    continue;
+                }
                 var dev = devs[local],
                     fdmCode = dev.cmd,
                     fdmMode = (getMode() === 'FDM');
@@ -3564,16 +3567,16 @@ self.kiri.license = exports.LICENSE;
                     first = device;
                 }
                 opt.appendChild(DOC.createTextNode(device));
-                opt.onclick = function() { selectDevice(device) };
+                opt.onclick = function() {
+                    selectDevice(device);
+                };
                 opt.ondblclick = function() {
                     if (settings.favorites[device]) {
-                        if (confirm(`remove "${device}" from favorites`)) {
-                            delete settings.favorites[device];
-                        }
+                        delete settings.favorites[device];
+                        alert2(`removed "${device}" from favorites`, 3);
                     } else {
-                        if (confirm(`add "${device}" to favorites`)) {
-                            settings.favorites[device] = true;
-                        }
+                        settings.favorites[device] = true;
+                        alert2(`added "${device}" to favorites`, 3);
                     }
                     showDevices();
                 };
@@ -3641,7 +3644,12 @@ self.kiri.license = exports.LICENSE;
             selectedTool.type = ['endmill','ballmill'][UI.toolType.selectedIndex];
             renderTools();
             UI.toolSelect.selectedIndex = selectedTool.order;
-            editTools.changed = true;
+            setToolChanged(true);
+        }
+
+        function setToolChanged(changed) {
+            editTools.changed = changed;
+            UI.toolsSave.disabled = !changed;
         }
 
         function showTools() {
@@ -3649,7 +3657,11 @@ self.kiri.license = exports.LICENSE;
 
             var selectedIndex = null;
 
-            editTools = settings.tools.slice();
+            editTools = settings.tools.slice().sort((a,b) => {
+                return a.name > b.name ? 1 : -1;
+            });
+
+            setToolChanged(false);
 
             UI.toolsClose.onclick = function() {
                 if (editTools.changed && !confirm("abandon changes?")) return;
@@ -3667,23 +3679,22 @@ self.kiri.license = exports.LICENSE;
                     shaft_len: 3,
                     metric: false
                 });
-                editTools.changed = true;
+                setToolChanged(true);
                 renderTools();
                 UI.toolSelect.selectedIndex = editTools.length-1;
                 selectTool(editTools[editTools.length-1]);
             };
             UI.toolDelete.onclick = function() {
                 editTools.remove(selectedTool);
-                editTools.changed = true;
+                setToolChanged(true);
                 renderTools();
             };
             UI.toolsSave.onclick = function() {
-                editTools.changed = false;
                 if (selectedTool) updateTool();
                 settings.tools = editTools;
+                setToolChanged(false);
                 saveSettings();
                 updateFields();
-                hideDialog();
                 triggerSettingsEvent();
             };
 
@@ -3729,7 +3740,7 @@ self.kiri.license = exports.LICENSE;
             SPACE.platform.setColor(0x555555);
 
             var files = evt.dataTransfer.files,
-                plate = files.length < 5 || confirm('add objects to table?');
+                plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`);
 
             if (plate) loadFiles(files);
         }

@@ -744,7 +744,7 @@ var gs_kiri_cam = exports;
                 }
             });
 
-            // for tracing out intersections
+            // required to match computed order of cutouts
             trace.setClockwise();
 
             let count = proc.camTabsCount;
@@ -753,7 +753,6 @@ var gs_kiri_cam = exports;
             let center = BASE.newPoint(0,0,slice.z);
             let offset = (tabWidth + toolDiam) / 2;
             let ints = [];
-            let segs = [];
             while (count-- > 0) {
                 let slope = BASE.newSlopeFromAngle(angle);
                 let normal = BASE.newSlopeFromAngle(angle + 90);
@@ -767,13 +766,11 @@ var gs_kiri_cam = exports;
                     ints.push(int1);
                     ints.push(int2);
                 }
-                // segs.push(BASE.newPolygon([c1, o1]).setOpen());
-                // segs.push(BASE.newPolygon([c2, o2]).setOpen());
                 angle -= angle_inc;
             }
             if (ints.length) {
-                let z = slice.z;
                 ints.push(ints.shift());
+                let segs = [];
                 for (let i=0; i<ints.length; i+=2) {
                     segs.push(trace.emitSegment(ints[i], ints[i+1]));
                 }

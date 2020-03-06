@@ -213,7 +213,7 @@ var gs_moto_ui = exports;
         pop.appendChild(txt);
         lbl.appendChild(DOC.createTextNode(label));
 
-        txt.setAttribute("cols", 30);
+        txt.setAttribute("cols", 40);
         txt.setAttribute("rows", 20);
         txt.setAttribute("wrap", "off");
 
@@ -222,6 +222,16 @@ var gs_moto_ui = exports;
             btn.parentNode.appendChild(box);
             btn.parentNode.onclick = btn.onclick;
             ev.stopPropagation();
+            txt.scrollTop = 0;
+            txt.scrollLeft = 0;
+            txt.selectionEnd = 0;
+            let rows = txt.value.split('\n');
+            let cols = 0;
+            rows.forEach(row => {
+                cols = Math.max(cols, row.length);
+            });
+            txt.setAttribute("cols", Math.max(30, cols + 1));
+            txt.setAttribute("rows", Math.max(10, rows.length + 1));
             // drop clicks on TextArea
             if (ev.target === txt) {
                 ev.target.focus();

@@ -689,6 +689,7 @@ button[import="1"] {
 }
 #alert-text p {
     margin: 5px;
+    text-align: center;
 }
 
 .flex {
