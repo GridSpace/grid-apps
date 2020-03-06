@@ -846,7 +846,11 @@ let ver = require('../js/license.js'),
     },
     code = {},
     inject = {},
-    injectKeys = ["kiri", "meta"];
+    injectKeys = ["kiri", "meta"],
+    WS = require('ws'),
+    wss = new WS.Server({ noServer: true }),
+    wss_roots = {}
+    ;
 
 /* *********************************************
  * Promises-based leveldb interface
@@ -1031,6 +1035,9 @@ function initModule(file, dir) {
             redirect: redirect,
             reply404: reply404,
             reply: quickReply
+        },
+        ws: {
+            register: ws_register_root
         }
     })
 }
@@ -1071,6 +1078,18 @@ function loadModule(dir) {
     lastmod(modjs) ? initModule(modjs, dir) : addStatic(dir);
 }
 
+function ws_delete_root(path) {
+    ws_register_root(path);
+}
+
+function ws_register_root(path, handler) {
+    if (handler) {
+        wss_roots[path] = handler;
+    } else {
+        delete wss_roots[path];
+    }
+}
+
 /* *********************************************
  * Start it up
  ********************************************* */
@@ -1099,7 +1118,7 @@ modPaths.forEach(fn => {
 });
 
 // add the rest of the handler chain
-handler.use(fullpath({
+let server = handler.use(fullpath({
         "/meta/index.html" : redir("/meta/"),
         "/kiri/index.html" : redir("/kiri/"),
         "/meta"            : remap("/meta/index.html"),
@@ -1119,6 +1138,24 @@ handler.use(fullpath({
     .use(compression)
     .use(handleStatic(currentDir + "/web/"))
     .listen(port);
+
+server.on('upgrade', (request, socket, head) => {
+    let handler = wss_roots[request.url];
+    if (handler) {
+        log({request: request.url})
+        wss.handleUpgrade(request, socket, head, ws => {
+            try {
+                handler(ws, request);
+            } catch (err) {
+                console.log({wss_handler_error: err});
+                ws_delete_root(request.url);
+                socket.destroy();
+            }
+        });
+    } else {
+        socket.destroy();
+    }
+});
 
 helper.log("------------------------------------------");
 helper.log({port, debug, nolocal, version: ver.VERSION});
