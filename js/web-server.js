@@ -44,7 +44,7 @@ function guid() {
 }
 
 function time() {
-    return new Date().getTime();
+    return Date.now();
 }
 
 /**
@@ -1039,7 +1039,7 @@ function initModule(file, dir) {
         ws: {
             register: ws_register_root
         }
-    })
+    });
 }
 
 function handleStatic(root, pre) {
@@ -1118,7 +1118,7 @@ modPaths.forEach(fn => {
 });
 
 // add the rest of the handler chain
-let server = handler.use(fullpath({
+handler.use(fullpath({
         "/meta/index.html" : redir("/meta/"),
         "/kiri/index.html" : redir("/kiri/"),
         "/meta"            : remap("/meta/index.html"),
@@ -1137,25 +1137,23 @@ let server = handler.use(fullpath({
     .use(rewriteHTML)
     .use(compression)
     .use(handleStatic(currentDir + "/web/"))
-    .listen(port);
-
-server.on('upgrade', (request, socket, head) => {
-    let handler = wss_roots[request.url];
-    if (handler) {
-        log({request: request.url})
-        wss.handleUpgrade(request, socket, head, ws => {
-            try {
-                handler(ws, request);
-            } catch (err) {
-                console.log({wss_handler_error: err});
-                ws_delete_root(request.url);
-                socket.destroy();
-            }
-        });
-    } else {
-        socket.destroy();
-    }
-});
+    .listen(port)
+    .on('upgrade', (request, socket, head) => {
+        let handler = wss_roots[request.url];
+        if (handler) {
+            wss.handleUpgrade(request, socket, head, ws => {
+                try {
+                    handler(ws, request);
+                } catch (err) {
+                    log({wss_handler_error: err});
+                    ws_delete_root(request.url);
+                    socket.destroy();
+                }
+            });
+        } else {
+            socket.destroy();
+        }
+    });
 
 helper.log("------------------------------------------");
 helper.log({port, debug, nolocal, version: ver.VERSION});
