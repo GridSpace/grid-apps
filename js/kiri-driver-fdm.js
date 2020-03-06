@@ -161,7 +161,7 @@ var gs_kiri_fdm = exports;
                 }, "infill");
             }
 
-            let polish = spro.layerPolishing;
+            let polish = spro.polishLayers;
             // experimental polishing
             if (polish) {
                 let polish_layer = Math.floor(polish);
@@ -198,7 +198,13 @@ var gs_kiri_fdm = exports;
                     // console.log({polish_update});
                 });
                 // apply polishing finishes to layers
-                forSlices(1.0, 1.0, slice => {
+                forSlices(1.0, 1.0, (slice) => {
+                    if (polish_layer >= 2) {
+                        let sai = (slice.index - polish_layer);
+                        if (sai % (polish_layer-1) !== 0) {
+                            return;
+                        }
+                    }
                     if (slice.index >= polish_layer) {
                         let sd = slice;
                         for (let i=0; i<polish_layer; i++) {
@@ -228,10 +234,12 @@ var gs_kiri_fdm = exports;
                                     return;
                                 }
                                 // order points lowest to highest
+                                let swap = false;
                                 if (p1.z > p2.z) {
                                     let t = p2;
                                     p2 = p1;
                                     p1 = t;
+                                    swap = true;
                                 }
                                 let trimlo = false;
                                 let trimhi = false;
@@ -250,8 +258,8 @@ var gs_kiri_fdm = exports;
                                     p2 = BASE.newPoint(p2.x,p2.z,p2.y);
                                 }
                                 let slope = BASE.newSlope(p1, p2);
-                                let angle = Math.abs(slope.angle);
-                                if (angle > 40 && angle < 140) {
+                                let angle = slope.angle;
+                                if (angle > 80 && angle < 100) {
                                     return;
                                 }
                                 let len = p1.distTo2D(p2);
@@ -281,7 +289,8 @@ var gs_kiri_fdm = exports;
                                 if (!lastp) {
                                     poly.push(p1);
                                     poly.push(p2);
-                                } else if (p1.isEqual(lastp)) {
+                                } else if (p1.isMergable2D(lastp)) {
+                                // } else if (p1.isEqual(lastp)) {
                                     poly.push(p2);
                                     cont++;
                                 } else if (poly.length) {
@@ -296,17 +305,17 @@ var gs_kiri_fdm = exports;
                         });
                         pout.push(polys);
                         polys = [];
-
                         });
 
                         if (pout.length && slice.tops.length) {
                             slice.tops[0].polish = {
                                 x: pout[0]
                                     .map(a => BASE.newPolygon(a).setOpen())
-                                    .filter(p => p.perimeter() > sdev.nozzleSize),
+                                    // .filter(p => p.perimeter() > sdev.nozzleSize)
+                                    ,
                                 y: pout[1]
                                     .map(a => BASE.newPolygon(a).setOpen())
-                                    .filter(p => p.perimeter() > sdev.nozzleSize)
+                                    // .filter(p => p.perimeter() > sdev.nozzleSize)
                             };
                         }
                     }
@@ -812,7 +821,9 @@ var gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
-                    moveTo({x:x, y:y, z:z}, seekMMM);
+                    // when making z moves (like polishing) allow slowdown vs fast seek
+                    let moveSpeed = (lastp && lastp.z !== z) ? speedMMM : seekMMM;
+                    moveTo({x:x, y:y, z:z}, moveSpeed);
                 }
 
                 // retract filament

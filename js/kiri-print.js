@@ -597,7 +597,7 @@ var gs_kiri_print = exports;
         /**
          * @param {Polygon[]} polys
          */
-        function outputSparse(polys, extrude) {
+        function outputSparse(polys, extrude, speed) {
             if (!polys) return;
             var proxy = polys.map(function(poly) {
                 return {poly: poly, first: poly.first(), last: poly.last()};
@@ -611,7 +611,7 @@ var gs_kiri_print = exports;
                     if (i === 0 && lp && lp.distTo2D(p) > retractDist && intersectsTop(lp,p)) {
                         retract();
                     }
-                    addOutput(preout, p, i === 0 ? 0 : extrude, printSpeed);
+                    addOutput(preout, p, i === 0 ? 0 : extrude, speed || printSpeed);
                     lp = p;
                 });
             });
@@ -806,10 +806,10 @@ var gs_kiri_print = exports;
         if (slice.tops.length && slice.tops[0].polish) {
             let {x,y} = slice.tops[0].polish;
             if (x) {
-                outputSparse(x, 0);
+                outputSparse(x, 0, process.polishSpeed);
             }
             if (y) {
-                outputSparse(y, 0);
+                outputSparse(y, 0, process.polishSpeed);
             }
         }
 
