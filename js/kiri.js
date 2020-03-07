@@ -540,7 +540,7 @@ self.kiri.license = exports.LICENSE;
         sliced_opacity = 0.0,
         sliced_opacity_cam = 0.25,
         // ---------------
-        printSeq = parseInt(SDB['print-seq'] || "0") + 1,
+        printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1,
         catalogSize = 0,
         showLayerRange = 0,
         showLayerValue = 0,
@@ -659,7 +659,10 @@ self.kiri.license = exports.LICENSE;
         return this;
     };
 
-    STATS.add('init');
+    let inits = parseInt(SDB.getItem('kiri-init') || STATS.get('init')) + 1;
+    SDB.setItem('kiri-init', inits);
+
+    STATS.set('init', inits);
     STATS.set('kiri', kiri.version);
     if (kiri.version !== STATS.get('kiri') && STATS.get('init') > 0) {
         STATS.set('upgrade', kiri.version);
@@ -1104,7 +1107,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function exportGCode(gcode) {
-        SDB['print-seq'] = printSeq++;
+        SDB['kiri-print-seq'] = printSeq++;
 
         var pre = (MODE === MODES.CAM ? "cnc-" : "print-") + (printSeq.toString().padStart(3,"0")),
             filename = pre,// + (new Date().getTime().toString(36)),
