@@ -850,7 +850,10 @@ let ver = require('../js/license.js'),
     injectKeys = ["kiri", "meta"],
     WS = require('ws'),
     wss = new WS.Server({ noServer: true }),
-    wss_roots = {}
+    wss_roots = {},
+    loads = [],
+    exits = [],
+    mods = {}
     ;
 
 /* *********************************************
@@ -999,6 +1002,7 @@ function initModule(file, dir) {
             agent,
             moment
         },
+        mod: mods,
         util: {
             log: helper.log,
             time: time,
@@ -1044,6 +1048,12 @@ function initModule(file, dir) {
         },
         ws: {
             register: ws_register_root
+        },
+        onload: (fn) => {
+            loads.push(fn);
+        },
+        onexit: (fn) => {
+            exits.push(fn)
         }
     });
 }
@@ -1100,11 +1110,13 @@ function open_logger(options) {
     let opt = options || {
         dir: "logs"
     }
+    let exiting = false;
     let logfile = null;
     let logstream = null;
     let pattern = opt.pattern || 'YY-MM-DD-HH';
     let last_pattern;
-    let exiting = false;
+    let count_min = opt.min || 1000;
+    let count = 0;
 
     try {
         fs.mkdirSync(opt.dir);
@@ -1115,6 +1127,7 @@ function open_logger(options) {
         close_file_stream();
         logfile = path.join(opt.dir, last_pattern = moment().format(pattern));
         logstream = fs.createWriteStream(logfile, {flags: 'a'});
+        count = 0;
     }
 
     function close_file_stream() {
@@ -1130,7 +1143,7 @@ function open_logger(options) {
             return;
         }
         let next_pattern = moment().format(pattern);
-        if (next_pattern !== last_pattern) {
+        if (++count >= count_min && next_pattern !== last_pattern) {
             open_file_stream();
         }
         let output = [moment().format('YYMMDD-HHmmss'),' ',JSON.stringify(obj),'\n'].join('');
@@ -1142,11 +1155,32 @@ function open_logger(options) {
         close_file_stream();
     }
 
-    process.on('beforeExit', exit);
-
     open_file_stream();
 
+    exits.push(exit);
+
     return { emit, close: close_file_stream };
+}
+
+function processLoad() {
+    while (loads.length) {
+        try {
+            loads.shift()();
+        } catch (e) {
+            log({on_load_fail: e});
+        }
+    }
+}
+
+function processExit(code) {
+    while (exits.length) {
+        try {
+            exits.shift()(code);
+        } catch (e) {
+            log({on_exit_fail: e});
+        }
+    }
+    process.exit();
 }
 
 /* *********************************************
@@ -1175,7 +1209,6 @@ let handler = connect().use(setup);
 modPaths.forEach(fn => {
     handler = handler.use(fn);
 });
-
 
 // add the rest of the handler chain
 handler.use(fullpath({
@@ -1218,12 +1251,18 @@ handler.use(fullpath({
 helper.log("------------------------------------------");
 helper.log({port, debug, nolocal, version: ver.VERSION});
 
+process.on('beforeExit', processExit);
+
+process.on('exit', processExit);
+
 process.on('SIGINT', function() {
     helper.log("caught sigint");
-    process.exit();
+    processExit();
 });
 
 process.on('SIGHUP', function() {
     helper.log("caught sighup");
-    process.exit();
+    processExit();
 });
+
+processLoad();
