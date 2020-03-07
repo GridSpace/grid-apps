@@ -1102,7 +1102,7 @@ function open_logger(options) {
     }
     let logfile = null;
     let logstream = null;
-    let pattern = opt.pattern || 'YYMMDDHH';
+    let pattern = opt.pattern || 'YY-MM-DD-HH';
     let last_pattern;
 
     try {
