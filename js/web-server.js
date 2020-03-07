@@ -1104,6 +1104,7 @@ function open_logger(options) {
     let logstream = null;
     let pattern = opt.pattern || 'YY-MM-DD-HH';
     let last_pattern;
+    let exiting = false;
 
     try {
         fs.mkdirSync(opt.dir);
@@ -1118,24 +1119,32 @@ function open_logger(options) {
 
     function close_file_stream() {
         if (logstream) {
+            logstream.end();
             logstream.close();
             logstream = null;
         }
     }
 
     function emit(obj) {
+        if (exiting) {
+            return;
+        }
         let next_pattern = moment().format(pattern);
         if (next_pattern !== last_pattern) {
             open_file_stream();
         }
-        logstream.write(moment().format('YYMMDD-HHmmss'));
-        logstream.write(" ");
-        logstream.write(JSON.stringify(obj));
-        logstream.write("\n");
+        let output = [moment().format('YYMMDD-HHmmss'),' ',JSON.stringify(obj),'\n'].join('');
+        logstream.write(output);
     }
 
-    process.on('beforeExit', close_file_stream);
-    process.on('exit', close_file_stream);
+    function exit() {
+        exiting = true;
+        close_file_stream();
+    }
+
+    process.on('beforeExit', exit);
+
+    open_file_stream();
 
     return { emit, close: close_file_stream };
 }
@@ -1208,3 +1217,13 @@ handler.use(fullpath({
 
 helper.log("------------------------------------------");
 helper.log({port, debug, nolocal, version: ver.VERSION});
+
+process.on('SIGINT', function() {
+    helper.log("caught sigint");
+    process.exit();
+});
+
+process.on('SIGHUP', function() {
+    helper.log("caught sighup");
+    process.exit();
+});
