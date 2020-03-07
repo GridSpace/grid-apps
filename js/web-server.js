@@ -730,6 +730,7 @@ let ver = require('../js/license.js'),
     url = require('url'),
     dns = require('dns'),
     util = require('util'),
+    path = require('path'),
     valid = require('validator'),
     agent = require('express-useragent'),
     spawn = require('child_process').spawn,
@@ -994,6 +995,10 @@ function initModule(file, dir) {
             args: args,
             debug: debug
         },
+        pkg: {
+            agent,
+            moment
+        },
         util: {
             log: helper.log,
             time: time,
@@ -1002,7 +1007,8 @@ function initModule(file, dir) {
             lastmod: lastmod,
             obj2string: obj2string,
             string2obj: string2obj,
-            getCookieValue: getCookieValue
+            getCookieValue: getCookieValue,
+            logger: open_logger
         },
         db: {
             api: db,
@@ -1090,6 +1096,50 @@ function ws_register_root(path, handler) {
     }
 }
 
+function open_logger(options) {
+    let opt = options || {
+        dir: "logs"
+    }
+    let logfile = null;
+    let logstream = null;
+    let pattern = opt.pattern || 'YYMMDDHH';
+    let last_pattern;
+
+    try {
+        fs.mkdirSync(opt.dir);
+    } catch (e) { }
+
+    // create file write stream
+    function open_file_stream() {
+        close_file_stream();
+        logfile = path.join(opt.dir, last_pattern = moment().format(pattern));
+        logstream = fs.createWriteStream(logfile, {flags: 'a'});
+    }
+
+    function close_file_stream() {
+        if (logstream) {
+            logstream.close();
+            logstream = null;
+        }
+    }
+
+    function emit(obj) {
+        let next_pattern = moment().format(pattern);
+        if (next_pattern !== last_pattern) {
+            open_file_stream();
+        }
+        logstream.write(moment().format('YYMMDD-HHmmss'));
+        logstream.write(" ");
+        logstream.write(JSON.stringify(obj));
+        logstream.write("\n");
+    }
+
+    process.on('beforeExit', close_file_stream);
+    process.on('exit', close_file_stream);
+
+    return { emit, close: close_file_stream };
+}
+
 /* *********************************************
  * Start it up
  ********************************************* */
@@ -1116,6 +1166,7 @@ let handler = connect().use(setup);
 modPaths.forEach(fn => {
     handler = handler.use(fn);
 });
+
 
 // add the rest of the handler chain
 handler.use(fullpath({
