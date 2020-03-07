@@ -659,7 +659,7 @@ self.kiri.license = exports.LICENSE;
         return this;
     };
 
-    let inits = parseInt(SDB.getItem('kiri-init') || STATS.get('init')) + 1;
+    let inits = parseInt(SDB.getItem('kiri-init') || STATS.get('init') || 0) + 1;
     SDB.setItem('kiri-init', inits);
 
     STATS.set('init', inits);
