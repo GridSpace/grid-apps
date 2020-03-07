@@ -660,7 +660,6 @@ self.kiri.license = exports.LICENSE;
     };
 
     STATS.add('init');
-    STATS.set('seed', SDB[SEED]);
     STATS.set('kiri', kiri.version);
     if (kiri.version !== STATS.get('kiri') && STATS.get('init') > 0) {
         STATS.set('upgrade', kiri.version);
@@ -1370,8 +1369,7 @@ self.kiri.license = exports.LICENSE;
         function calcWeight() {
             $('print-weight').value = (
                 UTIL.round(
-                    (Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * parseFloat($('
-                    weight').value || 1.25) / 1000, 2)
+                    (Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * parseFloat($('weight').value || 1.25) / 1000, 2)
             );
         }
 
