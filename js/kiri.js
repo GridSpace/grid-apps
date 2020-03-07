@@ -619,14 +619,13 @@ self.kiri.license = exports.LICENSE;
 
     function Stats(db) {
         this.db = db;
-        this.obj = js2o(db['stats'] || '{}');
+        this.obj = js2o(this.db['stats'] || '{}');
         var o = this.obj, k;
         for (k in o) {
             if (!o.hasOwnProperty(k)) continue;
-            if (k.indexOf('slice-') === 0) oremap(o,k,'s-');
-            if (k.indexOf('prep-') === 0) oremap(o,k,'p-');
-            if (k.indexOf('export-') === 0) oremap(o,k,'e-');
-            if (k.indexOf('show-') === 0) oremap(o,k,'d-');
+            if (k === 'dn' || k.indexOf('-') > 0 || k.indexOf('_') > 0) {
+                delete o[k];
+            }
         }
     }
 
@@ -660,8 +659,12 @@ self.kiri.license = exports.LICENSE;
         return this;
     };
 
-    STATS.set('upgrade', kiri.version !== STATS.get('kiri') && STATS.get('init') > 0);
+    STATS.add('init');
+    STATS.set('seed', SDB[SEED]);
     STATS.set('kiri', kiri.version);
+    if (kiri.version !== STATS.get('kiri') && STATS.get('init') > 0) {
+        STATS.set('upgrade', kiri.version);
+    }
 
     /** ******************************************************************
      * Utility Functions
@@ -1023,7 +1026,7 @@ self.kiri.license = exports.LICENSE;
             currentPrint.render();
 
             // on done
-            STATS.add('p-'+getMode().toLowerCase());
+            STATS.add(`ua_${getModeLower()}_print`);
             SPACE.platform.add(currentPrint.group);
             SPACE.update();
 
@@ -1040,7 +1043,7 @@ self.kiri.license = exports.LICENSE;
             preparePrint(exportPrint);
             return;
         }
-        STATS.add('e-'+getMode().toLowerCase());
+        STATS.add(`ua_${getModeLower()}_export`);
         switch (settings.mode) {
             case 'LASER': return exportPrintLaser();
             case 'FDM': return exportPrintGCODE();
@@ -1153,7 +1156,7 @@ self.kiri.license = exports.LICENSE;
             ajax.onreadystatechange = function() {
                 if (ajax.readyState === 4) {
                     var status = ajax.status;
-                    STATS.add('op-'+status);
+                    STATS.add(`ua_${getModeLower()}_print_octo_${status}`);
                     if (status >= 200 && status < 300) {
                         hideModal();
                     } else {
@@ -1205,9 +1208,11 @@ self.kiri.license = exports.LICENSE;
                 )
                 .then(t => t.text())
                 .then(t => {
+                    STATS.add(`ua_${getModeLower()}_print_local_ok`);
                     console.log({grid_spool_said: t});
                 })
                 .catch(e => {
+                    STATS.add(`ua_${getModeLower()}_print_local_err`);
                     console.log({grid_local_spool_error: e});
                 })
                 .finally(() => {
@@ -1319,7 +1324,7 @@ self.kiri.license = exports.LICENSE;
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     var status = xhtr.status;
-                    STATS.add('gp-'+status);
+                    STATS.add(`ua_${getModeLower()}_print_grid_${status}`);
                     if (status >= 200 && status < 300) {
                         var json = js2o(xhtr.responseText);
                         gridhost_tracker(host,json.key);
@@ -1365,7 +1370,8 @@ self.kiri.license = exports.LICENSE;
         function calcWeight() {
             $('print-weight').value = (
                 UTIL.round(
-                    (Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * parseFloat($('print-weight').value || 1.25) / 1000, 2)
+                    (Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * parseFloat($('
+                    weight').value || 1.25) / 1000, 2)
             );
         }
 
@@ -1503,7 +1509,7 @@ self.kiri.license = exports.LICENSE;
                     // update segment time
                     if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
                     DBUG.log(segtimes);
-                    STATS.add('s-'+getMode().toLowerCase());
+                    STATS.add(`ua_${getModeLower()}_slice`);
                     updateSliderMax(true);
                     if (preserveMax != showLayerMax) {
                         preserveLayer = showLayerMax;
@@ -2381,7 +2387,7 @@ self.kiri.license = exports.LICENSE;
         hideDialog();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
-            STATS.add('d-help');
+            STATS.add('ua_help');
             return;
         }
         ajax(local, function(html) {
@@ -2389,7 +2395,7 @@ self.kiri.license = exports.LICENSE;
             $('help-close').onclick = hideModal;
             $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
             showModal('help');
-            STATS.add('d-help');
+            STATS.add('ua_help');
         });
     }
 
@@ -2477,6 +2483,10 @@ self.kiri.license = exports.LICENSE;
         return settings.mode;
     }
 
+    function getModeLower() {
+        return getMode().toLowerCase();
+    }
+
     function switchMode(mode) {
         setMode(mode, updatePlatformSize);
     }
@@ -2494,7 +2504,7 @@ self.kiri.license = exports.LICENSE;
             settings.device = clone(settings.cdev[mode]);
         }
         // update device stat for FDM/CAM
-        STATS.set('dn', settings.filter[mode] || '.laser.');
+        STATS.set(`ud_${getModeLower()}`, settings.filter[mode] || 'default');
         MODE = MODES[mode];
         UC.setMode(MODE);
         loadNamedSetting();
@@ -3380,7 +3390,7 @@ self.kiri.license = exports.LICENSE;
 
         function setDeviceCode(code, devicename) {
             try {
-                STATS.set('dn', devicename);
+                STATS.set(`ud_${getModeLower()}`, devicename);
 
                 if (typeof(code) === 'string') code = js2o(code) || {};
 
@@ -3716,6 +3726,8 @@ self.kiri.license = exports.LICENSE;
 
             showDialog('tools');
             UI.toolSelect.focus();
+
+            STATS.add('ua_get_tools');
         }
 
         function showDevices() {
@@ -3726,7 +3738,7 @@ self.kiri.license = exports.LICENSE;
             ajax("/api/filters-"+getMode().toLowerCase(), function(flvalue) {
                 if (!flvalue) return;
                 renderDevices(js2o(flvalue));
-                STATS.add('d-gcode');
+                STATS.add('ua_get_devs');
             });
         }
 
@@ -3961,7 +3973,7 @@ self.kiri.license = exports.LICENSE;
                 scr.setAttribute('async',true);
                 scr.setAttribute('src','/code/'+lib+'.js');
                 DOC.body.appendChild(scr);
-                STATS.add('l-'+lib);
+                STATS.add('load_'+lib);
             });
 
             if (SETUP.ss) SETUP.ss.forEach(function(style) {
@@ -4003,9 +4015,6 @@ self.kiri.license = exports.LICENSE;
             STATS.del('upgrade');
 
             if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
-            STATS.set('seed', SDB[SEED]);
-            STATS.add('init');
-            // updateActive(true);
 
             // place version number a couple of places to help users
             UI.helpButton.title = `${LANG.version} ` + KIRI.version;
