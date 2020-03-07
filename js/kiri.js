@@ -617,66 +617,6 @@ self.kiri.license = exports.LICENSE;
      * Stats accumulator
      ******************************************************************* */
 
-     function clone(o) {
-         return o ? JSON.parse(JSON.stringify(o)) : o;
-     }
-
-    function alert2(message, time) {
-        if (message === undefined) {
-            return updateAlerts(true);
-        }
-        alerts.push([message, Date.now(), time]);
-        updateAlerts();
-    }
-
-    function updateAlerts(clear) {
-        if (clear) {
-            alerts = [];
-        }
-        let now = Date.now();
-        // filter out by age
-        alerts = alerts.filter(alert => {
-            return (now - alert[1]) < ((alert[2] || 5) * 1000);
-        });
-        // limit to 5 showing
-        while (alerts.length > 5) {
-            alerts.shift();
-        }
-        if (alerts.length > 0) {
-            UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
-            UI.alert.dialog.style.display = 'flex';
-        } else {
-            UI.alert.dialog.style.display = 'none';
-        }
-    }
-
-    function sendOnEvent(name, data) {
-        if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
-            fn(data);
-        });
-    }
-
-    function addOnEvent(name, handler) {
-        if (name && typeof(name) === 'string' && typeof(handler) === 'function') {
-            onEvent[name] = onEvent[name] || [];
-            onEvent[name].push(handler);
-        }
-    }
-
-    function triggerSettingsEvent() {
-        sendOnEvent('settings', settings);
-    }
-
-    function oremap(o,k,p) {
-        try {
-            var ov = o[k];
-            delete o[k];
-            o[p+(k.split('-')[1].toLowerCase())] = ov;
-        } catch (e) {
-            console.log(e)
-        }
-    }
-
     function Stats(db) {
         this.db = db;
         this.obj = js2o(db['stats'] || '{}');
@@ -689,28 +629,36 @@ self.kiri.license = exports.LICENSE;
             if (k.indexOf('show-') === 0) oremap(o,k,'d-');
         }
     }
-    Stats.prototype.save = function() {
+
+    Stats.prototype.save = function(quiet) {
         this.db['stats'] = o2js(this.obj);
+        if (!quiet) {
+            sendOnEvent('stats', this.obj);
+        }
         return this;
     };
+
     Stats.prototype.get = function(k) {
         return this.obj[k];
-    }
-    Stats.prototype.set = function(k,v) {
+    };
+
+    Stats.prototype.set = function(k,v,quiet) {
         this.obj[k] = v;
-        this.save();
+        this.save(quiet);
         return this;
     };
-    Stats.prototype.add = function(k,v) {
+
+    Stats.prototype.add = function(k,v,quiet) {
         this.obj[k] = (this.obj[k] || 0) + (v || 1);
-        this.save();
+        this.save(quiet);
         return this;
     };
-    Stats.prototype.del = function(k) {
+
+    Stats.prototype.del = function(k, quiet) {
         delete this.obj[k];
-        this.save();
+        this.save(quiet);
         return this;
-    }
+    };
 
     STATS.set('upgrade', kiri.version !== STATS.get('kiri') && STATS.get('init') > 0);
     STATS.set('kiri', kiri.version);
@@ -718,6 +666,66 @@ self.kiri.license = exports.LICENSE;
     /** ******************************************************************
      * Utility Functions
      ******************************************************************* */
+
+     function clone(o) {
+         return o ? JSON.parse(JSON.stringify(o)) : o;
+     }
+
+     function alert2(message, time) {
+         if (message === undefined) {
+             return updateAlerts(true);
+         }
+         alerts.push([message, Date.now(), time]);
+         updateAlerts();
+     }
+
+     function updateAlerts(clear) {
+         if (clear) {
+             alerts = [];
+         }
+         let now = Date.now();
+         // filter out by age
+         alerts = alerts.filter(alert => {
+             return (now - alert[1]) < ((alert[2] || 5) * 1000);
+         });
+         // limit to 5 showing
+         while (alerts.length > 5) {
+             alerts.shift();
+         }
+         if (alerts.length > 0) {
+             UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
+             UI.alert.dialog.style.display = 'flex';
+         } else {
+             UI.alert.dialog.style.display = 'none';
+         }
+     }
+
+     function sendOnEvent(name, data) {
+         if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
+             fn(data);
+         });
+     }
+
+     function addOnEvent(name, handler) {
+         if (name && typeof(name) === 'string' && typeof(handler) === 'function') {
+             onEvent[name] = onEvent[name] || [];
+             onEvent[name].push(handler);
+         }
+     }
+
+     function triggerSettingsEvent() {
+         sendOnEvent('settings', settings);
+     }
+
+     function oremap(o,k,p) {
+         try {
+             var ov = o[k];
+             delete o[k];
+             o[p+(k.split('-')[1].toLowerCase())] = ov;
+         } catch (e) {
+             console.log(e)
+         }
+     }
 
     function isSecure(proto) {
          return proto.toLowerCase().indexOf("https") === 0;

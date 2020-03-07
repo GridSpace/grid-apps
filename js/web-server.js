@@ -1019,8 +1019,13 @@ function initModule(file, dir) {
             level: level
         },
         inject: {
-            kiri: file => {
-                script.kiri.splice(0, 0, dir + "/" + file);
+            kiri: (file, options) => {
+                let opt = options || {};
+                if (opt.end) {
+                    script.kiri.push(dir + "/" + file);
+                } else {
+                    script.kiri.splice(0, 0, dir + "/" + file);
+                }
             }
         },
         path: {
