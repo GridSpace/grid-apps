@@ -317,16 +317,14 @@ function setup(req, res, next) {
     if (rec.saved === 0) {
         ipCache[ipaddr] = rec;
         if (!rec.host) {
-            // prevent overlapping lookups
-            // for the same address
+            // prevent overlapping lookups for the same address
             rec.host = 'unknown';
             try {
                 dns.reverse(ipaddr, (err,addr) => {
                     rec.host = addr;
-                    // if (addr) log({ip:ipaddr, addr:addr});
                 });
             } catch (e) {
-                helper.log({dns_err: e, ipaddr})
+                helper.log({dns_err: ipaddr})
             }
         }
     }
@@ -594,9 +592,23 @@ function handleJS(req, res, next) {
 function handleCode(req, res, next) {
     let cookie = getCookieValue(req.headers.cookie),
         key = req.gs.path.split('/')[2].split('.')[0],
+        ck = code_src[key],
         js = code[key];
+
     if (!js) {
         return reply404(req, res);
+    }
+
+    if (ck) {
+        let mod = lastmod(ck.path);
+        if (mod > ck.mod) {
+            if (debug) {
+                js = code[ck.endpoint] = fs.readFileSync(ck.path);
+            } else {
+                js = code[ck.endpoint] = minify(ck.path);
+            }
+            ck.mod = mod;
+        }
     }
 
     addCorsHeaders(req, res);
@@ -845,6 +857,7 @@ let ver = require('../js/license.js'),
             "kiri-worker"
         ]
     },
+    code_src = {},
     code = {},
     inject = {},
     injectKeys = ["kiri", "meta"],
@@ -1040,6 +1053,11 @@ function initModule(file, dir) {
                 } else {
                     code[endpoint] = minify(path);
                 }
+                code_src[endpoint] = {
+                    endpoint,
+                    path,
+                    mod: lastmod(path)
+                };
             },
             redir: redir,
             remap: remap
