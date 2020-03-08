@@ -223,6 +223,7 @@ self.kiri.license = exports.LICENSE;
                 { name: "in" }
             ],
             // CAM only
+            bounds: {},
             origin: {},
             stock: {},
             tools:[
@@ -680,6 +681,10 @@ self.kiri.license = exports.LICENSE;
 
      function clone(o) {
          return o ? JSON.parse(JSON.stringify(o)) : o;
+     }
+
+     function unitScale() {
+         return settings.controller.units === 'in' ? 25.4 : 1;
      }
 
      function alert2(message, time) {
@@ -1629,6 +1634,14 @@ self.kiri.license = exports.LICENSE;
         SPACE.update();
     }
 
+    function updatePlatformBounds() {
+        var bounds = new THREE.Box3();
+        forAllWidgets(function(widget) {
+            bounds.union(widget.mesh.getBoundingBox());
+        });
+        return settings.bounds = bounds;
+    }
+
     function boundsSelection() {
         var bounds = new THREE.Box3();
         forSelectedWidgets(function(widget) {
@@ -1942,13 +1955,14 @@ self.kiri.license = exports.LICENSE;
         let sd = settings.process;
         let offset = UI.camStockOffset.checked;
         let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
+        let scale = unitScale();
         camTopZ = topZ;
         // create/inject cam stock if stock size other than default
         if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
             UI.stock.style.display = offset ? 'inline' : 'none';
-            let csx = sd.camStockX;
-            let csy = sd.camStockY;
-            let csz = sd.camStockZ;
+            let csx = sd.camStockX * scale;
+            let csy = sd.camStockY * scale;
+            let csz = sd.camStockZ * scale;
             let csox = 0;
             let csoy = 0;
             if (offset) {
@@ -2000,7 +2014,7 @@ self.kiri.license = exports.LICENSE;
             updateWidgetsTopZ();
             SPACE.update();
         } else if (camStock) {
-            settings.stock = {};
+            settings.stock = { };
             UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
             SPACE.update();
@@ -2010,6 +2024,7 @@ self.kiri.license = exports.LICENSE;
         } else if (settings.controller.alignTop) {
             updateWidgetsTopZ();
         }
+        updatePlatformBounds();
         updateOrigin();
     }
 
@@ -2758,7 +2773,7 @@ self.kiri.license = exports.LICENSE;
 
             layout: UC.newGroup('options'),
             showOrigin: UC.newBoolean("show origin", booleanSave, {title:"show device or process origin"}),
-            alignTop: UC.newBoolean("align top", booleanSave, {title:"align parts to the\ntallest part when\nno stock is set", modes:[42]}),
+            alignTop: UC.newBoolean("align top", booleanSave, {title:"align parts to the\ntallest part when\nno stock is set", modes:CAM}),
             autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
             freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
             reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
@@ -2847,8 +2862,8 @@ self.kiri.license = exports.LICENSE;
             roughingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
             roughingOver: UC.newInput("step over", {title:"0.1 - 1.0\npercentage of\ntool diameter", convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
             roughingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\workspace units / minute", convert:UC.toInt, modes:CAM}),
-            roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\workspace units / minute", convert:UC.toInt, modes:CAM}),
+            roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nworkspace units / minute", convert:UC.toInt, modes:CAM}),
+            roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nworkspace units / minute", convert:UC.toInt, modes:CAM}),
             roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units", convert:UC.toFloat, modes:CAM}),
             camPocketOnlyRough: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"plunge cuts will\nspiral down or ease\nalong a linear path\nas they cut downward", modes:CAM}),
@@ -2905,7 +2920,7 @@ self.kiri.license = exports.LICENSE;
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFanLayer:  UC.newInput("fan layer", {title:"layer to enable fan", convert:UC.toInt, bound:UC.bound(0,100), modes:FDM, expert: true}),
 
-            camTolerance: UC.newInput("tolerance", {title:"surface precision\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
+            camTolerance: UC.newInput("tolerance", {title:"surface precision\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
             camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin workspace units", convert:UC.toFloat, modes:CAM}),
             camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin workspace units", convert:UC.toFloat, modes:CAM}),
             camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
