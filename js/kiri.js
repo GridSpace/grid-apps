@@ -484,7 +484,7 @@ self.kiri.license = exports.LICENSE;
                 showOrigin: false,
                 freeLayout: true,
                 autoLayout: true,
-                alignTop: false,
+                alignTop: true,
                 units: "mm"
             },
             mode: 'FDM',
