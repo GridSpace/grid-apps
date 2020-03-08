@@ -895,10 +895,10 @@ var gs_kiri_cam = exports;
             slice.index = index;
             switch (slice.camMode) {
                 case CPRO.FACING:
-                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver * units, pocketOnlyRough);
+                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver, pocketOnlyRough);
                     break;
                 case CPRO.ROUGH:
-                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock * units, proc.roughingOver * units, pocketOnlyRough);
+                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock * units, proc.roughingOver, pocketOnlyRough);
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:
@@ -1410,7 +1410,7 @@ var gs_kiri_cam = exports;
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
             bounds = widget.getCamBounds(settings),
-            units = settings.controller.units === 'in' ? 25.4 : 1,
+            units = 1,//settings.controller.units === 'in' ? 25.4 : 1,
             spro = settings.process,
             dev = settings.device,
             decimals = 4,
