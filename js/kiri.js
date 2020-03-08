@@ -218,6 +218,10 @@ self.kiri.license = exports.LICENSE;
                 { name: "gyroid" },
                 { name: "triangle" }
             ],
+            units:[
+                { name: "mm" },
+                { name: "in" }
+            ],
             // CAM only
             origin: {},
             stock: {},
@@ -478,7 +482,9 @@ self.kiri.license = exports.LICENSE;
                 reverseZoom: true,
                 showOrigin: false,
                 freeLayout: true,
-                autoLayout: true
+                autoLayout: true,
+                alignTop: false,
+                units: "mm"
             },
             mode: 'FDM',
             id: genID(),
@@ -1370,10 +1376,11 @@ self.kiri.license = exports.LICENSE;
         }
 
         function calcWeight() {
+            try {
             $('print-weight').value = (
-                UTIL.round(
-                    (Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * parseFloat($('weight').value || 1.25) / 1000, 2)
+                UTIL.round((Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * 1.25 / 1000, 2)
             );
+            } catch (e) { }
         }
 
         function calcTime() {
@@ -1403,7 +1410,7 @@ self.kiri.license = exports.LICENSE;
             $('grid-host').onkeyup = gridhost_probe;
             $('grid-apik').onkeyup = gridhost_probe;
             calcTime();
-            calcWeight();
+            if (MODE === MODES.FDM) calcWeight();
             octo_host = $('octo-host');
             octo_apik = $('octo-apik');
             if (MODE === MODES.CAM) {
@@ -1846,6 +1853,7 @@ self.kiri.license = exports.LICENSE;
 
         fillMissingSettings(settingsDefault, settings);
         settings.infill = settingsDefault.infill;
+        settings.units = settingsDefault.units;
 
         for (key in scope) {
             if (!scope.hasOwnProperty(key)) continue;
@@ -1923,7 +1931,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function updateWidgetsTopZ() {
-        let camz = MODE === MODES.CAM && settings.stock.z;
+        let camz = MODE === MODES.CAM && (settings.stock.z || settings.controller.alignTop);
         let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
         forAllWidgets(function(widget) {
             widget.setTopZ(ztop);
@@ -1999,6 +2007,8 @@ self.kiri.license = exports.LICENSE;
             camStock = null;
             camTopZ = topZ;
             updateWidgetsTopZ();
+        } else if (settings.controller.alignTop) {
+            updateWidgetsTopZ();
         }
         updateOrigin();
     }
@@ -2007,12 +2017,14 @@ self.kiri.license = exports.LICENSE;
         updateFieldsFromSettings(settings.device);
         updateFieldsFromSettings(settings.process);
         updateFieldsFromSettings(settings.layers);
+        updateFieldsFromSettings(settings.controller);
     }
 
     function updateSettings() {
         updateSettingsFromFields(settings.device);
         updateSettingsFromFields(settings.process);
-        updateSettingsFromFields(settings.layers, true);
+        updateSettingsFromFields(settings.layers);
+        updateSettingsFromFields(settings.controller);
         saveSettings();
         updateCamStock();
     }
@@ -2202,12 +2214,12 @@ self.kiri.license = exports.LICENSE;
                     widgetDeselect();
                     if (ondone) {
                         ondone();
-                        if ((newset || settings).mode != 'CAM') {
+                        // if ((newset || settings).mode != 'CAM') {
                             setTimeout(() => {
                                 updateWidgetsTopZ();
                                 SPACE.update();
                             }, 1);
-                        };
+                        // };
                     }
                 }
             }, position);
@@ -2720,15 +2732,6 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("Export",  exportPrint)
                 ]
             ]),
-            workspace: UC.newGroup('platform'),
-            wsTable: UC.newTableRow([
-                [
-                    UI.saveButton =
-                    UC.newButton("Save",    saveWorkspace),
-                ],[
-                    UC.newButton("Clear",   clearWorkspace)
-                ]
-            ]),
             camera: UC.newGroup('view'),
             camTable: UC.newTableRow([
                 [
@@ -2743,11 +2746,23 @@ self.kiri.license = exports.LICENSE;
                 ]
             ]),
 
+            workspace: UC.newGroup('workspace'),
+            wsTable: UC.newTableRow([
+                [
+                    UI.saveButton =
+                    UC.newButton("Save",    saveWorkspace),
+                ],[
+                    UC.newButton("Clear",   clearWorkspace)
+                ]
+            ]),
+
             layout: UC.newGroup('options'),
             showOrigin: UC.newBoolean("show origin", booleanSave, {title:"show device or process origin"}),
+            alignTop: UC.newBoolean("align top", booleanSave, {title:"align parts to the\ntallest part when\nno stock is set", modes:[42]}),
             autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
             freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
             reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
+            units: UC.newSelectField("units", {modes:CAM}, "units"),
 
             appendLeft: UC.checkpoint(),
 
@@ -2825,16 +2840,16 @@ self.kiri.license = exports.LICENSE;
             laserSliceSingle: UC.newBoolean("single", onBooleanClick, {title:"perform one slice\nat specified height", modes:LASER}),
 
             camCommon: UC.newGroup("common", null, {modes:CAM}),
-            camFastFeed: UC.newInput("rapid feed", {title:"rapid moves feedrate\nin millimeters / minute", convert:UC.toInt, modes:CAM}),
+            camFastFeed: UC.newInput("rapid feed", {title:"rapid moves feedrate\nin workspace units / minute", convert:UC.toInt, modes:CAM}),
 
             roughing: UC.newGroup("roughing", null, {modes:CAM}),
             roughingTool: UC.newSelectField("tool", {modes:CAM}),
             roughingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
             roughingOver: UC.newInput("step over", {title:"0.1 - 1.0\npercentage of\ntool diameter", convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
-            roughingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin millimeters\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
-            roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
-            roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin millimeters", convert:UC.toFloat, modes:CAM}),
+            roughingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
+            roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\workspace units / minute", convert:UC.toInt, modes:CAM}),
+            roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\workspace units / minute", convert:UC.toInt, modes:CAM}),
+            roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units", convert:UC.toFloat, modes:CAM}),
             camPocketOnlyRough: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"plunge cuts will\nspiral down or ease\nalong a linear path\nas they cut downward", modes:CAM}),
             roughingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
@@ -2843,10 +2858,10 @@ self.kiri.license = exports.LICENSE;
             finishingTool: UC.newSelectField("tool", {modes:CAM}),
             finishingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
             finishingOver: UC.newInput("step over", {title:"0.05 - 1.0\npercentage of\ntool diameter\nfor linear XY", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
-            finishingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin millimeters\n0 to disable", convert:UC.toFloat, modes:CAM}),
+            finishingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
             finishingAngle: UC.newInput("max angle", {title:"angles greater than this\nare considered vertical", convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
-            finishingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
-            finishingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nmillimeters / minute", convert:UC.toInt, modes:CAM}),
+            finishingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\workspace units / minute", convert:UC.toInt, modes:CAM}),
+            finishingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\workspace units / minute", convert:UC.toInt, modes:CAM}),
             camPocketOnlyFinish: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             finishingOn: UC.newBoolean("waterline", onBooleanClick, {title:"contour finishing\ndisabled when pocketing", modes:CAM}),
             finishingXOn: UC.newBoolean("linear x", onBooleanClick, {title:"linear x-axis finishing", modes:CAM}),
@@ -2856,17 +2871,17 @@ self.kiri.license = exports.LICENSE;
             drilling: UC.newGroup("drilling", null, {modes:CAM}),
             drillTool: UC.newSelectField("tool", {modes:CAM}),
             drillSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
-            drillDown: UC.newInput("plunge per", {title:"max plunge between\ndwell periods\nin millimeters\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            drillDownSpeed: UC.newInput("plunge rate", {title:"plunge rate\nin millimeters / minute\n0 to disable", convert:UC.toFloat, modes:CAM}),
+            drillDown: UC.newInput("plunge per", {title:"max plunge between\ndwell periods\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
+            drillDownSpeed: UC.newInput("plunge rate", {title:"plunge rate\nin workspace units / minute\n0 to disable", convert:UC.toFloat, modes:CAM}),
             drillDwell: UC.newInput("dwell time", {title:"dwell time\nbetween plunges in\nin milliseconds", convert:UC.toFloat, modes:CAM}),
-            drillLift: UC.newInput("drill lift", {title:"lift between plunges\nafter dwell period\nin millimeters\n0 to disable", convert:UC.toFloat, modes:CAM}),
+            drillLift: UC.newInput("drill lift", {title:"lift between plunges\nafter dwell period\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
             drillingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
 
             camTabs: UC.newGroup("cutout tabs", null, {modes:CAM}),
             camTabsAngle: UC.newInput("angle", {title:"starting angle for tab spacing\nin degrees", convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount: UC.newInput("count", {title:"number of tabs to use\nwill be spaced evenly\naround the part", convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
-            camTabsWidth: UC.newInput("width", {title:"width in millimeters\nperpendicular to part", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
-            camTabsHeight: UC.newInput("height", {title:"height in millimeters\nfrom part bottom", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
+            camTabsWidth: UC.newInput("width", {title:"width in workspace units\nperpendicular to part", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
+            camTabsHeight: UC.newInput("height", {title:"height in workspace units\nfrom part bottom", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
             camTabsOn: UC.newBoolean("enable", onBooleanClick, {title:"enable or disable tabs\ntab generation skipped when\npocket only mode enabled", modes:CAM}),
 
             output: UC.newGroup("raft", null, {modes:FDM}),
@@ -2890,18 +2905,18 @@ self.kiri.license = exports.LICENSE;
             outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFanLayer:  UC.newInput("fan layer", {title:"layer to enable fan", convert:UC.toInt, bound:UC.bound(0,100), modes:FDM, expert: true}),
 
-            camTolerance: UC.newInput("tolerance", {title:"surface precision\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
-            camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin millimeters", convert:UC.toFloat, modes:CAM}),
-            camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin millimeters", convert:UC.toFloat, modes:CAM}),
-            camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin millimeters", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
+            camTolerance: UC.newInput("tolerance", {title:"surface precision\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
+            camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin workspace units", convert:UC.toFloat, modes:CAM}),
+            camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin workspace units", convert:UC.toFloat, modes:CAM}),
+            camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin workspace units", convert:UC.toFloat, bound:UC.bound(1,100), modes:CAM}),
             // camPocketOnly: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
             camDepthFirst: UC.newBoolean("depth first", onBooleanClick, {title:"optimize pocket cuts\nwith depth priority", modes:CAM}),
             outputClockwise: UC.newBoolean("clockwise", onBooleanClick, {title:"waterline milling direction", modes:CAM}),
 
             camStock: UC.newGroup("stock", null, {modes:CAM}),
-            camStockX: UC.newInput("width", {title:"width (x) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
-            camStockY: UC.newInput("depth", {title:"depth (y) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
-            camStockZ: UC.newInput("height", {title:"height (z) in millimeters\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
+            camStockX: UC.newInput("width", {title:"width (x) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
+            camStockY: UC.newInput("depth", {title:"depth (y) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
+            camStockZ: UC.newInput("height", {title:"height (z) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockOffset: UC.newBoolean("offset", onBooleanClick, {title: "use width, depth, height\nas offsets from max\npart size on platform", modes:CAM}),
             outputOriginCenter: UC.newBoolean("origin center", onBooleanClick, {modes:CAM_LASER}),
             camOriginTop: UC.newBoolean("origin top", onBooleanClick, {modes:CAM}),
@@ -2936,6 +2951,7 @@ self.kiri.license = exports.LICENSE;
             settings.controller.showOrigin = UI.showOrigin.checked;
             settings.controller.autoLayout = UI.autoLayout.checked;
             settings.controller.freeLayout = UI.freeLayout.checked;
+            settings.controller.alignTop = UI.alignTop.checked;
             settings.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             updateOrigin();
@@ -3968,6 +3984,7 @@ self.kiri.license = exports.LICENSE;
             UI.showOrigin.checked = settings.controller.showOrigin;
             UI.freeLayout.checked = settings.controller.freeLayout;
             UI.autoLayout.checked = settings.controller.autoLayout;
+            UI.alignTop.checked = settings.controller.alignTop;
 
             if (SETUP.s) SETUP.s.forEach(function(lib) {
                 var scr = DOC.createElement('script');

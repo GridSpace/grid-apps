@@ -692,9 +692,11 @@ var gs_kiri_cam = exports;
             proc = conf.process,
             outp = conf.process,
             sliceAll = widget.slices = [],
-            roughToolDiam = getToolDiameter(conf, proc.roughingTool),
-            finishToolDiam = getToolDiameter(conf, proc.finishingTool),
-            drillToolDiam = getToolDiameter(conf, proc.drillTool),
+            unitsName = settings.controller.units,
+            units = unitsName === 'in' ? (1/25.4) : 1,
+            roughToolDiam = getToolDiameter(conf, proc.roughingTool) * units,
+            finishToolDiam = getToolDiameter(conf, proc.finishingTool) * units,
+            drillToolDiam = getToolDiameter(conf, proc.drillTool) * units,
             procRough = proc.roughingOn && proc.roughingDown && roughToolDiam,
             procFinish = proc.finishingOn && proc.finishingDown && finishToolDiam,
             procFinishX = proc.finishingXOn && proc.finishingPlunge && finishToolDiam,
@@ -702,24 +704,24 @@ var gs_kiri_cam = exports;
             anyFinish = procFinish || procFinishX || procFinishY,
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
-            sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3),
+            sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3) * units,
             // pocketOnly = outp.camPocketOnly,
             pocketOnlyRough = outp.camPocketOnlyRough,
             pocketOnlyFinish = outp.camPocketOnlyFinish,
             // addTabs = proc.camTabsOn && !pocketOnly,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
             addTabsFinish = anyFinish && proc.camTabsOn && !pocketOnlyFinish,
-            tabWidth = proc.camTabsWidth,
-            tabHeight = proc.camTabsHeight,
+            tabWidth = proc.camTabsWidth * units,
+            tabHeight = proc.camTabsHeight * units,
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
-            zMin = MAX(bounds.min.z, outp.camZBottom),
+            zMin = MAX(bounds.min.z, outp.camZBottom) * units,
             shellRough,
             shellFinish,
             facePolys;
 
         if (sliceDepth <= 0.05) {
-            return ondone("invalid slice depth");
+            return ondone(`invalid slice depth (${sliceDepth.toFixed(2)} ${unitsName})`);
         }
 
         if (!(procRough || anyFinish || procFacing || procDrill)) {
@@ -806,8 +808,8 @@ var gs_kiri_cam = exports;
             // hollow area from top of stock to top of part
             if (procFacing) {
                 var ztop = bounds.max.z,
-                    zpos = ztop + outp.camZTopOffset,
-                    zstep = proc.roughingDown;
+                    zpos = ztop + (outp.camZTopOffset * units),
+                    zstep = proc.roughingDown * units;
 
                 while (zpos >= ztop) {
                     zpos = zpos - MIN(zstep, zpos - ztop);
@@ -826,13 +828,13 @@ var gs_kiri_cam = exports;
 
             if (procRough) {
                 var selected = [];
-                selectSlices(slices, proc.roughingDown, CPRO.ROUGH, selected);
+                selectSlices(slices, proc.roughingDown * units, CPRO.ROUGH, selected);
                 sliceAll.appendAll(selected);
             }
 
             if (anyFinish) {
                 var selected = [];
-                selectSlices(slices, proc.finishingDown, CPRO.FINISH, selected);
+                selectSlices(slices, proc.finishingDown * units, CPRO.FINISH, selected);
                 sliceAll.appendAll(selected);
             }
 
@@ -845,7 +847,7 @@ var gs_kiri_cam = exports;
                 slices.forEach(function(slice) {
                     var inner = slice.gatherTopPolyInners([]);
                     inner.forEach(function(poly) {
-                        if (poly.circularity() >= 0.99 && Math.abs(poly.area() - area) <= areaDelta) {
+                        if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
                             var center = poly.circleCenter(),
                                 merged = false,
                                 closest = Infinity,
@@ -893,10 +895,10 @@ var gs_kiri_cam = exports;
             slice.index = index;
             switch (slice.camMode) {
                 case CPRO.FACING:
-                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver, pocketOnlyRough);
+                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver * units, pocketOnlyRough);
                     break;
                 case CPRO.ROUGH:
-                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock, proc.roughingOver, pocketOnlyRough);
+                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock * units, proc.roughingOver * units, pocketOnlyRough);
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:
@@ -942,9 +944,10 @@ var gs_kiri_cam = exports;
         if (widgetIndex >= widgetCount || !widget) return;
         var slices = widget.slices,
             bounds = widget.getCamBounds(settings),
+            units = settings.controller.units === 'in' ? (1/25.4) : 1,
             hasStock = process.camStockZ && process.camStockX && process.camStockY,
             startCenter = process.outputOriginCenter,
-            zclear = process.camZClearance || 1,
+            zclear = (process.camZClearance || 1) * units,
             zadd = hasStock ? stock.z - bounds.max.z : 0,
             zmax = hasStock ? stock.z + zclear : bounds.max.z + zclear,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
@@ -954,9 +957,9 @@ var gs_kiri_cam = exports;
             modes = CPRO,
             depthFirst = process.camDepthFirst,
             easeDown = process.camEaseDown,
-            tolerance = process.camTolerance,
-            drillDown = process.drillDown,
-            drillLift = process.drillLift,
+            tolerance = process.camTolerance * units,
+            drillDown = process.drillDown * units,
+            drillLift = process.drillLift * units,
             drillDwell = process.drillDwell,
             newOutput = widgetIndex === 0 ? [] : print.output,
             layerOut = [],
@@ -1407,6 +1410,7 @@ var gs_kiri_cam = exports;
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
             bounds = widget.getCamBounds(settings),
+            units = settings.controller.units === 'in' ? (1/25.4) : 1,
             spro = settings.process,
             dev = settings.device,
             decimals = 4,
@@ -1429,10 +1433,10 @@ var gs_kiri_cam = exports;
             consts = {
                     tool: 0,
                     tool_name: "unknown",
-                    top: offset ? dev.bedDepth : dev.bedDepth/2,
-                    left: offset ? 0 : -dev.bedWidth/2,
-                    right: offset ? dev.bedWidth : dev.bedWidth/2,
-                    bottom: offset ? 0 : -dev.bedDepth/2,
+                    top: (offset ? dev.bedDepth : dev.bedDepth/2) * units,
+                    left: (offset ? 0 : -dev.bedWidth/2) * units,
+                    right: (offset ? dev.bedWidth : dev.bedWidth/2) * units,
+                    bottom: (offset ? 0 : -dev.bedDepth/2) * units,
                     time_sec: 0,
                     time_ms: 0,
                     time: 0
@@ -1532,23 +1536,23 @@ var gs_kiri_cam = exports;
                 pos.x = newpos.x;
                 runbox.min.x = Math.min(runbox.min.x, pos.x);
                 runbox.max.x = Math.max(runbox.max.x, pos.x);
-                nl.append(space).append("X").append(add0(pos.x));
+                nl.append(space).append("X").append(add0(pos.x * units));
             }
             if (newpos.y !== pos.y) {
                 pos.y = newpos.y;
                 runbox.min.y = Math.min(runbox.min.y, pos.y);
                 runbox.max.y = Math.max(runbox.max.y, pos.y);
-                nl.append(space).append("Y").append(add0(pos.y));
+                nl.append(space).append("Y").append(add0(pos.y * units));
             }
             if (newpos.z !== pos.z) {
                 pos.z = newpos.z;
                 runbox.min.z = Math.min(runbox.min.z, pos.z);
                 runbox.max.z = Math.max(runbox.max.z, pos.z);
-                nl.append(space).append("Z").append(add0(pos.z));
+                nl.append(space).append("Z").append(add0(pos.z * units));
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;
-                nl.append(space).append("F").append(feed);
+                nl.append(space).append("F").append(feed * units);
             }
 
             // update time calculation
