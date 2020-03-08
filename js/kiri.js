@@ -733,16 +733,6 @@ self.kiri.license = exports.LICENSE;
          sendOnEvent('settings', settings);
      }
 
-     function oremap(o,k,p) {
-         try {
-             var ov = o[k];
-             delete o[k];
-             o[p+(k.split('-')[1].toLowerCase())] = ov;
-         } catch (e) {
-             console.log(e)
-         }
-     }
-
     function isSecure(proto) {
          return proto.toLowerCase().indexOf("https") === 0;
     }
@@ -1585,9 +1575,10 @@ self.kiri.license = exports.LICENSE;
             }
             return
         }
-        UI.selWidth.innerHTML = UTIL.round(mesh.w,2);
-        UI.selDepth.innerHTML = UTIL.round(mesh.h,2);
-        UI.selHeight.innerHTML = UTIL.round(mesh.d,2);
+        let scale = unitScale();
+        UI.selWidth.innerHTML = UTIL.round(mesh.w/scale,2);
+        UI.selDepth.innerHTML = UTIL.round(mesh.h/scale,2);
+        UI.selHeight.innerHTML = UTIL.round(mesh.d/scale,2);
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
@@ -1987,9 +1978,9 @@ self.kiri.license = exports.LICENSE;
                 csz += max.z - min.z;
                 csox = min.x + ((max.x - min.x) / 2);
                 csoy = min.y + ((max.y - min.y) / 2);
-                $('stock-width').innerText = (csx).toFixed(2);
-                $('stock-depth').innerText = (csy).toFixed(2);
-                $('stock-height').innerText = (csz).toFixed(2);
+                $('stock-width').innerText = (csx/scale).toFixed(2);
+                $('stock-depth').innerText = (csy/scale).toFixed(2);
+                $('stock-height').innerText = (csz/scale).toFixed(2);
             }
             if (!camStock) {
                 var geo = new THREE.BoxGeometry(1, 1, 1);
