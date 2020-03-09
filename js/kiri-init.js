@@ -61,10 +61,10 @@ var gs_kiri_init = exports;
         SPACE.showSkyGrid(false);
         SPACE.setSkyColor(0xffffff);
         SPACE.init(container, function (delta) {
-            if (showLayerMax === 0) return;
+            if (API.var.layer_max === 0) return;
             if (settings().controller.reverseZoom) delta = -delta;
-            if (delta > 0) showLayerValue--;
-            else if (delta < 0) showLayerValue++;
+            if (delta > 0) API.var.layer_at--;
+            else if (delta < 0) API.var.layer_at++;
             API.show.slices();
         });
         SPACE.platform.onMove(API.conf.save);
@@ -267,6 +267,7 @@ var gs_kiri_init = exports;
             layerSparse: UC.newBoolean("sparse fill", onLayerToggle, {modes:FDM}),
             layerSupport: UC.newBoolean("support", onLayerToggle, {modes:FDM}),
             layerPrint: UC.newBoolean("print", onLayerToggle),
+            layerMoves: UC.newBoolean("moves", onLayerToggle),
 
             settingsGroup: UC.newGroup("settings", control),
             settingsTable: UC.newTableRow([
@@ -447,12 +448,12 @@ var gs_kiri_init = exports;
         }
 
         function onLayerToggle() {
-            updateSettings();
+            API.conf.update();
             API.show.slices();
         }
 
         function onBooleanClick() {
-            updateSettings();
+            API.conf.update();
         }
 
         function inputHasFocus() {
@@ -523,14 +524,14 @@ var gs_kiri_init = exports;
                     break;
                 case 38: // up arrow
                     if (inputHasFocus()) return false;
-                    if (evt.metaKey) return setVisibleLayer(showLayerValue+1);
+                    if (evt.metaKey) return API.show.layer(API.var.layer_at+1);
                     if (deg) API.selection.rotate(deg, 0, 0);
                     if (move > 0) moveSelection(0, move, 0);
                     evt.preventDefault();
                     break;
                 case 40: // down arrow
                     if (inputHasFocus()) return false;
-                    if (evt.metaKey) return setVisibleLayer(showLayerValue-1);
+                    if (evt.metaKey) return API.show.layer(API.var.layer_at-1);
                     if (deg) API.selection.rotate(-deg, 0, 0);
                     if (move > 0) moveSelection(0, -move, 0);
                     evt.preventDefault();
@@ -573,13 +574,13 @@ var gs_kiri_init = exports;
             }
             switch (evt.charCode) {
                 case cca('`'): API.show.slices(0); break;
-                case cca('0'): API.show.slices(showLayerMax); break;
+                case cca('0'): API.show.slices(API.var.layer_max); break;
                 case cca('1'): // toggle control left
                     if (evt.ctrlKey) {
                         style = UI.ctrlLeft.style;
                         style.display = style.display === 'none' ? 'block' : 'none';
                     } else {
-                        API.show.slices(showLayerMax/10);
+                        API.show.slices(API.var.layer_max/10);
                     }
                     break;
                 case cca('2'): // toggle control right
@@ -587,7 +588,7 @@ var gs_kiri_init = exports;
                         style = UI.ctrlRight.style;
                         style.display = style.display === 'none' ? 'block' : 'none';
                     } else {
-                        API.show.slices(showLayerMax*2/10);
+                        API.show.slices(API.var.layer_max*2/10);
                     }
                     break;
                 case cca('3'):
@@ -597,15 +598,15 @@ var gs_kiri_init = exports;
                         SPACE.platform.showGrid(!style);
                         SPACE.update();
                     } else {
-                        API.show.slices(showLayerMax*3/10);
+                        API.show.slices(API.var.layer_max*3/10);
                     }
                     break;
-                case cca('4'): API.show.slices(showLayerMax*4/10); break;
-                case cca('5'): API.show.slices(showLayerMax*5/10); break;
-                case cca('6'): API.show.slices(showLayerMax*6/10); break;
-                case cca('7'): API.show.slices(showLayerMax*7/10); break;
-                case cca('8'): API.show.slices(showLayerMax*8/10); break;
-                case cca('9'): API.show.slices(showLayerMax*9/10); break;
+                case cca('4'): API.show.slices(API.var.layer_max*4/10); break;
+                case cca('5'): API.show.slices(API.var.layer_max*5/10); break;
+                case cca('6'): API.show.slices(API.var.layer_max*6/10); break;
+                case cca('7'): API.show.slices(API.var.layer_max*7/10); break;
+                case cca('8'): API.show.slices(API.var.layer_max*8/10); break;
+                case cca('9'): API.show.slices(API.var.layer_max*9/10); break;
                 case cca('?'):
                     API.help.show();
                     break;
@@ -1326,7 +1327,7 @@ var gs_kiri_init = exports;
 
         SPACE.onEnterKey([
             UI.layerSpan,    function() { API.show.slices() },
-            UI.layerID,      function() { setVisibleLayer(UI.layerID.value) },
+            UI.layerID,      function() { API.show.layer(UI.layerID.value) },
 
             UI.scaleX,           selection.scale,
             UI.scaleY,           selection.scale,
@@ -1372,7 +1373,7 @@ var gs_kiri_init = exports;
         $('z+').onclick = function(ev) { API.selection.rotate(0,0,ev.shiftKey ? -ROT5 : -ROT) };
 
         UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
-            setOpacity(parseInt(UI.modelOpacity.value)/100);
+            API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);
         };
 
         UI.layerSlider.ondblclick = function() {
@@ -1385,11 +1386,11 @@ var gs_kiri_init = exports;
         };
 
         UI.layerSlider.onclick = function() {
-            setVisibleLayer(UI.layerSlider.value);
+            API.show.layer(UI.layerSlider.value);
         };
 
         UI.layerSlider.onmousemove = UI.layerSlider.onchange = function() {
-            setVisibleLayer(UI.layerSlider.value);
+            API.show.layer(UI.layerSlider.value);
         };
 
         UI.layerSlider.onmouseup = function() { API.focus() };

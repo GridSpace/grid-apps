@@ -66,9 +66,6 @@ self.kiri.license = exports.LICENSE;
         sliced_opacity_cam = 0.25,
         // ---------------
         printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1,
-        showLayerRange = 0,
-        showLayerValue = 0,
-        showLayerMax = 0,
         renderMode = 4,
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
@@ -153,6 +150,11 @@ self.kiri.license = exports.LICENSE;
             VIEWS,
             SETUP
         },
+        var: {
+            layer_at: 0,
+            layer_max: 0,
+            layer_range: 0
+        },
         device: {
             get: currentDeviceName
         },
@@ -209,6 +211,7 @@ self.kiri.license = exports.LICENSE;
             controls: setControlsVisible,
             favorites: getShowFavorites,
             slices: showSlices,
+            layer: setVisibleLayer,
             local: showLocal,
             import: function() { UI.import.style.display = '' }
         },
@@ -227,7 +230,8 @@ self.kiri.license = exports.LICENSE;
             all: function() { return WIDGETS.slice() },
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
-            meshes: meshArray
+            meshes: meshArray,
+            opacity: setOpacity
         },
         work: KIRI.work
     };
@@ -416,7 +420,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function setVisibleLayer(v) {
-        showSlices(showLayerValue = bound(v, 0, showLayerMax));
+        showSlices(API.var.layer_at = bound(v, 0, API.var.layer_max));
     }
 
     function meshArray() {
@@ -459,16 +463,16 @@ self.kiri.license = exports.LICENSE;
             });
         }
         max = Math.max(0, max - 1);
-        showLayerMax = max;
-        if (UI.layerID.convert() > max || showLayerValue > max) {
-            showLayerValue = max;
+        API.var.layer_max = max;
+        if (UI.layerID.convert() > max || API.var.layer_at > max) {
+            API.var.layer_at = max;
             UI.layerID.value = max;
-            UI.layerSlider.value = showLayerMax;
+            UI.layerSlider.value = API.var.layer_max;
         }
         UI.layerSlider.max = max;
         if (set) {
-            showLayerValue = showLayerMax;
-            UI.layerSlider.value = showLayerMax;
+            API.var.layer_at = API.var.layer_max;
+            UI.layerSlider.value = API.var.layer_max;
         }
     }
 
@@ -500,10 +504,10 @@ self.kiri.license = exports.LICENSE;
         if (typeof(layer) === 'string' || typeof(layer) === 'number') {
             layer = parseInt(layer);
         } else {
-            layer = showLayerValue;
+            layer = API.var.layer_at;
         }
 
-        layer = bound(layer, 0, showLayerMax);
+        layer = bound(layer, 0, API.var.layer_max);
 
         UI.layerID.value = layer;
         UI.layerSlider.value = layer;
@@ -513,14 +517,15 @@ self.kiri.license = exports.LICENSE;
             slices,
             layers,
             range = UI.layerRange.checked ? UI.layerSpan.convert() || 1 : 0,
-            print = UI.layerPrint.checked;
+            print = UI.layerPrint.checked,
+            moves = UI.layerMoves.checked;
 
-        if (MODE === MODES.CAM && showLayerRange !== range && range && layer === showLayerMax) {
+        if (MODE === MODES.CAM && API.var.layer_range !== range && range && layer === API.var.layer_max) {
             layer = 0;
         }
 
-        showLayerRange = range;
-        showLayerValue = layer;
+        API.var.layer_range = range;
+        API.var.layer_at = layer;
 
         forAllWidgets(function(widget) {
             if (print) return widget.hideSlices();
@@ -568,10 +573,13 @@ self.kiri.license = exports.LICENSE;
         });
 
         if (currentPrint) {
-            for (j = 0; j < currentPrint.layerView.length; j++) {
-                currentPrint.showLayer(j, print && showSlice(j, range, layer));
+            let len = currentPrint.getLayerCount();
+            for (j = 0; j < len; j++) {
+                currentPrint.showLayer(j, print && showSlice(j, range, layer), moves);
             }
         }
+        UI.layerPrint.parentNode.style.display = currentPrint ? '' : 'none';
+        UI.layerMoves.parentNode.style.display = currentPrint ? '' : 'none';
 
         SPACE.update();
     }
@@ -1089,8 +1097,8 @@ self.kiri.license = exports.LICENSE;
 
         var firstMesh = true,
             countdown = WIDGETS.length,
-            preserveMax = showLayerMax,
-            preserveLayer = showLayerValue,
+            preserveMax = API.var.layer_max,
+            preserveLayer = API.var.layer_at,
             totalProgress,
             track = {};
 
@@ -1127,8 +1135,8 @@ self.kiri.license = exports.LICENSE;
                     DBUG.log(segtimes);
                     STATS.add(`ua_${getModeLower()}_slice`);
                     updateSliderMax(true);
-                    if (preserveMax != showLayerMax) {
-                        preserveLayer = showLayerMax;
+                    if (preserveMax != API.var.layer_max) {
+                        preserveLayer = API.var.layer_max;
                     }
                     firstMesh = false;
                 }
@@ -1345,7 +1353,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function platformDeselect(widget) {
-        if (viewMode !== VIEWS.ARRANGE) return;
+        // if (viewMode !== VIEWS.ARRANGE) return;
         if (!widget) {
             forAllWidgets(function(widget) {
                 platform.deselect(widget);

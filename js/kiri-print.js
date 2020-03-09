@@ -39,7 +39,8 @@ var gs_kiri_print = exports;
         this.settings = settings;
         this.widgets = widgets;
         this.group = new THREE.Group();
-        this.layerView = [];
+        this.printView = [];
+        this.movesView = [];
 
         this.time = 0;
         this.lines = 0;
@@ -350,7 +351,7 @@ var gs_kiri_print = exports;
     }
 
     PRO.renderMoves = function(showMoves, moveColor) {
-        var scope = this, last, view;
+        var scope = this, last, emits, moves;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
@@ -376,21 +377,24 @@ var gs_kiri_print = exports;
                 }
                 last = out.point;
             });
-            view = KIRI.newLayer(scope.group);
-            scope.layerView.push(view);
+            emits = KIRI.newLayer(scope.group);
+            scope.printView.push(emits);
             if (showMoves) {
-                view.lines(move, moveColor);
+                moves = KIRI.newLayer(scope.group);
+                moves.lines(move, moveColor);
+                scope.movesView.push(moves);
+                moves.render();
             }
             for (var speed in print) {
                 var sint = Math.min(6000, parseInt(speed));
                 var rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
-                view.lines(print[speed],
+                emits.lines(print[speed],
                     ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0)
                 );
             }
-            view.render();
+            emits.render();
             scope.lines += print.length;
         });
     }
@@ -400,13 +404,17 @@ var gs_kiri_print = exports;
     }
 
     PRO.hide = function() {
-        this.layerView.forEach(function(layer) {
+        this.printView.forEach(function(layer) {
+            layer.setVisible(false);
+        })
+        this.movesView.forEach(function(layer) {
             layer.setVisible(false);
         })
     };
 
-    PRO.showLayer = function(index, show) {
-        if (this.layerView[index]) this.layerView[index].setVisible(show);
+    PRO.showLayer = function(index, show, moves) {
+        if (this.printView[index]) this.printView[index].setVisible(show);
+        if (this.movesView[index]) this.movesView[index].setVisible(show && moves);
     };
 
     /**
