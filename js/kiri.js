@@ -178,6 +178,9 @@ self.kiri.license = exports.LICENSE;
             export: exportPrint,
             clear: clearWidgetCache
         },
+        hide: {
+            import: function() { UI.import.style.display = 'none' }
+        },
         modal: {
             show: showModal,
             hide: hideModal,
@@ -206,7 +209,8 @@ self.kiri.license = exports.LICENSE;
             controls: setControlsVisible,
             favorites: getShowFavorites,
             slices: showSlices,
-            local: showLocal
+            local: showLocal,
+            import: function() { UI.import.style.display = '' }
         },
         space: {
             restore: restoreWorkspace,
