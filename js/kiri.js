@@ -52,8 +52,6 @@ self.kiri.license = exports.LICENSE;
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         OCTOPRINT = null,
         // ---------------
-        wireframe_color = 0x444444,
-        wireframe_model_opacity = 0.25,
         widget_selected_color = 0xbbff00,
         widget_deselected_color = 0xffff00,
         widget_slicing_color = 0xffaaaa,
@@ -124,6 +122,14 @@ self.kiri.license = exports.LICENSE;
         load_files: loadFiles
     };
 
+    const color = {
+        wireframe: 0x444444
+    };
+
+    const opacity = {
+        wireframe: 0.25
+    };
+
     const API = KIRI.api = {
         ui: UI,
         uc: UC,
@@ -142,6 +148,7 @@ self.kiri.license = exports.LICENSE;
             show: showSettings,
             update: updateSettings
         },
+        color,
         const: {
             SEED,
             LANG,
@@ -199,6 +206,7 @@ self.kiri.license = exports.LICENSE;
             moved : function() { return mouseMoved },
             movedSet : function(b) { mouseMoved = b }
         },
+        opacity,
         probe: {
             local : function() { return false },
             grid : function() { return false },
@@ -223,7 +231,8 @@ self.kiri.license = exports.LICENSE;
         view: {
             get: function() { return viewMode },
             set: setViewMode,
-            update_fields: updateFields
+            update_fields: updateFields,
+            wireframe: toggleWireframe
         },
         widgets: {
             new: newWidget,
@@ -1125,7 +1134,7 @@ self.kiri.license = exports.LICENSE;
                 // on done
                 widget.render(renderMode, MODE === MODES.CAM);
                 // clear wireframe
-                widget.setWireframe(false, wireframe_color, wireframe_model_opacity);
+                widget.setWireframe(false, color.wireframe, opacity.wireframe);
                 widget.setOpacity(settings.mode === 'CAM' ? sliced_opacity_cam : sliced_opacity);
                 widget.setColor(widget_deselected_color);
                 // update UI info

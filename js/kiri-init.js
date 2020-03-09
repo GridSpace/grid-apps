@@ -691,7 +691,7 @@ var gs_kiri_init = exports;
                     platform.layout();
                     break;
                 case cca('w'): // toggle wireframe on widgets
-                    toggleWireframe(wireframe_color, wireframe_model_opacity);
+                    API.view.wireframe(API.color.wireframe, API.opacity.wireframe);
                     break;
                 default:
                     API.event.emit('keypress', evt);
