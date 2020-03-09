@@ -1007,11 +1007,12 @@ function initModule(file, dir) {
     require(file)({
         api: api,
         const: {
-            script: script,
-            rootdir: currentDir,
-            moddir: dir,
             args: args,
-            debug: debug
+            debug: debug,
+            script: script,
+            moddir: dir,
+            rootdir: currentDir,
+            version: ver.VERSION
         },
         pkg: {
             agent,
@@ -1033,14 +1034,12 @@ function initModule(file, dir) {
             api: db,
             level: level
         },
-        inject: {
-            kiri: (file, options) => {
-                let opt = options || {};
-                if (opt.end) {
-                    script.kiri.push(dir + "/" + file);
-                } else {
-                    script.kiri.splice(0, 0, dir + "/" + file);
-                }
+        inject: (code, file, options) => {
+            let opt = options || {};
+            if (opt.end) {
+                script[code].push(dir + "/" + file);
+            } else {
+                script[code].splice(0, 0, dir + "/" + file);
             }
         },
         path: {
@@ -1237,12 +1236,12 @@ modPaths.forEach(fn => {
 
 // add the rest of the handler chain
 handler.use(fullpath({
-        "/meta/index.html" : redir("/meta/"),
         "/kiri/index.html" : redir("/kiri/"),
         "/kiri"            : redir("/kiri/"),
+        "/kiri/"           : remap("/kiri/index.html"),
+        "/meta/index.html" : redir("/meta/"),
         "/meta"            : redir("/meta/"),
-        "/meta/"           : remap("/meta/index.html"),
-        "/kiri/"           : remap("/kiri/index.html")
+        "/meta/"           : remap("/meta/index.html")
     }))
     .use(prepath([
         [ "/space", redir("/meta/")],

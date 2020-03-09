@@ -444,7 +444,7 @@ let gs_moto_space = exports;
             if (platformClick) {
                 let vis = platform.visible;
                 platform.visible = true;
-                int = intersect([platform], false);
+                let int = intersect([platform], false);
                 platform.visible = vis;
                 platformClickAt = int && int.length > 0 ? int[0].point : null;
             }
