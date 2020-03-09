@@ -16,7 +16,7 @@ self.kiri.license = exports.LICENSE;
         }
     }
 
-    var iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
+    let iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
         // ---------------
         MODES = {
             FDM: 1,   // fused deposition modeling (also FFF)
@@ -494,22 +494,19 @@ self.kiri.license = exports.LICENSE;
         settingsDefault = settings,
         autoDecimate = true,
         // ---------------
-        SELF = self,
-        MOTO = moto,
-        KIRI = SELF.kiri,
-        BASE = SELF.base,
-        UTIL = BASE.util,
-        DBUG = BASE.debug,
-        LANG = KIRI.lang.current,
-        // ---------------
-        WIN    = SELF.window,
-        DOC    = SELF.document,
-        LOC    = SELF.location,
-        SETUP  = parseOpt(LOC.search.substring(1)),
-        HOST   = LOC.host.split(':'),
-        LOCAL  = HOST[0] === 'localhost' || HOST[0] === 'debug',
-        SECURE = isSecure(LOC.protocol),
-        // ---------------
+        MOTO    = moto,
+        KIRI    = self.kiri,
+        BASE    = self.base,
+        UTIL    = BASE.util,
+        DBUG    = BASE.debug,
+        LANG    = KIRI.lang.current,
+        WIN     = self.window,
+        DOC     = self.document,
+        LOC     = self.location,
+        HOST    = LOC.host.split(':'),
+        LOCAL   = HOST[0] === 'localhost' || HOST[0] === 'debug',
+        SETUP   = parseOpt(LOC.search.substring(1)),
+        SECURE  = isSecure(LOC.protocol),
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
@@ -518,7 +515,7 @@ self.kiri.license = exports.LICENSE;
         STATS   = new Stats(SDB),
         SEED    = 'kiri-seed',
         // ---------------
-        Widget = kiri.Widget,
+        Widget    = kiri.Widget,
         newWidget = kiri.newWidget,
         // ---------------
         UI = {},
@@ -562,7 +559,18 @@ self.kiri.license = exports.LICENSE;
         camTopZ = 0,
         topZ = 0,
         // origin = {x:0, y:0, z:0},
-        showFavorites = SDB['dev-favorites'] === 'true';
+        showFavorites = SDB['dev-favorites'] === 'true',
+        selectedTool = null,
+        editTools = null,
+        ROT = Math.PI/2,
+        ROT5 = ROT / 9,
+        ALL = [MODES.FDM, MODES.LASER, MODES.CAM],
+        CAM = [MODES.CAM],
+        FDM = [MODES.FDM],
+        FDM_CAM = [MODES.CAM,MODES.FDM],
+        FDM_LASER = [MODES.LASER,MODES.FDM],
+        CAM_LASER = [MODES.LASER,MODES.CAM],
+        LASER = [MODES.LASER];
 
     // seed defaults. will get culled on save
     settings.sproc.FDM.default = clone(settings.process);
@@ -576,7 +584,25 @@ self.kiri.license = exports.LICENSE;
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
 
-    var alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
+    let alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
+
+    const platform = {
+        add: platformAdd,
+        delete: platformDelete,
+        layout: platformLayout,
+        load: platformLoad,
+        load_stl: platformLoadSTL,
+        deselect: platformDeselect,
+        select: platformSelect,
+        select_all: platformSelectAll,
+        selected_count: platformSelectedCount,
+        compute_max_z: platformComputeMaxZ,
+        update_origin: platformUpdateOrigin,
+        update_bounds: platformUpdateBounds,
+        update_stock: platformUpdateStock,
+        update_size: platformUpdateSize,
+        update_top_z: platformUpdateTopZ
+    };
 
     KIRI.api = {
         ui : UI,
@@ -586,7 +612,7 @@ self.kiri.license = exports.LICENSE;
         js2o : js2o,
         ajax : ajax,
         help : showHelp,
-        load : loadWidget,
+        load : platform.load,
         alert: alert2,
         focus : takeFocus,
         stats : STATS,
@@ -602,7 +628,7 @@ self.kiri.license = exports.LICENSE;
         showCatalog : showCatalog,
         addWidget : platformAdd,
         selectAll : platformSelectAll,
-        selectNone : widgetDeselect,
+        selectNone : platform.deselect,
         showProgress : setProgress,
         clearWorker : KIRI.work.clear,
         getSettings : getSettings,
@@ -1472,7 +1498,7 @@ self.kiri.license = exports.LICENSE;
 
         clearPrint();
         saveSettings();
-        widgetDeselect();
+        platform.deselect();
 
         var firstMesh = true,
             countdown = WIDGETS.length,
@@ -1533,7 +1559,7 @@ self.kiri.license = exports.LICENSE;
                     errored = true;
                     setViewMode(VIEWS.ARRANGE);
                     setOpacity(model_opacity);
-                    widgetDeselect();
+                    platform.deselect();
                     alert2(error);
                 }
             }, function(update, msg) {
@@ -1562,6 +1588,10 @@ self.kiri.license = exports.LICENSE;
     function diffOffset() {
         return (settings.device.nozzleSize / 2) * fillOffsetMult();
     }
+
+    /** ******************************************************************
+     * Selection Functions
+     ******************************************************************* */
 
     function meshUpdateInfo(mesh) {
         if (!mesh) {
@@ -1592,7 +1622,7 @@ self.kiri.license = exports.LICENSE;
 
     function moveSelection(x, y, z, abs) {
         forSelectedWidgets(function (w) { w.move(x, y, z, abs) });
-        updateCamStock();
+        platform.update_stock();
         SPACE.update();
     }
 
@@ -1613,24 +1643,16 @@ self.kiri.license = exports.LICENSE;
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
-        platformComputeMaxZ();
-        updateCamStock(true);
+        platform.compute_max_z();
+        platform.update_stock(true);
         SPACE.update();
     }
 
     function rotateSelection(x, y, z) {
         forSelectedWidgets(function (w) { w.rotate(x, y, z) });
-        platformComputeMaxZ();
-        updateCamStock(true);
+        platform.compute_max_z();
+        platform.update_stock(true);
         SPACE.update();
-    }
-
-    function updatePlatformBounds() {
-        var bounds = new THREE.Box3();
-        forAllWidgets(function(widget) {
-            bounds.union(widget.mesh.getBoundingBox());
-        });
-        return settings.bounds = bounds;
     }
 
     function boundsSelection() {
@@ -1639,6 +1661,137 @@ self.kiri.license = exports.LICENSE;
             bounds.union(widget.mesh.getBoundingBox());
         });
         return bounds;
+    }
+
+    /** ******************************************************************
+     * Platform Functions
+     ******************************************************************* */
+
+     function platformUpdateOrigin() {
+         let dev = settings.device;
+         let proc = settings.process;
+         let x = 0;
+         let y = 0;
+         let z = 0;
+         if (MODE === MODES.CAM && proc.camOriginTop) {
+             z = camTopZ + 0.01;
+             if (!camStock) {
+                 z += proc.camZTopOffset;
+             }
+         }
+         if (!proc.outputOriginCenter) {
+             if (camStock) {
+                 x = (-camStock.scale.x / 2) + camStock.position.x;
+                 y = (camStock.scale.y / 2) - camStock.position.y;
+             } else {
+                 x = -dev.bedWidth / 2;
+                 y = dev.bedDepth / 2;
+             }
+         } else if (camStock) {
+             x = camStock.position.x;
+             y = -camStock.position.y;
+         }
+         settings.origin = {x, y, z};
+         if (settings.controller.showOrigin) {
+             SPACE.platform.setOrigin(x,y,z);
+         } else {
+             SPACE.platform.setOrigin();
+         }
+     }
+
+     function platformUpdateTopZ() {
+         let camz = MODE === MODES.CAM && (settings.stock.z || settings.controller.alignTop);
+         let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
+         forAllWidgets(function(widget) {
+             widget.setTopZ(ztop);
+         });
+     }
+
+    function platformUpdateSize() {
+        var dev = settings.device,
+            width, depth,
+            height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
+        SPACE.platform.setRound(dev.bedRound);
+        SPACE.platform.setGZOff(height/2 - 0.1);
+        SPACE.platform.setSize(
+            width = parseInt(dev.bedWidth),
+            depth = parseInt(dev.bedDepth),
+            height
+        );
+        SPACE.platform.setHidden(width > 500 || depth > 500);
+        platform.update_origin();
+    }
+
+    function platformUpdateBounds() {
+        var bounds = new THREE.Box3();
+        forAllWidgets(function(widget) {
+            bounds.union(widget.mesh.getBoundingBox());
+        });
+        return settings.bounds = bounds;
+    }
+
+    function platformSelect(widget, shift) {
+        if (viewMode !== VIEWS.ARRANGE) return;
+        var mesh = widget.mesh,
+            sel = (selectedMeshes.indexOf(mesh) >= 0);
+        if (sel) {
+            if (shift) {
+                platform.deselect(widget)
+            } else if (selectedMeshes.length > 1) {
+                platform.deselect();
+                platform.select(widget, false);
+            }
+        } else {
+            // prevent selection in slice view
+            if (!mesh.material.visible) return;
+            if (!shift) platform.deselect();
+            selectedMeshes.push(mesh);
+            widget.setColor(widget_selected_color);
+            meshUpdateInfo(mesh);
+        }
+        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        SPACE.update();
+    }
+
+    function platformSelectedCount() {
+        return viewMode === VIEWS.ARRANGE ? selectedMeshes.length : 0;
+    }
+
+    function platformDeselect(widget) {
+        if (viewMode !== VIEWS.ARRANGE) return;
+        if (!widget) {
+            forAllWidgets(function(widget) {
+                platform.deselect(widget);
+            });
+            return;
+        }
+        var mesh = widget.mesh,
+            si = selectedMeshes.indexOf(mesh),
+            sel = (si >= 0);
+        if (sel) selectedMeshes.splice(si,1);
+        widget.setColor(widget_deselected_color);
+        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        SPACE.update();
+        meshUpdateInfo();
+    }
+
+    function platformLoad(url, onload) {
+        if (url.toLowerCase().indexOf(".stl") > 0) {
+            platform.load_stl(url, onload);
+        } else {
+            ajax(url, function(vertices) {
+                vertices = js2o(vertices).toFloat32();
+                platform.add(newWidget().loadVertices(vertices));
+                if (onload) onload(vertices);
+            });
+        }
+    }
+
+    function platformLoadSTL(url, onload) {
+        new MOTO.STL().load(url, function(vertices) {
+            platform.add(newWidget().loadVertices(vertices));
+            if (onload) onload(vertices);
+        })
     }
 
     function platformComputeMaxZ() {
@@ -1652,17 +1805,17 @@ self.kiri.license = exports.LICENSE;
     function platformAdd(widget, shift, nolayout) {
         WIDGETS.push(widget);
         SPACE.platform.add(widget.mesh);
-        widgetSelect(widget, shift);
-        platformComputeMaxZ();
+        platform.select(widget, shift);
+        platform.compute_max_z();
         if (nolayout) return;
-        if (layoutOnAdd) layoutPlatform();
+        if (layoutOnAdd) platform.layout();
     }
 
     function platformDelete(widget) {
         if (Array.isArray(widget)) {
             var mc = widget.slice(), i;
             for (i=0; i<mc.length; i++) {
-                platformDelete(mc[i].widget);
+                platform.delete(mc[i].widget);
             }
             return;
         }
@@ -1671,62 +1824,17 @@ self.kiri.license = exports.LICENSE;
         SPACE.platform.remove(widget.mesh);
         selectedMeshes.remove(widget.mesh);
         updateSliderMax();
-        platformComputeMaxZ();
-        if (MODE !== MODES.FDM) layoutPlatform();
+        platform.compute_max_z();
+        if (MODE !== MODES.FDM) platform.layout();
         SPACE.update();
-        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
+        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
     }
 
     function platformSelectAll() {
-        forAllWidgets(function(w) { widgetSelect(w, true) })
+        forAllWidgets(function(w) { platform.select(w, true) })
     }
 
-    function widgetSelect(widget, shift) {
-        if (viewMode !== VIEWS.ARRANGE) return;
-        var mesh = widget.mesh,
-            sel = (selectedMeshes.indexOf(mesh) >= 0);
-        if (sel) {
-            if (shift) {
-                widgetDeselect(widget)
-            } else if (selectedMeshes.length > 1) {
-                widgetDeselect();
-                widgetSelect(widget, false);
-            }
-        } else {
-            // prevent selection in slice view
-            if (!mesh.material.visible) return;
-            if (!shift) widgetDeselect();
-            selectedMeshes.push(mesh);
-            widget.setColor(widget_selected_color);
-            meshUpdateInfo(mesh);
-        }
-        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
-        SPACE.update();
-    }
-
-    function selectedWidgetCount() {
-        return viewMode === VIEWS.ARRANGE ? selectedMeshes.length : 0;
-    }
-
-    function widgetDeselect(widget) {
-        if (viewMode !== VIEWS.ARRANGE) return;
-        if (!widget) {
-            forAllWidgets(function(widget) {
-                widgetDeselect(widget);
-            });
-            return;
-        }
-        var mesh = widget.mesh,
-            si = selectedMeshes.indexOf(mesh),
-            sel = (si >= 0);
-        if (sel) selectedMeshes.splice(si,1);
-        widget.setColor(widget_deselected_color);
-        UI.selection.style.display = selectedWidgetCount() ? 'inline' : 'none';
-        SPACE.update();
-        meshUpdateInfo();
-    }
-
-    function layoutPlatform(event, space) {
+    function platformLayout(event, space) {
         var auto = UI.autoLayout.checked,
             layout = (viewMode === VIEWS.ARRANGE && auto),
             proc = settings.process,
@@ -1795,37 +1903,99 @@ self.kiri.license = exports.LICENSE;
         }
 
         if (MODE === MODES.CAM) {
-            updateCamStock();
+            platform.update_stock();
         }
 
         SPACE.update();
     }
 
-    function loadWidget(url, onload) {
-        if (url.toLowerCase().indexOf(".stl") > 0) {
-            loadSTL(url, onload);
-        } else {
-            ajax(url, function(vertices) {
-                vertices = js2o(vertices).toFloat32();
-                platformAdd(newWidget().loadVertices(vertices));
-                if (onload) onload(vertices);
-            });
+    function platformUpdateStock(refresh) {
+        let sd = settings.process;
+        let offset = UI.camStockOffset.checked;
+        let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
+        let scale = unitScale();
+        camTopZ = topZ;
+        // create/inject cam stock if stock size other than default
+        if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
+            UI.stock.style.display = offset ? 'inline' : 'none';
+            let csx = sd.camStockX * scale;
+            let csy = sd.camStockY * scale;
+            let csz = sd.camStockZ * scale;
+            let csox = 0;
+            let csoy = 0;
+            if (offset) {
+                let min = { x: Infinity, y: Infinity, z: 0 };
+                let max = { x: -Infinity, y: -Infinity, z: -Infinity };
+                forAllWidgets(function(widget) {
+                    let wbnd = widget.getBoundingBox(refresh);
+                    let wpos = widget.orient.pos;
+                    min = {
+                        x: Math.min(min.x, wpos.x + wbnd.min.x),
+                        y: Math.min(min.y, wpos.y + wbnd.min.y),
+                        z: 0
+                    };
+                    max = {
+                        x: Math.max(max.x, wpos.x + wbnd.max.x),
+                        y: Math.max(max.y, wpos.y + wbnd.max.y),
+                        z: Math.max(max.z, wbnd.max.z)
+                    };
+                });
+                csx += max.x - min.x;
+                csy += max.y - min.y;
+                csz += max.z - min.z;
+                csox = min.x + ((max.x - min.x) / 2);
+                csoy = min.y + ((max.y - min.y) / 2);
+                $('stock-width').innerText = (csx/scale).toFixed(2);
+                $('stock-depth').innerText = (csy/scale).toFixed(2);
+                $('stock-height').innerText = (csz/scale).toFixed(2);
+            }
+            if (!camStock) {
+                var geo = new THREE.BoxGeometry(1, 1, 1);
+                var mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
+                var cube = new THREE.Mesh(geo, mat);
+                SPACE.platform.add(cube);
+                camStock = cube;
+            }
+            settings.stock = {
+                x: csx,
+                y: csy,
+                z: csz
+            };
+            camStock.scale.x = csx;
+            camStock.scale.y = csy;
+            camStock.scale.z = csz;
+            camStock.position.x = csox;
+            camStock.position.y = csoy;
+            camStock.position.z = csz / 2;
+            camStock.material.visible = settings.mode === 'CAM';
+            camTopZ = csz;
+            platform.update_top_z();
+            SPACE.update();
+        } else if (camStock) {
+            settings.stock = { };
+            UI.stock.style.display = 'none';
+            SPACE.platform.remove(camStock);
+            SPACE.update();
+            camStock = null;
+            camTopZ = topZ;
+            platform.update_top_z();
+        } else if (settings.controller.alignTop) {
+            platform.update_top_z();
         }
+        platform.update_bounds();
+        platform.update_origin();
     }
 
-    function loadSTL(url, onload) {
-        new MOTO.STL().load(url, function(vertices) {
-            platformAdd(newWidget().loadVertices(vertices));
-            if (onload) onload(vertices);
-        })
-    }
+    /** ******************************************************************
+     * Settings Functions
+     ******************************************************************* */
 
-    function resetSettings(force) {
-        if (force || confirm('reset all values to system defaults?')) {
-            settings = settingsDefault;
-            updateFields();
-        };
-    }
+     function resetSettings(force) {
+         if (force || confirm('reset all values to system defaults?')) {
+             settings = settingsDefault;
+             updateFields();
+         };
+     }
 
     /**
      * fill in missing settings from default template to pick up new fields
@@ -1934,91 +2104,6 @@ self.kiri.license = exports.LICENSE;
         return settings;
     }
 
-    function updateWidgetsTopZ() {
-        let camz = MODE === MODES.CAM && (settings.stock.z || settings.controller.alignTop);
-        let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
-        forAllWidgets(function(widget) {
-            widget.setTopZ(ztop);
-        });
-    }
-
-    function updateCamStock(refresh) {
-        let sd = settings.process;
-        let offset = UI.camStockOffset.checked;
-        let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
-        let scale = unitScale();
-        camTopZ = topZ;
-        // create/inject cam stock if stock size other than default
-        if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
-            UI.stock.style.display = offset ? 'inline' : 'none';
-            let csx = sd.camStockX * scale;
-            let csy = sd.camStockY * scale;
-            let csz = sd.camStockZ * scale;
-            let csox = 0;
-            let csoy = 0;
-            if (offset) {
-                let min = { x: Infinity, y: Infinity, z: 0 };
-                let max = { x: -Infinity, y: -Infinity, z: -Infinity };
-                forAllWidgets(function(widget) {
-                    let wbnd = widget.getBoundingBox(refresh);
-                    let wpos = widget.orient.pos;
-                    min = {
-                        x: Math.min(min.x, wpos.x + wbnd.min.x),
-                        y: Math.min(min.y, wpos.y + wbnd.min.y),
-                        z: 0
-                    };
-                    max = {
-                        x: Math.max(max.x, wpos.x + wbnd.max.x),
-                        y: Math.max(max.y, wpos.y + wbnd.max.y),
-                        z: Math.max(max.z, wbnd.max.z)
-                    };
-                });
-                csx += max.x - min.x;
-                csy += max.y - min.y;
-                csz += max.z - min.z;
-                csox = min.x + ((max.x - min.x) / 2);
-                csoy = min.y + ((max.y - min.y) / 2);
-                $('stock-width').innerText = (csx/scale).toFixed(2);
-                $('stock-depth').innerText = (csy/scale).toFixed(2);
-                $('stock-height').innerText = (csz/scale).toFixed(2);
-            }
-            if (!camStock) {
-                var geo = new THREE.BoxGeometry(1, 1, 1);
-                var mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
-                var cube = new THREE.Mesh(geo, mat);
-                SPACE.platform.add(cube);
-                camStock = cube;
-            }
-            settings.stock = {
-                x: csx,
-                y: csy,
-                z: csz
-            };
-            camStock.scale.x = csx;
-            camStock.scale.y = csy;
-            camStock.scale.z = csz;
-            camStock.position.x = csox;
-            camStock.position.y = csoy;
-            camStock.position.z = csz / 2;
-            camStock.material.visible = settings.mode === 'CAM';
-            camTopZ = csz;
-            updateWidgetsTopZ();
-            SPACE.update();
-        } else if (camStock) {
-            settings.stock = { };
-            UI.stock.style.display = 'none';
-            SPACE.platform.remove(camStock);
-            SPACE.update();
-            camStock = null;
-            camTopZ = topZ;
-            updateWidgetsTopZ();
-        } else if (settings.controller.alignTop) {
-            updateWidgetsTopZ();
-        }
-        updatePlatformBounds();
-        updateOrigin();
-    }
-
     function updateFields() {
         updateFieldsFromSettings(settings.device);
         updateFieldsFromSettings(settings.process);
@@ -2032,7 +2117,7 @@ self.kiri.license = exports.LICENSE;
         updateSettingsFromFields(settings.layers);
         updateSettingsFromFields(settings.controller);
         saveSettings();
-        updateCamStock();
+        platform.update_stock();
     }
 
     function saveSettings() {
@@ -2087,10 +2172,10 @@ self.kiri.license = exports.LICENSE;
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
-                if (israw) platformAdd(
+                if (israw) platform.add(
                     newWidget().loadVertices(JSON.parse(e.target.result).toFloat32())
                 );
-                if (isstl) platformAdd(
+                if (isstl) platform.add(
                     newWidget()
                     .loadVertices(new MOTO.STL().parse(e.target.result))
                     .saveToCatalog(e.target.file.name)
@@ -2123,53 +2208,6 @@ self.kiri.license = exports.LICENSE;
         restoreWorkspace(null, true);
     }
 
-    function updateOrigin() {
-        let dev = settings.device;
-        let proc = settings.process;
-        let x = 0;
-        let y = 0;
-        let z = 0;
-        if (MODE === MODES.CAM && proc.camOriginTop) {
-            z = camTopZ + 0.01;
-            if (!camStock) {
-                z += proc.camZTopOffset;
-            }
-        }
-        if (!proc.outputOriginCenter) {
-            if (camStock) {
-                x = (-camStock.scale.x / 2) + camStock.position.x;
-                y = (camStock.scale.y / 2) - camStock.position.y;
-            } else {
-                x = -dev.bedWidth / 2;
-                y = dev.bedDepth / 2;
-            }
-        } else if (camStock) {
-            x = camStock.position.x;
-            y = -camStock.position.y;
-        }
-        settings.origin = {x, y, z};
-        if (settings.controller.showOrigin) {
-            SPACE.platform.setOrigin(x,y,z);
-        } else {
-            SPACE.platform.setOrigin();
-        }
-    }
-
-    function updatePlatformSize() {
-        var dev = settings.device,
-            width, depth,
-            height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
-        SPACE.platform.setRound(dev.bedRound);
-        SPACE.platform.setGZOff(height/2 - 0.1);
-        SPACE.platform.setSize(
-            width = parseInt(dev.bedWidth),
-            depth = parseInt(dev.bedDepth),
-            height
-        );
-        SPACE.platform.setHidden(width > 500 || depth > 500);
-        updateOrigin();
-    }
-
     function restoreWorkspace(ondone, skipwidgets) {
         var loaded = 0,
             toload = ls2o('ws-widgets',[]),
@@ -2198,8 +2236,8 @@ self.kiri.license = exports.LICENSE;
         }
 
         updateFields();
-        updatePlatformSize();
-        updateCamStock();
+        platform.update_size();
+        platform.update_stock();
 
         SPACE.view.reset();
 
@@ -2209,20 +2247,20 @@ self.kiri.license = exports.LICENSE;
         if (skipwidgets) return;
 
         forAllWidgets(function(widget) {
-            platformDelete(widget);
+            platform.delete(widget);
         });
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
                 if (widget) {
-                    platformAdd(widget, 0, position);
+                    platform.add(widget, 0, position);
                 }
                 if (++loaded === toload.length) {
-                    widgetDeselect();
+                    platform.deselect();
                     if (ondone) {
                         ondone();
                         // if ((newset || settings).mode != 'CAM') {
                             setTimeout(() => {
-                                updateWidgetsTopZ();
+                                platform.update_top_z();
                                 SPACE.update();
                             }, 1);
                         // };
@@ -2238,7 +2276,7 @@ self.kiri.license = exports.LICENSE;
         // free up worker cache/mem
         KIRI.work.clear();
         platformSelectAll();
-        platformDelete(selectedMeshes);
+        platform.delete(selectedMeshes);
     }
 
     function modalShowing() {
@@ -2467,7 +2505,7 @@ self.kiri.license = exports.LICENSE;
     function setViewMode(mode) {
         var oldMode = viewMode;
         viewMode = mode;
-        widgetDeselect();
+        platform.deselect();
         meshUpdateInfo();
         [ UI.modeArrange, UI.modeSlice, UI.modePreview ].forEach(function(b) {
             b.removeAttribute("class");
@@ -2507,7 +2545,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function switchMode(mode) {
-        setMode(mode, updatePlatformSize);
+        setMode(mode, platform.update_size);
     }
 
     function setMode(mode, lock, then) {
@@ -2537,7 +2575,7 @@ self.kiri.license = exports.LICENSE;
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) camStock.material.visible = settings.mode === 'CAM';
         restoreWorkspace(null,true);
-        // if (MODE !== MODES.FDM) layoutPlatform();
+        // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();
         triggerSettingsEvent();
     }
@@ -2559,21 +2597,10 @@ self.kiri.license = exports.LICENSE;
         if (kiri.init) return;
         kiri.init = init;
 
-        var assets = $('assets'),
+        let assets = $('assets'),
             control = $('control'),
             container = $('container'),
-            welcome = $('welcome'),
-            selectedTool = null,
-            editTools = null,
-            ROT = Math.PI/2,
-            ROT5 = ROT / 9,
-            ALL = [MODES.FDM, MODES.LASER, MODES.CAM],
-            CAM = [MODES.CAM],
-            FDM = [MODES.FDM],
-            FDM_CAM = [MODES.CAM,MODES.FDM],
-            FDM_LASER = [MODES.LASER,MODES.FDM],
-            CAM_LASER = [MODES.LASER,MODES.CAM],
-            LASER = [MODES.LASER];
+            welcome = $('welcome');
 
         WIN.addEventListener("resize", onWindowResize);
 
@@ -2693,13 +2720,13 @@ self.kiri.license = exports.LICENSE;
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
-                    UC.newButton("FDM Printing", function() { setMode('FDM',null,updatePlatformSize) }),
+                    UC.newButton("FDM Printing", function() { setMode('FDM',null,platform.update_size) }),
                 ],[
                     UI.modeLASER =
-                    UC.newButton("Laser Cutting", function() { setMode('LASER',null,updatePlatformSize) }),
+                    UC.newButton("Laser Cutting", function() { setMode('LASER',null,platform.update_size) }),
                 ],[
                     UI.modeCAM =
-                    UC.newButton("CNC Milling",   function() { setMode('CAM',null,updatePlatformSize) }, {id:"modeCAM"}),
+                    UC.newButton("CNC Milling",   function() { setMode('CAM',null,platform.update_size) }, {id:"modeCAM"}),
                 ]
             ]),
             system: UC.newGroup('setup'),
@@ -2726,7 +2753,7 @@ self.kiri.license = exports.LICENSE;
                     UC.newButton("+")
                 ],[
                     UI.modeArrange =
-                    UC.newButton("Arrange", layoutPlatform),
+                    UC.newButton("Arrange", platform.layout),
                 ],[
                     UI.modeSlice =
                     UC.newButton("Slice",   prepareSlices)
@@ -2960,7 +2987,7 @@ self.kiri.license = exports.LICENSE;
             settings.controller.alignTop = UI.alignTop.checked;
             settings.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
-            updateOrigin();
+            platform.update_origin();
             saveSettings();
         }
 
@@ -3004,7 +3031,7 @@ self.kiri.license = exports.LICENSE;
                     // dismiss modals
                     hideModal();
                     // deselect widgets
-                    widgetDeselect();
+                    platform.deselect();
                     // hide all dialogs
                     hideDialog();
                     // cancel slicing
@@ -3025,7 +3052,7 @@ self.kiri.license = exports.LICENSE;
                 case 46: // others: delete
                     if (inputHasFocus()) return false;
                     if (selectedMeshes.length > 0) {
-                        platformDelete(selectedMeshes);
+                        platform.delete(selectedMeshes);
                     }
                     evt.preventDefault();
                     break;
@@ -3063,7 +3090,7 @@ self.kiri.license = exports.LICENSE;
                     if (evt.metaKey) {
                         if (inputHasFocus()) return false;
                         evt.preventDefault();
-                        widgetDeselect();
+                        platform.deselect();
                         platformSelectAll();
                     }
                     break;
@@ -3188,7 +3215,7 @@ self.kiri.license = exports.LICENSE;
                     break;
                 case cca('d'): // duplicate object
                     sel = selectedMeshes.slice();
-                    widgetDeselect();
+                    platform.deselect();
                     for (i=0; i<sel.length; i++) {
                         m = sel[i].clone();
                         m.geometry = m.geometry.clone();
@@ -3196,7 +3223,7 @@ self.kiri.license = exports.LICENSE;
                         bb = m.getBoundingBox();
                         var nw = newWidget().loadGeometry(m.geometry);
                         nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-                        platformAdd(nw,true);
+                        platform.add(nw,true);
                     }
                     break;
                 case cca('m'): // mirror object
@@ -3210,7 +3237,7 @@ self.kiri.license = exports.LICENSE;
                     prepareSlices();
                     break;
                 case cca('a'): // auto arrange items on platform
-                    layoutPlatform();
+                    platform.layout();
                     break;
                 case cca('w'): // toggle wireframe on widgets
                     toggleWireframe(wireframe_color, wireframe_model_opacity);
@@ -3525,7 +3552,7 @@ self.kiri.license = exports.LICENSE;
                 UI.deviceDelete.disabled = !local;
 
                 updateFields();
-                updatePlatformSize();
+                platform.update_size();
 
                 settings.filter[mode] = devicename;
                 settings.cdev[mode] = dev;
@@ -3790,7 +3817,7 @@ self.kiri.license = exports.LICENSE;
 
         function loadCatalogFile(e) {
             Widget.loadFromCatalog(e.target.getAttribute('load'), function(widget) {
-                platformAdd(widget);
+                platform.add(widget);
                 hideDialog();
             });
         }
@@ -3836,7 +3863,7 @@ self.kiri.license = exports.LICENSE;
             onControlResize();
         }
 
-        SPACE.addEventHandlers(SELF, [
+        SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
             'keypress', keyHandler,
@@ -3860,8 +3887,8 @@ self.kiri.license = exports.LICENSE;
             UI.toolShaftDiam,    updateTool,
             UI.toolShaftLen,     updateTool,
 
-            UI.bedWidth,         updatePlatformSize,
-            UI.bedDepth,         updatePlatformSize
+            UI.bedWidth,         platform.update_size,
+            UI.bedDepth,         platform.update_size
         ]);
 
         UI.setupDevices.innerHTML = "D<u>e</u>vices";
@@ -3942,9 +3969,9 @@ self.kiri.license = exports.LICENSE;
         SPACE.mouse.upSelect(function(selection, event) {
             if (event && event.target.nodeName === "CANVAS") {
                 if (selection) {
-                    widgetSelect(selection.object.widget, event.shiftKey);
+                    platform.select(selection.object.widget, event.shiftKey);
                 } else {
-                    widgetDeselect();
+                    platform.deselect();
                 }
             } else {
                 return meshArray();
@@ -3956,7 +3983,7 @@ self.kiri.license = exports.LICENSE;
                 forSelectedWidgets(function(widget) {
                     widget.move(delta.x, delta.y, 0);
                 });
-                updateCamStock();
+                platform.update_stock();
             } else {
                 return selectedMeshes.length > 0;
             }
@@ -3967,9 +3994,9 @@ self.kiri.license = exports.LICENSE;
             if (!SDB[SEED]) {
                 SDB[SEED] = new Date().getTime();
                 if (!SETUP.s) {
-                    loadSTL("/obj/cube.stl", function(vert) {
+                    platform.load_stl("/obj/cube.stl", function(vert) {
                         CATALOG.putFile("sample cube.stl", vert);
-                        platformComputeMaxZ();
+                        platform.compute_max_z();
                         SPACE.view.home();
                         setTimeout(saveWorkspace,500);
                         ondone();
@@ -3982,7 +4009,7 @@ self.kiri.license = exports.LICENSE;
         }
 
         function ondone() {
-            widgetDeselect();
+            platform.deselect();
             CATALOG.addFileListener(updateCatalog);
             SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
             SPACE.platform.setZOff(0.2);
@@ -4032,7 +4059,7 @@ self.kiri.license = exports.LICENSE;
 
             setMode(SETMODE || STARTMODE || settings.mode, SETMODE);
             setControlsVisible(true);
-            updatePlatformSize();
+            platform.update_size();
             takeFocus();
 
             if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
