@@ -807,7 +807,9 @@ let ver = require('../js/license.js'),
             "kiri-print",
             "kiri-codec",
             "kiri-work",
-            "kiri"
+            "kiri-conf",
+            "kiri",
+            "kiri-init"
         ],
         meta : [
             "license",

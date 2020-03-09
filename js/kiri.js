@@ -7,491 +7,8 @@ self.kiri.copyright = exports.COPYRIGHT;
 self.kiri.license = exports.LICENSE;
 
 (function () {
-    if (kiri.init) return;
-
-    function genID() {
-        while (true) {
-            var k = Math.round(Math.random() * 9999999999).toString(36);
-            if (k.length >= 4 && k.length <= 8) return k;
-        }
-    }
 
     let iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
-        // ---------------
-        MODES = {
-            FDM: 1,   // fused deposition modeling (also FFF)
-            LASER: 2, // laser cutting
-            CAM: 3    // 3 axis milling/machining
-        },
-        VIEWS = {
-            ARRANGE: 1,
-            SLICE: 2,
-            PREVIEW: 3
-        },
-        // --------------- settings filters (for loading/saving)
-        sf = {
-            fdm:{
-                // fields permitted in FDM:Device
-                d:{
-                    bedWidth: 1,
-                    bedDepth: 1,
-                    bedHeight: 1,
-                    bedRound: 1,
-                    maxHeight: 1,
-                    extrudeAbs: 1,
-                    originCenter: 1,
-                    filamentSize: 1,
-                    nozzleSize: 1,
-                    gcodePre: 1,
-                    gcodePost: 1,
-                    gcodeProc: 1,
-                    gcodePause: 1,
-                    gcodeFExt: 1,
-                    gcodeFan: 1,
-                    gcodeTrack: 1,
-                    gcodeLayer: 1
-                },
-                // fields permitted in FDM:Process
-                p:{
-                    processName: 1,
-                    sliceHeight: 1,
-                    sliceShells: 1,
-                    sliceFillAngle: 1,
-                    sliceFillOverlap: 1,
-                    sliceFillSparse: 1,
-                    sliceFillType: 1,
-                    sliceSupportEnable: 1,
-                    sliceSupportDensity: 1,
-                    sliceSupportOffset: 1,
-                    sliceSupportGap: 1,
-                    sliceSupportSize: 1,
-                    sliceSupportArea: 1,
-                    sliceSupportExtra: 1,
-                    sliceSupportSpan: 1,
-                    sliceSolidMinArea: 1,
-                    sliceSolidLayers: 1,
-                    sliceBottomLayers: 1,
-                    sliceTopLayers: 1,
-                    firstSliceHeight: 1,
-                    firstLayerRate: 1,
-                    firstLayerFillRate: 1,
-                    firstLayerPrintMult: 1,
-                    firstLayerNozzleTemp: 1,
-                    firstLayerBedTemp: 1,
-                    outputRaft: 1,
-                    outputRaftSpacing: 1,
-                    outputTemp: 1,
-                    outputFanMax: 1,
-                    outputBedTemp: 1,
-                    outputFeedrate: 1,
-                    outputFinishrate: 1,
-                    outputSeekrate: 1,
-                    outputShellMult: 1,
-                    outputFillMult: 1,
-                    outputSparseMult: 1,
-                    outputFanLayer: 1,
-                    outputRetractDist: 1,
-                    outputRetractSpeed: 1,
-                    outputRetractDwell: 1,
-                    outputBrimCount: 1,
-                    outputBrimOffset: 1,
-                    outputShortPoly: 1,
-                    outputMinSpeed: 1,
-                    outputCoastDist: 1,
-                    outputWipeDistance: 1,
-                    sliceMinHeight: 1,
-                    // detectThinWalls: 1,
-                    antiBacklash: 1,
-                    zHopDistance: 1,
-                    polishLayers: 1,
-                    polishSpeed: 1,
-                    outputLayerRetract: 1,
-                    gcodeNozzle: 1,
-                    gcodePauseLayers: 1,
-                    outputClockwise: 1,
-                    outputOriginCenter: 1,
-                    outputInvertX: 1,
-                    outputInvertY: 1
-                }
-            },
-            cam:{
-                // fields permitted in CAM:Device
-                d:{
-                    bedWidth: 1,
-                    bedDepth: 1,
-                    bedHeight: 1,
-                    originCenter: 1,
-                    spindleMax: 1,
-                    gcodePre: 1,
-                    gcodePost: 1,
-                    gcodeDwell: 1,
-                    gcodeChange: 1,
-                    gcodeSpindle: 1,
-                    gcodeFExt: 1,
-                    gcodeSpace: 1,
-                    gcodeStrip: 1
-                },
-                // fields permitted in CAM:Process
-                p:{
-                    processName: 1,
-                    camFastFeed: 1,
-                    roughingTool: 1,
-                    roughingSpindle: 1,
-                    roughingDown: 1,
-                    roughingOver: 1,
-                    roughingSpeed: 1,
-                    roughingPlunge: 1,
-                    roughingStock: 1,
-                    camPocketOnlyRough: 1,
-                    roughingOn: 1,
-                    finishingTool: 1,
-                    finishingSpindle: 1,
-                    finishingDown: 1,
-                    finishingOver: 1,
-                    finishingAngle: 1,
-                    finishingSpeed: 1,
-                    finishingPlunge: 1,
-                    finishingOn: 1,
-                    finishingXOn: 1,
-                    finishingYOn: 1,
-                    finishCurvesOnly: 1,
-                    camPocketOnlyFinish: 1,
-                    drillTool: 1,
-                    drillSpindle: 1,
-                    drillDownSpeed: 1,
-                    drillDown: 1,
-                    drillDwell: 1,
-                    drillLift: 1,
-                    drillingOn: 1,
-                    camTabsAngle: 1,
-                    camTabsCount: 1,
-                    camTabsWidth: 1,
-                    camTabsHeight: 1,
-                    camTabsOn: 1,
-                    camPocketOnly: 1,
-                    camDepthFirst: 0,
-                    camEaseDown: 1,
-                    camOriginTop: 1,
-                    camTolerance: 1,
-                    camZTopOffset: 1,
-                    camZBottom: 1,
-                    camZClearance: 1,
-                    camStockX: 1,
-                    camStockY: 1,
-                    camStockZ: 1,
-                    camStockOffset: 1,
-                    outputClockwise: 1,
-                    outputOriginCenter: 1,
-                    outputInvertX: 1,
-                    outputInvertY: 1
-                }
-            },
-            laser: {
-                // fields permitted in Laser:Device
-                d:{
-                    bedWidth: 1,
-                    bedDepth: 1,
-                },
-                // fields permitted in Laser:Process
-                p:{
-                    processName: 1,
-                    laserOffset: 1,
-                    laserSliceHeight: 1,
-                    laserSliceSingle: 1,
-                    outputTileSpacing: 1,
-                    outputTileScaling: 1,
-                    outputLaserPower: 1,
-                    outputLaserSpeed: 1,
-                    outputLaserGroup: 1,
-                    outputOriginCenter: 1,
-                    outputInvertX: 1,
-                    outputInvertY: 1
-                }
-            }
-        },
-        // --------------- (default)
-        settings = {
-            infill:[
-                { name: "vase" },
-                { name: "hex" },
-                { name: "grid" },
-                { name: "gyroid" },
-                { name: "triangle" }
-            ],
-            units:[
-                { name: "mm" },
-                { name: "in" }
-            ],
-            // CAM only
-            bounds: {},
-            origin: {},
-            stock: {},
-            tools:[
-                {
-                    id: 1000,
-                    number: 1,
-                    type: "endmill",
-                    name: "end 1/4",
-                    metric: false,
-                    flute_diam: 0.25,
-                    flute_len: 0,
-                    shaft_diam: 0.25,
-                    shaft_len: 0
-                },
-                {
-                    id: 1001,
-                    number: 2,
-                    type: "endmill",
-                    name: "end 1/8",
-                    metric: false,
-                    flute_diam: 0.125,
-                    flute_len: 0,
-                    shaft_diam: 0.125,
-                    shaft_len: 0
-                },
-                {
-                    id: 1002,
-                    number: 3,
-                    type: "endmill",
-                    name: "end 1/16",
-                    metric: false,
-                    flute_diam: 0.0625,
-                    flute_len: 0,
-                    shaft_diam: 0.0625,
-                    shaft_len: 0
-                }
-            ],
-            // FDM/CAM/Laser
-            device:{
-                bedWidth: 300,      // FDM/CAM/Laser
-                bedDepth: 175,      // FDM/CAM/Laser
-                bedHeight: 2.5,     // display only (deprecate)
-                bedRound: false,    // FDM
-                originCenter: false,// FDM/CAM
-                maxHeight: 150,     // FDM
-                filamentSize: 1.75, // FDM
-                nozzleSize: 0.4,    // FDM
-                spindleMax: 0,      // CAM
-                gcodePre: [],       // FDM/CAM header script
-                gcodePost: [],      // FDM/CAM footer script
-                gcodeProc: "",      // FDM post processor script (encoding, etc)
-                gcodePause: [],     // FDM pause script
-                gcodeFan: "",       // FDM fan command
-                gcodeTrack: "",     // FDM progress command
-                gcodeLayer: "",     // FDM layer output
-                gcodeDwell: ["G4 P{time}"],     // CAM dwell script
-                gcodeChange: ["M6 T{tool}"],    // CAM tool change script
-                gcodeSpindle: ["M3 S{speed}"],  // CAM spindle speed
-                gcodeFExt: "",      // CAM file extension
-                gcodeSpace: "",     // CAM token spacing
-                gcodeStrip: true    // CAM strip comments
-            },
-            // FDM/CAM/Laser
-            process:{
-                processName: "default",
-
-                // --- FDM ---
-
-                sliceHeight: 0.25,
-                sliceShells: 3,
-                sliceFillAngle: 45,
-                sliceFillOverlap: 0.3,
-                sliceFillSparse: 0.5,
-                sliceFillType: "hex",
-
-                sliceSupportEnable: false,
-                sliceSupportDensity: 0.25,
-                sliceSupportOffset: 1.0,
-                sliceSupportGap: 1,
-                sliceSupportSize: 10,
-                sliceSupportArea: 1,
-                sliceSupportExtra: 0,
-                sliceSupportSpan: 6,
-
-                sliceSolidMinArea: 1,
-                sliceSolidLayers: 3,
-                sliceBottomLayers: 3,
-                sliceTopLayers: 3,
-
-                firstSliceHeight: 0.25,
-                firstLayerRate: 30,
-                firstLayerFillRate: 40,
-                firstLayerPrintMult: 1.0,
-                outputRaft: false,
-                outputRaftSpacing: 0.2,
-                firstLayerNozzleTemp: 0,
-                firstLayerBedTemp: 0,
-
-                outputTemp: 200,
-                outputFanMax: 255,
-                outputBedTemp: 0,
-                outputFeedrate: 80,
-                outputFinishrate: 60,
-                outputSeekrate: 100,
-                outputShellMult: 1.2,
-                outputFillMult: 1.2,
-                outputSparseMult: 1.2,
-                outputFanLayer: 1,
-                outputRetractDist: 1.0,
-                outputRetractSpeed: 40,
-                outputRetractDwell: 30,
-                outputBrimCount: 2,
-                outputBrimOffset: 2,
-                outputShortPoly: 50.0,
-                outputMinSpeed: 15.0,
-                outputCoastDist: 0,
-                outputWipeDistance: 0,
-                sliceMinHeight: 0,
-                detectThinWalls: false,
-                antiBacklash: 1,
-                zHopDistance: 0.2,
-                polishLayers: 0,
-                polishSpeed: 40,
-                outputLayerRetract: false,
-                gcodeNozzle: 0,
-                gcodePauseLayers: "",
-
-                // --- LASER ---
-
-                laserOffset: 0.25,
-                laserSliceHeight: 1,
-                laserSliceSingle: false,
-
-                outputTileSpacing: 1,
-                outputTileScaling: 1,
-                outputLaserPower: 100,
-                outputLaserSpeed: 1000,
-                outputLaserGroup: true,
-
-                // --- CAM ---
-
-                camFastFeed: 6000,
-
-                roughingTool: 1000,
-                roughingSpindle: 1000,
-                roughingDown: 2,
-                roughingOver: 0.5,
-                roughingSpeed: 1000,
-                roughingPlunge: 250,
-                roughingStock: 0,
-                camPocketOnlyRough: false,
-                roughingOn: true,
-
-                finishingTool: 1000,
-                finishingSpindle: 1000,
-                finishingDown: 3,
-                finishingOver: 0.5,
-                finishingAngle: 85,
-                finishingSpeed: 800,
-                finishingPlunge: 250,
-                finishingOn: true,
-                finishingXOn: true,
-                finishingYOn: true,
-                finishCurvesOnly: false,
-                camPocketOnlyFinish: false,
-
-                drillTool: 1000,
-                drillSpindle: 1000,
-                drillDownSpeed: 250,
-                drillDown: 5,
-                drillDwell: 250,
-                drillLift: 2,
-                drillingOn: false,
-
-                camTabsAngle: 0,
-                camTabsCount: 4,
-                camTabsWidth: 5,
-                camTabsHeight: 5,
-                camTabsOn: false,
-
-                camPocketOnly: false,
-                camDepthFirst: false,
-                camEaseDown: false,
-                camOriginTop: true,
-                camTolerance: 0.15,
-                camZTopOffset: 0,
-                camZBottom: 0,
-                camZClearance: 1,
-
-                camStockX: 0,
-                camStockY: 0,
-                camStockZ: 0,
-                camStockOffset: true,
-
-                outputClockwise: true,
-
-                // --- shared FDM/Laser/CAM ---
-
-                outputOriginCenter: true,
-                outputInvertX: false,
-                outputInvertY: false
-            },
-            // current process name
-            cproc:{
-                FDM: "default",
-                CAM: "default",
-                LASER: "default"
-            },
-            // saved processes by name
-            sproc:{
-                FDM: {},
-                CAM: {},
-                LASER: {}
-            },
-            // cached device settings by mode
-            cdev: {
-                FDM: null,
-                CAM: null
-            },
-            // now they're called devices instead of gcode filters
-            filter:{
-                FDM: "Any.Generic.Marlin",
-                CAM: "Any.Generic.Grbl"
-            },
-            // custom devices by name
-            devices:{
-            },
-            // favorite devices
-            favorites:{
-            },
-            // map of device to last process setting (name)
-            devproc: {
-            },
-            layers:{
-                layerOutline: true,
-                layerTrace: true,
-                layerFacing: true,
-                layerRough: true,
-                layerFinish: true,
-                layerFinishX: true,
-                layerFinishY: true,
-                layerDelta: false,
-                layerSolid: false,
-                layerSparse: true,
-                layerFill: true,
-                layerSupport: true,
-                layerPrint: false
-            },
-            synth: {
-                // set in updateSettingsFromFields()
-                fillOffsetMult: 0,
-                diffOffsetMult: 0
-            },
-            controller:{
-                view: null,
-                zoomSpeed: 1.0,
-                reverseZoom: true,
-                showOrigin: false,
-                freeLayout: true,
-                autoLayout: true,
-                alignTop: true,
-                units: "mm"
-            },
-            mode: 'FDM',
-            id: genID(),
-            ver: 1
-        },
-        settingsDefault = settings,
         autoDecimate = true,
         // ---------------
         MOTO    = moto,
@@ -515,13 +32,17 @@ self.kiri.license = exports.LICENSE;
         STATS   = new Stats(SDB),
         SEED    = 'kiri-seed',
         // ---------------
+        MODES   = KIRI.conf.MODES,
+        VIEWS   = KIRI.conf.VIEWS,
+        filter  = KIRI.conf.filter,
+        settings = KIRI.conf.template,
+        settingsDefault = settings,
+        // ---------------
         Widget    = kiri.Widget,
         newWidget = kiri.newWidget,
         // ---------------
         UI = {},
-        UC = MOTO.ui.prefix('kiri').inputAction(updateSettings).hideAction(onControlResize),
-        DEFMODE = SETUP.dm && SETUP.dm.length === 1 ? SETUP.dm[0] : 'FDM',
-        STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
+        UC = MOTO.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
         MODE = MODES.FDM,
         onEvent = {},
         screenShot = null,
@@ -545,32 +66,18 @@ self.kiri.license = exports.LICENSE;
         sliced_opacity_cam = 0.25,
         // ---------------
         printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1,
-        catalogSize = 0,
         showLayerRange = 0,
         showLayerValue = 0,
         showLayerMax = 0,
         renderMode = 4,
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
-        deviceLock = false,
         local = SETUP.local,
         mouseMoved = false,
         camStock = null,
         camTopZ = 0,
         topZ = 0,
-        // origin = {x:0, y:0, z:0},
-        showFavorites = SDB['dev-favorites'] === 'true',
-        selectedTool = null,
-        editTools = null,
-        ROT = Math.PI/2,
-        ROT5 = ROT / 9,
-        ALL = [MODES.FDM, MODES.LASER, MODES.CAM],
-        CAM = [MODES.CAM],
-        FDM = [MODES.FDM],
-        FDM_CAM = [MODES.CAM,MODES.FDM],
-        FDM_LASER = [MODES.LASER,MODES.FDM],
-        CAM_LASER = [MODES.LASER,MODES.CAM],
-        LASER = [MODES.LASER];
+        showFavorites = SDB['dev-favorites'] === 'true';
 
     // seed defaults. will get culled on save
     settings.sproc.FDM.default = clone(settings.process);
@@ -579,12 +86,27 @@ self.kiri.license = exports.LICENSE;
     settings.cdev.FDM = clone(settings.device);
     settings.cdev.CAM = clone(settings.device);
 
+    // add show() to catalog
+    CATALOG.show = showCatalog;
+
     DBUG.enable();
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
 
     let alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
+
+    const selection = {
+        opacity: setOpacity,
+        move: moveSelection,
+        scale: scaleSelection,
+        rotate: rotateSelection,
+        bounds: boundsSelection,
+        meshes: function() { return selectedMeshes.slice() },
+        widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
+        for_meshes: forSelectedMeshes,
+        for_widgets: forSelectedWidgets
+    };
 
     const platform = {
         add: platformAdd,
@@ -601,49 +123,109 @@ self.kiri.license = exports.LICENSE;
         update_bounds: platformUpdateBounds,
         update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
-        update_top_z: platformUpdateTopZ
+        update_top_z: platformUpdateTopZ,
+        load_files: loadFiles
     };
 
-    KIRI.api = {
-        ui : UI,
-        on : addOnEvent,
-        sdb : SDB,
-        o2js : o2js,
-        js2o : js2o,
-        ajax : ajax,
-        help : showHelp,
-        load : platform.load,
-        alert: alert2,
-        focus : takeFocus,
-        stats : STATS,
-        import : loadFile,
-        catalog : CATALOG,
-        getMode : getMode,
-        setMode : setMode,
-        switchMode : switchMode,
-        showModal : showModal,
-        hideModal : hideModal,
-        showDialog : showDialog,
-        hideDialog : hideDialog,
-        showCatalog : showCatalog,
-        addWidget : platformAdd,
-        selectAll : platformSelectAll,
-        selectNone : platform.deselect,
-        showProgress : setProgress,
-        clearWorker : KIRI.work.clear,
-        getSettings : getSettings,
-        putSettings : putSettings,
-        gridDetect : function() { return false },
-        ghostDetect : function() { return false },
-        hideImport : function() { UI.import.style.display = 'none' },
+    const API = KIRI.api = {
+        ui: UI,
+        uc: UC,
+        sdb: SDB,
+        o2js: o2js,
+        js2o: js2o,
+        ajax: ajax,
+        focus: setFocus,
+        stats: STATS,
+        catalog: CATALOG,
+        conf: {
+            get: getSettings,
+            put: putSettings,
+            load: loadNamedSetting,
+            save: saveSettings,
+            show: showSettings,
+            update: updateSettings
+        },
+        const: {
+            SEED,
+            LANG,
+            LOCAL,
+            MODES,
+            VIEWS,
+            SETUP
+        },
+        device: {
+            get: currentDeviceName
+        },
+        dialog: {
+            show: showDialog,
+            hide: hideDialog,
+            update: updateDialogLeft
+        },
+        help: {
+            show: showHelp,
+            file: showHelpFile
+        },
+        event: {
+            on: addOnEvent,
+            emit: sendOnEvent,
+            import: loadFile,
+            alerts: updateAlerts,
+            settings: triggerSettingsEvent
+        },
+        function: {
+            slice: prepareSlices,
+            print: preparePrint,
+            export: exportPrint,
+            clear: clearWidgetCache
+        },
+        modal: {
+            show: showModal,
+            hide: hideModal,
+            visible: modalShowing
+        },
+        mode: {
+            get_lower: getModeLower,
+            get_id: function() { return MODE },
+            get: getMode,
+            set: setMode,
+            switch: switchMode
+        },
         mouse : {
             moved : function() { return mouseMoved },
             movedSet : function(b) { mouseMoved = b }
         },
-        const: {
-            MODES,
-            VIEWS
-        }
+        probe: {
+            local : function() { return false },
+            grid : function() { return false },
+        },
+        platform,
+        selection,
+        show: {
+            alert: alert2,
+            progress: setProgress,
+            controls: setControlsVisible,
+            favorites: getShowFavorites,
+            slices: showSlices,
+            local: showLocal
+        },
+        space: {
+            restore: restoreWorkspace,
+            clear: clearWorkspace,
+            save: saveWorkspace,
+        },
+        view: {
+            get: function() { return viewMode },
+            set: setViewMode,
+            update_fields: updateFields
+        },
+        widgets: {
+            new: newWidget,
+            all: function() { return WIDGETS.slice() },
+            for: forAllWidgets,
+            load: Widget.loadFromCatalog,
+            meshes: meshArray
+        },
+        work: KIRI.work
     };
 
     /** ******************************************************************
@@ -742,6 +324,13 @@ self.kiri.license = exports.LICENSE;
          }
      }
 
+     function getShowFavorites(bool) {
+         if (bool !== undefined) {
+             return SDB['dev-favorites'] = showFavorites = bool;
+         }
+         return showFavorites;
+     }
+
      function sendOnEvent(name, data) {
          if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
              fn(data);
@@ -794,12 +383,6 @@ self.kiri.license = exports.LICENSE;
 
     function ls2o(key,def) {
         return js2o(SDB.getItem(key),def);
-    }
-
-    function set(to, from) {
-        for (var k in from) {
-            if (from.hasOwnProperty(k)) to[k] = from[k];
-        }
     }
 
     function cull(o, f) {
@@ -1214,7 +797,7 @@ self.kiri.license = exports.LICENSE;
         function gridlocal_probe(ev, devs) {
             if (ev && ev.code !== 'Enter') return;
 
-            if (!devs && KIRI.api.gridDetect(gridlocal_probe)) return;
+            if (!devs && API.probe.local(gridlocal_probe)) return;
 
             grid_local = devs;
 
@@ -1271,7 +854,7 @@ self.kiri.license = exports.LICENSE;
 
             if (!apik) $('gpapik').style.display = 'none';
 
-            if (!host && KIRI.api.ghostDetect(gridhost_probe)) return;
+            if (!host && API.probe.grid(gridhost_probe)) return;
 
             if (!host) return;
 
@@ -1553,7 +1136,7 @@ self.kiri.license = exports.LICENSE;
                     if (callback && typeof callback === 'function') callback();
                 }
                 // update slider window
-                onControlResize();
+                updateDialogLeft();
                 // handle slicing errors
                 if (error && !errored) {
                     errored = true;
@@ -1812,6 +1395,9 @@ self.kiri.license = exports.LICENSE;
     }
 
     function platformDelete(widget) {
+        if (!widget) {
+            return;
+        }
         if (Array.isArray(widget)) {
             var mc = widget.slice(), i;
             for (i=0; i<mc.length; i++) {
@@ -2125,21 +1711,21 @@ self.kiri.license = exports.LICENSE;
         cull(settings, settingsDefault);
         switch (settings.mode) {
             case 'FDM':
-                cull(settings.device, sf.fdm.d);
-                cull(settings.process, sf.fdm.p);
+                cull(settings.device, filter.fdm.d);
+                cull(settings.process, filter.fdm.p);
                 break;
             case 'CAM':
-                cull(settings.device, sf.cam.d);
-                cull(settings.process, sf.cam.p);
+                cull(settings.device, filter.cam.d);
+                cull(settings.process, filter.cam.p);
                 break;
             case 'LASER':
-                cull(settings.device, sf.laser.d);
-                cull(settings.process, sf.laser.p);
+                cull(settings.device, filter.laser.d);
+                cull(settings.process, filter.laser.p);
                 settings.cdev.LASER = clone(settings.device);
                 break;
         }
-        cull(settings.cdev.FDM, sf.fdm.d);
-        cull(settings.cdev.CAM, sf.cam.d);
+        cull(settings.cdev.FDM, filter.fdm.d);
+        cull(settings.cdev.CAM, filter.cam.d);
         // store camera view
         var view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
@@ -2275,7 +1861,7 @@ self.kiri.license = exports.LICENSE;
     function clearWorkspace() {
         // free up worker cache/mem
         KIRI.work.clear();
-        platformSelectAll();
+        platform.select_all();
         platform.delete(selectedMeshes);
     }
 
@@ -2411,7 +1997,7 @@ self.kiri.license = exports.LICENSE;
             row.appendChild(del);
             table.appendChild(row);
         });
-        onControlResize();
+        updateDialogLeft();
     }
 
     function showSettings() {
@@ -2419,13 +2005,9 @@ self.kiri.license = exports.LICENSE;
         showDialog("settings");
     }
 
-    function onWindowResize() {
-        onControlResize();
-    }
-
-    function onControlResize() {
-        var left = UI.ctrlLeft.getBoundingClientRect(),
-            right = UI.ctrlRight.getBoundingClientRect();
+    function updateDialogLeft() {
+        let left = UI.ctrlLeft.getBoundingClientRect();
+        let right = UI.ctrlRight.getBoundingClientRect();
         UI.catalog.style.left = (left.width + 5) + 'px';
         UI.devices.style.left = (left.width + 5) + 'px';
         UI.tools.style.left = (left.width + 5) + 'px';
@@ -2436,11 +2018,11 @@ self.kiri.license = exports.LICENSE;
         UI.modal.style.display = 'none';
     }
 
-    function showHelpLocal() {
-        showHelp("/kiri/help.html");
+    function showHelp() {
+        showHelpFile("/kiri/help.html");
     }
 
-    function showHelp(local) {
+    function showHelpFile(local) {
         hideDialog();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
@@ -2487,7 +2069,7 @@ self.kiri.license = exports.LICENSE;
             });
     }
 
-    function takeFocus(el) {
+    function setFocus(el) {
         DOC.activeElement.blur();
         el = [ el || DOC.body, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
         for (var es, i=0; i<el.length; i++) {
@@ -2530,10 +2112,6 @@ self.kiri.license = exports.LICENSE;
                 return;
         }
         DOC.activeElement.blur();
-    }
-
-    function inMode(mode) {
-        return settings.mode === mode;
     }
 
     function getMode() {
@@ -2589,1527 +2167,11 @@ self.kiri.license = exports.LICENSE;
         UI.ctrlRight.style.display = show ? 'block' : 'none';
     }
 
-    /** ******************************************************************
-     * LETS_GET_THIS_PARTY_STARTED()
-     ******************************************************************* */
-
-    function init() {
-        if (kiri.init) return;
-        kiri.init = init;
-
-        let assets = $('assets'),
-            control = $('control'),
-            container = $('container'),
-            welcome = $('welcome');
-
-        WIN.addEventListener("resize", onWindowResize);
-
-        SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(0xffffff);
-        SPACE.init(container, function (delta) {
-            if (showLayerMax === 0) return;
-            if (settings.controller.reverseZoom) delta = -delta;
-            if (delta > 0) showLayerValue--;
-            else if (delta < 0) showLayerValue++;
-            showSlices();
-        });
-        SPACE.platform.onMove(saveSettings);
-        SPACE.platform.setRound(true);
-
-        set(UI, {
-            container: container,
-            ctrlLeft: $('control-left'),
-            ctrlRight: $('control-right'),
-            layerView: $('layer-view'),
-            layerSlider: $('layer-slider'),
-            modelOpacity: $('opacity'),
-
-            assets: assets,
-            control: control,
-            modal: $('modal'),
-            print: $('print'),
-            local: $('local'),
-            help: $('help'),
-
-            alert: {
-                dialog: $('alert-area'),
-                text: $('alert-text')
-            },
-
-            devices: $('devices'),
-            deviceAdd: $('device-add'),
-            deviceDelete: $('device-del'),
-            deviceSave: $('device-save'),
-            deviceClose: $('device-close'),
-            deviceSelect: $('device-select'),
-            deviceFavorites: $('device-favorites'),
-            deviceAll: $('device-all'),
-
-            device: UC.newGroup("device", $('device')),
-            deviceName: UC.newInput(LANG.dev_name, {size:20, text:true}),
-            setDeviceFilament: UC.newInput(LANG.dev_fil, {title:LANG.dev_fil_desc, convert:UC.toFloat, modes:FDM}),
-            setDeviceNozzle: UC.newInput(LANG.dev_nozl, {title:LANG.dev_nozl_desc, convert:UC.toFloat, modes:FDM}),
-            setDeviceWidth: UC.newInput(LANG.dev_bedw, {title:LANG.dev_bedw_desc, convert:UC.toInt}),
-            setDeviceDepth: UC.newInput(LANG.dev_bedd, {title:LANG.dev_bedd_desc, convert:UC.toInt}),
-            setDeviceHeight: UC.newInput(LANG.dev_bedhm, {title:LANG.dev_bedhm_desc, convert:UC.toInt, modes:FDM}),
-            setDeviceMaxSpindle: UC.newInput(LANG.dev_spmax, {title:LANG.dev_spmax_desc, convert:UC.toInt, modes:CAM}),
-            setDeviceExtrusion: UC.newBoolean(LANG.dev_extab, onBooleanClick, {title:LANG.dev_extab_desc}),
-            setDeviceOrigin: UC.newBoolean(LANG.dev_orgc, onBooleanClick, {title:LANG.dev_orgc_desc}),
-            setDeviceOriginTop: UC.newBoolean(LANG.dev_orgt, onBooleanClick, {title:LANG.dev_orgt_desc, modes:CAM}),
-            setDeviceRound: UC.newBoolean(LANG.dev_bedc, onBooleanClick, {title:LANG.dev_bedc_desc, modes:FDM}),
-
-            setDevice: UC.newGroup("gcode", $('device')),
-            setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:15}),
-            setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:15}),
-            setDeviceLayer: UC.newText(LANG.dev_layer, {title:LANG.dev_layer_desc, modes:FDM, size:14, height: 2}),
-            setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM}),
-            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM}),
-            setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM, size:5}),
-            setDeviceDwell: UC.newText(LANG.dev_dwell, {title:LANG.dev_dwell_desc, modes:CAM, size:14, height:2}),
-            setDeviceChange: UC.newText(LANG.dev_tool, {title:LANG.dev_tool_desc, modes:CAM, size:14, height:2}),
-            setDeviceSpindle: UC.newText(LANG.dev_speed, {title:LANG.dev_speed_desc, modes:CAM, size:14, height:2}),
-            setDevicePause: UC.newText(LANG.dev_pause, {title:LANG.dev_pause_desc, modes:FDM, size:14, height:3}),
-            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, modes:FDM_CAM, size:14, height:3}),
-            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, modes:FDM_CAM, size:14, height:3}),
-
-            tools: $('tools'),
-            toolsSave: $('tools-save'),
-            toolsClose: $('tools-close'),
-            toolSelect: $('tool-select'),
-            toolAdd: $('tool-add'),
-            toolDelete: $('tool-del'),
-            toolType: $('tool-type'),
-            toolName: $('tool-name'),
-            toolNum: $('tool-num'),
-            toolFluteDiam: $('tool-fdiam'),
-            toolFluteLen: $('tool-flen'),
-            toolShaftDiam: $('tool-sdiam'),
-            toolShaftLen: $('tool-slen'),
-            toolMetric: $('tool-metric'),
-
-            catalog: $('catalog'),
-            catalogBody: $('catalogBody'),
-            catalogList: $('catalogList'),
-
-            settings: $('settings'),
-            settingsBody: $('settingsBody'),
-            settingsList: $('settingsList'),
-
-            layerID: $('layer-id'),
-            layerSpan: $('layer-span'),
-            layerRange: $('layer-range'),
-
-            loading: $('loading').style,
-            progress: $('progress').style,
-            prostatus: $('prostatus'),
-
-            selection: $('selection'),
-            selWidth: $('sel_width'),
-            selHeight: $('sel_height'),
-            selDepth: $('sel_depth'),
-            scaleX: $('scale_x'),
-            scaleY: $('scale_y'),
-            scaleZ: $('scale_z'),
-            scaleUniform: $('scale_uni'),
-            stock: $('stock'),
-            stockWidth: $('stock-width'),
-            stockDepth: $('stock-width'),
-            stockHeight: $('stock-width'),
-
-            mode: UC.newGroup('mode', assets),
-            modeTable: UC.newTableRow([
-                [
-                    UI.modeFDM =
-                    UC.newButton("FDM Printing", function() { setMode('FDM',null,platform.update_size) }),
-                ],[
-                    UI.modeLASER =
-                    UC.newButton("Laser Cutting", function() { setMode('LASER',null,platform.update_size) }),
-                ],[
-                    UI.modeCAM =
-                    UC.newButton("CNC Milling",   function() { setMode('CAM',null,platform.update_size) }, {id:"modeCAM"}),
-                ]
-            ]),
-            system: UC.newGroup('setup'),
-            sysTable: UC.newTableRow([
-                [
-                    UI.setupDevices =
-                    UC.newButton("Devices", showDevices, {modes:FDM_CAM})
-                ],[
-                    UI.setupTools =
-                    UC.newButton("Tools",   showTools, {modes:CAM})
-                ],[
-                    UI.localButton =
-                    UC.newButton("Local",   showLocal, {modes:FDM_CAM})
-                ],[
-                    UI.helpButton =
-                    UC.newButton("Help",    showHelpLocal)
-                ]
-            ]),
-            wsFunc: UC.newGroup('function'),
-            wsFuncTable: UC.newTableRow([
-                [
-                    UC.newButton("Import",  function() { KIRI.api.import() }),
-                    UI.import =
-                    UC.newButton("+")
-                ],[
-                    UI.modeArrange =
-                    UC.newButton("Arrange", platform.layout),
-                ],[
-                    UI.modeSlice =
-                    UC.newButton("Slice",   prepareSlices)
-                ],[
-                    UI.modePreview =
-                    UC.newButton("Preview", preparePrint),
-                ],[
-                    UI.modeExport =
-                    UC.newButton("Export",  exportPrint)
-                ]
-            ]),
-            camera: UC.newGroup('view'),
-            camTable: UC.newTableRow([
-                [
-                    UC.newButton("home",  SPACE.view.home),
-                    UC.newButton("reset", SPACE.view.reset)
-                ],[
-                    UC.newButton("top",   SPACE.view.top),
-                    UC.newButton("front", SPACE.view.front),
-                ],[
-                    UC.newButton("left",  SPACE.view.left),
-                    UC.newButton("right", SPACE.view.right)
-                ]
-            ]),
-
-            workspace: UC.newGroup('workspace'),
-            wsTable: UC.newTableRow([
-                [
-                    UI.saveButton =
-                    UC.newButton("Save",    saveWorkspace),
-                ],[
-                    UC.newButton("Clear",   clearWorkspace)
-                ]
-            ]),
-
-            layout: UC.newGroup('options'),
-            showOrigin: UC.newBoolean("show origin", booleanSave, {title:"show device or process origin"}),
-            alignTop: UC.newBoolean("align top", booleanSave, {title:"align parts to the\ntallest part when\nno stock is set", modes:CAM}),
-            autoLayout: UC.newBoolean("auto layout", booleanSave, {title:"automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once"}),
-            freeLayout: UC.newBoolean("free layout", booleanSave, {title:"permit dragable layout"}),
-            reverseZoom: UC.newBoolean("invert zoom", booleanSave, {title:"invert mouse wheel\nscroll zoom"}),
-            units: UC.newSelectField("units", {modes:CAM}, "units"),
-
-            appendLeft: UC.checkpoint(),
-
-            layers: UC.setGroup($("layers")),
-            layerOutline: UC.newBoolean("outline", onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
-            layerTrace: UC.newBoolean("trace", onLayerToggle, {modes:FDM_LASER}),
-            layerFacing: UC.newBoolean("facing", onLayerToggle, {modes:CAM}),
-            layerRough: UC.newBoolean("roughing", onLayerToggle, {modes:CAM}),
-            layerFinish: UC.newBoolean("finishing", onLayerToggle, {modes:CAM}),
-            layerFinishX: UC.newBoolean("finish x", onLayerToggle, {modes:CAM}),
-            layerFinishY: UC.newBoolean("finish y", onLayerToggle, {modes:CAM}),
-            layerDelta: UC.newBoolean("delta", onLayerToggle, {modes:FDM}),
-            layerSolid: UC.newBoolean("solids", onLayerToggle, {modes:FDM}),
-            layerFill: UC.newBoolean("solid fill", onLayerToggle, {modes:FDM}),
-            layerSparse: UC.newBoolean("sparse fill", onLayerToggle, {modes:FDM}),
-            layerSupport: UC.newBoolean("support", onLayerToggle, {modes:FDM}),
-            layerPrint: UC.newBoolean("print", onLayerToggle),
-
-            settingsGroup: UC.newGroup("settings", control),
-            settingsTable: UC.newTableRow([
-                [
-                    UI.settingsLoad =
-                    UC.newButton("load", settingsLoad),
-                    UI.settingsSave =
-                    UC.newButton("save", settingsSave)
-                ],[
-                    UI.settingsExpert =
-                    UC.newButton("expert", () => { UC.setExpert(true); SDB.setItem('expert', true) }, {modes:FDM, expert: false}),
-                    UI.settingsExpert =
-                    UC.newButton("basic", () => { UC.setExpert(false); SDB.removeItem('expert') }, {modes:FDM, expert: true})
-                ]
-            ]),
-
-            platform: UC.newGroup("build area", control, {modes:LASER}),
-            bedWidth: UC.newInput("width", {title:"millimeters", convert:UC.toInt, modes:LASER}),
-            bedDepth: UC.newInput("depth", {title:"millimeters", convert:UC.toInt, modes:LASER}),
-
-            process: UC.newGroup("slicing", control, {modes:FDM_LASER}),
-
-            // 3d print
-            sliceHeight: UC.newInput("layer height", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
-            sliceShells: UC.newInput("shell count", {convert:UC.toInt, modes:FDM}),
-            sliceTopLayers: UC.newInput("top layers", {title:"top solid layer count", convert:UC.toInt, modes:FDM}),
-            sliceSolidLayers: UC.newInput("solid layers", {title:"flat area fill projections\nbased on layer deltas", convert:UC.toInt, modes:FDM}),
-            sliceBottomLayers: UC.newInput("base layers", {title:"bottom solid layer count", convert:UC.toInt, modes:FDM}),
-
-            process: UC.newGroup("fill", control, {modes:FDM}),
-            sliceFillType: UC.newSelectField("type", {modes:FDM}, "infill"),
-            sliceFillSparse: UC.newInput("percentage", {title:"for infill areas\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            sliceFillAngle: UC.newInput("solid angle", {title:"base angle in degrees", convert:UC.toFloat, modes:FDM, expert:true}),
-            sliceFillOverlap: UC.newInput("overlap", {title:"overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM, expert:true}),
-
-            firstLayer: UC.newGroup("first layer", null, {modes:FDM}),
-            firstSliceHeight: UC.newInput("layer height", {title:"in millimeters\nshould be >= slice height", convert:UC.toFloat, modes:FDM}),
-            firstLayerRate: UC.newInput("shell speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
-            firstLayerFillRate: UC.newInput("fill speed", {title:"fill move max speed\nmillimeters / minute", convert:UC.toFloat, modes:FDM}),
-            firstLayerPrintMult: UC.newInput("print factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, modes:FDM, expert: true}),
-            outputBrimCount: UC.newInput("skirt count", {title:"number of skirts", convert:UC.toInt, modes:FDM}),
-            outputBrimOffset: UC.newInput("skirt offset", {title:"millimeters", convert:UC.toFloat, modes:FDM}),
-            firstLayerNozzleTemp: UC.newInput("nozzle temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM, expert: true}),
-            firstLayerBedTemp: UC.newInput("bed temp", {title:"degrees celsius\nused when non-zero", convert:UC.toInt, modes:FDM, expert: true}),
-
-            support: UC.newGroup("support", null, {modes:FDM}),
-            sliceSupportDensity: UC.newInput("density", {title:"0.0 - 1.0\nrecommended 0.15\n0 to disable", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
-            sliceSupportSize: UC.newInput("pillar size", {title:"width in millimeters", bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportOffset: UC.newInput("part offset", {title:"millimeters\noffset from part", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportGap: UC.newInput("gap layers", {title:"number of layers\noffset from part", bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, expert: true}),
-            sliceSupportSpan: UC.newInput("max bridge", {title:"span length that\ntriggers support\nin millimeters", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportArea: UC.newInput("min area", {title:"min area for a\nsupport column\nin millimeters", bound:UC.bound(0.1,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportExtra: UC.newInput("expand", {title:"expand support area\nbeyond part boundary\nin millimeters", bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert: true}),
-            sliceSupportEnable: UC.newBoolean("enable", onBooleanClick, {modes:FDM}),
-
-            laserOffset: UC.newInput("offset", {title:"nadjust for beam width\nin millimeters", convert:UC.toFloat, modes:LASER}),
-            laserSliceHeight: UC.newInput("height", {title:"millimeters\n0 = auto/detect", convert:UC.toFloat, modes:LASER}),
-            laserSliceSingle: UC.newBoolean("single", onBooleanClick, {title:"perform one slice\nat specified height", modes:LASER}),
-
-            camCommon: UC.newGroup("common", null, {modes:CAM}),
-            camFastFeed: UC.newInput("rapid feed", {title:"rapid moves feedrate\nin workspace units / minute", convert:UC.toInt, modes:CAM}),
-
-            roughing: UC.newGroup("roughing", null, {modes:CAM}),
-            roughingTool: UC.newSelectField("tool", {modes:CAM}),
-            roughingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
-            roughingOver: UC.newInput("step over", {title:"0.1 - 1.0\npercentage of\ntool diameter", convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
-            roughingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            roughingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\nworkspace units / minute", convert:UC.toInt, modes:CAM}),
-            roughingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\nworkspace units / minute", convert:UC.toInt, modes:CAM}),
-            roughingStock: UC.newInput("leave stock", {title:"horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units", convert:UC.toFloat, modes:CAM}),
-            camPocketOnlyRough: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
-            camEaseDown: UC.newBoolean("ease down", onBooleanClick, {title:"plunge cuts will\nspiral down or ease\nalong a linear path\nas they cut downward", modes:CAM}),
-            roughingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
-
-            finishing: UC.newGroup("finishing", null, {modes:CAM}),
-            finishingTool: UC.newSelectField("tool", {modes:CAM}),
-            finishingSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
-            finishingOver: UC.newInput("step over", {title:"0.05 - 1.0\npercentage of\ntool diameter\nfor linear XY", convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
-            finishingDown: UC.newInput("step down", {title:"step down depth\nfor each pass\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            finishingAngle: UC.newInput("max angle", {title:"angles greater than this\nare considered vertical", convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
-            finishingSpeed: UC.newInput("feed rate", {title:"max speed while cutting\workspace units / minute", convert:UC.toInt, modes:CAM}),
-            finishingPlunge: UC.newInput("plunge rate", {title:"max speed on z axis\workspace units / minute", convert:UC.toInt, modes:CAM}),
-            camPocketOnlyFinish: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
-            finishingOn: UC.newBoolean("waterline", onBooleanClick, {title:"contour finishing\ndisabled when pocketing", modes:CAM}),
-            finishingXOn: UC.newBoolean("linear x", onBooleanClick, {title:"linear x-axis finishing", modes:CAM}),
-            finishingYOn: UC.newBoolean("linear y", onBooleanClick, {title:"linear y-axis finishing", modes:CAM}),
-            finishCurvesOnly: UC.newBoolean("curves only", onBooleanClick, {title:"limit linear cleanup\nto curved surfaces\nto reduce time", modes:CAM}),
-
-            drilling: UC.newGroup("drilling", null, {modes:CAM}),
-            drillTool: UC.newSelectField("tool", {modes:CAM}),
-            drillSpindle: UC.newInput("spindle rpm", {title:"spindle speed rpm", convert:UC.toInt, modes:CAM}),
-            drillDown: UC.newInput("plunge per", {title:"max plunge between\ndwell periods\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            drillDownSpeed: UC.newInput("plunge rate", {title:"plunge rate\nin workspace units / minute\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            drillDwell: UC.newInput("dwell time", {title:"dwell time\nbetween plunges in\nin milliseconds", convert:UC.toFloat, modes:CAM}),
-            drillLift: UC.newInput("drill lift", {title:"lift between plunges\nafter dwell period\nin workspace units\n0 to disable", convert:UC.toFloat, modes:CAM}),
-            drillingOn: UC.newBoolean("enable", onBooleanClick, {modes:CAM}),
-
-            camTabs: UC.newGroup("cutout tabs", null, {modes:CAM}),
-            camTabsAngle: UC.newInput("angle", {title:"starting angle for tab spacing\nin degrees", convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
-            camTabsCount: UC.newInput("count", {title:"number of tabs to use\nwill be spaced evenly\naround the part", convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
-            camTabsWidth: UC.newInput("width", {title:"width in workspace units\nperpendicular to part", convert:UC.toFloat, bound:UC.bound(0.1,100), modes:CAM}),
-            camTabsHeight: UC.newInput("height", {title:"height in workspace units\nfrom part bottom", convert:UC.toFloat, bound:UC.bound(0.1,100), modes:CAM}),
-            camTabsOn: UC.newBoolean("enable", onBooleanClick, {title:"enable or disable tabs\ntab generation skipped when\npocket only mode enabled", modes:CAM}),
-
-            output: UC.newGroup("raft", null, {modes:FDM}),
-            outputRaftSpacing:  UC.newInput("spacing", {title:"additional layer spacing\nbetween 1st layer and raft\nin millimeters", convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
-            outputRaft: UC.newBoolean("enable", onBooleanClick, {title:"create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output", modes:FDM}),
-
-            output: UC.newGroup("output"),
-            outputTileSpacing: UC.newInput("spacing", {title:"millimeters\ndistance between layer output", convert:UC.toInt, modes:LASER}),
-            outputTileScaling: UC.newInput("scaling", {title:"multiplier (0.1 to 100)", convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
-            outputLaserPower: UC.newInput("power", {title:"0 - 100 %", convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
-            outputLaserSpeed: UC.newInput("speed", {title:"millimeters / minute", convert:UC.toInt, modes:LASER}),
-            outputLaserGroup: UC.newBoolean("layer group", onBooleanClick, {title:"retain layer as\nsingle grouped object", modes:LASER}),
-
-            outputTemp: UC.newInput("nozzle temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
-            outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
-            outputFeedrate: UC.newInput("print speed", {title:"print move max speed\nmillimeters / minute", convert:UC.toInt, modes:FDM}),
-            outputFinishrate: UC.newInput("finish speed", {title:"outermost shell speed\nmillimeters / minute", convert:UC.toInt, modes:FDM}),
-            outputSeekrate: UC.newInput("move speed", {title:"non-print move speed\nmillimeters / minute\n0 = enable G0 moves", convert:UC.toInt, modes:FDM}),
-            outputShellMult: UC.newInput("shell factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputFillMult: UC.newInput("solid factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputSparseMult:  UC.newInput("infill factor", {title:"extrusion multiplier\n0.0 - 2.0", convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputFanLayer:  UC.newInput("fan layer", {title:"layer to enable fan", convert:UC.toInt, bound:UC.bound(0,100), modes:FDM, expert: true}),
-
-            camTolerance: UC.newInput("tolerance", {title:"surface precision\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
-            camZTopOffset: UC.newInput("z top offset", {title:"offset from stock surface\nto top face of part\nin workspace units", convert:UC.toFloat, modes:CAM}),
-            camZBottom: UC.newInput("z bottom", {title:"offset from part bottom\nto limit cutting depth\nin workspace units", convert:UC.toFloat, modes:CAM}),
-            camZClearance: UC.newInput("z clearance", {title:"travel offset from z top\nin workspace units", convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
-            // camPocketOnly: UC.newBoolean("pocket only", onBooleanClick, {title:"constrain to\npart boundaries", modes:CAM}),
-            camDepthFirst: UC.newBoolean("depth first", onBooleanClick, {title:"optimize pocket cuts\nwith depth priority", modes:CAM}),
-            outputClockwise: UC.newBoolean("clockwise", onBooleanClick, {title:"waterline milling direction", modes:CAM}),
-
-            camStock: UC.newGroup("stock", null, {modes:CAM}),
-            camStockX: UC.newInput("width", {title:"width (x) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
-            camStockY: UC.newInput("depth", {title:"depth (y) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
-            camStockZ: UC.newInput("height", {title:"height (z) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
-            camStockOffset: UC.newBoolean("offset", onBooleanClick, {title: "use width, depth, height\nas offsets from max\npart size on platform", modes:CAM}),
-            outputOriginCenter: UC.newBoolean("origin center", onBooleanClick, {modes:CAM_LASER}),
-            camOriginTop: UC.newBoolean("origin top", onBooleanClick, {modes:CAM}),
-
-            advanced: UC.newGroup("advanced", null, {modes:FDM, expert: true}),
-            outputRetractDist: UC.newInput("retract dist", {title:"amount to retract filament\nfor long moves. in millimeters", convert:UC.toFloat, modes:FDM, expert: true}),
-            outputRetractSpeed: UC.newInput("retract rate", {title:"speed of filament\nretraction in mm/s", convert:UC.toInt, modes:FDM, expert: true}),
-            outputRetractDwell: UC.newInput("engage dwell", {title:"time between re-engaging\nfilament and movement\nin milliseconds", convert:UC.toInt, modes:FDM, expert: true}),
-            outputCoastDist: UC.newInput("shell coast", {title:"non-printing end\nof perimeter shells\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM, expert: true}),
-            // outputWipeDistance: UC.newInput("wipe", {title:"non-printing move at\close of polygon\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM, expert: true}),
-            sliceSolidMinArea: UC.newInput("min solid", {title:"minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1", convert:UC.toFloat, modes:FDM, expert: true}),
-            sliceMinHeight: UC.newInput("min layer", {title: "enables adaptive slicing with\nthis as the min layer height\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert: true}),
-            outputMinSpeed: UC.newInput("min speed", {title:"minimum speed\nfor short segments", bound:UC.bound(5,200), convert:UC.toFloat, modes:FDM, expert: true}),
-            outputShortPoly: UC.newInput("slow poly", {title:"polygons shorter than this\nwill have their print speed\nscaled down to min speed\nin millimeters", bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM, expert: true}),
-            zHopDistance: UC.newInput("z hop dist", {title: "amount to raise z\non retraction moves\nin millimeters\n0 to disable", bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert: true}),
-            antiBacklash: UC.newInput("anti-backlash", {title: "use micro-movements to cancel\nbacklash during fills\nin millimeters", bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert: true}),
-            // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert: true})
-            polishLayers: LOCAL ? UC.newInput("polish layers", {title:"polish up to specified\n# of layers at a time", bound:UC.bound(0,10), convert:UC.toFloat, modes:FDM, expert: true}) : null,
-            polishSpeed: LOCAL ? UC.newInput("polish speed", {title:"polishing speed\nin millimeters / minute", bound:UC.bound(10,2000), convert:UC.toInt, modes:FDM, expert: true}) : null,
-            outputLayerRetract: UC.newBoolean("layer retract", onBooleanClick, {title:"force filament retraction\nbetween layers", modes:FDM, expert: true}),
-
-            gcodeVars: UC.newGroup("gcode", null, {modes:FDM, expert: true}),
-            gcodeNozzle: UC.newInput("nozzle", {title: "select output nozzle", convert:UC.toInt, modes:FDM, expert: true}),
-            gcodePauseLayers: UC.newInput("pause layers", {title: "comma-separated list of layers\nto inject pause commands before", modes:FDM, expert: true})
-        });
-
-        function toolUpdate(a,b,c) {
-            DBUG.log(['toolUpdate',a,b,c])
-        }
-
-        function booleanSave() {
-            settings.controller.showOrigin = UI.showOrigin.checked;
-            settings.controller.autoLayout = UI.autoLayout.checked;
-            settings.controller.freeLayout = UI.freeLayout.checked;
-            settings.controller.alignTop = UI.alignTop.checked;
-            settings.controller.reverseZoom = UI.reverseZoom.checked;
-            SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
-            platform.update_origin();
-            saveSettings();
-        }
-
-        function onLayerToggle() {
-            updateSettings();
-            showSlices();
-        }
-
-        function onBooleanClick() {
-            updateSettings();
-        }
-
-        function inputHasFocus() {
-            var active = DOC.activeElement;
-            return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
-        }
-
-        function inputTextOK() {
-            return DOC.activeElement === UI.deviceName;
-        }
-
-        function textAreaHasFocus() {
-            var active = DOC.activeElement;
-            return active && active.nodeName === "TEXTAREA";
-        }
-
-        function inputSize() {
-            return parseInt(DOC.activeElement.size);
-        }
-
-        function cca(c) {
-            return c.charCodeAt(0);
-        }
-
-        function keyUpHandler(evt) {
-            switch (evt.keyCode) {
-                // escape
-                case 27:
-                    // blur text input focus
-                    DOC.activeElement.blur();
-                    // dismiss modals
-                    hideModal();
-                    // deselect widgets
-                    platform.deselect();
-                    // hide all dialogs
-                    hideDialog();
-                    // cancel slicing
-                    if (KIRI.work.isSlicing()) KIRI.work.restart();
-                    break;
-            }
-            return false;
-        }
-
-        function keyDownHandler(evt) {
-            if (modalShowing()) {
-                return false;
-            }
-            var move = evt.altKey ? 5 : 0,
-                deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
-            switch (evt.keyCode) {
-                case 8: // apple: delete/backspace
-                case 46: // others: delete
-                    if (inputHasFocus()) return false;
-                    if (selectedMeshes.length > 0) {
-                        platform.delete(selectedMeshes);
-                    }
-                    evt.preventDefault();
-                    break;
-                case 37: // left arrow
-                    if (inputHasFocus()) return false;
-                    // if (selectedMeshes.length === 0) return;
-                    if (deg) rotateSelection(0, 0, -deg);
-                    if (move > 0) moveSelection(-move, 0, 0);
-                    evt.preventDefault();
-                    break;
-                case 39: // right arrow
-                    if (inputHasFocus()) return false;
-                    // if (selectedMeshes.length === 0) return;
-                    if (deg) rotateSelection(0, 0, deg);
-                    if (move > 0) moveSelection(move, 0, 0);
-                    evt.preventDefault();
-                    break;
-                case 38: // up arrow
-                    if (inputHasFocus()) return false;
-                    if (evt.metaKey) return setVisibleLayer(showLayerValue+1);
-                    // if (selectedMeshes.length === 0) return;
-                    if (deg) rotateSelection(deg, 0, 0);
-                    if (move > 0) moveSelection(0, move, 0);
-                    evt.preventDefault();
-                    break;
-                case 40: // down arrow
-                    if (inputHasFocus()) return false;
-                    if (evt.metaKey) return setVisibleLayer(showLayerValue-1);
-                    // if (selectedMeshes.length === 0) return;
-                    if (deg) rotateSelection(-deg, 0, 0);
-                    if (move > 0) moveSelection(0, -move, 0);
-                    evt.preventDefault();
-                    break;
-                case 65: // 'a' for select all
-                    if (evt.metaKey) {
-                        if (inputHasFocus()) return false;
-                        evt.preventDefault();
-                        platform.deselect();
-                        platformSelectAll();
-                    }
-                    break;
-                case 83: // 's' for save workspace
-                    if (evt.ctrlKey) {
-                        evt.preventDefault();
-                        saveSettings();
-                        log("settings saved");
-                    } else
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        saveWorkspace();
-                    }
-                    break;
-                case 76: // 'l' for restore workspace
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        restoreWorkspace();
-                    }
-                    break;
-            }
-        }
-
-        function keyHandler(evt) {
-            var handled = true,
-                style, sel, i, m, bb,
-                ncc = evt.charCode - 48;
-            if (modalShowing() || inputHasFocus()) {
-                return false;
-            }
-            switch (evt.charCode) {
-                case cca('`'): showSlices(0); break;
-                case cca('0'): showSlices(showLayerMax); break;
-                case cca('1'): // toggle control left
-                    if (evt.ctrlKey) {
-                        style = UI.ctrlLeft.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        showSlices(showLayerMax/10);
-                    }
-                    break;
-                case cca('2'): // toggle control right
-                    if (evt.ctrlKey) {
-                        style = UI.ctrlRight.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        showSlices(showLayerMax*2/10);
-                    }
-                    break;
-                case cca('3'):
-                    if (evt.ctrlKey) {
-                        style = !SPACE.platform.isHidden();
-                        SPACE.platform.setHidden(style);
-                        SPACE.platform.showGrid(!style);
-                        SPACE.update();
-                    } else {
-                        showSlices(showLayerMax*3/10);
-                    }
-                    break;
-                case cca('4'): showSlices(showLayerMax*4/10); break;
-                case cca('5'): showSlices(showLayerMax*5/10); break;
-                case cca('6'): showSlices(showLayerMax*6/10); break;
-                case cca('7'): showSlices(showLayerMax*7/10); break;
-                case cca('8'): showSlices(showLayerMax*8/10); break;
-                case cca('9'): showSlices(showLayerMax*9/10); break;
-                case cca('?'):
-                    showHelpLocal();
-                    break;
-                case cca('Z'): // reset stored state
-                    if (confirm('clear all settings?')) {
-                        SDB.clear();
-                    }
-                    break;
-                case cca('C'): // refresh catalog
-                    CATALOG.refresh();
-                    break;
-                case cca('i'): // single settings edit
-                    var v = prompt('edit "'+settings.process.processName+'"', JSON.stringify(settings.process));
-                    if (v) {
-                        try {
-                            settings.process = JSON.parse(v);
-                            updateFields();
-                        } catch (e) {
-                            console.log(e);
-                            alert2("invalid settings format");
-                        }
-                    }
-                    break;
-                case cca('U'): // full settings url
-                    storeSettingsToServer(true);
-                    break;
-                case cca('u'): // full settings url
-                    loadSettingsFromServer(prompt("settings id to load"));
-                    break;
-                case cca('s'): // complete slice
-                    prepareSlices();
-                    break;
-                case cca('p'): // prepare print
-                    preparePrint();
-                    break;
-                case cca('P'): // position widget
-                    positionSelection();
-                    break;
-                case cca('R'): // position widget
-                    rotateInputSelection();
-                    break;
-                case cca('x'): // export print
-                    exportPrint();
-                    break;
-                case cca('e'): // devices
-                    showDevices();
-                    break;
-                case cca('o'): // tools
-                    showTools();
-                    break;
-                case cca('c'): // local devices
-                    showLocal();
-                    break;
-                case cca('v'): // toggle single slice view mode
-                    UI.layerRange.checked = !UI.layerRange.checked;
-                    showSlices();
-                    break;
-                case cca('d'): // duplicate object
-                    sel = selectedMeshes.slice();
-                    platform.deselect();
-                    for (i=0; i<sel.length; i++) {
-                        m = sel[i].clone();
-                        m.geometry = m.geometry.clone();
-                        m.material = m.material.clone();
-                        bb = m.getBoundingBox();
-                        var nw = newWidget().loadGeometry(m.geometry);
-                        nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-                        platform.add(nw,true);
-                    }
-                    break;
-                case cca('m'): // mirror object
-                    forSelectedWidgets(function(widget) {
-                        widget.mirror();
-                    });
-                    SPACE.update();
-                    break;
-                case cca('R'): // toggle slice render mode
-                    renderMode++;
-                    prepareSlices();
-                    break;
-                case cca('a'): // auto arrange items on platform
-                    platform.layout();
-                    break;
-                case cca('w'): // toggle wireframe on widgets
-                    toggleWireframe(wireframe_color, wireframe_model_opacity);
-                    break;
-                default:
-                    sendOnEvent('keypress', evt);
-                    handled = false;
-                    break;
-            }
-            if (handled) evt.preventDefault();
-            return false;
-        }
-
-        function keys(o) {
-            var key, list = [];
-            for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
-            return list.sort();
-        }
-
-        function clearSelected(children) {
-            for (var i=0; i<children.length; i++) {
-                children[i].setAttribute('class','');
-            }
-        }
-
-        function rotateInputSelection() {
-            if (selectedMeshes.length === 0) {
-                alert2("select object to rotate");
-                return;
-            }
-            var coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
-                prod = Math.PI / 360,
-                x = parseFloat(coord[0] || 0.0) * prod,
-                y = parseFloat(coord[1] || 0.0) * prod,
-                z = parseFloat(coord[2] || 0.0) * prod;
-
-            rotateSelection(x, y, z);
-        }
-
-        function positionSelection() {
-            if (selectedMeshes.length === 0) {
-                alert2("select object to position");
-                return;
-            }
-            var center = settings.process.outputOriginCenter,
-                bounds = boundsSelection(),
-                coord = prompt("Enter X,Y coordinates for selection").split(','),
-                x = parseFloat(coord[0] || 0.0),
-                y = parseFloat(coord[1] || 0.0),
-                z = parseFloat(coord[2] || 0.0);
-
-            if (!center) {
-                x = x - settings.device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-                y = y - settings.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
-            }
-
-            moveSelection(x, y, z, true);
-        }
-
-        function loadSettingsFromServer(tok) {
-            var hash = (tok || LOC.hash.substring(1)).split("/");
-            if (hash.length === 2) {
-                new moto.Ajax(function(reply) {
-                    if (reply) {
-                        var res = JSON.parse(reply);
-                        if (res && res.ver && res.rec) {
-                            var set = JSON.parse(atob(res.rec));
-                            set.id = res.space;
-                            set.ver = res.ver;
-                            putSettings(set);
-                            triggerSettingsEvent();
-                            LOC.hash = '';
-                        }
-                    }
-                }).request("/data/"+ hash[0] + "/" + hash[1]);
-            }
-        }
-
-        function storeSettingsToServer(display) {
-            var set = btoa(JSON.stringify(settings));
-            new moto.Ajax(function(reply) {
-                if (reply) {
-                    var res = JSON.parse(reply);
-                    if (res && res.ver) {
-                        LOC.hash = res.space + "/" + res.ver;
-                        if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
-                    }
-                } else {
-                    updateSpaceState();
-                }
-            }).request("/data/"+ settings.id + "/" + settings.ver, set);
-        }
-
-        function settingsSave() {
-            hideDialog();
-            var mode = getMode(),
-                s = settings,
-                def = "default",
-                cp = s.process,
-                pl = s.sproc[mode],
-                pt = sf[mode.toLowerCase()].p, // process field mask
-                name = WIN.prompt("Save Settings As", cp ? cp.processName || def : def);
-            if (!name) return;
-            var np = pl[name] = {};
-            cp.processName = name;
-            for (var k in cp) {
-                if (!cp.hasOwnProperty(k)) continue;
-                if (!pt.hasOwnProperty(k)) continue; // mask out invalid fields
-                np[k] = cp[k];
-            }
-            s.cproc[getMode()] = name;
-            saveSettings();
-            triggerSettingsEvent();
-        }
-
-        function settingsLoad() {
-            showSettings();
-        }
-
-        function putLocalDevice(devicename, code) {
-            settings.devices[devicename] = code;
-            saveSettings();
-        }
-
-        function removeLocalDevice(devicename) {
-            delete settings.devices[devicename];
-            saveSettings();
-        }
-
-        function isLocalDevice(devicename) {
-            return settings.devices[devicename] ? true : false;
-            // return localFilters.contains(devicename);
-        }
-
-        function isFavoriteDevice(devicename) {
-            return settings.favorites[devicename] ? true : false;
-        }
-
-        function getSelectedDevice() {
-            return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
-        }
-
-        function selectDevice(devicename, lock) {
-            deviceLock = lock;
-            if (lock) UI.setupDevices.style.display = 'none';
-            if (inMode('LASER')) return;
-            if (isLocalDevice(devicename)) {
-                setDeviceCode(settings.devices[devicename], devicename);
-            } else {
-                ajax("/kiri/filter/"+getMode()+"/"+devicename, function(code) {
-                    setDeviceCode(code, devicename);
-                });
-            }
-            $('selected-device').innerHTML = devicename;
-        }
-
-        function valueOf(val, dv) {
-            return typeof(val) !== 'undefined' ? val : dv;
-        }
-
-        // only for local filters
-        function updateDeviceCode(override) {
-            var oldname = getSelectedDevice(),
-                newname = override || UI.deviceName.value,
-                code = {
-                    mode: getMode(),
-                    settings: {
-                        bed_width: parseInt(UI.setDeviceWidth.value) || 300,
-                        bed_depth: parseInt(UI.setDeviceDepth.value) || 175,
-                        bed_circle: UI.setDeviceRound.checked,
-                        build_height: parseInt(UI.setDeviceHeight.value) || 150,
-                        nozzle_size: parseFloat(UI.setDeviceNozzle.value) || 0.4,
-                        filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
-                        origin_center: UI.setDeviceOrigin.checked,
-                        origin_top: UI.setDeviceOriginTop.checked,
-                        extrude_abs: UI.setDeviceExtrusion.checked,
-                        spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
-                    },
-                    cmd: {
-                        fan_power: UI.setDeviceFan.value,
-                        progress: UI.setDeviceTrack.value,
-                        spindle: UI.setDeviceSpindle.value.split('\n'),
-                        layer: UI.setDeviceLayer.value.split('\n')
-                    },
-                    pre: UI.setDevicePre.value.split('\n'),
-                    post: UI.setDevicePost.value.split('\n'),
-                    pause: UI.setDevicePause.value.split('\n'),
-                    dwell: UI.setDeviceDwell.value.split('\n'),
-                    'tool-change': UI.setDeviceChange.value.split('\n'),
-                    'file-ext': UI.setDeviceFExt.value,
-                    'token-space': UI.setDeviceToken.checked ? ' ' : '',
-                    'strip-comments': UI.setDeviceStrip.checked
-                };
-
-            if (oldname !== newname && isLocalDevice(oldname)) removeLocalDevice(oldname);
-
-            putLocalDevice(newname, code);
-            setDeviceCode(code, newname);
-        }
-
-        function setDeviceCode(code, devicename) {
-            try {
-                STATS.set(`ud_${getModeLower()}`, devicename);
-
-                if (typeof(code) === 'string') code = js2o(code) || {};
-
-                var cmd = code.cmd || {},
-                    set = code.settings || {},
-                    local = isLocalDevice(devicename),
-                    dproc = settings.devproc[devicename],
-                    mode = getMode();
-
-                settings.device = {
-                    bedHeight: 2.5,
-                    bedWidth: valueOf(set.bed_width, 300),
-                    bedDepth: valueOf(set.bed_depth, 175),
-                    bedRound: valueOf(set.bed_circle, false),
-                    maxHeight: valueOf(set.build_height, 150),
-                    nozzleSize: valueOf(set.nozzle_size, 0.4),
-                    filamentSize: valueOf(set.filament_diameter, 1.75),
-                    originCenter: valueOf(set.origin_center, false),
-                    extrudeAbs: valueOf(set.extrude_abs, false),
-                    spindleMax: valueOf(set.spindle_max, 0),
-                    gcodeFan: valueOf(cmd.fan_power, ''),
-                    gcodeTrack: valueOf(cmd.progress, ''),
-                    gcodeLayer: valueOf(cmd.layer, []),
-                    gcodePre: valueOf(code.pre, []),
-                    gcodePost: valueOf(code.post, []),
-                    gcodeProc: valueOf(code.proc, ''),
-                    gcodePause: valueOf(code.pause, []),
-                    gcodeDwell: valueOf(code.dwell, []),
-                    gcodeSpindle: valueOf(cmd.spindle, []),
-                    gcodeChange: valueOf(code['tool-change'], []),
-                    gcodeFExt: valueOf(code['file-ext'], 'gcode'),
-                    gcodeSpace: valueOf(code['token-space'], ''),
-                    gcodeStrip: valueOf(code['strip-comments'], false)
-                };
-
-                var dev = settings.device,
-                    proc = settings.process;
-
-                proc.outputOriginCenter = valueOf(set.origin_center, true);
-                proc.camOriginTop = valueOf(set.origin_top, true);
-
-                UI.deviceName.value = devicename;
-                // common
-                UI.setDevicePre.value = dev.gcodePre.join('\n');
-                UI.setDevicePost.value = dev.gcodePost.join('\n');
-                UI.setDevicePause.value = dev.gcodePause.join('\n');
-                UI.setDeviceWidth.value = dev.bedWidth;
-                UI.setDeviceDepth.value = dev.bedDepth;
-                UI.setDeviceHeight.value = dev.maxHeight;
-                UI.setDeviceRound.checked = dev.bedRound;
-                UI.setDeviceOrigin.checked = proc.outputOriginCenter;
-                // FDM
-                UI.setDeviceFan.value = dev.gcodeFan;
-                UI.setDeviceTrack.value = dev.gcodeTrack;
-                UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
-                UI.setDeviceFilament.value = dev.filamentSize;
-                UI.setDeviceNozzle.value = dev.nozzleSize;
-                UI.setDeviceExtrusion.checked = dev.extrudeAbs;
-                // CAM
-                UI.setDeviceMaxSpindle.value = dev.spindleMax;
-                UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
-                UI.setDeviceDwell.value = dev.gcodeDwell.join('\n');
-                UI.setDeviceChange.value = dev.gcodeChange.join('\n');
-                UI.setDeviceFExt.value = dev.gcodeFExt;
-                UI.setDeviceToken.checked = dev.gcodeSpace ? true : false;
-                UI.setDeviceStrip.checked = dev.gcodeStrip;
-
-                // disable editing for non-local devices
-                [
-                 UI.deviceName,
-                 UI.setDevicePre,
-                 UI.setDevicePost,
-                 UI.setDevicePause,
-                 UI.setDeviceDepth,
-                 UI.setDeviceWidth,
-                 UI.setDeviceHeight,
-                 UI.setDeviceExtrusion,
-                 UI.setDeviceOrigin,
-                 UI.setDeviceOriginTop,
-                 UI.setDeviceRound,
-                 UI.setDeviceFan,
-                 UI.setDeviceTrack,
-                 UI.setDeviceLayer,
-                 UI.setDeviceFilament,
-                 UI.setDeviceNozzle,
-                 UI.setDeviceMaxSpindle,
-                 UI.setDeviceSpindle,
-                 UI.setDeviceDwell,
-                 UI.setDeviceChange,
-                 UI.setDeviceFExt,
-                 UI.setDeviceToken,
-                 UI.setDeviceStrip
-                ].forEach(function(e) {
-                    e.disabled = !local;
-                });
-
-                // hide spindle fields when device doens't support it
-                if (mode === 'CAM')
-                [
-                 UI.setDeviceExtrusion,
-                 UI.roughingSpindle,
-                 UI.finishingSpindle,
-                 UI.drillSpindle
-                ].forEach(function(e) {
-                 e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
-                });
-
-                UI.deviceSave.disabled =
-                UI.deviceDelete.disabled = !local;
-
-                updateFields();
-                platform.update_size();
-
-                settings.filter[mode] = devicename;
-                settings.cdev[mode] = dev;
-
-                // restore last process associated with this device
-                if (dproc) loadNamedSetting(null, dproc);
-
-                saveSettings();
-            } catch (e) {
-                console.log({error:e, device:code});
-                // alert2("invalid or deprecated device. please select a new device.");
-                showDevices();
-            }
-            clearWidgetCache();
-            triggerSettingsEvent();
-        }
-
-        function renderDevices(devices) {
-            UI.devices.onclick = UC.hidePop;
-            UC.hidePop();
-
-            var selectedIndex = -1,
-                selected = currentDeviceName(),
-                devs = settings.devices;
-
-            for (var local in devs) {
-                if (!(devs.hasOwnProperty(local) && devs[local])) {
-                    continue;
-                }
-                var dev = devs[local],
-                    fdmCode = dev.cmd,
-                    fdmMode = (getMode() === 'FDM');
-
-                if (dev.mode ? (dev.mode === getMode()) : (fdmCode ? fdmMode : !fdmMode)) {
-                    devices.push(local);
-                }
-            };
-
-            devices = devices.sort();
-
-            UI.deviceClose.onclick = hideDialog;
-            UI.deviceSave.onclick = function() {
-                clearWidgetCache();
-                updateDeviceCode();
-                saveSettings();
-                showDevices();
-            };
-            UI.deviceAdd.onclick = function() {
-                clearWidgetCache();
-                updateDeviceCode(getSelectedDevice()+".copy");
-                showDevices();
-            };
-            UI.deviceDelete.onclick = function() {
-                clearWidgetCache();
-                removeLocalDevice(getSelectedDevice());
-                showDevices();
-            };
-
-            UI.deviceAll.onclick = function() {
-                showFavorites = SDB['dev-favorites'] = false;
-                showDevices();
-            };
-            UI.deviceFavorites.onclick = function() {
-                showFavorites = SDB['dev-favorites'] = true;
-                showDevices();
-            };
-
-            UI.deviceSelect.innerHTML = '';
-            let incr = 0;
-            let found = false;
-            let first = devices[0];
-            devices.forEach(function(device, index) {
-                var opt = DOC.createElement('option'),
-                    fav = isFavoriteDevice(device),
-                    loc = isLocalDevice(device);
-                if (showFavorites && !(fav || loc)) {
-                    return;
-                }
-                if (incr === 0) {
-                    first = device;
-                }
-                opt.appendChild(DOC.createTextNode(device));
-                opt.onclick = function() {
-                    selectDevice(device);
-                };
-                opt.ondblclick = function() {
-                    if (settings.favorites[device]) {
-                        delete settings.favorites[device];
-                        alert2(`removed "${device}" from favorites`, 3);
-                    } else {
-                        settings.favorites[device] = true;
-                        alert2(`added "${device}" to favorites`, 3);
-                    }
-                    showDevices();
-                };
-                if (!showFavorites) {
-                    if (fav) opt.setAttribute("favorite", 1);
-                    if (loc) opt.setAttribute("local", 1);
-                }
-                UI.deviceSelect.appendChild(opt);
-                if (device === selected) {
-                    selectedIndex = incr;
-                    found = true;
-                }
-                incr++;
-            });
-
-            if (selectedIndex >= 0) {
-                UI.deviceSelect.selectedIndex = selectedIndex;
-                selectDevice(selected);
-            } else {
-                UI.deviceSelect.selectedIndex = 0;
-                selectDevice(first);
-            }
-
-            showDialog('devices', true);
-            onWindowResize();
-
-            UI.deviceSelect.focus();
-        }
-
-        function renderTools() {
-            UI.toolSelect.innerHTML = '';
-            editTools.forEach(function(tool, index) {
-                tool.order = index;
-                var opt = DOC.createElement('option');
-                opt.appendChild(DOC.createTextNode(tool.name));
-                opt.onclick = function() { selectTool(tool) };
-                UI.toolSelect.appendChild(opt);
-            });
-        }
-
-        function selectTool(tool) {
-            selectedTool = tool;
-            UI.toolName.value = tool.name;
-            UI.toolNum.value = tool.number;
-            UI.toolFluteDiam.value = tool.flute_diam;
-            UI.toolFluteLen.value = tool.flute_len;
-            UI.toolShaftDiam.value = tool.shaft_diam;
-            UI.toolShaftLen.value = tool.shaft_len;
-            UI.toolMetric.checked = tool.metric;
-            UI.toolType.selectedIndex = (
-                tool.type === 'endmill' ? 0 :
-                tool.type === 'ballmill' ? 1 :
-                -1
-            );
-        }
-
-        function updateTool() {
-            selectedTool.name = UI.toolName.value;
-            selectedTool.number = parseInt(UI.toolNum.value);
-            selectedTool.flute_diam = parseFloat(UI.toolFluteDiam.value);
-            selectedTool.flute_len = parseFloat(UI.toolFluteLen.value);
-            selectedTool.shaft_diam = parseFloat(UI.toolShaftDiam.value);
-            selectedTool.shaft_len = parseFloat(UI.toolShaftLen.value);
-            selectedTool.metric = UI.toolMetric.checked;
-            selectedTool.type = ['endmill','ballmill'][UI.toolType.selectedIndex];
-            renderTools();
-            UI.toolSelect.selectedIndex = selectedTool.order;
-            setToolChanged(true);
-        }
-
-        function setToolChanged(changed) {
-            editTools.changed = changed;
-            UI.toolsSave.disabled = !changed;
-        }
-
-        function showTools() {
-            if (MODE !== MODES.CAM) return;
-
-            var selectedIndex = null;
-
-            editTools = settings.tools.slice().sort((a,b) => {
-                return a.name > b.name ? 1 : -1;
-            });
-
-            setToolChanged(false);
-
-            UI.toolsClose.onclick = function() {
-                if (editTools.changed && !confirm("abandon changes?")) return;
-                hideDialog();
-            };
-            UI.toolAdd.onclick = function() {
-                editTools.push({
-                    id: UTIL.time(),
-                    number: editTools.length,
-                    name: "new",
-                    type: "endmill",
-                    flute_diam: 0.25,
-                    flute_len: 1,
-                    shaft_diam: 0.25,
-                    shaft_len: 3,
-                    metric: false
-                });
-                setToolChanged(true);
-                renderTools();
-                UI.toolSelect.selectedIndex = editTools.length-1;
-                selectTool(editTools[editTools.length-1]);
-            };
-            UI.toolDelete.onclick = function() {
-                editTools.remove(selectedTool);
-                setToolChanged(true);
-                renderTools();
-            };
-            UI.toolsSave.onclick = function() {
-                if (selectedTool) updateTool();
-                settings.tools = editTools;
-                setToolChanged(false);
-                saveSettings();
-                updateFields();
-                triggerSettingsEvent();
-            };
-
-            renderTools();
-            if (editTools.length > 0) {
-                selectTool(editTools[0]);
-                UI.toolSelect.selectedIndex = 0;
-            } else {
-                UI.toolAdd.onclick();
-            }
-
-            showDialog('tools');
-            UI.toolSelect.focus();
-
-            STATS.add('ua_get_tools');
-        }
-
-        function showDevices() {
-            if (MODE === MODES.LASER || deviceLock) return;
-
-            setViewMode(VIEWS.ARRANGE);
-
-            ajax("/api/filters-"+getMode().toLowerCase(), function(flvalue) {
-                if (!flvalue) return;
-                renderDevices(js2o(flvalue));
-                STATS.add('ua_get_devs');
-            });
-        }
-
-        function dragOverHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            evt.dataTransfer.dropEffect = 'copy';
-            SPACE.platform.setColor(0x00ff00);
-        }
-
-        function dragLeave() {
-            SPACE.platform.setColor(0x555555);
-        }
-
-        function dropHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-
-            SPACE.platform.setColor(0x555555);
-
-            var files = evt.dataTransfer.files,
-                plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`);
-
-            if (plate) loadFiles(files);
-        }
-
-        function loadCatalogFile(e) {
-            Widget.loadFromCatalog(e.target.getAttribute('load'), function(widget) {
-                platform.add(widget);
-                hideDialog();
-            });
-        }
-
-        function deleteCatalogFile(e) {
-            CATALOG.deleteFile(e.target.getAttribute('del'));
-        }
-
-        function updateCatalog(files) {
-            var table = UI.catalogList,
-                list = [];
-            table.innerHTML = '';
-            for (var name in files) {
-                list.push({n:name, ln:name.toLowerCase(), v:files[name].vertices, t:files[name].updated});
-            }
-            list.sort(function(a,b) {
-                return a.ln < b.ln ? -1 : 1;
-            });
-            for (var i=0; i<list.length; i++) {
-                var row = DOC.createElement('div'),
-                    load = DOC.createElement('button'),
-                    del = DOC.createElement('button'),
-                    file = list[i],
-                    name = file.n;
-
-                load.setAttribute('load', name);
-                load.setAttribute('title', 'file: '+name+'\nvertices: '+file.v);
-                load.onclick = loadCatalogFile;
-                load.appendChild(DOC.createTextNode(name.split('.')[0]));
-
-                del.setAttribute('del', name);
-                del.setAttribute('title', "remove '"+name+"'");
-                del.onclick = deleteCatalogFile;
-                del.appendChild(DOC.createTextNode('x'));
-
-                row.setAttribute("class", "flow-row");
-                row.appendChild(load);
-                row.appendChild(del);
-                table.appendChild(row);
-            }
-            catalogSize = list.length;
-            // fix layer scroll size
-            onControlResize();
-        }
-
-        SPACE.addEventHandlers(self, [
-            'keyup', keyUpHandler,
-            'keydown', keyDownHandler,
-            'keypress', keyHandler,
-            'dragover', dragOverHandler,
-            'dragleave', dragLeave,
-            'drop', dropHandler
-        ]);
-
-        SPACE.onEnterKey([
-            UI.layerSpan,    function() { showSlices() },
-            UI.layerID,      function() { setVisibleLayer(UI.layerID.value) },
-
-            UI.scaleX,           scaleSelection,
-            UI.scaleY,           scaleSelection,
-            UI.scaleZ,           scaleSelection,
-
-            UI.toolName,         updateTool,
-            UI.toolNum,          updateTool,
-            UI.toolFluteDiam,    updateTool,
-            UI.toolFluteLen,     updateTool,
-            UI.toolShaftDiam,    updateTool,
-            UI.toolShaftLen,     updateTool,
-
-            UI.bedWidth,         platform.update_size,
-            UI.bedDepth,         platform.update_size
-        ]);
-
-        UI.setupDevices.innerHTML = "D<u>e</u>vices";
-        UI.setupTools.innerHTML = "T<u>o</u>ols";
-
-        UI.modeArrange.innerHTML = "<u>A</u>rrange";
-        UI.modeSlice.innerHTML = "<u>S</u>lice";
-        UI.modePreview.innerHTML = "<u>P</u>review";
-        UI.modeExport.innerHTML = "E<u>x</u>port";
-
-        UI.layerID.convert = UC.toFloat.bind(UI.layerID);
-        UI.layerSpan.convert = UC.toFloat.bind(UI.layerSpan);
-        UI.layerRange.onclick = function() {
-            UI.layerRange.checked = !(UI.layerRange.checked || false);
-            showSlices();
-        };
-
-        $('layer-toggle').onclick = function(ev) {
-            var ls = UI.layers.style;
-            ls.display = ls.display !== 'block' ? 'block' : 'none';
-            UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
-        };
-
-        $('x-').onclick = function(ev) { rotateSelection(ev.shiftKey ? -ROT5 : -ROT,0,0) };
-        $('x+').onclick = function(ev) { rotateSelection(ev.shiftKey ? ROT5 : ROT,0,0) };
-        $('y-').onclick = function(ev) { rotateSelection(0,ev.shiftKey ? -ROT5 : -ROT,0) };
-        $('y+').onclick = function(ev) { rotateSelection(0,ev.shiftKey ? ROT5 : ROT,0) };
-        $('z-').onclick = function(ev) { rotateSelection(0,0,ev.shiftKey ? ROT5 : ROT) };
-        $('z+').onclick = function(ev) { rotateSelection(0,0,ev.shiftKey ? -ROT5 : -ROT) };
-
-        UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
-            setOpacity(parseInt(UI.modelOpacity.value)/100);
-        };
-
-        UI.layerSlider.ondblclick = function() {
-            UI.layerRange.checked = !UI.layerRange.checked;
-            showSlices();
-        };
-
-        UI.layerSlider.onmousedown = function(ev) {
-            if (ev.shiftKey) UI.layerRange.checked = !UI.layerRange.checked;
-        };
-
-        UI.layerSlider.onclick = function() {
-            setVisibleLayer(UI.layerSlider.value);
-        };
-
-        UI.layerSlider.onmousemove = UI.layerSlider.onchange = function() {
-            setVisibleLayer(UI.layerSlider.value);
-        };
-
-        UI.layerSlider.onmouseup = function() { takeFocus() };
-
-        UI.import.setAttribute("import","1");
-        UI.import.onclick = function() {
-            showDialog("catalog");
-        };
-
-        UI.toolMetric.onclick = updateTool;
-        UI.toolType.onchange = updateTool;
-
-        $('kiri').onclick = showHelpLocal;
-
-        SPACE.platform.setSize(
-            settings.device.bedWidth,
-            settings.device.bedDepth,
-            settings.device.bedHeight
-        );
-
-        SPACE.platform.setGrid(25, 5);
-        SPACE.platform.opacity(0.2);
-
-        SPACE.mouse.downSelect(function() {
-            if (viewMode !== VIEWS.ARRANGE) return null;
-            return selectedMeshes;
-        });
-
-        SPACE.mouse.upSelect(function(selection, event) {
-            if (event && event.target.nodeName === "CANVAS") {
-                if (selection) {
-                    platform.select(selection.object.widget, event.shiftKey);
-                } else {
-                    platform.deselect();
-                }
-            } else {
-                return meshArray();
-            }
-        });
-
-        SPACE.mouse.onDrag(function(delta) {
-            if (delta && UI.freeLayout.checked) {
-                forSelectedWidgets(function(widget) {
-                    widget.move(delta.x, delta.y, 0);
-                });
-                platform.update_stock();
-            } else {
-                return selectedMeshes.length > 0;
-            }
-        });
-
-        function checkSeed(ondone) {
-            // skip sample object load in onshape (or any script postload)
-            if (!SDB[SEED]) {
-                SDB[SEED] = new Date().getTime();
-                if (!SETUP.s) {
-                    platform.load_stl("/obj/cube.stl", function(vert) {
-                        CATALOG.putFile("sample cube.stl", vert);
-                        platform.compute_max_z();
-                        SPACE.view.home();
-                        setTimeout(saveWorkspace,500);
-                        ondone();
-                        showHelpLocal();
-                    });
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function ondone() {
-            platform.deselect();
-            CATALOG.addFileListener(updateCatalog);
-            SPACE.view.setZoom(settings.controller.reverseZoom, settings.controller.zoomSpeed);
-            SPACE.platform.setZOff(0.2);
-
-            UI.showOrigin.checked = settings.controller.showOrigin;
-            UI.freeLayout.checked = settings.controller.freeLayout;
-            UI.autoLayout.checked = settings.controller.autoLayout;
-            UI.alignTop.checked = settings.controller.alignTop;
-
-            if (SETUP.s) SETUP.s.forEach(function(lib) {
-                var scr = DOC.createElement('script');
-                scr.setAttribute('async',true);
-                scr.setAttribute('src','/code/'+lib+'.js');
-                DOC.body.appendChild(scr);
-                STATS.add('load_'+lib);
-            });
-
-            if (SETUP.ss) SETUP.ss.forEach(function(style) {
-                var ss = DOC.createElement('link');
-                ss.setAttribute("type", "text/css");
-                ss.setAttribute("rel", "stylesheet");
-                ss.setAttribute("href", "/kiri/style-"+style+".css");
-                DOC.body.appendChild(ss);
-            });
-
-            if (SETUP.v) SETUP.v.forEach(function(kv) {
-                kv = kv.split('=');
-                SDB.setItem(kv[0],kv[1]);
-            });
-
-            // import octoprint settings from url
-            if (SETUP.ophost) {
-                OCTOPRINT = {
-                    host: SETUP.ophost[0],
-                    apik: SETUP.opkey ? SETUP.opkey[0] : ''
-                };
-                SDB['octo-host'] = OCTOPRINT.host;
-                SDB['octo-apik'] = OCTOPRINT.apik;
-                console.log({octoprint:OCTOPRINT});
-            }
-
-            // mode passed on url
-            var SETMODE = SETUP.mode ? SETUP.mode[0] : null;
-
-            // device name pass on url
-            var DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
-
-            setMode(SETMODE || STARTMODE || settings.mode, SETMODE);
-            setControlsVisible(true);
-            platform.update_size();
-            takeFocus();
-
-            if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
-            STATS.del('upgrade');
-
-            if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
-
-            // place version number a couple of places to help users
-            UI.helpButton.title = `${LANG.version} ` + KIRI.version;
-
-            // restore expert setting preference
-            UC.setExpert(SDB.getItem('expert') ? true : false);
-
-            // setup tab visibility watcher
-            // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
-
-            // ensure settings has gcode
-            selectDevice(DEVNAME || currentDeviceName(), DEVNAME);
-
-            // ensure field data propagation
-            updateSettings();
-
-            // set initial layer slider size
-            onControlResize();
-
-            // send init-done event
-            sendOnEvent('init-done', STATS);
-
-            // load settings provided in url hash
-            loadSettingsFromServer();
-
-            // clear alerts as they build up
-            setInterval(updateAlerts, 1000);
-
-            UI.alert.dialog.onclick = function() {
-                updateAlerts(true);
-            };
-        }
-
-        restoreWorkspace(ondone) || checkSeed(ondone) || ondone();
-
-    } // end init()
-
-    SPACE.addEventListener(DOC, 'DOMContentLoaded', function () { init() }, false);
+    SPACE.addEventListener(DOC, 'DOMContentLoaded', function () { KIRI.init() }, false);
     SPACE.addEventListener(WIN, 'mousemove', function() { mouseMoved = true });
 
     // prevent safari from exiting full screen mode
-    DOC.onkeydown = function (evt) {
-        if (evt.keyCode == 27) evt.preventDefault();
-    }
+    DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
     // run optional module functions
     if (Array.isArray(self.kirimod)) {
