@@ -235,10 +235,12 @@ var gs_kiri_conf = exports;
                     type: "endmill",
                     name: "end 1/4",
                     metric: false,
-                    flute_diam: 0.25,
-                    flute_len: 0,
                     shaft_diam: 0.25,
-                    shaft_len: 0
+                    shaft_len:  1,
+                    flute_diam: 0.25,
+                    flute_len:  2,
+                    // taper_angle: 70,
+                    taper_tip: 0,
                 },
                 {
                     id: 1001,
@@ -246,10 +248,12 @@ var gs_kiri_conf = exports;
                     type: "endmill",
                     name: "end 1/8",
                     metric: false,
-                    flute_diam: 0.125,
-                    flute_len: 0,
                     shaft_diam: 0.125,
-                    shaft_len: 0
+                    shaft_len:  1,
+                    flute_diam: 0.125,
+                    flute_len:  1.5,
+                    // taper_angle: 70,
+                    taper_tip: 0,
                 },
                 {
                     id: 1002,
@@ -257,10 +261,12 @@ var gs_kiri_conf = exports;
                     type: "endmill",
                     name: "end 1/16",
                     metric: false,
-                    flute_diam: 0.0625,
-                    flute_len: 0,
                     shaft_diam: 0.0625,
-                    shaft_len: 0
+                    shaft_len:  1,
+                    flute_diam: 0.0625,
+                    flute_len:  1.5,
+                    // taper_angle: 70,
+                    taper_tip: 0,
                 }
             ],
             // FDM/CAM/Laser

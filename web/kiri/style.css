@@ -415,6 +415,9 @@ button.selected {
 #tools input:focus {
     background-color: #dee;
 }
+#tools input:disabled {
+    color: #ddd;
+}
 #tool-list > select {
     flex-grow: 1;
     width: 100%;

@@ -10,13 +10,9 @@ let gs_kiri_export = exports;
     if (self.kiri.export) return;
 
     let KIRI = self.kiri,
-        WIN = self.window,
-        DOC = self.document,
-        LOC = self.location,
         API = KIRI.api,
         SDB = API.sdb,
         UI = API.ui,
-        UC = API.uc,
         STATS = API.stats,
         MODES = API.const.MODES,
         printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1;
@@ -25,32 +21,31 @@ let gs_kiri_export = exports;
 
     function exportPrint() {
         let currentPrint = API.print.get();
-        if (!currentPrint) {
+        if (currentPrint) {
+            STATS.add(`ua_${API.mode.get_lower()}_export`);
+            switch (API.mode.get()) {
+                case 'LASER': return exportPrintLaser(currentPrint);
+                case 'FDM': return exportPrintGCODE(currentPrint);
+                case 'CAM': return exportPrintGCODE(currentPrint);
+            }
+        } else {
             API.function.print(exportPrint);
-            return;
-        }
-        STATS.add(`ua_${API.mode.get_lower()}_export`);
-        switch (API.mode.get()) {
-            case 'LASER': return exportPrintLaser(currentPrint);
-            case 'FDM': return exportPrintGCODE(currentPrint);
-            case 'CAM': return exportPrintGCODE(currentPrint);
         }
     }
 
     function exportPrintGCODE(currentPrint) {
-        if (!currentPrint) {
+        if (currentPrint) {
+            currentPrint.exportGCode(true, function(gcode) {
+                exportGCode(gcode,currentPrint);
+            });
+        } else {
             API.function.print(exportPrint);
-            return;
         }
-        currentPrint.exportGCode(true, function(gcode) {
-            exportGCode(gcode,currentPrint);
-        });
     }
 
     function exportPrintLaser(currentPrint) {
         if (!currentPrint) {
-            API.function.print(exportPrintLaser);
-            return;
+            return API.function.print(exportPrintLaser);
         }
 
         let filename = "laser-"+(new Date().getTime().toString(36));
@@ -341,7 +336,8 @@ let gs_kiri_export = exports;
                 "&image=" + filename
             );
             xhtr.setRequestHeader("Content-Type", "text/plain");
-            xhtr.send(screenShot ? [gcode,screenShot].join("\0") : gcode);
+            let snapshot = API.view.snapshot;
+            xhtr.send(snapshot ? [gcode,snapshot].join("\0") : gcode);
             API.modal.hide();
         }
 
@@ -390,7 +386,9 @@ let gs_kiri_export = exports;
             $('grid-host').onkeyup = gridhost_probe;
             $('grid-apik').onkeyup = gridhost_probe;
             calcTime();
-            if (MODE === MODES.FDM) calcWeight();
+            if (MODE === MODES.FDM) {
+                calcWeight();
+            }
             octo_host = $('octo-host');
             octo_apik = $('octo-apik');
             if (MODE === MODES.CAM) {

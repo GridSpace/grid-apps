@@ -45,7 +45,6 @@ self.kiri.license = exports.LICENSE;
         UC = MOTO.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
         MODE = MODES.FDM,
         onEvent = {},
-        screenShot = null,
         currentPrint = null,
         selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
@@ -79,15 +78,15 @@ self.kiri.license = exports.LICENSE;
     settings.cdev.FDM = clone(settings.device);
     settings.cdev.CAM = clone(settings.device);
 
-    // add show() to catalog
-    CATALOG.show = showCatalog;
-
     DBUG.enable();
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
 
     let alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
+
+    // add show() to catalog for API
+    CATALOG.show = showCatalog;
 
     const selection = {
         opacity: setOpacity,
@@ -210,8 +209,8 @@ self.kiri.license = exports.LICENSE;
             clear: clearPrint
         },
         probe: {
-            local : function() { return false },
             grid : function() { return false },
+            local : function() { return false }
         },
         platform,
         selection,
@@ -234,7 +233,8 @@ self.kiri.license = exports.LICENSE;
             get: function() { return viewMode },
             set: setViewMode,
             update_fields: updateFields,
-            wireframe: toggleWireframe
+            wireframe: toggleWireframe,
+            snapshot: null
         },
         widgets: {
             new: newWidget,
@@ -639,7 +639,6 @@ self.kiri.license = exports.LICENSE;
         }
 
         setViewMode(VIEWS.PREVIEW);
-
         clearPrint();
         saveSettings();
 
@@ -702,8 +701,8 @@ self.kiri.license = exports.LICENSE;
      */
     function prepareSlices(callback) {
         if (viewMode == VIEWS.ARRANGE) {
-            screenShot = SPACE.screenshot();
-            screenShot = screenShot.substring(screenShot.indexOf(",")+1);
+            let snap = SPACE.screenshot();
+            API.view.snapshot = snap.substring(snap.indexOf(",")+1);
         }
 
         setViewMode(VIEWS.SLICE);
@@ -965,12 +964,16 @@ self.kiri.license = exports.LICENSE;
             widget.setColor(widget_selected_color);
             meshUpdateInfo(mesh);
         }
-        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        platformUpdateSelected();
         SPACE.update();
     }
 
     function platformSelectedCount() {
         return viewMode === VIEWS.ARRANGE ? selectedMeshes.length : 0;
+    }
+
+    function platformUpdateSelected() {
+        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
     }
 
     function platformDeselect(widget) {
@@ -986,7 +989,7 @@ self.kiri.license = exports.LICENSE;
             sel = (si >= 0);
         if (sel) selectedMeshes.splice(si,1);
         widget.setColor(widget_deselected_color);
-        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        platformUpdateSelected();
         SPACE.update();
         meshUpdateInfo();
     }
@@ -1046,7 +1049,7 @@ self.kiri.license = exports.LICENSE;
         platform.compute_max_z();
         if (MODE !== MODES.FDM) platform.layout();
         SPACE.update();
-        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        platformUpdateSelected();
     }
 
     function platformSelectAll() {
@@ -1712,7 +1715,6 @@ self.kiri.license = exports.LICENSE;
         }
         UI.ctrlLeft.focus();
         UI.container.focus();
-        //console.log({focus: DOC.activeElement});
     }
 
     function setViewMode(mode) {
@@ -1720,29 +1722,40 @@ self.kiri.license = exports.LICENSE;
         viewMode = mode;
         platform.deselect();
         meshUpdateInfo();
-        [ UI.modeArrange, UI.modeSlice, UI.modePreview ].forEach(function(b) {
-            b.removeAttribute("class");
-        });
         switch (mode) {
             case VIEWS.ARRANGE:
+                showLayerView(false);
                 updateSliderMax();
-                UI.layerView.style.display = 'none';
-                UI.modeArrange.setAttribute("class","buton");
+                showModeActive(UI.modeArrange);
                 break;
             case VIEWS.SLICE:
-                UI.layerView.style.display = 'flex';
-                UI.modeSlice.setAttribute("class","buton");
+                showLayerView(true);
                 updateSliderMax();
+                showModeActive(UI.modeSlice);
                 break;
             case VIEWS.PREVIEW:
-                UI.layerView.style.display = 'flex';
-                UI.modePreview.setAttribute("class","buton");
+                showLayerView(true);
+                showModeActive(UI.modePreview);
                 break;
             default:
                 DBUG.log("invalid view mode: "+mode);
                 return;
         }
         DOC.activeElement.blur();
+    }
+
+    function showModeActive(el) {
+        [ UI.modeArrange, UI.modeSlice, UI.modePreview, UI.modeExport ].forEach(function(b) {
+            if (b === el) {
+                b.classList.add('buton');
+            } else {
+                b.classList.remove('buton');
+            }
+        });
+    }
+
+    function showLayerView(bool) {
+        UI.layerView.style.display = bool ? 'flex' : 'none';
     }
 
     function getMode() {
@@ -1782,7 +1795,9 @@ self.kiri.license = exports.LICENSE;
         UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
         UI.mode.style.display = lock ? 'none' : '';
         UI.modeTable.style.display = lock ? 'none' : '';
-        if (camStock) camStock.material.visible = settings.mode === 'CAM';
+        if (camStock) {
+            camStock.material.visible = settings.mode === 'CAM';
+        }
         restoreWorkspace(null,true);
         // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();

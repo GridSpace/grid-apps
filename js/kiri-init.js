@@ -139,6 +139,8 @@ var gs_kiri_init = exports;
             toolFluteLen: $('tool-flen'),
             toolShaftDiam: $('tool-sdiam'),
             toolShaftLen: $('tool-slen'),
+            // toolTaperAngle: $('tool-tangle'),
+            toolTaperTip: $('tool-ttip'),
             toolMetric: $('tool-metric'),
 
             catalog: $('catalog'),
@@ -1147,12 +1149,94 @@ var gs_kiri_init = exports;
             UI.toolFluteLen.value = tool.flute_len;
             UI.toolShaftDiam.value = tool.shaft_diam;
             UI.toolShaftLen.value = tool.shaft_len;
+            // UI.toolTaperAngle.value = tool.taper_angle || 70;
+            UI.toolTaperTip.value = tool.taper_tip || 0;
             UI.toolMetric.checked = tool.metric;
-            UI.toolType.selectedIndex = (
-                tool.type === 'endmill' ? 0 :
-                tool.type === 'ballmill' ? 1 :
-                -1
-            );
+            UI.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
+            renderTool(tool);
+        }
+
+        function otag(o) {
+            if (Array.isArray(o)) {
+                let out = []
+                o.forEach(oe => out.push(otag(oe)));
+                return out.join('');
+            }
+            let tags = [];
+            Object.keys(o).forEach(key => {
+                let val = o[key];
+                let att = [];
+                Object.keys(val).forEach(tk => {
+                    let tv = val[tk];
+                    att.push(`${tk.replace(/_/g,'-')}="${tv}"`);
+                });
+                tags.push(`<${key} ${att.join(' ')}></${key}>`);
+            });
+            return tags.join('');
+        }
+
+        function renderTool(tool) {
+            let type = selectedTool.type;
+            let taper = type === 'tapermill';
+            // UI.toolTaperAngle.disabled = taper ? undefined : 'true';
+            UI.toolTaperTip.disabled = taper ? undefined : 'true';
+            $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
+            setTimeout(() => {
+                let svg = $('tool-svg');
+                let pad = 10;
+                let dim = { w: svg.clientWidth, h: svg.clientHeight }
+                let max = { w: dim.w - pad * 2, h: dim.h - pad * 2};
+                let off = { x: pad, y: pad };
+                let shaft_fill = "#cccccc";
+                let flute_fill = "#dddddd";
+                let stroke = "#777777";
+                let stroke_width = 3;
+                let shaft = tool.shaft_len || 1;
+                let flute = tool.flute_len || 1;
+                let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
+                let total_len = shaft + flute + tip_len;
+                let shaft_len = (shaft / total_len) * max.h;
+                let flute_len = (flute / total_len) * max.h;
+                let total_wid = Math.max(tool.flute_diam, tool.shaft_diam, total_len/4);
+                let shaft_off = (max.w * (1 - (tool.shaft_diam / total_wid))) / 2;
+                let flute_off = (max.w * (1 - (tool.flute_diam / total_wid))) / 2;
+                let taper_off = (max.w * (1 - ((tool.taper_tip || 0) / total_wid))) / 2;
+                let parts = [
+                    { rect: {
+                        x:off.x + shaft_off, y:off.y,
+                        width:max.w - shaft_off * 2, height:shaft_len,
+                        stroke, fill: shaft_fill, stroke_width
+                    } }
+                ];
+                if (type === "tapermill") {
+                    let yoff = off.y + shaft_len;
+                    let mid = dim.w / 2;
+                    parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                        `M ${off.x + flute_off} ${yoff}`,
+                        `L ${off.x + taper_off} ${yoff + flute_len}`,
+                        `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
+                        `L ${dim.w - off.x - flute_off} ${yoff}`,
+                        `z`
+                    ].join('\n')}});
+                } else {
+                    parts.push({ rect: {
+                        x:off.x + flute_off, y:off.y + shaft_len,
+                        width:max.w - flute_off * 2, height:flute_len,
+                        stroke, fill: flute_fill, stroke_width
+                    } });
+                }
+                if (type === "ballmill") {
+                    let rad = (max.w - flute_off * 2) / 2;
+                    let xend = dim.w - off.x - flute_off;
+                    let yoff = off.y + shaft_len + flute_len + stroke_width/2;
+                    parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                        `M ${off.x + flute_off} ${yoff}`,
+                        `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,
+                        // `L ${off.x + flute_off} ${yoff}`
+                    ].join('\n')}})
+                }
+                svg.innerHTML = otag(parts);
+            }, 10);
         }
 
         function updateTool() {
@@ -1162,11 +1246,14 @@ var gs_kiri_init = exports;
             selectedTool.flute_len = parseFloat(UI.toolFluteLen.value);
             selectedTool.shaft_diam = parseFloat(UI.toolShaftDiam.value);
             selectedTool.shaft_len = parseFloat(UI.toolShaftLen.value);
+            // selectedTool.taper_angle = parseFloat(UI.toolTaperAngle.value);
+            selectedTool.taper_tip = parseFloat(UI.toolTaperTip.value);
             selectedTool.metric = UI.toolMetric.checked;
-            selectedTool.type = ['endmill','ballmill'][UI.toolType.selectedIndex];
+            selectedTool.type = ['endmill','ballmill','tapermill'][UI.toolType.selectedIndex];
             renderTools();
             UI.toolSelect.selectedIndex = selectedTool.order;
             setToolChanged(true);
+            renderTool(selectedTool);
         }
 
         function setToolChanged(changed) {
@@ -1191,14 +1278,16 @@ var gs_kiri_init = exports;
             };
             UI.toolAdd.onclick = function() {
                 editTools.push({
-                    id: UTIL.time(),
+                    id: Date.now(),
                     number: editTools.length,
                     name: "new",
                     type: "endmill",
-                    flute_diam: 0.25,
-                    flute_len: 1,
                     shaft_diam: 0.25,
-                    shaft_len: 3,
+                    shaft_len: 1,
+                    flute_diam: 0.25,
+                    flute_len: 2,
+                    // taper_angle: 70,
+                    taper_tip: 0,
                     metric: false
                 });
                 setToolChanged(true);
@@ -1236,8 +1325,6 @@ var gs_kiri_init = exports;
 
         function showDevices() {
             if (API.mode.get_id() === MODES.LASER || deviceLock) return;
-
-            API.view.set(VIEWS.ARRANGE);
 
             API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
                 if (!flvalue) return;
@@ -1339,6 +1426,8 @@ var gs_kiri_init = exports;
             UI.toolFluteLen,     updateTool,
             UI.toolShaftDiam,    updateTool,
             UI.toolShaftLen,     updateTool,
+            // UI.toolTaperAngle,   updateTool,
+            UI.toolTaperTip,     updateTool,
 
             UI.bedWidth,         platform.update_size,
             UI.bedDepth,         platform.update_size
@@ -1552,6 +1641,8 @@ var gs_kiri_init = exports;
             UI.alert.dialog.onclick = function() {
                 API.event.alerts(true);
             };
+
+            API.view.set(VIEWS.ARRANGE);
         }
 
         API.space.restore(ondone) || checkSeed(ondone) || ondone();
