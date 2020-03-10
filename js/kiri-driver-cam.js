@@ -756,6 +756,7 @@ var gs_kiri_cam = exports;
             let center = BASE.newPoint(0,0,slice.z);
             let offset = (tabWidth + toolDiam) / 2;
             let ints = [];
+            let segs = [];
             while (count-- > 0) {
                 let slope = BASE.newSlopeFromAngle(angle);
                 let normal = BASE.newSlopeFromAngle(angle + 90);
@@ -770,10 +771,11 @@ var gs_kiri_cam = exports;
                     ints.push(int2);
                 }
                 angle -= angle_inc;
+                // segs.push(newPolygon([c1,o1]));
+                // segs.push(newPolygon([c2,o2]));
             }
             if (ints.length) {
                 ints.push(ints.shift());
-                let segs = [];
                 for (let i=0; i<ints.length; i+=2) {
                     segs.push(trace.emitSegment(ints[i], ints[i+1]));
                 }

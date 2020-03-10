@@ -339,6 +339,9 @@ button.selected {
 
 /** tool dialog */
 
+#tools:hover,#tools-body:hover {
+    background-color: #ffffff;
+}
 #tools {
     text-align: center;
 }
@@ -361,21 +364,29 @@ button.selected {
     padding-bottom: 5px;
     border: 0;
 }
-#tool-labels span {
-    width: 200px;
-    padding: 2px 5px 2px 5px;
-    margin: 0 5px 5px 5px;
-    background-color: #eee;
-    border-radius: 5px;
-    border: 1px solid #aaa;
-    text-align: center;
+#tool-labels label:nth-child(1) {
+    width: 125px;
+}
+#tool-labels label:nth-child(2) {
+    width: 175px;
+}
+#tool-labels label:nth-child(3) {
+    width: 100px;
 }
 #tool-cols > div {
-    width: 200px;
     padding: 5px;
     margin: 5px;
     border: 1px solid #aaa;
     border-radius: 5px;
+}
+#tool-cols > div:nth-child(1) {
+    width: 125px;
+}
+#tool-cols > div:nth-child(2) {
+    width: 175px;
+}
+#tool-cols > div:nth-child(3) {
+    width: 100px;
 }
 #tool-info > div {
     margin-top: 2px;
@@ -422,6 +433,9 @@ button.selected {
 
 /** device dialog */
 
+#devices:hover,#devices-body:hover {
+    background-color: #ffffff;
+}
 #devices {
     text-align: center;
 }
@@ -707,7 +721,6 @@ button[import="1"] {
 .fgro {
     flex-grow: 1;
 }
-
 
 #selected {
     position: fixed;

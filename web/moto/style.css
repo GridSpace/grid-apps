@@ -202,6 +202,10 @@ button[del] {
     margin-right: 2px !important;
 }
 
+#control-left:hover, #control-right:hover {
+    background-color: #ffffff;
+}
+
 /** ******************************************************************
  * ID
  ******************************************************************* */

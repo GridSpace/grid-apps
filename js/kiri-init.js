@@ -1497,13 +1497,13 @@ var gs_kiri_init = exports;
 
             // import octoprint settings from url
             if (SETUP.ophost) {
-                OCTOPRINT = {
+                let ohost = API.const.OCTO = {
                     host: SETUP.ophost[0],
                     apik: SETUP.opkey ? SETUP.opkey[0] : ''
                 };
-                SDB['octo-host'] = OCTOPRINT.host;
-                SDB['octo-apik'] = OCTOPRINT.apik;
-                console.log({octoprint:OCTOPRINT});
+                SDB['octo-host'] = ohost.host;
+                SDB['octo-apik'] = ohost.apik;
+                console.log({octoprint:ohost});
             }
 
             // mode passed on url

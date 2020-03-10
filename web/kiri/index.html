@@ -104,10 +104,11 @@
     </div>
     <!-- CAM tools dialog -->
     <div id="tools" class="dialog">
-            <div id="tools-body" class="flow-col">
+        <div id="tools-body" class="flow-col">
             <div id="tool-labels" class="flow-row">
-                <label>tools</label>
-                <label>details</label>
+                <label>tool</label>
+                <label>detail</label>
+                <label>view</label>
             </div>
             <div id="tool-cols" class="flow-row">
                 <div id="tool-list" class="flow-col">
@@ -116,8 +117,9 @@
                 <div id="tool-info" class="flow-col">
                     <div class="flow-row"><label>type</label>
                         <select id="tool-type">
-                            <option value="endmill" selected>endmill</option>
-                            <option value="ballmill">ballmill</option>
+                            <option value="endmill" selected>end</option>
+                            <option value="ballmill">ball</option>
+                            <option value="taper">taper</option>
                         </select>
                     </div>
                     <div class="flow-row"><label>name</label><input id="tool-name" size=8></input></div>
@@ -129,7 +131,11 @@
                     <div class="grouphead">shaft</div>
                     <div class="flow-row" title="shaft diameter"><label>diameter</label><input id="tool-sdiam" size=5></input></div>
                     <div class="flow-row" title="shaft length"><label>length</label><input id="tool-slen" size=5></input></div>
+                    <div class="grouphead">taper</div>
+                    <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div>
+                    <div class="flow-row" title="tip width"><label>width</label><input id="tool-twidth" size=5></input></div>
                 </div>
+                <div id="tool-view" class="flow-col"></div>
             </div>
             <div id="tool-action" class="flow-row">
                 <button id="tool-add">+</button>
