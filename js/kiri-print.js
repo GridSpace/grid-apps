@@ -854,7 +854,6 @@ var gs_kiri_print = exports;
      */
     function tip2tipEmit(array, startPoint, emitter) {
         var mindist, dist, found, count = 0;
-
         for (;;) {
             found = null;
             mindist = Infinity;

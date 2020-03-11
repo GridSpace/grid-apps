@@ -1323,6 +1323,10 @@ let gs_kiri_cam = exports;
                     break;
                 case modes.FINISH_X:
                 case modes.FINISH_Y:
+                    if (isNewMode || !printPoint) {
+                        // force start at lower left corner
+                        printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
+                    }
                     setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
                     spindle = Math.min(spindleMax, process.finishingSpindle);
                     depthData.finishDiam = toolDiam;
@@ -1343,9 +1347,9 @@ let gs_kiri_cam = exports;
                                 poly.forEachPoint(function(point, pidx) {
                                     camOut(point.clone(), pidx > 0);
                                 }, false);
+                                return lastPoint;
                             });
                             newLayer();
-                            return lastPoint;
                         }
                     });
                     break;
@@ -1423,27 +1427,33 @@ let gs_kiri_cam = exports;
                 setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
                 spindle = Math.min(spindleMax, process.finishingSpindle);
                 // deferred linear x finishing
-                if (depthData.linearx.length > 0)
-                printPoint = tip2tipEmit(depthData.linearx, printPoint, function(el, point, count) {
-                    let poly = el.poly;
-                    if (poly.last() === point) poly.reverse();
-                    poly.forEachPoint(function(point, pidx) {
-                        camOut(point.clone(), pidx > 0);
-                    }, false);
-                    newLayer();
-                    return lastPoint;
-                });
+                if (depthData.linearx.length > 0) {
+                    // force start at lower left corner
+                    // printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
+                    printPoint = tip2tipEmit(depthData.linearx, printPoint, function(el, point, count) {
+                        let poly = el.poly;
+                        if (poly.last() === point) poly.reverse();
+                        poly.forEachPoint(function(point, pidx) {
+                            camOut(point.clone(), pidx > 0);
+                        }, false);
+                        newLayer();
+                        return lastPoint;
+                    });
+                }
                 // deferred linear y finishing
-                if (depthData.lineary.length > 0)
-                printPoint = tip2tipEmit(depthData.lineary, printPoint, function(el, point, count) {
-                    let poly = el.poly;
-                    if (poly.last() === point) poly.reverse();
-                    poly.forEachPoint(function(point, pidx) {
-                        camOut(point.clone(), pidx > 0);
-                    }, false);
-                    newLayer();
-                    return lastPoint;
-                });
+                if (depthData.lineary.length > 0) {
+                    // force start at lower left corner
+                    // printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
+                    printPoint = tip2tipEmit(depthData.lineary, printPoint, function(el, point, count) {
+                        let poly = el.poly;
+                        if (poly.last() === point) poly.reverse();
+                        poly.forEachPoint(function(point, pidx) {
+                            camOut(point.clone(), pidx > 0);
+                        }, false);
+                        newLayer();
+                        return lastPoint;
+                    });
+                }
             }
         }
 
