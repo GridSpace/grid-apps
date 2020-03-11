@@ -478,7 +478,8 @@ var gs_kiri_conf = exports;
                 layerSparse: true,
                 layerFill: true,
                 layerSupport: true,
-                layerPrint: false
+                layerPrint: false,
+                layerMoves: false
             },
             synth: {
                 // set in updateSettingsFromFields()

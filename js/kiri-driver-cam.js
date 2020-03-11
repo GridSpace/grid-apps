@@ -15,10 +15,11 @@ let gs_kiri_cam = exports;
         UTIL = BASE.util,
         POLY = BASE.polygons,
         CAM = KIRI.driver.CAM = {
-            slice: slice,
-            printSetup: printSetup,
-            printExport: printExport,
-            getToolDiameter: getToolDiameter
+            slice,
+            printSetup,
+            printExport,
+            getToolById,
+            getToolDiameter
         },
         CPRO = CAM.process = {
             ROUGH: 1,
@@ -39,8 +40,7 @@ let gs_kiri_cam = exports;
         ],
         MIN = Math.min,
         MAX = Math.max,
-        PI = Math.PI,
-        HPI = PI/2,
+        HPI = Math.PI/2,
         SLICER = KIRI.slicer,
         newLine = BASE.newLine,
         newSlice = KIRI.newSlice,
@@ -1013,6 +1013,8 @@ let gs_kiri_cam = exports;
             hasStock = process.camStockZ && process.camStockX && process.camStockY,
             startCenter = process.outputOriginCenter,
             zclear = (process.camZClearance || 1) * units,
+            zadd_outer = hasStock ? stock.z - outer.max.z : alignTop ? outer.max.z - outer.max.z : 0,
+            zmax_outer = hasStock ? stock.z + zclear : outer.max.z + zclear,
             zadd = hasStock ? stock.z - bounds.max.z : alignTop ? outer.max.z - bounds.max.z : 0,
             zmax = hasStock ? stock.z + zclear : bounds.max.z + zclear,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
@@ -1220,7 +1222,7 @@ let gs_kiri_cam = exports;
                 }
             } else {
                 // before first point, move cutting head to point above it
-                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
+                layerPush(point.clone().setZ(zmax_outer + zadd_outer), 0, 0, tool.number);
             }
             // todo synthesize move speed from feed / plunge accordingly
             layerPush(
@@ -1389,6 +1391,7 @@ let gs_kiri_cam = exports;
                     } else {
                         poly.forEachPoint(function(point, pidx, points, offset) {
                             camOut(point.clone(), offset !== 0);
+                            last = point;
                         }, poly.isClosed(), index);
                     }
                     newLayer();
@@ -1442,13 +1445,17 @@ let gs_kiri_cam = exports;
         }
 
         // last layer/move is to zmax
+        // printPoint = lastPoint.clone();
+        // lastPoint = null;
         camOut(printPoint.clone().setZ(bounds.max.z + zclear), false);
         newOutput.push(layerOut);
 
         // replace output single flattened layer with all points
         print.output = newOutput;
 
-        if (widgetIndex + 1 < widgetCount) printSetup(print, update, widgetIndex + 1, printPoint);
+        if (widgetIndex + 1 < widgetCount) {
+            printSetup(print, update, widgetIndex + 1, printPoint);
+        }
     };
 
     /**

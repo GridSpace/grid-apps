@@ -1008,20 +1008,15 @@ var gs_kiri_print = exports;
             poolPoly.mark = true;
             const polys = poolPoly.pool.slice().append(poolPoly);
             startPoint = poly2polyEmit(polys, startPoint, emitter);
-            // poolPoly.poolsDown.forEach(function(downPool) {
-            //     emitPool(downPool);
-            // });
-            poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown");
+            startPoint = poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown");
+            return startPoint;
         };
 
         // from the top layer, iterate and descend through all connected pools
         // pools are sorted smallest to largest. pools are polygons with an
         // attached 'pool' array of polygons
         layers.forEach(function(pools) {
-            // pools.forEach(function(poolPoly) {
-            //     emitPool(poolPoly);
-            // });
-            poly2polyEmit(pools, startPoint, emitPool, "del_ptop");
+            startPoint = poly2polyEmit(pools, startPoint, emitPool, "del_ptop");
         })
         return startPoint;
     }
