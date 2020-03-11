@@ -2,7 +2,7 @@
 
 "use strict";
 
-var gs_kiri_cam = exports;
+let gs_kiri_cam = exports;
 
 (function() {
 
@@ -10,7 +10,7 @@ var gs_kiri_cam = exports;
     if (!self.kiri.driver) self.kiri.driver = { };
     if (self.kiri.driver.CAM) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
@@ -49,34 +49,41 @@ var gs_kiri_cam = exports;
         time = UTIL.time;
 
     function getToolById(settings, id) {
-        for (var i=0, t=settings.tools; i<t.length; i++) {
+        for (let i=0, t=settings.tools; i<t.length; i++) {
             if (t[i].id === id) return t[i];
         }
         return null;
     };
 
     function getToolDiameter(settings, id) {
-        var tool = getToolById(settings, id);
+        let tool = getToolById(settings, id);
         if (!tool) return 0;
         return (tool.metric ? 1 : 25.4) * tool.flute_diam;
     };
 
+    function getToolTipDiameter(settings, id) {
+        let tool = getToolById(settings, id);
+        if (!tool) return 0;
+        return (tool.metric ? 1 : 25.4) * tool.taper_tip;
+    };
+
     function getToolShaftDiameter(settings, id) {
-        var tool = getToolById(settings, id);
+        let tool = getToolById(settings, id);
         if (!tool) return 0;
         return (tool.metric ? 1 : 25.4) * tool.shaft_diam;
     };
 
     function getToolShaftOffset(settings, id) {
-        var tool = getToolById(settings, id);
+        let tool = getToolById(settings, id);
         if (!tool) return 0;
         return (tool.metric ? 1 : 25.4) * tool.flute_len;
     };
 
     function createToolProfile(settings, id, topo) {
         // generate tool profile
-        var tool = getToolById(settings, id),
+        let tool = getToolById(settings, id),
             ball = tool.type === "ballmill",
+            taper = tool.type === "tapermill",
             shaft_diameter = getToolShaftDiameter(settings, id),
             shaft_radius = shaft_diameter / 2,
             shaft_pix_float = shaft_diameter / topo.resolution,
@@ -86,31 +93,66 @@ var gs_kiri_cam = exports;
             flute_diameter = getToolDiameter(settings, id),
             flute_radius = flute_diameter / 2,
             flute_pix_float = flute_diameter / topo.resolution,
-            flute_pix_int = Math.round(flute_pix_float),
+            // flute_pix_int = Math.round(flute_pix_float),
             flute_radius_pix_float = flute_pix_float / 2,
+            tip_diameter = getToolTipDiameter(settings, id),
+            tip_pix_float = tip_diameter / topo.resolution,
+            tip_radius_pix_float = tip_pix_float / 2,
+            tip_max_radius_offset = flute_radius_pix_float - tip_radius_pix_float,
             profile_pix_iter = shaft_pix_int + (1 - shaft_pix_int % 2),
             toolCenter = (shaft_pix_int - (shaft_pix_int % 2)) / 2,
             toolOffset = [],
             larger_shaft = shaft_diameter - flute_diameter > 0.001;
 
-        // console.log({id:tool.id, diam:flute_diameter, pix:flute_pix_float, tocks:profile_pix_iter});
+        // console.log({
+        //     tool: tool.name,
+        //     rez: topo.resolution,
+        //     diam: flute_diameter,
+        //     pix: flute_pix_float.toFixed(2),
+        //     rad: flute_radius_pix_float.toFixed(2),
+        //     tocks: profile_pix_iter,
+        //     shaft_offset,
+        //     larger_shaft
+        // });
 
-        // for each pixel in tool profile, check inside radius
-        for (var x = 0; x < profile_pix_iter; x++) {
-            for (var y = 0; y < profile_pix_iter; y++) {
-                var dx = x - toolCenter,
+        let bounds = toolOffset.bounds = {
+            minx: Infinity, maxx: -Infinity,
+            miny: Infinity, maxy: -Infinity
+        };
+
+        // for each point in tool profile, check inside radius
+        for (let x = 0; x < profile_pix_iter; x++) {
+            // let dbl = [];
+            for (let y = 0; y < profile_pix_iter; y++) {
+                let dx = x - toolCenter,
                     dy = y - toolCenter,
-                    dist_from_center = Math.sqrt(dx * dx + dy * dy);
-
+                    dist_from_center = Math.sqrt(dx * dx + dy * dy),
+                    nup;
                 if (dist_from_center <= flute_radius_pix_float) {
-                    var z_offset = ball ? (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius : 0;
-                    toolOffset.push([dx, dy, z_offset]);
-                } else if (larger_shaft && dist_from_center <= shaft_radius_pix_float) {
-                    toolOffset.push([dx, dy, -shaft_offset]);
+                    // console.log({x,y,dx,dy,dist:dist_from_center,ln:dbl.length})
+                    // flute offset points
+                    let z_offset = 0;
+                    if (ball) {
+                        z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
+                    } else if (taper && dist_from_center >= tip_radius_pix_float) {
+                        z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
+                    }
+                    toolOffset.push(nup = [dx, dy, z_offset]);
+                } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
+                    // shaft offset points
+                    toolOffset.push(nup = [dx, dy, -shaft_offset]);
                 }
+                if (nup) {
+                    bounds.minx = Math.min(bounds.minx, dx);
+                    bounds.maxx = Math.max(bounds.maxx, dx);
+                    bounds.miny = Math.min(bounds.miny, dx);
+                    bounds.maxy = Math.max(bounds.maxy, dx);
+                }
+                // if (nup) dbl.push(toolOffset[toolOffset.length-1][2]);
             }
+            // console.log(dbl.length,dbl.map(v => Math.abs(v).toFixed(1)).join(','));
         }
-
+        // console.log(tool.name,toolOffset.length,toolOffset.bounds)
         return toolOffset;
     };
 
@@ -120,7 +162,7 @@ var gs_kiri_cam = exports;
      */
     function getTopoZPathMax(widget, profile, x1, y1, x2, y2) {
 
-        var topo = widget.topo,
+        let topo = widget.topo,
             rez = topo.resolution,
             bounds = widget.getBoundingBox(),
             dx = x2-x1,
@@ -131,8 +173,11 @@ var gs_kiri_cam = exports;
             iy = dy / mi,
             zmax = 0;
 
+        // implement fast grid fingerprinting. if no z variance within
+        // the scan area (or min scan delta set from last point), then
+        // use the last computed zmax and carry on
         while (mi-- > 0) {
-            var tx1 = Math.round((x1 - bounds.min.x) / rez),
+            let tx1 = Math.round((x1 - bounds.min.x) / rez),
                 ty1 = Math.round((y1 - bounds.min.y) / rez);
             zmax = Math.max(zmax, getMaxTopoToolZ(topo, profile, tx1, ty1, true));
             x1 += ix;
@@ -142,32 +187,61 @@ var gs_kiri_cam = exports;
         return zmax;
     };
 
+    const lastTopo = {
+        lx:0,
+        ly:0,
+        lr:undefined
+    };
+
     /**
      * x,y are in topo grid int coordinates
      */
     function getMaxTopoToolZ(topo, profile, x, y, floormax) {
-        var tv, tx, ty, tz, gv,
-            i = 0, mz = -1,
-            sx = topo.stepsx, sy = topo.stepsy,
-            data = topo.data;
+        let tv, tx, ty, tz, gv, i = 0, mz = -1;
+
+        const sx = topo.stepsx, sy = topo.stepsy;
+
+        let {lx, ly, lr} = lastTopo;
+        let dx = x - lx;
+        let dy = y - ly;
 
         while (i < profile.length) {
             tv = profile[i++];
+
+            if (dx == -1 && tv[0] > 0) continue;
+            if (dx ==  1 && tv[0] < 0) continue;
+            if (dy == -1 && tv[1] > 0) continue;
+            if (dy ==  1 && tv[1] < 0) continue;
+
             tx = tv[0] + x;
             ty = tv[1] + y;
-            if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) continue;
-            gv = data[tx * sy + ty];
+
+            // if outside max topo steps, skip
+            if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) {
+                continue;
+            }
+
+            // lookup grid value @ tx, ty
+            gv = topo.data[tx * sy + ty];
+            // outside the topo
             if (gv === undefined) {
                 continue;
             }
+            // inside the topo but off the part
             if (floormax && gv === 0) {
-                return topo.bounds.max.z;
+                // return topo.bounds.max.z;
+                gv = topo.bounds.max.z;
             }
+            // update the rest
             tz = tv[2] + gv;
             mz = Math.max(tz, mz);
         }
 
-        return mz >= 0.0 ? mz : topo.bounds.max.z;
+        lastTopo.lx = x;
+        lastTopo.ly = y;
+        lastTopo.lr = mz >= 0.0 ? mz : topo.bounds.max.z;
+
+        return lastTopo.lr;
     };
 
     /**
@@ -181,7 +255,7 @@ var gs_kiri_cam = exports;
      * top down progressive union for CAM
      */
     function pancake(slices, onupdate) {
-        var union, tops, last;
+        let union, tops, last;
 
         slices.forEach(function(slice,index) {
             tops = slice.gatherTopPolys([]).clone(true);
@@ -210,7 +284,7 @@ var gs_kiri_cam = exports;
      * return slice closest to specified z
      */
     function closestSliceToZ(slices, z) {
-        var selected = null,
+        let selected = null,
             distance = Infinity,
             nextdist;
         slices.forEach(function(slice) {
@@ -227,7 +301,7 @@ var gs_kiri_cam = exports;
      * select from pancaked layers
      */
     function selectSlices(slices, step, mode, output) {
-        var last, zlastout, emitted = [];
+        let last, zlastout, emitted = [];
 
         function emit(slice) {
             // prevent double emit at end
@@ -235,7 +309,7 @@ var gs_kiri_cam = exports;
             last = slice;
             if (slice.camMode) {
                 // clone to prevent double emit
-                var nuslice = newSlice(slice.z);
+                let nuslice = newSlice(slice.z);
                 slice.tops.forEach(function(top) {
                     nuslice.addTop(top.poly.clone(true));
                 });
@@ -249,16 +323,16 @@ var gs_kiri_cam = exports;
         // - find mandatory slices
         // - divide space between by step
         // - select closes spaces for divisible gap
-        var forced = [];
+        let forced = [];
         slices.forEach(function(slice) {
             if (slice.hasFlats) forced.push(slice);
         })
 
-        var mid = [];
+        let mid = [];
         forced.forEachPair(function(s1, s2) {
             // skip last to first pair
             if (s2.z > s1.z) return;
-            var delta = Math.abs(s2.z - s1.z),
+            let delta = Math.abs(s2.z - s1.z),
                 inc = delta / step,
                 nstep = step,
                 dec = inc - Math.floor(inc),
@@ -268,7 +342,7 @@ var gs_kiri_cam = exports;
             // add another step if decimal too high
             if (dec > slop) nstep = delta / Math.ceil(inc);
             // find closest slices in-between
-            for (var zv = s1.z - nstep; zv >= s2.z + nstep/2; zv -= nstep) {
+            for (let zv = s1.z - nstep; zv >= s2.z + nstep/2; zv -= nstep) {
                 mid.push(closestSliceToZ(slices, zv));
             }
         }, 1);
@@ -293,7 +367,7 @@ var gs_kiri_cam = exports;
      * remove collinear points (todo)
      */
     function cleanupTopoSlice(slice, diameter, curvesOnly) {
-        var poly = slice.tops[0].traces[0],
+        let poly = slice.tops[0].traces[0],
             nupoly = newPolygon().setOpen(),
             points = poly.points,
             start = 0,
@@ -328,7 +402,7 @@ var gs_kiri_cam = exports;
         if (nupoly.length < 2) return false;
 
         // limit cleanup to curved features
-        var traces = [],
+        let traces = [],
             trace = newPolygon().setOpen();
 
         slice.tops[0].traces = traces;
@@ -337,7 +411,7 @@ var gs_kiri_cam = exports;
         latent = null;
         for (i = 1; i < points.length; i++) {
             point = points[i];
-            var use = curvesOnly ?
+            let use = curvesOnly ?
                 (last.z != point.z && (last.x !== point.x || last.y !== point.y)) :
                 last.z && point.z;
             if (use) {
@@ -373,7 +447,7 @@ var gs_kiri_cam = exports;
      * @param {Function} onupdate
      */
     function generateTopoMap(widget, settings, ondone, onupdate) {
-        var mesh = widget.mesh,
+        let mesh = widget.mesh,
             proc = settings.process,
             outp = settings.process,
             units = settings.controller.units === 'in' ? 25.4 : 1,
@@ -413,7 +487,7 @@ var gs_kiri_cam = exports;
         }
 
         function topoSlicesDone(slices) {
-            var gridx = 0,
+            let gridx = 0,
                 gridy,
                 gridi, // index
                 gridv, // value
@@ -424,19 +498,19 @@ var gs_kiri_cam = exports;
                 x, y, tv, ltv;
 
             // for each Y slice, find z grid value (x/z swapped)
-            for (var j=0; j<slices.length; j++) {
-                var slice = slices[j],
+            for (let j=0; j<slices.length; j++) {
+                let slice = slices[j],
                     lodata = data,
                     lines = slice.lines;
                 gridy = 0;
                 // slices have x/z swapped
-                x = slice.z - maxx;
+                // x = slice.z - maxx;
                 for (y = miny; y <= maxy; y += resolution) {
                     gridi = gridx * stepsy + gridy;
                     gridv = lodata[gridi] || 0;
                     // strategy using raw lines (faster slice, but more lines)
-                    for (var i=0; i<lines.length; i++) {
-                        var line = lines[i],
+                    for (let i=0; i<lines.length; i++) {
+                        let line = lines[i],
                             p1 = line.p1,
                             p2 = line.p2;//,
                         if (
@@ -445,7 +519,7 @@ var gs_kiri_cam = exports;
                             ((p1.y <= y && p2.y >= y) || // one endpoint left
                              (p2.y <= y && p1.y >= y)) // one endpoint right
                         ) {
-                            var dy = p1.y - p2.y,
+                            let dy = p1.y - p2.y,
                                 dz = p1.z - p2.z,
                                 pct = (p1.y - y) / dy,
                                 nz = p1.z - (dz * pct);
@@ -461,11 +535,9 @@ var gs_kiri_cam = exports;
             // do x linear finishing
             if (proc.finishingXOn) {
                 startTime = time();
-
                 // emit slice per X
                 gridx = 0;
                 for (x = bounds.min.x; x <= bounds.max.x; x += toolStep) {
-                // for (x = bounds.min.x; x <= bounds.max.x; x += resolution) {
                     ly = gridy = 0;
                     slice = newSlice(gridx, mesh.newGroup ? mesh.newGroup() : null);
                     slice.camMode = CPRO.FINISH_X;
@@ -481,7 +553,7 @@ var gs_kiri_cam = exports;
                                 newPoint(x,ly,lv),
                                 newPoint(x,y,gridv)
                             ));
-                            var ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
+                            let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
                             if (ang > maxangle) {
                                 if (ltv > tv) {
@@ -499,7 +571,9 @@ var gs_kiri_cam = exports;
                         ltv = tv;
                         gridy++;
                     }
-                    if (cleanupTopoSlice(slice,diameter,curvesOnly)) newslices.push(slice);
+                    if (cleanupTopoSlice(slice,diameter,curvesOnly)) {
+                        newslices.push(slice);
+                    }
                     gridx = Math.round(((x - bounds.min.x + toolStep) / boundsX) * stepsx);
                     onupdate(0.70 + (gridx/stepsx) * 0.15, "linear x");
                 }
@@ -508,7 +582,6 @@ var gs_kiri_cam = exports;
             // do y linear finishing
             if (proc.finishingYOn) {
                 startTime = time();
-
                 // emit slice per Y
                 gridy = 0;
                 for (y = bounds.min.y; y < bounds.max.y; y += toolStep) {
@@ -527,7 +600,7 @@ var gs_kiri_cam = exports;
                                 newPoint(lx,y,lv),
                                 newPoint(x,y,gridv)
                             ));
-                            var ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
+                            let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
                             if (ang > maxangle) {
                                 if (ltv > tv) {
@@ -545,7 +618,9 @@ var gs_kiri_cam = exports;
                         ltv = tv;
                         gridx++;
                     }
-                    if (cleanupTopoSlice(slice,diameter,curvesOnly)) newslices.push(slice);
+                    if (cleanupTopoSlice(slice,diameter,curvesOnly)) {
+                        newslices.push(slice);
+                    }
                     gridy = Math.round(((y - bounds.min.y + toolStep) / boundsY) * stepsy);
                     onupdate(0.85 + (gridy/stepsy) * 0.15, "linear y");
                 }
@@ -572,7 +647,7 @@ var gs_kiri_cam = exports;
      * @returns {Object} shell
      */
     function createFacingSlices(slice, shell, diameter, overlap, pocket) {
-        var outer = [],
+        let outer = [],
             offset = [];
 
         // clone and flatten the shell with tops to offset array
@@ -610,7 +685,7 @@ var gs_kiri_cam = exports;
      * @returns {Object} shell or newly generated shell
      */
     function createRoughingSlices(slice, shell, diameter, stock, overlap, pocket) {
-        var tops = slice.gatherTopPolys([]).clone(true),
+        let tops = slice.gatherTopPolys([]).clone(true),
             outer = [],
             offset = [];
 
@@ -656,7 +731,7 @@ var gs_kiri_cam = exports;
     function createFinishingSlices(slice, shell, diameter, pocket) {
         if (slice.tops.length === 0) return shell;
 
-        var tops = slice.gatherTopPolys([]).clone(true),
+        let tops = slice.gatherTopPolys([]).clone(true),
             offset = POLY.expand(tops, diameter / 2, slice.z);
 
         // when pocket only, drop first outer poly
@@ -664,7 +739,7 @@ var gs_kiri_cam = exports;
         if (pocket) {
             offset = POLY.filter(POLY.diff(shell, offset, slice.z), [], function(poly) {
                 if (poly.area() < 1) return null;
-                for (var sp=0; sp<shell.length; sp++) {
+                for (let sp=0; sp<shell.length; sp++) {
                     // eliminate shell only polys
                     if (poly.isEquivalent(shell[sp])) {
                         if (poly.inner) return poly.inner;
@@ -689,7 +764,7 @@ var gs_kiri_cam = exports;
      * @param {Function} output
      */
     function slice(settings, widget, onupdate, ondone) {
-        var conf = settings,
+        let conf = settings,
             proc = conf.process,
             outp = conf.process,
             sliceAll = widget.slices = [],
@@ -711,7 +786,7 @@ var gs_kiri_cam = exports;
             pocketOnlyFinish = outp.camPocketOnlyFinish,
             // addTabs = proc.camTabsOn && !pocketOnly,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
-            addTabsFinish = anyFinish && proc.camTabsOn && !pocketOnlyFinish,
+            addTabsFinish = procFinish && proc.camTabsOn && !pocketOnlyFinish,
             tabWidth = proc.camTabsWidth * units,
             tabHeight = proc.camTabsHeight * units,
             mesh = widget.mesh,
@@ -736,7 +811,7 @@ var gs_kiri_cam = exports;
             // no tops / traces
             if (slice.tops.length === 0) return;
 
-            var trace, index, maxArea = 0, tmpArea;
+            let trace, index, maxArea = 0, tmpArea;
 
             // find trace with greatest area
             slice.tops[0].traces.forEach(function(trc, idx) {
@@ -810,7 +885,7 @@ var gs_kiri_cam = exports;
 
             // hollow area from top of stock to top of part
             if (procFacing) {
-                var ztop = bounds.max.z,
+                let ztop = bounds.max.z,
                     zpos = ztop + (outp.camZTopOffset * units),
                     zstep = proc.roughingDown * units;
 
@@ -830,28 +905,28 @@ var gs_kiri_cam = exports;
             }
 
             if (procRough) {
-                var selected = [];
+                let selected = [];
                 selectSlices(slices, proc.roughingDown * units, CPRO.ROUGH, selected);
                 sliceAll.appendAll(selected);
             }
 
-            if (anyFinish) {
-                var selected = [];
+            if (procFinish) {
+                let selected = [];
                 selectSlices(slices, proc.finishingDown * units, CPRO.FINISH, selected);
                 sliceAll.appendAll(selected);
             }
 
             if (procDrill) {
-                var drills = [],
+                let drills = [],
                     centerDiff = drillToolDiam * 0.1,
                     area = (drillToolDiam/2) * (drillToolDiam/2) * Math.PI,
                     areaDelta = area * 0.05;
 
                 slices.forEach(function(slice) {
-                    var inner = slice.gatherTopPolyInners([]);
+                    let inner = slice.gatherTopPolyInners([]);
                     inner.forEach(function(poly) {
                         if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
-                            var center = poly.circleCenter(),
+                            let center = poly.circleCenter(),
                                 merged = false,
                                 closest = Infinity,
                                 dist;
@@ -874,7 +949,7 @@ var gs_kiri_cam = exports;
 
                 // force all drill poly points to use center (average) point
                 drills.forEach(function(drill) {
-                    var center = drill.center(true),
+                    let center = drill.center(true),
                         slice = newSlice(0,null);
                     drill.points.forEach(function(point) {
                         point.x = center.x;
@@ -934,7 +1009,7 @@ var gs_kiri_cam = exports;
      * @param {Object} [firstPoint] starting point
      */
     function printSetup(print, update, index, firstPoint) {
-        var getTool = getToolById,
+        let getTool = getToolById,
             settings = print.settings,
             device = settings.device,
             process = settings.process,
@@ -947,7 +1022,7 @@ var gs_kiri_cam = exports;
             alignTop = settings.controller.alignTop;
 
         if (widgetIndex >= widgetCount || !widget) return;
-        var slices = widget.slices,
+        let slices = widget.slices,
             bounds = widget.getCamBounds(settings),
             units = settings.controller.units === 'in' ? 25.4 : 1,
             hasStock = process.camStockZ && process.camStockX && process.camStockY,
@@ -1019,12 +1094,12 @@ var gs_kiri_cam = exports;
         function emitDrills(polys) {
             polys = polys.slice();
             for (;;) {
-                var closestDist = Infinity,
+                let closestDist = Infinity,
                     closestI,
                     closest = null,
                     dist;
 
-                for (var i=0; i<polys.length; i++) {
+                for (let i=0; i<polys.length; i++) {
                     if (!polys[i]) continue;
                     if ((dist = polys[i].first().distTo2D(printPoint)) < closestDist) {
                         closestDist = dist;
@@ -1045,7 +1120,7 @@ var gs_kiri_cam = exports;
         }
 
         function emitDrill(poly, down, lift, dwell) {
-            var remain = poly.first().z - poly.last().z,
+            let remain = poly.first().z - poly.last().z,
                 points = [],
                 point = poly.first();
             for (;;) {
@@ -1096,10 +1171,10 @@ var gs_kiri_cam = exports;
                 cut = 0;
                 nextIsMove = false;
             }
-            var rate = feedRate;
+            let rate = feedRate;
             // only when we have a previous point to compare to
             if (lastPoint) {
-                var deltaXY = lastPoint.distTo2D(point),
+                let deltaXY = lastPoint.distTo2D(point),
                     deltaZ = point.z - lastPoint.z,
                     absDeltaZ = Math.abs(deltaZ),
                     isMove = !cut;
@@ -1122,7 +1197,7 @@ var gs_kiri_cam = exports;
                 } //else (TODO verify no else here b/c above could change isMove)
                 // move over things
                 if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                    var maxz = MAX(
+                    let maxz = MAX(
                             getTopoZPathMax(
                                 widget,
                                 toolProfile,
@@ -1148,7 +1223,7 @@ var gs_kiri_cam = exports;
                 }
                 // synth new plunge rate
                 if (deltaZ <= -tolerance) {
-                    var threshold = MIN(deltaXY / 2, absDeltaZ),
+                    let threshold = MIN(deltaXY / 2, absDeltaZ),
                         modifier = threshold / absDeltaZ;
                     if (threshold && modifier && deltaXY > tolerance) {
                         // use modifier to speed up long XY move plunge rates
@@ -1177,7 +1252,7 @@ var gs_kiri_cam = exports;
         printPoint = firstPoint || origin;
 
         // accumulated data for depth-first optimiztions
-        var depthData = {
+        let depthData = {
             rough: [],
             finish: [],
             roughDiam: 0,
@@ -1202,7 +1277,7 @@ var gs_kiri_cam = exports;
                     spindle = Math.min(spindleMax, process.roughingSpindle);
                     slice.tops.forEach(function(top) {
                         if (!top.traces) return;
-                        var polys = [];
+                        let polys = [];
                         top.traces.forEach(function (poly) {
                             polys.push(poly);
                             if (poly.inner) {
@@ -1236,7 +1311,7 @@ var gs_kiri_cam = exports;
                     slice.tops.forEach(function(top) {
                         if (!top.poly) return;
                         if (!top.traces) return;
-                        var polys = [];
+                        let polys = [];
                         POLY.flatten(top.traces, []).forEach(function (poly) {
                             if (depthFirst) poly = poly.clone(true);
                             poly.layer = depthData.layer;
@@ -1264,7 +1339,7 @@ var gs_kiri_cam = exports;
                     // todo find closest next trace/trace-point
                     slice.tops.forEach(function(top) {
                         if (!top.traces) return;
-                        var polys = [], poly, emit;
+                        let polys = [], poly, emit;
                         top.traces.forEach(function (poly) {
                             if (depthFirst) poly = poly.clone(true);
                             polys.push({first:poly.first(), last:poly.last(), poly:poly});
@@ -1302,7 +1377,7 @@ var gs_kiri_cam = exports;
                 setTool(process.roughingTool, process.roughingSpeed, process.roughingPlunge);
                 spindle = Math.min(spindleMax, process.roughingSpindle);
                 printPoint = poly2polyDepthFirstEmit(depthData.rough, printPoint, function(poly, index, count, fromPoint) {
-                    var last = null;
+                    let last = null;
                     if (easeDown && poly.isClosed()) {
                         last = poly.forEachPointEaseDown(function(point, offset) {
                             camOut(point.clone(), offset > 0);
@@ -1321,7 +1396,7 @@ var gs_kiri_cam = exports;
                 setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
                 spindle = Math.min(spindleMax, process.finishingSpindle);
                 printPoint = poly2polyDepthFirstEmit(depthData.finish, printPoint, function(poly, index, count, fromPoint) {
-                    var last = null;
+                    let last = null;
                     if (easeDown && poly.isClosed()) {
                         last = poly.forEachPointEaseDown(function(point, offset) {
                             camOut(point.clone(), offset > 0);
@@ -1340,9 +1415,9 @@ var gs_kiri_cam = exports;
                 setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
                 spindle = Math.min(spindleMax, process.finishingSpindle);
                 // combined deferred linear x and y finishing
-                var linearxy = [].appendAll(depthData.linearx).appendAll(depthData.lineary);
+                let linearxy = [].appendAll(depthData.linearx).appendAll(depthData.lineary);
                 printPoint = tip2tipEmit(linearxy, printPoint, function(el, point, count) {
-                    var poly = el.poly;
+                    let poly = el.poly;
                     if (poly.last() === point) poly.reverse();
                     poly.forEachPoint(function(point, pidx) {
                         camOut(point.clone(), pidx > 0);
@@ -1355,7 +1430,7 @@ var gs_kiri_cam = exports;
                 // deferred linear x finishing
                 if (depthData.linearx.length > 0)
                 printPoint = tip2tipEmit(depthData.linearx, printPoint, function(el, point, count) {
-                    var poly = el.poly;
+                    let poly = el.poly;
                     if (poly.last() === point) poly.reverse();
                     poly.forEachPoint(function(point, pidx) {
                         camOut(point.clone(), pidx > 0);
@@ -1365,7 +1440,7 @@ var gs_kiri_cam = exports;
                 // deferred linear y finishing
                 if (depthData.lineary.length > 0)
                 printPoint = tip2tipEmit(depthData.lineary, printPoint, function(el, point, count) {
-                    var poly = el.poly;
+                    let poly = el.poly;
                     if (poly.last() === point) poly.reverse();
                     poly.forEachPoint(function(point, pidx) {
                         camOut(point.clone(), pidx > 0);
@@ -1395,11 +1470,11 @@ var gs_kiri_cam = exports;
      * @returns {Array} gcode lines
      */
     function printExport(print, online) {
-        var widget = print.widgets[0];
+        let widget = print.widgets[0];
 
         if (!widget) return;
 
-        var i,
+        let i,
             time = 0,
             lines = 0,
             bytes = 0,
@@ -1482,7 +1557,7 @@ var gs_kiri_cam = exports;
         }
 
         function add0(val) {
-            var s = val.toString(),
+            let s = val.toString(),
                 d = s.indexOf(".");
             if (d < 0) {
                 return s + '.0';
@@ -1492,14 +1567,14 @@ var gs_kiri_cam = exports;
         }
 
         function toolNameByNumber(number, tools) {
-            for (var i=0; i<tools.length; i++) {
+            for (let i=0; i<tools.length; i++) {
                 if (tools[i].number === number) return tools[i].name;
             }
             return "unknown";
         }
 
         function moveTo(out) {
-            var newpos = out.point;
+            let newpos = out.point;
 
             // no point == dwell
             // out.speed = time to dwell in ms
@@ -1524,7 +1599,7 @@ var gs_kiri_cam = exports;
                 filterEmit(cmdToolChange, consts);
             }
 
-            var speed = out.speed,
+            let speed = out.speed,
                 feed = speed || spro.camFastFeed,
                 nl = [speed ? 'G1' : 'G0'],
                 dx = newpos.x - pos.x,
