@@ -872,7 +872,7 @@ var gs_kiri_print = exports;
             });
             if (found) {
                 found.el.delete = true;
-                startPoint = found.last;
+                // startPoint = found.last;
                 startPoint = emitter(found.el, found.first, ++count);
             } else {
                 break;

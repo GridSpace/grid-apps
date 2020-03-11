@@ -977,7 +977,11 @@ self.kiri.license = exports.LICENSE;
     }
 
     function platformDeselect(widget) {
-        // if (viewMode !== VIEWS.ARRANGE) return;
+        if (viewMode !== VIEWS.ARRANGE) {
+            // don't de-select and re-color widgets in,
+            // for example, sliced or preview modes
+            return;
+        }
         if (!widget) {
             forAllWidgets(function(widget) {
                 platform.deselect(widget);
