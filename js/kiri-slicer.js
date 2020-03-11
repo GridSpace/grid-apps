@@ -50,13 +50,14 @@ var gs_kiri_slicer = exports;
     function slice(points, bounds, options, ondone, onupdate) {
         var topoMode = options.topo,
             simpleMode = options.simple,
+            swap = options.swapX || options.swapY,
             ox = 0,
             oy = 0;
 
         // handle rotating meshes for CAM finishing.
         // slicer expects things just so, so we alter
         // geometry to satisfy
-        if (options.swapX || options.swapY) {
+        if (swap) {
             points = points.slice();
 
             var btmp = new THREE.Box3(),
@@ -149,7 +150,7 @@ var gs_kiri_slicer = exports;
                     } else {
                         zFlat[zkey] += area;
                     }
-                } else if (false) {
+                } else if (options.trace) {
                     // detect zLines (curved region tops/bottoms)
                     // mark these layers for ball mills only
                     if (p1.z === p2.z && p1.z > bounds.min.z) {
@@ -171,26 +172,30 @@ var gs_kiri_slicer = exports;
             }
         }
 
-        // translate zLines to zFlats
-        if (options.cam) {
-            let zlk, zlv;
-            Object.entries(zLines)
-                .map(v => [v[0], v[1], parseFloat(v[0])])
-                .sort((a,b) => {
-                    return a[2] - b[2]
-                })
-                .forEach(zl => {
-                    if (zlk) {
-                        if (zlv != zl[1]) {
-                            zFlat[zlk] = zlv;
-                            zlv = zl[1];
-                        }
-                        zlk = zl[0];
-                    } else {
-                        zlk = zl[0];
-                        zlv = zl[1];
+        // find slice candidates to trace for ballmills and tapermills
+        if (options.trace) {
+            let zl = {};
+            let le;
+            let zs = Object.entries(zLines).map(oe => {
+                return oe.map(v => parseFloat(v));
+            }).sort((a,b) => {
+                return b[0] - a[0];
+            }).forEach((e,i) => {
+                // console.log(e)
+                if (i > 0) {
+                    let zd = le[0]-e[0];
+                    // console.log(e[0], zd);
+                    if (zd > 0.1 && e[1] > 100) {
+                        // zl.push(e)
+                        zl[e[0].toFixed(5)] = e[1];
+                        zFlat[e[0].toFixed(5)] = e[1];
                     }
-                });
+                }
+                if (e[1] > 10) {
+                    le = e;
+                }
+            });
+            zLines = zl;
         }
 
         /** bucket polygons into z-bounded groups */
@@ -247,9 +252,13 @@ var gs_kiri_slicer = exports;
             }
             for (key in zFlat) {
                 // todo make threshold for flat detection configurable
-                if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10) continue;
+                if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10){
+                    continue;
+                }
                 key = parseFloat(key);
-                if (!zIndexes.contains(key) && key >= zMin) zIndexes.push(key);
+                if (!zIndexes.contains(key) && key >= zMin) {
+                    zIndexes.push(key);
+                }
             }
             // sort top down
             zIndexes.sort(function(a,b) {
@@ -411,7 +420,9 @@ var gs_kiri_slicer = exports;
         function sliceZ(z, height) {
             var phash = {},
                 lines = [],
-                onflat = zFlat[z.toFixed(5)] > 0,
+                zkey = z.toFixed(5),
+                onflat = zFlat[zkey] > 0,
+                online = zLines[zkey] > 0,
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
                 bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];
 
