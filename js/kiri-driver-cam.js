@@ -115,19 +115,12 @@ let gs_kiri_cam = exports;
         //     larger_shaft
         // });
 
-        let bounds = toolOffset.bounds = {
-            minx: Infinity, maxx: -Infinity,
-            miny: Infinity, maxy: -Infinity
-        };
-
         // for each point in tool profile, check inside radius
         for (let x = 0; x < profile_pix_iter; x++) {
-            // let dbl = [];
             for (let y = 0; y < profile_pix_iter; y++) {
                 let dx = x - toolCenter,
                     dy = y - toolCenter,
-                    dist_from_center = Math.sqrt(dx * dx + dy * dy),
-                    nup;
+                    dist_from_center = Math.sqrt(dx * dx + dy * dy);
                 if (dist_from_center <= flute_radius_pix_float) {
                     // console.log({x,y,dx,dy,dist:dist_from_center,ln:dbl.length})
                     // flute offset points
@@ -137,22 +130,13 @@ let gs_kiri_cam = exports;
                     } else if (taper && dist_from_center >= tip_radius_pix_float) {
                         z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
                     }
-                    toolOffset.push(nup = [dx, dy, z_offset]);
+                    toolOffset.push(dx, dy, z_offset);
                 } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
                     // shaft offset points
-                    toolOffset.push(nup = [dx, dy, -shaft_offset]);
+                    toolOffset.push(dx, dy, -shaft_offset);
                 }
-                if (nup) {
-                    bounds.minx = Math.min(bounds.minx, dx);
-                    bounds.maxx = Math.max(bounds.maxx, dx);
-                    bounds.miny = Math.min(bounds.miny, dx);
-                    bounds.maxy = Math.max(bounds.maxy, dx);
-                }
-                // if (nup) dbl.push(toolOffset[toolOffset.length-1][2]);
             }
-            // console.log(dbl.length,dbl.map(v => Math.abs(v).toFixed(1)).join(','));
         }
-        // console.log(tool.name,toolOffset.length,toolOffset.bounds)
         return toolOffset;
     };
 
@@ -206,15 +190,17 @@ let gs_kiri_cam = exports;
         let dy = y - ly;
 
         while (i < profile.length) {
-            tv = profile[i++];
+            let tx = profile[i++];
+            let ty = profile[i++];
+            let tz = profile[i++];
 
-            if (dx == -1 && tv[0] > 0) continue;
-            if (dx ==  1 && tv[0] < 0) continue;
-            if (dy == -1 && tv[1] > 0) continue;
-            if (dy ==  1 && tv[1] < 0) continue;
+            if (dx == -1 && tx > 0) continue;
+            if (dx ==  1 && tx < 0) continue;
+            if (dy == -1 && ty > 0) continue;
+            if (dy ==  1 && ty < 0) continue;
 
-            tx = tv[0] + x;
-            ty = tv[1] + y;
+            tx += x;
+            ty += y;
 
             // if outside max topo steps, skip
             if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) {
@@ -233,8 +219,7 @@ let gs_kiri_cam = exports;
                 gv = topo.bounds.max.z;
             }
             // update the rest
-            tz = tv[2] + gv;
-            mz = Math.max(tz, mz);
+            mz = Math.max(tz + gv, mz);
         }
 
         lastTopo.lx = x;
