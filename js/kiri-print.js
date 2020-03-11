@@ -613,7 +613,9 @@ var gs_kiri_print = exports;
             var lp = startPoint;
             startPoint = tip2tipEmit(proxy, startPoint, function(el, point, count) {
                 var poly = el.poly;
-                if (poly.last() === point) poly.reverse();
+                if (poly.last() === point) {
+                    poly.reverse();
+                }
                 poly.forEachPoint(function(p, i) {
                     // retract if dist trigger and crosses a slice top polygon
                     if (i === 0 && lp && lp.distTo2D(p) > retractDist && intersectsTop(lp,p)) {
@@ -622,6 +624,7 @@ var gs_kiri_print = exports;
                     addOutput(preout, p, i === 0 ? 0 : extrude, speed || printSpeed);
                     lp = p;
                 });
+                return lp;
             });
         }
 
@@ -871,7 +874,7 @@ var gs_kiri_print = exports;
             if (found) {
                 found.el.delete = true;
                 startPoint = found.last;
-                emitter(found.el, found.first, ++count);
+                startPoint = emitter(found.el, found.first, ++count);
             } else {
                 break;
             }
@@ -892,13 +895,17 @@ var gs_kiri_print = exports;
             found = null;
             mindist = Infinity;
             array.forEach(function(poly) {
-                if (poly[marker]) return;
+                if (poly[marker]) {
+                    return;
+                }
                 if (poly.isOpen()) {
                     const d2f = startPoint.distTo2D(poly.first());
-                    const d2l = startPoint.distTo2D(poly.first());
-                    if (d2f > mindist && d2l > mindist) return;
+                    const d2l = startPoint.distTo2D(poly.last());
+                    if (d2f > mindist && d2l > mindist) {
+                        return;
+                    }
                     if (d2l < mindist && d2l < d2f) {
-                        // poly.reverse();
+                        poly.reverse();
                         found = {poly:poly, index:0, point:poly.first()};
                     } else if (d2f < mindist) {
                         found = {poly:poly, index:0, point:poly.first()};

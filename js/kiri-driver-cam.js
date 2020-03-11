@@ -1342,6 +1342,7 @@ let gs_kiri_cam = exports;
                                 }, false);
                             });
                             newLayer();
+                            return lastPoint;
                         }
                     });
                     break;
@@ -1411,6 +1412,7 @@ let gs_kiri_cam = exports;
                         camOut(point.clone(), pidx > 0);
                     }, false);
                     newLayer();
+                    return lastPoint;
                 });
             } else {
                 setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
@@ -1424,6 +1426,7 @@ let gs_kiri_cam = exports;
                         camOut(point.clone(), pidx > 0);
                     }, false);
                     newLayer();
+                    return lastPoint;
                 });
                 // deferred linear y finishing
                 if (depthData.lineary.length > 0)
@@ -1434,6 +1437,7 @@ let gs_kiri_cam = exports;
                         camOut(point.clone(), pidx > 0);
                     }, false);
                     newLayer();
+                    return lastPoint;
                 });
             }
         }
