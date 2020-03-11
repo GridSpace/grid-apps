@@ -25,6 +25,8 @@ serves code as obfuscated, compressed bundles. this is the mode used to run on a
 web site, so you can't use "localhost" to test. to accommodate this, alias "debug" to 127.0.0.1
 then access the apps from http://debug:8080/
 
+requires node.js 12+
+
 ## More Information
 
 * [Facebook Group](https://www.facebook.com/groups/660020084206828/)
