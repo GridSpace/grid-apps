@@ -709,6 +709,66 @@ let gs_kiri_cam = exports;
     };
 
     /**
+     * Find top paths to trace when using ball and taper mills
+     * in waterline finishing mode.
+     */
+    function findTracingPaths(widget, slice, tool, profile) {
+        // check for ball and taper mills paths and add to top[0].inner
+        let polys = [];
+        let nups = [];
+        let cull = [];
+        slice.gatherTopPolys([]).forEach(poly => poly.flattenTo(polys));
+        polys.forEach(poly => {
+            let pz = poly.first().z;
+            let mz = -Infinity;
+            let np = newPolygon().setOpen();
+            let mp = 0;
+            // find top poly segments that are not significantly offset
+            // my tool profile and add to new polygons which accumulate
+            // to the top inner array
+            poly.forEachSegment((p1,p2) => {
+                let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
+                if (nz > mz) {
+                    mz = nz;
+                }
+                if (nz - pz < 0.01) {
+                    mp++
+                    if (np.length) {
+                        if (!np.first().isEqual(p2)) {
+                            np.append(p2);
+                        } else {
+                            np.setClosed();
+                        }
+                    } else {
+                        np.append(p1).append(p2);
+                    }
+                } else if (np.length) {
+                    nups.append(np);
+                    np = newPolygon().setOpen();
+                }
+            });
+            if (np.length) {
+                if (np.length === poly.length) {
+                    np.setClosed();
+                }
+                // if a trace poly has no interruptions for an endmill
+                // and it's an inner poly, eliminate it from the parent
+                // so it won't be offset.
+                let parent = poly.parent;
+                if (np.isClosed() && parent) {
+                    // console.log(slice.z,'cull',poly);
+                    parent.inner = parent.inner.filter(p => p !== poly);
+                }
+                nups.append(np);
+            }
+        });
+        if (nups.length) {
+            // console.log(slice.z,'nups',nups.length);
+            slice.tops[0].inner = nups;
+        }
+    }
+
+    /**
      * Create CAM finishing offsets
      *
      * @param {Slice} slice target
@@ -740,8 +800,15 @@ let gs_kiri_cam = exports;
 
         const output = POLY.flatten(offset, [], true);
 
-        // slice.tops[0].inner = output;
         slice.tops[0].traces = output;
+
+        // append inner traces from findTracingPaths
+        let inner = slice.tops[0].inner;
+        if (inner) {
+            // console.log(slice.z,'inner',inner.length)
+            // output.append(...inner);
+            // slice.tops[0].inner = null;
+        }
     };
 
     /**
@@ -955,6 +1022,26 @@ let gs_kiri_cam = exports;
             onupdate(0.0 + update * 0.25, "slicing");
         });
 
+        // we need topo for safe travel moves
+        generateTopoMap(widget, settings, function(slices) {
+            sliceAll.appendAll(slices);
+            // todo union rough / finish shells
+            // todo union rough / finish tabs
+            // todo append to generated topo map
+        }, function(update, msg) {
+            onupdate(0.40 + update * 0.50, msg || "create topo");
+        });
+
+        // prepare for tracing paths
+        let tool;
+        let profile;
+        if (procFinish) {
+            tool = getToolById(conf, proc.finishingTool);
+            if (tool.type !== 'endmill') {
+                profile = createToolProfile(conf, proc.finishingTool, widget.topo);
+            }
+        }
+
         // for each final slice, do post-processing
         sliceAll.forEach(function(slice, index) {
             // re-index
@@ -968,76 +1055,15 @@ let gs_kiri_cam = exports;
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:
+                    if (profile) {
+                        findTracingPaths(widget, slice, tool, profile);
+                    }
                     createFinishingSlices(slice, shellFinish, finishToolDiam, pocketOnlyFinish);
                     if (addTabsFinish) addCutoutTabs(slice, finishToolDiam);
                     break;
             }
-            onupdate(0.40 + (index / sliceAll.length) * 0.10, "finishing")
+            onupdate(0.90 + (index / sliceAll.length) * 0.10, "finishing")
         }, "cam post");
-
-        // we need topo for safe travel moves
-        generateTopoMap(widget, settings, function(slices) {
-            sliceAll.appendAll(slices);
-            // todo union rough / finish shells
-            // todo union rough / finish tabs
-            // todo append to generated topo map
-        }, function(update, msg) {
-            onupdate(0.50 + update * 0.50, msg || "create topo");
-        });
-
-        // check for ball and taper mills paths and add to top[0].inner
-        if (procFinish) {
-            let tool = getToolById(conf, proc.finishingTool);
-            if (tool.type !== 'endmill') {
-                let profile = createToolProfile(conf, proc.finishingTool, widget.topo);
-                sliceAll.forEach(function(slice, index) {
-                    let polys = [];
-                    let nups = [];
-                    slice.gatherTopPolys([]).forEach(poly => poly.flattenTo(polys));
-                    polys.forEach(poly => {
-                        let pz = poly.first().z;
-                        let mz = -Infinity;
-                        let np = newPolygon().setOpen();
-                        let mp = 0;
-                        // find top poly segments that are not significantly offset
-                        // my tool profile and add to new polygons which accumulate
-                        // to the top inner array
-                        // TODO offset polygons should be calculated after this pass
-                        // so that they can not be offset when segments match
-                        // TODO for now remove trace polygons enclosed by newly
-                        // created inner polygons
-                        poly.forEachSegment((p1,p2) => {
-                            let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
-                            if (nz > mz) {
-                                mz = nz;
-                            }
-                            if (nz - pz < 0.01) {
-                                mp++
-                                if (np.length) {
-                                    if (!np.first().isEqual(p2)) {
-                                        np.append(p2);
-                                    } else {
-                                        np.setClosed();
-                                    }
-                                } else {
-                                    np.append(p1).append(p2);
-                                }
-                            } else if (np.length) {
-                                nups.append(np);
-                                np = newPolygon().setOpen();
-                            }
-                        });
-                        if (np.length) {
-                            nups.append(np);
-                        }
-                        // if (mp) console.log(slice.z,'match',mp,poly.length,np.length);
-                    });
-                    if (nups.length) {
-                        slice.tops[0].inner = nups;
-                    }
-                });
-            }
-        }
 
         ondone();
     };
@@ -1356,7 +1382,7 @@ let gs_kiri_cam = exports;
                         if (!top.poly) return;
                         if (!top.traces) return;
                         let polys = [];
-                        POLY.flatten(top.traces, []).forEach(function (poly) {
+                        POLY.flatten(top.traces, top.inner || []).forEach(function (poly) {
                             if (depthFirst) poly = poly.clone(true);
                             poly.layer = depthData.layer;
                             polys.push(poly);
