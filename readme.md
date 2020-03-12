@@ -27,7 +27,7 @@ then access the apps from http://debug:8080/
 
 ## More Information
 
-* [Facebook Group](https://www.facebook.com/groups/660020084206828/)
+* [Facebook Group](https://www.facebook.com/groups/kirimoto/)
 * [YouTube Tutorials](https://www.youtube.com/c/gridspace)
 * [Twitter](https://twitter.com/grid_space_3d)
 * [Wiki](https://github.com/GridSpace/grid-apps/wiki)

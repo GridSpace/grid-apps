@@ -1302,7 +1302,9 @@ var gs_kiri_init = exports;
             };
             UI.toolsSave.onclick = function() {
                 if (selectedTool) updateTool();
-                settings().tools = editTools;
+                settings().tools = editTools.sort((a,b) => {
+                    return a.name < b.name ? -1 : 1;
+                });
                 setToolChanged(false);
                 API.conf.save();
                 API.view.update_fields();

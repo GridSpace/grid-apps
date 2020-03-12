@@ -710,9 +710,12 @@ let gs_kiri_cam = exports;
 
     /**
      * Find top paths to trace when using ball and taper mills
-     * in waterline finishing mode.
+     * in waterline finishing and tracing modes.
      */
-    function findTracingPaths(widget, slice, tool, profile) {
+    function findTracingPaths(widget, slice, tool, profile, partial) {
+        // for now, only emit completed polys and not segments
+        // TODO consider limiting to nup path lengths that are >= tool radius
+        let only_whole = !partial;
         // check for ball and taper mills paths and add to top[0].inner
         let polys = [];
         let nups = [];
@@ -724,13 +727,14 @@ let gs_kiri_cam = exports;
             let np = newPolygon().setOpen();
             let mp = 0;
             // find top poly segments that are not significantly offset
-            // my tool profile and add to new polygons which accumulate
+            // from tool profile and add to new polygons which accumulate
             // to the top inner array
             poly.forEachSegment((p1,p2) => {
                 let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
                 if (nz > mz) {
                     mz = nz;
                 }
+                // this # should be computed from topo resolution
                 if (nz - pz < 0.01) {
                     mp++
                     if (np.length) {
@@ -743,7 +747,9 @@ let gs_kiri_cam = exports;
                         np.append(p1).append(p2);
                     }
                 } else if (np.length) {
-                    nups.append(np);
+                    if (!only_whole) {
+                        nups.append(np);
+                    }
                     np = newPolygon().setOpen();
                 }
             });
@@ -758,8 +764,13 @@ let gs_kiri_cam = exports;
                 if (np.isClosed() && parent) {
                     // console.log(slice.z,'cull',poly);
                     parent.inner = parent.inner.filter(p => p !== poly);
+                    if (only_whole) {
+                        nups.append(np);
+                    }
                 }
-                nups.append(np);
+                if (!only_whole) {
+                    nups.append(np);
+                }
             }
         });
         if (nups.length) {
@@ -1022,7 +1033,9 @@ let gs_kiri_cam = exports;
             onupdate(0.0 + update * 0.25, "slicing");
         });
 
-        // we need topo for safe travel moves
+        // we need topo for safe travel moves when roughing and finishing
+        // not generated when drilling-only. then all z moves use bounds max
+        if (procRough || anyFinish)
         generateTopoMap(widget, settings, function(slices) {
             sliceAll.appendAll(slices);
             // todo union rough / finish shells
@@ -1055,9 +1068,7 @@ let gs_kiri_cam = exports;
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:
-                    if (profile) {
-                        findTracingPaths(widget, slice, tool, profile);
-                    }
+                    if (profile) findTracingPaths(widget, slice, tool, profile);
                     createFinishingSlices(slice, shellFinish, finishToolDiam, pocketOnlyFinish);
                     if (addTabsFinish) addCutoutTabs(slice, finishToolDiam);
                     break;
@@ -1153,8 +1164,10 @@ let gs_kiri_cam = exports;
             if (toolID !== lastTool) {
                 tool = getToolById(settings, toolID);
                 toolDiam = getToolDiameter(settings, toolID);
-                toolDiamMove = toolDiam, // TODO validate w/ multiple models
-                toolProfile = createToolProfile(settings, toolID, widget.topo);
+                toolDiamMove = toolDiam; // TODO validate w/ multiple models
+                if (widget.topo) {
+                    toolProfile = createToolProfile(settings, toolID, widget.topo);
+                }
                 lastTool = toolID;
             }
             feedRate = feed;
@@ -1267,7 +1280,7 @@ let gs_kiri_cam = exports;
                 } //else (TODO verify no else here b/c above could change isMove)
                 // move over things
                 if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                    let maxz = MAX(
+                    let maxz = toolProfile ? MAX(
                             getTopoZPathMax(
                                 widget,
                                 toolProfile,
@@ -1276,7 +1289,7 @@ let gs_kiri_cam = exports;
                                 point.x,
                                 point.y) + zadd,
                             point.z,
-                            lastPoint.z),
+                            lastPoint.z) : zmax + zadd,
                         mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                         clearz = maxz;
                     // up if any point between higher than start/finish

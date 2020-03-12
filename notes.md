@@ -9,7 +9,6 @@
 * bail on decimation if it's proving ineffective
 * improve decimation speed by avoiding in/out of Point
 * server-side processing (determine protocol and storage)
-* move printing/output into module
 * refactor / simplify POLY.expand (put onus on collector)
 * cloned objects should share same slice data unless rotated
 * remember object's original position/orientation for reset/multi-object import alignment
@@ -39,15 +38,13 @@
 
 * refactor slicing around flats w/ interpolation instead of culling
 * optimize away topo generation (for z hop/move) when part is flat
-* add imperial / metric units switch in (future) global config options
 * add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * ease-in and ease-out especially on tab cut-out start/stop
-* import options: unify bodies.
 * milling order option: by operation or by part
 * store tab and camshell polys in widget.topo to minimize z on edge moves
-* trimming linear finishing to tabs
-* improve 'clockwise' setting to take into account spindle direction, etc
-* linear finishing cutting out tabs
+* add endmill spiral direction to influence next point
+* improve 'clockwise' setting to take into account spindle direction, etc (climb/conventional)
+* lead-in milling
 * linear finishing going back to z top too often
 * fix ease down and re-enable (need failure case)
 * warn when part > stock or cuts go outside bed
@@ -57,16 +54,13 @@
 * crossing open space check point is outside camshell before returning max z
 * compensate for leave-stock in outside roughing (w/ tabs)
 * fix zooming, workspace thickness for larger workspaces
-* raise z by leave-stock in roughing? if so, see next
-* if (raise z) above, add clear-flats to finishing
-* revisit tabs - just cut polys instead
-* try chunking topo until smaller blocks for processing (fit in cacheline)
-* linear x/y scan overflow (y) w/ topo model
 * linear x/y not obeying inset from pocket only
 * check normals for downward facing facets. mark top for slice skirt/pancake
 
 # Laser todo
 
+* add proper devices
+* color coding according to # of identical polys that show up in stacked layers
 * overcuts, radii for drag knives
 * sla :: svg modified from http://garyhodgson.github.io/slic3rsvgviewer/?file=examples/belt_pulley3.svg
 
