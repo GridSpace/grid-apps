@@ -380,7 +380,8 @@ var gs_kiri_init = exports;
             outputTileScaling: UC.newInput("scaling", {title:"multiplier (0.1 to 100)", convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
             outputLaserPower: UC.newInput("power", {title:"0 - 100 %", convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
             outputLaserSpeed: UC.newInput("speed", {title:"millimeters / minute", convert:UC.toInt, modes:LASER}),
-            outputLaserGroup: UC.newBoolean("layer group", onBooleanClick, {title:"retain layer as\nsingle grouped object", modes:LASER}),
+            outputLaserMerged: UC.newBoolean("merged", onBooleanClick, {title:"merge all layers using\ncolor coding to denote\nstacking depth", modes:LASER}),
+            outputLaserGroup: UC.newBoolean("grouped", onBooleanClick, {title:"retain each layer as\na unified grouping\ninstead of separated\npolygons", modes:LASER}),
 
             outputTemp: UC.newInput("nozzle temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
             outputBedTemp: UC.newInput("bed temp", {title:"degrees celsius", convert:UC.toInt, modes:FDM}),
@@ -454,6 +455,7 @@ var gs_kiri_init = exports;
 
         function onBooleanClick() {
             API.conf.update();
+            DOC.activeElement.blur();
         }
 
         function inputHasFocus() {

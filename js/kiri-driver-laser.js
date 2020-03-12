@@ -2,7 +2,7 @@
 
 "use strict";
 
-var gs_kiri_laser = exports;
+let gs_kiri_laser = exports;
 
 (function() {
 
@@ -10,9 +10,10 @@ var gs_kiri_laser = exports;
     if (!self.kiri.driver) self.kiri.driver = { };
     if (self.kiri.driver.LASER) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
+        POLY = BASE.polygons,
         DBUG = BASE.debug,
         LASER = KIRI.driver.LASER = {
             slice,
@@ -33,7 +34,7 @@ var gs_kiri_laser = exports;
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
     function slice(settings, widget, onupdate, ondone) {
-        var proc = settings.process;
+        let proc = settings.process;
 
         if (proc.laserSliceHeight < 0) {
             return ondone("invalid slice height");
@@ -51,34 +52,39 @@ var gs_kiri_laser = exports;
         });
     };
 
-    function sliceEmitObjects(print, slice, objects) {
-        var start = newPoint(0,0,0);
+    /**
+     *
+     */
+    function sliceEmitObjects(print, slice, groups) {
+        let start = newPoint(0,0,0);
+        let process = print.settings.process;
+        let grouped = process.outputLaserGroup;
+        let group = [];
 
-        function laserOut(poly, object) {
-            if (!poly) return;
+        function laserOut(poly, group) {
+            if (!poly) {
+                return;
+            }
             if (Array.isArray(poly)) {
                 poly.forEach(function(pi) {
-                    laserOut(pi, object);
+                    laserOut(pi, group);
                 });
             } else {
-                print.polyPrintPath(poly, start, object, {extrude: 1});
+                print.polyPrintPath(poly, start, group, {extrude: 1});
             }
         }
 
-        var breakout = !print.settings.process.outputLaserGroup;
-        var object = [];
-
         slice.tops.forEach(function(top) {
-            laserOut(top.traces, object);
-            laserOut(top.innerTraces(), object);
-            if (breakout) {
-                objects.push(object);
-                object = [];
+            laserOut(top.traces, group);
+            laserOut(top.innerTraces(), group);
+            if (!grouped) {
+                groups.push(group);
+                group = [];
             }
         });
 
-        if (!breakout) {
-            objects.push(object);
+        if (grouped) {
+            groups.push(group);
         }
     };
 
@@ -89,11 +95,10 @@ var gs_kiri_laser = exports;
      * @param {Function} update incremental callback
      */
     function printSetup(print, update) {
-        var widgets = print.widgets,
+        let widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            mode = settings.mode,
             output = print.output,
             totalSlices = 0,
             slices = 0;
@@ -105,15 +110,49 @@ var gs_kiri_laser = exports;
 
         // emit objects from each slice into output array
         widgets.forEach(function(widget) {
-            widget.slices.forEach(function(slice) {
-                sliceEmitObjects(print, slice, output);
-                update(slices++ / totalSlices);
-            });
+            // slice stack merging
+            if (process.outputLaserMerged) {
+                let merged = [];
+                widget.slices.forEach(function(slice) {
+                    let polys = [];
+                    slice.gatherTopPolys([]).forEach(p => p.flattenTo(polys));
+                    polys.forEach(p => {
+                        let match = false;
+                        for (let i=0; i<merged.length; i++) {
+                            let mp = merged[i];
+                            if (p.isEquivalent(mp)) {
+                                // increase weight
+                                match = true;
+                                mp.depth++;
+                            }
+                        }
+                        if (!match) {
+                            p.depth = 1;
+                            merged.push(p);
+                        }
+                    });
+                    update(slices++ / totalSlices);
+                });
+                let start = newPoint(0,0,0);
+                let gather = [];
+                merged.forEach(poly => {
+                    print.polyPrintPath(poly, start, gather, {
+                        extrude: poly.depth,
+                        rate: poly.depth * 10
+                    });
+                });
+                output.push(gather);
+            } else {
+                widget.slices.forEach(function(slice) {
+                    sliceEmitObjects(print, slice, output);
+                    update(slices++ / totalSlices);
+                });
+            }
         });
 
         // compute tile width / height
         output.forEach(function(layerout) {
-            var min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
+            let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
             layerout.forEach(function(out) {
                 p = out.point;
                 out.point = p.clone(); // b/c first/last point are often shared
@@ -133,10 +172,8 @@ var gs_kiri_laser = exports;
         });
 
         // do object layout packing
-        var i, m, e,
+        let i, m, e,
             MOTO = self.moto,
-            device = settings.device,
-            process = settings.process,
             mp = [device.bedWidth, device.bedDepth],
             ms = [mp[0] / 2, mp[1] / 2],
             mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
@@ -170,7 +207,7 @@ var gs_kiri_laser = exports;
      */
     function exportElements(print, onpre, onpoly, onpost, onpoint) {
 
-        var process = print.settings.process,
+        let process = print.settings.process,
             output = print.output,
             last,
             point,
@@ -191,7 +228,7 @@ var gs_kiri_laser = exports;
                 max.y = Math.max(max.y, point.y);
             });
         });
-
+console.log(print.settings)
         if (!process.outputOriginCenter) {
             // normalize against origin lower left
             output.forEach(function(layer) {
@@ -225,19 +262,23 @@ var gs_kiri_laser = exports;
         onpre(min, max, process.outputLaserPower, process.outputLaserSpeed);
 
         output.forEach(function(layer) {
+            let color = 0;
             layer.forEach(function(out) {
                 point = out.point;
                 if (out.emit) {
-                    if (last && poly.length === 0) poly.push(onpoint(last));
+                    color = out.emit;
+                    if (last && poly.length === 0) {
+                        poly.push(onpoint(last));
+                    }
                     poly.push(onpoint(point));
                 } else if (poly.length > 0) {
-                    onpoly(poly);
+                    onpoly(poly, color);
                     poly = [];
                 }
                 last = point;
             });
             if (poly.length > 0) {
-                onpoly(poly);
+                onpoly(poly, color);
                 poly = [];
             }
         });
@@ -249,12 +290,12 @@ var gs_kiri_laser = exports;
      *
      */
     function exportGCode(print) {
-        var lines = [], dx = 0, dy = 0, feedrate, laser_on;
+        let lines = [], dx = 0, dy = 0, feedrate, laser_on;
 
         exportElements(
             print,
             function(min, max, power, speed) {
-                var width = (max.x - min.x),
+                let width = (max.x - min.x),
                     height = (max.y - min.y);
                 dx = min.x;
                 dy = min.y;
@@ -262,7 +303,7 @@ var gs_kiri_laser = exports;
                 laser_on = "M106 S" + UTIL.round(256 * (power / 100), 3);
                 // pre
             },
-            function(poly) {
+            function(poly, color) {
                 poly.forEach(function(point, index) {
                     if (index === 0) {
                         lines.push("G0 " + point);
@@ -290,23 +331,34 @@ var gs_kiri_laser = exports;
      *
      */
     function exportSVG(print, cut_color) {
-        var lines = [], dx = 0, dy = 0, my;
-        var color = cut_color || "blue";
+        let lines = [], dx = 0, dy = 0, my;
+        let colors = [
+            "purple",
+            "blue",
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "brown",
+            "gray",
+            "black"
+        ];
 
         exportElements(
             print,
             function(min, max) {
-                var width = (max.x - min.x),
+                let width = (max.x - min.x),
                     height = (max.y - min.y);
                 dx = min.x;
                 dy = min.y;
                 my = max.y;
                 lines.push('<?xml version="1.0" standalone="no"?>');
                 lines.push('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
-                lines.push('<svg width="'+width+'mm" height="'+height+'mm" viewBox="0 0 '+width+' '+height+'" xmlns="http://www.w3.org/2000/svg" version="1.1">');
+                lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
             },
-            function(poly) {
-                lines.push('<polyline points="'+poly.join(' ')+'" fill="none" stroke="' + color + '" stroke-width="0.01mm" />');
+            function(poly, color) {
+                let cout = colors[((color-1) % colors.length)];
+                lines.push(`<polyline points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
             },
             function() {
                 lines.push("</svg>");
@@ -323,7 +375,7 @@ var gs_kiri_laser = exports;
      *
      */
     function exportDXF(print) {
-        var lines = [];
+        let lines = [];
 
         exportElements(
             print,

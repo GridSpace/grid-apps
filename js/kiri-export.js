@@ -52,7 +52,7 @@ let gs_kiri_export = exports;
 
         function download_svg() {
             saveAs(new Blob(
-                [currentPrint.exportSVG($('print-color').value)],
+                [currentPrint.exportSVG()],
                 {type:"application/octet-stream"}),
                 $('print-filename').value + ".svg");
         }

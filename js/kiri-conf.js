@@ -205,6 +205,7 @@ var gs_kiri_conf = exports;
                     outputLaserPower: 1,
                     outputLaserSpeed: 1,
                     outputLaserGroup: 1,
+                    outputLaserMerged: 1,
                     outputOriginBounds: 1,
                     outputOriginCenter: 1,
                     outputInvertX: 1,
@@ -371,6 +372,7 @@ var gs_kiri_conf = exports;
                 outputLaserPower: 100,
                 outputLaserSpeed: 1000,
                 outputLaserGroup: true,
+                outputLaserMerged: false,
 
                 // --- CAM ---
 
