@@ -740,7 +740,7 @@ let gs_kiri_cam = exports;
 
         const output = POLY.flatten(offset, [], true);
 
-        slice.tops[0].inner = output;
+        // slice.tops[0].inner = output;
         slice.tops[0].traces = output;
     };
 
@@ -984,6 +984,60 @@ let gs_kiri_cam = exports;
         }, function(update, msg) {
             onupdate(0.50 + update * 0.50, msg || "create topo");
         });
+
+        // check for ball and taper mills paths and add to top[0].inner
+        if (procFinish) {
+            let tool = getToolById(conf, proc.finishingTool);
+            if (tool.type !== 'endmill') {
+                let profile = createToolProfile(conf, proc.finishingTool, widget.topo);
+                sliceAll.forEach(function(slice, index) {
+                    let polys = [];
+                    let nups = [];
+                    slice.gatherTopPolys([]).forEach(poly => poly.flattenTo(polys));
+                    polys.forEach(poly => {
+                        let pz = poly.first().z;
+                        let mz = -Infinity;
+                        let np = newPolygon().setOpen();
+                        let mp = 0;
+                        // find top poly segments that are not significantly offset
+                        // my tool profile and add to new polygons which accumulate
+                        // to the top inner array
+                        // TODO offset polygons should be calculated after this pass
+                        // so that they can not be offset when segments match
+                        // TODO for now remove trace polygons enclosed by newly
+                        // created inner polygons
+                        poly.forEachSegment((p1,p2) => {
+                            let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
+                            if (nz > mz) {
+                                mz = nz;
+                            }
+                            if (nz - pz < 0.01) {
+                                mp++
+                                if (np.length) {
+                                    if (!np.first().isEqual(p2)) {
+                                        np.append(p2);
+                                    } else {
+                                        np.setClosed();
+                                    }
+                                } else {
+                                    np.append(p1).append(p2);
+                                }
+                            } else if (np.length) {
+                                nups.append(np);
+                                np = newPolygon().setOpen();
+                            }
+                        });
+                        if (np.length) {
+                            nups.append(np);
+                        }
+                        // if (mp) console.log(slice.z,'match',mp,poly.length,np.length);
+                    });
+                    if (nups.length) {
+                        slice.tops[0].inner = nups;
+                    }
+                });
+            }
+        }
 
         ondone();
     };

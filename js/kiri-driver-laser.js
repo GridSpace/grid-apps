@@ -14,7 +14,13 @@ var gs_kiri_laser = exports;
         BASE = self.base,
         UTIL = BASE.util,
         DBUG = BASE.debug,
-        LASER = KIRI.driver.LASER = { },
+        LASER = KIRI.driver.LASER = {
+            slice,
+            printSetup,
+            exportGCode,
+            exportSVG,
+            exportDXF
+        },
         SLICER = KIRI.slicer,
         newPoint = BASE.newPoint;
 
@@ -26,7 +32,7 @@ var gs_kiri_laser = exports;
      * @param {Function} onupdate (called with % complete and optional message)
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
-    LASER.slice = function(settings, widget, onupdate, ondone) {
+    function slice(settings, widget, onupdate, ondone) {
         var proc = settings.process;
 
         if (proc.laserSliceHeight < 0) {
@@ -82,7 +88,7 @@ var gs_kiri_laser = exports;
      * @param {Object} print state object
      * @param {Function} update incremental callback
      */
-    LASER.printSetup = function(print, update) {
+    function printSetup(print, update) {
         var widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
@@ -242,7 +248,7 @@ var gs_kiri_laser = exports;
     /**
      *
      */
-    LASER.exportGCode = function(print) {
+    function exportGCode(print) {
         var lines = [], dx = 0, dy = 0, feedrate, laser_on;
 
         exportElements(
@@ -283,7 +289,7 @@ var gs_kiri_laser = exports;
     /**
      *
      */
-    LASER.exportSVG = function(print, cut_color) {
+    function exportSVG(print, cut_color) {
         var lines = [], dx = 0, dy = 0, my;
         var color = cut_color || "blue";
 
@@ -316,7 +322,7 @@ var gs_kiri_laser = exports;
     /**
      *
      */
-    LASER.exportDXF = function(print) {
+    function exportDXF(print) {
         var lines = [];
 
         exportElements(

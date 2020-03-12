@@ -15,11 +15,14 @@ var gs_kiri_fdm = exports;
         DBUG = BASE.debug,
         UTIL = BASE.util,
         CONF = BASE.config,
-        FDM = KIRI.driver.FDM = { },
         POLY = BASE.polygons,
+        FDM = KIRI.driver.FDM = {
+            slice,
+            printSetup,
+            printExport
+        },
         SLICER = KIRI.slicer,
-        newPoint = BASE.newPoint,
-        time = UTIL.time;
+        newPoint = BASE.newPoint;
 
     // customer gcode post function for XYZ daVinci Mini W
     self.kiri_fdm_xyz_mini_w = function(gcode, options) {
@@ -39,10 +42,10 @@ var gs_kiri_fdm = exports;
      * @param {Function} onupdate (called with % complete and optional message)
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
-    FDM.slice = function(settings, widget, onupdate, ondone) {
+    function slice(settings, widget, onupdate, ondone) {
         var spro = settings.process,
             sdev = settings.device,
-            update_start = time(),
+            update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
             vaseMode = spro.sliceFillType === 'vase',
@@ -334,7 +337,7 @@ var gs_kiri_fdm = exports;
      * @param {Object} print state object
      * @param {Function} update incremental callback
      */
-    FDM.printSetup = function(print, update) {
+    function printSetup(print, update) {
         var widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
@@ -551,7 +554,7 @@ var gs_kiri_fdm = exports;
     /**
      * @returns {Array} gcode lines
      */
-    FDM.printExport = function(print, online) {
+    function printExport(print, online) {
         var layers = print.output,
             settings = print.settings,
             device = settings.device,

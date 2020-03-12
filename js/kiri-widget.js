@@ -245,18 +245,6 @@ var gs_kiri_widget = exports;
         });
     };
 
-    // PRO.encodeSlices = function() {
-    //     var encoded = [];
-    //     if (this.slices) this.slices.forEach(function(slice) {
-    //         encoded.push(slice.encode());
-    //     });
-    //     return encoded;
-    // };
-
-    // PRO.decodeSlices = function(encoded) {
-    //     this.slices = KIRI.codec.decode(encoded, { mesh:this.mesh });
-    // };
-
     /**
      *
      * @param {Float32Array} vertices
