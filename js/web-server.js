@@ -356,7 +356,7 @@ function setup(req, res, next) {
         req.method,
         req.headers['host'],
         req.url,
-        ipaddr,
+        req.socket.remoteAddress,
         req.headers['origin'] || '',
         req.headers['user-agent']
         // m: req.method,
@@ -1224,6 +1224,7 @@ function processLoad() {
 }
 
 function processExit(code) {
+    logger.emit({exit: code, registered: exits.length});
     while (exits.length) {
         try {
             exits.shift()(code);
@@ -1307,14 +1308,16 @@ process.on('beforeExit', processExit);
 
 process.on('exit', processExit);
 
-process.on('SIGINT', function() {
+process.on('SIGINT', function(sig, code) {
     helper.log("caught sigint");
-    processExit();
+    logger.emit({signal: sig, code});
+    processExit(code);
 });
 
-process.on('SIGHUP', function() {
+process.on('SIGHUP', function(sig, code) {
     helper.log("caught sighup");
-    processExit();
+    logger.emit({signal: sig, code});
+    processExit(code);
 });
 
 processLoad();
