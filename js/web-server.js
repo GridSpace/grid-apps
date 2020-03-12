@@ -348,6 +348,22 @@ function setup(req, res, next) {
     rec.last.push(time);
     rec.hits++;
 
+    // log request
+    logger.emit([
+        req.method,
+        req.headers['host'],
+        req.url,
+        ipaddr,
+        req.headers['origin'] || '',
+        req.headers['user-agent']
+        // m: req.method,
+        // u: req.url,
+        // i: ipaddr,
+        // h: req.headers['host'],
+        // o: req.headers['origin'],
+        // a: req.headers['user-agent']
+    ]);
+
     // update db ip record
     if (time - rec.saved > ipSaveDelay) db.get(dbikey)
         .then(dbrec => {
@@ -869,7 +885,8 @@ let ver = require('../js/license.js'),
     wss_roots = {},
     loads = [],
     exits = [],
-    mods = {}
+    mods = {},
+    logger = open_logger({dir: ".log-main"})
     ;
 
 /* *********************************************
@@ -1275,6 +1292,7 @@ handler.use(fullpath({
 
 helper.log("------------------------------------------");
 helper.log({port, debug, nolocal, version: ver.VERSION});
+logger.emit({port, debug, nolocal, version: ver.VERSION});
 
 process.on('beforeExit', processExit);
 
