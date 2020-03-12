@@ -151,6 +151,9 @@ function prepareScripts() {
     fs.readdir("./web/kiri/filter/CAM", function(err, files) {
         filters_cam = files || filters_cam;
     });
+    fs.readdir("./web/kiri/filter/LASER", function(err, files) {
+        filters_laser = files || filters_laser;
+    });
 }
 
 /**
@@ -763,6 +766,7 @@ let ver = require('../js/license.js'),
     fileMap = {},
     filters_fdm = [],
     filters_cam = [],
+    filters_laser = [],
     modPaths = [],
     ipCache = {},
     clearOK = [
@@ -934,6 +938,11 @@ const api = {
     "filters-cam": (req, res, next) => {
         res.setHeader("Content-Type", "application/javascript");
         res.end(obj2string(filters_cam));
+    },
+
+    "filters-laser": (req, res, next) => {
+        res.setHeader("Content-Type", "application/javascript");
+        res.end(obj2string(filters_laser));
     }
 
 };
@@ -1168,7 +1177,7 @@ function open_logger(options) {
             return;
         }
         let next_pattern = moment().format(pattern);
-        if (++count >= count_min && next_pattern !== last_pattern) {
+        if (++count > count_min && next_pattern !== last_pattern) {
             open_file_stream();
         }
         let output = [moment().format('YYMMDD-HHmmss'),' ',JSON.stringify(obj),'\n'].join('');

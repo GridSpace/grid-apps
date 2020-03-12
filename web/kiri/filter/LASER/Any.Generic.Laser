@@ -1,0 +1,16 @@
+{
+    "file-ext": "gcode",
+    "token-space": " ",
+    "strip-comments": false,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "post":[
+        "M30 ; program end"
+    ],
+	"settings": {
+		"bed_width": 300,
+		"bed_depth": 300
+	}
+}

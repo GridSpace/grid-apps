@@ -114,18 +114,18 @@ var gs_kiri_init = exports;
             setDeviceRound: UC.newBoolean(LANG.dev_bedc, onBooleanClick, {title:LANG.dev_bedc_desc, modes:FDM}),
 
             setDevice: UC.newGroup("gcode", $('device')),
-            setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:15}),
-            setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:15}),
+            setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:17}),
+            setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:17}),
             setDeviceLayer: UC.newText(LANG.dev_layer, {title:LANG.dev_layer_desc, modes:FDM, size:14, height: 2}),
-            setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM}),
-            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM}),
-            setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM, size:5}),
+            setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM_LASER}),
+            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM_LASER}),
+            setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM_LASER, size:7}),
             setDeviceDwell: UC.newText(LANG.dev_dwell, {title:LANG.dev_dwell_desc, modes:CAM, size:14, height:2}),
             setDeviceChange: UC.newText(LANG.dev_tool, {title:LANG.dev_tool_desc, modes:CAM, size:14, height:2}),
             setDeviceSpindle: UC.newText(LANG.dev_speed, {title:LANG.dev_speed_desc, modes:CAM, size:14, height:2}),
             setDevicePause: UC.newText(LANG.dev_pause, {title:LANG.dev_pause_desc, modes:FDM, size:14, height:3}),
-            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, modes:FDM_CAM, size:14, height:3}),
-            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, modes:FDM_CAM, size:14, height:3}),
+            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, xmodes:FDM_CAM, size:14, height:3}),
+            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, xmodes:FDM_CAM, size:14, height:3}),
 
             tools: $('tools'),
             toolsSave: $('tools-save'),
@@ -190,7 +190,7 @@ var gs_kiri_init = exports;
             sysTable: UC.newTableRow([
                 [
                     UI.setupDevices =
-                    UC.newButton("Devices", showDevices, {modes:FDM_CAM})
+                    UC.newButton("Devices", showDevices)
                 ],[
                     UI.setupTools =
                     UC.newButton("Tools",   showTools, {modes:CAM})
@@ -286,10 +286,6 @@ var gs_kiri_init = exports;
                     UC.newButton("basic", () => { UC.setExpert(false); SDB.removeItem('expert') }, {modes:FDM, expert: true})
                 ]
             ]),
-
-            platform: UC.newGroup("build area", control, {modes:LASER}),
-            bedWidth: UC.newInput("width", {title:"millimeters", convert:UC.toInt, modes:LASER}),
-            bedDepth: UC.newInput("depth", {title:"millimeters", convert:UC.toInt, modes:LASER}),
 
             process: UC.newGroup("slicing", control, {modes:FDM_LASER}),
 
@@ -409,6 +405,7 @@ var gs_kiri_init = exports;
             camStockY: UC.newInput("depth", {title:"depth (y) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockZ: UC.newInput("height", {title:"height (z) in workspace units\n0 defaults to part size", convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockOffset: UC.newBoolean("offset", onBooleanClick, {title: "use width, depth, height\nas offsets from max\npart size on platform", modes:CAM}),
+            outputOriginBounds: UC.newBoolean("origin bounds", onBooleanClick, {modes:LASER}),
             outputOriginCenter: UC.newBoolean("origin center", onBooleanClick, {modes:CAM_LASER}),
             camOriginTop: UC.newBoolean("origin top", onBooleanClick, {modes:CAM}),
 
@@ -838,7 +835,6 @@ var gs_kiri_init = exports;
         function selectDevice(devicename, lock) {
             deviceLock = lock;
             if (lock) UI.setupDevices.style.display = 'none';
-            if (API.mode.get() === 'LASER') return;
             if (isLocalDevice(devicename)) {
                 setDeviceCode(settings().devices[devicename], devicename);
             } else {
@@ -1329,7 +1325,7 @@ var gs_kiri_init = exports;
         }
 
         function showDevices() {
-            if (API.mode.get_id() === MODES.LASER || deviceLock) return;
+            if (deviceLock) return;
 
             API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
                 if (!flvalue) return;
@@ -1433,9 +1429,6 @@ var gs_kiri_init = exports;
             UI.toolShaftLen,     updateTool,
             // UI.toolTaperAngle,   updateTool,
             UI.toolTaperTip,     updateTool,
-
-            UI.bedWidth,         platform.update_size,
-            UI.bedDepth,         platform.update_size
         ]);
 
         UI.setupDevices.innerHTML = "D<u>e</u>vices";

@@ -205,6 +205,7 @@ var gs_kiri_conf = exports;
                     outputLaserPower: 1,
                     outputLaserSpeed: 1,
                     outputLaserGroup: 1,
+                    outputOriginBounds: 1,
                     outputOriginCenter: 1,
                     outputInvertX: 1,
                     outputInvertY: 1
@@ -430,6 +431,7 @@ var gs_kiri_conf = exports;
 
                 // --- shared FDM/Laser/CAM ---
 
+                outputOriginBounds: true,
                 outputOriginCenter: true,
                 outputInvertX: false,
                 outputInvertY: false

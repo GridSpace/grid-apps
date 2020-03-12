@@ -77,7 +77,7 @@ var gs_kiri_lang = exports;
         dev_token_desc: "gcode token spacer",
         dev_strip:      "strip comments",
         dev_strip_desc: "strip gcode comments",
-        dev_fext:       "file ext",
+        dev_fext:       "file extension",
         dev_fext_desc:  "file name extension",
         dev_dwell:      "dwell",
         dev_dwell_desc: "gcode dwell script",

@@ -2,7 +2,7 @@
 
 "use strict";
 
-let gs_kiri_cam = exports;
+var gs_kiri_cam = exports;
 
 (function() {
 

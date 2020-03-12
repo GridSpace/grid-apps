@@ -883,6 +883,7 @@ self.kiri.license = exports.LICENSE;
      ******************************************************************* */
 
      function platformUpdateOrigin() {
+         platform.update_bounds();
          let dev = settings.device;
          let proc = settings.process;
          let x = 0;
@@ -899,8 +900,14 @@ self.kiri.license = exports.LICENSE;
                  x = (-camStock.scale.x / 2) + camStock.position.x;
                  y = (camStock.scale.y / 2) - camStock.position.y;
              } else {
-                 x = -dev.bedWidth / 2;
-                 y = dev.bedDepth / 2;
+                 if (MODE === MODES.LASER && proc.outputOriginBounds) {
+                     let b = settings.bounds;
+                     x = b.min.x,
+                     y = -b.min.y
+                 } else {
+                     x = -dev.bedWidth / 2;
+                     y = dev.bedDepth / 2;
+                 }
              }
          } else if (camStock) {
              x = camStock.position.x;
@@ -940,7 +947,10 @@ self.kiri.license = exports.LICENSE;
     function platformUpdateBounds() {
         var bounds = new THREE.Box3();
         forAllWidgets(function(widget) {
-            bounds.union(widget.mesh.getBoundingBox());
+            let wp = widget.orient.pos;
+            let wb = widget.mesh.getBoundingBox().clone();
+            wb.translate(widget.orient.pos);
+            bounds.union(wb);
         });
         return settings.bounds = bounds;
     }
@@ -1131,6 +1141,7 @@ self.kiri.license = exports.LICENSE;
         if (MODE === MODES.CAM) {
             platform.update_stock();
         }
+        platform.update_origin();
 
         SPACE.update();
     }
@@ -1208,7 +1219,6 @@ self.kiri.license = exports.LICENSE;
         } else if (settings.controller.alignTop) {
             platform.update_top_z();
         }
-        platform.update_bounds();
         platform.update_origin();
     }
 
@@ -1576,7 +1586,6 @@ self.kiri.license = exports.LICENSE;
         // update selection display (off for laser)
         $('selected-device').innerHTML = currentDeviceName();
         $('selected-process').innerHTML = name;
-        $('selected').style.display = (mode !== 'LASER') ? 'block' : 'none';
 
         // FDM process settings overridden by device
         if (mode == "FDM") {

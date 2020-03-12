@@ -526,8 +526,16 @@ button.selected {
 #device-list option[favorite="1"] {
     font-weight: bold;
 }
+#device > div {
+    align-items: center;
+    justify-content: center;
+}
 #device label {
     white-space: nowrap;
+    padding: 2px;
+}
+#device input {
+    margin: 2px;
 }
 #device textarea {
     overflow: hidden;

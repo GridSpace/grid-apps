@@ -174,6 +174,9 @@ button[del] {
  margin-right: -14px !important;
  margin-bottom: -14px !important;
 }
+.control label {
+    padding: 2px;
+}
 .control input {
     background-color: #eee;
     margin-bottom: 1px;
@@ -196,12 +199,14 @@ button[del] {
 .control button {
     margin: 1px;
 }
-
 .control select {
     margin-bottom: 1px !important;
     margin-right: 2px !important;
 }
-
+.control > div > div {
+    align-items: center;
+    justify-content: center;
+}
 #control-left:hover, #control-right:hover {
     background-color: #ffffff;
 }
