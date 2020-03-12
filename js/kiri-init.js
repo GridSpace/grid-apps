@@ -43,7 +43,8 @@ var gs_kiri_init = exports;
         js2o = API.js2o,
         o2js = API.o2js,
         selectedTool = null,
-        editTools = null;
+        editTools = null,
+        maxTool = 0;
 
     function settings() {
         return API.conf.get();
@@ -1132,7 +1133,9 @@ var gs_kiri_init = exports;
 
         function renderTools() {
             UI.toolSelect.innerHTML = '';
+            maxTool = 0;
             editTools.forEach(function(tool, index) {
+                maxTool = Math.max(maxTool, tool.number);
                 tool.order = index;
                 let opt = DOC.createElement('option');
                 opt.appendChild(DOC.createTextNode(tool.name));
@@ -1279,7 +1282,7 @@ var gs_kiri_init = exports;
             UI.toolAdd.onclick = function() {
                 editTools.push({
                     id: Date.now(),
-                    number: editTools.length,
+                    number: maxTool + 1,
                     name: "new",
                     type: "endmill",
                     shaft_diam: 0.25,
