@@ -118,14 +118,16 @@ var gs_kiri_init = exports;
             setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:17}),
             setDeviceLayer: UC.newText(LANG.dev_layer, {title:LANG.dev_layer_desc, modes:FDM, size:14, height: 2}),
             setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM_LASER}),
-            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM_LASER}),
+            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM}),
             setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM_LASER, size:7}),
             setDeviceDwell: UC.newText(LANG.dev_dwell, {title:LANG.dev_dwell_desc, modes:CAM, size:14, height:2}),
             setDeviceChange: UC.newText(LANG.dev_tool, {title:LANG.dev_tool_desc, modes:CAM, size:14, height:2}),
             setDeviceSpindle: UC.newText(LANG.dev_speed, {title:LANG.dev_speed_desc, modes:CAM, size:14, height:2}),
             setDevicePause: UC.newText(LANG.dev_pause, {title:LANG.dev_pause_desc, modes:FDM, size:14, height:3}),
-            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, xmodes:FDM_CAM, size:14, height:3}),
-            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, xmodes:FDM_CAM, size:14, height:3}),
+            setDeviceLaserOn: UC.newText(LANG.dev_lzon, {title:LANG.dev_lzon_desc, modes:LASER, size:14, height:3}),
+            setDeviceLaserOff: UC.newText(LANG.dev_lzof, {title:LANG.dev_lzof_desc, modes:LASER, size:14, height:3}),
+            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, modes:ALL, size:14, height:3}),
+            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, modes:ALL, size:14, height:3}),
 
             tools: $('tools'),
             toolsSave: $('tools-save'),
@@ -879,6 +881,8 @@ var gs_kiri_init = exports;
                     post: UI.setDevicePost.value.split('\n'),
                     pause: UI.setDevicePause.value.split('\n'),
                     dwell: UI.setDeviceDwell.value.split('\n'),
+                    'laser-on': UI.setDeviceLaserOn.value.split('\n'),
+                    'laser-off': UI.setDeviceLaserOff.value.split('\n'),
                     'tool-change': UI.setDeviceChange.value.split('\n'),
                     'file-ext': UI.setDeviceFExt.value,
                     'token-space': UI.setDeviceToken.checked ? ' ' : '',
@@ -927,7 +931,9 @@ var gs_kiri_init = exports;
                     gcodeChange: valueOf(code['tool-change'], []),
                     gcodeFExt: valueOf(code['file-ext'], 'gcode'),
                     gcodeSpace: valueOf(code['token-space'], ''),
-                    gcodeStrip: valueOf(code['strip-comments'], false)
+                    gcodeStrip: valueOf(code['strip-comments'], false),
+                    gcodeLaserOn: valueOf(code['laser-on'], []),
+                    gcodeLaserOff: valueOf(code['laser-off'], [])
                 };
 
                 let dev = current.device,
@@ -961,6 +967,9 @@ var gs_kiri_init = exports;
                 UI.setDeviceFExt.value = dev.gcodeFExt;
                 UI.setDeviceToken.checked = dev.gcodeSpace ? true : false;
                 UI.setDeviceStrip.checked = dev.gcodeStrip;
+                // LASER
+                UI.setDeviceLaserOn.value = dev.gcodeLaserOn.join('\n');
+                UI.setDeviceLaserOff.value = dev.gcodeLaserOff.join('\n');
 
                 // disable editing for non-local devices
                 [
@@ -986,7 +995,9 @@ var gs_kiri_init = exports;
                  UI.setDeviceChange,
                  UI.setDeviceFExt,
                  UI.setDeviceToken,
-                 UI.setDeviceStrip
+                 UI.setDeviceStrip,
+                 UI.setDeviceLaserOn,
+                 UI.setDeviceLaserOff
                 ].forEach(function(e) {
                     e.disabled = !local;
                 });
@@ -1002,7 +1013,7 @@ var gs_kiri_init = exports;
                  e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
                 });
 
-                UI.deviceSave.disabled =
+                UI.deviceSave.disabled = !local;
                 UI.deviceDelete.disabled = !local;
 
                 API.view.update_fields();
@@ -1076,18 +1087,26 @@ var gs_kiri_init = exports;
 
             UI.deviceSelect.innerHTML = '';
             let incr = 0;
+            let faves = API.show.favorites();
             let found = false;
             let first = devices[0];
+            // run through the list up to twice forcing faves off
+            // the second time if incr === 0 (no devices shown)
+            // if incr > 0, second loop is avoided
+            for (let rep=0; rep<2; rep++)
+            if (incr === 0)
             devices.forEach(function(device, index) {
-                let opt = DOC.createElement('option'),
-                    fav = isFavoriteDevice(device),
+                // force faves off for second try
+                if (rep === 1) faves = false;
+                let fav = isFavoriteDevice(device),
                     loc = isLocalDevice(device);
-                if (API.show.favorites() && !(fav || loc)) {
+                if (faves && !(fav || loc)) {
                     return;
                 }
                 if (incr === 0) {
                     first = device;
                 }
+                let opt = DOC.createElement('option');
                 opt.appendChild(DOC.createTextNode(device));
                 opt.onclick = function() {
                     selectDevice(device);
@@ -1328,7 +1347,7 @@ var gs_kiri_init = exports;
 
         function showDevices() {
             if (deviceLock) return;
-
+            API.modal.hide();
             API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
                 if (!flvalue) return;
                 renderDevices(js2o(flvalue));
@@ -1647,6 +1666,8 @@ var gs_kiri_init = exports;
 
         API.space.restore(ondone) || checkSeed(ondone) || ondone();
 
+        // extend API
+        API.show.devices = showDevices;
     };
 
 })();

@@ -290,37 +290,52 @@ let gs_kiri_laser = exports;
      *
      */
     function exportGCode(print) {
-        let lines = [], dx = 0, dy = 0, feedrate, laser_on;
+        let lines = [], dx = 0, dy = 0, feedrate;
+        let dev = print.settings.device;
+        let space = dev.gcodeSpace;
+        let power = 255;
+        let laser_on = dev.gcodeLaserOn || [];
+        let laser_off = dev.gcodeLaserOff || [];
 
         exportElements(
             print,
             function(min, max, power, speed) {
                 let width = (max.x - min.x),
                     height = (max.y - min.y);
+
                 dx = min.x;
                 dy = min.y;
-                feedrate = " F" + speed,
-                laser_on = "M106 S" + UTIL.round(256 * (power / 100), 3);
-                // pre
+                feedrate = `${space}F${speed}`;
+                power = (256 * (power / 100)).toFixed(3);
+
+                (dev.gcodePre || []).forEach(line => {
+                    lines.push(line);
+                });
             },
             function(poly, color) {
                 poly.forEach(function(point, index) {
                     if (index === 0) {
-                        lines.push("G0 " + point);
+                        lines.push(`G0${space}${point}`);
                     } else if (index === 1) {
-                        lines.push(laser_on);
-                        lines.push("G1 " + point + feedrate);
+                        laser_on.forEach(line => {
+                            lines.push(line.replace('{power}', power));
+                        });
+                        lines.push(`G1${space}${point}${feedrate}`);
                     } else {
-                        lines.push("G1 " + point);
+                        lines.push(`G1${space}${point}`);
                     }
                 });
-                lines.push("M107");
+                laser_off.forEach(line => {
+                    lines.push(line);
+                });
             },
             function() {
-                // post
+                (dev.gcodePost || []).forEach(line => {
+                    lines.push(line);
+                });
             },
             function(point) {
-                return "X" + UTIL.round(point.x - dx, 3) + " Y" + UTIL.round(point.y - dy, 3);
+                return `X${(point.x - dx, 3).toFixed(3)}${space}Y${(point.y - dy, 3).toFixed(3)}`;
             }
         );
 
@@ -333,6 +348,7 @@ let gs_kiri_laser = exports;
     function exportSVG(print, cut_color) {
         let lines = [], dx = 0, dy = 0, my;
         let colors = [
+            "black",
             "purple",
             "blue",
             "red",
@@ -340,8 +356,7 @@ let gs_kiri_laser = exports;
             "yellow",
             "green",
             "brown",
-            "gray",
-            "black"
+            "gray"
         ];
 
         exportElements(

@@ -532,6 +532,8 @@ button.selected {
 }
 #device label {
     white-space: nowrap;
+}
+#device > div > label {
     padding: 2px;
 }
 #device input {
@@ -664,7 +666,6 @@ button[import="1"] {
     z-Index: 10000;
 }
 .poptext label {
-    width: 100% !important;
     text-align: center !important;
     border-top: 1px solid #888;
     border-left: 1px solid #888;
@@ -676,6 +677,7 @@ button[import="1"] {
 }
 .poptext textarea {
     flex-grow: 1;
+    margin: 0;
     opacity: 0.95;
     outline: none;
     overflow-y: scroll !important;

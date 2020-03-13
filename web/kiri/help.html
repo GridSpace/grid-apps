@@ -23,19 +23,22 @@
     <b>File Load & Import</b>
 
     <li>Drag and drop an <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">STL</a> onto the grid
-    <li>Or load with Function [Import]
+    <li>Or load with Function <button onclick="kiri.api.event.import()">Import</button>
 
     <p>
     <b>Start Working</b>
-    <li>Select device mode: FDM, CAM, Laser
-    <li>Select device profile under Devices
-    <li>Set slicing parameters in right menu
-    <li>Test slicing settings with Function [Slice]
-    <li>Preview slicing output with Function [Preview]
-    <li>Export gcode with Function [Export]
-
+    <li>Set mode
+        <button onclick="kiri.api.mode.set('FDM')">FDM</button>
+        <button onclick="kiri.api.mode.set('CAM')">CAM</button>
+        <button onclick="kiri.api.mode.set('LASER')">LASER</button>
+    <li>Select <button onclick="kiri.api.show.devices()">Device</button>
+    <li>Set slicing parameters in right panel
+    <li><button onclick = "kiri.api.function.slice()">Slice</button>
+        using settings from the right panel
+    <li><button onclick = "kiri.api.function.print()">Preview</button> GCode output
+    <li><button onclick = "kiri.api.function.export()">Export</button> GCode
     <p>
-    <b>Other ways to use Kiri</b>
+    <b>Other ways to use Kiri:Moto</b>
 
     <li><label><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a></label> -- Inside Onshape
     <li><label><a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a></label> -- Inside Thingiverse

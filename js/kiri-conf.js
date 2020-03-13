@@ -193,6 +193,12 @@ var gs_kiri_conf = exports;
                 d:{
                     bedWidth: 1,
                     bedDepth: 1,
+                    gcodePre: 1,
+                    gcodePost: 1,
+                    gcodeFExt: 1,
+                    gcodeSpace: 1,
+                    gcodeLaserOn: 1,
+                    gcodeLaserOff: 1
                 },
                 // fields permitted in Laser:Process
                 p:{
@@ -289,12 +295,14 @@ var gs_kiri_conf = exports;
                 gcodeFan: "",       // FDM fan command
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: "",     // FDM layer output
+                gcodeFExt: "",      // CAM file extension
+                gcodeSpace: "",     // CAM token spacing
+                gcodeStrip: true,   // CAM strip comments
                 gcodeDwell: ["G4 P{time}"],     // CAM dwell script
                 gcodeChange: ["M6 T{tool}"],    // CAM tool change script
                 gcodeSpindle: ["M3 S{speed}"],  // CAM spindle speed
-                gcodeFExt: "",      // CAM file extension
-                gcodeSpace: "",     // CAM token spacing
-                gcodeStrip: true    // CAM strip comments
+                gcodeLaserOn: ["M106 S{power}"],// LASER turn on
+                gcodeLaserOff: ["M107"]         // LASER turn off
             },
             // FDM/CAM/Laser
             process:{

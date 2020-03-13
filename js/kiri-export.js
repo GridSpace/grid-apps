@@ -10,6 +10,8 @@ let gs_kiri_export = exports;
     if (self.kiri.export) return;
 
     let KIRI = self.kiri,
+        BASE = self.base,
+        UTIL = BASE.util,
         API = KIRI.api,
         SDB = API.sdb,
         UI = API.ui,
@@ -76,7 +78,7 @@ let gs_kiri_export = exports;
             currentPrint.output.forEach(layer => { segments += layer.length });
             UI.print.innerHTML = html;
             $('print-filename').value = filename;
-            $('print-lines').value = segments;
+            $('print-lines').value = UTIL.comma(segments);
             $('print-close').onclick = API.modal.hide;
             $('print-svg').onclick = download_svg;
             $('print-dxf').onclick = download_dxf;
@@ -353,9 +355,18 @@ let gs_kiri_export = exports;
 
         function calcWeight() {
             try {
+            let density = $('print-density');
             $('print-weight').value = (
-                UTIL.round((Math.PI * UTIL.sqr(currentPrint.settings.device.filamentSize/2)) * currentPrint.distance * 1.25 / 1000, 2)
-            );
+                (Math.PI * UTIL.sqr(
+                    currentPrint.settings.device.filamentSize / 2
+                )) *
+                currentPrint.distance *
+                (parseFloat(density.value) || 1.25) /
+                1000
+            ).toFixed(2);
+            density.onkeyup = (ev) => {
+                if (ev.key === 'Enter') calcWeight();
+            };
             } catch (e) { }
         }
 
@@ -381,7 +392,7 @@ let gs_kiri_export = exports;
             $('print-filament-row').style.display = MODE === MODES.FDM ? '' : 'none';
             $('mill-info').style.display = MODE === MODES.CAM ? '' : 'none';
             $('print-filename').value = filename;
-            $('print-filesize').value = currentPrint.bytes;
+            $('print-filesize').value = UTIL.comma(currentPrint.bytes);
             $('print-filament').value = Math.round(currentPrint.distance);
             $('grid-host').onkeyup = gridhost_probe;
             $('grid-apik').onkeyup = gridhost_probe;

@@ -90,7 +90,11 @@ var gs_kiri_lang = exports;
         dev_head:       "header",
         dev_head_desc:  "gcode header script",
         dev_foot:       "footer",
-        dev_foot_desc:  "gcode footer script"
+        dev_foot_desc:  "gcode footer script",
+        dev_lzon:       "laser on",
+        dev_lzon_desc:  "gcode laser on script",
+        dev_lzof:       "laser off",
+        dev_lzof_desc:  "gcode laser off script"
 
     };
 
