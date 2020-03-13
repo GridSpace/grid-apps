@@ -228,7 +228,7 @@ let gs_kiri_laser = exports;
                 max.y = Math.max(max.y, point.y);
             });
         });
-console.log(print.settings)
+
         if (!process.outputOriginCenter) {
             // normalize against origin lower left
             output.forEach(function(layer) {

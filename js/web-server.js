@@ -1178,6 +1178,9 @@ function open_logger(options) {
         close_file_stream();
         logfile = path.join(opt.dir, last_pattern = moment().format(pattern));
         logstream = fs.createWriteStream(logfile, {flags: 'a'});
+        let cur = path.join(opt.dir, "current");
+        try { fs.unlinkSync(cur) } catch (e) { }
+        try { fs.symlinkSync(last_pattern, cur) } catch (e) { }
         count = 0;
     }
 
