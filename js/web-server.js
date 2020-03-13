@@ -358,7 +358,7 @@ function setup(req, res, next) {
         req.url,
         req.socket.remoteAddress,
         req.headers['origin'] || '',
-        req.headers['user-agent']
+        req.headers['user-agent'] || ''
         // m: req.method,
         // u: req.url,
         // i: ipaddr,
