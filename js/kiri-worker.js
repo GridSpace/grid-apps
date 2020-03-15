@@ -8,7 +8,7 @@ let loc = self.location,
     ver = exports.VERSION,
     time = function() { return new Date().getTime() };
     host = loc.hostname,
-    debug = host === 'debug';
+    debug = host === 'debug' || host === 'localhost';
 
 console.log(`kiri | init work | ${ver}${debug ? ' | debug' : ''}`);
 
