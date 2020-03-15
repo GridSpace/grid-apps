@@ -737,7 +737,7 @@ button[import="1"] {
 
 #selected {
     position: fixed;
-    z-index: 10000;
+    z-index: 5000;
     color: #eee;
     bottom: 5px;
     left: 0px;
