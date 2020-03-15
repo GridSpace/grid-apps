@@ -1147,7 +1147,7 @@ var gs_kiri_cam = exports;
             newOutput.push(layerOut);
             layerOut = [];
         }
-
+        // console.log({index, zadd, zmax, bz:bounds.max.z});
         /**
          * @param {Point} point
          * @param {number} emit (0=move, !0=filament emit/laser on/cut mode)

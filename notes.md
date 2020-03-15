@@ -39,10 +39,12 @@
 
 # CAM
 
+* `F` trapezoidal tabs (in the Z axis)
 * `F` lead-in milling
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add endmill spiral direction to fully respect climb vs conventional
+* `F` add tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling

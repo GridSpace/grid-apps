@@ -445,7 +445,8 @@ var gs_kiri_init = exports;
             current.controller.alignTop = UI.alignTop.checked;
             current.controller.reverseZoom = UI.reverseZoom.checked;
             SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
-            platform.update_origin();
+            platform.layout();
+            platform.update_stock();
             API.conf.save();
         }
 

@@ -1206,20 +1206,16 @@ self.kiri.license = exports.LICENSE;
             camStock.position.z = csz / 2;
             camStock.material.visible = settings.mode === 'CAM';
             camTopZ = csz;
-            platform.update_top_z();
-            SPACE.update();
         } else if (camStock) {
             settings.stock = { };
             UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
-            SPACE.update();
             camStock = null;
             camTopZ = topZ;
-            platform.update_top_z();
-        } else if (settings.controller.alignTop) {
-            platform.update_top_z();
         }
+        platform.update_top_z();
         platform.update_origin();
+        SPACE.update();
     }
 
     /** ******************************************************************
