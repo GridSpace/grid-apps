@@ -40,22 +40,17 @@
 # CAM
 
 * `F` lead-in milling
-* `F` have 'clockwise' setting use spindle direction, etc (climb/conventional)
-* `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` ease-in and ease-out especially on tab cut-out start/stop
-* `F` add endmill spiral direction to influence next point
+* `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
+* `F` add endmill spiral direction to fully respect climb vs conventional
 * `F` warn when part > stock or cuts go outside bed
-* `F` add M03 tool feedrate support (https://forum.grid.space/index.php?p=/discussion/14/s-
-* `F` compensate for leave-stock in outside roughing (w/ tabs)
-* `F` check normals for downward facing facets. mark top for slice skirt/pancake
+* `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling
 * `P` optimize away topo generation (for z hop/move) when part is flat
 * `P` store tab and camshell polys in widget.topo to minimize z on edge moves
 * `P` linear finishing going back to z top too often
 * `P` option to skip milling holes that would be drilled
-parameter#latest)
 * `P` crossing open space check point is outside camshell before returning max z
-* `B` fix ease down and re-enable (need failure case)
 * `B` fix zooming, workspace thickness for larger workspaces
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 
