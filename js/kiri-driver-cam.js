@@ -763,7 +763,9 @@ var gs_kiri_cam = exports;
                 let parent = poly.parent;
                 if (np.isClosed() && parent) {
                     // console.log(slice.z,'cull',poly);
-                    parent.inner = parent.inner.filter(p => p !== poly);
+                    if (parent.inner) {
+                        parent.inner = parent.inner.filter(p => p !== poly);
+                    }
                     if (only_whole) {
                         nups.append(np);
                     }
