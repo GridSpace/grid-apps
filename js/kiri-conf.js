@@ -437,7 +437,7 @@ var gs_kiri_conf = exports;
                 camStockZ: 0,
                 camStockOffset: true,
 
-                outputClockwise: true,
+                outputClockwise: false,
 
                 // --- shared FDM/Laser/CAM ---
 

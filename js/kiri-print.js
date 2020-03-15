@@ -2,17 +2,17 @@
 
 "use strict";
 
-var gs_kiri_print = exports;
+let gs_kiri_print = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         DRIVERS = KIRI.driver,
+        LASER = DRIVERS.LASER,
         CAM = DRIVERS.CAM,
         FDM = DRIVERS.FDM,
-        LASER = DRIVERS.LASER,
         BASE = self.base,
         UTIL = BASE.util,
         DBUG = BASE.debug,
@@ -92,7 +92,7 @@ var gs_kiri_print = exports;
     };
 
     PRO.parseGCode = function(gcode, offset) {
-        var lines = gcode
+        let lines = gcode
             .toUpperCase()
             .replace("X", " X")
             .replace("Y", " Y")
@@ -102,7 +102,7 @@ var gs_kiri_print = exports;
             .replace("  ", " ")
             .split("\n");
 
-        var scope = this,
+        let scope = this,
             output = scope.output = [],
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
@@ -185,7 +185,7 @@ var gs_kiri_print = exports;
     };
 
     PRO.setup = function(remote, onupdate, ondone) {
-        var scope = this,
+        let scope = this,
             settings = scope.settings,
             mode = settings.mode;
 
@@ -207,7 +207,7 @@ var gs_kiri_print = exports;
         } else {
 
             // executed from kiri-worker.js
-            var driver = KIRI.driver[mode];
+            let driver = KIRI.driver[mode];
             if (driver) driver.printSetup(scope, onupdate);
             else console.log({missing_print_driver: mode});
             ondone();
@@ -216,7 +216,7 @@ var gs_kiri_print = exports;
     };
 
     PRO.exportGCode = function(remote, ondone, online) {
-        var scope = this,
+        let scope = this,
             settings = scope.settings,
             mode = settings.mode;
 
@@ -239,7 +239,7 @@ var gs_kiri_print = exports;
         } else {
 
             // executed from kiri-worker.js
-            var driver = KIRI.driver[mode];
+            let driver = KIRI.driver[mode];
             if (driver && driver.printExport) {
                 ondone(driver.printExport(scope, online));
             } else {
@@ -263,7 +263,7 @@ var gs_kiri_print = exports;
     };
 
     PRO.encodeOutput = function() {
-        var newout = [], newlayer;
+        let newout = [], newlayer;
 
         this.output.forEach(function(layerout) {
             newlayer = [];
@@ -286,7 +286,7 @@ var gs_kiri_print = exports;
     };
 
     PRO.render = function() {
-        var scope = this,
+        let scope = this,
             mode = scope.settings.mode;
 
         switch (mode) {
@@ -306,13 +306,13 @@ var gs_kiri_print = exports;
 
     // hsv values all = 0 to 1
     function hsv2rgb(hsv) {
-        var seg  = Math.floor(hsv.h * 6);
-        var rem  = hsv.h - (seg * (1/6));
-        var out = {};
+        let seg  = Math.floor(hsv.h * 6);
+        let rem  = hsv.h - (seg * (1/6));
+        let out = {};
 
-        var p = hsv.v * (1.0 - (hsv.s)              );
-        var q = hsv.v * (1.0 - (hsv.s * rem)        );
-        var t = hsv.v * (1.0 - (hsv.s * (1.0 - rem)));
+        let p = hsv.v * (1.0 - (hsv.s)              );
+        let q = hsv.v * (1.0 - (hsv.s * rem)        );
+        let t = hsv.v * (1.0 - (hsv.s * (1.0 - rem)));
 
         switch (seg) {
             case 0:
@@ -351,31 +351,46 @@ var gs_kiri_print = exports;
     }
 
     PRO.renderMoves = function(showMoves, moveColor) {
-        var scope = this, last, emits, moves;
+        let debug = KIRI.api.const.LOCAL;
+        let scope = this, last, emits, moves;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
-            var move = [], print = {}, z;
+            let move = [], print = {}, z;
             layerout.forEach(function(out, index) {
+                let point = out.point;
                 if (last) {
-                    if (UTIL.distSq(last, out.point) < 0.001 && out.point.z === last.z) {
+                    if (UTIL.distSq(last, point) < 0.001 && point.z === last.z) {
                         return;
                     }
                     if (out.emit > 0) {
-                        var spd = out.speed || 4000;
-                        var arr = print[spd] || [];
+                        let spd = out.speed || 4000;
+                        let arr = print[spd] || [];
                         print[spd] = arr;
                         arr.push(last);
-                        arr.push(out.point);
+                        arr.push(point);
+                        if (debug && showMoves) {
+                            let rs = BASE.newSlope(
+                                {x: point.x, y: point.y},
+                                {x: last.x, y: last.y}
+                            );
+                            let ao1 = BASE.newSlopeFromAngle(rs.angle + 25);
+                            let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
+                            let sp = BASE.newPoint(point.x, point.y, point.z);
+                            move.push(sp);
+                            move.push(sp.projectOnSlope(ao1, 0.5));
+                            move.push(sp);
+                            move.push(sp.projectOnSlope(ao2, 0.5));
+                        }
                     } else {
                         move.push(last);
-                        move.push(out.point);
+                        move.push(point);
                     }
                 } else {
                     if (out.emit) DBUG.log("first point is emit");
-                    z = out.point.z;
+                    z = point.z;
                 }
-                last = out.point;
+                last = point;
             });
             emits = KIRI.newLayer(scope.group);
             scope.printView.push(emits);
@@ -385,9 +400,9 @@ var gs_kiri_print = exports;
                 scope.movesView.push(moves);
                 moves.render();
             }
-            for (var speed in print) {
-                var sint = Math.min(6000, parseInt(speed));
-                var rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
+            for (let speed in print) {
+                let sint = Math.min(6000, parseInt(speed));
+                let rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
                 emits.lines(print[speed],
                     ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
@@ -448,10 +463,10 @@ var gs_kiri_print = exports;
     }
 
     function segmentOutput(output, p1, p2, s1, s2, steps, mult) {
-        var sd = (s2 - s1) / (steps + 1);
-        var dd = p1.distTo2D(p2) / steps;
-        var dist = dd;
-        var spd = s1;
+        let sd = (s2 - s1) / (steps + 1);
+        let dd = p1.distTo2D(p2) / steps;
+        let dist = dd;
+        let spd = s1;
         while (steps-- > 0) {
             spd += sd;
             p1 = p1.offsetPointTo(p2, dd);
@@ -469,10 +484,10 @@ var gs_kiri_print = exports;
      * @param {Function} [onfirst] optional fn to call on first point
      * @return {Point} last output point
      */
-    PRO.polyPrintPath = function(poly, startPoint, output, options) {
+    PRO.polyPrintPath = function(poly, startPoint, output, opt) {
         poly.setClockwise();
 
-        var options = options || {},
+        let options = opt || {},
             process = this.settings.process,
             shortDist = process.outputShortDistance,
             shellMult = pref(options.extrude, process.outputShellMult),
@@ -500,11 +515,11 @@ var gs_kiri_print = exports;
                 addOutput(output, point, 0, moveSpeed);
                 first = false;
             } else {
-                var seglen = last.distTo2D(point);
+                let seglen = last.distTo2D(point);
                 if (coastDist && shellMult && perimeter - seglen <= coastDist) {
-                    var delta = perimeter - coastDist;
-                    var offset = seglen - delta;
-                    var offPoint = last.offsetPointFrom(point, offset)
+                    let delta = perimeter - coastDist;
+                    let offset = seglen - delta;
+                    let offPoint = last.offsetPointFrom(point, offset)
                     addOutput(output, offPoint, shellMult, printSpeed);
                     shellMult = 0;
                 }
@@ -528,7 +543,7 @@ var gs_kiri_print = exports;
      * @return {Point} last output point
      */
     PRO.slicePrintPath = function(slice, startPoint, offset, output, options) {
-        var i,
+        let i,
             opt = options || {},
             preout = [],
             scope = this,
@@ -567,7 +582,7 @@ var gs_kiri_print = exports;
         }
 
         function intersectsTop(p1, p2) {
-            var int = false;
+            let int = false;
             POLY.flatten(slice.gatherTopPolys([])).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
@@ -586,7 +601,7 @@ var gs_kiri_print = exports;
                     outputTraces(next, extrude);
                 }, null);
             } else {
-                var finishShell = poly.depth === 0 && !firstLayer;
+                let finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
                     rate: finishShell ? finishSpeed : printSpeed,
                     accel: finishShell,
@@ -607,12 +622,12 @@ var gs_kiri_print = exports;
          */
         function outputSparse(polys, extrude, speed) {
             if (!polys) return;
-            var proxy = polys.map(function(poly) {
+            let proxy = polys.map(function(poly) {
                 return {poly: poly, first: poly.first(), last: poly.last()};
             });
-            var lp = startPoint;
+            let lp = startPoint;
             startPoint = tip2tipEmit(proxy, startPoint, function(el, point, count) {
-                var poly = el.poly;
+                let poly = el.poly;
                 if (poly.last() === point) {
                     poly.reverse();
                 }
@@ -629,7 +644,7 @@ var gs_kiri_print = exports;
         }
 
         function outputFills(lines, options) {
-            var p, p1, p2, dist, len, found, group, mindist, t1, t2,
+            let p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
                 start = 0,
                 skip = false,
@@ -744,7 +759,7 @@ var gs_kiri_print = exports;
                 return fn(array[0]);
             }
             array = array.slice();
-            var closest, find, next, order, poly, lastDepth = 0;
+            let closest, find, next, order, poly, lastDepth = 0;
             for (;;) {
                 order = [];
                 closest = null;
@@ -771,8 +786,8 @@ var gs_kiri_print = exports;
             }
         }
 
-        var all = [].appendAll(slice.supports || []).appendAll(slice.tops || []);
-        var lastTop = null;
+        let all = [].appendAll(slice.supports || []).appendAll(slice.tops || []);
+        let lastTop = null;
         outputOrderClosest(all || [], function(next) {
             if (next instanceof Polygon) {
                 // support polygon
@@ -784,7 +799,7 @@ var gs_kiri_print = exports;
                 }
             } else {
                 // top object
-                var bounds = POLY.flatten(next.gatherOuter([]));
+                let bounds = POLY.flatten(next.gatherOuter([]));
 
                 let dir = -1; // 1 == inside out, -1 == outside-in
 
@@ -853,7 +868,7 @@ var gs_kiri_print = exports;
      * the next closest endpoint.
      */
     function tip2tipEmit(array, startPoint, emitter) {
-        var mindist, dist, found, count = 0;
+        let mindist, dist, found, count = 0;
         for (;;) {
             found = null;
             mindist = Infinity;
@@ -889,7 +904,7 @@ var gs_kiri_print = exports;
      * depth in determining distance
      */
     function poly2polyEmit(array, startPoint, emitter, mark) {
-        var mindist, dist, found, count = 0, marker = mark || 'delete';
+        let mindist, dist, found, count = 0, marker = mark || 'delete';
         for (;;) {
             found = null;
             mindist = Infinity;
@@ -943,7 +958,7 @@ var gs_kiri_print = exports;
      * used for CAM depth first layer output
      */
     function poly2polyDepthFirstEmit(array, startPoint, emitter, offset) {
-        var layers = [],
+        let layers = [],
             pools;
 
         array.forEach(function(layerPolys, layerIndex) {
@@ -968,7 +983,7 @@ var gs_kiri_print = exports;
                     poly.poolsDown = [];
                 } else {
                     // otherwise walk up the parent tree to find a pool to join
-                    var search = poly.parent;
+                    let search = poly.parent;
                     // walk up until pool found
                     while (search && !search.pool) {
                         search = search.parent;
@@ -993,7 +1008,7 @@ var gs_kiri_print = exports;
 
             if (layerIndex > 0)
             pools.forEach(function(pool) {
-                for (var i=0; i<poolsAbove.length; i++) {
+                for (let i=0; i<poolsAbove.length; i++) {
                     const above = poolsAbove[i];
                     // can only add open polys to open polys
                     if (above.isOpen() && pool.isClosed()) {
@@ -1059,7 +1074,7 @@ var gs_kiri_print = exports;
     }
 
     function polygonMinOffset(poly1, poly2, offset) {
-        var mindist = Infinity;
+        let mindist = Infinity;
         poly1.forEachPoint(function(p) {
             const nextdist = p.distToPolySegments(poly2, offset);
             mindist = Math.min(mindist, nextdist);
@@ -1082,7 +1097,7 @@ var gs_kiri_print = exports;
     }
 
     function constOp(tok, consts, opch, op) {
-        var pos, v1, v2;
+        let pos, v1, v2;
         if ((pos = tok.indexOf(opch)) > 0) {
             v1 = consts[tok.substring(0,pos)] || 0;
             v2 = parseInt(tok.substring(pos+1)) || 0;
@@ -1093,7 +1108,7 @@ var gs_kiri_print = exports;
     }
 
     function constReplace(str, consts, start) {
-        var cs = str.indexOf("{", start || 0),
+        let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
         if (cs >=0 && ce > cs) {

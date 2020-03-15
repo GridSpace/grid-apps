@@ -832,7 +832,6 @@ var gs_kiri_cam = exports;
     function slice(settings, widget, onupdate, ondone) {
         let conf = settings,
             proc = conf.process,
-            outp = conf.process,
             sliceAll = widget.slices = [],
             unitsName = settings.controller.units,
             units = unitsName === 'in' ? 25.4 : 1,
@@ -847,9 +846,9 @@ var gs_kiri_cam = exports;
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
             sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3) * units,
-            // pocketOnly = outp.camPocketOnly,
-            pocketOnlyRough = outp.camPocketOnlyRough,
-            pocketOnlyFinish = outp.camPocketOnlyFinish,
+            // pocketOnly = proc.camPocketOnly,
+            pocketOnlyRough = proc.camPocketOnlyRough,
+            pocketOnlyFinish = proc.camPocketOnlyFinish,
             // addTabs = proc.camTabsOn && !pocketOnly,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
             addTabsFinish = procFinish && proc.camTabsOn && !pocketOnlyFinish,
@@ -857,7 +856,7 @@ var gs_kiri_cam = exports;
             tabHeight = proc.camTabsHeight * units,
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
-            zMin = MAX(bounds.min.z, outp.camZBottom) * units,
+            zMin = MAX(bounds.min.z, proc.camZBottom) * units,
             shellRough,
             shellFinish,
             facePolys;
@@ -952,7 +951,7 @@ var gs_kiri_cam = exports;
             // hollow area from top of stock to top of part
             if (procFacing) {
                 let ztop = bounds.max.z,
-                    zpos = ztop + (outp.camZTopOffset * units),
+                    zpos = ztop + (proc.camZTopOffset * units),
                     zstep = proc.roughingDown * units;
 
                 while (zpos >= ztop) {
@@ -1029,7 +1028,7 @@ var gs_kiri_cam = exports;
         }
 
         // horizontal slices for rough/finish
-        doSlicing(widget, {height: sliceDepth, cam:true, zmin:outp.camZBottom}, camSlicesDone, function(update) {
+        doSlicing(widget, {height: sliceDepth, cam:true, zmin:proc.camZBottom}, camSlicesDone, function(update) {
             onupdate(0.0 + update * 0.25, "slicing");
         });
 
@@ -1370,7 +1369,7 @@ var gs_kiri_cam = exports;
                             }
                         });
                         // set winding specified in output
-                        POLY.setWinding(polys, process.outputClockwise, true);
+                        POLY.setWinding(polys, process.outputClockwise, false);
                         printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                             poly.forEachPoint(function(point, pidx, points, offset) {
                                 camOut(point.clone(), offset !== 0);
@@ -1381,6 +1380,7 @@ var gs_kiri_cam = exports;
                     break;
                 case modes.ROUGH:
                 case modes.FINISH:
+                    let dir = process.outputClockwise;
                     if (slice.camMode === modes.ROUGH) {
                         setTool(process.roughingTool, process.roughingSpeed, process.roughingPlunge);
                         spindle = Math.min(spindleMax, process.roughingSpindle);
@@ -1389,19 +1389,26 @@ var gs_kiri_cam = exports;
                         setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
                         spindle = Math.min(spindleMax, process.finishingSpindle);
                         depthData.finishDiam = toolDiam;
+                        if (!process.camPocketOnlyFinish) {
+                            dir = !dir;
+                        }
                     }
                     // todo find closest next trace/trace-point
                     slice.tops.forEach(function(top) {
                         if (!top.poly) return;
                         if (!top.traces) return;
-                        let polys = [];
+                        let polys = [], t = [], c = [];
                         POLY.flatten(top.traces, top.inner || []).forEach(function (poly) {
+                            let child = poly.parent;
                             if (depthFirst) poly = poly.clone(true);
+                            if (child) c.push(poly); else t.push(poly);
                             poly.layer = depthData.layer;
                             polys.push(poly);
                         });
-                        // set winding specified in output
-                        POLY.setWinding(polys, process.outputClockwise, true);
+                        // set cut direction on outer polys
+                        POLY.setWinding(t, dir);
+                        // set cut direction on inner polys
+                        POLY.setWinding(c, !dir);
                         if (depthFirst) {
                             (slice.camMode === modes.ROUGH ? depthData.rough : depthData.finish).append(polys);
                         } else {
