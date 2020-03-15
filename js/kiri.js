@@ -922,7 +922,7 @@ self.kiri.license = exports.LICENSE;
      }
 
      function platformUpdateTopZ() {
-         let camz = MODE === MODES.CAM && (settings.stock.z || settings.controller.alignTop);
+         let camz = (MODE === MODES.CAM) && (settings.stock.z || settings.controller.alignTop);
          let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
          forAllWidgets(function(widget) {
              widget.setTopZ(ztop);
@@ -949,7 +949,7 @@ self.kiri.license = exports.LICENSE;
         forAllWidgets(function(widget) {
             let wp = widget.orient.pos;
             let wb = widget.mesh.getBoundingBox().clone();
-            wb.translate(widget.orient.pos);
+            // wb.translate(widget.orient.pos);
             bounds.union(wb);
         });
         return settings.bounds = bounds;
@@ -1151,6 +1151,7 @@ self.kiri.license = exports.LICENSE;
         let offset = UI.camStockOffset.checked;
         let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
         let scale = unitScale();
+        settings.stock = { };
         camTopZ = topZ;
         // create/inject cam stock if stock size other than default
         if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
@@ -1207,7 +1208,6 @@ self.kiri.license = exports.LICENSE;
             camStock.material.visible = settings.mode === 'CAM';
             camTopZ = csz;
         } else if (camStock) {
-            settings.stock = { };
             UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
             camStock = null;

@@ -369,22 +369,22 @@ let gs_kiri_print = exports;
                         print[spd] = arr;
                         arr.push(last);
                         arr.push(point);
-                        if (debug && showMoves) {
-                            let rs = BASE.newSlope(
-                                {x: point.x, y: point.y},
-                                {x: last.x, y: last.y}
-                            );
-                            let ao1 = BASE.newSlopeFromAngle(rs.angle + 25);
-                            let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
-                            let sp = BASE.newPoint(point.x, point.y, point.z);
-                            move.push(sp);
-                            move.push(sp.projectOnSlope(ao1, 0.5));
-                            move.push(sp);
-                            move.push(sp.projectOnSlope(ao2, 0.5));
-                        }
                     } else {
                         move.push(last);
                         move.push(point);
+                    }
+                    if (debug && showMoves && last.z == point.z) {
+                        let rs = BASE.newSlope(
+                            {x: point.x, y: point.y},
+                            {x: last.x, y: last.y}
+                        );
+                        let ao1 = BASE.newSlopeFromAngle(rs.angle + 25);
+                        let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
+                        let sp = BASE.newPoint(point.x, point.y, point.z);
+                        move.push(sp);
+                        move.push(sp.projectOnSlope(ao1, 0.5));
+                        move.push(sp);
+                        move.push(sp.projectOnSlope(ao2, 0.5));
                     }
                 } else {
                     if (out.emit) DBUG.log("first point is emit");

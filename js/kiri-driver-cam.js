@@ -1089,32 +1089,35 @@ var gs_kiri_cam = exports;
      * @param {Object} [firstPoint] starting point
      */
     function printSetup(print, update, index, firstPoint) {
+        let widgetIndex = index || 0,
+            widgetArray = print.widgets,
+            widgetCount = widgetArray.length,
+            widget = widgetArray[widgetIndex];
+
+        if (widgetIndex >= widgetCount || !widget) return;
+
         let getTool = getToolById,
             settings = print.settings,
             device = settings.device,
             process = settings.process,
             stock = settings.stock,
             outer = settings.bounds,
-            widgetIndex = index || 0,
-            widgetArray = print.widgets,
-            widgetCount = widgetArray.length,
-            widget = widgetArray[widgetIndex],
-            alignTop = settings.controller.alignTop;
-
-        if (widgetIndex >= widgetCount || !widget) return;
-        let slices = widget.slices,
+            outerz = outer.max.z,
+            slices = widget.slices,
             bounds = widget.getCamBounds(settings),
+            boundsz = bounds.max.z,
             units = settings.controller.units === 'in' ? 25.4 : 1,
             hasStock = process.camStockZ && process.camStockX && process.camStockY,
             startCenter = process.outputOriginCenter,
+            alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
-            zadd_outer = hasStock ? stock.z - outer.max.z : alignTop ? outer.max.z - outer.max.z : 0,
-            zmax_outer = hasStock ? stock.z + zclear : outer.max.z + zclear,
-            zadd = hasStock ? stock.z - bounds.max.z : alignTop ? outer.max.z - bounds.max.z : 0,
-            zmax = hasStock ? stock.z + zclear : bounds.max.z + zclear,
+            // zadd_outer = hasStock ? stock.z - outerz : alignTop ? outerz : 0,
+            zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
+            zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
+            zmax = outerz + zclear,//hasStock ? stock.z + zclear : boundsz + zclear,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
             originy = startCenter ? 0 : hasStock ? -stock.y / 2 : bounds.min.y,
-            origin = hasStock ? newPoint(originx, originy, stock.z) : newPoint(originx, originy, bounds.max.z + zclear),
+            origin = newPoint(originx, originy, zmax),
             output = print.output,
             modes = CPRO,
             depthFirst = process.camDepthFirst,
@@ -1145,12 +1148,12 @@ var gs_kiri_cam = exports;
             poly2polyDepthFirstEmit = print.poly2polyDepthFirstEmit;
 
         function newLayer() {
-            if (layerOut.length < 2) return;
+            if (layerOut.length < 2) {
+                return;
+            }
             newOutput.push(layerOut);
             layerOut = [];
         }
-
-        // console.log({index, zadd, zmax, sz:stock.z, bz:bounds.max.z, oz:outer.max.z, at:alignTop});
 
         /**
          * @param {Point} point
@@ -1253,6 +1256,7 @@ var gs_kiri_cam = exports;
             point.x += widget.mesh.position.x;
             point.y += widget.mesh.position.y;
             point.z += zadd;
+
             if (nextIsMove) {
                 cut = 0;
                 nextIsMove = false;
@@ -1292,7 +1296,7 @@ var gs_kiri_cam = exports;
                                 point.x,
                                 point.y) + zadd,
                             point.z,
-                            lastPoint.z) : zmax + zadd,
+                            lastPoint.z) : zmax,
                         mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                         clearz = maxz;
                     // up if any point between higher than start/finish
@@ -1321,7 +1325,7 @@ var gs_kiri_cam = exports;
                 }
             } else {
                 // before first point, move cutting head to point above it
-                layerPush(point.clone().setZ(zmax_outer + zadd_outer), 0, 0, tool.number);
+                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
             }
             // todo synthesize move speed from feed / plunge accordingly
             layerPush(
@@ -1333,6 +1337,9 @@ var gs_kiri_cam = exports;
             lastPoint = point;
             layerOut.spindle = spindle;
         }
+
+        // coming from a previous widget, use previous last point
+        lastPoint = firstPoint;
 
         // make top start offset configurable
         printPoint = firstPoint || origin;
@@ -1568,10 +1575,8 @@ var gs_kiri_cam = exports;
         }
 
         // last layer/move is to zmax
-        // printPoint = lastPoint.clone();
-        // lastPoint = null;
-        camOut(printPoint.clone().setZ(bounds.max.z + zclear), false);
-        newOutput.push(layerOut);
+        // injected into the last layer generated
+        addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
 
         // replace output single flattened layer with all points
         print.output = newOutput;
