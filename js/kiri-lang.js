@@ -147,7 +147,8 @@ let gs_kiri_lang = exports;
         ws_cler:        "Clear"
     };
 
-    // create test language based on en-us
+    LANG['test'] = { bogus: "not a valid key" };
+
     Object.keys(LANG.en).forEach(key => {
         LANG.test[key] = `*${LANG.en[key]}*`;
     });
