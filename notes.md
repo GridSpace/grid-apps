@@ -2,6 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `C` prevent dragging items beyond the work boundaries
 * `C` hide the bed with a checkbox? indication of part outside printable area?
 * `C` set page background color? or dark mode?
 * `C` better small screen support (on screen button for hiding side panels, compact selectors)
@@ -39,6 +40,9 @@
 
 # CAM
 
+* `B` import scale off when units are NOT set to "mm"
+* `B` fix zooming, workspace thickness for larger workspaces
+* `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `F` trapezoidal tabs (in the Z axis)
 * `F` lead-in milling
 * `F` ease-in and ease-out especially on tab cut-out start/stop
@@ -53,8 +57,6 @@
 * `P` linear finishing going back to z top too often
 * `P` option to skip milling holes that would be drilled
 * `P` crossing open space check point is outside camshell before returning max z
-* `B` fix zooming, workspace thickness for larger workspaces
-* `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 
 # Laser
 
