@@ -186,7 +186,49 @@ let gs_kiri_lang = exports;
         se_bsic:        "basic",
 
         // SLICING menu
-        sl_menu:        "slicing"
+        sl_menu:        "slicing",
+        sl_lahi_s:      "layer height",
+        sl_lahi_l:      "height of each slice\nlayer in millimeters",
+        sl_shel_s:      "shell count",
+        sl_shel_l:      "number of perimeter\nwalls to generate",
+        sl_ltop_s:      "top layers",
+        sl_ltop_l:      "number of solid layers\nto enforce at the\ntop of the print",
+        sl_lsld_s:      "solid layers",
+        sl_lsld_l:      "solid fill areas computed\nfrom layer deltas. see\nlayer pop menu",
+        sl_lbot_s:      "base layers",
+        sl_lbot_l:      "number of solid layers\nto enforce at the\nbottom of the print",
+
+        // FILL menu
+        fi_menu:        "fill",
+        fi_type:        "type",
+        fi_pcnt_s:      "percentage",
+        fi_pcnt_l:      "fill density values\n0.0 - 1.0",
+        fi_angl_s:      "solid angle",
+        fi_angl_l:      "base angle in degrees",
+        fi_over_s:      "overlap",
+        fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
+
+        // FIRST LAYER menu
+        fl_menu:        "first layer",
+        fl_lahi_s:      "layer height",
+        fl_lahi_l:      "height of each slice\nin millimeters\nshould be >= slice height",
+        fl_rate_s:      "shell speed",
+        fl_rate_h:      "printing max speed\nin millimeters / minute",
+        fl_frat_s:      "fill speed",
+        fl_frat_l:      "printing max speed\nin millimeters / minute",
+        fl_mult_s:      "print factor",
+        fl_mult_l:      "extrusion multiplier\n0.0 - 2.0",
+        fl_skrt_s:      "skirt count",
+        fl_skrt_l:      "number of first-layer offset\nbrims to generate",
+        fl_skro_s:      "skirt offset",
+        fl_skro_l:      "skirt offset from part\nin millimeters",
+        fl_nozl_s:      "nozzle temp",
+        fl_nozl_l:      "degrees in celsius\noutput setting used\nwhen this is zero",
+        fl_bedd_s:      "bed temp",
+        fl_bedd_l:      "degrees in celsius\noutput setting used\nwhen this is zero",
+
+        // SUPPORT menu
+        sp_menu:        "support",
 
     };
 

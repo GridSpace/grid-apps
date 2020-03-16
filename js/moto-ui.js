@@ -37,11 +37,11 @@ var gs_moto_ui = exports;
         isPopped: isPopped,
         newText: newTextArea,
         newLabel: newLabel,
-        newRange: newRangeField,
+        newRange: newRange,
         newInput: newInputField,
         newButton: newButton,
         newBoolean: newBooleanField,
-        newSelectField: newSelectField,
+        newSelect: newSelect,
         newTable: newTables,
         newTableRow: newTableRow,
         newRow: newRow,
@@ -323,7 +323,7 @@ var gs_moto_ui = exports;
         return ip;
     }
 
-    function newRangeField(label, options) {
+    function newRange(label, options) {
         var row = newDiv(options),
             ip = DOC.createElement('input'),
             hide = options && options.hide,
@@ -348,7 +348,7 @@ var gs_moto_ui = exports;
         return ip;
     }
 
-    function newSelectField(label, options, source) {
+    function newSelect(label, options, source) {
         var row = newDiv(options),
             ip = DOC.createElement('select'),
             hide = options && options.hide,
