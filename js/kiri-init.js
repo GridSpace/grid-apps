@@ -100,34 +100,34 @@ var gs_kiri_init = exports;
             deviceFavorites: $('device-favorites'),
             deviceAll: $('device-all'),
 
-            device: UC.newGroup("device", $('device')),
-            deviceName: UC.newInput(LANG.dev_name, {size:20, text:true}),
-            setDeviceFilament: UC.newInput(LANG.dev_fil, {title:LANG.dev_fil_desc, convert:UC.toFloat, modes:FDM}),
-            setDeviceNozzle: UC.newInput(LANG.dev_nozl, {title:LANG.dev_nozl_desc, convert:UC.toFloat, modes:FDM}),
-            setDeviceWidth: UC.newInput(LANG.dev_bedw, {title:LANG.dev_bedw_desc, convert:UC.toInt}),
-            setDeviceDepth: UC.newInput(LANG.dev_bedd, {title:LANG.dev_bedd_desc, convert:UC.toInt}),
-            setDeviceHeight: UC.newInput(LANG.dev_bedhm, {title:LANG.dev_bedhm_desc, convert:UC.toInt, modes:FDM}),
-            setDeviceMaxSpindle: UC.newInput(LANG.dev_spmax, {title:LANG.dev_spmax_desc, convert:UC.toInt, modes:CAM}),
-            setDeviceExtrusion: UC.newBoolean(LANG.dev_extab, onBooleanClick, {title:LANG.dev_extab_desc}),
-            setDeviceOrigin: UC.newBoolean(LANG.dev_orgc, onBooleanClick, {title:LANG.dev_orgc_desc}),
-            setDeviceOriginTop: UC.newBoolean(LANG.dev_orgt, onBooleanClick, {title:LANG.dev_orgt_desc, modes:CAM}),
-            setDeviceRound: UC.newBoolean(LANG.dev_bedc, onBooleanClick, {title:LANG.dev_bedc_desc, modes:FDM}),
+            device: UC.newGroup(LANG.dv_gr_dev, $('device')),
+            deviceName: UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:20, text:true}),
+            setDeviceFilament: UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
+            setDeviceNozzle: UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
+            setDeviceWidth: UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
+            setDeviceDepth: UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
+            setDeviceHeight: UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
+            setDeviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
+            setDeviceExtrusion: UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l}),
+            setDeviceOrigin: UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l}),
+            setDeviceOriginTop: UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
+            setDeviceRound: UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
-            setDevice: UC.newGroup("gcode", $('device')),
-            setDeviceFan: UC.newInput(LANG.dev_fanp, {title:LANG.dev_fanp_desc, modes:FDM, size:17}),
-            setDeviceTrack: UC.newInput(LANG.dev_prog, {title:LANG.dev_prog_desc, modes:FDM, size:17}),
-            setDeviceLayer: UC.newText(LANG.dev_layer, {title:LANG.dev_layer_desc, modes:FDM, size:14, height: 2}),
-            setDeviceToken: UC.newBoolean(LANG.dev_token, null, {title:LANG.dev_token_desc, modes:CAM_LASER}),
-            setDeviceStrip: UC.newBoolean(LANG.dev_strip, null, {title:LANG.dev_strip_desc, modes:CAM}),
-            setDeviceFExt: UC.newInput(LANG.dev_fext, {title:LANG.dev_fext_desc, modes:CAM_LASER, size:7}),
-            setDeviceDwell: UC.newText(LANG.dev_dwell, {title:LANG.dev_dwell_desc, modes:CAM, size:14, height:2}),
-            setDeviceChange: UC.newText(LANG.dev_tool, {title:LANG.dev_tool_desc, modes:CAM, size:14, height:2}),
-            setDeviceSpindle: UC.newText(LANG.dev_speed, {title:LANG.dev_speed_desc, modes:CAM, size:14, height:2}),
-            setDevicePause: UC.newText(LANG.dev_pause, {title:LANG.dev_pause_desc, modes:FDM, size:14, height:3}),
-            setDeviceLaserOn: UC.newText(LANG.dev_lzon, {title:LANG.dev_lzon_desc, modes:LASER, size:14, height:3}),
-            setDeviceLaserOff: UC.newText(LANG.dev_lzof, {title:LANG.dev_lzof_desc, modes:LASER, size:14, height:3}),
-            setDevicePre: UC.newText(LANG.dev_head, {title:LANG.dev_head_desc, modes:ALL, size:14, height:3}),
-            setDevicePost: UC.newText(LANG.dev_foot, {title:LANG.dev_foot_desc, modes:ALL, size:14, height:3}),
+            setDevice: UC.newGroup(LANG.dv_gr_gco, $('device')),
+            setDeviceFan: UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:17}),
+            setDeviceTrack: UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:17}),
+            setDeviceLayer: UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
+            setDeviceToken: UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
+            setDeviceStrip: UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
+            setDeviceFExt: UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7}),
+            setDeviceDwell: UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2}),
+            setDeviceChange: UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
+            setDeviceSpindle: UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2}),
+            setDevicePause: UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
+            setDeviceLaserOn: UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
+            setDeviceLaserOff: UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
+            setDevicePre: UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
+            setDevicePost: UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
 
             tools: $('tools'),
             toolsSave: $('tools-save'),
@@ -175,77 +175,77 @@ var gs_kiri_init = exports;
             stockDepth: $('stock-width'),
             stockHeight: $('stock-width'),
 
-            mode: UC.newGroup('mode', assets),
+            mode: UC.newGroup(LANG.mo_menu, assets),
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
-                    UC.newButton("FDM Printing", function() { API.mode.set('FDM',null,platform.update_size) }),
+                    UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }),
                 ],[
                     UI.modeLASER =
-                    UC.newButton("Laser Cutting", function() { API.mode.set('LASER',null,platform.update_size) }),
+                    UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }),
                 ],[
                     UI.modeCAM =
-                    UC.newButton("CNC Milling",   function() { API.mode.set('CAM',null,platform.update_size) }, {id:"modeCAM"}),
+                    UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {id:"modeCAM"}),
                 ]
             ]),
-            system: UC.newGroup('setup'),
+            system: UC.newGroup(LANG.su_menu),
             sysTable: UC.newTableRow([
                 [
                     UI.setupDevices =
-                    UC.newButton("Devices", showDevices)
+                    UC.newButton(LANG.su_devi, showDevices)
                 ],[
                     UI.setupTools =
-                    UC.newButton("Tools",   showTools, {modes:CAM})
+                    UC.newButton(LANG.su_tool, showTools, {modes:CAM})
                 ],[
                     UI.localButton =
-                    UC.newButton("Local",   API.show.local, {modes:FDM_CAM})
+                    UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM})
                 ],[
                     UI.helpButton =
-                    UC.newButton("Help",    API.help.show)
+                    UC.newButton(LANG.su_help, API.help.show)
                 ]
             ]),
-            wsFunc: UC.newGroup('function'),
+            wsFunc: UC.newGroup(LANG.fn_menu),
             wsFuncTable: UC.newTableRow([
                 [
                     UI.load =
-                    UC.newButton("Import",  function() { API.event.import() }),
+                    UC.newButton(LANG.fn_impo, function() { API.event.import() }),
                     UI.import =
                     UC.newButton("+")
                 ],[
                     UI.modeArrange =
-                    UC.newButton("Arrange", platform.layout),
+                    UC.newButton(LANG.fn_arra, platform.layout),
                 ],[
                     UI.modeSlice =
-                    UC.newButton("Slice",   API.function.slice)
+                    UC.newButton(LANG.fn_slic, API.function.slice)
                 ],[
                     UI.modePreview =
-                    UC.newButton("Preview", API.function.print),
+                    UC.newButton(LANG.fn_prev, API.function.print),
                 ],[
                     UI.modeExport =
-                    UC.newButton("Export",  API.function.export)
+                    UC.newButton(LANG.fn_expo, API.function.export)
                 ]
             ]),
-            camera: UC.newGroup('view'),
+            camera: UC.newGroup(LANG.vu_menu),
             camTable: UC.newTableRow([
                 [
-                    UC.newButton("home",  SPACE.view.home),
-                    UC.newButton("reset", SPACE.view.reset)
+                    UC.newButton(LANG.vu_home, SPACE.view.home),
+                    UC.newButton(LANG.vu_rset, SPACE.view.reset)
                 ],[
-                    UC.newButton("top",   SPACE.view.top),
-                    UC.newButton("front", SPACE.view.front),
+                    UC.newButton(LANG.vu_sptp, SPACE.view.top),
+                    UC.newButton(LANG.vu_spfr, SPACE.view.front),
                 ],[
-                    UC.newButton("left",  SPACE.view.left),
-                    UC.newButton("right", SPACE.view.right)
+                    UC.newButton(LANG.vu_splt, SPACE.view.left),
+                    UC.newButton(LANG.vu_sprt, SPACE.view.right)
                 ]
             ]),
 
-            workspace: UC.newGroup('workspace'),
+            workspace: UC.newGroup(LANG.ws_menu),
             wsTable: UC.newTableRow([
                 [
                     UI.saveButton =
-                    UC.newButton("Save",    API.space.save),
+                    UC.newButton(LANG.ws_save, API.space.save),
                 ],[
-                    UC.newButton("Clear",   API.space.clear)
+                    UC.newButton(LANG.ws_cler, API.space.clear)
                 ]
             ]),
 
@@ -1595,10 +1595,11 @@ var gs_kiri_init = exports;
 
             // load CSS extensions
             if (SETUP.ss) SETUP.ss.forEach(function(style) {
+                style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`;
                 let ss = DOC.createElement('link');
                 ss.setAttribute("type", "text/css");
                 ss.setAttribute("rel", "stylesheet");
-                ss.setAttribute("href", "/kiri/style-"+style+".css");
+                ss.setAttribute("href", `${style}.css`);
                 DOC.body.appendChild(ss);
             });
 
