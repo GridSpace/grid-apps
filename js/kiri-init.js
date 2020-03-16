@@ -1531,8 +1531,22 @@ var gs_kiri_init = exports;
         });
 
         SPACE.mouse.onDrag(function(delta) {
+            let dev = settings().device;
+            let bmaxx = dev.bedWidth/2;
+            let bminx = -bmaxx;
+            let bmaxy = dev.bedDepth/2;
+            let bminy = -bmaxy
             if (delta && UI.freeLayout.checked) {
                 API.selection.for_widgets(function(widget) {
+                    let wbnd = widget.getBoundingBox();
+                    let wwid = wbnd.max.x - wbnd.min.x;
+                    let wminx = widget.orient.pos.x + delta.x - wwid / 2;
+                    let wmaxx = wminx + wwid + delta.x;
+                    if (wminx < bminx || wmaxx > bmaxx) return;
+                    let whei = wbnd.max.y - wbnd.min.y;
+                    let wminy = widget.orient.pos.y + delta.y - whei / 2;
+                    let wmaxy = wminy + whei + delta.y;
+                    if (wminy < bminy || wmaxy > bmaxy) return;
                     widget.move(delta.x, delta.y, 0);
                 });
                 platform.update_stock();

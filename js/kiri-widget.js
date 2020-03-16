@@ -425,8 +425,9 @@ var gs_kiri_widget = exports;
      * @param {number} z
      */
     PRO.scale = function(x, y, z) {
-        var mesh = this.mesh,
+        let mesh = this.mesh,
             scale = this.orient.scale;
+        this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix(new THREE.Matrix4().makeScale(x, y, z));
@@ -443,11 +444,12 @@ var gs_kiri_widget = exports;
      * @param {number} z
      */
     PRO.rotate = function(x, y, z) {
+        this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
         this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0)));
         this.center();
-        var rot = this.orient.rot;
+        let rot = this.orient.rot;
         rot.x += (x || 0);
         rot.y += (y || 0);
         rot.z += (z || 0);

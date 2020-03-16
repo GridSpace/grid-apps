@@ -2,7 +2,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `C` prevent dragging items beyond the work boundaries
 * `C` hide the bed with a checkbox? indication of part outside printable area?
 * `C` set page background color? or dark mode?
 * `C` better small screen support (on screen button for hiding side panels, compact selectors)

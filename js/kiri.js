@@ -707,8 +707,6 @@ self.kiri.license = exports.LICENSE;
 
         setViewMode(VIEWS.SLICE);
 
-        var selectSave = selectedMeshes.slice();
-
         clearPrint();
         saveSettings();
         platform.deselect();
@@ -732,9 +730,6 @@ self.kiri.license = exports.LICENSE;
                 errored = false,
                 startTime,
                 lastMsg;
-
-            // skip non-selected widgets in CAM mode when any widget is selected
-            if (MODE === MODES.CAM && selectSave.length > 0 && selectSave.indexOf(widget.mesh) < 0) return --countdown;
 
             widget.stats.progress = 0;
             widget.setColor(widget_slicing_color);
