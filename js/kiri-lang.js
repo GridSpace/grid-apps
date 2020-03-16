@@ -2,19 +2,25 @@
 
 "use strict";
 
-var gs_kiri_lang = exports;
+let gs_kiri_lang = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
     if (self.kiri.lang) return;
 
-    var KIRI = self.kiri,
-        LANG = self.kiri.lang = {};
+    let KIRI = self.kiri,
+        LANG = self.kiri.lang = {},
+        lset = navigator.language.toLocaleLowerCase();
 
-    LANG.set = (key) => {
-        if (LANG[key]) {
-            let map = LANG[key];
+    LANG.set = function() {
+        let map, key, keys = [...arguments];
+        for (let i=0; i<keys.length; i++)
+        {
+            key = keys[i]
+            if (!(map = LANG[key])) {
+                continue;
+            }
             let missing = [];
             let invalid = [];
             // default to EN values when missing
@@ -38,12 +44,15 @@ var gs_kiri_lang = exports;
             if (invalid.length) {
                 console.log(`language map "${key}" invalid keys [${invalid.length}]: ${invalid.join(', ')}`);
             }
+            return key;
         }
+        return undefined;
     }
 
     // english. other language maps will defer to english
     // map for any missing key/value pairs
-    LANG.en = {
+    LANG['en'] =
+    LANG['en-us'] = {
         version:        "version",
 
         // DEVICE dialog (_s = label, _l = hover help)
@@ -138,15 +147,13 @@ var gs_kiri_lang = exports;
         ws_cler:        "Clear"
     };
 
-    LANG.test = {
-        bogus:          "not a valid key",
-        version:        "_version_",
-        dv_gr_dev:      "_device_",
-        dv_gr_gco:      "_gcode_",
-    };
+    // create test language based on en-us
+    Object.keys(LANG.en).forEach(key => {
+        LANG.test[key] = `*${LANG.en[key]}*`;
+    });
 
     LANG.current = {};
 
-    LANG.set('en');
+    LANG.set(lset, lset.split('-')[0]);
 
 })();
