@@ -1713,8 +1713,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function setFocus(el) {
-        DOC.activeElement.blur();
-        el = [ el || DOC.body, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
+        el = [ el || UI.load, UI.import, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
         for (var es, i=0; i<el.length; i++) {
             es = el[i];
             es.focus();
@@ -1722,8 +1721,6 @@ self.kiri.license = exports.LICENSE;
                 break;
             }
         }
-        UI.ctrlLeft.focus();
-        UI.container.focus();
     }
 
     function setViewMode(mode) {

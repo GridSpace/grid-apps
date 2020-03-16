@@ -207,6 +207,7 @@ var gs_kiri_init = exports;
             wsFunc: UC.newGroup('function'),
             wsFuncTable: UC.newTableRow([
                 [
+                    UI.load =
                     UC.newButton("Import",  function() { API.event.import() }),
                     UI.import =
                     UC.newButton("+")
@@ -1577,11 +1578,13 @@ var gs_kiri_init = exports;
             SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
             SPACE.platform.setZOff(0.2);
 
+            // restore UI state from settings
             UI.showOrigin.checked = current.controller.showOrigin;
             UI.freeLayout.checked = current.controller.freeLayout;
             UI.autoLayout.checked = current.controller.autoLayout;
             UI.alignTop.checked = current.controller.alignTop;
 
+            // load script extensions
             if (SETUP.s) SETUP.s.forEach(function(lib) {
                 let scr = DOC.createElement('script');
                 scr.setAttribute('async',true);
@@ -1590,6 +1593,7 @@ var gs_kiri_init = exports;
                 STATS.add('load_'+lib);
             });
 
+            // load CSS extensions
             if (SETUP.ss) SETUP.ss.forEach(function(style) {
                 let ss = DOC.createElement('link');
                 ss.setAttribute("type", "text/css");
@@ -1598,12 +1602,13 @@ var gs_kiri_init = exports;
                 DOC.body.appendChild(ss);
             });
 
+            // override stored settings
             if (SETUP.v) SETUP.v.forEach(function(kv) {
                 kv = kv.split('=');
                 SDB.setItem(kv[0],kv[1]);
             });
 
-            // import octoprint settings from url
+            // import octoprint settings
             if (SETUP.ophost) {
                 let ohost = API.const.OCTO = {
                     host: SETUP.ophost[0],
@@ -1614,10 +1619,10 @@ var gs_kiri_init = exports;
                 console.log({octoprint:ohost});
             }
 
-            // mode passed on url
+            // optional set-and-lock mode (hides mode menu)
             let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
 
-            // device name pass on url
+            // optional set-and-lock device (hides device menu)
             let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
             API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
