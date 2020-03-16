@@ -144,7 +144,50 @@ let gs_kiri_lang = exports;
         // WORKSPACE menu
         ws_menu:        "workspace",
         ws_save:        "Save",
-        ws_cler:        "Clear"
+        ws_cler:        "Clear",
+
+        // OPTIONS menu
+        op_menu:        "options",
+        op_show_s:      "show origin",
+        op_show_l:      "show device or process origin",
+        op_alig_s:      "align top",
+        op_alig_l:      "align parts to the\ntallest part when\nno stock is set",
+        op_auto_s:      "auto layout",
+        op_auto_l:      "automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once",
+        op_free_s:      "free layout",
+        op_free_l:      "permit dragable layout",
+        op_invr_s:      "invert zoom",
+        op_invr_l:      "invert mouse wheel\nscroll zoom",
+        op_unit_s:      "units",
+        op_unit_l:      "workspace units affects\nspeeds and distances",
+
+        // LAYERS pop-menu
+        la_menu:        "layers",
+        la_olin:        "outline",
+        la_trce:        "trace",
+        la_face:        "facing",
+        la_ruff:        "roughing",
+        la_fini:        "finishing",
+        la_finx:        "finish x",
+        la_finy:        "finish y",
+        la_dlta:        "delta",
+        la_slds:        "solids",
+        la_fill:        "solid fill",
+        la_sprs:        "sparse",
+        la_sprt:        "support",
+        la_prnt:        "print",
+        la_move:        "moves",
+
+        // SETTINGS menu
+        se_menu:        "settings",
+        se_load:        "load",
+        se_save:        "save",
+        se_xprt:        "expert",
+        se_bsic:        "basic",
+
+        // SLICING menu
+        sl_menu:        "slicing"
+
     };
 
     LANG['test'] = { bogus: "not a valid key" };
