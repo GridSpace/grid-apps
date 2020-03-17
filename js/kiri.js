@@ -69,7 +69,8 @@ self.kiri.license = exports.LICENSE;
         camStock = null,
         camTopZ = 0,
         topZ = 0,
-        showFavorites = SDB['dev-favorites'] === 'true';
+        showFavorites = SDB['dev-favorites'] === 'true',
+        alerts = [];
 
     // seed defaults. will get culled on save
     settings.sproc.FDM.default = clone(settings.process);
@@ -79,11 +80,6 @@ self.kiri.license = exports.LICENSE;
     settings.cdev.CAM = clone(settings.device);
 
     DBUG.enable();
-
-    if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
-    if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
-
-    let alerts = [ [ `${LANG.version} ${KIRI.version}`, Date.now() ] ];
 
     // add show() to catalog for API
     CATALOG.show = showCatalog;
@@ -187,6 +183,7 @@ self.kiri.license = exports.LICENSE;
         hide: {
             import: function() { UI.import.style.display = 'none' }
         },
+        language: KIRI.lang,
         modal: {
             show: showModal,
             hide: hideModal,
@@ -334,6 +331,10 @@ self.kiri.license = exports.LICENSE;
          // limit to 5 showing
          while (alerts.length > 5) {
              alerts.shift();
+         }
+         // return if called before UI configured
+         if (!UI.alert) {
+             return;
          }
          if (alerts.length > 0) {
              UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
@@ -1821,5 +1822,12 @@ self.kiri.license = exports.LICENSE;
     if (Array.isArray(self.kirimod)) {
         kirimod.forEach(function(mod) { mod(kiri.api) });
     }
+
+    // allow language modules to load first
+    if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
+    if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
+
+    // show version on startup
+    API.show.alert(`${LANG.version} ${KIRI.version}`);
 
 })();

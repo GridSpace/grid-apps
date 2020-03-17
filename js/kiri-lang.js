@@ -425,12 +425,6 @@ let gs_kiri_lang = exports;
         ag_paws_l:      "comma-separated list of layers\nto inject pause commands before"
     };
 
-    LANG['test'] = { bogus: "not a valid key" };
-
-    Object.keys(LANG.en).forEach(key => {
-        LANG.test[key] = `*${LANG.en[key]}*`;
-    });
-
     LANG.current = {};
 
     LANG.set(lset, lset.split('-')[0]);
