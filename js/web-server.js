@@ -185,7 +185,7 @@ function concatCode(array) {
         filepath;
 
     array.forEach((file, index) => {
-        if (file.charAt(0) === "/") {
+        if (file.charAt(0) === "/" || file.indexOf("\\") > 0) {
             filepath = file;
             cachepath = "js_mod" + file
                 .replace(/\//g,'_')
