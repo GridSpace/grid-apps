@@ -92,7 +92,10 @@ function lastmod(path) {
  * @returns {*}
  */
 function getCachedFile(filePath, cpath, fn) {
-    let cachePath = ".cache/" + cpath.replace(/\//g,'_'),
+    let cachePath = ".cache/" + cpath
+            .replace(/\//g,'_')
+            .replace(/\\/g,'_')
+            .replace(/:/g,'_'),
         cached = fileCache[filePath],
         now = time();
 
@@ -184,7 +187,10 @@ function concatCode(array) {
     array.forEach((file, index) => {
         if (file.charAt(0) === "/") {
             filepath = file;
-            cachepath = "js_mod" + file.replace(/\//g,'_');
+            cachepath = "js_mod" + file
+                .replace(/\//g,'_')
+                .replace(/\\/g,'_')
+                .replace(/:/g,'_'),
             array[index] = cachepath.substring(3).replace('.js','');
             fileMap[cachepath.replace("js_","js/")] = filepath;
         } else {
