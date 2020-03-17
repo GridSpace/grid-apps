@@ -1827,18 +1827,4 @@ self.kiri.license = exports.LICENSE;
     // allow language modules to load first
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
 
-    // inject language script
-    if (SETUP.ln || SDB.getItem('kiri-lang')) {
-        let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
-        if (lang !== 'en') {
-            let scr = DOC.createElement('script');
-            scr.setAttribute('defer',true);
-            scr.setAttribute('src',`/kiri/lang/${lang}.js`);
-            DOC.body.appendChild(scr);
-            STATS.set('ll',lang);
-            scr.onload = function() {
-                KIRI.lang.set(lang);
-            }
-        }
-    }
 })();

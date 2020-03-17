@@ -1065,7 +1065,6 @@ var gs_kiri_init = exports;
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
-
         let assets = $('assets'),
             control = $('control'),
             container = $('container'),
@@ -1666,9 +1665,6 @@ var gs_kiri_init = exports;
         // set initial layer slider size
         API.dialog.update();
 
-        // send init-done event
-        API.event.emit('init-done', STATS);
-
         // load settings provided in url hash
         loadSettingsFromServer();
 
@@ -1692,9 +1688,41 @@ var gs_kiri_init = exports;
         if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
         if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
         STATS.del('upgrade');
+
+        // send init-done event
+        API.event.emit('init-done', STATS);
+    }
+
+    // if a language needs to load, the script is injected and loaded
+    // first.  once this loads, or doesn't, the initialization begins
+    let lang_set = undefined;
+
+    // inject language script
+    if (SETUP.ln || SDB.getItem('kiri-lang')) {
+        let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
+        if (lang !== 'en') {
+            lang_set = lang;
+            let scr = DOC.createElement('script');
+            // scr.setAttribute('defer',true);
+            scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+            DOC.body.appendChild(scr);
+            STATS.set('ll',lang);
+            scr.onload = function() {
+                KIRI.lang.set(lang);
+                init_one();
+            };
+            scr.onerror = function(err) {
+                console.log({language_load_error: err, lang})
+                init_one();
+            }
+        }
     }
 
     // schedule init_one to run after all page content is loaded
-    SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one, false);
+    // unless a languge script is loading first, in which case it
+    // will call init once it's done (or failed)
+    if (!lang_set) {
+        SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one, false);
+    }
 
 })();
