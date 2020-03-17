@@ -1678,6 +1678,9 @@ var gs_kiri_init = exports;
         };
 
         API.view.set(VIEWS.ARRANGE);
+
+        // show version on startup
+        API.show.alert(`${LANG.version} ${KIRI.version}`);
     }
 
     // schedule init_one to run after all page content is loaded

@@ -69,7 +69,7 @@ self.kiri.license = exports.LICENSE;
         camStock = null,
         camTopZ = 0,
         topZ = 0,
-        showFavorites = SDB['dev-favorites'] === 'true',
+        showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [];
 
     // seed defaults. will get culled on save
@@ -346,7 +346,9 @@ self.kiri.license = exports.LICENSE;
 
      function getShowFavorites(bool) {
          if (bool !== undefined) {
-             return SDB['dev-favorites'] = showFavorites = bool;
+             SDB.setItem('dev-favorites', bool);
+             showFavorites = bool;
+             return bool;
          }
          return showFavorites;
      }
@@ -1824,10 +1826,20 @@ self.kiri.license = exports.LICENSE;
     }
 
     // allow language modules to load first
-    if (SETUP.ln) KIRI.lang.set(SETUP.ln[0]);
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
 
-    // show version on startup
-    API.show.alert(`${LANG.version} ${KIRI.version}`);
-
+    // inject language script
+    if (SETUP.ln || SDB.getItem('kiri-lang')) {
+        let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
+        if (lang !== 'en') {
+            let scr = DOC.createElement('script');
+            scr.setAttribute('defer',true);
+            scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+            DOC.body.appendChild(scr);
+            STATS.set('ll',lang);
+            scr.onload = function() {
+                KIRI.lang.set(lang);
+            }
+        }
+    }
 })();
