@@ -221,6 +221,7 @@ button[del] {
     xoverflow: hidden;
 }
 #control-left {
+    display: none;
     position: fixed;
     z-index: 10000;
     color: black;
@@ -242,6 +243,7 @@ button[del] {
     display: none;
 }
 #control-right {
+    display: none;
     position: fixed;
     z-index: 10000;
     top: 5px;

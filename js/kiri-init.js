@@ -46,6 +46,10 @@ var gs_kiri_init = exports;
         editTools = null,
         maxTool = 0;
 
+    // extend KIRI API with local functions
+    API.show.devices = showDevices;
+    API.device.set = selectDevice;
+
     function settings() {
         return API.conf.get();
     }
@@ -659,8 +663,9 @@ var gs_kiri_init = exports;
 
             API.conf.save();
         } catch (e) {
-            console.log({error:e, device:code});
-            // API.show.alert("invalid or deprecated device. please select a new device.");
+            console.log({error:e, device:code, devicename});
+            API.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
+            API.show.alert(`please select a new device`, 10);
             showDevices();
         }
         API.function.clear();
@@ -1574,8 +1579,6 @@ var gs_kiri_init = exports;
 
         API.space.restore(init_two) || checkSeed(init_two) || init_two();
 
-        // extend API
-        API.show.devices = showDevices;
     };
 
     // SECOND STAGE INIT AFTER UI RESTORED
@@ -1636,15 +1639,14 @@ var gs_kiri_init = exports;
         // optional set-and-lock device (hides device menu)
         let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
+        // setup default mode and enable mode locking, if set
         API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
-        API.show.controls(true);
+
+        // update everything dependent on the platform size
         platform.update_size();
+
+        // ensure hot keys work even in iframes
         API.focus();
-
-        if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
-        STATS.del('upgrade');
-
-        if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
 
         // place version number a couple of places to help users
         UI.helpButton.title = `${LANG.version} ` + KIRI.version;
@@ -1673,14 +1675,23 @@ var gs_kiri_init = exports;
         // clear alerts as they build up
         setInterval(API.event.alerts, 1000);
 
+        // add hide-alerts-on-alert-click
         UI.alert.dialog.onclick = function() {
             API.event.alerts(true);
         };
 
+        // default to ARRANGE view mode
         API.view.set(VIEWS.ARRANGE);
+
+        // add ability to override
+        API.show.controls(true);
 
         // show version on startup
         API.show.alert(`${LANG.version} ${KIRI.version}`);
+
+        if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
+        if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
+        STATS.del('upgrade');
     }
 
     // schedule init_one to run after all page content is loaded

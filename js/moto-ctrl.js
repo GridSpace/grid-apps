@@ -3,7 +3,7 @@
 "use strict";
 
 let gs_moto_ctrl = exports;
-let MOTO = window.moto = window.moto || {};
+var MOTO = window.moto = window.moto || {};
 
 /**
  * Adapted from THREE.OrbitControls

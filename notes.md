@@ -2,7 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` restore settings should restore all mode/device/settings
+* `B` restore settings should restore all mode/device/settings (find corner cases)
 * `C` set page background color? or dark mode?
 * `C` better small screen support (on screen button for hiding side panels, compact selectors)
 * `F` implement an in-app bug reporting system
@@ -11,10 +11,10 @@
 *     share raw data w/ dups, encode/decode
 * `F` remember object's original position/orientation for reset/multi-object import alignment
 * `P` bail on decimation if it's proving ineffective
-* `P` improve decimation speed by avoiding in/out of Point
+* `P` improve decimation speed by avoiding in/out of Point?
 * `P` server-side processing (determine protocol and storage)
 * `P` refactor / simplify POLY.expand (put onus on collector)
-* `P` cloned objects should share same slice data unless rotated
+* `P` cloned objects should share same slice data unless rotated or scaled
 
 # FDM
 
@@ -40,9 +40,11 @@
 
 # CAM
 
-* `B` fix zooming, workspace thickness for larger workspaces
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
+* `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `F` do not rough areas that go all the way through the part
+      https://github.com/GridSpace/grid-apps/issues/20
 * `F` send gcode to cncjs
 * `F` trapezoidal tabs (in the Z axis)
 * `F` lead-in milling
@@ -50,13 +52,13 @@
 * `F` implement z line-only follows for ball/taper
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add endmill spiral direction to fully respect climb vs conventional
-* `F` add tapered ball mills
+* `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling
 * `P` optimize away topo generation (for z hop/move) when part is flat
 * `P` store tab and camshell polys in widget.topo to minimize z on edge moves
-* `P` linear finishing going back to z top too often
+* `P` linear finishing is going back to z top too often
 * `P` option to skip milling holes that would be drilled
 * `P` crossing open space check point is outside camshell before returning max z
 

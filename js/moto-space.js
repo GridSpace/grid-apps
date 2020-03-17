@@ -2,7 +2,7 @@
 "use strict";
 
 let gs_moto_space = exports;
-let MOTO = window.moto = window.moto || {};
+var MOTO = window.moto = window.moto || {};
 
 (function() {
 

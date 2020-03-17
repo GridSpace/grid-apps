@@ -65,7 +65,6 @@ self.kiri.license = exports.LICENSE;
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
         local = SETUP.local,
-        // mouseMoved = false,
         camStock = null,
         camTopZ = 0,
         topZ = 0,
@@ -156,7 +155,8 @@ self.kiri.license = exports.LICENSE;
             layer_range: 0
         },
         device: {
-            get: currentDeviceName
+            get: currentDeviceName,
+            set: undefined // set during init
         },
         dialog: {
             show: showDialog,
@@ -196,10 +196,6 @@ self.kiri.license = exports.LICENSE;
             set: setMode,
             switch: switchMode
         },
-        // mouse : {
-        //     moved : function() { return mouseMoved },
-        //     movedSet : function(b) { mouseMoved = b }
-        // },
         opacity,
         print: {
             get: function() { return currentPrint },
@@ -213,6 +209,7 @@ self.kiri.license = exports.LICENSE;
         selection,
         show: {
             alert: alert2,
+            devices: undefined, // set during init
             progress: setProgress,
             controls: setControlsVisible,
             favorites: getShowFavorites,
@@ -1426,7 +1423,7 @@ self.kiri.license = exports.LICENSE;
         alert2("workspace saved", 1);
     }
 
-    function restoreWorkspace(ondone, skipwidgets) {
+    function restoreWorkspace(ondone, skip_widget_load) {
         var loaded = 0,
             toload = ls2o('ws-widgets',[]),
             newset = ls2o('ws-settings'),
@@ -1462,11 +1459,14 @@ self.kiri.license = exports.LICENSE;
         if (camera) SPACE.view.load(camera);
         else setTimeout(SPACE.view.home, 100);
 
-        if (skipwidgets) return;
+        if (skip_widget_load) return;
 
+        // remove any widgets from platform
         forAllWidgets(function(widget) {
             platform.delete(widget);
         });
+
+        // load any widget by name that was saved to the workspace
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
                 if (widget) {
@@ -1476,12 +1476,10 @@ self.kiri.license = exports.LICENSE;
                     platform.deselect();
                     if (ondone) {
                         ondone();
-                        // if ((newset || settings).mode != 'CAM') {
-                            setTimeout(() => {
-                                platform.update_top_z();
-                                SPACE.update();
-                            }, 1);
-                        // };
+                        setTimeout(() => {
+                            platform.update_top_z();
+                            SPACE.update();
+                        }, 1);
                     }
                 }
             }, position);
@@ -1789,6 +1787,7 @@ self.kiri.license = exports.LICENSE;
         // update device stat for FDM/CAM
         STATS.set(`ud_${getModeLower()}`, settings.filter[mode] || 'default');
         MODE = MODES[mode];
+        // updates right-hand menu by enabling/disabling fields
         UC.setMode(MODE);
         loadNamedSetting();
         saveSettings();
@@ -1802,7 +1801,7 @@ self.kiri.license = exports.LICENSE;
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
-        restoreWorkspace(null,true);
+        restoreWorkspace(null, true);
         // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();
         triggerSettingsEvent();
