@@ -1,7 +1,7 @@
 kiri.lang['da'] =
 kiri.lang['da-dk'] = {
-    version:        "ALBERT!",
-    enable:         "enable",
+    version:        "version",
+    enable:         "aktivér",
 
     // DEVICE dialog (_s = label, _l = hover help)
     dv_gr_dev:      "enhed",
