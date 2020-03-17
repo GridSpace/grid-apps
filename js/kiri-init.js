@@ -50,7 +50,1016 @@ var gs_kiri_init = exports;
         return API.conf.get();
     }
 
-    KIRI.init = function(api) {
+    function checkSeed(then) {
+        // skip sample object load in onshape (or any script postload)
+        if (!SDB[SEED]) {
+            SDB[SEED] = new Date().getTime();
+            if (!SETUP.s) {
+                platform.load_stl("/obj/cube.stl", function(vert) {
+                    CATALOG.putFile("sample cube.stl", vert);
+                    platform.compute_max_z();
+                    SPACE.view.home();
+                    setTimeout(API.space.save,500);
+                    then();
+                    API.help.show();
+                });
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function booleanSave() {
+        let current = settings();
+        current.controller.showOrigin = UI.showOrigin.checked;
+        current.controller.autoLayout = UI.autoLayout.checked;
+        current.controller.freeLayout = UI.freeLayout.checked;
+        current.controller.alignTop = UI.alignTop.checked;
+        current.controller.reverseZoom = UI.reverseZoom.checked;
+        SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
+        platform.layout();
+        platform.update_stock();
+        API.conf.save();
+    }
+
+    function onLayerToggle() {
+        API.conf.update();
+        API.show.slices();
+    }
+
+    function onBooleanClick() {
+        API.conf.update();
+        DOC.activeElement.blur();
+    }
+
+    function inputHasFocus() {
+        let active = DOC.activeElement;
+        return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
+    }
+
+    function inputTextOK() {
+        return DOC.activeElement === UI.deviceName;
+    }
+
+    function textAreaHasFocus() {
+        let active = DOC.activeElement;
+        return active && active.nodeName === "TEXTAREA";
+    }
+
+    function inputSize() {
+        return parseInt(DOC.activeElement.size);
+    }
+
+    function cca(c) {
+        return c.charCodeAt(0);
+    }
+
+    function keyUpHandler(evt) {
+        switch (evt.keyCode) {
+            // escape
+            case 27:
+                // blur text input focus
+                DOC.activeElement.blur();
+                // dismiss modals
+                API.modal.hide();
+                // deselect widgets
+                platform.deselect();
+                // hide all dialogs
+                API.dialog.hide();
+                // cancel slicing
+                if (KIRI.work.isSlicing()) KIRI.work.restart();
+                break;
+        }
+        return false;
+    }
+
+    function keyDownHandler(evt) {
+        if (API.modal.visible()) {
+            return false;
+        }
+        let move = evt.altKey ? 5 : 0,
+            deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
+        switch (evt.keyCode) {
+            case 8: // apple: delete/backspace
+            case 46: // others: delete
+                if (inputHasFocus()) return false;
+                platform.delete(API.selection.meshes());
+                evt.preventDefault();
+                break;
+            case 37: // left arrow
+                if (inputHasFocus()) return false;
+                if (deg) API.selection.rotate(0, 0, -deg);
+                if (move > 0) moveSelection(-move, 0, 0);
+                evt.preventDefault();
+                break;
+            case 39: // right arrow
+                if (inputHasFocus()) return false;
+                if (deg) API.selection.rotate(0, 0, deg);
+                if (move > 0) moveSelection(move, 0, 0);
+                evt.preventDefault();
+                break;
+            case 38: // up arrow
+                if (inputHasFocus()) return false;
+                if (evt.metaKey) return API.show.layer(API.var.layer_at+1);
+                if (deg) API.selection.rotate(deg, 0, 0);
+                if (move > 0) moveSelection(0, move, 0);
+                evt.preventDefault();
+                break;
+            case 40: // down arrow
+                if (inputHasFocus()) return false;
+                if (evt.metaKey) return API.show.layer(API.var.layer_at-1);
+                if (deg) API.selection.rotate(-deg, 0, 0);
+                if (move > 0) moveSelection(0, -move, 0);
+                evt.preventDefault();
+                break;
+            case 65: // 'a' for select all
+                if (evt.metaKey) {
+                    if (inputHasFocus()) return false;
+                    evt.preventDefault();
+                    platform.deselect();
+                    platform.select_all();
+                }
+                break;
+            case 83: // 's' for save workspace
+                if (evt.ctrlKey) {
+                    evt.preventDefault();
+                    API.conf.save();
+                    log("settings saved");
+                } else
+                if (evt.metaKey) {
+                    evt.preventDefault();
+                    API.space.save();
+                }
+                break;
+            case 76: // 'l' for restore workspace
+                if (evt.metaKey) {
+                    evt.preventDefault();
+                    API.space.restore();
+                }
+                break;
+        }
+    }
+
+    function keyHandler(evt) {
+        let handled = true,
+            current = settings(),
+            style, sel, i, m, bb,
+            ncc = evt.charCode - 48;
+        if (API.modal.visible() || inputHasFocus()) {
+            return false;
+        }
+        switch (evt.charCode) {
+            case cca('`'): API.show.slices(0); break;
+            case cca('0'): API.show.slices(API.var.layer_max); break;
+            case cca('1'): // toggle control left
+                if (evt.ctrlKey) {
+                    style = UI.ctrlLeft.style;
+                    style.display = style.display === 'none' ? 'block' : 'none';
+                } else {
+                    API.show.slices(API.var.layer_max/10);
+                }
+                break;
+            case cca('2'): // toggle control right
+                if (evt.ctrlKey) {
+                    style = UI.ctrlRight.style;
+                    style.display = style.display === 'none' ? 'block' : 'none';
+                } else {
+                    API.show.slices(API.var.layer_max*2/10);
+                }
+                break;
+            case cca('3'):
+                if (evt.ctrlKey) {
+                    style = !SPACE.platform.isHidden();
+                    SPACE.platform.setHidden(style);
+                    SPACE.platform.showGrid(!style);
+                    SPACE.update();
+                } else {
+                    API.show.slices(API.var.layer_max*3/10);
+                }
+                break;
+            case cca('4'): API.show.slices(API.var.layer_max*4/10); break;
+            case cca('5'): API.show.slices(API.var.layer_max*5/10); break;
+            case cca('6'): API.show.slices(API.var.layer_max*6/10); break;
+            case cca('7'): API.show.slices(API.var.layer_max*7/10); break;
+            case cca('8'): API.show.slices(API.var.layer_max*8/10); break;
+            case cca('9'): API.show.slices(API.var.layer_max*9/10); break;
+            case cca('?'):
+                API.help.show();
+                break;
+            case cca('Z'): // reset stored state
+                if (confirm('clear all settings?')) {
+                    SDB.clear();
+                }
+                break;
+            case cca('C'): // refresh catalog
+                CATALOG.refresh();
+                break;
+            case cca('i'): // single settings edit
+                let v = prompt('edit "'+current.process.processName+'"', JSON.stringify(current.process));
+                if (v) {
+                    try {
+                        current.process = JSON.parse(v);
+                        API.view.update_fields();
+                    } catch (e) {
+                        console.log(e);
+                        API.show.alert("invalid settings format");
+                    }
+                }
+                break;
+            case cca('U'): // full settings url
+                storeSettingsToServer(true);
+                break;
+            case cca('u'): // full settings url
+                loadSettingsFromServer(prompt("settings id to load"));
+                break;
+            case cca('s'): // complete slice
+                API.function.slice();
+                break;
+            case cca('p'): // prepare print
+                API.function.print();
+                break;
+            case cca('P'): // position widget
+                positionSelection();
+                break;
+            case cca('R'): // position widget
+                rotateInputSelection();
+                break;
+            case cca('x'): // export print
+                API.function.export();
+                break;
+            case cca('e'): // devices
+                showDevices();
+                break;
+            case cca('o'): // tools
+                showTools();
+                break;
+            case cca('c'): // local devices
+                API.show.local();
+                break;
+            case cca('v'): // toggle single slice view mode
+                UI.layerRange.checked = !UI.layerRange.checked;
+                API.show.slices();
+                break;
+            case cca('d'): // duplicate object
+                sel = API.selection.meshes();
+                platform.deselect();
+                for (i=0; i<sel.length; i++) {
+                    m = sel[i].clone();
+                    m.geometry = m.geometry.clone();
+                    m.material = m.material.clone();
+                    bb = m.getBoundingBox();
+                    let nw = API.widgets.new().loadGeometry(m.geometry);
+                    nw.move(bb.max.x - bb.min.x + 1, 0, 0);
+                    platform.add(nw,true);
+                }
+                break;
+            case cca('m'): // mirror object
+                API.selection.for_widgets(function(widget) {
+                    widget.mirror();
+                });
+                SPACE.update();
+                break;
+            case cca('R'): // toggle slice render mode
+                renderMode++;
+                API.function.slice();
+                break;
+            case cca('a'): // auto arrange items on platform
+                platform.layout();
+                break;
+            case cca('w'): // toggle wireframe on widgets
+                API.view.wireframe(API.color.wireframe, API.opacity.wireframe);
+                break;
+            default:
+                API.event.emit('keypress', evt);
+                handled = false;
+                break;
+        }
+        if (handled) evt.preventDefault();
+        return false;
+    }
+
+    function keys(o) {
+        let key, list = [];
+        for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
+        return list.sort();
+    }
+
+    function clearSelected(children) {
+        for (let i=0; i<children.length; i++) {
+            children[i].setAttribute('class','');
+        }
+    }
+
+    function rotateInputSelection() {
+        if (API.selection.meshes().length === 0) {
+            API.show.alert("select object to rotate");
+            return;
+        }
+        let coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
+            prod = Math.PI / 360,
+            x = parseFloat(coord[0] || 0.0) * prod,
+            y = parseFloat(coord[1] || 0.0) * prod,
+            z = parseFloat(coord[2] || 0.0) * prod;
+
+        API.selection.rotate(x, y, z);
+    }
+
+    function positionSelection() {
+        if (API.selection.meshes().length === 0) {
+            API.show.alert("select object to position");
+            return;
+        }
+        let current = settings(),
+            center = current.process.outputOriginCenter,
+            bounds = boundsSelection(),
+            coord = prompt("Enter X,Y coordinates for selection").split(','),
+            x = parseFloat(coord[0] || 0.0),
+            y = parseFloat(coord[1] || 0.0),
+            z = parseFloat(coord[2] || 0.0);
+
+        if (!center) {
+            x = x - current.device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
+            y = y - current.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
+        }
+
+        moveSelection(x, y, z, true);
+    }
+
+    function loadSettingsFromServer(tok) {
+        let hash = (tok || LOC.hash.substring(1)).split("/");
+        if (hash.length === 2) {
+            new moto.Ajax(function(reply) {
+                if (reply) {
+                    let res = JSON.parse(reply);
+                    if (res && res.ver && res.rec) {
+                        let set = JSON.parse(atob(res.rec));
+                        set.id = res.space;
+                        set.ver = res.ver;
+                        API.conf.put(set);
+                        API.event.settings();
+                        LOC.hash = '';
+                    }
+                }
+            }).request("/data/"+ hash[0] + "/" + hash[1]);
+        }
+    }
+
+    function storeSettingsToServer(display) {
+        let set = btoa(JSON.stringify(settings()));
+        new moto.Ajax(function(reply) {
+            if (reply) {
+                let res = JSON.parse(reply);
+                if (res && res.ver) {
+                    LOC.hash = res.space + "/" + res.ver;
+                    if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
+                }
+            } else {
+                updateSpaceState();
+            }
+        }).request("/data/"+ settings().id + "/" + settings().ver, set);
+    }
+
+    function settingsSave() {
+        API.dialog.hide();
+        let mode = API.mode.get(),
+            s = settings(),
+            def = "default",
+            cp = s.process,
+            pl = s.sproc[mode],
+            // pt = sf[mode.toLowerCase()].p, // process field mask
+            name = WIN.prompt("Save Settings As", cp ? cp.processName || def : def);
+        if (!name) return;
+        let np = pl[name] = {};
+        cp.processName = name;
+        for (let k in cp) {
+            if (!cp.hasOwnProperty(k)) continue;
+            // if (!pt.hasOwnProperty(k)) continue; // mask out invalid fields
+            np[k] = cp[k];
+        }
+        s.cproc[API.mode.get()] = name;
+        API.conf.save();
+        API.event.settings();
+    }
+
+    function settingsLoad() {
+        API.conf.show();
+    }
+
+    function putLocalDevice(devicename, code) {
+        settings().devices[devicename] = code;
+        API.conf.save();
+    }
+
+    function removeLocalDevice(devicename) {
+        delete settings().devices[devicename];
+        API.conf.save();
+    }
+
+    function isLocalDevice(devicename) {
+        return settings().devices[devicename] ? true : false;
+        // return localFilters.contains(devicename);
+    }
+
+    function isFavoriteDevice(devicename) {
+        return settings().favorites[devicename] ? true : false;
+    }
+
+    function getSelectedDevice() {
+        return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
+    }
+
+    function selectDevice(devicename, lock) {
+        deviceLock = lock;
+        if (lock) UI.setupDevices.style.display = 'none';
+        if (isLocalDevice(devicename)) {
+            setDeviceCode(settings().devices[devicename], devicename);
+        } else {
+            API.ajax("/kiri/filter/"+API.mode.get()+"/"+devicename, function(code) {
+                setDeviceCode(code, devicename);
+            });
+        }
+        $('selected-device').innerHTML = devicename;
+    }
+
+    function valueOf(val, dv) {
+        return typeof(val) !== 'undefined' ? val : dv;
+    }
+
+    // only for local filters
+    function updateDeviceCode(override) {
+        let oldname = getSelectedDevice(),
+            newname = override || UI.deviceName.value,
+            code = {
+                mode: API.mode.get(),
+                settings: {
+                    bed_width: parseInt(UI.setDeviceWidth.value) || 300,
+                    bed_depth: parseInt(UI.setDeviceDepth.value) || 175,
+                    bed_circle: UI.setDeviceRound.checked,
+                    build_height: parseInt(UI.setDeviceHeight.value) || 150,
+                    nozzle_size: parseFloat(UI.setDeviceNozzle.value) || 0.4,
+                    filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
+                    origin_center: UI.setDeviceOrigin.checked,
+                    origin_top: UI.setDeviceOriginTop.checked,
+                    extrude_abs: UI.setDeviceExtrusion.checked,
+                    spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
+                },
+                cmd: {
+                    fan_power: UI.setDeviceFan.value,
+                    progress: UI.setDeviceTrack.value,
+                    spindle: UI.setDeviceSpindle.value.split('\n'),
+                    layer: UI.setDeviceLayer.value.split('\n')
+                },
+                pre: UI.setDevicePre.value.split('\n'),
+                post: UI.setDevicePost.value.split('\n'),
+                pause: UI.setDevicePause.value.split('\n'),
+                dwell: UI.setDeviceDwell.value.split('\n'),
+                'laser-on': UI.setDeviceLaserOn.value.split('\n'),
+                'laser-off': UI.setDeviceLaserOff.value.split('\n'),
+                'tool-change': UI.setDeviceChange.value.split('\n'),
+                'file-ext': UI.setDeviceFExt.value,
+                'token-space': UI.setDeviceToken.checked ? ' ' : '',
+                'strip-comments': UI.setDeviceStrip.checked
+            };
+
+        if (oldname !== newname && isLocalDevice(oldname)) removeLocalDevice(oldname);
+
+        putLocalDevice(newname, code);
+        setDeviceCode(code, newname);
+    }
+
+    function setDeviceCode(code, devicename) {
+        try {
+            STATS.set(`ud_${API.mode.get_lower()}`, devicename);
+
+            if (typeof(code) === 'string') code = js2o(code) || {};
+
+            let cmd = code.cmd || {},
+                set = code.settings || {},
+                local = isLocalDevice(devicename),
+                current = settings(),
+                dproc = current.devproc[devicename],
+                mode = API.mode.get();
+
+            current.device = {
+                bedHeight: 2.5,
+                bedWidth: valueOf(set.bed_width, 300),
+                bedDepth: valueOf(set.bed_depth, 175),
+                bedRound: valueOf(set.bed_circle, false),
+                maxHeight: valueOf(set.build_height, 150),
+                nozzleSize: valueOf(set.nozzle_size, 0.4),
+                filamentSize: valueOf(set.filament_diameter, 1.75),
+                originCenter: valueOf(set.origin_center, false),
+                extrudeAbs: valueOf(set.extrude_abs, false),
+                spindleMax: valueOf(set.spindle_max, 0),
+                gcodeFan: valueOf(cmd.fan_power, ''),
+                gcodeTrack: valueOf(cmd.progress, ''),
+                gcodeLayer: valueOf(cmd.layer, []),
+                gcodePre: valueOf(code.pre, []),
+                gcodePost: valueOf(code.post, []),
+                gcodeProc: valueOf(code.proc, ''),
+                gcodePause: valueOf(code.pause, []),
+                gcodeDwell: valueOf(code.dwell, []),
+                gcodeSpindle: valueOf(cmd.spindle, []),
+                gcodeChange: valueOf(code['tool-change'], []),
+                gcodeFExt: valueOf(code['file-ext'], 'gcode'),
+                gcodeSpace: valueOf(code['token-space'], ''),
+                gcodeStrip: valueOf(code['strip-comments'], false),
+                gcodeLaserOn: valueOf(code['laser-on'], []),
+                gcodeLaserOff: valueOf(code['laser-off'], [])
+            };
+
+            let dev = current.device,
+                proc = current.process;
+
+            proc.outputOriginCenter = valueOf(set.origin_center, true);
+            proc.camOriginTop = valueOf(set.origin_top, true);
+
+            UI.deviceName.value = devicename;
+            // common
+            UI.setDevicePre.value = dev.gcodePre.join('\n');
+            UI.setDevicePost.value = dev.gcodePost.join('\n');
+            UI.setDevicePause.value = dev.gcodePause.join('\n');
+            UI.setDeviceWidth.value = dev.bedWidth;
+            UI.setDeviceDepth.value = dev.bedDepth;
+            UI.setDeviceHeight.value = dev.maxHeight;
+            UI.setDeviceRound.checked = dev.bedRound;
+            UI.setDeviceOrigin.checked = proc.outputOriginCenter;
+            // FDM
+            UI.setDeviceFan.value = dev.gcodeFan;
+            UI.setDeviceTrack.value = dev.gcodeTrack;
+            UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
+            UI.setDeviceFilament.value = dev.filamentSize;
+            UI.setDeviceNozzle.value = dev.nozzleSize;
+            UI.setDeviceExtrusion.checked = dev.extrudeAbs;
+            // CAM
+            UI.setDeviceMaxSpindle.value = dev.spindleMax;
+            UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
+            UI.setDeviceDwell.value = dev.gcodeDwell.join('\n');
+            UI.setDeviceChange.value = dev.gcodeChange.join('\n');
+            UI.setDeviceFExt.value = dev.gcodeFExt;
+            UI.setDeviceToken.checked = dev.gcodeSpace ? true : false;
+            UI.setDeviceStrip.checked = dev.gcodeStrip;
+            // LASER
+            UI.setDeviceLaserOn.value = dev.gcodeLaserOn.join('\n');
+            UI.setDeviceLaserOff.value = dev.gcodeLaserOff.join('\n');
+
+            // disable editing for non-local devices
+            [
+             UI.deviceName,
+             UI.setDevicePre,
+             UI.setDevicePost,
+             UI.setDevicePause,
+             UI.setDeviceDepth,
+             UI.setDeviceWidth,
+             UI.setDeviceHeight,
+             UI.setDeviceExtrusion,
+             UI.setDeviceOrigin,
+             UI.setDeviceOriginTop,
+             UI.setDeviceRound,
+             UI.setDeviceFan,
+             UI.setDeviceTrack,
+             UI.setDeviceLayer,
+             UI.setDeviceFilament,
+             UI.setDeviceNozzle,
+             UI.setDeviceMaxSpindle,
+             UI.setDeviceSpindle,
+             UI.setDeviceDwell,
+             UI.setDeviceChange,
+             UI.setDeviceFExt,
+             UI.setDeviceToken,
+             UI.setDeviceStrip,
+             UI.setDeviceLaserOn,
+             UI.setDeviceLaserOff
+            ].forEach(function(e) {
+                e.disabled = !local;
+            });
+
+            // hide spindle fields when device doens't support it
+            if (mode === 'CAM')
+            [
+             UI.setDeviceExtrusion,
+             UI.roughingSpindle,
+             UI.finishingSpindle,
+             UI.drillSpindle
+            ].forEach(function(e) {
+             e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
+            });
+
+            UI.deviceSave.disabled = !local;
+            UI.deviceDelete.disabled = !local;
+
+            API.view.update_fields();
+            platform.update_size();
+
+            current.filter[mode] = devicename;
+            current.cdev[mode] = dev;
+
+            // restore last process associated with this device
+            if (dproc) API.conf.load(null, dproc);
+
+            API.conf.save();
+        } catch (e) {
+            console.log({error:e, device:code});
+            // API.show.alert("invalid or deprecated device. please select a new device.");
+            showDevices();
+        }
+        API.function.clear();
+        API.event.settings();
+    }
+
+    function renderDevices(devices) {
+        UI.devices.onclick = UC.hidePop;
+        UC.hidePop();
+
+        let selectedIndex = -1,
+            selected = API.device.get(),
+            devs = settings().devices;
+
+        for (let local in devs) {
+            if (!(devs.hasOwnProperty(local) && devs[local])) {
+                continue;
+            }
+            let dev = devs[local],
+                fdmCode = dev.cmd,
+                fdmMode = (API.mode.get() === 'FDM');
+
+            if (dev.mode ? (dev.mode === API.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
+                devices.push(local);
+            }
+        };
+
+        devices = devices.sort();
+
+        UI.deviceClose.onclick = API.dialog.hide;
+        UI.deviceSave.onclick = function() {
+            API.function.clear();
+            updateDeviceCode();
+            API.conf.save();
+            showDevices();
+        };
+        UI.deviceAdd.onclick = function() {
+            API.function.clear();
+            updateDeviceCode(getSelectedDevice()+".copy");
+            showDevices();
+        };
+        UI.deviceDelete.onclick = function() {
+            API.function.clear();
+            removeLocalDevice(getSelectedDevice());
+            showDevices();
+        };
+
+        UI.deviceAll.onclick = function() {
+            API.show.favorites(false);
+            showDevices();
+        };
+        UI.deviceFavorites.onclick = function() {
+            API.show.favorites(true);
+            showDevices();
+        };
+
+        UI.deviceSelect.innerHTML = '';
+        let incr = 0;
+        let faves = API.show.favorites();
+        let found = false;
+        let first = devices[0];
+        // run through the list up to twice forcing faves off
+        // the second time if incr === 0 (no devices shown)
+        // if incr > 0, second loop is avoided
+        for (let rep=0; rep<2; rep++)
+        if (incr === 0)
+        devices.forEach(function(device, index) {
+            // force faves off for second try
+            if (rep === 1) faves = false;
+            let fav = isFavoriteDevice(device),
+                loc = isLocalDevice(device);
+            if (faves && !(fav || loc)) {
+                return;
+            }
+            if (incr === 0) {
+                first = device;
+            }
+            let opt = DOC.createElement('option');
+            opt.appendChild(DOC.createTextNode(device));
+            opt.onclick = function() {
+                selectDevice(device);
+            };
+            opt.ondblclick = function() {
+                if (settings().favorites[device]) {
+                    delete settings().favorites[device];
+                    API.show.alert(`removed "${device}" from favorites`, 3);
+                } else {
+                    settings().favorites[device] = true;
+                    API.show.alert(`added "${device}" to favorites`, 3);
+                }
+                showDevices();
+            };
+            if (API.show.favorites()) {
+                if (loc) opt.setAttribute("local", 1);
+            } else {
+                if (fav) opt.setAttribute("favorite", 1);
+            }
+            UI.deviceSelect.appendChild(opt);
+            if (device === selected) {
+                selectedIndex = incr;
+                found = true;
+            }
+            incr++;
+        });
+
+        if (selectedIndex >= 0) {
+            UI.deviceSelect.selectedIndex = selectedIndex;
+            selectDevice(selected);
+        } else {
+            UI.deviceSelect.selectedIndex = 0;
+            selectDevice(first);
+        }
+
+        API.dialog.show('devices', true);
+        API.dialog.update();
+
+        UI.deviceSelect.focus();
+    }
+
+    function renderTools() {
+        UI.toolSelect.innerHTML = '';
+        maxTool = 0;
+        editTools.forEach(function(tool, index) {
+            maxTool = Math.max(maxTool, tool.number);
+            tool.order = index;
+            let opt = DOC.createElement('option');
+            opt.appendChild(DOC.createTextNode(tool.name));
+            opt.onclick = function() { selectTool(tool) };
+            UI.toolSelect.appendChild(opt);
+        });
+    }
+
+    function selectTool(tool) {
+        selectedTool = tool;
+        UI.toolName.value = tool.name;
+        UI.toolNum.value = tool.number;
+        UI.toolFluteDiam.value = tool.flute_diam;
+        UI.toolFluteLen.value = tool.flute_len;
+        UI.toolShaftDiam.value = tool.shaft_diam;
+        UI.toolShaftLen.value = tool.shaft_len;
+        // UI.toolTaperAngle.value = tool.taper_angle || 70;
+        UI.toolTaperTip.value = tool.taper_tip || 0;
+        UI.toolMetric.checked = tool.metric;
+        UI.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
+        renderTool(tool);
+    }
+
+    function otag(o) {
+        if (Array.isArray(o)) {
+            let out = []
+            o.forEach(oe => out.push(otag(oe)));
+            return out.join('');
+        }
+        let tags = [];
+        Object.keys(o).forEach(key => {
+            let val = o[key];
+            let att = [];
+            Object.keys(val).forEach(tk => {
+                let tv = val[tk];
+                att.push(`${tk.replace(/_/g,'-')}="${tv}"`);
+            });
+            tags.push(`<${key} ${att.join(' ')}></${key}>`);
+        });
+        return tags.join('');
+    }
+
+    function renderTool(tool) {
+        let type = selectedTool.type;
+        let taper = type === 'tapermill';
+        // UI.toolTaperAngle.disabled = taper ? undefined : 'true';
+        UI.toolTaperTip.disabled = taper ? undefined : 'true';
+        $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
+        setTimeout(() => {
+            let svg = $('tool-svg');
+            let pad = 10;
+            let dim = { w: svg.clientWidth, h: svg.clientHeight }
+            let max = { w: dim.w - pad * 2, h: dim.h - pad * 2};
+            let off = { x: pad, y: pad };
+            let shaft_fill = "#cccccc";
+            let flute_fill = "#dddddd";
+            let stroke = "#777777";
+            let stroke_width = 3;
+            let shaft = tool.shaft_len || 1;
+            let flute = tool.flute_len || 1;
+            let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
+            let total_len = shaft + flute + tip_len;
+            let shaft_len = (shaft / total_len) * max.h;
+            let flute_len = (flute / total_len) * max.h;
+            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam, total_len/4);
+            let shaft_off = (max.w * (1 - (tool.shaft_diam / total_wid))) / 2;
+            let flute_off = (max.w * (1 - (tool.flute_diam / total_wid))) / 2;
+            let taper_off = (max.w * (1 - ((tool.taper_tip || 0) / total_wid))) / 2;
+            let parts = [
+                { rect: {
+                    x:off.x + shaft_off, y:off.y,
+                    width:max.w - shaft_off * 2, height:shaft_len,
+                    stroke, fill: shaft_fill, stroke_width
+                } }
+            ];
+            if (type === "tapermill") {
+                let yoff = off.y + shaft_len;
+                let mid = dim.w / 2;
+                parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                    `M ${off.x + flute_off} ${yoff}`,
+                    `L ${off.x + taper_off} ${yoff + flute_len}`,
+                    `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
+                    `L ${dim.w - off.x - flute_off} ${yoff}`,
+                    `z`
+                ].join('\n')}});
+            } else {
+                parts.push({ rect: {
+                    x:off.x + flute_off, y:off.y + shaft_len,
+                    width:max.w - flute_off * 2, height:flute_len,
+                    stroke, fill: flute_fill, stroke_width
+                } });
+            }
+            if (type === "ballmill") {
+                let rad = (max.w - flute_off * 2) / 2;
+                let xend = dim.w - off.x - flute_off;
+                let yoff = off.y + shaft_len + flute_len + stroke_width/2;
+                parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                    `M ${off.x + flute_off} ${yoff}`,
+                    `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,
+                    // `L ${off.x + flute_off} ${yoff}`
+                ].join('\n')}})
+            }
+            svg.innerHTML = otag(parts);
+        }, 10);
+    }
+
+    function updateTool() {
+        selectedTool.name = UI.toolName.value;
+        selectedTool.number = parseInt(UI.toolNum.value);
+        selectedTool.flute_diam = parseFloat(UI.toolFluteDiam.value);
+        selectedTool.flute_len = parseFloat(UI.toolFluteLen.value);
+        selectedTool.shaft_diam = parseFloat(UI.toolShaftDiam.value);
+        selectedTool.shaft_len = parseFloat(UI.toolShaftLen.value);
+        // selectedTool.taper_angle = parseFloat(UI.toolTaperAngle.value);
+        selectedTool.taper_tip = parseFloat(UI.toolTaperTip.value);
+        selectedTool.metric = UI.toolMetric.checked;
+        selectedTool.type = ['endmill','ballmill','tapermill'][UI.toolType.selectedIndex];
+        renderTools();
+        UI.toolSelect.selectedIndex = selectedTool.order;
+        setToolChanged(true);
+        renderTool(selectedTool);
+    }
+
+    function setToolChanged(changed) {
+        editTools.changed = changed;
+        UI.toolsSave.disabled = !changed;
+    }
+
+    function showTools() {
+        if (API.mode.get_id() !== MODES.CAM) return;
+
+        let selectedIndex = null;
+
+        editTools = settings().tools.slice().sort((a,b) => {
+            return a.name > b.name ? 1 : -1;
+        });
+
+        setToolChanged(false);
+
+        UI.toolsClose.onclick = function() {
+            if (editTools.changed && !confirm("abandon changes?")) return;
+            API.dialog.hide();
+        };
+        UI.toolAdd.onclick = function() {
+            editTools.push({
+                id: Date.now(),
+                number: maxTool + 1,
+                name: "new",
+                type: "endmill",
+                shaft_diam: 0.25,
+                shaft_len: 1,
+                flute_diam: 0.25,
+                flute_len: 2,
+                // taper_angle: 70,
+                taper_tip: 0,
+                metric: false
+            });
+            setToolChanged(true);
+            renderTools();
+            UI.toolSelect.selectedIndex = editTools.length-1;
+            selectTool(editTools[editTools.length-1]);
+        };
+        UI.toolDelete.onclick = function() {
+            editTools.remove(selectedTool);
+            setToolChanged(true);
+            renderTools();
+        };
+        UI.toolsSave.onclick = function() {
+            if (selectedTool) updateTool();
+            settings().tools = editTools.sort((a,b) => {
+                return a.name < b.name ? -1 : 1;
+            });
+            setToolChanged(false);
+            API.conf.save();
+            API.view.update_fields();
+            API.event.settings();
+        };
+
+        renderTools();
+        if (editTools.length > 0) {
+            selectTool(editTools[0]);
+            UI.toolSelect.selectedIndex = 0;
+        } else {
+            UI.toolAdd.onclick();
+        }
+
+        API.dialog.show('tools');
+        UI.toolSelect.focus();
+
+        STATS.add('ua_get_tools');
+    }
+
+    function showDevices() {
+        if (deviceLock) return;
+        API.modal.hide();
+        API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
+            if (!flvalue) return;
+            renderDevices(js2o(flvalue));
+            STATS.add('ua_get_devs');
+        });
+    }
+
+    function dragOverHandler(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.dataTransfer.dropEffect = 'copy';
+        SPACE.platform.setColor(0x00ff00);
+    }
+
+    function dragLeave() {
+        SPACE.platform.setColor(0x555555);
+    }
+
+    function dropHandler(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        SPACE.platform.setColor(0x555555);
+
+        let files = evt.dataTransfer.files,
+            plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`);
+
+        if (plate) API.platform.load_files(files);
+    }
+
+    function loadCatalogFile(e) {
+        API.widgets.load(e.target.getAttribute('load'), function(widget) {
+            platform.add(widget);
+            API.dialog.hide();
+        });
+    }
+
+    function deleteCatalogFile(e) {
+        CATALOG.deleteFile(e.target.getAttribute('del'));
+    }
+
+    function updateCatalog(files) {
+        let table = UI.catalogList,
+            list = [];
+        table.innerHTML = '';
+        for (let name in files) {
+            list.push({n:name, ln:name.toLowerCase(), v:files[name].vertices, t:files[name].updated});
+        }
+        list.sort(function(a,b) {
+            return a.ln < b.ln ? -1 : 1;
+        });
+        for (let i=0; i<list.length; i++) {
+            let row = DOC.createElement('div'),
+                load = DOC.createElement('button'),
+                del = DOC.createElement('button'),
+                file = list[i],
+                name = file.n;
+
+            load.setAttribute('load', name);
+            load.setAttribute('title', 'file: '+name+'\nvertices: '+file.v);
+            load.onclick = loadCatalogFile;
+            load.appendChild(DOC.createTextNode(name.split('.')[0]));
+
+            del.setAttribute('del', name);
+            del.setAttribute('title', "remove '"+name+"'");
+            del.onclick = deleteCatalogFile;
+            del.appendChild(DOC.createTextNode('x'));
+
+            row.setAttribute("class", "flow-row");
+            row.appendChild(load);
+            row.appendChild(del);
+            table.appendChild(row);
+        }
+        // fix layer scroll size
+        API.dialog.update();
+    }
+
+    // MAIN INITIALIZATION FUNCTION
+
+    function init_one() {
 
         let assets = $('assets'),
             control = $('control'),
@@ -424,998 +1433,6 @@ var gs_kiri_init = exports;
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true})
         });
 
-        function toolUpdate(a,b,c) {
-            DBUG.log(['toolUpdate',a,b,c])
-        }
-
-        function booleanSave() {
-            let current = settings();
-            current.controller.showOrigin = UI.showOrigin.checked;
-            current.controller.autoLayout = UI.autoLayout.checked;
-            current.controller.freeLayout = UI.freeLayout.checked;
-            current.controller.alignTop = UI.alignTop.checked;
-            current.controller.reverseZoom = UI.reverseZoom.checked;
-            SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
-            platform.layout();
-            platform.update_stock();
-            API.conf.save();
-        }
-
-        function onLayerToggle() {
-            API.conf.update();
-            API.show.slices();
-        }
-
-        function onBooleanClick() {
-            API.conf.update();
-            DOC.activeElement.blur();
-        }
-
-        function inputHasFocus() {
-            let active = DOC.activeElement;
-            return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
-        }
-
-        function inputTextOK() {
-            return DOC.activeElement === UI.deviceName;
-        }
-
-        function textAreaHasFocus() {
-            let active = DOC.activeElement;
-            return active && active.nodeName === "TEXTAREA";
-        }
-
-        function inputSize() {
-            return parseInt(DOC.activeElement.size);
-        }
-
-        function cca(c) {
-            return c.charCodeAt(0);
-        }
-
-        function keyUpHandler(evt) {
-            switch (evt.keyCode) {
-                // escape
-                case 27:
-                    // blur text input focus
-                    DOC.activeElement.blur();
-                    // dismiss modals
-                    API.modal.hide();
-                    // deselect widgets
-                    platform.deselect();
-                    // hide all dialogs
-                    API.dialog.hide();
-                    // cancel slicing
-                    if (KIRI.work.isSlicing()) KIRI.work.restart();
-                    break;
-            }
-            return false;
-        }
-
-        function keyDownHandler(evt) {
-            if (API.modal.visible()) {
-                return false;
-            }
-            let move = evt.altKey ? 5 : 0,
-                deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
-            switch (evt.keyCode) {
-                case 8: // apple: delete/backspace
-                case 46: // others: delete
-                    if (inputHasFocus()) return false;
-                    platform.delete(API.selection.meshes());
-                    evt.preventDefault();
-                    break;
-                case 37: // left arrow
-                    if (inputHasFocus()) return false;
-                    if (deg) API.selection.rotate(0, 0, -deg);
-                    if (move > 0) moveSelection(-move, 0, 0);
-                    evt.preventDefault();
-                    break;
-                case 39: // right arrow
-                    if (inputHasFocus()) return false;
-                    if (deg) API.selection.rotate(0, 0, deg);
-                    if (move > 0) moveSelection(move, 0, 0);
-                    evt.preventDefault();
-                    break;
-                case 38: // up arrow
-                    if (inputHasFocus()) return false;
-                    if (evt.metaKey) return API.show.layer(API.var.layer_at+1);
-                    if (deg) API.selection.rotate(deg, 0, 0);
-                    if (move > 0) moveSelection(0, move, 0);
-                    evt.preventDefault();
-                    break;
-                case 40: // down arrow
-                    if (inputHasFocus()) return false;
-                    if (evt.metaKey) return API.show.layer(API.var.layer_at-1);
-                    if (deg) API.selection.rotate(-deg, 0, 0);
-                    if (move > 0) moveSelection(0, -move, 0);
-                    evt.preventDefault();
-                    break;
-                case 65: // 'a' for select all
-                    if (evt.metaKey) {
-                        if (inputHasFocus()) return false;
-                        evt.preventDefault();
-                        platform.deselect();
-                        platform.select_all();
-                    }
-                    break;
-                case 83: // 's' for save workspace
-                    if (evt.ctrlKey) {
-                        evt.preventDefault();
-                        API.conf.save();
-                        log("settings saved");
-                    } else
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        API.space.save();
-                    }
-                    break;
-                case 76: // 'l' for restore workspace
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        API.space.restore();
-                    }
-                    break;
-            }
-        }
-
-        function keyHandler(evt) {
-            let handled = true,
-                current = settings(),
-                style, sel, i, m, bb,
-                ncc = evt.charCode - 48;
-            if (API.modal.visible() || inputHasFocus()) {
-                return false;
-            }
-            switch (evt.charCode) {
-                case cca('`'): API.show.slices(0); break;
-                case cca('0'): API.show.slices(API.var.layer_max); break;
-                case cca('1'): // toggle control left
-                    if (evt.ctrlKey) {
-                        style = UI.ctrlLeft.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        API.show.slices(API.var.layer_max/10);
-                    }
-                    break;
-                case cca('2'): // toggle control right
-                    if (evt.ctrlKey) {
-                        style = UI.ctrlRight.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        API.show.slices(API.var.layer_max*2/10);
-                    }
-                    break;
-                case cca('3'):
-                    if (evt.ctrlKey) {
-                        style = !SPACE.platform.isHidden();
-                        SPACE.platform.setHidden(style);
-                        SPACE.platform.showGrid(!style);
-                        SPACE.update();
-                    } else {
-                        API.show.slices(API.var.layer_max*3/10);
-                    }
-                    break;
-                case cca('4'): API.show.slices(API.var.layer_max*4/10); break;
-                case cca('5'): API.show.slices(API.var.layer_max*5/10); break;
-                case cca('6'): API.show.slices(API.var.layer_max*6/10); break;
-                case cca('7'): API.show.slices(API.var.layer_max*7/10); break;
-                case cca('8'): API.show.slices(API.var.layer_max*8/10); break;
-                case cca('9'): API.show.slices(API.var.layer_max*9/10); break;
-                case cca('?'):
-                    API.help.show();
-                    break;
-                case cca('Z'): // reset stored state
-                    if (confirm('clear all settings?')) {
-                        SDB.clear();
-                    }
-                    break;
-                case cca('C'): // refresh catalog
-                    CATALOG.refresh();
-                    break;
-                case cca('i'): // single settings edit
-                    let v = prompt('edit "'+current.process.processName+'"', JSON.stringify(current.process));
-                    if (v) {
-                        try {
-                            current.process = JSON.parse(v);
-                            API.view.update_fields();
-                        } catch (e) {
-                            console.log(e);
-                            API.show.alert("invalid settings format");
-                        }
-                    }
-                    break;
-                case cca('U'): // full settings url
-                    storeSettingsToServer(true);
-                    break;
-                case cca('u'): // full settings url
-                    loadSettingsFromServer(prompt("settings id to load"));
-                    break;
-                case cca('s'): // complete slice
-                    API.function.slice();
-                    break;
-                case cca('p'): // prepare print
-                    API.function.print();
-                    break;
-                case cca('P'): // position widget
-                    positionSelection();
-                    break;
-                case cca('R'): // position widget
-                    rotateInputSelection();
-                    break;
-                case cca('x'): // export print
-                    API.function.export();
-                    break;
-                case cca('e'): // devices
-                    showDevices();
-                    break;
-                case cca('o'): // tools
-                    showTools();
-                    break;
-                case cca('c'): // local devices
-                    API.show.local();
-                    break;
-                case cca('v'): // toggle single slice view mode
-                    UI.layerRange.checked = !UI.layerRange.checked;
-                    API.show.slices();
-                    break;
-                case cca('d'): // duplicate object
-                    sel = API.selection.meshes();
-                    platform.deselect();
-                    for (i=0; i<sel.length; i++) {
-                        m = sel[i].clone();
-                        m.geometry = m.geometry.clone();
-                        m.material = m.material.clone();
-                        bb = m.getBoundingBox();
-                        let nw = API.widgets.new().loadGeometry(m.geometry);
-                        nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-                        platform.add(nw,true);
-                    }
-                    break;
-                case cca('m'): // mirror object
-                    API.selection.for_widgets(function(widget) {
-                        widget.mirror();
-                    });
-                    SPACE.update();
-                    break;
-                case cca('R'): // toggle slice render mode
-                    renderMode++;
-                    API.function.slice();
-                    break;
-                case cca('a'): // auto arrange items on platform
-                    platform.layout();
-                    break;
-                case cca('w'): // toggle wireframe on widgets
-                    API.view.wireframe(API.color.wireframe, API.opacity.wireframe);
-                    break;
-                default:
-                    API.event.emit('keypress', evt);
-                    handled = false;
-                    break;
-            }
-            if (handled) evt.preventDefault();
-            return false;
-        }
-
-        function keys(o) {
-            let key, list = [];
-            for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
-            return list.sort();
-        }
-
-        function clearSelected(children) {
-            for (let i=0; i<children.length; i++) {
-                children[i].setAttribute('class','');
-            }
-        }
-
-        function rotateInputSelection() {
-            if (API.selection.meshes().length === 0) {
-                API.show.alert("select object to rotate");
-                return;
-            }
-            let coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
-                prod = Math.PI / 360,
-                x = parseFloat(coord[0] || 0.0) * prod,
-                y = parseFloat(coord[1] || 0.0) * prod,
-                z = parseFloat(coord[2] || 0.0) * prod;
-
-            API.selection.rotate(x, y, z);
-        }
-
-        function positionSelection() {
-            if (API.selection.meshes().length === 0) {
-                API.show.alert("select object to position");
-                return;
-            }
-            let current = settings(),
-                center = current.process.outputOriginCenter,
-                bounds = boundsSelection(),
-                coord = prompt("Enter X,Y coordinates for selection").split(','),
-                x = parseFloat(coord[0] || 0.0),
-                y = parseFloat(coord[1] || 0.0),
-                z = parseFloat(coord[2] || 0.0);
-
-            if (!center) {
-                x = x - current.device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-                y = y - current.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
-            }
-
-            moveSelection(x, y, z, true);
-        }
-
-        function loadSettingsFromServer(tok) {
-            let hash = (tok || LOC.hash.substring(1)).split("/");
-            if (hash.length === 2) {
-                new moto.Ajax(function(reply) {
-                    if (reply) {
-                        let res = JSON.parse(reply);
-                        if (res && res.ver && res.rec) {
-                            let set = JSON.parse(atob(res.rec));
-                            set.id = res.space;
-                            set.ver = res.ver;
-                            API.conf.put(set);
-                            API.event.settings();
-                            LOC.hash = '';
-                        }
-                    }
-                }).request("/data/"+ hash[0] + "/" + hash[1]);
-            }
-        }
-
-        function storeSettingsToServer(display) {
-            let set = btoa(JSON.stringify(settings()));
-            new moto.Ajax(function(reply) {
-                if (reply) {
-                    let res = JSON.parse(reply);
-                    if (res && res.ver) {
-                        LOC.hash = res.space + "/" + res.ver;
-                        if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
-                    }
-                } else {
-                    updateSpaceState();
-                }
-            }).request("/data/"+ settings().id + "/" + settings().ver, set);
-        }
-
-        function settingsSave() {
-            API.dialog.hide();
-            let mode = API.mode.get(),
-                s = settings(),
-                def = "default",
-                cp = s.process,
-                pl = s.sproc[mode],
-                // pt = sf[mode.toLowerCase()].p, // process field mask
-                name = WIN.prompt("Save Settings As", cp ? cp.processName || def : def);
-            if (!name) return;
-            let np = pl[name] = {};
-            cp.processName = name;
-            for (let k in cp) {
-                if (!cp.hasOwnProperty(k)) continue;
-                // if (!pt.hasOwnProperty(k)) continue; // mask out invalid fields
-                np[k] = cp[k];
-            }
-            s.cproc[API.mode.get()] = name;
-            API.conf.save();
-            API.event.settings();
-        }
-
-        function settingsLoad() {
-            API.conf.show();
-        }
-
-        function putLocalDevice(devicename, code) {
-            settings().devices[devicename] = code;
-            API.conf.save();
-        }
-
-        function removeLocalDevice(devicename) {
-            delete settings().devices[devicename];
-            API.conf.save();
-        }
-
-        function isLocalDevice(devicename) {
-            return settings().devices[devicename] ? true : false;
-            // return localFilters.contains(devicename);
-        }
-
-        function isFavoriteDevice(devicename) {
-            return settings().favorites[devicename] ? true : false;
-        }
-
-        function getSelectedDevice() {
-            return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
-        }
-
-        function selectDevice(devicename, lock) {
-            deviceLock = lock;
-            if (lock) UI.setupDevices.style.display = 'none';
-            if (isLocalDevice(devicename)) {
-                setDeviceCode(settings().devices[devicename], devicename);
-            } else {
-                API.ajax("/kiri/filter/"+API.mode.get()+"/"+devicename, function(code) {
-                    setDeviceCode(code, devicename);
-                });
-            }
-            $('selected-device').innerHTML = devicename;
-        }
-
-        function valueOf(val, dv) {
-            return typeof(val) !== 'undefined' ? val : dv;
-        }
-
-        // only for local filters
-        function updateDeviceCode(override) {
-            let oldname = getSelectedDevice(),
-                newname = override || UI.deviceName.value,
-                code = {
-                    mode: API.mode.get(),
-                    settings: {
-                        bed_width: parseInt(UI.setDeviceWidth.value) || 300,
-                        bed_depth: parseInt(UI.setDeviceDepth.value) || 175,
-                        bed_circle: UI.setDeviceRound.checked,
-                        build_height: parseInt(UI.setDeviceHeight.value) || 150,
-                        nozzle_size: parseFloat(UI.setDeviceNozzle.value) || 0.4,
-                        filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
-                        origin_center: UI.setDeviceOrigin.checked,
-                        origin_top: UI.setDeviceOriginTop.checked,
-                        extrude_abs: UI.setDeviceExtrusion.checked,
-                        spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
-                    },
-                    cmd: {
-                        fan_power: UI.setDeviceFan.value,
-                        progress: UI.setDeviceTrack.value,
-                        spindle: UI.setDeviceSpindle.value.split('\n'),
-                        layer: UI.setDeviceLayer.value.split('\n')
-                    },
-                    pre: UI.setDevicePre.value.split('\n'),
-                    post: UI.setDevicePost.value.split('\n'),
-                    pause: UI.setDevicePause.value.split('\n'),
-                    dwell: UI.setDeviceDwell.value.split('\n'),
-                    'laser-on': UI.setDeviceLaserOn.value.split('\n'),
-                    'laser-off': UI.setDeviceLaserOff.value.split('\n'),
-                    'tool-change': UI.setDeviceChange.value.split('\n'),
-                    'file-ext': UI.setDeviceFExt.value,
-                    'token-space': UI.setDeviceToken.checked ? ' ' : '',
-                    'strip-comments': UI.setDeviceStrip.checked
-                };
-
-            if (oldname !== newname && isLocalDevice(oldname)) removeLocalDevice(oldname);
-
-            putLocalDevice(newname, code);
-            setDeviceCode(code, newname);
-        }
-
-        function setDeviceCode(code, devicename) {
-            try {
-                STATS.set(`ud_${API.mode.get_lower()}`, devicename);
-
-                if (typeof(code) === 'string') code = js2o(code) || {};
-
-                let cmd = code.cmd || {},
-                    set = code.settings || {},
-                    local = isLocalDevice(devicename),
-                    current = settings(),
-                    dproc = current.devproc[devicename],
-                    mode = API.mode.get();
-
-                current.device = {
-                    bedHeight: 2.5,
-                    bedWidth: valueOf(set.bed_width, 300),
-                    bedDepth: valueOf(set.bed_depth, 175),
-                    bedRound: valueOf(set.bed_circle, false),
-                    maxHeight: valueOf(set.build_height, 150),
-                    nozzleSize: valueOf(set.nozzle_size, 0.4),
-                    filamentSize: valueOf(set.filament_diameter, 1.75),
-                    originCenter: valueOf(set.origin_center, false),
-                    extrudeAbs: valueOf(set.extrude_abs, false),
-                    spindleMax: valueOf(set.spindle_max, 0),
-                    gcodeFan: valueOf(cmd.fan_power, ''),
-                    gcodeTrack: valueOf(cmd.progress, ''),
-                    gcodeLayer: valueOf(cmd.layer, []),
-                    gcodePre: valueOf(code.pre, []),
-                    gcodePost: valueOf(code.post, []),
-                    gcodeProc: valueOf(code.proc, ''),
-                    gcodePause: valueOf(code.pause, []),
-                    gcodeDwell: valueOf(code.dwell, []),
-                    gcodeSpindle: valueOf(cmd.spindle, []),
-                    gcodeChange: valueOf(code['tool-change'], []),
-                    gcodeFExt: valueOf(code['file-ext'], 'gcode'),
-                    gcodeSpace: valueOf(code['token-space'], ''),
-                    gcodeStrip: valueOf(code['strip-comments'], false),
-                    gcodeLaserOn: valueOf(code['laser-on'], []),
-                    gcodeLaserOff: valueOf(code['laser-off'], [])
-                };
-
-                let dev = current.device,
-                    proc = current.process;
-
-                proc.outputOriginCenter = valueOf(set.origin_center, true);
-                proc.camOriginTop = valueOf(set.origin_top, true);
-
-                UI.deviceName.value = devicename;
-                // common
-                UI.setDevicePre.value = dev.gcodePre.join('\n');
-                UI.setDevicePost.value = dev.gcodePost.join('\n');
-                UI.setDevicePause.value = dev.gcodePause.join('\n');
-                UI.setDeviceWidth.value = dev.bedWidth;
-                UI.setDeviceDepth.value = dev.bedDepth;
-                UI.setDeviceHeight.value = dev.maxHeight;
-                UI.setDeviceRound.checked = dev.bedRound;
-                UI.setDeviceOrigin.checked = proc.outputOriginCenter;
-                // FDM
-                UI.setDeviceFan.value = dev.gcodeFan;
-                UI.setDeviceTrack.value = dev.gcodeTrack;
-                UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
-                UI.setDeviceFilament.value = dev.filamentSize;
-                UI.setDeviceNozzle.value = dev.nozzleSize;
-                UI.setDeviceExtrusion.checked = dev.extrudeAbs;
-                // CAM
-                UI.setDeviceMaxSpindle.value = dev.spindleMax;
-                UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
-                UI.setDeviceDwell.value = dev.gcodeDwell.join('\n');
-                UI.setDeviceChange.value = dev.gcodeChange.join('\n');
-                UI.setDeviceFExt.value = dev.gcodeFExt;
-                UI.setDeviceToken.checked = dev.gcodeSpace ? true : false;
-                UI.setDeviceStrip.checked = dev.gcodeStrip;
-                // LASER
-                UI.setDeviceLaserOn.value = dev.gcodeLaserOn.join('\n');
-                UI.setDeviceLaserOff.value = dev.gcodeLaserOff.join('\n');
-
-                // disable editing for non-local devices
-                [
-                 UI.deviceName,
-                 UI.setDevicePre,
-                 UI.setDevicePost,
-                 UI.setDevicePause,
-                 UI.setDeviceDepth,
-                 UI.setDeviceWidth,
-                 UI.setDeviceHeight,
-                 UI.setDeviceExtrusion,
-                 UI.setDeviceOrigin,
-                 UI.setDeviceOriginTop,
-                 UI.setDeviceRound,
-                 UI.setDeviceFan,
-                 UI.setDeviceTrack,
-                 UI.setDeviceLayer,
-                 UI.setDeviceFilament,
-                 UI.setDeviceNozzle,
-                 UI.setDeviceMaxSpindle,
-                 UI.setDeviceSpindle,
-                 UI.setDeviceDwell,
-                 UI.setDeviceChange,
-                 UI.setDeviceFExt,
-                 UI.setDeviceToken,
-                 UI.setDeviceStrip,
-                 UI.setDeviceLaserOn,
-                 UI.setDeviceLaserOff
-                ].forEach(function(e) {
-                    e.disabled = !local;
-                });
-
-                // hide spindle fields when device doens't support it
-                if (mode === 'CAM')
-                [
-                 UI.setDeviceExtrusion,
-                 UI.roughingSpindle,
-                 UI.finishingSpindle,
-                 UI.drillSpindle
-                ].forEach(function(e) {
-                 e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
-                });
-
-                UI.deviceSave.disabled = !local;
-                UI.deviceDelete.disabled = !local;
-
-                API.view.update_fields();
-                platform.update_size();
-
-                current.filter[mode] = devicename;
-                current.cdev[mode] = dev;
-
-                // restore last process associated with this device
-                if (dproc) API.conf.load(null, dproc);
-
-                API.conf.save();
-            } catch (e) {
-                console.log({error:e, device:code});
-                // API.show.alert("invalid or deprecated device. please select a new device.");
-                showDevices();
-            }
-            API.function.clear();
-            API.event.settings();
-        }
-
-        function renderDevices(devices) {
-            UI.devices.onclick = UC.hidePop;
-            UC.hidePop();
-
-            let selectedIndex = -1,
-                selected = API.device.get(),
-                devs = settings().devices;
-
-            for (let local in devs) {
-                if (!(devs.hasOwnProperty(local) && devs[local])) {
-                    continue;
-                }
-                let dev = devs[local],
-                    fdmCode = dev.cmd,
-                    fdmMode = (API.mode.get() === 'FDM');
-
-                if (dev.mode ? (dev.mode === API.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
-                    devices.push(local);
-                }
-            };
-
-            devices = devices.sort();
-
-            UI.deviceClose.onclick = API.dialog.hide;
-            UI.deviceSave.onclick = function() {
-                API.function.clear();
-                updateDeviceCode();
-                API.conf.save();
-                showDevices();
-            };
-            UI.deviceAdd.onclick = function() {
-                API.function.clear();
-                updateDeviceCode(getSelectedDevice()+".copy");
-                showDevices();
-            };
-            UI.deviceDelete.onclick = function() {
-                API.function.clear();
-                removeLocalDevice(getSelectedDevice());
-                showDevices();
-            };
-
-            UI.deviceAll.onclick = function() {
-                API.show.favorites(false);
-                showDevices();
-            };
-            UI.deviceFavorites.onclick = function() {
-                API.show.favorites(true);
-                showDevices();
-            };
-
-            UI.deviceSelect.innerHTML = '';
-            let incr = 0;
-            let faves = API.show.favorites();
-            let found = false;
-            let first = devices[0];
-            // run through the list up to twice forcing faves off
-            // the second time if incr === 0 (no devices shown)
-            // if incr > 0, second loop is avoided
-            for (let rep=0; rep<2; rep++)
-            if (incr === 0)
-            devices.forEach(function(device, index) {
-                // force faves off for second try
-                if (rep === 1) faves = false;
-                let fav = isFavoriteDevice(device),
-                    loc = isLocalDevice(device);
-                if (faves && !(fav || loc)) {
-                    return;
-                }
-                if (incr === 0) {
-                    first = device;
-                }
-                let opt = DOC.createElement('option');
-                opt.appendChild(DOC.createTextNode(device));
-                opt.onclick = function() {
-                    selectDevice(device);
-                };
-                opt.ondblclick = function() {
-                    if (settings().favorites[device]) {
-                        delete settings().favorites[device];
-                        API.show.alert(`removed "${device}" from favorites`, 3);
-                    } else {
-                        settings().favorites[device] = true;
-                        API.show.alert(`added "${device}" to favorites`, 3);
-                    }
-                    showDevices();
-                };
-                if (API.show.favorites()) {
-                    if (loc) opt.setAttribute("local", 1);
-                } else {
-                    if (fav) opt.setAttribute("favorite", 1);
-                }
-                UI.deviceSelect.appendChild(opt);
-                if (device === selected) {
-                    selectedIndex = incr;
-                    found = true;
-                }
-                incr++;
-            });
-
-            if (selectedIndex >= 0) {
-                UI.deviceSelect.selectedIndex = selectedIndex;
-                selectDevice(selected);
-            } else {
-                UI.deviceSelect.selectedIndex = 0;
-                selectDevice(first);
-            }
-
-            API.dialog.show('devices', true);
-            API.dialog.update();
-
-            UI.deviceSelect.focus();
-        }
-
-        function renderTools() {
-            UI.toolSelect.innerHTML = '';
-            maxTool = 0;
-            editTools.forEach(function(tool, index) {
-                maxTool = Math.max(maxTool, tool.number);
-                tool.order = index;
-                let opt = DOC.createElement('option');
-                opt.appendChild(DOC.createTextNode(tool.name));
-                opt.onclick = function() { selectTool(tool) };
-                UI.toolSelect.appendChild(opt);
-            });
-        }
-
-        function selectTool(tool) {
-            selectedTool = tool;
-            UI.toolName.value = tool.name;
-            UI.toolNum.value = tool.number;
-            UI.toolFluteDiam.value = tool.flute_diam;
-            UI.toolFluteLen.value = tool.flute_len;
-            UI.toolShaftDiam.value = tool.shaft_diam;
-            UI.toolShaftLen.value = tool.shaft_len;
-            // UI.toolTaperAngle.value = tool.taper_angle || 70;
-            UI.toolTaperTip.value = tool.taper_tip || 0;
-            UI.toolMetric.checked = tool.metric;
-            UI.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
-            renderTool(tool);
-        }
-
-        function otag(o) {
-            if (Array.isArray(o)) {
-                let out = []
-                o.forEach(oe => out.push(otag(oe)));
-                return out.join('');
-            }
-            let tags = [];
-            Object.keys(o).forEach(key => {
-                let val = o[key];
-                let att = [];
-                Object.keys(val).forEach(tk => {
-                    let tv = val[tk];
-                    att.push(`${tk.replace(/_/g,'-')}="${tv}"`);
-                });
-                tags.push(`<${key} ${att.join(' ')}></${key}>`);
-            });
-            return tags.join('');
-        }
-
-        function renderTool(tool) {
-            let type = selectedTool.type;
-            let taper = type === 'tapermill';
-            // UI.toolTaperAngle.disabled = taper ? undefined : 'true';
-            UI.toolTaperTip.disabled = taper ? undefined : 'true';
-            $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
-            setTimeout(() => {
-                let svg = $('tool-svg');
-                let pad = 10;
-                let dim = { w: svg.clientWidth, h: svg.clientHeight }
-                let max = { w: dim.w - pad * 2, h: dim.h - pad * 2};
-                let off = { x: pad, y: pad };
-                let shaft_fill = "#cccccc";
-                let flute_fill = "#dddddd";
-                let stroke = "#777777";
-                let stroke_width = 3;
-                let shaft = tool.shaft_len || 1;
-                let flute = tool.flute_len || 1;
-                let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
-                let total_len = shaft + flute + tip_len;
-                let shaft_len = (shaft / total_len) * max.h;
-                let flute_len = (flute / total_len) * max.h;
-                let total_wid = Math.max(tool.flute_diam, tool.shaft_diam, total_len/4);
-                let shaft_off = (max.w * (1 - (tool.shaft_diam / total_wid))) / 2;
-                let flute_off = (max.w * (1 - (tool.flute_diam / total_wid))) / 2;
-                let taper_off = (max.w * (1 - ((tool.taper_tip || 0) / total_wid))) / 2;
-                let parts = [
-                    { rect: {
-                        x:off.x + shaft_off, y:off.y,
-                        width:max.w - shaft_off * 2, height:shaft_len,
-                        stroke, fill: shaft_fill, stroke_width
-                    } }
-                ];
-                if (type === "tapermill") {
-                    let yoff = off.y + shaft_len;
-                    let mid = dim.w / 2;
-                    parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                        `M ${off.x + flute_off} ${yoff}`,
-                        `L ${off.x + taper_off} ${yoff + flute_len}`,
-                        `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
-                        `L ${dim.w - off.x - flute_off} ${yoff}`,
-                        `z`
-                    ].join('\n')}});
-                } else {
-                    parts.push({ rect: {
-                        x:off.x + flute_off, y:off.y + shaft_len,
-                        width:max.w - flute_off * 2, height:flute_len,
-                        stroke, fill: flute_fill, stroke_width
-                    } });
-                }
-                if (type === "ballmill") {
-                    let rad = (max.w - flute_off * 2) / 2;
-                    let xend = dim.w - off.x - flute_off;
-                    let yoff = off.y + shaft_len + flute_len + stroke_width/2;
-                    parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                        `M ${off.x + flute_off} ${yoff}`,
-                        `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,
-                        // `L ${off.x + flute_off} ${yoff}`
-                    ].join('\n')}})
-                }
-                svg.innerHTML = otag(parts);
-            }, 10);
-        }
-
-        function updateTool() {
-            selectedTool.name = UI.toolName.value;
-            selectedTool.number = parseInt(UI.toolNum.value);
-            selectedTool.flute_diam = parseFloat(UI.toolFluteDiam.value);
-            selectedTool.flute_len = parseFloat(UI.toolFluteLen.value);
-            selectedTool.shaft_diam = parseFloat(UI.toolShaftDiam.value);
-            selectedTool.shaft_len = parseFloat(UI.toolShaftLen.value);
-            // selectedTool.taper_angle = parseFloat(UI.toolTaperAngle.value);
-            selectedTool.taper_tip = parseFloat(UI.toolTaperTip.value);
-            selectedTool.metric = UI.toolMetric.checked;
-            selectedTool.type = ['endmill','ballmill','tapermill'][UI.toolType.selectedIndex];
-            renderTools();
-            UI.toolSelect.selectedIndex = selectedTool.order;
-            setToolChanged(true);
-            renderTool(selectedTool);
-        }
-
-        function setToolChanged(changed) {
-            editTools.changed = changed;
-            UI.toolsSave.disabled = !changed;
-        }
-
-        function showTools() {
-            if (API.mode.get_id() !== MODES.CAM) return;
-
-            let selectedIndex = null;
-
-            editTools = settings().tools.slice().sort((a,b) => {
-                return a.name > b.name ? 1 : -1;
-            });
-
-            setToolChanged(false);
-
-            UI.toolsClose.onclick = function() {
-                if (editTools.changed && !confirm("abandon changes?")) return;
-                API.dialog.hide();
-            };
-            UI.toolAdd.onclick = function() {
-                editTools.push({
-                    id: Date.now(),
-                    number: maxTool + 1,
-                    name: "new",
-                    type: "endmill",
-                    shaft_diam: 0.25,
-                    shaft_len: 1,
-                    flute_diam: 0.25,
-                    flute_len: 2,
-                    // taper_angle: 70,
-                    taper_tip: 0,
-                    metric: false
-                });
-                setToolChanged(true);
-                renderTools();
-                UI.toolSelect.selectedIndex = editTools.length-1;
-                selectTool(editTools[editTools.length-1]);
-            };
-            UI.toolDelete.onclick = function() {
-                editTools.remove(selectedTool);
-                setToolChanged(true);
-                renderTools();
-            };
-            UI.toolsSave.onclick = function() {
-                if (selectedTool) updateTool();
-                settings().tools = editTools.sort((a,b) => {
-                    return a.name < b.name ? -1 : 1;
-                });
-                setToolChanged(false);
-                API.conf.save();
-                API.view.update_fields();
-                API.event.settings();
-            };
-
-            renderTools();
-            if (editTools.length > 0) {
-                selectTool(editTools[0]);
-                UI.toolSelect.selectedIndex = 0;
-            } else {
-                UI.toolAdd.onclick();
-            }
-
-            API.dialog.show('tools');
-            UI.toolSelect.focus();
-
-            STATS.add('ua_get_tools');
-        }
-
-        function showDevices() {
-            if (deviceLock) return;
-            API.modal.hide();
-            API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
-                if (!flvalue) return;
-                renderDevices(js2o(flvalue));
-                STATS.add('ua_get_devs');
-            });
-        }
-
-        function dragOverHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            evt.dataTransfer.dropEffect = 'copy';
-            SPACE.platform.setColor(0x00ff00);
-        }
-
-        function dragLeave() {
-            SPACE.platform.setColor(0x555555);
-        }
-
-        function dropHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-
-            SPACE.platform.setColor(0x555555);
-
-            let files = evt.dataTransfer.files,
-                plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`);
-
-            if (plate) API.platform.load_files(files);
-        }
-
-        function loadCatalogFile(e) {
-            API.widgets.load(e.target.getAttribute('load'), function(widget) {
-                platform.add(widget);
-                API.dialog.hide();
-            });
-        }
-
-        function deleteCatalogFile(e) {
-            CATALOG.deleteFile(e.target.getAttribute('del'));
-        }
-
-        function updateCatalog(files) {
-            let table = UI.catalogList,
-                list = [];
-            table.innerHTML = '';
-            for (let name in files) {
-                list.push({n:name, ln:name.toLowerCase(), v:files[name].vertices, t:files[name].updated});
-            }
-            list.sort(function(a,b) {
-                return a.ln < b.ln ? -1 : 1;
-            });
-            for (let i=0; i<list.length; i++) {
-                let row = DOC.createElement('div'),
-                    load = DOC.createElement('button'),
-                    del = DOC.createElement('button'),
-                    file = list[i],
-                    name = file.n;
-
-                load.setAttribute('load', name);
-                load.setAttribute('title', 'file: '+name+'\nvertices: '+file.v);
-                load.onclick = loadCatalogFile;
-                load.appendChild(DOC.createTextNode(name.split('.')[0]));
-
-                del.setAttribute('del', name);
-                del.setAttribute('title', "remove '"+name+"'");
-                del.onclick = deleteCatalogFile;
-                del.appendChild(DOC.createTextNode('x'));
-
-                row.setAttribute("class", "flow-row");
-                row.appendChild(load);
-                row.appendChild(del);
-                table.appendChild(row);
-            }
-            // fix layer scroll size
-            API.dialog.update();
-        }
-
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
@@ -1555,129 +1572,115 @@ var gs_kiri_init = exports;
             }
         });
 
-        function checkSeed(ondone) {
-            // skip sample object load in onshape (or any script postload)
-            if (!SDB[SEED]) {
-                SDB[SEED] = new Date().getTime();
-                if (!SETUP.s) {
-                    platform.load_stl("/obj/cube.stl", function(vert) {
-                        CATALOG.putFile("sample cube.stl", vert);
-                        platform.compute_max_z();
-                        SPACE.view.home();
-                        setTimeout(API.space.save,500);
-                        ondone();
-                        API.help.show();
-                    });
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function ondone() {
-            let current = settings();
-
-            platform.deselect();
-            CATALOG.addFileListener(updateCatalog);
-            SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
-            SPACE.platform.setZOff(0.2);
-
-            // restore UI state from settings
-            UI.showOrigin.checked = current.controller.showOrigin;
-            UI.freeLayout.checked = current.controller.freeLayout;
-            UI.autoLayout.checked = current.controller.autoLayout;
-            UI.alignTop.checked = current.controller.alignTop;
-
-            // load script extensions
-            if (SETUP.s) SETUP.s.forEach(function(lib) {
-                let scr = DOC.createElement('script');
-                scr.setAttribute('async',true);
-                scr.setAttribute('src','/code/'+lib+'.js');
-                DOC.body.appendChild(scr);
-                STATS.add('load_'+lib);
-            });
-
-            // load CSS extensions
-            if (SETUP.ss) SETUP.ss.forEach(function(style) {
-                style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`;
-                let ss = DOC.createElement('link');
-                ss.setAttribute("type", "text/css");
-                ss.setAttribute("rel", "stylesheet");
-                ss.setAttribute("href", `${style}.css`);
-                DOC.body.appendChild(ss);
-            });
-
-            // override stored settings
-            if (SETUP.v) SETUP.v.forEach(function(kv) {
-                kv = kv.split('=');
-                SDB.setItem(kv[0],kv[1]);
-            });
-
-            // import octoprint settings
-            if (SETUP.ophost) {
-                let ohost = API.const.OCTO = {
-                    host: SETUP.ophost[0],
-                    apik: SETUP.opkey ? SETUP.opkey[0] : ''
-                };
-                SDB['octo-host'] = ohost.host;
-                SDB['octo-apik'] = ohost.apik;
-                console.log({octoprint:ohost});
-            }
-
-            // optional set-and-lock mode (hides mode menu)
-            let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
-
-            // optional set-and-lock device (hides device menu)
-            let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
-
-            API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
-            API.show.controls(true);
-            platform.update_size();
-            API.focus();
-
-            if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
-            STATS.del('upgrade');
-
-            if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
-
-            // place version number a couple of places to help users
-            UI.helpButton.title = `${LANG.version} ` + KIRI.version;
-
-            // restore expert setting preference
-            UC.setExpert(SDB.getItem('expert') ? true : false);
-
-            // setup tab visibility watcher
-            // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
-
-            // ensure settings has gcode
-            selectDevice(DEVNAME || API.device.get(), DEVNAME);
-
-            // ensure field data propagation
-            API.conf.update();
-
-            // set initial layer slider size
-            API.dialog.update();
-
-            // send init-done event
-            API.event.emit('init-done', STATS);
-
-            // load settings provided in url hash
-            loadSettingsFromServer();
-
-            // clear alerts as they build up
-            setInterval(API.event.alerts, 1000);
-
-            UI.alert.dialog.onclick = function() {
-                API.event.alerts(true);
-            };
-
-            API.view.set(VIEWS.ARRANGE);
-        }
-
-        API.space.restore(ondone) || checkSeed(ondone) || ondone();
+        API.space.restore(init_two) || checkSeed(init_two) || init_two();
 
         // extend API
         API.show.devices = showDevices;
     };
+
+    // SECOND STAGE INIT AFTER UI RESTORED
+
+    function init_two() {
+        let current = settings();
+
+        platform.deselect();
+        CATALOG.addFileListener(updateCatalog);
+        SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
+        SPACE.platform.setZOff(0.2);
+
+        // restore UI state from settings
+        UI.showOrigin.checked = current.controller.showOrigin;
+        UI.freeLayout.checked = current.controller.freeLayout;
+        UI.autoLayout.checked = current.controller.autoLayout;
+        UI.alignTop.checked = current.controller.alignTop;
+
+        // load script extensions
+        if (SETUP.s) SETUP.s.forEach(function(lib) {
+            let scr = DOC.createElement('script');
+            scr.setAttribute('async',true);
+            scr.setAttribute('src','/code/'+lib+'.js');
+            DOC.body.appendChild(scr);
+            STATS.add('load_'+lib);
+        });
+
+        // load CSS extensions
+        if (SETUP.ss) SETUP.ss.forEach(function(style) {
+            style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`;
+            let ss = DOC.createElement('link');
+            ss.setAttribute("type", "text/css");
+            ss.setAttribute("rel", "stylesheet");
+            ss.setAttribute("href", `${style}.css`);
+            DOC.body.appendChild(ss);
+        });
+
+        // override stored settings
+        if (SETUP.v) SETUP.v.forEach(function(kv) {
+            kv = kv.split('=');
+            SDB.setItem(kv[0],kv[1]);
+        });
+
+        // import octoprint settings
+        if (SETUP.ophost) {
+            let ohost = API.const.OCTO = {
+                host: SETUP.ophost[0],
+                apik: SETUP.opkey ? SETUP.opkey[0] : ''
+            };
+            SDB['octo-host'] = ohost.host;
+            SDB['octo-apik'] = ohost.apik;
+            console.log({octoprint:ohost});
+        }
+
+        // optional set-and-lock mode (hides mode menu)
+        let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
+
+        // optional set-and-lock device (hides device menu)
+        let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
+
+        API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
+        API.show.controls(true);
+        platform.update_size();
+        API.focus();
+
+        if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
+        STATS.del('upgrade');
+
+        if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
+
+        // place version number a couple of places to help users
+        UI.helpButton.title = `${LANG.version} ` + KIRI.version;
+
+        // restore expert setting preference
+        UC.setExpert(SDB.getItem('expert') ? true : false);
+
+        // setup tab visibility watcher
+        // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
+
+        // ensure settings has gcode
+        selectDevice(DEVNAME || API.device.get(), DEVNAME);
+
+        // ensure field data propagation
+        API.conf.update();
+
+        // set initial layer slider size
+        API.dialog.update();
+
+        // send init-done event
+        API.event.emit('init-done', STATS);
+
+        // load settings provided in url hash
+        loadSettingsFromServer();
+
+        // clear alerts as they build up
+        setInterval(API.event.alerts, 1000);
+
+        UI.alert.dialog.onclick = function() {
+            API.event.alerts(true);
+        };
+
+        API.view.set(VIEWS.ARRANGE);
+    }
+
+    // schedule init_one to run after all page content is loaded
+    SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one, false);
 
 })();

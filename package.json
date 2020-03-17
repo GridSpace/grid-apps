@@ -37,7 +37,7 @@
         "n3d-threejs": "^72.0.0",
         "pixi.js": "^4.8.9",
         "serve-static": "^1.14.1",
-        "three": "^0.96.0",
+        "three": "^0.114.0",
         "tween.js": "^0.14.0",
         "uglify-es": "^3.3.10",
         "validator": "^8.2.0",

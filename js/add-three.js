@@ -104,7 +104,7 @@
 
     THREE.Geometry.fromVertices = function(vertices) {
         var geometry = new THREE.BufferGeometry();
-        geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         return geometry;
     };
 

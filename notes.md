@@ -2,9 +2,10 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `C` hide the bed with a checkbox? indication of part outside printable area?
+* `B` restore settings should restore all mode/device/settings
 * `C` set page background color? or dark mode?
 * `C` better small screen support (on screen button for hiding side panels, compact selectors)
+* `F` implement an in-app bug reporting system
 * `F` widget general add-ons (fdm supports, cam tabs)
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -39,12 +40,14 @@
 
 # CAM
 
-* `B` import scale off when units are NOT set to "mm"
 * `B` fix zooming, workspace thickness for larger workspaces
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
+* `B` outside cutting direction in roughing mode inverted
+* `F` send gcode to cncjs
 * `F` trapezoidal tabs (in the Z axis)
 * `F` lead-in milling
 * `F` ease-in and ease-out especially on tab cut-out start/stop
+* `F` implement z line-only follows for ball/taper
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add endmill spiral direction to fully respect climb vs conventional
 * `F` add tapered ball mills

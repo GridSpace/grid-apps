@@ -252,14 +252,14 @@ var gs_kiri_widget = exports;
      */
     PRO.loadVertices = function(vertices) {
         if (this.mesh) {
-            this.mesh.geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            this.mesh.geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             this.mesh.geometry.computeFaceNormals();
             this.mesh.geometry.computeVertexNormals();
             this.points = null;
             return this;
         } else {
             var geometry = new THREE.BufferGeometry();
-            geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             return this.loadGeometry(geometry);
         }
     };
@@ -430,7 +430,7 @@ var gs_kiri_widget = exports;
         this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
-        mesh.geometry.applyMatrix(new THREE.Matrix4().makeScale(x, y, z));
+        mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
         this.center();
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
@@ -447,7 +447,7 @@ var gs_kiri_widget = exports;
         this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
-        this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0)));
+        this.mesh.geometry.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0)));
         this.center();
         let rot = this.orient.rot;
         rot.x += (x || 0);

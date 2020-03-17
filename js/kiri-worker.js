@@ -19,8 +19,8 @@ if (debug) {
     try {
         [
             "license",
-            "ext-n3d",
-            "ext-clip",
+            "ext-n3d", // for math/geometry only
+            "ext-clip2",
             "add-array",
             "add-three",
             "geo",

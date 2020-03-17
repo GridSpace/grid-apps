@@ -65,7 +65,7 @@ self.kiri.license = exports.LICENSE;
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
         local = SETUP.local,
-        mouseMoved = false,
+        // mouseMoved = false,
         camStock = null,
         camTopZ = 0,
         topZ = 0,
@@ -199,10 +199,10 @@ self.kiri.license = exports.LICENSE;
             set: setMode,
             switch: switchMode
         },
-        mouse : {
-            moved : function() { return mouseMoved },
-            movedSet : function(b) { mouseMoved = b }
-        },
+        // mouse : {
+        //     moved : function() { return mouseMoved },
+        //     movedSet : function(b) { mouseMoved = b }
+        // },
         opacity,
         print: {
             get: function() { return currentPrint },
@@ -1814,14 +1814,12 @@ self.kiri.license = exports.LICENSE;
         UI.ctrlRight.style.display = show ? 'block' : 'none';
     }
 
-    SPACE.addEventListener(DOC, 'DOMContentLoaded', function () { KIRI.init() }, false);
-    SPACE.addEventListener(WIN, 'mousemove', function() { mouseMoved = true });
-
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
-    // run optional module functions
+    // run optional module functions NOW before kiri-init has run
     if (Array.isArray(self.kirimod)) {
         kirimod.forEach(function(mod) { mod(kiri.api) });
     }
+
 })();
