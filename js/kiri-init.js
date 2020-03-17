@@ -1686,8 +1686,6 @@ var gs_kiri_init = exports;
         API.show.alert(`${LANG.version} ${KIRI.version}`);
 
         if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
-        if (STATS.get('upgrade')) DBUG.log("kiri | version upgrade");
-        STATS.del('upgrade');
 
         // send init-done event
         API.event.emit('init-done', STATS);

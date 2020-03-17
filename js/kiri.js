@@ -78,6 +78,7 @@ self.kiri.license = exports.LICENSE;
     settings.cdev.FDM = clone(settings.device);
     settings.cdev.CAM = clone(settings.device);
 
+    if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     DBUG.enable();
 
     // add show() to catalog for API
@@ -292,9 +293,6 @@ self.kiri.license = exports.LICENSE;
 
     STATS.set('init', inits);
     STATS.set('kiri', kiri.version);
-    if (kiri.version !== STATS.get('kiri') && STATS.get('init') > 0) {
-        STATS.set('upgrade', kiri.version);
-    }
 
     /** ******************************************************************
      * Utility Functions
@@ -1823,8 +1821,5 @@ self.kiri.license = exports.LICENSE;
     if (Array.isArray(self.kirimod)) {
         kirimod.forEach(function(mod) { mod(kiri.api) });
     }
-
-    // allow language modules to load first
-    if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
 
 })();
