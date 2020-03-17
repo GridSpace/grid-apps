@@ -2,13 +2,14 @@
 
 "use strict";
 
-var gs_moto_ctrl = exports;
+let gs_moto_ctrl = exports;
+let MOTO = window.moto = window.moto || {};
 
 /**
- * Adapted from OrbitControls
+ * Adapted from THREE.OrbitControls
  */
 
-THREE.CubeControls = function (object, domElement, notify, slider) {
+MOTO.CTRL = function (object, domElement, notify, slider) {
 
     this.object = object;
     this.domElement = ( domElement !== undefined ) ? domElement : document;
@@ -55,12 +56,21 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     this.noKeys = false;
 
     // The four arrow keys
-    this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
+    this.keys = {
+        UP: 38,
+        LEFT: 37,
+        RIGHT: 39,
+        BOTTOM: 40
+    };
 
     // Mouse buttons
-    this.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, ZOOM: THREE.MOUSE.MIDDLE, PAN: THREE.MOUSE.RIGHT };
+    this.mouseButtons = {
+        ORBIT: THREE.MOUSE.LEFT,
+        ZOOM: THREE.MOUSE.MIDDLE,
+        PAN: THREE.MOUSE.RIGHT
+    };
 
-    var scope = this,
+    let scope = this,
         domEl = scope.domElement,
         EPS = 0.000001,
         rotateStart = new THREE.Vector2(),
@@ -93,7 +103,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
         startEvent = { type: 'start'},
         endEvent = { type: 'end'};
 
-    var STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY: 4, TOUCH_PAN: 5},
+    let STATE = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY: 4, TOUCH_PAN: 5},
         state = STATE.NONE,
         MODE = { PERSPECTIVE: 1, ORTHOGRAPHIC: 2, UNKNOWN: 3},
         mode = isValue(object.fov) ? MODE.PERSPECTIVE : isValue(object.top) ? MODE.ORTHOGRAPHIC : MODE.UNKNOWN;
@@ -112,7 +122,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
 
     // pass in distance in world space to move left
     this.panLeft = function (distance) {
-        var te = this.object.matrix.elements;
+        let te = this.object.matrix.elements;
 
         // get X column of matrix
         panOffset.set(te[ 0 ], te[ 1 ], te[ 2 ]);
@@ -122,7 +132,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
 
     // pass in distance in world space to move up
     this.panUp = function (distance) {
-        var te = this.object.matrix.elements;
+        let te = this.object.matrix.elements;
 
         // get Y column of matrix
         panOffset.set(te[ 4 ], te[ 5 ], te[ 6 ]);
@@ -133,13 +143,13 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     // pass in x,y of change desired in pixel space,
     // right and down are positive
     this.pan = function (deltaX, deltaY) {
-        var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+        let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
         switch (mode) {
             case MODE.PERSPECTIVE:
-                var position = scope.object.position;
-                var offset = position.clone().sub(scope.target);
-                var targetDistance = offset.length();
+                let position = scope.object.position;
+                let offset = position.clone().sub(scope.target);
+                let targetDistance = offset.length();
 
                 // half of the fov is center to top of screen
                 targetDistance *= Math.tan(( scope.object.fov / 2 ) * Math.PI / 180.0);
@@ -160,8 +170,8 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     }
 
     function firstValue(choices) {
-        for (var i=0; i<choices.length; i++) {
-            var v = choices[i];
+        for (let i=0; i<choices.length; i++) {
+            let v = choices[i];
             if (isValue(v)) return v;
         }
         return null;
@@ -182,7 +192,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     };
 
     this.getPosition = function(scaled) {
-        var t = this.target,
+        let t = this.target,
             pos = { left:theta, up:phi, panX:t.x, panY:t.y, panZ:t.z, scale:scaled ? scaleSave : 1 };
         return pos;
     };
@@ -202,7 +212,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     };
 
     this.update = function () {
-        var position = this.object.position;
+        let position = this.object.position;
 
         offset.copy(position).sub(this.target);
 
@@ -227,7 +237,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
         // restrict phi to be betwee EPS and PI-EPS
         phi = Math.max(EPS, Math.min(Math.PI - EPS, phi));
 
-        var radius = offset.length() * (mode === MODE.PERSPECTIVE ? scale : 1);
+        let radius = offset.length() * (mode === MODE.PERSPECTIVE ? scale : 1);
 
         // restrict radius to be between desired limits
         radius = Math.max(this.minDistance, Math.min(this.maxDistance, radius));
@@ -335,7 +345,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
         if (scope.enabled === false) return;
         event.preventDefault();
 
-        var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+        let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
         if (state === STATE.ROTATE) {
             if (scope.noRotate === true) return;
@@ -376,7 +386,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
         scope.update();
     }
 
-    function onMouseUp(/* event */) {
+    function onMouseUp(event) {
         if (scope.enabled === false) return;
 
         document.removeEventListener('mousemove', onMouseMove, false);
@@ -396,7 +406,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
             return;
         }
 
-        var delta = -(event.deltaY || event.wheelDelta || event.detail || 0);
+        let delta = -(event.deltaY || event.wheelDelta || event.detail || 0);
 
         if (delta === 0) return;
 
@@ -404,11 +414,17 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
             delta = -delta;
         }
 
+        let saveZoomSpeed = scope.zoomSpeed;
+        if (event.ctrlKey) scope.zoomSpeed *= 2;
+        if (event.metaKey) scope.zoomSpeed *= 2;
+
         if (delta > 0) {
             scope.dollyOut();
         } else if (delta < 0) {
             scope.dollyIn();
         }
+
+        scope.zoomSpeed = saveZoomSpeed;
 
         scope.update();
         scope.dispatchEvent(startEvent);
@@ -459,9 +475,9 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
 
                 state = STATE.TOUCH_DOLLY;
 
-                var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-                var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-                var distance = Math.sqrt(dx * dx + dy * dy);
+                let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+                let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+                let distance = Math.sqrt(dx * dx + dy * dy);
                 dollyStart.set(0, distance);
                 break;
 
@@ -485,7 +501,7 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
         event.preventDefault();
         event.stopPropagation();
 
-        var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+        let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
         switch (event.touches.length) {
             case 1: // one-fingered touch: rotate
@@ -508,9 +524,9 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
                 if (scope.noZoom === true) return;
                 if (state !== STATE.TOUCH_DOLLY) return;
 
-                var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-                var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-                var distance = Math.sqrt(dx * dx + dy * dy);
+                let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+                let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+                let distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (reverseZoom) distance = -distance;
 
@@ -563,4 +579,4 @@ THREE.CubeControls = function (object, domElement, notify, slider) {
     window.addEventListener('keydown', onKeyDown, false);
 };
 
-THREE.CubeControls.prototype = Object.create(THREE.EventDispatcher.prototype);
+MOTO.CTRL.prototype = Object.create(THREE.EventDispatcher.prototype);

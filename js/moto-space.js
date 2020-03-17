@@ -2,6 +2,7 @@
 "use strict";
 
 let gs_moto_space = exports;
+let MOTO = window.moto = window.moto || {};
 
 (function() {
 
@@ -526,7 +527,7 @@ let gs_moto_space = exports;
      * Space Object
      ******************************************************************* */
 
-    let Space = {
+    let Space = MOTO.Space = {
         alignTracking: alignTracking,
         addEventListener: addEventListener,
         addEventHandlers: addEventHandlers,
@@ -656,12 +657,17 @@ let gs_moto_space = exports;
             renderer.setSize(width(), height());
             domelement.appendChild(renderer.domElement);
 
-            viewControl = new THREE.CubeControls(camera, domelement, function (position, moved) {
-                if (platform) platform.visible = hidePlatformBelow ? initialized && position.y >= 0 && showPlatform : showPlatform;
-                if (trackcam) trackcam.position.copy(camera.position);
+            viewControl = new MOTO.CTRL(camera, domelement, function (position, moved) {
+                if (platform) {
+                    platform.visible = hidePlatformBelow ?
+                        initialized && position.y >= 0 && showPlatform : showPlatform;
+                }
+                if (trackcam) {
+                    trackcam.position.copy(camera.position);
+                }
                 renderer.render(SCENE, camera);
                 if (moved && platformOnMove) {
-                    if (platformMoveTimer) clearTimeout(platformMoveTimer);
+                    clearTimeout(platformMoveTimer);
                     platformMoveTimer = setTimeout(platformOnMove, 500);
                 }
             }, slider);
@@ -723,12 +729,5 @@ let gs_moto_space = exports;
             initialized = true;
         }
     };
-
-    /** ******************************************************************
-     * Connect to moto
-     ******************************************************************* */
-
-    if (!window.moto) window.moto = {};
-    window.moto.Space = Space;
 
 })();
