@@ -1597,7 +1597,7 @@ var gs_kiri_init = exports;
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {
             let scr = DOC.createElement('script');
-            scr.setAttribute('async',true);
+            scr.setAttribute('defer',true);
             scr.setAttribute('src','/code/'+lib+'.js');
             DOC.body.appendChild(scr);
             STATS.add('load_'+lib);
