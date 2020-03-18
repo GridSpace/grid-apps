@@ -3,8 +3,8 @@
 
 self.kiri = (self.kiri || {});
 self.kiri.version = exports.VERSION;
-self.kiri.copyright = exports.COPYRIGHT;
 self.kiri.license = exports.LICENSE;
+self.kiri.copyright = exports.COPYRIGHT;
 
 (function () {
 
@@ -1656,7 +1656,7 @@ self.kiri.license = exports.LICENSE;
     }
 
     function showHelp() {
-        showHelpFile("/kiri/help.html");
+        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html`);
     }
 
     function showHelpFile(local) {

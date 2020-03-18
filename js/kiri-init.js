@@ -1714,6 +1714,9 @@ var gs_kiri_init = exports;
                 init_one();
             }
         }
+    } else {
+        // set to browser default
+        KIRI.lang.set();
     }
 
     // schedule init_one to run after all page content is loaded

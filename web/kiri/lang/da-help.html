@@ -1,0 +1,119 @@
+<button id="help-close" class="modal-x">X</button>
+
+<div id="help-body" class="flex frow">
+
+    <div id="help-left">
+        <p><center><b>Hjæp & Introduktion</b></center>
+
+        <p>
+            <a href="#" title="Kiri-e is the Japanese art of papercutting"><b>Kiri:Moto</b></a>
+            er en udvideligt, universelt slicing<br> og visualiserings værktøj der kan outputte til
+
+            <li><button onclick="kiri.api.mode.set('FDM')">FDM</button> : GCode Til 3D printere
+            <li><button onclick="kiri.api.mode.set('CAM')">CAM</button> : 3 Akse CNC Værktøjsruter
+            <li><button onclick="kiri.api.mode.set('LASER')">LASER</button> : DXG / SVG Skære ruter
+
+        <p>
+            <b>Lær Mere</b>
+            <li>Se <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">en tutorial</a> på YouTube
+            <li>Følg <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> på Twitter
+            <li>Tilmeld dig <a target="_fb" href="https://www.facebook.com/groups/kirimoto">bruger gruppen</a> på Facebook
+
+        <p>
+            <b>Fil Load & Import</b>
+
+            <li>Træk og slip en <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">STL</a> ind på gitteret
+            <li>Eller upload med funktionen <button onclick="kiri.api.event.import()">Import</button>
+
+        <p>
+            <b>Kom i Gang</b>
+            <li>Vælg Funktion
+                <button onclick="kiri.api.mode.set('FDM')">FDM</button>
+                <button onclick="kiri.api.mode.set('CAM')">CAM</button>
+                <button onclick="kiri.api.mode.set('LASER')">LASER</button>
+            <li>Vælg <button onclick="kiri.api.show.devices()">Device</button>
+            <li>Indstil slicing parametre i højre panel
+            <li><button onclick = "kiri.api.function.slice()">Slice</button>
+                med indstillingerne fra højre panel
+            <li><button onclick = "kiri.api.function.print()">Forhåndsvis</button> GCode output
+            <li><button onclick = "kiri.api.function.export()">Eksporter</button> GCode
+        <p>
+            <b>Andre måder at bruge Kiri:Moto</b>
+
+            <li><label><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a></label> -- Inde i Onshape
+        <li><label><a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a></label> -- Inde i Thingiverse
+        </p>
+
+        <p>Referer til <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Grid.Space Wiki</a> for mere information</p>
+
+        <p id="kiri-version"></p>
+    </div>
+
+    <div id="help-right">
+        <p><center><b>Keyboard & Muse Kontrol</b></center>
+        <p>
+        <div class="flex frow">
+            <table>
+                <tr><th colspan=2 class="grouphead">Funktioner</th></tr>
+                <tr><td><label>a</label></td><td>Arranger</td></tr>
+                <tr><td><label>s</label></td><td>Slice</td></tr>
+                <tr><td><label>p</label></td><td>forhåndsvisning</td></tr>
+                <tr><td><label>x</label></td><td>Eksporter</td></tr>
+                <tr><td></td></tr>
+                <tr><th colspan=2 class="grouphead">Kamera</th></tr>
+                <tr><td><label>h</label></td><td>Hjem</td></tr>
+                <tr><td><label>t</label></td><td>Top</td></tr>
+                <tr><td><label>l</label></td><td>Venstre</td></tr>
+                <tr><td><label>r</label></td><td>Højre</td></tr>
+                <tr><td><label>b</label></td><td>Bagside</td></tr>
+                <tr><td><label>z</label></td><td>Nulstil</td></tr>
+                <tr><td><label>v</label></td><td>Lag</td></tr>
+                <tr><td></td></tr>
+                <tr><td><label>shift</label> wheel</td><td>Skift Lag</td></tr>
+                <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
+                <tr><td>right-drag</td><td>Pan</td></tr>
+                <tr><td>3-touch-drag</td><td>Pan</td></tr>
+                <tr><td>left-drag</td><td>Roter</td></tr>
+                <tr><td>mouse-wheel</td><td>Zoom</td></tr>
+                <tr><td>middle-drag</td><td>Zoom</td></tr>
+                <tr><td>2-touch-pinch</td><td>Zoom</td></tr>
+            </table>
+            <table>
+                <tr><th colspan=2 class="grouphead">Konfiguration</th></tr>
+                <tr><td><label>?</label></td><td>Dette Hjælpe Vindue</td></tr>
+                <tr><td><label>e</label></td><td>Enhed Udvælger</td></tr>
+                <tr><td><label>o</label></td><td>CAM Værktøj Udvælger</td></tr>
+                <tr><td><label>c</label></td><td>Grid Lokale Enheder</td></tr>
+                <tr><td></td></tr>
+                <tr><th colspan=2 class="grouphead">Objekt</th></tr>
+                <tr><td><label>d</label></td><td>Dupliker</td></tr>
+                <tr><td><label>m</label></td><td>Spejlvend</td></tr>
+                <tr><td><label>w</label></td><td>Trådmodel</td></tr>
+                <tr><td><label>delete</label></td><td>Slet</td></tr>
+                <tr><td></td></tr>
+                <tr><td><label>arrow-left</label></td><td>Z Roter CCW 90&deg;</td></tr>
+                <tr><td><label>arrow-right</label></td><td>Z Roter CW 90&deg;</td></tr>
+                <tr><td><label>shift-arrow-left</label></td><td>Z Roter CCW 5&deg;</td></tr>
+                <tr><td><label>shift-arrow-right</label></td><td>Z Roter CW 5&deg;</td></tr>
+                <tr><td></td></tr>
+                <tr><td><label>arrow-up</label></td><td>X Roter CCW 90&deg;</td></tr>
+                <tr><td><label>arrow-down</label></td><td>X Roter CW 90&deg;</td></tr>
+                <tr><td><label>shift-arrow-up</label></td><td>X Roter CCW 5&deg;</td></tr>
+                <tr><td><label>shift-arrow-down</label></td><td>X Roter CW 5&deg;</td></tr>
+                <tr><td></td></tr>
+                <tr><td><label>option-arrow-up</label></td><td>Flyt Opad 5mm</td></tr>
+                <tr><td><label>option-arrow-down</label></td><td>Flyt Nedad 5mm</td></tr>
+                <tr><td><label>option-arrow-left</label></td><td>Flyt Til Venstre 5mm</td></tr>
+                <tr><td><label>option-arrow-right</label></td><td>Flyt Til Højre 5mm</td></tr>
+                <tr><td></td></tr>
+            </table>
+        </div>
+
+        <div id="help-post">
+            <br>&lt;ESC&gt; knappen lukker alle dialog vinduer i Kiri<br>
+            <br>Kiri er allerede loaded og kører på denne side
+            <br>Luk dette vindue for at komme i gang
+        </div>
+    </div>
+
+</div>
