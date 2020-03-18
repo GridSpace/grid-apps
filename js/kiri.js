@@ -21,7 +21,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         DOC     = self.document,
         LOC     = self.location,
         HOST    = LOC.host.split(':'),
-        LOCAL   = HOST[0] === 'localhost' || HOST[0] === 'debug',
+        LOCAL   = self.debug,
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         SDB     = MOTO.KV,

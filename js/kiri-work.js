@@ -8,9 +8,6 @@ let loc = self.location,
     host = loc.hostname,
     port = loc.port,
     proto = loc.protocol,
-    pre = '',
-    // pre = host.indexOf(".space") > 0 || host === "localhost" ?
-    //     proto + "//" + host + ":" + port : "",
     time = function() { return new Date().getTime() },
     KIRI = self.kiri,
     BASE = self.base,
@@ -18,13 +15,6 @@ let loc = self.location,
     running = {},
     slicing = {},
     worker = null;
-
-// new moto.Ajax(function(body) {
-//     console.log({body:body});
-//     let blob = new Blob([body], {type : 'application/json'});
-//     worker = new Worker(URL.createObjectURL(blob));
-//     console.log({worker})
-// }).request(pre + "/code/worker.js/123");
 
 function send(fn, data, onreply, async, zerocopy) {
     let seq = seqid++;
@@ -59,7 +49,7 @@ KIRI.work = {
 
         slicing = {};
         running = {};
-        worker = new Worker(pre + "/code/worker.js/" + exports.VERSION);
+        worker = new Worker(`/code/worker.js`);
 
         worker.onmessage = function(e) {
             let now = time(),

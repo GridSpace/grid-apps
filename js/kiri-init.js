@@ -1523,7 +1523,7 @@ var gs_kiri_init = exports;
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
 
-        $('kiri').onclick = API.help.show;
+        $('appname').onclick = API.help.show;
 
         SPACE.platform.setSize(
             settings().device.bedWidth,
@@ -1694,36 +1694,40 @@ var gs_kiri_init = exports;
     // if a language needs to load, the script is injected and loaded
     // first.  once this loads, or doesn't, the initialization begins
     let lang_set = undefined;
+    let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
 
-    // inject language script
-    if (SETUP.ln || SDB.getItem('kiri-lang')) {
-        let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
-        if (lang !== 'en') {
-            lang_set = lang;
-            let scr = DOC.createElement('script');
-            // scr.setAttribute('defer',true);
-            scr.setAttribute('src',`/kiri/lang/${lang}.js`);
-            DOC.body.appendChild(scr);
-            STATS.set('ll',lang);
-            scr.onload = function() {
-                KIRI.lang.set(lang);
-                init_one();
-            };
-            scr.onerror = function(err) {
-                console.log({language_load_error: err, lang})
-                init_one();
-            }
+    // inject language script if not english
+    if (lang && lang !== 'en' && lang !== 'en-us') {
+        lang_set = lang;
+        let scr = DOC.createElement('script');
+        // scr.setAttribute('defer',true);
+        scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+        (DOC.body || DOC.head).appendChild(scr);
+        STATS.set('ll',lang);
+        scr.onload = function() {
+            KIRI.lang.set(lang);
+            init_one();
+        };
+        scr.onerror = function(err) {
+            console.log({language_load_error: err, lang})
+            init_one();
         }
-    } else {
-        // set to browser default
-        KIRI.lang.set();
     }
+
+    // set to browser default which will be overridden
+    // by any future script loads (above)
+    KIRI.lang.set();
 
     // schedule init_one to run after all page content is loaded
     // unless a languge script is loading first, in which case it
     // will call init once it's done (or failed)
     if (!lang_set) {
-        SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one, false);
+        if (document.readyState === 'loading') {
+            SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one);
+        } else {
+            // happens in debug mode when scripts are chain loaded
+            init_one();
+        }
     }
 
 })();

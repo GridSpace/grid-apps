@@ -144,10 +144,6 @@ function prepareScripts() {
     code.meta = concatCode(script.meta);
     code.work = concatCode(script.work);
     code.worker = concatCode(script.worker);
-    inject.kiri_local = htmlScript(codePrefix, script.kiri);
-    inject.meta_local = htmlScript(codePrefix, script.meta);
-    inject.kiri = htmlScript("code/", ["kiri"]);
-    inject.meta = htmlScript("code/", ["meta"]);
     fs.readdir("./web/kiri/filter/FDM", function(err, files) {
         filters_fdm = files || filters_fdm;
     });
@@ -184,6 +180,32 @@ function concatCode(array) {
         cachepath,
         filepath;
 
+    // in debug mode, the script should load dependent
+    // scripts instead of serving a complete bundle
+    if (debug) {
+        let code = [ `(function() { let load = [ `];
+        array.forEach(file => {
+            if (file.indexOf(".js") < 0) {
+                file = `/js/${file}.js`;
+            }
+            code.push(`"${file}",`);
+        });
+        code.push([
+            ']; function load_next() {',
+            'let file = load.shift();',
+            'if (!file) return;',
+            'if (!self.document) { importScripts(file); return load_next() }',
+            'let s = document.createElement("script");',
+            's.type = "text/javascript";',
+            's.src = file;',
+            's.onload = load_next;',
+            'document.head.append(s);',
+            '}; load_next(); })();',
+            'self.debug=true;'
+        ].join('\n'));
+        return code.join('\n');
+    }
+
     array.forEach((file, index) => {
         if (file.charAt(0) === "/" || file.indexOf("\\") > 0) {
             filepath = file;
@@ -202,6 +224,7 @@ function concatCode(array) {
         });
         code.push(cached);
     });
+
     return code.join('');
 }
 
@@ -421,6 +444,16 @@ function addCorsHeaders(req, res) {
 }
 
 /**
+ * in debug mode only, serve ANY file path beginning with / that exists
+ */
+function handleDebug(req, res, next) {
+    if (debug && lastmod(req.url)) {
+        return res.end(fs.readFileSync(req.url));
+    }
+    return next();
+}
+
+/**
  * meta:moto data storage and retrieval url
  *
  * @param {Object} req
@@ -543,6 +576,9 @@ function handleData(req, res, next) {
 
 function minify(path) {
     let code = fs.readFileSync(path);
+    if (skip_minify.indexOf(path) >= 0) {
+        return code;
+    }
     let mini = uglify.minify(code.toString());
     if (mini.error) {
         console.trace(mini.error);
@@ -557,7 +593,7 @@ function minify(path) {
  * @param {Function} next
  */
 function handleJS(req, res, next) {
-    if (!(req.gs.local || debug || clearOK.indexOf(req.gs.path) >= 0)) {
+    if (!(req.gs.local || debug)) {
         return reply404(req, res);
     }
 
@@ -613,10 +649,11 @@ function handleJS(req, res, next) {
  * @param {Object} req
  * @param {Object} res
  * @param {Function} next
+ *
+ * expects paths in the format "/code/[token]/the/rest/is/ignored"
  */
 function handleCode(req, res, next) {
-    let cookie = getCookieValue(req.headers.cookie),
-        key = req.gs.path.split('/')[2].split('.')[0],
+    let key = req.gs.path.split('/')[2].split('.')[0],
         ck = code_src[key],
         js = code[key];
 
@@ -683,68 +720,6 @@ function serveCode(req, res, code) {
     res.end(code.code);
 }
 
-/**
- * @param {Object} req
- * @param {Object} res
- * @param {Function} next
- */
-function rewriteHTML(req, res, next) {
-    function sendHTML(entry) {
-        let imd = ifModifiedDate(req);
-        if (imd && entry.mtime <= imd) {
-            res.writeHead(304, "Not Modified");
-            res.end();
-            return;
-        }
-        res.writeHead(200, {
-            'Last-Modified': new Date(entry.mtime).toGMTString(),
-            'Cache-Control': 'public, max-age=600',
-            'Content-Type': 'text/html'
-        });
-        res.write(entry.data);
-        res.end();
-    }
-
-    if (req.url.indexOf(".html") > 0) {
-        let local = req.gs.local,
-            key = local ? "local_" + req.url : req.url,
-            path = "web" + req.gs.path,
-            mtime = lastmod(path),
-            cached = fileCache[key],
-            replaced = false,
-            magic;
-
-        if (mtime === 0) return next();
-        if (cached && mtime === cached.mtime) return sendHTML(cached);
-
-        fs.readFile(path, (err, data) => {
-            if (!data) return next();
-            data = data.toString();
-
-            injectKeys.forEach(key => {
-                if (replaced) return;
-                magic = "<!--{"+key+"}-->";
-                if (data.indexOf(magic) > 0) {
-                    data = data.replace(magic, inject[local ? key + "_local" : key]);
-                    replaced = true;
-                }
-            });
-
-            if (replaced) {
-                cached = fileCache[key] = {
-                    data: data,
-                    mtime: mtime
-                };
-                sendHTML(cached);
-            } else {
-                next();
-            }
-        });
-    } else {
-        next();
-    }
-}
-
 /* *********************************************
  * Setup / Global
  ********************************************* */
@@ -791,13 +766,13 @@ let ver = require('../js/license.js'),
     filters_laser = [],
     modPaths = [],
     ipCache = {},
-    clearOK = [
-        '/js/ext-three.js'
+    skip_minify = [
+        "js/ext-three.js"
     ],
     script = {
         kiri : [
+            "ext-three",
             "license",
-            // "ext-clip2",
             "ext-tween",
             "ext-fsave",
             "add-array",
@@ -840,6 +815,7 @@ let ver = require('../js/license.js'),
             "kiri-export"
         ],
         meta : [
+            "ext-three",
             "license",
             "ext-tween",
             "ext-fsave",
@@ -856,8 +832,8 @@ let ver = require('../js/license.js'),
             "meta"
         ],
         work : [
+            "ext-three",
             "license",
-            "ext-n3d",
             "ext-clip2",
             "add-array",
             "add-three",
@@ -870,7 +846,6 @@ let ver = require('../js/license.js'),
             "geo-polygon",
             "geo-polygons",
             "geo-gyroid",
-            "kiri-lang",
             "kiri-fill",
             "kiri-slice",
             "kiri-slicer",
@@ -883,14 +858,11 @@ let ver = require('../js/license.js'),
             "kiri-codec"
         ],
         worker : [
-            "license",
             "kiri-worker"
         ]
     },
     code_src = {},
     code = {},
-    inject = {},
-    injectKeys = ["kiri", "meta"],
     WS = require('ws'),
     wss = new WS.Server({ noServer: true }),
     wss_roots = {},
@@ -1288,8 +1260,8 @@ handler.use(fullpath({
         [ "/code/", handleCode ],
         [ "/js/",   handleJS ]
     ]))
+    .use(handleDebug)
     .use(fixedmap("/api/", api))
-    .use(rewriteHTML)
     .use(compression)
     .use(handleStatic(currentDir + "/web/"))
     .listen(port)

@@ -1,69 +1,26 @@
 /** Copyright Stewart Allen -- All Rights Reserved */
 "use strict";
 
-// this code runs in the web worker
-module = { exports: {} };
+importScripts(`/code/work.js`);
 
 let loc = self.location,
     ver = exports.VERSION,
-    time = function() { return new Date().getTime() };
-    host = loc.hostname,
-    debug = host === 'debug' || host === 'localhost';
-
-console.log(`kiri | init work | ${ver}${debug ? ' | debug' : ''}`);
-
-// when running the server in 'web' mode, the obfuscated code is served as a
-// unified ball via /code/work.js -- otherwise, map "localhost" to "debug"
-// to debug unobfuscated code.  if not, /js/ paths will 404.
-if (debug) {
-    try {
-        [
-            "license",
-            "ext-n3d", // for math/geometry only
-            "ext-clip2",
-            "add-array",
-            "add-three",
-            "geo",
-            "geo-point",
-            "geo-debug",
-            "geo-bounds",
-            "geo-line",
-            "geo-slope",
-            "geo-polygon",
-            "geo-polygons",
-            "geo-gyroid",
-            "kiri-fill",
-            "kiri-slice",
-            "kiri-slicer",
-            "kiri-driver-fdm",
-            "kiri-driver-cam",
-            "kiri-driver-laser",
-            "kiri-widget",
-            "kiri-pack",
-            "kiri-print",
-            "kiri-codec"
-        ].forEach(function(scr) {
-            importScripts(`/js/${scr}.js/${ver}`);
-        })
-    } catch (e) {
-        console.log("unable to load worker scripts. server is in production mode.");
-    }
-} else {
-    importScripts("/code/work.js/"+ver);
-}
-
-let base = self.base,
+    base = self.base,
     moto = self.moto,
-    dbug = base.debug,
     util = base.util,
+    time = util.time,
     kiri = self.kiri,
     Widget = kiri.Widget,
     currentPrint,
     cache = {};
 
-if (!debug) {
-    base.debug.disable();
-}
+console.log(`kiri | init work | ${ver}`);
+base.debug.disable();
+
+// catch clipper alerts and convert to console messages
+self.alert = function(o) {
+    console.log(o);
+};
 
 let dispatch = {
     decimate: function(vertices, send) {
@@ -108,7 +65,7 @@ let dispatch = {
                 slices.forEach(function(slice,index) {
                     send.data({index: index, slice: slice.encode()});
                 })
-                if (debug && widget.polish) {
+                if (self.debug && widget.polish) {
                     send.data({polish: kiri.codec.encode(widget.polish)});
                 }
                 send.data({send_end: time()});
@@ -220,9 +177,4 @@ self.onmessage = function(e) {
     } else {
         console.log({kiri_msg:e});
     }
-};
-
-// catch clipper alerts and convert to console messages
-self.alert = function(o) {
-    console.log(o);
 };
