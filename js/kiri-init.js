@@ -1662,9 +1662,6 @@ var gs_kiri_init = exports;
         // ensure field data propagation
         API.conf.update();
 
-        // set initial layer slider size
-        API.dialog.update();
-
         // load settings provided in url hash
         loadSettingsFromServer();
 
@@ -1681,6 +1678,9 @@ var gs_kiri_init = exports;
 
         // add ability to override
         API.show.controls(true);
+
+        // set initial layer slider size
+        API.dialog.update();
 
         // show version on startup
         API.show.alert(`${LANG.version} ${KIRI.version}`);

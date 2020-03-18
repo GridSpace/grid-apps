@@ -17,17 +17,17 @@
  * TODO add reserved spaces (links) for signups
  * TODO shared live-edit workspaces?
  * TODO add OBJ export (http://en.wikipedia.org/wiki/Wavefront_.obj_file)
- * TODO add parametric relations (via marks?) w/ var table
+ * TODO add parametric relations (via marks?) w/ let table
  * TODO l&f and import stl from http://openjscad.org/
  */
 
 "use strict";
 
-var gs_meta = exports;
+let gs_meta = exports;
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
-    var hidden = this.clone();
+    let hidden = this.clone();
     this.m_hide = hidden;
     this.m_show = this;
     hidden.m_hide = hidden;
@@ -41,7 +41,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 };
 
 (function() {
-    var $ = function(id) { return document.getElementById(id)},
+    let $ = function(id) { return document.getElementById(id) },
         // ---------------
         WIN = self,
         DOC = WIN.document,
@@ -277,7 +277,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         SPACE.mouse.upSelect(function(selection, event) {
             if (event) {
                 if (selection && selection.faceIndex) {
-                    var face = selection.face.onface,
+                    let face = selection.face.onface,
                         cube = face.cube;
                     switch (editMode) {
                         case EDIT.MARK:
@@ -285,7 +285,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                             scheduleUpdateFaces(cube, face);
                             break;
                         case EDIT.SELECT:
-                            var shift = event.shiftKey,
+                            let shift = event.shiftKey,
                                 meta = event.metaKey,
                                 isSelected = cube.isSelected();
                             if (shift) {
@@ -298,7 +298,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                                 selectedFace = face;
                                 scheduleUpdateFaces(cube, face);
                             }
-                            var s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
+                            let s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
                             SPACE.alignTracking(selection.point, rot, {x:-ABS(s.ox), y:-ABS(s.oz), z:-ABS(s.oy)});
                             break;
                         case EDIT.ADD:
@@ -331,7 +331,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         SPACE.mouse.onHover(function(selection, event) {
             if (event) {
                 if (selection && selection.faceIndex) {
-                    var cf = selection.face.onface,
+                    let cf = selection.face.onface,
                         s = cf.set,
                         p = cf.cube.pos;
                     hoverSpot.rotation.set(s.rx, s.ry, s.rz);
@@ -343,322 +343,9 @@ THREE.Face3.prototype.mVisible = function(show) {
             }
         });
 
-        function inputHasFocus() {
-            return DOC.activeElement && (DOC.activeElement != DOC.body);
-        }
-
-        function setAnchorSelection(x,y,z) {
-            if (selected.length === 0) return;
-            for (var i=0; i<selected.length; i++) selected[i].setMeshAnchor(x,y,z);
-            SPACE.update();
-        }
-
-        function updateAnchorSelection(x,y,z) {
-            if (selected.length === 0) return;
-            for (var i=0; i<selected.length; i++) selected[i].alterMeshAnchor(x,y,z);
-            SPACE.update();
-        }
-
-        function rotateSelection(x,y,z) {
-            if (selected.length === 0) return;
-            for (var i=0; i<selected.length; i++) selected[i].rotateMesh(x,y,z);
-            SPACE.update();
-        }
-
-        function keyDownHandler(evt) {
-            //if (inputHasFocus()) return false;
-            switch (evt.keyCode) {
-                case 8:
-                    if (inputHasFocus()) return;
-                    event.preventDefault();
-                    deleteSelection();
-                    break;
-                case 37: // left arrow
-                    rotateSelection(0,0,-1);
-                    evt.preventDefault();
-                    break;
-                case 39: // right arrow
-                    rotateSelection(0,0,1);
-                    evt.preventDefault();
-                    break;
-                case 38: // up arrow
-                    if (evt.shiftKey) rotateSelection(0,-1,0); else rotateSelection(1,0,0);
-                    evt.preventDefault();
-                    break;
-                case 40: // down arrow
-                    if (evt.shiftKey) rotateSelection(0,1,0); else rotateSelection(-1,0,0);
-                    evt.preventDefault();
-                    break;
-                case 65: // 'a' for select all
-                    if (inputHasFocus()) return;
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        selectAll();
-                    }
-                    break;
-                case 83: // 's' for save workspace
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        saveWorkspace();
-                    }
-                    break;
-                case 76: // 'l' for restore workspace
-                    if (evt.metaKey) {
-                        evt.preventDefault();
-                        restoreWorkspace();
-                    }
-                    break;
-            }
-        }
-
-        function keyUpHandler(evt) {
-            if (inputHasFocus()) return false;
-            switch(evt.keyCode) {
-                case 27: // escape
-                    clearSelections();
-                    setEditMode(EDIT.SELECT);
-                    break;
-            }
-            return false;
-        }
-
-        function cca(c) {
-            return c.charCodeAt(0);
-        }
-
-        function computeCenter() {
-            var bounds = new Bounds(), i = 0;
-            if (selected.length > 0) {
-                while (i < selected.length) {
-                    bounds.update(selected[i++].pos);
-                }
-            } else {
-                while (i < selectable.length) {
-                    bounds.update(selectable[i++].cube.pos);
-                }
-            }
-            SPACE.platform.setMaxZ(i > 0 ? bounds.z.max : 0);
-        }
-
-        function keyPressHandler(evt) {
-            if (inputHasFocus()) return false;
-            var handled = true, style;
-            switch(evt.charCode) {
-                case cca('h'):
-                    computeCenter();
-                    SPACE.view.home();
-                    break;
-                case cca('t'):
-                    computeCenter();
-                    SPACE.view.top();
-                    break;
-                case cca('a'):
-                    setEditMode(EDIT.ADD);
-                    break;
-                case cca('s'):
-                    setEditMode(EDIT.SELECT);
-                    break;
-                case cca('d'):
-                    setEditMode(EDIT.DELETE);
-                    break;
-                case cca('e'):
-                    setMarkMode(MARK.EMIT);
-                    break;
-                case cca('w'):
-                    setMarkMode(MARK.SLIDE);
-                    break;
-                case cca('q'):
-                    setMarkMode(MARK.CLEAR);
-                    break;
-                case cca('c'):
-                    if (selected.length === 0) {
-                        setEditMode(EDIT.CLONE)
-                    } else {
-                        cloneSelection(false);
-                    }
-                    break;
-                case cca('m'):
-                    mirrorSelection();
-                    break;
-                case cca('n'):
-                    window.n = [];
-                    for (var i=0; i<selected.length; i++) window.n.push(selected[i]);
-                    break;
-                case cca('p'):
-                    enablePost = !enablePost;
-                    removeSynthetic();
-                    updateFaces();
-                    break;
-                case cca('l'):
-                    selectionToLibrary();
-                    break;
-                case cca('x'):
-                    sendWorkspace();
-                    break;
-                case cca('X'):
-                    sendWorkspace("http://localhost:8080");
-                    break;
-                case cca('1'): // toggle control left
-                    if (evt.ctrlKey) {
-                        style = ctrlLeft.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        handled = false;
-                    }
-                    break;
-                case cca('2'): // toggle control right
-                    if (evt.ctrlKey) {
-                        style = ctrlRight.style;
-                        style.display = style.display === 'none' ? 'block' : 'none';
-                    } else {
-                        handled = false;
-                    }
-                    break;
-                default:
-                    handled = false;
-                    break;
-            }
-            if (handled) evt.preventDefault();
-            return false;
-        }
-
-        function setEditMode(mode,term) {
-            for (var key in editModeButtons) {
-                if (!editModeButtons.hasOwnProperty(key)) continue;
-                editModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
-            }
-            if (mode === null) return;
-            mode = parseInt(mode);
-            if (term && mode === editMode) return;
-            editMode = mode;
-            setMarkMode(mode === EDIT.MARK ? markMode : null,true);
-            setSelectMode(mode === EDIT.SELECT ? selectMode : null,true);
-            scheduleUpdateFaces();
-            var color = 0xffffff;
-            switch (mode) {
-                case EDIT.ADD: color = COLOR.ADD; break;
-                case EDIT.DELETE: color = COLOR.DELETE; break;
-                case EDIT.SELECT: color = COLOR.SELECT; break;
-                case EDIT.CLONE: color = COLOR.CLONE; break;
-            }
-            hoverMaterial.color.setHex(color);
-            SPACE.update();
-        }
-
-        function setSelectMode(mode,term) {
-            for (var key in selectModeButtons) {
-                if (!selectModeButtons.hasOwnProperty(key)) continue;
-                selectModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
-            }
-            if (mode == null) return;
-            mode = parseInt(mode);
-            if (term && mode === selectMode) return;
-            selectMode = mode;
-            setMarkMode(null,true);
-            setEditMode(EDIT.SELECT,true);
-            scheduleUpdateFaces();
-            SDB['meta-smode'] = mode;
-        }
-
-        function setMarkMode(mode,term) {
-            for (var key in markTypeButtons) {
-                if (!markTypeButtons.hasOwnProperty(key)) continue;
-                markTypeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
-            }
-            if (mode === null) return;
-            mode = parseInt(mode);
-            if (term && mode === markMode) return;
-            markMode = mode;
-            selectedFace = null;
-            setSelectMode(selectMode,true);
-            setEditMode(EDIT.MARK,true);
-            scheduleUpdateFaces();
-            var color = COLOR.SELECT;
-            switch (mode) {
-                case MARK.EMIT: color = COLOR.EMIT; break;
-                case MARK.SLIDE: color = COLOR.SLIDE; break;
-                case MARK.CLEAR: color = COLOR.CLEAR; break;
-            }
-            hoverMaterial.color.setHex(color);
-            SPACE.update();
-        }
-
-        /** library drag/drop handlers */
-
-        function dragOverHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-            evt.dataTransfer.dropEffect = 'copy';
-            UI.libdrop.style.backgroundColor = '#8f8';
-        }
-
-        function dragLeave() {
-            UI.libdrop.style.backgroundColor = '#ccc';
-        }
-
-        function dropHandler(evt) {
-            evt.stopPropagation();
-            evt.preventDefault();
-
-            UI.libdrop.style.backgroundColor = '#ccc';
-
-            var files = evt.dataTransfer.files,
-                add = files.length <= 1 || confirm('add '+files.length+' objects to library?'),
-                i;
-            for (i=0; add && i<files.length; i++) {
-                if (files[i].name.toLowerCase().indexOf(".stl") < 0) continue;
-                var reader = new FileReader();
-                reader.file = files[i];
-                reader.onloadend = function (e) {
-                    var vertices = new moto.STL().parse(e.target.result);
-                    MDB.putFile(e.target.file.name, vertices);
-                };
-                reader.readAsBinaryString(reader.file);
-            }
-        }
-
-        function keysToSortedArray(obj) {
-            var array = [];
-            for (var key in obj) {
-                if (obj.hasOwnProperty(key)) array.push(key);
-            }
-            array.sort();
-            return array;
-        }
-
-        function updateMeshList(files) {
-            var lib = UI.library,
-                html = [],
-                filenames = keysToSortedArray(files),
-                name, sname, button,
-                i = 0;
-
-            filenames.forEach(function(name) {
-                sname = name.split('.')[0];
-                sname = sname > 15 ? sname.substring(0,13)+"..." : sname;
-                html.push('<div><button id="slib_'+i+'" class="load">'+sname+'</button><button id="dlib_'+i+'" class="del">x</button></div>');
-                i++;
-            });
-            html.push();
-            lib.innerHTML = html.join('');
-
-            i = 0;
-            filenames.forEach(function(name) {
-                button = $('slib_'+i);
-                button.onclick = function() { libraryToSelection(this.filename) };
-                button.title = name+'\rvertices: '+files[name].vertices;
-                button.filename = name;
-                button = $('dlib_'+i);
-                button.onclick = function() { if (confirm('delete '+this.filename+'?')) MDB.deleteFile(this.filename) };
-                button.filename = name;
-                button.title = 'delete';
-                i++;
-            });
-        }
-
         /** setup UI control elements */
 
-        var UC = moto.ui.prefix('meta'),
+        let UC = moto.ui.prefix('meta'),
             ctrlLeft  = $('control-left'),
             ctrlRight = $('control-right'),
             assets    = $('assets'),
@@ -841,6 +528,319 @@ THREE.Face3.prototype.mVisible = function(show) {
         ctrlRight.style.display = 'block';
     }
 
+    function inputHasFocus() {
+        return DOC.activeElement && (DOC.activeElement != DOC.body);
+    }
+
+    function setAnchorSelection(x,y,z) {
+        if (selected.length === 0) return;
+        for (let i=0; i<selected.length; i++) selected[i].setMeshAnchor(x,y,z);
+        SPACE.update();
+    }
+
+    function updateAnchorSelection(x,y,z) {
+        if (selected.length === 0) return;
+        for (let i=0; i<selected.length; i++) selected[i].alterMeshAnchor(x,y,z);
+        SPACE.update();
+    }
+
+    function rotateSelection(x,y,z) {
+        if (selected.length === 0) return;
+        for (let i=0; i<selected.length; i++) selected[i].rotateMesh(x,y,z);
+        SPACE.update();
+    }
+
+    function keyDownHandler(evt) {
+        //if (inputHasFocus()) return false;
+        switch (evt.keyCode) {
+            case 8:
+                if (inputHasFocus()) return;
+                event.preventDefault();
+                deleteSelection();
+                break;
+            case 37: // left arrow
+                rotateSelection(0,0,-1);
+                evt.preventDefault();
+                break;
+            case 39: // right arrow
+                rotateSelection(0,0,1);
+                evt.preventDefault();
+                break;
+            case 38: // up arrow
+                if (evt.shiftKey) rotateSelection(0,-1,0); else rotateSelection(1,0,0);
+                evt.preventDefault();
+                break;
+            case 40: // down arrow
+                if (evt.shiftKey) rotateSelection(0,1,0); else rotateSelection(-1,0,0);
+                evt.preventDefault();
+                break;
+            case 65: // 'a' for select all
+                if (inputHasFocus()) return;
+                if (evt.metaKey) {
+                    evt.preventDefault();
+                    selectAll();
+                }
+                break;
+            case 83: // 's' for save workspace
+                if (evt.metaKey) {
+                    evt.preventDefault();
+                    saveWorkspace();
+                }
+                break;
+            case 76: // 'l' for restore workspace
+                if (evt.metaKey) {
+                    evt.preventDefault();
+                    restoreWorkspace();
+                }
+                break;
+        }
+    }
+
+    function keyUpHandler(evt) {
+        if (inputHasFocus()) return false;
+        switch(evt.keyCode) {
+            case 27: // escape
+                clearSelections();
+                setEditMode(EDIT.SELECT);
+                break;
+        }
+        return false;
+    }
+
+    function cca(c) {
+        return c.charCodeAt(0);
+    }
+
+    function computeCenter() {
+        let bounds = new Bounds(), i = 0;
+        if (selected.length > 0) {
+            while (i < selected.length) {
+                bounds.update(selected[i++].pos);
+            }
+        } else {
+            while (i < selectable.length) {
+                bounds.update(selectable[i++].cube.pos);
+            }
+        }
+        SPACE.platform.setMaxZ(i > 0 ? bounds.z.max : 0);
+    }
+
+    function keyPressHandler(evt) {
+        if (inputHasFocus()) return false;
+        let handled = true, style;
+        switch(evt.charCode) {
+            case cca('h'):
+                computeCenter();
+                SPACE.view.home();
+                break;
+            case cca('t'):
+                computeCenter();
+                SPACE.view.top();
+                break;
+            case cca('a'):
+                setEditMode(EDIT.ADD);
+                break;
+            case cca('s'):
+                setEditMode(EDIT.SELECT);
+                break;
+            case cca('d'):
+                setEditMode(EDIT.DELETE);
+                break;
+            case cca('e'):
+                setMarkMode(MARK.EMIT);
+                break;
+            case cca('w'):
+                setMarkMode(MARK.SLIDE);
+                break;
+            case cca('q'):
+                setMarkMode(MARK.CLEAR);
+                break;
+            case cca('c'):
+                if (selected.length === 0) {
+                    setEditMode(EDIT.CLONE)
+                } else {
+                    cloneSelection(false);
+                }
+                break;
+            case cca('m'):
+                mirrorSelection();
+                break;
+            case cca('n'):
+                window.n = [];
+                for (let i=0; i<selected.length; i++) window.n.push(selected[i]);
+                break;
+            case cca('p'):
+                enablePost = !enablePost;
+                removeSynthetic();
+                updateFaces();
+                break;
+            case cca('l'):
+                selectionToLibrary();
+                break;
+            case cca('x'):
+                sendWorkspace();
+                break;
+            case cca('X'):
+                sendWorkspace("http://localhost:8080");
+                break;
+            case cca('1'): // toggle control left
+                if (evt.ctrlKey) {
+                    style = ctrlLeft.style;
+                    style.display = style.display === 'none' ? 'block' : 'none';
+                } else {
+                    handled = false;
+                }
+                break;
+            case cca('2'): // toggle control right
+                if (evt.ctrlKey) {
+                    style = ctrlRight.style;
+                    style.display = style.display === 'none' ? 'block' : 'none';
+                } else {
+                    handled = false;
+                }
+                break;
+            default:
+                handled = false;
+                break;
+        }
+        if (handled) evt.preventDefault();
+        return false;
+    }
+
+    function setEditMode(mode,term) {
+        for (let key in editModeButtons) {
+            if (!editModeButtons.hasOwnProperty(key)) continue;
+            editModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
+        }
+        if (mode === null) return;
+        mode = parseInt(mode);
+        if (term && mode === editMode) return;
+        editMode = mode;
+        setMarkMode(mode === EDIT.MARK ? markMode : null,true);
+        setSelectMode(mode === EDIT.SELECT ? selectMode : null,true);
+        scheduleUpdateFaces();
+        let color = 0xffffff;
+        switch (mode) {
+            case EDIT.ADD: color = COLOR.ADD; break;
+            case EDIT.DELETE: color = COLOR.DELETE; break;
+            case EDIT.SELECT: color = COLOR.SELECT; break;
+            case EDIT.CLONE: color = COLOR.CLONE; break;
+        }
+        hoverMaterial.color.setHex(color);
+        SPACE.update();
+    }
+
+    function setSelectMode(mode,term) {
+        for (let key in selectModeButtons) {
+            if (!selectModeButtons.hasOwnProperty(key)) continue;
+            selectModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
+        }
+        if (mode == null) return;
+        mode = parseInt(mode);
+        if (term && mode === selectMode) return;
+        selectMode = mode;
+        setMarkMode(null,true);
+        setEditMode(EDIT.SELECT,true);
+        scheduleUpdateFaces();
+        SDB['meta-smode'] = mode;
+    }
+
+    function setMarkMode(mode,term) {
+        for (let key in markTypeButtons) {
+            if (!markTypeButtons.hasOwnProperty(key)) continue;
+            markTypeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
+        }
+        if (mode === null) return;
+        mode = parseInt(mode);
+        if (term && mode === markMode) return;
+        markMode = mode;
+        selectedFace = null;
+        setSelectMode(selectMode,true);
+        setEditMode(EDIT.MARK,true);
+        scheduleUpdateFaces();
+        let color = COLOR.SELECT;
+        switch (mode) {
+            case MARK.EMIT: color = COLOR.EMIT; break;
+            case MARK.SLIDE: color = COLOR.SLIDE; break;
+            case MARK.CLEAR: color = COLOR.CLEAR; break;
+        }
+        hoverMaterial.color.setHex(color);
+        SPACE.update();
+    }
+
+    /** library drag/drop handlers */
+
+    function dragOverHandler(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        evt.dataTransfer.dropEffect = 'copy';
+        UI.libdrop.style.backgroundColor = '#8f8';
+    }
+
+    function dragLeave() {
+        UI.libdrop.style.backgroundColor = '#ccc';
+    }
+
+    function dropHandler(evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        UI.libdrop.style.backgroundColor = '#ccc';
+
+        let files = evt.dataTransfer.files,
+            add = files.length <= 1 || confirm('add '+files.length+' objects to library?'),
+            i;
+        for (i=0; add && i<files.length; i++) {
+            if (files[i].name.toLowerCase().indexOf(".stl") < 0) continue;
+            let reader = new FileReader();
+            reader.file = files[i];
+            reader.onloadend = function (e) {
+                let vertices = new moto.STL().parse(e.target.result);
+                MDB.putFile(e.target.file.name, vertices);
+            };
+            reader.readAsBinaryString(reader.file);
+        }
+    }
+
+    function keysToSortedArray(obj) {
+        let array = [];
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) array.push(key);
+        }
+        array.sort();
+        return array;
+    }
+
+    function updateMeshList(files) {
+        let lib = UI.library,
+            html = [],
+            filenames = keysToSortedArray(files),
+            name, sname, button,
+            i = 0;
+
+        filenames.forEach(function(name) {
+            sname = name.split('.')[0];
+            sname = sname > 15 ? sname.substring(0,13)+"..." : sname;
+            html.push('<div><button id="slib_'+i+'" class="load">'+sname+'</button><button id="dlib_'+i+'" class="del">x</button></div>');
+            i++;
+        });
+        html.push();
+        lib.innerHTML = html.join('');
+
+        i = 0;
+        filenames.forEach(function(name) {
+            button = $('slib_'+i);
+            button.onclick = function() { libraryToSelection(this.filename) };
+            button.title = name+'\rvertices: '+files[name].vertices;
+            button.filename = name;
+            button = $('dlib_'+i);
+            button.onclick = function() { if (confirm('delete '+this.filename+'?')) MDB.deleteFile(this.filename) };
+            button.filename = name;
+            button.title = 'delete';
+            i++;
+        });
+    }
+
     /** ******************************************************************
      * Object Definitions
      ******************************************************************* */
@@ -915,8 +915,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             bt: this.makeFace('bt')
         };
 
-        var b = this.box, f, key;
-        for (var i=0; i<b.faces.length; i++) {
+        let b = this.box, f, key;
+        for (let i=0; i<b.faces.length; i++) {
             f = b.faces[i];
             switch (f.materialIndex) {
                 case 0: key = "rl"; break;
@@ -933,7 +933,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     CP.copyMesh = function(cube) {
         if (cube.mesh) {
             this.setMesh(geoToMesh(cube.mesh.geometry));
-            var mrt = this.meshRotate,
+            let mrt = this.meshRotate,
                 mrf = cube.meshRotate;
             mrt.f = mrf.f;
             mrt.r = mrf.r;
@@ -957,17 +957,17 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.updateMeshAnchor = function(force) {
-        var mr = this.meshRotate;
+        let mr = this.meshRotate;
         if (mr && (force || mr.ax || mr.ay || mr.az)) this.mesh.geometry.center(mr.ax, mr.ay, mr.az);
     };
 
     CP.alterMeshAnchor = function(x,y,z) {
-        var mr = this.meshRotate;
+        let mr = this.meshRotate;
         if (mr) this.setMeshAnchor(mr.ax + x, mr.ay + y, mr.az + z);
     };
 
     CP.setMeshAnchor = function(x,y,z) {
-        var mr = this.meshRotate;
+        let mr = this.meshRotate;
         if (mr && (mr.ax != x || mr.ay != y || mr.az != z)) {
             mr.ax = BOUND(x,-1,1);
             mr.ay = BOUND(y,-1,1);
@@ -977,7 +977,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setMeshRotation = function(f,r) {
-        var rtt = FACEROT[[f,r].join('')], mr = this.meshRotate;
+        let rtt = FACEROT[[f,r].join('')], mr = this.meshRotate;
         if (rtt) {
             this.rotateMesh(rtt.x,rtt.y,rtt.z,true);
             mr.f = f;
@@ -986,7 +986,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setMeshMirror = function(x,y,z) {
-        var mr = this.meshRotate;
+        let mr = this.meshRotate;
         if (x != mr.mx) { this.mesh.mirrorX(); mr.mx = x; }
         if (y != mr.my) { this.mesh.mirrorY(); mr.my = y; }
         if (z != mr.mz) { this.mesh.mirrorZ(); mr.mz = z; }
@@ -994,7 +994,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     CP.mirrorMesh = function(x,y,z) {
         if (!(x || y || z)) return;
-        var mr = this.meshRotate;
+        let mr = this.meshRotate;
         if (x) { this.mesh.mirrorX(); mr.mx = 1 - mr.mx; }
         if (y) { this.mesh.mirrorY(); mr.my = 1 - mr.my; }
         if (z) { this.mesh.mirrorZ(); mr.mz = 1 - mr.mz; }
@@ -1009,7 +1009,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
             if (nostate) return;
 
-            var mr = this.meshRotate,
+            let mr = this.meshRotate,
                 //f = mr.f,
                 fdir = null, fro = 0, sum = x + y + z;
 
@@ -1051,7 +1051,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     CP.canMoveTo = function(delta) {
         if (!this.isSelected()) return true;
-        var adjacent = this.offsetCube(delta);
+        let adjacent = this.offsetCube(delta);
         if (adjacent === this) return true;
         if (this.pos.z + delta.z < 0) return false;
         return (!adjacent || adjacent.isSelected() || adjacent.isSynthetic());
@@ -1064,7 +1064,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.dropAndUpdate = function(clone) {
-        var pos = this.pos,
+        let pos = this.pos,
             delta = this.group.position,
             faces = this.faces,
             npos = {x:pos.x + delta.x, y:pos.y + delta.y, z:pos.z + delta.z},
@@ -1092,7 +1092,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.newAdjacent = function(face, mult, synth) {
-        var pos = this.pos,
+        let pos = this.pos,
             off = FACE[face.key],
             prod = mult || 1;
         if (pos.z + off.oz * prod < 0) return null;
@@ -1100,7 +1100,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.offsetPosition = function(off, mult) {
-        var pos = this.pos,
+        let pos = this.pos,
             prod = mult || 1;
         return {
             x: pos.x + off.x * prod,
@@ -1110,7 +1110,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.offsetCube = function(off, mult) {
-        var pos = this.pos,
+        let pos = this.pos,
             prod = mult || 1,
             key = [pos.x + off.ox * prod, pos.y + off.oy * prod, pos.z + off.oz * prod].join(',');
         return matrix[[pos.x + off.ox * prod, pos.y + off.oy * prod, pos.z + off.oz * prod].join(',')];
@@ -1121,7 +1121,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.adjacentCubeFace = function(face, key) {
-        var cube = this.adjacentCube(face);
+        let cube = this.adjacentCube(face);
         if (cube) return cube.faces[key.reverse()];
         return null;
     };
@@ -1136,13 +1136,13 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.mirrorSwapFace = function(facekey) {
-        var f = this.faces,
+        let f = this.faces,
             rev = facekey.reverse(),
             tmp = f[facekey].mark;
         f[facekey].mark = f[rev].mark;
         f[rev].mark = tmp;
         if (this.mesh) {
-            var fd = 0, mr = this.meshRotate;
+            let fd = 0, mr = this.meshRotate;
             switch (facekey) {
                 case 'tb':
                 case 'bt':
@@ -1166,9 +1166,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         if (this.mesh) {
             this.mesh.material = this.selected ? boxMaterialSelected : boxMaterial;
         }
-        for (var k in this.faces) {
+        for (let k in this.faces) {
             if (!HAS(this.faces, k)) continue;
-            var select = this.selected,
+            let select = this.selected,
                 face = this.faces[k],
                 cube = face.cube,
                 syn = this.isSynthetic(),
@@ -1204,7 +1204,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.clearMarks = function() {
-        for (var k in this.faces) {
+        for (let k in this.faces) {
             if (!HAS(this.faces, k)) continue;
             this.faces[k].mark = MARK.NONE;
         }
@@ -1212,13 +1212,13 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.addSynthetic = function() {
-        for (var k in this.faces) {
+        for (let k in this.faces) {
             if (!HAS(this.faces, k)) continue;
-            var face = this.faces[k],
+            let face = this.faces[k],
                 krev = k.reverse(),
                 offset = FACE[face.key];
             if (face.mark === MARK.EMIT) {
-                var found = false,
+                let found = false,
                     build = [],
                     count = 1,
                     next;
@@ -1238,7 +1238,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                     }
                 }
                 if (found) {
-                    for (var i=0; i<build.length; i++) {
+                    for (let i=0; i<build.length; i++) {
                         this.newAdjacent(face, build[i], true).add();
                     }
                 }
@@ -1259,10 +1259,10 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.cloneTo = function(x, y, z) {
-        var cube = new Cube(x, y, z).add();
+        let cube = new Cube(x, y, z).add();
         if (cube) {
-            for (var i=0; i<FACES.length; i++) {
-                var k = FACES[i];
+            for (let i=0; i<FACES.length; i++) {
+                let k = FACES[i];
                 cube.faces[k].mark = this.faces[k].mark;
             }
             cube.copyMesh(this);
@@ -1271,8 +1271,8 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.cloneFrom = function(cube) {
-        for (var i=0; i<FACES.length; i++) {
-            var k = FACES[i];
+        for (let i=0; i<FACES.length; i++) {
+            let k = FACES[i];
             this.faces[k].mark = cube.faces[k].mark;
         }
         this.copyMesh(cube);
@@ -1283,7 +1283,7 @@ THREE.Face3.prototype.mVisible = function(show) {
      ******************************************************************* */
 
     function addCube(cube) {
-        var key = cube.key;
+        let key = cube.key;
         if (!matrix[key]) {
             matrix[key] = cube;
             SPACE.platform.add(cube.group);
@@ -1295,7 +1295,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function removeCube(cube, nosynth) {
-        var key = cube.key;
+        let key = cube.key;
         if (matrix[key]) {
             delete matrix[key];
             SPACE.platform.remove(cube.group);
@@ -1308,10 +1308,10 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function markFace(face) {
         if (markMode != MARK.NONE) {
-            var mark = markMode === MARK.CLEAR ? MARK.NONE : markMode;
+            let mark = markMode === MARK.CLEAR ? MARK.NONE : markMode;
             if (editMode === EDIT.MARK) {
-                var sel = selectRegion(face, false, selectMode === SELECT.PLANE ? SELECT.PLANE : SELECT.CUBE);
-                for (var i=0; i<sel.length; i++) {
+                let sel = selectRegion(face, false, selectMode === SELECT.PLANE ? SELECT.PLANE : SELECT.CUBE);
+                for (let i=0; i<sel.length; i++) {
                     sel[i].faces[face.key].mark = mark;
                 }
             } else {
@@ -1323,7 +1323,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function deleteSelection() {
-        var i = 0, list = selected.slice();
+        let i = 0, list = selected.slice();
         while (i < list.length)  {
             removeCube(list[i++]);
         }
@@ -1331,7 +1331,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function clearSelections() {
-        for (var k = 0; k < selected.length; k++) {
+        for (let k = 0; k < selected.length; k++) {
             selected[k].setSelected(false);
         }
         selectedFace = null;
@@ -1345,7 +1345,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function cloneSelection(mirror) {
         if (!selectedFace) return;
-        var newcubes = [],
+        let newcubes = [],
             i = 0,
             sfkey = selectedFace.key,
             cube, x, y, z, nx, ny, nz, hasface, newface,
@@ -1384,7 +1384,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function convertSelection() {
-        var i = 0;
+        let i = 0;
         while (i < selected.length) {
             selected[i++].synth = false;
         }
@@ -1392,7 +1392,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function selectionToGeometry(scale) {
-        var vertices = [],
+        let vertices = [],
             normals = [],
             i = 0, cube, j, k, face, pos, off, fix, arr;
 
@@ -1400,7 +1400,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             cube = selected[i++];
             pos = cube.pos;
             if (cube.mesh) {
-                var k = 0, arr = cube.mesh.geometry.attributes.position.array;
+                let k = 0, arr = cube.mesh.geometry.attributes.position.array;
                 while (k < arr.length) {
                     vertices.push(arr[k++] + pos.x);
                     vertices.push(arr[k++] + pos.y);
@@ -1473,7 +1473,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function unitsToMM(units) {
-        var num = parseFloat(units),
+        let num = parseFloat(units),
             scale = 10.0;
         units = units.toString();
         if (units.indexOf('mm') > 0) scale = 1.0;
@@ -1488,7 +1488,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function geoToMesh(geo) {
-        var newgeo = geo.clone(),
+        let newgeo = geo.clone(),
             mesh = new THREE.Mesh(newgeo, boxMaterial);
         newgeo.filename = geo.filename;
         mesh.filename = geo.filename;
@@ -1500,7 +1500,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         if (LIBCACHE[filename]) callback(LIBCACHE[filename]);
         MDB.getFile(filename, function(vertices) {
             if (!vertices) return callback();
-            var geo = THREE.Geometry.fromVertices(vertices).unitScale().center().fixNormals();
+            let geo = THREE.Geometry.fromVertices(vertices).unitScale().center().fixNormals();
             geo.filename = filename;
             callback(LIBCACHE[filename] = geo);
         });
@@ -1509,7 +1509,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     function libraryToSelection(filename) {
         if (selected.length === 0) return alert("no selection for mesh");
         getLibraryGeo(filename, function(geo) {
-            for (var i=0; i<selected.length; i++) {
+            for (let i=0; i<selected.length; i++) {
                 selected[i].setMesh(geoToMesh(geo));
             }
             updateFaces();
@@ -1525,7 +1525,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function selectionToKiri() {
         if (selected.length === 0) return alert("make a selection to send");
-        var scale = unitsToMM(spaceUnits),
+        let scale = unitsToMM(spaceUnits),
             geo = selectionToGeometry(scale),
             name = prompt("Name of Selection", "");
         if (name && name.length > 0) KDB.putFile(name, geo.vertices.toFloat32(), function(done) {
@@ -1535,7 +1535,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function selectionToLibrary() {
         if (selected.length === 0) return alert("make a selection to import");
-        var scale = unitsToMM(spaceUnits),
+        let scale = unitsToMM(spaceUnits),
             geo = selectionToGeometry(scale),
             name = prompt("Name of Selection", "");
         if (name && name.length > 0) MDB.putFile(name, geo.vertices.toFloat32());
@@ -1543,9 +1543,9 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function downloadSelection() {
         if (selected.length === 0) return alert("make a selection to export");
-        var name = prompt("Download Name", spaceName);
+        let name = prompt("Download Name", spaceName);
         if (!name) return;
-        var scale = unitsToMM(spaceUnits),
+        let scale = unitsToMM(spaceUnits),
             geo = selectionToGeometry(scale),
             stl = new moto.STL().encode(geo.vertices, geo.normals),
             blob = new Blob([stl], {type: 'application/octet-binary'}),
@@ -1553,7 +1553,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function sendWorkspace(to) {
-        var data = (to || gs_meta.sendTo)+"/data/"+spaceID,
+        let data = (to || gs_meta.sendTo)+"/data/"+spaceID,
             space = (to || gs_meta.sendTo)+"/meta/#"+spaceID;
         new moto.Ajax(function(res, ajax) {
             if (res) WIN.location = space;
@@ -1562,8 +1562,8 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function selectAll() {
         selected = [];
-        for (var i = 0; i < selectable.length; i++) {
-            var cube = selectable[i].cube;
+        for (let i = 0; i < selectable.length; i++) {
+            let cube = selectable[i].cube;
             cube.setSelected(true);
             selected.push(cube);
         }
@@ -1573,12 +1573,12 @@ THREE.Face3.prototype.mVisible = function(show) {
     function setSelection(cubes) {
         clearSelections();
         selected = cubes;
-        for (var i=0; i<cubes.length; i++) cubes[i].setSelected(true);
+        for (let i=0; i<cubes.length; i++) cubes[i].setSelected(true);
         updateSelectionStats();
     }
 
     function selectRegion(face, modify, type) {
-        var cache = {},
+        let cache = {},
             cube = face.cube,
             stack = [cube],
             mode = !cube.isSelected(),
@@ -1600,7 +1600,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                 if (selType === SELECT.PLANE && pkeys.contains(k)) continue;
                 if (selType === SELECT.REGION) {
                     if (face.mark != MARK.NONE) continue;
-                    var adjface = cube.adjacentCubeFace(face,k);
+                    let adjface = cube.adjacentCubeFace(face,k);
                     if (adjface && adjface.mark !== MARK.NONE) continue;
                 }
                 next = cube.adjacentCube(face);
@@ -1636,14 +1636,14 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function updateSelectionStats() {
-        var bounds = new Bounds();
+        let bounds = new Bounds();
         UI.sel_b.value = selected.length || '';
         if (selected.length === 0) {
             UI.sel_x.value = '';
             UI.sel_y.value = '';
             UI.sel_z.value = '';
         } else {
-            var i = 0;
+            let i = 0;
             while (i < selected.length) {
                 bounds.update(selected[i++].pos);
             }
@@ -1655,7 +1655,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function moveSelection(delta) {
-        var k, rd = {x:ROUND(delta.x), y:-ROUND(delta.z), z:ROUND(delta.y)};
+        let k, rd = {x:ROUND(delta.x), y:-ROUND(delta.z), z:ROUND(delta.y)};
         // TODO ugly hack to workaround faces to box transition ... fix
         rd.ox = rd.x;
         rd.oy = rd.y;
@@ -1666,7 +1666,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function moveComplete() {
         removeSynthetic();
-        var i, list = selected.slice();
+        let i, list = selected.slice();
         for (i=0; i<list.length; i++) list[i].dropAndUpdate(dragCopy);
         if (!dragCopy) for (i=0; i<list.length; i++) matrix[list[i].key] = selected[i];
         scheduleUpdateFaces();
@@ -1680,7 +1680,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function removeSynthetic() {
-        var remove = [], i, k, cube;
+        let remove = [], i, k, cube;
         for (k in matrix) {
             if (HAS(matrix, k)) {
                 cube = matrix[k];
@@ -1692,7 +1692,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function updateFaces() {
-        var i = 0, k;
+        let i = 0, k;
         if (updateSynthetic && enablePost) {
             while (i < selectable.length) selectable[i++].cube.addSynthetic();
         }
@@ -1707,7 +1707,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function del_encode(array) {
-        var idx = 0,
+        let idx = 0,
             val = array[idx++],
             out = [val];
         while (idx < array.length) {
@@ -1717,7 +1717,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function del_decode(array) {
-        var idx = 0,
+        let idx = 0,
             val = array[idx++],
             out = [val];
         while (idx < array.length) {
@@ -1727,7 +1727,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function rle_encode(array) {
-        var out = [],
+        let out = [],
             nv = null,
             v = array[0],
             i = 1,
@@ -1749,7 +1749,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function rle_decode(array) {
-        var out = [],
+        let out = [],
             i = 0,
             c, v;
         while (i < array.length) {
@@ -1841,7 +1841,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function saveWorkspace() {
-        var cubes = selectable,
+        let cubes = selectable,
             cube,
             face,
             px = [],
@@ -1865,7 +1865,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             cube = cubes[i++].cube;
             if (cube.isSynthetic()) continue;
             if (cube.mesh) {
-                var mr = cube.meshRotate,
+                let mr = cube.meshRotate,
                     fn = cube.mesh.filename,
                     fnp = files.indexOf(fn);
                 if (fnp < 0) {
@@ -1889,7 +1889,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             pz.push(cube.pos.z);
             coded++;
         }
-        var save = JSON.stringify({
+        let save = JSON.stringify({
             files: files,
             cubes: coded,
             px: rle_encode(del_encode(px)),
@@ -1911,7 +1911,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
         new moto.Ajax(function(reply) {
             if (reply) {
-                var res = JSON.parse(reply);
+                let res = JSON.parse(reply);
                 if (res && res.ver) {
                     // server-side fork when save but not owned
                     if (res.space != spaceID) setSpaceName(spaceName+" new");
@@ -1928,7 +1928,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function updateSpacesList() {
-        var models = UI.models,
+        let models = UI.models,
             idx = SPACES.length- 1,
             html = [],
             id, name, button;
@@ -1956,7 +1956,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function deleteWorkspace(id) {
-        var io = SPACES.indexOf(id);
+        let io = SPACES.indexOf(id);
         if (io >= 0) {
             if (!confirm("delete workspace "+(SPACENAMES[id] || id))) return;
             SPACES.splice(io,1);
@@ -1981,17 +1981,16 @@ THREE.Face3.prototype.mVisible = function(show) {
         } else {
             SPACE.view.load({scale:0.1});
         }
-        var hash = LOC.hash;
+        let hash = LOC.hash, handled = false;
         if (hash.length > 1) {
-            var x = hash.substring(1).split("/"),
+            let x = hash.substring(1).split("/"),
                 xs = x[0] || '',
-                xv = x[1] || '',
-                handled = false;
+                xv = x[1] || '';
             if (xs && xs.length >= 4 && xs.length <= 8) {
                 handled = true;
                 new moto.Ajax(function (json) {
                     if (json && json.charAt(0) === '{') {
-                        var rec = JSON.parse(json);
+                        let rec = JSON.parse(json);
                         loadWorkspace(rec.rec);
                         spaceID = rec.space;
                         setSpaceVersion(rec.ver);
@@ -2025,7 +2024,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function loadWorkspace(json) {
         if (json && json.length > 0) {
-            var cubes = selectable.slice(),
+            let cubes = selectable.slice(),
                 wrk = JSON.parse(json),
                 pos = wrk.pos,
                 px = wrk.px ? del_decode(rle_decode(wrk.px)) : null,
@@ -2049,14 +2048,14 @@ THREE.Face3.prototype.mVisible = function(show) {
                 removeCube(cubes[i++]);
             }
             while (count-- > 0) {
-                var cube = px ? new Cube(px[pid], py[pid], pz[pid++]) : new Cube(pos[pid++], pos[pid++], pos[pid++]),
+                let cube = px ? new Cube(px[pid], py[pid], pz[pid++]) : new Cube(pos[pid++], pos[pid++], pos[pid++]),
                     mfile = mesh ? mesh[mp++] : null;
                 for (i = 0; i < FACES.length; i++) {
                     cube.faces[FACES[i]].mark = marks[fid++];
                 }
                 if (!(mfile === null || mfile === '-') && mfac && mfro) {
                     (function() {
-                        var mi = {c: cube, f: mfac[mfr], r: mfro[mfr], m: mmir[mfr], a:manc[mfr++]};
+                        let mi = {c: cube, f: mfac[mfr], r: mfro[mfr], m: mmir[mfr], a:manc[mfr++]};
                         getLibraryGeo(files[mfile], function (geo) {
                             if (!geo) return;
                             mi.c.setMesh(geoToMesh(geo));
@@ -2081,7 +2080,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         } else {
             seedWorkspace();
         }
-        var spaces = SDB['spaces'],
+        let spaces = SDB['spaces'],
             spaceNames = SDB['spaceNames'];
         if (spaceNames) {
             SPACENAMES = JSON.parse(spaceNames);
@@ -2110,7 +2109,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     function genKey() {
         while (true) {
-            var k = Math.round(Math.random() * 9999999999).toString(36);
+            let k = Math.round(Math.random() * 9999999999).toString(36);
             if (k.length >= 4 && k.length <= 8) return k;
         }
     }

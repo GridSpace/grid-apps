@@ -761,7 +761,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                     }
                 }
                 // update slider window
-                updateDialogLeft();
+                API.dialog.update();
                 // handle slicing errors
                 if (error && !errored) {
                     errored = true;
@@ -1634,7 +1634,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             row.appendChild(del);
             table.appendChild(row);
         });
-        updateDialogLeft();
+        API.dialog.update();
     }
 
     function showSettings() {
