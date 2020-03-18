@@ -240,13 +240,6 @@ THREE.Face3.prototype.mVisible = function(show) {
      * LETS_GET_THIS_PARTY_STARTED()
      ******************************************************************* */
 
-    if (MOTO.KV.__mem__) alert(
-        "browser is blocking local storage or\n"+
-        "3rd party cookies required to store\n" +
-        "application state.");
-
-    SPACE.addEventListener(DOC, 'DOMContentLoaded', metaInit, false);
-
     function metaInit() {
         SPACE.showSkyGrid(false);
         SPACE.setSkyColor(0xf8f8f8);
@@ -2120,6 +2113,17 @@ THREE.Face3.prototype.mVisible = function(show) {
             var k = Math.round(Math.random() * 9999999999).toString(36);
             if (k.length >= 4 && k.length <= 8) return k;
         }
+    }
+
+    if (MOTO.KV.__mem__) alert(
+        "browser is blocking local storage or\n"+
+        "3rd party cookies required to store\n" +
+        "application state.");
+
+    if (DOC.readyState === 'loading') {
+        SPACE.addEventListener(DOC, 'DOMContentLoaded', metaInit, false);
+    } else {
+        metaInit();
     }
 
 })();
