@@ -77,17 +77,13 @@
 
     // uniformly scale any mesh to a max x/y/z dim of 'unit' (defaults to 1)
     GP.unitScale = function(unit) {
-        var bbox = this.getBoundingBox(),
-            scale = unit || 1;
-        this.applyMatrix(
-            new THREE.Matrix3().identity().multiplyScalar(scale /
-                Math.max(
-                    bbox.max.x - bbox.min.x,
-                    bbox.max.y - bbox.min.y,
-                    bbox.max.z - bbox.min.z
-                )
-            )
-        );
+        var bbox = this.getBoundingBox().clone(),
+            scale = (unit || 1) / Math.max(
+                bbox.max.x - bbox.min.x,
+                bbox.max.y - bbox.min.y,
+                bbox.max.z - bbox.min.z
+            );
+        this.applyMatrix4(new THREE.Matrix4().makeScale(scale,scale,scale));
         // force update of (obsolete) bounding box
         this.getBoundingBox(true);
         return this;

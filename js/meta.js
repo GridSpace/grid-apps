@@ -214,9 +214,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         DATA = "/data/",
         // ---------------
         hashWatcher = null,
-        selectMode = SELECT.REGION,
-        editMode = EDIT.SELECT,
-        markMode = MARK.EMIT,
+        selectMode = null,
+        editMode = null,
+        markMode = null,
         updateFacesScheduled = false,
         updateSynthetic = true,
         enablePost = true,
@@ -445,10 +445,10 @@ THREE.Face3.prototype.mVisible = function(show) {
                 UC.newButton('center', function() { setAnchorSelection(0,0,0)   })
             ]
         ]);
-        UC.newGroup('send').setAttribute("title","send selection to target");
+        UC.newGroup('export').setAttribute("title","send selection to target");
         UC.newTableRow([
             [
-                UC.newButton('mesh',        selectionToLibrary ),
+                UC.newButton('library',     selectionToLibrary ),
                 UC.newButton('kiri',        selectionToKiri    )
             ],[
                 UC.newButton('download',    downloadSelection  )
@@ -476,7 +476,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         UI.libdrop.id = "dropbutton";
         UC.newRow([UI.libdrop]);
 
-        UC.newGroup('meshes');
+        UC.newGroup('library');
         UI.library = UC.newRow();
 
         /** attach our key board controls */
@@ -521,9 +521,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         /** and a few more settings before we're done */
 
         setGridSize(gridSize);
+        setSelectMode(SDB['meta-smode'] || SELECT.REGION,true);
+        setMarkMode(SDB['meta-mmode'] || MARK.EMIT,true);
         setEditMode(EDIT.SELECT);
-        setMarkMode(SDB['meta-mmode'] || MARK.EMIT);
-        setSelectMode(SDB['meta-smode'] || SELECT.REGION);
         setSpaceUnits('1 cm');
 
         restoreWorkspace();
@@ -764,16 +764,17 @@ THREE.Face3.prototype.mVisible = function(show) {
         updateHighlights(selectModeButtons,newmode);
         if (newmode == null) return;
         selectMode = parseInt(newmode);
+        SDB['meta-smode'] = selectMode;
         if (term) return;
         setEditMode(EDIT.SELECT,true);
         scheduleUpdateFaces();
-        SDB['meta-smode'] = selectMode;
     }
 
     function setMarkMode(newmode,term) {
         updateHighlights(markTypeButtons,newmode);
         if (newmode === null) return;
         markMode = parseInt(newmode);
+        SDB['meta-mmode'] = markMode;
         selectedFace = null;
         if (term) return;
         setEditMode(EDIT.MARK,true);
@@ -785,7 +786,6 @@ THREE.Face3.prototype.mVisible = function(show) {
             case MARK.CLEAR: color = COLOR.CLEAR; break;
         }
         hoverMaterial.color.setHex(color);
-        SDB['meta-mmode'] = markMode;
         SPACE.update();
     }
 
@@ -1024,7 +1024,7 @@ THREE.Face3.prototype.mVisible = function(show) {
 
     CP.rotateMesh = function(x,y,z,nostate) {
         if (this.mesh) {
-            this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationFromEuler(
+            this.mesh.geometry.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(
                 new THREE.Euler((-x || 0) * PI2, (y || 0) * PI2, (-z || 0) * PI2))
             );
 
@@ -1521,7 +1521,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         if (LIBCACHE[filename]) callback(LIBCACHE[filename]);
         MDB.getFile(filename, function(vertices) {
             if (!vertices) return callback();
-            let geo = THREE.Geometry.fromVertices(vertices).unitScale().center().fixNormals();
+            let geo = THREE.Geometry.fromVertices(vertices.slice()).unitScale().center().fixNormals();
             geo.filename = filename;
             callback(LIBCACHE[filename] = geo);
         });
