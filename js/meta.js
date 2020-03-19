@@ -27,17 +27,22 @@ let gs_meta = exports;
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
+    this.transparent = false;
+
     let hidden = this.clone();
-    this.m_hide = hidden;
-    this.m_show = this;
+    hidden.visible = false;
+
     hidden.m_hide = hidden;
     hidden.m_show = this;
-    hidden.visible = false;
+
+    this.m_hide = hidden;
+    this.m_show = this;
+
     return this;
 };
 
 THREE.Face3.prototype.mVisible = function(show) {
-    this.onface.cube.showHideFace(this.materialIndex, show);
+    this.onface.cube.showFace(this.materialIndex, show);
 };
 
 (function() {
@@ -136,7 +141,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         },
         // ---------------
         boxMaterial = new THREE.MeshPhongMaterial({
-            side:THREE.DoubleSide,
+            side: THREE.DoubleSide,
             color: 0x00ff00,
             specular: 0x111111,
             transparent: false,
@@ -236,11 +241,16 @@ THREE.Face3.prototype.mVisible = function(show) {
         matrix = {},
         selected = [], // cubes
         selectable = [], // meshes
-        selectedBounds = new Bounds();
+        selectedBounds = new Bounds(),
+        cubeID = 0;
 
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()
      ******************************************************************* */
+
+    function nextID() {
+        return ++cubeID;
+    }
 
     function metaInit() {
         SPACE.showSkyGrid(false);
@@ -273,61 +283,62 @@ THREE.Face3.prototype.mVisible = function(show) {
 
         SPACE.mouse.downSelect(function(selection, event) {
             dragCopy = selection && event.metaKey;
-            return selectedFace ? [ selectedFace.cube.boxM ] : null;
+            // let mdr = selectedFace ? [ selectedFace.cube.boxy ] : null;
+            let mdr = selectedFace ? selectedFace.cube.boxy.children : null;
+            return mdr;
         });
 
         SPACE.mouse.upSelect(function(selection, event) {
-            if (event) {
-                if (selection && selection.faceIndex) {
-                    let face = selection.face.onface,
-                        cube = face.cube;
-                    switch (editMode) {
-                        case EDIT.MARK:
-                            if (!cube.isSynthetic()) markFace(face);
-                            scheduleUpdateFaces(cube, face);
-                            break;
-                        case EDIT.SELECT:
-                            let shift = event.shiftKey,
-                                meta = event.metaKey,
-                                isSelected = cube.isSelected();
-                            if (shift) {
-                                selectRegion(face, true, meta ? SELECT.REGION : selectMode);
-                            } else if (!isSelected) {
-                                clearSelections();
-                                selectRegion(face, true, meta ? SELECT.REGION : selectMode);
-                            }
-                            if (cube.isSelected()) {
-                                selectedFace = face;
-                                scheduleUpdateFaces(cube, face);
-                            }
-                            let s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
-                            SPACE.alignTracking(selection.point, rot, {x:-ABS(s.ox), y:-ABS(s.oz), z:-ABS(s.oy)});
-                            break;
-                        case EDIT.ADD:
-                            clearSelections();
-                            cube.newAdjacent(face).add();
-                            break;
-                        case EDIT.CLONE:
-                            clearSelections();
-                            cube.newAdjacent(face).add().cloneFrom(cube);
-                            break;
-                        case EDIT.DELETE:
-                            if (cube.isSynthetic()) return;
-                            clearSelections();
-                            removeCube(cube);
-                            break;
-                    }
-                } else {
-                    clearSelections();
-                }
+            if (!event) {
+                return selectable;
             }
-            return selectable;
+            if (!(selection && selection.faceIndex >= 0)) {
+                return;
+            }
+            let face = selection.face.onface,
+                cube = face.cube;
+            switch (editMode) {
+                case EDIT.MARK:
+                    if (!cube.isSynthetic()) markFace(face);
+                    scheduleUpdateFaces(cube, face);
+                    break;
+                case EDIT.SELECT:
+                    let shift = event.shiftKey,
+                        meta = event.metaKey,
+                        isSelected = cube.isSelected();
+                    if (shift) {
+                        selectRegion(face, true, meta ? SELECT.REGION : selectMode);
+                    } else if (!isSelected) {
+                        clearSelections();
+                        selectRegion(face, true, meta ? SELECT.REGION : selectMode);
+                    }
+                    if (cube.isSelected()) {
+                        selectedFace = face;
+                        scheduleUpdateFaces(cube, face);
+                    }
+                    let s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
+                    SPACE.alignTracking(selection.point, rot, {x:-ABS(s.ox), y:-ABS(s.oz), z:-ABS(s.oy)});
+                    break;
+                case EDIT.ADD:
+                    clearSelections();
+                    cube.newAdjacent(face).add();
+                    break;
+                case EDIT.CLONE:
+                    clearSelections();
+                    cube.newAdjacent(face).add().cloneFrom(cube);
+                    break;
+                case EDIT.DELETE:
+                    if (cube.isSynthetic()) return;
+                    clearSelections();
+                    removeCube(cube);
+                    break;
+            }
         });
 
         SPACE.mouse.onDrag(function(delta, offset, end) {
             if (offset) moveSelection(offset);
             if (end) moveComplete();
-            return selectedFace.cube.boxM;
+            return selectedFace.cube.boxy;
         });
 
         SPACE.mouse.onHover(function(selection, event) {
@@ -421,12 +432,11 @@ THREE.Face3.prototype.mVisible = function(show) {
         UC.newTableRow([
             [
                 UC.newButton('x-', function() { rotateSelection(-1, 0, 0) }),
-                UC.newButton('x+', function() { rotateSelection( 1, 0, 0) })
-            ],[
                 UC.newButton('y-', function() { rotateSelection( 0,-1, 0) }),
-                UC.newButton('y+', function() { rotateSelection( 0, 1, 0) })
+                UC.newButton('z-', function() { rotateSelection( 0, 0,-1) })
             ],[
-                UC.newButton('z-', function() { rotateSelection( 0, 0,-1) }),
+                UC.newButton('x+', function() { rotateSelection( 1, 0, 0) }),
+                UC.newButton('y+', function() { rotateSelection( 0, 1, 0) }),
                 UC.newButton('z+', function() { rotateSelection( 0, 0, 1) })
             ]
         ]);
@@ -434,12 +444,11 @@ THREE.Face3.prototype.mVisible = function(show) {
         UC.newTableRow([
             [
                 UC.newButton('x-', function() { updateAnchorSelection(-1, 0, 0) }),
-                UC.newButton('x+', function() { updateAnchorSelection( 1, 0, 0) })
-            ],[
                 UC.newButton('y-', function() { updateAnchorSelection( 0,-1, 0) }),
-                UC.newButton('y+', function() { updateAnchorSelection( 0, 1, 0) })
+                UC.newButton('z-', function() { updateAnchorSelection( 0, 0,-1) })
             ],[
-                UC.newButton('z-', function() { updateAnchorSelection( 0, 0,-1) }),
+                UC.newButton('x+', function() { updateAnchorSelection( 1, 0, 0) }),
+                UC.newButton('y+', function() { updateAnchorSelection( 0, 1, 0) }),
                 UC.newButton('z+', function() { updateAnchorSelection( 0, 0, 1) })
             ],[
                 UC.newButton('center', function() { setAnchorSelection(0,0,0)   })
@@ -454,6 +463,9 @@ THREE.Face3.prototype.mVisible = function(show) {
                 UC.newButton('download',    downloadSelection  )
             ]
         ]);
+
+        UC.newGroup('options');
+        UI.invert = UC.newBoolean('invert zoom', setZoom);
 
         UC.newGroup('space', control);
         UI.name = UC.newInput('name', {size:10});
@@ -521,6 +533,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         /** and a few more settings before we're done */
 
         setGridSize(gridSize);
+        setZoom(SDB['meta-zoom'] === 'true');
         setSelectMode(SDB['meta-smode'] || SELECT.REGION,true);
         setMarkMode(SDB['meta-mmode'] || MARK.EMIT,true);
         setEditMode(EDIT.SELECT);
@@ -531,6 +544,13 @@ THREE.Face3.prototype.mVisible = function(show) {
 
         ctrlLeft.style.display = 'block';
         ctrlRight.style.display = 'block';
+    }
+
+    function setZoom(value) {
+        if (value !== undefined) {
+            UI.invert.checked = value;
+        }
+        SPACE.view.setZoom(SDB['meta-zoom'] = UI.invert.checked);
     }
 
     function inputHasFocus() {
@@ -753,8 +773,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         }
         setSelectMode(newSelect,true);
         setMarkMode(newMark,true);
-        // updateHighlights(selectModeButtons,editMode === EDIT.SELECT ? selectMode : null);
-        // updateHighlights(markTypeButtons,editMode === EDIT.MARK ? markMode : null);
         scheduleUpdateFaces();
         hoverMaterial.color.setHex(color);
         SPACE.update();
@@ -905,27 +923,13 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     function Cube(x, y, z, synth) {
+        this.id = nextID();
+
         this.pos = {x:x, y:y, z:z};
         this.key = [x,y,z].join(',');
 
         this.synth = synth;
         this.selected = false;
-
-        this.materials = [
-            boxMaterial, boxMaterial, boxMaterial, boxMaterial, boxMaterial, boxMaterial
-        ];
-
-        this.box = new THREE.BoxGeometry(1,1,1,1,1,1);
-        this.boxM = new THREE.Mesh(this.box, this.materials);
-        this.boxM.position.set(x, y, z);
-        this.boxM.cube = this;
-
-        this.mesh = null;
-        this.meshRotate = null;
-
-        this.group = new THREE.Object3D();
-        this.group.cube = this;
-        this.group.add(this.boxM);
 
         this.faces = {
             rl: this.makeFace('rl'),
@@ -936,19 +940,109 @@ THREE.Face3.prototype.mVisible = function(show) {
             bt: this.makeFace('bt')
         };
 
-        let b = this.box, f, key;
-        for (let i=0; i<b.faces.length; i++) {
-            f = b.faces[i];
-            switch (f.materialIndex) {
-                case 0: key = "rl"; break;
-                case 1: key = "lr"; break;
-                case 2: key = "bf"; break;
-                case 3: key = "fb"; break;
-                case 4: key = "tb"; break;
-                case 5: key = "bt"; break;
-            }
-            f.onface = this.faces[key];
+        this.sides = [
+            this.side(0, this.faces.rl),
+            this.side(1, this.faces.lr),
+            this.side(2, this.faces.bf),
+            this.side(3, this.faces.fb),
+            this.side(4, this.faces.tb),
+            this.side(5, this.faces.bt)
+        ];
+
+        this.boxy = new THREE.Object3D();
+        this.boxy.add(this.sides[0]);
+        this.boxy.add(this.sides[1]);
+        this.boxy.add(this.sides[2]);
+        this.boxy.add(this.sides[3]);
+        this.boxy.add(this.sides[4]);
+        this.boxy.add(this.sides[5]);
+        this.boxy.position.set(x, y, z);
+        this.boxy.cube = this;
+
+        this.mesh = null;
+        this.meshRotate = null;
+
+        this.group = new THREE.Object3D();
+        this.group.cube = this;
+        this.group.add(this.boxy);
+    }
+
+    CP.side = function(order,face) {
+        let P = 0.5;
+        let N = -0.5;
+        let geo = new THREE.Geometry();
+        switch (order) {
+            case 0:
+                geo.vertices.push(
+                    new THREE.Vector3(P,P,N),
+                    new THREE.Vector3(P,P,P),
+                    new THREE.Vector3(P,N,P),
+                    new THREE.Vector3(P,P,N),
+                    new THREE.Vector3(P,N,N),
+                    new THREE.Vector3(P,N,P)
+                );
+                break;
+            case 1:
+                geo.vertices.push(
+                    new THREE.Vector3(N,P,N),
+                    new THREE.Vector3(N,P,P),
+                    new THREE.Vector3(N,N,P),
+                    new THREE.Vector3(N,P,N),
+                    new THREE.Vector3(N,N,N),
+                    new THREE.Vector3(N,N,P)
+                );
+                break;
+            case 2:
+                geo.vertices.push(
+                    new THREE.Vector3(P,P,N),
+                    new THREE.Vector3(P,P,P),
+                    new THREE.Vector3(N,P,P),
+                    new THREE.Vector3(P,P,N),
+                    new THREE.Vector3(N,P,N),
+                    new THREE.Vector3(N,P,P)
+                );
+                break;
+            case 3:
+                geo.vertices.push(
+                    new THREE.Vector3(P,N,N),
+                    new THREE.Vector3(P,N,P),
+                    new THREE.Vector3(N,N,P),
+                    new THREE.Vector3(P,N,N),
+                    new THREE.Vector3(N,N,N),
+                    new THREE.Vector3(N,N,P)
+                );
+                break;
+            case 4:
+                geo.vertices.push(
+                    new THREE.Vector3(P,N,P),
+                    new THREE.Vector3(P,P,P),
+                    new THREE.Vector3(N,P,P),
+                    new THREE.Vector3(P,N,P),
+                    new THREE.Vector3(N,N,P),
+                    new THREE.Vector3(N,P,P)
+                );
+                break;
+            case 5:
+                geo.vertices.push(
+                    new THREE.Vector3(P,N,N),
+                    new THREE.Vector3(P,P,N),
+                    new THREE.Vector3(N,P,N),
+                    new THREE.Vector3(P,N,N),
+                    new THREE.Vector3(N,N,N),
+                    new THREE.Vector3(N,P,N)
+                );
+                break;
         }
+        let f1 = new THREE.Face3(0,1,2);
+        let f2 = new THREE.Face3(3,4,5);
+        f1.onface = face;
+        f2.onface = face;
+        geo.faces.push(f1);
+        geo.faces.push(f2);
+        geo.computeFaceNormals();
+        geo.computeVertexNormals();
+        let mesh = new THREE.Mesh(geo, boxMaterial);
+        return mesh;
     }
 
     CP.copyMesh = function(cube) {
@@ -968,10 +1062,12 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setMesh = function(mesh) {
-        if (this.mesh) this.group.remove(this.mesh);
+        if (this.mesh) {
+            this.group.remove(this.mesh);
+        }
         if (mesh) {
             this.group.add(mesh);
-            mesh.position.copy(this.boxM.position);
+            mesh.position.copy(this.boxy.position);
         }
         this.mesh = mesh;
         this.meshRotate = {f:2, r:3, mx:0, my:0, mz:0, ax:0, ay:0, az:0};
@@ -1063,11 +1159,15 @@ THREE.Face3.prototype.mVisible = function(show) {
     };
 
     CP.setFaceMaterial = function(index, mat) {
-        this.materials[index] = mat;
+        this.sides[index].material = mat;
     };
 
-    CP.showHideFace = function(index, show) {
-        this.materials[index].visible = show;
+    CP.showFace = function(index, show) {
+        if (show) {
+            this.sides[index].material = this.sides[index].material.m_show;
+        } else {
+            this.sides[index].material = this.sides[index].material.m_hide;
+        }
     };
 
     CP.canMoveTo = function(delta) {
@@ -1094,7 +1194,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             this.group.position.set(0,0,0);
             return this.cloneTo(npos.x, npos.y, npos.z);
         } else {
-            this.boxM.position.add(delta);
+            this.boxy.position.add(delta);
             if (this.mesh) this.mesh.position.add(delta);
             this.group.position.set(0,0,0);
             if (!delete matrix[this.key]) throw "missing cube @ "+this.key;
@@ -1184,8 +1284,9 @@ THREE.Face3.prototype.mVisible = function(show) {
     // todo: make more efficient by marking cube changes and only updating
     // todo: if this cube or one if it's neighbors has been changed
     CP.updateFaces = function() {
-        if (this.mesh) {
-            this.mesh.material = this.selected ? boxMaterialSelected : boxMaterial;
+        let mesh = this.mesh;
+        if (mesh) {
+            mesh.material = this.selected ? boxMaterialSelected : boxMaterial;
         }
         for (let k in this.faces) {
             if (!HAS(this.faces, k)) continue;
@@ -1217,9 +1318,10 @@ THREE.Face3.prototype.mVisible = function(show) {
             if (sel) {
                 mat = faceMaterialSelected;
             }
+            // mark inside if adjacent to cube that has no mesh
             face.inside = adj && !adjm;
             cube.setFaceMaterial(face.set.mi, mat);
-            cube.showHideFace(face.set.mi, mark || sel || !(face.inside || this.mesh));
+            cube.showFace(face.set.mi, !mesh && (mark || sel || !face.inside));
         }
         SPACE.update();
     };
@@ -1308,7 +1410,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         if (!matrix[key]) {
             matrix[key] = cube;
             SPACE.platform.add(cube.group);
-            selectable.push(cube.boxM);
+            selectable.push(cube.boxy);
             scheduleUpdateFaces();
             return cube;
         }
@@ -1321,7 +1423,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             delete matrix[key];
             SPACE.platform.remove(cube.group);
             selected.remove(cube);
-            selectable.remove(cube.boxM);
+            selectable.remove(cube.boxy);
         }
         if (!nosynth) removeSynthetic();
         scheduleUpdateFaces();
@@ -1715,7 +1817,9 @@ THREE.Face3.prototype.mVisible = function(show) {
     function updateFaces() {
         let i = 0, k;
         if (updateSynthetic && enablePost) {
-            while (i < selectable.length) selectable[i++].cube.addSynthetic();
+            while (i < selectable.length) {
+                selectable[i++].cube.addSynthetic();
+            }
         }
         for (k in matrix) {
             if (HAS(matrix,k)) {

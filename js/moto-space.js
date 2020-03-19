@@ -19,6 +19,7 @@ var MOTO = window.moto = window.moto || {};
         gridZOff = 0,
         platformZOff = 0,
         perspective = 35,
+        refreshTimeout = null,
         refreshRequested = false,
         selectRecurse = false,
         defaultKeys = true,
@@ -33,7 +34,7 @@ var MOTO = window.moto = window.moto || {};
         trackcam = addLight(0, 0, 0, lightIntensity/3),
         trackDelta = {x:0, y:0, z:0},
         mouse = {x: 0, y: 0},
-        mouseMoved = false,
+        mouseStart = null,
         mouseDragPoint = null,
         mouseDragStart = null,
         mouseDownSelect,
@@ -314,7 +315,8 @@ var MOTO = window.moto = window.moto || {};
     function requestRefresh(timeout) {
         if (refreshRequested === false) {
             refreshRequested = true;
-            setTimeout(refresh, timeout || 10);
+            clearTimeout(refreshTimeout);
+            refreshTimeout = setTimeout(refresh, timeout || 10);
         }
     }
 
@@ -452,7 +454,9 @@ var MOTO = window.moto = window.moto || {};
         } else {
             viewControl.enabled = false;
         }
-        mouseMoved = false;
+        mouseStart = {
+            x: (event.clientX / width()) * 2 - 1,
+            y: -(event.clientY / height()) * 2 + 1};
     }
 
     function onMouseUp(event) {
@@ -460,26 +464,28 @@ var MOTO = window.moto = window.moto || {};
             viewControl.enabled = true;
             viewControl.onMouseUp(event);
         }
-        if (!mouseMoved) {
+        let mouseEnd = {
+            x: (event.clientX / width()) * 2 - 1,
+            y: -(event.clientY / height()) * 2 + 1};
+        // only fire on mouse move between mouseStart (down) and up
+        if (mouseEnd.x - mouseStart.x + mouseEnd.y - mouseStart.y === 0) {
             event.preventDefault();
-            if (!mouseMoved) {
-                let refresh = false,
-                    selection = null;
-                if (mouseUpSelect) selection = mouseUpSelect();
-                if (selection && selection.length > 0) {
-                    let int = intersect(selection, selectRecurse);
-                    if (int.length > 0) {
-                        mouseUpSelect(int[0], event);
-                        refresh = true;
-                    } else {
-                        mouseUpSelect(null, event);
-                    }
+            let refresh = false,
+                selection = null;
+            if (mouseUpSelect) selection = mouseUpSelect();
+            if (selection && selection.length > 0) {
+                let int = intersect(selection, selectRecurse);
+                if (int.length > 0) {
+                    mouseUpSelect(int[0], event);
+                    refresh = true;
+                } else {
+                    mouseUpSelect(null, event);
                 }
-                if (!refresh && platformClickAt) {
-                    platformClick(platformClickAt);
-                }
-                if (refresh) requestRefresh();
             }
+            if (!refresh && platformClickAt) {
+                platformClick(platformClickAt);
+            }
+            if (refresh) requestRefresh();
         } else if (mouseDrag && mouseDragStart) {
             mouseDrag(null,null,true);
         }
@@ -517,7 +523,6 @@ var MOTO = window.moto = window.moto || {};
                 requestRefresh();
             }
         }
-        mouseMoved = true;
         mouse = {
             x: (event.clientX / width()) * 2 - 1,
             y: -(event.clientY / height()) * 2 + 1};
