@@ -48,6 +48,12 @@ button[load] {
 button[del] {
     margin-left: 5px;
 }
+select {
+    outline: none;
+}
+th, tr, td, span, div, label, button {
+    user-select: none;
+}
 
 /** ******************************************************************
  * Class
@@ -187,8 +193,7 @@ button[del] {
     outline: none;
 }
 .control input[disabled] {
-    background-color: #aaa;
-    border-color: #bbb;
+    background-color: #ccc;
     color: #000;
     border-width: 1px;
 }
@@ -207,14 +212,31 @@ button[del] {
     align-items: center;
     justify-content: center;
 }
-#control-left:hover, #control-right:hover {
-    background-color: #ffffff;
-}
 
 /** ******************************************************************
  * ID
  ******************************************************************* */
 
+#appid {
+    text-align: center;
+    position: fixed;
+    width: 100%;
+    top: 3px;
+}
+#appid span {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px 8px 3px 8px;
+    background-color: rgba(170,221,255,0.75);
+    color: rgba(0,0,0,0.5);
+}
+#appid a {
+    color: rgba(0,0,0,0.75);
+    font-weight: bold;
+}
+#appid a:hover {
+    color: rgba(0,50,50,0.75);
+}
 #container {
     width: 100%;
     height: 100%;
@@ -236,12 +258,6 @@ button[del] {
     background-color: rgba(255,255,255,0.75);
     overflow-y: scroll;
 }
-#control-left::-webkit-scrollbar {
-    display: none;
-}
-#control-right::-webkit-scrollbar {
-    display: none;
-}
 #control-right {
     display: none;
     position: fixed;
@@ -259,6 +275,12 @@ button[del] {
     color: #222;
     overflow-y: scroll;
     overflow-x: visible;
+}
+#control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
+    display: none;
+}
+#control-left:hover, #control-right:hover {
+    background-color: #ffffff;
 }
 #loading {
     position: fixed;

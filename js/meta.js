@@ -116,12 +116,14 @@ THREE.Face3.prototype.mVisible = function(show) {
             DRILL: 4,
             CUBE: 5
         },
+        SELECT_NEXT = [1, 4,3,1,5,2],
         MARK = {
             NONE: 1,
             EMIT: 2,
             SLIDE: 3,
             CLEAR: 5
         },
+        MARK_NEXT = [2, 2,3,5,2,2],
         COLOR = {
             ADD: 0x00ff00,
             SELECT: 0xffff00,
@@ -401,15 +403,9 @@ THREE.Face3.prototype.mVisible = function(show) {
                 UC.newButton('mirror',       mirrorSelection    )
             ],[
                 UC.newButton('solidify',     convertSelection   ),
-                UC.newButton('clear',        selectionClearMesh )
-            ],[
-                UC.newButton('to meshes',    selectionToLibrary )
-            ],[
-                UC.newButton('to kiri:moto', selectionToKiri    )
-            ],[
-                UC.newButton('download STL', downloadSelection  )
+                UC.newButton('unmesh',       selectionClearMesh )
             ]
-        ]);
+        ]),
         UC.newGroup('select').setAttribute("title","criteria for choosing the selection");
         UC.newTableRow([
             [ selCube, selRegion ],
@@ -447,6 +443,15 @@ THREE.Face3.prototype.mVisible = function(show) {
                 UC.newButton('z+', function() { updateAnchorSelection( 0, 0, 1) })
             ],[
                 UC.newButton('center', function() { setAnchorSelection(0,0,0)   })
+            ]
+        ]);
+        UC.newGroup('send').setAttribute("title","send selection to target");
+        UC.newTableRow([
+            [
+                UC.newButton('mesh',        selectionToLibrary ),
+                UC.newButton('kiri',        selectionToKiri    )
+            ],[
+                UC.newButton('download',    downloadSelection  )
             ]
         ]);
 
@@ -516,9 +521,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         /** and a few more settings before we're done */
 
         setGridSize(gridSize);
-        setMarkMode(MARK.NONE);
         setEditMode(EDIT.SELECT);
-        setSelectMode(SDB['meta-smode']);
+        setMarkMode(SDB['meta-mmode'] || MARK.EMIT);
+        setSelectMode(SDB['meta-smode'] || SELECT.REGION);
         setSpaceUnits('1 cm');
 
         restoreWorkspace();
@@ -601,7 +606,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         switch(evt.keyCode) {
             case 27: // escape
                 clearSelections();
-                setEditMode(EDIT.SELECT);
                 break;
         }
         return false;
@@ -707,64 +711,81 @@ THREE.Face3.prototype.mVisible = function(show) {
         return false;
     }
 
-    function setEditMode(mode,term) {
-        for (let key in editModeButtons) {
-            if (!editModeButtons.hasOwnProperty(key)) continue;
-            editModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
+    function updateHighlights(map,key) {
+        let val = parseInt(key);
+        for (let key in map) {
+            let button = map[key];
+                let classes = button.classList;
+            if (parseInt(key) === val) {
+                classes.add('buton');
+            } else {
+                classes.remove('buton');
+            }
         }
-        if (mode === null) return;
-        mode = parseInt(mode);
-        if (term && mode === editMode) return;
-        editMode = mode;
-        setMarkMode(mode === EDIT.MARK ? markMode : null,true);
-        setSelectMode(mode === EDIT.SELECT ? selectMode : null,true);
-        scheduleUpdateFaces();
+    }
+
+    function focusInput() {
+        if (DOC.activeElement) DOC.activeElement.blur();
+        DOC.body.focus();
+    }
+
+    function setEditMode(newmode,term) {
+        focusInput();
+        updateHighlights(editModeButtons,newmode);
+        if (newmode === null) return;
+        let sameMode = newmode == editMode;
+        editMode = parseInt(newmode);
+        if (term) return;
         let color = 0xffffff;
-        switch (mode) {
+        let newSelect = null;
+        let newMark = null;
+        switch (editMode) {
             case EDIT.ADD: color = COLOR.ADD; break;
             case EDIT.DELETE: color = COLOR.DELETE; break;
-            case EDIT.SELECT: color = COLOR.SELECT; break;
+            case EDIT.SELECT:
+                newSelect = sameMode ? SELECT_NEXT[selectMode] : selectMode;
+                color = COLOR.SELECT;
+                break;
             case EDIT.CLONE: color = COLOR.CLONE; break;
+            case EDIT.MARK:
+                newMark = sameMode ? MARK_NEXT[markMode] : markMode;
+                break;
         }
+        setSelectMode(newSelect,true);
+        setMarkMode(newMark,true);
+        // updateHighlights(selectModeButtons,editMode === EDIT.SELECT ? selectMode : null);
+        // updateHighlights(markTypeButtons,editMode === EDIT.MARK ? markMode : null);
+        scheduleUpdateFaces();
         hoverMaterial.color.setHex(color);
         SPACE.update();
     }
 
-    function setSelectMode(mode,term) {
-        for (let key in selectModeButtons) {
-            if (!selectModeButtons.hasOwnProperty(key)) continue;
-            selectModeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
-        }
-        if (mode == null) return;
-        mode = parseInt(mode);
-        if (term && mode === selectMode) return;
-        selectMode = mode;
-        setMarkMode(null,true);
+    function setSelectMode(newmode,term) {
+        updateHighlights(selectModeButtons,newmode);
+        if (newmode == null) return;
+        selectMode = parseInt(newmode);
+        if (term) return;
         setEditMode(EDIT.SELECT,true);
         scheduleUpdateFaces();
-        SDB['meta-smode'] = mode;
+        SDB['meta-smode'] = selectMode;
     }
 
-    function setMarkMode(mode,term) {
-        for (let key in markTypeButtons) {
-            if (!markTypeButtons.hasOwnProperty(key)) continue;
-            markTypeButtons[key].setAttribute('class', parseInt(key) === parseInt(mode) ? 'buton' : 'butoff');
-        }
-        if (mode === null) return;
-        mode = parseInt(mode);
-        if (term && mode === markMode) return;
-        markMode = mode;
+    function setMarkMode(newmode,term) {
+        updateHighlights(markTypeButtons,newmode);
+        if (newmode === null) return;
+        markMode = parseInt(newmode);
         selectedFace = null;
-        setSelectMode(selectMode,true);
+        if (term) return;
         setEditMode(EDIT.MARK,true);
         scheduleUpdateFaces();
         let color = COLOR.SELECT;
-        switch (mode) {
+        switch (markMode) {
             case MARK.EMIT: color = COLOR.EMIT; break;
             case MARK.SLIDE: color = COLOR.SLIDE; break;
             case MARK.CLEAR: color = COLOR.CLEAR; break;
         }
         hoverMaterial.color.setHex(color);
+        SDB['meta-mmode'] = markMode;
         SPACE.update();
     }
 

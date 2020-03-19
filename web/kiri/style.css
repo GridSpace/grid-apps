@@ -1,11 +1,5 @@
-th, tr, td, span, div, label, button {
-    user-select: none;
-}
 input[type=range]::-moz-focus-outer {
     border: 0;
-}
-select {
-    outline: none;
 }
 .dialog {
     display: none;
@@ -61,26 +55,6 @@ select {
 }
 #stock,#selection {
     display: none;
-}
-#appid {
-    text-align: center;
-    position: fixed;
-    width: 100%;
-    top: 3px;
-}
-#appid span {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 5px 8px 3px 8px;
-    background-color: rgba(170,221,255,0.75);
-    color: rgba(0,0,0,0.5);
-}
-#appid a {
-    color: rgba(0,0,0,0.75);
-    font-weight: bold;
-}
-#appid a:hover {
-    color: rgba(0,50,50,0.75);
 }
 #container {
     width: 100%;
