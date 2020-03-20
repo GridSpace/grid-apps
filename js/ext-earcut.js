@@ -1,0 +1,1 @@
+../node_modules/earcut/src/earcut.js
