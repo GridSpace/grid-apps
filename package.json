@@ -29,6 +29,7 @@
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
         "connect": "^3.7.0",
+        "earcut": "^2.2.2",
         "express-useragent": "^1.0.13",
         "level": "^6.0.0",
         "leveldown": "^5.5.1",

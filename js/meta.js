@@ -158,7 +158,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         }).motoSetup(),
         boxMaterialSelectedSynthetic = new THREE.MeshPhongMaterial({
             side:THREE.DoubleSide,
-            color: 0xffff77,
+            color: 0xffff99,
             specular: 0x111111,
             transparent: true,
             shininess: 100,
@@ -198,7 +198,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         }).motoSetup(),
         faceMaterialSynthetic = new THREE.MeshPhongMaterial({
             side:THREE.DoubleSide,
-            color: 0x55ff55,
+            color: 0x88ff88,
             specular: 0x111111,
             transparent: false,
             shininess: 100,
@@ -702,10 +702,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                 selectionToLibrary();
                 break;
             case cca('x'):
-                sendWorkspace();
-                break;
-            case cca('X'):
-                sendWorkspace("http://localhost:8080");
+                downloadSelection();
                 break;
             case cca('1'): // toggle control left
                 if (evt.ctrlKey) {
@@ -784,7 +781,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         selectMode = parseInt(newmode);
         SDB['meta-smode'] = selectMode;
         if (term) return;
-        setEditMode(EDIT.SELECT,true);
+        setEditMode(EDIT.SELECT,term);
         scheduleUpdateFaces();
     }
 
@@ -795,7 +792,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         SDB['meta-mmode'] = markMode;
         selectedFace = null;
         if (term) return;
-        setEditMode(EDIT.MARK,true);
+        setEditMode(EDIT.MARK,term);
         scheduleUpdateFaces();
         let color = COLOR.SELECT;
         switch (markMode) {
@@ -922,6 +919,12 @@ THREE.Face3.prototype.mVisible = function(show) {
         };
     };
 
+    function add_vertices(arr,pts) {
+        for (let i=0; i<pts.length; i += 3) {
+            arr.push(new THREE.Vector3(pts[i],pts[i+1],pts[i+2]));
+        }
+    }
+
     function Cube(x, y, z, synth) {
         this.id = nextID();
 
@@ -973,64 +976,40 @@ THREE.Face3.prototype.mVisible = function(show) {
         let geo = new THREE.Geometry();
         switch (order) {
             case 0:
-                geo.vertices.push(
-                    new THREE.Vector3(P,P,N),
-                    new THREE.Vector3(P,P,P),
-                    new THREE.Vector3(P,N,P),
-                    new THREE.Vector3(P,P,N),
-                    new THREE.Vector3(P,N,N),
-                    new THREE.Vector3(P,N,P)
-                );
+                add_vertices(geo.vertices, [
+                    P,P,N, P,P,P, P,N,P,
+                    P,P,N, P,N,N, P,N,P
+                ]);
                 break;
             case 1:
-                geo.vertices.push(
-                    new THREE.Vector3(N,P,N),
-                    new THREE.Vector3(N,P,P),
-                    new THREE.Vector3(N,N,P),
-                    new THREE.Vector3(N,P,N),
-                    new THREE.Vector3(N,N,N),
-                    new THREE.Vector3(N,N,P)
-                );
+                add_vertices(geo.vertices, [
+                    N,P,N, N,P,P, N,N,P,
+                    N,P,N, N,N,N, N,N,P
+                ]);
                 break;
             case 2:
-                geo.vertices.push(
-                    new THREE.Vector3(P,P,N),
-                    new THREE.Vector3(P,P,P),
-                    new THREE.Vector3(N,P,P),
-                    new THREE.Vector3(P,P,N),
-                    new THREE.Vector3(N,P,N),
-                    new THREE.Vector3(N,P,P)
-                );
+                add_vertices(geo.vertices, [
+                    P,P,N, P,P,P, N,P,P,
+                    P,P,N, N,P,N, N,P,P
+                ]);
                 break;
             case 3:
-                geo.vertices.push(
-                    new THREE.Vector3(P,N,N),
-                    new THREE.Vector3(P,N,P),
-                    new THREE.Vector3(N,N,P),
-                    new THREE.Vector3(P,N,N),
-                    new THREE.Vector3(N,N,N),
-                    new THREE.Vector3(N,N,P)
-                );
+                add_vertices(geo.vertices, [
+                    P,N,N, P,N,P, N,N,P,
+                    P,N,N, N,N,N, N,N,P
+                ]);
                 break;
             case 4:
-                geo.vertices.push(
-                    new THREE.Vector3(P,N,P),
-                    new THREE.Vector3(P,P,P),
-                    new THREE.Vector3(N,P,P),
-                    new THREE.Vector3(P,N,P),
-                    new THREE.Vector3(N,N,P),
-                    new THREE.Vector3(N,P,P)
-                );
+                add_vertices(geo.vertices, [
+                    P,N,P, P,P,P, N,P,P,
+                    P,N,P, N,N,P, N,P,P
+                ]);
                 break;
             case 5:
-                geo.vertices.push(
-                    new THREE.Vector3(P,N,N),
-                    new THREE.Vector3(P,P,N),
-                    new THREE.Vector3(N,P,N),
-                    new THREE.Vector3(P,N,N),
-                    new THREE.Vector3(N,N,N),
-                    new THREE.Vector3(N,P,N)
-                );
+                add_vertices(geo.vertices, [
+                    P,N,N, P,P,N, N,P,N,
+                    P,N,N, N,N,N, N,P,N
+                ]);
                 break;
         }
         let f1 = new THREE.Face3(0,1,2);
@@ -1041,8 +1020,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         geo.faces.push(f2);
         geo.computeFaceNormals();
         geo.computeVertexNormals();
-        let mesh = new THREE.Mesh(geo, boxMaterial);
-        return mesh;
+        return new THREE.Mesh(geo, boxMaterial);
     }
 
     CP.copyMesh = function(cube) {
@@ -1657,7 +1635,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function selectionToLibrary() {
-        if (selected.length === 0) return alert("make a selection to import");
+        if (selected.length === 0) return alert("make a selection to add");
         let scale = unitsToMM(spaceUnits),
             geo = selectionToGeometry(scale),
             name = prompt("Name of Selection", "");
@@ -1673,14 +1651,6 @@ THREE.Face3.prototype.mVisible = function(show) {
             stl = new moto.STL().encode(geo.vertices, geo.normals),
             blob = new Blob([stl], {type: 'application/octet-binary'}),
             save = saveAs(blob, name+".stl");
-    }
-
-    function sendWorkspace(to) {
-        let data = (to || gs_meta.sendTo)+"/data/"+spaceID,
-            space = (to || gs_meta.sendTo)+"/meta/#"+spaceID;
-        new moto.Ajax(function(res, ajax) {
-            if (res) WIN.location = space;
-        }).request(data, SDB['workspace']);
     }
 
     function selectAll() {
@@ -1894,6 +1864,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         setSpaceName(name);
         updateSpacesList();
         SDB['spaceNames'] = JSON.stringify(SPACENAMES);
+        saveWorkspace();
     }
 
     function setSpaceName(name) {
@@ -2137,6 +2108,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         spaceID = SDB['workspace-i'] || genKey();
         setSpaceVersion(SDB['workspace-v'] || 1);
         loadWorkspace(SDB['workspace']);
+        updateURL();
     }
 
     function forkWorkspace() {
@@ -2148,6 +2120,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function loadWorkspace(json) {
+        updateSynthetic = true;
         if (json && json.length > 0) {
             let cubes = selectable.slice(),
                 wrk = JSON.parse(json),
@@ -2214,11 +2187,10 @@ THREE.Face3.prototype.mVisible = function(show) {
             SPACES = JSON.parse(spaces);
             updateSpacesList();
         }
-        updateURL();
     }
 
     function watchHash() {
-        if (hashWatcher) return;
+        clearTimeout(hashWatcher);
         hashWatcher = setTimeout(function() {
             if (LOC.hash != HASHMATCH) restoreWorkspace();
             hashWatcher = null;
