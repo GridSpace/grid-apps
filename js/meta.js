@@ -71,6 +71,25 @@ THREE.Face3.prototype.mVisible = function(show) {
         CP = Cube.prototype,
         BP = Bounds.prototype,
         // ---------------
+        SKEY = {
+            seed:   'meta-seed',
+            zoom:   'meta-zoom',
+            mmode:  'meta-mmode',
+            smode:  'meta-smode',
+            snames: 'meta-names',
+            spaces: 'meta-spaces',
+            wspace: 'meta-workspc',
+            workid: 'meta-work-id',
+            workvr: 'meta-work-vr'
+        },
+        OKEY = {
+            'spaceNames':   'meta-names',
+            'spaces':       'meta-spaces',
+            'workspace':    'meta-workspc',
+            'workspace-i':  'meta-work-id',
+            'workspace-v':  'meta-work-vr'
+        },
+        // ---------------
         FACES = ['bt','tb','lr','rl','fb','bf'],
         FACE = {
             rl: { mi:0, x: HALF, y:0, z:0, rx:0, ry:PI2, rz:0, ox: 1, oy:0, oz:0, tx:PI2, ty:0, tz:0 },
@@ -247,6 +266,13 @@ THREE.Face3.prototype.mVisible = function(show) {
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()
      ******************************************************************* */
+
+     Object.keys(OKEY).forEach(key => {
+        if (SDB[key]) {
+            SDB[OKEY[key]] = SDB[key];
+            delete SDB[key];
+        }
+     });
 
     function nextID() {
         return ++cubeID;
@@ -533,9 +559,9 @@ THREE.Face3.prototype.mVisible = function(show) {
         /** and a few more settings before we're done */
 
         setGridSize(gridSize);
-        setZoom(SDB['meta-zoom'] === 'true');
-        setSelectMode(SDB['meta-smode'] || SELECT.REGION,true);
-        setMarkMode(SDB['meta-mmode'] || MARK.EMIT,true);
+        setZoom(SDB[SKEY.zoom] === 'true');
+        setSelectMode(SDB[SKEY.smode] || SELECT.REGION,true);
+        setMarkMode(SDB[SKEY.mmode] || MARK.EMIT,true);
         setEditMode(EDIT.SELECT);
         setSpaceUnits('1 cm');
 
@@ -550,7 +576,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         if (value !== undefined) {
             UI.invert.checked = value;
         }
-        SPACE.view.setZoom(SDB['meta-zoom'] = UI.invert.checked);
+        SPACE.view.setZoom(SDB[SKEY.zoom] = UI.invert.checked);
     }
 
     function inputHasFocus() {
@@ -665,7 +691,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                 setEditMode(EDIT.ADD);
                 break;
             case cca('s'):
-                setEditMode(EDIT.SELECT);
+                setEditMode(EDIT.SELECT,false,true);
                 break;
             case cca('d'):
                 setEditMode(EDIT.DELETE);
@@ -746,7 +772,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         DOC.body.focus();
     }
 
-    function setEditMode(newmode,term) {
+    function setEditMode(newmode,term,toggle) {
         focusInput();
         updateHighlights(editModeButtons,newmode);
         if (newmode === null) return;
@@ -760,12 +786,12 @@ THREE.Face3.prototype.mVisible = function(show) {
             case EDIT.ADD: color = COLOR.ADD; break;
             case EDIT.DELETE: color = COLOR.DELETE; break;
             case EDIT.SELECT:
-                newSelect = sameMode ? SELECT_NEXT[selectMode] : selectMode;
+                newSelect = toggle && sameMode ? SELECT_NEXT[selectMode] : selectMode;
                 color = COLOR.SELECT;
                 break;
             case EDIT.CLONE: color = COLOR.CLONE; break;
             case EDIT.MARK:
-                newMark = sameMode ? MARK_NEXT[markMode] : markMode;
+                newMark = toggle && sameMode ? MARK_NEXT[markMode] : markMode;
                 break;
         }
         setSelectMode(newSelect,true);
@@ -779,7 +805,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         updateHighlights(selectModeButtons,newmode);
         if (newmode == null) return;
         selectMode = parseInt(newmode);
-        SDB['meta-smode'] = selectMode;
+        SDB[SKEY.smode] = selectMode;
         if (term) return;
         setEditMode(EDIT.SELECT,term);
         scheduleUpdateFaces();
@@ -789,7 +815,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         updateHighlights(markTypeButtons,newmode);
         if (newmode === null) return;
         markMode = parseInt(newmode);
-        SDB['meta-mmode'] = markMode;
+        SDB[SKEY.mmode] = markMode;
         selectedFace = null;
         if (term) return;
         setEditMode(EDIT.MARK,term);
@@ -1863,7 +1889,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     function updateSpaceName(name) {
         setSpaceName(name);
         updateSpacesList();
-        SDB['spaceNames'] = JSON.stringify(SPACENAMES);
+        SDB[SKEY.snames] = JSON.stringify(SPACENAMES);
         saveWorkspace();
     }
 
@@ -1892,12 +1918,12 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function seedCorners() {
-        if (!SDB['meta-seed']) {
+        if (!SDB[SKEY.seed]) {
             loadSTL("/obj/meta-corner-1.stl","corner-1");
             loadSTL("/obj/meta-corner-2.stl","corner-2");
             loadSTL("/obj/meta-corner-3.stl","corner-3");
             loadSTL("/obj/meta-corner-4.stl","corner-4");
-            SDB['meta-seed'] = new Date().getTime();
+            SDB[SKEY.seed] = new Date().getTime();
         }
     }
 
@@ -1929,10 +1955,10 @@ THREE.Face3.prototype.mVisible = function(show) {
             SPACES.push(spaceID);
             SPACENAMES[spaceID] = spaceName;
         }
-        SDB['workspace-i'] = spaceID;
-        SDB['workspace-v'] = spaceVer;
-        SDB['spaces'] = JSON.stringify(SPACES);
-        SDB['spaceNames'] = JSON.stringify(SPACENAMES);
+        SDB[SKEY.workid] = spaceID;
+        SDB[SKEY.workvr] = spaceVer;
+        SDB[SKEY.spaces] = JSON.stringify(SPACES);
+        SDB[SKEY.snames] = JSON.stringify(SPACENAMES);
         updateSpacesList();
     }
 
@@ -2003,7 +2029,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             units: spaceUnits
         });
 
-        SDB['workspace'] = save;
+        SDB[SKEY.wspace] = save;
 
         new moto.Ajax(function(reply) {
             if (reply) {
@@ -2011,8 +2037,8 @@ THREE.Face3.prototype.mVisible = function(show) {
                 if (res && res.ver) {
                     // server-side fork when save but not owned
                     if (res.space != spaceID) setSpaceName(spaceName+" new");
-                    SDB['workspace-i'] = spaceID = res.space;
-                    SDB['workspace-v'] = res.ver;
+                    SDB[SKEY.workid] = spaceID = res.space;
+                    SDB[SKEY.workvr] = res.ver;
                     setSpaceVersion(res.ver);
                     updateURL();
                     updateSpaceState();
@@ -2057,8 +2083,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             if (!confirm("delete workspace "+(SPACENAMES[id] || id))) return;
             SPACES.splice(io,1);
             delete SPACENAMES[id];
-            SDB['spaces'] = JSON.stringify(SPACES);
-            SDB['spaceNames'] = JSON.stringify(SPACENAMES);
+            SDB[SKEY.spaces] = JSON.stringify(SPACES);
+            SDB[SKEY.snames] = JSON.stringify(SPACENAMES);
         }
         updateSpacesList();
     }
@@ -2090,9 +2116,9 @@ THREE.Face3.prototype.mVisible = function(show) {
                         loadWorkspace(rec.rec);
                         spaceID = rec.space;
                         setSpaceVersion(rec.ver);
-                        SDB['workspace'] = rec.rec;
-                        SDB['workspace-i'] = spaceID;
-                        SDB['workspace-v'] = spaceVer;
+                        SDB[SKEY.wspace] = rec.rec;
+                        SDB[SKEY.workid] = spaceID;
+                        SDB[SKEY.workvr] = spaceVer;
                         updateURL();
                         updateFaces();
                     } else {
@@ -2105,9 +2131,9 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function restoreWorkspaceLocal() {
-        spaceID = SDB['workspace-i'] || genKey();
-        setSpaceVersion(SDB['workspace-v'] || 1);
-        loadWorkspace(SDB['workspace']);
+        spaceID = SDB[SKEY.workid] || genKey();
+        setSpaceVersion(SDB[SKEY.workvr] || 1);
+        loadWorkspace(SDB[SKEY.wspace]);
         updateURL();
     }
 
@@ -2178,8 +2204,8 @@ THREE.Face3.prototype.mVisible = function(show) {
         } else {
             seedWorkspace();
         }
-        let spaces = SDB['spaces'],
-            spaceNames = SDB['spaceNames'];
+        let spaces = SDB[SKEY.spaces],
+            spaceNames = SDB[SKEY.snames];
         if (spaceNames) {
             SPACENAMES = JSON.parse(spaceNames);
         }
