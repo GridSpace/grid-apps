@@ -371,8 +371,9 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function parseOpt(ov) {
         var opt = {}, kv, kva;
-        ov.split(',').forEach(function(el) {
-            kv = el.split(':');
+        // handle kiri legacy and proper url encoding better
+        ov.split(',').map(v => v.split('&')).flat(1).forEach(function(el) {
+            kv = decodeURIComponent(el).split(':');
             if (kv.length === 2) {
                 kva = opt[kv[0]] = opt[kv[0]] || [];
                 kva.push(decodeURIComponent(kv[1]));
