@@ -188,7 +188,10 @@ function concatCode(array) {
             if (file.indexOf(".js") < 0) {
                 file = `/js/${file}.js`;
             }
-            code.push(`"${file}",`);
+            if (file.indexOf(":\\") > 0) {
+                file = `/${file}`;
+            }
+            code.push(`"${file.replace(/\\/g,'/')}",`);
         });
         code.push([
             ']; function load_next() {',
@@ -447,8 +450,12 @@ function addCorsHeaders(req, res) {
  * in debug mode only, serve ANY file path beginning with / that exists
  */
 function handleDebug(req, res, next) {
-    if (debug && lastmod(req.url)) {
-        return res.end(fs.readFileSync(req.url));
+    if (debug) {
+        if (lastmod(req.url)) {
+            return res.end(fs.readFileSync(req.url));
+        } else if (lastmod(req.url.substring(1))) {
+            return res.end(fs.readFileSync(req.url.substring(1)));
+        }
     }
     return next();
 }
