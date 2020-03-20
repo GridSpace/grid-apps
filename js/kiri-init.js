@@ -1694,7 +1694,7 @@ var gs_kiri_init = exports;
     // if a language needs to load, the script is injected and loaded
     // first.  once this loads, or doesn't, the initialization begins
     let lang_set = undefined;
-    let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang');
+    let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang') || KIRI.lang.get();
 
     // inject language script if not english
     if (lang && lang !== 'en' && lang !== 'en-us') {

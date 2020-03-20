@@ -21,7 +21,7 @@ let gs_kiri_lang = exports;
         let map, key, keys = [...arguments];
         // provide default if none given
         if (keys.length === 0) {
-            keys = [lset, lset.split('-')[0]];
+            keys = [lset, lset.split('-')[0], 'en'];
         }
         for (let i=0; i<keys.length; i++)
         {
