@@ -1644,7 +1644,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             });
             if (newgroup) {
                 let points = [];
-                faceGroups.push(points);
+                let map = {};
+                faceGroups.push({map,points});
                 group.forEach(face => {
                     let pos = face.pos;
                     let fac = FACE[face.key];
@@ -1656,9 +1657,9 @@ THREE.Face3.prototype.mVisible = function(show) {
                     face.sides.forEach(side => {
                         let off = FACE[side];
                         let tt = {
-                            x: xyz.x == off.x ? HALF : 0,
-                            y: xyz.y == off.y ? HALF : 0,
-                            z: xyz.z == off.z ? HALF : 0
+                            x: fac.x == off.x ? HALF : 0,
+                            y: fac.y == off.y ? HALF : 0,
+                            z: fac.z == off.z ? HALF : 0
                         };
                         let mid = {
                             x: xyz.x + off.x,
@@ -1675,13 +1676,20 @@ THREE.Face3.prototype.mVisible = function(show) {
                             y: mid.y + tt.y,
                             z: mid.z + tt.z
                         };
-                        points.push(p1);
-                        points.push(p2);
-                        // points.push([p1.x, p1.y, p1.z]);
-                        // points.push([p2.x, p2.y, p2.z]);
+                        p1.k = `${p1.x},${p1.y},${p1.z}`;
+                        p2.k = `${p2.x},${p2.y},${p2.z}`;
+                        let op1 = map[p1.k];
+                        let op2 = map[p2.k];
+                        if (!op1) op1 = map[p1.k] = p1;
+                        if (!op2) op2 = map[p2.k] = p2;
+                        if (!op1.p) op1.p = [op2]; else op1.p.push(op2);
+                        if (!op2.p) op2.p = [op1]; else op2.p.push(op1);
+                        points.push(op1);
+                        points.push(op2);
                     });
                 });
-                console.table(points);
+console.log(group);
+console.table(points);
             }
             return true;
         }
@@ -1692,10 +1700,33 @@ THREE.Face3.prototype.mVisible = function(show) {
             });
         });
 
-        // faceGroups.forEach(points => {
-        //
-        // });
-        console.log(faceGroups);
+        faceGroups.forEach((el,gi) => {
+            let {map, points} = el;
+            let seen = {};
+
+            // newstart: for (let ip=0; ip<points.length; ip++) {
+                let start = points[0];
+                // if (seen[start.k]) continue newstart;
+// console.log({gi,start:ip})
+                let point = start;
+                let out = [ point ];
+                seen[point.k] = point;
+
+                outer: for (;;) {
+                    let peers = point.p;
+                    for (let i=0; i<peers.length; i++) {
+                        let peer = peers[i];
+                        if (!seen[peer.k]) {
+                            out.push(point = peer);
+                            seen[point.k] = point;
+                            continue outer;
+                        }
+                    }
+                    break;
+                }
+console.log(out.length);
+            // }
+        });
 
         if (scale) {
             for (let i = 0; i < vertices.length; i++) {
