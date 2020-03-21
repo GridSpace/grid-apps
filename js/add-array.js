@@ -9,6 +9,15 @@
      * array prototype helpers
      ******************************************************************* */
 
+     AP.equals = function(arr) {
+         if (!arr) return false;
+         if (arr.length !== this.length) return false;
+         for (let i=0; i<this.length; i++) {
+             if (arr[i] !== this[i]) return false;
+         }
+         return true;
+     };
+
      AP.peek = function() {
         return this[this.length-1];
      };

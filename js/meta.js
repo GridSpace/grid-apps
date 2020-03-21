@@ -1618,7 +1618,7 @@ console.clear();
 if (!debugadded) SPACE.platform.add(debugadded = debuggroup)
 debuggroup.children.slice().forEach(c => debuggroup.remove(c));
 
-        function walk(cube_face, group, xseen) {
+        function walk(cube_face, group) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
 // console.log("walk", face_key, seen[face_key] ? 'seen' : '....', group ? group.id : 'new');
@@ -1638,13 +1638,8 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
             if (newgroup) {
                 group = [];
                 group.id = nid++;
-                xseen = {}
             }
             group.push({pos: cube.pos, key: cube_face.key, sides });
-            // if (newgroup) {
-            //     console.log(`----------( ${group.id} )----------`,face_key);
-            //     console.log(group);
-            // }
             // walk four directions perpendicular to face
             let skip = [cube_face.key, cube_face.key.reverse()];
             FACES.forEach(face_name => {
@@ -1654,7 +1649,7 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                 let facedir = cube.faces[face_name];
                 let adjacent = cube.adjacentCube(facedir);
                 if (adjacent) {
-                    if (walk(adjacent.faces[cube_face.key], group, seen)) {
+                    if (walk(adjacent.faces[cube_face.key], group)) {
 // console.log(" ++ ", face_key, face_name);
                         sides.push(face_name);
                     }
@@ -1711,19 +1706,16 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                         points.push(op1);
                         points.push(op2);
 
-let mat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-let geo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(op1.x,op1.y,op1.z),
-    new THREE.Vector3(op2.x,op2.y,op2.z)
-]);
-let lnz = new THREE.Line(geo, mat);
-debuggroup.add(lnz)
-SPACE.refresh();
+// let mat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+// let geo = new THREE.BufferGeometry().setFromPoints([
+//     new THREE.Vector3(op1.x,op1.y,op1.z),
+//     new THREE.Vector3(op2.x,op2.y,op2.z)
+// ]);
+// let lnz = new THREE.Line(geo, mat);
+// debuggroup.add(lnz)
+// SPACE.refresh();
                     });
                 });
-// console.log("-----------------------")
-// console.log(group);
-// console.table(points);
             }
             return false;
         }
@@ -1740,7 +1732,7 @@ console.log({GROUPS: faceGroups.length})
         faceGroups.forEach((el,gi) => {
             let {map, points} = el;
             let seen = {};
-console.log("<<<",points.length);
+console.log("<<< lines in",points.length/2);
 
             // newstart: for (let ip=0; ip<points.length; ip++) {
                 let start = points[0];
@@ -1748,6 +1740,7 @@ console.log("<<<",points.length);
 // console.log({gi,start:ip})
                 let point = start;
                 let out = [ point ];
+                let delta = [];
                 seen[point.k] = point;
 
                 outer: for (;;) {
@@ -1755,14 +1748,52 @@ console.log("<<<",points.length);
                     for (let i=0; i<peers.length; i++) {
                         let peer = peers[i];
                         if (!seen[peer.k]) {
+                            let new_delta = [
+                                peer.x - point.x,
+                                peer.y - point.y,
+                                peer.z - point.z
+                            ];
+                            if (new_delta.equals(delta)) {
+                                out.pop();
+                            }
                             out.push(point = peer);
+                            delta = new_delta;
                             seen[point.k] = point;
                             continue outer;
                         }
                     }
                     break;
                 }
-console.log(">>>",out)
+                if ([
+                    point.x - start.x,
+                    point.y - start.y,
+                    point.z - start.z
+                ].equals([
+                    start.x - points[1].x,
+                    start.y - points[1].y,
+                    start.z - points[1].z
+                ])) {
+                    out.shift();
+                }
+                if (delta.equals([
+                    start.x - point.x,
+                    start.y - point.y,
+                    start.z - point.z
+                ])) {
+                    out.pop();
+                }
+
+console.log(">>> points out",out.length)
+// console.log(out)
+let m = 1.05 + (gi * 0.05);
+let mat = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+let geo = new THREE.BufferGeometry().setFromPoints(
+    out.map(p => new THREE.Vector3(p.x*m,p.y*m,p.z*m))
+);
+let lnz = new THREE.Line(geo, mat);
+debuggroup.add(lnz)
+SPACE.refresh();
+
             // }
         });
 
