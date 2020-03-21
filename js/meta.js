@@ -1221,6 +1221,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         removeCube(this);
     };
 
+    // create new cube adjacent to this face offset by 'prod' cubes
     CP.newAdjacent = function(face, mult, synth) {
         let pos = this.pos,
             off = FACE[face.key],
@@ -1239,6 +1240,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         };
     };
 
+    // find cube offset from this one by "off" FACE definition
     CP.offsetCube = function(off, mult) {
         let pos = this.pos,
             prod = mult || 1,
@@ -1246,6 +1248,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         return matrix[[pos.x + off.ox * prod, pos.y + off.oy * prod, pos.z + off.oz * prod].join(',')];
     };
 
+    // find cube adjacent to given face
     CP.adjacentCube = function(face) {
         return this.offsetCube(FACE[face.key]);
     };
@@ -1605,34 +1608,54 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function selectionToGeometry2(scale) {
-        let vertices = [],
-            normals = [],
-            i = 0, cube, j, k, face, pos, off, fix, arr;
+        let vertices = [], normals = [],
+            seenFaces = {}, faceGroups = [];
+
+        function walk(cube_face, group) {
+            let cube = cube_face.cube;
+            let face_key = `${cube.key}-${cube_face.key}`;
+            // skip seen faces
+            if (seenFaces[face_key]) return true;
+            // mark face as seen
+            seenFaces[face_key] = cube_face;
+            // skip faces facing another cube
+            if (cube.adjacentCube(cube_face)) {
+                return false;
+            }
+            let sides = [];
+            let newgroup = !group;
+            if (newgroup) group = [];
+            group.push({pos: cube.pos, sides});
+            // walk four directions perpendicular to face
+            let skip = [cube_face.key, cube_face.key.reverse()];
+            FACES.forEach(face_name => {
+                // only walk face directions perpendicular to face
+                if (skip.indexOf(face_name) >= 0) return;
+                // if adjacent cube, check it out
+                let facedir = cube.faces[face_name];
+                let adjacent = cube.adjacentCube(facedir);
+                if (adjacent) {
+                    if (!walk(adjacent.faces[cube_face.key], group)) {
+                        sides.push(face_name);
+                    }
+                } else {
+                    sides.push(face_name);
+                }
+            });
+            if (newgroup) faceGroups.push(group);
+            return true;
+        }
 
         selected.forEach(cube => {
-            FACES.forEach(face_key => {
-                let cube_face = cube.faces[face_key];
-                let face_adj = cube.adjacentCube(cube_face) ? 1 : 0;
-                console.log(cube.key, face_key, face_adj);
+            FACES.forEach(face_name => {
+                walk(cube.faces[face_name]);
             });
         });
 
-        while (i < selected.length) {
-            cube = selected[i++];
-            pos = cube.pos;
-            if (cube.mesh) {
-                let k = 0, arr = cube.mesh.geometry.attributes.position.array;
-                while (k < arr.length) {
-                    vertices.push(arr[k++] + pos.x);
-                    vertices.push(arr[k++] + pos.y);
-                    vertices.push(arr[k++] + pos.z);
-                }
-                continue;
-            }
-        }
+        console.log(faceGroups)
 
         if (scale) {
-            for (i = 0; i < vertices.length; i++) {
+            for (let i = 0; i < vertices.length; i++) {
                 vertices[i] *= scale;
             }
         }
