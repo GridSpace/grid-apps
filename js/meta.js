@@ -51,16 +51,19 @@ THREE.Face3.prototype.mVisible = function(show) {
         WIN = self,
         DOC = WIN.document,
         LOC = WIN.location,
-        ABS = Math.abs,
-        MAX = Math.max,
-        MIN = Math.min,
-        BOUND = function(v,min,max) { return MAX(min,MIN(max,v))},
+        BASE = self.base,
+        BOUND = function(v,min,max) { return Math.max(min,Math.min(max,v)) },
         ROUND = Math.round,
-        PI = Math.PI,
-        PI2 = PI/2,
+        PI2 = Math.PI/2,
+        ABS = Math.abs,
         SCALE = 1,
         HALF = SCALE / 2,
         HAS = function(a,b) { return a.hasOwnProperty(b) },
+        // ---------------
+        POLY = BASE.polygons,
+        Layer = self.kiri.Layer,
+        Point = BASE.Point,
+        Polygon = BASE.Polygon,
         // ---------------
         MOTO = self.moto,
         SPACE = MOTO.Space,
@@ -342,7 +345,6 @@ THREE.Face3.prototype.mVisible = function(show) {
                     }
                     if (cube.isSelected()) {
                         selectedFace = face;
-console.log('sel',cube.pos,face.key,FACE[face.key])
                         scheduleUpdateFaces(cube, face);
                     }
                     let s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
@@ -1610,10 +1612,12 @@ console.log('sel',cube.pos,face.key,FACE[face.key])
 
 let debuggroup = new THREE.Group();
 let debugadded = false;
+let layer = new Layer(debuggroup);
 
     function selectionToGeometry2(scale) {
         let vertices = [], normals = [], faceGroups = [], seen = {}, nid = 0;
 
+layer.clear();
 console.clear();
 if (!debugadded) SPACE.platform.add(debugadded = debuggroup)
 debuggroup.children.slice().forEach(c => debuggroup.remove(c));
@@ -1621,10 +1625,8 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
         function walk(cube_face, group) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
-// console.log("walk", face_key, seen[face_key] ? 'seen' : '....', group ? group.id : 'new');
             // skip faces facing another cube
             if (cube.adjacentCube(cube_face)) {
-// console.log(" --|", face_key);
                 return true;
             }
             // skip seen faces
@@ -1650,11 +1652,9 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                 let adjacent = cube.adjacentCube(facedir);
                 if (adjacent) {
                     if (walk(adjacent.faces[cube_face.key], group)) {
-// console.log(" ++ ", face_key, face_name);
                         sides.push(face_name);
                     }
                 } else {
-// console.log(" +++", face_key, face_name);
                     sides.push(face_name);
                 }
             });
@@ -1705,15 +1705,6 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                         if (!op2.p) op2.p = [op1]; else op2.p.push(op1);
                         points.push(op1);
                         points.push(op2);
-
-// let mat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-// let geo = new THREE.BufferGeometry().setFromPoints([
-//     new THREE.Vector3(op1.x,op1.y,op1.z),
-//     new THREE.Vector3(op2.x,op2.y,op2.z)
-// ]);
-// let lnz = new THREE.Line(geo, mat);
-// debuggroup.add(lnz)
-// SPACE.refresh();
                     });
                 });
             }
@@ -1726,18 +1717,16 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
             });
         });
 
-console.log({GROUPS: faceGroups.length})
-// return;
-// console.log(">>>>>>>>>>>>>>>>>>>>>>>>")
+        let polys = [];
+
         faceGroups.forEach((el,gi) => {
             let {map, points} = el;
             let seen = {};
-console.log("<<< lines in",points.length/2);
+            let set = [];
 
-            // newstart: for (let ip=0; ip<points.length; ip++) {
-                let start = points[0];
-                // if (seen[start.k]) continue newstart;
-// console.log({gi,start:ip})
+            newstart: for (let ip=0; ip<points.length; ip++) {
+                let start = points[ip];
+                if (seen[start.k]) continue newstart;
                 let point = start;
                 let out = [ point ];
                 let delta = [];
@@ -1783,18 +1772,28 @@ console.log("<<< lines in",points.length/2);
                     out.pop();
                 }
 
-console.log(">>> points out",out.length)
-// console.log(out)
-let m = 1.05 + (gi * 0.05);
-let mat = new THREE.LineBasicMaterial( { color: 0xff0000 } );
-let geo = new THREE.BufferGeometry().setFromPoints(
-    out.map(p => new THREE.Vector3(p.x*m,p.y*m,p.z*m))
-);
-let lnz = new THREE.Line(geo, mat);
-debuggroup.add(lnz)
+                let poly = new Polygon();
+                out.forEach(p => {
+                    poly.add(p.x,p.y,p.z);
+                });
+
+                set.push(poly);
+            }
+
+            polys.push(POLY.nest(set));
+        });
+
+let cuts = polys.flat().map(p => p.earcut()).flat();
+cuts.forEach(p => layer.poly(p, 0xff0000, true, false));
+
+layer.render();
 SPACE.refresh();
 
-            // }
+        // exports cut polys back to vertices
+        cuts.forEach(poly => {
+            poly.forEachPoint(p => {
+                vertices.push(p.x,p.y,p.z);
+            });
         });
 
         if (scale) {
@@ -1802,6 +1801,7 @@ SPACE.refresh();
                 vertices[i] *= scale;
             }
         }
+
         return {vertices: vertices, normals: null};
     }
 

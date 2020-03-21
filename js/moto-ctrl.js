@@ -523,7 +523,6 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
             case 2: // two-fingered touch: dolly
                 if (scope.noZoom === true) return;
                 if (state !== STATE.TOUCH_DOLLY) return;
-console.log(event)
                 let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
                 let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
                 let distance = Math.sqrt(dx * dx + dy * dy);

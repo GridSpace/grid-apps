@@ -112,6 +112,84 @@ var gs_base_polygon = exports;
      * Polygon Prototype Functions
      ******************************************************************* */
 
+    PRO.earcut = function(raw) {
+        // gather all points into a single array including inner polys
+        // keeping track of array offset indices for inners
+        let out = [];
+        let holes = [];
+        let last = undefined;
+        let diff = {x: false, y: false, z: false};
+
+        // flatten points into array for earcut()
+        this.points.forEach(p => {
+            if (last) {
+                diff.x = diff.x || last.x !== p.x;
+                diff.y = diff.y || last.y !== p.y;
+                diff.z = diff.z || last.z !== p.z;
+            }
+            last = p;
+            out.push(p.x, p.y, p.z);
+        });
+
+        // check which plane polygon arrived in
+        let swapz = diff.x === false ? 0 :
+                    diff.y === false ? 1 : 2;
+
+        // swap planar coordinates into X,Y if not in Z plane
+        if (swapz < 2) {
+            for (let i=0; i<out.length; i+=3) {
+                let t = out[i+2];
+                out[i+2] = out[i+swapz];
+                out[i+swapz] = t;
+            }
+        }
+
+        // add hole offsets for inner polygons
+        if (this.inner) {
+            this.inner.forEach(p => {
+                holes.push(out.length / 3);
+                p.points.forEach(p => {
+                    out.push(p.x, p.y, p.z);
+                })
+            });
+        }
+
+        // perform earcut();
+        let cut = earcut(out,holes,3);
+
+        // un-swap planar coordinates into X,Y if not in Z plane
+        // so that polygons are returned in their original plane
+        if (swapz < 2) {
+            for (let i=0; i<out.length; i+=3) {
+                let t = out[i+2];
+                out[i+2] = out[i+swapz];
+                out[i+swapz] = t;
+            }
+        }
+
+        let ret = [];
+
+        if (raw) {
+            for (let i=0; i<cut.length; i+=3) {
+                for (let j=0; j<3; j++) {
+                    let n = cut[i + j] * 3;
+                    p.push(out[n], out[n+1], out[n+2]);
+                }
+            }
+        } else {
+            for (let i=0; i<cut.length; i+=3) {
+                let p = new Polygon();
+                for (let j=0; j<3; j++) {
+                    let n = cut[i + j] * 3;
+                    p.add(out[n], out[n+1], out[n+2]);
+                }
+                ret.push(p);
+            }
+        }
+
+        return ret;
+    };
+
     PRO.createConvexHull = function(points) {
         function removeMiddle(a, b, c) {
             var cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);

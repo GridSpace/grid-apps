@@ -9,6 +9,12 @@
      * array prototype helpers
      ******************************************************************* */
 
+     if (!AP.flat) {
+         AP.flat = function() {
+             return [].concat.apply([], this);
+         };
+     }
+
      AP.equals = function(arr) {
          if (!arr) return false;
          if (arr.length !== this.length) return false;
