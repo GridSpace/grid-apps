@@ -189,7 +189,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             specular: 0x111111,
             transparent: true,
             shininess: 100,
-            opacity: 0.8
+            opacity: 0.8,
+            depthFunc: THREE.LessDepth
         }).motoSetup(),
         faceMaterialSlide = new THREE.MeshPhongMaterial({
             side:THREE.DoubleSide,
@@ -227,7 +228,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             color: 0x0,
             opacity: 0.75,
             transparent: true,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            depthFunc: THREE.LessDepth
         }).motoSetup(),
         // ---------------
         UI = {},
@@ -729,6 +731,9 @@ THREE.Face3.prototype.mVisible = function(show) {
                 break;
             case cca('x'):
                 downloadSelection();
+                break;
+            case cca('X'):
+                downloadSelection2()
                 break;
             case cca('1'): // toggle control left
                 if (evt.ctrlKey) {
@@ -1325,7 +1330,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             // mark inside if adjacent to cube that has no mesh
             face.inside = adj && !adjm;
             cube.setFaceMaterial(face.set.mi, mat);
-            cube.showFace(face.set.mi, !mesh && (mark || sel || !face.inside));
+            cube.showFace(face.set.mi, !face.inside && (!mesh || mark || sel));
         }
         SPACE.update();
     };
@@ -1599,6 +1604,41 @@ THREE.Face3.prototype.mVisible = function(show) {
         return {vertices: vertices, normals: null};
     }
 
+    function selectionToGeometry2(scale) {
+        let vertices = [],
+            normals = [],
+            i = 0, cube, j, k, face, pos, off, fix, arr;
+
+        selected.forEach(cube => {
+            FACES.forEach(face_key => {
+                let cube_face = cube.faces[face_key];
+                let face_adj = cube.adjacentCube(cube_face) ? 1 : 0;
+                console.log(cube.key, face_key, face_adj);
+            });
+        });
+
+        while (i < selected.length) {
+            cube = selected[i++];
+            pos = cube.pos;
+            if (cube.mesh) {
+                let k = 0, arr = cube.mesh.geometry.attributes.position.array;
+                while (k < arr.length) {
+                    vertices.push(arr[k++] + pos.x);
+                    vertices.push(arr[k++] + pos.y);
+                    vertices.push(arr[k++] + pos.z);
+                }
+                continue;
+            }
+        }
+
+        if (scale) {
+            for (i = 0; i < vertices.length; i++) {
+                vertices[i] *= scale;
+            }
+        }
+        return {vertices: vertices, normals: null};
+    }
+
     function unitsToMM(units) {
         let num = parseFloat(units),
             scale = 10.0;
@@ -1677,6 +1717,17 @@ THREE.Face3.prototype.mVisible = function(show) {
             stl = new moto.STL().encode(geo.vertices, geo.normals),
             blob = new Blob([stl], {type: 'application/octet-binary'}),
             save = saveAs(blob, name+".stl");
+    }
+
+    function downloadSelection2() {
+        // if (selected.length === 0) return alert("make a selection to export");
+        // let name = prompt("Download Name", spaceName);
+        // if (!name) return;
+        let scale = unitsToMM(spaceUnits),
+            geo = selectionToGeometry2(scale);//,
+            // stl = new moto.STL().encode(geo.vertices, geo.normals),
+            // blob = new Blob([stl], {type: 'application/octet-binary'}),
+            // save = saveAs(blob, name+".stl");
     }
 
     function selectAll() {

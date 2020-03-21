@@ -31,7 +31,7 @@
         "connect": "^3.7.0",
         "earcut": "^2.2.2",
         "express-useragent": "^1.0.13",
-        "level": "^6.0.0",
+        "level": "^6.0.1",
         "leveldown": "^5.5.1",
         "levelup": "^4.3.2",
         "moment": "^2.24.0",
@@ -41,6 +41,6 @@
         "tween.js": "^0.14.0",
         "uglify-es": "^3.3.10",
         "validator": "^8.2.0",
-        "ws": "^7.2.1"
+        "ws": "^7.2.3"
     }
 }

@@ -1437,6 +1437,16 @@ var gs_kiri_init = exports;
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true})
         });
 
+        if (!lang_set) {
+            // for english only, add underlined labels for hotkeys
+            UI.setupDevices.innerHTML   = "D<u>e</u>vices";
+            UI.setupTools.innerHTML     = "T<u>o</u>ols";
+            UI.modeArrange.innerHTML    = "<u>A</u>rrange";
+            UI.modeSlice.innerHTML      = "<u>S</u>lice";
+            UI.modePreview.innerHTML    = "<u>P</u>review";
+            UI.modeExport.innerHTML     = "E<u>x</u>port";
+        }
+
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
@@ -1463,14 +1473,6 @@ var gs_kiri_init = exports;
             // UI.toolTaperAngle,   updateTool,
             UI.toolTaperTip,     updateTool,
         ]);
-
-        UI.setupDevices.innerHTML = "D<u>e</u>vices";
-        UI.setupTools.innerHTML = "T<u>o</u>ols";
-
-        UI.modeArrange.innerHTML = "<u>A</u>rrange";
-        UI.modeSlice.innerHTML = "<u>S</u>lice";
-        UI.modePreview.innerHTML = "<u>P</u>review";
-        UI.modeExport.innerHTML = "E<u>x</u>port";
 
         UI.layerID.convert = UC.toFloat.bind(UI.layerID);
         UI.layerSpan.convert = UC.toFloat.bind(UI.layerSpan);

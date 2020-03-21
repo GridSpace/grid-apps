@@ -285,7 +285,12 @@ function quickReply(res, code, msg) {
  * @param {Object} res
  */
 function reply404(req, res) {
-    log({"404":req.url, ip:req.gs.ip});
+    logger.emit([
+        '404',
+        req.url,
+        req.socket.remoteAddress,
+        req.headers
+    ]);
     res.writeHead(404);
     res.end("[404]");
 }
@@ -386,7 +391,7 @@ function setup(req, res, next) {
     // log request
     logger.emit([
         req.method,
-        req.headers['host'],
+        req.headers['host'] || '',
         req.url,
         req.socket.remoteAddress,
         req.headers['origin'] || '',
@@ -1272,6 +1277,7 @@ handler.use(fullpath({
     .use(fixedmap("/api/", api))
     .use(compression)
     .use(handleStatic(currentDir + "/web/"))
+    .use(reply404)
     .listen(port)
     .on('upgrade', (request, socket, head) => {
         let handler = wss_roots[request.url];
