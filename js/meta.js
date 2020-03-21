@@ -27,7 +27,7 @@ let gs_meta = exports;
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
-    this.transparent = false;
+    // this.transparent = false;
 
     let hidden = this.clone();
     hidden.visible = false;
@@ -94,8 +94,8 @@ THREE.Face3.prototype.mVisible = function(show) {
         FACE = {
             rl: { mi:0, x: HALF, y:0, z:0, rx:0, ry:PI2, rz:0, ox: 1, oy:0, oz:0, tx:PI2, ty:0, tz:0 },
             lr: { mi:1, x:-HALF, y:0, z:0, rx:0, ry:PI2, rz:0, ox:-1, oy:0, oz:0, tx:PI2, ty:0, tz:0 },
-            bf: { mi:2, x:0, y:-HALF, z:0, rx:0, ry:0, rz:0, ox:0, oy: 1, oz:0, tx:PI2, ty:0, tz:0 },
-            fb: { mi:3, x:0, y: HALF, z:0, rx:0, ry:0, rz:0, ox:0, oy:-1, oz:0, tx:PI2, ty:0, tz:0 },
+            bf: { mi:2, x:0, y: HALF, z:0, rx:0, ry:0, rz:0, ox:0, oy: 1, oz:0, tx:PI2, ty:0, tz:0 },
+            fb: { mi:3, x:0, y:-HALF, z:0, rx:0, ry:0, rz:0, ox:0, oy:-1, oz:0, tx:PI2, ty:0, tz:0 },
             tb: { mi:4, x:0, y:0, z: HALF, rx:PI2, ry:0, rz:0, ox:0, oy:0, oz: 1, tx:0, ty:0, tz:0 },
             bt: { mi:5, x:0, y:0, z:-HALF, rx:PI2, ry:0, rz:0, ox:0, oy:0, oz:-1, tx:0, ty:0, tz:0 }
         },
@@ -342,6 +342,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                     }
                     if (cube.isSelected()) {
                         selectedFace = face;
+console.log('sel',cube.pos,face.key,FACE[face.key])
                         scheduleUpdateFaces(cube, face);
                     }
                     let s = face.set, rot = { x: s.tx, y: s.ty, z: s.tz };
@@ -1607,24 +1608,35 @@ THREE.Face3.prototype.mVisible = function(show) {
         return {vertices: vertices, normals: null};
     }
 
-    function selectionToGeometry2(scale) {
-        let vertices = [], normals = [],
-            seenFaces = {}, faceGroups = [];
+let debuggroup = new THREE.Group();
+let debugadded = false;
 
-        function walk(cube_face, group) {
+    function selectionToGeometry2(scale) {
+        let vertices = [], normals = [], faceGroups = [];
+
+console.clear();
+if (!debugadded) SPACE.platform.add(debugadded = debuggroup)
+debuggroup.children.slice().forEach(c => debuggroup.remove(c));
+
+        function walk(cube_face, group, seen) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
+console.log("walk", cube.pos, face_key)
             // skip seen faces
-            if (seenFaces[face_key]) return true;
+            if (seen[face_key]) {
+console.log("seen", cube.pos, face_key, false)
+                return false;
+            }
             // mark face as seen
-            seenFaces[face_key] = cube_face;
+            seen[face_key] = cube_face;
             // skip faces facing another cube
             if (cube.adjacentCube(cube_face)) {
-                return false;
+console.log("blok", cube.pos, face_key, true)
+                return true;
             }
             let sides = [];
             let newgroup = !group;
-            if (newgroup) group = [];
+            if (newgroup) { group = []; seen = {} }
             group.push({pos: cube.pos, key: cube_face.key, sides});
             // walk four directions perpendicular to face
             let skip = [cube_face.key, cube_face.key.reverse()];
@@ -1634,11 +1646,14 @@ THREE.Face3.prototype.mVisible = function(show) {
                 // if adjacent cube, check it out
                 let facedir = cube.faces[face_name];
                 let adjacent = cube.adjacentCube(facedir);
+console.log("test", cube.pos, face_key, face_name, adjacent ? "adj" : "opn")
                 if (adjacent) {
-                    if (!walk(adjacent.faces[cube_face.key], group)) {
+                    if (walk(adjacent.faces[cube_face.key], group, seen)) {
+console.log("+++|", cube.pos, face_key, face_name)
                         sides.push(face_name);
                     }
                 } else {
+console.log(adjacent ? "++++" : " ++ ", cube.pos, face_key, face_name)
                     sides.push(face_name);
                 }
             });
@@ -1649,10 +1664,11 @@ THREE.Face3.prototype.mVisible = function(show) {
                 group.forEach(face => {
                     let pos = face.pos;
                     let fac = FACE[face.key];
+                    let MUL = 0.9;
                     let xyz = {
-                        x: pos.x + fac.x,
-                        y: pos.y + fac.y,
-                        z: pos.z + fac.z
+                        x: pos.x + fac.x * MUL,
+                        y: pos.y + fac.y * MUL,
+                        z: pos.z + fac.z * MUL
                     };
                     face.sides.forEach(side => {
                         let off = FACE[side];
@@ -1661,10 +1677,11 @@ THREE.Face3.prototype.mVisible = function(show) {
                             y: fac.y == off.y ? HALF : 0,
                             z: fac.z == off.z ? HALF : 0
                         };
+                        tt.x *= MUL; tt.y *= MUL; tt.z *= MUL;
                         let mid = {
-                            x: xyz.x + off.x,
-                            y: xyz.y + off.y,
-                            z: xyz.z + off.z
+                            x: xyz.x + off.x * MUL,
+                            y: xyz.y + off.y * MUL,
+                            z: xyz.z + off.z * MUL
                         };
                         let p1 = {
                             x: mid.x - tt.x,
@@ -1686,20 +1703,36 @@ THREE.Face3.prototype.mVisible = function(show) {
                         if (!op2.p) op2.p = [op1]; else op2.p.push(op1);
                         points.push(op1);
                         points.push(op2);
+
+let mat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+let geo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(op1.x,op1.y,op1.z),
+    new THREE.Vector3(op2.x,op2.y,op2.z)
+]);
+let lnz = new THREE.Line(geo, mat);
+debuggroup.add(lnz)
+
                     });
                 });
+console.log("-----------------------")
 console.log(group);
 console.table(points);
             }
-            return true;
+console.log("done", cube.pos, face_key, true)
+            return false;
         }
 
         selected.forEach(cube => {
+console.log("(((((---", cube.pos, "---)))))")
             FACES.forEach(face_name => {
-                walk(cube.faces[face_name]);
+console.log("FACE", "<<<", face_name, ">>>");
+                walk(cube.faces[face_name], null, {});
+SPACE.refresh();
+                // die
             });
         });
-
+return
+console.log(">>>>>>>>>>>>>>>>>>>>>>>>")
         faceGroups.forEach((el,gi) => {
             let {map, points} = el;
             let seen = {};
@@ -1707,7 +1740,7 @@ console.table(points);
             // newstart: for (let ip=0; ip<points.length; ip++) {
                 let start = points[0];
                 // if (seen[start.k]) continue newstart;
-// console.log({gi,start:ip})
+console.log({gi,start:ip})
                 let point = start;
                 let out = [ point ];
                 seen[point.k] = point;
@@ -1724,7 +1757,7 @@ console.table(points);
                     }
                     break;
                 }
-console.log(out.length);
+console.log(out)
             // }
         });
 

@@ -539,6 +539,7 @@ var MOTO = window.moto = window.moto || {};
         onEnterKey: onEnterKey,
         onResize: onResize,
         update: requestRefresh,
+        refresh: refresh,
 
         showSkyGrid: function(b) { showSkyGrid = b },
         setSkyColor: function(c) { skyColor = c },
