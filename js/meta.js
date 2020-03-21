@@ -1625,7 +1625,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             let sides = [];
             let newgroup = !group;
             if (newgroup) group = [];
-            group.push({pos: cube.pos, sides});
+            group.push({pos: cube.pos, key: cube_face.key, sides});
             // walk four directions perpendicular to face
             let skip = [cube_face.key, cube_face.key.reverse()];
             FACES.forEach(face_name => {
@@ -1642,7 +1642,47 @@ THREE.Face3.prototype.mVisible = function(show) {
                     sides.push(face_name);
                 }
             });
-            if (newgroup) faceGroups.push(group);
+            if (newgroup) {
+                let points = [];
+                faceGroups.push(points);
+                group.forEach(face => {
+                    let pos = face.pos;
+                    let fac = FACE[face.key];
+                    let xyz = {
+                        x: pos.x + fac.x,
+                        y: pos.y + fac.y,
+                        z: pos.z + fac.z
+                    };
+                    face.sides.forEach(side => {
+                        let off = FACE[side];
+                        let tt = {
+                            x: xyz.x == off.x ? HALF : 0,
+                            y: xyz.y == off.y ? HALF : 0,
+                            z: xyz.z == off.z ? HALF : 0
+                        };
+                        let mid = {
+                            x: xyz.x + off.x,
+                            y: xyz.y + off.y,
+                            z: xyz.z + off.z
+                        };
+                        let p1 = {
+                            x: mid.x - tt.x,
+                            y: mid.y - tt.y,
+                            z: mid.z - tt.z
+                        };
+                        let p2 = {
+                            x: mid.x + tt.x,
+                            y: mid.y + tt.y,
+                            z: mid.z + tt.z
+                        };
+                        points.push(p1);
+                        points.push(p2);
+                        // points.push([p1.x, p1.y, p1.z]);
+                        // points.push([p2.x, p2.y, p2.z]);
+                    });
+                });
+                console.table(points);
+            }
             return true;
         }
 
@@ -1652,7 +1692,10 @@ THREE.Face3.prototype.mVisible = function(show) {
             });
         });
 
-        console.log(faceGroups)
+        // faceGroups.forEach(points => {
+        //
+        // });
+        console.log(faceGroups);
 
         if (scale) {
             for (let i = 0; i < vertices.length; i++) {
