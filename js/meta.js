@@ -1612,32 +1612,39 @@ let debuggroup = new THREE.Group();
 let debugadded = false;
 
     function selectionToGeometry2(scale) {
-        let vertices = [], normals = [], faceGroups = [];
+        let vertices = [], normals = [], faceGroups = [], seen = {}, nid = 0;
 
 console.clear();
 if (!debugadded) SPACE.platform.add(debugadded = debuggroup)
 debuggroup.children.slice().forEach(c => debuggroup.remove(c));
 
-        function walk(cube_face, group, seen) {
+        function walk(cube_face, group, xseen) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
-console.log("walk", cube.pos, face_key)
+// console.log("walk", face_key, seen[face_key] ? 'seen' : '....', group ? group.id : 'new');
+            // skip faces facing another cube
+            if (cube.adjacentCube(cube_face)) {
+// console.log(" --|", face_key);
+                return true;
+            }
             // skip seen faces
             if (seen[face_key]) {
-console.log("seen", cube.pos, face_key, false)
                 return false;
             }
             // mark face as seen
             seen[face_key] = cube_face;
-            // skip faces facing another cube
-            if (cube.adjacentCube(cube_face)) {
-console.log("blok", cube.pos, face_key, true)
-                return true;
-            }
             let sides = [];
             let newgroup = !group;
-            if (newgroup) { group = []; seen = {} }
-            group.push({pos: cube.pos, key: cube_face.key, sides});
+            if (newgroup) {
+                group = [];
+                group.id = nid++;
+                xseen = {}
+            }
+            group.push({pos: cube.pos, key: cube_face.key, sides });
+            // if (newgroup) {
+            //     console.log(`----------( ${group.id} )----------`,face_key);
+            //     console.log(group);
+            // }
             // walk four directions perpendicular to face
             let skip = [cube_face.key, cube_face.key.reverse()];
             FACES.forEach(face_name => {
@@ -1646,14 +1653,13 @@ console.log("blok", cube.pos, face_key, true)
                 // if adjacent cube, check it out
                 let facedir = cube.faces[face_name];
                 let adjacent = cube.adjacentCube(facedir);
-console.log("test", cube.pos, face_key, face_name, adjacent ? "adj" : "opn")
                 if (adjacent) {
                     if (walk(adjacent.faces[cube_face.key], group, seen)) {
-console.log("+++|", cube.pos, face_key, face_name)
+// console.log(" ++ ", face_key, face_name);
                         sides.push(face_name);
                     }
                 } else {
-console.log(adjacent ? "++++" : " ++ ", cube.pos, face_key, face_name)
+// console.log(" +++", face_key, face_name);
                     sides.push(face_name);
                 }
             });
@@ -1664,7 +1670,8 @@ console.log(adjacent ? "++++" : " ++ ", cube.pos, face_key, face_name)
                 group.forEach(face => {
                     let pos = face.pos;
                     let fac = FACE[face.key];
-                    let MUL = 0.9;
+                    // let MUL = 0.9;
+                    let MUL = 1.0;
                     let xyz = {
                         x: pos.x + fac.x * MUL,
                         y: pos.y + fac.y * MUL,
@@ -1711,36 +1718,34 @@ let geo = new THREE.BufferGeometry().setFromPoints([
 ]);
 let lnz = new THREE.Line(geo, mat);
 debuggroup.add(lnz)
-
+SPACE.refresh();
                     });
                 });
-console.log("-----------------------")
-console.log(group);
-console.table(points);
+// console.log("-----------------------")
+// console.log(group);
+// console.table(points);
             }
-console.log("done", cube.pos, face_key, true)
             return false;
         }
 
         selected.forEach(cube => {
-console.log("(((((---", cube.pos, "---)))))")
             FACES.forEach(face_name => {
-console.log("FACE", "<<<", face_name, ">>>");
                 walk(cube.faces[face_name], null, {});
-SPACE.refresh();
-                // die
             });
         });
-return
-console.log(">>>>>>>>>>>>>>>>>>>>>>>>")
+
+console.log({GROUPS: faceGroups.length})
+// return;
+// console.log(">>>>>>>>>>>>>>>>>>>>>>>>")
         faceGroups.forEach((el,gi) => {
             let {map, points} = el;
             let seen = {};
+console.log("<<<",points.length);
 
             // newstart: for (let ip=0; ip<points.length; ip++) {
                 let start = points[0];
                 // if (seen[start.k]) continue newstart;
-console.log({gi,start:ip})
+// console.log({gi,start:ip})
                 let point = start;
                 let out = [ point ];
                 seen[point.k] = point;
@@ -1757,7 +1762,7 @@ console.log({gi,start:ip})
                     }
                     break;
                 }
-console.log(out)
+console.log(">>>",out)
             // }
         });
 
