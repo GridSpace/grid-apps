@@ -112,13 +112,12 @@ var gs_base_polygon = exports;
      * Polygon Prototype Functions
      ******************************************************************* */
 
-    PRO.earcut = function(raw) {
-        // gather all points into a single array including inner polys
-        // keeping track of array offset indices for inners
-        let out = [];
-        let holes = [];
-        let last = undefined;
+    // return which plane (x,y,z) this polygon is coplanar with
+    PRO.alignment = function() {
+        if (this._aligned) return this._aligned;
+
         let diff = {x: false, y: false, z: false};
+        let last = undefined;
 
         // flatten points into array for earcut()
         this.points.forEach(p => {
@@ -128,21 +127,46 @@ var gs_base_polygon = exports;
                 diff.z = diff.z || last.z !== p.z;
             }
             last = p;
-            out.push(p.x, p.y, p.z);
         });
 
-        // check which plane polygon arrived in
-        let swapz = diff.x === false ? 0 :
-                    diff.y === false ? 1 : 2;
+        return this._aligned =
+            diff.x === false ? 'yz' :
+            diff.y === false ? 'xz' : 'xy';
+    };
 
-        // swap planar coordinates into X,Y if not in Z plane
-        if (swapz < 2) {
-            for (let i=0; i<out.length; i+=3) {
-                let t = out[i+2];
-                out[i+2] = out[i+swapz];
-                out[i+swapz] = t;
-            }
+    // ensure alignment with XY plane. mark if axes are swapped.
+    PRO.ensureXY = function() {
+        if (this._swapped) return this;
+        switch (this.alignment()) {
+            case 'xy': break;
+            case 'yz': this.swap(true,false)._swapped = true; break;
+            case 'xz': this.swap(false,true)._swapped = true; break;
+            default: throw `invalid alignment`;
         }
+        return this;
+    };
+
+    // restore to original planar alignment if swapped
+    PRO.restoreXY = function() {
+        if (!this._swapped) return this;
+        switch (this.alignment()) {
+            case 'xy': break;
+            case 'yz': this.swap(true,false)._swapped = false; break;
+            case 'xz': this.swap(false,true)._swapped = false; break;
+        }
+        return this;
+    };
+
+    PRO.earcut = function() {
+        // gather all points into a single array including inner polys
+        // keeping track of array offset indices for inners
+        let out = [];
+        let holes = [];
+
+        // flatten points into array for earcut()
+        this.points.forEach(p => {
+            out.push(p.x, p.y, p.z);
+        });
 
         // add hole offsets for inner polygons
         if (this.inner) {
@@ -154,37 +178,20 @@ var gs_base_polygon = exports;
             });
         }
 
-        // perform earcut();
+        // perform earcut()
         let cut = earcut(out,holes,3);
-
-        // un-swap planar coordinates into X,Y if not in Z plane
-        // so that polygons are returned in their original plane
-        if (swapz < 2) {
-            for (let i=0; i<out.length; i+=3) {
-                let t = out[i+2];
-                out[i+2] = out[i+swapz];
-                out[i+swapz] = t;
-            }
-        }
-
         let ret = [];
 
-        if (raw) {
-            for (let i=0; i<cut.length; i+=3) {
-                for (let j=0; j<3; j++) {
-                    let n = cut[i + j] * 3;
-                    p.push(out[n], out[n+1], out[n+2]);
-                }
+        // preserve swaps in new polys
+        for (let i=0; i<cut.length; i+=3) {
+            let p = new Polygon();
+            p._aligned = this._aligned;
+            p._swapped = this._swapped;
+            for (let j=0; j<3; j++) {
+                let n = cut[i + j] * 3;
+                p.add(out[n], out[n+1], out[n+2]);
             }
-        } else {
-            for (let i=0; i<cut.length; i+=3) {
-                let p = new Polygon();
-                for (let j=0; j<3; j++) {
-                    let n = cut[i + j] * 3;
-                    p.add(out[n], out[n+1], out[n+2]);
-                }
-                ret.push(p);
-            }
+            ret.push(p);
         }
 
         return ret;

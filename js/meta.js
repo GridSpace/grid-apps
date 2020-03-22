@@ -24,10 +24,11 @@
 "use strict";
 
 let gs_meta = exports;
+let gs_meta_debug = false;
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
-    // this.transparent = false;
+    this.transparent = gs_meta_debug ? true : false;
 
     let hidden = this.clone();
     hidden.visible = false;
@@ -193,7 +194,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             transparent: true,
             shininess: 100,
             opacity: 0.8,
-            depthFunc: THREE.LessDepth
+            // depthFunc: THREE.LessDepth
         }).motoSetup(),
         faceMaterialSlide = new THREE.MeshPhongMaterial({
             side:THREE.DoubleSide,
@@ -232,7 +233,7 @@ THREE.Face3.prototype.mVisible = function(show) {
             opacity: 0.75,
             transparent: true,
             side: THREE.DoubleSide,
-            depthFunc: THREE.LessDepth
+            // depthFunc: THREE.LessDepth
         }).motoSetup(),
         // ---------------
         UI = {},
@@ -267,6 +268,11 @@ THREE.Face3.prototype.mVisible = function(show) {
         selectable = [], // meshes
         selectedBounds = new Bounds(),
         cubeID = 0;
+
+    let debugGroup = new THREE.Group(),
+        debugAdded = false,
+        debugLayer = new Layer(debugGroup),
+        debugExport = gs_meta_debug;
 
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()
@@ -379,7 +385,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                         s = cf.set,
                         p = cf.cube.pos;
                     hoverSpot.rotation.set(s.rx, s.ry, s.rz);
-                    hoverSpot.position.set(p.x + s.x * 1.05, p.z + s.z * 1.05, -p.y + s.y * 1.05);
+                    hoverSpot.position.set(p.x + s.x * 1.05, p.z + s.z * 1.05, -p.y - s.y * 1.05);
                     SPACE.update(25);
                 }
             } else {
@@ -1610,23 +1616,30 @@ THREE.Face3.prototype.mVisible = function(show) {
         return {vertices: vertices, normals: null};
     }
 
-let debuggroup = new THREE.Group();
-let debugadded = false;
-let layer = new Layer(debuggroup);
-
     function selectionToGeometry2(scale) {
-        let vertices = [], normals = [], faceGroups = [], seen = {}, nid = 0;
+        let faceGroups = [],
+            vertices = [],
+            normals = [],
+            seen = {},
+            valid = {};
 
-layer.clear();
-console.clear();
-if (!debugadded) SPACE.platform.add(debugadded = debuggroup)
-debuggroup.children.slice().forEach(c => debuggroup.remove(c));
+        // limit walk to selected without meshes
+        selected.forEach(cube => {
+            if (!cube.mesh) valid[cube.key] = cube;
+        });
+
+        if (debugExport) {
+            debugLayer.clear();
+            if (!debugAdded) SPACE.platform.add(debugAdded = debugGroup)
+            debugGroup.children.slice().forEach(c => debugGroup.remove(c));
+        }
 
         function walk(cube_face, group) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
             // skip faces facing another cube
-            if (cube.adjacentCube(cube_face)) {
+            let facing = cube.adjacentCube(cube_face);
+            if (facing && valid[facing.key]) {
                 return true;
             }
             // skip seen faces
@@ -1637,10 +1650,7 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
             seen[face_key] = cube_face;
             let sides = [];
             let newgroup = !group;
-            if (newgroup) {
-                group = [];
-                group.id = nid++;
-            }
+            if (newgroup) group = [];
             group.push({pos: cube.pos, key: cube_face.key, sides });
             // walk four directions perpendicular to face
             let skip = [cube_face.key, cube_face.key.reverse()];
@@ -1650,7 +1660,7 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                 // if adjacent cube, check it out
                 let facedir = cube.faces[face_name];
                 let adjacent = cube.adjacentCube(facedir);
-                if (adjacent) {
+                if (adjacent && valid[adjacent.key]) {
                     if (walk(adjacent.faces[cube_face.key], group)) {
                         sides.push(face_name);
                     }
@@ -1711,7 +1721,21 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
             return false;
         }
 
+        // append selected cube meshes
         selected.forEach(cube => {
+            if (!cube.mesh) return;
+            let k = 0,
+                pos = cube.pos,
+                arr = cube.mesh.geometry.attributes.position.array;
+            while (k < arr.length) {
+                vertices.push(arr[k++] + pos.x);
+                vertices.push(arr[k++] + pos.y);
+                vertices.push(arr[k++] + pos.z);
+            }
+        });
+
+        selected.forEach(cube => {
+            if (!valid[cube.key]) return;
             FACES.forEach(face_name => {
                 walk(cube.faces[face_name], null, {});
             });
@@ -1776,18 +1800,19 @@ debuggroup.children.slice().forEach(c => debuggroup.remove(c));
                 out.forEach(p => {
                     poly.add(p.x,p.y,p.z);
                 });
-
-                set.push(poly);
+                set.push(poly.ensureXY());
             }
 
             polys.push(POLY.nest(set));
         });
 
-let cuts = polys.flat().map(p => p.earcut()).flat();
-cuts.forEach(p => layer.poly(p, 0xff0000, true, false));
+        let cuts = polys.flat().map(p => p.earcut()).flat().map(p => p.restoreXY());
 
-layer.render();
-SPACE.refresh();
+        // debug resulting cuts
+        if (debugExport) {
+            cuts.forEach(p => debugLayer.poly(p, 0xff0000, true, false));
+            debugLayer.render(); SPACE.refresh();
+        }
 
         // exports cut polys back to vertices
         cuts.forEach(poly => {
@@ -1886,14 +1911,15 @@ SPACE.refresh();
     }
 
     function downloadSelection2() {
-        // if (selected.length === 0) return alert("make a selection to export");
-        // let name = prompt("Download Name", spaceName);
-        // if (!name) return;
+        if (selected.length === 0) return alert("make a selection to export");
+        let name = debugExport ? 'debug' : prompt("Download Name", spaceName);
+        if (!name) return;
         let scale = unitsToMM(spaceUnits),
-            geo = selectionToGeometry2(scale);//,
-            // stl = new moto.STL().encode(geo.vertices, geo.normals),
-            // blob = new Blob([stl], {type: 'application/octet-binary'}),
-            // save = saveAs(blob, name+".stl");
+            geo = selectionToGeometry2(scale);
+        if (debugExport) return;
+        let stl = new moto.STL().encode(geo.vertices, geo.normals),
+            blob = new Blob([stl], {type: 'application/octet-binary'}),
+            save = saveAs(blob, name+".stl");
     }
 
     function selectAll() {
