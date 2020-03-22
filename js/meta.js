@@ -8,7 +8,6 @@
  * TODO show/hide selection (to edit around, prevent mod, etc)
  * TODO make synth more efficient by only rebuilding if a relevant node has changed
  * TODO grouping and group naming (helps download / batch download)?
- * TODO bit encoding + stl instead of xyz
  * TODO undo/redo stack ... and revert to previous save hotkey
  * TODO improve paint/preproc and preview modes
  * TODO auto-save of workspace, selection and undo/redo stack (on idle)
@@ -24,7 +23,7 @@
 "use strict";
 
 let gs_meta = exports;
-let gs_meta_debug = false;
+let gs_meta_debug = false; // 'line', 'poly', or 'cut'
 
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
@@ -742,7 +741,8 @@ THREE.Face3.prototype.mVisible = function(show) {
                 downloadSelection();
                 break;
             case cca('X'):
-                downloadSelection2()
+                // debug selectionToGeometry
+                selectionToGeometry(unitsToMM(spaceUnits));
                 break;
             case cca('1'): // toggle control left
                 if (evt.ctrlKey) {
@@ -1536,87 +1536,6 @@ THREE.Face3.prototype.mVisible = function(show) {
     }
 
     function selectionToGeometry(scale) {
-        let vertices = [],
-            normals = [],
-            i = 0, cube, j, k, face, pos, off, fix, arr;
-
-        while (i < selected.length) {
-            cube = selected[i++];
-            pos = cube.pos;
-            if (cube.mesh) {
-                let k = 0, arr = cube.mesh.geometry.attributes.position.array;
-                while (k < arr.length) {
-                    vertices.push(arr[k++] + pos.x);
-                    vertices.push(arr[k++] + pos.y);
-                    vertices.push(arr[k++] + pos.z);
-                }
-                continue;
-            }
-            for (j = 0; j < FACES.length; j++) {
-                face = cube.faces[FACES[j]];
-                if (face.inside && face.mark === MARK.NONE && cube.adjacentCube(face).isSelected()) continue;
-                off = FACE[face.key];
-                // output 2 triangles, 6 points, 18 elements
-                if (off.ox) {
-                    fix = pos.x + HALF * off.ox;
-                    arr = [
-                        // triangle 1
-                        [fix, pos.y - HALF, pos.z - HALF],
-                        [fix, pos.y + HALF, pos.z + HALF],
-                        [fix, pos.y + HALF, pos.z - HALF],
-                        // triangle 2
-                        [fix, pos.y - HALF, pos.z - HALF],
-                        [fix, pos.y - HALF, pos.z + HALF],
-                        [fix, pos.y + HALF, pos.z + HALF]
-                    ];
-                    if (off.ox > 0) arr.reverse();
-                }
-                if (off.oy) {
-                    fix = pos.y + HALF * off.oy;
-                    arr = [
-                        // triangle 1
-                        [pos.x - HALF, fix, pos.z - HALF],
-                        [pos.x + HALF, fix, pos.z + HALF],
-                        [pos.x + HALF, fix, pos.z - HALF],
-                        // triangle 2
-                        [pos.x - HALF, fix, pos.z - HALF],
-                        [pos.x - HALF, fix, pos.z + HALF],
-                        [pos.x + HALF, fix, pos.z + HALF]
-                    ];
-                    if (off.oy < 0) arr.reverse();
-                }
-                if (off.oz) {
-                    fix = pos.z + HALF * off.oz;
-                    arr = [
-                        // triangle 1
-                        [pos.x - HALF, pos.y - HALF, fix],
-                        [pos.x + HALF, pos.y + HALF, fix],
-                        [pos.x + HALF, pos.y - HALF, fix],
-                        // triangle 2
-                        [pos.x - HALF, pos.y - HALF, fix],
-                        [pos.x - HALF, pos.y + HALF, fix],
-                        [pos.x + HALF, pos.y + HALF, fix]
-                    ];
-                    if (off.oz > 0) arr.reverse();
-                }
-                for (k = 0; k < arr.length; k++) {
-                    vertices.appendAll(arr[k]);
-                }
-                normals.appendAll([
-                    0,0,0,
-                    0,0,0
-                ]);
-            }
-        }
-        if (scale) {
-            for (i = 0; i < vertices.length; i++) {
-                vertices[i] *= scale;
-            }
-        }
-        return {vertices: vertices, normals: null};
-    }
-
-    function selectionToGeometry2(scale) {
         let faceGroups = [],
             vertices = [],
             normals = [],
@@ -1669,14 +1588,14 @@ THREE.Face3.prototype.mVisible = function(show) {
                 }
             });
             if (newgroup) {
+                let debug = debugExport === 'line';
                 let points = [];
                 let map = {};
                 faceGroups.push({map,points});
                 group.forEach(face => {
                     let pos = face.pos;
                     let fac = FACE[face.key];
-                    // let MUL = 0.9;
-                    let MUL = 1.0;
+                    let MUL = debug ? 0.9 : 1.0;
                     let xyz = {
                         x: pos.x + fac.x * MUL,
                         y: pos.y + fac.y * MUL,
@@ -1715,6 +1634,15 @@ THREE.Face3.prototype.mVisible = function(show) {
                         if (!op2.p) op2.p = [op1]; else op2.p.push(op1);
                         points.push(op1);
                         points.push(op2);
+                        // debug resulting polygon
+                        if (debugExport === 'line') {
+                            debugLayer.poly(new Polygon()
+                                .add(p1.x,p1.y,p1.z)
+                                .add(p2.x,p2.y,p2.z),
+                                0x0000ff, true);
+                            debugLayer.render();
+                            SPACE.refresh();
+                        }
                     });
                 });
             }
@@ -1797,9 +1725,14 @@ THREE.Face3.prototype.mVisible = function(show) {
                 }
 
                 let poly = new Polygon();
-                out.forEach(p => {
-                    poly.add(p.x,p.y,p.z);
-                });
+                out.forEach(p => poly.add(p.x,p.y,p.z));
+
+                // debug resulting polygon
+                if (debugExport === 'poly') {
+                    debugLayer.poly(poly.clone(), 0x0000ff, true);
+                    debugLayer.render(); SPACE.refresh();
+                }
+
                 set.push(poly.ensureXY());
             }
 
@@ -1809,8 +1742,8 @@ THREE.Face3.prototype.mVisible = function(show) {
         let cuts = polys.flat().map(p => p.earcut()).flat().map(p => p.restoreXY());
 
         // debug resulting cuts
-        if (debugExport) {
-            cuts.forEach(p => debugLayer.poly(p, 0xff0000, true, false));
+        if (debugExport === 'cut') {
+            cuts.forEach(p => debugLayer.poly(p, 0xff0000, true));
             debugLayer.render(); SPACE.refresh();
         }
 
@@ -1906,18 +1839,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         let scale = unitsToMM(spaceUnits),
             geo = selectionToGeometry(scale),
             stl = new moto.STL().encode(geo.vertices, geo.normals),
-            blob = new Blob([stl], {type: 'application/octet-binary'}),
-            save = saveAs(blob, name+".stl");
-    }
-
-    function downloadSelection2() {
-        if (selected.length === 0) return alert("make a selection to export");
-        let name = debugExport ? 'debug' : prompt("Download Name", spaceName);
-        if (!name) return;
-        let scale = unitsToMM(spaceUnits),
-            geo = selectionToGeometry2(scale);
-        if (debugExport) return;
-        let stl = new moto.STL().encode(geo.vertices, geo.normals),
             blob = new Blob([stl], {type: 'application/octet-binary'}),
             save = saveAs(blob, name+".stl");
     }
