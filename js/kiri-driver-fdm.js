@@ -221,21 +221,45 @@ var gs_kiri_fdm = exports;
 
                         let polys = [];
                         pa.forEach(p => {
+                            // rotate and test for self-intersection (points under model)
+                            p.ensureXY();
+                            let ox = p._aligned == 'yz' ? 0.1 : 0;
+                            let oy = p._aligned == 'yz' ? 0 : 0.1;
+                            p.forEachPoint(pt => {
+                                let int = p.intersections(
+                                    pt.offset(ox,oy,0),
+                                    pt.offset(ox*10000,oy*10000,0));
+                                if (int.length > 0) {
+                                    pt._under = true;
+                                }
+                            });
+                            p.restoreXY();
+
                             let lastp = undefined;
                             let poly = [];
+                            // look for qualifying segments
                             p.forEachSegment((p1, p2) => {
-                                // return when both below
+                                // eliminate segments that projected up
+                                // intersect with the polygon (bottom faces)
+                                if (p1._under || p2._under) {
+                                    return;
+                                }
+                                // skip when both below layer range
                                 if (p1.z < zb && p2.z < zb) {
                                     return;
                                 }
-                                // return when both above
+                                // skip when both above layer range
                                 if (p1.z > zt && p2.z > zt) {
                                     return;
                                 }
-                                // return when vertical
+                                // skip vertical
                                 if (p1.x === p2.x && p1.y === p2.y) {
                                     return;
                                 }
+                                // skip horizontal
+                                // if (p1.z === p2.z) {
+                                //     return;
+                                // }
                                 // order points lowest to highest
                                 let swap = false;
                                 if (p1.z > p2.z) {

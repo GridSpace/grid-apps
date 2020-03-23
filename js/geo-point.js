@@ -318,6 +318,10 @@ var gs_base_point = exports;
         return BASE.newLine(np1, np2, KEYS.NONE);
     };
 
+    PRO.offset = function(x, y, z) {
+        return newPoint(this.x + x, this.y + y, this.z + z);
+    };
+
     /**
      * checks if a point is inside of a polygon
      * does not check children/holes

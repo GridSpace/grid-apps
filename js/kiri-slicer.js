@@ -11,7 +11,8 @@ var gs_kiri_slicer = exports;
 
     var slicer = self.kiri.slicer = {
         slice: slice,
-        sliceWidget: sliceWidget
+        sliceWidget: sliceWidget,
+        connectLines: connectLines
     };
 
     var KIRI = self.kiri,
@@ -489,11 +490,13 @@ var gs_kiri_slicer = exports;
                 if (topoMode) {
                     var lines = slice.lines, llen = lines.length, idx, line;
                     // shared points causing problems
-                    for (idx=0; idx<llen; idx++) { line = lines[idx];
+                    for (idx=0; idx<llen; idx++) {
+                        line = lines[idx];
                         line.p1 = line.p1.clone();
                         line.p2 = line.p2.clone();
                     }
-                    for (idx=0; idx<llen; idx++) { line = lines[idx];
+                    for (idx=0; idx<llen; idx++) {
+                        line = lines[idx];
                         if (options.swapX) {
                             line.p1.swapXZ();
                             line.p2.swapXZ();
@@ -535,7 +538,7 @@ var gs_kiri_slicer = exports;
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input, index) {
+    function connectLines(input) {
         // map points to all other points they're connected to
         var DBUG = BASE.debug,
             CONF = BASE.config,
@@ -653,7 +656,7 @@ var gs_kiri_slicer = exports;
                 closed = 0,
                 open = 0;
 
-            paths.forEach(function(path, index) {
+            paths.forEach(function(path) {
                 // use longest perimeter vs longest path?
                 if (!longest || path.length > longest.length) longest = path;
                 if (!path.open) closed++; else open++;
