@@ -40,6 +40,7 @@
 
 # CAM
 
+* `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted

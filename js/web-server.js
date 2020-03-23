@@ -1337,4 +1337,13 @@ process.on('SIGHUP', function(sig, code) {
     processExit(code);
 });
 
+process.on('unhandledRejection', (reason, p) => {
+    logger.log({unhandled_rejection: reason, promise: p});
+});
+
+process.on('uncaughtException', (err) => {
+    logger.log({uncaught_exception: err});
+    // process.exit(1);
+});
+
 processLoad();
