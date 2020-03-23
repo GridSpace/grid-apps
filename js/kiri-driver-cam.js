@@ -1252,9 +1252,12 @@ var gs_kiri_cam = exports;
         }
 
         function camOut(point, cut) {
+            let wmx = widget.mesh.position.x;
+            let wmy = widget.mesh.position.y;
+
             point = point.clone();
-            point.x += widget.mesh.position.x;
-            point.y += widget.mesh.position.y;
+            point.x += wmx;
+            point.y += wmy;
             point.z += zadd;
 
             if (nextIsMove) {
@@ -1270,7 +1273,7 @@ var gs_kiri_cam = exports;
                     isMove = !cut;
                 // drop points too close together
                 if (deltaXY < 0.001 && point.z === lastPoint.z) {
-                    // console.trace(["drop dup",lastPoint,point]);
+                    console.trace(["drop dup",lastPoint,point]);
                     return;
                 }
                 if (isMove && deltaXY <= toolDiamMove) {
@@ -1291,10 +1294,10 @@ var gs_kiri_cam = exports;
                             getTopoZPathMax(
                                 widget,
                                 toolProfile,
-                                lastPoint.x,
-                                lastPoint.y,
-                                point.x,
-                                point.y) + zadd,
+                                lastPoint.x - wmx,
+                                lastPoint.y - wmy,
+                                point.x - wmx,
+                                point.y - wmy) + zadd,
                             point.z,
                             lastPoint.z) : zmax,
                         mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,

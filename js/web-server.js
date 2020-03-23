@@ -737,7 +737,8 @@ function serveCode(req, res, code) {
  ********************************************* */
 
 let debug = false,
-    nolocal = false
+    nolocal = false,
+    procexit = false,
     port = 8080,
     args = process.argv.slice(2);
 
@@ -1190,13 +1191,18 @@ function open_logger(options) {
     function close_file_stream() {
         if (logstream) {
             logstream.end();
-            logstream.close();
             logstream = null;
         }
     }
 
+    function emit_log(obj) {
+        helper.log(obj);
+        emit(obj);
+    }
+
     function emit(obj) {
         if (exiting) {
+            // console.log({dir: opt.dir, exiting_skip_log: obj})
             return;
         }
         let next_pattern = moment().format(pattern);
@@ -1216,7 +1222,7 @@ function open_logger(options) {
 
     exits.push(exit);
 
-    return { emit, close: close_file_stream };
+    return { emit, log: emit_log, close: close_file_stream };
 }
 
 function processLoad() {
@@ -1230,7 +1236,11 @@ function processLoad() {
 }
 
 function processExit(code) {
-    logger.emit({exit: code, registered: exits.length});
+    if (procexit) {
+        return;
+    }
+    procexit = true;
+    logger.log({proc_exit: code, registered: exits.length, uptime: time() - startTime});
     while (exits.length) {
         try {
             exits.shift()(code);
@@ -1238,7 +1248,9 @@ function processExit(code) {
             log({on_exit_fail: e});
         }
     }
-    process.exit();
+    setTimeout(() => {
+        process.exit();
+    }, 500);
 }
 
 /* *********************************************
@@ -1316,14 +1328,12 @@ process.on('beforeExit', processExit);
 process.on('exit', processExit);
 
 process.on('SIGINT', function(sig, code) {
-    helper.log("caught sigint");
-    logger.emit({signal: sig, code});
+    logger.log({exit: code, signal: sig});
     processExit(code);
 });
 
 process.on('SIGHUP', function(sig, code) {
-    helper.log("caught sighup");
-    logger.emit({signal: sig, code});
+    logger.log({exit: code, signal: sig});
     processExit(code);
 });
 
