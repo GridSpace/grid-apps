@@ -366,12 +366,48 @@ var gs_kiri_cam = exports;
             newlines,
             newtop,
             newtrace,
+            sliceout,
+            latent,
+            lastP,
             slice, lx, ly, lv,
             startTime = time();
 
         // return highest z within tools radius
         function maxzat(x,y) {
             return getMaxTopoToolZ(topo, toolOffset, x, y);
+        }
+
+        function push_point(x,y,z) {
+            let newP = newPoint(x,y,z);
+            if (lastP && lastP.z === z) {
+                if (curvesOnly) {
+                    end_poly();
+                } else {
+                    latent = newP;
+                }
+            } else {
+                if (latent) {
+                    newtrace.push(latent);
+                    latent = null;
+                }
+                newtrace.push(newP);
+            }
+            lastP = newP;
+        }
+
+        function end_poly() {
+            if (latent) {
+                newtrace.push(latent);
+            }
+            if (newtrace.length > 0) {
+                // add additional constraint on min perimeter()
+                if (newtrace.length > 1) {
+                    sliceout.push(newtrace);
+                }
+                newtrace = newPolygon().setOpen();
+            }
+            latent = undefined;
+            lastP = undefined;
         }
 
         function topoSlicesDone(slices) {
@@ -430,8 +466,7 @@ var gs_kiri_cam = exports;
                     slice.lines = newlines = [];
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
-                    let sliceout = slice.tops[0].traces = [ ];
-                    let latent;
+                    sliceout = slice.tops[0].traces = [ ];
                     for (y = bounds.min.y; y < bounds.max.y; y += resolution) {
                         gridv = data[gridx * stepsy + gridy];
                         if (gridv === undefined) {
@@ -441,20 +476,10 @@ var gs_kiri_cam = exports;
                         }
                         if (gridv === 0) {
                             // off part
-                            if (latent) {
-                                newtrace.push(latent);
-                            }
-                            if (newtrace.length > 0) {
-                                sliceout.push(newtrace);
-                                newtrace = newPolygon().setOpen();
-                                latent = null;
-                                ly = 0;
-                            }
+                            end_poly();
                             gridy++;
+                            ly = 0;
                             continue;
-                        }
-                        if (gridy === 0 || newtrace.length === 0) {
-                            ltv = undefined;
                         }
                         tv = maxzat(gridx, gridy);
                         if (ly) {
@@ -465,39 +490,22 @@ var gs_kiri_cam = exports;
                             let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
                             if (ang > maxangle) {
-                                if (latent) {
-                                    newtrace.push(latent);
-                                    latent = null;
-                                }
                                 if (ltv > tv) {
                                     // down = forward,down
-                                    newtrace.push(newPoint(x,y,ltv));
+                                    push_point(x,y,ltv);
                                 } else {
                                     // up = up,forward
-                                    newtrace.push(newPoint(x,ly,tv));
+                                    push_point(x,ly,tv);
                                 }
                             }
                         }
-                        if (tv === ltv) {
-                            latent = newPoint(x,y,tv);
-                        } else {
-                            if (latent) {
-                                newtrace.push(latent);
-                                latent = null;
-                            }
-                            newtrace.push(newPoint(x,y,tv));
-                        }
+                        push_point(x,y,tv);
                         ly = y;
                         lv = gridv;
                         ltv = tv;
                         gridy++;
                     }
-                    if (latent) {
-                        newtrace.push(latent);
-                    }
-                    if (newtrace.length > 0) {
-                        sliceout.push(newtrace);
-                    }
+                    end_poly();
                     if (sliceout.length > 0) {
                         newslices.push(slice);
                     }
@@ -518,8 +526,7 @@ var gs_kiri_cam = exports;
                     slice.lines = newlines = [];
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
-                    let sliceout = slice.tops[0].traces = [ ];
-                    let latent;
+                    sliceout = slice.tops[0].traces = [ ];
                     for (x = bounds.min.x; x <= bounds.max.x; x += resolution) {
                         gridv = data[gridx * stepsy + gridy];
                         if (gridv === undefined) {
@@ -529,22 +536,12 @@ var gs_kiri_cam = exports;
                         }
                         if (gridv === 0) {
                             // off part
-                            if (latent) {
-                                newtrace.push(latent);
-                            }
-                            if (newtrace.length > 0) {
-                                sliceout.push(newtrace);
-                                newtrace = newPolygon().setOpen();
-                                latent = null;
-                                lx = 0;
-                            }
+                            end_poly();
                             gridx++;
+                            lx = 0;
                             continue;
                         }
                         tv = maxzat(gridx, gridy);
-                        if (gridx === 0 || newtrace.length === 0) {
-                            ltv = undefined;
-                        }
                         if (lx) {
                             if (mesh) newlines.push(newLine(
                                 newPoint(lx,y,lv),
@@ -553,42 +550,24 @@ var gs_kiri_cam = exports;
                             let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
                             if (ang > maxangle) {
-                                if (latent) {
-                                    newtrace.push(latent);
-                                    latent = null;
-                                }
                                 if (ltv > tv) {
                                     // down = forward,down
-                                    newtrace.push(newPoint(x,y,ltv));
+                                    push_point(x,y,ltv);
                                 } else {
                                     // up = up,forward
-                                    newtrace.push(newPoint(lx,y,tv));
+                                    push_point(lx,y,tv);
                                 }
                             }
                         }
-                        if (tv === ltv) {
-                            latent = newPoint(x,y,tv);
-                        } else {
-                            if (latent) {
-                                newtrace.push(latent);
-                                latent = null;
-                            }
-                            newtrace.push(newPoint(x,y,tv));
-                        }
+                        push_point(x,y,tv);
                         lx = x;
                         lv = gridv;
                         ltv = tv;
                         gridx++;
                     }
-                    if (latent) {
-                        newtrace.push(latent);
-                    }
-                    if (newtrace.length > 0) {
-                        sliceout.push(newtrace);
-                    }
+                    end_poly();
                     if (sliceout.length > 0) {
                         newslices.push(slice);
-                        // console.log(sliceout.map(v => v.length))
                     }
                     gridy = Math.round(((y - bounds.min.y + toolStep) / boundsY) * stepsy);
                     onupdate(0.85 + (gridy/stepsy) * 0.15, "linear y");
