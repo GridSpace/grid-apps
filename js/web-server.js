@@ -1343,7 +1343,6 @@ process.on('unhandledRejection', (reason, p) => {
 
 process.on('uncaughtException', (err) => {
     logger.log({uncaught_exception: err});
-    // process.exit(1);
 });
 
 processLoad();

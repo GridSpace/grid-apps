@@ -171,12 +171,6 @@ var gs_kiri_cam = exports;
         return zmax;
     };
 
-    const lastTopo = {
-        lx:0,
-        ly:0,
-        lr:undefined
-    };
-
     /**
      * x,y are in topo grid int coordinates
      */
@@ -185,20 +179,11 @@ var gs_kiri_cam = exports;
 
         const sx = topo.stepsx, sy = topo.stepsy;
 
-        let {lx, ly, lr} = lastTopo;
-        let dx = x - lx;
-        let dy = y - ly;
-
         while (i < profile.length) {
             // tool profile point x, y, and z offsets
             let tx = profile[i++];
             let ty = profile[i++];
             let tz = profile[i++];
-            // only check points in the direction of travel
-            if (dx == -1 && tx > 0) continue;
-            if (dx ==  1 && tx < 0) continue;
-            if (dy == -1 && ty > 0) continue;
-            if (dy ==  1 && ty < 0) continue;
             // update with tool profile point offset
             tx += x;
             ty += y;
@@ -223,11 +208,7 @@ var gs_kiri_cam = exports;
             mz = Math.max(tz + gv, mz);
         }
 
-        lastTopo.lx = x;
-        lastTopo.ly = y;
-        lastTopo.lr = Math.max(mz,0);//mz >= 0.0 ? mz : topo.bounds.max.z;
-
-        return lastTopo.lr;
+        return Math.max(mz,0);//mz >= 0.0 ? mz : topo.bounds.max.z;
     };
 
     /**

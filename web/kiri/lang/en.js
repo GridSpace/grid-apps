@@ -153,7 +153,7 @@ kiri.lang['en-us'] = {
     fi_type:        "type",
     fi_pcnt_s:      "percentage",
     fi_pcnt_l:      "fill density values\n0.0 - 1.0",
-    fi_angl_s:      "solid angle",
+    fi_angl_s:      "start angle",
     fi_angl_l:      "base angle in degrees",
     fi_over_s:      "overlap",
     fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
