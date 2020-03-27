@@ -518,10 +518,13 @@ var gs_kiri_widget = exports;
             startTime = UTIL.time();
 
         widget.settings = settings;
+        widget.clearSlices();
 
         onupdate(0.0001, "slicing");
 
         if (remote) {
+            // in case result of slice is nothing, do not preserve previous
+            widget.slices = []
 
             // executed from kiri.js
             KIRI.work.slice(settings, this, function (reply) {
@@ -540,10 +543,6 @@ var gs_kiri_widget = exports;
                 if (reply.send_end) {
                     widget.stats.load_time = widget.xfer.start - reply.send_end;
                 }
-                if (reply.slices) {
-                    widget.clearSlices();
-                    widget.slices = []
-                };
                 if (reply.slice) {
                     widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
                 }
@@ -562,8 +561,6 @@ var gs_kiri_widget = exports;
         } else {
 
             // executed from kiri-worker.js
-            widget.clearSlices();
-
             var catchdone = function(error) {
                 if (error) {
                     return ondone(error);
