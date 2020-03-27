@@ -336,6 +336,7 @@ var gs_kiri_cam = exports;
             tool = getToolById(settings, proc.finishingTool),
             toolStep = diameter * proc.finishingOver,
             traceJoin = diameter / 2,
+            pocketOnly = proc.camPocketOnlyFinish,
             bounds = widget.getBoundingBox().clone(),
             minX = bounds.min.x,// - diameter,
             maxX = bounds.max.x,// + diameter,
@@ -462,9 +463,14 @@ var gs_kiri_cam = exports;
                     newtrace = newPolygon().setOpen();
                     sliceout = slice.tops[0].traces = [ ];
                     for (y = minY; y < maxY; y += resolution) {
+                        if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
+                            end_poly();
+                            gridy++;
+                            ly = 0;
+                            continue;
+                        }
                         tv = maxzat(gridx, gridy);
                         if (tv === 0) {
-                            // off part
                             end_poly();
                             gridy++;
                             ly = 0;
@@ -514,9 +520,14 @@ var gs_kiri_cam = exports;
                     newtrace = newPolygon().setOpen();
                     sliceout = slice.tops[0].traces = [ ];
                     for (x = minX; x <= maxX; x += resolution) {
+                        if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
+                            end_poly();
+                            gridx++;
+                            ly = 0;
+                            continue;
+                        }
                         tv = maxzat(gridx, gridy);
                         if (tv === 0) {
-                            // off part
                             end_poly();
                             gridx++;
                             lx = 0;
