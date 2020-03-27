@@ -181,12 +181,9 @@ var gs_kiri_cam = exports;
 
         while (i < profile.length) {
             // tool profile point x, y, and z offsets
-            let tx = profile[i++];
-            let ty = profile[i++];
+            let tx = profile[i++] + x;
+            let ty = profile[i++] + y;
             let tz = profile[i++];
-            // update with tool profile point offset
-            tx += x;
-            ty += y;
             // if outside max topo steps, skip
             if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) {
                 continue;
@@ -470,11 +467,11 @@ var gs_kiri_cam = exports;
                     for (y = bounds.min.y; y < bounds.max.y; y += resolution) {
                         gridv = data[gridx * stepsy + gridy];
                         if (gridv === undefined) {
-                            // off topo (why?)
+                            // off topo
                             gridy++;
                             continue;
                         }
-                        if (gridv === 0) {
+                        if (!curvesOnly && gridv === 0) {
                             // off part
                             end_poly();
                             gridy++;
@@ -530,11 +527,11 @@ var gs_kiri_cam = exports;
                     for (x = bounds.min.x; x <= bounds.max.x; x += resolution) {
                         gridv = data[gridx * stepsy + gridy];
                         if (gridv === undefined) {
-                            // off topo (why?)
+                            // off topo
                             gridx++;
                             continue;
                         }
-                        if (gridv === 0) {
+                        if (!curvesOnly && gridv === 0) {
                             // off part
                             end_poly();
                             gridx++;
