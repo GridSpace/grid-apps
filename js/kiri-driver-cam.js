@@ -184,20 +184,15 @@ var gs_kiri_cam = exports;
             let tx = profile[i++] + x;
             let ty = profile[i++] + y;
             let tz = profile[i++];
-            // if outside max topo steps, skip
             if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) {
-                continue;
-            }
-            // lookup grid value @ tx, ty
-            gv = topo.data[tx * sy + ty];
-            // outside the topo
-            if (gv === undefined) {
-                console.log("outside");
-                continue;
+                // if outside max topo steps, use 0
+                gv = 0;
+            } else {
+                // lookup grid value @ tx, ty
+                gv = topo.data[tx * sy + ty] || 0;
             }
             // inside the topo but off the part
             if (floormax && gv === 0) {
-                // console.log("off topo");
                 // return topo.bounds.max.z;
                 gv = topo.bounds.max.z;
             }
@@ -205,7 +200,7 @@ var gs_kiri_cam = exports;
             mz = Math.max(tz + gv, mz);
         }
 
-        return Math.max(mz,0);//mz >= 0.0 ? mz : topo.bounds.max.z;
+        return Math.max(mz,0);
     };
 
     /**
@@ -342,8 +337,12 @@ var gs_kiri_cam = exports;
             toolStep = diameter * proc.finishingOver,
             traceJoin = diameter / 2,
             bounds = widget.getBoundingBox().clone(),
-            boundsX = bounds.max.x - bounds.min.x,
-            boundsY = bounds.max.y - bounds.min.y,
+            minX = bounds.min.x,// - diameter,
+            maxX = bounds.max.x,// + diameter,
+            minY = bounds.min.y,// - diameter,
+            maxY = bounds.max.y,// + diameter,
+            boundsX = maxX - minX,
+            boundsY = maxY - minY,
             maxangle = proc.finishingAngle,
             curvesOnly = proc.finishCurvesOnly,
             R2A = 180 / Math.PI,
@@ -366,7 +365,7 @@ var gs_kiri_cam = exports;
             sliceout,
             latent,
             lastP,
-            slice, lx, ly, lv,
+            slice, lx, ly,
             startTime = time();
 
         // return highest z within tools radius
@@ -412,8 +411,6 @@ var gs_kiri_cam = exports;
                 gridy,
                 gridi, // index
                 gridv, // value
-                miny = bounds.min.y,
-                maxy = bounds.max.y,
                 zMin = MAX(bounds.min.z, outp.camZBottom) + 0.0001,
                 x, y, tv, ltv;
 
@@ -423,7 +420,7 @@ var gs_kiri_cam = exports;
                     lines = slice.lines;
                 gridy = 0;
                 // slices have x/z swapped
-                for (y = miny; y <= maxy; y += resolution) {
+                for (y = minY; y <= maxY; y += resolution) {
                     gridi = gridx * stepsy + gridy;
                     gridv = data[gridi] || 0;
                     // strategy using raw lines (faster slice, but more lines)
@@ -455,8 +452,8 @@ var gs_kiri_cam = exports;
             if (proc.finishingXOn) {
                 startTime = time();
                 // emit slice per X
-                gridx = 0;
-                for (x = bounds.min.x; x <= bounds.max.x; x += toolStep) {
+                for (x = minX; x <= maxX; x += toolStep) {
+                    gridx = Math.round(((x - minX) / boundsX) * stepsx);
                     ly = gridy = 0;
                     slice = newSlice(gridx, mesh.newGroup ? mesh.newGroup() : null);
                     slice.camMode = CPRO.FINISH_X;
@@ -464,25 +461,19 @@ var gs_kiri_cam = exports;
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
                     sliceout = slice.tops[0].traces = [ ];
-                    for (y = bounds.min.y; y < bounds.max.y; y += resolution) {
-                        gridv = data[gridx * stepsy + gridy];
-                        if (gridv === undefined) {
-                            // off topo
-                            gridy++;
-                            continue;
-                        }
-                        if (!curvesOnly && gridv === 0) {
+                    for (y = minY; y < maxY; y += resolution) {
+                        tv = maxzat(gridx, gridy);
+                        if (tv === 0) {
                             // off part
                             end_poly();
                             gridy++;
                             ly = 0;
                             continue;
                         }
-                        tv = maxzat(gridx, gridy);
                         if (ly) {
                             if (mesh) newlines.push(newLine(
-                                newPoint(x,ly,lv),
-                                newPoint(x,y,gridv)
+                                newPoint(x,ly,ltv),
+                                newPoint(x,y,tv)
                             ));
                             let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
@@ -498,7 +489,6 @@ var gs_kiri_cam = exports;
                         }
                         push_point(x,y,tv);
                         ly = y;
-                        lv = gridv;
                         ltv = tv;
                         gridy++;
                     }
@@ -506,7 +496,6 @@ var gs_kiri_cam = exports;
                     if (sliceout.length > 0) {
                         newslices.push(slice);
                     }
-                    gridx = Math.round(((x - bounds.min.x + toolStep) / boundsX) * stepsx);
                     onupdate(0.70 + (gridx/stepsx) * 0.15, "linear x");
                 }
             }
@@ -515,8 +504,8 @@ var gs_kiri_cam = exports;
             if (proc.finishingYOn) {
                 startTime = time();
                 // emit slice per Y
-                gridy = 0;
-                for (y = bounds.min.y; y < bounds.max.y; y += toolStep) {
+                for (y = minY; y < maxY; y += toolStep) {
+                    gridy = Math.round(((y - minY) / boundsY) * stepsy);
                     lx = gridx = 0;
                     slice = newSlice(gridy, mesh.newGroup ? mesh.newGroup() : null);
                     slice.camMode = CPRO.FINISH_Y;
@@ -524,25 +513,19 @@ var gs_kiri_cam = exports;
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
                     sliceout = slice.tops[0].traces = [ ];
-                    for (x = bounds.min.x; x <= bounds.max.x; x += resolution) {
-                        gridv = data[gridx * stepsy + gridy];
-                        if (gridv === undefined) {
-                            // off topo
-                            gridx++;
-                            continue;
-                        }
-                        if (!curvesOnly && gridv === 0) {
+                    for (x = minX; x <= maxX; x += resolution) {
+                        tv = maxzat(gridx, gridy);
+                        if (tv === 0) {
                             // off part
                             end_poly();
                             gridx++;
                             lx = 0;
                             continue;
                         }
-                        tv = maxzat(gridx, gridy);
                         if (lx) {
                             if (mesh) newlines.push(newLine(
-                                newPoint(lx,y,lv),
-                                newPoint(x,y,gridv)
+                                newPoint(lx,y,ltv),
+                                newPoint(x,y,tv)
                             ));
                             let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                             // over max angle, turn into square edge (up or down)
@@ -558,7 +541,6 @@ var gs_kiri_cam = exports;
                         }
                         push_point(x,y,tv);
                         lx = x;
-                        lv = gridv;
                         ltv = tv;
                         gridx++;
                     }
@@ -566,7 +548,6 @@ var gs_kiri_cam = exports;
                     if (sliceout.length > 0) {
                         newslices.push(slice);
                     }
-                    gridy = Math.round(((y - bounds.min.y + toolStep) / boundsY) * stepsy);
                     onupdate(0.85 + (gridy/stepsy) * 0.15, "linear y");
                 }
             }
