@@ -50,17 +50,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         // ---------------
-        widget_selected_color = 0xbbff00,
-        widget_deselected_color = 0xffff00,
-        widget_slicing_color = 0xffaaaa,
-        widget_cam_preview_color = 0x0055bb,
-        preview_opacity_cam = 0.25,
-        preview_opacity = 0.0,
-        model_opacity = 1.0,
-        slicing_opacity = 0.5,
-        sliced_opacity = 0.0,
-        sliced_opacity_cam = 0.25,
-        // ---------------
         renderMode = 4,
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
@@ -116,7 +105,17 @@ self.kiri.copyright = exports.COPYRIGHT;
     };
 
     const color = {
-        wireframe: 0x444444
+        wireframe: 0x444444,
+        selected: 0xbbff00,
+        deselected: 0xffff00,
+        slicing: 0xffaaaa,
+        preview_opacity: 0.0,
+        model_opacity: 1.0,
+        slicing_opacity: 0.5,
+        sliced_opacity: 0.0,
+        cam_preview: 0x0055bb,
+        cam_preview_opacity: 0.25,
+        cam_sliced_opacity: 0.25
     };
 
     const opacity = {
@@ -488,7 +487,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function hideSlices() {
         var showing = false;
-        setOpacity(model_opacity);
+        setOpacity(color.model_opacity);
         forAllWidgets(function(widget) {
             widget.setWireframe(false);
             showing = widget.hideSlices() || showing;
@@ -642,12 +641,12 @@ self.kiri.copyright = exports.COPYRIGHT;
         saveSettings();
 
         if (MODE === MODES.CAM) {
-            setOpacity(preview_opacity_cam);
+            setOpacity(color.cam_preview_opacity);
             forAllWidgets(function(widget) {
-                widget.setColor(widget_cam_preview_color);
+                widget.setColor(color.cam_preview);
             });
         } else {
-            setOpacity(preview_opacity);
+            setOpacity(color.preview_opacity);
         }
 
         currentPrint = kiri.newPrint(settings, WIDGETS);
@@ -720,7 +719,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         // require topo be sent back from worker for local printing
         settings.synth.sendTopo = false;
 
-        setOpacity(slicing_opacity);
+        setOpacity(color.slicing_opacity);
 
         // for each widget, slice
         forAllWidgets(function(widget) {
@@ -731,15 +730,15 @@ self.kiri.copyright = exports.COPYRIGHT;
                 lastMsg;
 
             widget.stats.progress = 0;
-            widget.setColor(widget_slicing_color);
+            widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
                 var mark = UTIL.time();
                 // on done
                 widget.render(renderMode, MODE === MODES.CAM);
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, opacity.wireframe);
-                widget.setOpacity(settings.mode === 'CAM' ? sliced_opacity_cam : sliced_opacity);
-                widget.setColor(widget_deselected_color);
+                widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
+                widget.setColor(color.deselected);
                 // update UI info
                 if (sliced) {
                     // update segment time
@@ -756,7 +755,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 if (--countdown === 0 || error || errored) {
                     setProgress(0);
                     showSlices(preserveLayer);
-                    setOpacity(settings.mode === 'CAM' ? sliced_opacity_cam : sliced_opacity);
+                    setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
@@ -767,7 +766,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 if (error && !errored) {
                     errored = true;
                     setViewMode(VIEWS.ARRANGE);
-                    setOpacity(model_opacity);
+                    setOpacity(color.model_opacity);
                     platform.deselect();
                     alert2(error);
                 }
@@ -965,7 +964,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             if (!mesh.material.visible) return;
             if (!shift) platform.deselect();
             selectedMeshes.push(mesh);
-            widget.setColor(widget_selected_color);
+            widget.setColor(color.selected);
             meshUpdateInfo(mesh);
         }
         platformUpdateSelected();
@@ -996,7 +995,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             si = selectedMeshes.indexOf(mesh),
             sel = (si >= 0);
         if (sel) selectedMeshes.splice(si,1);
-        widget.setColor(widget_deselected_color);
+        widget.setColor(color.deselected);
         platformUpdateSelected();
         SPACE.update();
         meshUpdateInfo();
