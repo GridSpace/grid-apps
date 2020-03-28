@@ -58,7 +58,7 @@ var gs_kiri_init = exports;
         // skip sample object load in onshape (or any script postload)
         if (!SDB[SEED]) {
             SDB[SEED] = new Date().getTime();
-            if (!SETUP.s) {
+            if (!SETUP.s && API.feature.seed) {
                 platform.load_stl("/obj/cube.stl", function(vert) {
                     CATALOG.putFile("sample cube.stl", vert);
                     platform.compute_max_z();
@@ -1679,7 +1679,7 @@ var gs_kiri_init = exports;
         API.view.set(VIEWS.ARRANGE);
 
         // add ability to override
-        API.show.controls(true);
+        API.show.controls(API.feature.controls);
 
         // set initial layer slider size
         API.dialog.update();

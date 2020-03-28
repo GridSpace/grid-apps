@@ -73,6 +73,11 @@ self.kiri.copyright = exports.COPYRIGHT;
     // add show() to catalog for API
     CATALOG.show = showCatalog;
 
+    const feature = {
+        seed: true,
+        controls: true
+    };
+
     const selection = {
         opacity: setOpacity,
         move: moveSelection,
@@ -106,6 +111,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     const color = {
         wireframe: 0x444444,
+        wireframe_opacity: 0.25,
         selected: 0xbbff00,
         deselected: 0xffff00,
         slicing: 0xffaaaa,
@@ -116,10 +122,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         cam_preview: 0x0055bb,
         cam_preview_opacity: 0.25,
         cam_sliced_opacity: 0.25
-    };
-
-    const opacity = {
-        wireframe: 0.25
     };
 
     const API = KIRI.api = {
@@ -174,6 +176,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             alerts: updateAlerts,
             settings: triggerSettingsEvent
         },
+        feature,
         function: {
             slice: prepareSlices,
             print: preparePrint,
@@ -196,7 +199,6 @@ self.kiri.copyright = exports.COPYRIGHT;
             set: setMode,
             switch: switchMode
         },
-        opacity,
         print: {
             get: function() { return currentPrint },
             clear: clearPrint
@@ -736,7 +738,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 // on done
                 widget.render(renderMode, MODE === MODES.CAM);
                 // clear wireframe
-                widget.setWireframe(false, color.wireframe, opacity.wireframe);
+                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                 widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
                 widget.setColor(color.deselected);
                 // update UI info
