@@ -415,7 +415,10 @@ var gs_kiri_widget = exports;
             pos.y += (y || 0);
             pos.z += (z || 0);
         }
-        if (x || y || z) this.modified = true;
+        if (x || y || z) {
+            this.modified = true;
+            KIRI.api.event.emit('widget.move', {widget: this, pos});
+        }
     };
 
     /**

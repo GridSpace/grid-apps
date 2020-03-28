@@ -260,7 +260,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     Stats.prototype.save = function(quiet) {
         this.db['stats'] = o2js(this.obj);
         if (!quiet) {
-            sendOnEvent('stats', this.obj);
+            API.event.emit('stats', this.obj);
         }
         return this;
     };
@@ -361,7 +361,7 @@ self.kiri.copyright = exports.COPYRIGHT;
      }
 
      function triggerSettingsEvent() {
-         sendOnEvent('settings', settings);
+         API.event.emit('settings', settings);
      }
 
     function isSecure(proto) {
@@ -964,6 +964,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             if (!mesh.material.visible) return;
             if (!shift) platform.deselect();
             selectedMeshes.push(mesh);
+            API.event.emit('widget.select', widget);
             widget.setColor(color.selected);
             meshUpdateInfo(mesh);
         }
@@ -994,7 +995,10 @@ self.kiri.copyright = exports.COPYRIGHT;
         var mesh = widget.mesh,
             si = selectedMeshes.indexOf(mesh),
             sel = (si >= 0);
-        if (sel) selectedMeshes.splice(si,1);
+        if (sel) {
+            selectedMeshes.splice(si,1);
+            API.event.emit('widget.deselect', widget);
+        }
         widget.setColor(color.deselected);
         platformUpdateSelected();
         SPACE.update();
@@ -1035,6 +1039,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         platform.compute_max_z();
         if (nolayout) return;
         if (layoutOnAdd) platform.layout();
+        API.event.emit('widget.add', widget);
     }
 
     function platformDelete(widget) {
@@ -1057,6 +1062,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (MODE !== MODES.FDM) platform.layout();
         SPACE.update();
         platformUpdateSelected();
+        API.event.emit('widget.delete', widget);
     }
 
     function platformSelectAll() {
