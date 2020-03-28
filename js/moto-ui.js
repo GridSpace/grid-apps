@@ -101,7 +101,7 @@ var gs_moto_ui = exports;
         addModeControls(row, options);
         groupName = label;
         lastGroup = groups[label] = [];
-        groupShow[label] = !(SDB[dbkey] === 'false' || SDB[dbkey] === undefined);
+        groupShow[label] = SDB[dbkey] !== 'false';
         row.onclick = function() {
             collapseGroup(label, dbkey);
         };
