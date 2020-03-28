@@ -240,7 +240,6 @@ th, tr, td, span, div, label, button {
 #container {
     width: 100%;
     height: 100%;
-    xoverflow: hidden;
 }
 #control-left {
     display: none;

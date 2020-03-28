@@ -12,6 +12,7 @@ var gs_moto_ui = exports;
     let SELF = self,
         lastGroup = null,
         lastDiv = null,
+        addTo = null,
         hideAction = null,
         inputAction = null,
         groups = {},
@@ -24,7 +25,8 @@ var gs_moto_ui = exports;
         SDB = moto.KV,
         DOC = SELF.document,
         prefix = "tab",
-        NOMODE = "nomode";
+        NOMODE = "nomode",
+        compact = false;
 
     SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
 
@@ -69,18 +71,19 @@ var gs_moto_ui = exports;
     }
 
     function checkpoint() {
-        return { lastDiv, lastGroup };
+        return { addTo, lastDiv, lastGroup };
     }
 
     function restore(opt) {
         if (opt) {
+            addTo = opt.addTo;
             lastDiv = opt.lastDiv;
             lastGroup = opt.lastGroup;
         }
     }
 
     function setGroup(div) {
-        lastDiv = div;
+        addTo = lastDiv = div;
         return div;
     }
 
@@ -94,6 +97,15 @@ var gs_moto_ui = exports;
             a = DOC.createElement('a'),
             dbkey = `${prefix}-show-${label}`;
 
+        if (compact) {
+            let pop = DOC.createElement('div');
+            pop.setAttribute('class','popper');
+            row.appendChild(pop);
+            addTo = pop;
+        } else {
+            addTo = lastDiv;
+        }
+
         div.appendChild(row);
         row.setAttribute("class", "grouphead noselect");
         row.appendChild(a);
@@ -105,6 +117,7 @@ var gs_moto_ui = exports;
         row.onclick = function() {
             collapseGroup(label, dbkey);
         };
+
         return row;
     }
 
@@ -195,6 +208,7 @@ var gs_moto_ui = exports;
     function newDiv(options) {
         let div = DOC.createElement('div');
         addModeControls(div, options);
+        addTo.appendChild(div);
         lastGroup.push(div);
         div._group = groupName;
         return div;
@@ -262,7 +276,6 @@ var gs_moto_ui = exports;
         addModeControls(btn, opt);
         addId(btn, opt);
 
-        lastDiv.appendChild(row);
         row.appendChild(newLabel(label));
         row.appendChild(btn);
         row.setAttribute("class", "flow-row");
@@ -280,7 +293,6 @@ var gs_moto_ui = exports;
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
             action = inputAction;
 
-        lastDiv.appendChild(row);
         row.appendChild(newLabel(label));
         row.appendChild(ip);
         row.setAttribute("class", "flow-row");
@@ -345,7 +357,6 @@ var gs_moto_ui = exports;
             hide = options && options.hide,
             action = inputAction;
 
-        lastDiv.appendChild(row);
         if (label) row.appendChild(newLabel(label));
         row.appendChild(ip);
         row.setAttribute("class", "flow-row");
@@ -372,7 +383,6 @@ var gs_moto_ui = exports;
             hide = options && options.hide,
             action = inputAction;
 
-        lastDiv.appendChild(row);
         row.appendChild(newLabel(label));
         row.appendChild(ip);
         row.setAttribute("source", source || "tools");
@@ -395,8 +405,9 @@ var gs_moto_ui = exports;
             ip = DOC.createElement('input'),
             hide = options && options.hide;
 
-        lastDiv.appendChild(row);
-        if (label) row.appendChild(newLabel(label));
+        if (label) {
+            row.appendChild(newLabel(label));
+        }
         row.appendChild(ip);
         row.setAttribute("class", "flow-row");
         row.style.display = hide ? 'none' : '';
@@ -419,7 +430,6 @@ var gs_moto_ui = exports;
         let row = newDiv(options),
             hide = options && options.hide;
 
-        lastDiv.appendChild(row);
         row.setAttribute("class", "flow-row");
         row.style.display = hide ? 'none' : '';
         ip.setVisible = row.setVisible;

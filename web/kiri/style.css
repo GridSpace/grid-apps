@@ -1,6 +1,15 @@
 input[type=range]::-moz-focus-outer {
     border: 0;
 }
+.grouphead {
+    position: relative;
+}
+.popper {
+    position: absolute;
+    right: 50%;
+    top: 0;
+    z-index: 50000;
+}
 .dialog {
     display: none;
     color: black;
@@ -59,7 +68,6 @@ input[type=range]::-moz-focus-outer {
 #container {
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 #loading {
     position: fixed;
