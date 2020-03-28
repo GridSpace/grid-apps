@@ -71,7 +71,7 @@ var gs_moto_ui = exports;
     }
 
     function checkpoint() {
-        return { addTo, lastDiv, lastGroup };
+        return { addTo, lastDiv, lastGroup, groupName };
     }
 
     function restore(opt) {
@@ -79,11 +79,13 @@ var gs_moto_ui = exports;
             addTo = opt.addTo;
             lastDiv = opt.lastDiv;
             lastGroup = opt.lastGroup;
+            groupName = opt.groupName;
         }
     }
 
     function setGroup(div) {
         addTo = lastDiv = div;
+        groupName = undefined;
         return div;
     }
 
