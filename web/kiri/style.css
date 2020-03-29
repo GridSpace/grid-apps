@@ -6,9 +6,20 @@ input[type=range]::-moz-focus-outer {
 }
 .popper {
     position: absolute;
-    right: 50%;
     top: 0;
     z-index: 50000;
+    background-color: white;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 5px;
+    white-space: nowrap;
+    text-align: left;
+}
+.popper.left {
+    left: 105%;
+}
+.popper.right {
+    right: 105%;
 }
 .dialog {
     display: none;

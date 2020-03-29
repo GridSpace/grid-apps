@@ -255,6 +255,7 @@ th, tr, td, span, div, label, button {
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
     background-color: rgba(255,255,255,0.75);
+    overflow-x: visible;
     overflow-y: scroll;
 }
 #control-right {
@@ -274,6 +275,12 @@ th, tr, td, span, div, label, button {
     color: #222;
     overflow-y: scroll;
     overflow-x: visible;
+}
+.compact {
+    overflow: visible !important;
+    bottom: auto !important;
+    border: 0 !important;
+    background-color: rgba(255,255,255,0.5) !important;
 }
 #control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
     display: none;

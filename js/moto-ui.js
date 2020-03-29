@@ -10,6 +10,7 @@ var gs_moto_ui = exports;
     if (moto.ui) return;
 
     let SELF = self,
+        lastRegion = null,
         lastGroup = null,
         lastDiv = null,
         addTo = null,
@@ -59,6 +60,13 @@ var gs_moto_ui = exports;
     };
 
     function setMode(mode) {
+        if (compact) {
+            $('control-left').classList.add('compact');
+            $('control-right').classList.add('compact');
+            Object.keys(groupShow).forEach(group => {
+                updateGroupShow(group);
+            });
+        }
         letMode = mode;
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
@@ -71,7 +79,7 @@ var gs_moto_ui = exports;
     }
 
     function checkpoint() {
-        return { addTo, lastDiv, lastGroup, groupName };
+        return { addTo, lastDiv, lastGroup, lastRegion, groupName };
     }
 
     function restore(opt) {
@@ -79,6 +87,7 @@ var gs_moto_ui = exports;
             addTo = opt.addTo;
             lastDiv = opt.lastDiv;
             lastGroup = opt.lastGroup;
+            lastRegion = opt.lastRegion;
             groupName = opt.groupName;
         }
     }
@@ -95,13 +104,16 @@ var gs_moto_ui = exports;
     }
 
     function addCollapsableGroup(label, div, options) {
+        lastRegion = (options || {}).region || lastRegion;
+
         let row = DOC.createElement('div'),
             a = DOC.createElement('a'),
             dbkey = `${prefix}-show-${label}`;
 
         if (compact) {
             let pop = DOC.createElement('div');
-            pop.setAttribute('class','popper');
+            pop.classList.add('popper');
+            if (lastRegion) pop.classList.add(lastRegion);
             row.appendChild(pop);
             addTo = pop;
         } else {
@@ -115,22 +127,51 @@ var gs_moto_ui = exports;
         addModeControls(row, options);
         groupName = label;
         lastGroup = groups[label] = [];
+        lastGroup.key = dbkey;
         groupShow[label] = SDB[dbkey] !== 'false';
-        row.onclick = function() {
-            collapseGroup(label, dbkey);
+        row.onclick = function(ev) {
+            if (ev.target !== a && ev.target !== row) {
+                return;
+            }
+            toggleGroup(label, dbkey);
         };
+        if (compact) row.onmouseenter = function(ev) {
+            if (ev.target !== a && ev.target !== row) {
+                return;
+            }
+            showGroup(label);
+        };
+
+        if (compact) {
+            addTo._group = label;
+            addModeControls(addTo, options);
+            lastGroup.push(addTo);
+        }
 
         return row;
     }
 
-    function collapseGroup(groupname, dbkey) {
+    function showGroup(groupname) {
+        Object.keys(groups).forEach(name => {
+            let group = groups[name];
+            groupShow[name] = SDB[group.key] = (groupname === name);
+            updateGroupShow(name);
+        });
+    }
+
+    function toggleGroup(groupname, dbkey) {
         let show = SDB[dbkey] === 'false';
+        groupShow[groupname] = SDB[dbkey] = show;
+        updateGroupShow(groupname);
+    }
+
+    function updateGroupShow(groupname) {
+        let show = groupShow[groupname];
         let group = groups[groupname];
         group.forEach(div => {
             if (show) div.setMode(letMode);
             else div.setMode(NOMODE);
         });
-        groupShow[groupname] = SDB[dbkey] = show;
     }
 
     function toInt() {
@@ -471,7 +512,7 @@ var gs_moto_ui = exports;
     }
 
     function newRow(children, options) {
-        let row = addCollapsableElement((options && options.noadd) ? null : lastDiv);
+        let row = addCollapsableElement((options && options.noadd) ? null : addTo);
         if (children) children.forEach(function (c) { row.appendChild(c) });
         addModeControls(row, options);
         return row;

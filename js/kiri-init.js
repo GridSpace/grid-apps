@@ -331,7 +331,7 @@ var gs_kiri_init = exports;
                 platform.layout();
                 break;
             case cca('w'): // toggle wireframe on widgets
-                API.view.wireframe(API.color.wireframe, API.opacity.wireframe);
+                API.view.wireframe(API.color.wireframe, API.color.wireframe_opacity);
                 break;
             default:
                 API.event.emit('keypress', evt);
@@ -1180,7 +1180,7 @@ var gs_kiri_init = exports;
             setDevicePre:        UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
             setDevicePost:       UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
 
-            mode: UC.newGroup(LANG.mo_menu, assets),
+            mode: UC.newGroup(LANG.mo_menu, assets, {region:"left"}),
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
@@ -1281,7 +1281,7 @@ var gs_kiri_init = exports;
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle),
 
-            settingsGroup: UC.newGroup(LANG.se_menu, control),
+            settingsGroup: UC.newGroup(LANG.se_menu, control, {region:"right"}),
             settingsTable: UC.newTableRow([
                 [
                     UI.settingsLoad =
