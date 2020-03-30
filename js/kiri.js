@@ -706,11 +706,10 @@ self.kiri.copyright = exports.COPYRIGHT;
             API.view.snapshot = snap.substring(snap.indexOf(",")+1);
         }
 
-        setViewMode(VIEWS.SLICE);
-
         clearPrint();
-        API.conf.save();
         platform.deselect();
+        setViewMode(VIEWS.SLICE);
+        API.conf.save();
 
         var firstMesh = true,
             countdown = WIDGETS.length,

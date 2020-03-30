@@ -314,6 +314,16 @@ th, tr, td, span, div, label, button {
     font-size: larger !important;
     padding: 5px 10px 5px 10px;
 }
+:-moz-any(#control-left.compact) {
+ overflow-x: display !important;
+ overflow-y: display !important;
+}
+:-moz-any(#control-right.compact) {
+ overflow-x: display !important;
+ overflow-y: display !important;
+ margin-right: auto !important;
+ margin-bottom: auto !important;
+}
 #control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
     display: none;
 }
