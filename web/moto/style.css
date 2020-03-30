@@ -104,10 +104,12 @@ th, tr, td, span, div, label, button {
     margin-top: 5px;
     margin-bottom: 3px;
     padding: 3px 2px 2px 3px;
-    text-align: center;
-    text-transform: uppercase;
     font-size: 12px;
     font-weight: bold;
+    text-align: center;
+}
+.grouphead > a {
+    text-transform: uppercase;
 }
 .grouphead:hover {
     cursor: default;
@@ -208,7 +210,7 @@ th, tr, td, span, div, label, button {
     margin-bottom: 1px !important;
     margin-right: 2px !important;
 }
-.control > div > div {
+.control .flow-row {
     align-items: center;
     justify-content: center;
 }
@@ -281,6 +283,19 @@ th, tr, td, span, div, label, button {
     bottom: auto !important;
     border: 0 !important;
     background-color: rgba(255,255,255,0.5) !important;
+}
+.compact .grouphead {
+    padding: 5px !important;
+    background-color: rgba(170,221,255,0.25);
+}
+.compact .grouphead:hover {
+    background-color: rgba(170,221,255,0.9);
+}
+.compact .grouphead a {
+    margin: 5px !important;
+}
+.compact .asym {
+    width: auto !important;
 }
 #control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
     display: none;

@@ -137,10 +137,11 @@ self.kiri.copyright = exports.COPYRIGHT;
         conf: {
             get: getSettings,
             put: putSettings,
-            load: loadNamedSetting,
+            load: loadSettings,
             save: saveSettings,
             show: showSettings,
-            update: updateSettings
+            update: updateSettings,
+            restore: restoreSettings
         },
         color,
         const: {
@@ -640,7 +641,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
         setViewMode(VIEWS.PREVIEW);
         clearPrint();
-        saveSettings();
+        API.conf.save();
 
         if (MODE === MODES.CAM) {
             setOpacity(color.cam_preview_opacity);
@@ -708,7 +709,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         setViewMode(VIEWS.SLICE);
 
         clearPrint();
-        saveSettings();
+        API.conf.save();
         platform.deselect();
 
         var firstMesh = true,
@@ -1349,7 +1350,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         updateSettingsFromFields(settings.process);
         updateSettingsFromFields(settings.layers);
         updateSettingsFromFields(settings.controller);
-        saveSettings();
+        API.conf.save();
         platform.update_stock();
     }
 
@@ -1374,7 +1375,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         cull(settings.cdev.FDM, filter.fdm.d);
         cull(settings.cdev.CAM, filter.cam.d);
         // store camera view
-        var view = SPACE.view.save();
+        let view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
@@ -1414,7 +1415,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function saveWorkspace() {
-        saveSettings();
+        API.conf.save();
         var newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
@@ -1429,12 +1430,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         alert2("workspace saved", 1);
     }
 
-    function restoreWorkspace(ondone, skip_widget_load) {
-        var loaded = 0,
-            toload = ls2o('ws-widgets',[]),
-            newset = ls2o('ws-settings'),
-            camera = ls2o('ws-camera'),
-            position = true;
+    function restoreSettings(save) {
+        var newset = ls2o('ws-settings'),
+            camera = ls2o('ws-camera');
 
         if (newset) {
             fillMissingSettings(settingsDefault, newset);
@@ -1443,7 +1441,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             if (settings.controller.view) {
                 camera = settings.controller.view;
                 SDB.removeItem('ws-camera');
-                UI.reverseZoom.checked = settings.controller.reverseZoom;
+                // UI.reverseZoom.checked = settings.controller.reverseZoom;
             }
             // merge custom filters from localstorage into settings
             localFilters.forEach(function(fname) {
@@ -1453,8 +1451,18 @@ self.kiri.copyright = exports.COPYRIGHT;
             });
             SDB.removeItem(localFilterKey);
             // save updated settings
-            saveSettings();
+            if (save) API.conf.save();
         }
+
+        return {newset, camera};
+    }
+
+    function restoreWorkspace(ondone, skip_widget_load) {
+        let {newset, camera} = restoreSettings(true);
+
+        let loaded = 0,
+            toload = ls2o('ws-widgets',[]),
+            position = true;
 
         updateFields();
         platform.update_size();
@@ -1538,11 +1546,11 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function putSettings(newset) {
         settings = newset;
-        saveSettings()
-        restoreWorkspace(null, true);
+        API.conf.save()
+        API.space.restore(null, true);
     }
 
-    function editNamedSetting(e) {
+    function editSettings(e) {
         var mode = getMode(),
             name = e.target.getAttribute("name"),
             load = settings.sproc[mode][name],
@@ -1552,16 +1560,16 @@ self.kiri.copyright = exports.COPYRIGHT;
             try {
                 settings.sproc[mode][name] = JSON.parse(edit);
                 if (name === settings.process.processName) {
-                    loadNamedSetting(null, name);
+                    API.conf.load(null, name);
                 }
-                saveSettings();
+                API.conf.save();
             } catch (e) {
                 alert('malformed settings object');
             }
         }
     }
 
-    function loadNamedSetting(e, named) {
+    function loadSettings(e, named) {
         var mode = getMode(),
             name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
             load = settings.sproc[mode][name];
@@ -1594,15 +1602,15 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (!named) {
             hideDialog();
         }
-        updateSettings();
+        API.conf.update();
         if (e) triggerSettingsEvent();
     }
 
-    function deleteNamedSetting(e) {
+    function deleteSettings(e) {
         var name = e.target.getAttribute("del");
         delete settings.sproc[getMode()][name];
         updateSettingsList();
-        saveSettings();
+        API.conf.save();
         triggerSettingsEvent();
     }
 
@@ -1620,7 +1628,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 name = sk;
 
             load.setAttribute('load', sk);
-            load.onclick = loadNamedSetting;
+            load.onclick = API.conf.load;
             load.appendChild(DOC.createTextNode(sk));
             if (sk == settings.process.processName) {
                 load.setAttribute('class', 'selected')
@@ -1628,13 +1636,13 @@ self.kiri.copyright = exports.COPYRIGHT;
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");
-            del.onclick = deleteNamedSetting;
+            del.onclick = deleteSettings;
             del.appendChild(DOC.createTextNode('x'));
 
             edit.innerHTML = '&uarr;';
             edit.setAttribute('name', sk);
             edit.setAttribute('title', 'edit');
-            edit.onclick = editNamedSetting;
+            edit.onclick = editSettings;
 
             row.setAttribute("class", "flow-row");
             row.appendChild(edit);
@@ -1795,8 +1803,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         MODE = MODES[mode];
         // updates right-hand menu by enabling/disabling fields
         UC.setMode(MODE);
-        loadNamedSetting();
-        saveSettings();
+        API.conf.load();
+        API.conf.save();
         clearWidgetCache();
         SPACE.update();
         UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
@@ -1807,7 +1815,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
-        restoreWorkspace(null, true);
+        API.space.restore(null, true);
         // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();
         triggerSettingsEvent();

@@ -27,7 +27,8 @@ var gs_moto_ui = exports;
         DOC = SELF.document,
         prefix = "tab",
         NOMODE = "nomode",
-        compact = false;
+        compact = false,
+        exitimer = undefined;
 
     SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
 
@@ -55,9 +56,25 @@ var gs_moto_ui = exports;
         newBlank: newBlank,
         newGroup: newGroup,
         setGroup: setGroup,
+        setCompact: setCompact,
+        setDefaults: setDefaults,
         checkpoint,
         restore
     };
+
+    function setDefaults(bool) {
+        Object.keys(localStorage).forEach(name => {
+            let namepre = `${prefix}-show-`;
+            if (name.indexOf(namepre) === 0) {
+                localStorage[name] = bool;
+            }
+        });
+    }
+
+    function setCompact(bool) {
+        compact = bool;
+        return this;
+    }
 
     function setMode(mode) {
         if (compact) {
@@ -135,14 +152,21 @@ var gs_moto_ui = exports;
             }
             toggleGroup(label, dbkey);
         };
-        if (compact) row.onmouseenter = function(ev) {
-            if (ev.target !== a && ev.target !== row) {
-                return;
-            }
-            showGroup(label);
-        };
-
         if (compact) {
+            row.onmouseenter = function(ev) {
+                if (ev.target !== a && ev.target !== row) {
+                    return;
+                }
+                clearTimeout(exitimer);
+                showGroup(label);
+            };
+            row.onmouseleave = function(ev) {
+                if (ev.target !== a && ev.target !== row) {
+                    return;
+                }
+                clearTimeout(exitimer);
+                exitimer = setTimeout(showGroup, 1000);
+            };
             addTo._group = label;
             addModeControls(addTo, options);
             lastGroup.push(addTo);
@@ -483,10 +507,17 @@ var gs_moto_ui = exports;
     function newButton(label, action, options) {
         let b = DOC.createElement('button'),
             t = DOC.createTextNode(label);
+
         b.appendChild(t);
         b.onclick = function() { action() };
+
+        if (options && options.class) {
+            b.classList.add(options.class);
+        }
+
         addModeControls(b, options);
         addId(b, options);
+
         return b;
     }
 

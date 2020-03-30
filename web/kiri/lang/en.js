@@ -98,6 +98,8 @@ kiri.lang['en-us'] = {
 
     // OPTIONS
     op_menu:        "options",
+    op_comp_s:      "compact",
+    op_comp_l:      "compact user interface",
     op_show_s:      "show origin",
     op_show_l:      "show device or process origin",
     op_alig_s:      "align top",

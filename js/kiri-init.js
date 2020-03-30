@@ -75,15 +75,22 @@ var gs_kiri_init = exports;
 
     function booleanSave() {
         let current = settings();
+        let isCompact = current.controller.compact;
         current.controller.showOrigin = UI.showOrigin.checked;
         current.controller.autoLayout = UI.autoLayout.checked;
         current.controller.freeLayout = UI.freeLayout.checked;
         current.controller.alignTop = UI.alignTop.checked;
         current.controller.reverseZoom = UI.reverseZoom.checked;
+        current.controller.compact = UI.compact.checked;
         SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
         platform.layout();
         platform.update_stock();
         API.conf.save();
+        // if compact mode changed, reload UI
+        if (isCompact !== current.controller.compact) {
+            UC.setDefaults(isCompact);
+            LOC.reload();
+        }
     }
 
     function onLayerToggle() {
@@ -1065,6 +1072,9 @@ var gs_kiri_init = exports;
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
+        // ensure we have settings from last session
+        API.conf.restore();
+
         let assets = $('assets'),
             control = $('control'),
             container = $('container'),
@@ -1083,6 +1093,8 @@ var gs_kiri_init = exports;
         });
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
+
+        UC.setCompact(settings().controller.compact);
 
         Object.assign(UI, {
             // from static HTML
@@ -1203,7 +1215,7 @@ var gs_kiri_init = exports;
                     UC.newButton(LANG.su_tool, showTools, {modes:CAM})
                 ],[
                     UI.localButton =
-                    UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM})
+                    UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true})
                 ],[
                     UI.helpButton =
                     UC.newButton(LANG.su_help, API.help.show)
@@ -1213,9 +1225,9 @@ var gs_kiri_init = exports;
             wsFuncTable: UC.newTableRow([
                 [
                     UI.load =
-                    UC.newButton(LANG.fn_impo, function() { API.event.import() }),
+                    UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}),
                     UI.import =
-                    UC.newButton("+")
+                    UC.newButton("+", undefined, {class:"asym"})
                 ],[
                     UI.modeArrange =
                     UC.newButton(LANG.fn_arra, platform.layout),
@@ -1255,6 +1267,7 @@ var gs_kiri_init = exports;
             ]),
 
             layout:        UC.newGroup(LANG.op_menu),
+            compact:       UC.newBoolean(LANG.op_comp_s, booleanSave, {title:LANG.op_comp_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:    UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
@@ -1290,7 +1303,7 @@ var gs_kiri_init = exports;
                     UC.newButton(LANG.se_save, settingsSave)
                 ],[
                     UI.settingsExpert =
-                    UC.newButton(LANG.se_xprt, () => { UC.setExpert(true); SDB.setItem('expert', true) }, {modes:FDM, expert: false}),
+                    UC.newButton(LANG.se_xprt, () => { UC.setExpert(true); SDB.setItem('expert', true) }, {modes:FDM, expert:false}),
                     UI.settingsExpert =
                     UC.newButton(LANG.se_bsic, () => { UC.setExpert(false); SDB.removeItem('expert') }, {modes:FDM, expert:true})
                 ]
@@ -1597,6 +1610,8 @@ var gs_kiri_init = exports;
         UI.freeLayout.checked = current.controller.freeLayout;
         UI.autoLayout.checked = current.controller.autoLayout;
         UI.alignTop.checked = current.controller.alignTop;
+        UI.reverseZoom.checked = current.controller.reverseZoom;
+        UI.compact.checked = current.controller.compact;
 
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {
