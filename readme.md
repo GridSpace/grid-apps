@@ -14,7 +14,7 @@ npm start
 
 to start a local instance of the apps. then open
 [Kiri:Moto](http://localhost:8080/kiri) or
-[Meta:Moto](http://localhost:8080/meta) on http://localhost:8080/
+[Meta:Moto](http://localhost:8080/meta)
 
 ### Other Start Options
 
