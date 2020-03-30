@@ -285,17 +285,34 @@ th, tr, td, span, div, label, button {
     background-color: rgba(255,255,255,0.5) !important;
 }
 .compact .grouphead {
-    padding: 5px !important;
+    padding: 10px 5px 10px 5px !important;
     background-color: rgba(170,221,255,0.25);
 }
 .compact .grouphead:hover {
     background-color: rgba(170,221,255,0.9);
 }
 .compact .grouphead a {
+    font-size: larger !important;
     margin: 5px !important;
+}
+.compact .flow-row label {
+    font-size: 18px !important;
+}
+.compact .flow-row input {
+    font-size: 18px !important;
+}
+.compact .flow-row select {
+    font-size: 18px !important;
+}
+.compact .flow-row {
+    margin: 3px 0 3px 0;
 }
 .compact .asym {
     width: auto !important;
+}
+.compact button {
+    font-size: larger !important;
+    padding: 5px 10px 5px 10px;
 }
 #control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
     display: none;
