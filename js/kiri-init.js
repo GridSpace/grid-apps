@@ -367,7 +367,7 @@ var gs_kiri_init = exports;
             return;
         }
         let coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
-            prod = Math.PI / 360,
+            prod = Math.PI / 180,
             x = parseFloat(coord[0] || 0.0) * prod,
             y = parseFloat(coord[1] || 0.0) * prod,
             z = parseFloat(coord[2] || 0.0) * prod;
@@ -1549,7 +1549,13 @@ var gs_kiri_init = exports;
         SPACE.platform.setGrid(25, 5);
         SPACE.platform.opacity(0.2);
 
-        SPACE.mouse.downSelect(function() {
+        SPACE.mouse.downSelect(function(int,event) {
+            // lay flat with meta or ctrl clicking a selected face
+            if (int && (event.ctrlKey || event.metaKey)) {
+                let q = new THREE.Quaternion();
+                q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
+                API.selection.rotate(q);
+            }
             if (API.view.get() !== VIEWS.ARRANGE) return null;
             return API.selection.meshes();
         });

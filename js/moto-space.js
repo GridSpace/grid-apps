@@ -440,6 +440,8 @@ var MOTO = window.moto = window.moto || {};
                         mouseDragPoint = trackInt.point.clone();
                         mouseDragStart = mouseDragPoint;
                         viewControl.enabled = false;
+                    }
+                    if (selectInt) {
                         mouseDownSelect(selectInt, event);
                     }
                 }

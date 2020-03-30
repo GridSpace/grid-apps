@@ -450,12 +450,21 @@ var gs_kiri_widget = exports;
         this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
-        this.mesh.geometry.applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0)));
+        let m4 = new THREE.Matrix4();
+        let euler = typeof(x) === 'number';
+        if (euler) {
+            m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+        } else {
+            m4 = m4.makeRotationFromQuaternion(x);
+        }
+        this.mesh.geometry.applyMatrix4(m4);
         this.center();
-        let rot = this.orient.rot;
-        rot.x += (x || 0);
-        rot.y += (y || 0);
-        rot.z += (z || 0);
+        if (euler) {
+            let rot = this.orient.rot;
+            rot.x += (x || 0);
+            rot.y += (y || 0);
+            rot.z += (z || 0);
+        }
     };
 
     PRO.mirror = function() {
