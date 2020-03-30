@@ -145,7 +145,7 @@ var gs_moto_ui = exports;
         groupName = label;
         lastGroup = groups[label] = [];
         lastGroup.key = dbkey;
-        groupShow[label] = SDB[dbkey] !== 'false';
+        groupShow[label] = compact ? SDB[dbkey] === 'true' : SDB[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== a && ev.target !== row) {
                 return;
