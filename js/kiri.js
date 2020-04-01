@@ -1588,8 +1588,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         // associate named process with the current device
         settings.devproc[currentDeviceName()] = name;
 
-        // update selection display (off for laser)
-        $('selected-device').innerHTML = currentDeviceName();
+        // update selection display
+        $('selected-mode').innerHTML = API.mode.get();
+        $('selected-device').innerHTML = API.device.get();
         $('selected-process').innerHTML = name;
 
         // FDM process settings overridden by device

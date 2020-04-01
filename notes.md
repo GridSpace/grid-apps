@@ -4,7 +4,6 @@
 
 * `B` restore settings should restore all mode/device/settings (find corner cases)
 * `C` set page background color? or dark mode?
-* `C` better small screen support (on screen button for hiding side panels, compact selectors)
 * `F` implement an in-app bug reporting system
 * `F` widget general add-ons (fdm supports, cam tabs)
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
