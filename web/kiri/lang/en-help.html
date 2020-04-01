@@ -31,12 +31,10 @@
         <button onclick="kiri.api.mode.set('FDM')">FDM</button>
         <button onclick="kiri.api.mode.set('CAM')">CAM</button>
         <button onclick="kiri.api.mode.set('LASER')">LASER</button>
-    <li>Select <button onclick="kiri.api.show.devices()">Device</button>
-    <li>Set slicing parameters in right panel
-    <li><button onclick = "kiri.api.function.slice()">Slice</button>
-        using settings from the right panel
-    <li><button onclick = "kiri.api.function.print()">Preview</button> GCode output
-    <li><button onclick = "kiri.api.function.export()">Export</button> GCode
+    <li>Select your target <button onclick="kiri.api.show.devices()">Device</button>
+    <li>Then <button onclick = "kiri.api.function.slice()">Slice</button>
+        <button onclick = "kiri.api.function.print()">Preview</button> and
+        <button onclick = "kiri.api.function.export()">Export</button> GCode
     <p>
     <b>Other ways to use Kiri:Moto</b>
 
@@ -91,21 +89,12 @@
             <tr><td><label>w</label></td><td>Wireframe</td></tr>
             <tr><td><label>delete</label></td><td>Delete</td></tr>
             <tr><td></td></tr>
-            <tr><td><label>arrow-left</label></td><td>Z Rotate CCW 90&deg;</td></tr>
-            <tr><td><label>arrow-right</label></td><td>Z Rotate CW 90&deg;</td></tr>
-            <tr><td><label>shift-arrow-left</label></td><td>Z Rotate CCW 5&deg;</td></tr>
-            <tr><td><label>shift-arrow-right</label></td><td>Z Rotate CW 5&deg;</td></tr>
+            <tr><td><label>arrow</label></td><td>Rotate 90&deg;</td></tr>
+            <tr><td><label>shift-arrow</label></td><td>Rotate 5&deg;</td></tr>
+            <tr><td><label>option-arrow</label></td><td>Move 5mm</td></tr>
             <tr><td></td></tr>
-            <tr><td><label>arrow-up</label></td><td>X Rotate CCW 90&deg;</td></tr>
-            <tr><td><label>arrow-down</label></td><td>X Rotate CW 90&deg;</td></tr>
-            <tr><td><label>shift-arrow-up</label></td><td>X Rotate CCW 5&deg;</td></tr>
-            <tr><td><label>shift-arrow-down</label></td><td>X Rotate CW 5&deg;</td></tr>
-            <tr><td></td></tr>
-            <tr><td><label>option-arrow-up</label></td><td>Move Up 5mm</td></tr>
-            <tr><td><label>option-arrow-down</label></td><td>Move Down 5mm</td></tr>
-            <tr><td><label>option-arrow-left</label></td><td>Move Left 5mm</td></tr>
-            <tr><td><label>option-arrow-right</label></td><td>Move Right 5mm</td></tr>
-            <tr><td></td></tr>
+            <tr><td><label>ctrl-click</label></td><td>Align face to bed</td></tr>
+            <tr><td><label>meta-click</label></td><td>of selected object</td></tr>
         </table>
         </div>
 

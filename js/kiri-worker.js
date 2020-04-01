@@ -50,6 +50,8 @@ let dispatch = {
             position: position
         };
 
+        try {
+
         widget.slice(settings, function(error) {
             if (error) {
                 delete cache[data.id];
@@ -80,6 +82,10 @@ let dispatch = {
             send.data({update: (0.05 + update * 0.95), updateStatus: msg});
             last = now;
         });
+
+        } catch (error) {
+            send.data({error: error.toString()});
+        }
     },
 
     printSetup: function(data, send) {
