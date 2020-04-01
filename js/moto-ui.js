@@ -111,9 +111,11 @@ var gs_moto_ui = exports;
         }
     }
 
+    // at present only used by the layers popup menu
     function setGroup(div) {
         addTo = lastDiv = div;
         groupName = undefined;
+        lastGroup = [];
         return div;
     }
 

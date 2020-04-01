@@ -139,6 +139,10 @@ var gs_kiri_init = exports;
                 API.dialog.hide();
                 // cancel slicing
                 if (KIRI.work.isSlicing()) KIRI.work.restart();
+                // kill any poppers in compact mode
+                UC.hidePoppers();
+                // hide layers menu
+                UI.layers.style.display = 'none';
                 break;
         }
         return false;
