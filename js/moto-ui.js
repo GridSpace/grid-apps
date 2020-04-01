@@ -19,6 +19,7 @@ var gs_moto_ui = exports;
         groups = {},
         groupShow = {},
         groupName = undefined,
+        hideable = {},
         hasModes = [],
         isExpert = [],
         letMode = null,
@@ -58,6 +59,7 @@ var gs_moto_ui = exports;
         setGroup: setGroup,
         setCompact: setCompact,
         setDefaults: setDefaults,
+        hidePoppers: hidePoppers,
         checkpoint,
         restore
     };
@@ -121,13 +123,17 @@ var gs_moto_ui = exports;
     }
 
     function addCollapsableGroup(label, div, options) {
-        lastRegion = (options || {}).region || lastRegion;
+        let opt = options || {};
+        let group = opt.group || label;
+        lastRegion = opt.region || lastRegion;
+        hideable[group] = opt.nocompact === true ? false : true;
 
         let row = DOC.createElement('div'),
             a = DOC.createElement('a'),
-            dbkey = `${prefix}-show-${label}`;
+            dbkey = `${prefix}-show-${group}`,
+            popper = compact && !opt.nocompact;
 
-        if (compact) {
+        if (popper) {
             let pop = DOC.createElement('div');
             pop.classList.add('popper');
             if (lastRegion) pop.classList.add(lastRegion);
@@ -141,24 +147,24 @@ var gs_moto_ui = exports;
         row.setAttribute("class", "grouphead noselect");
         row.appendChild(a);
         a.appendChild(DOC.createTextNode(label));
-        addModeControls(row, options);
-        groupName = label;
-        lastGroup = groups[label] = [];
+        addModeControls(row, opt);
+        lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
-        groupShow[label] = compact ? SDB[dbkey] === 'true' : SDB[dbkey] !== 'false';
+        groupName = name;
+        groupShow[group] = popper ? SDB[dbkey] === 'true' : SDB[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== a && ev.target !== row) {
                 return;
             }
-            toggleGroup(label, dbkey);
+            toggleGroup(group, dbkey);
         };
-        if (compact) {
+        if (popper) {
             row.onmouseenter = function(ev) {
                 if (ev.target !== a && ev.target !== row) {
                     return;
                 }
                 clearTimeout(exitimer);
-                showGroup(label);
+                showGroup(group);
             };
             row.onmouseleave = function(ev) {
                 if (ev.target !== a && ev.target !== row) {
@@ -167,12 +173,18 @@ var gs_moto_ui = exports;
                 clearTimeout(exitimer);
                 exitimer = setTimeout(showGroup, 1000);
             };
-            addTo._group = label;
-            addModeControls(addTo, options);
+            addTo._group = group;
+            addModeControls(addTo, opt);
             lastGroup.push(addTo);
         }
 
         return row;
+    }
+
+    function hidePoppers() {
+        if (compact) {
+            showGroup(undefined);
+        }
     }
 
     function showGroup(groupname) {
@@ -185,12 +197,12 @@ var gs_moto_ui = exports;
 
     function toggleGroup(groupname, dbkey) {
         let show = SDB[dbkey] === 'false';
-        groupShow[groupname] = SDB[dbkey] = show;
+        groupShow[groupname] = hideable[groupname] ? SDB[dbkey] = show : true;
         updateGroupShow(groupname);
     }
 
     function updateGroupShow(groupname) {
-        let show = groupShow[groupname];
+        let show = groupShow[groupname] || !hideable[groupname];
         let group = groups[groupname];
         group.forEach(div => {
             if (show) div.setMode(letMode);
@@ -509,7 +521,10 @@ var gs_moto_ui = exports;
             t = DOC.createTextNode(label);
 
         b.appendChild(t);
-        b.onclick = function() { action() };
+        b.onclick = function() {
+            if (compact) hidePoppers();
+            action();
+        };
 
         if (options && options.class) {
             b.classList.add(options.class);

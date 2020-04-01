@@ -1163,7 +1163,7 @@ var gs_kiri_init = exports;
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:              UC.newGroup(LANG.dv_gr_dev, $('device')),
+            device:              UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
             deviceName:          UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:20, text:true}),
             setDeviceFilament:   UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
             setDeviceNozzle:     UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
@@ -1176,7 +1176,7 @@ var gs_kiri_init = exports;
             setDeviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
             setDeviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
-            setDevice:           UC.newGroup(LANG.dv_gr_gco, $('device')),
+            setDevice:           UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
             setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:17, text:true}),
             setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:17, text:true}),
             setDeviceLayer:      UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
@@ -1532,6 +1532,7 @@ var gs_kiri_init = exports;
 
         UI.import.setAttribute("import","1");
         UI.import.onclick = function() {
+            UC.hidePoppers();
             API.dialog.show("catalog");
         };
 
