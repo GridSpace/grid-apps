@@ -98,6 +98,10 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
         // so camera.up is the orbit axis
         quat = new THREE.Quaternion().setFromUnitVectors(object.up, new THREE.Vector3(0, 1, 0)),
         quatInverse = quat.clone().inverse(),
+        // touch tracking
+        firstTouch = [],
+        touchSlide = false,
+        lastDY = 0,
         // events
         changeEvent = { type: 'change'},
         startEvent = { type: 'start'},
@@ -478,6 +482,11 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
                 let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
                 let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
                 let distance = Math.sqrt(dx * dx + dy * dy);
+
+                firstTouch = [...event.touches].map(v => { return {x:v.pageX, y:v.pageY} });
+                touchSlide = false;
+                lastDY = 0;
+
                 dollyStart.set(0, distance);
                 break;
 
@@ -527,15 +536,25 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
                 let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
                 let distance = Math.sqrt(dx * dx + dy * dy);
 
+                let touches = [...event.touches].map(v => { return {x:v.pageX, y:v.pageY} });
+                let ddx = ( (touches[0].x - firstTouch[0].x) + (touches[1].x - firstTouch[1].x) ) / 2;
+                let ddy = ( (touches[0].y - firstTouch[0].y) + (touches[1].y - firstTouch[1].y) ) / 2;
+
                 if (scope.reverseZoom) distance = -distance;
 
                 dollyEnd.set(0, distance);
                 dollyDelta.subVectors(dollyEnd, dollyStart);
 
-                if (dollyDelta.y > 0) {
-                    scope.dollyOut();
+                if (touchSlide || (Math.abs(ddy/ddx) > 10 && slider)) {
+                    touchSlide = true;
+                    slider(lastDY ? lastDY - ddy : ddy);
+                    lastDY = ddy;
                 } else {
-                    scope.dollyIn();
+                    if (dollyDelta.y > 0) {
+                        scope.dollyOut();
+                    } else {
+                        scope.dollyIn();
+                    }
                 }
 
                 dollyStart.copy(dollyEnd);
