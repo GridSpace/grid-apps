@@ -232,6 +232,9 @@ th, tr, td, span, div, label, button {
     background-color: rgba(170,221,255,0.75);
     color: rgba(0,0,0,0.5);
 }
+#appid span:hover {
+    background-color: rgba(170,221,255,0.5);
+}
 #appid a {
     color: rgba(0,0,0,0.75);
     font-weight: bold;
@@ -239,11 +242,34 @@ th, tr, td, span, div, label, button {
 #appid a:hover {
     color: rgba(0,50,50,0.75);
 }
-#applang:hover .drop {
-    display: block;
-}
 #apphelp {
     margin-left: 5px;
+}
+#applang {
+    position: relative;
+    margin-right: 5px;
+    font-weight: bold;
+}
+#langpop {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    top: 105%;
+    left: 0;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: rgba(255,255,255,0.75);
+    padding: 5px;
+}
+#langpop > div {
+    padding: 5px;
+}
+#langpop > div:hover {
+    background-color: rgba(255,128,128,0.5);
+    border-radius: 5px;
+}
+#applang:hover #langpop {
+    display: block;
 }
 #container {
     width: 100%;

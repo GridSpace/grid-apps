@@ -1464,6 +1464,23 @@ var gs_kiri_init = exports;
             UI.modeExport.innerHTML     = "E<u>x</u>port";
         }
 
+        // populate language drop-down
+        let lp = $('langpop');
+        let elp = DOC.createElement("div");
+        let dlp = DOC.createElement("div");
+        elp.appendChild(DOC.createTextNode('english'));
+        dlp.appendChild(DOC.createTextNode('danish'));
+        lp.appendChild(elp);
+        lp.appendChild(dlp);
+        elp.onclick = function() {
+            SDB.setItem('kiri-lang', 'en-us');
+            LOC.reload();
+        };
+        dlp.onclick = function() {
+            SDB.setItem('kiri-lang', 'da-dk');
+            LOC.reload();
+        };
+
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
