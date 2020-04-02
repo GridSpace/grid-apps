@@ -26,7 +26,7 @@
         <button onclick="kiri.api.mode.set('FDM')">FDM</button>
         <button onclick="kiri.api.mode.set('CAM')">CAM</button>
         <button onclick="kiri.api.mode.set('LASER')">LASER</button></li>
-    <li>Select your target <button onclick="kiri.api.show.devices()">Device</button></li>
+    <li>Set target <button onclick="kiri.api.show.devices()">Device</button></li>
     <li>Then <button onclick = "kiri.api.function.slice()">Slice</button>
         <button onclick = "kiri.api.function.print()">Preview</button> and
         <button onclick = "kiri.api.function.export()">Export</button></li>
@@ -70,11 +70,9 @@
             <tr><td><label>shift</label> wheel</td><td>Change Layer</td></tr>
             <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
             <tr><td>right-drag</td><td>Pan</td></tr>
-            <tr><td>3-touch-drag</td><td>Pan</td></tr>
             <tr><td>left-drag</td><td>Rotate</td></tr>
             <tr><td>mouse-wheel</td><td>Zoom</td></tr>
             <tr><td>middle-drag</td><td>Zoom</td></tr>
-            <tr><td>2-touch-pinch</td><td>Zoom</td></tr>
         </table>
         <table>
             <tr><th colspan=2 class="grouphead">Config</th></tr>
@@ -102,12 +100,7 @@
             <p><b>Kiri:Moto is entirely open source</b>!</p>
             <p>Please contribute to the project with code,<br>
             ideas, or localizations for your preferred language.</p>
-        </div>
-
-        <div class="help-post">
             <p><b>&lt;ESC&gt; key closes any dialog in Kiri</b></p>
-            <p>Kiri is already loaded and running on this page<br>
-            Dismiss this help window to start working</p>
         </div>
     </div>
 
