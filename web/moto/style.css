@@ -244,6 +244,7 @@ th, tr, td, span, div, label, button {
 }
 #apphelp {
     margin-left: 5px;
+    font-weight: bold;
 }
 #applang {
     position: relative;
