@@ -283,7 +283,9 @@ input[type=range]::-moz-focus-outer {
 }
 #help a {
     color: #68d;
-    font-size: smaller !important;
+}
+#help button {
+    margin: 2px 0 2px 0;
 }
 #help a:hover {
     color: #46a;
@@ -291,6 +293,7 @@ input[type=range]::-moz-focus-outer {
 }
 #help p {
     font-weight: normal;
+    white-space: nowrap;
 }
 button.selected {
     background-color: white;
@@ -322,12 +325,15 @@ button.selected {
 }
 #help-body li {
     white-space: nowrap;
+    list-style-type: none;
+    padding-left: 10px;
 }
-#help-post {
+.help-post {
     text-align: center;
     font-family: monospace;
     font-style: italic;
     border-top: 1px dashed #aaa;
+    margin-top: 10px !important;
 }
 
 /** tool dialog */

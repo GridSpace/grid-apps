@@ -7,42 +7,42 @@
 
     <p>
     <a href="#" title="Kiri-e is the Japanese art of papercutting"><b>Kiri:Moto</b></a>
-    is an extensible, multi-purpose slicing<br> and visualization engine that produces output for
+    is an <a href="https://github.com/GridSpace/grid-apps">open-source</a> slicer for
+    </p>
 
-    <li><button onclick="kiri.api.mode.set('FDM')">FDM</button> : GCode for 3D printers
-    <li><button onclick="kiri.api.mode.set('CAM')">CAM</button> : 3 Axis CNC toolpaths
-    <li><button onclick="kiri.api.mode.set('LASER')">LASER</button> : DXG / SVG cut paths
-
-    <p>
-    <b>Learn More</b>
-    <li>Watch <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">a tutorial</a> on YouTube
-    <li>Follow <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> on Twitter
-    <li>Join the <a target="_fb" href="https://www.facebook.com/groups/kirimoto">user group</a> on Facebook
+    <li>Laser Cutters</li>
+    <li>3D Printers</li>
+    <li>CNC Mills</li>
 
     <p>
-    <b>File Load & Import</b>
+    <b>Loading Files</b>
 
-    <li>Drag and drop an <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">STL</a> onto the grid
-    <li>Or load with Function <button onclick="kiri.api.event.import()">Import</button>
+    <li>Drag and drop a <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">file</a> onto the grid</li>
+    <li>Or <button onclick="kiri.api.event.import()">Import</button> from your computer</li>
 
     <p>
     <b>Start Working</b>
     <li>Set mode
         <button onclick="kiri.api.mode.set('FDM')">FDM</button>
         <button onclick="kiri.api.mode.set('CAM')">CAM</button>
-        <button onclick="kiri.api.mode.set('LASER')">LASER</button>
-    <li>Select your target <button onclick="kiri.api.show.devices()">Device</button>
+        <button onclick="kiri.api.mode.set('LASER')">LASER</button></li>
+    <li>Select your target <button onclick="kiri.api.show.devices()">Device</button></li>
     <li>Then <button onclick = "kiri.api.function.slice()">Slice</button>
         <button onclick = "kiri.api.function.print()">Preview</button> and
-        <button onclick = "kiri.api.function.export()">Export</button> GCode
+        <button onclick = "kiri.api.function.export()">Export</button></li>
     <p>
     <b>Other ways to use Kiri:Moto</b>
 
-    <li><label><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a></label> -- Inside Onshape
-    <li><label><a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a></label> -- Inside Thingiverse
+    <li><label><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a></label> &mdash; free Embedded App</li>
+    <li><label><a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a></label> &mdash; free Thing App</li>
     </p>
 
-    <p>Refer to the <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Grid.Space Wiki</a> for more information</p>
+    <p>
+    <b>Learn More</b>
+    <li>Watch <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">a tutorial</a> on YouTube</li>
+    <li>Follow <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> on Twitter</li>
+    <li>Join the <a target="_fb" href="https://www.facebook.com/groups/kirimoto">user group</a> on Facebook</li>
+    <li>Visit the <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Wiki</a> on Github</li>
 
     <p id="kiri-version"></p>
     </div>
@@ -98,10 +98,16 @@
         </table>
         </div>
 
-        <div id="help-post">
-            <br>&lt;ESC&gt; key closes any dialog in Kiri<br>
-            <br>Kiri is already loaded and running on this page
-            <br>Dismiss this help window to start working
+        <div class="help-post">
+            <p><b>Kiri:Moto is entirely open source</b>!</p>
+            <p>Please contribute to the project with code,<br>
+            ideas, or localizations for your preferred language.</p>
+        </div>
+
+        <div class="help-post">
+            <p><b>&lt;ESC&gt; key closes any dialog in Kiri</b></p>
+            <p>Kiri is already loaded and running on this page<br>
+            Dismiss this help window to start working</p>
         </div>
     </div>
 
