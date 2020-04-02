@@ -17,10 +17,9 @@
 
 # FDM
 
-* `P` disable infill fingerprinting for gyroids
-* `P` refactor thin fill to use outline and inside poly normal dist to self
-* `F` polishing and other non-planar work
+* `B` check for support / brim intersections on first layer
 * `F` manual support addition / control
+* `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` first layer segment large flat areas for better fill reliability
 * `F` adaptive column to compensate for fine or layers that finish too quickly and melt
@@ -33,21 +32,19 @@
 * `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` dual extruder and swapping extruder support
 * `F` option to support interior bridges when 0% infill
-* `B` fix multiple part layout export offset (resend position @ print time)
-* `B` check for support / brim intersections on first layer
-* `B` fix wrong first point in general (all modes)
+* `P` disable infill fingerprinting for gyroids
+* `P` refactor thin fill to use outline and inside poly normal dist to self
 
 # CAM
 
-* `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `F` do not rough areas that go all the way through the part
       https://github.com/GridSpace/grid-apps/issues/20
 * `F` send gcode to cncjs
-* `F` trapezoidal tabs (in the Z axis)
 * `F` lead-in milling
+* `F` trapezoidal tabs (in the Z axis)
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` implement z line-only follows for ball/taper
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
@@ -61,6 +58,7 @@
 * `P` linear finishing is going back to z top too often
 * `P` option to skip milling holes that would be drilled
 * `P` crossing open space check point is outside camshell before returning max z
+* `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 
 # Laser
 

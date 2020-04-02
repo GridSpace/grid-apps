@@ -599,20 +599,27 @@ function minify(path) {
     return mini.code;
 }
 
+const clearok = [
+    'js/add-three.js',
+    'js/ext-three.js',
+    'js/ext-tween.js',
+    'js/moto-load-stl.js',
+];
+
 /**
  * @param {Object} req
  * @param {Object} res
  * @param {Function} next
  */
 function handleJS(req, res, next) {
-    if (!(req.gs.local || debug)) {
-        return reply404(req, res);
-    }
-
     let spath = req.gs.path.substring(1),
         jspos = spath.indexOf(".js"),
         fpath = jspos > 0 ? spath.substring(0,jspos+3) : spath,
         cached = fileCache[fpath];
+
+    if (!(req.gs.local || debug || clearok.indexOf(fpath) >= 0)) {
+        return reply404(req, res);
+    }
 
     if (fileMap[fpath]) {
         fpath = fileMap[fpath];
