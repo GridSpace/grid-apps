@@ -1544,6 +1544,7 @@ var gs_kiri_init = exports;
         UI.toolType.onchange = updateTool;
 
         $('appname').onclick = API.help.show;
+        $('apphelp').onclick = API.help.show;
 
         SPACE.platform.setSize(
             settings().device.bedWidth,

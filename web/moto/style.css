@@ -239,6 +239,12 @@ th, tr, td, span, div, label, button {
 #appid a:hover {
     color: rgba(0,50,50,0.75);
 }
+#applang:hover .drop {
+    display: block;
+}
+#apphelp {
+    margin-left: 5px;
+}
 #container {
     width: 100%;
     height: 100%;
