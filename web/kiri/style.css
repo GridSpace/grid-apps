@@ -282,6 +282,7 @@ input[type=range]::-moz-focus-outer {
 }
 #help div {
     font-family: Verdana, Geneva, sans-serif;
+    white-space: nowrap;
 }
 #help a {
     color: #68d;
