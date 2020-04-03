@@ -3,48 +3,54 @@
 <div id="help-body" class="flex frow">
 
     <div id="help-left">
-    <p><center><b>Help & Introduction</b></center>
 
-    <p>
+    <p><center><b>Quick Help</b></center></p>
+
+    <div class="content">
     <a href="#" title="Kiri-e is the Japanese art of papercutting"><b>Kiri:Moto</b></a>
-    is an <a href="https://github.com/GridSpace/grid-apps">open-source</a> slicer for
-    </p>
+    is an <a href="https://github.com/GridSpace/grid-apps" target="_github">open-source</a> slicer for
+    <br>
+    Laser cutting, 3D printing, CNC milling
+    </div>
 
-    <li>Laser Cutters</li>
-    <li>3D Printers</li>
-    <li>CNC Mills</li>
+    <div class="grouphead">Loading Objects</div>
 
-    <p>
-    <b>Loading Files</b>
+    <div class="content">
+    Drag and drop a <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">file</a> onto the grid
+    <br>
+    or import from your computer
+    </div>
 
-    <li>Drag and drop a <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">file</a> onto the grid</li>
-    <li>Or <button onclick="kiri.api.event.import()">Import</button> from your computer</li>
+    <div class="grouphead">Workflow</div>
 
-    <p>
-    <b>Start Working</b>
-    <li>Set mode
-        <button onclick="kiri.api.mode.set('FDM')">FDM</button>
-        <button onclick="kiri.api.mode.set('CAM')">CAM</button>
-        <button onclick="kiri.api.mode.set('LASER')">LASER</button></li>
-    <li>Set target <button onclick="kiri.api.show.devices()">Device</button></li>
-    <li>Then <button onclick = "kiri.api.function.slice()">Slice</button>
-        <button onclick = "kiri.api.function.print()">Preview</button> and
-        <button onclick = "kiri.api.function.export()">Export</button></li>
-    <p>
-    <b>Other ways to use Kiri:Moto</b>
+    <div class="content">
+    Select operating <u>mode</u><br>
+    Select target <u>device</u><br>
+    <u>Slice</u>, <u>Preview</u>, then <u>Export</u> GCode
+    </div>
 
-    <li><label><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a></label> &mdash; free Embedded App</li>
-    <li><label><a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a></label> &mdash; free Thing App</li>
-    </p>
+    <div class="grouphead">Integrations</div>
 
-    <p>
-    <b>Learn More</b>
-    <li>Watch <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">a tutorial</a> on YouTube</li>
-    <li>Follow <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> on Twitter</li>
-    <li>Join the <a target="_fb" href="https://www.facebook.com/groups/kirimoto">user group</a> on Facebook</li>
-    <li>Visit the <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Wiki</a> on Github</li>
+    <div class="content">
+    Kiri:Moto is also available through<br>
+    <a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description">Onshape</a> and
+    <a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/">Thingiverse</a> as apps
+    </div>
 
-    <p id="kiri-version"></p>
+    <div class="grouphead">Resources</div>
+
+    <div class="content">
+    Watch <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">a tutorial</a> on YouTube
+    <br>
+    Follow <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> on Twitter
+    <br>
+    Join the <a target="_fb" href="https://www.facebook.com/groups/kirimoto">user group</a> on Facebook
+    <br>
+    Visit the <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Wiki</a> on Github
+    </div>
+
+    <div class="help-post"><p id="kiri-version"></p></div>
+
     </div>
 
     <div id="help-right">

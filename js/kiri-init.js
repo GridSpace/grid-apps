@@ -1560,7 +1560,6 @@ var gs_kiri_init = exports;
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
 
-        $('appname').onclick = API.help.show;
         $('apphelp').onclick = API.help.show;
 
         SPACE.platform.setSize(

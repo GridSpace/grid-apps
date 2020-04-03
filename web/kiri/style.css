@@ -279,7 +279,9 @@ input[type=range]::-moz-focus-outer {
     border: 10px solid #ddd;
     background-color: rgba(255,255,255,0.9);
     padding: 10px;
-    font-family: sans-serif;
+}
+#help div {
+    font-family: Verdana, Geneva, sans-serif;
 }
 #help a {
     color: #68d;
@@ -295,12 +297,27 @@ input[type=range]::-moz-focus-outer {
     font-weight: normal;
     white-space: nowrap;
 }
+#help td {
+    border: 1px solid rgba(255,255,255,0);
+}
 button.selected {
     background-color: white;
 }
 #help-left {
     border-right: 1px dashed #aaa;
     padding-right: 10px;
+    line-height: 150%;
+}
+#help .grouphead {
+    line-height: 120%;
+    font-size: 14px;
+    padding: 8px 0 8px 0;
+    margin: 10px 0 10px 0;
+    background-color: #ccc;
+    border-color: white;
+}
+#help-left .content {
+    margin: 5px;
 }
 #help-right {
     padding-left: 10px;
@@ -330,7 +347,6 @@ button.selected {
 }
 .help-post {
     text-align: center;
-    font-family: monospace;
     font-style: italic;
     border-top: 1px dashed #aaa;
     margin-top: 10px !important;
