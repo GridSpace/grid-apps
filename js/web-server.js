@@ -156,21 +156,6 @@ function prepareScripts() {
 }
 
 /**
- * @param {String} name
- * @oaram {Array} list
- * @returns {String}
- */
-function htmlScript(prefix, list) {
-    let code = [];
-
-    list.forEach(file => {
-        code.push('\t<script src="/' + prefix + file + '.js/' + ver.VERSION + '"></script>');
-    });
-
-    return code.join("\n");
-}
-
-/**
  * @param {Array} array
  * @returns {String}
  */
@@ -186,7 +171,7 @@ function concatCode(array) {
         let code = [ `(function() { let load = [ `];
         array.forEach(file => {
             if (file.indexOf(".js") < 0) {
-                file = `/js/${file}.js`;
+                file = `/js/${file}.js?${ver.VERSION}`;
             }
             if (file.indexOf(":\\") > 0) {
                 file = `/${file}`;
@@ -324,6 +309,26 @@ function limit(array, length, timespan, inc) {
         array.shift();
     }
     return limit;
+}
+
+function rewrite(req, res, next) {
+    if (req.url.indexOf(".html") > 0) {
+        let real_write = res.write;
+        let real_end = res.end;
+
+        res.write = function() {
+            arguments[0] = arguments[0].toString().replace(/{{version}}/g,ver.VERSION);
+            real_write.apply(res, arguments);
+        };
+        res.end = function() {
+            if (arguments[0]) {
+                arguments[0] = arguments[0].toString().replace(/{{version}}/g,ver.VERSION);
+            }
+            real_end.apply(res, arguments);
+        };
+    }
+
+    next();
 }
 
 /**
@@ -1306,6 +1311,7 @@ handler.use(fullpath({
     .use(handleDebug)
     .use(fixedmap("/api/", api))
     .use(compression)
+    .use(rewrite)
     .use(handleStatic(currentDir + "/web/"))
     .use(reply404)
     .listen(port)

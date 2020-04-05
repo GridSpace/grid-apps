@@ -49,7 +49,7 @@ KIRI.work = {
 
         slicing = {};
         running = {};
-        worker = new Worker(`/code/worker.js`);
+        worker = new Worker(`/code/worker.js?${exports.VERSION}`);
 
         worker.onmessage = function(e) {
             let now = time(),

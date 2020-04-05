@@ -1,10 +1,9 @@
 /** Copyright Stewart Allen -- All Rights Reserved */
 "use strict";
 
-importScripts(`/code/work.js`);
+importScripts(`/code/work.js${location.search}`);
 
-let loc = self.location,
-    ver = exports.VERSION,
+let ver = exports.VERSION,
     base = self.base,
     moto = self.moto,
     util = base.util,
