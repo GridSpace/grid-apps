@@ -1021,9 +1021,10 @@ var gs_kiri_init = exports;
         SPACE.platform.setColor(0x555555);
 
         let files = evt.dataTransfer.files,
-            plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`);
+            plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`),
+            group = files.length < 2 ? undefined : confirm('group files?') ? [] : undefined;
 
-        if (plate) API.platform.load_files(files);
+        if (plate) API.platform.load_files(files,group);
     }
 
     function loadCatalogFile(e) {
@@ -1168,7 +1169,7 @@ var gs_kiri_init = exports;
             stockHeight:        $('stock-width'),
 
             device:              UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
-            deviceName:          UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:20, text:true}),
+            deviceName:          UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
             setDeviceFilament:   UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
             setDeviceNozzle:     UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
             setDeviceWidth:      UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
@@ -1181,8 +1182,8 @@ var gs_kiri_init = exports;
             setDeviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
             setDevice:           UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
-            setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:17, text:true}),
-            setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:17, text:true}),
+            setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"30%", text:true}),
+            setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"30%", text:true}),
             setDeviceLayer:      UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
             setDeviceToken:      UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             setDeviceStrip:      UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
@@ -1604,11 +1605,11 @@ var gs_kiri_init = exports;
                 API.selection.for_widgets(function(widget) {
                     let wbnd = widget.getBoundingBox();
                     let wwid = wbnd.max.x - wbnd.min.x;
-                    let wminx = widget.orient.pos.x + delta.x - wwid / 2;
+                    let wminx = widget.track.pos.x + delta.x - wwid / 2;
                     let wmaxx = wminx + wwid + delta.x;
                     if (wminx < bminx || wmaxx > bmaxx) return;
                     let whei = wbnd.max.y - wbnd.min.y;
-                    let wminy = widget.orient.pos.y + delta.y - whei / 2;
+                    let wminy = widget.track.pos.y + delta.y - whei / 2;
                     let wmaxy = wminy + whei + delta.y;
                     if (wminy < bminy || wmaxy > bmaxy) return;
                     widget.move(delta.x, delta.y, 0);

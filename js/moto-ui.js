@@ -382,7 +382,11 @@ var gs_moto_ui = exports;
             ip.setAttribute("rows", height);
             ip.setAttribute("wrap", "off");
         } else {
-            ip.setAttribute("size", size);
+            if (Number.isInteger(size)) {
+                ip.setAttribute("size", size);
+            } else {
+                ip.setAttribute("style", `width:${size}`);
+            }
         }
         ip.setAttribute("type", "text");
         row.style.display = hide ? 'none' : '';

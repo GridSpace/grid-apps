@@ -2,14 +2,14 @@
 
 "use strict";
 
-var gs_kiri_widget = exports;
+let gs_kiri_widget = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
     if (self.kiri.Widget) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         DRIVERS = KIRI.driver,
         CAM = DRIVERS.CAM,
         FDM = DRIVERS.FDM,
@@ -37,12 +37,70 @@ var gs_kiri_widget = exports;
         time = UTIL.time,
         PRO = Widget.prototype,
         solid_opacity = 1.0,
-        nextId = 0;
+        nextId = 0,
+        groups = [];
 
     KIRI.Widget = Widget;
     KIRI.newWidget = newWidget;
 
-    function newWidget(id) { return new Widget(id) }
+    function newWidget(id,group) { return new Widget(id,group) }
+
+    /** ******************************************************************
+     * Group helpers
+     ******************************************************************* */
+
+    let Group = Widget.Groups = {
+
+        remove: function(widget) {
+            groups.slice().forEach(group => {
+                let pos = group.indexOf(widget);
+                if (pos >= 0) {
+                    group.splice(pos,1);
+                }
+                if (group.length === 0) {
+                    pos = groups.indexOf(group);
+                    groups.splice(pos,1);
+                }
+            });
+        },
+
+        blocks: function() {
+            return groups.map(group => {
+                return {
+                    w: group[0].track.box.w,
+                    h: group[0].track.box.h,
+                    move: (x,y,z,abs) => {
+                        group.forEach(widget => {
+                            widget.mesh.material.visible = true;
+                            widget._move(x, y, z, abs);
+                        });
+                    }
+                };
+            });
+        },
+
+        loadDone: function() {
+            groups.forEach(group => {
+                if (!group.centered) {
+                    group[0].center();
+                    group.centered = true;
+                }
+            });
+        },
+
+        bounds: function(group) {
+            let bounds = null;
+            group.forEach(widget => {
+                let wb = widget.mesh.getBoundingBox(true);
+                if (bounds) {
+                    bounds = bounds.union(wb);
+                } else {
+                    bounds = wb;
+                }
+            });
+            return bounds;
+        }
+    };
 
     /** ******************************************************************
      * Constructor
@@ -52,8 +110,13 @@ var gs_kiri_widget = exports;
      * @params {String} [id]
      * @constructor
      */
-    function Widget(id) {
+    function Widget(id,group) {
         this.id = id || new Date().getTime().toString(36)+(nextId++);
+        this.group = group || [];
+        this.group.push(this);
+        if (groups.indexOf(this.group) < 0) {
+            groups.push(this.group);
+        }
         this.mesh = null;
         this.points = null;
         // todo resolve use of this vs. mesh.bounds
@@ -63,7 +126,13 @@ var gs_kiri_widget = exports;
         this.slices = null;
         this.settings = null;
         this.modified = true;
-        this.orient = {
+        this.track = {
+            // box size for packer
+            box: {
+                w: 0,
+                h: 0,
+                d: 0
+            },
             scale: {
                 x: 1.0,
                 y: 1.0,
@@ -100,18 +169,18 @@ var gs_kiri_widget = exports;
     };
 
     Widget.loadFromState = function(id, ondone, move) {
-        var widget = newWidget();
+        let widget = newWidget();
         widget.id = id;
         widget.saved = time();
         KIRI.odb.get('ws-save-'+id, function(data) {
             if (data) {
-                var vertices = data.geo || data,
-                    orient = data.orient || null;
+                let vertices = data.geo || data,
+                    track = data.track || null;
                 ondone(widget.loadVertices(vertices));
                 // restore widget position if specified
-                if (move && orient && orient.pos) {
-                    widget.orient = orient;
-                    widget.move(orient.pos.x, orient.pos.y, orient.pos.z, true);
+                if (move && track && track.pos) {
+                    widget.track = track;
+                    widget.move(track.pos.x, track.pos.y, track.pos.z, true);
                 }
             } else {
                 ondone(null);
@@ -132,7 +201,7 @@ var gs_kiri_widget = exports;
      * @returns {Array}
      */
     Widget.verticesToPoints = function(array,decimate) {
-        var parr = new Array(array.length / 3),
+        let parr = new Array(array.length / 3),
             i = 0,
             j = 0,
             t = time(),
@@ -144,7 +213,7 @@ var gs_kiri_widget = exports;
             newpoints;
         // replace point objects with their equivalents
         while (i < array.length) {
-            var p = newPoint(array[i++], array[i++], array[i++]),
+            let p = newPoint(array[i++], array[i++], array[i++]),
                 k = p.key,
                 m = hash[k];
             if (!m) {
@@ -156,9 +225,9 @@ var gs_kiri_widget = exports;
         }
         // decimate until all point spacing > precision_decimate
         while (parr.length > BASE.config.decimate_threshold && decimate && BASE.config.precision_decimate > 0.0) {
-            var lines = [], line, dec = 0;
+            let lines = [], line, dec = 0;
             for (i=0; i<oldpoints; ) {
-                var p1 = parr[i++],
+                let p1 = parr[i++],
                     p2 = parr[i++],
                     p3 = parr[i++];
                 lines.push( {p1:p1, p2:p2, d:SQRT(p1.distToSq3D(p2))} );
@@ -185,7 +254,7 @@ var gs_kiri_widget = exports;
             points = new Array(oldpoints);
             newpoints = 0;
             for (i=0; i<oldpoints; ) {
-                var p1 = parr[i++],
+                let p1 = parr[i++],
                     p2 = parr[i++],
                     p3 = parr[i++];
                 // drop facets with two offset points
@@ -211,7 +280,7 @@ var gs_kiri_widget = exports;
     };
 
     Widget.pointsToVertices = function(points) {
-        var vertices = new Float32Array(points.length * 3),
+        let vertices = new Float32Array(points.length * 3),
             i = 0, vi = 0;
         while (i < points.length) {
             vertices[vi++] = points[i].x;
@@ -226,8 +295,8 @@ var gs_kiri_widget = exports;
      ******************************************************************* */
 
     PRO.saveToCatalog = function(filename) {
-        var widget = this;
-        var time = UTIL.time();
+        let widget = this;
+        let time = UTIL.time();
         KIRI.catalog.putFile(filename, this.getGeoVertices(), function(vertices) {
             if (vertices && vertices.length) {
                 console.log("saving decimated mesh ["+vertices.length+"] time ["+(UTIL.time()-time)+"]");
@@ -238,8 +307,8 @@ var gs_kiri_widget = exports;
     };
 
     PRO.saveState = function(ondone) {
-        var widget = this;
-        KIRI.odb.put('ws-save-'+this.id, {geo:widget.getGeoVertices(), orient:widget.orient}, function(result) {
+        let widget = this;
+        KIRI.odb.put('ws-save-'+this.id, {geo:widget.getGeoVertices(), track:widget.track}, function(result) {
             widget.saved = time();
             if (ondone) ondone();
         });
@@ -258,7 +327,7 @@ var gs_kiri_widget = exports;
             this.points = null;
             return this;
         } else {
-            var geometry = new THREE.BufferGeometry();
+            let geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             return this.loadGeometry(geometry);
         }
@@ -269,7 +338,7 @@ var gs_kiri_widget = exports;
      * @returns {Widget}
      */
     PRO.loadGeometry = function(geometry) {
-        var mesh = new THREE.Mesh(
+        let mesh = new THREE.Mesh(
             geometry,
             new THREE.MeshPhongMaterial({
                 color: 0xffff00,
@@ -279,7 +348,6 @@ var gs_kiri_widget = exports;
                 opacity: solid_opacity
             })
         );
-
         // fix invalid normals
         geometry.computeFaceNormals();
         geometry.computeVertexNormals();
@@ -290,8 +358,12 @@ var gs_kiri_widget = exports;
         mesh.widget = this;
         this.mesh = mesh;
         // invalidates points cache (like any scale/rotation)
-        this.center();
+        this.center(true);
         return this;
+    };
+
+    PRO.groupBounds = function() {
+        return Group.bounds(this.group);
     };
 
     /**
@@ -307,7 +379,7 @@ var gs_kiri_widget = exports;
      * remove slice data and their views
      */
     PRO.clearSlices = function() {
-        var slices = this.slices,
+        let slices = this.slices,
             mesh = this.mesh;
         if (slices) {
             slices.forEach(function(slice) {
@@ -321,7 +393,7 @@ var gs_kiri_widget = exports;
      * @param {number} color
      */
     PRO.setColor = function(color) {
-        var material = this.mesh.material;
+        let material = this.mesh.material;
         material.color.set(color);
     };
 
@@ -329,7 +401,7 @@ var gs_kiri_widget = exports;
      * @param {number} value
      */
     PRO.setOpacity = function(value) {
-        var mesh = this.mesh;
+        let mesh = this.mesh;
         if (value <= 0.0) {
             mesh.material.transparent = solid_opacity < 1.0;
             mesh.material.opacity = solid_opacity;
@@ -344,28 +416,42 @@ var gs_kiri_widget = exports;
     /**
      * center geometry bottom (on platform) at 0,0,0
      */
-    PRO.center = function() {
-        var i = 0,
-            mesh = this.mesh,
-            geo = mesh.geometry,
-            bb = mesh.getBoundingBox(true),
+    PRO.center = function(init) {
+        let bb = init ? this.mesh.getBoundingBox(true) : this.groupBounds(),
             bm = bb.min.clone(),
             bM = bb.max.clone(),
             bd = bM.sub(bm).multiplyScalar(0.5),
-            gap = geo.attributes.position,
+            dx = bm.x + bd.x,
+            dy = bm.y + bd.y,
+            dz = bm.z;
+        // move mesh for each widget in group
+        if (!init) {
+            this.group.forEach(w => {
+                w.moveMesh(dx,dy,dz);
+            });
+        }
+    };
+
+    /**
+     * called by center() and Group.center()
+     */
+    PRO.moveMesh = function(x, y, z) {
+        let gap = this.mesh.geometry.attributes.position,
             pa = gap.array;
         // center point array on 0,0,0
-        for ( ; i < pa.length; i += 3) {
-            pa[i    ] -= bm.x + bd.x;
-            pa[i + 1] -= bm.y + bd.y;
-            pa[i + 2] -= bm.z;
+        for (let i=0; i < pa.length; i += 3) {
+            pa[i    ] -= x;
+            pa[i + 1] -= y;
+            pa[i + 2] -= z;
         }
         gap.needsUpdate = true;
-        bb = mesh.getBoundingBox(true);
+        let bb = this.groupBounds();
+        this.track.box = {
+            w: (bb.max.x - bb.min.x),
+            h: (bb.max.y - bb.min.y),
+            d: (bb.max.z - bb.min.z)
+        };
         // for use with the packer
-        mesh.w = (bb.max.x - bb.min.x);
-        mesh.h = (bb.max.y - bb.min.y);
-        mesh.d = (bb.max.z - bb.min.z);
         // invalidate cached points
         this.points = null;
         this.modified = true;
@@ -378,8 +464,8 @@ var gs_kiri_widget = exports;
      * @param {number} z position
      */
     PRO.setTopZ = function(z) {
-        var mesh = this.mesh,
-            pos = this.orient.pos;
+        let mesh = this.mesh,
+            pos = this.track.pos;
         if (z) {
             pos.z = mesh.getBoundingBox().max.z - z;
             mesh.position.z = -pos.z - 0.01;
@@ -390,16 +476,15 @@ var gs_kiri_widget = exports;
         this.modified = true;
     }
 
-    /**
-     *
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
-     * @param {boolean} abs
-     */
     PRO.move = function(x, y, z, abs) {
-        var mesh = this.mesh,
-            pos = this.orient.pos;
+        this.group.forEach(w => {
+            w._move(x, y, z, abs);
+        });
+    };
+
+    PRO._move = function(x, y, z, abs) {
+        let mesh = this.mesh,
+            pos = this.track.pos;
         // do not allow moves in pure slice view
         if (!mesh.material.visible) return;
         if (abs) {
@@ -421,32 +506,33 @@ var gs_kiri_widget = exports;
         }
     };
 
-    /**
-     *
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
-     */
     PRO.scale = function(x, y, z) {
+        this.group.forEach(w => {
+            w._scale(x, y, z);
+        });
+        this.center();
+    };
+
+    PRO._scale = function(x, y, z) {
         let mesh = this.mesh,
-            scale = this.orient.scale;
+            scale = this.track.scale;
         this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
-        this.center();
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
     };
 
-    /**
-     *
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
-     */
     PRO.rotate = function(x, y, z) {
+        this.group.forEach(w => {
+            w._rotate(x, y, z);
+        });
+        this.center();
+    };
+
+    PRO._rotate = function(x, y, z) {
         this.bounds = null;
         this.setWireframe(false);
         this.clearSlices();
@@ -458,9 +544,8 @@ var gs_kiri_widget = exports;
             m4 = m4.makeRotationFromQuaternion(x);
         }
         this.mesh.geometry.applyMatrix4(m4);
-        this.center();
         if (euler) {
-            let rot = this.orient.rot;
+            let rot = this.track.rot;
             rot.x += (x || 0);
             rot.y += (y || 0);
             rot.z += (z || 0);
@@ -468,10 +553,17 @@ var gs_kiri_widget = exports;
     };
 
     PRO.mirror = function() {
+        this.group.forEach(w => {
+            w._mirror();
+        });
+        this.center();
+    };
+
+    PRO._mirror = function() {
         this.setWireframe(false);
         this.clearSlices();
-        var i,
-            o = this.orient,
+        let i,
+            o = this.track,
             geo = this.mesh.geometry,
             at = geo.attributes,
             pa = at.position.array,
@@ -482,7 +574,6 @@ var gs_kiri_widget = exports;
         }
         geo.computeFaceNormals();
         geo.computeVertexNormals();
-        this.center();
         o.mirror = !o.mirror;
     };
 
@@ -499,7 +590,6 @@ var gs_kiri_widget = exports;
     };
 
     PRO.getBoundingBox = function(refresh) {
-        // if (this.mesh) return this.mesh.getBoundingBox();
         if (!this.bounds || refresh) {
             this.bounds = new THREE.Box3();
             this.bounds.setFromPoints(this.getPoints());
@@ -526,7 +616,7 @@ var gs_kiri_widget = exports;
      * @params {boolean} [remote]
      */
     PRO.slice = function(settings, ondone, onupdate, remote) {
-        var widget = this,
+        let widget = this,
             startTime = UTIL.time();
 
         widget.settings = settings;
@@ -573,7 +663,7 @@ var gs_kiri_widget = exports;
         } else {
 
             // executed from kiri-worker.js
-            var catchdone = function(error) {
+            let catchdone = function(error) {
                 if (error) {
                     return ondone(error);
                 }
@@ -586,11 +676,11 @@ var gs_kiri_widget = exports;
                 ondone();
             };
 
-            var catchupdate = function(progress, message) {
+            let catchupdate = function(progress, message) {
                 onupdate(progress, message);
             };
 
-            var driver = null;
+            let driver = null;
 
             switch (settings.mode) {
                 case 'LASER': driver = LASER; break;
@@ -608,7 +698,7 @@ var gs_kiri_widget = exports;
     };
 
     PRO.getCamBounds = function(settings) {
-        var bounds = this.getBoundingBox().clone();
+        let bounds = this.getBoundingBox().clone();
         bounds.max.z += settings.process.camZTopOffset;
         return bounds;
     };
@@ -619,7 +709,7 @@ var gs_kiri_widget = exports;
      * @param {boolean} cam mode
      */
     PRO.render = function(renderMode, cam) {
-        var slices = this.slices;
+        let slices = this.slices;
         if (!slices) return;
         // render outline
         slices.forEach(function(s) { s.renderOutline(renderMode) });
@@ -638,7 +728,7 @@ var gs_kiri_widget = exports;
     };
 
     PRO.hideSlices = function() {
-        var showing = false;
+        let showing = false;
         if (this.slices) this.slices.forEach(function(slice) {
             showing = showing || slice.view.visible;
             slice.view.visible = false;
@@ -651,7 +741,7 @@ var gs_kiri_widget = exports;
     };
 
     PRO.setWireframe = function(set, color, opacity) {
-        var mesh = this.mesh,
+        let mesh = this.mesh,
             widget = this;
         if (this.wire) {
             mesh.remove(this.wire);

@@ -58,7 +58,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         camTopZ = 0,
         topZ = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
-        alerts = [];
+        alerts = [],
+        grouping = false;
 
     // seed defaults. will get culled on save
     settings.sproc.FDM.default = clone(settings.process);
@@ -83,7 +84,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         move: moveSelection,
         scale: scaleSelection,
         rotate: rotateSelection,
-        bounds: boundsSelection,
         meshes: function() { return selectedMeshes.slice() },
         widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
         for_meshes: forSelectedMeshes,
@@ -106,7 +106,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
-        load_files: loadFiles
+        load_files: loadFiles,
+        group: platformGroup,
+        group_done: platformGroupDone
     };
 
     const color = {
@@ -449,8 +451,18 @@ self.kiri.copyright = exports.COPYRIGHT;
         });
     }
 
+    function forSelectedGroups(f) {
+        let m = selectedMeshes;
+        if (m.length === 0 && WIDGETS.length === 1) m = [ WIDGETS[0].mesh ];
+        let v = [];
+        m.slice().forEach(function (mesh) {
+            if (v.indexOf(mesh.widget.group) < 0) f(mesh.widget);
+            v.push(mesh.widget.group);
+        });
+    }
+
     function forSelectedWidgets(f) {
-        var m = selectedMeshes;
+        let m = selectedMeshes;
         if (m.length === 0 && WIDGETS.length === 1) m = [ WIDGETS[0].mesh ];
         m.slice().forEach(function (mesh) { f(mesh.widget) });
     }
@@ -816,9 +828,10 @@ self.kiri.copyright = exports.COPYRIGHT;
             return
         }
         let scale = unitScale();
-        UI.selWidth.innerHTML = UTIL.round(mesh.w/scale,2);
-        UI.selDepth.innerHTML = UTIL.round(mesh.h/scale,2);
-        UI.selHeight.innerHTML = UTIL.round(mesh.d/scale,2);
+        let {w, h, d} = mesh.widget.track.box;
+        UI.selWidth.innerHTML = UTIL.round(w/scale,2);
+        UI.selDepth.innerHTML = UTIL.round(h/scale,2);
+        UI.selHeight.innerHTML = UTIL.round(d/scale,2);
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
@@ -831,7 +844,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function moveSelection(x, y, z, abs) {
-        forSelectedWidgets(function (w) { w.move(x, y, z, abs) });
+        forSelectedGroups(function (w) { w.move(x, y, z, abs) });
         platform.update_stock();
         SPACE.update();
     }
@@ -846,7 +859,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         var x = parseFloat(UI.scaleX.value || dv),
             y = parseFloat(UI.scaleY.value || dv),
             z = parseFloat(UI.scaleZ.value || dv);
-        forSelectedWidgets(function (w) {
+        forSelectedGroups(function (w) {
             w.scale(x,y,z);
             meshUpdateInfo(w.mesh);
         });
@@ -859,18 +872,13 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function rotateSelection(x, y, z) {
-        forSelectedWidgets(function (w) { w.rotate(x, y, z) });
+        forSelectedGroups(function (w) {
+            w.rotate(x, y, z);
+            meshUpdateInfo(w.mesh);
+        });
         platform.compute_max_z();
         platform.update_stock(true);
         SPACE.update();
-    }
-
-    function boundsSelection() {
-        var bounds = new THREE.Box3();
-        forSelectedWidgets(function(widget) {
-            bounds.union(widget.mesh.getBoundingBox());
-        });
-        return bounds;
     }
 
     /** ******************************************************************
@@ -942,9 +950,9 @@ self.kiri.copyright = exports.COPYRIGHT;
     function platformUpdateBounds() {
         var bounds = new THREE.Box3();
         forAllWidgets(function(widget) {
-            let wp = widget.orient.pos;
+            let wp = widget.track.pos;
             let wb = widget.mesh.getBoundingBox().clone();
-            // wb.translate(widget.orient.pos);
+            // wb.translate(widget.track.pos);
             bounds.union(wb);
         });
         return settings.bounds = bounds;
@@ -1034,14 +1042,28 @@ self.kiri.copyright = exports.COPYRIGHT;
         SPACE.platform.setMaxZ(topZ);
     }
 
+    function platformGroup() {
+        grouping = true;
+    }
+
+    // called after all new widgets are loaded to update group positions
+    function platformGroupDone() {
+        grouping = false;
+        Widget.Groups.loadDone();
+        if (layoutOnAdd) platform.layout();
+    }
+
     function platformAdd(widget, shift, nolayout) {
         WIDGETS.push(widget);
         SPACE.platform.add(widget.mesh);
         platform.select(widget, shift);
         platform.compute_max_z();
+        API.event.emit('widget.add', widget);
         if (nolayout) return;
         if (layoutOnAdd) platform.layout();
-        API.event.emit('widget.add', widget);
+        if (!grouping) {
+            platformGroupDone();
+        }
     }
 
     function platformDelete(widget) {
@@ -1057,6 +1079,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         }
         KIRI.work.clear(widget);
         WIDGETS.remove(widget);
+        Widget.Groups.remove(widget);
         SPACE.platform.remove(widget.mesh);
         selectedMeshes.remove(widget.mesh);
         updateSliderMax();
@@ -1073,10 +1096,9 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function platformLayout(event, space) {
         var auto = UI.autoLayout.checked,
-            layout = (viewMode === VIEWS.ARRANGE && auto),
             proc = settings.process,
-            modified = false,
             oldmode = viewMode,
+            layout = (viewMode === VIEWS.ARRANGE && auto),
             topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset : 0;
 
         switch (MODE) {
@@ -1102,11 +1124,6 @@ self.kiri.copyright = exports.COPYRIGHT;
             return SPACE.update();
         }
 
-        // check if any widget has been modified
-        forAllWidgets(function(w) {
-            modified |= w.isModified();
-        });
-
         var gap = space;
 
         // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
@@ -1121,7 +1138,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
-            c = meshArray().sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
+            c = Widget.Groups.blocks().sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
             p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
@@ -1134,9 +1151,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             m = c[i];
             m.fit.x += m.w / 2 + p.pad;
             m.fit.y += m.h / 2 + p.pad;
-            m.widget.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
-            // m.widget.setTopZ(topZ);
-            m.material.visible = true;
+            m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
+            // m.material.visible = true;
         }
 
         if (MODE === MODES.CAM) {
@@ -1167,7 +1183,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 let max = { x: -Infinity, y: -Infinity, z: -Infinity };
                 forAllWidgets(function(widget) {
                     let wbnd = widget.getBoundingBox(refresh);
-                    let wpos = widget.orient.pos;
+                    let wpos = widget.track.pos;
                     min = {
                         x: Math.min(min.x, wpos.x + wbnd.min.x),
                         y: Math.min(min.y, wpos.y + wbnd.min.y),
@@ -1379,9 +1395,11 @@ self.kiri.copyright = exports.COPYRIGHT;
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 
-    function loadFiles(files) {
-        for (var i=0; i<files.length; i++) {
-            var reader = new FileReader(),
+    function loadFiles(files,group) {
+        let loaded = files.length;
+        platform.group();
+        for (let i=0; i<files.length; i++) {
+            let reader = new FileReader(),
                 lower = files[i].name.toLowerCase(),
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
@@ -1390,15 +1408,17 @@ self.kiri.copyright = exports.COPYRIGHT;
             reader.file = files[i];
             reader.onloadend = function (e) {
                 if (israw) platform.add(
-                    newWidget().loadVertices(JSON.parse(e.target.result).toFloat32())
+                    newWidget(undefined,group)
+                    .loadVertices(JSON.parse(e.target.result).toFloat32())
                 );
                 if (isstl) platform.add(
-                    newWidget()
+                    newWidget(undefined,group)
                     .loadVertices(new MOTO.STL().parse(e.target.result))
                     .saveToCatalog(e.target.file.name)
                 );
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
+                if (--loaded === 0) platform.group_done();
             };
             reader.readAsBinaryString(reader.file);
         }
