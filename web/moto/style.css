@@ -20,7 +20,6 @@ body,div {
 }
 label {
     font-size: 14px;
-    border-bottom: 1px solid #ddd;
     margin-right: 2px;
 }
 canvas {
@@ -95,6 +94,15 @@ th, tr, td, span, div, label, button {
     flex-grow: 1;
     flex-basis: auto;
     width: 33.33%;
+}
+.grouphead:first-of-type {
+    margin-top: 0;
+}
+.dark .grouphead {
+    background-color: rgba(100,120,150,0.75);
+    border: 1px solid #555;
+    color: #eee;
+    font-weight: normal;
 }
 .grouphead {
     color: black;
@@ -181,6 +189,16 @@ th, tr, td, span, div, label, button {
  overflow-y: scroll !important;
  margin-right: -14px !important;
  margin-bottom: -14px !important;
+}
+.dark .control {
+    border: 0 !important;
+    background-color: rgba(255,255,255,0.5);
+}
+.dark .control button {
+    border: 1px solid rgba(128,128,128,0.5);
+}
+.control {
+    background-color: rgba(255,255,255,0.75);
 }
 .control label {
     padding: 2px;
@@ -276,6 +294,10 @@ th, tr, td, span, div, label, button {
     width: 100%;
     height: 100%;
 }
+#control > div:hover label {
+    text-decoration: underline;
+    text-decoration-color: #aaa;
+}
 #control-left {
     display: none;
     position: fixed;
@@ -284,12 +306,11 @@ th, tr, td, span, div, label, button {
     top: 5px;
     left: 0px;
     padding: 5px;
-    border-top: 3px solid #ddd;
-    border-right: 3px solid #ddd;
-    border-bottom: 3px solid #ddd;
+    border-top: 2px solid #ddd;
+    border-right: 2px solid #ddd;
+    border-bottom: 2px solid #ddd;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
-    background-color: rgba(255,255,255,0.75);
     overflow-x: visible;
     overflow-y: scroll;
 }
@@ -301,15 +322,26 @@ th, tr, td, span, div, label, button {
     right: 0px;
     bottom: 5px;
     padding: 5px;
-    border-top: 3px solid #ddd;
-    border-left: 3px solid #ddd;
-    border-bottom: 3px solid #ddd;
+    border-top: 2px solid #ddd;
+    border-left: 2px solid #ddd;
+    border-bottom: 2px solid #ddd;
     border-top-left-radius: 3px;
     border-bottom-left-radius: 3px;
-    background-color: rgba(255,255,255,0.75);
     color: #222;
     overflow-y: scroll;
     overflow-x: visible;
+}
+.dark .compact .grouphead {
+    background-color: rgba(100,120,150,0.75);
+    border: 1px solid #555;
+    color: #eee;
+    xfont-weight: normal;
+}
+.dark .compact .grouphead:hover {
+    background-color: rgba(80,100,180,0.75);
+}
+.dark .compact.control {
+    background-color: rgba(128,128,128,0.2) !important;
 }
 .compact {
     overflow: visible !important;
@@ -359,6 +391,9 @@ th, tr, td, span, div, label, button {
 }
 #control-left::-webkit-scrollbar, #control-right::-webkit-scrollbar {
     display: none;
+}
+.dark #control-left:hover, .dark #control-right:hover {
+    background-color: rgba(255,255,255,0.6);
 }
 #control-left:hover, #control-right:hover {
     background-color: #ffffff;

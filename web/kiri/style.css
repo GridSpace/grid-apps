@@ -4,6 +4,10 @@ input[type=range]::-moz-focus-outer {
 .grouphead {
     position: relative;
 }
+.dark .popper {
+    background-color: rgba(255,255,255,0.75);
+    color: black;
+}
 .popper {
     position: absolute;
     top: 0;

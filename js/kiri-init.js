@@ -1605,6 +1605,7 @@ var gs_kiri_init = exports;
         if (dark) {
             SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
             SPACE.platform.opacity(0.8);
+            DOC.body.classList.add('dark');
         } else {
             SPACE.platform.setGrid(25, 5, 0x999999, 0xcccccc);
             SPACE.platform.opacity(0.3);
