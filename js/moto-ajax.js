@@ -2,18 +2,35 @@
 
 "use strict";
 
-var gs_moto_ajax = exports;
+let gs_moto_ajax = exports;
 
 (function() {
-    if (!self.moto) self.moto = {};
-    if (self.moto.Ajax) return;
+    let MOTO = self.moto;
 
-    self.moto.Ajax = Ajax;
-    self.moto.callAjax = function(url, handler) {
+    if (!MOTO) MOTO = self.moto = {};
+
+    if (MOTO.Ajax) return;
+
+    MOTO.Ajax = Ajax;
+
+    MOTO.callAjax = function(url, handler) {
         new Ajax(handler).request(url);
     };
 
-    var STATES = [
+    let AP = Ajax.prototype,
+        KV = moto.KV,
+        KEY = "moto-ajax",
+        TIME = function() { return new Date().getTime() },
+        MOKEY = moto.id = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());
+
+    MOTO.restore = function(id) {
+        MOKEY = moto.id = id;
+        KV.setItem(KEY, MOKEY);
+    }
+
+    KV.setItem(KEY, MOKEY);
+
+    let STATES = [
         "request not initialized",        // 0
         "server connection established",  // 1
         "request recieved",               // 2
@@ -34,18 +51,10 @@ var gs_moto_ajax = exports;
         return Math.round(Math.random()*0xffffffff).toString(36);
     }
 
-    var AP = Ajax.prototype,
-        KV = moto.KV,
-        KEY = "moto-ajax",
-        TIME = function() { return new Date().getTime() },
-        MOKEY = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());
-
-    KV.setItem(KEY, MOKEY);
-
     AP.onStateChange = function() {
         this.state = STATES[this.ajax.readyState];
         if (this.ajax.readyState === 4 && this.callback) {
-            var status = this.ajax.status;
+            let status = this.ajax.status;
             if (status >= 200 && status < 300) {
                 this.callback(this.ajax.responseType ? this.ajax.response : this.ajax.responseText, this.ajax);
             } else {
@@ -64,7 +73,7 @@ var gs_moto_ajax = exports;
         if (this.responseType) this.ajax.responseType = this.responseType;
         headers = headers || {};
         headers["X-Moto-Ajax"] = MOKEY;
-        for (var k in headers) {
+        for (let k in headers) {
             this.ajax.setRequestHeader(k, headers[k]);
         }
         if (send) {

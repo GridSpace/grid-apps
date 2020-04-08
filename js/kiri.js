@@ -106,7 +106,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
-        load_files: loadFiles,
+        load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone
     };
@@ -143,7 +143,9 @@ self.kiri.copyright = exports.COPYRIGHT;
             save: saveSettings,
             show: showSettings,
             update: updateSettings,
-            restore: restoreSettings
+            restore: restoreSettings,
+            export: settingsExport,
+            import: settingsImport
         },
         color,
         const: {
@@ -815,8 +817,12 @@ self.kiri.copyright = exports.COPYRIGHT;
      * Selection Functions
      ******************************************************************* */
 
-    function meshUpdateInfo(mesh) {
-        if (!mesh) {
+    function updateSelectedInfo() {
+        let bounds = new THREE.Box3();
+        forSelectedMeshes(mesh => {
+            bounds = bounds.union(mesh.getBoundingBox());
+        });
+        if (bounds.min.x === Infinity) {
             if (selectedMeshes.length === 0) {
                 UI.selWidth.innerHTML = '0';
                 UI.selDepth.innerHTML = '0';
@@ -825,13 +831,15 @@ self.kiri.copyright = exports.COPYRIGHT;
                 UI.scaleY.value = '';
                 UI.scaleZ.value = '';
             }
-            return
+            return;
         }
-        let scale = unitScale();
-        let {w, h, d} = mesh.widget.track.box;
-        UI.selWidth.innerHTML = UTIL.round(w/scale,2);
-        UI.selDepth.innerHTML = UTIL.round(h/scale,2);
-        UI.selHeight.innerHTML = UTIL.round(d/scale,2);
+        let dx = bounds.max.x - bounds.min.x,
+            dy = bounds.max.y - bounds.min.y,
+            dz = bounds.max.z - bounds.min.z,
+            scale = unitScale();
+        UI.selWidth.innerHTML = UTIL.round(dx/scale,2);
+        UI.selDepth.innerHTML = UTIL.round(dy/scale,2);
+        UI.selHeight.innerHTML = UTIL.round(dz/scale,2);
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
@@ -861,8 +869,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             z = parseFloat(UI.scaleZ.value || dv);
         forSelectedGroups(function (w) {
             w.scale(x,y,z);
-            meshUpdateInfo(w.mesh);
         });
+        updateSelectedInfo();
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
         UI.scaleZ.value = 1;
@@ -874,8 +882,8 @@ self.kiri.copyright = exports.COPYRIGHT;
     function rotateSelection(x, y, z) {
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
-            meshUpdateInfo(w.mesh);
         });
+        updateSelectedInfo();
         platform.compute_max_z();
         platform.update_stock(true);
         SPACE.update();
@@ -976,7 +984,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             selectedMeshes.push(mesh);
             API.event.emit('widget.select', widget);
             widget.setColor(color.selected);
-            meshUpdateInfo(mesh);
+            updateSelectedInfo();
         }
         platformUpdateSelected();
         SPACE.update();
@@ -1012,7 +1020,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         widget.setColor(color.deselected);
         platformUpdateSelected();
         SPACE.update();
-        meshUpdateInfo();
+        updateSelectedInfo();
     }
 
     function platformLoad(url, onload) {
@@ -1395,7 +1403,41 @@ self.kiri.copyright = exports.COPYRIGHT;
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 
-    function loadFiles(files,group) {
+    function settingsImport(data, ask) {
+        if (typeof(data) === 'string') {
+            try {
+                data = JSON.parse(atob(data));
+            } catch (e) {
+                console.log({data})
+                alert('invalid settings format');
+                return;
+            }
+        }
+        if (!(data.settings && data.moto && data.time)) {
+            alert('invalid settings format');
+            return;
+        }
+        if (ask && !confirm(`Import settings made on ${new Date(data.time)} from Kiri:Moto version ${data.version}?`)) {
+            return;
+        }
+        settings = data.settings;
+        MOTO.restore(data.moto);
+        SDB.setItem('kiri-init', data.init || 2);
+        API.conf.save();
+        LOC.reload();
+    }
+
+    function settingsExport() {
+        return btoa(JSON.stringify({
+            settings: settings,
+            version: KIRI.version,
+            moto: MOTO.id,
+            init: SDB.getItem('kiri-init'),
+            time: Date.now()
+        }));
+    }
+
+    function platformLoadFiles(files,group) {
         let loaded = files.length;
         platform.group();
         for (let i=0; i<files.length; i++) {
@@ -1404,7 +1446,8 @@ self.kiri.copyright = exports.COPYRIGHT;
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
-                isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0;
+                isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
+                isset = lower.indexOf(".b64") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
                 if (israw) platform.add(
@@ -1418,6 +1461,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 );
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
+                if (isset) settingsImport(e.target.result, true);
                 if (--loaded === 0) platform.group_done();
             };
             reader.readAsBinaryString(reader.file);
@@ -1427,7 +1471,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     function loadFile() {
         $('load-file').onchange = function(event) {
             DBUG.log(event);
-            loadFiles(event.target.files);
+            platformLoadFiles(event.target.files);
         };
         $('load-file').click();
         // alert2("drag/drop STL files onto platform to import\nreload page to return to last saved state");
@@ -1757,7 +1801,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         var oldMode = viewMode;
         viewMode = mode;
         platform.deselect();
-        meshUpdateInfo();
+        updateSelectedInfo();
         switch (mode) {
             case VIEWS.ARRANGE:
                 showLayerView(false);

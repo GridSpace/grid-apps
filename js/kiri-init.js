@@ -10,6 +10,7 @@ var gs_kiri_init = exports;
     if (self.kiri.init) return;
 
     let KIRI = self.kiri,
+        MOTO = self.moto,
         WIN = self.window,
         DOC = self.document,
         LOC = self.location,
@@ -432,6 +433,15 @@ var gs_kiri_init = exports;
                 updateSpaceState();
             }
         }).request("/data/"+ settings().id + "/" + settings().ver, set);
+    }
+
+    function settingsExport() {
+        if (!confirm('Download Kiri:Moto Settings?')) return;
+        let json = API.conf.export();
+        let blob = new Blob([json], {type: "octet/stream"});
+        let url = WIN.URL.createObjectURL(blob);
+        $('help').innerHTML = `<a id="sexport" href="${url}" download="kiriconf.b64">x</a>`;
+        $('sexport').click();
     }
 
     function settingsSave() {
@@ -1218,6 +1228,9 @@ var gs_kiri_init = exports;
                 ],[
                     UI.setupTools =
                     UC.newButton(LANG.su_tool, showTools, {modes:CAM})
+                ],[
+                    UI.setupExport =
+                    UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL})
                 ],[
                     UI.localButton =
                     UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true})

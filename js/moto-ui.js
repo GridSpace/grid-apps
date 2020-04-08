@@ -529,7 +529,7 @@ var gs_moto_ui = exports;
         b.appendChild(t);
         b.onclick = function() {
             if (compact) hidePoppers();
-            action();
+            if (action) action();
         };
 
         if (options && options.class) {

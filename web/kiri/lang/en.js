@@ -72,6 +72,7 @@ kiri.lang['en-us'] = {
     su_devi:        "Devices",
     su_tool:        "Tools",
     su_locl:        "Local",
+    su_xprt:        "Export",
     su_help:        "Help",
 
     // FUNCTION
