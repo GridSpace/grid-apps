@@ -523,33 +523,33 @@ var gs_kiri_init = exports;
             code = {
                 mode: API.mode.get(),
                 settings: {
-                    bed_width: parseInt(UI.setDeviceWidth.value) || 300,
-                    bed_depth: parseInt(UI.setDeviceDepth.value) || 175,
-                    bed_circle: UI.setDeviceRound.checked,
-                    build_height: parseInt(UI.setDeviceHeight.value) || 150,
-                    nozzle_size: parseFloat(UI.setDeviceNozzle.value) || 0.4,
-                    filament_diameter: parseFloat(UI.setDeviceFilament.value) || 1.75,
-                    origin_center: UI.setDeviceOrigin.checked,
-                    origin_top: UI.setDeviceOriginTop.checked,
-                    extrude_abs: UI.setDeviceExtrusion.checked,
-                    spindle_max: parseInt(UI.setDeviceMaxSpindle.value) || 0
+                    bed_width: parseInt(UI.deviceWidth.value) || 300,
+                    bed_depth: parseInt(UI.deviceDepth.value) || 175,
+                    bed_circle: UI.deviceRound.checked,
+                    build_height: parseInt(UI.deviceHeight.value) || 150,
+                    nozzle_size: parseFloat(UI.extruderNozzle.value) || 0.4,
+                    filament_diameter: parseFloat(UI.extruderFilament.value) || 1.75,
+                    origin_center: UI.deviceOrigin.checked,
+                    origin_top: UI.deviceOriginTop.checked,
+                    extrude_abs: UI.extrudeAbsolute.checked,
+                    spindle_max: parseInt(UI.deviceMaxSpindle.value) || 0
                 },
                 cmd: {
-                    fan_power: UI.setDeviceFan.value,
-                    progress: UI.setDeviceTrack.value,
-                    spindle: UI.setDeviceSpindle.value.split('\n'),
-                    layer: UI.setDeviceLayer.value.split('\n')
+                    fan_power: UI.gcodeFan.value,
+                    progress: UI.gcodeProgress.value,
+                    spindle: UI.gcodeSpindle.value.split('\n'),
+                    layer: UI.gcodeLayer.value.split('\n')
                 },
-                pre: UI.setDevicePre.value.split('\n'),
-                post: UI.setDevicePost.value.split('\n'),
-                pause: UI.setDevicePause.value.split('\n'),
-                dwell: UI.setDeviceDwell.value.split('\n'),
-                'laser-on': UI.setDeviceLaserOn.value.split('\n'),
-                'laser-off': UI.setDeviceLaserOff.value.split('\n'),
-                'tool-change': UI.setDeviceChange.value.split('\n'),
-                'file-ext': UI.setDeviceFExt.value,
-                'token-space': UI.setDeviceToken.checked ? ' ' : '',
-                'strip-comments': UI.setDeviceStrip.checked
+                pre: UI.gcodeHeader.value.split('\n'),
+                post: UI.gcodeFooter.value.split('\n'),
+                pause: UI.gcodePause.value.split('\n'),
+                dwell: UI.gcodeDwell.value.split('\n'),
+                'laser-on': UI.gcodeLaserOn.value.split('\n'),
+                'laser-off': UI.gcodeLaserOff.value.split('\n'),
+                'tool-change': UI.gcodeToolChange.value.split('\n'),
+                'file-ext': UI.gcodeExtension.value,
+                'token-space': UI.gcodeToken.checked ? ' ' : '',
+                'strip-comments': UI.gcodeStrip.checked
             };
 
         if (oldname !== newname && isLocalDevice(oldname)) removeLocalDevice(oldname);
@@ -607,60 +607,60 @@ var gs_kiri_init = exports;
 
             UI.deviceName.value = devicename;
             // common
-            UI.setDevicePre.value = dev.gcodePre.join('\n');
-            UI.setDevicePost.value = dev.gcodePost.join('\n');
-            UI.setDevicePause.value = dev.gcodePause.join('\n');
-            UI.setDeviceWidth.value = dev.bedWidth;
-            UI.setDeviceDepth.value = dev.bedDepth;
-            UI.setDeviceHeight.value = dev.maxHeight;
-            UI.setDeviceRound.checked = dev.bedRound;
-            UI.setDeviceOrigin.checked = proc.outputOriginCenter;
+            UI.gcodeHeader.value = dev.gcodePre.join('\n');
+            UI.gcodeFooter.value = dev.gcodePost.join('\n');
+            UI.gcodePause.value = dev.gcodePause.join('\n');
+            UI.deviceWidth.value = dev.bedWidth;
+            UI.deviceDepth.value = dev.bedDepth;
+            UI.deviceHeight.value = dev.maxHeight;
+            UI.deviceRound.checked = dev.bedRound;
+            UI.deviceOrigin.checked = proc.outputOriginCenter;
             // FDM
-            UI.setDeviceFan.value = dev.gcodeFan;
-            UI.setDeviceTrack.value = dev.gcodeTrack;
-            UI.setDeviceLayer.value = dev.gcodeLayer.join('\n');
-            UI.setDeviceFilament.value = dev.filamentSize;
-            UI.setDeviceNozzle.value = dev.nozzleSize;
-            UI.setDeviceExtrusion.checked = dev.extrudeAbs;
+            UI.gcodeFan.value = dev.gcodeFan;
+            UI.gcodeProgress.value = dev.gcodeTrack;
+            UI.gcodeLayer.value = dev.gcodeLayer.join('\n');
+            UI.extruderFilament.value = dev.filamentSize;
+            UI.extruderNozzle.value = dev.nozzleSize;
+            UI.extrudeAbsolute.checked = dev.extrudeAbs;
             // CAM
-            UI.setDeviceMaxSpindle.value = dev.spindleMax;
-            UI.setDeviceSpindle.value = dev.gcodeSpindle.join('\n');
-            UI.setDeviceDwell.value = dev.gcodeDwell.join('\n');
-            UI.setDeviceChange.value = dev.gcodeChange.join('\n');
-            UI.setDeviceFExt.value = dev.gcodeFExt;
-            UI.setDeviceToken.checked = dev.gcodeSpace ? true : false;
-            UI.setDeviceStrip.checked = dev.gcodeStrip;
+            UI.deviceMaxSpindle.value = dev.spindleMax;
+            UI.gcodeSpindle.value = dev.gcodeSpindle.join('\n');
+            UI.gcodeDwell.value = dev.gcodeDwell.join('\n');
+            UI.gcodeToolChange.value = dev.gcodeChange.join('\n');
+            UI.gcodeExtension.value = dev.gcodeFExt;
+            UI.gcodeToken.checked = dev.gcodeSpace ? true : false;
+            UI.gcodeStrip.checked = dev.gcodeStrip;
             // LASER
-            UI.setDeviceLaserOn.value = dev.gcodeLaserOn.join('\n');
-            UI.setDeviceLaserOff.value = dev.gcodeLaserOff.join('\n');
+            UI.gcodeLaserOn.value = dev.gcodeLaserOn.join('\n');
+            UI.gcodeLaserOff.value = dev.gcodeLaserOff.join('\n');
 
             // disable editing for non-local devices
             [
              UI.deviceName,
-             UI.setDevicePre,
-             UI.setDevicePost,
-             UI.setDevicePause,
-             UI.setDeviceDepth,
-             UI.setDeviceWidth,
-             UI.setDeviceHeight,
-             UI.setDeviceExtrusion,
-             UI.setDeviceOrigin,
-             UI.setDeviceOriginTop,
-             UI.setDeviceRound,
-             UI.setDeviceFan,
-             UI.setDeviceTrack,
-             UI.setDeviceLayer,
-             UI.setDeviceFilament,
-             UI.setDeviceNozzle,
-             UI.setDeviceMaxSpindle,
-             UI.setDeviceSpindle,
-             UI.setDeviceDwell,
-             UI.setDeviceChange,
-             UI.setDeviceFExt,
-             UI.setDeviceToken,
-             UI.setDeviceStrip,
-             UI.setDeviceLaserOn,
-             UI.setDeviceLaserOff
+             UI.gcodeHeader,
+             UI.gcodeFooter,
+             UI.gcodePause,
+             UI.deviceDepth,
+             UI.deviceWidth,
+             UI.deviceHeight,
+             UI.extrudeAbsolute,
+             UI.deviceOrigin,
+             UI.deviceOriginTop,
+             UI.deviceRound,
+             UI.gcodeFan,
+             UI.gcodeProgress,
+             UI.gcodeLayer,
+             UI.extruderFilament,
+             UI.extruderNozzle,
+             UI.deviceMaxSpindle,
+             UI.gcodeSpindle,
+             UI.gcodeDwell,
+             UI.gcodeToolChange,
+             UI.gcodeExtension,
+             UI.gcodeToken,
+             UI.gcodeStrip,
+             UI.gcodeLaserOn,
+             UI.gcodeLaserOff
             ].forEach(function(e) {
                 e.disabled = !local;
             });
@@ -668,7 +668,7 @@ var gs_kiri_init = exports;
             // hide spindle fields when device doens't support it
             if (mode === 'CAM')
             [
-             UI.setDeviceExtrusion,
+             UI.extrudeAbsolute,
              UI.roughingSpindle,
              UI.finishingSpindle,
              UI.drillSpindle
@@ -1187,38 +1187,46 @@ var gs_kiri_init = exports;
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:              UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
-            deviceName:          UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
-            setDeviceWidth:      UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
-            setDeviceDepth:      UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
-            setDeviceHeight:     UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
-            setDeviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
-            setDeviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l}),
-            setDeviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
-            setDeviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
+            device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
+            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
+            deviceWidth:      UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
+            deviceDepth:      UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
+            deviceHeight:     UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
+            deviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
+            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l}),
+            deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
+            deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
-            setExtruder:         UC.newGroup(LANG.dv_gr_ext, $('extruders'), {group:"dext", nocompact:true, modes:FDM}),
-            setDeviceFilament:   UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
-            setDeviceNozzle:     UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
-            setExtruderSelect:   UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM}),
-            setExtruderDeselect: UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM}),
-            setDeviceExtrusion:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
+            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", nocompact:true, modes:FDM}),
+            extruderFilament: UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
+            extruderNozzle:   UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
+            extruderOffX:     UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            extruderOffY:     UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            extruderSelect:   UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
+            extruderDeselect: UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
+            extrudeAbsolute:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
+            extruders:        UC.newTableRow([[
+                UC.newButton("<", undefined),
+                UC.newButton("+", undefined),
+                UC.newButton("-", undefined),
+                UC.newButton(">", undefined)
+            ]], {modes:FDM, expert:true}),
 
-            setDevice:           UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
-            setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
-            setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
-            setDeviceLayer:      UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
-            setDeviceToken:      UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
-            setDeviceStrip:      UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
-            setDeviceFExt:       UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
-            setDeviceDwell:      UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2}),
-            setDeviceChange:     UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
-            setDeviceSpindle:    UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2}),
-            setDevicePause:      UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
-            setDeviceLaserOn:    UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
-            setDeviceLaserOff:   UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
-            setDevicePre:        UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
-            setDevicePost:       UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
+            gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
+            gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
+            gcodeProgress:    UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
+            gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
+            gcodeToken:       UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
+            gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
+            gcodeExtension:   UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
+            gcodeDwell:       UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2}),
+            gcodeToolChange:  UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
+            gcodeSpindle:     UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2}),
+            gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
+            gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
+            gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
+            gcodeHeader:      UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
+            gcodeFooter:      UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
 
             mode: UC.newGroup(LANG.mo_menu, assets, {region:"left"}),
             modeTable: UC.newTableRow([
@@ -1243,7 +1251,7 @@ var gs_kiri_init = exports;
                     UC.newButton(LANG.su_tool, showTools, {modes:CAM})
                 ],[
                     UI.setupExport =
-                    UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL})
+                    UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true})
                 ],[
                     UI.localButton =
                     UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true})

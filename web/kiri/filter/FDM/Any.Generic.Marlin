@@ -24,10 +24,23 @@
         "G28 X0 Y0                ; home XY axes",
         "M84                      ; disable stepper motors"
     ],
+    "extruder":[
+        {
+            "nozzle": 0.4,
+            "filament": 1.75,
+            "offset_x": 0,
+            "offset_y": 0,
+            "select": [
+                "T0"
+            ],
+            "deselect": []
+        }
+    ],
     "cmd":{
         "fan_power": "M106 S{fan_speed}"
     },
     "settings":{
-        "origin_center": false
+        "origin_center": false,
+        "extrude_abs": false
     }
 }

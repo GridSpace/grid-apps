@@ -65,6 +65,10 @@ kiri.lang['en-us'] = {
     dv_exts_l:      "gcode to select this extruder",
     dv_extd_s:      "deselect",
     dv_extd_l:      "gcode to deselect this extruder",
+    dv_exox_s:      "offset x",
+    dv_exox_l:      "nozzle offset x",
+    dv_exoy_s:      "offset y",
+    dv_exoy_l:      "nozzle offset y",
 
     // MODE
     mo_menu:        "mode",
