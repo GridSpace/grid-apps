@@ -108,6 +108,8 @@ kiri.lang['en-us'] = {
 
     // OPTIONS
     op_menu:        "options",
+    op_xprt_s:      "expert",
+    op_xprt_l:      "enable expert options",
     op_dark_s:      "dark mode",
     op_dark_l:      "dark mode interface",
     op_comp_s:      "compact",
@@ -146,8 +148,6 @@ kiri.lang['en-us'] = {
     se_menu:        "settings",
     se_load:        "load",
     se_save:        "save",
-    se_xprt:        "expert",
-    se_bsic:        "basic",
 
     // FDM SLICING
     sl_menu:        "slicing",

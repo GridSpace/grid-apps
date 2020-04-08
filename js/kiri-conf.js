@@ -51,7 +51,8 @@ var gs_kiri_conf = exports;
                     gcodeFExt: 1,
                     gcodeFan: 1,
                     gcodeTrack: 1,
-                    gcodeLayer: 1
+                    gcodeLayer: 1,
+                    extruders: 1
                 },
                 // fields permitted in FDM:Process
                 p:{
@@ -302,7 +303,15 @@ var gs_kiri_conf = exports;
                 gcodeChange: ["M6 T{tool}"],    // CAM tool change script
                 gcodeSpindle: ["M3 S{speed}"],  // CAM spindle speed
                 gcodeLaserOn: ["M106 S{power}"],// LASER turn on
-                gcodeLaserOff: ["M107"]         // LASER turn off
+                gcodeLaserOff: ["M107"],        // LASER turn off
+                extruders:[{        // FDM extruders structure
+                    filament: 1.75,
+                    nozzle: 0.4,
+                    select: [],
+                    deselect: [],
+                    offsetX: 0,
+                    offsetY: 0
+                }]
             },
             // FDM/CAM/Laser
             process:{
@@ -501,6 +510,7 @@ var gs_kiri_conf = exports;
             controller:{
                 view: null,
                 dark: false,
+                expert: false,
                 compact: false,
                 zoomSpeed: 1.0,
                 reverseZoom: true,

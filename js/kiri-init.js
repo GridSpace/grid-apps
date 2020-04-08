@@ -78,6 +78,7 @@ var gs_kiri_init = exports;
         let control = settings().controller;
         let isCompact = control.compact;
         let isDark = control.dark;
+        control.expert = UI.expert.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
@@ -98,6 +99,7 @@ var gs_kiri_init = exports;
         if (isDark !== control.dark) {
             LOC.reload();
         }
+        UC.setExpert(control.expert);
     }
 
     function onLayerToggle() {
@@ -1306,13 +1308,14 @@ var gs_kiri_init = exports;
             ]),
 
             layout:        UC.newGroup(LANG.op_menu),
-            dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l, modes:ALL, expert:true}),
+            expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             compact:       UC.newBoolean(LANG.op_comp_s, booleanSave, {title:LANG.op_comp_l}),
+            dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:    UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-            freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-            reverseZoom:   UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
+            freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL, expert:true}),
+            reverseZoom:   UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL, expert:true}),
             units:         UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
 
             // allow modules to insert new items at the bottom of the left menu
@@ -1341,11 +1344,6 @@ var gs_kiri_init = exports;
                     UC.newButton(LANG.se_load, settingsLoad),
                     UI.settingsSave =
                     UC.newButton(LANG.se_save, settingsSave)
-                ],[
-                    UI.settingsExpert =
-                    UC.newButton(LANG.se_xprt, () => { UC.setExpert(true); SDB.setItem('expert', true) }, {modes:FDM, expert:false}),
-                    UI.settingsExpert =
-                    UC.newButton(LANG.se_bsic, () => { UC.setExpert(false); SDB.removeItem('expert') }, {modes:FDM, expert:true})
                 ]
             ]),
 
@@ -1738,7 +1736,7 @@ var gs_kiri_init = exports;
         UI.helpButton.title = `${LANG.version} ` + KIRI.version;
 
         // restore expert setting preference
-        UC.setExpert(SDB.getItem('expert') ? true : false);
+        UC.setExpert(control.expert);
 
         // setup tab visibility watcher
         // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });

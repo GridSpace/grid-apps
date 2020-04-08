@@ -3,8 +3,11 @@ kiri.lang['da-dk'] = {
     version:        "version",
     enable:         "aktivér",
 
-    // DEVICE dialog (_s = label, _l = hover help)
+    // DEVICE dialog groups
     dv_gr_dev:      "enhed",
+    dv_gr_gco:      "gcode",
+
+    // DEVICE dialog (_s = label, _l = hover help)
     dv_name_s:      "navn",
     dv_name_l:      "enhedens navn",
     dv_fila_s:      "filament",
@@ -27,9 +30,6 @@ kiri.lang['da-dk'] = {
     dv_orgt_l:      "del z udgangspunkt top",
     dv_bedc_s:      "cirkulær plade",
     dv_bedc_l:      "enhedens plade er cirkulær",
-
-    // DEVICE dialog gcode (_s = label, _l = hover help)
-    dv_gr_gco:      "gcode",
     dv_fanp_s:      "blæser styrke",
     dv_fanp_l:      "bestem kæler blæser styrke",
     dv_prog_s:      "fremgang",
@@ -96,6 +96,8 @@ kiri.lang['da-dk'] = {
 
     // OPTIONS
     op_menu:        "præferencer",
+    op_xprt_s:      "ekspert",
+    op_xprt_l:      "aktivér ekspert præferencer",
     op_show_s:      "vis udgangspunkt",
     op_show_l:      "vis enhed eller fremgang udgangspunkt",
     op_alig_s:      "flugt top",
@@ -130,8 +132,6 @@ kiri.lang['da-dk'] = {
     se_menu:        "Indstillinger",
     se_load:        "indlæs",
     se_save:        "gem",
-    se_xprt:        "ekspert",
-    se_bsic:        "grundlæggende",
 
     // FDM SLICING
     sl_menu:        "klargøre",

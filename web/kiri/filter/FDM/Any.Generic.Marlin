@@ -34,6 +34,15 @@
                 "T0"
             ],
             "deselect": []
+        },
+            "nozzle": 0.4,
+            "filament": 1.75,
+            "offset_x": 30,
+            "offset_y": 0,
+            "select": [
+                "T1"
+            ],
+            "deselect": []
         }
     ],
     "cmd":{
