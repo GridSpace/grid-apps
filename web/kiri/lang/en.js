@@ -5,8 +5,12 @@ kiri.lang['en-us'] = {
     version:        "version",
     enable:         "enable",
 
-    // DEVICE dialog (_s = label, _l = hover help)
+    // DEVICE dialog groups
     dv_gr_dev:      "device",
+    dv_gr_ext:      "extruder",
+    dv_gr_gco:      "gcode",
+
+    // DEVICE dialog (_s = label, _l = hover help)
     dv_name_s:      "name",
     dv_name_l:      "device name",
     dv_fila_s:      "filament",
@@ -21,7 +25,7 @@ kiri.lang['en-us'] = {
     dv_bedh_l:      "max build height\nin millimeters",
     dv_spmx_s:      "max spindle rpm",
     dv_spmx_l:      "max spindle speed\n0 to disable",
-    dv_xtab_s:      "extrude absolute",
+    dv_xtab_s:      "absolute positioning",
     dv_xtab_l:      "extrusion moves absolute",
     dv_orgc_s:      "origin center",
     dv_orgc_l:      "bed origin center",
@@ -29,9 +33,6 @@ kiri.lang['en-us'] = {
     dv_orgt_l:      "part z origin top",
     dv_bedc_s:      "circular bed",
     dv_bedc_l:      "device bed is circular",
-
-    // DEVICE dialog gcode (_s = label, _l = hover help)
-    dv_gr_gco:      "gcode",
     dv_fanp_s:      "fan power",
     dv_fanp_l:      "set cooling fan power",
     dv_prog_s:      "progress",
@@ -60,6 +61,10 @@ kiri.lang['en-us'] = {
     dv_lzon_l:      "gcode laser on script",
     dv_lzof_s:      "laser off",
     dv_lzof_l:      "gcode laser off script",
+    dv_exts_s:      "select",
+    dv_exts_l:      "gcode to select this extruder",
+    dv_extd_s:      "deselect",
+    dv_extd_l:      "gcode to deselect this extruder",
 
     // MODE
     mo_menu:        "mode",
@@ -99,6 +104,8 @@ kiri.lang['en-us'] = {
 
     // OPTIONS
     op_menu:        "options",
+    op_dark_s:      "dark mode",
+    op_dark_l:      "dark mode interface",
     op_comp_s:      "compact",
     op_comp_l:      "compact user interface",
     op_show_s:      "show origin",

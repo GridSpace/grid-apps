@@ -500,6 +500,7 @@ var gs_kiri_conf = exports;
             },
             controller:{
                 view: null,
+                dark: false,
                 compact: false,
                 zoomSpeed: 1.0,
                 reverseZoom: true,

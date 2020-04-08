@@ -44,6 +44,8 @@ var MOTO = window.moto = window.moto || {};
         gridOrigin,
         gridUnitMinor,
         gridUnitMajor,
+        gridColorMajor,
+        gridColorMinor,
         gridView,
         viewControl,
         trackPlane,
@@ -114,7 +116,7 @@ var MOTO = window.moto = window.moto || {};
                 refresh();
             },
             complete = function() {
-                setGrid(gridMajor, gridMinor);
+                setGrid(gridMajor, gridMinor, gridColorMajor, gridColorMinor);
             };
         new TWEEN.Tween(from).
             to(to, 500).
@@ -201,6 +203,8 @@ var MOTO = window.moto = window.moto || {};
         gridView = new THREE.Group();
         gridUnitMajor = unitMajor;
         gridUnitMinor = unitMinor;
+        gridColorMajor = colorMajor || gridColorMajor;
+        gridColorMinor = colorMinor || gridColorMinor;
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
@@ -227,8 +231,8 @@ var MOTO = window.moto = window.moto || {};
                 else if (minors && i % unitMinor === 0) minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
             }
         }
-        gridView.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
-        if (minors) gridView.add(makeLinesFromPoints(minors, colorMinor || 0xcccccc, 1));
+        gridView.add(makeLinesFromPoints(majors, gridColorMajor || 0x999999, 1));
+        if (minors) gridView.add(makeLinesFromPoints(minors, gridColorMinor || 0xcccccc, 1));
         Space.scene.add(gridView);
     }
 

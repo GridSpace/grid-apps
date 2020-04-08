@@ -3,7 +3,6 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` restore settings should restore all mode/device/settings (find corner cases)
-* `C` set page background color? or dark mode?
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode

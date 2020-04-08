@@ -75,21 +75,27 @@ var gs_kiri_init = exports;
     }
 
     function booleanSave() {
-        let current = settings();
-        let isCompact = current.controller.compact;
-        current.controller.showOrigin = UI.showOrigin.checked;
-        current.controller.autoLayout = UI.autoLayout.checked;
-        current.controller.freeLayout = UI.freeLayout.checked;
-        current.controller.alignTop = UI.alignTop.checked;
-        current.controller.reverseZoom = UI.reverseZoom.checked;
-        current.controller.compact = UI.compact.checked;
-        SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
+        let control = settings().controller;
+        let isCompact = control.compact;
+        let isDark = control.dark;
+        control.showOrigin = UI.showOrigin.checked;
+        control.autoLayout = UI.autoLayout.checked;
+        control.freeLayout = UI.freeLayout.checked;
+        control.alignTop = UI.alignTop.checked;
+        control.reverseZoom = UI.reverseZoom.checked;
+        control.compact = UI.compact.checked;
+        control.dark = UI.dark.checked;
+        SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
         platform.update_stock();
         API.conf.save();
         // if compact mode changed, reload UI
-        if (isCompact !== current.controller.compact) {
+        if (isCompact !== control.compact) {
             UC.setDefaults(isCompact);
+            LOC.reload();
+        }
+        // if dark mode changed, reload UI
+        if (isDark !== control.dark) {
             LOC.reload();
         }
     }
@@ -1093,12 +1099,15 @@ var gs_kiri_init = exports;
         let assets = $('assets'),
             control = $('control'),
             container = $('container'),
-            welcome = $('welcome');
+            welcome = $('welcome'),
+            controller = settings().controller,
+            compact = controller.compact,
+            dark = controller.dark;
 
         WIN.addEventListener("resize", API.dialog.update);
 
         SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(0xffffff);
+        SPACE.setSkyColor(dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
             if (API.var.layer_max === 0) return;
             if (settings().controller.reverseZoom) delta = -delta;
@@ -1109,7 +1118,7 @@ var gs_kiri_init = exports;
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
 
-        UC.setCompact(settings().controller.compact);
+        UC.setCompact(compact);
 
         Object.assign(UI, {
             // from static HTML
@@ -1180,20 +1189,24 @@ var gs_kiri_init = exports;
 
             device:              UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
             deviceName:          UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
-            setDeviceFilament:   UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
-            setDeviceNozzle:     UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
             setDeviceWidth:      UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
             setDeviceDepth:      UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
             setDeviceHeight:     UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
             setDeviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
-            setDeviceExtrusion:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l}),
             setDeviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l}),
             setDeviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
             setDeviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
+            setExtruder:         UC.newGroup(LANG.dv_gr_ext, $('extruders'), {group:"dext", nocompact:true, modes:FDM}),
+            setDeviceFilament:   UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
+            setDeviceNozzle:     UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
+            setExtruderSelect:   UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM}),
+            setExtruderDeselect: UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM}),
+            setDeviceExtrusion:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
+
             setDevice:           UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
-            setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"30%", text:true}),
-            setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"30%", text:true}),
+            setDeviceFan:        UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
+            setDeviceTrack:      UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
             setDeviceLayer:      UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
             setDeviceToken:      UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             setDeviceStrip:      UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
@@ -1285,6 +1298,7 @@ var gs_kiri_init = exports;
             ]),
 
             layout:        UC.newGroup(LANG.op_menu),
+            dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l, modes:ALL, expert:true}),
             compact:       UC.newBoolean(LANG.op_comp_s, booleanSave, {title:LANG.op_comp_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
@@ -1582,8 +1596,13 @@ var gs_kiri_init = exports;
             settings().device.bedHeight
         );
 
-        SPACE.platform.setGrid(25, 5);
-        SPACE.platform.opacity(0.2);
+        if (dark) {
+            SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
+            SPACE.platform.opacity(0.8);
+        } else {
+            SPACE.platform.setGrid(25, 5, 0x999999, 0xcccccc);
+            SPACE.platform.opacity(0.3);
+        }
 
         SPACE.mouse.downSelect(function(int,event) {
             // lay flat with meta or ctrl clicking a selected face
@@ -1640,20 +1659,21 @@ var gs_kiri_init = exports;
     // SECOND STAGE INIT AFTER UI RESTORED
 
     function init_two() {
-        let current = settings();
+        let current = settings(),
+            control = current.controller;
 
         platform.deselect();
         CATALOG.addFileListener(updateCatalog);
-        SPACE.view.setZoom(current.controller.reverseZoom, current.controller.zoomSpeed);
+        SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         SPACE.platform.setZOff(0.2);
 
         // restore UI state from settings
-        UI.showOrigin.checked = current.controller.showOrigin;
-        UI.freeLayout.checked = current.controller.freeLayout;
-        UI.autoLayout.checked = current.controller.autoLayout;
-        UI.alignTop.checked = current.controller.alignTop;
-        UI.reverseZoom.checked = current.controller.reverseZoom;
-        UI.compact.checked = current.controller.compact;
+        UI.showOrigin.checked = control.showOrigin;
+        UI.freeLayout.checked = control.freeLayout;
+        UI.autoLayout.checked = control.autoLayout;
+        UI.alignTop.checked = control.alignTop;
+        UI.reverseZoom.checked = control.reverseZoom;
+        UI.compact.checked = control.compact;
 
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {

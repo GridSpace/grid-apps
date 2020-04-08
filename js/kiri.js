@@ -1421,8 +1421,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             return;
         }
         settings = data.settings;
-        MOTO.restore(data.moto);
-        SDB.setItem('kiri-init', data.init || 2);
+        // MOTO.restore(data.moto);
+        // SDB.setItem('kiri-init', data.init || 2);
         API.conf.save();
         LOC.reload();
     }
