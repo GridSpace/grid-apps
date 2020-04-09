@@ -75,7 +75,7 @@ let gs_kiri_conf = exports;
             ext = code.extruders;
 
         let device = {
-            mode: mode || '',
+            mode: mode || code.mode || '',
             internal: 0,
             bedHeight: 2.5,
             bedWidth: valueOf(set.bed_width, 300),
@@ -125,6 +125,12 @@ let gs_kiri_conf = exports;
         return device;
     }
 
+    function objectMap(o, fn) {
+        for (let [key,  val] of Object.entries(o)) {
+            o[key] = fn(val) || val;
+        }
+    }
+
     function forValues(o, fn) {
         Object.values(o).forEach(v => fn(v));
     }
@@ -156,6 +162,9 @@ let gs_kiri_conf = exports;
             API.sdb.setItem(`ws-settings-${Date.now()}`, JSON.stringify(settings));
             device_v1_to_v2(settings.device);
             device_v1_to_v2(settings.cdev.FDM);
+            objectMap(settings.devices, dev => {
+                return device_from_code(dev);
+            });
             settings.ver = 2;
         }
 

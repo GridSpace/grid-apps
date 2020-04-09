@@ -1268,6 +1268,10 @@ self.kiri.copyright = exports.COPYRIGHT;
                         uie.appendChild(opt);
                     });
                     if (chosen) uie.selectedIndex = chosen;
+                } else if (typ === 'textarea') {
+                    if (Array.isArray(val)) {
+                        uie.value = val.join('\n');
+                    }
                 }
             }
         }
@@ -1327,6 +1331,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         let device = settings.device;
         if (device.extruders && device.extruders[device.internal]) {
             updateFieldsFromSettings(device.extruders[device.internal]);
+            UI.extruder.firstChild.innerText = `${LANG.dv_gr_ext} [${device.internal+1}/${device.extruders.length}]`;
         }
     }
 

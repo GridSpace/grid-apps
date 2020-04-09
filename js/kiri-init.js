@@ -538,62 +538,35 @@ var gs_kiri_init = exports;
 
             proc.outputOriginCenter = dev.outputOriginCenter;
             UI.deviceName.value = devicename;
-            UI.gcodeHeader.value = dev.gcodePre.join('\n');
-            UI.gcodeFooter.value = dev.gcodePost.join('\n');
-            UI.gcodePause.value = dev.gcodePause.join('\n');
-            UI.deviceWidth.value = dev.bedWidth;
-            UI.deviceDepth.value = dev.bedDepth;
-            UI.deviceHeight.value = dev.maxHeight;
-            UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = proc.outputOriginCenter;
-            UI.gcodeExtension.value = dev.gcodeFExt;
-
-            if (mode === 'FDM') {
-                UI.gcodeFan.value = dev.gcodeFan;
-                UI.gcodeProgress.value = dev.gcodeTrack;
-                UI.gcodeLayer.value = dev.gcodeLayer.join('\n');
-                UI.extrudeAbsolute.checked = dev.extrudeAbs;
-            }
 
             if (mode === 'CAM') {
                 proc.camOriginTop = dev.outputOriginTop;
-                UI.deviceMaxSpindle.value = dev.spindleMax;
-                UI.gcodeSpindle.value = dev.gcodeSpindle.join('\n');
-                UI.gcodeDwell.value = dev.gcodeDwell.join('\n');
-                UI.gcodeToolChange.value = dev.gcodeChange.join('\n');
-                UI.gcodeToken.checked = dev.gcodeSpace ? true : false;
-                UI.gcodeStrip.checked = dev.gcodeStrip;
             }
-
-            if (mode === 'LASER') {
-                UI.gcodeLaserOn.value = dev.gcodeLaserOn.join('\n');
-                UI.gcodeLaserOff.value = dev.gcodeLaserOff.join('\n');
-            }
-
             // disable editing for non-local devices
             [
                 UI.deviceName,
-                UI.gcodeHeader,
-                UI.gcodeFooter,
+                UI.gcodePre,
+                UI.gcodePost,
                 UI.gcodePause,
-                UI.deviceDepth,
-                UI.deviceWidth,
-                UI.deviceHeight,
-                UI.extrudeAbsolute,
+                UI.bedDepth,
+                UI.bedWidth,
+                UI.maxHeight,
+                UI.extrudeAbs,
                 UI.deviceOrigin,
                 UI.deviceOriginTop,
                 UI.deviceRound,
                 UI.gcodeFan,
-                UI.gcodeProgress,
+                UI.gcodeTrack,
                 UI.gcodeLayer,
                 UI.extFilament,
                 UI.extNozzle,
                 UI.deviceMaxSpindle,
                 UI.gcodeSpindle,
                 UI.gcodeDwell,
-                UI.gcodeToolChange,
-                UI.gcodeExtension,
-                UI.gcodeToken,
+                UI.gcodeChange,
+                UI.gcodeFExt,
+                UI.gcodeSpace,
                 UI.gcodeStrip,
                 UI.gcodeLaserOn,
                 UI.gcodeLaserOff
@@ -603,7 +576,7 @@ var gs_kiri_init = exports;
 
             // hide spindle fields when device doens't support it
             if (mode === 'CAM') [
-                UI.extrudeAbsolute,
+                UI.extrudeAbs,
                 UI.roughingSpindle,
                 UI.finishingSpindle,
                 UI.drillSpindle
@@ -626,10 +599,9 @@ var gs_kiri_init = exports;
             API.conf.save();
         } catch (e) {
             console.log({error:e, device:code, devicename});
-            throw e;
             API.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
             API.show.alert(`please select a new device`, 10);
-            // showDevices();
+            showDevices();
         }
         API.function.clear();
         API.event.settings();
@@ -1124,9 +1096,9 @@ var gs_kiri_init = exports;
 
             device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
             deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
-            deviceWidth:      UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
-            deviceDepth:      UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
-            deviceHeight:     UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
+            bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
+            bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
+            maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM}),
             deviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l}),
             deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
@@ -1139,7 +1111,7 @@ var gs_kiri_init = exports;
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
             extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
             extDeselect:      UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
-            extrudeAbsolute:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
+            extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
             extActions:       UC.newTableRow([[
                 UC.newButton("<", undefined),
                 UC.newButton("+", undefined),
@@ -1149,19 +1121,19 @@ var gs_kiri_init = exports;
 
             gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
             gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
-            gcodeProgress:    UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
+            gcodeTrack:       UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
             gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
-            gcodeToken:       UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
+            gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, null, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, null, {title:LANG.dv_strc_l, modes:CAM}),
-            gcodeExtension:   UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
+            gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
             gcodeDwell:       UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2}),
-            gcodeToolChange:  UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
+            gcodeChange:      UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
             gcodeSpindle:     UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2}),
             gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
             gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
             gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
-            gcodeHeader:      UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
-            gcodeFooter:      UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
+            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
+            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
 
             mode: UC.newGroup(LANG.mo_menu, assets, {region:"left"}),
             modeTable: UC.newTableRow([
