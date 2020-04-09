@@ -32,11 +32,11 @@ self.kiri.copyright = exports.COPYRIGHT;
         STATS   = new Stats(SDB),
         SEED    = 'kiri-seed',
         // ---------------
-        MODES   = KIRI.conf.MODES,
-        VIEWS   = KIRI.conf.VIEWS,
-        filter  = KIRI.conf.filter,
-        settings = KIRI.conf.template,
-        settingsDefault = settings,
+        CONF    = KIRI.conf,
+        MODES   = CONF.MODES,
+        VIEWS   = CONF.VIEWS,
+        settings = clone(CONF.template),
+        settingsDefault = clone(settings),
         // ---------------
         Widget    = kiri.Widget,
         newWidget = kiri.newWidget,
@@ -133,6 +133,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         o2js: o2js,
         js2o: js2o,
         ajax: ajax,
+        clone: clone,
         focus: setFocus,
         stats: STATS,
         catalog: CATALOG,
@@ -255,7 +256,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     function Stats(db) {
         this.db = db;
         this.obj = js2o(this.db['stats'] || '{}');
-        var o = this.obj, k;
+        let o = this.obj, k;
         for (k in o) {
             if (!o.hasOwnProperty(k)) continue;
             if (k === 'dn' || k.indexOf('-') > 0 || k.indexOf('_') > 0) {
@@ -376,7 +377,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function parseOpt(ov) {
-        var opt = {}, kv, kva;
+        let opt = {}, kv, kva;
         // handle kiri legacy and proper url encoding better
         ov.replace(/&/g,',').split(',').forEach(function(el) {
             kv = decodeURIComponent(el).split(':');
@@ -409,17 +410,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         return js2o(SDB.getItem(key),def);
     }
 
-    function cull(o, f) {
-        for (var k in o) {
-            if (!o.hasOwnProperty(k)) {
-                continue;
-            }
-            if (!f.hasOwnProperty(k)) {
-                delete o[k];
-            }
-        }
-    }
-
     function setProgress(value, msg) {
         if (value) {
             value = UTIL.round(value*100,4);
@@ -440,7 +430,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function meshArray() {
-        var out = [];
+        let out = [];
         forAllWidgets(function(widget) {
             out.push(widget.mesh);
         });
@@ -479,7 +469,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function updateSliderMax(set) {
-        var max = 0;
+        let max = 0;
         if (viewMode === VIEWS.PREVIEW && currentPrint) {
             max = currentPrint.getLayerCount();
         } else {
@@ -503,7 +493,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function hideSlices() {
-        var showing = false;
+        let showing = false;
         setOpacity(color.model_opacity);
         forAllWidgets(function(widget) {
             widget.setWireframe(false);
@@ -538,7 +528,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         UI.layerID.value = layer;
         UI.layerSlider.value = layer;
 
-        var j,
+        let j,
             slice,
             slices,
             layers,
@@ -640,7 +630,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function preparePrint(callback) {
         // kick off slicing it hasn't been done already
-        for (var i=0; i < WIDGETS.length; i++) {
+        for (let i=0; i < WIDGETS.length; i++) {
             if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
                 prepareSlices(function() {
                     if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
@@ -725,7 +715,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         setViewMode(VIEWS.SLICE);
         API.conf.save();
 
-        var firstMesh = true,
+        let firstMesh = true,
             countdown = WIDGETS.length,
             preserveMax = API.var.layer_max,
             preserveLayer = API.var.layer_at,
@@ -739,7 +729,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
         // for each widget, slice
         forAllWidgets(function(widget) {
-            var segtimes = {},
+            let segtimes = {},
                 segNumber = 0,
                 errored = false,
                 startTime,
@@ -748,7 +738,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
-                var mark = UTIL.time();
+                let mark = UTIL.time();
                 // on done
                 widget.render(renderMode, MODE === MODES.CAM);
                 // clear wireframe
@@ -788,7 +778,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 }
             }, function(update, msg) {
                 if (msg !== lastMsg) {
-                    var mark = UTIL.time();
+                    let mark = UTIL.time();
                     if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
                     lastMsg = msg;
                     startTime = mark;
@@ -858,13 +848,13 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function scaleSelection(ev) {
-        var dv = parseFloat(ev.target.value || 1);
+        let dv = parseFloat(ev.target.value || 1);
         if (UI.scaleUniform.checked) {
             UI.scaleX.value = dv;
             UI.scaleY.value = dv;
             UI.scaleZ.value = dv;
         }
-        var x = parseFloat(UI.scaleX.value || dv),
+        let x = parseFloat(UI.scaleX.value || dv),
             y = parseFloat(UI.scaleY.value || dv),
             z = parseFloat(UI.scaleZ.value || dv);
         forSelectedGroups(function (w) {
@@ -941,7 +931,7 @@ self.kiri.copyright = exports.COPYRIGHT;
      }
 
     function platformUpdateSize() {
-        var dev = settings.device,
+        let dev = settings.device,
             width, depth,
             height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
         SPACE.platform.setRound(dev.bedRound);
@@ -956,7 +946,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function platformUpdateBounds() {
-        var bounds = new THREE.Box3();
+        let bounds = new THREE.Box3();
         forAllWidgets(function(widget) {
             let wp = widget.track.pos;
             let wb = widget.mesh.getBoundingBox().clone();
@@ -968,7 +958,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function platformSelect(widget, shift) {
         if (viewMode !== VIEWS.ARRANGE) return;
-        var mesh = widget.mesh,
+        let mesh = widget.mesh,
             sel = (selectedMeshes.indexOf(mesh) >= 0);
         if (sel) {
             if (shift) {
@@ -1010,7 +1000,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             });
             return;
         }
-        var mesh = widget.mesh,
+        let mesh = widget.mesh,
             si = selectedMeshes.indexOf(mesh),
             sel = (si >= 0);
         if (sel) {
@@ -1079,7 +1069,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             return;
         }
         if (Array.isArray(widget)) {
-            var mc = widget.slice(), i;
+            let mc = widget.slice(), i;
             for (i=0; i<mc.length; i++) {
                 platform.delete(mc[i].widget);
             }
@@ -1103,7 +1093,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function platformLayout(event, space) {
-        var auto = UI.autoLayout.checked,
+        let auto = UI.autoLayout.checked,
             proc = settings.process,
             oldmode = viewMode,
             layout = (viewMode === VIEWS.ARRANGE && auto),
@@ -1132,17 +1122,17 @@ self.kiri.copyright = exports.COPYRIGHT;
             return SPACE.update();
         }
 
-        var gap = space;
+        let gap = space;
 
         // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
         if (MODE === MODES.CAM && WIDGETS.length > 1) {
-            var spacing = space || 1, CAM = KIRI.driver.CAM;
+            let spacing = space || 1, CAM = KIRI.driver.CAM;
             if (proc.roughingOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.roughingTool));
             if (proc.finishingOn || proc.finishingXOn || proc.finishingYOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.finishingTool));
             gap = spacing * 1.5;
         }
 
-        var i, m, sz = SPACE.platform.size(),
+        let i, m, sz = SPACE.platform.size(),
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
@@ -1213,9 +1203,9 @@ self.kiri.copyright = exports.COPYRIGHT;
                 $('stock-height').innerText = (csz/scale).toFixed(2);
             }
             if (!camStock) {
-                var geo = new THREE.BoxGeometry(1, 1, 1);
-                var mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
-                var cube = new THREE.Mesh(geo, mat);
+                let geo = new THREE.BoxGeometry(1, 1, 1);
+                let mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
+                let cube = new THREE.Mesh(geo, mat);
                 SPACE.platform.add(cube);
                 camStock = cube;
             }
@@ -1247,66 +1237,32 @@ self.kiri.copyright = exports.COPYRIGHT;
      * Settings Functions
      ******************************************************************* */
 
-     function resetSettings(force) {
-         if (force || confirm('reset all values to system defaults?')) {
-             settings = settingsDefault;
-             updateFields();
-         };
-     }
-
-    /**
-     * fill in missing settings from default template to pick up new fields
-     * that may have been recently added and expected in the code
-     *
-     * @param {Object} osrc
-     * @param {Object} odst
-     */
-    function fillMissingSettings(osrc, odst) {
-        var key, val;
-        for (key in osrc) {
-            if (!osrc.hasOwnProperty(key)) continue;
-            val = odst[key];
-            if (typeof val === 'undefined' || val === null || val === '') {
-                odst[key] = osrc[key];
-            } else if (typeof osrc[key] === 'object') {
-                fillMissingSettings(osrc[key], odst[key]);
-            }
-        }
-    }
-
-    /**
-     * @returns {Object}
-     */
+    // given a settings region, update values of matching bound UI fields
     function updateFieldsFromSettings(scope) {
         if (!scope) return console.trace("missing scope");
 
-        var key, val;
+        // CONF.normalize(settings);
 
-        fillMissingSettings(settingsDefault, settings);
-        settings.infill = settingsDefault.infill;
-        settings.units = settingsDefault.units;
-
-        for (key in scope) {
+        for (let key in scope) {
             if (!scope.hasOwnProperty(key)) continue;
-            val = scope[key];
+            let val = scope[key];
             if (UI.hasOwnProperty(key)) {
-                var uie = UI[key],
-                    typ = uie ? uie.type : null;
+                let uie = UI[key], typ = uie ? uie.type : null;
                 if (typ === 'text') {
                     uie.value = val;
                 } else if (typ === 'checkbox') {
                     uie.checked = val;
                 } else if (typ === 'select-one') {
                     uie.innerHTML = '<option></option>';
-                    var chosen = null;
-                    var source = uie.parentNode.getAttribute('source');
-                    var list = settings[source];
+                    let source = uie.parentNode.getAttribute('source'),
+                        list = settings[source],
+                        chosen = null;
                     list.forEach(function(tool, index) {
                         let id = tool.id || tool.name;
                         if (val === id) {
                             chosen = index + 1;
                         }
-                        var opt = DOC.createElement('option');
+                        let opt = DOC.createElement('option');
                         opt.appendChild(DOC.createTextNode(tool.name));
                         opt.setAttribute('value', id);
                         uie.appendChild(opt);
@@ -1315,8 +1271,6 @@ self.kiri.copyright = exports.COPYRIGHT;
                 }
             }
         }
-
-        return settings;
     }
 
     /**
@@ -1325,17 +1279,19 @@ self.kiri.copyright = exports.COPYRIGHT;
     function updateSettingsFromFields(scope) {
         if (!scope) return console.trace("missing scope");
 
-        var key,
-            changed = false;
+        let key, changed = false;
 
         // for each key in scope object
         for (key in scope) {
-            if (!scope.hasOwnProperty(key)) continue;
+            if (!scope.hasOwnProperty(key)) {
+                continue;
+            }
             if (UI.hasOwnProperty(key)) {
-                var nval = null,
-                    uie = UI[key];
+                let nval = null, uie = UI[key];
                 // skip empty UI values
-                if (!uie || uie === '') continue;
+                if (!uie || uie === '') {
+                    continue;
+                }
                 if (uie.type === 'text') {
                     nval = UI[key].convert();
                 } else if (uie.type === 'checkbox') {
@@ -1348,6 +1304,8 @@ self.kiri.copyright = exports.COPYRIGHT;
                             nval = parseInt(nval);
                         }
                     }
+                } else {
+                    continue;
                 }
                 if (scope[key] != nval) {
                     scope[key] = nval;
@@ -1366,6 +1324,10 @@ self.kiri.copyright = exports.COPYRIGHT;
         updateFieldsFromSettings(settings.process);
         updateFieldsFromSettings(settings.layers);
         updateFieldsFromSettings(settings.controller);
+        let device = settings.device;
+        if (device.extruders && device.extruders[device.internal]) {
+            updateFieldsFromSettings(device.extruders[device.internal]);
+        }
     }
 
     function updateSettings() {
@@ -1373,33 +1335,19 @@ self.kiri.copyright = exports.COPYRIGHT;
         updateSettingsFromFields(settings.process);
         updateSettingsFromFields(settings.layers);
         updateSettingsFromFields(settings.controller);
+        let device = settings.device;
+        if (device.extruders && device.extruders[device.internal]) {
+            updateSettingsFromFields(device.extruders[device.internal]);
+        }
         API.conf.save();
         platform.update_stock();
     }
 
     function saveSettings() {
-        // remove settings invalid for a given mode (cleanup)
-        cull(settings, settingsDefault);
-        switch (settings.mode) {
-            case 'FDM':
-                cull(settings.device, filter.fdm.d);
-                cull(settings.process, filter.fdm.p);
-                break;
-            case 'CAM':
-                cull(settings.device, filter.cam.d);
-                cull(settings.process, filter.cam.p);
-                break;
-            case 'LASER':
-                cull(settings.device, filter.laser.d);
-                cull(settings.process, filter.laser.p);
-                settings.cdev.LASER = clone(settings.device);
-                break;
-        }
-        cull(settings.cdev.FDM, filter.fdm.d);
-        cull(settings.cdev.CAM, filter.cam.d);
         // store camera view
         let view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
+        // CONF.normalize(settings);
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 
@@ -1408,19 +1356,20 @@ self.kiri.copyright = exports.COPYRIGHT;
             try {
                 data = JSON.parse(atob(data));
             } catch (e) {
-                console.log({data})
                 alert('invalid settings format');
+                console.log('data',data);
                 return;
             }
         }
-        if (!(data.settings && data.moto && data.time)) {
+        if (!(data.settings && data.version && data.time)) {
             alert('invalid settings format');
+            console.log('data',data);
             return;
         }
         if (ask && !confirm(`Import settings made on ${new Date(data.time)} from Kiri:Moto version ${data.version}?`)) {
             return;
         }
-        settings = data.settings;
+        settings = CONF.normalize(data.settings);
         // MOTO.restore(data.moto);
         // SDB.setItem('kiri-init', data.init || 2);
         API.conf.save();
@@ -1479,7 +1428,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function saveWorkspace() {
         API.conf.save();
-        var newWidgets = [],
+        let newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
             newWidgets.push(widget.id);
@@ -1494,12 +1443,11 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function restoreSettings(save) {
-        var newset = ls2o('ws-settings'),
+        let newset = ls2o('ws-settings'),
             camera = ls2o('ws-camera');
 
         if (newset) {
-            fillMissingSettings(settingsDefault, newset);
-            settings = newset;
+            settings = CONF.normalize(newset);
             // override camera from settings
             if (settings.controller.view) {
                 camera = settings.controller.view;
@@ -1508,7 +1456,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             }
             // merge custom filters from localstorage into settings
             localFilters.forEach(function(fname) {
-                var fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
+                let fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
                 if (ov) settings.devices[fname] = ov;
                 SDB.removeItem(fkey)
             });
@@ -1573,7 +1521,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function modalShowing() {
-        var showing = $('modal').style.display !== 'none';
+        let showing = $('modal').style.display !== 'none';
         return showing || UC.isPopped();
     }
 
@@ -1594,7 +1542,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             return;
         }
         ["catalog","devices","tools","settings"].forEach(function(dialog) {
-            var style = UI[dialog].style;
+            let style = UI[dialog].style;
             style.display = (dialog === which && (force || style.display !== 'flex') ? 'flex' : 'none');
         });
     }
@@ -1608,13 +1556,13 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function putSettings(newset) {
-        settings = newset;
+        settings = CONF.normalize(newset);
         API.conf.save()
         API.space.restore(null, true);
     }
 
     function editSettings(e) {
-        var mode = getMode(),
+        let mode = getMode(),
             name = e.target.getAttribute("name"),
             load = settings.sproc[mode][name],
             edit = prompt(`settings for "${name}"`, JSON.stringify(load));
@@ -1633,18 +1581,11 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function loadSettings(e, named) {
-        var mode = getMode(),
+        let mode = getMode(),
             name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
             load = settings.sproc[mode][name];
 
         if (!load) return;
-
-        for (var k in load) {
-            if (!load.hasOwnProperty(k)) continue;
-            // prevent stored process from overwriting device defaults
-            //if (k === "outputOriginCenter" && mode == "FDM") continue;
-            settings.process[k] = load[k];
-        }
 
         settings.process.processName = name;
         settings.cproc[mode] = name;
@@ -1662,16 +1603,17 @@ self.kiri.copyright = exports.COPYRIGHT;
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
         }
 
-        updateFields();
         if (!named) {
             hideDialog();
         }
+
+        updateFields();
         API.conf.update();
         if (e) triggerSettingsEvent();
     }
 
     function deleteSettings(e) {
-        var name = e.target.getAttribute("del");
+        let name = e.target.getAttribute("del");
         delete settings.sproc[getMode()][name];
         updateSettingsList();
         API.conf.save();
@@ -1679,13 +1621,13 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function updateSettingsList() {
-        var list = [], s = settings, sp = s.sproc[getMode()] || {}, table = UI.settingsList;
+        let list = [], s = settings, sp = s.sproc[getMode()] || {}, table = UI.settingsList;
         table.innerHTML = '';
-        for (var k in sp) {
+        for (let k in sp) {
             if (sp.hasOwnProperty(k)) list.push(k);
         }
         list.sort().forEach(function(sk) {
-            var row = DOC.createElement('div'),
+            let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
                 edit = DOC.createElement('button'),
                 del = DOC.createElement('button'),
@@ -1788,7 +1730,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function setFocus(el) {
         el = [ el || UI.load, UI.import, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
-        for (var es, i=0; i<el.length; i++) {
+        for (let es, i=0; i<el.length; i++) {
             es = el[i];
             es.focus();
             if (DOC.activeElement === es) {
@@ -1798,7 +1740,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function setViewMode(mode) {
-        var oldMode = viewMode;
+        let oldMode = viewMode;
         viewMode = mode;
         platform.deselect();
         updateSelectedInfo();

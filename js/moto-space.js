@@ -567,7 +567,6 @@ var MOTO = window.moto = window.moto || {};
             setColor:  setPlatformColor,
             setOrigin: setOrigin,
             setGrid:   setGrid,
-
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },
@@ -577,16 +576,13 @@ var MOTO = window.moto = window.moto || {};
             setZOff:   function(z) { platformZOff = z; updatePlatformPosition() },
             setGZOff:  function(z) { gridZOff = z; updatePlatformPosition() },
             opacity:   function(o) { platform.material.opacity = o },
-
             onMove:    function(f) { platformOnMove = f },
             onHover:   function(f) { platformHover = f },
             onClick:   function(f) { platformClick = f},
-
             size:      function()  { return platform.scale },
             isVisible: function()  { return platform.visible },
             showGrid:  function(b) { gridView.visible = b },
-
-            setRound: function(bool) {
+            setRound:  function(bool) {
                 let current = platform;
                 isRound = bool;
                 if (bool) {

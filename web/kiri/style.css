@@ -473,6 +473,11 @@ button.selected {
 #devices-body {
     height: 100%;
 }
+#device .tablerow button {
+    margin: 5px 3px 5px 3px;
+    padding-top: 0;
+    padding-bottom: 2px;
+}
 #device-labels span {
     width: 200px;
     padding: 2px 5px 2px 5px;

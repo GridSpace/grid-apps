@@ -38,6 +38,7 @@
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `F` use arcs to connect hard angles
 * `F` do not rough areas that go all the way through the part
       https://github.com/GridSpace/grid-apps/issues/20
 * `F` send gcode to cncjs

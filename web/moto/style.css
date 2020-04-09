@@ -237,6 +237,23 @@ th, tr, td, span, div, label, button {
  * ID
  ******************************************************************* */
 
+.dark #appid span {
+    border-color: #555;
+    background-color: rgba(100,120,150,0.75);
+    color: #eee;
+}
+.dark #appid a {
+    color: #eee;
+}
+.dark #appid a:hover {
+    color: #eee;
+}
+.dark #appid span:hover {
+    background-color: rgba(80,100,230,0.75);
+}
+.dark #langpop {
+    color: black;
+}
 #appid {
     text-align: center;
     position: fixed;
@@ -335,10 +352,9 @@ th, tr, td, span, div, label, button {
     background-color: rgba(100,120,150,0.75);
     border: 1px solid #555;
     color: #eee;
-    xfont-weight: normal;
 }
 .dark .compact .grouphead:hover {
-    background-color: rgba(80,100,180,0.75);
+    background-color: rgba(80,100,230,0.75);
 }
 .dark .compact.control {
     background-color: rgba(128,128,128,0.2) !important;

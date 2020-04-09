@@ -11,6 +11,7 @@ var gs_kiri_init = exports;
 
     let KIRI = self.kiri,
         MOTO = self.moto,
+        CONF = KIRI.conf,
         WIN = self.window,
         DOC = self.document,
         LOC = self.location,
@@ -478,8 +479,8 @@ var gs_kiri_init = exports;
         API.conf.show();
     }
 
-    function putLocalDevice(devicename, code) {
-        settings().devices[devicename] = code;
+    function putLocalDevice(devicename, obj) {
+        settings().devices[devicename] = obj;
         API.conf.save();
     }
 
@@ -490,7 +491,6 @@ var gs_kiri_init = exports;
 
     function isLocalDevice(devicename) {
         return settings().devices[devicename] ? true : false;
-        // return localFilters.contains(devicename);
     }
 
     function isFavoriteDevice(devicename) {
@@ -514,50 +514,13 @@ var gs_kiri_init = exports;
         $('selected-device').innerHTML = devicename;
     }
 
-    function valueOf(val, dv) {
-        return typeof(val) !== 'undefined' ? val : dv;
-    }
-
     // only for local filters
-    function updateDeviceCode(override) {
-        let oldname = getSelectedDevice(),
-            newname = override || UI.deviceName.value,
-            code = {
-                mode: API.mode.get(),
-                settings: {
-                    bed_width: parseInt(UI.deviceWidth.value) || 300,
-                    bed_depth: parseInt(UI.deviceDepth.value) || 175,
-                    bed_circle: UI.deviceRound.checked,
-                    build_height: parseInt(UI.deviceHeight.value) || 150,
-                    nozzle_size: parseFloat(UI.extruderNozzle.value) || 0.4,
-                    filament_diameter: parseFloat(UI.extruderFilament.value) || 1.75,
-                    origin_center: UI.deviceOrigin.checked,
-                    origin_top: UI.deviceOriginTop.checked,
-                    extrude_abs: UI.extrudeAbsolute.checked,
-                    spindle_max: parseInt(UI.deviceMaxSpindle.value) || 0
-                },
-                cmd: {
-                    fan_power: UI.gcodeFan.value,
-                    progress: UI.gcodeProgress.value,
-                    spindle: UI.gcodeSpindle.value.split('\n'),
-                    layer: UI.gcodeLayer.value.split('\n')
-                },
-                pre: UI.gcodeHeader.value.split('\n'),
-                post: UI.gcodeFooter.value.split('\n'),
-                pause: UI.gcodePause.value.split('\n'),
-                dwell: UI.gcodeDwell.value.split('\n'),
-                'laser-on': UI.gcodeLaserOn.value.split('\n'),
-                'laser-off': UI.gcodeLaserOff.value.split('\n'),
-                'tool-change': UI.gcodeToolChange.value.split('\n'),
-                'file-ext': UI.gcodeExtension.value,
-                'token-space': UI.gcodeToken.checked ? ' ' : '',
-                'strip-comments': UI.gcodeStrip.checked
-            };
-
-        if (oldname !== newname && isLocalDevice(oldname)) removeLocalDevice(oldname);
-
-        putLocalDevice(newname, code);
-        setDeviceCode(code, newname);
+    function cloneDevice() {
+        let name = `${getSelectedDevice()}.copy`;
+        let code = API.clone(settings().device);
+        code.mode = API.mode.get();
+        putLocalDevice(name, code);
+        setDeviceCode(code, name);
     }
 
     function setDeviceCode(code, devicename) {
@@ -566,49 +529,15 @@ var gs_kiri_init = exports;
 
             if (typeof(code) === 'string') code = js2o(code) || {};
 
-            let cmd = code.cmd || {},
-                set = code.settings || {},
-                local = isLocalDevice(devicename),
+            let mode = API.mode.get(),
                 current = settings(),
+                local = isLocalDevice(devicename),
                 dproc = current.devproc[devicename],
-                mode = API.mode.get();
-
-            current.device = {
-                bedHeight: 2.5,
-                bedWidth: valueOf(set.bed_width, 300),
-                bedDepth: valueOf(set.bed_depth, 175),
-                bedRound: valueOf(set.bed_circle, false),
-                maxHeight: valueOf(set.build_height, 150),
-                nozzleSize: valueOf(set.nozzle_size, 0.4),
-                filamentSize: valueOf(set.filament_diameter, 1.75),
-                originCenter: valueOf(set.origin_center, false),
-                extrudeAbs: valueOf(set.extrude_abs, false),
-                spindleMax: valueOf(set.spindle_max, 0),
-                gcodeFan: valueOf(cmd.fan_power, ''),
-                gcodeTrack: valueOf(cmd.progress, ''),
-                gcodeLayer: valueOf(cmd.layer, []),
-                gcodePre: valueOf(code.pre, []),
-                gcodePost: valueOf(code.post, []),
-                gcodeProc: valueOf(code.proc, ''),
-                gcodePause: valueOf(code.pause, []),
-                gcodeDwell: valueOf(code.dwell, []),
-                gcodeSpindle: valueOf(cmd.spindle, []),
-                gcodeChange: valueOf(code['tool-change'], []),
-                gcodeFExt: valueOf(code['file-ext'], 'gcode'),
-                gcodeSpace: valueOf(code['token-space'], ''),
-                gcodeStrip: valueOf(code['strip-comments'], false),
-                gcodeLaserOn: valueOf(code['laser-on'], []),
-                gcodeLaserOff: valueOf(code['laser-off'], [])
-            };
-
-            let dev = current.device,
+                dev = current.device = CONF.device_from_code(code,mode),
                 proc = current.process;
 
-            proc.outputOriginCenter = valueOf(set.origin_center, true);
-            proc.camOriginTop = valueOf(set.origin_top, true);
-
+            proc.outputOriginCenter = dev.outputOriginCenter;
             UI.deviceName.value = devicename;
-            // common
             UI.gcodeHeader.value = dev.gcodePre.join('\n');
             UI.gcodeFooter.value = dev.gcodePost.join('\n');
             UI.gcodePause.value = dev.gcodePause.join('\n');
@@ -617,65 +546,69 @@ var gs_kiri_init = exports;
             UI.deviceHeight.value = dev.maxHeight;
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = proc.outputOriginCenter;
-            // FDM
-            UI.gcodeFan.value = dev.gcodeFan;
-            UI.gcodeProgress.value = dev.gcodeTrack;
-            UI.gcodeLayer.value = dev.gcodeLayer.join('\n');
-            UI.extruderFilament.value = dev.filamentSize;
-            UI.extruderNozzle.value = dev.nozzleSize;
-            UI.extrudeAbsolute.checked = dev.extrudeAbs;
-            // CAM
-            UI.deviceMaxSpindle.value = dev.spindleMax;
-            UI.gcodeSpindle.value = dev.gcodeSpindle.join('\n');
-            UI.gcodeDwell.value = dev.gcodeDwell.join('\n');
-            UI.gcodeToolChange.value = dev.gcodeChange.join('\n');
             UI.gcodeExtension.value = dev.gcodeFExt;
-            UI.gcodeToken.checked = dev.gcodeSpace ? true : false;
-            UI.gcodeStrip.checked = dev.gcodeStrip;
-            // LASER
-            UI.gcodeLaserOn.value = dev.gcodeLaserOn.join('\n');
-            UI.gcodeLaserOff.value = dev.gcodeLaserOff.join('\n');
+
+            if (mode === 'FDM') {
+                UI.gcodeFan.value = dev.gcodeFan;
+                UI.gcodeProgress.value = dev.gcodeTrack;
+                UI.gcodeLayer.value = dev.gcodeLayer.join('\n');
+                UI.extrudeAbsolute.checked = dev.extrudeAbs;
+            }
+
+            if (mode === 'CAM') {
+                proc.camOriginTop = dev.outputOriginTop;
+                UI.deviceMaxSpindle.value = dev.spindleMax;
+                UI.gcodeSpindle.value = dev.gcodeSpindle.join('\n');
+                UI.gcodeDwell.value = dev.gcodeDwell.join('\n');
+                UI.gcodeToolChange.value = dev.gcodeChange.join('\n');
+                UI.gcodeToken.checked = dev.gcodeSpace ? true : false;
+                UI.gcodeStrip.checked = dev.gcodeStrip;
+            }
+
+            if (mode === 'LASER') {
+                UI.gcodeLaserOn.value = dev.gcodeLaserOn.join('\n');
+                UI.gcodeLaserOff.value = dev.gcodeLaserOff.join('\n');
+            }
 
             // disable editing for non-local devices
             [
-             UI.deviceName,
-             UI.gcodeHeader,
-             UI.gcodeFooter,
-             UI.gcodePause,
-             UI.deviceDepth,
-             UI.deviceWidth,
-             UI.deviceHeight,
-             UI.extrudeAbsolute,
-             UI.deviceOrigin,
-             UI.deviceOriginTop,
-             UI.deviceRound,
-             UI.gcodeFan,
-             UI.gcodeProgress,
-             UI.gcodeLayer,
-             UI.extruderFilament,
-             UI.extruderNozzle,
-             UI.deviceMaxSpindle,
-             UI.gcodeSpindle,
-             UI.gcodeDwell,
-             UI.gcodeToolChange,
-             UI.gcodeExtension,
-             UI.gcodeToken,
-             UI.gcodeStrip,
-             UI.gcodeLaserOn,
-             UI.gcodeLaserOff
+                UI.deviceName,
+                UI.gcodeHeader,
+                UI.gcodeFooter,
+                UI.gcodePause,
+                UI.deviceDepth,
+                UI.deviceWidth,
+                UI.deviceHeight,
+                UI.extrudeAbsolute,
+                UI.deviceOrigin,
+                UI.deviceOriginTop,
+                UI.deviceRound,
+                UI.gcodeFan,
+                UI.gcodeProgress,
+                UI.gcodeLayer,
+                UI.extFilament,
+                UI.extNozzle,
+                UI.deviceMaxSpindle,
+                UI.gcodeSpindle,
+                UI.gcodeDwell,
+                UI.gcodeToolChange,
+                UI.gcodeExtension,
+                UI.gcodeToken,
+                UI.gcodeStrip,
+                UI.gcodeLaserOn,
+                UI.gcodeLaserOff
             ].forEach(function(e) {
                 e.disabled = !local;
             });
 
             // hide spindle fields when device doens't support it
-            if (mode === 'CAM')
-            [
-             UI.extrudeAbsolute,
-             UI.roughingSpindle,
-             UI.finishingSpindle,
-             UI.drillSpindle
+            if (mode === 'CAM') [
+                UI.extrudeAbsolute,
+                UI.roughingSpindle,
+                UI.finishingSpindle,
+                UI.drillSpindle
             ].forEach(function(e) {
-             e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
+                e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
             });
 
             UI.deviceSave.disabled = !local;
@@ -693,9 +626,10 @@ var gs_kiri_init = exports;
             API.conf.save();
         } catch (e) {
             console.log({error:e, device:code, devicename});
+            throw e;
             API.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
             API.show.alert(`please select a new device`, 10);
-            showDevices();
+            // showDevices();
         }
         API.function.clear();
         API.event.settings();
@@ -727,13 +661,12 @@ var gs_kiri_init = exports;
         UI.deviceClose.onclick = API.dialog.hide;
         UI.deviceSave.onclick = function() {
             API.function.clear();
-            updateDeviceCode();
             API.conf.save();
             showDevices();
         };
         UI.deviceAdd.onclick = function() {
             API.function.clear();
-            updateDeviceCode(getSelectedDevice()+".copy");
+            cloneDevice();
             showDevices();
         };
         UI.deviceDelete.onclick = function() {
@@ -787,11 +720,11 @@ var gs_kiri_init = exports;
                 }
                 showDevices();
             };
-            if (API.show.favorites()) {
+            // if (API.show.favorites()) {
                 if (loc) opt.setAttribute("local", 1);
-            } else {
-                if (fav) opt.setAttribute("favorite", 1);
-            }
+            // } else {
+                if (loc || fav) opt.setAttribute("favorite", 1);
+            // }
             UI.deviceSelect.appendChild(opt);
             if (device === selected) {
                 selectedIndex = incr;
@@ -1200,14 +1133,14 @@ var gs_kiri_init = exports;
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", nocompact:true, modes:FDM}),
-            extruderFilament: UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
-            extruderNozzle:   UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
-            extruderOffX:     UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            extruderOffY:     UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            extruderSelect:   UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
-            extruderDeselect: UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
+            extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
+            extNozzle:        UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
+            extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
+            extDeselect:      UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
             extrudeAbsolute:  UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
-            extruders:        UC.newTableRow([[
+            extActions:       UC.newTableRow([[
                 UC.newButton("<", undefined),
                 UC.newButton("+", undefined),
                 UC.newButton("-", undefined),
