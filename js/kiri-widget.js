@@ -51,6 +51,16 @@ let gs_kiri_widget = exports;
 
     let Group = Widget.Groups = {
 
+        forid: function(id) {
+            for (let i=0; i<groups.length; i++) {
+                if (groups[i].id === id) return groups[i];
+            }
+            let group = [];
+            group.id = id;
+            groups.push(group);
+            return group;
+        },
+
         remove: function(widget) {
             groups.slice().forEach(group => {
                 let pos = group.indexOf(widget);
@@ -114,6 +124,9 @@ let gs_kiri_widget = exports;
         this.id = id || new Date().getTime().toString(36)+(nextId++);
         this.group = group || [];
         this.group.push(this);
+        if (!this.group.id) {
+            this.group.id = this.id;
+        }
         if (groups.indexOf(this.group) < 0) {
             groups.push(this.group);
         }
@@ -169,13 +182,13 @@ let gs_kiri_widget = exports;
     };
 
     Widget.loadFromState = function(id, ondone, move) {
-        let widget = newWidget();
-        widget.id = id;
-        widget.saved = time();
         KIRI.odb.get('ws-save-'+id, function(data) {
             if (data) {
                 let vertices = data.geo || data,
-                    track = data.track || null;
+                    track = data.track || undefined,
+                    group = data.group || id,
+                    widget = newWidget(id, Group.forid(group));
+                widget.saved = time();
                 ondone(widget.loadVertices(vertices));
                 // restore widget position if specified
                 if (move && track && track.pos) {
@@ -308,7 +321,11 @@ let gs_kiri_widget = exports;
 
     PRO.saveState = function(ondone) {
         let widget = this;
-        KIRI.odb.put('ws-save-'+this.id, {geo:widget.getGeoVertices(), track:widget.track}, function(result) {
+        KIRI.odb.put('ws-save-'+this.id, {
+            geo:widget.getGeoVertices(),
+            track:widget.track,
+            group:this.group.id
+        }, function(result) {
             widget.saved = time();
             if (ondone) ondone();
         });

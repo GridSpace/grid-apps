@@ -1062,16 +1062,19 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function platformAdd(widget, shift, nolayout) {
-        settings.widget[widget.id] = {extruder: 0};
+        if (!settings.widget[widget.id]) {
+            settings.widget[widget.id] = {extruder: 0};
+        }
         WIDGETS.push(widget);
         SPACE.platform.add(widget.mesh);
         platform.select(widget, shift);
         platform.compute_max_z();
         API.event.emit('widget.add', widget);
         if (nolayout) return;
-        if (layoutOnAdd) platform.layout();
         if (!grouping) {
             platformGroupDone();
+        } else if (layoutOnAdd) {
+            platform.layout();
         }
     }
 
@@ -1097,6 +1100,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (MODE !== MODES.FDM) platform.layout();
         SPACE.update();
         platformUpdateSelected();
+        if (layoutOnAdd) platform.layout();
         API.event.emit('widget.delete', widget);
     }
 

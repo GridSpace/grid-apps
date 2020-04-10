@@ -157,16 +157,33 @@
             <label class="label">depth:</label><label id="sel_depth" class="value">mm</label>
             <label class="label">height:</label><label id="sel_height" class="value">mm</label>
             &nbsp;&nbsp;
-            <label class="label">scale</label>
-            <label class="label">x</label><input id="scale_x" size="3" value="1"/>
-            <label class="label">y</label><input id="scale_y" size="3" value="1"/>
-            <label class="label">z</label><input id="scale_z" size="3" value="1"/>
-            <label class="label">uniform</label><input type="checkbox" id="scale_uni" checked>
+            <div class="sel-span">
+                <label class="label">scale</label>
+                <div id="sel-scale" class="sel-pop">
+                    <div>
+                        <label class="label">x</label><input id="scale_x" size="3" value="1"/>
+                        <label class="label">y</label><input id="scale_y" size="3" value="1"/>
+                        <label class="label">z</label><input id="scale_z" size="3" value="1"/>
+                        <label class="label">uniform</label><input type="checkbox" id="scale_uni" checked>
+                    </div>
+                </div>
+            </div>
             &nbsp;&nbsp;
-            <label class="label">rotate</label>
-            <button id="x+" title="hold SHIFT to rotate 5 degrees">x+</button><button id="x-" title="hold SHIFT to rotate 5 degrees">x-</button>
-            <button id="y+" title="hold SHIFT to rotate 5 degrees">y+</button><button id="y-" title="hold SHIFT to rotate 5 degrees">y-</button>
-            <button id="z+" title="hold SHIFT to rotate 5 degrees">z+</button><button id="z-" title="hold SHIFT to rotate 5 degrees">z-</button>
+            <div class="sel-span">
+                <label class="label">rotate</label>
+                <div id="sel-rotate" class="sel-pop">
+                    <div>
+                        <button id="x+" title="hold SHIFT to rotate 5 degrees">x+</button><button id="x-" title="hold SHIFT to rotate 5 degrees">x-</button>
+                        <button id="y+" title="hold SHIFT to rotate 5 degrees">y+</button><button id="y-" title="hold SHIFT to rotate 5 degrees">y-</button>
+                        <button id="z+" title="hold SHIFT to rotate 5 degrees">z+</button><button id="z-" title="hold SHIFT to rotate 5 degrees">z-</button>
+                    </div>
+                </div>
+            </div>
+            &nbsp;&nbsp;
+            <div class="sel-span">
+                <label class="label">extruder</label>
+                <div class="sel-pop"><div id="sel-ext"><div></div>
+            </div>
         </span>
         <span id="stock">
             <label class="label">stock</label>

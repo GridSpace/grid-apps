@@ -386,6 +386,7 @@ var gs_kiri_fdm = exports;
             zoff = 0,
             meshIndex,
             lastIndex,
+            lastOut,
             closest,
             mindist,
             minidx,
@@ -553,6 +554,10 @@ var gs_kiri_fdm = exports;
                 layerout.height = layerout.height || closest.slice.height;
                 slices[minidx] = null;
                 closest.offset.z = zoff;
+                // detect extruder change and print purge block
+                if (lastOut && lastOut.extruder !== closest.slice.extruder) {
+                    console.log({extruder_swap: closest.slice.extruder, from: lastOut.extruder});
+                }
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     closest.slice,
@@ -561,6 +566,7 @@ var gs_kiri_fdm = exports;
                     layerout,
                     { first: closest.slice.index === 0 }
                 );
+                lastOut = closest.slice,
                 lastIndex = minidx;
             }
 
@@ -595,9 +601,10 @@ var gs_kiri_fdm = exports;
             fan_power = device.gcodeFan,
             trackLayers = device.gcodeLayer,
             trackProgress = device.gcodeTrack,
-            extruder = 0,
-            nozzleSize = extruders[extruder].extNozzle,
-            filamentSize = extruders[extruder].extFilament,
+            tool = 0,
+            extruder = extruders[tool],
+            offset_x = extruder.extOffsetX,
+            offset_y = extruder.extOffsetY,
             time = 0,
             layer = 0,
             pause = [],
@@ -766,8 +773,8 @@ var gs_kiri_fdm = exports;
         while (layer < layers.length) {
             path = layers[layer];
             emitPerMM = print.extrudePerMM(
-                nozzleSize,
-                filamentSize,
+                extruder.extNozzle,
+                extruder.extFilament,
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
@@ -828,13 +835,14 @@ var gs_kiri_fdm = exports;
                 speedMMM = (out.speed || process.outputFeedrate) * 60;
 
                 // look for extruder change and recalc emit factor
-                if (out.tool !== undefined && out.tool !== extruder) {
-                    extruder = out.tool;
-                    nozzleSize = extruders[extruder].extNozzle;
-                    filamentSize = extruders[extruder].extFilament;
+                if (out.tool !== undefined && out.tool !== tool) {
+                    tool = out.tool;
+                    extruder = extruders[tool];
+                    offset_x = extruder.extOffsetX;
+                    offset_y = extruder.extOffsetY;
                     emitPerMM = print.extrudePerMM(
-                        nozzleSize,
-                        filamentSize,
+                        extruder.extNozzle,
+                        extruder.extFilament,
                         path.layer === 0 ?
                             (process.firstSliceHeight || process.sliceHeight) : path.height);
                 }
@@ -844,8 +852,8 @@ var gs_kiri_fdm = exports;
                     dwell(out.speed);
                     continue;
                 }
-                var x = out.point.x,
-                    y = out.point.y,
+                var x = out.point.x + offset_x,
+                    y = out.point.y + offset_y,
                     z = out.point.z;
 
                 // adjust for inversions and offsets

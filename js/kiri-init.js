@@ -540,6 +540,23 @@ var gs_kiri_init = exports;
             UI.deviceName.value = devicename;
             UI.deviceOrigin.checked = proc.outputOriginCenter;
 
+            // add extruder selection buttons
+            if (dev.extruders) {
+                let selext = $('sel-ext');
+                selext.innerHTML = '';
+                let arr = [];
+                for (let i=dev.extruders.length-1; i>=0; i--) {
+                    let b = DOC.createElement('button');
+                    b.appendChild(DOC.createTextNode(i));
+                    b.onclick = function() {
+                        API.selection.for_widgets(w => {
+                            current.widget[w.id] = {extruder: i};
+                        });
+                    };
+                    selext.appendChild(b);
+                }
+            }
+
             if (mode === 'CAM') {
                 proc.camOriginTop = dev.outputOriginTop;
             }

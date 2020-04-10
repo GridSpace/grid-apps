@@ -52,6 +52,26 @@ input[type=range]::-moz-focus-outer {
     font-family: monospace;
     white-space: pre;
 }
+.sel-span {
+    position: relative;
+    display: inline-block;
+}
+.sel-pop {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding-bottom: 5px;
+}
+.sel-pop div {
+    background-color: white;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    padding: 5px;
+}
+.sel-span:hover .sel-pop {
+    display: block;
+}
 #widget-info {
     text-align: center;
     position: fixed;
@@ -64,9 +84,11 @@ input[type=range]::-moz-focus-outer {
     padding: 3px 8px 8px 8px;
     background-color: rgba(170,221,255,0.75);
     color: rgba(0,0,0,0.5);
+    z-index: 10;
 }
 #widget-info label {
     border: 0;
+    white-space: nowrap;
 }
 #widget-info .value {
     font-weight: bold;
