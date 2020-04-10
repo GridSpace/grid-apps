@@ -22,6 +22,7 @@ let gs_kiri_conf = exports;
     // add fields to o(bject) from t(arget) that are missing
     // remove fields from o(bject) that don't exist in f(ilter)
     function fill_cull(o, t, f) {
+        if (!o) return;
         // add missing
         for (let k in t) {
             if (!t.hasOwnProperty(k)) {
