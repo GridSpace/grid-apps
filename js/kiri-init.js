@@ -586,7 +586,15 @@ var gs_kiri_init = exports;
                 UI.gcodeSpace,
                 UI.gcodeStrip,
                 UI.gcodeLaserOn,
-                UI.gcodeLaserOff
+                UI.gcodeLaserOff,
+                UI.extPrev,
+                UI.extNext,
+                UI.extAdd,
+                UI.extDel,
+                UI.extOffsetX,
+                UI.extOffsetY,
+                UI.extSelect,
+                UI.extDeselect
             ].forEach(function(e) {
                 e.disabled = !local;
             });
