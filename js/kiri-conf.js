@@ -56,7 +56,6 @@ let gs_kiri_conf = exports;
                 extFilament: device.filamentSize,
                 extNozzle: device.nozzleSize,
                 extSelect: ["T0"],
-                extDeselect: [],
                 extOffsetX: 0,
                 extOffsetY: 0
             }];
@@ -113,7 +112,6 @@ let gs_kiri_conf = exports;
                 if (rec.offset_x) e.extOffsetX = rec.offset_x;
                 if (rec.offset_y) e.extOffsetY = rec.offset_y;
                 if (rec.select) e.extSelect = rec.select;
-                if (rec.deselect) e.extDeselect= rec.deselect;
                 device.extruders.push(e);
             });
         } else {
@@ -476,7 +474,6 @@ let gs_kiri_conf = exports;
                     extFilament: 1.75,
                     extNozzle: 0.4,
                     extSelect: ["T0"],
-                    extDeselect: [],
                     extOffsetX: 0,
                     extOffsetY: 0
                 }]

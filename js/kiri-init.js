@@ -553,8 +553,8 @@ var gs_kiri_init = exports;
                     b.onclick = function() {
                         API.selection.for_widgets(w => {
                             current.widget[w.id] = {extruder: i};
-                            API.platform.update_selected();
                         });
+                        API.platform.update_selected();
                     };
                     selext.appendChild(b);
                     ext.push({id:i, name:i});
@@ -597,8 +597,7 @@ var gs_kiri_init = exports;
                 UI.extDel,
                 UI.extOffsetX,
                 UI.extOffsetY,
-                UI.extSelect,
-                UI.extDeselect
+                UI.extSelect
             ].forEach(function(e) {
                 e.disabled = !local;
             });
@@ -1139,7 +1138,6 @@ var gs_kiri_init = exports;
             extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
             extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
-            extDeselect:      UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
             extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
             extActions:       UC.newTableRow([[
                 UI.extPrev = UC.newButton("<"),

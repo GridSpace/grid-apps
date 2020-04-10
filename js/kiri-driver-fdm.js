@@ -2,7 +2,7 @@
 
 "use strict";
 
-var gs_kiri_fdm = exports;
+let gs_kiri_fdm = exports;
 
 (function() {
 
@@ -10,7 +10,7 @@ var gs_kiri_fdm = exports;
     if (!self.kiri.driver) self.kiri.driver = { };
     if (self.kiri.driver.FDM) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         DBUG = BASE.debug,
         UTIL = BASE.util,
@@ -43,7 +43,7 @@ var gs_kiri_fdm = exports;
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
     function slice(settings, widget, onupdate, ondone) {
-        var spro = settings.process,
+        let spro = settings.process,
             sdev = settings.device,
             update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
@@ -116,12 +116,12 @@ var gs_kiri_fdm = exports;
                 slice.invalidateSupports();
             });
 
-            var supportEnabled = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
+            let supportEnabled = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                 supportMinArea = spro.sliceSupportArea;
 
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, function(slice) {
-                var solid = (
+                let solid = (
                         slice.index < spro.sliceBottomLayers ||
                         slice.index > slices.length - spro.sliceTopLayers-1 ||
                         spro.sliceFillSparse > 0.95
@@ -372,13 +372,14 @@ var gs_kiri_fdm = exports;
      * @param {Function} update incremental callback
      */
     function printSetup(print, update) {
-        var widgets = print.widgets,
+        let widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
             mode = settings.mode,
             output = print.output,
+            bounds = settings.bounds,
             printPoint = newPoint(0,0,0),
             firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
             maxLayers = 0,
@@ -386,7 +387,7 @@ var gs_kiri_fdm = exports;
             zoff = 0,
             meshIndex,
             lastIndex,
-            lastOut,
+            // lastOut,
             closest,
             mindist,
             minidx,
@@ -398,12 +399,12 @@ var gs_kiri_fdm = exports;
 
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
         if (process.outputBrimCount || process.outputRaft) {
-            var brims = [],
+            let brims = [],
                 offset = process.outputBrimOffset || (process.outputRaft ? 4 : 0);
 
             // compute first brim
             widgets.forEach(function(widget) {
-                var tops = [];
+                let tops = [];
                 // collect top outer polygons
                 widget.slices[0].tops.forEach(function(top) {
                     tops.push(top.poly.clone());
@@ -425,27 +426,27 @@ var gs_kiri_fdm = exports;
             // merge brims
             brims = POLY.union(brims);
 
-            // if brim is offset, the expand and shrink to cause brims to merge
+            // if brim is offset, over-expand then shrink to induce brims to merge
             if (offset && brims.length) {
-                var extra = process.sliceSupportExtra + 2;
+                let extra = process.sliceSupportExtra + 2;
                 brims = POLY.expand(brims, extra, 0, null, 1);
                 brims = POLY.expand(brims, -extra, 0, null, 1);
             }
 
             // if raft is specified
             if (process.outputRaft) {
-                var offset = newPoint(0,0,0),
+                let offset = newPoint(0,0,0),
                     height = nozzle;
 
                 // cause first point of raft to be used
                 printPoint = null;
 
-                var raft = function(height, angle, spacing, speed, extrude) {
-                    var slice = kiri.newSlice(zoff + height / 2);
+                let raft = function(height, angle, spacing, speed, extrude) {
+                    let slice = kiri.newSlice(zoff + height / 2);
                     brims.forEach(function(brim) {
                         // use first point of first brim as start point
                         if (printPoint === null) printPoint = brim.first();
-                        var t = slice.addTop(brim);
+                        let t = slice.addTop(brim);
                         t.traces = [ brim ];
                         t.inner = POLY.expand(t.traces, -nozzle * 0.5, 0, null, 1);
                         // tweak bounds for fill to induce an offset
@@ -481,7 +482,7 @@ var gs_kiri_fdm = exports;
             else
             // if using brim vs raft
             if (process.outputBrimCount) {
-                var polys = [],
+                let polys = [],
                     preout = [];
 
                 // expand brims
@@ -508,12 +509,57 @@ var gs_kiri_fdm = exports;
                     preout.last().retract = true;
                 }
             }
+            // TODO recompute bounds for purge block offsets
         }
 
+        let extruders = [];
+        let extcount = 0;
+
         // find max layers (for updates)
+        // generate list of used extruders for purge blocks
         widgets.forEach(function(widget) {
             maxLayers = Math.max(maxLayers, widget.slices.length);
+            let extruder = settings.widget[widget.id].extruder;
+            if (extruders.indexOf(extruder) < 0) {
+                extruders[extruder] = {};
+                extcount++;
+            }
         });
+
+        let blokpos, walkpos;
+        if (bounds.min.x < bounds.min.y) {
+            let dx = ((bounds.max.x - bounds.min.x) - (extcount * 5)) / 2;
+            blokpos = { x:bounds.min.x + dx, y: bounds.max.y + 5};
+            walkpos  = { x:10, y: 0};
+        } else {
+            let dy = ((bounds.max.y - bounds.min.y) - (extcount * 5)) / 2;
+            blokpos = { x:bounds.max.x + 5, y: bounds.min.y + dy};
+            walkpos  = { x:0, y: 10};
+        }
+
+        // compute purge blocks
+        extruders = extruders.map((ext,i) => {
+            if (!ext) return ext;
+            let pos = {x:blokpos.x, y:blokpos.y, z:0},
+                rec = {
+                    extruder: i,
+                    poly: BASE.newPolygon().centerRectangle(pos, 8, 8)
+                };
+            blokpos.x += walkpos.x;
+            blokpos.y += walkpos.y;
+            return rec;
+        });
+
+        // generate purge block for given nozzle
+        function purge(nozzle, track, layer, start, z, using) {
+            let rec = track[nozzle];
+            if (rec) {
+                track[nozzle] = null;
+                return print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {tool:using || nozzle});
+            } else {
+                console.log({already_purged: nozzle, from: track, layer});
+            }
+        }
 
         // for each layer until no layers are found
         for (;;) {
@@ -529,6 +575,10 @@ var gs_kiri_fdm = exports;
 
             // exit if no slices
             if (slices.length === 0) break;
+
+            // track purge blocks generated for each layer
+            let track = extruders.slice();
+            let lastOut;
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
@@ -555,8 +605,8 @@ var gs_kiri_fdm = exports;
                 slices[minidx] = null;
                 closest.offset.z = zoff;
                 // detect extruder change and print purge block
-                if (lastOut && lastOut.extruder !== closest.slice.extruder) {
-                    console.log({extruder_swap: closest.slice.extruder, from: lastOut.extruder});
+                if (!lastOut || lastOut.extruder !== closest.slice.extruder) {
+                    printPoint = purge(closest.slice.extruder, track, layerout, printPoint, closest.slice.z);
                 }
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
@@ -570,14 +620,21 @@ var gs_kiri_fdm = exports;
                 lastIndex = minidx;
             }
 
-            layerout.layer = layer;
-
             // if layer produced output, append to output array
             if (layerout.length) output.append(layerout);
 
             // notify progress
-            layer++;
+            layerout.layer = layer++;
             update(layer / maxLayers);
+
+            // if a declared extruder isn't used in a layer, use selected
+            // extruder to fill the relevant purge blocks for later support
+            track.forEach(ext => {
+                if (ext) {
+                    console.log({purge_block_unused: ext.extruder, using: lastOut.extruder});
+                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastOut.extruder);
+                }
+            });
 
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
@@ -586,6 +643,7 @@ var gs_kiri_fdm = exports;
 
             slices = [];
             layerout = [];
+            lastOut = undefined;
         }
     };
 
@@ -593,18 +651,19 @@ var gs_kiri_fdm = exports;
      * @returns {Array} gcode lines
      */
     function printExport(print, online) {
-        var layers = print.output,
+        let layers = print.output,
             settings = print.settings,
             device = settings.device,
             extruders = device.extruders,
             process = settings.process,
             fan_power = device.gcodeFan,
-            trackLayers = device.gcodeLayer,
-            trackProgress = device.gcodeTrack,
+            gcodeLayer = device.gcodeLayer,
+            gcodeTrack = device.gcodeTrack,
             tool = 0,
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,
             offset_y = extruder.extOffsetY,
+            extrudeAbs = device.extrudeAbs,
             time = 0,
             layer = 0,
             pause = [],
@@ -621,16 +680,23 @@ var gs_kiri_fdm = exports;
             last = null,
             zpos = 0,
             zhop = process.zHopDistance || 0,
+            seekMMM = process.outputSeekrate * 60,
+            retDist = process.outputRetractDist,
+            retSpeed = process.outputRetractSpeed * 60,
+            retDwell = process.outputRetractDwell || 0,
+            timeDwell = retDwell / 1000,
             offset = process.outputOriginCenter ? null : {
                 x: device.bedWidth/2,
                 y: device.bedDepth/2
             },
-            consts = {
+            subst = {
+                retract_speed: retSpeed,
+                retract_distance: retDist,
                 temp: process.firstLayerNozzleTemp || process.outputTemp,
                 temp_bed: process.firstLayerBedTemp || process.outputBedTemp,
                 bed_temp: process.firstLayerBedTemp || process.outputBedTemp,
                 fan_speed: process.outputFanMax,
-                speed: process.outputFanMax,
+                speed: process.outputFanMax, // legacy
                 top: offset ? device.bedDepth : device.bedDepth/2,
                 left: offset ? 0 : -device.bedWidth/2,
                 right: offset ? device.bedWidth : device.bedWidth/2,
@@ -640,16 +706,7 @@ var gs_kiri_fdm = exports;
                 nozzle: 0,
                 tool: 0
             },
-            seekMMM = process.outputSeekrate * 60,
-            retDist = process.outputRetractDist,
-            retSpeed = process.outputRetractSpeed * 60,
-            retDwell = process.outputRetractDwell || 0,
-            timeDwell = retDwell / 1000,
-            constReplace = print.constReplace,
             pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
-            appendAll = function(arr) {
-                arr.forEach(function(line) { append(line) });
-            },
             append,
             lines = 0,
             bytes = 0;
@@ -657,7 +714,7 @@ var gs_kiri_fdm = exports;
         // console.log({print: print.widgets, meta:settings.widget, extruders, nozzleSize, filamentSize});
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
-            var v = parseInt(lv);
+            let v = parseInt(lv);
             if (v >= 0) pause.push(v);
         });
 
@@ -682,21 +739,37 @@ var gs_kiri_fdm = exports;
             }
         }
 
-        append("; Generated by Kiri:Moto " + exports.VERSION);
-        append("; "+new Date().toString());
-        append(constReplace("; Bed left:{left} right:{right} top:{top} bottom:{bottom}", consts));
+        function appendSub(line) {
+            append(print.constReplace(line, subst));
+        }
+
+        function appendAll(arr) {
+            arr.forEach(function(line) { append(line) });
+        }
+
+        function appendAllSub(arr) {
+            arr.forEach(function(line) { appendSub(line) });
+        }
+
+        append(`; Generated by Kiri:Moto ${exports.VERSION}`);
+        append(`; ${new Date().toString()}`);
+        appendSub("; Bed left:{left} right:{right} top:{top} bottom:{bottom}");
         append("; --- process ---");
-        for (var pk in process) {
+        for (let pk in process) {
             append("; " + pk + " = " + process[pk]);
         }
         append("; --- startup ---");
-        var t0 = false;
-        var t1 = false;
-        for (var i=0; i<device.gcodePre.length; i++) {
-            var line = device.gcodePre[i];
-            if (line.indexOf('T0') >= 0) t0 = true;
-            if (line.indexOf('T1') >= 0) t1 = true;
-            if (device.extrudeAbs && line.indexOf('E') > 0) {
+        let t0 = false;
+        let t1 = false;
+        for (let i=0; i<device.gcodePre.length; i++) {
+            let line = device.gcodePre[i];
+            if (line.indexOf('T0') >= 0) t0 = true; else
+            if (line.indexOf('T1') >= 0) t1 = true; else
+            if (line.indexOf('M82') >= 0) extrudeAbs = true; else
+            if (line.indexOf('M83') >= 0) extrudeAbs = false; else
+            if (line.indexOf('G90') >= 0) extrudeAbs = true; else
+            if (line.indexOf('G91') >= 0) extrudeAbs = false; else
+            if (extrudeAbs && line.indexOf('E') > 0) {
                 line.split(";")[0].split(' ').forEach(function (tok) {
                     // use max E position from gcode-preamble
                     if (tok[0] == 'E') {
@@ -704,17 +777,17 @@ var gs_kiri_fdm = exports;
                     }
                 });
             }
-            append(constReplace(line, consts));
+            appendSub(line);
         }
 
         function dwell(ms) {
-            append("G4 P" + ms);
+            append(`G4 P${ms}`);
             time += timeDwell;
         }
 
         function retract() {
             retracted = retDist;
-            moveTo({e:-retracted}, retSpeed, "retract " + retDist);
+            moveTo({e:-retracted}, retSpeed, `retract ${retDist}`);
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "zhop up");
             time += (retDist / retSpeed) * 60 * 2; // retraction time
         }
@@ -723,7 +796,7 @@ var gs_kiri_fdm = exports;
             if (comment) {
                 append(" ; " + comment);
             }
-            var o = [!rate && !newpos.e ? 'G0' : 'G1'];
+            let o = [!rate && !newpos.e ? 'G0' : 'G1'];
             if (typeof newpos.x === 'number') {
                 pos.x = UTIL.round(newpos.x,decimals);
                 o.append(" X").append(pos.x.toFixed(decimals));
@@ -738,7 +811,7 @@ var gs_kiri_fdm = exports;
             }
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
-                if (device.extrudeAbs) {
+                if (extrudeAbs) {
                     // for cumulative (absolute) extruder positions
                     o.append(" E").append(UTIL.round(outputLength, decimals));
                 } else {
@@ -749,7 +822,7 @@ var gs_kiri_fdm = exports;
                 o.append(" F").append(Math.round(rate));
                 pos.f = rate
             }
-            var line = o.join('');
+            let line = o.join('');
             if (last == line) {
                 // console.log({dup:line});
                 return;
@@ -759,7 +832,7 @@ var gs_kiri_fdm = exports;
         }
 
         // calc total distance traveled by head as proxy for progress
-        var allout = [], totaldistance = 0;
+        let allout = [], totaldistance = 0;
         layers.forEach(function(outs) {
             allout.appendAll(outs);
         });
@@ -778,23 +851,19 @@ var gs_kiri_fdm = exports;
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
-            consts.z = zpos.toFixed(2);
-            consts.Z = consts.z;
-            consts.layer = layer;
-            consts.height = path.height.toFixed(3);
+            subst.z = zpos.toFixed(2);
+            subst.Z = subst.z;
+            subst.layer = layer;
+            subst.height = path.height.toFixed(3);
 
             if (pauseCmd && pause.indexOf(layer) >= 0) {
-                for (var i=0; i<pauseCmd.length; i++) {
-                    append(constReplace(pauseCmd[i], consts));
-                }
+                appendAllSub(pauseCmd)
             }
 
-            if (trackLayers && trackLayers.length) {
-                trackLayers.forEach(function(line) {
-                    append(constReplace(line, consts));
-                });
+            if (gcodeLayer) {
+                appendAllSub(gcodeLayer);
             } else {
-                append("; --- layer " + layer + " (" + consts.height + " @ " + consts.z + ") ---");
+                append(`; --- layer ${layer} (${subst.height} @ ${subst.z}) ---`);
             }
 
             if (layer > 0 && process.layerRetract) {
@@ -803,25 +872,21 @@ var gs_kiri_fdm = exports;
 
             // enable fan at fan layer
             if (fan_power && layer === process.outputFanLayer) {
-                append(constReplace(fan_power, consts));
+                appendSub(fan_power);
             }
 
             // second layer transitions
             if (layer === 1) {
                 // update temps when first layer overrides are present
                 if (process.firstLayerNozzleTemp) {
-                    consts.temp = process.outputTemp;
-                    if (t0) {
-                        append(constReplace("M104 S{temp} T0", consts));
-                    } else if (t1) {
-                        append(constReplace("M104 S{temp} T1", consts));
-                    } else {
-                        append(constReplace("M104 S{temp} T{tool}", consts));
-                    }
+                    subst.temp = process.outputTemp;
+                    if (t0) appendSub("M104 S{temp} T0");
+                    if (t1) appendSub("M104 S{temp} T1");
+                    if (!(t0 || t1)) appendSub("M104 S{temp} T{tool}");
                 }
                 if (process.firstLayerBedTemp) {
-                    consts.bed_temp = consts.temp_bed = process.outputBedTemp;
-                    append(constReplace("M140 S{temp_bed} T0", consts));
+                    subst.bed_temp = subst.temp_bed = process.outputBedTemp;
+                    appendSub("M140 S{temp_bed} T0");
                 }
             }
 
@@ -836,8 +901,9 @@ var gs_kiri_fdm = exports;
 
                 // look for extruder change and recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {
+                    appendAllSub(extruder.extSelect);
                     tool = out.tool;
-                    consts.nozzle = consts.tool = tool;
+                    subst.nozzle = subst.tool = tool;
                     extruder = extruders[tool];
                     offset_x = extruder.extOffsetX;
                     offset_y = extruder.extOffsetY;
@@ -853,7 +919,8 @@ var gs_kiri_fdm = exports;
                     dwell(out.speed);
                     continue;
                 }
-                var x = out.point.x + offset_x,
+
+                let x = out.point.x + offset_x,
                     y = out.point.y + offset_y,
                     z = out.point.z;
 
@@ -872,7 +939,7 @@ var gs_kiri_fdm = exports;
                     // when enabled, resume previous Z
                     if (zhop) moveTo({z:zpos}, seekMMM, "zhop down");
                     // re-engage retracted filament
-                    moveTo({e:retracted}, retSpeed, "engage " + retracted);
+                    moveTo({e:retracted}, retSpeed, `engage ${retracted}`);
                     retracted = 0;
                     // optional dwell after re-engaging filament to allow pressure to build
                     if (retDwell) dwell(retDwell);
@@ -897,11 +964,11 @@ var gs_kiri_fdm = exports;
                 // update time and distance (should calc in moveTo() instead)
                 time += (dist / speedMMM) * 60 * 1.5;
                 distance += dist;
-                consts.progress = progress = Math.round((distance / totaldistance) * 100);
+                subst.progress = progress = Math.round((distance / totaldistance) * 100);
 
                 // emit tracked progress
-                if (trackProgress && progress != lastProgress) {
-                    append(constReplace(trackProgress, consts));
+                if (gcodeTrack && progress != lastProgress) {
+                    appendSub(gcodeTrack);
                     lastProgress = progress;
                 }
 
@@ -911,15 +978,13 @@ var gs_kiri_fdm = exports;
             layer++;
         }
 
-        consts.material = UTIL.round(emitted,2);
-        consts.time = UTIL.round(time,2);
+        subst.time = UTIL.round(time,2);
+        subst.material = UTIL.round(emitted,2);
 
         append("; --- shutdown ---");
-        for (var i=0; i<device.gcodePost.length; i++) {
-            append(constReplace(device.gcodePost[i], consts));
-        }
-        append("; --- filament used: "  +consts.material + "mm ---");
-        append("; --- print time: " + consts.time + "s ---");
+        appendAllSub(device.gcodePost);
+        append(`; --- filament used: ${subst.material} mm ---`);
+        append(`; --- print time: ${time}s ---`);
 
         // force emit of buffer
         append();
