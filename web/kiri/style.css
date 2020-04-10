@@ -735,7 +735,7 @@ button[import="1"] {
     justify-content: center;
     align-items: center;
     position: fixed;
-    bottom: 40px;
+    top: 40px;
     left: 0;
     right: 0;
 }

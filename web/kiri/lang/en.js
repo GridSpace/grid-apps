@@ -207,6 +207,8 @@ kiri.lang['en-us'] = {
     sp_area_l:      "minimum area for\na support column\nin millimeters",
     sp_xpnd_s:      "expand",
     sp_xpnd_l:      "expand support area\nbeyond part boundary\nin millimeters",
+    sp_nozl_s:      "extruder",
+    sp_nozl_l:      "in multi-extruder systems\nthe extruder to use for\nsupport material",
 
     // LASER SLICING
     ls_offs_s:      "offset",

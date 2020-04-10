@@ -127,6 +127,20 @@ self.kiri.copyright = exports.COPYRIGHT;
         cam_sliced_opacity: 0.25
     };
 
+    const lists = {
+        infill: [
+            { name: "vase" },
+            { name: "hex" },
+            { name: "grid" },
+            { name: "gyroid" },
+            { name: "triangle" }
+        ],
+        units:[
+            { name: "mm" },
+            { name: "in" }
+        ],
+    };
+
     const API = KIRI.api = {
         ui: UI,
         uc: UC,
@@ -194,6 +208,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             import: function() { UI.import.style.display = 'none' }
         },
         language: KIRI.lang,
+        lists,
         modal: {
             show: showModal,
             hide: hideModal,
@@ -1275,8 +1290,6 @@ self.kiri.copyright = exports.COPYRIGHT;
     function updateFieldsFromSettings(scope) {
         if (!scope) return console.trace("missing scope");
 
-        // CONF.normalize(settings);
-
         for (let key in scope) {
             if (!scope.hasOwnProperty(key)) continue;
             let val = scope[key];
@@ -1289,11 +1302,11 @@ self.kiri.copyright = exports.COPYRIGHT;
                 } else if (typ === 'select-one') {
                     uie.innerHTML = '<option></option>';
                     let source = uie.parentNode.getAttribute('source'),
-                        list = settings[source],
+                        list = settings[source] || lists[source],
                         chosen = null;
-                    list.forEach(function(tool, index) {
+                    if (list) list.forEach(function(tool, index) {
                         let id = tool.id || tool.name;
-                        if (val === id) {
+                        if (val == id) {
                             chosen = index + 1;
                         }
                         let opt = DOC.createElement('option');
@@ -1341,6 +1354,8 @@ self.kiri.copyright = exports.COPYRIGHT;
                         if (src === 'tools') {
                             nval = parseInt(nval);
                         }
+                    } else {
+                        nval = scope[key];
                     }
                 } else if (uie.type === 'textarea') {
                     nval = uie.value.trim().split('\n');
@@ -1434,8 +1449,6 @@ self.kiri.copyright = exports.COPYRIGHT;
             return;
         }
         settings = CONF.normalize(data.settings);
-        // MOTO.restore(data.moto);
-        // SDB.setItem('kiri-init', data.init || 2);
         API.conf.save();
         LOC.reload();
     }

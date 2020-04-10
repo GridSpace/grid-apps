@@ -542,10 +542,10 @@ var gs_kiri_init = exports;
 
             // add extruder selection buttons
             if (dev.extruders) {
+                let ext = API.lists.extruders = [];
                 dev.internal = 0;
                 let selext = $('sel-ext');
                 selext.innerHTML = '';
-                let arr = [];
                 for (let i=dev.extruders.length-1; i>=0; i--) {
                     let b = DOC.createElement('button');
                     b.appendChild(DOC.createTextNode(i));
@@ -557,6 +557,7 @@ var gs_kiri_init = exports;
                         });
                     };
                     selext.appendChild(b);
+                    ext.push({id:i, name:i});
                 }
             }
 
@@ -1311,6 +1312,7 @@ var gs_kiri_init = exports;
             sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.1,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
+            sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
 
             laserOffset:         UC.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:UC.toFloat, modes:LASER}),
@@ -1414,11 +1416,8 @@ var gs_kiri_init = exports;
             // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert:true})
             polishLayers:        LOCAL ? UC.newInput(LANG.ad_play_s, {title:LANG.ad_play_l, bound:UC.bound(0,10), convert:UC.toFloat, modes:FDM, expert:true}) : null,
             polishSpeed:         LOCAL ? UC.newInput(LANG.ad_pspd_s, {title:LANG.ad_pspd_l, bound:UC.bound(10,2000), convert:UC.toInt, modes:FDM, expert:true}) : null,
-            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
-
-            gcodeVars:           UC.newGroup(LANG.ag_menu, null, {modes:FDM, expert:true}),
-            gcodeNozzle:         UC.newInput(LANG.ag_nozl_s, {title:LANG.ag_nozl_l, convert:UC.toInt, modes:FDM, expert:true}),
-            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true})
+            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true}),
+            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true})
         });
 
         if (!lang_set) {

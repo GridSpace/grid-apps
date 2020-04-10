@@ -245,6 +245,7 @@ let gs_kiri_conf = exports;
                     sliceSupportArea: 1,
                     sliceSupportExtra: 1,
                     sliceSupportSpan: 1,
+                    sliceSupportNozzle: 1,
                     sliceSolidMinArea: 1,
                     sliceSolidLayers: 1,
                     sliceBottomLayers: 1,
@@ -283,7 +284,6 @@ let gs_kiri_conf = exports;
                     polishLayers: 1,
                     polishSpeed: 1,
                     outputLayerRetract: 1,
-                    gcodeNozzle: 1,
                     gcodePauseLayers: 1,
                     outputClockwise: 1,
                     outputOriginCenter: 1,
@@ -401,18 +401,6 @@ let gs_kiri_conf = exports;
         },
         // --------------- default settings
         template: {
-            // use by UI for populating selectors
-            infill:[
-                { name: "vase" },
-                { name: "hex" },
-                { name: "grid" },
-                { name: "gyroid" },
-                { name: "triangle" }
-            ],
-            units:[
-                { name: "mm" },
-                { name: "in" }
-            ],
             // CAM only
             bounds: {},
             origin: {},
@@ -517,6 +505,7 @@ let gs_kiri_conf = exports;
                 sliceSupportArea: 1,
                 sliceSupportExtra: 0,
                 sliceSupportSpan: 6,
+                sliceSupportNozzle: 0,
                 sliceSolidMinArea: 1,
                 sliceSolidLayers: 3,
                 sliceBottomLayers: 3,
@@ -555,7 +544,6 @@ let gs_kiri_conf = exports;
                 polishLayers: 0,
                 polishSpeed: 40,
                 outputLayerRetract: false,
-                gcodeNozzle: 0,
                 gcodePauseLayers: "",
 
                 // --- LASER ---

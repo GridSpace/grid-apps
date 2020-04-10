@@ -635,10 +635,10 @@ var gs_kiri_fdm = exports;
                 left: offset ? 0 : -device.bedWidth/2,
                 right: offset ? device.bedWidth : device.bedWidth/2,
                 bottom: offset ? 0 : -device.bedDepth/2,
-                nozzle: process.gcodeNozzle || 0,
-                tool: process.gcodeNozzle || 0,
                 z_max: device.maxHeight,
-                layers: layers.length
+                layers: layers.length,
+                nozzle: 0,
+                tool: 0
             },
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist,
@@ -837,6 +837,7 @@ var gs_kiri_fdm = exports;
                 // look for extruder change and recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {
                     tool = out.tool;
+                    consts.nozzle = consts.tool = tool;
                     extruder = extruders[tool];
                     offset_x = extruder.extOffsetX;
                     offset_y = extruder.extOffsetY;
