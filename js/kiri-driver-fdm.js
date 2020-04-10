@@ -50,26 +50,35 @@ var gs_kiri_fdm = exports;
             solidLayers = spro.sliceSolidLayers,
             vaseMode = spro.sliceFillType === 'vase',
             doSolidLayers = solidLayers && !vaseMode,
-            firstOffset = sdev.nozzleSize / 2,
-            shellOffset = sdev.nozzleSize,
-            fillOffset = sdev.nozzleSize * settings.synth.fillOffsetMult,
-            fillSpacing = sdev.nozzleSize,
+            metadata = settings.widget[widget.id] || {},
+            extruder = metadata.extruder || 0,
+            sliceHeight = spro.sliceHeight,
+            nozzleSize = sdev.extruders[extruder].extNozzle,
+            firstOffset = nozzleSize / 2,
+            shellOffset = nozzleSize,
+            fillSpacing = nozzleSize,
+            fillOffset = nozzleSize * settings.synth.fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
-        if (spro.sliceHeight < 0.01) {
+        // console.log({slice:widget.id, metadata, extruder, nozzleSize});
+
+        if (!(sliceHeight > 0 && sliceHeight < 100)) {
             return ondone("invalid slice height");
         }
+        if (!(nozzleSize >= 0.01 && nozzleSize < 100)) {
+            return ondone("invalid nozzle size");
+        }
 
-        if (spro.firstSliceHeight < spro.sliceHeight) {
+        if (spro.firstSliceHeight < sliceHeight) {
             DBUG.log("invalid first layer height < slice height");
             DBUG.log("reverting to slice height");
-            spro.firstSliceHeight = spro.sliceHeight;
+            spro.firstSliceHeight = sliceHeight;
         }
 
         SLICER.sliceWidget(widget, {
-            height: spro.sliceHeight,
-            minHeight: spro.sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
+            height: sliceHeight,
+            minHeight: sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
             firstHeight: spro.firstSliceHeight,
             view: view
         }, onSliceDone, onSliceUpdate);
@@ -101,6 +110,7 @@ var gs_kiri_fdm = exports;
 
             // reset (if necessary) for solids and support projections
             slices.forEach(function(slice) {
+                slice.extruder = extruder;
                 slice.invalidateFill();
                 slice.invalidateSolids();
                 slice.invalidateSupports();
@@ -146,7 +156,7 @@ var gs_kiri_fdm = exports;
                     slice.doSupport(spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
                 }, "support");
                 forSlices(0.7, 0.8, function(slice) {
-                    slice.doSupportFill(sdev.nozzleSize, spro.sliceSupportDensity, supportMinArea);
+                    slice.doSupportFill(nozzleSize, spro.sliceSupportDensity, supportMinArea);
                 }, "support");
             }
 
@@ -154,11 +164,11 @@ var gs_kiri_fdm = exports;
             if (!vaseMode && spro.sliceFillSparse > 0.0) {
                 forSlices(0.8, 1.0, function(slice) {
                     slice.doSparseLayerFill({
-                        lineWidth: sdev.nozzleSize,
+                        lineWidth: nozzleSize,
                         spacing: fillOffset,
                         density: spro.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
-                        height: spro.sliceHeight,
+                        height: sliceHeight,
                         type: spro.sliceFillType
                     });
                 }, "infill");
@@ -174,7 +184,7 @@ var gs_kiri_fdm = exports;
                 let py = [];
                 // compute x polishing slices
                 SLICER.sliceWidget(widget, {
-                    height: sdev.nozzleSize * polish_step,
+                    height: nozzleSize * polish_step,
                     swapX: true,
                     swapY: false,
                     simple: true
@@ -188,7 +198,7 @@ var gs_kiri_fdm = exports;
                 });
                 // compute y polishing slices
                 SLICER.sliceWidget(widget, {
-                    height: sdev.nozzleSize * polish_step,
+                    height: nozzleSize * polish_step,
                     swapX: false,
                     swapY: true,
                     simple: true
@@ -338,11 +348,11 @@ var gs_kiri_fdm = exports;
                             slice.tops[0].polish = {
                                 x: pout[0]
                                     .map(a => BASE.newPolygon(a).setOpen())
-                                    // .filter(p => p.perimeter() > sdev.nozzleSize)
+                                    // .filter(p => p.perimeter() > nozzleSize)
                                     ,
                                 y: pout[1]
                                     .map(a => BASE.newPolygon(a).setOpen())
-                                    // .filter(p => p.perimeter() > sdev.nozzleSize)
+                                    // .filter(p => p.perimeter() > nozzleSize)
                             };
                         }
                     }
@@ -365,7 +375,7 @@ var gs_kiri_fdm = exports;
         var widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
-            nozzle = device.nozzleSize,
+            nozzle = device.extruders[0].extNozzle,
             process = settings.process,
             mode = settings.mode,
             output = print.output,
@@ -374,7 +384,6 @@ var gs_kiri_fdm = exports;
             maxLayers = 0,
             layer = 0,
             zoff = 0,
-            mesh,
             meshIndex,
             lastIndex,
             closest,
@@ -382,7 +391,6 @@ var gs_kiri_fdm = exports;
             minidx,
             find,
             found,
-            mslices,
             layerout = [],
             slices = [],
             sliceEntry;
@@ -510,9 +518,9 @@ var gs_kiri_fdm = exports;
         for (;;) {
             // create list of mesh slice arrays with their platform offsets
             for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
-                mesh = widgets[meshIndex].mesh;
+                let mesh = widgets[meshIndex].mesh;
                 if (!mesh.widget) continue;
-                mslices = mesh.widget.slices;
+                let mslices = mesh.widget.slices;
                 if (mslices && mslices[layer]) {
                     slices.push({slice:mslices[layer], offset:mesh.position});
                 }
@@ -582,10 +590,14 @@ var gs_kiri_fdm = exports;
         var layers = print.output,
             settings = print.settings,
             device = settings.device,
+            extruders = device.extruders,
             process = settings.process,
             fan_power = device.gcodeFan,
             trackLayers = device.gcodeLayer,
             trackProgress = device.gcodeTrack,
+            extruder = 0,
+            nozzleSize = extruders[extruder].extNozzle,
+            filamentSize = extruders[extruder].extFilament,
             time = 0,
             layer = 0,
             pause = [],
@@ -634,6 +646,8 @@ var gs_kiri_fdm = exports;
             append,
             lines = 0,
             bytes = 0;
+
+        // console.log({print: print.widgets, meta:settings.widget, extruders, nozzleSize, filamentSize});
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             var v = parseInt(lv);
@@ -738,9 +752,10 @@ var gs_kiri_fdm = exports;
         }
 
         // calc total distance traveled by head as proxy for progress
-        var allout = [],
-            totaldistance = 0;
-        layers.forEach(function(outs) { allout.appendAll(outs) });
+        var allout = [], totaldistance = 0;
+        layers.forEach(function(outs) {
+            allout.appendAll(outs);
+        });
         allout.forEachPair(function (o1, o2) {
             totaldistance += o1.point.distTo2D(o2.point);
         }, 1);
@@ -751,8 +766,8 @@ var gs_kiri_fdm = exports;
         while (layer < layers.length) {
             path = layers[layer];
             emitPerMM = print.extrudePerMM(
-                device.nozzleSize,
-                device.filamentSize,
+                nozzleSize,
+                filamentSize,
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
@@ -811,6 +826,18 @@ var gs_kiri_fdm = exports;
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
                 speedMMM = (out.speed || process.outputFeedrate) * 60;
+
+                // look for extruder change and recalc emit factor
+                if (out.tool !== undefined && out.tool !== extruder) {
+                    extruder = out.tool;
+                    nozzleSize = extruders[extruder].extNozzle;
+                    filamentSize = extruders[extruder].extFilament;
+                    emitPerMM = print.extrudePerMM(
+                        nozzleSize,
+                        filamentSize,
+                        path.layer === 0 ?
+                            (process.firstSliceHeight || process.sliceHeight) : path.height);
+                }
 
                 // if no point in output, it's a dwell command
                 if (!out.point) {

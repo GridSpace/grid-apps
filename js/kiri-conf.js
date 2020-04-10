@@ -684,6 +684,9 @@ let gs_kiri_conf = exports;
                 alignTop: true,
                 units: "mm"
             },
+            // widget extra info for slicing (like extruder mapping)
+            widget: {
+            },
             mode: 'FDM',
             id: genID(),
             ver: CVER

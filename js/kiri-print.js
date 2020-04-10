@@ -111,6 +111,7 @@ let gs_kiri_print = exports;
             seq = [],
             abs = true,
             move = false,
+            tool = 0,
             E0G0 = false,
             G0 = function() {
                 move = true;
@@ -166,7 +167,8 @@ let gs_kiri_print = exports;
                         seq,
                         {x:pos.X + off.X, y:pos.Y + off.Y, z:pos.Z + off.Z},
                         !move,
-                        pos.F
+                        pos.F,
+                        tool
                     );
                     break;
                 case 'M6':
@@ -462,17 +464,17 @@ let gs_kiri_print = exports;
         array.push(new Output(point, emit, speed, tool));
     }
 
-    function segmentOutput(output, p1, p2, s1, s2, steps, mult) {
-        let sd = (s2 - s1) / (steps + 1);
-        let dd = p1.distTo2D(p2) / steps;
-        let dist = dd;
-        let spd = s1;
-        while (steps-- > 0) {
-            spd += sd;
-            p1 = p1.offsetPointTo(p2, dd);
-            addOutput(output, p1, mult, spd);
-        }
-    }
+    // function segmentedOutput(output, p1, p2, s1, s2, steps, mult) {
+    //     let sd = (s2 - s1) / (steps + 1);
+    //     let dd = p1.distTo2D(p2) / steps;
+    //     let dist = dd;
+    //     let spd = s1;
+    //     while (steps-- > 0) {
+    //         spd += sd;
+    //         p1 = p1.offsetPointTo(p2, dd);
+    //         addOutput(output, p1, mult, spd);
+    //     }
+    // }
 
     /**
      * FDM & Laser. add points in polygon to an output array (print path)
@@ -499,7 +501,8 @@ let gs_kiri_print = exports;
             first = true,
             last = startPoint,
             wipeDist = options.wipe || 0,
-            coastDist = options.coast || 0;
+            coastDist = options.coast || 0,
+            tool = options.tool;
 
         // if short, use calculated print speed based on sliding scale
         if (perimeter < process.outputShortPoly) {
@@ -512,7 +515,7 @@ let gs_kiri_print = exports;
                     options.onfirst(point);
                 }
                 // move from startPoint to point
-                addOutput(output, point, 0, moveSpeed);
+                addOutput(output, point, 0, moveSpeed, tool);
                 first = false;
             } else {
                 let seglen = last.distTo2D(point);
@@ -520,11 +523,11 @@ let gs_kiri_print = exports;
                     let delta = perimeter - coastDist;
                     let offset = seglen - delta;
                     let offPoint = last.offsetPointFrom(point, offset)
-                    addOutput(output, offPoint, shellMult, printSpeed);
+                    addOutput(output, offPoint, shellMult, printSpeed, tool);
                     shellMult = 0;
                 }
                 perimeter -= seglen;
-                addOutput(output, point, shellMult, printSpeed);
+                addOutput(output, point, shellMult, printSpeed, tool);
             }
             last = point;
         }, true, closest.index);
@@ -543,16 +546,19 @@ let gs_kiri_print = exports;
      * @return {Point} last output point
      */
     PRO.slicePrintPath = function(slice, startPoint, offset, output, options) {
+        // console.log({slicePrintPath: slice.index, ext:slice.extruder});
+
         let i,
             opt = options || {},
             preout = [],
             scope = this,
             settings = this.settings,
             process = settings.process,
-            nozzle = settings.device.nozzleSize,
+            extruder = slice.extruder || 0,
+            nozzleSize = settings.device.extruders[extruder].extNozzle,
             firstLayer = opt.first || false,
-            minSeek = nozzle * (opt.minSeek || 1.5),
-            thinWall = nozzle * (opt.thinWall || 1.75),
+            minSeek = nozzleSize * (opt.minSeek || 1.5),
+            thinWall = nozzleSize * (opt.thinWall || 1.75),
             retractDist = opt.retractOver || 2,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
@@ -603,6 +609,7 @@ let gs_kiri_print = exports;
             } else {
                 let finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
+                    tool: extruder,
                     rate: finishShell ? finishSpeed : printSpeed,
                     accel: finishShell,
                     wipe: process.outputWipeDistance || 0,
@@ -636,7 +643,7 @@ let gs_kiri_print = exports;
                     if (i === 0 && lp && lp.distTo2D(p) > retractDist && intersectsTop(lp,p)) {
                         retract();
                     }
-                    addOutput(preout, p, i === 0 ? 0 : extrude, speed || printSpeed);
+                    addOutput(preout, p, i === 0 ? 0 : extrude, speed || printSpeed, extruder);
                     lp = p;
                 });
                 return lp;
@@ -716,7 +723,7 @@ let gs_kiri_print = exports;
                 // to avoid shaking the printer to death.
                 if (dist <= thinWall && len <= thinWall) {
                     p2 = p1.midPointTo(p2);
-                    addOutput(preout, p2, fill * (dist / thinWall), fillSpeed);
+                    addOutput(preout, p2, fill * (dist / thinWall), fillSpeed, extruder);
                 } else {
                     // retract if dist trigger or crosses a slice top polygon
                     if (dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
@@ -725,17 +732,17 @@ let gs_kiri_print = exports;
 
                     // anti-backlash on longer move
                     if (antiBacklash && dist > retractDist) {
-                        addOutput(preout, p1.add({x:antiBacklash,y:-antiBacklash,z:0}), 0, moveSpeed);
+                        addOutput(preout, p1.add({x:antiBacklash,y:-antiBacklash,z:0}), 0, moveSpeed, extruder);
                     }
 
                     // bridge ends of fill when they're close together
                     if (dist < thinWall) {
-                        addOutput(preout, p1, fill, fillSpeed);
+                        addOutput(preout, p1, fill, fillSpeed, extruder);
                     } else {
-                        addOutput(preout, p1, 0, moveSpeed);
+                        addOutput(preout, p1, 0, moveSpeed, extruder);
                     }
 
-                    addOutput(preout, p2, fill, fillSpeed);
+                    addOutput(preout, p2, fill, fillSpeed, extruder);
                 }
 
                 startPoint = p2;
@@ -845,7 +852,7 @@ let gs_kiri_print = exports;
         }
 
         // add offset points to total print
-        addPrintPoints(preout, output, origin);
+        addPrintPoints(preout, output, origin, extruder);
 
         return startPoint.add(offset);
     };
@@ -856,9 +863,9 @@ let gs_kiri_print = exports;
      * @param {Point[]} output
      * @param {Point} [startPoint]
      */
-    function addPrintPoints(input, output, startPoint) {
+    function addPrintPoints(input, output, startPoint, tool) {
         if (startPoint && input.length > 0) {
-            addOutput(output, startPoint, 0);
+            addOutput(output, startPoint, 0, undefined, tool);
         }
         output.appendAll(input);
     }

@@ -847,7 +847,17 @@ self.kiri.copyright = exports.COPYRIGHT;
         SPACE.update();
     }
 
-    function scaleSelection(ev) {
+    function scaleSelection() {
+        if (arguments.length === 1) {
+            scaleSelectionUI(...arguments);
+        } else {
+            forSelectedGroups(function (w) {
+                w.scale(...arguments);
+            });
+        }
+    }
+
+    function scaleSelectionUI(ev) {
         let dv = parseFloat(ev.target.value || 1);
         if (UI.scaleUniform.checked) {
             UI.scaleX.value = dv;
@@ -1052,6 +1062,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function platformAdd(widget, shift, nolayout) {
+        settings.widget[widget.id] = {extruder: 0};
         WIDGETS.push(widget);
         SPACE.platform.add(widget.mesh);
         platform.select(widget, shift);
@@ -1076,6 +1087,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             return;
         }
         KIRI.work.clear(widget);
+        delete settings.widget[widget.id];
         WIDGETS.remove(widget);
         Widget.Groups.remove(widget);
         SPACE.platform.remove(widget.mesh);
@@ -1352,7 +1364,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         // store camera view
         let view = SPACE.view.save();
         if (view.left || view.up) settings.controller.view = view;
-        // CONF.normalize(settings);
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 

@@ -358,7 +358,7 @@ let gs_kiri_export = exports;
             let density = $('print-density');
             $('print-weight').value = (
                 (Math.PI * UTIL.sqr(
-                    currentPrint.settings.device.filamentSize / 2
+                    currentPrint.settings.device.extruders[0].extFilament / 2
                 )) *
                 currentPrint.distance *
                 (parseFloat(density.value) || 1.25) /
