@@ -856,6 +856,13 @@ self.kiri.copyright = exports.COPYRIGHT;
                 w.scale(...args);
             });
         }
+        updateSelectedInfo();
+        UI.scaleX.value = 1;
+        UI.scaleY.value = 1;
+        UI.scaleZ.value = 1;
+        platform.compute_max_z();
+        platform.update_stock(true);
+        SPACE.update();
     }
 
     function scaleSelectionUI(ev) {
@@ -871,13 +878,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         forSelectedGroups(function (w) {
             w.scale(x,y,z);
         });
-        updateSelectedInfo();
-        UI.scaleX.value = 1;
-        UI.scaleY.value = 1;
-        UI.scaleZ.value = 1;
-        platform.compute_max_z();
-        platform.update_stock(true);
-        SPACE.update();
     }
 
     function rotateSelection(x, y, z) {
