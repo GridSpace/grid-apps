@@ -106,6 +106,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
+        update_selected: platformUpdateSelected,
         load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone
@@ -1001,6 +1002,18 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function platformUpdateSelected() {
         UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        let extruders = settings.device.extruders;
+        if (extruders) {
+            for (let i=0; i<extruders.length; i++) {
+                let b = $(`sel-ext-${i}`);
+                if (b) b.classList.remove('buton');
+            }
+            forSelectedWidgets(w => {
+                let ext = settings.widget[w.id].extruder || 0;
+                let b = $(`sel-ext-${ext}`);
+                if (b) b.classList.add('buton');
+            });
+        }
     }
 
     function platformDeselect(widget) {

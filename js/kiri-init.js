@@ -549,9 +549,11 @@ var gs_kiri_init = exports;
                 for (let i=dev.extruders.length-1; i>=0; i--) {
                     let b = DOC.createElement('button');
                     b.appendChild(DOC.createTextNode(i));
+                    b.setAttribute('id', `sel-ext-${i}`);
                     b.onclick = function() {
                         API.selection.for_widgets(w => {
                             current.widget[w.id] = {extruder: i};
+                            API.platform.update_selected();
                         });
                     };
                     selext.appendChild(b);
