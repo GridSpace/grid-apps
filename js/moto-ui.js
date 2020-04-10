@@ -328,25 +328,28 @@ var gs_moto_ui = exports;
 
         btn.appendChild(DOC.createTextNode("edit"));
         btn.onclick = function(ev) {
-            btn.parentNode.appendChild(box);
-            btn.parentNode.onclick = btn.onclick;
             ev.stopPropagation();
-            txt.scrollTop = 0;
-            txt.scrollLeft = 0;
-            txt.selectionEnd = 0;
-            let rows = txt.value.split('\n');
-            let cols = 0;
-            rows.forEach(row => {
-                cols = Math.max(cols, row.length);
-            });
-            txt.setAttribute("cols", Math.max(30, cols + 1));
-            txt.setAttribute("rows", Math.max(10, rows.length + 1));
-            // drop clicks on TextArea
             if (ev.target === txt) {
+                // drop clicks on TextArea
                 ev.target.focus();
             } else {
+                // first time, button click / show
+                btn.parentNode.appendChild(box);
+                btn.parentNode.onclick = btn.onclick;
+                txt.scrollTop = 0;
+                txt.scrollLeft = 0;
+                txt.selectionEnd = 0;
+                let rows = txt.value.split('\n');
+                let cols = 0;
+                rows.forEach(row => {
+                    cols = Math.max(cols, row.length);
+                });
+                txt.setAttribute("cols", Math.max(30, cols + 1));
+                txt.setAttribute("rows", Math.max(10, rows.length + 1));
+
                 let showing = pop === lastPop;
                 hidePop();
+                inputAction();
                 if (!showing) {
                     pop.style.display = "flex";
                     lastPop = pop;

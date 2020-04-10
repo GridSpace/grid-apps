@@ -1329,6 +1329,8 @@ self.kiri.copyright = exports.COPYRIGHT;
                             nval = parseInt(nval);
                         }
                     }
+                } else if (uie.type === 'textarea') {
+                    nval = uie.value.trim().split('\n');
                 } else {
                     continue;
                 }
@@ -1364,6 +1366,16 @@ self.kiri.copyright = exports.COPYRIGHT;
             UI.extNext.disabled = device.internal === device.extruders.length - 1;
             UI.extNext.onclick = function() {
                 device.internal++;
+                updateExtruderFields(device);
+            };
+            UI.extDel.disabled = device.extruders.length < 2;
+            UI.extDel.onclick = function() {
+                device.extruders.splice(device.internal,1);
+                updateExtruderFields(device);
+            };
+            UI.extAdd.onclick = function() {
+                device.extruders.push(clone(device.extruders[device.internal]));
+                device.internal = device.extruders.length - 1;
                 updateExtruderFields(device);
             };
         }
