@@ -65,7 +65,7 @@ input[type=range]::-moz-focus-outer {
 }
 .sel-pop div {
     background-color: white;
-    border: 1px solid #aaa;
+    border: 1px solid #ddd;
     border-radius: 5px;
     padding: 5px;
 }
