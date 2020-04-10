@@ -856,6 +856,10 @@ self.kiri.copyright = exports.COPYRIGHT;
                 w.scale(...args);
             });
         }
+        // skip update if last argument is strictly 'false'
+        if ([...arguments].pop() === false) {
+            return;
+        }
         updateSelectedInfo();
         UI.scaleX.value = 1;
         UI.scaleY.value = 1;
