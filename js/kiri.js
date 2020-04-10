@@ -851,8 +851,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (arguments.length === 1) {
             scaleSelectionUI(...arguments);
         } else {
+            let args = arguments;
             forSelectedGroups(function (w) {
-                w.scale(...arguments);
+                w.scale(...args);
             });
         }
     }
@@ -1344,10 +1345,23 @@ self.kiri.copyright = exports.COPYRIGHT;
         updateFieldsFromSettings(settings.process);
         updateFieldsFromSettings(settings.layers);
         updateFieldsFromSettings(settings.controller);
-        let device = settings.device;
+        updateExtruderFields(settings.device);
+    }
+
+    function updateExtruderFields(device) {
         if (device.extruders && device.extruders[device.internal]) {
             updateFieldsFromSettings(device.extruders[device.internal]);
             UI.extruder.firstChild.innerText = `${LANG.dv_gr_ext} [${device.internal+1}/${device.extruders.length}]`;
+            UI.extPrev.disabled = device.internal === 0;
+            UI.extPrev.onclick = function() {
+                device.internal--;
+                updateExtruderFields(device);
+            };
+            UI.extNext.disabled = device.internal === device.extruders.length - 1;
+            UI.extNext.onclick = function() {
+                device.internal++;
+                updateExtruderFields(device);
+            };
         }
     }
 

@@ -1130,10 +1130,10 @@ var gs_kiri_init = exports;
             extDeselect:      UC.newText(LANG.dv_extd_s, {title:LANG.dv_extd_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
             extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
             extActions:       UC.newTableRow([[
-                UC.newButton("<", undefined),
-                UC.newButton("+", undefined),
-                UC.newButton("-", undefined),
-                UC.newButton(">", undefined)
+                UI.extPrev = UC.newButton("<"),
+                UI.extAdd = UC.newButton("+"),
+                UI.extDel = UC.newButton("-"),
+                UI.extNext = UC.newButton(">")
             ]], {modes:FDM, expert:true}),
 
             gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
