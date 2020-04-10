@@ -1371,6 +1371,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             UI.extDel.disabled = device.extruders.length < 2;
             UI.extDel.onclick = function() {
                 device.extruders.splice(device.internal,1);
+                device.internal = Math.min(device.internal, device.extruders.length-1);
                 updateExtruderFields(device);
             };
             UI.extAdd.onclick = function() {

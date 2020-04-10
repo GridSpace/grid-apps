@@ -542,6 +542,7 @@ var gs_kiri_init = exports;
 
             // add extruder selection buttons
             if (dev.extruders) {
+                dev.internal = 0;
                 let selext = $('sel-ext');
                 selext.innerHTML = '';
                 let arr = [];
