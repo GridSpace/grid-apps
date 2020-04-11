@@ -1088,10 +1088,10 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     // called after all new widgets are loaded to update group positions
-    function platformGroupDone() {
+    function platformGroupDone(skipLayout) {
         grouping = false;
         Widget.Groups.loadDone();
-        if (layoutOnAdd) platform.layout();
+        if (layoutOnAdd && !skipLayout) platform.layout();
     }
 
     function platformAdd(widget, shift, nolayout) {
@@ -1488,7 +1488,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
-                if (--loaded === 0) platform.group_done();
+                if (--loaded === 0) platform.group_done(isgcode);
             };
             reader.readAsBinaryString(reader.file);
         }

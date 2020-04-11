@@ -743,7 +743,6 @@ button[import="1"] {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 25%;
     max-width: 50%;
     background-color: rgba(230,245,255,0.8);
     border: 3px solid rgba(200,215,255,0.6);

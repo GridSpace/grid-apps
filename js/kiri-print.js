@@ -132,12 +132,25 @@ let gs_kiri_print = exports;
                 X: offset ? offset.x || 0 : 0,
                 Y: offset ? offset.y || 0 : 0,
                 Z: offset ? offset.z || 0 : 0
+            },
+            xoff = {
+                X: 0,
+                Y: 0,
+                Z: 0
             };
 
         lines.forEach(function(line) {
             line = line.split(";")[0].split(" ");
-            if (line.length < 2) return;
-            switch (line.shift()) {
+            let cmd = line.shift();
+            if (cmd.charAt(0) === 'T') {
+                let ext = scope.settings.device.extruders;
+                let pos = parseInt(cmd.charAt(1));
+                if (ext && ext[pos]) {
+                    xoff.X = -ext[pos].extOffsetX;
+                    xoff.Y = -ext[pos].extOffsetY;
+                }
+            }
+            switch (cmd) {
                 case 'G90':
                     // absolute positioning
                     abs = true;
@@ -165,7 +178,11 @@ let gs_kiri_print = exports;
                     }
                     addOutput(
                         seq,
-                        {x:pos.X + off.X, y:pos.Y + off.Y, z:pos.Z + off.Z},
+                        {
+                            x:pos.X + off.X + xoff.X,
+                            y:pos.Y + off.Y + xoff.Y,
+                            z:pos.Z + off.Z + xoff.Z
+                        },
                         !move,
                         pos.F,
                         tool
@@ -389,7 +406,6 @@ let gs_kiri_print = exports;
                         move.push(sp.projectOnSlope(ao2, 0.5));
                     }
                 } else {
-                    if (out.emit) DBUG.log("first point is emit");
                     z = point.z;
                 }
                 last = point;

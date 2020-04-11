@@ -901,7 +901,6 @@ let gs_kiri_fdm = exports;
 
                 // look for extruder change and recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {
-                    appendAllSub(extruder.extSelect);
                     tool = out.tool;
                     subst.nozzle = subst.tool = tool;
                     extruder = extruders[tool];
@@ -912,6 +911,7 @@ let gs_kiri_fdm = exports;
                         extruder.extFilament,
                         path.layer === 0 ?
                             (process.firstSliceHeight || process.sliceHeight) : path.height);
+                    appendAllSub(extruder.extSelect);
                 }
 
                 // if no point in output, it's a dwell command
