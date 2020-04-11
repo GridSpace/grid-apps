@@ -652,10 +652,8 @@ let gs_kiri_conf = exports;
                 layerPrint: false,
                 layerMoves: false
             },
+            // for passing temporary slice hints (topo currently)
             synth: {
-                // set in updateSettingsFromFields()
-                fillOffsetMult: 0,
-                diffOffsetMult: 0
             },
             controller:{
                 view: null,

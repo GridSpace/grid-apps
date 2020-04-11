@@ -812,14 +812,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         });
     }
 
-    function fillOffsetMult() {
-        return 1.0-bound(settings.process.sliceFillOverlap, 0, 0.8);
-    }
-
-    function diffOffset() {
-        return (settings.device.nozzleSize / 2) * fillOffsetMult();
-    }
-
     /** ******************************************************************
      * Selection Functions
      ******************************************************************* */
@@ -1349,9 +1341,6 @@ self.kiri.copyright = exports.COPYRIGHT;
             }
         }
 
-        settings.synth.fillOffsetMult = fillOffsetMult();
-        settings.synth.diffOffsetMult = diffOffset();
-
         return settings;
     }
 
@@ -1872,8 +1861,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         clearWidgetCache();
         SPACE.update();
         UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
-        UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
         UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
+        UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
         UI.mode.style.display = lock ? 'none' : '';
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) {
@@ -1884,6 +1873,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (then) then();
         triggerSettingsEvent();
         platformUpdateSelected();
+        updateFields();
     }
 
     function currentDeviceName() {

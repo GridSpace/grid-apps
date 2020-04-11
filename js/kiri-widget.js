@@ -649,7 +649,6 @@ let gs_kiri_widget = exports;
 
         widget.settings = settings;
         widget.clearSlices();
-
         onupdate(0.0001, "slicing");
 
         if (remote) {

@@ -29,6 +29,10 @@ let gs_kiri_fdm = exports;
         return btoa("; filename = kirimoto.gcode\n; machine = dv1MW0A000\n" + gcode);
     };
 
+    function bound(v,min,max) {
+        return Math.max(min,Math.min(max,v));
+    }
+
     /**
      * DRIVER SLICE CONTRACT
      *
@@ -56,12 +60,11 @@ let gs_kiri_fdm = exports;
             nozzleSize = sdev.extruders[extruder].extNozzle,
             firstOffset = nozzleSize / 2,
             shellOffset = nozzleSize,
+            fillOffsetMult = 1.0 - bound(spro.sliceFillOverlap, 0, 0.8),
             fillSpacing = nozzleSize,
-            fillOffset = nozzleSize * settings.synth.fillOffsetMult,
+            fillOffset = nozzleSize * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
-
-        // console.log({slice:widget.id, metadata, extruder, nozzleSize});
 
         if (!(sliceHeight > 0 && sliceHeight < 100)) {
             return ondone("invalid slice height");
@@ -736,8 +739,6 @@ let gs_kiri_fdm = exports;
             append,
             lines = 0,
             bytes = 0;
-
-        // console.log({print: print.widgets, meta:settings.widget, extruders, nozzleSize, filamentSize});
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);

@@ -1628,6 +1628,22 @@ var gs_kiri_init = exports;
             }
         });
 
+        // SPACE.mouse.onHover(function(d,me) {
+        //     if (d) {
+        //         console.log(d,d.object.widget.id,d.face.materialIndex)
+        //         // d.object.material.vertexColors = true;
+        //         // d.object.material.needsUpdate = true;
+        //         // d.face.vertexColors = [
+        //         //     new THREE.Color(0xffaa88),
+        //         //     new THREE.Color(0xffaa88),
+        //         //     new THREE.Color(0xffaa88)
+        //         // ];
+        //         // d.face.materialIndex = 1;
+        //     } else {
+        //         return API.widgets.meshes();
+        //     }
+        // });
+
         SPACE.mouse.onDrag(function(delta) {
             let dev = settings().device;
             let bmaxx = dev.bedWidth/2;
