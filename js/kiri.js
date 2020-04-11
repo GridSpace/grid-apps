@@ -997,6 +997,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function platformUpdateSelected() {
         UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline' : 'none';
         let extruders = settings.device.extruders;
         if (extruders) {
             for (let i=0; i<extruders.length; i++) {
@@ -1882,6 +1883,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();
         triggerSettingsEvent();
+        platformUpdateSelected();
     }
 
     function currentDeviceName() {
