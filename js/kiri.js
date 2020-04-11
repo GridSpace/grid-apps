@@ -997,7 +997,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
     function platformUpdateSelected() {
         UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
-        $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline' : 'none';
+        $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
         let extruders = settings.device.extruders;
         if (extruders) {
             for (let i=0; i<extruders.length; i++) {
@@ -1200,7 +1200,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         camTopZ = topZ;
         // create/inject cam stock if stock size other than default
         if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
-            UI.stock.style.display = offset ? 'inline' : 'none';
+            UI.stock.style.display = offset ? 'inline-block' : 'none';
             let csx = sd.camStockX * scale;
             let csy = sd.camStockY * scale;
             let csz = sd.camStockZ * scale;

@@ -1592,6 +1592,10 @@ var gs_kiri_init = exports;
             settings().device.bedHeight
         );
 
+        if (compact) {
+            UI.selection.classList.add('compact');
+        }
+
         if (dark) {
             SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
             SPACE.platform.opacity(0.8);

@@ -72,6 +72,13 @@ input[type=range]::-moz-focus-outer {
 .sel-span:hover .sel-pop {
     display: block;
 }
+.compact .sel-span label {
+    font-size: 24px;
+}
+.compact .sel-span input {
+    font-size: 18px;
+    margin: 4px;
+}
 #widget-info {
     text-align: center;
     position: fixed;
@@ -112,6 +119,12 @@ input[type=range]::-moz-focus-outer {
 }
 #stock,#selection {
     display: none;
+}
+#stock label {
+    background-color: transparent !important;
+}
+#selection {
+    background-color: transparent !important;
 }
 #container {
     width: 100%;
