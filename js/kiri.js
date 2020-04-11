@@ -86,6 +86,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         rotate: rotateSelection,
         meshes: function() { return selectedMeshes.slice() },
         widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
+        for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets
     };
@@ -824,18 +825,19 @@ self.kiri.copyright = exports.COPYRIGHT;
      ******************************************************************* */
 
     function updateSelectedInfo() {
-        let bounds = new THREE.Box3();
+        let bounds = new THREE.Box3(), track;
         forSelectedMeshes(mesh => {
             bounds = bounds.union(mesh.getBoundingBox());
+            track = mesh.widget.track;
         });
         if (bounds.min.x === Infinity) {
             if (selectedMeshes.length === 0) {
-                UI.selWidth.innerHTML = '0';
-                UI.selDepth.innerHTML = '0';
-                UI.selHeight.innerHTML = '0';
-                UI.scaleX.value = '';
-                UI.scaleY.value = '';
-                UI.scaleZ.value = '';
+                UI.sizeX.value = 0;
+                UI.sizeY.value = 0;
+                UI.sizeZ.value = 0;
+                UI.scaleX.value = 1;
+                UI.scaleY.value = 1;
+                UI.scaleZ.value = 1;
             }
             return;
         }
@@ -843,12 +845,12 @@ self.kiri.copyright = exports.COPYRIGHT;
             dy = bounds.max.y - bounds.min.y,
             dz = bounds.max.z - bounds.min.z,
             scale = unitScale();
-        UI.selWidth.innerHTML = UTIL.round(dx/scale,2);
-        UI.selDepth.innerHTML = UTIL.round(dy/scale,2);
-        UI.selHeight.innerHTML = UTIL.round(dz/scale,2);
-        UI.scaleX.value = 1;
-        UI.scaleY.value = 1;
-        UI.scaleZ.value = 1;
+        UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
+        UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
+        UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
+        UI.scaleX.value = UI.scaleX.was = track.scale.x;
+        UI.scaleY.value = UI.scaleY.was = track.scale.y;
+        UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
     }
 
     function setOpacity(value) {
@@ -864,40 +866,18 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function scaleSelection() {
-        if (arguments.length === 1) {
-            scaleSelectionUI(...arguments);
-        } else {
-            let args = arguments;
-            forSelectedGroups(function (w) {
-                w.scale(...args);
-            });
-        }
+        let args = arguments;
+        forSelectedGroups(function (w) {
+            w.scale(...args);
+        });
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
             return;
         }
         updateSelectedInfo();
-        UI.scaleX.value = 1;
-        UI.scaleY.value = 1;
-        UI.scaleZ.value = 1;
         platform.compute_max_z();
         platform.update_stock(true);
         SPACE.update();
-    }
-
-    function scaleSelectionUI(ev) {
-        let dv = parseFloat(ev.target.value || 1);
-        if (UI.scaleUniform.checked) {
-            UI.scaleX.value = dv;
-            UI.scaleY.value = dv;
-            UI.scaleZ.value = dv;
-        }
-        let x = parseFloat(UI.scaleX.value || dv),
-            y = parseFloat(UI.scaleY.value || dv),
-            z = parseFloat(UI.scaleZ.value || dv);
-        forSelectedGroups(function (w) {
-            w.scale(x,y,z);
-        });
     }
 
     function rotateSelection(x, y, z) {

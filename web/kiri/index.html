@@ -152,39 +152,62 @@
     </div>
     <!-- selection info -->
     <div id="widget-info">
-        <span id="selection">
-            <label class="label">width:</label><label id="sel_width" class="value">mm</label>
-            <label class="label">depth:</label><label id="sel_depth" class="value">mm</label>
-            <label class="label">height:</label><label id="sel_height" class="value">mm</label>
-            &nbsp;&nbsp;
-            <div class="sel-span">
+        <div id="selection">
+            <span class="sel-span">
                 <label class="label">scale</label>
                 <div id="sel-scale" class="sel-pop">
-                    <div>
-                        <label class="label">x</label><input id="scale_x" size="3" value="1"/>
-                        <label class="label">y</label><input id="scale_y" size="3" value="1"/>
-                        <label class="label">z</label><input id="scale_z" size="3" value="1"/>
-                        <label class="label">uniform</label><input type="checkbox" id="scale_uni" checked>
-                    </div>
+                    <table>
+                        <tr>
+                            <th></th>
+                            <td><label>size</label></td>
+                            <td><label>scale</label></td>
+                            <td><label>lock</label></td>
+                        </tr>
+                        <tr>
+                            <td><label>x</label></td>
+                            <td><input id="size_x" size="8" class="value"/></td>
+                            <td><input id="scale_x" size="3" class="value" value="1"/></td>
+                            <td><input id="lock_x" type="checkbox" checked/></td>
+                        </tr>
+                        <tr>
+                            <td><label>y</label></td>
+                            <td><input id="size_y" size="8" class="value"/></td>
+                            <td><input id="scale_y" size="3" class="value" value="1"/></td>
+                            <td><input id="lock_y" type="checkbox" checked/></td>
+                        </tr>
+                        <tr>
+                            <td><label>z</label></td>
+                            <td><input id="size_z" size="8" class="value"/></td>
+                            <td><input id="scale_z" size="3" class="value" value="1"/></td>
+                            <td><input id="lock_z" type="checkbox" checked/></td>
+                        </tr>
+                    </table>
                 </div>
-            </div>
-            &nbsp;&nbsp;
-            <div class="sel-span">
+            </span>
+            <span class="sel-span">
                 <label class="label">rotate</label>
                 <div id="sel-rotate" class="sel-pop">
-                    <div>
-                        <button id="x+" title="hold SHIFT to rotate 5 degrees">x+</button><button id="x-" title="hold SHIFT to rotate 5 degrees">x-</button>
-                        <button id="y+" title="hold SHIFT to rotate 5 degrees">y+</button><button id="y-" title="hold SHIFT to rotate 5 degrees">y-</button>
-                        <button id="z+" title="hold SHIFT to rotate 5 degrees">z+</button><button id="z-" title="hold SHIFT to rotate 5 degrees">z-</button>
-                    </div>
+                    <table>
+                        <tr><td>
+                            <label>z</label>
+                            <input id="rot_z" class="value" size="5"/ value="0">
+                        </td></tr>
+                        <tr><td>
+                            <label>y</label>
+                            <input id="rot_y" class="value" size="5"/ value="0">
+                        </td></tr>
+                        <tr><td>
+                            <label>x</label>
+                            <input id="rot_x" class="value" size="5"/ value="0">
+                        </td></tr>
+                    </table>
                 </div>
-            </div>
-            &nbsp;&nbsp;
-            <div class="sel-span">
+            </span>
+            <span class="sel-span">
                 <label class="label">extruder</label>
                 <div class="sel-pop"><div id="sel-ext"></div></div>
-            </div>
-        </span>
+            </span>
+        </div>
         <span id="stock">
             <label class="label">stock</label>
             <label id="stock-width" class="value">mm</label> x

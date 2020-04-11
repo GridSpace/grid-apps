@@ -63,7 +63,7 @@ input[type=range]::-moz-focus-outer {
     left: 0;
     padding-bottom: 5px;
 }
-.sel-pop div {
+.sel-pop div, .sel-pop table {
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 5px;
@@ -76,28 +76,39 @@ input[type=range]::-moz-focus-outer {
     text-align: center;
     position: fixed;
     width: 100%;
-    bottom: 3px;
+    bottom: -5px;
 }
 #widget-info span {
     border: 1px solid #ccc;
     border-radius: 5px;
-    padding: 3px 8px 8px 8px;
+    margin: 0 3px 0 3px;
+    padding: 3px 10px 10px 10px;
     background-color: rgba(170,221,255,0.75);
-    color: rgba(0,0,0,0.5);
+    font-weight: bold;
     z-index: 10;
 }
 #widget-info label {
     border: 0;
+    color: rgba(0,0,0,0.75);
     white-space: nowrap;
+    font-weight: bold;
 }
 #widget-info .value {
-    font-weight: bold;
     font-style: italic;
+    background-color: #f4f4f4;
+    outline: none;
     color: black;
+}
+#widget-info .value:focus {
+    background-color: #fec;
 }
 #widget-info button {
     margin: 0 2px 0 2px !important;
     border: 1px solid rgba(255,255,255,0.75);
+}
+#sel-ext {
+    display: flex;
+    flex-direction: column;
 }
 #stock,#selection {
     display: none;

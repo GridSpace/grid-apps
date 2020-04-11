@@ -29,8 +29,7 @@ var gs_kiri_init = exports;
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
         SPACE = KIRI.space,
         STATS = API.stats,
-        ROT = Math.PI/2,
-        ROT5 = ROT / 9,
+        DEG = Math.PI/180,
         ALL = [MODES.FDM, MODES.LASER, MODES.CAM],
         CAM = [MODES.CAM],
         FDM = [MODES.FDM],
@@ -1110,13 +1109,15 @@ var gs_kiri_init = exports;
             progress:           $('progress').style,
             prostatus:          $('prostatus'),
             selection:          $('selection'),
-            selWidth:           $('sel_width'),
-            selHeight:          $('sel_height'),
-            selDepth:           $('sel_depth'),
+            sizeX:              $('size_x'),
+            sizeY:              $('size_y'),
+            sizeZ:              $('size_z'),
             scaleX:             $('scale_x'),
             scaleY:             $('scale_y'),
             scaleZ:             $('scale_z'),
-            scaleUniform:       $('scale_uni'),
+            lockX:              $('lock_x'),
+            lockY:              $('lock_y'),
+            lockZ:              $('lock_z'),
             stock:              $('stock'),
             stockWidth:         $('stock-width'),
             stockDepth:         $('stock-width'),
@@ -1454,22 +1455,67 @@ var gs_kiri_init = exports;
             'drop', dropHandler
         ]);
 
+        function selectionSize(e) {
+            let dv = parseFloat(e.target.value || 1),
+                pv = parseFloat(e.target.was || 1),
+                ra = dv / pv,
+                xv = parseFloat(UI.sizeX.was),
+                yv = parseFloat(UI.sizeY.was),
+                zv = parseFloat(UI.sizeZ.was),
+                xr = (UI.lockX.checked ? ra : 1),
+                yr = (UI.lockY.checked ? ra : 1),
+                zr = (UI.lockZ.checked ? ra : 1);
+            API.selection.scale(xr,yr,zr);
+            UI.sizeX.was = UI.sizeX.value = xv * xr;
+            UI.sizeY.was = UI.sizeY.value = yv * yr;
+            UI.sizeZ.was = UI.sizeZ.value = zv * zr;
+        }
+
+        function selectionScale(e) {
+            let dv = parseFloat(e.target.value || 1),
+                pv = parseFloat(e.target.was || 1),
+                ra = dv / pv,
+                xv = parseFloat(UI.scaleX.was),
+                yv = parseFloat(UI.scaleY.was),
+                zv = parseFloat(UI.scaleZ.was),
+                xr = (UI.lockX.checked ? ra : 1),
+                yr = (UI.lockY.checked ? ra : 1),
+                zr = (UI.lockZ.checked ? ra : 1);
+            API.selection.scale(xr,yr,zr);
+            UI.scaleX.was = UI.scaleX.value = xv * xr;
+            UI.scaleY.was = UI.scaleY.value = yv * yr;
+            UI.scaleZ.was = UI.scaleZ.value = zv * zr;
+        }
+
+        function selectionRotate(e) {
+            let deg = parseFloat(e.target.value) * DEG;
+            e.target.value = 0;
+            switch (e.target.id.split('').pop()) {
+                case 'x': return API.selection.rotate(deg,0,0);
+                case 'y': return API.selection.rotate(0,deg,0);
+                case 'z': return API.selection.rotate(0,0,deg);
+            }
+        }
+
         SPACE.onEnterKey([
-            UI.layerSpan,    function() { API.show.slices() },
-            UI.layerID,      function() { API.show.layer(UI.layerID.value) },
-
-            UI.scaleX,           selection.scale,
-            UI.scaleY,           selection.scale,
-            UI.scaleZ,           selection.scale,
-
-            UI.toolName,         updateTool,
-            UI.toolNum,          updateTool,
-            UI.toolFluteDiam,    updateTool,
-            UI.toolFluteLen,     updateTool,
-            UI.toolShaftDiam,    updateTool,
-            UI.toolShaftLen,     updateTool,
-            // UI.toolTaperAngle,   updateTool,
-            UI.toolTaperTip,     updateTool,
+            UI.layerSpan,     function() { API.show.slices() },
+            UI.layerID,       function() { API.show.layer(UI.layerID.value) },
+            UI.scaleX,        selectionScale,
+            UI.scaleY,        selectionScale,
+            UI.scaleZ,        selectionScale,
+            UI.sizeX,         selectionSize,
+            UI.sizeY,         selectionSize,
+            UI.sizeZ,         selectionSize,
+            UI.toolName,      updateTool,
+            UI.toolNum,       updateTool,
+            UI.toolFluteDiam, updateTool,
+            UI.toolFluteLen,  updateTool,
+            UI.toolShaftDiam, updateTool,
+            UI.toolShaftLen,  updateTool,
+            UI.toolTaperTip,  updateTool,
+            $('rot_x'),       selectionRotate,
+            $('rot_y'),       selectionRotate,
+            $('rot_z'),       selectionRotate
         ]);
 
         UI.layerID.convert = UC.toFloat.bind(UI.layerID);
@@ -1485,12 +1531,26 @@ var gs_kiri_init = exports;
             UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
         };
 
-        $('x-').onclick = function(ev) { API.selection.rotate(ev.shiftKey ? -ROT5 : -ROT,0,0) };
-        $('x+').onclick = function(ev) { API.selection.rotate(ev.shiftKey ? ROT5 : ROT,0,0) };
-        $('y-').onclick = function(ev) { API.selection.rotate(0,ev.shiftKey ? -ROT5 : -ROT,0) };
-        $('y+').onclick = function(ev) { API.selection.rotate(0,ev.shiftKey ? ROT5 : ROT,0) };
-        $('z-').onclick = function(ev) { API.selection.rotate(0,0,ev.shiftKey ? ROT5 : ROT) };
-        $('z+').onclick = function(ev) { API.selection.rotate(0,0,ev.shiftKey ? -ROT5 : -ROT) };
+        // $('rot_x').onkeypress = (ev) => {
+        //     if (ev.key === 'Enter') {
+        //         API.selection.rotate(parseFloat(ev.target.value)*DEG,0,0);
+        //         ev.target.value = 0;
+        //     }
+        // };
+        //
+        // $('rot_y').onkeypress = (ev) => {
+        //     if (ev.key === 'Enter') {
+        //         API.selection.rotate(0,parseFloat(ev.target.value)*DEG,0);
+        //         ev.target.value = 0;
+        //     }
+        // };
+        //
+        // $('rot_z').onkeypress = (ev) => {
+        //     if (ev.key === 'Enter') {
+        //         API.selection.rotate(0,0,parseFloat(ev.target.value)*DEG);
+        //         ev.target.value = 0;
+        //     }
+        // };
 
         UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
             API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);
