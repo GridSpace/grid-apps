@@ -509,7 +509,15 @@ let gs_kiri_fdm = exports;
                     preout.last().retract = true;
                 }
             }
-            // TODO recompute bounds for purge block offsets
+            // recompute bounds for purge block offsets
+            let bbounds = BASE.newBounds();
+            brims.forEach(brim => {
+                bbounds.merge(brim.bounds);
+            });
+            bounds.min.x = Math.min(bounds.min.x, bbounds.minx);
+            bounds.min.y = Math.min(bounds.min.y, bbounds.miny);
+            bounds.max.x = Math.max(bounds.max.x, bbounds.maxx);
+            bounds.max.y = Math.max(bounds.max.y, bbounds.maxy);
         }
 
         let extruders = [];
@@ -520,7 +528,7 @@ let gs_kiri_fdm = exports;
         widgets.forEach(function(widget) {
             maxLayers = Math.max(maxLayers, widget.slices.length);
             let extruder = settings.widget[widget.id].extruder;
-            if (extruders.indexOf(extruder) < 0) {
+            if (!extruders[extruder]) {
                 extruders[extruder] = {};
                 extcount++;
             }
@@ -528,12 +536,12 @@ let gs_kiri_fdm = exports;
 
         let blokpos, walkpos, blok;
         if (bounds.min.x < bounds.min.y) {
-            let dx = ((bounds.max.x - bounds.min.x) - (extcount * 5)) / 2;
+            let dx = ((bounds.max.x - bounds.min.x) - (extcount * 10)) / 2 + 5;
             blokpos = { x:bounds.min.x + dx, y: bounds.max.y + 5};
             walkpos  = { x:10, y:0 };
             blok = { x:9, y:4 };
         } else {
-            let dy = ((bounds.max.y - bounds.min.y) - (extcount * 5)) / 2;
+            let dy = ((bounds.max.y - bounds.min.y) - (extcount * 10)) / 2 + 5;
             blokpos = { x:bounds.max.x + 5, y: bounds.min.y + dy};
             walkpos  = { x:0, y:10 };
             blok = { x:4, y:9 };
@@ -555,6 +563,9 @@ let gs_kiri_fdm = exports;
 
         // generate purge block for given nozzle
         function purge(nozzle, track, layer, start, z, using) {
+            if (extcount < 2) {
+                return start;
+            }
             let rec = track[nozzle];
             if (rec) {
                 track[nozzle] = null;
@@ -573,7 +584,9 @@ let gs_kiri_fdm = exports;
             // create list of mesh slice arrays with their platform offsets
             for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
                 let mesh = widgets[meshIndex].mesh;
-                if (!mesh.widget) continue;
+                if (!mesh.widget) {
+                    continue;
+                }
                 let mslices = mesh.widget.slices;
                 if (mslices && mslices[layer]) {
                     slices.push({slice:mslices[layer], offset:mesh.position});
@@ -581,11 +594,14 @@ let gs_kiri_fdm = exports;
             }
 
             // exit if no slices
-            if (slices.length === 0) break;
+            if (slices.length === 0) {
+                break;
+            }
 
             // track purge blocks generated for each layer
             let track = extruders.slice();
             let lastOut;
+            let lastExt;
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
@@ -603,7 +619,10 @@ let gs_kiri_fdm = exports;
                     }
                     found++;
                 }
-                if (!closest) break;
+                if (!closest) {
+                    if (sliceEntry) lastOut = sliceEntry.slice;
+                    break;
+                }
                 // retract between widgets
                 if (layerout.length && minidx !== lastIndex) {
                     layerout.last().retract = true;
@@ -623,9 +642,18 @@ let gs_kiri_fdm = exports;
                     layerout,
                     { first: closest.slice.index === 0 }
                 );
-                lastOut = closest.slice,
+                lastOut = closest.slice;
+                lastExt = lastOut.ext
                 lastIndex = minidx;
             }
+
+            // if a declared extruder isn't used in a layer, use selected
+            // extruder to fill the relevant purge blocks for later support
+            track.forEach(ext => {
+                if (ext) {
+                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt);
+                }
+            });
 
             // if layer produced output, append to output array
             if (layerout.length) output.append(layerout);
@@ -633,15 +661,6 @@ let gs_kiri_fdm = exports;
             // notify progress
             layerout.layer = layer++;
             update(layer / maxLayers);
-
-            // if a declared extruder isn't used in a layer, use selected
-            // extruder to fill the relevant purge blocks for later support
-            track.forEach(ext => {
-                if (ext) {
-                    console.log({purge_block_unused: ext.extruder, using: lastOut.extruder});
-                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastOut.extruder);
-                }
-            });
 
             // retract after last layer
             if (layer === maxLayers && layerout.length) {

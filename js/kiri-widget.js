@@ -409,7 +409,10 @@ let gs_kiri_widget = exports;
     /**
      * @param {number} color
      */
-    PRO.setColor = function(color) {
+    PRO.setColor = function(color,settings) {
+        if (Array.isArray(color)) {
+            color = color[this.getExtruder(settings) % color.length];
+        }
         let material = this.mesh.material;
         material.color.set(color);
     };
@@ -618,6 +621,14 @@ let gs_kiri_widget = exports;
         return this.modified;
     };
 
+    PRO.getExtruder = function(settings) {
+        if (settings && settings.widget) {
+            let rec = settings.widget[this.id];
+            return rec && rec.extruder >= 0 ? rec.extruder : 0;
+        }
+        return 0;
+    };
+
     /**
      * processes points into facets, then into slices
      *
@@ -728,8 +739,9 @@ let gs_kiri_widget = exports;
     PRO.render = function(renderMode, cam) {
         let slices = this.slices;
         if (!slices) return;
+        let extruder = this.getExtruder(this.settings);
         // render outline
-        slices.forEach(function(s) { s.renderOutline(renderMode) });
+        slices.forEach(function(s) { s.renderOutline(renderMode,extruder) });
         // render shells
         slices.forEach(function(s) { s.renderShells(renderMode) });
         // render diff

@@ -115,8 +115,8 @@ self.kiri.copyright = exports.COPYRIGHT;
     const color = {
         wireframe: 0x444444,
         wireframe_opacity: 0.25,
-        selected: 0xbbff00,
-        deselected: 0xffff00,
+        selected: [ 0xbbff00, 0xbbee00, 0xbbdd00 ],
+        deselected: [ 0xffff00, 0xffdd00, 0xffbb00 ],
         slicing: 0xffaaaa,
         preview_opacity: 0.0,
         model_opacity: 1.0,
@@ -1004,7 +1004,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             if (!shift) platform.deselect();
             selectedMeshes.push(mesh);
             API.event.emit('widget.select', widget);
-            widget.setColor(color.selected);
+            widget.setColor(color.selected, settings);
             updateSelectedInfo();
         }
         platformUpdateSelected();
@@ -1050,7 +1050,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             selectedMeshes.splice(si,1);
             API.event.emit('widget.deselect', widget);
         }
-        widget.setColor(color.deselected);
+        widget.setColor(color.deselected, settings);
         platformUpdateSelected();
         SPACE.update();
         updateSelectedInfo();

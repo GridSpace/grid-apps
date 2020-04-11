@@ -20,7 +20,21 @@ var gs_kiri_slice = exports;
         MIN = Math.min,
         MAX = Math.max,
         NOKEY = BASE.key.NONE,
-        outline_colors = [0xffff00, 0x00ffff, 0xff00ff, 0xff0000, 0x00ff00, 0x0000ff, 0xffffff, 0x000000],
+        outline_colors = [
+            0xffff00,
+            0xffcc00,
+            0xff9900
+        ],
+        debug_colors = [
+            0xffff00,
+            0x00ffff,
+            0xff00ff,
+            0xff0000,
+            0x00ff00,
+            0x0000ff,
+            0xffffff,
+            0x000000
+        ],
         trace_color = 0x000000,
         sparse_fill_color = 0x333366,
         fill_offset_color = 0xeeeeee,
@@ -312,14 +326,14 @@ var gs_kiri_slice = exports;
      *
      * @param {number} renderMode
      */
-    PRO.renderOutline = function(renderMode) {
+    PRO.renderOutline = function(renderMode,color) {
         if (!this.view) return;
 
         var process = KIRI.driver.CAM.process,
             slice = this,
             layers = slice.layers,
             layer = layers.outline,
-            colors = outline_colors,
+            colors = debug_colors,
             groups = slice.groups ? slice.groups.sort(function(a,b) { return b.area() - a.area() }) : null,
             tops = slice.tops,
             pbuf = [],
@@ -360,8 +374,9 @@ var gs_kiri_slice = exports;
                 break;
             // all polygons in yellow
             case 4:
+                colors = outline_colors;
                 tops.forEach(function(top) {
-                    layer.poly(top.poly, colors[0], true, open);
+                    layer.poly(top.poly, colors[color], true, open);
                     if (top.inner) layer.poly(top.inner, 0x999999, true, null);
                     // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
                 });
