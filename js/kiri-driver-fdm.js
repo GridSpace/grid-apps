@@ -526,24 +526,27 @@ let gs_kiri_fdm = exports;
             }
         });
 
-        let blokpos, walkpos;
+        let blokpos, walkpos, blok;
         if (bounds.min.x < bounds.min.y) {
             let dx = ((bounds.max.x - bounds.min.x) - (extcount * 5)) / 2;
             blokpos = { x:bounds.min.x + dx, y: bounds.max.y + 5};
-            walkpos  = { x:10, y: 0};
+            walkpos  = { x:10, y:0 };
+            blok = { x:9, y:4 };
         } else {
             let dy = ((bounds.max.y - bounds.min.y) - (extcount * 5)) / 2;
             blokpos = { x:bounds.max.x + 5, y: bounds.min.y + dy};
-            walkpos  = { x:0, y: 10};
+            walkpos  = { x:0, y:10 };
+            blok = { x:4, y:9 };
         }
 
         // compute purge blocks
         extruders = extruders.map((ext,i) => {
             if (!ext) return ext;
-            let pos = {x:blokpos.x, y:blokpos.y, z:0},
+            let noz = device.extruders[i].extNozzle,
+                pos = {x:blokpos.x, y:blokpos.y, z:0},
                 rec = {
                     extruder: i,
-                    poly: BASE.newPolygon().centerRectangle(pos, 8, 8)
+                    poly: BASE.newPolygon().centerSpiral(pos, blok.x, blok.y, noz*2, 3)
                 };
             blokpos.x += walkpos.x;
             blokpos.y += walkpos.y;
@@ -555,7 +558,11 @@ let gs_kiri_fdm = exports;
             let rec = track[nozzle];
             if (rec) {
                 track[nozzle] = null;
-                return print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {tool:using || nozzle});
+                return print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
+                    tool: using || nozzle,
+                    open: true,
+                    simple: true
+                });
             } else {
                 console.log({already_purged: nozzle, from: track, layer});
             }

@@ -326,6 +326,31 @@ var gs_base_polygon = exports;
     };
 
     /**
+     * create square spiral (used for purge blocks)
+     */
+    PRO.centerSpiral = function(center, lenx, leny, offset, count) {
+        count *= 4;
+        offset /= 2;
+        let pos = { x: center.x - lenx/2, y: center.y + leny/2, z: center.z },
+            dir = { x: 1, y: 0, i: 0 }, t;
+        while (count-- > 0) {
+            this.push(newPoint(pos.x, pos.y, pos.z));
+            pos.x += dir.x * lenx;
+            pos.y += dir.y * leny;
+            switch (dir.i++) {
+                case 0: t = dir.x; dir.x = dir.y; dir.y = -t; break;
+                case 1: t = dir.x; dir.x = dir.y; dir.y = t; break;
+                case 2: t = dir.x; dir.x = dir.y; dir.y = -t; break;
+                case 3: t = dir.x; dir.x = dir.y; dir.y = t; break;
+            }
+            lenx -= offset/2;
+            leny -= offset/2;
+            dir.i = dir.i % 4;
+        }
+        return this;
+    };
+
+    /**
      * add points forming a circle around a center point
      *
      * @param {Point} center

@@ -512,9 +512,10 @@ let gs_kiri_print = exports;
             printSpeed = options.rate || process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
             minSpeed = process.outputMinSpeed,
-            closest = poly.findClosestPointTo(startPoint),
+            closest = options.simple ? poly.first() : poly.findClosestPointTo(startPoint),
             perimeter = poly.perimeter(),
             first = true,
+            close = !options.open,
             last = startPoint,
             wipeDist = options.wipe || 0,
             coastDist = options.coast || 0,
@@ -546,7 +547,7 @@ let gs_kiri_print = exports;
                 addOutput(output, point, shellMult, printSpeed, tool);
             }
             last = point;
-        }, true, closest.index);
+        }, close, closest.index);
 
         return output.last().point;
     };
