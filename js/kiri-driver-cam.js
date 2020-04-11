@@ -979,7 +979,7 @@ var gs_kiri_cam = exports;
         }
 
         // horizontal slices for rough/finish
-        doSlicing(widget, {height: sliceDepth, cam:true, zmin:proc.camZBottom}, camSlicesDone, function(update) {
+        doSlicing(widget, {height: sliceDepth, cam:true, zmin:proc.camZBottom, noEmpty:true}, camSlicesDone, function(update) {
             onupdate(0.0 + update * 0.25, "slicing");
         });
 

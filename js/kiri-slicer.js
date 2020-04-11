@@ -472,6 +472,7 @@ var gs_kiri_slicer = exports;
 
             // allow empty slices in CAM swap mode (for topos w/ gaps)
             // if (lines.length == 0 && !(options.swapX || options.swapY)) return;
+            if (lines.length == 0 && options.noEmpty) return;
 
             slice.height = height;
             slice.index = slices.length;
