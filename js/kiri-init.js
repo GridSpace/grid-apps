@@ -1662,6 +1662,7 @@ var gs_kiri_init = exports;
                     let wmaxy = wminy + whei + delta.y;
                     if (wminy < bminy || wmaxy > bmaxy) return;
                     widget.move(delta.x, delta.y, 0);
+                    API.event.emit('widget.move', {widget, delta});
                 });
                 platform.update_stock();
             } else {

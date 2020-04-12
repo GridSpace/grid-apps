@@ -162,7 +162,7 @@ let gs_kiri_conf = exports;
             device_v1_to_v2(settings.device);
             device_v1_to_v2(settings.cdev.FDM);
             objectMap(settings.devices, dev => {
-                return device_from_code(dev);
+                return dev ? device_from_code(dev) : dev;
             });
             settings.ver = CVER;
         }
