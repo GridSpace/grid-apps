@@ -743,12 +743,12 @@ let gs_kiri_print = exports;
                     addOutput(preout, p2, fill * (dist / thinWall), fillSpeed, extruder);
                 } else {
                     // retract if dist trigger or crosses a slice top polygon
-                    if (dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
+                    if (!fast && dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
                         retract();
                     }
 
                     // anti-backlash on longer move
-                    if (antiBacklash && dist > retractDist) {
+                    if (!fast && antiBacklash && dist > retractDist) {
                         addOutput(preout, p1.add({x:antiBacklash,y:-antiBacklash,z:0}), 0, moveSpeed, extruder);
                     }
 

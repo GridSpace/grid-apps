@@ -1634,6 +1634,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
         if (!load) return;
 
+        settings.process = clone(load);
         settings.process.processName = name;
         settings.cproc[mode] = name;
 
