@@ -2,7 +2,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` restore settings should restore all mode/device/settings (find corner cases)
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -10,25 +9,22 @@
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` server-side processing (determine protocol and storage)
 * `P` refactor / simplify POLY.expand (put onus on collector)
-* `P` cloned objects should share same slice data unless rotated or scaled
+* `P` duplicate objects should share same slice data unless rotated or scaled
 
 # FDM
 
 * `B` check for support / brim intersections on first layer
-* `F` detect M82 / M83 in the gcode header and use appropriate setting over device
 * `F` manual support addition / control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
+* `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` first layer segment large flat areas for better fill reliability
-* `F` adaptive column to compensate for fine or layers that finish too quickly and melt
+* `F` enable purge block when quick layers are detected
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats
 * `F` first layer support speed should be same as shell speed
-* `F` add lay-flat auto-rotation or from selected face
 * `F` determine start point from gcode preamble
 * `F` trim support offset from layer below
-* `F` feather sharp tips by reducing extrusion in area of overlap
-* `F` multi extruder and swapping extruder support
 * `F` option to support interior bridges when 0% infill
 * `P` disable infill fingerprinting for gyroids
 * `P` refactor thin fill to use outline and inside poly normal dist to self
@@ -38,6 +34,7 @@
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `F` do not mill out thru-pockets. cut outline only.
 * `F` use arcs to connect hard angles
 * `F` do not rough areas that go all the way through the part
       https://github.com/GridSpace/grid-apps/issues/20
@@ -52,7 +49,7 @@
 * `F` warn when part > stock or cuts go outside bed
 * `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling
-* `P` optimize away topo generation (for z hop/move) when part is flat
+* `P` disable topo generation when no linear xy and no depth first
 * `P` store tab and camshell polys in widget.topo to minimize z on edge moves
 * `P` linear finishing is going back to z top too often
 * `P` option to skip milling holes that would be drilled
