@@ -1617,7 +1617,7 @@ var gs_kiri_init = exports;
 
         SPACE.mouse.downSelect(function(int,event) {
             // lay flat with meta or ctrl clicking a selected face
-            if (int && (event.ctrlKey || event.metaKey)) {
+            if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
                 let q = new THREE.Quaternion();
                 q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
                 API.selection.rotate(q);
