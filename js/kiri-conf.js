@@ -10,7 +10,7 @@ let gs_kiri_conf = exports;
     if (self.kiri.conf) return;
 
     let KIRI = self.kiri,
-        CVER = 2;
+        CVER = 185;
 
     function genID() {
         while (true) {
@@ -96,7 +96,7 @@ let gs_kiri_conf = exports;
             gcodeSpindle: valueOf(cmd.spindle, []),
             gcodeChange: valueOf(code['tool-change'], []),
             gcodeFExt: valueOf(code['file-ext'], 'gcode'),
-            gcodeSpace: valueOf(code['token-space'], ''),
+            gcodeSpace: valueOf(code['token-space'], true),
             gcodeStrip: valueOf(code['strip-comments'], false),
             gcodeLaserOn: valueOf(code['laser-on'], []),
             gcodeLaserOff: valueOf(code['laser-off'], []),
@@ -156,7 +156,7 @@ let gs_kiri_conf = exports;
         }
 
         // v1 to v2 changed FDM extruder / nozzle / filament structure
-        if (settings.ver === 1) {
+        if (settings.ver != CVER) {
             // backup settings before upgrade
             API.sdb.setItem(`ws-settings-${Date.now()}`, JSON.stringify(settings));
             device_v1_to_v2(settings.device);
@@ -164,7 +164,7 @@ let gs_kiri_conf = exports;
             objectMap(settings.devices, dev => {
                 return device_from_code(dev);
             });
-            settings.ver = 2;
+            settings.ver = CVER;
         }
 
         fill_cull(settings, defaults, defaults);
@@ -463,7 +463,7 @@ let gs_kiri_conf = exports;
                 gcodeTrack: "",     // FDM progress command
                 gcodeLayer: [],     // FDM layer output
                 gcodeFExt: "",      // CAM file extension
-                gcodeSpace: "",     // CAM token spacing
+                gcodeSpace: true,   // CAM token spacing
                 gcodeStrip: true,   // CAM strip comments
                 gcodeDwell: ["G4 P{time}"],     // CAM dwell script
                 gcodeChange: ["M6 T{tool}"],    // CAM tool change script

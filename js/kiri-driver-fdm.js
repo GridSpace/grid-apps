@@ -584,6 +584,7 @@ let gs_kiri_fdm = exports;
                 return start;
             } else {
                 console.log({already_purged: nozzle, from: track, layer});
+                return start;
             }
         }
 
@@ -616,6 +617,9 @@ let gs_kiri_fdm = exports;
                 found = 0;
                 closest = null;
                 mindist = Infinity;
+                // TODO must select slices of the same extruder type first
+                // instead of just finding closest, create sorted list and
+                // next is draw from list
                 for (meshIndex = 0; meshIndex < slices.length; meshIndex++) {
                     sliceEntry = slices[meshIndex];
                     if (!sliceEntry) continue;
