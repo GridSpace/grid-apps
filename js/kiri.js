@@ -1450,11 +1450,17 @@ self.kiri.copyright = exports.COPYRIGHT;
                     newWidget(undefined,group)
                     .loadVertices(JSON.parse(e.target.result).toFloat32())
                 );
-                if (isstl) platform.add(
-                    newWidget(undefined,group)
-                    .loadVertices(new MOTO.STL().parse(e.target.result))
-                    .saveToCatalog(e.target.file.name)
-                );
+                if (isstl) {
+                    if (API.feature.on_add_stl) {
+                        API.feature.on_add_stl(e.target.result);
+                    } else {
+                        platform.add(
+                            newWidget(undefined,group)
+                            .loadVertices(new MOTO.STL().parse(e.target.result))
+                            .saveToCatalog(e.target.file.name)
+                        );
+                    }
+                }
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
