@@ -135,6 +135,9 @@ var gs_kiri_init = exports;
     }
 
     function keyUpHandler(evt) {
+        if (API.feature.on_key) {
+            if (API.feature.on_key({up:evt})) return;
+        }
         switch (evt.keyCode) {
             // escape
             case 27:
@@ -160,6 +163,9 @@ var gs_kiri_init = exports;
     function keyDownHandler(evt) {
         if (API.modal.visible()) {
             return false;
+        }
+        if (API.feature.on_key) {
+            if (API.feature.on_key({down:evt})) return;
         }
         let move = evt.altKey ? 5 : 0,
             deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
@@ -231,6 +237,9 @@ var gs_kiri_init = exports;
             ncc = evt.charCode - 48;
         if (API.modal.visible() || inputHasFocus()) {
             return false;
+        }
+        if (API.feature.on_key) {
+            if (API.feature.on_key({key:evt})) return;
         }
         switch (evt.charCode) {
             case cca('`'): API.show.slices(0); break;
@@ -1051,6 +1060,7 @@ var gs_kiri_init = exports;
         });
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
+        SPACE.useDefaultKeys(API.feature.on_key === undefined);
 
         UC.setCompact(compact);
 
