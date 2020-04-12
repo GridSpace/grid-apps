@@ -177,190 +177,190 @@ let gs_kiri_fdm = exports;
                 }, "infill");
             }
 
-            let polish = spro.polishLayers;
-            // experimental polishing
-            if (polish) {
-                let polish_layer = Math.floor(polish);
-                let polish_step = Math.max(polish - polish_layer || 1, 0.25);
-                widget.polish = {};
-                let px = [];
-                let py = [];
-                // compute x polishing slices
-                SLICER.sliceWidget(widget, {
-                    height: nozzleSize * polish_step,
-                    swapX: true,
-                    swapY: false,
-                    simple: true
-                }, (polish_done => {
-                    widget.polish.x = polish_done
-                        .filter(s => s.groups.length)
-                        .map(s => s.groups)
-                        .forEach(p => px.appendAll(p));
-                }), (polish_update) => {
-                    // console.log({polish_update});
-                });
-                // compute y polishing slices
-                SLICER.sliceWidget(widget, {
-                    height: nozzleSize * polish_step,
-                    swapX: false,
-                    swapY: true,
-                    simple: true
-                }, (polish_done => {
-                    widget.polish.y = polish_done
-                        .filter(s => s.groups.length)
-                        .map(s => s.groups)
-                        .forEach(p => py.appendAll(p));
-                }), (polish_update) => {
-                    // console.log({polish_update});
-                });
-                // apply polishing finishes to layers
-                forSlices(1.0, 1.0, (slice) => {
-                    if (polish_layer >= 2) {
-                        let sai = (slice.index - polish_layer);
-                        if (sai % (polish_layer-1) !== 0) {
-                            return;
-                        }
-                    }
-                    if (slice.index >= polish_layer) {
-                        let sd = slice;
-                        for (let i=0; i<polish_layer; i++) {
-                            sd = sd.down;
-                        }
-                        let zb = sd.z;
-                        let zt = slice.z;
-                        let pout = [];
-                        let cont = 0;
-                        [px, py].forEach(pa => {
-
-                        let polys = [];
-                        pa.forEach(p => {
-                            // rotate and test for self-intersection (points under model)
-                            p.ensureXY();
-                            let ox = p._aligned == 'yz' ? 0.1 : 0;
-                            let oy = p._aligned == 'yz' ? 0 : 0.1;
-                            p.forEachPoint(pt => {
-                                let int = p.intersections(
-                                    pt.offset(ox,oy,0),
-                                    pt.offset(ox*10000,oy*10000,0));
-                                if (int.length > 0) {
-                                    pt._under = true;
-                                }
-                            });
-                            p.restoreXY();
-
-                            let lastp = undefined;
-                            let poly = [];
-                            // look for qualifying segments
-                            p.forEachSegment((p1, p2) => {
-                                // eliminate segments that projected up
-                                // intersect with the polygon (bottom faces)
-                                if (p1._under || p2._under) {
-                                    return;
-                                }
-                                // skip when both below layer range
-                                if (p1.z < zb && p2.z < zb) {
-                                    return;
-                                }
-                                // skip when both above layer range
-                                if (p1.z > zt && p2.z > zt) {
-                                    return;
-                                }
-                                // skip vertical
-                                if (p1.x === p2.x && p1.y === p2.y) {
-                                    return;
-                                }
-                                // skip horizontal
-                                // if (p1.z === p2.z) {
-                                //     return;
-                                // }
-                                // order points lowest to highest
-                                let swap = false;
-                                if (p1.z > p2.z) {
-                                    let t = p2;
-                                    p2 = p1;
-                                    p1 = t;
-                                    swap = true;
-                                }
-                                let trimlo = false;
-                                let trimhi = false;
-                                if (p1.z < zb) {
-                                    trimlo = true;
-                                }
-                                if (p2.z > zt) {
-                                    trimhi = true;
-                                }
-                                let xaxis = p1.x === p2.x;
-                                if (xaxis) {
-                                    p1 = BASE.newPoint(p1.y,p1.z,p1.x);
-                                    p2 = BASE.newPoint(p2.y,p2.z,p2.x);
-                                } else {
-                                    p1 = BASE.newPoint(p1.x,p1.z,p1.y);
-                                    p2 = BASE.newPoint(p2.x,p2.z,p2.y);
-                                }
-                                let slope = BASE.newSlope(p1, p2);
-                                let angle = slope.angle;
-                                if (angle > 80 && angle < 100) {
-                                    return;
-                                }
-                                let len = p1.distTo2D(p2);
-                                let np1 = p1;
-                                if (trimlo) {
-                                    let zunder = zb - p1.y;
-                                    let zover = p2.y - zb;
-                                    let zdelt = p2.y - p1.y;
-                                    let pct = zunder / zdelt;
-                                    np1 = p1.follow(slope, len * pct);
-                                }
-                                if (trimhi) {
-                                    let zunder = zt - p1.y;
-                                    let zover = p2.y - zt;
-                                    let zdelt = p2.y - p1.y;
-                                    let pct = zover / zdelt;
-                                    p2 = p2.follow(slope.invert(), len * pct);
-                                }
-                                p1 = np1;
-                                if (xaxis) {
-                                    p1 = BASE.newPoint(p1.z,p1.x,p1.y);
-                                    p2 = BASE.newPoint(p2.z,p2.x,p2.y);
-                                } else {
-                                    p1 = BASE.newPoint(p1.x,p1.z,p1.y);
-                                    p2 = BASE.newPoint(p2.x,p2.z,p2.y);
-                                }
-                                if (!lastp) {
-                                    poly.push(p1);
-                                    poly.push(p2);
-                                } else if (p1.isMergable2D(lastp)) {
-                                // } else if (p1.isEqual(lastp)) {
-                                    poly.push(p2);
-                                    cont++;
-                                } else if (poly.length) {
-                                    polys.push(poly);
-                                    poly = [p1, p2];
-                                }
-                                lastp = p2;
-                            });
-                            if (poly.length) {
-                                polys.push(poly);
-                            }
-                        });
-                        pout.push(polys);
-                        polys = [];
-                        });
-
-                        if (pout.length && slice.tops.length) {
-                            slice.tops[0].polish = {
-                                x: pout[0]
-                                    .map(a => BASE.newPolygon(a).setOpen())
-                                    // .filter(p => p.perimeter() > nozzleSize)
-                                    ,
-                                y: pout[1]
-                                    .map(a => BASE.newPolygon(a).setOpen())
-                                    // .filter(p => p.perimeter() > nozzleSize)
-                            };
-                        }
-                    }
-                });
-            }
+            // let polish = spro.polishLayers;
+            // // experimental polishing
+            // if (polish) {
+            //     let polish_layer = Math.floor(polish);
+            //     let polish_step = Math.max(polish - polish_layer || 1, 0.25);
+            //     widget.polish = {};
+            //     let px = [];
+            //     let py = [];
+            //     // compute x polishing slices
+            //     SLICER.sliceWidget(widget, {
+            //         height: nozzleSize * polish_step,
+            //         swapX: true,
+            //         swapY: false,
+            //         simple: true
+            //     }, (polish_done => {
+            //         widget.polish.x = polish_done
+            //             .filter(s => s.groups.length)
+            //             .map(s => s.groups)
+            //             .forEach(p => px.appendAll(p));
+            //     }), (polish_update) => {
+            //         // console.log({polish_update});
+            //     });
+            //     // compute y polishing slices
+            //     SLICER.sliceWidget(widget, {
+            //         height: nozzleSize * polish_step,
+            //         swapX: false,
+            //         swapY: true,
+            //         simple: true
+            //     }, (polish_done => {
+            //         widget.polish.y = polish_done
+            //             .filter(s => s.groups.length)
+            //             .map(s => s.groups)
+            //             .forEach(p => py.appendAll(p));
+            //     }), (polish_update) => {
+            //         // console.log({polish_update});
+            //     });
+            //     // apply polishing finishes to layers
+            //     forSlices(1.0, 1.0, (slice) => {
+            //         if (polish_layer >= 2) {
+            //             let sai = (slice.index - polish_layer);
+            //             if (sai % (polish_layer-1) !== 0) {
+            //                 return;
+            //             }
+            //         }
+            //         if (slice.index >= polish_layer) {
+            //             let sd = slice;
+            //             for (let i=0; i<polish_layer; i++) {
+            //                 sd = sd.down;
+            //             }
+            //             let zb = sd.z;
+            //             let zt = slice.z;
+            //             let pout = [];
+            //             let cont = 0;
+            //             [px, py].forEach(pa => {
+            //
+            //             let polys = [];
+            //             pa.forEach(p => {
+            //                 // rotate and test for self-intersection (points under model)
+            //                 p.ensureXY();
+            //                 let ox = p._aligned == 'yz' ? 0.1 : 0;
+            //                 let oy = p._aligned == 'yz' ? 0 : 0.1;
+            //                 p.forEachPoint(pt => {
+            //                     let int = p.intersections(
+            //                         pt.offset(ox,oy,0),
+            //                         pt.offset(ox*10000,oy*10000,0));
+            //                     if (int.length > 0) {
+            //                         pt._under = true;
+            //                     }
+            //                 });
+            //                 p.restoreXY();
+            //
+            //                 let lastp = undefined;
+            //                 let poly = [];
+            //                 // look for qualifying segments
+            //                 p.forEachSegment((p1, p2) => {
+            //                     // eliminate segments that projected up
+            //                     // intersect with the polygon (bottom faces)
+            //                     if (p1._under || p2._under) {
+            //                         return;
+            //                     }
+            //                     // skip when both below layer range
+            //                     if (p1.z < zb && p2.z < zb) {
+            //                         return;
+            //                     }
+            //                     // skip when both above layer range
+            //                     if (p1.z > zt && p2.z > zt) {
+            //                         return;
+            //                     }
+            //                     // skip vertical
+            //                     if (p1.x === p2.x && p1.y === p2.y) {
+            //                         return;
+            //                     }
+            //                     // skip horizontal
+            //                     // if (p1.z === p2.z) {
+            //                     //     return;
+            //                     // }
+            //                     // order points lowest to highest
+            //                     let swap = false;
+            //                     if (p1.z > p2.z) {
+            //                         let t = p2;
+            //                         p2 = p1;
+            //                         p1 = t;
+            //                         swap = true;
+            //                     }
+            //                     let trimlo = false;
+            //                     let trimhi = false;
+            //                     if (p1.z < zb) {
+            //                         trimlo = true;
+            //                     }
+            //                     if (p2.z > zt) {
+            //                         trimhi = true;
+            //                     }
+            //                     let xaxis = p1.x === p2.x;
+            //                     if (xaxis) {
+            //                         p1 = BASE.newPoint(p1.y,p1.z,p1.x);
+            //                         p2 = BASE.newPoint(p2.y,p2.z,p2.x);
+            //                     } else {
+            //                         p1 = BASE.newPoint(p1.x,p1.z,p1.y);
+            //                         p2 = BASE.newPoint(p2.x,p2.z,p2.y);
+            //                     }
+            //                     let slope = BASE.newSlope(p1, p2);
+            //                     let angle = slope.angle;
+            //                     if (angle > 80 && angle < 100) {
+            //                         return;
+            //                     }
+            //                     let len = p1.distTo2D(p2);
+            //                     let np1 = p1;
+            //                     if (trimlo) {
+            //                         let zunder = zb - p1.y;
+            //                         let zover = p2.y - zb;
+            //                         let zdelt = p2.y - p1.y;
+            //                         let pct = zunder / zdelt;
+            //                         np1 = p1.follow(slope, len * pct);
+            //                     }
+            //                     if (trimhi) {
+            //                         let zunder = zt - p1.y;
+            //                         let zover = p2.y - zt;
+            //                         let zdelt = p2.y - p1.y;
+            //                         let pct = zover / zdelt;
+            //                         p2 = p2.follow(slope.invert(), len * pct);
+            //                     }
+            //                     p1 = np1;
+            //                     if (xaxis) {
+            //                         p1 = BASE.newPoint(p1.z,p1.x,p1.y);
+            //                         p2 = BASE.newPoint(p2.z,p2.x,p2.y);
+            //                     } else {
+            //                         p1 = BASE.newPoint(p1.x,p1.z,p1.y);
+            //                         p2 = BASE.newPoint(p2.x,p2.z,p2.y);
+            //                     }
+            //                     if (!lastp) {
+            //                         poly.push(p1);
+            //                         poly.push(p2);
+            //                     } else if (p1.isMergable2D(lastp)) {
+            //                     // } else if (p1.isEqual(lastp)) {
+            //                         poly.push(p2);
+            //                         cont++;
+            //                     } else if (poly.length) {
+            //                         polys.push(poly);
+            //                         poly = [p1, p2];
+            //                     }
+            //                     lastp = p2;
+            //                 });
+            //                 if (poly.length) {
+            //                     polys.push(poly);
+            //                 }
+            //             });
+            //             pout.push(polys);
+            //             polys = [];
+            //             });
+            //
+            //             if (pout.length && slice.tops.length) {
+            //                 slice.tops[0].polish = {
+            //                     x: pout[0]
+            //                         .map(a => BASE.newPolygon(a).setOpen())
+            //                         // .filter(p => p.perimeter() > nozzleSize)
+            //                         ,
+            //                     y: pout[1]
+            //                         .map(a => BASE.newPolygon(a).setOpen())
+            //                         // .filter(p => p.perimeter() > nozzleSize)
+            //                 };
+            //             }
+            //         }
+            //     });
+            // }
 
             // report slicing complete
             ondone();
@@ -432,8 +432,9 @@ let gs_kiri_fdm = exports;
             // if brim is offset, over-expand then shrink to induce brims to merge
             if (offset && brims.length) {
                 let extra = process.sliceSupportExtra + 2;
-                brims = POLY.expand(brims, extra, 0, null, 1);
-                brims = POLY.expand(brims, -extra, 0, null, 1);
+                let zheight = brims[0].getZ();
+                brims = POLY.expand(brims, extra, zheight, null, 1);
+                brims = POLY.expand(brims, -extra, zheight, null, 1);
             }
 
             // if raft is specified
@@ -488,7 +489,7 @@ let gs_kiri_fdm = exports;
                 let polys = [],
                     preout = [];
 
-                // expand brims
+                // expand specified # of brims
                 brims.forEach(function(brim) {
                     POLY.trace2count(brim, polys, -nozzle, process.outputBrimCount, 0);
                 });
@@ -509,6 +510,7 @@ let gs_kiri_fdm = exports;
                 print.addPrintPoints(preout, layerout, null);
 
                 if (preout.length) {
+                    // retract between brims and print
                     preout.last().retract = true;
                 }
             }
@@ -572,11 +574,14 @@ let gs_kiri_fdm = exports;
             let rec = track[nozzle];
             if (rec) {
                 track[nozzle] = null;
-                return print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
+                if (layer.last()) layer.last().retract = true;
+                start = print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
                     tool: using || nozzle,
                     open: true,
                     simple: true
                 });
+                layer.last().retract = true;
+                return start;
             } else {
                 console.log({already_purged: nozzle, from: track, layer});
             }
@@ -812,7 +817,7 @@ let gs_kiri_fdm = exports;
             time += timeDwell;
         }
 
-        function retract() {
+        function retract(zhop) {
             retracted = retDist;
             moveTo({e:-retracted}, retSpeed, `retract ${retDist}`);
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "zhop up");
@@ -825,24 +830,26 @@ let gs_kiri_fdm = exports;
             }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
             if (typeof newpos.x === 'number') {
-                pos.x = UTIL.round(newpos.x,decimals);
+                pos.x = newpos.x;//UTIL.round(newpos.x,decimals);
                 o.append(" X").append(pos.x.toFixed(decimals));
             }
             if (typeof newpos.y === 'number') {
-                pos.y = UTIL.round(newpos.y,decimals);
+                pos.y = newpos.y;//UTIL.round(newpos.y,decimals);
                 o.append(" Y").append(pos.y.toFixed(decimals));
             }
             if (typeof newpos.z === 'number') {
-                pos.z = UTIL.round(newpos.z,decimals);
+                pos.z = newpos.z;//UTIL.round(newpos.z,decimals);
                 o.append(" Z").append(pos.z.toFixed(decimals));
             }
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
                 if (extrudeAbs) {
                     // for cumulative (absolute) extruder positions
-                    o.append(" E").append(UTIL.round(outputLength, decimals));
+                    // o.append(" E").append(UTIL.round(outputLength, decimals));
+                    o.append(" E").append(outputLength.toFixed(decimals));
                 } else {
-                    o.append(" E").append(UTIL.round(newpos.e, decimals));
+                    // o.append(" E").append(UTIL.round(newpos.e, decimals));
+                    o.append(" E").append(newpos.e.toFixed(decimals));
                 }
             }
             if (rate && rate != pos.f) {
@@ -964,7 +971,7 @@ let gs_kiri_fdm = exports;
                 // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
                     // when enabled, resume previous Z
-                    if (zhop) moveTo({z:zpos}, seekMMM, "zhop down");
+                    if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "zhop down");
                     // re-engage retracted filament
                     moveTo({e:retracted}, retSpeed, `engage ${retracted}`);
                     retracted = 0;
@@ -978,14 +985,17 @@ let gs_kiri_fdm = exports;
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 } else {
+                    moveTo({x:x, y:y}, seekMMM);
+                    // TODO disabling out of plane z moves until a better mechanism
+                    // can be built that doesn't rely on computed zpos from layer heights...
                     // when making z moves (like polishing) allow slowdown vs fast seek
-                    let moveSpeed = (lastp && lastp.z !== z) ? speedMMM : seekMMM;
-                    moveTo({x:x, y:y, z:z}, moveSpeed);
+                    // let moveSpeed = (lastp && lastp.z !== z) ? speedMMM : seekMMM;
+                    // moveTo({x:x, y:y, z:z}, moveSpeed);
                 }
 
-                // retract filament
+                // retract filament if point retract flag set
                 if (!retracted && out.retract) {
-                    retract();
+                    retract(zhop);
                 }
 
                 // update time and distance (should calc in moveTo() instead)
