@@ -1060,7 +1060,7 @@ var gs_kiri_init = exports;
         });
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
-        SPACE.useDefaultKeys(API.feature.on_key === undefined);
+        SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
 
         UC.setCompact(compact);
 
@@ -1640,7 +1640,7 @@ var gs_kiri_init = exports;
 
         // SPACE.mouse.onHover(function(d,me) {
         //     if (d) {
-        //         console.log(d,d.object.widget.id,d.face.materialIndex)
+        //         // console.log(d,d.object.widget.id,d.face.materialIndex)
         //         // d.object.material.vertexColors = true;
         //         // d.object.material.needsUpdate = true;
         //         // d.face.vertexColors = [

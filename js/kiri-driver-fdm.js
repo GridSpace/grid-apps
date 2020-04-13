@@ -390,16 +390,15 @@ let gs_kiri_fdm = exports;
             zoff = 0,
             meshIndex,
             lastIndex,
-            // lastOut,
             closest,
             mindist,
             minidx,
             find,
-            found,
             layerout = [],
             slices = [],
             sliceEntry;
 
+        // TODO pick a widget with a slice on the first layer and use that nozzle
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
         if (process.outputBrimCount || process.outputRaft) {
             let brims = [],
@@ -588,7 +587,7 @@ let gs_kiri_fdm = exports;
             }
         }
 
-        // for each layer until no layers are found
+        // increment layer count until no widget has remaining slices
         for (;;) {
             // create list of mesh slice arrays with their platform offsets
             for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
@@ -614,22 +613,30 @@ let gs_kiri_fdm = exports;
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
-                found = 0;
                 closest = null;
                 mindist = Infinity;
-                // TODO must select slices of the same extruder type first
-                // instead of just finding closest, create sorted list and
-                // next is draw from list
+                let order = [];
+                // select slices of the same extruder type first then distance
                 for (meshIndex = 0; meshIndex < slices.length; meshIndex++) {
                     sliceEntry = slices[meshIndex];
-                    if (!sliceEntry) continue;
-                    find = sliceEntry.slice.findClosestPointTo(printPoint.sub(sliceEntry.offset));
-                    if (find && (!closest || find.distance < mindist)) {
-                        closest = sliceEntry;
-                        mindist = find.distance;
-                        minidx = meshIndex;
+                    if (sliceEntry) {
+                        find = sliceEntry.slice.findClosestPointTo(printPoint.sub(sliceEntry.offset));
+                        if (find) {
+                            let ext = sliceEntry.slice.extruder;
+                            let lex = lastOut ? lastOut.extruder : ext;
+                            let dst = Math.abs(find.distance);
+                            if (ext !== lex) dst *= 10000;
+                            order.push({dst,sliceEntry,meshIndex});
+                        }
                     }
-                    found++;
+                }
+                order.sort((a,b) => {
+                    return a.dst - b.dst;
+                });
+                if (order.length) {
+                    let find = order.shift();
+                    closest = find.sliceEntry;
+                    minidx = find.meshIndex;
                 }
                 if (!closest) {
                     if (sliceEntry) lastOut = sliceEntry.slice;

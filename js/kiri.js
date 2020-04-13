@@ -1583,6 +1583,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         ["print","help","local"].forEach(function(modal) {
             UI[modal].style.display = (modal === which ? 'block' : 'none');
         });
+        if (which) API.event.emit('modal.show', which);
     }
 
     function hideDialog() {
@@ -1598,6 +1599,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             let style = UI[dialog].style;
             style.display = (dialog === which && (force || style.display !== 'flex') ? 'flex' : 'none');
         });
+        if (which) API.event.emit('dialog.show', which);
     }
 
     function showCatalog() {
