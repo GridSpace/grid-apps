@@ -2,14 +2,14 @@
 
 "use strict";
 
-var gs_kiri_slice = exports;
+let gs_kiri_slice = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
     if (self.kiri.Slice) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         FILL = KIRI.fill,
         BASE = self.base,
         UTIL = BASE.util,
@@ -108,7 +108,7 @@ var gs_kiri_slice = exports;
      * the outline shell that the fill touches.
      */
     Top.prototype.innerTraces = function() {
-        var traces = this.traces,
+        let traces = this.traces,
             array = [];
         if (traces) traces.forEach(function(p) {
             if (p.inner) array.appendAll(p.inner);
@@ -117,7 +117,7 @@ var gs_kiri_slice = exports;
     };
 
     Top.prototype.clone = function(deep) {
-        var top = new Top(this.poly.clone(deep));
+        let top = new Top(this.poly.clone(deep));
         return top;
     };
 
@@ -142,7 +142,7 @@ var gs_kiri_slice = exports;
      * returns a cloned slice the option of a deep clone on the top polys
      */
     PRO.clone = function(deep) {
-        var from = this,
+        let from = this,
             slice = newSlice(from.z, from.view);
         from.tops.forEach(function(top) {
             slice.addTop(top.poly.clone(deep));
@@ -203,7 +203,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon} poly to merge into a top
      */
     PRO.mergeTop = function(poly) {
-        var scope = this,
+        let scope = this,
             tops = scope.tops,
             union, i;
         for (i=0; i<tops.length; i++) {
@@ -221,7 +221,7 @@ var gs_kiri_slice = exports;
      * @param {Polygon} poly to add
      */
     PRO.addTop = function(poly) {
-        var top = new Top(poly);
+        let top = new Top(poly);
         this.tops.push(top);
         return top;
     };
@@ -309,7 +309,7 @@ var gs_kiri_slice = exports;
      * Clear solid area cache in preparation for a new slicing action
      */
     PRO.invalidateSolids = function() {
-        var solids = this.solids;
+        let solids = this.solids;
         solids.poly = [];
         solids.trimmed = null;
     };
@@ -329,7 +329,7 @@ var gs_kiri_slice = exports;
     PRO.renderOutline = function(renderMode,color) {
         if (!this.view) return;
 
-        var process = KIRI.driver.CAM.process,
+        let process = KIRI.driver.CAM.process,
             slice = this,
             layers = slice.layers,
             layer = layers.outline,
@@ -347,7 +347,7 @@ var gs_kiri_slice = exports;
             case 0:
                 if (!slice.lines) return;
                 slice.lines.forEach(function(line) {
-                    var pa = [line.p1, line.p2];
+                    let pa = [line.p1, line.p2];
                     layer.lines(pa, colors[coloridx++ % colors.length]);
                     layer.points(pa, 0x0, 0.1);
                 });
@@ -396,16 +396,16 @@ var gs_kiri_slice = exports;
      */
     function cullIntersections(r1, r2) {
         if (!(r1 && r2 && r1.length && r2.length)) return;
-        var valid = r2.slice();
-        outer: for (var i=0; i<r1.length; i += 2) {
-            for (var j=0; j<r2.length; j += 2) {
+        let valid = r2.slice();
+        outer: for (let i=0; i<r1.length; i += 2) {
+            for (let j=0; j<r2.length; j += 2) {
                 if (UTIL.intersect(r1[i], r1[i+1], r2[j], r2[j+1], BASE.key.SEGINT)) continue outer;
             }
             valid.push(r1[i]);
             valid.push(r1[i+1]);
         }
         // add index to point for fill order storeSettingsToServer
-        for (var k=0; k<valid.length; k++) {
+        for (let k=0; k<valid.length; k++) {
             valid[k].index = Infinity;
         }
         return valid.length > 2 ? valid : [];
@@ -425,11 +425,11 @@ var gs_kiri_slice = exports;
      * @param {Obejct} options
      */
     PRO.doShells = function(count, offset1, offsetN, fillOffset, options) {
-        var slice = this,
+        let slice = this,
             opt = options || {};
 
         slice.tops.forEach(function(top) {
-            var top_poly = [ top.poly ];
+            let top_poly = [ top.poly ];
 
             if (slice.index === 0) {
                 // console.log({slice_top_0: top_poly, count});
@@ -442,7 +442,7 @@ var gs_kiri_slice = exports;
             // top.thinner = [];
             top.traces = [];
             top.inner = [];
-            var last = [],
+            let last = [],
                 z = top.poly.getZ();
 
             if (opt.thin) {
@@ -456,7 +456,7 @@ var gs_kiri_slice = exports;
                     top.traces = last;
                 } else {
                     if (opt.thin) {
-                        var on1s2 = offset1 * 2,
+                        let on1s2 = offset1 * 2,
                             on2s2 = offsetN * 2;
                         POLY.expand2(
                             top_poly,
@@ -480,14 +480,14 @@ var gs_kiri_slice = exports;
                             function(p1, p2, diff, dist) {
                                 if (p2) {
                                     // nth offset
-                                    var pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
+                                    let pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
                                         pnew1 = POLY.expand(pall, -dist, z, null, 1),
                                         r1 = fillArea(pnew1, 45, offsetN, [], dist / 2, on2s2),
                                         r2 = fillArea(pnew1, 135, offsetN, [], dist / 2, on2s2),
                                         rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
                                 } else {
                                     // first offset
-                                    var pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
+                                    let pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
                                         pnew1 = POLY.expand(pall, -dist, z, null, 1),
                                         r1 = fillArea(pnew1, 45, offsetN, [], 0, on1s2),
                                         r2 = fillArea(pnew1, 135, offsetN, [], 0, on1s2),
@@ -537,7 +537,7 @@ var gs_kiri_slice = exports;
      * @param {number} renderMode
      */
     PRO.renderShells = function(renderMode) {
-        var scope = this,
+        let scope = this,
             layers = scope.layers,
             layer = layers.trace,
             process = KIRI.driver.CAM.process;
@@ -633,7 +633,7 @@ var gs_kiri_slice = exports;
      * Runs in client. Generate solid lines in the correct view layer.
      */
     PRO.renderSolidFill = function() {
-        var layer = this.layers.fill,
+        let layer = this.layers.fill,
             render;
 
         layer.clear();
@@ -661,7 +661,7 @@ var gs_kiri_slice = exports;
         this.isSparseFill = false;
         if (this.tops.length === 0 || density === 0.0 || this.isSolidFill) return;
 
-        var scope = this,
+        let scope = this,
             tops = scope.tops,
             down = scope.down,
             clib = self.ClipperLib,
@@ -752,7 +752,7 @@ var gs_kiri_slice = exports;
      * Runs in client. Generate sparse lines in the correct view layer.
      */
     PRO.renderSparseFill = function() {
-        var layer = this.layers.sparse;
+        let layer = this.layers.sparse;
 
         layer.clear();
 
@@ -771,18 +771,19 @@ var gs_kiri_slice = exports;
     /**
      * Find difference between fill inset poly on two adjacent layers.
      * Used to calculate bridges, flats and then solid projections.
+     * 'expand' is used for top offsets in SLA mode
      */
-    PRO.doDiff = function(minArea) {
+    PRO.doDiff = function(minArea, expand) {
         if (!this.down) return;
 
-        var top = this,
+        let top = this,
             bottom = this.down;
 
         top.bridges = null;
         bottom.flats = null;
 
-        var topInner = top.gatherInner([]),
-            bottomInner = bottom.gatherInner([]),
+        let topInner = expand ? top.gatherTopPolys([]) : top.gatherInner([]),
+            bottomInner = expand ? bottom.gatherTopPolys([]) : bottom.gatherInner([]),
             bridges = [],
             flats = [];
 
@@ -795,15 +796,22 @@ var gs_kiri_slice = exports;
 
         POLY.subtract(topInner, bottomInner, bridges, flats, this.z, minArea);
 
-        top.bridges = bridges;
-        bottom.flats = flats;
+        if (expand) {
+            top.bridges = [];
+            bottom.flats = [];
+            POLY.expand(bridges, expand, top.z, top.bridges, 1);
+            POLY.expand(flats, expand, top.z, bottom.flats, 1);
+        } else {
+            top.bridges = bridges;
+            bottom.flats = flats;
+        }
     };
 
     /**
     * Runs in client. Generate polygon lines in the correct view layer.
      */
     PRO.renderDiff = function() {
-        var scope = this,
+        let scope = this,
             layers = scope.layers,
             bridgeLayer = layers.bridge,
             flatLayer = layers.flat,
@@ -858,18 +866,19 @@ var gs_kiri_slice = exports;
      */
     PRO.doSolidsFill = function(spacing, angle, minArea) {
 
-        var minarea = minArea || 1,
+        let minarea = minArea || 1,
             scope = this,
             tops = scope.tops,
             solids = scope.solids,
-            unioned = POLY.union(solids.poly);
+            unioned = POLY.union(solids.poly),
+            isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;
         if (unioned.length === 0) return false;
 
-        var masks,
+        let masks,
             trims = [],
-            inner = scope.gatherInner([]);
+            inner = isSLA ? scope.gatherTopPolys([]) : scope.gatherInner([]);
 
         // trim each solid to the inner bounds
         unioned.forEach(function(p) {
@@ -897,7 +906,7 @@ var gs_kiri_slice = exports;
                 if (top.poly.overlaps(solid)) {
                     if (!solid.parent || solid.parent.area() > top.poly.area()) {
                         if (solid.areaDeep() < minarea) {
-                            // console.log({cull_solid:solid,area:solid.areaDeep()});
+                            // console.log({i:scope.index,cull_solid:solid,area:solid.areaDeep()});
                             return;
                         }
                         solid.parent = top.poly;
@@ -907,10 +916,13 @@ var gs_kiri_slice = exports;
             });
         });
 
+        // for SLA to bypass line infill
+        if (isSLA) return true;
+
         // create empty filled line array for each top
         tops.forEach(function(top) {
             top.fill_lines = top.thin_fill || [];
-            var tofill = [],
+            let tofill = [],
                 angfill = [];
             trims.forEach(function(solid) {
                 if (solid.parent === top.poly) {
@@ -957,7 +969,7 @@ var gs_kiri_slice = exports;
     };
 
     PRO.renderSolidOutlines = function() {
-        var layer = this.layers.solid,
+        let layer = this.layers.solid,
             trimmed = this.solids.trimmed;
 
         layer.clear();
@@ -980,7 +992,7 @@ var gs_kiri_slice = exports;
      * @param {number} gap layers between supports and part
      */
     PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset, gap) {
-        var min = minArea || 0.1,
+        let min = minArea || 0.1,
             size = (pillarSize || 2),
             slice = this,
             mergeDist = size * 3, // pillar merge dist
@@ -996,7 +1008,7 @@ var gs_kiri_slice = exports;
         // skip support detection for bottom layer
         if (!slice.down) return;
 
-        var traces = POLY.flatten(slice.gatherTraces([])),
+        let traces = POLY.flatten(slice.gatherTraces([])),
             fill = slice.gatherFillLines([]),
             points = [],
             down = slice.down,
@@ -1006,10 +1018,10 @@ var gs_kiri_slice = exports;
         // check if point is supported by layer below
         function checkSupported(point) {
             // skip points close to other support points
-            for (var i=0; i<points.length; i++) {
+            for (let i=0; i<points.length; i++) {
                 if (point.distTo2D(points[i]) < size/4) return;
             }
-            var supported = point.isInPolygonOnly(down_tops);
+            let supported = point.isInPolygonOnly(down_tops);
             if (!supported) down_traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) {
                     if (point.distToLine(p1, p2) <= minOffset) return supported = true;
@@ -1022,9 +1034,9 @@ var gs_kiri_slice = exports;
         // todo support entire line if both endpoints unsupported
         // segment line and check if midpoints are supported
         function checkLine(p1, p2, poly) {
-            var dist, i = 1;
+            let dist, i = 1;
             if ((dist = p1.distTo2D(p2)) >= maxBridge) {
-                var slope = p1.slopeTo(p2).factor(1/dist),
+                let slope = p1.slopeTo(p2).factor(1/dist),
                     segs = Math.floor(dist / maxBridge) + 1,
                     seglen = dist / segs;
                 while (i < segs) {
@@ -1039,7 +1051,7 @@ var gs_kiri_slice = exports;
             trace.forEachSegment(function(p1, p2) { checkLine(p1, p2, true) });
         });
 
-        var supports = [];
+        let supports = [];
 
         // add offset solids to supports (or fill depending)
         fill.forEachPair(function(p1,p2) { checkLine(p1, p2, false) });
@@ -1048,7 +1060,7 @@ var gs_kiri_slice = exports;
         // skip the rest if no points or supports
         if (!(points.length || supports.length)) return;
 
-        var pillars = [];
+        let pillars = [];
 
         // TODO project points down instead of unioned pillars
         // TODO merge point/rect into hull of next nearest (up to maxBridge/2 away)
@@ -1072,11 +1084,11 @@ var gs_kiri_slice = exports;
         // constrain support poly to top polys
         supports = POLY.trimTo(supports, trimTo);
 
-        var depth = 0;
+        let depth = 0;
         while (down && supports.length > 0) {
             down.supports = down.supports || [];
 
-            var trimmed = [],
+            let trimmed = [],
                 culled = [];
 
             // clip supports to shell offsets
@@ -1109,7 +1121,7 @@ var gs_kiri_slice = exports;
      */
     PRO.doSupportFill = function(linewidth, density, minArea) {
         // return;
-        var slice = this,
+        let slice = this,
             supports = slice.supports,
             nsB = [],
             nsC = [],
@@ -1135,7 +1147,7 @@ var gs_kiri_slice = exports;
 
         if (supports) supports.forEach(function (poly) {
             // angle based on width/height ratio
-            var angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0,
+            let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0,
                 // calculate fill density
                 spacing = linewidth * (1 / density),
                 offsets = [];
@@ -1154,7 +1166,7 @@ var gs_kiri_slice = exports;
      *
      */
     PRO.renderSupport = function() {
-        var slice = this,
+        let slice = this,
             layer = slice.layers.support,
             supports = slice.supports;
 
@@ -1176,7 +1188,7 @@ var gs_kiri_slice = exports;
      * @return {Object}
      */
     PRO.findClosestPointTo = function(target) {
-        var min, find;
+        let min, find;
 
         this.tops.forEach(function(top) {
             find = top.poly.findClosestPointTo(target);
@@ -1201,15 +1213,15 @@ var gs_kiri_slice = exports;
      * @returns {?Point}
      */
     function lineCrossesPoly(p1, p2, poly, minDist2) {
-        var ip;
+        let ip;
         if (Array.isArray(poly)) {
-            for (var i=0; i<poly.length; i++) {
+            for (let i=0; i<poly.length; i++) {
                 if (ip = lineCrossesPoly(p1, p2, poly[i], minDist2)) return ip;
             }
             return null;
         }
         if (minDist2 && p1.distToSq2D(p2) < minDist2) return null;
-        var pp = poly.points, j = 0;
+        let pp = poly.points, j = 0;
         if (pp.length < 2) return false;
         // todo may cross multiple times ... find the closest ip to p1
         while (j < pp.length) {
@@ -1227,7 +1239,7 @@ var gs_kiri_slice = exports;
      * @returns {Point[]}
      */
     function sortIntersections(out) {
-        var ints = [];
+        let ints = [];
         out.sort(function(a,b) {
             return a.dist2 - b.dist2;
         });
@@ -1242,14 +1254,14 @@ var gs_kiri_slice = exports;
      * @returns {?Point}
      */
     function findIntersections(p1, p2, polys, out) {
-        var i, j, ip;
+        let i, j, ip;
         if (Array.isArray(polys)) {
             for (i=0; i<polys.length; i++) {
                 findIntersections(p1, p2, polys[i], out);
             }
             return out;
         }
-        var pp = polys.points,
+        let pp = polys.points,
             pl = pp.length;
         if (pp.length < 2) return out;
         for (i=0; i < pl; i++) {
@@ -1274,8 +1286,7 @@ var gs_kiri_slice = exports;
      */
     function projectSolid(slice, polys, count, up, first) {
         if (!slice || slice.isSolidFill || count <= 0) return;
-
-        var clones = polys.clone(true);
+        let clones = polys.clone(true);
         if (first) {
             clones.forEach(function(p) {
                 p.hintFillAngle();

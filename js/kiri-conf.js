@@ -298,14 +298,9 @@ let gs_kiri_conf = exports;
                 p:{
                     processName: "default",
                     slaSlice: 0.05,
-                    slaSupportEnable: false,
-                    slaSupportDensity: 0.5,
-                    slaSupportSize: 2,
-                    slaSupportArea: 1,
-                    slaSupportSpan: 2,
-                    slaSolidLayers: 5,
-                    slaBottomLayers: 5,
-                    slaTopLayers: 5
+                    slaBottoms: 5,
+                    slaSolids: 5,
+                    slaTops: 5
                 }
             },
             cam:{

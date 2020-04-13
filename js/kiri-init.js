@@ -32,12 +32,15 @@ var gs_kiri_init = exports;
         DEG = Math.PI/180,
         ALL = [MODES.FDM, MODES.LASER, MODES.CAM, MODES.SLA],
         CAM = [MODES.CAM],
+        SLA = [MODES.SLA],
         FDM = [MODES.FDM],
+        FDM_SLA = [MODES.FDM,MODES.SLA],
         FDM_CAM = [MODES.CAM,MODES.FDM],
         FDM_LASER = [MODES.LASER,MODES.FDM],
+        FDM_LASER_SLA = [MODES.LASER,MODES.FDM,MODES.SLA],
         CAM_LASER = [MODES.LASER,MODES.CAM],
-        LASER = [MODES.LASER],
         GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
+        LASER = [MODES.LASER],
         CATALOG = API.catalog,
         platform = API.platform,
         selection = API.selection,
@@ -1271,14 +1274,14 @@ var gs_kiri_init = exports;
 
             layers:        UC.setGroup($("layers")),
             layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
-            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
+            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER_SLA}),
             layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:CAM}),
             layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
             layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
             layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
             layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
+            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
+            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
             layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
             layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
@@ -1382,7 +1385,7 @@ var gs_kiri_init = exports;
             outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
             outputRaft:          UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
-            output:              UC.newGroup(LANG.ou_menu),
+            output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
             outputTileSpacing:   UC.newInput(LANG.ou_spac_c, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
             outputTileScaling:   UC.newInput(LANG.ou_scal_s, {title:LANG.ou_scal_l, convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
             outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
@@ -1429,7 +1432,14 @@ var gs_kiri_init = exports;
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert:true})
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true}),
-            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true})
+            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
+
+            // SLA
+            slaProc:             UC.newGroup('slaproc', null, {modes:SLA}),
+            slaSlice:            UC.newInput('slice height',  {title:'slice height', convert:UC.toFloat, modes:SLA}),
+            slaBottoms:          UC.newInput('bottom layers', {title:'bottom layers', convert:UC.toInt, modes:SLA}),
+            slaSolids:           UC.newInput('solid layers',  {title:'solid layers', convert:UC.toInt, modes:SLA}),
+            slaTops:             UC.newInput('top layers',    {title:'bottom layers', convert:UC.toInt, modes:SLA}),
         });
 
         if (!LOCAL) {
@@ -1547,27 +1557,6 @@ var gs_kiri_init = exports;
             ls.display = ls.display !== 'block' ? 'block' : 'none';
             UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
         };
-
-        // $('rot_x').onkeypress = (ev) => {
-        //     if (ev.key === 'Enter') {
-        //         API.selection.rotate(parseFloat(ev.target.value)*DEG,0,0);
-        //         ev.target.value = 0;
-        //     }
-        // };
-        //
-        // $('rot_y').onkeypress = (ev) => {
-        //     if (ev.key === 'Enter') {
-        //         API.selection.rotate(0,parseFloat(ev.target.value)*DEG,0);
-        //         ev.target.value = 0;
-        //     }
-        // };
-        //
-        // $('rot_z').onkeypress = (ev) => {
-        //     if (ev.key === 'Enter') {
-        //         API.selection.rotate(0,0,parseFloat(ev.target.value)*DEG);
-        //         ev.target.value = 0;
-        //     }
-        // };
 
         UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
             API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);

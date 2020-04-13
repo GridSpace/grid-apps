@@ -40,7 +40,9 @@ let gs_kiri_laser = exports;
             return ondone("invalid slice height");
         }
 
-        SLICER.sliceWidget(widget, {height: proc.laserSliceHeight, single: proc.laserSliceSingle}, function(slices) {
+        SLICER.sliceWidget(widget, {
+            height: proc.laserSliceHeight, single: proc.laserSliceSingle
+        }, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
                 slice.doShells(1, -proc.laserOffset);

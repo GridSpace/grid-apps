@@ -84,6 +84,7 @@ let dispatch = {
 
         } catch (error) {
             send.data({error: error.toString()});
+            console.log(error);
         }
     },
 

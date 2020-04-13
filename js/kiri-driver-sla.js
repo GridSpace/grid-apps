@@ -36,33 +36,48 @@ let gs_kiri_sla = exports;
         let process = settings.process,
             device = settings.device;
 
-        SLICER.sliceWidget(widget, { height: sliceHeight }, onSliceDone, onSliceUpdate);
-
-        function onSliceUpdate(update) {
-            return onupdate(0.0 + update * 0.5);
+        // calculate % complete and call onupdate()
+        function doupdate(slices, index, from, to, msg) {
+            onupdate(0.5 + (from + ((index / slices.length) * (to - from))) * 0.5, msg);
         }
 
-        function onSliceDone(slices) {
+        // for each slice, performe a function and call doupdate()
+        function forSlices(slices, from, to, fn, msg) {
+            slices.forEach(function(slice) {
+                fn(slice);
+                doupdate(slices, slice.index, from, to, msg)
+            });
+        }
+
+        SLICER.sliceWidget(widget, {
+            height: process.slaSlice || 0.05
+        }, function(slices) {
             widget.slices = slices;
-
-            if (!slices) return;
-
-            // calculate % complete and call onupdate()
-            function doupdate(index, from, to, msg) {
-                onupdate(0.5 + (from + ((index/slices.length) * (to-from))) * 0.5, msg);
-            }
-
-            // for each slice, performe a function and call doupdate()
-            function forSlices(from, to, fn, msg) {
-                slices.forEach(function(slice) {
-                    fn(slice);
-                    doupdate(slice.index, from, to, msg)
-                });
-            }
-
-            // report slicing complete
+            // reset for solids and support projections
+            slices.forEach(function(slice) {
+                slice.invalidateFill();
+                slice.invalidateSolids();
+                slice.invalidateSupports();
+                slice.isSolidFill = false;
+            });
+            forSlices(slices, 0.0, 0.2, (slice) => {
+                slice.doShells(1, 0);
+                // slice.tops.forEach(top => { top.solids = [] });
+            }, "slice");
+            forSlices(slices, 0.2, 0.4, (slice) => {
+                slice.doDiff(0.00001, 0.005);
+            }, "delta");
+            forSlices(slices, 0.4, 0.5, (slice) => {
+                slice.projectFlats(process.slaSolids || 5);
+                slice.projectBridges(process.slaSolids || 5);
+            }, "project");
+            forSlices(slices, 0.5, 0.6, (slice) => {
+                slice.doSolidsFill(undefined, undefined, 0.00001);
+            }, "solid");
             ondone();
-        }
+        }, function(update) {
+            return onupdate(0.0 + update * 0.5);
+        });
     };
 
     /**
