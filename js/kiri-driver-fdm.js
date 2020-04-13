@@ -33,6 +33,17 @@ let gs_kiri_fdm = exports;
         return Math.max(min,Math.min(max,v));
     }
 
+    function fixExtruders(settings) {
+        Object.entries(settings.widget).forEach(arr => {
+            let [wid,val] = arr;
+            let dext = settings.device.extruders[val.extruder];
+            if (!dext) {
+                settings.widget[wid].extruder = 0;
+            }
+        });
+        return settings;
+    }
+
     /**
      * DRIVER SLICE CONTRACT
      *
@@ -47,6 +58,7 @@ let gs_kiri_fdm = exports;
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
     function slice(settings, widget, onupdate, ondone) {
+        fixExtruders(settings);
         let spro = settings.process,
             sdev = settings.device,
             update_start = Date.now(),
@@ -71,6 +83,10 @@ let gs_kiri_fdm = exports;
         }
         if (!(nozzleSize >= 0.01 && nozzleSize < 100)) {
             return ondone("invalid nozzle size");
+        }
+
+        if (spro.firstSliceHeight === 0) {
+            spro.firstSliceHeight = sliceHeight;
         }
 
         if (spro.firstSliceHeight < sliceHeight) {
@@ -376,7 +392,7 @@ let gs_kiri_fdm = exports;
      */
     function printSetup(print, update) {
         let widgets = print.widgets,
-            settings = print.settings,
+            settings = fixExtruders(print.settings),
             device = settings.device,
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
@@ -697,7 +713,7 @@ let gs_kiri_fdm = exports;
      */
     function printExport(print, online) {
         let layers = print.output,
-            settings = print.settings,
+            settings = fixExtruders(print.settings),
             device = settings.device,
             extruders = device.extruders,
             process = settings.process,

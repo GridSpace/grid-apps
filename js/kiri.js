@@ -1373,7 +1373,9 @@ self.kiri.copyright = exports.COPYRIGHT;
                 updateExtruderFields(device);
             };
             UI.extAdd.onclick = function() {
-                device.extruders.push(clone(device.extruders[device.internal]));
+                let copy = clone(device.extruders[device.internal]);
+                copy.extSelect = [`T${device.extruders.length}`];
+                device.extruders.push(copy);
                 device.internal = device.extruders.length - 1;
                 updateExtruderFields(device);
             };
