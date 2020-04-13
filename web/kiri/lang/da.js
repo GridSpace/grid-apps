@@ -62,6 +62,7 @@ kiri.lang['da-dk'] = {
     // MODE
     mo_menu:        "Teknologi",
     mo_fdmp:        "FDM Print",
+    mo_slap:        "SLA Print",
     mo_lazr:        "Laser skær",
     mo_cncm:        "CNC fræs",
 

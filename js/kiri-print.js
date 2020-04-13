@@ -323,15 +323,42 @@ let gs_kiri_print = exports;
         return a !== undefined ? a : b;
     }
 
+    function rgb2hsv(ir, ig, ib) {
+        let H = 0,
+            S = 0,
+            V = 0,
+            r = ir / 255,
+            g = ig / 255,
+            b = ib / 255;
+
+        let minRGB = Math.min(r, Math.min(g, b)),
+            maxRGB = Math.max(r, Math.max(g, b));
+
+        // Black-gray-white
+        if (minRGB == maxRGB) {
+            V = minRGB;
+            return [0, 0, V];
+        }
+
+        // Colors other than black-gray-white:
+        let d = (r == minRGB) ? g - b : ((b == minRGB) ? r - g : b - r),
+            h = (r == minRGB) ? 3 : ((b == minRGB) ? 1 : 5);
+
+        H = 60 * (h - d / (maxRGB - minRGB));
+        S = (maxRGB - minRGB) / maxRGB;
+        V = maxRGB;
+
+        return [H, S, V];
+    }
+
     // hsv values all = 0 to 1
     function hsv2rgb(hsv) {
-        let seg  = Math.floor(hsv.h * 6);
-        let rem  = hsv.h - (seg * (1/6));
-        let out = {};
-
-        let p = hsv.v * (1.0 - (hsv.s)              );
-        let q = hsv.v * (1.0 - (hsv.s * rem)        );
-        let t = hsv.v * (1.0 - (hsv.s * (1.0 - rem)));
+        let seg  = Math.floor(hsv.h * 6),
+            rem  = hsv.h - (seg * (1/6)),
+            p = hsv.v * (1.0 - (hsv.s)),
+            q = hsv.v * (1.0 - (hsv.s * rem)),
+            t = hsv.v * (1.0 - (hsv.s * (1.0 - rem))),
+            out = {};
 
         switch (seg) {
             case 0:

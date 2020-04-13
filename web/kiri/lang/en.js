@@ -17,14 +17,14 @@ kiri.lang['en-us'] = {
     dv_fila_l:      "diameter in millimeters",
     dv_nozl_s:      "nozzle",
     dv_nozl_l:      "diameter in millimeters",
-    dv_bedw_s:      "bed width",
+    dv_bedw_s:      "width",
     dv_bedw_l:      "millimeters",
-    dv_bedd_s:      "bed depth",
+    dv_bedd_s:      "depth",
     dv_bedd_l:      "millimeters",
-    dv_bedh_s:      "max height",
+    dv_bedh_s:      "height",
     dv_bedh_l:      "max build height\nin millimeters",
-    dv_spmx_s:      "max spindle rpm",
-    dv_spmx_l:      "max spindle speed\n0 to disable",
+    dv_spmx_s:      "max spindle",
+    dv_spmx_l:      "max spindle rpm speed\n0 to disable",
     dv_xtab_s:      "absolute positioning",
     dv_xtab_l:      "extrusion moves absolute",
     dv_orgc_s:      "origin center",
@@ -72,9 +72,10 @@ kiri.lang['en-us'] = {
 
     // MODE
     mo_menu:        "mode",
-    mo_fdmp:        "FDM Printing",
-    mo_lazr:        "Laser Cutting",
-    mo_cncm:        "CNC Milling",
+    mo_fdmp:        "FDM Print",
+    mo_slap:        "SLA Print",
+    mo_lazr:        "Laser Cut",
+    mo_cncm:        "CNC Mill",
 
     // SETUP
     su_menu:        "setup",

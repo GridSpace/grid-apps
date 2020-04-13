@@ -30,13 +30,14 @@ var gs_kiri_init = exports;
         SPACE = KIRI.space,
         STATS = API.stats,
         DEG = Math.PI/180,
-        ALL = [MODES.FDM, MODES.LASER, MODES.CAM],
+        ALL = [MODES.FDM, MODES.LASER, MODES.CAM, MODES.SLA],
         CAM = [MODES.CAM],
         FDM = [MODES.FDM],
         FDM_CAM = [MODES.CAM,MODES.FDM],
         FDM_LASER = [MODES.LASER,MODES.FDM],
         CAM_LASER = [MODES.LASER,MODES.CAM],
         LASER = [MODES.LASER],
+        GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
         CATALOG = API.catalog,
         platform = API.platform,
         selection = API.selection,
@@ -637,6 +638,7 @@ var gs_kiri_init = exports;
             console.log({error:e, device:code, devicename});
             API.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
             API.show.alert(`please select a new device`, 10);
+            throw e;
             showDevices();
         }
         API.function.clear();
@@ -1157,7 +1159,7 @@ var gs_kiri_init = exports;
                 UI.extNext = UC.newButton(">")
             ]], {modes:FDM, expert:true}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true}),
+            gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true, modes:GCODE}),
             gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
             gcodeTrack:       UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
             gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
@@ -1170,14 +1172,17 @@ var gs_kiri_init = exports;
             gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
             gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
             gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
-            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:ALL, size:14, height:3}),
-            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:ALL, size:14, height:3}),
+            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3}),
+            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3}),
 
             mode: UC.newGroup(LANG.mo_menu, assets, {region:"left"}),
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
                     UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }),
+                ],[
+                    UI.modeSLA =
+                    UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }),
                 ],[
                     UI.modeLASER =
                     UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }),
@@ -1423,11 +1428,13 @@ var gs_kiri_init = exports;
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert:true})
-            // polishLayers:        LOCAL ? UC.newInput(LANG.ad_play_s, {title:LANG.ad_play_l, bound:UC.bound(0,10), convert:UC.toFloat, modes:FDM, expert:true}) : null,
-            // polishSpeed:         LOCAL ? UC.newInput(LANG.ad_pspd_s, {title:LANG.ad_pspd_l, bound:UC.bound(10,2000), convert:UC.toInt, modes:FDM, expert:true}) : null,
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true})
         });
+
+        if (!LOCAL) {
+            UI.modeSLA.style.display = 'none';
+        }
 
         if (!lang_set) {
             // for english only, add underlined labels for hotkeys

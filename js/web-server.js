@@ -147,6 +147,9 @@ function prepareScripts() {
     fs.readdir("./web/kiri/filter/FDM", function(err, files) {
         filters_fdm = files || filters_fdm;
     });
+    fs.readdir("./web/kiri/filter/SLA", function(err, files) {
+        filters_sla = files || filters_sla;
+    });
     fs.readdir("./web/kiri/filter/CAM", function(err, files) {
         filters_cam = files || filters_cam;
     });
@@ -787,6 +790,7 @@ let ver = require('../js/license.js'),
     fileCache = {},
     fileMap = {},
     filters_fdm = [],
+    filters_sla = [],
     filters_cam = [],
     filters_laser = [],
     modPaths = [],
@@ -826,6 +830,7 @@ let ver = require('../js/license.js'),
             "kiri-slice",
             "kiri-slicer",
             "kiri-driver-fdm",
+            "kiri-driver-sla",
             "kiri-driver-cam",
             "kiri-driver-laser",
             "kiri-pack",
@@ -887,6 +892,7 @@ let ver = require('../js/license.js'),
             "kiri-slice",
             "kiri-slicer",
             "kiri-driver-fdm",
+            "kiri-driver-sla",
             "kiri-driver-cam",
             "kiri-driver-laser",
             "kiri-pack",
@@ -966,6 +972,11 @@ const api = {
     "filters-fdm": (req, res, next) => {
         res.setHeader("Content-Type", "application/javascript");
         res.end(obj2string(filters_fdm));
+    },
+
+    "filters-sla": (req, res, next) => {
+        res.setHeader("Content-Type", "application/javascript");
+        res.end(obj2string(filters_sla));
     },
 
     "filters-cam": (req, res, next) => {

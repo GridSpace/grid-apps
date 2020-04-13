@@ -124,4 +124,16 @@
         return this.split('').reverse().join('');
     };
 
+    /** ******************************************************************
+     * Object static helpers
+     ******************************************************************* */
+
+    Object.clone = function(o) {
+        return o ? JSON.parse(JSON.stringify(o)) : o;
+    };
+
+    Math.bound = function(val,min,max) {
+        return Math.max(min,Math.min(max,val));
+    };
+
 })();

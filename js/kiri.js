@@ -35,6 +35,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         CONF    = KIRI.conf,
         MODES   = CONF.MODES,
         VIEWS   = CONF.VIEWS,
+        clone   = Object.clone,
         settings = clone(CONF.template),
         settingsDefault = clone(settings),
         // ---------------
@@ -60,13 +61,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
         grouping = false;
-
-    // seed defaults. will get culled on save
-    settings.sproc.FDM.default = clone(settings.process);
-    settings.sproc.CAM.default = clone(settings.process);
-    settings.sproc.LASER.default = clone(settings.process);
-    settings.cdev.FDM = clone(settings.device);
-    settings.cdev.CAM = clone(settings.device);
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     DBUG.enable();
@@ -321,10 +315,6 @@ self.kiri.copyright = exports.COPYRIGHT;
     /** ******************************************************************
      * Utility Functions
      ******************************************************************* */
-
-     function clone(o) {
-         return o ? JSON.parse(JSON.stringify(o)) : o;
-     }
 
      function unitScale() {
          return settings.controller.units === 'in' ? 25.4 : 1;
@@ -1396,9 +1386,10 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function saveSettings() {
-        // store camera view
         let view = SPACE.view.save();
-        if (view.left || view.up) settings.controller.view = view;
+        if (view.left || view.up) {
+            settings.controller.view = view;
+        }
         SDB.setItem('ws-settings', JSON.stringify(settings));
     }
 
@@ -1498,16 +1489,13 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function restoreSettings(save) {
-        let newset = ls2o('ws-settings'),
-            camera = ls2o('ws-camera');
+        let newset = ls2o('ws-settings');
 
         if (newset) {
             settings = CONF.normalize(newset);
             // override camera from settings
             if (settings.controller.view) {
-                camera = settings.controller.view;
                 SDB.removeItem('ws-camera');
-                // UI.reverseZoom.checked = settings.controller.reverseZoom;
             }
             // merge custom filters from localstorage into settings
             localFilters.forEach(function(fname) {
@@ -1519,15 +1507,14 @@ self.kiri.copyright = exports.COPYRIGHT;
             // save updated settings
             if (save) API.conf.save();
         }
-
-        return {newset, camera};
+        return newset;
     }
 
     function restoreWorkspace(ondone, skip_widget_load) {
-        let {newset, camera} = restoreSettings(true);
-
-        let loaded = 0,
+        let newset = restoreSettings(true),
+            camera = newset.controller.view,
             toload = ls2o('ws-widgets',[]),
+            loaded = 0,
             position = true;
 
         updateFields();
@@ -1535,7 +1522,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         platform.update_stock();
 
         SPACE.view.reset();
-
         if (camera) SPACE.view.load(camera);
         else setTimeout(SPACE.view.home, 100);
 
@@ -1872,6 +1858,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         clearWidgetCache();
         SPACE.update();
         UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
+        UI.modeSLA.setAttribute('class', MODE === MODES.SLA ? 'buton' : '');
         UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
         UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
         UI.mode.style.display = lock ? 'none' : '';

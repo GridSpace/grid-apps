@@ -11,31 +11,15 @@ let gs_kiri_widget = exports;
 
     let KIRI = self.kiri,
         DRIVERS = KIRI.driver,
-        CAM = DRIVERS.CAM,
-        FDM = DRIVERS.FDM,
-        LASER = DRIVERS.LASER,
-        CPRO = CAM.process,
         BASE = self.base,
         CONF = BASE.config,
         DBUG = BASE.debug,
         UTIL = BASE.util,
         POLY = BASE.polygons,
         MATH = Math,
-        ABS = MATH.abs,
-        MIN = MATH.min,
-        MAX = MATH.max,
         SQRT = MATH.sqrt,
-        CEIL = MATH.ceil,
-        FLOOR = MATH.floor,
-        ROUND = MATH.round,
-        SLICER = KIRI.slicer,
-        newLine = BASE.newLine,
-        newPoint = BASE.newPoint,
-        newSlice = KIRI.newSlice,
-        newPolygon = BASE.newPolygon,
-        newOrderedLine = BASE.newOrderedLine,
-        time = UTIL.time,
         PRO = Widget.prototype,
+        time = UTIL.time,
         solid_opacity = 1.0,
         nextId = 0,
         groups = [];
@@ -226,7 +210,7 @@ let gs_kiri_widget = exports;
             newpoints;
         // replace point objects with their equivalents
         while (i < array.length) {
-            let p = newPoint(array[i++], array[i++], array[i++]),
+            let p = BASE.newPoint(array[i++], array[i++], array[i++]),
                 k = p.key,
                 m = hash[k];
             if (!m) {
@@ -707,13 +691,7 @@ let gs_kiri_widget = exports;
                 onupdate(progress, message);
             };
 
-            let driver = null;
-
-            switch (settings.mode) {
-                case 'LASER': driver = LASER; break;
-                case 'FDM': driver = FDM; break;
-                case 'CAM': driver = CAM; break;
-            }
+            let driver = DRIVERS[settings.mode.toUpperCase()];
 
             if (driver) {
                 driver.slice(settings, widget, catchupdate, catchdone);
