@@ -291,16 +291,22 @@ let gs_kiri_conf = exports;
                     bedWidth: 150,
                     bedDepth: 150,
                     bedHeight: 2.5,
-                    maxHeight: 150,
-                    originCenter: false
+                    maxHeight: 150
                 },
                 // process defaults SLA:Process
                 p:{
                     processName: "default",
                     slaSlice: 0.05,
-                    slaBottoms: 5,
-                    slaSolids: 5,
-                    slaTops: 5
+                    slaShell: 1.00,
+                    slaOpenTop: false,
+                    slaOpenBase: false,
+                    slaLayerOn: 8,
+                    slaLayerOff: 1,
+                    slaBaseLayers: 8,
+                    slaBaseOn: 90,
+                    slaPeelDist: 6,
+                    slaPeelLift: 3,
+                    slaPeelDrop: 3
                 }
             },
             cam:{

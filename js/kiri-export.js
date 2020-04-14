@@ -42,7 +42,8 @@ let gs_kiri_export = exports;
             currentPrint.export(true, function(line) {
                 lines.push(line);
             }, function(done) {
-                KIRI.driver.SLA.printDownload(API, lines, done);
+                currentPrint.sla = { lines, done, API };
+                KIRI.driver.SLA.printDownload(currentPrint);
             });
         } else {
             API.function.print(exportPrintSLA);

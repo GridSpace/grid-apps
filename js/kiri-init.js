@@ -1435,11 +1435,19 @@ var gs_kiri_init = exports;
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
 
             // SLA
-            slaProc:             UC.newGroup('slaproc', null, {modes:SLA}),
-            slaSlice:            UC.newInput('slice height',  {title:'slice height', convert:UC.toFloat, modes:SLA}),
-            slaBottoms:          UC.newInput('bottom layers', {title:'bottom layers', convert:UC.toInt, modes:SLA}),
-            slaSolids:           UC.newInput('solid layers',  {title:'solid layers', convert:UC.toInt, modes:SLA}),
-            slaTops:             UC.newInput('top layers',    {title:'bottom layers', convert:UC.toInt, modes:SLA}),
+            slaProc:             UC.newGroup('sla slice', null, {modes:SLA}),
+            slaSlice:            UC.newInput('layer height',  {title:'slice height', convert:UC.toFloat, modes:SLA}),
+            slaShell:            UC.newInput('hollow shell', {title:'shell thickness in mm\nuse multiple of layer height\nuse 0 for solid', convert:UC.toInt, modes:SLA}),
+            slaOpenTop:          UC.newBoolean('open top', onBooleanClick, {title:'solid layers', modes:SLA}),
+            slaOpenBase:         UC.newBoolean('open base', onBooleanClick, {title:'bottom layers', modes:SLA}),
+            slaOutput:           UC.newGroup('sla output', null, {modes:SLA}),
+            slaLayerOn:          UC.newInput('layer on', {title:'layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA}),
+            slaLayerOff:         UC.newInput('layer off', {title:'layer light off\ntime in seconds', convert:UC.toFloat, modes:SLA}),
+            slaBaseLayers:       UC.newInput('base count', {title:'number of\bbase layers', convert:UC.toInt, modes:SLA}),
+            slaBaseOn:           UC.newInput('base on', {title:'base layer light\non time in seconds', convert:UC.toFloat, modes:SLA}),
+            slaPeelDist:         UC.newInput('peel dist', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
+            slaPeelLift:         UC.newInput('peel lift', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
+            slaPeelDrop:         UC.newInput('peel drop', {title:'peel drop speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
         });
 
         if (!LOCAL) {

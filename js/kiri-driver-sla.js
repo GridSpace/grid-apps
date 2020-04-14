@@ -105,8 +105,19 @@ let gs_kiri_sla = exports;
             layermax = Math.max(widget.slices.length);
         });
 
+        function polyout(poly, ctx) {
+            poly.forEachPoint((p,i) => {
+                if (i === 0) {
+                    ctx.moveTo(p.y * scaleY + height2, p.x * scaleX + width2);
+                } else {
+                    ctx.lineTo(p.y * scaleY + height2, p.x * scaleX + width2);
+                }
+            }, true);
+            ctx.closePath();
+        }
+
         for (let index=0; index < layermax; index++) {
-            let layer = new OffscreenCanvas(width,height);
+            let layer = new OffscreenCanvas(height,width);
             let ctx = layer.getContext('2d');
             ctx.fillStyle = 'rgb(200, 0, 0)';
             let count = 0;
@@ -115,25 +126,23 @@ let gs_kiri_sla = exports;
                 if (slice) {
                     slice.tops.map(top => top.poly).forEach(poly => {
                         ctx.beginPath();
-                        poly.forEachPoint((p,i) => {
-                            if (i === 0) {
-                                ctx.moveTo(p.x * scaleX + width2, p.y * scaleY + height2);
-                            } else {
-                                ctx.lineTo(p.x * scaleX + width2, p.y * scaleY + height2);
-                            }
-                        }, true);
+                        polyout(poly.setClockwise(), ctx);
+                        if (poly.inner) {
+                            poly.inner.forEach(inner => {
+                                polyout(inner.setCounterClockwise(), ctx);
+                            });
+                        }
                         ctx.fill();
                         count++;
                     });
                 }
             });
-            output.push(ctx.getImageData(0,0,width,height));
+            output.push(ctx.getImageData(0,0,height,width));
             update(index / layermax);
 
             if (count === 0) break;
         }
 
-        // in theory sends back pre-gcode print preview data
         update(1);
     };
 
@@ -154,8 +163,6 @@ let gs_kiri_sla = exports;
             online(image.data, [image.data.buffer]);
         });
 
-        // in theory converts print data from printSetup to gcode
-        // online("pex.line");
         ondone({width:2560,height:1440});
     };
 
@@ -193,25 +200,23 @@ let gs_kiri_sla = exports;
     }
 
     // runs in browser main
-    function printDownload(API, lines, done) {
-        let filename = "print-"+(new Date().getTime().toString(36));
+    function printDownload(print) {
+        let { API, lines, done } = print.sla;
+        let filename = `print-${new Date().getTime().toString(36)}`;
 
         API.ajax("/kiri/output-sla.html", html => {
             API.ui.print.innerHTML = html;
             $('print-filename').value = filename;
             $('print-layers').value = lines.length;
             $('print-close').onclick = API.modal.hide;
-            $('print-photons').onclick = download_photons;
-            $('print-photon').onclick = download_photon;
-            $('print-pws').onclick = download_pws;
+            $('print-photons').onclick = () => { download_photons(print) };
+            // $('print-photon').onclick = () => { download_photon(print) };
+            // $('print-pws').onclick = () => { download_pws(print) };
 
             let canvas = $('print-canvas');
             let ctx = canvas.getContext('2d');
-            let img = ctx.createImageData(done.width, done.height);
+            let img = ctx.createImageData(done.height, done.width);
             let imgDV = new DataView(img.data.buffer);
-
-            // canvas.setAttribute('width', done.width/2);
-            // canvas.setAttribute('height', done.height/2);
 
             let range = $('print-range');
             range.value = 0;
@@ -225,12 +230,180 @@ let gs_kiri_sla = exports;
                 ctx.putImageData(img,0,0);
             };
 
+            range.oninput();
             API.modal.show('print');
         });
     }
 
-    function download_photons() { }
-    function download_photon() { }
-    function download_pws() { }
+    function download_photons(print) {
+        let printset = print.settings,
+            process = printset.process,
+            device = printset.device,
+            width = print.sla.done.width,
+            height = print.sla.done.height,
+            layerCount = print.sla.lines.length,
+            layerBytes = width * height;
 
+        let converted = print.sla.lines.map((line, index) => {
+            let count = line.length / 4;
+            let bits = new Uint8Array(line.length / 4);
+            let bitsDV = new DataView(bits.buffer);
+            let lineDV = new DataView(line.buffer);
+            // reduce RGB to R
+            for (let i = 0; i < count; i++) {
+                // defeat anti-aliasing for the moment
+                bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
+            }
+            return {
+                subs: [{
+                    exposureTime: process.slaLayerOn,
+                    data: bits
+                }]
+            };
+        });
+
+        let layers = encodeLayers(converted, "photons");
+        let filebuf = new ArrayBuffer(75366 + layers.length + 28 * layerCount);
+        let filedat = new DataView(filebuf);
+        let filePos = 0;
+
+        filedat.setUint32 (0,  2,                     false);
+        filedat.setUint32 (4,  3227560,               false);
+        filedat.setUint32 (8,  824633720,             false);
+        filedat.setUint16 (12, 10,                    false);
+        filedat.setFloat64(14, process.slaSlice,      false);
+        filedat.setFloat64(22, process.slaLayerOn,    false);
+        filedat.setFloat64(30, process.slaLayerOff,   false);
+        filedat.setFloat64(38, process.slaBaseOn,     false);
+        filedat.setUint32 (46, process.slaBaseLayers, false);
+        filedat.setFloat64(50, process.slaPeelDist,   false);
+        filedat.setFloat64(58, process.slaPeelLift,   false);
+        filedat.setFloat64(66, process.slaPeelDrop,   false);
+        filedat.setFloat64(74, 69420,                 false);
+        filedat.setUint32 (82, 224,                   false);
+        filedat.setUint32 (86, 42,                    false);
+        filedat.setUint32 (90, 168,                   false);
+        filedat.setUint32 (94, 10,                    false);
+        filedat.setUint32 (75362, layerCount,         false);
+
+        filePos = 75366;
+        for (let i = 0; i < layerCount; i++) {
+            let layer = layers.layers[i],
+                sublayer = layer.sublayers[0],
+                numbytes = sublayer.length;
+
+            filedat.setUint32 (filePos + 0,  69420,  false);
+            filedat.setFloat64(filePos + 4,  0);
+            filedat.setUint32 (filePos + 12, height, false);
+            filedat.setUint32 (filePos + 16, width,  false);
+            filedat.setUint32 (filePos + 20, numbytes * 8 + 32, false);
+            filedat.setUint32 (filePos + 24, 2684702720, false);
+            filePos += 28;
+            for (let j = 0; j < numbytes; j++) {
+                filedat.setUint8(filePos + j, sublayer[j]);
+            }
+            filePos += numbytes;
+        }
+
+        saveAs(
+            new Blob([filebuf], { type: "application/octet-stream" }),
+            $('print-filename').value + ".photons");
+
+        print.sla.API.modal.hide();
+    }
+
+    function download_photon() {
+    }
+
+    function download_pws() {
+    }
+
+    function encodeLayers(input, type) {
+        let layers = [],
+            length = 0;
+        for (let index = 0; index < input.length; index++) {
+            let subs = input[index].subs,
+                sublayers = [],
+                sublength = 0;
+            for (let subindex = 0; subindex < subs.length; subindex++) {
+                let data = subs[subindex].data;
+                let encoded = rleEncode(data, type);
+                sublength += encoded.length;
+                sublayers.push(encoded);
+                if (type == "photons") break;
+            }
+            length += sublength;
+            layers.push({
+                sublength,
+                sublayers
+            });
+        }
+        return {
+            length,
+            layers
+        };
+    }
+
+    function rleEncode(data, type) {
+        let maxlen = (type === 'photons') ? 128 : 125,
+            color = data[0],
+            runlen = 1,
+            output = [];
+        for (let index = 1; index < data.length; index++) {
+            let newColor = data[index];
+            if (newColor !== color) {
+                output.push(rleByte(color, runlen, type));
+                color = newColor;
+                runlen = 1;
+            } else {
+                if (runlen === maxlen) {
+                    output.push(rleByte(color, runlen, type));
+                    runlen = 1;
+                } else {
+                    runlen++;
+                }
+            }
+        }
+        if (runlen > 0) {
+            output.push(rleByte(color, runlen, type));
+        }
+        return output;
+    }
+
+    function rleByte(color, length, type) {
+        switch (type) {
+            case 'pws':
+            case 'photon':
+                return length | (color * 128);
+            case 'photons':
+                length--;
+                return (length & 1  ? 128 : 0) |
+                     (length & 2  ?  64 : 0) |
+                     (length & 4  ?  32 : 0) |
+                     (length & 8  ?  16 : 0) |
+                     (length & 16 ?   8 : 0) |
+                     (length & 32 ?   4 : 0) |
+                     (length & 64 ?   2 : 0) | color;
+            }
+    }
+
+    function rleDecode(data) {
+        let bytes = [];
+        for (let i = 0; i < data.length; i++) {
+            let val = data[i],
+                col = val & 1,
+                count =
+                ((val & 128 ?  1 : 0) |
+                 (val &  64 ?  2 : 0) |
+                 (val &  32 ?  4 : 0) |
+                 (val &  16 ?  8 : 0) |
+                 (val &   8 ? 16 : 0) |
+                 (val &   4 ? 32 : 0) |
+                 (val &   2 ? 64 : 0)) + 1;
+            for (let j = 0; j < count; j++) {
+                bytes.push(col);
+            }
+        }
+        return bytes;
+    }
 })();

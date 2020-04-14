@@ -270,6 +270,10 @@ input[type=range]::-moz-focus-outer {
 .print-sel th {
     text-align: right !important;
 }
+#print-canvas {
+    width: 360px;
+    height: 640px;
+}
 #print-range {
     width: 90%;
 }
