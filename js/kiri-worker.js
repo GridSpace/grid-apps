@@ -110,6 +110,14 @@ let dispatch = {
         });
     },
 
+    printExport: function(data, send) {
+        currentPrint.export(false, function(line, direct) {
+            send.data({line}, direct);
+        }, function(done, direct) {
+            send.done({done}, direct);
+        });
+    },
+
     printGCode: function(data, send) {
         currentPrint.exportGCode(false, function(gcode) {
             send.done({

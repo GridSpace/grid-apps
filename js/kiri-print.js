@@ -234,6 +234,25 @@ let gs_kiri_print = exports;
         }
     };
 
+    // more generic. only used by SLA at the moment
+    PRO.export = function(remote, online, ondone) {
+        let driver = KIRI.driver[this.settings.mode];
+
+        if (!(driver && driver.printExport)) {
+            console.log({missing_export_driver: mode});
+            ondone(null);
+            return;
+        }
+
+        if (remote) {
+            // executed from kiri.js
+            KIRI.work.printExport(this.settings, online, ondone);
+        } else {
+            // executed from kiri-worker.js
+            driver.printExport(this, online, ondone);
+        }
+    };
+
     PRO.exportGCode = function(remote, ondone, online) {
         let scope = this,
             settings = scope.settings,

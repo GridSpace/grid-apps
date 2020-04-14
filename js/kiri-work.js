@@ -101,6 +101,18 @@ KIRI.work = {
         });
     },
 
+    printExport : function(settings, online, ondone) {
+        let lines = [];
+        send("printExport", {settings:settings}, function(reply) {
+            if (reply.line) {
+                online(reply.line);
+            }
+            if (reply.done) {
+                ondone(reply.done);
+            }
+        });
+    },
+
     printGCode : function(callback) {
         let gcode = [];
         let start = BASE.util.time();

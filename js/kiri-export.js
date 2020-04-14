@@ -29,10 +29,23 @@ let gs_kiri_export = exports;
                 case 'LASER': return exportPrintLaser(currentPrint);
                 case 'FDM': return exportPrintGCODE(currentPrint);
                 case 'CAM': return exportPrintGCODE(currentPrint);
-                case 'SLA': return KIRI.driver.SLA.printDownload(API,currentPrint);
+                case 'SLA': return exportPrintSLA(currentPrint);
             }
         } else {
             API.function.print(exportPrint);
+        }
+    }
+
+    function exportPrintSLA(currentPrint) {
+        if (currentPrint) {
+            let lines = [];
+            currentPrint.export(true, function(line) {
+                lines.push(line);
+            }, function(done) {
+                KIRI.driver.SLA.printDownload(API, lines, done);
+            });
+        } else {
+            API.function.print(exportPrintSLA);
         }
     }
 
