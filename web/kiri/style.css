@@ -270,6 +270,9 @@ input[type=range]::-moz-focus-outer {
 .print-sel th {
     text-align: right !important;
 }
+#print-range {
+    width: 90%;
+}
 #print .print-sel:hover {
     border: 1px solid #555;
 }

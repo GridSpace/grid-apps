@@ -97,7 +97,9 @@ let gs_kiri_sla = exports;
             width = 2560,
             height = 1440,
             width2 = width/2,
-            height2 = height/2;
+            height2 = height/2,
+            scaleX = width / device.bedWidth,
+            scaleY = height / device.bedDepth;
 
         widgets.forEach(widget => {
             layermax = Math.max(widget.slices.length);
@@ -115,9 +117,9 @@ let gs_kiri_sla = exports;
                         ctx.beginPath();
                         poly.forEachPoint((p,i) => {
                             if (i === 0) {
-                                ctx.moveTo(p.x + width2, p.y + height2);
+                                ctx.moveTo(p.x * scaleX + width2, p.y * scaleY + height2);
                             } else {
-                                ctx.lineTo(p.x + width2, p.y + height2);
+                                ctx.lineTo(p.x * scaleX + width2, p.y * scaleY + height2);
                             }
                         }, true);
                         ctx.fill();
@@ -206,14 +208,20 @@ let gs_kiri_sla = exports;
             let canvas = $('print-canvas');
             let ctx = canvas.getContext('2d');
             let img = ctx.createImageData(done.width, done.height);
+            let imgDV = new DataView(img.data.buffer);
+
+            // canvas.setAttribute('width', done.width/2);
+            // canvas.setAttribute('height', done.height/2);
 
             let range = $('print-range');
             range.value = 0;
             range.min = 0;
-            range.max = lines.length;
+            range.max = lines.length - 1;
             range.oninput = function() {
-                console.log(range.value);
-                lines[range.value].forEach((v,i) => img.data[i] = v);
+                let lineDV = new DataView(lines[range.value].buffer);
+                for (let i=0; i<lineDV.byteLength; i+=4) {
+                    imgDV.setUint32(i, lineDV.getUint32(i));
+                }
                 ctx.putImageData(img,0,0);
             };
 
