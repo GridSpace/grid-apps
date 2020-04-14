@@ -306,9 +306,13 @@ let gs_kiri_print = exports;
 
     PRO.render = function() {
         let scope = this,
-            mode = scope.settings.mode;
+            mode = scope.settings.mode,
+            driver = KIRI.driver[mode];
 
         switch (mode) {
+            case 'SLA':
+                driver.printRender(scope);
+                break;
             case 'CAM':
             case 'FDM':
                 scope.renderMoves(true, 0x888888);

@@ -19,13 +19,15 @@ let gs_kiri_sla = exports;
         SLA = KIRI.driver.SLA = {
             slice,
             printSetup,
-            printExport
+            printExport,
+            printDownload,
+            printRender
         },
         SLICER = KIRI.slicer,
         newPoint = BASE.newPoint;
 
     /**
-     * DRIVER SLICE CONTRACT
+     * DRIVER SLICE CONTRACT - runs in worker
      *
      * @param {Object} settings
      * @param {Widget} Widget
@@ -81,8 +83,7 @@ let gs_kiri_sla = exports;
     };
 
     /**
-     * DRIVER PRINT CONTRACT
-     *
+     * DRIVER PRINT CONTRACT - runs in worker
      * @param {Object} print state object
      * @param {Function} update incremental callback
      */
@@ -91,151 +92,83 @@ let gs_kiri_sla = exports;
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            output = print.output,
-            bounds = settings.bounds,
-            printPoint = newPoint(0,0,0);
+            output = print.output;
 
-        // increment layer count until no widget has remaining slices
-        for (;;) {
-            // create list of mesh slice arrays with their platform offsets
-            for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
-                let mesh = widgets[meshIndex].mesh;
-                if (!mesh.widget) {
-                    continue;
-                }
-                let mslices = mesh.widget.slices;
-                if (mslices && mslices[layer]) {
-                    slices.push({slice:mslices[layer], offset:mesh.position});
-                }
-            }
-
-            // exit if no slices
-            if (slices.length === 0) {
-                break;
-            }
-
-            // track purge blocks generated for each layer
-            let track = extruders.slice();
-            let lastOut;
-            let lastExt;
-
-            // iterate over layer slices, find closest widget, print, eliminate
-            for (;;) {
-                closest = null;
-                mindist = Infinity;
-                let order = [];
-                // select slices of the same extruder type first then distance
-                for (meshIndex = 0; meshIndex < slices.length; meshIndex++) {
-                    sliceEntry = slices[meshIndex];
-                    if (sliceEntry) {
-                        find = sliceEntry.slice.findClosestPointTo(printPoint.sub(sliceEntry.offset));
-                        if (find) {
-                            let ext = sliceEntry.slice.extruder;
-                            let lex = lastOut ? lastOut.extruder : ext;
-                            let dst = Math.abs(find.distance);
-                            if (ext !== lex) dst *= 10000;
-                            order.push({dst,sliceEntry,meshIndex});
-                        }
-                    }
-                }
-                order.sort((a,b) => {
-                    return a.dst - b.dst;
-                });
-                if (order.length) {
-                    let find = order.shift();
-                    closest = find.sliceEntry;
-                    minidx = find.meshIndex;
-                }
-                if (!closest) {
-                    if (sliceEntry) lastOut = sliceEntry.slice;
-                    break;
-                }
-                // retract between widgets
-                if (layerout.length && minidx !== lastIndex) {
-                    layerout.last().retract = true;
-                }
-                layerout.height = layerout.height || closest.slice.height;
-                slices[minidx] = null;
-                closest.offset.z = zoff;
-                // detect extruder change and print purge block
-                if (!lastOut || lastOut.extruder !== closest.slice.extruder) {
-                    printPoint = purge(closest.slice.extruder, track, layerout, printPoint, closest.slice.z);
-                }
-                // output seek to start point between mesh slices if previous data
-                printPoint = print.slicePrintPath(
-                    closest.slice,
-                    printPoint.sub(closest.offset),
-                    closest.offset,
-                    layerout,
-                    { first: closest.slice.index === 0 }
-                );
-                lastOut = closest.slice;
-                lastExt = lastOut.ext
-                lastIndex = minidx;
-            }
-
-            // if a declared extruder isn't used in a layer, use selected
-            // extruder to fill the relevant purge blocks for later support
-            track.forEach(ext => {
-                if (ext) {
-                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt);
-                }
-            });
-
-            // if layer produced output, append to output array
-            if (layerout.length) output.append(layerout);
-
-            // notify progress
-            layerout.layer = layer++;
-            update(layer / maxLayers);
-
-            // retract after last layer
-            if (layer === maxLayers && layerout.length) {
-                layerout.last().retract = true;
-            }
-
-            slices = [];
-            layerout = [];
-            lastOut = undefined;
-        }
+        // in theory sends back pre-gcode print preview data
+        update(1);
     };
 
     /**
-     * DRIVER PRINT CONTRACT
-     *
-     * @returns {Array} gcode lines
+     * DRIVER PRINT CONTRACT - runs in worker
+     * @param {Object} print state object
+     * @param {Function} online optional streaming reply
      */
     function printExport(print, online) {
-        let layers = print.output,
+        let widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            append,
-            output = [];
+            output = print.output;
 
-        if (online) {
-            append = function(line) {
-                if (line) {
-                    output.append(line);
+        // in theory converts print data from printSetup to gcode
+        return;
+    };
+
+    // runs in browser main
+    function printRender(print) {
+        let widgets = print.widgets,
+            settings = print.settings,
+            device = settings.device,
+            process = settings.process;
+
+        for (let index=0; ; index++) {
+            let layer = KIRI.newLayer(print.group);
+            print.printView.push(layer);
+
+            let count = 0;
+            widgets.forEach(widget => {
+                let slice = widget.slices[index];
+                if (!slice) {
+                    return;
                 }
-                if (!line || output.length > 1000) {
-                    online(output.join("\n"));
-                    output = [];
-                }
-            };
-        } else {
-            append = function(line) {
-                if (!line) return;
-                output.append(line);
+                slice.tops.map(top => top.poly).forEach(poly => {
+                    layer.poly(poly, 0x888888, true, false);
+                    count++;
+                });
+            });
+            layer.render();
+
+            if (count === 0) {
+                // TODO fix with contract for exposing layer count
+                // hack uses expected gcode output array in print object
+                print.output = print.printView;
+                break;
             }
         }
+    }
 
-        // print.distance = emitted;
-        // print.lines = lines;
-        // print.bytes = bytes + lines - 1;
-        // print.time = time;
+    // runs in browser main
+    function printDownload(API, currentPrint) {
+        if (!currentPrint) {
+            return API.function.print(printDownload);
+        }
 
-        return online ? null : output.join("\n");
-    };
+        let filename = "print-"+(new Date().getTime().toString(36));
+
+        API.ajax("/kiri/output-sla.html", html => {
+            API.ui.print.innerHTML = html;
+            $('print-filename').value = filename;
+            $('print-layers').value = currentPrint.output.length;
+            $('print-close').onclick = API.modal.hide;
+            $('print-photons').onclick = download_photons;
+            $('print-photon').onclick = download_photon;
+            $('print-pws').onclick = download_pws;
+            API.modal.show('print');
+        });
+    }
+
+    function download_photons() { }
+    function download_photon() { }
+    function download_pws() { }
 
 })();
