@@ -141,7 +141,7 @@ var gs_kiri_slicer = exports;
                 countZ(p2.z);
                 countZ(p3.z);
             }
-            if (options.cam) {
+            if (true || options.cam) {
                 if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
                     // auto-detect flats for cam faces and to avoid slicing directly on flats
                     var zkey = p1.z.toFixed(5),
@@ -151,7 +151,7 @@ var gs_kiri_slicer = exports;
                     } else {
                         zFlat[zkey] += area;
                     }
-                } else if (options.trace) {
+                } else if (true || options.trace) {
                     // detect zLines (curved region tops/bottoms)
                     // mark these layers for ball mills only
                     if (p1.z === p2.z && p1.z > bounds.min.z) {
@@ -316,6 +316,10 @@ var gs_kiri_slicer = exports;
 
         // create a Slice for each z offset in the zIndexes array
         for (var i = 0; i < zIndexes.length; i++) {
+            let ik = zIndexes[i].toFixed(5);
+            // ensure no slice through horizontal lines or planes
+            if (zFlat[ik]) zIndexes[i] -= 0.001;
+            if (zLines[ik]) zIndexes[i] -= 0.001;
             // slice next layer and add to slices[] array
             sliceZ(zIndexes[i], zHeights[i]);
             onupdate(i / zIndexes.length);
