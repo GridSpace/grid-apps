@@ -228,6 +228,7 @@ let gs_kiri_sla = exports;
                     imgDV.setUint32(i, lineDV.getUint32(i));
                 }
                 ctx.putImageData(img,0,0);
+                $('print-layer').innerText = range.value.padStart(4,'0');
             };
 
             range.oninput();

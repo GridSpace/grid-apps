@@ -271,11 +271,19 @@ input[type=range]::-moz-focus-outer {
     text-align: right !important;
 }
 #print-canvas {
-    width: 360px;
-    height: 640px;
+    width: 180px;
+    height: 320px;
+    border: 1px solid #ccc;
+    background-color: #f5f5f5;
 }
 #print-range {
-    width: 90%;
+    width: 80%;
+}
+#print-layer {
+    border: 1px solid #ddd;
+    padding: 0 3px 0 3px;
+    margin: 0 5px 0 5px;
+    font-family: monospace;
 }
 #print .print-sel:hover {
     border: 1px solid #555;

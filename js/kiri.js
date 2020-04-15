@@ -932,7 +932,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         SPACE.platform.setSize(
             width = parseInt(dev.bedWidth),
             depth = parseInt(dev.bedDepth),
-            height
+            height = parseFloat(dev.bedHeight)
         );
         SPACE.platform.setHidden(width > 500 || depth > 500);
         platform.update_origin();

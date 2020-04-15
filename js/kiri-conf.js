@@ -91,7 +91,7 @@ let gs_kiri_conf = exports;
             noclone: valueOf(code.no_clone, false),
             mode: mode || code.mode || '',
             internal: 0,
-            bedHeight: 2.5,
+            bedHeight: valueOf(set.bed_height, 2.5),
             bedWidth: valueOf(set.bed_width, 300),
             bedDepth: valueOf(set.bed_depth, 175),
             bedRound: valueOf(set.bed_circle, false),
@@ -292,7 +292,7 @@ let gs_kiri_conf = exports;
                     internal: 0,
                     bedWidth: 150,
                     bedDepth: 150,
-                    bedHeight: 2.5,
+                    bedHeight: 1.5,
                     maxHeight: 150
                 },
                 // process defaults SLA:Process

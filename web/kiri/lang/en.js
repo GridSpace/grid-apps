@@ -151,7 +151,7 @@ kiri.lang['en-us'] = {
     se_save:        "save",
 
     // FDM SLICING
-    sl_menu:        "slicing",
+    sl_menu:        "slice",
     sl_lahi_s:      "layer height",
     sl_lahi_l:      "height of each slice\nlayer in millimeters",
     sl_shel_s:      "shell count",
