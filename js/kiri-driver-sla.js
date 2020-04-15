@@ -263,11 +263,11 @@ let gs_kiri_sla = exports;
         });
 
         let coded = encodeLayers(converted, "photon");
-        let filebuf = new ArrayBuffer(984 + coded.length + layerCount * 28);
+        let filebuf = new ArrayBuffer(1016 + coded.length + layerCount * 28);
         let filedat = new DataWriter(new DataView(filebuf));
 
-        filedat.skip(4); // header
-        filedat.writeU32(2); //version
+        filedat.writeU32(0); // header
+        filedat.writeU32(0); // version
         filedat.writeF32(68.04,  true); // bed x
         filedat.writeF32(120.96, true); // bed y
         filedat.writeF32(150.0, true); // bed z
@@ -283,8 +283,8 @@ let gs_kiri_sla = exports;
         let layerpos = filedat.skip(4); // layer data address filled later
         filedat.writeU32(layerCount, true);
         let lorez = filedat.skip(4); // hirez preview address filled later
-        filedat.writeU32(0, true); // print time (TODO)
-        filedat.writeU32(0, true); // projection type (TODO)
+        filedat.writeF32(0, true); // print time seconds (TODO)
+        filedat.writeU32(1, true); // projection type (1=lcd, 0=cast)
         let proppos = filedat.skip(4); // print properties address filled later
         let proplen = filedat.skip(4); // print properties length filled later
         filedat.writeU32(1, true); // AA level (sub layers)
@@ -297,6 +297,7 @@ let gs_kiri_sla = exports;
         filedat.writeU32(0, true); // res y
         filedat.writeU32(filedat.pos, true); // data pos
         filedat.writeU32(0, true); // data len
+        filedat.skip(16); // padding
         // write hirez preview data
 
         filedat.view.setUint32(lorez, filedat.pos, true);
@@ -305,6 +306,7 @@ let gs_kiri_sla = exports;
         filedat.writeU32(0, true); // res y
         filedat.writeU32(filedat.pos, true); // data pos
         filedat.writeU32(0, true); // data len
+        filedat.skip(16); // padding
         // write lorez preview data
 
         filedat.view.setUint32(proppos, filedat.pos, true);
@@ -328,7 +330,7 @@ let gs_kiri_sla = exports;
         let layers = coded.layers;
         let layerat = [];
         for (let l=0; l<layers.length; l++) {
-            filedat.writeF32(process.slaSlice, true);
+            filedat.writeF32(process.slaSlice * l, true); // layer height
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBasOn : process.slaLayerOn, true);
             filedat.writeF32(process.slaLayerOff, true);
             layerat.push(filedat.skip(4)); // rewrite later
