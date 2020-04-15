@@ -63,6 +63,7 @@ var MOTO = window.moto = window.moto || {};
         camera,
         renderer,
         container,
+        freeze = false,
         isRound = false,
         platformMaterial = new THREE.MeshPhongMaterial({
             color: 0xcccccc,
@@ -198,8 +199,8 @@ var MOTO = window.moto = window.moto || {};
     }
 
     function setGrid(unitMajor, unitMinor, colorMajor, colorMinor) {
-        if (gridView) Space.scene.remove(gridView);
         if (!unitMajor) return;
+        let oldGridView = gridView;
         gridView = new THREE.Group();
         gridUnitMajor = unitMajor;
         gridUnitMinor = unitMinor;
@@ -233,6 +234,7 @@ var MOTO = window.moto = window.moto || {};
         }
         gridView.add(makeLinesFromPoints(majors, gridColorMajor || 0x999999, 1));
         if (minors) gridView.add(makeLinesFromPoints(minors, gridColorMinor || 0xcccccc, 1));
+        if (oldGridView) Space.scene.remove(oldGridView);
         Space.scene.add(gridView);
     }
 
@@ -560,6 +562,11 @@ var MOTO = window.moto = window.moto || {};
             },
             remove: function (o) {
                 return SCENE.remove(o);
+            },
+            freeze: function (b) {
+                let fz = freeze;
+                freeze = b;
+                return fz;
             }
         },
 
@@ -737,7 +744,7 @@ var MOTO = window.moto = window.moto || {};
 
             function animate() {
                 requestAnimationFrame(animate);
-                renderer.render(SCENE, camera);
+                if (!freeze) renderer.render(SCENE, camera);
             }
 
             animate();

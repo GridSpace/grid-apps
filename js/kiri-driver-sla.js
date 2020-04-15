@@ -45,8 +45,8 @@ let gs_kiri_sla = exports;
 
         // for each slice, performe a function and call doupdate()
         function forSlices(slices, from, to, fn, msg) {
-            slices.forEach(function(slice) {
-                fn(slice);
+            slices.forEach(function(slice,index) {
+                fn(slice,index);
                 doupdate(slices, slice.index, from, to, msg)
             });
         }
@@ -54,7 +54,7 @@ let gs_kiri_sla = exports;
         SLICER.sliceWidget(widget, {
             height: process.slaSlice || 0.05
         }, function(slices) {
-            widget.slices = slices;
+            widget.slices = slices.filter(slice => slice.tops.length);
             // reset for solids and support projections
             slices.forEach(function(slice) {
                 slice.invalidateFill();
@@ -62,20 +62,35 @@ let gs_kiri_sla = exports;
                 slice.invalidateSupports();
                 slice.isSolidFill = false;
             });
-            forSlices(slices, 0.0, 0.2, (slice) => {
-                slice.doShells(1, 0);
-                // slice.tops.forEach(top => { top.solids = [] });
+            let solidLayers = Math.round(process.slaShell / process.slaSlice);
+            forSlices(slices, 0.0, 0.2, (slice,index) => {
+                if (process.slaShell) {
+                    slice.doShells(2, 0, process.slaShell);
+                } else {
+                    slice.doShells(1, 0);
+                }
             }, "slice");
             forSlices(slices, 0.2, 0.4, (slice) => {
                 slice.doDiff(0.00001, 0.005, true);
             }, "delta");
-            forSlices(slices, 0.4, 0.5, (slice) => {
-                slice.projectFlats(process.slaSolids || 5);
-                slice.projectBridges(process.slaSolids || 5);
-            }, "project");
-            forSlices(slices, 0.5, 0.6, (slice) => {
-                slice.doSolidsFill(undefined, undefined, 0.00001);
-            }, "solid");
+            if (solidLayers) {
+                forSlices(slices, 0.4, 0.5, (slice) => {
+                    slice.projectFlats(solidLayers);
+                    slice.projectBridges(solidLayers);
+                }, "project");
+                forSlices(slices, 0.5, 0.6, (slice) => {
+                    slice.doSolidsFill(undefined, undefined, 0.001);
+                    let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
+                    let trims = slice.solids.trimmed || [];
+                    traces.appendAll(trims);
+                    let union = POLY.union(traces);
+                    slice.solids.unioned = union;
+                }, "solid");
+            } else {
+                forSlices(slices, 0.4, 0.6, (slice) => {
+                    slice.solids.unioned = slice.gatherTopPolys([]);
+                })
+            }
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.5);
@@ -124,7 +139,9 @@ let gs_kiri_sla = exports;
             widgets.forEach(widget => {
                 let slice = widget.slices[index];
                 if (slice) {
-                    slice.tops.map(top => top.poly).forEach(poly => {
+                    let traces = POLY.flatten(slice.gatherTraces([]));
+                    let polys = slice.solids.unioned;
+                    polys.forEach(poly => {
                         ctx.beginPath();
                         polyout(poly.setClockwise(), ctx);
                         if (poly.inner) {
@@ -183,7 +200,9 @@ let gs_kiri_sla = exports;
                 if (!slice) {
                     return;
                 }
-                slice.tops.map(top => top.poly).forEach(poly => {
+                // let polys = slice.gatherTraces([]);
+                let polys = slice.solids.unioned;
+                polys.forEach(poly => {
                     layer.poly(poly, 0x888888, true, false);
                     count++;
                 });

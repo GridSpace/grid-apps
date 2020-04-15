@@ -442,8 +442,7 @@ let gs_kiri_slice = exports;
             // top.thinner = [];
             top.traces = [];
             top.inner = [];
-            let last = [],
-                z = top.poly.getZ();
+            let last = [], z = top.poly.getZ();
 
             if (opt.thin) {
                 top.thin_fill = [];
@@ -451,7 +450,7 @@ let gs_kiri_slice = exports;
 
             if (count) {
                 // permit offset of 0 for laser
-                if (offset1 === 0) {
+                if (offset1 === 0 && count === 1) {
                     last = top_poly.clone(true);
                     top.traces = last;
                 } else {
@@ -925,7 +924,9 @@ let gs_kiri_slice = exports;
         });
 
         // for SLA to bypass line infill
-        if (isSLA) return true;
+        if (isSLA) {
+            return true;
+        }
 
         // create empty filled line array for each top
         tops.forEach(function(top) {

@@ -1438,7 +1438,7 @@ var gs_kiri_init = exports;
             // SLA
             slaProc:             UC.newGroup('slice', null, {modes:SLA, group:"sla-slice"}),
             slaSlice:            UC.newInput('layer height',  {title:'slice height', convert:UC.toFloat, modes:SLA}),
-            slaShell:            UC.newInput('hollow shell', {title:'shell thickness in mm\nuse multiple of layer height\nuse 0 for solid', convert:UC.toInt, modes:SLA}),
+            slaShell:            UC.newInput('hollow shell', {title:'shell thickness in mm\nuse multiple of layer height\nuse 0 for solid', convert:UC.toFloat, modes:SLA}),
             slaOpenTop:          UC.newBoolean('open top', onBooleanClick, {title:'solid layers', modes:SLA}),
             slaOpenBase:         UC.newBoolean('open base', onBooleanClick, {title:'bottom layers', modes:SLA}),
             slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-output"}),
@@ -1695,6 +1695,8 @@ var gs_kiri_init = exports;
         let current = settings(),
             control = current.controller;
 
+        SPACE.scene.freeze(true);
+
         platform.deselect();
         CATALOG.addFileListener(updateCatalog);
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
@@ -1801,6 +1803,8 @@ var gs_kiri_init = exports;
 
         // send init-done event
         API.event.emit('init-done', STATS);
+
+        SPACE.scene.freeze(false);
     }
 
     // if a language needs to load, the script is injected and loaded

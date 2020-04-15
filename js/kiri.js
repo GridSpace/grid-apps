@@ -924,18 +924,20 @@ self.kiri.copyright = exports.COPYRIGHT;
      }
 
     function platformUpdateSize() {
+        let frozen = SPACE.scene.freeze(true);
         let dev = settings.device,
             width, depth,
             height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
         SPACE.platform.setRound(dev.bedRound);
-        SPACE.platform.setGZOff(height/2 - 0.1);
         SPACE.platform.setSize(
             width = parseInt(dev.bedWidth),
             depth = parseInt(dev.bedDepth),
             height = parseFloat(dev.bedHeight)
         );
+        SPACE.platform.setGZOff(height/2 - 0.1);
         SPACE.platform.setHidden(width > 500 || depth > 500);
         platform.update_origin();
+        SPACE.scene.freeze(frozen);
     }
 
     function platformUpdateBounds() {
@@ -1520,9 +1522,14 @@ self.kiri.copyright = exports.COPYRIGHT;
         platform.update_size();
         platform.update_stock();
 
+        let fz = SPACE.scene.freeze(true);
         SPACE.view.reset();
-        if (camera) SPACE.view.load(camera);
-        else setTimeout(SPACE.view.home, 100);
+        if (camera) {
+            SPACE.view.load(camera);
+        } else {
+            SPACE.view.home();
+        }
+        SPACE.scene.freeze(fz);
 
         if (skip_widget_load) return;
 
