@@ -283,12 +283,16 @@ let gs_kiri_sla = exports;
         });
 
         let coded = encodeLayers(converted, "photon");
-        let filebuf = new ArrayBuffer(1016 + coded.length + layerCount * 28);
+        let filebuf = new ArrayBuffer(3000 + coded.length + layerCount * 28);
         let filedat = new DataWriter(new DataView(filebuf));
+        let printtime = (process.slaBaseLayers * process.slaBaseOn) +
+                (coded.layers.length - process.slaBaseLayers) * process.slaLayerOn;
 
-        filedat.writeU32(0); // header
-        filedat.writeU32(0); // version
-        filedat.writeF32(68.04,  true); // bed x
+        // filedat.writeU32(0, true); // header
+        // filedat.writeU32(0, true); // version
+        filedat.writeU32(0x1900fd12); // header
+        filedat.writeU32(2,true); // version
+        filedat.writeF32(68.04, true); // bed x
         filedat.writeF32(120.96, true); // bed y
         filedat.writeF32(150.0, true); // bed z
         filedat.skip(12); // padding
@@ -303,19 +307,19 @@ let gs_kiri_sla = exports;
         let layerpos = filedat.skip(4); // layer data address filled later
         filedat.writeU32(layerCount, true);
         let lorez = filedat.skip(4); // hirez preview address filled later
-        filedat.writeF32(0, true); // print time seconds (TODO)
+        filedat.writeU32(printtime, true); // print time seconds
         filedat.writeU32(1, true); // projection type (1=lcd, 0=cast)
         let proppos = filedat.skip(4); // print properties address filled later
         let proplen = filedat.skip(4); // print properties length filled later
         filedat.writeU32(1, true); // AA level (sub layers)
-        filedat.writeU16(0, true); // light pwm (TODO);
-        filedat.writeU16(0, true); // light pwm bottom (TODO);
+        filedat.writeU16(0x00ff, true); // light pwm (TODO);
+        filedat.writeU16(0x00ff, true); // light pwm bottom (TODO);
 
         filedat.view.setUint32(hirez, filedat.pos, true);
         // write hirez preview header
         filedat.writeU32(0, true); // res x
         filedat.writeU32(0, true); // res y
-        filedat.writeU32(filedat.pos, true); // data pos
+        filedat.writeU32(filedat.pos + 4, true); // data pos
         filedat.writeU32(0, true); // data len
         filedat.skip(16); // padding
         // write hirez preview data
@@ -324,26 +328,30 @@ let gs_kiri_sla = exports;
         // write lorez preview header
         filedat.writeU32(0, true); // res x
         filedat.writeU32(0, true); // res y
-        filedat.writeU32(filedat.pos, true); // data pos
+        filedat.writeU32(filedat.pos + 4, true); // data pos
         filedat.writeU32(0, true); // data len
         filedat.skip(16); // padding
         // write lorez preview data
 
+        let propstart = filedat.pos;
         filedat.view.setUint32(proppos, filedat.pos, true);
         // write print properties
-        filedat.writeF32(process.slaPeelDist, true);
-        filedat.writeF32(process.slaPeelLift, true); // speed
-        filedat.writeF32(process.slaPeelDrop, true); // speed
+        filedat.writeF32(process.slaPeelDist, true); // default or base?
+        filedat.writeF32(process.slaPeelLift * 60 , true); // speed
+        filedat.writeF32(process.slaPeelDist, true); // default or base?
+        filedat.writeF32(process.slaPeelLift * 60 , true); // speed
+        filedat.writeF32(process.slaPeelDrop * 60, true); // speed
         filedat.writeF32(0, true); // volume of used
         filedat.writeF32(0, true); // weight of used
         filedat.writeF32(0, true); // cost of used
         filedat.writeF32(0, true); // bottom off delay time
         filedat.writeF32(0, true); // light off delay time
-        filedat.writeF32(process.slaBaseLayers, true);
+        filedat.writeU32(process.slaBaseLayers, true);
         filedat.writeF32(0, true); // p1 ?
         filedat.writeF32(0, true); // p2 ?
         filedat.writeF32(0, true); // p3 ?
         filedat.writeF32(0, true); // p4 ?
+        filedat.view.setUint32(proplen, filedat.pos - propstart, true);
 
         filedat.view.setUint32(layerpos, filedat.pos, true);
         // write layer headers
@@ -361,10 +369,13 @@ let gs_kiri_sla = exports;
         for (let l=0; l<layers.length; l++) {
             filedat.view.setUint32(layerat[l], filedat.pos, true);
             let layer = layers[l].sublayers[0];
+            // console.log({l, of:layers.length, len:layer.length})
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], true);
             }
         }
+        // let buf = filebuf.byteLength, pos = filedat.pos;
+        // console.log({buf,pos,delta:buf-pos});
 
         saveAs(
             new Blob([filebuf], { type: "application/octet-stream" }),
@@ -556,8 +567,13 @@ class DataWriter {
     }
 
     writeU8(v) {
-        this.view.setUint8(this.pos, v);
-        return this.skip(1);
+        try {
+            this.view.setUint8(this.pos, v);
+            return this.skip(1);
+        } catch (err) {
+            console.log({pos:this.pos, err})
+            throw err;
+        }
     }
 
     writeU16(v,le) {
