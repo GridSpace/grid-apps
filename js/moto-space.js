@@ -425,12 +425,13 @@ var MOTO = window.moto = window.moto || {};
             DOC.activeElement.blur();
             event.preventDefault();
             let selection = null,
-                trackTo = alignedTracking ? trackPlane : platform;
+                trackTo = alignedTracking ? trackPlane : platform,
+                isVis = trackTo.visible;
             if (mouseDownSelect) selection = mouseDownSelect();
             if (selection && selection.length > 0) {
                 trackTo.visible = true;
                 let int = intersect(selection.slice().append(trackTo), false);
-                trackTo.visible = false;
+                trackTo.visible = isVis;
                 if (int.length > 0) {
                     let trackInt, selectInt;
                     for (let i=0; i<int.length; i++) {
@@ -518,9 +519,10 @@ var MOTO = window.moto = window.moto || {};
         } else if (mouseDragPoint && mouseDrag && mouseDrag()) {
             event.preventDefault();
             let trackTo = alignedTracking ? trackPlane : platform;
+            let vis = trackTo.visible;
             trackTo.visible = true;
             int = intersect([trackTo], false);
-            trackTo.visible = false;
+            trackTo.visible = vis;
             if (int.length > 0 && int[0].object === trackTo) {
                 let delta = mouseDragPoint.clone().sub(int[0].point);
                 let offset = mouseDragStart.clone().sub(int[0].point);
@@ -673,7 +675,6 @@ var MOTO = window.moto = window.moto || {};
                 if (trackcam) {
                     trackcam.position.copy(camera.position);
                 }
-                renderer.render(SCENE, camera);
                 if (moved && platformOnMove) {
                     clearTimeout(platformMoveTimer);
                     platformMoveTimer = setTimeout(platformOnMove, 500);
@@ -701,10 +702,10 @@ var MOTO = window.moto = window.moto || {};
             platform.visible = showPlatform;
 
             trackPlane = new THREE.Mesh(
-                new THREE.PlaneBufferGeometry(2000, 2000, 1, 1),
-                new THREE.MeshBasicMaterial( { color: 0x777777, opacity: 0.3, transparent: false, side:THREE.DoubleSide } )
+                new THREE.PlaneBufferGeometry(100000, 100000, 1, 1),
+                new THREE.MeshBasicMaterial( { color: 0x777777, opacity: 0, transparent: true, side:THREE.DoubleSide } )
             );
-            trackPlane.visible = false;
+            trackPlane.visible = true;
             trackPlane.rotation.x = PI2;
 
             let sky = new THREE.Mesh(
@@ -733,6 +734,13 @@ var MOTO = window.moto = window.moto || {};
                 'mouseup', onMouseUp,
                 'keypress', keyHandler
             ]);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(SCENE, camera);
+            }
+
+            animate();
 
             initialized = true;
         }

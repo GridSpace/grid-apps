@@ -773,11 +773,19 @@ let gs_kiri_slice = exports;
      * Used to calculate bridges, flats and then solid projections.
      * 'expand' is used for top offsets in SLA mode
      */
-    PRO.doDiff = function(minArea, expand) {
-        if (!this.down) return;
+    PRO.doDiff = function(minArea, expand, fakedown) {
+        let down = this.down;
+
+        if (!down) {
+            if (fakedown) {
+                down = newSlice(-1);
+            } else {
+                return;
+            }
+        }
 
         let top = this,
-            bottom = this.down;
+            bottom = down;
 
         top.bridges = null;
         bottom.flats = null;

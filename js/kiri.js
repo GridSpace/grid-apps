@@ -1489,24 +1489,23 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function restoreSettings(save) {
-        let newset = ls2o('ws-settings');
+        let newset = ls2o('ws-settings') || settings;
 
-        if (newset) {
-            settings = CONF.normalize(newset);
-            // override camera from settings
-            if (settings.controller.view) {
-                SDB.removeItem('ws-camera');
-            }
-            // merge custom filters from localstorage into settings
-            localFilters.forEach(function(fname) {
-                let fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
-                if (ov) settings.devices[fname] = ov;
-                SDB.removeItem(fkey)
-            });
-            SDB.removeItem(localFilterKey);
-            // save updated settings
-            if (save) API.conf.save();
+        settings = CONF.normalize(newset);
+        // override camera from settings
+        if (settings.controller.view) {
+            SDB.removeItem('ws-camera');
         }
+        // merge custom filters from localstorage into settings
+        localFilters.forEach(function(fname) {
+            let fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
+            if (ov) settings.devices[fname] = ov;
+            SDB.removeItem(fkey)
+        });
+        SDB.removeItem(localFilterKey);
+        // save updated settings
+        if (save) API.conf.save();
+
         return newset;
     }
 

@@ -486,7 +486,7 @@ let gs_kiri_conf = exports;
             // current device name by mode
             filter:{
                 FDM: "Any.Generic.Marlin",
-                SLA: "Any.Generic.SLA",
+                SLA: "Anycubic.Photon",
                 CAM: "Any.Generic.Grbl",
                 LASER: "Any.Generic.Laser"
             },

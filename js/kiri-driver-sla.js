@@ -67,7 +67,7 @@ let gs_kiri_sla = exports;
                 // slice.tops.forEach(top => { top.solids = [] });
             }, "slice");
             forSlices(slices, 0.2, 0.4, (slice) => {
-                slice.doDiff(0.00001, 0.005);
+                slice.doDiff(0.00001, 0.005, true);
             }, "delta");
             forSlices(slices, 0.4, 0.5, (slice) => {
                 slice.projectFlats(process.slaSolids || 5);
