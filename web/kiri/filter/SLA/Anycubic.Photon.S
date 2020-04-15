@@ -1,11 +1,9 @@
 {
-    "pre":[],
-    "post":[],
+    "no_clone": true,
     "cmd":{},
     "settings":{
         "bed_width": 115,
         "bed_depth": 65,
-        "max_height": 165,
-        "origin_center": true
+        "max_height": 165
     }
 }

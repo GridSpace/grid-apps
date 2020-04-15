@@ -210,7 +210,7 @@ let gs_kiri_sla = exports;
             $('print-layers').value = lines.length;
             $('print-close').onclick = API.modal.hide;
             $('print-photons').onclick = () => { download_photons(print) };
-            // $('print-photon').onclick = () => { download_photon(print) };
+            $('print-photon').onclick = () => { download_photon(print) };
             // $('print-pws').onclick = () => { download_pws(print) };
 
             let canvas = $('print-canvas');
@@ -233,6 +233,122 @@ let gs_kiri_sla = exports;
             range.oninput();
             API.modal.show('print');
         });
+    }
+
+    function download_photon(print) {
+        let printset = print.settings,
+            process = printset.process,
+            device = printset.device,
+            width = print.sla.done.width,
+            height = print.sla.done.height,
+            layerCount = print.sla.lines.length,
+            layerBytes = width * height;
+
+        let converted = print.sla.lines.map((line, index) => {
+            let count = line.length / 4;
+            let bits = new Uint8Array(line.length / 4);
+            let bitsDV = new DataView(bits.buffer);
+            let lineDV = new DataView(line.buffer);
+            // reduce RGB to R
+            for (let i = 0; i < count; i++) {
+                // defeat anti-aliasing for the moment
+                bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
+            }
+            return {
+                subs: [{
+                    exposureTime: process.slaLayerOn,
+                    data: bits
+                }]
+            };
+        });
+
+        let coded = encodeLayers(converted, "photon");
+        let filebuf = new ArrayBuffer(984 + coded.length + layerCount * 28);
+        let filedat = new DataWriter(new DataView(filebuf));
+
+        filedat.skip(4); // header
+        filedat.writeU32(2); //version
+        filedat.writeF32(68.04,  true); // bed x
+        filedat.writeF32(120.96, true); // bed y
+        filedat.writeF32(150.0, true); // bed z
+        filedat.skip(12); // padding
+        filedat.writeF32(process.slaSlice, true); // layer height
+        filedat.writeF32(process.slaLayerOn, true); // default lamp on
+        filedat.writeF32(process.slaBaseOn, true); // base lamp on
+        filedat.writeF32(process.slaLayerOff, true); // lamp off
+        filedat.writeU32(process.slaBaseLayers, true); // base layers
+        filedat.writeU32(1440, true); // device x
+        filedat.writeU32(2560, true); // device y
+        let hirez = filedat.skip(4); // hirez preview address filled pater
+        let layerpos = filedat.skip(4); // layer data address filled later
+        filedat.writeU32(layerCount, true);
+        let lorez = filedat.skip(4); // hirez preview address filled later
+        filedat.writeU32(0, true); // print time (TODO)
+        filedat.writeU32(0, true); // projection type (TODO)
+        let proppos = filedat.skip(4); // print properties address filled later
+        let proplen = filedat.skip(4); // print properties length filled later
+        filedat.writeU32(1, true); // AA level (sub layers)
+        filedat.writeU16(0, true); // light pwm (TODO);
+        filedat.writeU16(0, true); // light pwm bottom (TODO);
+
+        filedat.view.setUint32(hirez, filedat.pos, true);
+        // write hirez preview header
+        filedat.writeU32(0, true); // res x
+        filedat.writeU32(0, true); // res y
+        filedat.writeU32(filedat.pos, true); // data pos
+        filedat.writeU32(0, true); // data len
+        // write hirez preview data
+
+        filedat.view.setUint32(lorez, filedat.pos, true);
+        // write lorez preview header
+        filedat.writeU32(0, true); // res x
+        filedat.writeU32(0, true); // res y
+        filedat.writeU32(filedat.pos, true); // data pos
+        filedat.writeU32(0, true); // data len
+        // write lorez preview data
+
+        filedat.view.setUint32(proppos, filedat.pos, true);
+        // write print properties
+        filedat.writeF32(process.slaPeelDist, true);
+        filedat.writeF32(process.slaPeelLift, true); // speed
+        filedat.writeF32(process.slaPeelDrop, true); // speed
+        filedat.writeF32(0, true); // volume of used
+        filedat.writeF32(0, true); // weight of used
+        filedat.writeF32(0, true); // cost of used
+        filedat.writeF32(0, true); // bottom off delay time
+        filedat.writeF32(0, true); // light off delay time
+        filedat.writeF32(process.slaBaseLayers, true);
+        filedat.writeF32(0, true); // p1 ?
+        filedat.writeF32(0, true); // p2 ?
+        filedat.writeF32(0, true); // p3 ?
+        filedat.writeF32(0, true); // p4 ?
+
+        filedat.view.setUint32(layerpos, filedat.pos, true);
+        // write layer headers
+        let layers = coded.layers;
+        let layerat = [];
+        for (let l=0; l<layers.length; l++) {
+            filedat.writeF32(process.slaSlice, true);
+            filedat.writeF32(l < process.slaBaseLayers ? process.slaBasOn : process.slaLayerOn, true);
+            filedat.writeF32(process.slaLayerOff, true);
+            layerat.push(filedat.skip(4)); // rewrite later
+            filedat.writeU32(layers[l].length, true);
+            filedat.skip(16); // padding
+        }
+        // write layer data
+        for (let l=0; l<layers.length; l++) {
+            filedat.view.setUint32(layerat[l], filedat.pos, true);
+            let layer = layers[l].sublayers[0];
+            for (let j=0; j<layer.length; j++) {
+                filedat.writeU8(layer[j], true);
+            }
+        }
+
+        saveAs(
+            new Blob([filebuf], { type: "application/octet-stream" }),
+            $('print-filename').value + ".photon");
+
+        print.sla.API.modal.hide();
     }
 
     function download_photons(print) {
@@ -262,8 +378,8 @@ let gs_kiri_sla = exports;
             };
         });
 
-        let layers = encodeLayers(converted, "photons");
-        let filebuf = new ArrayBuffer(75366 + layers.length + 28 * layerCount);
+        let coded = encodeLayers(converted, "photons");
+        let filebuf = new ArrayBuffer(75366 + coded.length + 28 * layerCount);
         let filedat = new DataView(filebuf);
         let filePos = 0;
 
@@ -288,7 +404,7 @@ let gs_kiri_sla = exports;
 
         filePos = 75366;
         for (let i = 0; i < layerCount; i++) {
-            let layer = layers.layers[i],
+            let layer = coded.layers[i],
                 sublayer = layer.sublayers[0],
                 numbytes = sublayer.length;
 
@@ -310,9 +426,6 @@ let gs_kiri_sla = exports;
             $('print-filename').value + ".photons");
 
         print.sla.API.modal.hide();
-    }
-
-    function download_photon() {
     }
 
     function download_pws() {
@@ -407,3 +520,41 @@ let gs_kiri_sla = exports;
         return bytes;
     }
 })();
+
+class DataWriter {
+    constructor(view) {
+        this.view = view;
+        this.pos = 0;
+    }
+
+    skip(v) {
+        let p = this.pos;
+        this.pos += v;
+        return p;
+    }
+
+    writeU8(v) {
+        this.view.setUint8(this.pos, v);
+        return this.skip(1);
+    }
+
+    writeU16(v,le) {
+        this.view.setUint16(this.pos, v, le);
+        return this.skip(2);
+    }
+
+    writeU32(v,le) {
+        this.view.setUint32(this.pos, v, le);
+        return this.skip(4);
+    }
+
+    writeF32(v,le) {
+        this.view.setFloat32(this.pos, v, le);
+        return this.skip(4);
+    }
+
+    writeF64(v,le) {
+        this.view.setFloat64(this.pos, v, le);
+        return this.skip(8);
+    }
+}

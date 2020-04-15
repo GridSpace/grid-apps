@@ -88,6 +88,7 @@ let gs_kiri_conf = exports;
         // currently causes unecessary fills and culls because
         // it's not mode and device type sensitive
         let device = {
+            noclone: valueOf(code.no_clone, false),
             mode: mode || code.mode || '',
             internal: 0,
             bedHeight: 2.5,
@@ -286,6 +287,7 @@ let gs_kiri_conf = exports;
             sla:{
                 // device defaults SLA:Device
                 d:{
+                    noclone: false,
                     mode: "",
                     internal: 0,
                     bedWidth: 150,
