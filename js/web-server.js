@@ -875,6 +875,7 @@ let ver = require('../js/license.js'),
         ],
         work : [
             "ext-three",
+            "ext-pngjs",
             "license",
             "ext-clip2",
             "add-array",

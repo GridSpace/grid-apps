@@ -11,6 +11,7 @@ let ver = exports.VERSION,
     kiri = self.kiri,
     Widget = kiri.Widget,
     currentPrint,
+    currentSnap,
     cache = {};
 
 console.log(`kiri | init work | ${ver}`);
@@ -26,6 +27,11 @@ let dispatch = {
         vertices = new Float32Array(vertices),
         vertices = Widget.pointsToVertices(Widget.verticesToPoints(vertices, true));
         send.done(vertices);
+    },
+
+    snap: function(data, send) {
+        currentSnap = data;
+        send.done();
     },
 
     slice: function(data, send) {

@@ -715,6 +715,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
             API.view.snapshot = snap.substring(snap.indexOf(",")+1);
+            KIRI.work.snap(API.view.snapshot);
         }
 
         clearPrint();

@@ -51,6 +51,11 @@ let gs_kiri_sla = exports;
             });
         }
 
+        let b64 = atob(currentSnap);
+        let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
+        let img = new png.PNG().parse(bin);
+        console.log({img})
+
         SLICER.sliceWidget(widget, {
             height: process.slaSlice || 0.05
         }, function(slices) {

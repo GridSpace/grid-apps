@@ -81,14 +81,22 @@ KIRI.work = {
         });
     },
 
+    snap : function(data) {
+        send("snap", data, function(reply) {
+            // console.log({snap:reply})
+        });
+    },
+
     slice : function(settings, widget, callback) {
-        let vertices = widget.getGeoVertices().buffer.slice(0);
+        let vertices = widget.getGeoVertices().buffer.slice(0),
+            snapshot = KIRI.api.view.snapshot;
         slicing[widget.id] = callback;
         send("slice", {
             id: widget.id,
             settings: settings,
             vertices: vertices,
-            position: widget.mesh.position
+            position: widget.mesh.position,
+            snapshot: snapshot
         }, function(reply) {
             if (reply.done || reply.error) delete slicing[widget.id];
             callback(reply);
@@ -98,7 +106,7 @@ KIRI.work = {
     printSetup : function(settings, callback) {
         send("printSetup", {settings:settings}, function(reply) {
             callback(reply);
-        });
+        }, undefined);
     },
 
     printExport : function(settings, online, ondone) {
