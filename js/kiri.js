@@ -318,7 +318,8 @@ self.kiri.copyright = exports.COPYRIGHT;
      ******************************************************************* */
 
      function unitScale() {
-         return settings.controller.units === 'in' ? 25.4 : 1;
+         return MODE === MODES.CAM &&
+            settings.controller.units === 'in' ? 25.4 : 1;
      }
 
      function alert2(message, time) {
@@ -1273,7 +1274,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                     if (list) list.forEach(function(tool, index) {
                         let id = tool.id || tool.name;
                         if (val == id) {
-                            chosen = index + 1;
+                            chosen = index;
                         }
                         let opt = DOC.createElement('option');
                         opt.appendChild(DOC.createTextNode(tool.name));
@@ -1314,7 +1315,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 } else if (uie.type === 'checkbox') {
                     nval = UI[key].checked;
                 } else if (uie.type === 'select-one') {
-                    if (uie.selectedIndex > 0) {
+                    if (uie.selectedIndex >= 0) {
                         nval = uie.options[uie.selectedIndex].value;
                         let src = uie.parentNode.getAttribute('source');
                         if (src === 'tools') {
@@ -1376,10 +1377,10 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function updateSettings() {
+        updateSettingsFromFields(settings.controller);
         updateSettingsFromFields(settings.device);
         updateSettingsFromFields(settings.process);
         updateSettingsFromFields(settings.layers);
-        updateSettingsFromFields(settings.controller);
         let device = settings.device;
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);
