@@ -336,20 +336,6 @@ let gs_kiri_sla = exports;
         filedat.writeU16(0x00ff, true); // light pwm (TODO);
         filedat.writeU16(0x00ff, true); // light pwm bottom (TODO);
 
-        filedat.view.setUint32(hirez, filedat.pos, true);
-        writePhotonImage({
-            width: 400,
-            height: 300,
-            data: print.sla.done.large
-        }, filedat);
-
-        filedat.view.setUint32(lorez, filedat.pos, true);
-        writePhotonImage({
-            width: 200,
-            height: 125,
-            data: print.sla.done.small
-        }, filedat);
-
         let propstart = filedat.pos;
         filedat.view.setUint32(proppos, filedat.pos, true);
         // write print properties
@@ -387,9 +373,23 @@ let gs_kiri_sla = exports;
             filedat.view.setUint32(layerat[l], filedat.pos, true);
             let layer = layers[l].sublayers[0];
             for (let j=0; j<layer.length; j++) {
-                filedat.writeU8(layer[j], true);
+                filedat.writeU8(layer[j], false);
             }
         }
+
+        filedat.view.setUint32(hirez, filedat.pos, true);
+        writePhotonImage({
+            width: 400,
+            height: 300,
+            data: print.sla.done.large
+        }, filedat);
+
+        filedat.view.setUint32(lorez, filedat.pos, true);
+        writePhotonImage({
+            width: 200,
+            height: 125,
+            data: print.sla.done.small
+        }, filedat);
 
         saveAs(
             new Blob([filebuf], { type: "application/octet-stream" }),
@@ -412,7 +412,7 @@ let gs_kiri_sla = exports;
             let bits = new Uint8Array(line.length / 4);
             let bitsDV = new DataView(bits.buffer);
             let lineDV = new DataView(line.buffer);
-            // reduce RGB to R
+            // reduce RGB to R = 0||1
             for (let i = 0; i < count; i++) {
                 // defeat anti-aliasing for the moment
                 bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
@@ -463,7 +463,7 @@ let gs_kiri_sla = exports;
             filedat.setUint32 (filePos + 24, 2684702720, false);
             filePos += 28;
             for (let j = 0; j < numbytes; j++) {
-                filedat.setUint8(filePos + j, sublayer[j]);
+                filedat.setUint8(filePos + j, sublayer[j], false);
             }
             filePos += numbytes;
         }
@@ -534,7 +534,7 @@ let gs_kiri_sla = exports;
         switch (type) {
             case 'pws':
             case 'photon':
-                return length | (color * 128);
+                return (length & 0x7f) | ((color << 7) & 0x80);
             case 'photons':
                 length--;
                 return (length & 1  ? 128 : 0) |
@@ -547,21 +547,32 @@ let gs_kiri_sla = exports;
             }
     }
 
-    function rleDecode(data) {
+    function rleDecode(data, type) {
         let bytes = [];
-        for (let i = 0; i < data.length; i++) {
-            let val = data[i],
-                col = val & 1,
-                count =
-                ((val & 128 ?  1 : 0) |
-                 (val &  64 ?  2 : 0) |
-                 (val &  32 ?  4 : 0) |
-                 (val &  16 ?  8 : 0) |
-                 (val &   8 ? 16 : 0) |
-                 (val &   4 ? 32 : 0) |
-                 (val &   2 ? 64 : 0)) + 1;
-            for (let j = 0; j < count; j++) {
-                bytes.push(col);
+        if (type === 'photon') {
+            for (let i = 0; i < data.length; i++) {
+                let val = data[i],
+                    color = val >> 7,
+                    count = val & 0x7f;
+                for (let j = 0; j < count; j++) {
+                    bytes.push(color);
+                }
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                let val = data[i],
+                    color = val & 1,
+                    count =
+                    ((val & 128 ?  1 : 0) |
+                     (val &  64 ?  2 : 0) |
+                     (val &  32 ?  4 : 0) |
+                     (val &  16 ?  8 : 0) |
+                     (val &   8 ? 16 : 0) |
+                     (val &   4 ? 32 : 0) |
+                     (val &   2 ? 64 : 0)) + 1;
+                for (let j = 0; j < count; j++) {
+                    bytes.push(color);
+                }
             }
         }
         return bytes;
