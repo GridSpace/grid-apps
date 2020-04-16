@@ -1256,7 +1256,6 @@ self.kiri.copyright = exports.COPYRIGHT;
     // given a settings region, update values of matching bound UI fields
     function updateFieldsFromSettings(scope) {
         if (!scope) return console.trace("missing scope");
-
         for (let key in scope) {
             if (!scope.hasOwnProperty(key)) continue;
             let val = scope[key];

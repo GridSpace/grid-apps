@@ -296,9 +296,16 @@ var gs_moto_ui = exports;
     }
 
     let lastPop = null;
+    let savePop = null;
 
     function hidePop() {
-        if (lastPop) lastPop.style.display = "none";
+        if (lastPop) {
+            lastPop.style.display = "none";
+        }
+        if (savePop) {
+            savePop();
+            savePop = null;
+        }
         lastPop = null;
     }
 
@@ -347,13 +354,19 @@ var gs_moto_ui = exports;
                 txt.setAttribute("cols", Math.max(30, cols + 1));
                 txt.setAttribute("rows", Math.max(10, rows.length + 1));
 
+                txt.onblur = () => {
+                    console.log({text_lost_focus: txt});
+                };
+
                 let showing = pop === lastPop;
                 hidePop();
-                inputAction();
                 if (!showing) {
+                    savePop = inputAction;
                     pop.style.display = "flex";
                     lastPop = pop;
                     txt.focus();
+                } else {
+                    inputAction();
                 }
             }
         };

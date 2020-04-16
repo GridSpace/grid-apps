@@ -243,8 +243,21 @@ let gs_kiri_sla = exports;
 
         API.ajax("/kiri/output-sla.html", html => {
             API.ui.print.innerHTML = html;
+
+            let printset = print.settings,
+                process = printset.process,
+                print_sec = (process.slaBaseLayers * process.slaBaseOn) +
+                    (lines.length - process.slaBaseLayers) * process.slaLayerOn,
+                print_min = Math.floor(print_sec/60),
+                print_hrs = Math.floor(print_min/60);
+
+            print_sec -= (print_min * 60).toString().padStart(2,0);
+            print_min -= (print_hrs * 60).toString().padStart(2,0);
+            print_hrs = print_hrs.toString().padStart(2,0);
+
             $('print-filename').value = filename;
             $('print-layers').value = lines.length;
+            $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
             $('print-close').onclick = API.modal.hide;
             $('print-photons').onclick = () => { download_photons(print) };
             $('print-photon').onclick = () => { download_photon(print) };

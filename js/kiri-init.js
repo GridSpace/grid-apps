@@ -674,9 +674,15 @@ var gs_kiri_init = exports;
 
         UI.deviceClose.onclick = API.dialog.hide;
         UI.deviceSave.onclick = function() {
+            let newname = UI.deviceName.value
+            if (newname !== selected) {
+                devs[newname] = devs[selected];
+                delete devs[selected];
+            }
             API.function.clear();
             API.conf.save();
             showDevices();
+            selectDevice(newname);
         };
         UI.deviceAdd.onclick = function() {
             API.function.clear();
@@ -734,11 +740,8 @@ var gs_kiri_init = exports;
                 }
                 showDevices();
             };
-            // if (API.show.favorites()) {
-                if (loc) opt.setAttribute("local", 1);
-            // } else {
-                if (loc || fav) opt.setAttribute("favorite", 1);
-            // }
+            if (loc) opt.setAttribute("local", 1);
+            if (loc || fav) opt.setAttribute("favorite", 1);
             UI.deviceSelect.appendChild(opt);
             if (device === selected) {
                 selectedIndex = incr;
@@ -1457,10 +1460,6 @@ var gs_kiri_init = exports;
             slaBasePeelDist:     UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
             slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
         });
-
-        if (!LOCAL) {
-            UI.modeSLA.style.display = 'none';
-        }
 
         if (!lang_set) {
             // for english only, add underlined labels for hotkeys
