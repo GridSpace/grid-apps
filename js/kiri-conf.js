@@ -287,6 +287,7 @@ let gs_kiri_conf = exports;
             sla:{
                 // device defaults SLA:Device
                 d:{
+                    deviceName: "",
                     noclone: false,
                     mode: "",
                     internal: 0,
@@ -312,6 +313,7 @@ let gs_kiri_conf = exports;
                     slaBaseOn: 90,
                     slaBasePeelDist: 6,
                     slaBasePeelLiftRate: 3,
+                    slaFirstOffset: 0
                 }
             },
             cam:{

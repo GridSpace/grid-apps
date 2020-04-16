@@ -548,6 +548,9 @@ var gs_kiri_init = exports;
                 dev = current.device = CONF.device_from_code(code,mode),
                 proc = current.process;
 
+
+            dev.deviceName = devicename;
+
             proc.outputOriginCenter = dev.outputOriginCenter;
             UI.deviceName.value = devicename;
             UI.deviceOrigin.checked = proc.outputOriginCenter;
@@ -1459,6 +1462,9 @@ var gs_kiri_init = exports;
             slaBaseOff:          UC.newInput('light off time', {title:'base layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA}),
             slaBasePeelDist:     UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
             slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
+
+            slaFirst:            UC.newGroup('first layer', null, {modes:SLA, group:"sla-first", expert:true}),
+            slaFirstOffset:      UC.newInput('offset', {title:'first layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
         });
 
         if (!lang_set) {

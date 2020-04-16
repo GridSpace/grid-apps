@@ -246,22 +246,34 @@ let gs_kiri_sla = exports;
 
             let printset = print.settings,
                 process = printset.process,
+                device = printset.device,
                 print_sec = (process.slaBaseLayers * process.slaBaseOn) +
                     (lines.length - process.slaBaseLayers) * process.slaLayerOn,
                 print_min = Math.floor(print_sec/60),
-                print_hrs = Math.floor(print_min/60);
+                print_hrs = Math.floor(print_min/60),
+                download = $('print-photon');
 
-            print_sec -= (print_min * 60).toString().padStart(2,0);
-            print_min -= (print_hrs * 60).toString().padStart(2,0);
-            print_hrs = print_hrs.toString().padStart(2,0);
+            print_sec -= (print_min * 60);
+            print_min -= (print_hrs * 60);
+            print_sec = print_sec.toString().padStart(2,'0');
+            print_min = print_min.toString().padStart(2,'0');
+            print_hrs = print_hrs.toString().padStart(2,'0');
 
             $('print-filename').value = filename;
             $('print-layers').value = lines.length;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
             $('print-close').onclick = API.modal.hide;
-            $('print-photons').onclick = () => { download_photons(print) };
-            $('print-photon').onclick = () => { download_photon(print) };
-            // $('print-pws').onclick = () => { download_pws(print) };
+
+            switch (device.deviceName) {
+                case 'Anycubic.Photon':
+                    download.innerText += " .photon";
+                    download.onclick = () => { download_photon(print) };
+                    break;
+                case 'Anycubic.Photon.S':
+                    download.innerText += " .photons";
+                    download.onclick = () => { download_photons(print) };
+                    break;
+            }
 
             let canvas = $('print-canvas');
             let ctx = canvas.getContext('2d');
