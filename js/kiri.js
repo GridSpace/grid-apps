@@ -1266,7 +1266,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 } else if (typ === 'checkbox') {
                     uie.checked = val;
                 } else if (typ === 'select-one') {
-                    uie.innerHTML = '<option></option>';
+                    uie.innerHTML = '';
                     let source = uie.parentNode.getAttribute('source'),
                         list = settings[source] || lists[source],
                         chosen = null;
