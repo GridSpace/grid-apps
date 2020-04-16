@@ -107,6 +107,8 @@ let gs_kiri_fdm = exports;
         }
 
         function onSliceDone(slices) {
+            slices = slices.filter(slice => slice.tops.length);
+
             widget.slices = slices;
 
             if (!slices) return;

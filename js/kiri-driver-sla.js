@@ -59,7 +59,8 @@ let gs_kiri_sla = exports;
         SLICER.sliceWidget(widget, {
             height: process.slaSlice || 0.05
         }, function(slices) {
-            widget.slices = slices.filter(slice => slice.tops.length);
+            slices = slices.filter(slice => slice.tops.length);
+            widget.slices = slices;
             // reset for solids and support projections
             slices.forEach(function(slice) {
                 slice.invalidateFill();

@@ -849,7 +849,7 @@ let gs_kiri_slice = exports;
      * @param {Polygon[]} polys
      */
     PRO.addSolidFills = function(polys) {
-        this.solids.poly.appendAll(polys);
+        if (this.solids.poly) this.solids.poly.appendAll(polys);
     };
 
     /**
