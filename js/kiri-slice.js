@@ -709,9 +709,10 @@ let gs_kiri_slice = exports;
 
         scope._fill_finger = POLY.fingerprint(polys);
 
+        let skippable = type !== 'gyroid' && type !== 'linear';
         let miss = false;
         // if the layer below has the same fingerprint, we may be able to clone its infill
-        if (scope.fingerprintSame(down)) {
+        if (skippable && scope.fingerprintSame(down)) {
             // the fill fingerprint can slightly different because of solid projections
             if (down._fill_finger && POLY.fingerprintCompare(scope._fill_finger, down._fill_finger)) {
                 for (let i=0; i<tops.length; i++) {

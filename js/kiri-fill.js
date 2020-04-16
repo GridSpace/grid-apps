@@ -18,7 +18,8 @@ var gs_kiri_fill = exports;
             hex: fillHexFull,
             grid: fillGrid,
             gyroid: fillGyroid,
-            triangle: fillTriangle
+            triangle: fillTriangle,
+            linear: fillLinear
         };
 
     function fillHexFull(target) {
@@ -144,6 +145,32 @@ var gs_kiri_fill = exports;
                     target.emit(bx + tile_x - offset, by);
                     target.emit(bx, by + tile);
                 }
+            }
+        }
+    }
+
+    function fillLinear(target) {
+        let bounds = target.bounds();
+        let height = target.zHeight();
+        let span_x = bounds.max.x - bounds.min.x;
+        let span_y = bounds.max.y - bounds.min.y;
+        let density = target.density();
+        let offset = target.offset() / 2;
+        let tile = 1 + (1 - density);
+        let tile_xc = span_x / tile;
+        let tile_yc = span_y / tile;
+
+        if (target.zIndex() % 2 === 1) {
+            for (let tx=0; tx<=tile_xc; tx++) {
+                target.newline();
+                target.emit(bounds.min.y, tx * tile + bounds.min.x);
+                target.emit(bounds.max.y, tx * tile + bounds.min.x);
+            }
+        } else {
+            for (let ty=0; ty<=tile_yc; ty++) {
+                target.newline();
+                target.emit(ty * tile + bounds.min.y, bounds.min.x);
+                target.emit(ty * tile + bounds.min.y, bounds.max.x);
             }
         }
     }

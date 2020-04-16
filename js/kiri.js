@@ -128,7 +128,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             { name: "hex" },
             { name: "grid" },
             { name: "gyroid" },
-            { name: "triangle" }
+            { name: "triangle" },
+            { name: "linear" }
         ],
         units:[
             { name: "mm" },
