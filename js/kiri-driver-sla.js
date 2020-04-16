@@ -187,18 +187,37 @@ let gs_kiri_sla = exports;
             process = settings.process,
             output = print.output;
 
-        print.images.forEach(image => {
-            online(image.data, [image.data.buffer]);
+        print.images.forEach((image,index) => {
+            // online(image.data, [image.data.buffer]);
+            online({progress: (index/print.images.length)/2, data: image.data});
         });
+
+        let exp_func;
+
+        switch (device.deviceName) {
+            case 'Anycubic.Photon':
+                exp_func = generatePhoton;
+                break;
+            case 'Anycubic.Photon.S':
+                exp_func = generatePhotons;
+                break;
+        }
+
+        let file = exp_func(print, {
+            width: 2560,
+            height: 1440,
+            lines: print.images.map(i => i.data),
+            small: previewSmall.data,
+            large: previewLarge.data
+        }, progress => {
+            online({progress: progress/2 + 0.5});
+        });
+
         ondone({
             width:2560,
             height:1440,
-            small:previewSmall.data,
-            large:previewLarge.data
-        },[
-            previewSmall.data.buffer,
-            previewLarge.data.buffer
-        ]);
+            file:file
+        },[file]);
     };
 
     // runs in browser main
@@ -218,7 +237,6 @@ let gs_kiri_sla = exports;
                 if (!slice) {
                     return;
                 }
-                // let polys = slice.gatherTraces([]);
                 let polys = slice.solids.unioned;
                 polys.forEach(poly => {
                     layer.poly(poly, 0x888888, true, false);
@@ -267,11 +285,11 @@ let gs_kiri_sla = exports;
             switch (device.deviceName) {
                 case 'Anycubic.Photon':
                     download.innerText += " .photon";
-                    download.onclick = () => { download_photon(print) };
+                    download.onclick = () => { saveFile(API, done.file, ".photon") };
                     break;
                 case 'Anycubic.Photon.S':
                     download.innerText += " .photons";
-                    download.onclick = () => { download_photons(print) };
+                    download.onclick = () => { saveFile(API, done.file, ".photons") };
                     break;
             }
 
@@ -298,18 +316,25 @@ let gs_kiri_sla = exports;
         });
     }
 
-    function download_photon(print) {
+    function saveFile(API, file, ext) {
+        saveAs(
+            new Blob([file], { type: "application/octet-stream" }),
+            $('print-filename').value + ext);
+        API.modal.hide();
+    }
+
+    function generatePhoton(print, conf, progress) {
         let printset = print.settings,
             process = printset.process,
             device = printset.device,
-            width = print.sla.done.width,
-            height = print.sla.done.height,
-            layerCount = print.sla.lines.length,
+            width = conf.width,
+            height = conf.height,
+            layerCount = conf.lines.length,
             layerBytes = width * height,
-            small = print.sla.done.small,
-            large = print.sla.done.large;
+            small = conf.small,
+            large = conf.large;
 
-        let converted = print.sla.lines.map((line, index) => {
+        let converted = conf.lines.map((line, index) => {
             let count = line.length / 4;
             let bits = new Uint8Array(line.length / 4);
             let bitsDV = new DataView(bits.buffer);
@@ -319,6 +344,7 @@ let gs_kiri_sla = exports;
                 // defeat anti-aliasing for the moment
                 bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
             }
+            progress(index / conf.lines.length);
             return {
                 subs: [{
                     exposureTime: process.slaLayerOn,
@@ -400,39 +426,36 @@ let gs_kiri_sla = exports;
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], false);
             }
+            progress((l / layers.length) / 2 + 0.5);
         }
 
         filedat.view.setUint32(hirez, filedat.pos, true);
         writePhotonImage({
             width: 400,
             height: 300,
-            data: print.sla.done.large
+            data: conf.large
         }, filedat);
 
         filedat.view.setUint32(lorez, filedat.pos, true);
         writePhotonImage({
             width: 200,
             height: 125,
-            data: print.sla.done.small
+            data: conf.small
         }, filedat);
 
-        saveAs(
-            new Blob([filebuf], { type: "application/octet-stream" }),
-            $('print-filename').value + ".photon");
-
-        print.sla.API.modal.hide();
+        return filebuf;
     }
 
-    function download_photons(print) {
+    function generatePhotons(print, conf, progress) {
         let printset = print.settings,
             process = printset.process,
             device = printset.device,
-            width = print.sla.done.width,
-            height = print.sla.done.height,
-            layerCount = print.sla.lines.length,
+            width = conf.width,
+            height = conf.height,
+            layerCount = conf.lines.length,
             layerBytes = width * height;
 
-        let converted = print.sla.lines.map((line, index) => {
+        let converted = conf.lines.map((line, index) => {
             let count = line.length / 4;
             let bits = new Uint8Array(line.length / 4);
             let bitsDV = new DataView(bits.buffer);
@@ -442,6 +465,7 @@ let gs_kiri_sla = exports;
                 // defeat anti-aliasing for the moment
                 bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
             }
+            progress(index / conf.lines.length);
             return {
                 subs: [{
                     exposureTime: process.slaLayerOn,
@@ -491,16 +515,10 @@ let gs_kiri_sla = exports;
                 filedat.setUint8(filePos + j, sublayer[j], false);
             }
             filePos += numbytes;
+            progress((i / layerCount) / 2 + 0.5);
         }
 
-        saveAs(
-            new Blob([filebuf], { type: "application/octet-stream" }),
-            $('print-filename').value + ".photons");
-
-        print.sla.API.modal.hide();
-    }
-
-    function download_pws() {
+        return filebuf;
     }
 
     function encodeLayers(input, type) {

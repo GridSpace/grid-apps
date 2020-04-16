@@ -40,8 +40,10 @@ let gs_kiri_export = exports;
         if (currentPrint) {
             let lines = [];
             currentPrint.export(true, function(line) {
-                lines.push(line);
+                if (line.progress) API.show.progress(line.progress, "exporting");
+                if (line.data) lines.push(line.data);
             }, function(done) {
+                API.show.progress(0);
                 currentPrint.sla = { lines, done, API };
                 KIRI.driver.SLA.printDownload(currentPrint);
             });
