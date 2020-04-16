@@ -24,7 +24,10 @@ let gs_kiri_sla = exports;
             printRender
         },
         SLICER = KIRI.slicer,
-        newPoint = BASE.newPoint;
+        newPoint = BASE.newPoint,
+        preview,
+        previewSmall,
+        previewLarge;
 
     /**
      * DRIVER SLICE CONTRACT - runs in worker
@@ -53,14 +56,16 @@ let gs_kiri_sla = exports;
 
         let b64 = atob(currentSnap);
         let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
-        let img = new png.PNG().parse(bin);
-        console.log({img})
+        let img = new png.PNG().parse(bin, (err, data) => {
+            preview = img;
+            previewSmall = samplePNG(img, 200, 125);
+            previewLarge = samplePNG(img, 400, 300);
+        });
 
         SLICER.sliceWidget(widget, {
             height: process.slaSlice || 0.05
         }, function(slices) {
-            slices = slices.filter(slice => slice.tops.length);
-            widget.slices = slices;
+            widget.slices = slices.filter(slice => slice.tops.length);
             // reset for solids and support projections
             slices.forEach(function(slice) {
                 slice.invalidateFill();
@@ -69,22 +74,22 @@ let gs_kiri_sla = exports;
                 slice.isSolidFill = false;
             });
             let solidLayers = Math.round(process.slaShell / process.slaSlice);
-            forSlices(slices, 0.0, 0.2, (slice,index) => {
+            forSlices(slices, 0.1, 0.3, (slice,index) => {
                 if (process.slaShell) {
                     slice.doShells(2, 0, process.slaShell);
                 } else {
                     slice.doShells(1, 0);
                 }
             }, "slice");
-            forSlices(slices, 0.2, 0.4, (slice) => {
+            forSlices(slices, 0.3, 0.6, (slice) => {
                 slice.doDiff(0.00001, 0.005, true);
             }, "delta");
             if (solidLayers) {
-                forSlices(slices, 0.4, 0.5, (slice) => {
+                forSlices(slices, 0.6, 0.7, (slice) => {
                     slice.projectFlats(solidLayers);
                     slice.projectBridges(solidLayers);
                 }, "project");
-                forSlices(slices, 0.5, 0.6, (slice) => {
+                forSlices(slices, 0.7, 0.9, (slice) => {
                     slice.doSolidsFill(undefined, undefined, 0.001);
                     let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
                     let trims = slice.solids.trimmed || [];
@@ -93,7 +98,7 @@ let gs_kiri_sla = exports;
                     slice.solids.unioned = union;
                 }, "solid");
             } else {
-                forSlices(slices, 0.4, 0.6, (slice) => {
+                forSlices(slices, 0.6, 0.9, (slice) => {
                     slice.solids.unioned = slice.gatherTopPolys([]);
                 })
             }
@@ -185,8 +190,15 @@ let gs_kiri_sla = exports;
         print.images.forEach(image => {
             online(image.data, [image.data.buffer]);
         });
-
-        ondone({width:2560,height:1440});
+        ondone({
+            width:2560,
+            height:1440,
+            small:previewSmall.data,
+            large:previewLarge.data
+        },[
+            previewSmall.data.buffer,
+            previewLarge.data.buffer
+        ]);
     };
 
     // runs in browser main
@@ -268,7 +280,9 @@ let gs_kiri_sla = exports;
             width = print.sla.done.width,
             height = print.sla.done.height,
             layerCount = print.sla.lines.length,
-            layerBytes = width * height;
+            layerBytes = width * height,
+            small = print.sla.done.small,
+            large = print.sla.done.large;
 
         let converted = print.sla.lines.map((line, index) => {
             let count = line.length / 4;
@@ -289,7 +303,8 @@ let gs_kiri_sla = exports;
         });
 
         let coded = encodeLayers(converted, "photon");
-        let filebuf = new ArrayBuffer(3000 + coded.length + layerCount * 28);
+        let buflen = 3000 + coded.length + layerCount * 28 + small.byteLength + large.byteLength;
+        let filebuf = new ArrayBuffer(buflen);
         let filedat = new DataWriter(new DataView(filebuf));
         let printtime = (process.slaBaseLayers * process.slaBaseOn) +
                 (coded.layers.length - process.slaBaseLayers) * process.slaLayerOn;
@@ -322,31 +337,27 @@ let gs_kiri_sla = exports;
         filedat.writeU16(0x00ff, true); // light pwm bottom (TODO);
 
         filedat.view.setUint32(hirez, filedat.pos, true);
-        // write hirez preview header
-        filedat.writeU32(0, true); // res x
-        filedat.writeU32(0, true); // res y
-        filedat.writeU32(filedat.pos + 4, true); // data pos
-        filedat.writeU32(0, true); // data len
-        filedat.skip(16); // padding
-        // write hirez preview data
+        writePhotonImage({
+            width: 400,
+            height: 300,
+            data: print.sla.done.large
+        }, filedat);
 
         filedat.view.setUint32(lorez, filedat.pos, true);
-        // write lorez preview header
-        filedat.writeU32(0, true); // res x
-        filedat.writeU32(0, true); // res y
-        filedat.writeU32(filedat.pos + 4, true); // data pos
-        filedat.writeU32(0, true); // data len
-        filedat.skip(16); // padding
-        // write lorez preview data
+        writePhotonImage({
+            width: 200,
+            height: 125,
+            data: print.sla.done.small
+        }, filedat);
 
         let propstart = filedat.pos;
         filedat.view.setUint32(proppos, filedat.pos, true);
         // write print properties
-        filedat.writeF32(process.slaPeelDist, true); // default or base?
-        filedat.writeF32(process.slaPeelLift * 60 , true); // speed
-        filedat.writeF32(process.slaPeelDist, true); // default or base?
-        filedat.writeF32(process.slaPeelLift * 60 , true); // speed
-        filedat.writeF32(process.slaPeelDrop * 60, true); // speed
+        filedat.writeF32(process.slaBasePeelDist, true);
+        filedat.writeF32(process.slaBasePeelLiftRate * 60 , true);
+        filedat.writeF32(process.slaPeelDist, true);
+        filedat.writeF32(process.slaPeelLiftRate * 60 , true);
+        filedat.writeF32(process.slaPeelDropRate * 60, true);
         filedat.writeF32(0, true); // volume of used
         filedat.writeF32(0, true); // weight of used
         filedat.writeF32(0, true); // cost of used
@@ -365,23 +376,20 @@ let gs_kiri_sla = exports;
         let layerat = [];
         for (let l=0; l<layers.length; l++) {
             filedat.writeF32(process.slaSlice * l, true); // layer height
-            filedat.writeF32(l < process.slaBaseLayers ? process.slaBasOn : process.slaLayerOn, true);
-            filedat.writeF32(process.slaLayerOff, true);
+            filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOn : process.slaLayerOn, true);
+            filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOff : process.slaLayerOff, true);
             layerat.push(filedat.skip(4)); // rewrite later
-            filedat.writeU32(layers[l].length, true);
+            filedat.writeU32(layers[l].sublayers[0].length, true);
             filedat.skip(16); // padding
         }
         // write layer data
         for (let l=0; l<layers.length; l++) {
             filedat.view.setUint32(layerat[l], filedat.pos, true);
             let layer = layers[l].sublayers[0];
-            // console.log({l, of:layers.length, len:layer.length})
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], true);
             }
         }
-        // let buf = filebuf.byteLength, pos = filedat.pos;
-        // console.log({buf,pos,delta:buf-pos});
 
         saveAs(
             new Blob([filebuf], { type: "application/octet-stream" }),
@@ -558,6 +566,91 @@ let gs_kiri_sla = exports;
         }
         return bytes;
     }
+
+    function pixAt(png,x,y) {
+        let idx = (x + png.width * y) * 4;
+        let dat = png.data;
+        return [
+            dat[idx++],
+            dat[idx++],
+            dat[idx++],
+            dat[idx++]
+        ];
+    }
+
+    function averageBlock(png,x1,y1,x2,y2) {
+        let val = [0, 0, 0, 0], count = 0, x, y, z, v2;
+        for (x=x1; x<x2; x++) {
+            for (y=y1; y<y2; y++) {
+                v2 = pixAt(png,x,y);
+                for (z=0; z<4; z++) {
+                    val[z] += v2[z];
+                }
+                count++;
+            }
+        }
+        for (z=0; z<4; z++) {
+            val[z] = Math.abs(val[z] / count);
+        }
+        return val;
+    };
+
+    function samplePNG(png, width, height) {
+        let th = width, tw = height,
+            ratio = png.width / png.height,
+            buf = new Uint8Array(th * tw * 4),
+            div, xoff, yoff, dx, ex, dy, ey, bidx, pixval;
+
+        if (ratio > 4/3) {
+            div = png.height / tw;
+            xoff = Math.round((png.width - (th * div)) / 2);
+            yoff = 0;
+        } else {
+            div = png.width / th;
+            xoff = 0;
+            yoff = Math.round((png.height - (tw * div)) / 2);
+        }
+
+        for (let y=0; y<tw; y++) {
+            dy = Math.round(y * div + yoff);
+            if (dy < 0 || dy > png.height) continue;
+            ey = Math.round((y+1) * div + yoff);
+            for (let x=0; x<th; x++) {
+                dx = Math.round(x * div + xoff);
+                if (dx < 0 || dx > png.width) continue;
+                ex = Math.round((x+1) * div + xoff);
+                bidx = (y * th + x) * 4;
+                pixval = averageBlock(png,dx,dy,ex,ey);
+                buf[bidx+0] = pixval[0];
+                buf[bidx+1] = pixval[1];
+                buf[bidx+2] = pixval[2];
+                buf[bidx+3] = pixval[3];
+            }
+        }
+
+        return {width, height, data:buf, png};
+    }
+
+    function writePhotonImage(preview, writer) {
+        let data = new Uint8Array(preview.data), len = data.byteLength;
+        writer.writeU32(preview.width, true);
+        writer.writeU32(preview.height, true);
+        let hpos = writer.skip(4);
+        writer.writeU32(len/2, true);
+        writer.view.setUint32(hpos, writer.pos, true);
+        let pos = 0;
+        while (pos < len) {
+            let r = data[pos++],
+                g = data[pos++],
+                b = data[pos++],
+                a = data[pos++],
+                v = (((r/4)&0x1f) << 11) |
+                    (((g/4)&0x1f) <<  6) |
+                    (((b/4)&0x1f) <<  0) ;
+            writer.writeU16(v, true);
+        }
+    }
+
 })();
 
 class DataWriter {

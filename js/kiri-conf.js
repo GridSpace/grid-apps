@@ -302,13 +302,16 @@ let gs_kiri_conf = exports;
                     slaShell: 1.00,
                     slaOpenTop: false,
                     slaOpenBase: false,
+                    slaLayerOff: 0.1,
                     slaLayerOn: 8,
-                    slaLayerOff: 1,
-                    slaBaseLayers: 8,
-                    slaBaseOn: 90,
                     slaPeelDist: 6,
-                    slaPeelLift: 3,
-                    slaPeelDrop: 3
+                    slaPeelLiftRate: 3,
+                    slaPeelDropRate: 3,
+                    slaBaseLayers: 8,
+                    slaBaseOff: 0.2,
+                    slaBaseOn: 90,
+                    slaBasePeelDist: 6,
+                    slaBasePeelLiftRate: 3,
                 }
             },
             cam:{
