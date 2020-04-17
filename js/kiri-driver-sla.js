@@ -63,7 +63,8 @@ let gs_kiri_sla = exports;
         });
 
         SLICER.sliceWidget(widget, {
-            height: process.slaSlice || 0.05
+            height: process.slaSlice || 0.05,
+            add: true
         }, function(slices) {
             widget.slices = slices.filter(slice => slice.tops.length);
             // reset for solids and support projections
@@ -163,11 +164,12 @@ let gs_kiri_sla = exports;
                         ctx.fill();
                         count++;
                     });
+                } else {
+                    console.log({no_slice_at: index})
                 }
             });
             output.push(ctx.getImageData(0,0,height,width));
             update(index / layermax);
-
             if (count === 0) break;
         }
 
@@ -229,7 +231,6 @@ let gs_kiri_sla = exports;
 
         for (let index=0; ; index++) {
             let layer = KIRI.newLayer(print.group);
-            print.printView.push(layer);
 
             let count = 0;
             widgets.forEach(widget => {
@@ -249,8 +250,10 @@ let gs_kiri_sla = exports;
                 // TODO fix with contract for exposing layer count
                 // hack uses expected gcode output array in print object
                 print.output = print.printView;
-                break;
+                return;
             }
+
+            print.printView.push(layer);
         }
     }
 

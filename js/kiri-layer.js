@@ -2,14 +2,14 @@
 
 "use strict";
 
-var gs_kiri_layer = exports;
+let gs_kiri_layer = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
     if (self.kiri.Layer) return;
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         LP = Layer.prototype,
         mcache = {};
 
@@ -17,7 +17,7 @@ var gs_kiri_layer = exports;
     KIRI.newLayer = function(view) { return new Layer(view) };
 
     function materialFor(color) {
-        var m = mcache[color];
+        let m = mcache[color];
         if (!m) {
             m = mcache[color] = new THREE.LineBasicMaterial({
                 fog: false,
@@ -33,12 +33,12 @@ var gs_kiri_layer = exports;
     }
 
     function addPoly(arr, poly, deep, open) {
-        var points = poly.points,
+        let points = poly.points,
             len = points.length;
 
         if (len < 2) return;
 
-        var doOpen = (open === undefined || open === null) ? poly.isOpen() : open,
+        let doOpen = (open === undefined || open === null) ? poly.isOpen() : open,
             end = doOpen ? len - 1 : len,
             last = toVector(points[0]),
             i = 0;
@@ -75,13 +75,13 @@ var gs_kiri_layer = exports;
     };
 
     LP.add = function(color, obj) {
-        var ca = this.bycolor[color];
+        let ca = this.bycolor[color];
         if (!ca) ca = this.bycolor[color] = [];
         ca.push(obj);
     };
 
     LP.poly = function(poly, color, deep, open) {
-        var layer = this;
+        let layer = this;
         if (Array.isArray(poly)) {
             poly.forEach(function(p) { layer.poly(p, color, deep, open) });
         } else {
@@ -91,7 +91,7 @@ var gs_kiri_layer = exports;
     };
 
     LP.points = function(points, color, size, opacity) {
-        var layer = this,
+        let layer = this,
             sz = size/2;
         points.forEach(function(p) {
             layer.lines([
@@ -135,15 +135,16 @@ var gs_kiri_layer = exports;
         if (this.group) this.view.remove(this.group);
         this.group = this.view.newGroup();
 
-        var bycolor = this.bycolor,
+        let bycolor = this.bycolor,
             key, added;
 
         for (key in bycolor) {
             if (!bycolor.hasOwnProperty(key)) continue;
 
-            var geo = new THREE.Geometry(),
+            let geo = new THREE.Geometry(),
                 arr = geo.vertices,
                 mat = materialFor(parseInt(key));
+
             added = bycolor[key];
 
             added.forEach(function(obj) {

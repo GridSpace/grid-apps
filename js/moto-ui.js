@@ -388,7 +388,7 @@ var gs_moto_ui = exports;
             size = options ? options.size || 5 : 5,
             height = options ? options.height : 0,
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
-            action = inputAction;
+            action = options.action || inputAction;
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);

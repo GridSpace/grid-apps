@@ -122,6 +122,8 @@ var gs_kiri_slicer = exports;
             i, j = 0, k, p1, p2, p3, px,
             CPRO = KIRI.driver.CAM.process;
 
+        if (options.add) zMax += zInc;
+
         function countZ(z) {
             z = UTIL.round(z,5);
             zList[z] = (zList[z] || 0) + 1;

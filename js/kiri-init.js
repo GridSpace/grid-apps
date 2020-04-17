@@ -652,6 +652,19 @@ var gs_kiri_init = exports;
         API.event.settings();
     }
 
+    function updateDeviceName() {
+        console.log('update device name');
+        let newname = UI.deviceName.value,
+            selected = API.device.get(),
+            devs = settings().devices;
+        if (newname !== selected) {
+            devs[newname] = devs[selected];
+            delete devs[selected];
+            UI.deviceSave.onclick();
+            selectDevice(newname);
+        }
+    }
+
     function renderDevices(devices) {
         UI.devices.onclick = UC.hidePop;
         UC.hidePop();
@@ -677,15 +690,9 @@ var gs_kiri_init = exports;
 
         UI.deviceClose.onclick = API.dialog.hide;
         UI.deviceSave.onclick = function() {
-            let newname = UI.deviceName.value
-            if (newname !== selected) {
-                devs[newname] = devs[selected];
-                delete devs[selected];
-            }
             API.function.clear();
             API.conf.save();
             showDevices();
-            selectDevice(newname);
         };
         UI.deviceAdd.onclick = function() {
             API.function.clear();
@@ -1146,7 +1153,7 @@ var gs_kiri_init = exports;
             stockHeight:        $('stock-width'),
 
             device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
-            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true}),
+            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true, action:updateDeviceName}),
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toInt}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toInt}),
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toInt, modes:FDM_SLA}),
