@@ -313,7 +313,7 @@ var gs_kiri_init = exports;
                 API.function.slice();
                 break;
             case cca('p'): // prepare print
-                if (API.mode.get() !== 'SLA') {
+                if (!API.conf.isSliceSkipped()) {
                     API.function.print();
                 }
                 break;
@@ -1473,6 +1473,9 @@ var gs_kiri_init = exports;
 
             slaFirst:            UC.newGroup('first layer', null, {modes:SLA, group:"sla-first", expert:true}),
             slaFirstOffset:      UC.newInput('offset', {title:'first layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
+
+            slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-first"}),
+            slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
         });
 
         if (!lang_set) {

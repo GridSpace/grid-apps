@@ -315,6 +315,7 @@ let gs_kiri_conf = exports;
                     slaBaseOn: 30,
                     slaBasePeelDist: 6,
                     slaBasePeelLiftRate: 1.5,
+                    slaFillDensity: 0,
                     slaFirstOffset: 0
                 }
             },

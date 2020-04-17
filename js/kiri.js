@@ -158,7 +158,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             update: updateSettings,
             restore: restoreSettings,
             export: settingsExport,
-            import: settingsImport
+            import: settingsImport,
+            isSliceSkipped: () => { return skipSliceView }
         },
         color,
         const: {

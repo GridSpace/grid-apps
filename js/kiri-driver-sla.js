@@ -112,11 +112,52 @@ let gs_kiri_sla = exports;
                     slice.solids.unioned = slice.gatherTopPolys([]);
                 })
             }
+            if (process.slaFillDensity) {
+                forSlices(slices, 0.9, 1.0, (slice) => {
+                    fillPolys(slice, settings);
+                });
+            }
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.5);
         });
     };
+
+    function fillPolys(slice, settings) {
+        let process = settings.process,
+            device = settings.device,
+            density = process.slaFillDensity,
+            polys = slice.solids.unioned,
+            bounds = settings.bounds,
+            width = bounds.max.x - bounds.min.x,
+            depth = bounds.max.y - bounds.min.y,
+            fill = [];
+
+        for (let x=0; x<5; x++) {
+            fill.push(
+                BASE.newPolygon().centerRectangle({
+                    x: x * (width/20) - (width/2),
+                    y: 0,
+                    z: slice.z
+                }, width/20, depth/20)
+            );
+        }
+        for (let y=0; y<5; y++) {
+            fill.push(
+                BASE.newPolygon().centerRectangle({
+                    x: 0,
+                    y: y * (depth/20) - (depth/2),
+                    z: slice.z
+                }, width/20, depth/20)
+            );
+        }
+
+        let clip = POLY.trimTo(fill, slice.tops.map(t => t.poly));
+        let union = slice.solids.unioned.appendAll(clip);
+
+        slice.solids.unioned = POLY.union(union);
+        // console.log(slice.index, clip, union, slice.solids.unioned);
+    }
 
     /**
      * DRIVER PRINT CONTRACT - runs in worker
@@ -249,7 +290,7 @@ let gs_kiri_sla = exports;
                 }
                 let polys = slice.solids.unioned;
                 polys.forEach(poly => {
-                    layer.poly(poly, 0, true);
+                    layer.poly(poly, 0x010101, true);
                     layer.solid(poly, 0x00bbee);
                     count++;
                 });
@@ -480,12 +521,10 @@ let gs_kiri_sla = exports;
                 bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
             }
             progress(index / conf.lines.length);
-            return {
-                subs: [{
-                    exposureTime: process.slaLayerOn,
-                    data: bits
-                }]
-            };
+            return { subs: [{
+                exposureTime: process.slaLayerOn,
+                data: bits
+            }] };
         });
 
         let coded = encodeLayers(converted, "photons");
@@ -536,8 +575,7 @@ let gs_kiri_sla = exports;
     }
 
     function encodeLayers(input, type) {
-        let layers = [],
-            length = 0;
+        let layers = [], length = 0;
         for (let index = 0; index < input.length; index++) {
             let subs = input[index].subs,
                 sublayers = [],
@@ -555,10 +593,7 @@ let gs_kiri_sla = exports;
                 sublayers
             });
         }
-        return {
-            length,
-            layers
-        };
+        return { length, layers };
     }
 
     function rleEncode(data, type) {
@@ -589,7 +624,6 @@ let gs_kiri_sla = exports;
 
     function rleByte(color, length, type) {
         switch (type) {
-            case 'pws':
             case 'photon':
                 return (length & 0x7f) | ((color << 7) & 0x80);
             case 'photons':
