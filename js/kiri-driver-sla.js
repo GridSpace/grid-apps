@@ -71,6 +71,11 @@ let gs_kiri_sla = exports;
             add: !process.slaOpenTop
         }, function(slices) {
             widget.slices = slices.filter(slice => slice.tops.length);
+            if (process.slaOpenTop) {
+                // with closed top, filter out any empty above slices
+                // that will generate a diff producing a solid projection
+                slices = widget.slices;
+            }
             // reset for solids and support projections
             slices.forEach(function(slice) {
                 slice.invalidateFill();
@@ -244,7 +249,7 @@ let gs_kiri_sla = exports;
                 }
                 let polys = slice.solids.unioned;
                 polys.forEach(poly => {
-                    layer.poly(poly, 0x222222, true);
+                    layer.poly(poly, 0, true);
                     layer.solid(poly, 0x00bbee);
                     count++;
                 });
