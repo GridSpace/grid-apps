@@ -152,7 +152,7 @@ var gs_moto_ui = exports;
         addModeControls(row, opt);
         lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
-        groupName = name;
+        groupName = group;
         groupShow[group] = popper ? SDB[dbkey] === 'true' : SDB[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== a && ev.target !== row) {

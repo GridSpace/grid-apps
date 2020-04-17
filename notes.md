@@ -31,6 +31,8 @@
 * `P` disable infill fingerprinting for gyroids
 * `P` refactor thin fill to use outline and inside poly normal dist to self
 
+# SLA
+
 # CAM
 
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
@@ -67,3 +69,4 @@
 * http://lcamtuf.coredump.cx/gcnc/full/
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
+* http://photon.chrisgraf.de/

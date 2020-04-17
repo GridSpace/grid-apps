@@ -1064,7 +1064,7 @@ var gs_kiri_init = exports;
             container = $('container'),
             welcome = $('welcome'),
             controller = settings().controller,
-            compact = controller.compact || SETUP.compact,
+            compact = SETUP.compact || controller.compact,
             dark = controller.dark;
 
         WIN.addEventListener("resize", API.dialog.update);
