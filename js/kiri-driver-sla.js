@@ -41,6 +41,10 @@ let gs_kiri_sla = exports;
         let process = settings.process,
             device = settings.device;
 
+        if (!self.OffscreenCanvas) {
+            return ondone("browser lacks support for OffscreenCanvas",true);
+        }
+
         // calculate % complete and call onupdate()
         function doupdate(slices, index, from, to, msg) {
             onupdate(0.5 + (from + ((index / slices.length) * (to - from))) * 0.5, msg);
@@ -64,7 +68,7 @@ let gs_kiri_sla = exports;
 
         SLICER.sliceWidget(widget, {
             height: process.slaSlice || 0.05,
-            add: true
+            add: !process.slaOpenTop
         }, function(slices) {
             widget.slices = slices.filter(slice => slice.tops.length);
             // reset for solids and support projections
@@ -83,7 +87,7 @@ let gs_kiri_sla = exports;
                 }
             }, "slice");
             forSlices(slices, 0.3, 0.6, (slice) => {
-                slice.doDiff(0.00001, 0.005, true);
+                slice.doDiff(0.00001, 0.005, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 0.6, 0.7, (slice) => {

@@ -812,6 +812,18 @@ var gs_kiri_cam = exports;
             shellFinish,
             facePolys;
 
+        if (settings.stock.x < bounds.max.x - bounds.min.x) {
+            return ondone('stock too small for part. disable or use offset stock');
+        }
+
+        if (settings.stock.y < bounds.max.y - bounds.min.y) {
+            return ondone('stock too small for part. disable or use offset stock');
+        }
+
+        if (settings.stock.z < bounds.max.z - bounds.min.z) {
+            return ondone('stock too small for part. disable or use offset stock');
+        }
+
         if (sliceDepth <= 0.05) {
             return ondone(`invalid slice depth (${sliceDepth.toFixed(2)} ${unitsName})`);
         }

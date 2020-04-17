@@ -21,9 +21,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         DOC     = self.document,
         LOC     = self.location,
         HOST    = LOC.host.split(':'),
-        LOCAL   = self.debug,
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
+        LOCAL   = self.debug && !SETUP.remote,
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
@@ -60,7 +60,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         topZ = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
-        grouping = false;
+        grouping = false,
+        skipSliceView = false;
 
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     DBUG.enable();
@@ -215,7 +216,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             get_id: function() { return MODE },
             get: getMode,
             set: setMode,
-            switch: switchMode
+            switch: switchMode,
+            set_expert: setExpert
         },
         print: {
             get: function() { return currentPrint },
@@ -638,9 +640,8 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function preparePrint(callback) {
-        let isSLA = MODE === MODES.SLA,
-            tpFactor = isSLA ? 0.5 : 1,
-            tpBase = isSLA ? 0.5 : 0;
+        let tpFactor = skipSliceView ? 0.5 : 1,
+            tpBase = skipSliceView ? 0.5 : 0;
 
         // kick off slicing it hasn't been done already
         for (let i=0; i < WIDGETS.length; i++) {
@@ -665,7 +666,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else if (!isSLA) {
+        } else if (!skipSliceView) {
             setOpacity(color.preview_opacity);
         }
 
@@ -676,7 +677,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         }, function() {
             setProgress(0);
 
-            if (isSLA) {
+            if (skipSliceView) {
                 setOpacity(0);
             }
 
@@ -738,8 +739,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             countdown = WIDGETS.length,
             preserveMax = API.var.layer_max,
             preserveLayer = API.var.layer_at,
-            isSLA = MODE === MODES.SLA,
-            tpFactor = isSLA ? 0.5 : 1,
+            tpFactor = skipSliceView ? 0.5 : 1,
             totalProgress,
             track = {};
 
@@ -760,7 +760,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
                 let mark = UTIL.time();
-                if (!isSLA) {
+                if (!skipSliceView) {
                     // on done
                     widget.render(renderMode, MODE === MODES.CAM);
                     // clear wireframe
@@ -782,8 +782,10 @@ self.kiri.copyright = exports.COPYRIGHT;
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    if (isSLA) {
-                        preparePrint(callback);
+                    if (skipSliceView) {
+                        if (!error) {
+                            preparePrint(callback);
+                        }
                     } else {
                         setProgress(0);
                         showSlices(preserveLayer);
@@ -1851,6 +1853,11 @@ self.kiri.copyright = exports.COPYRIGHT;
         UI.layerView.style.display = bool ? 'flex' : 'none';
     }
 
+    function setExpert(bool) {
+        UC.setExpert(UI.expert.checked = control.expert = bool);
+        updateSkipSliceView();
+    }
+
     function getMode() {
         return settings.mode;
     }
@@ -1889,20 +1896,25 @@ self.kiri.copyright = exports.COPYRIGHT;
         UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
         UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
         UI.mode.style.display = lock ? 'none' : '';
-        UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
         API.space.restore(null, true);
-        // if (MODE !== MODES.FDM) platform.layout();
         if (then) then();
         triggerSettingsEvent();
         platformUpdateSelected();
         updateFields();
+        updateSkipSliceView();
         if (settings.device.new) {
             API.show.devices();
         }
+    }
+
+    function updateSkipSliceView() {
+        skipSliceView = MODE === MODES.SLA &&
+            (!LOCAL || settings.controller.expert !== LOCAL);
+        UI.modePreview.style.display = skipSliceView ? 'none' : '';
     }
 
     function currentDeviceName() {

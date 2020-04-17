@@ -103,7 +103,7 @@ var gs_kiri_init = exports;
         if (isDark !== control.dark) {
             LOC.reload();
         }
-        UC.setExpert(control.expert);
+        API.mode.set_expert(control.expert);
     }
 
     function onLayerToggle() {
