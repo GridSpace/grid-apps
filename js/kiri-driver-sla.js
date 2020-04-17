@@ -112,7 +112,7 @@ let gs_kiri_sla = exports;
                     slice.solids.unioned = slice.gatherTopPolys([]);
                 })
             }
-            if (process.slaFillDensity) {
+            if (process.slaFillDensity && process.slaShell) {
                 forSlices(slices, 0.9, 1.0, (slice) => {
                     fillPolys(slice, settings);
                 });
@@ -126,37 +126,53 @@ let gs_kiri_sla = exports;
     function fillPolys(slice, settings) {
         let process = settings.process,
             device = settings.device,
-            density = process.slaFillDensity,
             polys = slice.solids.unioned,
             bounds = settings.bounds,
             width = bounds.max.x - bounds.min.x,
             depth = bounds.max.y - bounds.min.y,
-            fill = [];
+            max = Math.max(width,depth),
+            seq = Math.round(process.slaFillLine / process.slaSlice),
+            linew = process.slaFillLine,
+            units_w = (width / linew) * process.slaFillDensity,
+            units_d = (depth / linew) * process.slaFillDensity,
+            step_x = width / units_w,
+            step_y = depth / units_d,
+            start_x = -(width / 2),
+            start_y = -(depth / 2),
+            end_x = width / 2,
+            end_y = depth / 2,
+            fill = []
+            ;
 
-        for (let x=0; x<5; x++) {
+        let seq_i = Math.floor(slice.index / seq);
+
+        if (seq_i % 4 !== 2)
+        for (let x=start_x; x<end_x; x += step_x) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
-                    x: x * (width/20) - (width/2),
+                    x: x + step_x/2,
                     y: 0,
                     z: slice.z
-                }, width/20, depth/20)
+                }, linew, depth)
             );
         }
-        for (let y=0; y<5; y++) {
+
+        if (seq_i % 4 !== 0)
+        for (let y=start_y; y<end_y; y += step_y) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
                     x: 0,
-                    y: y * (depth/20) - (depth/2),
+                    y: y + step_y/2,
                     z: slice.z
-                }, width/20, depth/20)
+                }, width, linew)
             );
         }
 
-        let clip = POLY.trimTo(fill, slice.tops.map(t => t.poly));
-        let union = slice.solids.unioned.appendAll(clip);
+        fill = POLY.union(fill);
+        fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
+        fill = POLY.union(slice.solids.unioned.appendAll(fill));
 
-        slice.solids.unioned = POLY.union(union);
-        // console.log(slice.index, clip, union, slice.solids.unioned);
+        slice.solids.unioned = fill;
     }
 
     /**

@@ -1289,7 +1289,7 @@ var gs_kiri_init = exports;
 
             layers:        UC.setGroup($("layers")),
             layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
-            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER_SLA}),
+            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
             layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:CAM}),
             layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
             layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
@@ -1301,7 +1301,7 @@ var gs_kiri_init = exports;
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
             layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
-            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle),
+            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
 
             settingsGroup: UC.newGroup(LANG.se_menu, control, {region:"right"}),
             settingsTable: UC.newTableRow([
@@ -1476,6 +1476,7 @@ var gs_kiri_init = exports;
 
             slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-first"}),
             slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
+            slaFillLine:         UC.newInput('line width', {title:'hatch line width\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
         });
 
         if (!lang_set) {
