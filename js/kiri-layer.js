@@ -16,10 +16,17 @@ let gs_kiri_layer = exports;
     KIRI.Layer = Layer;
     KIRI.newLayer = function(view) { return new Layer(view) };
 
-    function materialFor(color) {
+    function materialFor(color, mesh, linewidth) {
         let m = mcache[color];
         if (!m) {
-            m = mcache[color] = new THREE.LineBasicMaterial({
+            m = mcache[color] = mesh ? new THREE.MeshPhongMaterial({
+                specular: 0x181818,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.15,
+                color: color,
+                side: THREE.DoubleSide
+            }) : new THREE.LineBasicMaterial({
                 fog: false,
                 color: color,
                 linewidth: 1
@@ -55,18 +62,29 @@ let gs_kiri_layer = exports;
         }
     }
 
+    function addSolid(arr, poly) {
+        let faces = poly.earcut();
+        faces.forEach(p => {
+            p.forEachPoint(p => {
+                arr.push(p.x, p.y, p.z);
+            });
+        });
+    }
+
     /**
      * @param {THREE.Group} view
      */
     function Layer(view) {
         this.changed = false;
         this.group = null;
+        this.solids = null;
         this.view = view;
         this.bycolor = {};
     };
 
     LP.setVisible = function(vis) {
         if (this.group) this.group.visible = vis;
+        if (this.solids) this.solids.visible = vis;
     };
 
     LP.clear = function() {
@@ -88,6 +106,11 @@ let gs_kiri_layer = exports;
             this.add(color, {poly:poly, deep:deep, open:open});
             this.changed = true;
         }
+    };
+
+    LP.solid = function(poly, color) {
+        this.add(color, {solid: poly});
+        this.changed = true;
     };
 
     LP.points = function(points, color, size, opacity) {
@@ -128,6 +151,32 @@ let gs_kiri_layer = exports;
     LP.lines = function(points, color) {
         this.add(color, {lines:points});
         this.changed = true;
+    };
+
+    LP.renderSolid = function() {
+        if (!(this.view)) return;
+        if (this.solids) this.view.remove(this.solids);
+        this.solids = this.view.newGroup();
+
+        let bycolor = this.bycolor;
+
+        for (let key in bycolor) {
+            if (!bycolor.hasOwnProperty(key)) continue;
+
+            let arr = [], mat = materialFor(parseInt(key), true);
+
+            bycolor[key].forEach(function(obj) {
+                if (obj.solid) {
+                    addSolid(arr, obj.solid);
+                }
+            });
+
+            if (arr.length > 0) {
+                let geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(arr.toFloat32(), 3));
+                this.solids.add(new THREE.Mesh(geo, mat));
+            }
+        }
     };
 
     LP.render = function() {

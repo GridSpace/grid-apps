@@ -638,6 +638,10 @@ self.kiri.copyright = exports.COPYRIGHT;
     }
 
     function preparePrint(callback) {
+        let isSLA = MODE === MODES.SLA,
+            tpFactor = isSLA ? 0.5 : 1,
+            tpBase = isSLA ? 0.5 : 0;
+
         // kick off slicing it hasn't been done already
         for (let i=0; i < WIDGETS.length; i++) {
             if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
@@ -661,16 +665,21 @@ self.kiri.copyright = exports.COPYRIGHT;
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else {
+        } else if (!isSLA) {
             setOpacity(color.preview_opacity);
         }
 
         currentPrint = kiri.newPrint(settings, WIDGETS);
         currentPrint.setup(true, function(update, status) {
             // on update
-            setProgress(update, status);
+            setProgress(tpBase + update * tpFactor, status);
         }, function() {
             setProgress(0);
+
+            if (isSLA) {
+                setOpacity(0);
+            }
+
             currentPrint.render();
 
             // on done
@@ -729,6 +738,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             countdown = WIDGETS.length,
             preserveMax = API.var.layer_max,
             preserveLayer = API.var.layer_at,
+            isSLA = MODE === MODES.SLA,
+            tpFactor = isSLA ? 0.5 : 1,
             totalProgress,
             track = {};
 
@@ -749,12 +760,14 @@ self.kiri.copyright = exports.COPYRIGHT;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
                 let mark = UTIL.time();
-                // on done
-                widget.render(renderMode, MODE === MODES.CAM);
-                // clear wireframe
-                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
-                widget.setColor(color.deselected);
+                if (!isSLA) {
+                    // on done
+                    widget.render(renderMode, MODE === MODES.CAM);
+                    // clear wireframe
+                    widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
+                    widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
+                    widget.setColor(color.deselected);
+                }
                 // update UI info
                 if (sliced) {
                     // update segment time
@@ -769,11 +782,15 @@ self.kiri.copyright = exports.COPYRIGHT;
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    setProgress(0);
-                    showSlices(preserveLayer);
-                    setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
-                    if (callback && typeof callback === 'function') {
-                        callback();
+                    if (isSLA) {
+                        preparePrint(callback);
+                    } else {
+                        setProgress(0);
+                        showSlices(preserveLayer);
+                        setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
+                        if (callback && typeof callback === 'function') {
+                            callback();
+                        }
                     }
                 }
                 // update slider window
@@ -800,7 +817,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 forAllWidgets(function(w) {
                     totalProgress += (track[w.id] || 0);
                 });
-                setProgress(totalProgress / WIDGETS.length, msg);
+                setProgress((totalProgress / WIDGETS.length) * tpFactor, msg);
             }, true);
         });
     }
@@ -1808,8 +1825,10 @@ self.kiri.copyright = exports.COPYRIGHT;
                 showModeActive(UI.modeSlice);
                 break;
             case VIEWS.PREVIEW:
-                showLayerView(true);
-                showModeActive(UI.modePreview);
+                // if (MODE !== MODES.SLA) {
+                    showLayerView(true);
+                    showModeActive(UI.modePreview);
+                // }
                 break;
             default:
                 DBUG.log("invalid view mode: "+mode);
@@ -1870,6 +1889,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
         UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
         UI.mode.style.display = lock ? 'none' : '';
+        UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
         UI.modeTable.style.display = lock ? 'none' : '';
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';

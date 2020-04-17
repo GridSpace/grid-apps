@@ -313,7 +313,9 @@ var gs_kiri_init = exports;
                 API.function.slice();
                 break;
             case cca('p'): // prepare print
-                API.function.print();
+                if (API.mode.get() !== 'SLA') {
+                    API.function.print();
+                }
                 break;
             case cca('P'): // position widget
                 positionSelection();
@@ -653,7 +655,6 @@ var gs_kiri_init = exports;
     }
 
     function updateDeviceName() {
-        console.log('update device name');
         let newname = UI.deviceName.value,
             selected = API.device.get(),
             devs = settings().devices;

@@ -240,10 +240,12 @@ let gs_kiri_sla = exports;
                 }
                 let polys = slice.solids.unioned;
                 polys.forEach(poly => {
-                    layer.poly(poly, 0x888888, true, false);
+                    layer.poly(poly, 0x222222, true);
+                    layer.solid(poly, 0x00bbee);
                     count++;
                 });
             });
+            layer.renderSolid();
             layer.render();
 
             if (count === 0) {
