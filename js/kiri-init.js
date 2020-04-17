@@ -1064,7 +1064,7 @@ var gs_kiri_init = exports;
             container = $('container'),
             welcome = $('welcome'),
             controller = settings().controller,
-            compact = controller.compact,
+            compact = controller.compact || SETUP.compact,
             dark = controller.dark;
 
         WIN.addEventListener("resize", API.dialog.update);
@@ -1263,7 +1263,7 @@ var gs_kiri_init = exports;
                 ]
             ]),
 
-            workspace: UC.newGroup(LANG.ws_menu),
+            workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
             wsTable: UC.newTableRow([
                 [
                     UI.saveButton =
@@ -1271,7 +1271,7 @@ var gs_kiri_init = exports;
                 ],[
                     UC.newButton(LANG.ws_cler, API.space.clear)
                 ]
-            ]),
+            ], {modes:ALL, expert:true}),
 
             layout:        UC.newGroup(LANG.op_menu),
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
@@ -1615,6 +1615,8 @@ var gs_kiri_init = exports;
             UC.hidePoppers();
             API.dialog.show("catalog");
         };
+
+        $('cache-close').onclick = API.dialog.hide;
 
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;

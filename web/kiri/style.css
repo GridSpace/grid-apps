@@ -79,6 +79,15 @@ input[type=range]::-moz-focus-outer {
     font-size: 18px;
     margin: 4px;
 }
+#localCache {
+    border-bottom: 1px solid #ddd !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 4px;
+}
+#localCache button {
+    position: absolute;
+    right: 0;
+}
 #widget-info {
     text-align: center;
     position: fixed;
