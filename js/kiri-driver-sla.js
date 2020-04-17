@@ -27,7 +27,8 @@ let gs_kiri_sla = exports;
         newPoint = BASE.newPoint,
         preview,
         previewSmall,
-        previewLarge;
+        previewLarge,
+        fill_cache;
 
     /**
      * DRIVER SLICE CONTRACT - runs in worker
@@ -47,10 +48,10 @@ let gs_kiri_sla = exports;
 
         // calculate % complete and call onupdate()
         function doupdate(slices, index, from, to, msg) {
-            onupdate(0.5 + (from + ((index / slices.length) * (to - from))) * 0.5, msg);
+            onupdate(0.25 + (from + ((index / slices.length) * (to - from))) * 0.75, msg);
         }
 
-        // for each slice, performe a function and call doupdate()
+        // for each slice, perform a function and call doupdate()
         function forSlices(slices, from, to, fn, msg) {
             slices.forEach(function(slice,index) {
                 fn(slice,index);
@@ -84,22 +85,22 @@ let gs_kiri_sla = exports;
                 slice.isSolidFill = false;
             });
             let solidLayers = Math.round(process.slaShell / process.slaSlice);
-            forSlices(slices, 0.1, 0.3, (slice,index) => {
+            forSlices(slices, 0.05, 0.1, (slice,index) => {
                 if (process.slaShell) {
                     slice.doShells(2, 0, process.slaShell);
                 } else {
                     slice.doShells(1, 0);
                 }
             }, "slice");
-            forSlices(slices, 0.3, 0.6, (slice) => {
+            forSlices(slices, 0.1, 0.2, (slice) => {
                 slice.doDiff(0.00001, 0.005, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
-                forSlices(slices, 0.6, 0.7, (slice) => {
+                forSlices(slices, 0.2, 0.3, (slice) => {
                     slice.projectFlats(solidLayers);
                     slice.projectBridges(solidLayers);
                 }, "project");
-                forSlices(slices, 0.7, 0.9, (slice) => {
+                forSlices(slices, 0.3, 0.4, (slice) => {
                     slice.doSolidsFill(undefined, undefined, 0.001);
                     let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
                     let trims = slice.solids.trimmed || [];
@@ -108,18 +109,19 @@ let gs_kiri_sla = exports;
                     slice.solids.unioned = union;
                 }, "solid");
             } else {
-                forSlices(slices, 0.6, 0.9, (slice) => {
+                forSlices(slices, 0.2, 0.4, (slice) => {
                     slice.solids.unioned = slice.gatherTopPolys([]);
-                })
+                }, "solid");
             }
             if (process.slaFillDensity && process.slaShell) {
-                forSlices(slices, 0.9, 1.0, (slice) => {
+                fill_cache = [];
+                forSlices(slices, 0.4, 1.0, (slice) => {
                     fillPolys(slice, settings);
-                });
+                }, "infill");
             }
             ondone();
         }, function(update) {
-            return onupdate(0.0 + update * 0.5);
+            return onupdate(0.0 + update * 0.25);
         });
     };
 
@@ -141,12 +143,13 @@ let gs_kiri_sla = exports;
             start_y = -(depth / 2),
             end_x = width / 2,
             end_y = depth / 2,
-            fill = []
-            ;
+            fill = [];
 
-        let seq_i = Math.floor(slice.index / seq);
+        let seq_i = Math.floor(slice.index / seq),
+            seq_c = seq_i % 4,
+            cached = fill_cache[seq_c];
 
-        if (seq_i % 4 !== 2)
+        if (!cached && seq_c !== 2)
         for (let x=start_x; x<end_x; x += step_x) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
@@ -157,7 +160,7 @@ let gs_kiri_sla = exports;
             );
         }
 
-        if (seq_i % 4 !== 0)
+        if (!cached && seq_c !== 0)
         for (let y=start_y; y<end_y; y += step_y) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
@@ -168,7 +171,13 @@ let gs_kiri_sla = exports;
             );
         }
 
-        fill = POLY.union(fill);
+        if (!cached) {
+            fill = POLY.union(fill);
+            fill_cache[seq_c] = fill;
+        } else {
+            fill = cached.slice().map(p => p.clone(true).setZ(slice.z));
+        }
+
         fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
         fill = POLY.union(slice.solids.unioned.appendAll(fill));
 
