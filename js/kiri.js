@@ -1900,6 +1900,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         triggerSettingsEvent();
         platformUpdateSelected();
         updateFields();
+        if (settings.device.new) {
+            API.show.devices();
+        }
     }
 
     function currentDeviceName() {

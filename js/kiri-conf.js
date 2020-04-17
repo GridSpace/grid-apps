@@ -200,6 +200,7 @@ let gs_kiri_conf = exports;
             fdm:{
                 // device defaults FDM:Device
                 d:{
+                    new: true,
                     mode: "",
                     internal: 0,
                     bedWidth: 300,
@@ -287,6 +288,7 @@ let gs_kiri_conf = exports;
             sla:{
                 // device defaults SLA:Device
                 d:{
+                    new: true,
                     deviceName: "",
                     noclone: false,
                     mode: "",
@@ -319,6 +321,7 @@ let gs_kiri_conf = exports;
             cam:{
                 // device defaults CAM:Device
                 d:{
+                    new: true,
                     mode: "",
                     internal: 0,
                     bedWidth: 300,
@@ -393,6 +396,7 @@ let gs_kiri_conf = exports;
             laser: {
                 // device defaults Laser:Device
                 d:{
+                    new: true,
                     mode: "",
                     internal: 0,
                     bedWidth: 300,

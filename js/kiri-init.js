@@ -550,7 +550,7 @@ var gs_kiri_init = exports;
                 dev = current.device = CONF.device_from_code(code,mode),
                 proc = current.process;
 
-
+            dev.new = false;
             dev.deviceName = devicename;
 
             proc.outputOriginCenter = dev.outputOriginCenter;
