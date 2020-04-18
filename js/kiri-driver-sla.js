@@ -210,9 +210,9 @@ let gs_kiri_sla = exports;
         function polyout(poly, ctx) {
             poly.forEachPoint((p,i) => {
                 if (i === 0) {
-                    ctx.moveTo(p.y * scaleY + height2, p.x * scaleX + width2);
+                    ctx.moveTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
                 } else {
-                    ctx.lineTo(p.y * scaleY + height2, p.x * scaleX + width2);
+                    ctx.lineTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
                 }
             }, true);
             ctx.closePath();
