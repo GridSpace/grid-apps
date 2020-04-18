@@ -284,6 +284,7 @@ input[type=range]::-moz-focus-outer {
     height: 320px;
     border: 1px solid #ccc;
     background-color: #f5f5f5;
+    transform: scale(-1, 1);
 }
 #print-range {
     width: 80%;
