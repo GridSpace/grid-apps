@@ -2,20 +2,20 @@
 
 "use strict";
 
-var gs_kiri_slicer = exports;
+let gs_kiri_slicer = exports;
 
 (function() {
 
     if (!self.kiri) self.kiri = {};
     if (self.kiri.slicer) return;
 
-    var slicer = self.kiri.slicer = {
+    let slicer = self.kiri.slicer = {
         slice: slice,
         sliceWidget: sliceWidget,
         connectLines: connectLines
     };
 
-    var KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         CONF = BASE.config,
         UTIL = BASE.util,
@@ -49,7 +49,7 @@ var gs_kiri_slicer = exports;
      * @param {Function} onupdate callback to report slicing progress
      */
     function slice(points, bounds, options, ondone, onupdate) {
-        var topoMode = options.topo,
+        let topoMode = options.topo,
             simpleMode = options.simple,
             swap = options.swapX || options.swapY,
             ox = 0,
@@ -61,7 +61,7 @@ var gs_kiri_slicer = exports;
         if (swap) {
             points = points.slice();
 
-            var btmp = new THREE.Box3(),
+            let btmp = new THREE.Box3(),
                 pref = {},
                 cached;
 
@@ -72,7 +72,7 @@ var gs_kiri_slicer = exports;
             // array re-uses points so we need
             // to be careful not to alter a point
             // more than once
-            for (var p, index=0; index<points.length; index++) {
+            for (let p, index=0; index<points.length; index++) {
                 p = points[index];
                 cached = pref[p.key];
                 // skip points already altered
@@ -90,7 +90,7 @@ var gs_kiri_slicer = exports;
 
             // update temp bounds from new points
             btmp.setFromPoints(points);
-            for (var p, index=0; index<points.length; index++) {
+            for (let p, index=0; index<points.length; index++) {
                 p = points[index];
                 if (p.mod === 1) continue;
                 p.mod = 1;
@@ -102,7 +102,7 @@ var gs_kiri_slicer = exports;
             bounds = btmp;
         }
 
-        var zMin = options.zmin || Math.floor(bounds.min.z),
+        let zMin = options.zmin || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
             zInc = options.height,
             zIncMin = options.minHeight,
@@ -146,7 +146,7 @@ var gs_kiri_slicer = exports;
             if (true || options.cam) {
                 if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
                     // auto-detect flats for cam faces and to avoid slicing directly on flats
-                    var zkey = p1.z.toFixed(5),
+                    let zkey = p1.z.toFixed(5),
                         area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
                     if (!zFlat[zkey]) {
                         zFlat[zkey] = area;
@@ -202,7 +202,7 @@ var gs_kiri_slicer = exports;
         }
 
         /** bucket polygons into z-bounded groups */
-        var bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
+        let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
 
         zScale = 1 / (zMax / bucketCount);
 
@@ -215,7 +215,7 @@ var gs_kiri_slicer = exports;
                 p1 = points[i++];
                 p2 = points[i++];
                 p3 = points[i++];
-                var zm = Math.min(p1.z, p2.z, p3.z),
+                let zm = Math.min(p1.z, p2.z, p3.z),
                     zM = Math.max(p1.z, p2.z, p3.z),
                     bm = Math.floor(zm * zScale),
                     bM = Math.ceil(zM * zScale);
@@ -229,7 +229,7 @@ var gs_kiri_slicer = exports;
 
         // we need Z ordered list for laser auto or adaptive fdm slicing
         if (zInc === 0 || zIncMin) {
-            for (var key in zList) {
+            for (let key in zList) {
                 if (!zList.hasOwnProperty(key)) continue;
                 zOrdered.push(parseFloat(key));
             }
@@ -242,7 +242,7 @@ var gs_kiri_slicer = exports;
         } else if (zInc === 0) {
             // use Z indices in auto slice mode for laser
             // find unique z-index offsets for slicing
-            var zl = zOrdered
+            let zl = zOrdered
             for (i = 0; i < zl.length - 1; i++) {
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
             }
@@ -253,7 +253,7 @@ var gs_kiri_slicer = exports;
             for (i = zMin; i < zMax; i += zInc) {
                 zIndexes.push(i);
             }
-            for (key in zFlat) {
+            for (let key in zFlat) {
                 // todo make threshold for flat detection configurable
                 if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10){
                     continue;
@@ -269,7 +269,7 @@ var gs_kiri_slicer = exports;
             });
         } else if (zIncMin) {
             // FDM adaptive slicing
-            var zPos = zMin + zIncFirst,
+            let zPos = zMin + zIncFirst,
                 zOI = 0,
                 zDelta,
                 zDivMin,
@@ -317,13 +317,21 @@ var gs_kiri_slicer = exports;
         }
 
         // create a Slice for each z offset in the zIndexes array
-        for (var i = 0; i < zIndexes.length; i++) {
-            let ik = zIndexes[i].toFixed(5);
+        for (let i = 0; i < zIndexes.length; i++) {
+            let ik = zIndexes[i].toFixed(5),
+                onFlat = false,
+                onLine = false;
             // ensure no slice through horizontal lines or planes
-            if (zFlat[ik]) zIndexes[i] -= 0.001;
-            if (zLines[ik]) zIndexes[i] -= 0.001;
+            if (zFlat[ik]) {
+                zIndexes[i] -= 0.001;
+                onFlat = true;
+            }
+            if (zLines[ik]) {
+                zIndexes[i] -= 0.001;
+                onLine = true;
+            }
             // slice next layer and add to slices[] array
-            sliceZ(zIndexes[i], zHeights[i]);
+            sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
             onupdate(i / zIndexes.length);
         }
 
@@ -355,7 +363,7 @@ var gs_kiri_slicer = exports;
          * @param {Obejct} where
          */
         function checkUnderOverOn(p, z, where) {
-            var delta = p.z - z;
+            let delta = p.z - z;
             if (Math.abs(delta) < CONF.precision_slice_z) { // on
                 where.on.push(p);
             } else if (delta < 0) { // under
@@ -375,9 +383,9 @@ var gs_kiri_slicer = exports;
          * @returns {Point} intersection point
          */
         function intersectPoints(over, under, z) {
-            var ip = [];
-            for (var i = 0; i < over.length; i++) {
-                for (var j = 0; j < under.length; j++) {
+            let ip = [];
+            for (let i = 0; i < over.length; i++) {
+                for (let j = 0; j < under.length; j++) {
                     ip.push(over[i].intersectZ(under[j], z));
                 }
             }
@@ -388,7 +396,7 @@ var gs_kiri_slicer = exports;
          * Ensure points are unique with a cache/key algorithm
          */
         function getCachedPoint(phash, p) {
-            var cached = phash[p.key];
+            let cached = phash[p.key];
             if (!cached) {
                 phash[p.key] = p;
                 return p;
@@ -411,7 +419,7 @@ var gs_kiri_slicer = exports;
         function makeZLine(phash, p1, p2, coplanar, edge) {
             p1 = getCachedPoint(phash, p1);
             p2 = getCachedPoint(phash, p2);
-            var line = newOrderedLine(p1,p2);
+            let line = newOrderedLine(p1,p2);
             line.coplanar = coplanar || false;
             line.edge = edge || false;
             return line;
@@ -424,12 +432,10 @@ var gs_kiri_slicer = exports;
          * @param {number} z
          * @param {number} [height] optional real height (fdm)
          */
-        function sliceZ(z, height) {
-            var phash = {},
+        function sliceZ(z, height, onflat, online) {
+            let phash = {},
                 lines = [],
                 zkey = z.toFixed(5),
-                onflat = zFlat[zkey] > 0,
-                online = zLines[zkey] > 0,
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
                 bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];
 
@@ -438,15 +444,17 @@ var gs_kiri_slicer = exports;
             if (onflat) {
                 // annotate slices with cam flats for finishing waterlines
                 if (options.cam) slice.hasFlats = true;
-                z += 0.001;
+                // since default onflat pushes Z down by 0.001 and in cam
+                // mode we want the opposite, overcompsate above the Z
+                z += 0.002;
             }
 
             // iterate over matching buckets for this z offset
-            for (var i = 0; i < bucket.length;) {
+            for (let i = 0; i < bucket.length;) {
                 p1 = bucket[i++];
                 p2 = bucket[i++];
                 p3 = bucket[i++];
-                var where = {under: [], over: [], on: []};
+                let where = {under: [], over: [], on: []};
                 checkUnderOverOn(p1, z, where);
                 checkUnderOverOn(p2, z, where);
                 checkUnderOverOn(p3, z, where);
@@ -464,7 +472,7 @@ var gs_kiri_slicer = exports;
                     // does not intersect (but one point is on the plane)
                 } else {
                     // compute two point intersections and construct line
-                    var line = intersectPoints(where.over, where.under, z);
+                    let line = intersectPoints(where.over, where.under, z);
                     if (line.length < 2 && where.on.length === 1) {
                         line.push(where.on[0]);
                     }
@@ -492,10 +500,10 @@ var gs_kiri_slicer = exports;
 
             // fixup un-rotates polygons for CAM
             if (options.swapX || options.swapY) {
-                var move = {x:ox, y:oy, z:0};
+                let move = {x:ox, y:oy, z:0};
                 slice.camMode = options.swapX ? CPRO.FINISH_X : CPRO.FINISH_Y;
                 if (topoMode) {
-                    var lines = slice.lines, llen = lines.length, idx, line;
+                    let lines = slice.lines, llen = lines.length, idx, line;
                     // shared points causing problems
                     for (idx=0; idx<llen; idx++) {
                         line = lines[idx];
@@ -547,7 +555,7 @@ var gs_kiri_slicer = exports;
      */
     function connectLines(input) {
         // map points to all other points they're connected to
-        var DBUG = BASE.debug,
+        let DBUG = BASE.debug,
             CONF = BASE.config,
             pmap = {},
             points = [],
@@ -559,7 +567,7 @@ var gs_kiri_slicer = exports;
             p1, p2;
 
         function cachedPoint(p) {
-            var cp = pmap[p.key];
+            let cp = pmap[p.key];
             if (cp) return cp;
             points.push(p);
             pmap[p.key] = p;
@@ -574,7 +582,7 @@ var gs_kiri_slicer = exports;
         }
 
         function sliceAtTerm(path, term) {
-            var idx, len = path.length;
+            let idx, len = path.length;
             for (idx = 0; idx < len-1; idx++) {
                 if (path[idx] === term) {
                     return path.slice(idx);
@@ -588,7 +596,7 @@ var gs_kiri_slicer = exports;
          * to form candidate output paths.
          */
         function findPathsMinRecurse(point, path, paths, from) {
-            var stack = [ ];
+            let stack = [ ];
             if (paths.length > 10000) {
                 DBUG.log("excessive path options @ "+paths.length+" #"+input.length);
                 return;
@@ -596,7 +604,7 @@ var gs_kiri_slicer = exports;
             for (;;) {
                 stack.push(point);
 
-                var last = point,
+                let last = point,
                     links = point.group;
 
                 path.push(point);
@@ -643,7 +651,7 @@ var gs_kiri_slicer = exports;
                 }
             }
 
-            for (var i=0; i<stack.length; i++) stack[i].del = false;
+            for (let i=0; i<stack.length; i++) stack[i].del = false;
             // stack.forEach(function(p) { p.del = false });
         }
 
@@ -658,7 +666,7 @@ var gs_kiri_slicer = exports;
         // eliminating points from the paths as they are emitted
         // shorter paths any point eliminated are eliminated as candidates.
         function emitLongestAsPolygon(paths) {
-            var longest = null,
+            let longest = null,
                 emitted = 0,
                 closed = 0,
                 open = 0;
@@ -684,7 +692,7 @@ var gs_kiri_slicer = exports;
                 // omit polygon if it intersects previously emitted (has del points)
                 paths.forEach(function(path) {
                     if (path.length < 3) return;
-                    var len = path.length, i;
+                    let len = path.length, i;
                     for (i = 0; i < len; i++) if (path[i].del) return;
                     for (i = 0; i < len; i++) path[i].del = true;
                     emit(path.poly);
@@ -711,7 +719,7 @@ var gs_kiri_slicer = exports;
         points.forEach(function(point) {
             // must not have been used and be a dangling end
             if (point.pos === 0 && point.group.length === 1) {
-                var path = [],
+                let path = [],
                     paths = [];
                 findPathsMinRecurse(point, path, paths);
                 if (paths.length > 0) emitLongestAsPolygon(paths);
@@ -722,7 +730,7 @@ var gs_kiri_slicer = exports;
         points.forEach(function(point) {
             // must not have been used or be at a split
             if (point.pos === 0 && point.group.length === 2) {
-                var path = [],
+                let path = [],
                     paths = [];
                 findPathsMinRecurse(point, path, paths);
                 if (paths.length > 0) emitLongestAsPolygon(paths);
@@ -735,9 +743,9 @@ var gs_kiri_slicer = exports;
         }
 
         // reconnect dangling/open polygons to closest endpoint
-        for (var i=0; i<connect.length; i++) {
+        for (let i=0; i<connect.length; i++) {
 
-            var array = connect[i],
+            let array = connect[i],
                 last = array[array.length-1],
                 tmp, dist, j;
 
@@ -748,8 +756,8 @@ var gs_kiri_slicer = exports;
 
             if (array.delete) continue;
 
-            loop: for (var merged=0;;) {
-                var closest = { dist:Infinity };
+            loop: for (let merged=0;;) {
+                let closest = { dist:Infinity };
                 for (j=i+1; j<connect.length; j++) {
                     tmp = connect[j];
                     if (tmp.delete) continue;
@@ -804,13 +812,13 @@ var gs_kiri_slicer = exports;
      * @returns {Line[]}
      */
     function removeDuplicateLines(lines) {
-        var output = [],
+        let output = [],
             tmplines = [],
             points = [],
             pmap = {};
 
         function cachePoint(p) {
-            var cp = pmap[p.key];
+            let cp = pmap[p.key];
             if (cp) return cp;
             points.push(p);
             pmap[p.key] = p;
@@ -845,13 +853,13 @@ var gs_kiri_slicer = exports;
         // merge collinear lines
         points.forEach(function(point) {
             if (point.group.length != 2) return;
-            var l1 = point.group[0],
+            let l1 = point.group[0],
                 l2 = point.group[1];
             if (l1.isCollinear(l2)) {
                 l1.del = true;
                 l2.del = true;
                 // find new endpoints that are not shared point
-                var p1 = l1.p1 != point ? l1.p1 : l1.p2,
+                let p1 = l1.p1 != point ? l1.p1 : l1.p2,
                     p2 = l2.p1 != point ? l2.p1 : l2.p2,
                     newline = base.newOrderedLine(p1,p2);
                 // remove deleted lines from associated points

@@ -297,7 +297,9 @@ var gs_kiri_cam = exports;
                 dec = inc - Math.floor(inc),
                 slop = step * 0.02; // allow 2% over/under on step alignment
             // skip if delta close to step
-            if (Math.abs(delta - step) < slop) return;
+            if (Math.abs(delta - step) < slop) {
+                return;
+            }
             // add another step if decimal too high
             if (dec > slop) nstep = delta / Math.ceil(inc);
             // find closest slices in-between
