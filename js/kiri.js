@@ -1880,6 +1880,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         // restore cached device profile for this mode
         if (settings.cdev[mode]) {
             settings.device = clone(settings.cdev[mode]);
+            API.event.emit('device.set', currentDeviceName());
         }
         MODE = MODES[mode];
         // updates right-hand menu by enabling/disabling fields
