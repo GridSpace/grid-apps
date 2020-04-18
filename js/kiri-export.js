@@ -24,7 +24,7 @@ let gs_kiri_export = exports;
     function exportPrint() {
         let currentPrint = API.print.get();
         if (currentPrint) {
-            STATS.add(`ua_${API.mode.get_lower()}_export`);
+            API.event.emit('export', API.mode.get());
             switch (API.mode.get()) {
                 case 'LASER': return exportPrintLaser(currentPrint);
                 case 'FDM': return exportPrintGCODE(currentPrint);

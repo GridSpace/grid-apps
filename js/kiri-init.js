@@ -539,9 +539,9 @@ var gs_kiri_init = exports;
 
     function setDeviceCode(code, devicename) {
         try {
-            STATS.set(`ud_${API.mode.get_lower()}`, devicename);
-
             if (typeof(code) === 'string') code = js2o(code) || {};
+
+            API.event.emit('device.set', devicename);
 
             let mode = API.mode.get(),
                 current = settings(),
@@ -968,8 +968,6 @@ var gs_kiri_init = exports;
 
         API.dialog.show('tools');
         UI.toolSelect.focus();
-
-        STATS.add('ua_get_tools');
     }
 
     function showDevices() {
@@ -978,7 +976,6 @@ var gs_kiri_init = exports;
         API.ajax("/api/filters-"+API.mode.get_lower(), function(flvalue) {
             if (!flvalue) return;
             renderDevices(js2o(flvalue));
-            STATS.add('ua_get_devs');
         });
     }
 
@@ -1743,6 +1740,7 @@ var gs_kiri_init = exports;
             scr.setAttribute('src','/code/'+lib+'.js');
             DOC.body.appendChild(scr);
             STATS.add('load_'+lib);
+            API.event.emit('load.lib', lib);
         });
 
         // load CSS extensions

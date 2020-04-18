@@ -684,8 +684,7 @@ self.kiri.copyright = exports.COPYRIGHT;
 
             currentPrint.render();
 
-            // on done
-            STATS.add(`ua_${getModeLower()}_print`);
+            API.event.emit('print', getMode());
             SPACE.platform.add(currentPrint.group);
             SPACE.update();
 
@@ -774,7 +773,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                     // update segment time
                     if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
                     DBUG.log(segtimes);
-                    STATS.add(`ua_${getModeLower()}_slice`);
+                    API.event.emit('slice', getMode());
                     updateSliderMax(true);
                     if (preserveMax != API.var.layer_max) {
                         preserveLayer = API.var.layer_max;
@@ -1757,7 +1756,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         hideDialog();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
-            STATS.add('ua_help');
             return;
         }
         ajax(local, function(html) {
@@ -1765,8 +1763,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             $('help-close').onclick = hideModal;
             $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
             showModal('help');
-            STATS.add('ua_help');
         });
+        API.event.emit('help.show', local);
     }
 
     function showLocal() {
@@ -1883,8 +1881,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (settings.cdev[mode]) {
             settings.device = clone(settings.cdev[mode]);
         }
-        // update device stat for FDM/CAM
-        STATS.set(`ud_${getModeLower()}`, settings.filter[mode] || 'default');
         MODE = MODES[mode];
         // updates right-hand menu by enabling/disabling fields
         UC.setMode(MODE);
@@ -1910,6 +1906,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         if (settings.device.new) {
             API.show.devices();
         }
+        API.event.emit("mode.set", mode);
     }
 
     function updateSkipSliceView() {
