@@ -305,6 +305,7 @@ let gs_kiri_conf = exports;
                     slaShell: 0.00,
                     slaOpenTop: false,
                     slaOpenBase: false,
+                    slaAntiAlias: false,
                     slaLayerOff: 0.1,
                     slaLayerOn: 7,
                     slaPeelDist: 6,

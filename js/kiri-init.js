@@ -1452,6 +1452,7 @@ var gs_kiri_init = exports;
             slaShell:            UC.newInput('hollow shell', {title:'shell thickness in mm\nuse multiple of layer height\nuse 0 for solid', convert:UC.toFloat, modes:SLA}),
             slaOpenTop:          UC.newBoolean('open top', onBooleanClick, {title:'solid layers', modes:SLA}),
             slaOpenBase:         UC.newBoolean('open base', onBooleanClick, {title:'bottom layers', modes:SLA}),
+            // slaAntiAlias:        UC.newBoolean('anti alias', onBooleanClick, {title:'enable anti-aliasing\nproduces larger files', modes:SLA, expert:true}),
 
             // SLA
             slaOutput:           UC.newGroup('layers', null, {modes:SLA, group:"sla-layers"}),

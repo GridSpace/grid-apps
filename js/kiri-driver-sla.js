@@ -412,29 +412,41 @@ let gs_kiri_sla = exports;
             layerCount = conf.lines.length,
             layerBytes = width * height,
             small = conf.small,
-            large = conf.large;
+            large = conf.large,
+            subcount = process.slaAntiAlias ? 2 : 1;
 
         let converted = conf.lines.map((line, index) => {
             let count = line.length / 4;
-            let bits = new Uint8Array(line.length / 4);
-            let bitsDV = new DataView(bits.buffer);
+            let bits = new Uint8Array(line.length / 4), bits2;
+            let bitsDV = new DataView(bits.buffer), bitsDV2;
             let lineDV = new DataView(line.buffer);
+            let subs = [{
+                exposureTime: process.slaLayerOn,
+                data: bits
+            }];
+            if (subcount === 2) {
+                bits2 = bits.slice();
+                bitsDV2 = new DataView(bits2.buffer);
+                subs.push({
+                    exposureTime: process.slaLayerOn,
+                    data: bits2
+                });
+            }
             // reduce RGB to R
             for (let i = 0; i < count; i++) {
                 // defeat anti-aliasing for the moment
-                bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
+                let dv = lineDV.getUint8(i * 4);
+                bitsDV.setUint8(i, dv >= 128 ? 1 : 0);
+                if (subcount === 2) {
+                    bitsDV2.setUint8(i, dv > 0 && dv < 128 ? 1 : 0);
+                }
             }
             progress(index / conf.lines.length);
-            return {
-                subs: [{
-                    exposureTime: process.slaLayerOn,
-                    data: bits
-                }]
-            };
+            return { subs };
         });
 
         let coded = encodeLayers(converted, "photon");
-        let buflen = 3000 + coded.length + layerCount * 28 + small.byteLength + large.byteLength;
+        let buflen = 3000 + coded.length + (layerCount * subcount * 28) + small.byteLength + large.byteLength;
         let filebuf = new ArrayBuffer(buflen);
         let filedat = new DataWriter(new DataView(filebuf));
         let printtime = (process.slaBaseLayers * process.slaBaseOn) +
@@ -463,7 +475,7 @@ let gs_kiri_sla = exports;
         filedat.writeU32(1, true); // projection type (1=lcd, 0=cast)
         let proppos = filedat.skip(4); // print properties address filled later
         let proplen = filedat.skip(4); // print properties length filled later
-        filedat.writeU32(1, true); // AA level (sub layers)
+        filedat.writeU32(subcount, true); // AA level (sub layers)
         filedat.writeU16(0x00ff, true); // light pwm (TODO);
         filedat.writeU16(0x00ff, true); // light pwm bottom (TODO);
 
@@ -491,18 +503,21 @@ let gs_kiri_sla = exports;
         // write layer headers
         let layers = coded.layers;
         let layerat = [];
+
+        for (let sc=0; sc<subcount; sc++)
         for (let l=0; l<layers.length; l++) {
             filedat.writeF32(process.slaFirstOffset + process.slaSlice * l, true); // layer height
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOn : process.slaLayerOn, true);
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOff : process.slaLayerOff, true);
             layerat.push(filedat.skip(4)); // rewrite later
-            filedat.writeU32(layers[l].sublayers[0].length, true);
+            filedat.writeU32(layers[l].sublayers[sc].length, true);
             filedat.skip(16); // padding
         }
         // write layer data
+        for (let sc=0; sc<subcount; sc++)
         for (let l=0; l<layers.length; l++) {
-            filedat.view.setUint32(layerat[l], filedat.pos, true);
-            let layer = layers[l].sublayers[0];
+            filedat.view.setUint32(layerat[l*(sc+1)], filedat.pos, true);
+            let layer = layers[l].sublayers[sc];
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], false);
             }
