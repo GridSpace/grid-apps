@@ -452,8 +452,6 @@ let gs_kiri_sla = exports;
         let printtime = (process.slaBaseLayers * process.slaBaseOn) +
                 (coded.layers.length - process.slaBaseLayers) * process.slaLayerOn;
 
-        // filedat.writeU32(0, true); // header
-        // filedat.writeU32(0, true); // version
         filedat.writeU32(0x1900fd12); // header
         filedat.writeU32(2,true); // version
         filedat.writeF32(68.04, true); // bed x
@@ -506,18 +504,19 @@ let gs_kiri_sla = exports;
 
         for (let sc=0; sc<subcount; sc++)
         for (let l=0; l<layers.length; l++) {
+            let layer = layers[l].sublayers[sc];
             filedat.writeF32(process.slaFirstOffset + process.slaSlice * l, true); // layer height
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOn : process.slaLayerOn, true);
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOff : process.slaLayerOff, true);
-            layerat.push(filedat.skip(4)); // rewrite later
-            filedat.writeU32(layers[l].sublayers[sc].length, true);
+            layerat.push(layer.repos = filedat.skip(4)); // rewrite later
+            filedat.writeU32(layer.length, true);
             filedat.skip(16); // padding
         }
         // write layer data
         for (let sc=0; sc<subcount; sc++)
         for (let l=0; l<layers.length; l++) {
-            filedat.view.setUint32(layerat[l*(sc+1)], filedat.pos, true);
             let layer = layers[l].sublayers[sc];
+            filedat.view.setUint32(layer.repos, filedat.pos, true);
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], false);
             }
