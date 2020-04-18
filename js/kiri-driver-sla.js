@@ -149,7 +149,7 @@ let gs_kiri_sla = exports;
             seq_c = seq_i % 4,
             cached = fill_cache[seq_c];
 
-        if (!cached && seq_c !== 2)
+        if (!cached && seq_c !== 1)
         for (let x=start_x; x<end_x; x += step_x) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
@@ -160,7 +160,7 @@ let gs_kiri_sla = exports;
             );
         }
 
-        if (!cached && seq_c !== 0)
+        if (!cached && seq_c !== 3)
         for (let y=start_y; y<end_y; y += step_y) {
             fill.push(
                 BASE.newPolygon().centerRectangle({
