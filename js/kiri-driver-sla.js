@@ -492,7 +492,7 @@ let gs_kiri_sla = exports;
         let layers = coded.layers;
         let layerat = [];
         for (let l=0; l<layers.length; l++) {
-            filedat.writeF32(process.slaSlice * l, true); // layer height
+            filedat.writeF32(process.slaFirstOffset + process.slaSlice * l, true); // layer height
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOn : process.slaLayerOn, true);
             filedat.writeF32(l < process.slaBaseLayers ? process.slaBaseOff : process.slaLayerOff, true);
             layerat.push(filedat.skip(4)); // rewrite later
