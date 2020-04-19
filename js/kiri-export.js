@@ -39,10 +39,24 @@ let gs_kiri_export = exports;
     function exportPrintSLA(currentPrint) {
         if (currentPrint) {
             let lines = [];
+            let times = {};
+            let mark = Date.now();
+            let seq = 1;
+            let segment;
             currentPrint.export(true, function(line) {
+                if (line.message) {
+                    if (segment && segment !== line.message) {
+                        let now = Date.now();
+                        times[`${seq++}_${segment}`] = now - mark;
+                        mark = now;
+                    }
+                    segment = line.message;
+                }
                 if (line.progress) API.show.progress(line.progress, "exporting");
                 if (line.data) lines.push(line.data);
             }, function(done) {
+                times[`${seq++}_${segment}`] = Date.now() - mark;
+                console.log({export: times});
                 API.show.progress(0);
                 currentPrint.sla = { lines, done, API };
                 KIRI.driver.SLA.printDownload(currentPrint);

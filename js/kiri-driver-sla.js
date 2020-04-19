@@ -265,8 +265,11 @@ let gs_kiri_sla = exports;
             output = print.output;
 
         print.images.forEach((image,index) => {
-            // online(image.data, [image.data.buffer]);
-            online({progress: (index/print.images.length)/2, data: image.data});
+            online({
+                progress: (index / print.images.length) * 0.25,
+                message: "image_xfer",
+                data: image.data
+            });
         });
 
         let exp_func;
@@ -286,14 +289,13 @@ let gs_kiri_sla = exports;
             lines: print.images.map(i => i.data),
             small: previewSmall.data,
             large: previewLarge.data
-        }, progress => {
-            online({progress: progress/2 + 0.5});
+        }, (progress, message) => {
+            online({progress: progress * 0.75 + 0.25, message});
         });
-
         ondone({
-            width:2560,
-            height:1440,
-            file:file
+            width: 2560,
+            height: 1440,
+            file: file
         },[file]);
     };
 
@@ -413,13 +415,18 @@ let gs_kiri_sla = exports;
             layerBytes = width * height,
             small = conf.small,
             large = conf.large,
-            subcount = process.slaAntiAlias ? 2 : 1,
-            masks = [ ];
+            subcount = process.slaAntiAlias || 1,
+            // move = [0,0,0,0],
+            move = {1:0,2:4,4:2,8:1},
+            masks = [];
 
-        for (let l=0; l < subcount; l++) {
-            masks.push((Math.pow(2,8/subcount)-1) << (l * (8/subcount)));
+        for (let l=0; l<subcount; l++) {
+            let o = 8/subcount;
+            masks.push((Math.pow(2,o)-1) << (move[subcount] * l));
         }
 
+        let ccl = 0;
+        let tcl = conf.lines.length * subcount;
         let converted = conf.lines.map((line, index) => {
             let count = line.length / 4;
             let lineDV = new DataView(line.buffer);
@@ -434,17 +441,19 @@ let gs_kiri_sla = exports;
             // use R from RGB since that was painted on the canvas
             for (let s=0; s<subcount; s++) {
                 let view = subs[s].view;
-                let mask = masks[s];
+                let mask = masks[subcount-s-1];
                 for (let i = 0; i < count; i++) {
                     let dv = lineDV.getUint8(i * 4) & mask;
                     view.setUint8(i, dv > 0 ? 1 : 0);
                 }
+                progress((ccl++/tcl) * 0.4, "layer_convert");
             }
-            progress(index / conf.lines.length);
             return { subs };
         });
 
-        let coded = encodeLayers(converted, "photon");
+        let coded = encodeLayers(converted, "photon", (pro => {
+            progress(pro * 0.4 + 0.4, "layer_encode");
+        }));
         let buflen = 3000 + coded.length + (layerCount * subcount * 28) + small.byteLength + large.byteLength;
         let filebuf = new ArrayBuffer(buflen);
         let filedat = new DataWriter(new DataView(filebuf));
@@ -511,7 +520,10 @@ let gs_kiri_sla = exports;
             filedat.writeU32(layer.length, true);
             filedat.skip(16); // padding
         }
+
         // write layer data
+        let clo = 0;
+        let tlo = layers.length * subcount;
         for (let sc=0; sc<subcount; sc++)
         for (let l=0; l<layers.length; l++) {
             let layer = layers[l].sublayers[sc];
@@ -519,7 +531,7 @@ let gs_kiri_sla = exports;
             for (let j=0; j<layer.length; j++) {
                 filedat.writeU8(layer[j], false);
             }
-            progress((l / layers.length) / 2 + 0.5);
+            progress(((clo++/tlo) * 0.1) + 0.9, "layer_write");
         }
 
         filedat.view.setUint32(hirez, filedat.pos, true);
@@ -612,8 +624,11 @@ let gs_kiri_sla = exports;
         return filebuf;
     }
 
-    function encodeLayers(input, type) {
-        let layers = [], length = 0;
+    function encodeLayers(input, type, progress) {
+        let layers = [], length = 0, total = 0, count = 0;
+        input.forEach(layer => {
+            layer.subs.forEach(sub => total++);
+        });
         for (let index = 0; index < input.length; index++) {
             let subs = input[index].subs,
                 sublayers = [],
@@ -623,6 +638,7 @@ let gs_kiri_sla = exports;
                 let encoded = rleEncode(data, type);
                 sublength += encoded.length;
                 sublayers.push(encoded);
+                if (progress) progress(count++/total);
                 if (type == "photons") break;
             }
             length += sublength;

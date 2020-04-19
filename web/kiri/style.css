@@ -162,6 +162,7 @@ input[type=range]::-moz-focus-outer {
     color: white;
     padding: 5px;
     margin: 5px;
+    white-space: nowrap;
 }
 #modal {
     z-index: 20000;
