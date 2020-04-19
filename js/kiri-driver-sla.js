@@ -441,8 +441,8 @@ let gs_kiri_sla = exports;
         let converted = conf.lines.map((line, index) => {
             let count = line.length;
             let lineDV = new DataView(line.buffer);
-            let bits = new Uint8Array(line.length), bits2;
-            let bitsDV = new DataView(bits.buffer), bitsDV2;
+            let bits = new Uint8Array(line.length);
+            let bitsDV = new DataView(bits.buffer);
             let subs = [{ data: bits, view: bitsDV }];
             for (let sl=1; sl<subcount; sl++) {
                 bits = bits.slice();
