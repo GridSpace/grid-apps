@@ -416,13 +416,10 @@ let gs_kiri_sla = exports;
             small = conf.small,
             large = conf.large,
             subcount = process.slaAntiAlias || 1,
-            // move = [0,0,0,0],
-            move = {1:0,2:4,4:2,8:1},
             masks = [];
 
-        for (let l=0; l<subcount; l++) {
-            let o = 8/subcount;
-            masks.push((Math.pow(2,o)-1) << (move[subcount] * l));
+        for (let i=0; i<subcount; i++) {
+            masks.push(1 << subcount);
         }
 
         let ccl = 0;
@@ -441,10 +438,10 @@ let gs_kiri_sla = exports;
             // use R from RGB since that was painted on the canvas
             for (let s=0; s<subcount; s++) {
                 let view = subs[s].view;
-                let mask = masks[subcount-s-1];
+                let mask = masks[s];
                 for (let i = 0; i < count; i++) {
-                    let dv = lineDV.getUint8(i * 4) & mask;
-                    view.setUint8(i, dv > 0 ? 1 : 0);
+                    let dv = lineDV.getUint8(i * 4);
+                    view.setUint8(i, (dv / subcount) & mask ? 1 : 0);
                 }
                 progress((ccl++/tcl) * 0.4, "layer_convert");
             }
