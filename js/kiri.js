@@ -1822,6 +1822,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         updateSelectedInfo();
         switch (mode) {
             case VIEWS.ARRANGE:
+                KIRI.work.clear();
+                clearWidgetCache();
                 showLayerView(false);
                 updateSliderMax();
                 showModeActive(UI.modeArrange);

@@ -140,9 +140,9 @@ let dispatch = {
     },
 
     clear: function(data, send) {
+        currentPrint = null;
         if (!data.id) {
             cache = {};
-            currentPrint = null;
             send.done({ clear: true });
             return;
         }

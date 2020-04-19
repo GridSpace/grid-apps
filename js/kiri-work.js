@@ -20,7 +20,7 @@ function send(fn, data, onreply, async, zerocopy) {
     let seq = seqid++;
 
     running[seq] = {fn:onreply, async:async||false};
-
+    // console.log('send', data);
     worker.postMessage({
         seq: seq,
         task: fn,
@@ -56,7 +56,7 @@ KIRI.work = {
                 reply = e.data,
                 record = running[reply.seq],
                 onreply = record.fn;
-
+                // console.log('recv', reply.data)
             if (reply.done) {
                 delete running[reply.seq];
             }

@@ -292,11 +292,15 @@ let gs_kiri_sla = exports;
         }, (progress, message) => {
             online({progress: progress * 0.75 + 0.25, message});
         });
+
         ondone({
             width: 2560,
             height: 1440,
             file: file
         },[file]);
+
+        // release memory
+        print.images = null;
     };
 
     // runs in browser main

@@ -320,6 +320,7 @@ let gs_kiri_print = exports;
                 }
             });
         });
+
         return newout;
     };
 
