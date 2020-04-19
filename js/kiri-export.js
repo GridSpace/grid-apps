@@ -32,7 +32,14 @@ let gs_kiri_export = exports;
                 case 'SLA': return exportPrintSLA(currentPrint);
             }
         } else {
-            API.function.print(exportPrint);
+            switch (API.mode.get()) {
+                case 'SLA':
+                    API.function.slice(exportPrint);
+                    break;
+                default:
+                    API.function.print(exportPrint);
+                    break;
+            }
         }
     }
 

@@ -679,9 +679,12 @@ self.kiri.copyright = exports.COPYRIGHT;
 
         currentPrint = kiri.newPrint(settings, WIDGETS);
         currentPrint.setup(true, function(update, status) {
-            // on update
             setProgress(tpBase + update * tpFactor, status);
         }, function() {
+            if (!currentPrint) {
+                return setViewMode(VIEWS.ARRANGE);
+            }
+
             setProgress(0);
 
             if (skipSliceView) {
@@ -788,12 +791,14 @@ self.kiri.copyright = exports.COPYRIGHT;
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    setProgress(0);
                     if (skipSliceView) {
                         if (!(error || errored)) {
                             preparePrint(callback);
+                        } else {
+                            setProgress(0);
                         }
                     } else {
+                        setProgress(0);
                         showSlices(preserveLayer);
                         setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
                         if (callback && typeof callback === 'function') {

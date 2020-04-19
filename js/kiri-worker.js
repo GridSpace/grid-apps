@@ -78,8 +78,6 @@ let dispatch = {
                 send.data({send_end: time()});
             }
             send.done({done: true});
-            // cache results for future printing
-            // cache[data.id] = widget;
         }, function(update, msg) {
             now = util.time();
             if (now - last < 10 && update < 0.99) return;
@@ -140,6 +138,7 @@ let dispatch = {
     },
 
     clear: function(data, send) {
+        currentSnap = null;
         currentPrint = null;
         if (!data.id) {
             cache = {};

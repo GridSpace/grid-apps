@@ -203,6 +203,8 @@ let gs_kiri_sla = exports;
             scaleX = width / device.bedWidth,
             scaleY = height / device.bedDepth;
 
+        let mark = Date.now();
+
         widgets.forEach(widget => {
             layermax = Math.max(widget.slices.length);
         });
@@ -243,12 +245,19 @@ let gs_kiri_sla = exports;
                     console.log({no_slice_at: index})
                 }
             });
-            output.push(ctx.getImageData(0,0,height,width));
+            let data = ctx.getImageData(0,0,height,width).data;
+            let red = new Uint8ClampedArray(data.length / 4);
+            for (let i=0; i<red.length; i++) {
+                red[i] = data[i*4];
+            }
+            output.push(red);
             update(index / layermax);
             if (count === 0) break;
         }
 
         update(1);
+
+        console.log('print.setup', Date.now() - mark);
     };
 
     /**
@@ -262,13 +271,14 @@ let gs_kiri_sla = exports;
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            output = print.output;
+            output = print.output,
+            mark = Date.now();
 
         print.images.forEach((image,index) => {
             online({
                 progress: (index / print.images.length) * 0.25,
                 message: "image_xfer",
-                data: image.data
+                data: image
             });
         });
 
@@ -286,7 +296,7 @@ let gs_kiri_sla = exports;
         let file = exp_func(print, {
             width: 2560,
             height: 1440,
-            lines: print.images.map(i => i.data),
+            lines: print.images,
             small: previewSmall.data,
             large: previewLarge.data
         }, (progress, message) => {
@@ -301,6 +311,7 @@ let gs_kiri_sla = exports;
 
         // release memory
         print.images = null;
+        console.log('print.export', Date.now() - mark);
     };
 
     // runs in browser main
@@ -383,15 +394,14 @@ let gs_kiri_sla = exports;
             let ctx = canvas.getContext('2d');
             let img = ctx.createImageData(done.height, done.width);
             let imgDV = new DataView(img.data.buffer);
-
             let range = $('print-range');
             range.value = 0;
             range.min = 0;
             range.max = lines.length - 1;
             range.oninput = function() {
                 let lineDV = new DataView(lines[range.value].buffer);
-                for (let i=0; i<lineDV.byteLength; i+=4) {
-                    imgDV.setUint32(i, lineDV.getUint32(i));
+                for (let i=0; i<lineDV.byteLength; i++) {
+                    imgDV.setUint32(i*4, lineDV.getUint8(i));
                 }
                 ctx.putImageData(img,0,0);
                 $('print-layer').innerText = range.value.padStart(4,'0');
@@ -426,17 +436,12 @@ let gs_kiri_sla = exports;
         for (let i=0; i<subcount; i++) {
             masks.push((1 << (8 - i * d)) - 1);
         }
-        // let d = 8 / subcount;
-        // let m = (1 << d) - 1;
-        // for (let i=0; i<subcount; i++) {
-        //     masks.push(m << (i * d));
-        // }
         let ccl = 0;
         let tcl = conf.lines.length * subcount;
         let converted = conf.lines.map((line, index) => {
-            let count = line.length / 4;
+            let count = line.length;
             let lineDV = new DataView(line.buffer);
-            let bits = new Uint8Array(line.length / 4), bits2;
+            let bits = new Uint8Array(line.length), bits2;
             let bitsDV = new DataView(bits.buffer), bitsDV2;
             let subs = [{ data: bits, view: bitsDV }];
             for (let sl=1; sl<subcount; sl++) {
@@ -449,10 +454,10 @@ let gs_kiri_sla = exports;
                 let view = subs[s].view;
                 let mask = masks[s];
                 for (let i = 0; i < count; i++) {
-                    let dv = lineDV.getUint8(i * 4);
+                    let dv = lineDV.getUint8(i);
                     view.setUint8(i, (dv / subcount) & mask ? 1 : 0);
                 }
-                progress((ccl++/tcl) * 0.4, "layer_convert");
+                progress((ccl++/tcl) * 0.4, `layer_convert`);
             }
             return { subs };
         });
