@@ -413,32 +413,31 @@ let gs_kiri_sla = exports;
             layerBytes = width * height,
             small = conf.small,
             large = conf.large,
-            subcount = process.slaAntiAlias ? 2 : 1;
+            subcount = process.slaAntiAlias ? 2 : 1,
+            masks = [ ];
+
+        for (let l=0; l < subcount; l++) {
+            masks.push((Math.pow(2,8/subcount)-1) << (l * (8/subcount)));
+        }
 
         let converted = conf.lines.map((line, index) => {
             let count = line.length / 4;
+            let lineDV = new DataView(line.buffer);
             let bits = new Uint8Array(line.length / 4), bits2;
             let bitsDV = new DataView(bits.buffer), bitsDV2;
-            let lineDV = new DataView(line.buffer);
-            let subs = [{
-                exposureTime: process.slaLayerOn,
-                data: bits
-            }];
-            if (subcount === 2) {
-                bits2 = bits.slice();
-                bitsDV2 = new DataView(bits2.buffer);
-                subs.push({
-                    exposureTime: process.slaLayerOn,
-                    data: bits2
-                });
+            let subs = [{ data: bits, view: bitsDV }];
+            for (let sl=1; sl<subcount; sl++) {
+                bits = bits.slice();
+                bitsDV = new DataView(bits.buffer);
+                subs.push({ data: bits, view: bitsDV });
             }
-            // reduce RGB to R
-            for (let i = 0; i < count; i++) {
-                // defeat anti-aliasing for the moment
-                let dv = lineDV.getUint8(i * 4);
-                bitsDV.setUint8(i, dv >= 128 ? 1 : 0);
-                if (subcount === 2) {
-                    bitsDV2.setUint8(i, dv > 0 && dv < 128 ? 1 : 0);
+            // use R from RGB since that was painted on the canvas
+            for (let s=0; s<subcount; s++) {
+                let view = subs[s].view;
+                let mask = masks[s];
+                for (let i = 0; i < count; i++) {
+                    let dv = lineDV.getUint8(i * 4) & mask;
+                    view.setUint8(i, dv > 0 ? 1 : 0);
                 }
             }
             progress(index / conf.lines.length);

@@ -132,10 +132,16 @@ self.kiri.copyright = exports.COPYRIGHT;
             { name: "triangle" },
             { name: "linear" }
         ],
-        units:[
+        units: [
             { name: "mm" },
             { name: "in" }
         ],
+        antialias: [
+            { name: "1", id: 1 },
+            { name: "2", id: 2 },
+            { name: "4", id: 4 },
+            { name: "8", id: 8 }
+        ]
     };
 
     const API = KIRI.api = {

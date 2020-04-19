@@ -1542,6 +1542,7 @@ var gs_kiri_cam = exports;
 
         // last layer/move is to zmax
         // injected into the last layer generated
+        if (lastPoint)
         addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.number);
 
         // replace output single flattened layer with all points

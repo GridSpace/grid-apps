@@ -667,7 +667,7 @@ var MOTO = window.moto = window.moto || {};
                 preserveDrawingBuffer: true
             });
             camera = perspective ?
-                new THREE.PerspectiveCamera(perspective, aspect(), 1, 100000) :
+                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000) :
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000);
 
             camera.position.set(0, 200, 340);

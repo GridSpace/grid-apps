@@ -1452,7 +1452,6 @@ var gs_kiri_init = exports;
             slaShell:            UC.newInput('hollow shell', {title:'shell thickness in mm\nuse multiple of layer height\nuse 0 for solid', convert:UC.toFloat, modes:SLA}),
             slaOpenTop:          UC.newBoolean('open top', onBooleanClick, {title:'solid layers', modes:SLA}),
             slaOpenBase:         UC.newBoolean('open base', onBooleanClick, {title:'bottom layers', modes:SLA}),
-            slaAntiAlias:        UC.newBoolean('anti alias', onBooleanClick, {title:'enable anti-aliasing\nproduces larger files', modes:SLA, expert:true}),
 
             // SLA
             slaOutput:           UC.newGroup('layers', null, {modes:SLA, group:"sla-layers"}),
@@ -1469,12 +1468,13 @@ var gs_kiri_init = exports;
             slaBasePeelDist:     UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
             slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
 
-            slaFirst:            UC.newGroup('first layer', null, {modes:SLA, group:"sla-first", expert:true}),
-            slaFirstOffset:      UC.newInput('offset', {title:'first layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
-
             slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-first"}),
             slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaFillLine:         UC.newInput('line width', {title:'hatch line width\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
+
+            slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-first"}),
+            slaFirstOffset:      UC.newInput('z offset', {title:'z layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
+            slaAntiAlias:        UC.newSelect('anti alias', {title: 'enable anti-aliasing\nproduces larger files', modes:SLA}, "antialias"),
         });
 
         if (!lang_set) {
