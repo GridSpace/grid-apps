@@ -56,7 +56,7 @@ let gs_kiri_export = exports;
                 if (line.data) lines.push(line.data);
             }, function(done) {
                 times[`${seq++}_${segment}`] = Date.now() - mark;
-                console.log({export: times});
+                console.log(times);
                 API.show.progress(0);
                 currentPrint.sla = { lines, done, API };
                 KIRI.driver.SLA.printDownload(currentPrint);

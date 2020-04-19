@@ -418,10 +418,15 @@ let gs_kiri_sla = exports;
             subcount = process.slaAntiAlias || 1,
             masks = [];
 
+        let d = 8 / subcount;
         for (let i=0; i<subcount; i++) {
-            masks.push(1 << subcount);
+            masks.push((1 << (8 - i * d)) - 1);
         }
-
+        // let d = 8 / subcount;
+        // let m = (1 << d) - 1;
+        // for (let i=0; i<subcount; i++) {
+        //     masks.push(m << (i * d));
+        // }
         let ccl = 0;
         let tcl = conf.lines.length * subcount;
         let converted = conf.lines.map((line, index) => {
