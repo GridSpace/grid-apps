@@ -459,17 +459,16 @@ let gs_kiri_slicer = exports;
                 checkUnderOverOn(p2, z, where);
                 checkUnderOverOn(p3, z, where);
                 if (where.under.length === 3 || where.over.length === 3) {
-                    // does not intersect
+                    // does not intersect (all 3 above or below)
                 } else if (where.on.length === 2) {
                     // one side of triangle is on the Z plane
                     lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
                 } else if (where.on.length === 3) {
                     // triangle is coplanar with Z
-                    //lines.push(makeZLine(phash, where.on[0], where.on[1], true));
-                    //lines.push(makeZLine(phash, where.on[1], where.on[2], true));
-                    //lines.push(makeZLine(phash, where.on[2], where.on[0], true));
+                    // we drop these because this face is attached to 3 others
+                    // that will satisfy the if above (line) with 2 points
                 } else if (where.under.length === 0 || where.over.length === 0) {
-                    // does not intersect (but one point is on the plane)
+                    // does not intersect but one point is on the slice Z plane
                 } else {
                     // compute two point intersections and construct line
                     let line = intersectPoints(where.over, where.under, z);
@@ -530,12 +529,6 @@ let gs_kiri_slicer = exports;
                         poly.move(move);
                         poly.inner = null;
                     });
-                    // slice.tops.forEach(function(top) {
-                    //     top.poly.swap(options.swapX, options.swapY);
-                    //     top.poly.move(move);
-                    //     top.poly.inner = null;
-                    // });
-                    // drape(slice, options.swapX, options.swapY);
                 }
             }
 
@@ -659,7 +652,6 @@ let gs_kiri_slicer = exports;
         function emit(poly) {
             poly = poly.clean();
             if (poly.length > 2) output.push(poly.clean());
-            // if (poly.length > 2) output.push(poly);
         }
 
         // given an array of paths, emit longest to shortest
