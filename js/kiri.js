@@ -1315,6 +1315,8 @@ self.kiri.copyright = exports.COPYRIGHT;
                 } else if (typ === 'textarea') {
                     if (Array.isArray(val)) {
                         uie.value = val.join('\n');
+                    } else {
+                        uie.value = '';
                     }
                 }
             }
@@ -1355,7 +1357,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                         nval = scope[key];
                     }
                 } else if (uie.type === 'textarea') {
-                    nval = uie.value.trim().split('\n');
+                    nval = uie.value.trim().split('\n').filter(v => v !== '');
                 } else {
                     continue;
                 }
