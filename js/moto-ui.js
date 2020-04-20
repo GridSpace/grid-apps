@@ -421,11 +421,13 @@ var gs_moto_ui = exports;
                     key === '.' ||
                     key === '-' ||
                     key === 'Backspace' ||
+                    key === 'Delete' ||
                     key === 'ArrowLeft' ||
                     key === 'ArrowRight' ||
                     key === 'Tab' ||
                     event.metaKey ||
-                    event.ctrlKey
+                    event.ctrlKey ||
+                    (key === ',' && options.comma)
                 ) {
                     return;
                 }

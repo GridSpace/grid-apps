@@ -1443,7 +1443,7 @@ var gs_kiri_init = exports;
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert:true})
-            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true}),
+            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
 
             // SLA
