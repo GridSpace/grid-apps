@@ -11,6 +11,7 @@ let gs_kiri_slice = exports;
 
     let KIRI = self.kiri,
         FILL = KIRI.fill,
+        FILLFIXED = KIRI.fill_fixed,
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
@@ -675,6 +676,8 @@ let gs_kiri_slice = exports;
             line = [],
             // callback passed to pluggable infill algorithm
             target = {
+                slice: function() { return scope },
+                options: function() { return options },
                 lineWidth: function() { return options.lineWidth },
                 bounds: function() { return bounds },
                 zIndex: function() { return scope.index },
@@ -709,7 +712,7 @@ let gs_kiri_slice = exports;
 
         scope._fill_finger = POLY.fingerprint(polys);
 
-        let skippable = type !== 'gyroid' && type !== 'linear';
+        let skippable = FILLFIXED[type] ? true : false;
         let miss = false;
         // if the layer below has the same fingerprint, we may be able to clone its infill
         if (skippable && scope.fingerprintSame(down)) {

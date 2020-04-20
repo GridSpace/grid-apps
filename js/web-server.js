@@ -464,9 +464,16 @@ function addCorsHeaders(req, res) {
  */
 function handleDebug(req, res, next) {
     if (debug) {
+        let ext = req.url.split('.').pop();
+        let type = {
+            'html': 'text/html',
+            'js': 'application/javascript'
+        }[ext] || 'application/unknown';
         if (lastmod(req.url)) {
+            res.setHeader('Content-Type',type);
             return res.end(fs.readFileSync(req.url));
         } else if (lastmod(req.url.substring(1))) {
+            res.setHeader('Content-Type','application/javascript');
             return res.end(fs.readFileSync(req.url.substring(1)));
         }
     }

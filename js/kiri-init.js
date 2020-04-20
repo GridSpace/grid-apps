@@ -1053,6 +1053,8 @@ var gs_kiri_init = exports;
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
+        API.event.emit('init.one');
+
         // ensure we have settings from last session
         API.conf.restore();
 
@@ -1716,6 +1718,8 @@ var gs_kiri_init = exports;
     // SECOND STAGE INIT AFTER UI RESTORED
 
     function init_two() {
+        API.event.emit('init.two');
+
         let current = settings(),
             control = current.controller;
 

@@ -20,6 +20,11 @@ var gs_kiri_fill = exports;
             gyroid: fillGyroid,
             triangle: fillTriangle,
             linear: fillLinear
+        },
+        CACHE = self.kiri.fill_fixed = {
+            hex: fillHexFull,
+            grid: fillGrid,
+            triangle: fillTriangle
         };
 
     function fillHexFull(target) {
