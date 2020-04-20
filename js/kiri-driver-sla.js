@@ -231,6 +231,7 @@ let gs_kiri_sla = exports;
                     let traces = POLY.flatten(slice.gatherTraces([]));
                     let polys = slice.solids.unioned;
                     polys.forEach(poly => {
+                        poly.move(widget.track.pos);
                         ctx.beginPath();
                         polyout(poly.setClockwise(), ctx);
                         if (poly.inner) {
@@ -332,6 +333,7 @@ let gs_kiri_sla = exports;
                 }
                 let polys = slice.solids.unioned;
                 polys.forEach(poly => {
+                    poly = poly.clone(true).move(widget.track.pos);
                     layer.poly(poly, 0x010101, true);
                     layer.solid(poly, 0x00bbee);
                     count++;

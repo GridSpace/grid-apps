@@ -38,6 +38,7 @@ let dispatch = {
         let settings = data.settings,
             vertices = new Float32Array(data.vertices),
             position = data.position,
+            tracking = data.tracking,
             points = Widget.verticesToPoints(vertices);
 
         send.data({update:0.05, updateStatus:"slicing"});
@@ -50,6 +51,7 @@ let dispatch = {
         cache[data.id] = widget;
 
         // fake mesh object to satisfy printing
+        widget.track = tracking;
         widget.mesh = {
             widget: widget,
             position: position

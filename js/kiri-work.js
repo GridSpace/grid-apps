@@ -96,6 +96,7 @@ KIRI.work = {
             settings: settings,
             vertices: vertices,
             position: widget.mesh.position,
+            tracking: widget.track,
             snapshot: snapshot
         }, function(reply) {
             if (reply.done || reply.error) delete slicing[widget.id];

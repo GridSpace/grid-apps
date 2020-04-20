@@ -1468,7 +1468,7 @@ var gs_kiri_init = exports;
             slaBasePeelDist:     UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
             slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
 
-            slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-first"}),
+            slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-infill"}),
             slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaFillLine:         UC.newInput('line width', {title:'hatch line width\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
 
