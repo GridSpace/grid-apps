@@ -6,7 +6,6 @@
         "M83                      ; set relative positioning for extruder",
         "M107                     ; turn off filament cooling fan",
         "G28                      ; home axes",
-        "G29                      ; level bed",
         "G92 X0 Y0 Z0 E0          ; reset all axes positions",
         "G1 X0 Y0 Z0.25 F180      ; move xy to 0,0 and z 0.25mm over bed",
         "G92 E0                   ; zero the extruded",

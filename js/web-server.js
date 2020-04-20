@@ -1062,6 +1062,9 @@ function initModule(file, dir) {
     helper.log({module:file});
     require(file)({
         api: api,
+        adm: {
+            reload: prepareScripts
+        },
         const: {
             args: args,
             debug: debug,
