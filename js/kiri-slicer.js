@@ -443,10 +443,12 @@ let gs_kiri_slicer = exports;
 
             if (onflat) {
                 // annotate slices with cam flats for finishing waterlines
-                if (options.cam) slice.hasFlats = true;
-                // since default onflat pushes Z down by 0.001 and in cam
-                // mode we want the opposite, overcompsate above the Z
-                z += 0.002;
+                if (options.cam) {
+                    slice.hasFlats = true;
+                    // since default onflat pushes Z down by 0.001 and in cam
+                    // mode we want the opposite, overcompsate above the Z
+                    z += 0.002;
+                }
             }
 
             // iterate over matching buckets for this z offset
