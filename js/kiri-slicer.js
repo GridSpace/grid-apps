@@ -184,10 +184,8 @@ let gs_kiri_slicer = exports;
             }).sort((a,b) => {
                 return b[0] - a[0];
             }).forEach((e,i) => {
-                // console.log(e)
                 if (i > 0) {
                     let zd = le[0]-e[0];
-                    // console.log(e[0], zd);
                     if (zd > 0.1 && e[1] > 100) {
                         // zl.push(e)
                         zl[e[0].toFixed(5)] = e[1];
@@ -322,13 +320,12 @@ let gs_kiri_slicer = exports;
                 onFlat = false,
                 onLine = false;
             // ensure no slice through horizontal lines or planes
-            if (zFlat[ik]) {
-                zIndexes[i] -= 0.001;
-                onFlat = true;
-            }
-            if (zLines[ik]) {
-                zIndexes[i] -= 0.001;
-                onLine = true;
+            if (zFlat[ik]) onFlat = true;
+            if (zLines[ik]) onLine = true;
+            if (onFlat || onLine) zIndexes[i] -= 0.001;
+            if ((onFlat || onLine) && options.cam) {
+                // reverse on line compensation for cam mode
+                zIndexes[i] += 0.002;
             }
             // slice next layer and add to slices[] array
             sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
@@ -435,20 +432,16 @@ let gs_kiri_slicer = exports;
         function sliceZ(z, height, onflat, online) {
             let phash = {},
                 lines = [],
-                zkey = z.toFixed(5),
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
                 bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];
 
-            if (!bucket) return;
+            if (!bucket) {
+                return;
+            }
 
-            if (onflat) {
-                // annotate slices with cam flats for finishing waterlines
-                if (options.cam) {
-                    slice.hasFlats = true;
-                    // since default onflat pushes Z down by 0.001 and in cam
-                    // mode we want the opposite, overcompsate above the Z
-                    z += 0.002;
-                }
+            // annotate slices with cam flats for finishing waterlines
+            if (onflat && options.cam) {
+                slice.hasFlats = true;
             }
 
             // iterate over matching buckets for this z offset
@@ -533,7 +526,6 @@ let gs_kiri_slicer = exports;
                     });
                 }
             }
-
             slices.push(slice);
         }
     }

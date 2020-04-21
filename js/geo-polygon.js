@@ -112,6 +112,16 @@ var gs_base_polygon = exports;
      * Polygon Prototype Functions
      ******************************************************************* */
 
+    PRO.toString = function() {
+        let l;
+        if (this.inner && this.inner.length) {
+            l = '/' + this.inner.map(i => i.toString()).join(',');
+        } else {
+            l = '';
+        }
+        return `P[${this.points.length,this.area().toFixed(2)}${l}]`;
+    };
+
     // return which plane (x,y,z) this polygon is coplanar with
     PRO.alignment = function() {
         if (this._aligned) return this._aligned;
