@@ -950,7 +950,8 @@ self.kiri.copyright = exports.COPYRIGHT;
      }
 
      function platformUpdateTopZ() {
-         let camz = (MODE === MODES.CAM) && (settings.stock.z || settings.controller.alignTop);
+         let alignTopOk = WIDGETS.length > 1 && settings.controller.alignTop;
+         let camz = (MODE === MODES.CAM) && (settings.stock.z || alignTopOk);
          let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
          forAllWidgets(function(widget) {
              widget.setTopZ(ztop);
@@ -969,7 +970,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             height = parseFloat(dev.bedHeight)
         );
         SPACE.platform.setGZOff(height/2 - 0.1);
-        SPACE.platform.setHidden(width > 500 || depth > 500);
+        // SPACE.platform.setHidden(width > 500 || depth > 500);
         platform.update_origin();
         SPACE.scene.freeze(frozen);
     }
@@ -979,7 +980,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         forAllWidgets(function(widget) {
             let wp = widget.track.pos;
             let wb = widget.mesh.getBoundingBox().clone();
-            // wb.translate(widget.track.pos);
             bounds.union(wb);
         });
         return settings.bounds = bounds;
