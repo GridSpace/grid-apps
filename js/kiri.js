@@ -130,7 +130,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             { name: "grid" },
             { name: "gyroid" },
             { name: "triangle" },
-            { name: "linear" }
+            { name: "linear" },
+            { name: "bubbles" }
         ],
         units: [
             { name: "mm" },
