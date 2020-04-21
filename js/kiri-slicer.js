@@ -322,10 +322,8 @@ let gs_kiri_slicer = exports;
             // ensure no slice through horizontal lines or planes
             if (zFlat[ik]) onFlat = true;
             if (zLines[ik]) onLine = true;
-            if (onFlat || onLine) zIndexes[i] -= 0.001;
-            if ((onFlat || onLine) && options.cam) {
-                // reverse on line compensation for cam mode
-                zIndexes[i] += 0.002;
+            if (onFlat || onLine) {
+                zIndexes[i] += options.cam ? 0.001 : -0.001;
             }
             // slice next layer and add to slices[] array
             sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
