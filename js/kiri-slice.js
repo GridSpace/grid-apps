@@ -387,7 +387,7 @@ let gs_kiri_slice = exports;
                 tops.forEach(function(top) {
                     layer.poly(top.poly, outline_colors[color], true, open);
                     // layer.solid(top.poly, outline_solid_colors[color]);
-                    if (top.inner) layer.poly(top.inner, 0x777777, true);
+                    if (top.inner) layer.poly(top.inner, 0xdddddd, true);
                     // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
                 });
                 break;
@@ -576,7 +576,9 @@ let gs_kiri_slice = exports;
             }
             if (top.traces) {
                 layer.poly(top.traces, trace_color, true, null);
-                // layer.noodle(top.traces, 0.15, 0x888888);
+                // layer.setTransparent(false);
+                // layer.setOpacity(0.5);
+                // layer.noodle(top.traces, 0.19, 0x88aadd, 0x0);
             }
             if (top.polish) {
                 layer.poly(top.polish.x, 0x880000, true, null);
@@ -584,8 +586,8 @@ let gs_kiri_slice = exports;
             }
         });
 
-        layer.render();
         // layer.renderSolid();
+        layer.render();
 
         if (scope.camMode) {
             layers.solid.render();

@@ -134,17 +134,25 @@ let gs_kiri_layer = exports;
         this.changed = true;
     };
 
-    LP.noodle = function(poly, offset, color) {
+    LP.noodle = function(poly, offset, color, traceColor) {
         let layer = this;
         if (Array.isArray(poly)) {
-            poly.forEach(p => { layer.noodle(p, offset, color) });
+            poly = POLY.flatten(poly, [], true);
         } else {
-            let off = [];
-            POLY.expand(poly.flattenTo([]), offset, poly.getZ(), off, 1);
-            POLY.expand(poly.flattenTo([]), -offset, poly.getZ(), off, 1);
-            POLY.nest(off).forEach(p => { this.add(color, {solid: p}) });
-            this.changed = true;
+            poly = POLY.flatten([poly], [], true);
         }
+        poly = poly.map(p => p.clone());
+        let exp = [];
+        let z = poly[0].getZ();
+        poly.forEach(p => {
+            POLY.expand([p],  offset, z, exp, 1);
+            POLY.expand([p], -offset, z, exp, 1);
+        })
+        POLY.nest(exp).forEach((p,i) => {
+            this.add(color, {solid: p});
+            this.add(traceColor, {poly: p, deep: true, open: false});
+        });
+        this.changed = true;
     };
 
     LP.points = function(points, color, size, opacity) {
