@@ -379,12 +379,13 @@ var gs_moto_ui = exports;
     }
 
     function newInputField(label, options) {
-        let row = newDiv(options),
-            hide = options && options.hide,
-            size = options ? options.size || 5 : 5,
-            height = options ? options.height : 0,
+        let opt = options || {},
+            row = newDiv(opt),
+            hide = opt && opt.hide,
+            size = opt ? opt.size || 5 : 5,
+            height = opt ? opt.height : 0,
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
-            action = options.action || inputAction;
+            action = opt.action || inputAction;
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
@@ -402,12 +403,12 @@ var gs_moto_ui = exports;
         }
         ip.setAttribute("type", "text");
         row.style.display = hide ? 'none' : '';
-        if (options) {
-            if (options.disabled) ip.setAttribute("disabled", "true");
-            if (options.title) row.setAttribute("title", options.title);
-            if (options.convert) ip.convert = options.convert.bind(ip);
-            if (options.bound) ip.bound = options.bound;
-            if (options.action) action = options.action;
+        if (opt) {
+            if (opt.disabled) ip.setAttribute("disabled", "true");
+            if (opt.title) row.setAttribute("title", opt.title);
+            if (opt.convert) ip.convert = opt.convert.bind(ip);
+            if (opt.bound) ip.bound = opt.bound;
+            if (opt.action) action = opt.action;
         }
         ip.addEventListener('focus', function(event) {
             hidePop();
@@ -416,7 +417,7 @@ var gs_moto_ui = exports;
             ip.addEventListener('keydown', function(event) {
                 let key = event.key;
                 if (
-                    options.text ||
+                    opt.text ||
                     (key >= '0' && key <= '9') ||
                     key === '.' ||
                     key === '-' ||

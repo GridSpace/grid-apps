@@ -15,7 +15,7 @@
 # FDM
 
 * `B` check for support / brim intersections on first layer
-* `F` rectilinear infill
+* `F` add separate fill speed control
 * `F` manual support addition / control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
