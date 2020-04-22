@@ -809,6 +809,7 @@ let ver = require('../js/license.js'),
         kiri : [
             "ext-three",
             "license",
+            "ext-clip2",
             "ext-tween",
             "ext-fsave",
             "ext-earcut",

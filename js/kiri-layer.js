@@ -10,6 +10,7 @@ let gs_kiri_layer = exports;
     if (self.kiri.Layer) return;
 
     let KIRI = self.kiri,
+        POLY = self.base.polygons,
         LP = Layer.prototype,
         mcache = {};
 
@@ -131,6 +132,19 @@ let gs_kiri_layer = exports;
     LP.solid = function(poly, color) {
         this.add(color, {solid: poly});
         this.changed = true;
+    };
+
+    LP.noodle = function(poly, offset, color) {
+        let layer = this;
+        if (Array.isArray(poly)) {
+            poly.forEach(p => { layer.noodle(p, offset, color) });
+        } else {
+            let off = [];
+            POLY.expand(poly.flattenTo([]), offset, poly.getZ(), off, 1);
+            POLY.expand(poly.flattenTo([]), -offset, poly.getZ(), off, 1);
+            POLY.nest(off).forEach(p => { this.add(color, {solid: p}) });
+            this.changed = true;
+        }
     };
 
     LP.points = function(points, color, size, opacity) {

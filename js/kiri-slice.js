@@ -576,6 +576,7 @@ let gs_kiri_slice = exports;
             }
             if (top.traces) {
                 layer.poly(top.traces, trace_color, true, null);
+                // layer.noodle(top.traces, 0.15, 0x888888);
             }
             if (top.polish) {
                 layer.poly(top.polish.x, 0x880000, true, null);
@@ -584,6 +585,8 @@ let gs_kiri_slice = exports;
         });
 
         layer.render();
+        // layer.renderSolid();
+
         if (scope.camMode) {
             layers.solid.render();
             layers.bridge.render();
