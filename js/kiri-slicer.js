@@ -273,7 +273,8 @@ let gs_kiri_slicer = exports;
                 zDivMin,
                 zDivMax,
                 zStep,
-                nextZ;
+                nextZ,
+                lzp = zPos;
 
             // first slice is fixed
             zHeights.push(zIncFirst);
@@ -288,17 +289,20 @@ let gs_kiri_slicer = exports;
                 zDivMin = Math.floor(zDelta / zIncMin);
                 zDivMax = Math.floor(zDelta / zInc);
 
-                if (zDivMax && zDivMax < zDivMin) {
+                if (zDivMax && zDivMax <= zDivMin) {
                     if (zDelta % zInc > 0.01) zDivMax++;
                     zStep = zDelta / zDivMax;
+                    // console.log(`--- zDivMax <= zDivMin ---`, zStep, zDelta % zInc)
                 } else {
                     zStep = zDelta;
                 }
-
+                // console.log({nextZ, zPos, zDelta, zStep, zDivMin, zDivMax})
                 while (zPos < nextZ) {
                     zHeights.push(zStep);
                     zIndexes.push(zPos + zStep / 2);
                     zPos += zStep;
+                    // console.log({D: zPos - lzp, zPos})
+                    // lzp = zPos;
                 }
             }
         } else {
