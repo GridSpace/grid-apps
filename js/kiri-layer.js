@@ -141,6 +141,7 @@ let gs_kiri_layer = exports;
         } else {
             poly = POLY.flatten([poly], [], true);
         }
+        if (!poly.length) return;
         poly = poly.map(p => p.clone());
         let exp = [];
         let z = poly[0].getZ();
