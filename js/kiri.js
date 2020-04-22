@@ -1898,6 +1898,11 @@ self.kiri.copyright = exports.COPYRIGHT;
             settings.device = clone(settings.cdev[mode]);
             API.event.emit('device.set', currentDeviceName());
         }
+        if (MODE === MODES.CAM) {
+            SPACE.platform.setColor(0xeeeeee);
+        } else {
+            SPACE.platform.setColor(0xcccccc);
+        }
         MODE = MODES[mode];
         // updates right-hand menu by enabling/disabling fields
         UC.setMode(MODE);

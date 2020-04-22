@@ -194,8 +194,10 @@ var MOTO = window.moto = window.moto || {};
     }
 
     function setPlatformColor(color) {
+        let was = platform.material.color.getHex();
         platform.material.color.set(color);
         requestRefresh();
+        return was;
     }
 
     function setGrid(unitMajor, unitMinor, colorMajor, colorMinor) {

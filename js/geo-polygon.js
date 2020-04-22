@@ -503,6 +503,10 @@ var gs_base_polygon = exports;
         layer.poly(this, color, recursive, open);
     };
 
+    PRO.renderSolid = function(layer, color) {
+        layer.solid(this, color);
+    };
+
     /**
      * add new point and return polygon reference for chaining
      *

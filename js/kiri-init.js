@@ -49,7 +49,8 @@ var gs_kiri_init = exports;
         o2js = API.o2js,
         selectedTool = null,
         editTools = null,
-        maxTool = 0;
+        maxTool = 0,
+        platformColor;
 
     // extend KIRI API with local functions
     API.show.devices = showDevices;
@@ -983,18 +984,19 @@ var gs_kiri_init = exports;
         evt.stopPropagation();
         evt.preventDefault();
         evt.dataTransfer.dropEffect = 'copy';
-        SPACE.platform.setColor(0x00ff00);
+        let oldcolor = SPACE.platform.setColor(0x00ff00);
+        if (oldcolor !== 0x00ff00) platformColor = oldcolor;
     }
 
     function dragLeave() {
-        SPACE.platform.setColor(0x555555);
+        SPACE.platform.setColor(platformColor);
     }
 
     function dropHandler(evt) {
         evt.stopPropagation();
         evt.preventDefault();
 
-        SPACE.platform.setColor(0x555555);
+        SPACE.platform.setColor(platformColor);
 
         let files = evt.dataTransfer.files,
             plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`),

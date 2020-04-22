@@ -22,6 +22,11 @@ let gs_kiri_slice = exports;
         MAX = Math.max,
         NOKEY = BASE.key.NONE,
         outline_colors = [
+            0xeeee00,
+            0xeebb00,
+            0xee8800
+        ],
+        outline_solid_colors = [
             0xffff00,
             0xffcc00,
             0xff9900
@@ -36,13 +41,16 @@ let gs_kiri_slice = exports;
             0xffffff,
             0x000000
         ],
-        trace_color = 0x000000,
+        trace_color = 0x0,
         sparse_fill_color = 0x333366,
         fill_offset_color = 0xeeeeee,
         fill_color = 0x333333,
-        flat_color = 0xff00aa,
-        bridge_color = 0x00aaff,
-        solid_outline_color = 0x00dd00;
+        flat_outline_color = 0xee0099,
+        flat_solid_color = 0xff00aa,
+        bridge_outline_color = 0x0099ee,
+        bridge_solid_color = 0x00aaff,
+        solid_outline_color = 0x00cc00,
+        solid_solid_color = 0x00dd00;
 
     KIRI.Top = Top;
     KIRI.newTop = newTop;
@@ -327,7 +335,7 @@ let gs_kiri_slice = exports;
      *
      * @param {number} renderMode
      */
-    PRO.renderOutline = function(renderMode,color) {
+    PRO.renderOutline = function(renderMode, color) {
         if (!this.view) return;
 
         let process = KIRI.driver.CAM.process,
@@ -342,6 +350,7 @@ let gs_kiri_slice = exports;
             open = (slice.camMode === process.FINISH_X || slice.camMode === process.FINISH_Y);
 
         layer.clear();
+        // layer.setOpacity(0.05);
 
         switch (renderMode % 5) {
             // un-processed lines
@@ -375,15 +384,16 @@ let gs_kiri_slice = exports;
                 break;
             // all polygons in yellow
             case 4:
-                colors = outline_colors;
                 tops.forEach(function(top) {
-                    layer.poly(top.poly, colors[color], true, open);
-                    if (top.inner) layer.poly(top.inner, 0x999999, true, null);
+                    layer.poly(top.poly, outline_colors[color], true, open);
+                    // layer.solid(top.poly, outline_solid_colors[color]);
+                    if (top.inner) layer.poly(top.inner, 0x777777, true);
                     // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
                 });
                 break;
         }
 
+        // layer.renderSolid();
         layer.render();
     };
 
@@ -834,15 +844,19 @@ let gs_kiri_slice = exports;
 
         if (bridges) bridges.forEach(function (t) {
             t.setZ(scope.z);
-            t.render(bridgeLayer, bridge_color, true);
+            t.render(bridgeLayer, bridge_outline_color, true);
+            t.renderSolid(bridgeLayer, bridge_solid_color);
         });
 
         if (flats) flats.forEach(function (t) {
             t.setZ(scope.z);
-            t.render(flatLayer, flat_color, true);
+            t.render(flatLayer, flat_outline_color, true);
+            t.renderSolid(flatLayer, flat_solid_color);
         });
 
+        bridgeLayer.renderSolid();
         bridgeLayer.render();
+        flatLayer.renderSolid();
         flatLayer.render();
     };
 
@@ -989,8 +1003,10 @@ let gs_kiri_slice = exports;
 
         if (trimmed) trimmed.forEach(function(poly) {
             poly.render(layer, solid_outline_color, true);
+            poly.renderSolid(layer, solid_solid_color, true);
         });
 
+        layer.renderSolid();
         layer.render();
     };
 

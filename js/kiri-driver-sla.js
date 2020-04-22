@@ -335,7 +335,7 @@ let gs_kiri_sla = exports;
                 polys.forEach(poly => {
                     poly = poly.clone(true).move(widget.track.pos);
                     layer.poly(poly, 0x010101, true);
-                    layer.solid(poly, 0x00bbee);
+                    layer.solid(poly, 0x0099cc);
                     count++;
                 });
             });

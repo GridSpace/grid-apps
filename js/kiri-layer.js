@@ -16,14 +16,14 @@ let gs_kiri_layer = exports;
     KIRI.Layer = Layer;
     KIRI.newLayer = function(view) { return new Layer(view) };
 
-    function materialFor(color, mesh, linewidth) {
+    function materialFor(layer, color, mesh, linewidth) {
         let m = mcache[color];
         if (!m) {
             m = mcache[color] = mesh ? new THREE.MeshPhongMaterial({
-                specular: 0x181818,
-                shininess: 100,
-                transparent: true,
-                opacity: 0.15,
+                transparent: layer.transparent,
+                shininess: layer.shininess,
+                specular: layer.specular,
+                opacity: layer.opacity,
                 color: color,
                 side: THREE.DoubleSide
             }) : new THREE.LineBasicMaterial({
@@ -80,6 +80,26 @@ let gs_kiri_layer = exports;
         this.solids = null;
         this.view = view;
         this.bycolor = {};
+        this.opacity = 0.15,
+        this.specular = 0x181818,
+        this.shininess = 100,
+        this.transparent = true;
+    };
+
+    LP.setOpacity = function(v) {
+        this.opacity = v;
+    };
+
+    LP.setSpecular = function(v) {
+        this.specular = v;
+    };
+
+    LP.setShininess = function(v) {
+        this.shininess = v;
+    };
+
+    LP.setTransparent = function(b) {
+        this.transparent = b;
     };
 
     LP.setVisible = function(vis) {
@@ -163,7 +183,7 @@ let gs_kiri_layer = exports;
         for (let key in bycolor) {
             if (!bycolor.hasOwnProperty(key)) continue;
 
-            let arr = [], mat = materialFor(parseInt(key), true);
+            let arr = [], mat = materialFor(this, parseInt(key), true);
 
             bycolor[key].forEach(function(obj) {
                 if (obj.solid) {
@@ -173,8 +193,16 @@ let gs_kiri_layer = exports;
 
             if (arr.length > 0) {
                 let geo = new THREE.BufferGeometry();
+
                 geo.setAttribute('position', new THREE.BufferAttribute(arr.toFloat32(), 3));
-                this.solids.add(new THREE.Mesh(geo, mat));
+                geo.computeFaceNormals();
+                geo.computeVertexNormals();
+
+                let mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                this.solids.add(mesh);
             }
         }
     };
@@ -192,7 +220,7 @@ let gs_kiri_layer = exports;
 
             let geo = new THREE.Geometry(),
                 arr = geo.vertices,
-                mat = materialFor(parseInt(key));
+                mat = materialFor(this, parseInt(key));
 
             added = bycolor[key];
 
