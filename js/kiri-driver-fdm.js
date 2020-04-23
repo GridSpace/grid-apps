@@ -393,7 +393,7 @@ let gs_kiri_fdm = exports;
      * @param {Function} update incremental callback
      */
     function printSetup(print, update) {
-        let widgets = print.widgets,
+        let widgets = print.widgets.slice(),
             settings = fixExtruders(print.settings),
             device = settings.device,
             nozzle = device.extruders[0].extNozzle,
@@ -542,6 +542,32 @@ let gs_kiri_fdm = exports;
             bounds.max.y = Math.max(bounds.max.y, bbounds.maxy);
         }
 
+        // synthesize a support widget, if needed
+        if (process.sliceSupportEnable) {
+            let swidget = KIRI.newWidget();
+            let sslices = swidget.slices = [];
+            widgets.forEach(function(widget) {
+                let slices = widget.slices;
+                while (sslices.length < slices.length) {
+                    let sslice = KIRI.newSlice(slices[sslices.length].z);
+                    sslice.extruder = process.sliceSupportNozzle;
+                    sslices.push(sslice);
+                }
+                slices.forEach((slice,index) => {
+                    if (!slice.supports) return;
+                    if (sslices[index].supports) {
+                        sslices[index].supports.appendAll(slice.supports);
+                    } else {
+                        sslices[index].supports = slice.supports;
+                    }
+                });
+            });
+            swidget.support = true;
+            swidget.mesh = { widget: swidget }; // fake for lookup
+            settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
+            widgets.push(swidget);
+        }
+
         let extruders = [];
         let extcount = 0;
 
@@ -615,7 +641,11 @@ let gs_kiri_fdm = exports;
                 }
                 let mslices = mesh.widget.slices;
                 if (mslices && mslices[layer]) {
-                    slices.push({slice:mslices[layer], offset:mesh.position});
+                    slices.push({
+                        slice: mslices[layer],
+                        offset: mesh.position || {x:0, y:0, z:0},
+                        widget: mesh.widget
+                    });
                 }
             }
 
@@ -656,6 +686,7 @@ let gs_kiri_fdm = exports;
                     closest = find.sliceEntry;
                     minidx = find.meshIndex;
                 }
+
                 if (!closest) {
                     if (sliceEntry) lastOut = sliceEntry.slice;
                     break;
@@ -677,7 +708,10 @@ let gs_kiri_fdm = exports;
                     printPoint.sub(closest.offset),
                     closest.offset,
                     layerout,
-                    { first: closest.slice.index === 0 }
+                    {
+                        first: closest.slice.index === 0,
+                        support: closest.widget.support
+                    }
                 );
                 lastOut = closest.slice;
                 lastExt = lastOut.ext

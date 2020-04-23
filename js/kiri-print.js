@@ -648,6 +648,7 @@ let gs_kiri_print = exports;
             origin = startPoint.add(offset),
             zhop = process.zHopDistance || 0,
             antiBacklash = process.antiBacklash,
+            doSupport = opt.support,
             z = slice.z;
 
         // apply first layer extrusion multipliers
@@ -867,9 +868,16 @@ let gs_kiri_print = exports;
             }
         }
 
-        let all = [].appendAll(slice.supports || []).appendAll(slice.tops || []);
+        let out = [];
+        if (slice.tops) {
+            out.appendAll(slice.tops);
+        };
+        if (opt.support && slice.supports) {
+            out.appendAll(slice.supports);
+        }
+
         let lastTop = null;
-        outputOrderClosest(all || [], function(next) {
+        outputOrderClosest(out, function(next) {
             if (next instanceof Polygon) {
                 // support polygon
                 next.setZ(z);

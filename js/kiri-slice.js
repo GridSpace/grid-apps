@@ -1226,12 +1226,21 @@ let gs_kiri_slice = exports;
     PRO.findClosestPointTo = function(target) {
         let min, find;
 
-        this.tops.forEach(function(top) {
-            find = top.poly.findClosestPointTo(target);
-            if (!min || find.distance < min.distance) {
-                min = find;
-            }
-        });
+        if (this.tops.length) {
+            this.tops.forEach(function(top) {
+                find = top.poly.findClosestPointTo(target);
+                if (!min || find.distance < min.distance) {
+                    min = find;
+                }
+            });
+        } else if (this.supports) {
+            this.supports.forEach(function(poly) {
+                find = poly.findClosestPointTo(target);
+                if (!min || find.distance < min.distance) {
+                    min = find;
+                }
+            });
+        }
 
         return min;
     };

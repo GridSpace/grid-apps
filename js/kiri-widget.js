@@ -153,6 +153,7 @@ let gs_kiri_widget = exports;
             progress: 0
         };
         this.saved = false;
+        this.support = false; // is synthesized support widget
     }
 
     /** ******************************************************************

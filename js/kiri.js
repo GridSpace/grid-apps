@@ -1153,7 +1153,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 space = space || proc.outputTileSpacing || 1;
                 break;
             case MODES.FDM:
-                space = space || (proc.sliceSupportExtra || 0) + 1;
+                space = space || ((proc.sliceSupportExtra || 0) * 2) + 1;
                 break;
         }
 
