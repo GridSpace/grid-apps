@@ -1230,7 +1230,13 @@ var gs_kiri_cam = exports;
                 nextIsMove = false;
             }
             let rate = feedRate;
+
+            if (!lastPoint) {
+                lastPoint = newPoint(origin.x, origin.y, point.z);
+            }
+
             // only when we have a previous point to compare to
+            // TODO obsolete check. lastPoint now synthesized.
             if (lastPoint) {
                 let deltaXY = lastPoint.distTo2D(point),
                     deltaZ = point.z - lastPoint.z,
@@ -1665,6 +1671,12 @@ var gs_kiri_cam = exports;
         function moveTo(out) {
             let newpos = out.point;
 
+            // first point out sets the current position (but not Z)
+            if (points === 0) {
+                pos.x = newpos.x;
+                pos.y = newpos.y;
+            }
+
             // no point == dwell
             // out.speed = time to dwell in ms
             if (!newpos) {
@@ -1755,6 +1767,7 @@ var gs_kiri_cam = exports;
             layer.forEach(function(out) {
                 point = out.point;
                 if (!point || point.mod) return;
+                // ensure not point is modified twice
                 point.mod = 1;
                 if (offset) {
                     point.x += offset.x;

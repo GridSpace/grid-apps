@@ -324,8 +324,8 @@ let gs_kiri_sla = exports;
 
         for (let index=0; ; index++) {
             let layer = KIRI.newLayer(print.group);
-
             let count = 0;
+
             widgets.forEach(widget => {
                 let slice = widget.slices[index];
                 if (!slice) {
@@ -339,6 +339,7 @@ let gs_kiri_sla = exports;
                     count++;
                 });
             });
+
             layer.renderSolid();
             layer.render();
 

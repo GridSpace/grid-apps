@@ -326,16 +326,22 @@ let gs_kiri_print = exports;
 
     PRO.render = function() {
         let scope = this,
-            mode = scope.settings.mode,
-            driver = KIRI.driver[mode];
+            settings = scope.settings,
+            process = settings.process,
+            origin = settings.origin,
+            mode = settings.mode,
+            driver = KIRI.driver[mode],
+            firstPoint;
 
         switch (mode) {
             case 'SLA':
                 driver.printRender(scope);
                 break;
             case 'CAM':
+                console.log(scope.settings);
+                firstPoint = newPoint(origin.x, origin.y, process.camOriginTop ? settings.stock.z : origin.z);
             case 'FDM':
-                scope.renderMoves(true, 0x888888);
+                scope.renderMoves(true, 0x888888, firstPoint);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);
@@ -420,9 +426,9 @@ let gs_kiri_print = exports;
         return out;
     }
 
-    PRO.renderMoves = function(showMoves, moveColor) {
+    PRO.renderMoves = function(showMoves, moveColor, firstPoint) {
         let debug = KIRI.api.const.LOCAL;
-        let scope = this, last, emits, moves;
+        let scope = this, emits, moves, last = firstPoint;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
