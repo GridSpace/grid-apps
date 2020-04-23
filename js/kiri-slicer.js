@@ -52,6 +52,7 @@ let gs_kiri_slicer = exports;
         let topoMode = options.topo,
             simpleMode = options.simple,
             swap = options.swapX || options.swapY,
+            isCam = options.cam,
             ox = 0,
             oy = 0;
 
@@ -110,10 +111,10 @@ let gs_kiri_slicer = exports;
             zOff = true ? zInc / 2 : 0,
             zHeights = [],      // heights for zIndexes in adaptive mode
             zIndexes = [],      // auto-detected z slicing offsets (laser/cam)
-            zOrdered = [],      // ordered list of Z vertices
-            zList = {},         // list of z indices for auto slicing (laser)
-            zFlat = {},         // area of z offset flat areas (cam)
-            zLines = {},        // count of lines flat on a z index
+            zOrdered = [],      // ordered list of Z indexes
+            zList = {},         // map count of z index points for adaptive slicing
+            zFlat = {},         // map area of z index flat areas (cam)
+            zLines = {},        // map count of z index lines
             zScale,             // bucket span in z units
             timeStart = time(),
             slices = [],
@@ -143,39 +144,38 @@ let gs_kiri_slicer = exports;
                 countZ(p2.z);
                 countZ(p3.z);
             }
-            if (true || options.cam) {
-                if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
-                    // auto-detect flats for cam faces and to avoid slicing directly on flats
-                    let zkey = p1.z.toFixed(5),
-                        area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
-                    if (!zFlat[zkey]) {
-                        zFlat[zkey] = area;
-                    } else {
-                        zFlat[zkey] += area;
-                    }
-                } else if (true || options.trace) {
-                    // detect zLines (curved region tops/bottoms)
-                    // mark these layers for ball mills only
-                    if (p1.z === p2.z && p1.z > bounds.min.z) {
-                        let zkey = p1.z.toFixed(5);
-                        let zval = zLines[zkey];
-                        zLines[zkey] = (zval || 0) + 1;
-                    }
-                    if (p2.z === p3.z && p2.z > bounds.min.z) {
-                        let zkey = p2.z.toFixed(5);
-                        let zval = zLines[zkey];
-                        zLines[zkey] = (zval || 0) + 1;
-                    }
-                    if (p3.z === p1.z && p3.z > bounds.min.z) {
-                        let zkey = p3.z.toFixed(5);
-                        let zval = zLines[zkey];
-                        zLines[zkey] = (zval || 0) + 1;
-                    }
+            // use co-flat and co-line detection to adjust slice Z
+            if (p1.z === p2.z && p2.z === p3.z && p1.z > bounds.min.z) {
+                // detect zFlat faces to avoid slicing directly on them
+                let zkey = p1.z.toFixed(5),
+                    area = Math.abs(UTIL.area2(p1,p2,p3)) / 2;
+                if (!zFlat[zkey]) {
+                    zFlat[zkey] = area;
+                } else {
+                    zFlat[zkey] += area;
+                }
+            } else if (true || options.trace) {
+                // detect zLines (curved region tops/bottoms)
+                // mark these layers for ball and v mill tracing
+                if (p1.z === p2.z && p1.z > bounds.min.z) {
+                    let zkey = p1.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
+                }
+                if (p2.z === p3.z && p2.z > bounds.min.z) {
+                    let zkey = p2.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
+                }
+                if (p3.z === p1.z && p3.z > bounds.min.z) {
+                    let zkey = p3.z.toFixed(5);
+                    let zval = zLines[zkey];
+                    zLines[zkey] = (zval || 0) + 1;
                 }
             }
         }
 
-        // find slice candidates to trace for ballmills and tapermills
+        // CAM: find slice candidates to trace for ballmills and tapermills
         if (options.trace) {
             let zl = {};
             let le;
@@ -199,7 +199,10 @@ let gs_kiri_slicer = exports;
             zLines = zl;
         }
 
-        /** bucket polygons into z-bounded groups */
+        /**
+         * bucket polygons into z-bounded groups (inside or crossing)
+         * to reduce the search space in complex models
+         */
         let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
 
         zScale = 1 / (zMax / bucketCount);
@@ -244,7 +247,7 @@ let gs_kiri_slicer = exports;
             for (i = 0; i < zl.length - 1; i++) {
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
             }
-        } else if (options.cam) {
+        } else if (isCam) {
             // re-divide slice height so that top and
             // bottom slices fall exactly on those faces
             zInc = (zMax - zMin) / (Math.floor(zMax / zInc) + 1);
@@ -265,6 +268,8 @@ let gs_kiri_slicer = exports;
             zIndexes.sort(function(a,b) {
                 return b-a;
             });
+            // copy to store original z
+            zHeights = zIndexes.slice();
         } else if (zIncMin) {
             // FDM adaptive slicing
             let zPos = zMin + zIncFirst,
@@ -317,7 +322,6 @@ let gs_kiri_slicer = exports;
                 zHeights.push(zInc);
             }
         }
-
         // create a Slice for each z offset in the zIndexes array
         for (let i = 0; i < zIndexes.length; i++) {
             let ik = zIndexes[i].toFixed(5),
@@ -327,16 +331,20 @@ let gs_kiri_slicer = exports;
             if (zFlat[ik]) onFlat = true;
             if (zLines[ik]) onLine = true;
             if (onFlat || onLine) {
-                zIndexes[i] += options.cam ? 0.001 : -0.001;
+                zIndexes[i] += isCam ? 0.001 : -0.001;
             }
             // slice next layer and add to slices[] array
-            sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
+            let slice = sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
+            // override z in cam in case it was moved for a flat or line
+            if (isCam && slice) {
+                slice.z = zHeights[i];
+            }
             onupdate(i / zIndexes.length);
         }
 
-        // for cam, mark top and bottom as mandatory (hasFlats)
-        if (options.cam && slices.length > 0) {
-            slices[0].hasFlats = true;
+        // for cam, bottom as mandatory (hasFlats)
+        if (isCam && slices.length > 0) {
+            // slices[0].hasFlats = true;
             slices[slices.length-1].hasFlats = true;
         }
 
@@ -442,7 +450,7 @@ let gs_kiri_slicer = exports;
             }
 
             // annotate slices with cam flats for finishing waterlines
-            if (onflat && options.cam) {
+            if (onflat && isCam) {
                 slice.hasFlats = true;
             }
 
@@ -529,6 +537,7 @@ let gs_kiri_slicer = exports;
                 }
             }
             slices.push(slice);
+            return slice;
         }
     }
 

@@ -577,8 +577,7 @@ let gs_kiri_slice = exports;
             if (top.traces) {
                 layer.poly(top.traces, trace_color, true, null);
                 // layer.setTransparent(false);
-                // layer.setOpacity(0.5);
-                // layer.noodle(top.traces, 0.19, 0x88aadd, 0x0);
+                // layer.noodle(top.traces, 0.19, 0x88aadd, 0x77bbcc);
             }
             if (top.polish) {
                 layer.poly(top.polish.x, 0x880000, true, null);
@@ -652,14 +651,17 @@ let gs_kiri_slice = exports;
             render;
 
         layer.clear();
+        // layer.setTransparent(false);
 
         this.tops.forEach(function(top) {
             if (top.fill_lines) {
                 layer.lines(top.fill_lines, fill_color);
+                // layer.noodle(top.fill_lines, 0.19, 0x88aadd, 0x77bbcc, true);
             }
         });
 
         layer.render();
+        // layer.renderSolid();
     };
 
     /**
