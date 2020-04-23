@@ -24,6 +24,8 @@ let gs_kiri_sla = exports;
             printRender
         },
         SLICER = KIRI.slicer,
+        newTop = KIRI.newTop,
+        newSlice = KIRI.newSlice,
         newPoint = BASE.newPoint,
         preview,
         previewSmall,
@@ -66,9 +68,10 @@ let gs_kiri_sla = exports;
             previewSmall = samplePNG(img, 200, 125);
             previewLarge = samplePNG(img, 400, 300);
         });
+        let height = process.slaSlice || 0.05;
 
         SLICER.sliceWidget(widget, {
-            height: process.slaSlice || 0.05,
+            height: height,
             add: !process.slaOpenTop
         }, function(slices) {
             widget.slices = slices.filter(slice => slice.tops.length);
@@ -76,6 +79,35 @@ let gs_kiri_sla = exports;
                 // with closed top, filter out any empty above slices
                 // that will generate a diff producing a solid projection
                 slices = widget.slices;
+            }
+            // insert support layers
+            if (process.slaSupportLayers) {
+                let zoff = height / 2;
+                let snew = [];
+                let polys = [];
+                let outer = slices.forEach(slice => {
+                    polys.appendAll(slice.tops.map(t => t.poly));
+                });
+                let union = POLY.expand(POLY.union(polys), 2, zoff, [], 1);
+                for (let s=0; s<process.slaSupportLayers; s++) {
+                    let slice = newSlice(zoff);
+                    slice.height = height;
+                    slice.index = snew.length;
+                    union.forEach(u => {
+                        slice.tops.push(newTop(u.clone(true).setZ(zoff)));
+                    });
+                    snew.push(slice);
+                    zoff += height;
+                    union = POLY.expand(union, 0.1, zoff, [], 1);
+                }
+                widget.slices = slices = snew.concat(slices.map(s => {
+                    s.tops.forEach(t => {
+                        t.poly.setZ(s.z + zoff);
+                    });
+                    s.index += snew.length;
+                    s.z += zoff;
+                    return s;
+                }));
             }
             // reset for solids and support projections
             slices.forEach(function(slice) {
