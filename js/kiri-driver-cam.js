@@ -279,10 +279,10 @@ var gs_kiri_cam = exports;
             emitted.push(slice);
         }
 
-        // - find mandatory slices
-        // - divide space between by step
-        // - select closes spaces for divisible gap
-        let forced = [];
+        // - find mandatory slices (with flats)
+        // - divide space between by step (interpolate)
+        // - select smallest divisible gap
+        let forced = [ slices[0] ];
         slices.forEach(function(slice) {
             if (slice.hasFlats) forced.push(slice);
         })
@@ -310,8 +310,10 @@ var gs_kiri_cam = exports;
 
         forced.appendAll(mid);
         forced.sort(function(s1, s2) { return s2.z - s1.z; });
-        // drop first/top slice (because it's not an actual cut)
-        //forced = forced.slice(1);
+
+        // drop first/top slice. it's not an actual cut. it was
+        // added in the beginning to force layer interpolation.
+        forced = forced.slice(1);
         forced.forEach(function(slice) {
             emit(slice);
         });
