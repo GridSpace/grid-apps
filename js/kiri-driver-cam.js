@@ -801,7 +801,6 @@ var gs_kiri_cam = exports;
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
             sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3) * units,
-            // pocketOnly = proc.camPocketOnly,
             pocketOnlyRough = proc.camPocketOnlyRough,
             pocketOnlyFinish = proc.camPocketOnlyFinish,
             // addTabs = proc.camTabsOn && !pocketOnly,

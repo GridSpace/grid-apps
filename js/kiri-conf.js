@@ -318,7 +318,8 @@ let gs_kiri_conf = exports;
                     slaBasePeelLiftRate: 1.5,
                     slaFillDensity: 0,
                     slaFillLine: 0.5,
-                    slaFirstOffset: 0
+                    slaFirstOffset: 0,
+                    slaSupportEnable: false,
                 }
             },
             cam:{
@@ -352,7 +353,6 @@ let gs_kiri_conf = exports;
                     roughingSpeed: 1000,
                     roughingPlunge: 250,
                     roughingStock: 0,
-                    camPocketOnlyRough: false,
                     roughingOn: true,
                     finishingTool: 1000,
                     finishingSpindle: 1000,
@@ -365,7 +365,6 @@ let gs_kiri_conf = exports;
                     finishingXOn: true,
                     finishingYOn: true,
                     finishCurvesOnly: false,
-                    camPocketOnlyFinish: false,
                     drillTool: 1000,
                     drillSpindle: 1000,
                     drillDownSpeed: 250,
@@ -378,8 +377,9 @@ let gs_kiri_conf = exports;
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsOn: false,
-                    camPocketOnly: false,
-                    camDepthFirst: false,
+                    camPocketOnlyRough: false,
+                    camPocketOnlyFinish: false,
+                    camDepthFirst: true,
                     camEaseDown: false,
                     camOriginTop: true,
                     camTolerance: 0.15,
