@@ -562,7 +562,8 @@ let gs_kiri_fdm = exports;
                         sslices[index].supports = [];
                     }
                     sslices[index].supports.appendAll(slice.supports.map(p => {
-                        return p.clone().move(widget.track.pos);
+                        if (p.fills) p.fills.forEach(p => p.move(widget.track.pos));
+                        return p.move(widget.track.pos);
                     }));
                 });
             });
