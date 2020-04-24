@@ -75,43 +75,58 @@ let gs_kiri_sla = exports;
             height: height,
             add: !process.slaOpenTop
         }, function(slices) {
-            widget.slices = slices.filter(slice => slice.tops.length);
-            if (process.slaOpenTop) {
-                // with closed top, filter out any empty above slices
-                // that will generate a diff producing a solid projection
-                slices = widget.slices;
+            // hold onto last (empty) slice
+            let last = slices[slices.length-1];
+            // remove empty slices
+            slices = widget.slices = slices.filter(slice => slice.tops.length);
+            if (!process.slaOpenTop) {
+                // re-add last empty slice for open top
+                slices.push(last);
             }
-            // insert support layers
+            // prepend raft layers to slices array
             if (process.slaSupportLayers) {
                 let zoff = height / 2,
                     snew = [],
-                    polys = [];
+                    polys = [],
+                    off = 2, // starting union offset from part
+                    gap = 10, // gap layers above raft
+                    grow = 0.1; // union per layer expand
                 let outer = slices.forEach(slice => {
                     polys.appendAll(slice.tops.map(t => t.poly));
                 });
-                let union = POLY.expand(POLY.union(polys), 2, zoff, [], 1);
-                for (let s=0; s<process.slaSupportLayers + 3; s++) {
+                let union = POLY.union(polys);
+                let expand = POLY.expand(union, off, zoff, [], 1);
+                let lastraft;
+                for (let s=0; s<process.slaSupportLayers + gap; s++) {
                     let slice = newSlice(zoff);
-                    slice.synth = true;
                     slice.height = height;
                     slice.index = snew.length;
                     if (s < process.slaSupportLayers) {
-                        union.forEach(u => {
+                        slice.synth = true;
+                        expand.forEach(u => {
                             slice.tops.push(newTop(u.clone(true).setZ(zoff)));
                         });
-                        union = POLY.expand(union, 0.1, zoff, [], 1);
+                        expand = POLY.expand(expand, grow, zoff, [], 1);
+                        lastraft = slice;
                     }
                     snew.push(slice);
                     zoff += height;
                 }
-                widget.slices = slices = snew.concat(slices.map(s => {
-                    s.tops.forEach(t => {
-                        t.poly.setZ(s.z + zoff);
-                    });
+                // replace slices with new appended array
+                slices = widget.slices = snew.concat(slices.map(s => {
+                    s.tops.forEach(t => t.poly.setZ(s.z + zoff));
                     s.index += snew.length;
                     s.z += zoff;
                     return s;
                 }));
+                // annotate widget for support generation
+                widget.union = union;
+                widget.lastraft = lastraft;
+            }
+            // re-connect slices into linked list for island/bridge projections
+            for (let i=1; i<slices.length; i++) {
+                slices[i-1].up = slices[i];
+                slices[i].down = slices[i-1];
             }
             // reset for solids and support projections
             slices.forEach(function(slice) {
@@ -160,11 +175,58 @@ let gs_kiri_sla = exports;
                     fillPolys(slice, settings);
                 }, "infill");
             }
+            if (process.slaSupportLayers && process.slaSupportDensity) {
+                computeSupports(widget, process);
+            }
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.25);
         });
     };
+
+    function computeSupports(widget, process) {
+        let area = widget.union.reduce((t,p) => { return t + p.areaDeep() }, 0),
+            slices = widget.slices,
+            length = slices.length,
+            trigger = (1 - process.slaSupportDensity),
+            layer = 0,
+            accu = 0,
+            totmass = 0, // total widget "mass"
+            totbear = 0; // total "mass-bearing" area
+
+        // compute total "mass" by slice
+        slices.forEach(slice => {
+            if (slice.synth || !slice.solids.unioned) return;
+            slice.mass = slice.solids.unioned.reduce((t,p) => { return t + p.areaDeep() }, 0);
+            if (slice.up && slice.up.bridges) {
+                slice.bear = slice.up.bridges.reduce((t,p) => { return t + p.areaDeep() }, 0);
+                totbear += slice.bear;
+            } else {
+                slice.bear = 0;
+            }
+            totmass += slice.mass;
+            // console.log('mass', slice.index, slice.mass.toFixed(3), slice.bear.toFixed(3));
+        });
+
+        slices.forEach(slice => {
+            let weight = Math.pow(10, 0 + ((length - layer) / length));
+            if (slice.up && slice.up.bridges) {
+                let sum = 0;
+                slice.up.bridges.forEach(bridge => {
+                    sum += bridge.areaDeep() / area;
+                });
+                accu += sum * weight;
+                if (layer === 0 || accu > trigger) {
+                    // console.log('gen @', layer, slice.index);
+                    accu = 0;
+                    slice.supports = slice.up.bridges.map(p => {
+                        return p.clone(true).setZ(slice.z);
+                    });
+                }
+            }
+            if (slice.mass > 0) layer++;
+        });
+    }
 
     function fillPolys(slice, settings) {
         let process = settings.process,
@@ -374,14 +436,14 @@ let gs_kiri_sla = exports;
             } else if (slice.tops) {
                 slice.tops.forEach(top => {
                     outline.poly(top.poly, 0x010101, true, false);
-                    outline.solid(top.poly, 0xeeee55);
+                    outline.solid(top.poly, 0xfcba03);
                 });
             }
 
             if (slice.supports)
             slice.supports.forEach(poly => {
-                layer.poly(poly, 0x010105, true, false);
-                layer.solid(poly, 0xffff99);
+                support.poly(poly, 0x010105, true, false);
+                support.solid(poly, 0xfcba03);
             });
 
             slice.renderDiff();

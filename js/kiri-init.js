@@ -1478,6 +1478,7 @@ var gs_kiri_init = exports;
 
             slaSupport:          LOCAL ? UC.newGroup('support', null, {modes:SLA, group:"sla-support"}) : null,
             slaSupportLayers:    LOCAL ? UC.newInput('layers', {title:'base support layers\n0-10', convert:UC.toInt, bound:UC.bound(0,10), modes:SLA}) : null,
+            slaSupportDensity:   LOCAL ? UC.newInput('density', {title:'used to compute the\nnumber of support pillars\n0.0-1.0 (0 = disable)', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}) : null,
 
             slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput('z offset', {title:'z layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
