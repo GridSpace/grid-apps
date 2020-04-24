@@ -211,14 +211,15 @@ let gs_kiri_sla = exports;
 
         let mass_per_bear = (tot_mass / tot_bear) * (1 / process.slaSupportDensity);
 
-        console.log({tot_mass, tot_bear, ratio: tot_mass / tot_bear, mass_per_bear});
+        // console.log({tot_mass, tot_bear, ratio: tot_mass / tot_bear, mass_per_bear});
 
         let first;
         ops.slice().map((s,i) => {
             if (!first && s.bear) {
                 s.ord_first = first = true;
             }
-            s.ord_weight = ((ops.length - i) / ops.length) * 3;
+            // 30x lowest to 1x highest
+            s.ord_weight = Math.pow(30,((ops.length - i) / ops.length));
             return s;
         }).sort((a,b) => {
             if (a.ord_first) return -1;
@@ -232,9 +233,11 @@ let gs_kiri_sla = exports;
             rem_bear = tot_bear;
 
         // compute remaining mass, bearing surface, for each slice
+        let run, runLast, runCount = 0, runList = [];
         ops.forEach(slice => {
             slice.rem_mass = rem_mass;
             slice.rem_bear = rem_bear;
+            // slice.can_bear = slice.mass * mass_per_bear;
             slice.can_bear = slice.bear * mass_per_bear;
             rem_mass -= slice.mass;
             rem_bear -= slice.bear;
@@ -252,24 +255,35 @@ let gs_kiri_sla = exports;
         for (let i=0; i<ord.length; i++) {
             let slice = ord[i],
                 bearing = Math.min(slice.can_bear, slice.rem_mass);
+
             // remove from slices below the amount of mass they have to bear
             for (let j=slice.index - 1; j>ops[0].index; j--) {
                 slices[j].rem_mass -= bearing;
             }
+
             // remove total mass left to bear
             rem_mass -= bearing;
             slice.can_emit = true;
             if (rem_mass <= 0) {
-                console.log({break: i});
+                // console.log({break: i, of: ord.length});
                 break;
             }
         }
 
+        let seq = 0, seqLast = 0;
         slices.forEach(slice => {
             if (slice.can_emit) {
-                slice.supports = slice.bear_up.map(p => {
-                    return p.clone(true).setZ(slice.z);
-                });
+                if (seq === 0 || slice.index - seqLast > 5) {
+                    slice.supports = slice.bear_up.map(p => {
+                        return p.clone(true).setZ(slice.z);
+                    });
+                    seq++;
+                } else if (seq > 5) {
+                    seq = 0;
+                } else {
+                    seq++;
+                }
+                seqLast = slice.index;
             }
         });
     }
@@ -475,19 +489,21 @@ let gs_kiri_sla = exports;
 
             if (slice.solids.unioned) {
                 slice.solids.unioned.forEach(poly => {
-                    poly = poly.clone(true).move(widget.track.pos);
+                    poly = poly.clone(true);//.move(widget.track.pos);
                     outline.poly(poly, 0x010101, true);
                     outline.solid(poly, 0x0099cc);
                 });
             } else if (slice.tops) {
                 slice.tops.forEach(top => {
-                    outline.poly(top.poly, 0x010101, true, false);
-                    outline.solid(top.poly, 0xfcba03);
+                    let poly = top.poly;//.clone(true).move(widget.track.pos);
+                    outline.poly(poly, 0x010101, true, false);
+                    outline.solid(poly, 0xfcba03);
                 });
             }
 
             if (slice.supports)
             slice.supports.forEach(poly => {
+                //poly = poly.clone(true).move(widget.track.pos);
                 support.poly(poly, 0x010105, true, false);
                 support.solid(poly, 0xfcba03);
             });
