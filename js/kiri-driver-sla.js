@@ -191,40 +191,86 @@ let gs_kiri_sla = exports;
             trigger = (1 - process.slaSupportDensity),
             layer = 0,
             accu = 0,
-            totmass = 0, // total widget "mass"
-            totbear = 0; // total "mass-bearing" area
+            tot_mass = 0, // total widget "mass"
+            tot_bear = 0; // total "mass-bearing" area
+
+        let ops = slices.filter(slice => !slice.synth);
 
         // compute total "mass" by slice
-        slices.forEach(slice => {
-            if (slice.synth || !slice.solids.unioned) return;
+        ops.forEach(slice => {
             slice.mass = slice.solids.unioned.reduce((t,p) => { return t + p.areaDeep() }, 0);
             if (slice.up && slice.up.bridges) {
                 slice.bear = slice.up.bridges.reduce((t,p) => { return t + p.areaDeep() }, 0);
-                totbear += slice.bear;
+                slice.bear_up = slice.up.bridges;
+                tot_bear += slice.bear;
             } else {
                 slice.bear = 0;
             }
-            totmass += slice.mass;
-            // console.log('mass', slice.index, slice.mass.toFixed(3), slice.bear.toFixed(3));
+            tot_mass += slice.mass;
         });
 
-        slices.forEach(slice => {
-            let weight = Math.pow(10, 0 + ((length - layer) / length));
-            if (slice.up && slice.up.bridges) {
-                let sum = 0;
-                slice.up.bridges.forEach(bridge => {
-                    sum += bridge.areaDeep() / area;
-                });
-                accu += sum * weight;
-                if (layer === 0 || accu > trigger) {
-                    // console.log('gen @', layer, slice.index);
-                    accu = 0;
-                    slice.supports = slice.up.bridges.map(p => {
-                        return p.clone(true).setZ(slice.z);
-                    });
-                }
+        let mass_per_bear = (tot_mass / tot_bear) * (1 / process.slaSupportDensity);
+
+        console.log({tot_mass, tot_bear, ratio: tot_mass / tot_bear, mass_per_bear});
+
+        let first;
+        ops.slice().map((s,i) => {
+            if (!first && s.bear) {
+                s.ord_first = first = true;
             }
-            if (slice.mass > 0) layer++;
+            s.ord_weight = ((ops.length - i) / ops.length) * 3;
+            return s;
+        }).sort((a,b) => {
+            if (a.ord_first) return -1;
+            if (b.ord_first) return 1;
+            return (b.bear * b.ord_weight) - (a.bear * a.ord_weight);
+        }).forEach((slice, index) => {
+            slice.ord_bear = index;
+        })
+
+        let rem_mass = tot_mass,
+            rem_bear = tot_bear;
+
+        // compute remaining mass, bearing surface, for each slice
+        ops.forEach(slice => {
+            slice.rem_mass = rem_mass;
+            slice.rem_bear = rem_bear;
+            slice.can_bear = slice.bear * mass_per_bear;
+            rem_mass -= slice.mass;
+            rem_bear -= slice.bear;
+        });
+
+        let ord = ops.sort((a,b) => {
+            return a.ord_bear - b.ord_bear;
+        });
+
+        rem_mass = tot_mass;
+        rem_bear = tot_bear;
+
+        // in order of load bearing capability, select layer
+        // and recompute the requirements on the slices below
+        for (let i=0; i<ord.length; i++) {
+            let slice = ord[i],
+                bearing = Math.min(slice.can_bear, slice.rem_mass);
+            // remove from slices below the amount of mass they have to bear
+            for (let j=slice.index - 1; j>ops[0].index; j--) {
+                slices[j].rem_mass -= bearing;
+            }
+            // remove total mass left to bear
+            rem_mass -= bearing;
+            slice.can_emit = true;
+            if (rem_mass <= 0) {
+                console.log({break: i});
+                break;
+            }
+        }
+
+        slices.forEach(slice => {
+            if (slice.can_emit) {
+                slice.supports = slice.bear_up.map(p => {
+                    return p.clone(true).setZ(slice.z);
+                });
+            }
         });
     }
 
