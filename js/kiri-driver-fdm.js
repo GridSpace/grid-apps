@@ -558,11 +558,12 @@ let gs_kiri_fdm = exports;
                 }
                 slices.forEach((slice,index) => {
                     if (!slice.supports) return;
-                    if (sslices[index].supports) {
-                        sslices[index].supports.appendAll(slice.supports);
-                    } else {
-                        sslices[index].supports = slice.supports;
+                    if (!sslices[index].supports) {
+                        sslices[index].supports = [];
                     }
+                    sslices[index].supports.appendAll(slice.supports.map(p => {
+                        return p.clone().move(widget.track.pos);
+                    }));
                 });
             });
             swidget.support = true;
