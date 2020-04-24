@@ -195,6 +195,11 @@ let gs_kiri_layer = exports;
         this.changed = true;
     };
 
+    LP.renderAll = function() {
+        this.renderSolid();
+        this.render();
+    };
+
     LP.renderSolid = function() {
         if (!(this.view)) return;
         if (this.solids) this.view.remove(this.solids);

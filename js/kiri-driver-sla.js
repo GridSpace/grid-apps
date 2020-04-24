@@ -18,6 +18,7 @@ let gs_kiri_sla = exports;
         POLY = BASE.polygons,
         SLA = KIRI.driver.SLA = {
             slice,
+            sliceRender,
             printSetup,
             printExport,
             printDownload,
@@ -82,23 +83,26 @@ let gs_kiri_sla = exports;
             }
             // insert support layers
             if (process.slaSupportLayers) {
-                let zoff = height / 2;
-                let snew = [];
-                let polys = [];
+                let zoff = height / 2,
+                    snew = [],
+                    polys = [];
                 let outer = slices.forEach(slice => {
                     polys.appendAll(slice.tops.map(t => t.poly));
                 });
                 let union = POLY.expand(POLY.union(polys), 2, zoff, [], 1);
-                for (let s=0; s<process.slaSupportLayers; s++) {
+                for (let s=0; s<process.slaSupportLayers + 3; s++) {
                     let slice = newSlice(zoff);
+                    slice.synth = true;
                     slice.height = height;
                     slice.index = snew.length;
-                    union.forEach(u => {
-                        slice.tops.push(newTop(u.clone(true).setZ(zoff)));
-                    });
+                    if (s < process.slaSupportLayers) {
+                        union.forEach(u => {
+                            slice.tops.push(newTop(u.clone(true).setZ(zoff)));
+                        });
+                        union = POLY.expand(union, 0.1, zoff, [], 1);
+                    }
                     snew.push(slice);
                     zoff += height;
-                    union = POLY.expand(union, 0.1, zoff, [], 1);
                 }
                 widget.slices = slices = snew.concat(slices.map(s => {
                     s.tops.forEach(t => {
@@ -125,14 +129,17 @@ let gs_kiri_sla = exports;
                 }
             }, "slice");
             forSlices(slices, 0.1, 0.2, (slice) => {
+                if (slice.synth) return;
                 slice.doDiff(0.00001, 0.005, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 0.2, 0.3, (slice) => {
+                    if (slice.synth) return;
                     slice.projectFlats(solidLayers);
                     slice.projectBridges(solidLayers);
                 }, "project");
                 forSlices(slices, 0.3, 0.4, (slice) => {
+                    if (slice.synth) return;
                     slice.doSolidsFill(undefined, undefined, 0.001);
                     let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
                     let trims = slice.solids.trimmed || [];
@@ -142,12 +149,14 @@ let gs_kiri_sla = exports;
                 }, "solid");
             } else {
                 forSlices(slices, 0.2, 0.4, (slice) => {
+                    if (slice.synth) return;
                     slice.solids.unioned = slice.gatherTopPolys([]);
                 }, "solid");
             }
             if (process.slaFillDensity && process.slaShell) {
                 fill_cache = [];
                 forSlices(slices, 0.4, 1.0, (slice) => {
+                    if (slice.synth) return;
                     fillPolys(slice, settings);
                 }, "infill");
             }
@@ -260,8 +269,10 @@ let gs_kiri_sla = exports;
             widgets.forEach(widget => {
                 let slice = widget.slices[index];
                 if (slice) {
-                    let traces = POLY.flatten(slice.gatherTraces([]));
+                    // prevent premature exit on empty synth slice
+                    if (slice.synth) count++;
                     let polys = slice.solids.unioned;
+                    if (!polys) polys = slice.tops.map(t => t.poly);
                     polys.forEach(poly => {
                         poly.move(widget.track.pos);
                         ctx.beginPath();
@@ -348,6 +359,40 @@ let gs_kiri_sla = exports;
     };
 
     // runs in browser main
+    function sliceRender(widget) {
+        widget.slices.forEach(slice => {
+            let layers = slice.layers,
+                outline = layers.outline,
+                support = layers.support;
+
+            if (slice.solids.unioned) {
+                slice.solids.unioned.forEach(poly => {
+                    poly = poly.clone(true).move(widget.track.pos);
+                    outline.poly(poly, 0x010101, true);
+                    outline.solid(poly, 0x0099cc);
+                });
+            } else if (slice.tops) {
+                slice.tops.forEach(top => {
+                    outline.poly(top.poly, 0x010101, true, false);
+                    outline.solid(top.poly, 0xeeee55);
+                });
+            }
+
+            if (slice.supports)
+            slice.supports.forEach(poly => {
+                layer.poly(poly, 0x010105, true, false);
+                layer.solid(poly, 0xffff99);
+            });
+
+            slice.renderDiff();
+            slice.renderSolidOutlines();
+
+            outline.renderAll();
+            support.renderAll();
+        });
+    }
+
+    // runs in browser main
     function printRender(print) {
         let widgets = print.widgets,
             settings = print.settings,
@@ -363,12 +408,13 @@ let gs_kiri_sla = exports;
                 if (!slice) {
                     return;
                 }
+                count++;
                 let polys = slice.solids.unioned;
+                if (!polys) polys = slice.tops.map(t => t.poly);
                 polys.forEach(poly => {
                     poly = poly.clone(true).move(widget.track.pos);
                     layer.poly(poly, 0x010101, true);
                     layer.solid(poly, 0x0099cc);
-                    count++;
                 });
             });
 

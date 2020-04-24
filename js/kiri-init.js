@@ -1300,7 +1300,7 @@ var gs_kiri_init = exports;
             layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
             layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
-            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
+            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
 

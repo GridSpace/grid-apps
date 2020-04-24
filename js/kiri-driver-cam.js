@@ -803,7 +803,6 @@ var gs_kiri_cam = exports;
             sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3) * units,
             pocketOnlyRough = proc.camPocketOnlyRough,
             pocketOnlyFinish = proc.camPocketOnlyFinish,
-            // addTabs = proc.camTabsOn && !pocketOnly,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
             addTabsFinish = procFinish && proc.camTabsOn && !pocketOnlyFinish,
             tabWidth = proc.camTabsWidth * units,

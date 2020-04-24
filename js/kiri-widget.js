@@ -717,7 +717,14 @@ let gs_kiri_widget = exports;
     PRO.render = function(renderMode, cam) {
         let slices = this.slices;
         if (!slices) return;
-        let extruder = this.getExtruder(this.settings);
+
+        let settings = this.settings,
+            driver = DRIVERS[settings.mode.toUpperCase()];
+
+        // allow driver to override widget slice rendering (new in SLA)
+        if (driver.sliceRender) return driver.sliceRender(this);
+
+        let extruder = this.getExtruder(settings);
         // render outline
         slices.forEach(function(s) { s.renderOutline(renderMode,extruder) });
         // render shells
