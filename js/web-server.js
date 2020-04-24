@@ -190,7 +190,7 @@ function concatCode(array) {
             's.type = "text/javascript";',
             's.src = file;',
             's.onload = load_next;',
-            'document.head.append(s);',
+            'document.head.appendChild(s);',
             '}; load_next(); })();',
             'self.debug=true;'
         ].join('\n'));

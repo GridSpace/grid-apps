@@ -72,7 +72,25 @@ var MOTO = window.moto = window.moto || {};
             transparent: true,
             opacity: 0.6,
             side: THREE.DoubleSide
-        });
+        }),
+        hiddenKey,
+        vizChange,
+        docVisible = true;
+
+    if (typeof DOC.hidden !== "undefined") {
+        hiddenKey = "hidden";
+        vizChange = "visibilitychange";
+    } else if (typeof DOC.msHidden !== "undefined") {
+        hiddenKey = "msHidden";
+        vizChange = "msvisibilitychange";
+    } else if (typeof DOC.webkitHidden !== "undefined") {
+        hiddenKey = "webkitHidden";
+        vizChange = "webkitvisibilitychange";
+    }
+
+    DOC.addEventListener(vizChange, () => {
+        docVisible = DOC[hiddenKey] ? false : true;
+    }, false);
 
     /** ******************************************************************
      * TWEENing Functions
@@ -746,7 +764,7 @@ var MOTO = window.moto = window.moto || {};
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (!freeze) renderer.render(SCENE, camera);
+                if (docVisible && !freeze) renderer.render(SCENE, camera);
             }
 
             animate();
