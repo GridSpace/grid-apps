@@ -321,6 +321,7 @@ let gs_kiri_conf = exports;
                     slaFirstOffset: 0,
                     slaSupportLayers: 0,
                     slaSupportDensity: 0,
+                    slaSupportSize: 0.5
                 }
             },
             cam:{

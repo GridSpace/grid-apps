@@ -114,6 +114,8 @@ let gs_kiri_sla = exports;
                     snew.push(slice);
                     zoff += height;
                 }
+                // compensate for midline start
+                zoff -= height / 2;
                 // replace slices with new appended array
                 slices = widget.slices = snew.concat(slices.map(s => {
                     s.tops.forEach(t => t.poly.setZ(s.z + zoff));
@@ -180,6 +182,9 @@ let gs_kiri_sla = exports;
             if (process.slaSupportLayers && process.slaSupportDensity) {
                 computeSupports(widget, process);
             }
+            // slices.forEach(slice => {
+            //     console.log(slice.index, slice.z.toFixed(3), (slice.down ? slice.down.z - slice.z : 0).toFixed(3));
+            // });
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.25);
@@ -273,17 +278,19 @@ let gs_kiri_sla = exports;
         let seq = 0,
             seqLast = 0,
             spacing = (1 - process.slaSupportDensity) * 10,
-            size = Math.bound((1 - process.slaSupportDensity), 0.1, 0.5);
+            size = Math.bound(process.slaSupportSize * process.slaSupportDensity, 0.1, 0.5);
 
         // compute and project support pillars
         slices.forEach(slice => {
             if (slice.can_emit) {
                 if (seq === 0 || slice.index - seqLast > 5) {
-                    slice.supports = slice.bear_up.map(p => {
+                    // slice.supports = slice.bear_up.map(p => {
+                    //     return p.clone(true).setZ(slice.z);
+                    // });
+                    slice.bear_up.map(p => {
                         return p.clone(true).setZ(slice.z);
-                    });
-                    slice.supports.forEach(p => {
-                        projectSupport(slice, p, size, spacing);
+                    }).forEach(p => {
+                        projectSupport(process, slice, p, size, spacing);
                     });
                     seq++;
                 } else if (seq > 5) {
@@ -303,7 +310,7 @@ let gs_kiri_sla = exports;
         });
     }
 
-    function projectSupport(slice, poly, size, spacing) {
+    function projectSupport(process, slice, poly, size, spacing) {
         let flat = poly.circularityDeep() > 0.1,
             arr = [ poly ];
 
@@ -313,13 +320,14 @@ let gs_kiri_sla = exports;
             let out = [],
                 seg = [],
                 per = poly.perimeter(),
-                crit = 0;
+                crit = 0,
+                polys = poly.clone(true).flattenTo([]);
 
-            poly.forEachSegment((p1, p2) => {
+            polys.forEach(p => p.forEachSegment((p1, p2) => {
                 let rec = {dist: p1.distTo2D(p2), p1, p2};
                 if (rec.dist >= spacing) crit++;
                 seg.push(rec);
-            });
+            }));
 
             seg.sort((a,b) => {
                 return b.dist - a.dist;
@@ -333,7 +341,7 @@ let gs_kiri_sla = exports;
                     let num = Math.ceil(dist / spacing) + 1,
                         step = dist / num,
                         pt = p1;
-                    while (num-- > 0) {
+                    while (num-- >= 0) {
                         out.push(pt);
                         pt = pt.offsetPointTo(p2, step);
                     }
@@ -345,27 +353,73 @@ let gs_kiri_sla = exports;
             }
 
             // mark support pillar for each point
-            out.forEach(p => projectPillar(slice, p, size, 0));
+            out.forEach(p => projectPillar(process, slice, p, size, []));
 
             // inset polygon for flat area support
-            if (flat) poly.offset(1, arr);
+            if (flat) poly.offset(Math.max(0.2, 1 - process.slaSupportDensity), arr);
         }
     }
 
-    function projectPillar(slice, point, size, depth) {
+    function projectPillar(process, slice, point, size, track) {
         if (!slice.supports) slice.supports = [];
-        let pillar = newPolygon().centerRectangle(point, size/2, size/2).setZ(slice.z);
-        if (depth > 10) {
-            let trim = slice.tops.filter(t => {
-                if (point.isInPolygon(t.poly)) return true;
-                let pin = pillar.points.filter(p => p.isInPolygon(t.poly));
-                return pin.length;
+
+        let pillar = newPolygon().centerRectangle(point, size/2, size/2).setZ(slice.z),
+            max = process.slaSupportSize,
+            inc = process.slaSlice * 2,
+            end = false, // center intersects
+            over = [], // overlapping points
+            safe = []; // non-overlapping points
+
+        // slice.supports.push(pillar); return;
+
+        track.min = track.min ? Math.min(track.min, size) : size;
+        track.max = (track.max ? true : false) || size >= max;
+
+        slice.tops.forEach(t => {
+            if (track.length > 3 && point.isInPolygon(t.poly)) {
+                end = true;
+            }
+            pillar.points.forEach(p => {
+                let isin = p.isInPolygon(t.poly);
+                if (isin) {
+                    over.push(p);
+                } else {
+                    safe.push(p);
+                }
             });
-            if (trim.length) return;
+        });
+
+        if (end) {
+            // backtrack shrinking pillars if not landing on a flat
+            return;
         }
+
+        if (over.length) {
+            // move toward average of safe points
+            if (safe.length) {
+                let x = 0, y = 0;
+                safe.forEach(p => { x += p.x; y += p.y });
+                x /= safe.length;
+                y /= safe.length;
+                point = point.offsetPointTo({x, y, z:slice.z}, inc / 2);
+            }
+            if (track.max) {
+                size -= inc;
+            }
+        } else if (!track.max) {
+            size += inc;
+        }
+
+        if (size < track.min) {
+            return;
+        }
+
         if (pillar) {
             slice.supports.push(pillar);
-            if (slice.down) projectPillar(slice.down, point, Math.min(size + 0.1, 1), depth + 1);
+            track.push(pillar);
+            if (slice.down) {
+                projectPillar(process, slice.down, point, Math.min(size, max), track);
+            }
         }
     }
 
