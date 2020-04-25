@@ -1460,17 +1460,17 @@ var gs_kiri_init = exports;
             // SLA
             slaOutput:           UC.newGroup('layers', null, {modes:SLA, group:"sla-layers"}),
             slaLayerOn:          UC.newInput('light on time', {title:'layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA}),
-            slaLayerOff:         UC.newInput('light off time', {title:'layer light off\ntime in seconds', convert:UC.toFloat, modes:SLA}),
+            slaLayerOff:         UC.newInput('light off time', {title:'layer light off\ntime in seconds', convert:UC.toFloat, modes:SLA, expert:true}),
             slaPeelDist:         UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
-            slaPeelLiftRate:     UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
-            slaPeelDropRate:     UC.newInput('peel drop rate', {title:'peel drop speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
+            slaPeelLiftRate:     UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA, expert:true}),
+            slaPeelDropRate:     UC.newInput('peel drop rate', {title:'peel drop speed\nin mm/sec', convert:UC.toFloat, modes:SLA, expert:true}),
 
             slaOutput:           UC.newGroup('base layers', null, {modes:SLA, group:"sla-base"}),
             slaBaseLayers:       UC.newInput('layer count', {title:'number of\nbase layers', convert:UC.toInt, modes:SLA}),
             slaBaseOn:           UC.newInput('light on time', {title:'base layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA}),
-            slaBaseOff:          UC.newInput('light off time', {title:'base layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA}),
+            slaBaseOff:          UC.newInput('light off time', {title:'base layer light on\ntime in seconds', convert:UC.toFloat, modes:SLA, expert:true}),
             slaBasePeelDist:     UC.newInput('peel distance', {title:'peel distance\nin millimeters', convert:UC.toFloat, modes:SLA}),
-            slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA}),
+            slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA, expert:true}),
 
             slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-infill"}),
             slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
@@ -1480,6 +1480,8 @@ var gs_kiri_init = exports;
             slaSupportLayers:    LOCAL ? UC.newInput('layers', {title:'base support layers\n0-10', convert:UC.toInt, bound:UC.bound(0,10), modes:SLA}) : null,
             slaSupportDensity:   LOCAL ? UC.newInput('density', {title:'used to compute the\nnumber of support pillars\n0.0-1.0 (0 = disable)', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}) : null,
             slaSupportSize:      LOCAL ? UC.newInput('size', {title:'max size of a\nsupport pillar\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}) : null,
+            slaSupportPoints:    LOCAL ? UC.newInput('points', {title:'number of points in\neach support pillar\nin millimeters', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}) : null,
+            slaSupportGap:       LOCAL ? UC.newInput('gap layers', {title:'number of layers between\nraft and bottom of obejct', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}) : null,
 
             slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput('z offset', {title:'z layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
