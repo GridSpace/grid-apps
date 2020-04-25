@@ -28,6 +28,7 @@ let gs_kiri_sla = exports;
         newTop = KIRI.newTop,
         newSlice = KIRI.newSlice,
         newPoint = BASE.newPoint,
+        newPolygon = BASE.newPolygon,
         preview,
         previewSmall,
         previewLarge,
@@ -187,11 +188,9 @@ let gs_kiri_sla = exports;
 
     function computeSupports(widget, process) {
         let area = widget.union.reduce((t,p) => { return t + p.areaDeep() }, 0),
+            perim = widget.union.reduce((t,p) => { return t + p.perimeter() }, 0),
             slices = widget.slices,
             length = slices.length,
-            trigger = (1 - process.slaSupportDensity),
-            layer = 0,
-            accu = 0,
             tot_mass = 0, // total widget "mass"
             tot_bear = 0; // total "mass-bearing" area
 
@@ -271,12 +270,20 @@ let gs_kiri_sla = exports;
             }
         }
 
-        let seq = 0, seqLast = 0;
+        let seq = 0,
+            seqLast = 0,
+            spacing = (1 - process.slaSupportDensity) * 10,
+            size = Math.bound((1 - process.slaSupportDensity), 0.1, 0.5);
+
+        // compute and project support pillars
         slices.forEach(slice => {
             if (slice.can_emit) {
                 if (seq === 0 || slice.index - seqLast > 5) {
                     slice.supports = slice.bear_up.map(p => {
                         return p.clone(true).setZ(slice.z);
+                    });
+                    slice.supports.forEach(p => {
+                        projectSupport(slice, p, size, spacing);
                     });
                     seq++;
                 } else if (seq > 5) {
@@ -287,6 +294,79 @@ let gs_kiri_sla = exports;
                 seqLast = slice.index;
             }
         });
+
+        // union support pillars
+        slices.forEach(slice => {
+            if (slice.supports) {
+                slice.supports = POLY.union(slice.supports);
+            }
+        });
+    }
+
+    function projectSupport(slice, poly, size, spacing) {
+        let flat = poly.circularityDeep() > 0.1,
+            arr = [ poly ];
+
+        // insetting polys produces arrays. consume til gone
+        while (arr.length) {
+            poly = arr.shift();
+            let out = [],
+                seg = [],
+                per = poly.perimeter(),
+                crit = 0;
+
+            poly.forEachSegment((p1, p2) => {
+                let rec = {dist: p1.distTo2D(p2), p1, p2};
+                if (rec.dist >= spacing) crit++;
+                seg.push(rec);
+            });
+
+            seg.sort((a,b) => {
+                return b.dist - a.dist;
+            });
+
+            // emit all critical (long) segments. min 3
+            while (seg.length && (crit > 0 || out.length < 3)) {
+                let {dist, p1, p2} = seg.shift();
+                if (dist >= spacing) {
+                    // spaced
+                    let num = Math.ceil(dist / spacing) + 1,
+                        step = dist / num,
+                        pt = p1;
+                    while (num-- > 0) {
+                        out.push(pt);
+                        pt = pt.offsetPointTo(p2, step);
+                    }
+                    crit--;
+                } else {
+                    // midpoint
+                    out.push(p1.offsetPointTo(p2, dist / 2));
+                }
+            }
+
+            // mark support pillar for each point
+            out.forEach(p => projectPillar(slice, p, size, 0));
+
+            // inset polygon for flat area support
+            if (flat) poly.offset(1, arr);
+        }
+    }
+
+    function projectPillar(slice, point, size, depth) {
+        if (!slice.supports) slice.supports = [];
+        let pillar = newPolygon().centerRectangle(point, size/2, size/2).setZ(slice.z);
+        if (depth > 10) {
+            let trim = slice.tops.filter(t => {
+                if (point.isInPolygon(t.poly)) return true;
+                let pin = pillar.points.filter(p => p.isInPolygon(t.poly));
+                return pin.length;
+            });
+            if (trim.length) return;
+        }
+        if (pillar) {
+            slice.supports.push(pillar);
+            if (slice.down) projectPillar(slice.down, point, Math.min(size + 0.1, 1), depth + 1);
+        }
     }
 
     function fillPolys(slice, settings) {
@@ -396,6 +476,7 @@ let gs_kiri_sla = exports;
                     if (slice.synth) count++;
                     let polys = slice.solids.unioned;
                     if (!polys) polys = slice.tops.map(t => t.poly);
+                    if (slice.supports) polys.appendAll(slice.supports);
                     polys.forEach(poly => {
                         poly.move(widget.track.pos);
                         ctx.beginPath();
@@ -409,7 +490,7 @@ let gs_kiri_sla = exports;
                         count++;
                     });
                 } else {
-                    console.log({no_slice_at: index})
+                    // console.log({no_slice_at: index})
                 }
             });
             let data = ctx.getImageData(0,0,height,width).data;
@@ -540,6 +621,7 @@ let gs_kiri_sla = exports;
                 count++;
                 let polys = slice.solids.unioned;
                 if (!polys) polys = slice.tops.map(t => t.poly);
+                if (slice.supports) polys.appendAll(slice.supports);
                 polys.forEach(poly => {
                     poly = poly.clone(true).move(widget.track.pos);
                     layer.poly(poly, 0x010101, true);
