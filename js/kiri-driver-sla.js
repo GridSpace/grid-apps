@@ -85,23 +85,24 @@ let gs_kiri_sla = exports;
             }
             // prepend raft layers to slices array
             if (process.slaSupportLayers) {
-                let zoff = height / 2,
+                let layers = process.slaSupportLayers,
+                    zoff = height / 2,
                     snew = [],
                     polys = [],
-                    off = 2, // starting union offset from part
                     gap = 10, // gap layers above raft
-                    grow = 0.1; // union per layer expand
+                    grow = height, // union per layer expand
+                    off = 1 - (layers * grow); // starting union offset from part
                 let outer = slices.forEach(slice => {
                     polys.appendAll(slice.tops.map(t => t.poly));
                 });
                 let union = POLY.union(polys);
                 let expand = POLY.expand(union, off, zoff, [], 1);
                 let lastraft;
-                for (let s=0; s<process.slaSupportLayers + gap; s++) {
+                for (let s=0; s<layers + gap; s++) {
                     let slice = newSlice(zoff);
                     slice.height = height;
                     slice.index = snew.length;
-                    if (s < process.slaSupportLayers) {
+                    if (s < layers) {
                         slice.synth = true;
                         expand.forEach(u => {
                             slice.tops.push(newTop(u.clone(true).setZ(zoff)));
@@ -488,12 +489,14 @@ let gs_kiri_sla = exports;
                 support = layers.support;
 
             if (slice.solids.unioned) {
+                // console.log('solid', slice.index)
                 slice.solids.unioned.forEach(poly => {
                     poly = poly.clone(true);//.move(widget.track.pos);
                     outline.poly(poly, 0x010101, true);
                     outline.solid(poly, 0x0099cc);
                 });
             } else if (slice.tops) {
+                // console.log('top', slice.index)
                 slice.tops.forEach(top => {
                     let poly = top.poly;//.clone(true).move(widget.track.pos);
                     outline.poly(poly, 0x010101, true, false);
@@ -501,12 +504,14 @@ let gs_kiri_sla = exports;
                 });
             }
 
-            if (slice.supports)
-            slice.supports.forEach(poly => {
-                //poly = poly.clone(true).move(widget.track.pos);
-                support.poly(poly, 0x010105, true, false);
-                support.solid(poly, 0xfcba03);
-            });
+            if (slice.supports) {
+                // console.log('support', slice.index)
+                slice.supports.forEach(poly => {
+                    //poly = poly.clone(true).move(widget.track.pos);
+                    support.poly(poly, 0x010101, true, false);
+                    support.solid(poly, 0xfcba03);
+                });
+            }
 
             slice.renderDiff();
             slice.renderSolidOutlines();

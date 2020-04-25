@@ -1148,6 +1148,9 @@ self.kiri.copyright = exports.COPYRIGHT;
             topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset : 0;
 
         switch (MODE) {
+            case MODES.SLA:
+                space = space || (proc.slaSupportLayers && proc.slaSupportDensity ? 2 : 1);
+                break;
             case MODES.CAM:
             case MODES.LASER:
                 space = space || proc.outputTileSpacing || 1;
