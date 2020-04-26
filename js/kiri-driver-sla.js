@@ -322,7 +322,7 @@ let gs_kiri_sla = exports;
 
             polys.forEach(p => p.forEachSegment((p1, p2) => {
                 let rec = {dist: p1.distTo2D(p2), p1, p2};
-                if (rec.dist >= spacing) crit++;
+                if (rec.dist >= spacing || slice.ord_first) crit++;
                 seg.push(rec);
             }));
 
@@ -350,6 +350,7 @@ let gs_kiri_sla = exports;
             }
 
             // drop points too close to other pillars
+            if (!slice.ord_first)
             drop: for (let i=0; i<out.length; i++) {
                 for (let j=i+1; j<out.length; j++) {
                     if (out[i].distTo2D(out[j]) <= size) {
@@ -382,7 +383,7 @@ let gs_kiri_sla = exports;
                 .centerCircle(point, size/2, points, true)
                 .setZ(slice.z),
             max = process.slaSupportSize,
-            inc = process.slaSlice * 2,
+            inc = process.slaSlice/2,
             end = false, // center intersects
             over = [], // overlapping points
             safe = [], // non-overlapping points
@@ -412,7 +413,7 @@ let gs_kiri_sla = exports;
             // not landing on the base and size is max'd
             if (!slice.synth && track.max) {
                 let nusize = track.min;
-                while (nusize < max) {
+                while (track.length) {
                     let prec = track.pop(),
                         npil = newPolygon()
                                 .centerCircle(point, nusize/2, points, true)
@@ -422,6 +423,9 @@ let gs_kiri_sla = exports;
                     if (spos >= 0) {
                         prec.slice.supports[spos] = npil;
                         nusize += inc;
+                    }
+                    if (nusize > prec.size) {
+                        break;
                     }
                 }
             }
@@ -435,7 +439,9 @@ let gs_kiri_sla = exports;
                 safe.forEach(p => { x += p.x; y += p.y });
                 x /= safe.length;
                 y /= safe.length;
-                point = point.offsetPointTo({x, y, z:slice.z}, inc / 2);
+                if (x !== point.x || y !== point.y) {
+                    point = point.offsetPointTo({x, y, z:slice.z}, inc);
+                }
             }
             // once max'ed out, can only shrink in size
             if (track.max) {
@@ -456,6 +462,7 @@ let gs_kiri_sla = exports;
             track.push({slice, point, pillar, size});
             if (slice.down) {
                 projectPillar(process, slice.down, point, Math.min(size, max), track);
+            } else {
             }
         }
     }
