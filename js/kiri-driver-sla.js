@@ -94,9 +94,11 @@ let gs_kiri_sla = exports;
                     grow = height, // union per layer expand
                     off = 1 - (layers * grow); // starting union offset from part
                 let outer = slices.forEach(slice => {
-                    polys.appendAll(slice.tops.map(t => t.poly));
+                    // poly.clone prevents inner voids from forming
+                    polys.appendAll(slice.tops.map(t => t.poly.clone()));
                 });
-                let union = POLY.union(polys);
+                // p.clone prevents inner voids from forming
+                let union = POLY.union(polys).map(p => p.clone());
                 let expand = POLY.expand(union, off, zoff, [], 1);
                 let lastraft;
                 for (let s=0; s<layers + gap; s++) {
@@ -281,9 +283,6 @@ let gs_kiri_sla = exports;
         slices.forEach(slice => {
             if (slice.can_emit) {
                 if (seq === 0 || slice.index - seqLast > 5) {
-                    // slice.supports = slice.bear_up.map(p => {
-                    //     return p.clone(true).setZ(slice.z);
-                    // });
                     slice.bear_up.map(p => {
                         return p.clone(true).setZ(slice.z);
                     }).forEach(p => {
@@ -302,7 +301,8 @@ let gs_kiri_sla = exports;
         // union support pillars
         slices.forEach(slice => {
             if (slice.supports) {
-                slice.supports = POLY.union(slice.supports);
+                // todo unioning seems to be failing
+                // slice.supports = POLY.union(slice.supports);
             }
         });
     }
@@ -367,7 +367,18 @@ let gs_kiri_sla = exports;
 
             // mark support pillar for each point
             out.filter(p => p !== null)
-                .forEach(p => projectPillar(process, slice, p, size, []));
+                .forEach(p => {
+                    let track = projectPillar(process, slice, p, size, []);
+                    // find stunted pillars terminating on a face (not raft or merged)
+                    if (track.length && !(track.max || track.synth || track.merged)) {
+                        // remove stunted pillar
+                        track.forEach(rec => {
+                            let sp = rec.slice.supports;
+                            let rp = sp.indexOf(rec.pillar);
+                            if (rp >= 0) sp.splice(rp,1);
+                        });
+                    }
+                });
 
             // inset polygon for flat area support
             if (flat) poly.offset(Math.max(0.2, 1 - process.slaSupportDensity), arr);
@@ -389,10 +400,9 @@ let gs_kiri_sla = exports;
             safe = [], // non-overlapping points
             low = slice.index < process.slaSupportGap + process.slaSupportLayers;
 
-        // slice.supports.push(pillar); return;
-
         track.min = track.min ? Math.min(track.min, size) : size;
         track.max = (track.max ? true : false) || size >= max;
+        track.synth = track.synth || slice.synth;
 
         slice.tops.forEach(t => {
             if (track.length > 3 && point.isInPolygon(t.poly)) {
@@ -416,7 +426,7 @@ let gs_kiri_sla = exports;
                 while (track.length) {
                     let prec = track.pop(),
                         npil = newPolygon()
-                                .centerCircle(point, nusize/2, points, true)
+                                .centerCircle(prec.point, nusize/2, points, true)
                                 .setZ(prec.slice.z),
                         spos = prec.slice.supports.indexOf(prec.pillar);
                     // if we find our old pillar, replace
@@ -429,8 +439,10 @@ let gs_kiri_sla = exports;
                     }
                 }
             }
-            return;
+            return track;
         }
+
+        let nextpoint = point;
 
         if (over.length) {
             // move toward average of safe (non-overlapping) points
@@ -440,7 +452,7 @@ let gs_kiri_sla = exports;
                 x /= safe.length;
                 y /= safe.length;
                 if (x !== point.x || y !== point.y) {
-                    point = point.offsetPointTo({x, y, z:slice.z}, inc);
+                    nextpoint = point.offsetPointTo({x, y, z:slice.z}, inc);
                 }
             }
             // once max'ed out, can only shrink in size
@@ -453,18 +465,40 @@ let gs_kiri_sla = exports;
         }
 
         if (size < track.min) {
-            return;
+            return track;
         }
 
-        if (pillar) {
-            slice.supports.push(pillar);
-            slice.pillars.push({point, pillar, size});
-            track.push({slice, point, pillar, size});
-            if (slice.down) {
-                projectPillar(process, slice.down, point, Math.min(size, max), track);
-            } else {
+        let close = [];
+        for (let i=0; i<slice.pillars.length; i++) {
+            let p = slice.pillars[i].point;
+            let d = point.distTo2D(p);
+            // terminate if we're inside another pillar
+            if (d < inc) {
+                track.merged = true;
+                return track;
+            }
+            if (d <= process.slaSupportSize * 1.5) {
+                close.push(p);
             }
         }
+        if (close.length) {
+            let newp = point.clone();
+            close.forEach(p => {
+                newp.x += p.x;
+                newp.y += p.y;
+            });
+            newp.x /= (close.length + 1);
+            newp.y /= (close.length + 1);
+            nextpoint = point.offsetPointTo(newp, inc);
+        }
+
+        slice.supports.push(pillar);
+        slice.pillars.push({point, pillar, size});
+        track.push({slice, point, pillar, size});
+        if (slice.down) {
+            projectPillar(process, slice.down, nextpoint, Math.min(size, max), track);
+        }
+        return track;
     }
 
     function fillPolys(slice, settings) {
