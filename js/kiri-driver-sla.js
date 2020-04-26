@@ -443,7 +443,7 @@ let gs_kiri_sla = exports;
             }
         } else if (!track.max || low) {
             size += inc;
-            if (low) max *= 2;
+            if (low) max += (process.slaSupportGap * process.slaSlice * 2);
         }
 
         if (size < track.min) {

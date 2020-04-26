@@ -314,7 +314,10 @@ var gs_kiri_init = exports;
                 API.function.slice();
                 break;
             case cca('p'): // prepare print
-                API.function.print();
+                if (API.mode.get() !== 'SLA') {
+                    // hidden in SLA mode
+                    API.function.print();
+                }
                 break;
             case cca('P'): // position widget
                 positionSelection();

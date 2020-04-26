@@ -176,7 +176,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             SETUP
         },
         var: {
-            layer_at: 0,
+            layer_at: Infinity,
             layer_max: 0,
             layer_range: 0
         },
@@ -1900,6 +1900,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         UI.mode.style.display = lock ? 'none' : '';
         UI.modeTable.style.display = lock ? 'none' : '';
         UI.modelOpacity.style.display = MODE === MODES.SLA ? 'none' : '';
+        UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
