@@ -85,7 +85,7 @@ let gs_kiri_sla = exports;
                 slices.push(last);
             }
             // prepend raft layers to slices array
-            if (process.slaSupportLayers) {
+            if (process.slaSupportEnable && process.slaSupportLayers) {
                 let layers = process.slaSupportLayers,
                     zoff = height / 2,
                     snew = [],
@@ -179,12 +179,9 @@ let gs_kiri_sla = exports;
                     fillPolys(slice, settings);
                 }, "infill");
             }
-            if (process.slaSupportLayers && process.slaSupportDensity) {
+            if (process.slaSupportEnable && process.slaSupportLayers && process.slaSupportDensity) {
                 computeSupports(widget, process);
             }
-            // slices.forEach(slice => {
-            //     console.log(slice.index, slice.z.toFixed(3), (slice.down ? slice.down.z - slice.z : 0).toFixed(3));
-            // });
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.25);

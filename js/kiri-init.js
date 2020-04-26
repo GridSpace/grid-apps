@@ -1471,15 +1471,16 @@ var gs_kiri_init = exports;
             slaBasePeelLiftRate: UC.newInput('peel lift rate', {title:'peel lift speed\nin mm/sec', convert:UC.toFloat, modes:SLA, expert:true}),
 
             slaFill:             UC.newGroup('infill', null, {modes:SLA, group:"sla-infill"}),
-            slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
+            slaFillDensity:      UC.newInput('density', {title:'percent infill\nrequires shell\n0 = disabled\nvalid 0.0 - 1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaFillLine:         UC.newInput('line width', {title:'hatch line width\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
 
-            slaSupport:          UC.newGroup('support', null, {modes:SLA, group:"sla-support"}) : null,
+            slaSupport:          UC.newGroup('support', null, {modes:SLA, group:"sla-support"}),
             slaSupportLayers:    UC.newInput('layers', {title:'base support layers\n0-10', convert:UC.toInt, bound:UC.bound(0,10), modes:SLA}),
             slaSupportDensity:   UC.newInput('density', {title:'used to compute the\nnumber of support pillars\n0.0-1.0 (0 = disable)', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaSupportSize:      UC.newInput('size', {title:'max size of a\nsupport pillar\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaSupportPoints:    UC.newInput('points', {title:'number of points in\neach support pillar\nin millimeters', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
             slaSupportGap:       UC.newInput('gap layers', {title:'number of layers between\nraft and bottom of obejct', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
+            slaSupportEnable:    UC.newBoolean('enable', onBooleanClick, {title:'enable supports', modes:SLA}),
 
             slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput('z offset', {title:'z layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
