@@ -1474,12 +1474,12 @@ var gs_kiri_init = exports;
             slaFillDensity:      UC.newInput('density', {title:'percent infill\n0.0-1.0', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaFillLine:         UC.newInput('line width', {title:'hatch line width\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
 
-            slaSupport:          LOCAL ? UC.newGroup('support', null, {modes:SLA, group:"sla-support"}) : null,
-            slaSupportLayers:    LOCAL ? UC.newInput('layers', {title:'base support layers\n0-10', convert:UC.toInt, bound:UC.bound(0,10), modes:SLA}) : null,
-            slaSupportDensity:   LOCAL ? UC.newInput('density', {title:'used to compute the\nnumber of support pillars\n0.0-1.0 (0 = disable)', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}) : null,
-            slaSupportSize:      LOCAL ? UC.newInput('size', {title:'max size of a\nsupport pillar\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}) : null,
-            slaSupportPoints:    LOCAL ? UC.newInput('points', {title:'number of points in\neach support pillar\nin millimeters', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}) : null,
-            slaSupportGap:       LOCAL ? UC.newInput('gap layers', {title:'number of layers between\nraft and bottom of obejct', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}) : null,
+            slaSupport:          UC.newGroup('support', null, {modes:SLA, group:"sla-support"}) : null,
+            slaSupportLayers:    UC.newInput('layers', {title:'base support layers\n0-10', convert:UC.toInt, bound:UC.bound(0,10), modes:SLA}),
+            slaSupportDensity:   UC.newInput('density', {title:'used to compute the\nnumber of support pillars\n0.0-1.0 (0 = disable)', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
+            slaSupportSize:      UC.newInput('size', {title:'max size of a\nsupport pillar\nin millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
+            slaSupportPoints:    UC.newInput('points', {title:'number of points in\neach support pillar\nin millimeters', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
+            slaSupportGap:       UC.newInput('gap layers', {title:'number of layers between\nraft and bottom of obejct', convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
 
             slaOutput:           UC.newGroup('output', null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput('z offset', {title:'z layer offset\nalmost always 0.0\n0.0-1.0 in millimeters', convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
