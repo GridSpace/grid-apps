@@ -633,7 +633,8 @@ var MOTO = window.moto = window.moto || {};
 
                 SCENE.remove(current);
                 SCENE.add(platform);
-            }
+            },
+            world: WORLD
         },
 
         view: {

@@ -528,21 +528,32 @@ let gs_kiri_sla = exports;
      * @param {Function} update incremental callback
      */
     function printSetup(print, update) {
+        update(1);
+    };
+
+    /**
+     * DRIVER PRINT CONTRACT - runs in worker
+     * @param {Object} print state object
+     * @param {Function} online streaming reply
+     * @param {Function} ondone last reply
+     */
+    function printExport(print, online, ondone) {
         let widgets = print.widgets,
             settings = print.settings,
             device = settings.device,
             process = settings.process,
-            output = print.images = [],
+            output = print.output,
+            images = [],
             layermax = 0,
             width = 2560,
             height = 1440,
             width2 = width/2,
             height2 = height/2,
             scaleX = width / device.bedWidth,
-            scaleY = height / device.bedDepth;
+            scaleY = height / device.bedDepth,
+            mark = Date.now();
 
-        let mark = Date.now();
-
+        // find max layer count
         widgets.forEach(widget => {
             layermax = Math.max(widget.slices.length);
         });
@@ -558,6 +569,7 @@ let gs_kiri_sla = exports;
             ctx.closePath();
         }
 
+        // generate layer 8-bit bitaps using canvas
         for (let index=0; index < layermax; index++) {
             let layer = new OffscreenCanvas(height,width);
             let ctx = layer.getContext('2d');
@@ -588,41 +600,20 @@ let gs_kiri_sla = exports;
                 }
             });
             let data = ctx.getImageData(0,0,height,width).data;
+            // reduce RGBA to R
             let red = new Uint8ClampedArray(data.length / 4);
             for (let i=0; i<red.length; i++) {
                 red[i] = data[i*4];
             }
-            output.push(red);
-            update(index / layermax);
+            images.push(red);
+            // transfer images to browser main
+            online({
+                progress: (index / layermax) * 0.25,
+                message: "image_gen",
+                data: red
+            });
             if (count === 0) break;
         }
-
-        update(1);
-
-        console.log('print.setup', Date.now() - mark);
-    };
-
-    /**
-     * DRIVER PRINT CONTRACT - runs in worker
-     * @param {Object} print state object
-     * @param {Function} online streaming reply
-     * @param {Function} ondone last reply
-     */
-    function printExport(print, online, ondone) {
-        let widgets = print.widgets,
-            settings = print.settings,
-            device = settings.device,
-            process = settings.process,
-            output = print.output,
-            mark = Date.now();
-
-        print.images.forEach((image,index) => {
-            online({
-                progress: (index / print.images.length) * 0.25,
-                message: "image_xfer",
-                data: image
-            });
-        });
 
         let exp_func;
 
@@ -636,9 +627,9 @@ let gs_kiri_sla = exports;
         }
 
         let file = exp_func(print, {
-            width: 2560,
-            height: 1440,
-            lines: print.images,
+            width: width,
+            height: height,
+            lines: images,
             small: previewSmall.data,
             large: previewLarge.data
         }, (progress, message) => {
@@ -646,13 +637,11 @@ let gs_kiri_sla = exports;
         });
 
         ondone({
-            width: 2560,
-            height: 1440,
+            width: width,
+            height: height,
             file: file
         },[file]);
 
-        // release memory
-        print.images = null;
         console.log('print.export', Date.now() - mark);
     };
 
@@ -729,7 +718,7 @@ let gs_kiri_sla = exports;
             if (count === 0) {
                 // TODO fix with contract for exposing layer count
                 // hack uses expected gcode output array in print object
-                print.output = print.printView;
+                // print.output = print.printView;
                 return;
             }
 

@@ -32,19 +32,16 @@ let gs_kiri_export = exports;
                 case 'SLA': return exportPrintSLA(currentPrint);
             }
         } else {
-            switch (API.mode.get()) {
-                case 'SLA':
-                    API.function.slice(exportPrint);
-                    break;
-                default:
-                    API.function.print(exportPrint);
-                    break;
-            }
+            API.function.print(exportPrint);
         }
     }
 
     function exportPrintSLA(currentPrint) {
         if (currentPrint) {
+            if (currentPrint.exported) {
+                KIRI.driver.SLA.printDownload(currentPrint);
+                return;
+            }
             let lines = [];
             let times = {};
             let mark = Date.now();
@@ -62,6 +59,7 @@ let gs_kiri_export = exports;
                 if (line.progress) API.show.progress(line.progress, "exporting");
                 if (line.data) lines.push(line.data);
             }, function(done) {
+                currentPrint.exported = true;
                 times[`${seq++}_${segment}`] = Date.now() - mark;
                 console.log(times);
                 API.show.progress(0);

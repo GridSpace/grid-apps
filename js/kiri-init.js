@@ -314,9 +314,7 @@ var gs_kiri_init = exports;
                 API.function.slice();
                 break;
             case cca('p'): // prepare print
-                if (!API.conf.isSliceSkipped()) {
-                    API.function.print();
-                }
+                API.function.print();
                 break;
             case cca('P'): // position widget
                 positionSelection();
@@ -1278,7 +1276,7 @@ var gs_kiri_init = exports;
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             compact:       UC.newBoolean(LANG.op_comp_s, booleanSave, {title:LANG.op_comp_l}),
             dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-            showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l}),
+            showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:    UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL, expert:true}),
