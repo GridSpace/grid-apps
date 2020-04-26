@@ -1469,7 +1469,7 @@ var gs_kiri_init = exports;
             slaOutput:           UC.newGroup(LANG.sa_base_m, null, {modes:SLA, group:"sla-base"}),
             slaBaseLayers:       UC.newInput(LANG.sa_balc_s, {title:LANG.sa_balc_l, convert:UC.toInt, modes:SLA}),
             slaBaseOn:           UC.newInput(LANG.sa_lton_s, {title:LANG.sa_bltn_l, convert:UC.toFloat, modes:SLA}),
-            slaBaseOff:          UC.newInput(LANG.sa_balf_s, {title:LANG.sa_bltf_l, convert:UC.toFloat, modes:SLA, expert:true}),
+            slaBaseOff:          UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:UC.toFloat, modes:SLA, expert:true}),
             slaBasePeelDist:     UC.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:UC.toFloat, modes:SLA}),
             slaBasePeelLiftRate: UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA, expert:true}),
 
