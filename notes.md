@@ -32,6 +32,8 @@
 
 # SLA
 
+* `P` prioritize supports by length of unsupported span. mandatory when circularity > X
+
 # CAM
 
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)

@@ -290,12 +290,16 @@ var gs_base_point = exports;
      * @param dist
      */
     PRO.offsetPointTo = function(p2, dist) {
-        var p1 = this,
+        let p1 = this,
             dx = p2.x - p1.x,
-            dy = p2.y - p1.y,
-            ls = dist / Math.sqrt(dx * dx + dy * dy),
+            dy = p2.y - p1.y;
+
+        if (dx === 0 && dy === 0) return this;
+
+        let ls = dist / Math.sqrt(dx * dx + dy * dy),
             ox = dx * ls,
             oy = dy * ls;
+
         return newPoint(p1.x + ox, p1.y + oy, p2.z, KEYS.NONE);
     };
 

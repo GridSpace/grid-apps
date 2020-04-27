@@ -466,9 +466,7 @@ let gs_kiri_sla = exports;
                 safe.forEach(p => { x += p.x; y += p.y });
                 x /= safe.length;
                 y /= safe.length;
-                if (x !== point.x || y !== point.y) {
-                    nextpoint = point.offsetPointTo({x, y, z:slice.z}, inc);
-                }
+                nextpoint = point.offsetPointTo({x, y, z:slice.z}, inc);
             }
             // once max'ed out, can only shrink in size
             if (track.max) {
@@ -791,14 +789,32 @@ let gs_kiri_sla = exports;
                 process = printset.process,
                 device = printset.device,
                 print_sec = (process.slaBaseLayers * process.slaBaseOn) +
-                    (lines.length - process.slaBaseLayers) * process.slaLayerOn,
-                print_min = Math.floor(print_sec/60),
+                    (lines.length - process.slaBaseLayers) * process.slaLayerOn;
+
+            // add peel lift/drop times to total print time
+            for (let i=0; i<lines.length; i++) {
+                let dist = process.slaPeelDist,
+                    lift = process.slaPeelLiftRate,
+                    drop = process.slaPeelDropRate,
+                    off = process.slaLayerOff;
+                if (i < process.slaBaseLayers) {
+                    dist = process.slaBasePeelDist;
+                    lift = process.slaBasePeelLiftRate;
+                    off = process.slaBaseOff;
+                }
+                print_sec += (dist * lift) / 60;
+                print_sec += (dist * drop) / 60;
+                print_sec += off;
+            }
+
+            let print_min = Math.floor(print_sec/60),
                 print_hrs = Math.floor(print_min/60),
                 download = $('print-photon');
 
+            // add lift/drop time
             print_sec -= (print_min * 60);
             print_min -= (print_hrs * 60);
-            print_sec = print_sec.toString().padStart(2,'0');
+            print_sec = Math.round(print_sec).toString().padStart(2,'0');
             print_min = print_min.toString().padStart(2,'0');
             print_hrs = print_hrs.toString().padStart(2,'0');
 
