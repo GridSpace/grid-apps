@@ -44,22 +44,25 @@ let gs_kiri_sla = exports;
      */
     function slice(settings, widget, onupdate, ondone) {
         let process = settings.process,
-            device = settings.device;
+            device = settings.device,
+            work_total,
+            work_remain;
 
         if (!self.OffscreenCanvas) {
             return ondone("browser lacks support for OffscreenCanvas",true);
         }
 
         // calculate % complete and call onupdate()
-        function doupdate(slices, index, from, to, msg) {
-            onupdate(0.25 + (from + ((index / slices.length) * (to - from))) * 0.75, msg);
+        function doupdate(work, msg) {
+            onupdate(0.25 + ((work_total - work_remain) / work_total) * 0.75, msg);
+            work_remain -= work;
         }
 
         // for each slice, perform a function and call doupdate()
-        function forSlices(slices, from, to, fn, msg) {
+        function forSlices(slices, work, fn, msg) {
             slices.forEach(function(slice,index) {
                 fn(slice,index);
-                doupdate(slices, slice.index, from, to, msg)
+                doupdate(work / slices.length, msg)
             });
         }
 
@@ -142,24 +145,34 @@ let gs_kiri_sla = exports;
                 slice.isSolidFill = false;
             });
             let solidLayers = Math.round(process.slaShell / process.slaSlice);
-            forSlices(slices, 0.05, 0.1, (slice,index) => {
+            work_total = [
+                5,  // shell
+                10, // diff
+                solidLayers ? 10 : 0, // shell project
+                solidLayers ? 10 : 0, // shell fill
+                !solidLayers ? 10 : 0, // solid
+                process.slaFillDensity && process.slaShell ? 60 : 0, // infill
+                process.slaSupportEnable && process.slaSupportLayers && process.slaSupportDensity ? 100 : 0
+            ].reduce((t,v) => { return t+v });
+            work_remain = work_total;
+            forSlices(slices, 5, (slice,index) => {
                 if (process.slaShell) {
                     slice.doShells(2, 0, process.slaShell);
                 } else {
                     slice.doShells(1, 0);
                 }
             }, "slice");
-            forSlices(slices, 0.1, 0.2, (slice) => {
+            forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
                 slice.doDiff(0.00001, 0.005, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
-                forSlices(slices, 0.2, 0.3, (slice) => {
+                forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
                     slice.projectFlats(solidLayers);
                     slice.projectBridges(solidLayers);
                 }, "project");
-                forSlices(slices, 0.3, 0.4, (slice) => {
+                forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
                     slice.doSolidsFill(undefined, undefined, 0.001);
                     let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
@@ -169,20 +182,22 @@ let gs_kiri_sla = exports;
                     slice.solids.unioned = union;
                 }, "solid");
             } else {
-                forSlices(slices, 0.2, 0.4, (slice) => {
+                forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
                     slice.solids.unioned = slice.gatherTopPolys([]);
                 }, "solid");
             }
             if (process.slaFillDensity && process.slaShell) {
                 fill_cache = [];
-                forSlices(slices, 0.4, 1.0, (slice) => {
+                forSlices(slices, 60, (slice) => {
                     if (slice.synth) return;
                     fillPolys(slice, settings);
                 }, "infill");
             }
             if (process.slaSupportEnable && process.slaSupportLayers && process.slaSupportDensity) {
-                computeSupports(widget, process);
+                computeSupports(widget, process, progress => {
+                    doupdate(100 * progress, "support");
+                });
             }
             ondone();
         }, function(update) {
@@ -190,7 +205,7 @@ let gs_kiri_sla = exports;
         });
     };
 
-    function computeSupports(widget, process) {
+    function computeSupports(widget, process, progress) {
         let area = widget.union.reduce((t,p) => { return t + p.areaDeep() }, 0),
             perim = widget.union.reduce((t,p) => { return t + p.perimeter() }, 0),
             slices = widget.slices,
@@ -280,7 +295,7 @@ let gs_kiri_sla = exports;
             size = Math.bound(process.slaSupportSize / 2, 0.25, 1);
 
         // compute and project support pillars
-        slices.forEach(slice => {
+        slices.forEach((slice,index) => {
             if (slice.can_emit) {
                 if (seq === 0 || slice.index - seqLast > 5) {
                     slice.bear_up.map(p => {
@@ -296,6 +311,7 @@ let gs_kiri_sla = exports;
                 }
                 seqLast = slice.index;
             }
+            progress(1 / slices.length);
         });
 
         // union support pillars
