@@ -83,17 +83,21 @@ var gs_base_polygons = exports;
         return polys;
     };
 
-    function fromClipperTreeUnion(tnode, z, minarea) {
-        let polys = [], poly;
+    function fromClipperTreeUnion(tnode, z, minarea, tops, parent) {
+        let polys = tops || [], poly;
 
         tnode.m_Childs.forEach(function(child) {
             poly = fromClipperNode(child, z);
             if (minarea && poly.area() < minarea) {
                 return;
             }
-            polys.push(poly);
+            if (parent) {
+                parent.addInner(poly);
+            } else {
+                polys.push(poly);
+            }
             if (child.m_Childs) {
-                fromClipperTreeUnion(child, z, minarea);
+                fromClipperTreeUnion(child, z, minarea, polys, parent ? null : poly);
             }
         });
 

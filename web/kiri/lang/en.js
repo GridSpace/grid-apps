@@ -399,7 +399,7 @@ kiri.lang['en-us'] = {
     sa_otop_s:      "open top",
     sa_otop_l:      "if shell is enabled\nresults in an open top",
     sa_obas_s:      "open base",
-    sa_obas_l:      "if shell is enabled\nresults in an open base",
+    sa_obas_l:      "if shell is enabled\nresults in an open base\ndisabled with supports",
 
     sa_layr_m:      "layers",
     sa_lton_s:      "light on time",

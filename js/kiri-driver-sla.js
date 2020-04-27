@@ -101,7 +101,7 @@ let gs_kiri_sla = exports;
                     polys.appendAll(slice.tops.map(t => t.poly.clone()));
                 });
                 // p.clone prevents inner voids from forming
-                let union = POLY.union(polys,0).map(p => p.clone());
+                let union = POLY.union(polys).map(p => p.clone());
                 let expand = POLY.expand(union, off, zoff, [], 1);
                 let lastraft;
                 for (let s=0; s<layers + gap; s++) {
@@ -178,7 +178,7 @@ let gs_kiri_sla = exports;
                     let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
                     let trims = slice.solids.trimmed || [];
                     traces.appendAll(trims);
-                    let union = POLY.union(traces,0);
+                    let union = POLY.union(traces);
                     slice.solids.unioned = union;
                 }, "solid");
             } else {
@@ -563,14 +563,14 @@ let gs_kiri_sla = exports;
         }
 
         if (!cached) {
-            fill = POLY.union(fill,0);
+            fill = POLY.union(fill);
             fill_cache[seq_c] = fill;
         } else {
             fill = cached.slice().map(p => p.clone(true).setZ(slice.z));
         }
 
         fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
-        fill = POLY.union(slice.solids.unioned.appendAll(fill),0);
+        fill = POLY.union(slice.solids.unioned.appendAll(fill));
 
         slice.solids.unioned = fill;
     }
