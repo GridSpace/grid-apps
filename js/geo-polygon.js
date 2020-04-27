@@ -1224,7 +1224,7 @@ var gs_base_polygon = exports;
      * @param {Polygon} poly
      * @returns {?Polygon} intersected polygon or null if no intersection
      */
-    PRO.union = function(poly) {
+    PRO.union = function(poly, min) {
         if (!this.overlaps(poly)) return null;
 
         var fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
@@ -1235,17 +1235,18 @@ var gs_base_polygon = exports;
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             sp1 = this.toClipper(),
-            sp2 = poly.toClipper();
+            sp2 = poly.toClipper(),
+            minarea = min >= 0 ? min : 0.1;
 
         clip.AddPaths(sp1, ptyp.ptSubject, true);
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY().fromClipperTree(ctre, poly.getZ());
-            if (poly.length === 1) {
-                poly = poly[0];
-                poly.fillang = fillang;
-                return poly;
+            let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+            if (union.length === 1) {
+                union = union[0];
+                union.fillang = fillang;
+                return union;
             }
         }
 

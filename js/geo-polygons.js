@@ -37,6 +37,7 @@ var gs_base_polygons = exports;
         toClipper : toClipper,
         fromClipperNode : fromClipperNode,
         fromClipperTree : fromClipperTree,
+        fromClipperTreeUnion: fromClipperTreeUnion,
         cleanClipperTree : cleanClipperTree,
         fingerprintCompare: fingerprintCompare,
         fingerprint: fingerprint
@@ -76,6 +77,23 @@ var gs_base_polygons = exports;
             }
             if (child.m_Childs) {
                 fromClipperTree(child, z, polys, parent ? null : poly);
+            }
+        });
+
+        return polys;
+    };
+
+    function fromClipperTreeUnion(tnode, z, minarea) {
+        let polys = [], poly;
+
+        tnode.m_Childs.forEach(function(child) {
+            poly = fromClipperNode(child, z);
+            if (minarea && poly.area() < minarea) {
+                return;
+            }
+            polys.push(poly);
+            if (child.m_Childs) {
+                fromClipperTreeUnion(child, z, minarea);
             }
         });
 
@@ -303,10 +321,9 @@ var gs_base_polygons = exports;
      * Print.init w/ brims
      *
      * @param {Polygon[]} polys
-     * @param {number} [z]
      * @returns {Polygon[]}
      */
-     function union(polys) {
+     function union(polys, minarea) {
          if (polys.length < 2) return polys;
 
          var out = polys.slice(), i, j, union, uset = [];
@@ -315,7 +332,7 @@ var gs_base_polygons = exports;
              if (!out[i]) continue;
              for (j=i+1; j<out.length; j++) {
                  if (!out[j]) continue;
-                 union = out[i].union(out[j]);
+                 union = out[i].union(out[j], minarea);
                  if (union) {
                      out[i] = null;
                      out[j] = null;
