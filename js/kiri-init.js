@@ -1482,7 +1482,7 @@ var gs_kiri_init = exports;
             slaSupportDensity:   UC.newInput(LANG.sa_sldn_s, {title:LANG.sa_sldn_l, convert:UC.toFloat, bound:UC.bound(0.01,0.9), modes:SLA}),
             slaSupportSize:      UC.newInput(LANG.sa_slsz_s, {title:LANG.sa_slsz_l, convert:UC.toFloat, bound:UC.bound(0.1,1), modes:SLA}),
             slaSupportPoints:    UC.newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
-            slaSupportGap:       UC.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:UC.toInt, bound:UC.bound(3,15), modes:SLA, expert:true}),
+            slaSupportGap:       UC.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:UC.toInt, bound:UC.bound(3,30), modes:SLA, expert:true}),
             slaSupportEnable:    UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.sl_slen_l, modes:SLA}),
 
             slaOutput:           UC.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
