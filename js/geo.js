@@ -367,7 +367,7 @@ var gs_base = exports;
         // clipper multiplier
         clipper : 100000,
         // clipper poly clean
-        clipperClean : 50
+        clipperClean : 250
     };
 
     BASE.util = {

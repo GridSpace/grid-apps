@@ -744,7 +744,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             preserveMax = API.var.layer_max,
             preserveLayer = API.var.layer_at,
             totalProgress,
-            track = {};
+            track = {},
+            now = UTIL.time();
 
         // require topo be sent back from worker for local printing
         settings.synth.sendTopo = false;
@@ -773,6 +774,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 if (sliced) {
                     // update segment time
                     if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
+                    segtimes.total = UTIL.time() - now;
                     DBUG.log(segtimes);
                     API.event.emit('slice', getMode());
                     updateSliderMax(true);
