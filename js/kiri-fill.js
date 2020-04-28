@@ -163,20 +163,20 @@ var gs_kiri_fill = exports;
         let density = target.density();
         let offset = target.offset() / 2;
         let tile = 1 + (1 - density);
-        let tile_xc = span_x / tile;
-        let tile_yc = span_y / tile;
+        let tile_xc = Math.ceil(span_x / tile);
+        let tile_yc = Math.ceil(span_y / tile);
 
         if (target.zIndex() % 2 === 1) {
             for (let tx=0; tx<=tile_xc; tx++) {
                 target.newline();
-                target.emit(bounds.min.y, tx * tile + bounds.min.x);
-                target.emit(bounds.max.y, tx * tile + bounds.min.x);
+                target.emit(tx * tile + bounds.min.x, bounds.min.y);
+                target.emit(tx * tile + bounds.min.x, bounds.max.y);
             }
         } else {
             for (let ty=0; ty<=tile_yc; ty++) {
                 target.newline();
-                target.emit(ty * tile + bounds.min.y, bounds.min.x);
-                target.emit(ty * tile + bounds.min.y, bounds.max.x);
+                target.emit(bounds.min.x, ty * tile + bounds.min.y);
+                target.emit(bounds.max.x, ty * tile + bounds.min.y);
             }
         }
     }
