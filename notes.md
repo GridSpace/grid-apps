@@ -33,6 +33,7 @@
 # SLA
 
 * `P` prioritize supports by length of unsupported span. mandatory when circularity > X
+*     or % area of inner to outer poly is high (making it a thin shell)
 
 # CAM
 

@@ -268,6 +268,20 @@ var gs_base_polygon = exports;
         return this;
     }
 
+    // return average of all point positions
+    PRO.average = function() {
+        let ap = newPoint(0,0,0,null);
+        this.points.forEach(p => {
+            ap.x += p.x;
+            ap.y += p.y;
+            ap.z += p.z;
+        });
+        ap.x /= this.points.length;
+        ap.y /= this.points.length;
+        ap.z /= this.points.length;
+        return ap;
+    };
+
     /**
      * @param {boolean} [point] return just the center point
      * @returns {Polygon|Point} a new polygon centered on x=0, y=0, z=0

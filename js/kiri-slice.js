@@ -669,14 +669,17 @@ let gs_kiri_slice = exports;
      * the bounds of the top polygons and their inner solid areas.
      */
     PRO.doSparseLayerFill = function(options) {
-        let spacing = options.spacing,  // spacing space between fill lines
+        let process = options.process,
+            spacing = options.spacing,  // spacing space between fill lines
             density = options.density,  // density of infill 0.0 - 1.0
             bounds = options.bounds,    // bounding box of widget
             height = options.height,    // z layer height
             type = options.type || 'hex';
 
         this.isSparseFill = false;
-        if (this.tops.length === 0 || density === 0.0 || this.isSolidFill) return;
+        if (this.tops.length === 0 || density === 0.0 || this.isSolidFill) {
+            return;
+        }
 
         let scope = this,
             tops = scope.tops,
@@ -691,6 +694,7 @@ let gs_kiri_slice = exports;
             polys = [],
             lines = [],
             line = [],
+            solids = [],
             // callback passed to pluggable infill algorithm
             target = {
                 slice: function() { return scope },
@@ -702,7 +706,14 @@ let gs_kiri_slice = exports;
                 zHeight: function() { return height },
                 offset: function() { return spacing },
                 density: function() { return density },
-                emit: function(x,y) { line.push(newPoint(x,y,scope.z)) },
+                emit: function(x,y) {
+                    if (isNaN(x)) {
+                        solids.push(x);
+                    } else {
+                        line.push(newPoint(x,y,scope.z));
+                        scope.isSparseFill = true;
+                    }
+                },
                 newline: function() {
                     if (line.length > 0) {
                         lines.push(line);
@@ -710,8 +721,6 @@ let gs_kiri_slice = exports;
                     }
                 }
             };
-
-        scope.isSparseFill = true;
 
         // use specified fill type
         if (type && FILL[type]) {
@@ -752,6 +761,51 @@ let gs_kiri_slice = exports;
             }
         }
 
+        let sparse_clip = scope.isSparseFill;
+
+        // solid fill areas
+        if (solids.length) {
+            tops.forEach(top => {
+                if (!top.inner) return;
+                let masks = top.inner.slice();
+                if (top.solids) {
+                    masks = POLY.subtract(masks, top.solids, [], null, scope.z);
+                }
+                let angl = process.sliceFillAngle * ((scope.index % 2) + 1);
+                solids.forEach(solid => {
+                    let inter = [],
+                        fillable = [];
+                    masks.forEach(mask => {
+                        let p = solid.mask(mask);
+                        if (p && p.length) inter.appendAll(p);
+                    });
+                    // offset fill area to accommodate trace
+                    if (inter.length) {
+                        POLY.expand(inter, -options.lineWidth/2, scope.z, fillable);
+                    }
+                    // fill intersected areas
+                    if (inter.length) {
+                        scope.isSparseFill = true;
+                        if (!top.fill_lines) top.fill_lines = [];
+                        inter.forEach(p => {
+                            p.forEachSegment((p1, p2) => {
+                                top.fill_lines.push(p1, p2);
+                            });
+                        });
+                    }
+                    if (fillable.length) {
+                        let lines = POLY.fillArea(fillable, angl, options.lineWidth);
+                        top.fill_lines.appendAll(lines);
+                    }
+                });
+            });
+        }
+
+        // if only solids were added and no lines to clip
+        if (!sparse_clip) {
+            return;
+        }
+
         clip.AddPaths(lines, ptyp.ptSubject, false);
         clip.AddPaths(POLY.toClipper(polys), ptyp.ptClip, true);
 
@@ -759,7 +813,7 @@ let gs_kiri_slice = exports;
             ctre.m_AllPolys.forEach(function(node) {
                 poly = POLY.fromClipperNode(node, scope.z);
                 tops.forEach(function(top) {
-                    // use only polygons inside the top
+                    // use only polygons inside this top
                     if (poly.isInside(top.poly)) {
                         top.fill_sparse.push(poly);
                     }
