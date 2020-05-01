@@ -1697,22 +1697,17 @@ var gs_kiri_init = exports;
         // });
 
         SPACE.mouse.onDrag(function(delta) {
-            let dev = settings().device;
-            let bmaxx = dev.bedWidth/2;
-            let bminx = -bmaxx;
-            let bmaxy = dev.bedDepth/2;
-            let bminy = -bmaxy
             if (delta && UI.freeLayout.checked) {
+                let set = settings();
+                let dev = set.device;
+                let bound = set.bounds;
+                let width = dev.bedWidth/2;
+                let depth = dev.bedDepth/2;
+                if (bound.min.x + delta.x <= -width) return;
+                if (bound.min.y + delta.y <= -depth) return;
+                if (bound.max.x + delta.x >= width) return;
+                if (bound.max.y + delta.y >= depth) return;
                 API.selection.for_widgets(function(widget) {
-                    let wbnd = widget.getBoundingBox();
-                    let wwid = wbnd.max.x - wbnd.min.x;
-                    let wminx = widget.track.pos.x + delta.x - wwid / 2;
-                    let wmaxx = wminx + wwid + delta.x;
-                    if (wminx < bminx || wmaxx > bmaxx) return;
-                    let whei = wbnd.max.y - wbnd.min.y;
-                    let wminy = widget.track.pos.y + delta.y - whei / 2;
-                    let wmaxy = wminy + whei + delta.y;
-                    if (wminy < bminy || wmaxy > bmaxy) return;
                     widget.move(delta.x, delta.y, 0);
                     API.event.emit('widget.move', {widget, delta});
                 });

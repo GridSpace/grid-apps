@@ -11,6 +11,7 @@
 * `P` server-side processing (determine protocol and storage)
 * `P` refactor / simplify POLY.expand (put onus on collector)
 * `P` duplicate objects should share same slice data unless rotated or scaled
+* `F` https://poeditor.com/projects/view_terms?id=336467&per_page=20
 
 # FDM
 

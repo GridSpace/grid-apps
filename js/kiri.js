@@ -964,6 +964,10 @@ self.kiri.copyright = exports.COPYRIGHT;
         forAllWidgets(function(widget) {
             let wp = widget.track.pos;
             let wb = widget.mesh.getBoundingBox().clone();
+            wb.min.x += wp.x;
+            wb.max.x += wp.x;
+            wb.min.y += wp.y;
+            wb.max.y += wp.y;
             bounds.union(wb);
         });
         return settings.bounds = bounds;
