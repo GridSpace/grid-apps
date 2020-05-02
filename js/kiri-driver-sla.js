@@ -609,61 +609,21 @@ let gs_kiri_sla = exports;
             layermax = Math.max(widget.slices.length);
         });
 
-        function polyout(poly, ctx) {
-            poly.forEachPoint((p,i) => {
-                if (i === 0) {
-                    ctx.moveTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
-                } else {
-                    ctx.lineTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
-                }
-            }, true);
-            ctx.closePath();
-        }
+        let render = renderLayer;
+        // let render = renderLayerWasm;
 
         // generate layer 8-bit bitaps using canvas
         for (let index=0; index < layermax; index++) {
-            let layer = new OffscreenCanvas(height,width);
-            let ctx = layer.getContext('2d');
-            ctx.fillStyle = 'rgb(200, 0, 0)';
-            let count = 0;
-            widgets.forEach(widget => {
-                let slice = widget.slices[index];
-                if (slice) {
-                    // prevent premature exit on empty synth slice
-                    if (slice.synth) count++;
-                    let polys = slice.solids.unioned;
-                    if (!polys) polys = slice.tops.map(t => t.poly);
-                    if (slice.supports) polys.appendAll(slice.supports);
-                    polys.forEach(poly => {
-                        poly.move(widget.track.pos);
-                        ctx.beginPath();
-                        polyout(poly.setClockwise(), ctx);
-                        if (poly.inner) {
-                            poly.inner.forEach(inner => {
-                                polyout(inner.setCounterClockwise(), ctx);
-                            });
-                        }
-                        ctx.fill();
-                        count++;
-                    });
-                } else {
-                    // console.log({no_slice_at: index})
-                }
-            });
-            let data = ctx.getImageData(0,0,height,width).data;
-            // reduce RGBA to R
-            let red = new Uint8ClampedArray(data.length / 4);
-            for (let i=0; i<red.length; i++) {
-                red[i] = data[i*4];
-            }
-            images.push(red);
+            let param = { index, width, height, widgets, scaleX, scaleY };
+            let {data, end} = render(param);
+            images.push(data);
             // transfer images to browser main
             online({
                 progress: (index / layermax) * 0.25,
                 message: "image_gen",
-                data: red
+                data: data
             });
-            if (count === 0) break;
+            if (end) break;
         }
 
         let exp_func;
@@ -1262,47 +1222,201 @@ let gs_kiri_sla = exports;
         }
     }
 
-})();
+    class DataWriter {
+        constructor(view, pos) {
+            this.view = view;
+            this.pos = pos || 0;
+        }
 
-class DataWriter {
-    constructor(view) {
-        this.view = view;
-        this.pos = 0;
-    }
+        skip(v) {
+            let p = this.pos;
+            this.pos += v;
+            return p;
+        }
 
-    skip(v) {
-        let p = this.pos;
-        this.pos += v;
-        return p;
-    }
+        writeU8(v) {
+            try {
+                this.view.setUint8(this.pos, v);
+                return this.skip(1);
+            } catch (err) {
+                console.log({pos:this.pos, err})
+                throw err;
+            }
+        }
 
-    writeU8(v) {
-        try {
-            this.view.setUint8(this.pos, v);
-            return this.skip(1);
-        } catch (err) {
-            console.log({pos:this.pos, err})
-            throw err;
+        writeU16(v,le) {
+            this.view.setUint16(this.pos, v, le);
+            return this.skip(2);
+        }
+
+        writeU32(v,le) {
+            this.view.setUint32(this.pos, v, le);
+            return this.skip(4);
+        }
+
+        writeF32(v,le) {
+            this.view.setFloat32(this.pos, v, le);
+            return this.skip(4);
+        }
+
+        writeF64(v,le) {
+            this.view.setFloat64(this.pos, v, le);
+            return this.skip(8);
         }
     }
 
-    writeU16(v,le) {
-        this.view.setUint16(this.pos, v, le);
-        return this.skip(2);
+    // load wasm renderer in worker context
+    if (!self.window) {
+        fetch('/wasm/kiri-sla.wasm')
+            .then(response => response.arrayBuffer())
+            .then(bytes => WebAssembly.instantiate(bytes, {
+                env: {
+                    last: (a,b) => { console.log('last',a,b) },
+                    report: (a,b) => { console.log('report',a,b)
+                }}
+            }))
+            .then(results => {
+                let {module, instance} = results;
+                let {exports} = instance;
+                let heap = new Uint8Array(exports.memory.buffer);
+                self.wasm = {
+                    heap,
+                    memory: exports.memory,
+                    render: exports.render
+                };
+                // console.log({heap});
+            });
+
+        self.renderLayerWasm = function renderLayer(params) {
+            let { width, height, index, widgets, scaleX, scaleY } = params;
+            let width2 = width / 2, height2 = height / 2;
+            let array = [];
+            let count = 0;
+            let wasm = self.wasm;
+
+            function scaleMovePoly(poly) {
+                let points = poly.points;
+                for (let i=0, il=points.length; i<il; i++) {
+                    let p = points[i];
+                    p.y = height - (p.y * scaleY + height2);
+                    p.x = p.x * scaleX + width2;
+                }
+                if (poly.inner) {
+                    for (let i=0, ia=poly.inner, il=poly.inner.length; i<il; i++) {
+                        scaleMovePoly(ia[i]);
+                    }
+                }
+            }
+
+            function writePoly(writer, poly) {
+                let pos = writer.skip(2);
+                let inner = poly.inner;
+                writer.writeU16(inner ? inner.length : 0, true);
+                let points = poly.points;
+                writer.writeU16(points.length, true);
+                for (let j=0, jl=points.length; j<jl; j++) {
+                    let point = points[j];
+                    writer.writeF32(point.x, true);
+                    writer.writeF32(point.y, true);
+                }
+                if (inner && inner.length) {
+                    for (let i=0, il=inner.length; i<il; i++) {
+                        writePoly(inner[i]);
+                    }
+                }
+                // write total struct length at struct head
+                writer.view.setUint16(pos, writer.pos - pos, true);
+            }
+
+            widgets.forEach(widget => {
+                let slice = widget.slices[index];
+                if (slice) {
+                    if (slice.synth) count++;
+                    let polys = slice.solids.unioned;
+                    if (!polys) polys = slice.tops.map(t => t.poly);
+                    if (slice.supports) polys.appendAll(slice.supports);
+                    array.appendAll(polys);
+                    count += polys.length;
+                }
+            });
+
+            let imagelen = width * height;
+            let writer = new DataWriter(new DataView(wasm.memory.buffer), imagelen);
+            writer.writeU16(width, true);
+            writer.writeU16(height, true);
+            writer.writeU16(array.length, true);
+
+            for (let i=0, il=array.length; i<il; i++) {
+                let poly = array[i];
+                scaleMovePoly(poly);
+                writePoly(writer, poly);
+            }
+
+            let out = wasm.render(0, imagelen, 0);
+            let data = wasm.heap.slice(0, imagelen);
+
+            // console.log({
+            //     pos: writer.pos,
+            //     arr: array.length,
+            //     mem: wasm.memory.buffer.slice(imagelen,writer.pos),
+            //     out,
+            //     data: data.filter(v => v !== 0)
+            // });
+
+            return { data: data, end: count === 0 };
+        }
+
+        function polyout(poly, ctx, opt) {
+            let { scaleX, scaleY, width, height, width2, height2 } = opt;
+            poly.forEachPoint((p,i) => {
+                if (i === 0) {
+                    ctx.moveTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
+                } else {
+                    ctx.lineTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
+                }
+            }, true);
+            ctx.closePath();
+        }
+
+        self.renderLayer = function renderLayer(params) {
+            let {width, height, index, widgets, scaleX, scaleY} = params;
+            let layer = new OffscreenCanvas(height,width);
+            let opt = { scaleX, scaleY, width, height, width2: width/2, height2: height/2 };
+            let ctx = layer.getContext('2d');
+            ctx.fillStyle = 'rgb(200, 0, 0)';
+            let count = 0;
+            widgets.forEach(widget => {
+                let slice = widget.slices[index];
+                if (slice) {
+                    // prevent premature exit on empty synth slice
+                    if (slice.synth) count++;
+                    let polys = slice.solids.unioned;
+                    if (!polys) polys = slice.tops.map(t => t.poly);
+                    if (slice.supports) polys.appendAll(slice.supports);
+                    polys.forEach(poly => {
+                        poly.move(widget.track.pos);
+                        ctx.beginPath();
+                        polyout(poly.setClockwise(), ctx, opt);
+                        if (poly.inner) {
+                            poly.inner.forEach(inner => {
+                                polyout(inner.setCounterClockwise(), ctx, opt);
+                            });
+                        }
+                        ctx.fill();
+                        count++;
+                    });
+                } else {
+                    // console.log({no_slice_at: index})
+                }
+            });
+            let data = ctx.getImageData(0,0,height,width).data;
+            // reduce RGBA to R
+            let red = new Uint8ClampedArray(data.length / 4);
+            for (let i=0; i<red.length; i++) {
+                red[i] = data[i*4];
+            }
+            return { data: red, end: count === 0 };
+        }
     }
 
-    writeU32(v,le) {
-        this.view.setUint32(this.pos, v, le);
-        return this.skip(4);
-    }
-
-    writeF32(v,le) {
-        this.view.setFloat32(this.pos, v, le);
-        return this.skip(4);
-    }
-
-    writeF64(v,le) {
-        this.view.setFloat64(this.pos, v, le);
-        return this.skip(8);
-    }
-}
+})();

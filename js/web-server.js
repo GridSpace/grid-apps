@@ -714,6 +714,29 @@ function handleCode(req, res, next) {
     });
 }
 
+function handleWasm(req, res, next) {
+    let [root, file] = req.gs.path.split('/').slice(1);
+    let ext = (file || '').split('.')[1];
+    let path = `wasm/${file}`;
+    let mod = lastmod(path);
+
+    if (root === 'wasm' && ext === 'wasm' && mod) {
+        let imd = ifModifiedDate(req);
+        if (imd && mod <= imd) {
+            res.writeHead(304, "Not Modified");
+            return res.end();
+        }
+        res.writeHead(200, {
+            'Content-Type': 'application/wasm',
+            'Cache-Control': 'public, max-age=600',
+            'Last-Modified': new Date(mod).toGMTString(),
+        });
+        res.end(fs.readFileSync(path));
+    } else {
+        next();
+    }
+}
+
 function ifModifiedDate(req) {
     let ims = req.headers['if-modified-since'];
     if (ims) {
@@ -1330,6 +1353,7 @@ handler.use(fullpath({
         [ "/api/",  api.rateLimit ],
         [ "/data/", handleData ],
         [ "/code/", handleCode ],
+        [ "/wasm/", handleWasm ],
         [ "/js/",   handleJS ]
     ]))
     .use(handleDebug)
