@@ -48,9 +48,9 @@ let gs_kiri_sla = exports;
             work_total,
             work_remain;
 
-        if (!self.OffscreenCanvas) {
-            return ondone("browser lacks support for OffscreenCanvas",true);
-        }
+        // if (!self.OffscreenCanvas) {
+        //     return ondone("browser lacks support for OffscreenCanvas",true);
+        // }
 
         // calculate % complete and call onupdate()
         function doupdate(work, msg) {
@@ -609,8 +609,8 @@ let gs_kiri_sla = exports;
             layermax = Math.max(widget.slices.length);
         });
 
-        let render = renderLayer;
-        // let render = renderLayerWasm;
+        // let render = renderLayer;
+        let render = renderLayerWasm;
 
         // generate layer 8-bit bitaps using canvas
         for (let index=0; index < layermax; index++) {
@@ -1296,10 +1296,12 @@ let gs_kiri_sla = exports;
 
             function scaleMovePoly(poly) {
                 let points = poly.points;
+                let bounds = poly.bounds = BASE.newBounds();
                 for (let i=0, il=points.length; i<il; i++) {
                     let p = points[i];
                     p.y = height - (p.y * scaleY + height2);
                     p.x = p.x * scaleX + width2;
+                    bounds.update(p);
                 }
                 if (poly.inner) {
                     for (let i=0, ia=poly.inner, il=poly.inner.length; i<il; i++) {
@@ -1313,7 +1315,12 @@ let gs_kiri_sla = exports;
                 let inner = poly.inner;
                 writer.writeU16(inner ? inner.length : 0, true);
                 let points = poly.points;
+                let bounds = poly.bounds;
                 writer.writeU16(points.length, true);
+                writer.writeU16(bounds.minx, true);
+                writer.writeU16(bounds.maxx, true);
+                writer.writeU16(bounds.miny, true);
+                writer.writeU16(bounds.maxy, true);
                 for (let j=0, jl=points.length; j<jl; j++) {
                     let point = points[j];
                     writer.writeF32(point.x, true);
@@ -1321,7 +1328,7 @@ let gs_kiri_sla = exports;
                 }
                 if (inner && inner.length) {
                     for (let i=0, il=inner.length; i<il; i++) {
-                        writePoly(inner[i]);
+                        writePoly(writer, inner[i]);
                     }
                 }
                 // write total struct length at struct head
@@ -1354,14 +1361,6 @@ let gs_kiri_sla = exports;
 
             let out = wasm.render(0, imagelen, 0);
             let data = wasm.heap.slice(0, imagelen);
-
-            // console.log({
-            //     pos: writer.pos,
-            //     arr: array.length,
-            //     mem: wasm.memory.buffer.slice(imagelen,writer.pos),
-            //     out,
-            //     data: data.filter(v => v !== 0)
-            // });
 
             return { data: data, end: count === 0 };
         }
