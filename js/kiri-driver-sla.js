@@ -609,8 +609,9 @@ let gs_kiri_sla = exports;
             masks = [],
             images = [],
             slices = [],
-            part1 = legacy ? 0.25 : 0.85,
-            part2 = legacy ? 0.75 : 0.15;
+            legacyMode = legacy || layers > 1,
+            part1 = legacyMode ? 0.25 : 0.85,
+            part2 = legacyMode ? 0.75 : 0.15;
 
         let d = 8 / layers;
         for (let i=0; i<layers; i++) {
@@ -622,9 +623,10 @@ let gs_kiri_sla = exports;
             layermax = Math.max(widget.slices.length);
         });
 
-        let render = legacy ? renderLayer : renderLayerWasm;
+        let render = legacyMode ? renderLayer : renderLayerWasm;
 
-        // generate layer 8-bit bitaps using canvas
+        // generate layer bitmaps
+        // in wasm mode, rle layers generated here, too
         for (let index=0; index < layermax; index++) {
             let param = { index, width, height, widgets, scaleX, scaleY, masks };
             let {image, layers, end} = render(param);
@@ -852,7 +854,7 @@ let gs_kiri_sla = exports;
             masks = [],
             coded;
 
-        if (legacy) {
+        if (legacy || subcount > 1) {
             let d = 8 / subcount;
             for (let i=0; i<subcount; i++) {
                 masks.push((1 << (8 - i * d)) - 1);
