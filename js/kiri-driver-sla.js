@@ -1247,6 +1247,7 @@ let gs_kiri_sla = exports;
         return {width, height, data:buf, png};
     }
 
+    // write out a thumbnail image
     function writePhotonImage(preview, writer) {
         let data = new Uint8Array(preview.data), len = data.byteLength;
         writer.writeU32(preview.width, true);
@@ -1310,15 +1311,15 @@ let gs_kiri_sla = exports;
         }
     }
 
-    // load wasm renderer in worker context
+    // load renderer code in worker context only
     if (!self.window) {
         fetch('/wasm/kiri-sla.wasm')
             .then(response => response.arrayBuffer())
             .then(bytes => WebAssembly.instantiate(bytes, {
                 env: {
-                    last: (a,b) => { console.log('last',a,b) },
-                    report: (a,b) => { console.log('report',a,b)
-                }}
+                    reportf: (a,b) => { console.log('[f]',a,b) },
+                    reporti: (a,b) => { console.log('[i]',a,b) }
+                }
             }))
             .then(results => {
                 let {module, instance} = results;
@@ -1330,9 +1331,9 @@ let gs_kiri_sla = exports;
                     render: exports.render,
                     rle_encode: exports.rle_encode
                 };
-                // console.log({heap});
             });
 
+        // new WebAssembly rasterizer
         self.renderLayerWasm = function renderLayer(params) {
             let { width, height, index, widgets, scaleX, scaleY, masks } = params;
             let width2 = width / 2, height2 = height / 2;
@@ -1356,6 +1357,7 @@ let gs_kiri_sla = exports;
                 }
             }
 
+            // serialize poly into wasm heap memory
             function writePoly(writer, poly) {
                 let pos = writer.skip(2);
                 let inner = poly.inner;
@@ -1399,6 +1401,7 @@ let gs_kiri_sla = exports;
             writer.writeU16(height, true);
             writer.writeU16(array.length, true);
 
+            // scale and move all polys to fit in rendered platform coordinates
             for (let i=0, il=array.length; i<il; i++) {
                 let poly = array[i];
                 scaleMovePoly(poly);
@@ -1408,7 +1411,9 @@ let gs_kiri_sla = exports;
             wasm.render(0, imagelen, 0);
             let image = wasm.heap.slice(0, imagelen), layers = [];
 
+            // one rle encoded bitstream for each mash (anti-alias sublayer)
             for (let l=0; l<masks.length; l++) {
+                // while the image is still in wasm heap memory, rle encode it
                 let rlelen = wasm.rle_encode(0, 0, imagelen, masks[l], imagelen, 0);
                 layers.push(wasm.heap.slice(imagelen, imagelen + rlelen));
             }
@@ -1416,18 +1421,7 @@ let gs_kiri_sla = exports;
             return { image, layers, end: count === 0 };
         }
 
-        function polyout(poly, ctx, opt) {
-            let { scaleX, scaleY, width, height, width2, height2 } = opt;
-            poly.forEachPoint((p,i) => {
-                if (i === 0) {
-                    ctx.moveTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
-                } else {
-                    ctx.lineTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
-                }
-            }, true);
-            ctx.closePath();
-        }
-
+        // legacy JS-only rasterizer uses OffscreenCanvas
         self.renderLayer = function renderLayer(params) {
             let {width, height, index, widgets, scaleX, scaleY} = params;
             let layer = new OffscreenCanvas(height,width);
@@ -1467,6 +1461,19 @@ let gs_kiri_sla = exports;
             }
             return { image: red, end: count === 0 };
         }
+
+        function polyout(poly, ctx, opt) {
+            let { scaleX, scaleY, width, height, width2, height2 } = opt;
+            poly.forEachPoint((p,i) => {
+                if (i === 0) {
+                    ctx.moveTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
+                } else {
+                    ctx.lineTo(height - (p.y * scaleY + height2), p.x * scaleX + width2);
+                }
+            }, true);
+            ctx.closePath();
+        }
+
     }
 
 })();

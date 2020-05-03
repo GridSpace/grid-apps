@@ -29,8 +29,8 @@ struct point {
 const Uint8 ph_size = sizeof(struct poly);
 const Uint8 pt_size = sizeof(struct point);
 
-extern void last(float a, float b);
-extern void report(int a, int b);
+extern void reportf(float a, float b);
+extern void reporti(int a, int b);
 
 Uint32 readoff; // read position offset
 
