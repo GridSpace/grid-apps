@@ -608,7 +608,9 @@ let gs_kiri_sla = exports;
             layers = process.slaAntiAlias || 1,
             masks = [],
             images = [],
-            slices = [];
+            slices = [],
+            part1 = legacy ? 0.25 : 0.85,
+            part2 = legacy ? 0.75 : 0.15;
 
         let d = 8 / layers;
         for (let i=0; i<layers; i++) {
@@ -630,7 +632,7 @@ let gs_kiri_sla = exports;
             slices.push(layers);
             // transfer images to browser main
             online({
-                progress: (index / layermax) * 0.85,
+                progress: (index / layermax) * part1,
                 message: "image_gen",
                 data: image
             });
@@ -656,7 +658,7 @@ let gs_kiri_sla = exports;
             lines: images,
             slices: slices
         }, (progress, message) => {
-            online({progress: progress * 0.15 + 0.85, message});
+            online({progress: progress * part2 + part1, message});
         });
 
         ondone({
