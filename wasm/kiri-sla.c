@@ -146,6 +146,12 @@ void rasterize_poly(unsigned char *m, Uint32 o, Uint32 height) {
     readoff = nextpoly;
 }
 
+/**
+ * m = memory base pointer
+ * i = input memory location (polygon records)
+ * o = output memory location (for raster)
+ * returns last read position in memory
+ */
 EMSCRIPTEN_KEEPALIVE
 Uint32 render(unsigned char *m, Uint32 i, Uint32 o) {
     struct info *info = (struct info *)(m + i);
@@ -160,5 +166,52 @@ Uint32 render(unsigned char *m, Uint32 i, Uint32 o) {
         rasterize_poly(m, o, info->height);
     }
 
-    return 1;
+    return readoff;
+}
+
+Uint8 rle_byte(Uint8 color, Uint8 count, Uint8 type) {
+    if (type == 0) {
+        return (count & 0x7f) | ((color << 7) & 0x80);
+    } else {
+        Uint8 run = count - 1;
+        return
+            (run & 1  ? 128 : 0) |
+            (run & 2  ?  64 : 0) |
+            (run & 4  ?  32 : 0) |
+            (run & 8  ?  16 : 0) |
+            (run & 16 ?   8 : 0) |
+            (run & 32 ?   4 : 0) |
+            (run & 64 ?   2 : 0) | color;
+    }
+}
+
+/**
+ * mem  = memory base pointer
+ * in   = input memory location (raster)
+ * ilen = input raster length in bytes
+ * out  = output memory location (for rle-encoded image)
+ * type = 0=photon, 1=photons
+ * returns length of rle-encoded image
+ */
+EMSCRIPTEN_KEEPALIVE
+Uint32 rle_encode(unsigned char *mem, Uint32 in, Uint32 ilen, Uint8 mask, Uint32 out, Uint8 type) {
+    Uint8 color = (mem[in++] & mask) ? 1 : 0; // current color
+    Uint8 count = 1; // number of color matches
+    Uint8 cmax = type == 0 ? 125 : 128; // count max
+    Uint8 next; // next color
+    Uint32 opos = out;
+    while (--ilen > 0) {
+        next = (mem[in++] & mask) ? 1 : 0;
+        if (color != next || count == cmax) {
+            mem[opos++] = rle_byte(color, count, type);
+            count = 0;
+        }
+        count++;
+        color = next;
+    }
+
+    if (count > 0) {
+        mem[opos++] = rle_byte(color, count, type);
+    }
+    return opos - out;
 }

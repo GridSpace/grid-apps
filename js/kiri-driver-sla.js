@@ -32,7 +32,10 @@ let gs_kiri_sla = exports;
         preview,
         previewSmall,
         previewLarge,
-        fill_cache;
+        fill_cache,
+        legacy = false;
+
+    if (legacy) console.log("SLA Driver in Legacy Mode");
 
     /**
      * DRIVER SLICE CONTRACT - runs in worker
@@ -48,9 +51,9 @@ let gs_kiri_sla = exports;
             work_total,
             work_remain;
 
-        // if (!self.OffscreenCanvas) {
-        //     return ondone("browser lacks support for OffscreenCanvas",true);
-        // }
+        if (legacy && !self.OffscreenCanvas) {
+            return ondone("browser lacks support for OffscreenCanvas",true);
+        }
 
         // calculate % complete and call onupdate()
         function doupdate(work, msg) {
@@ -594,7 +597,6 @@ let gs_kiri_sla = exports;
             device = settings.device,
             process = settings.process,
             output = print.output,
-            images = [],
             layermax = 0,
             width = 2560,
             height = 1440,
@@ -602,26 +604,35 @@ let gs_kiri_sla = exports;
             height2 = height/2,
             scaleX = width / device.bedWidth,
             scaleY = height / device.bedDepth,
-            mark = Date.now();
+            mark = Date.now(),
+            layers = process.slaAntiAlias || 1,
+            masks = [],
+            images = [],
+            slices = [];
+
+        let d = 8 / layers;
+        for (let i=0; i<layers; i++) {
+            masks.push((1 << (8 - i * d)) - 1);
+        }
 
         // find max layer count
         widgets.forEach(widget => {
             layermax = Math.max(widget.slices.length);
         });
 
-        // let render = renderLayer;
-        let render = renderLayerWasm;
+        let render = legacy ? renderLayer : renderLayerWasm;
 
         // generate layer 8-bit bitaps using canvas
         for (let index=0; index < layermax; index++) {
-            let param = { index, width, height, widgets, scaleX, scaleY };
-            let {data, end} = render(param);
-            images.push(data);
+            let param = { index, width, height, widgets, scaleX, scaleY, masks };
+            let {image, layers, end} = render(param);
+            images.push(image);
+            slices.push(layers);
             // transfer images to browser main
             online({
-                progress: (index / layermax) * 0.25,
+                progress: (index / layermax) * 0.85,
                 message: "image_gen",
-                data: data
+                data: image
             });
             if (end) break;
         }
@@ -640,11 +651,12 @@ let gs_kiri_sla = exports;
         let file = exp_func(print, {
             width: width,
             height: height,
-            lines: images,
             small: previewSmall.data,
-            large: previewLarge.data
+            large: previewLarge.data,
+            lines: images,
+            slices: slices
         }, (progress, message) => {
-            online({progress: progress * 0.75 + 0.25, message});
+            online({progress: progress * 0.15 + 0.85, message});
         });
 
         ondone({
@@ -833,42 +845,57 @@ let gs_kiri_sla = exports;
             layerBytes = width * height,
             small = conf.small,
             large = conf.large,
+            slices = conf.slices,
             subcount = process.slaAntiAlias || 1,
-            masks = [];
+            masks = [],
+            coded;
 
-        let d = 8 / subcount;
-        for (let i=0; i<subcount; i++) {
-            masks.push((1 << (8 - i * d)) - 1);
-        }
-        let ccl = 0;
-        let tcl = conf.lines.length * subcount;
-        let converted = conf.lines.map((line, index) => {
-            let count = line.length;
-            let lineDV = new DataView(line.buffer);
-            let bits = new Uint8Array(line.length);
-            let bitsDV = new DataView(bits.buffer);
-            let subs = [{ data: bits, view: bitsDV }];
-            for (let sl=1; sl<subcount; sl++) {
-                bits = bits.slice();
-                bitsDV = new DataView(bits.buffer);
-                subs.push({ data: bits, view: bitsDV });
+        if (legacy) {
+            let d = 8 / subcount;
+            for (let i=0; i<subcount; i++) {
+                masks.push((1 << (8 - i * d)) - 1);
             }
-            // use R from RGB since that was painted on the canvas
-            for (let s=0; s<subcount; s++) {
-                let view = subs[s].view;
-                let mask = masks[s];
-                for (let i = 0; i < count; i++) {
-                    let dv = lineDV.getUint8(i);
-                    view.setUint8(i, (dv / subcount) & mask ? 1 : 0);
+            let ccl = 0;
+            let tcl = conf.lines.length * subcount;
+            let converted = conf.lines.map((line, index) => {
+                let count = line.length;
+                let lineDV = new DataView(line.buffer);
+                let bits = new Uint8Array(line.length);
+                let bitsDV = new DataView(bits.buffer);
+                let subs = [{ data: bits, view: bitsDV }];
+                for (let sl=1; sl<subcount; sl++) {
+                    bits = bits.slice();
+                    bitsDV = new DataView(bits.buffer);
+                    subs.push({ data: bits, view: bitsDV });
                 }
-                progress((ccl++/tcl) * 0.4, `layer_convert`);
-            }
-            return { subs };
-        });
+                // use R from RGB since that was painted on the canvas
+                for (let s=0; s<subcount; s++) {
+                    let view = subs[s].view;
+                    let mask = masks[s];
+                    for (let i = 0; i < count; i++) {
+                        let dv = lineDV.getUint8(i);
+                        view.setUint8(i, (dv / subcount) & mask ? 1 : 0);
+                    }
+                    progress((ccl++/tcl) * 0.4, `layer_convert`);
+                }
+                return { subs };
+            });
 
-        let coded = encodeLayers(converted, "photon", (pro => {
-            progress(pro * 0.4 + 0.4, "layer_encode");
-        }));
+            coded = encodeLayers(converted, "photon", (pro => {
+                progress(pro * 0.4 + 0.4, "layer_encode");
+            }));
+        } else {
+            let codedlen = slices.reduce((t,l) => {
+                return t + l.reduce((t,a) => {
+                    return t + a.length
+                }, 0);
+            }, 0);
+            coded = {
+                layers: slices.map(slice => { return { sublayers: slice }}),
+                length: codedlen
+            };
+        }
+
         let buflen = 3000 + coded.length + (layerCount * subcount * 28) + small.byteLength + large.byteLength;
         let filebuf = new ArrayBuffer(buflen);
         let filedat = new DataWriter(new DataView(filebuf));
@@ -972,27 +999,41 @@ let gs_kiri_sla = exports;
             device = printset.device,
             width = conf.width,
             height = conf.height,
+            slices = conf.slices,
             layerCount = conf.lines.length,
-            layerBytes = width * height;
+            layerBytes = width * height,
+            coded;
 
-        let converted = conf.lines.map((line, index) => {
-            let count = line.length / 4;
-            let bits = new Uint8Array(line.length / 4);
-            let bitsDV = new DataView(bits.buffer);
-            let lineDV = new DataView(line.buffer);
-            // reduce RGB to R = 0||1
-            for (let i = 0; i < count; i++) {
-                // defeat anti-aliasing for the moment
-                bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
-            }
-            progress(index / conf.lines.length);
-            return { subs: [{
-                exposureTime: process.slaLayerOn,
-                data: bits
-            }] };
-        });
+        if (legacy) {
+            let converted = conf.lines.map((line, index) => {
+                let count = line.length / 4;
+                let bits = new Uint8Array(line.length / 4);
+                let bitsDV = new DataView(bits.buffer);
+                let lineDV = new DataView(line.buffer);
+                // reduce RGB to R = 0||1
+                for (let i = 0; i < count; i++) {
+                    // defeat anti-aliasing for the moment
+                    bitsDV.setUint8(i, lineDV.getUint8(i * 4) > 0 ? 1 : 0);
+                }
+                progress(index / conf.lines.length);
+                return { subs: [{
+                    exposureTime: process.slaLayerOn,
+                    data: bits
+                }] };
+            });
+            coded = encodeLayers(converted, "photons");
+        } else {
+            let codedlen = slices.reduce((t,l) => {
+                return t + l.reduce((t,a) => {
+                    return t + a.length
+                }, 0);
+            }, 0);
+            coded = {
+                layers: slices.map(slice => { return { sublayers: slice }}),
+                length: codedlen
+            };
+        }
 
-        let coded = encodeLayers(converted, "photons");
         let filebuf = new ArrayBuffer(75366 + coded.length + 28 * layerCount);
         let filedat = new DataView(filebuf);
         let filePos = 0;
@@ -1282,13 +1323,14 @@ let gs_kiri_sla = exports;
                 self.wasm = {
                     heap,
                     memory: exports.memory,
-                    render: exports.render
+                    render: exports.render,
+                    rle_encode: exports.rle_encode
                 };
                 // console.log({heap});
             });
 
         self.renderLayerWasm = function renderLayer(params) {
-            let { width, height, index, widgets, scaleX, scaleY } = params;
+            let { width, height, index, widgets, scaleX, scaleY, masks } = params;
             let width2 = width / 2, height2 = height / 2;
             let array = [];
             let count = 0;
@@ -1359,10 +1401,15 @@ let gs_kiri_sla = exports;
                 writePoly(writer, poly);
             }
 
-            let out = wasm.render(0, imagelen, 0);
-            let data = wasm.heap.slice(0, imagelen);
+            wasm.render(0, imagelen, 0);
+            let image = wasm.heap.slice(0, imagelen), layers = [];
 
-            return { data: data, end: count === 0 };
+            for (let l=0; l<masks.length; l++) {
+                let rlelen = wasm.rle_encode(0, 0, imagelen, masks[l], imagelen, 0);
+                layers.push(wasm.heap.slice(imagelen, imagelen + rlelen));
+            }
+
+            return { image, layers, end: count === 0 };
         }
 
         function polyout(poly, ctx, opt) {
@@ -1414,7 +1461,7 @@ let gs_kiri_sla = exports;
             for (let i=0; i<red.length; i++) {
                 red[i] = data[i*4];
             }
-            return { data: red, end: count === 0 };
+            return { image: red, end: count === 0 };
         }
     }
 
