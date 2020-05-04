@@ -1268,49 +1268,6 @@ let gs_kiri_sla = exports;
         }
     }
 
-    class DataWriter {
-        constructor(view, pos) {
-            this.view = view;
-            this.pos = pos || 0;
-        }
-
-        skip(v) {
-            let p = this.pos;
-            this.pos += v;
-            return p;
-        }
-
-        writeU8(v) {
-            try {
-                this.view.setUint8(this.pos, v);
-                return this.skip(1);
-            } catch (err) {
-                console.log({pos:this.pos, err})
-                throw err;
-            }
-        }
-
-        writeU16(v,le) {
-            this.view.setUint16(this.pos, v, le);
-            return this.skip(2);
-        }
-
-        writeU32(v,le) {
-            this.view.setUint32(this.pos, v, le);
-            return this.skip(4);
-        }
-
-        writeF32(v,le) {
-            this.view.setFloat32(this.pos, v, le);
-            return this.skip(4);
-        }
-
-        writeF64(v,le) {
-            this.view.setFloat64(this.pos, v, le);
-            return this.skip(8);
-        }
-    }
-
     // load renderer code in worker context only
     if (!self.window) {
         fetch('/wasm/kiri-sla.wasm')
