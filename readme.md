@@ -8,7 +8,7 @@
 ### Getting Started
 
 ```
-npm update
+npm i
 npm start
 ```
 
