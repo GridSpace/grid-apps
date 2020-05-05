@@ -96,8 +96,51 @@
             }
         }
 
+        class Grid {
+            constructor(x,y,div) {
+                this.x = (x/div)|0;
+                this.y = (y/div)|0;
+                this.div = div;
+                this.grid = new Array(this.x * this.y);
+            }
+
+            get(x,y) {
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
+                let pos = x + y * this.x;
+                let rec = this.grid[pos];
+                if (rec) return rec;
+                return this.grid[pos] = [];
+            }
+
+            _get(x,y) {
+                if (x < 0 || y < 0 || x > this.x || y > this.y) return undefined;
+                return this.grid[x + y * this.x];
+            }
+
+            peers(x,y) {
+                let grid = this.grid;
+                let r = this.x;
+                // console.log('peers',x,y)
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
+                let peers = [], p;
+                p = this._get(x,y); if (p) peers.push(p);
+                p = this._get(x-1,y); if (p) peers.push(p);
+                p = this._get(x+1,y); if (p) peers.push(p);
+                p = this._get(x,y-1); if (p) peers.push(p);
+                p = this._get(x,y+1); if (p) peers.push(p);
+                p = this._get(x+1,y+1); if (p) peers.push(p);
+                p = this._get(x-1,y+1); if (p) peers.push(p);
+                p = this._get(x+1,y-1); if (p) peers.push(p);
+                p = this._get(x-1,y-1); if (p) peers.push(p);
+                // console.log('---',x,y,peers,this.x,this.y)
+                return peers;
+            }
+        }
+
         let PI2 = Math.PI * 2;
-        let rez = 200;
+        let rez = 300;
         let inc = PI2 / rez;
         let zcache = {};
         let timer = new Timer();
@@ -198,18 +241,20 @@
             // create sparse representation
             let sparse = [];
             let center = rez / 2;
-            let edgev = size-1;
+            let grid = new Grid(size,size,10);
             for (let x=0; x<size; x++) {
                 for (let y=0; y<size; y++) {
                     let val = edge.get(x,y);
                     if (val) {
                         let dx = Math.abs(x - center);
                         let dy = Math.abs(y - center);
-                        sparse.push({
+                        let rec = {
                             x, y, val,
                             dist: Math.max(dx,dy),
-                            edge: (x === 0 || y === 0 || x === edgev || y === edgev)
-                        });
+                            index: sparse.length
+                        };
+                        sparse.push(rec);
+                        grid.get(x,y).push(rec);
                     }
                 }
             }
@@ -227,6 +272,7 @@
             let chain;
             let added;
             let cleared = 0;
+            let fast = true;
 
             do {
                 for (let i=0; i<sparse.length; i++) {
@@ -246,22 +292,37 @@
                     let cl_elm = null; // candidate closest element
                     let cl_idx = null; // candidate closest index
                     let cl_dst = Infinity; // candidate distance
-                    // look for next closest point to end of chain
-                    for (let i=0; i<sparse.length; i++) {
-                        let test_el = sparse[i];
-                        if (test_el) {
-                            let dst = dist(target, test_el, dir);
-                            if (cl_idx === null || dst < cl_dst) {
-                                cl_idx = i;
-                                cl_elm = test_el;
-                                cl_dst = dst;
+                    // look for next closest point to end of chain\
+                    if (fast) {
+                        let peers = grid.peers(target.x,target.y);
+                        if (peers.length === 0) break;
+                        for (let ps=0, psl=peers.length; ps<psl; ps++) {
+                            let peera = peers[ps];
+                            for (let pr=0, prl=peera.length; pr<prl; pr++) {
+                                let peer = peera[pr];
+                                if (!sparse[peer.index]) continue;
+                                let dst = dist(target, peer, dir);
+                                if (cl_idx === null || dst < cl_dst) {
+                                    cl_idx = peer.index;
+                                    cl_elm = peer;
+                                    cl_dst = dst;
+                                }
+                            }
+                        }
+                    } else {
+                        for (let i=0; i<sparse.length; i++) {
+                            let test_el = sparse[i];
+                            if (test_el) {
+                                let dst = dist(target, test_el, dir);
+                                if (cl_idx === null || dst < cl_dst) {
+                                    cl_idx = i;
+                                    cl_elm = test_el;
+                                    cl_dst = dst;
+                                }
                             }
                         }
                     }
                     if (cl_elm) {
-                        // if (target.edge && !cl_elm.edge) {
-                        //     break;
-                        // }
                         if (cl_dst > maxdist) {
                             break;
                         }
@@ -272,6 +333,7 @@
                     }
                 } while (added);
             } while (cleared < sparse.length);
+            console.log('chains',chain.length);
             timer.mark('chain');
 
             // simplify poly
