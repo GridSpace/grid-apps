@@ -44,10 +44,64 @@
         }
     </style>
     <script>
+        class Timer {
+            constructor() {
+                this.time = 0;
+                this.times = {};
+                this.order = [];
+                this.start();
+            }
+
+            start() {
+                this.time = Date.now();
+            }
+
+            mark(label) {
+                let newtime = Date.now();
+                let oldval = this.times[label] || 0;
+                if (oldval === 0) {
+                    this.order.push(label);
+                }
+                this.times[label] = oldval + (newtime - this.time);
+                this.time = newtime;
+            }
+
+            toString() {
+                return this.order.map(l => `${l}:${this.times[l]}`);
+            }
+        }
+
+        class Map {
+            constructor(x,y,type) {
+                this.x = x;
+                this.y = y;
+                switch (type) {
+                    case 'f': this.map = new Float32Array(x*y); break;
+                    case 'i': this.map = new Int32Array(x*y); break;
+                    case 'c': this.map = new Uint8Array(x*y); break;
+                    default: throw `invalid type: ${type}`;
+                }
+            }
+
+            pos(x,y) {
+                return x+y*this.x;
+            }
+
+            get(x,y) {
+                return this.map[x+y*this.x];
+            }
+
+            put(x,y,v) {
+                this.map[x+y*this.x] = v;
+            }
+        }
+
         let PI2 = Math.PI * 2;
         let rez = 200;
         let inc = PI2 / rez;
         let zcache = {};
+        let timer = new Timer();
+        let maxdist = rez * 0.01;
 
         function $(id) {
             return document.getElementById(id);
@@ -58,6 +112,7 @@
             for (let z=0; z<PI2; z += inc) {
                 generate(z);
             }
+            console.log(timer.toString());
             render(0);
         }
 
@@ -73,58 +128,69 @@
             if (cached) {
                 return cached;
             }
+            timer.start();
 
-            let edge = [];
-            let vals = [];
+            let size = ((PI2 / inc)|0) + 1;
+            let edge = new Map(size,size,'c');
+            let vals = new Map(size,size,'f');
             let points = 0;
             let points_lr = 0;
             let points_td = 0;
-            for (let x=0; x<PI2; x += inc) {
-                let vrow = []; // raw values row
-                let erow = []; // edge values row
-                edge.push(erow);
-                vals.push(vrow);
-                for (let y=0; y<PI2; y += inc) {
-                    erow.push(0);
-                    vrow.push(
-                        Math.sin(x) * Math.cos(y) +
-                        Math.sin(y) * Math.cos(z) +
-                        Math.sin(z) * Math.cos(x)
+            let tip = 0.2;
+            let xv = 0;
+            for (let x=0; x<size; x++) {
+                let yv = 0;
+                for (let y=0; y<size; y++) {
+                    vals.put(x,y,
+                        Math.sin(xv) * Math.cos(yv) +
+                        Math.sin(yv) * Math.cos(z) +
+                        Math.sin(z) * Math.cos(xv)
                     );
+                    yv += inc;
                 }
+                xv += inc;
             }
+            timer.mark('points');
 
             // left-right threshold search (red)
-            vals.forEach((vrow, y) => {
-                let erow = edge[y];
-                let v0 = vrow[vrow.length - 1];
-                vrow.forEach((v1, x) => {
-                    if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
-                        erow[x] = 1;
+            for (let x=1; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let v0 = vals.get(x-1,y);
+                    let v1 = vals.get(x,y);
+                    if (
+                        (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
+                        (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
+                    ) {
+                    // if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
+                        edge.put(x,y,1);
                         points++;
                         points_lr++;
                     }
-                    v0 = v1;
-                })
-            });
+                }
+            }
+            timer.mark('gen_red');
 
             // top-down threshold search (green)
-            for (let x=0; x<rez; x++) {
-                let v0 = vals[vals.length-1][x];
-                for (let y=0; y<rez; y++) {
-                    let v1 = vals[y][x];
-                    if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
-                        if (edge[y][x]) {
-                            edge[y][x] = 3;
+            for (let y=1; y<size; y++) {
+                for (let x=0; x<size; x++) {
+                    let v0 = vals.get(x,y-1);
+                    let v1 = vals.get(x,y);
+                    if (
+                        (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
+                        (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
+                    ) {
+                    // if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
+                        if (edge.get(x,y)) {
+                            edge.put(x,y,3);
                         } else {
-                            edge[y][x] = 2;
-                            points++
+                            edge.put(x,y,2);
+                            points++;
                         }
                         points_td++;
                     }
-                    v0 = v1;
                 }
             }
+            timer.mark('gen_grn');
 
             // deterime prevailing direction for chaining
             let dir = points_td > points_lr ? 'lr' : 'td';
@@ -132,18 +198,26 @@
             // create sparse representation
             let sparse = [];
             let center = rez / 2;
-            edge.forEach((row,y) => {
-                row.forEach((val,x) => {
+            let edgev = size-1;
+            for (let x=0; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let val = edge.get(x,y);
                     if (val) {
                         let dx = Math.abs(x - center);
                         let dy = Math.abs(y - center);
-                        sparse.push({x, y, val, dist: Math.max(dx,dy)});
+                        sparse.push({
+                            x, y, val,
+                            dist: Math.max(dx,dy),
+                            edge: (x === 0 || y === 0 || x === edgev || y === edgev)
+                        });
                     }
-                });
-            });
+                }
+            }
+            // order points farthest from center (edges, in other words)
             sparse.sort((a,b) => {
                 return b.dist - a.dist;
             });
+            timer.mark('sparse');
 
             // preserve sparse points for rendering
             let raw = sparse.slice();
@@ -153,11 +227,11 @@
             let chain;
             let added;
             let cleared = 0;
-            let maxdist = rez * 0.05;
 
             do {
-                chain = null;
                 for (let i=0; i<sparse.length; i++) {
+                    // find the unclaimed point farthest
+                    // from center and start a chain
                     if (sparse[i]) {
                         chain = [ sparse[i] ];
                         polys.push(chain);
@@ -169,9 +243,10 @@
                 do {
                     added = false;
                     let target = chain[chain.length - 1];
-                    let cl_elm = null;
-                    let cl_idx = null;
-                    let cl_dst = Infinity;
+                    let cl_elm = null; // candidate closest element
+                    let cl_idx = null; // candidate closest index
+                    let cl_dst = Infinity; // candidate distance
+                    // look for next closest point to end of chain
                     for (let i=0; i<sparse.length; i++) {
                         let test_el = sparse[i];
                         if (test_el) {
@@ -184,6 +259,9 @@
                         }
                     }
                     if (cl_elm) {
+                        // if (target.edge && !cl_elm.edge) {
+                        //     break;
+                        // }
                         if (cl_dst > maxdist) {
                             break;
                         }
@@ -194,6 +272,7 @@
                     }
                 } while (added);
             } while (cleared < sparse.length);
+            timer.mark('chain');
 
             // simplify poly
             polys = polys.map(poly => filter(poly));
