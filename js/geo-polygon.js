@@ -1028,12 +1028,17 @@ var gs_base_polygon = exports;
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.
      */
-    PRO.clean = function() {
-        var clib = self.ClipperLib,
+    PRO.clean = function(deep, parent) {
+        let clib = self.ClipperLib,
             clip = clib.Clipper,
             clean = clip.CleanPolygon(this.toClipper()[0], CONF.clipperClean),
             poly = fromClipperPath(clean, this.getZ());
-        return poly;
+        if (deep && this.inner) {
+            poly.inner = this.inner.map(inr => inr.clean(false, poly));
+        }
+        poly.parent = parent || this.parent;
+        poly.area2 = this.area2;
+        return poly || this;
     };
 
     PRO.toClipper = function(inout,debug) {

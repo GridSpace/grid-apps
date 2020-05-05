@@ -490,6 +490,7 @@ var gs_base_polygons = exports;
             var simple = clip.SimplifyPolygons(clean, cpft.pftNonZero);
             coff.AddPaths(simple, cjnt.jtMiter, cety.etClosedPolygon);
         });
+
         coff.Execute(ctre, (dist1 + over) * fact);
         polys = fromClipperTree(ctre, z);
 
