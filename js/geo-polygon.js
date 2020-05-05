@@ -112,14 +112,18 @@ var gs_base_polygon = exports;
      * Polygon Prototype Functions
      ******************************************************************* */
 
-    PRO.toString = function() {
+    PRO.toString = function(verbose) {
         let l;
         if (this.inner && this.inner.length) {
-            l = '/' + this.inner.map(i => i.toString()).join(',');
+            l = '/' + this.inner.map(i => i.toString(verbose)).join(',');
         } else {
             l = '';
         }
-        return `P[${this.points.length,this.area().toFixed(2)}${l}]`;
+        if (verbose) {
+            return `P[{${this.area().toFixed(2)}}[${this.points.length}](${this.points.map(p=>`${p.x},${p.y}`).join('|')})${l}]`;
+        } else {
+            return `P[${this.points.length,this.area().toFixed(2)}${l}]`;
+        }
     };
 
     // return which plane (x,y,z) this polygon is coplanar with
@@ -1069,6 +1073,9 @@ var gs_base_polygon = exports;
      * @returns {?Polygon[]} returns output array provided as input or new array if not provided
      */
     PRO.offset = function(offset, output) {
+        // let offs = geo.poly.offset([this], -offset, this.getZ());
+        // if (output) output.appendAll(offs);
+        // return output || offs;
         return POLY().expand([this], -offset, this.getZ(), output);
     };
 

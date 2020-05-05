@@ -68,7 +68,35 @@ if (!self.window)
             }
         }
         wasm.free(memat);
-        return out;
+        return polyNest(out);
+    }
+
+    // nest closed polygons without existing parent / child relationships
+    function polyNest(polys) {
+        polys.sort((a,b) => {
+            return b.bounds.minx - a.bounds.minx;
+        });
+        // from smallest to largest, check for enclosing bounds and nest
+        for (let i=0, il=polys.length; i<il; i++) {
+            let smaller = polys[i];
+            // prevent parent poly from being consumed
+            if (smaller.inner) continue;
+            for (let j=i+1; j<il; j++) {
+                let larger = polys[j];
+                if (larger.bounds.contains(smaller.bounds)) {
+                    larger.addInner(smaller);
+                    break;
+                }
+            }
+        }
+        let tops = [];
+        for (let i=0, il=polys.length; i<il; i++) {
+            let poly = polys[i];
+            if (!poly.parent) {
+                tops.push(poly);
+            }
+        }
+        return tops;
     }
 
     fetch('/wasm/kiri-geo.wasm')
@@ -101,29 +129,6 @@ if (!self.window)
             };
 
             wasm.start();
-
-            // console.log(polyOffset(
-            //     [ self.base.newPolygon().centerRectangle({x:6,y:6},10,10) ], 1
-            // ));
-
-            // let memat = wasm.malloc(4096);
-            // let writer = new DataWriter(heap, memat);
-            // let pcount = writePoly(writer, self.base.newPolygon().centerRectangle({x:6,y:6},10,10));
-            //
-            // log({instance, exports, heap, memat});
-            // log(wasm.heap.buffer.slice(memat, memat+100));
-            //
-            // let resat = wasm.offset(memat, pcount, 0.5 * factor);
-            //
-            // log('offset', resat);
-            //
-            // log(wasm.heap.buffer.slice(resat, resat+100));
-            //
-            // let reader = new DataReader(heap, resat);
-            // let poly = readPoly(reader);
-            // console.log({poly});
-            //
-            // wasm.free(memat);
         });
 
 })();

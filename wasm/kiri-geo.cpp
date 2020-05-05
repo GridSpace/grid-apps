@@ -58,6 +58,12 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
         poly++;
     }
 
+    // clean and simplify polygons
+    // Paths cleans, simples;
+    // CleanPolygons(ins, cleans, 250);
+    // SimplifyPolygons(cleans, simples, pftNonZero);
+    // ins = simples;
+
     ClipperOffset co;
     co.AddPaths(ins, jtMiter, etClosedPolygon);
     co.Execute(outs, offset);
@@ -65,18 +71,22 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
     Uint32 resat = pos;
 
     for (Path po : outs) {
-        // polygon(po.size(), 0);
+        // polygon(po.size(), 1);
         struct length16 *ls = (struct length16 *)(mem + pos);
         ls->length = po.size();
         pos += 2;
         for (IntPoint pt : po) {
             // point(pt.X, pt.Y);
             struct point32 *ip = (struct point32 *)(mem + pos);
-            ip->x = pt.X;
-            ip->y = pt.Y;
+            ip->x = (int)pt.X;
+            ip->y = (int)pt.Y;
             pos += 8;
         }
     }
+
+    // null terminate
+    struct length16 *ls = (struct length16 *)(mem + pos);
+    ls->length = 0;
 
     co.Clear();
 
