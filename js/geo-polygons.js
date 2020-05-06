@@ -834,6 +834,7 @@ var gs_base_polygons = exports;
         }).forEach(p => {
             finger.push(p.area());
             finger.push(p.perimeter());
+            finger.push(p.bounds);
         });
         return finger;
     }
@@ -848,11 +849,17 @@ var gs_base_polygons = exports;
         if (a.length !== b.length) {
             return false;
         }
-        for (let i=0; i<a.length; i += 2) {
+        for (let i=0; i<a.length; i += 3) {
             if (Math.abs(a[i] - b[i]) > 0.001) {
                 return false;
             }
             if (Math.abs(a[i+1] - b[i+1]) > 0.0001) {
+                return false;
+            }
+            if (Math.abs(a[i+2].centerx() - b[i+2].centerx()) > 0.0001) {
+                return false;
+            }
+            if (Math.abs(a[i+2].centery() - b[i+2].centery()) > 0.0001) {
                 return false;
             }
         }

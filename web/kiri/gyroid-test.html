@@ -31,13 +31,17 @@
             min-width: 3px;
             min-height: 3px;
         }
-        #stats {
+        #stats,#opts {
             text-align: center;
+        }
+        #stats {
+            margin-top: 5px;
         }
         #stats > input {
             pointer-events: none;
             outline: none;
             width: 5em;
+            background-color: #eee;
         }
         svg {
             border: 1px solid #888;
@@ -97,33 +101,32 @@
         }
 
         class Grid {
-            constructor(x,y,div) {
-                this.x = (x/div)|0;
-                this.y = (y/div)|0;
+            constructor(size,div) {
+                this.size = (size/div)|0;
                 this.div = div;
-                this.grid = new Array(this.x * this.y);
+                this.grid = new Array(div * div);
             }
 
             get(x,y) {
-                x = (x/this.div)|0;
-                y = (y/this.div)|0;
-                let pos = x + y * this.x;
+                x = (x/this.size)|0;
+                y = (y/this.size)|0;
+                let pos = x + y * this.size;
                 let rec = this.grid[pos];
                 if (rec) return rec;
                 return this.grid[pos] = [];
             }
 
             _get(x,y) {
-                if (x < 0 || y < 0 || x > this.x || y > this.y) return undefined;
-                return this.grid[x + y * this.x];
+                if (x < 0 || y < 0 || x > this.size || y > this.size) return undefined;
+                return this.grid[x + y * this.size];
             }
 
             peers(x,y) {
                 let grid = this.grid;
                 let r = this.x;
                 // console.log('peers',x,y)
-                x = (x/this.div)|0;
-                y = (y/this.div)|0;
+                x = (x/this.size)|0;
+                y = (y/this.size)|0;
                 let peers = [], p;
                 p = this._get(x,y); if (p) peers.push(p);
                 p = this._get(x-1,y); if (p) peers.push(p);
@@ -145,17 +148,48 @@
         let zcache = {};
         let timer = new Timer();
         let maxdist = rez * 0.01;
-        let fast = false;
+        let fast = true;
+        let tip = 0.2;
 
         function $(id) {
             return document.getElementById(id);
         }
 
         function init() {
+            let opt = document.location.search.substring(1).split('&').map(v => {
+                return v.split('=').map(v => decodeURIComponent(v));
+            }).reduce( (m,v) => {
+                m[v[0]] = v[1];
+                return m;
+            }, {});
+            function reload() {
+                opt.speed = $('fast').checked ? 'fast' : 'slow';
+                opt.caps = $('caps').checked ? 1 : 0;
+                opt.raw = $('raw').checked ? 1 : 0;
+                let search = [];
+                Object.entries(opt).forEach((k,v) => {
+                    search.push(encodeURIComponent(k[0]) + '=' + encodeURIComponent(k[1]));
+                });
+                document.location.search = search.join('&');
+            };
+            $('offset').onkeypress = (ev) => {
+                if (ev.key === 'Enter') {
+                    opt.offset = $('offset').value;
+                    reload();
+                }
+            };
+            $('offset').focus();
+            if (opt.offset) tip = $('offset').value = (parseFloat(opt.offset) || 0);
+            if (opt.raw) $('raw').checked = opt.raw === 1;
+            if (opt.caps) $('caps').checked = opt.caps === 1;
+            $('fast').checked = fast = opt.speed !== 'slow';
+            $('fast').onchange = reload;
+            $('raw').onchange = update;
+            $('caps').onchange = update;
             $('zval').max = rez;
             let mark = Date.now();
-            for (let z=0; z<PI2; z += inc) {
-                generate(z);
+            for (let z=0, zi=0; z<PI2; z += inc) {
+                generate(z, zi++);
             }
             console.log(Date.now() - mark, timer.toString());
             render(0);
@@ -166,7 +200,7 @@
             render((z / rez) * PI2);
         }
 
-        function generate(z) {
+        function generate(z,zi) {
             let zkey = z.toFixed(8);
             let cached = zcache[zkey];
 
@@ -181,15 +215,21 @@
             let points = 0;
             let points_lr = 0;
             let points_td = 0;
-            let tip = 0.2;
             let xv = 0;
+            let sin = new Float32Array(size);
+            let cos = new Float32Array(size);
+            for (let i=0, iv=0; i<size; i++) {
+                sin[i] = Math.sin(iv);
+                cos[i] = Math.cos(iv);
+                iv += inc;
+            }
             for (let x=0; x<size; x++) {
                 let yv = 0;
                 for (let y=0; y<size; y++) {
                     vals.put(x,y,
-                        Math.sin(xv) * Math.cos(yv) +
-                        Math.sin(yv) * Math.cos(z) +
-                        Math.sin(z) * Math.cos(xv)
+                        sin[x] * cos[y] +
+                        sin[y] * cos[zi] +
+                        sin[zi] * cos[x]
                     );
                     yv += inc;
                 }
@@ -206,7 +246,6 @@
                         (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
                         (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
                     ) {
-                    // if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
                         edge.put(x,y,1);
                         points++;
                         points_lr++;
@@ -224,7 +263,6 @@
                         (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
                         (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
                     ) {
-                    // if ((v0 <= 0 && v1 >= 0) || (v0 >= 0 && v1 <= 0)) {
                         if (edge.get(x,y)) {
                             edge.put(x,y,3);
                         } else {
@@ -243,7 +281,7 @@
             // create sparse representation
             let sparse = [];
             let center = rez / 2;
-            let grid = new Grid(size,size,10);
+            let grid = new Grid(size,10);
             for (let x=0; x<size; x++) {
                 for (let y=0; y<size; y++) {
                     let val = edge.get(x,y);
@@ -295,7 +333,7 @@
                     let cl_dst = Infinity; // candidate distance
                     // look for next closest point to end of chain\
                     if (fast) {
-                        let peers = grid.peers(target.x,target.y);
+                        let peers = grid.peers(target.x, target.y);
                         if (peers.length === 0) break;
                         for (let ps=0, psl=peers.length; ps<psl; ps++) {
                             let peera = peers[ps];
@@ -394,13 +432,16 @@
             $('polys').value = polys.length;
 
             // raw threshold points
-            html.push('<g>');
-            raw.forEach(point => {
-                let x = point.x;
-                let y = point.y;
-                let color = ['black','#f00a','#0f0a','#00fa'][point.val];
-                html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
-            })
+            if ($('raw').checked) {
+                html.push('<g>');
+                raw.forEach(point => {
+                    let x = point.x;
+                    let y = point.y;
+                    let color = ['black','#f00a','#0f0a','#00fa'][point.val];
+                    html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+                })
+                html.push('</g>');
+            }
             // polys.forEach(poly => {
             //     poly.forEach(point => {
             //         let x = point.x;
@@ -409,7 +450,6 @@
             //         html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
             //     });
             // });
-            html.push('</g>');
 
             // points joined into poly lines
             html.push('<g>');
@@ -419,7 +459,9 @@
                     .join(',')).join(' ');
                 let x = poly[0].x - 1;
                 let y = poly[0].y - 1;
-                html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:#f0f5;stroke-width:0"/>`);
+                if ($('caps').checked) {
+                    html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:#f0f5;stroke-width:0"/>`);
+                }
                 html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
             });
             html.push('</g>');
@@ -434,6 +476,12 @@
     <div id="test">
         <div id="gyroid"></div>
         <input id="zval" type="range" min="0" max="200" value="0" oninput="update()"/>
+        <div id="opts">
+            <input id="offset" size="5" value="0.2">offset
+            <input id="raw" type="checkbox" checked>raw
+            <input id="caps" type="checkbox" checked>caps
+            <input id="fast" type="checkbox" checked>fast
+        </div>
         <div id="stats">
             <input id="points"></input>
             <input id="direction"></input>

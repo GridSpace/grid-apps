@@ -30,6 +30,7 @@
 * `F` option to support interior bridges when 0% infill
 * `P` disable infill fingerprinting for gyroids
 * `P` refactor thin fill to use outline and inside poly normal dist to self
+* `P` segment large polygons for extremely large parts / infill
 
 # SLA
 
