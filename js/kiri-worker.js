@@ -39,7 +39,15 @@ let dispatch = {
             vertices = new Float32Array(data.vertices),
             position = data.position,
             tracking = data.tracking,
-            points = Widget.verticesToPoints(vertices);
+            points = Widget.verticesToPoints(vertices),
+            state = data.state || {},
+            rotation = state.rotation,
+            centerz = state.centerz,
+            movez = state.movez;
+
+        if (rotation) {
+            state.rotate = new THREE.Matrix4().makeRotationY(-rotation);
+        }
 
         send.data({update:0.05, updateStatus:"slicing"});
 
@@ -72,7 +80,7 @@ let dispatch = {
                     slices: slices.length
                 });
                 slices.forEach(function(slice,index) {
-                    send.data({index: index, slice: slice.encode()});
+                    send.data({index: index, slice: slice.encode(state)});
                 })
                 if (self.debug && widget.polish) {
                     send.data({polish: kiri.codec.encode(widget.polish)});

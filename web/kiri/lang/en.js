@@ -376,6 +376,8 @@ kiri.lang['en-us'] = {
     ad_zhop_l:      "amount to raise z\non retraction moves\nin millimeters\n0 to disable",
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      "use micro-movements to cancel\nbacklash during fills\nin millimeters",
+    ad_slrt_s:      "slice rotation",
+    ad_slrt_l:      "slice object on a bias\nangle in the y axis.\nuseful for extremely\nlarge format prints",
     ad_lret_s:      "layer retract",
     ad_lret_l:      "force filament retraction\nbetween layers",
     ad_play_s:      "polish layers",

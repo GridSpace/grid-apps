@@ -282,7 +282,8 @@ let gs_kiri_conf = exports;
                     sliceMinHeight: 0,
                     zHopDistance: 0.2,
                     antiBacklash: 1,
-                    gcodePause: ""
+                    gcodePause: "",
+                    sliceRotation: 0
                 }
             },
             sla:{

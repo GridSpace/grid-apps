@@ -88,8 +88,23 @@ KIRI.work = {
     },
 
     slice : function(settings, widget, callback) {
+        let rotation = (Math.PI/180) * (settings.process.sliceRotation || 0);
+        let centerz;
+        let movez;
+        if (rotation) {
+            let bbox1 = widget.getBoundingBox(true);
+            widget._rotate(0,rotation,0,true);
+            widget.center();
+            let bbox2 = widget.getBoundingBox(true);
+            centerz = (bbox2.max.z - bbox2.min.z)/2;
+            movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
+        }
         let vertices = widget.getGeoVertices().buffer.slice(0),
             snapshot = KIRI.api.view.snapshot;
+        if (rotation) {
+            widget._rotate(0,-rotation,0,true);
+            widget.center();
+        }
         slicing[widget.id] = callback;
         send("slice", {
             id: widget.id,
@@ -97,7 +112,13 @@ KIRI.work = {
             vertices: vertices,
             position: widget.mesh.position,
             tracking: widget.track,
-            snapshot: snapshot
+            snapshot: snapshot,
+            // for rotation / unrotation
+            state: {
+                rotation: rotation,
+                centerz: centerz,
+                movez: movez
+            }
         }, function(reply) {
             if (reply.done || reply.error) delete slicing[widget.id];
             callback(reply);

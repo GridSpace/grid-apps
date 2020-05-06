@@ -122,7 +122,7 @@ var gs_kiri_codec = exports;
             inner: encode(this.inner, state),
             // thinner: encode(this.thinner, state),
             solids: encode(this.solids, state),
-            fill_lines: encodePointArray(this.fill_lines),
+            fill_lines: encodePointArray(this.fill_lines, state),
             fill_sparse: encode(this.fill_sparse, state),
             polish: encode(this.polish, state)
         };
@@ -142,13 +142,27 @@ var gs_kiri_codec = exports;
         return top;
     });
 
-    function encodePointArray(points) {
+    function encodePointArray(points, state) {
         if (!points) return null;
 
         var array = new Float32Array(points.length * 3),
             pos = 0;
 
         points.forEach(function(point) {
+            if (state.rotate) {
+                if (state.centerz) {
+                    point.z -= state.centerz;
+                }
+                let v = new THREE.Vector3(point.x, point.y, point.z);
+                v.applyMatrix4(state.rotate);
+                point = {x: v.x, y: v.y, z: v.z};
+                if (state.centerz) {
+                    point.z += state.centerz;
+                }
+                if (state.movez) {
+                    point.z -= state.movez;
+                }
+            }
             array[pos++] = point.x;
             array[pos++] = point.y;
             array[pos++] = point.z;
@@ -188,11 +202,11 @@ var gs_kiri_codec = exports;
         return {
             type: 'poly',
             id: this.id,
-            array: encodePointArray(this.points),
+            array: encodePointArray(this.points, state),
             open: this.isOpen(),
             inner: encode(this.inner, state),
             parent: encode(this.parent, state),
-            fills: encodePointArray(this.fills),
+            fills: encodePointArray(this.fills, state),
             depth: this.depth
         };
     };

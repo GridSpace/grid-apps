@@ -532,15 +532,17 @@ let gs_kiri_widget = exports;
 
     PRO.rotate = function(x, y, z) {
         this.group.forEach(w => {
-            w._rotate(x, y, z);
+            w._rotate(x, y, z, false);
         });
         this.center();
     };
 
-    PRO._rotate = function(x, y, z) {
-        this.bounds = null;
-        this.setWireframe(false);
-        this.clearSlices();
+    PRO._rotate = function(x, y, z, temp) {
+        if (!temp) {
+            this.bounds = null;
+            this.setWireframe(false);
+            this.clearSlices();
+        }
         let m4 = new THREE.Matrix4();
         let euler = typeof(x) === 'number';
         if (euler) {
@@ -549,7 +551,7 @@ let gs_kiri_widget = exports;
             m4 = m4.makeRotationFromQuaternion(x);
         }
         this.mesh.geometry.applyMatrix4(m4);
-        if (euler) {
+        if (!temp && euler) {
             let rot = this.track.rot;
             rot.x += (x || 0);
             rot.y += (y || 0);
