@@ -194,6 +194,10 @@ var gs_base_point = exports;
         var c1 = dot(w, v);
         var c2 = dot(v, v);
         var b = c1 / c2;
+        if (isNaN(b)) {
+            // console.log('nan', {p, l1, l2, v, w, c1, c2});
+            b = 0;
+        }
         var pb = {x: l1.x + b * v.x, y: l1.y + b * v.y};
         return d(p, pb);
     }

@@ -769,6 +769,13 @@ let gs_kiri_print = exports;
 
                 // go back to start and try again
                 if (!found) {
+                    if (start === 0 && lastIndex === -1) {
+                        console.log('infinite loop', lines, {
+                            marked, options, i, group, start, lastIndex,
+                            points: lines.map(p => p.index).join(', ')
+                        });
+                        break;
+                    }
                     start = 0;
                     lastIndex = -1;
                     continue;
