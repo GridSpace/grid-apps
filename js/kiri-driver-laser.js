@@ -294,7 +294,7 @@ let gs_kiri_laser = exports;
     function exportGCode(print) {
         let lines = [], dx = 0, dy = 0, feedrate;
         let dev = print.settings.device;
-        let space = dev.gcodeSpace;
+        let space = dev.gcodeSpace ? ' ' : '';
         let power = 255;
         let laser_on = dev.gcodeLaserOn || [];
         let laser_off = dev.gcodeLaserOff || [];
@@ -337,7 +337,7 @@ let gs_kiri_laser = exports;
                 });
             },
             function(point) {
-                return `X${(point.x - dx, 3).toFixed(3)}${space}Y${(point.y - dy, 3).toFixed(3)}`;
+                return `X${(point.x - dx).toFixed(3)}${space}Y${(point.y - dy).toFixed(3)}`;
             }
         );
 

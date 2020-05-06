@@ -145,6 +145,7 @@
         let zcache = {};
         let timer = new Timer();
         let maxdist = rez * 0.01;
+        let fast = false;
 
         function $(id) {
             return document.getElementById(id);
@@ -152,10 +153,11 @@
 
         function init() {
             $('zval').max = rez;
+            let mark = Date.now();
             for (let z=0; z<PI2; z += inc) {
                 generate(z);
             }
-            console.log(timer.toString());
+            console.log(Date.now() - mark, timer.toString());
             render(0);
         }
 
@@ -272,7 +274,6 @@
             let chain;
             let added;
             let cleared = 0;
-            let fast = true;
 
             do {
                 for (let i=0; i<sparse.length; i++) {
@@ -333,7 +334,7 @@
                     }
                 } while (added);
             } while (cleared < sparse.length);
-            console.log('chains',chain.length);
+            // console.log('chains',chain.length);
             timer.mark('chain');
 
             // simplify poly
