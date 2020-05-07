@@ -108,8 +108,8 @@
             }
 
             get(x,y) {
-                x = (x/this.size)|0;
-                y = (y/this.size)|0;
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
                 let pos = x + y * this.size;
                 let rec = this.grid[pos];
                 if (rec) return rec;
@@ -117,7 +117,9 @@
             }
 
             _get(x,y) {
-                if (x < 0 || y < 0 || x > this.size || y > this.size) return undefined;
+                if (x < 0 || y < 0 || x > this.size || y > this.size) {
+                    return undefined;
+                }
                 return this.grid[x + y * this.size];
             }
 
@@ -125,8 +127,8 @@
                 let grid = this.grid;
                 let r = this.x;
                 // console.log('peers',x,y)
-                x = (x/this.size)|0;
-                y = (y/this.size)|0;
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
                 let peers = [], p;
                 p = this._get(x,y); if (p) peers.push(p);
                 p = this._get(x-1,y); if (p) peers.push(p);
@@ -139,6 +141,17 @@
                 p = this._get(x-1,y-1); if (p) peers.push(p);
                 // console.log('---',x,y,peers,this.x,this.y)
                 return peers;
+            }
+
+            density() {
+                let size = this.size;
+                for (let y=0; y<size; y++) {
+                    let v = [];
+                    for (let x=0; x<size; x++) {
+                        v.push(this._get(x,y));
+                    }
+                    console.log(y,v.map(v => v ? (v.length).toString().padStart(2,'0') : '..').join(' '));
+                }
             }
         }
 
@@ -290,8 +303,8 @@
                         let dy = Math.abs(y - center);
                         let rec = {
                             x, y, val,
-                            dist: Math.max(dx,dy),
-                            index: sparse.length
+                            index: -1, // replaced after sort
+                            dist: Math.max(dx,dy)
                         };
                         sparse.push(rec);
                         grid.get(x,y).push(rec);
@@ -302,6 +315,10 @@
             sparse.sort((a,b) => {
                 return b.dist - a.dist;
             });
+            // fix record indexes
+            sparse.forEach((rec,i) => {
+                rec.index = i;
+            })
             timer.mark('sparse');
 
             // preserve sparse points for rendering
@@ -334,28 +351,32 @@
                     // look for next closest point to end of chain\
                     if (fast) {
                         let peers = grid.peers(target.x, target.y);
-                        if (peers.length === 0) break;
+                        if (peers.length === 0) {
+                            console.log('nopeers', target.x, target.y)
+                            break;
+                        }
                         for (let ps=0, psl=peers.length; ps<psl; ps++) {
-                            let peera = peers[ps];
-                            for (let pr=0, prl=peera.length; pr<prl; pr++) {
-                                let peer = peera[pr];
-                                if (!sparse[peer.index]) continue;
-                                let dst = dist(target, peer, dir);
+                            let peerl = peers[ps];
+                            for (let pr=0, prl=peerl.length; pr<prl; pr++) {
+                                let rec = peerl[pr];
+                                let srec = sparse[rec.index];
+                                if (!sparse[rec.index]) continue;
+                                let dst = dist(target, rec, dir);
                                 if (cl_idx === null || dst < cl_dst) {
-                                    cl_idx = peer.index;
-                                    cl_elm = peer;
+                                    cl_idx = rec.index;
+                                    cl_elm = rec;
                                     cl_dst = dst;
                                 }
                             }
                         }
                     } else {
                         for (let i=0; i<sparse.length; i++) {
-                            let test_el = sparse[i];
-                            if (test_el) {
-                                let dst = dist(target, test_el, dir);
+                            let rec = sparse[i];
+                            if (rec) {
+                                let dst = dist(target, rec, dir);
                                 if (cl_idx === null || dst < cl_dst) {
                                     cl_idx = i;
-                                    cl_elm = test_el;
+                                    cl_elm = rec;
                                     cl_dst = dst;
                                 }
                             }
@@ -442,14 +463,6 @@
                 })
                 html.push('</g>');
             }
-            // polys.forEach(poly => {
-            //     poly.forEach(point => {
-            //         let x = point.x;
-            //         let y = point.y;
-            //         let color = ['black','#f00a','#0f0a','#00fa'][point.val];
-            //         html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
-            //     });
-            // });
 
             // points joined into poly lines
             html.push('<g>');

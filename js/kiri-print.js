@@ -26,7 +26,9 @@ let gs_kiri_print = exports;
         lastPoint = null,
         lastEmit = null;
 
-    KIRI.newPrint = function(settings, widgets, id) { return new Print(settings, widgets, id) };
+    KIRI.newPrint = function(settings, widgets, id) {
+        return new Print(settings, widgets, id);
+    };
 
     /**
      * @param {Object} settings
