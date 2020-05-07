@@ -16,11 +16,11 @@ var gs_base_gyroid = exports;
      * @param off {number} z offset value from 0-1
      * @param res {number} resolution (pixels/slices per side)
      */
-    function slice(off, res) {
+    function slice(off, res, val) {
         let rez = parseInt(res || 200);
         let inc = PI2 / rez;
         let z = PI2 * off;
-
+        let tip = val || 0;
         let edge = [];
         let vals = [];
         let points = 0;
@@ -46,7 +46,10 @@ var gs_base_gyroid = exports;
             let erow = edge[y];
             let lval = vrow[vrow.length - 1];
             vrow.forEach((val, x) => {
-                if ((lval <= 0 && val >= 0) || (lval >= 0 && val <= 0)) {
+                if (
+                    (lval <= tip && val >= tip) || (lval >= tip && val <= tip) ||
+                    (lval <= -tip && val >= -tip) || (lval >= -tip && val <= -tip)
+                ) {
                     erow[x] = 1;
                     points++;
                     points_lr++;
@@ -60,7 +63,10 @@ var gs_base_gyroid = exports;
             let lval = vals[vals.length-1][x];
             for (let y=0; y<rez; y++) {
                 let val = vals[y][x];
-                if ((lval <= 0 && val >= 0) || (lval >= 0 && val <= 0)) {
+                if (
+                    (lval <= tip && val >= tip) || (lval >= tip && val <= tip) ||
+                    (lval <= -tip && val >= -tip) || (lval >= -tip && val <= -tip)
+                ) {
                     if (edge[y][x]) {
                         edge[y][x] = 3;
                     } else {
