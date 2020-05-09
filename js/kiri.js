@@ -247,6 +247,7 @@ self.kiri.copyright = exports.COPYRIGHT;
             import: function() { UI.import.style.display = '' }
         },
         space: {
+            reload: reload,
             restore: restoreWorkspace,
             clear: clearWorkspace,
             save: saveWorkspace,
@@ -268,6 +269,12 @@ self.kiri.copyright = exports.COPYRIGHT;
         },
         work: KIRI.work
     };
+
+    function reload() {
+        API.event.emit('reload');
+        // allow time for async saves to complete
+        setTimeout(() => { LOC.reload() }, 50);
+    }
 
     /** ******************************************************************
      * Stats accumulator
@@ -1441,7 +1448,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         }
         settings = CONF.normalize(data.settings);
         API.conf.save();
-        LOC.reload();
+        API.space.reload();
     }
 
     function settingsExport() {

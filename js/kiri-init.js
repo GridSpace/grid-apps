@@ -83,6 +83,7 @@ var gs_kiri_init = exports;
         let control = settings().controller;
         let isCompact = control.compact;
         let isDark = control.dark;
+        let isReload = false;
         control.expert = UI.expert.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.autoLayout = UI.autoLayout.checked;
@@ -98,13 +99,16 @@ var gs_kiri_init = exports;
         // if compact mode changed, reload UI
         if (isCompact !== control.compact) {
             UC.setDefaults(isCompact);
-            LOC.reload();
+            isReload = true;
         }
         // if dark mode changed, reload UI
         if (isDark !== control.dark) {
-            LOC.reload();
+            isReload = true;
         }
         API.mode.set_expert(control.expert);
+        if (isReload) {
+            API.space.reload();
+        }
     }
 
     function onLayerToggle() {
@@ -1511,11 +1515,11 @@ var gs_kiri_init = exports;
         lp.appendChild(dlp);
         elp.onclick = function() {
             SDB.setItem('kiri-lang', 'en-us');
-            LOC.reload();
+            API.space.reload();
         };
         dlp.onclick = function() {
             SDB.setItem('kiri-lang', 'da-dk');
-            LOC.reload();
+            API.space.reload();
         };
 
         SPACE.addEventHandlers(self, [
