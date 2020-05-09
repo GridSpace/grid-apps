@@ -484,29 +484,29 @@ let gs_kiri_sla = exports;
             return track;
         }
 
-        let close = [];
-        for (let i=0; i<slice.pillars.length; i++) {
-            let p = slice.pillars[i].point;
-            let d = point.distTo2D(p);
-            // terminate if we're inside another pillar
-            if (d < inc) {
-                track.merged = true;
-                return track;
-            }
-            if (d <= process.slaSupportSize * 1.5) {
-                close.push(p);
-            }
-        }
-        if (close.length) {
-            let newp = point.clone();
-            close.forEach(p => {
-                newp.x += p.x;
-                newp.y += p.y;
-            });
-            newp.x /= (close.length + 1);
-            newp.y /= (close.length + 1);
-            nextpoint = point.offsetPointTo(newp, inc);
-        }
+        // let close = [];
+        // for (let i=0; i<slice.pillars.length; i++) {
+        //     let p = slice.pillars[i].point;
+        //     let d = point.distTo2D(p);
+        //     // terminate if we're inside another pillar
+        //     if (d < inc) {
+        //         track.merged = true;
+        //         return track;
+        //     }
+        //     if (d <= process.slaSupportSize * 1.5) {
+        //         close.push(p);
+        //     }
+        // }
+        // if (close.length) {
+        //     let newp = point.clone();
+        //     close.forEach(p => {
+        //         newp.x += p.x;
+        //         newp.y += p.y;
+        //     });
+        //     newp.x /= (close.length + 1);
+        //     newp.y /= (close.length + 1);
+        //     nextpoint = point.offsetPointTo(newp, inc);
+        // }
 
         slice.supports.push(pillar);
         slice.pillars.push({point, pillar, size});

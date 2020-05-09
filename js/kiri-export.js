@@ -177,7 +177,7 @@ let gs_kiri_export = exports;
             ajax.onreadystatechange = function() {
                 if (ajax.readyState === 4) {
                     let status = ajax.status;
-                    STATS.add(`ua_${getModeLower()}_print_octo_${status}`);
+                    STATS.add(`ua_${API.mode.get_lower()}_print_octo_${status}`);
                     if (status >= 200 && status < 300) {
                         API.modal.hide();
                     } else {
@@ -229,11 +229,11 @@ let gs_kiri_export = exports;
                 )
                 .then(t => t.text())
                 .then(t => {
-                    STATS.add(`ua_${getModeLower()}_print_local_ok`);
+                    STATS.add(`ua_${API.mode.get_lower()}_print_local_ok`);
                     console.log({grid_spool_said: t});
                 })
                 .catch(e => {
-                    STATS.add(`ua_${getModeLower()}_print_local_err`);
+                    STATS.add(`ua_${API.mode.get_lower()}_print_local_err`);
                     console.log({grid_local_spool_error: e});
                 })
                 .finally(() => {
@@ -345,7 +345,7 @@ let gs_kiri_export = exports;
             xhtr.onreadystatechange = function() {
                 if (xhtr.readyState === 4) {
                     let status = xhtr.status;
-                    STATS.add(`ua_${getModeLower()}_print_grid_${status}`);
+                    STATS.add(`ua_${API.mode.get_lower()}_print_grid_${status}`);
                     if (status >= 200 && status < 300) {
                         let json = js2o(xhtr.responseText);
                         gridhost_tracker(host,json.key);
