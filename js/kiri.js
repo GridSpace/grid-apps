@@ -1193,7 +1193,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         }
 
         if (MODE === MODES.CAM) {
-            platform.update_stock();
+            platform.update_stock(true);
         }
         platform.update_origin();
 
@@ -1203,7 +1203,7 @@ self.kiri.copyright = exports.COPYRIGHT;
     function platformUpdateStock(refresh) {
         let sd = settings.process;
         let offset = UI.camStockOffset.checked;
-        let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ;
+        let stockSet = sd.camStockX && sd.camStockY && sd.camStockZ >= 0;
         let scale = unitScale();
         settings.stock = { };
         camTopZ = topZ;

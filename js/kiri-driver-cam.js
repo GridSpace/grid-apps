@@ -1685,7 +1685,7 @@ var gs_kiri_cam = exports;
             // no point == dwell
             // out.speed = time to dwell in ms
             if (!newpos) {
-                time += out.speed;
+                time += out.speed / 60;
                 consts.time_sec = out.speed / 1000;
                 consts.time_ms = out.speed;
                 consts.time = consts.time_sec;
