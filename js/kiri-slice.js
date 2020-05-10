@@ -881,8 +881,8 @@ let gs_kiri_slice = exports;
         if (expand) {
             top.bridges = [];
             bottom.flats = [];
-            POLY.expand(bridges, expand, top.z, top.bridges, 1);
-            POLY.expand(flats, expand, top.z, bottom.flats, 1);
+            POLY.expand(bridges, expand, top.z, top.bridges, 1, null, null, 0.0001);
+            POLY.expand(flats, expand, top.z, bottom.flats, 1, null, null, 0.0001);
         } else {
             top.bridges = bridges;
             bottom.flats = flats;

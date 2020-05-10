@@ -167,7 +167,7 @@ let gs_kiri_sla = exports;
             }, "slice");
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
-                slice.doDiff(0.00001, 0.005, !process.slaOpenBase);
+                slice.doDiff(0.000001, 0.005, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 10, (slice) => {

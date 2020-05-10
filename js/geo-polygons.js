@@ -62,21 +62,24 @@ var gs_base_polygons = exports;
         return poly;
     };
 
-    function fromClipperTree(tnode, z, tops, parent) {
+    function fromClipperTree(tnode, z, tops, parent, minarea) {
         var polys = tops || [],
-            poly;
+            poly,
+            min = minarea || 0.1;
 
         tnode.m_Childs.forEach(function(child) {
             poly = fromClipperNode(child, z);
             // throw out all tiny polygons
-            if (poly.area() < 0.1) return;
+            if (poly.area() < min) {
+                return;
+            }
             if (parent) {
                 parent.addInner(poly);
             } else {
                 polys.push(poly);
             }
             if (child.m_Childs) {
-                fromClipperTree(child, z, polys, parent ? null : poly);
+                fromClipperTree(child, z, polys, parent ? null : poly, minarea);
             }
         });
 
@@ -298,7 +301,7 @@ var gs_base_polygons = exports;
 
             if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
                 cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z), outA);
+                filter(fromClipperTree(ctre, z, null, null, min), outA);
             }
         }
 
@@ -313,7 +316,7 @@ var gs_base_polygons = exports;
 
             if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
                 cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z), outB);
+                filter(fromClipperTree(ctre, z, null, null, min), outB);
             }
         }
 
@@ -416,7 +419,7 @@ var gs_base_polygons = exports;
      * @param {Function} [collector] receives output of each pass
      * @returns {Polygon[]} last offset
      */
-    function expand(polys, distance, z, out, count, distance2, collector) {
+    function expand(polys, distance, z, out, count, distance2, collector, min) {
         // prepare alignments for clipper lib
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -440,7 +443,7 @@ var gs_base_polygons = exports;
         });
 
         coff.Execute(ctre, distance * fact);
-        polys = fromClipperTree(ctre, z);
+        polys = fromClipperTree(ctre, z, null, null, min);
 
         if (out) out.appendAll(polys);
         if (collector) collector(polys, count);
