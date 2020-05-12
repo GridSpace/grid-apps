@@ -1451,7 +1451,7 @@ var gs_kiri_init = exports;
             outputShortPoly:     UC.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:UC.bound(0,200), convert:UC.toFloat, modes:FDM, expert:true}),
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
-            sliceRotation:       UC.newInput(LANG.ad_slrt_s, {title:LANG.ad_slrt_l, bound:UC.bound(-45,45), convert:UC.toFloat, modes:FDM, expert:true}),
+            sliceRotation:       LOCAL ? UC.newInput(LANG.ad_slrt_s, {title:LANG.ad_slrt_l, bound:UC.bound(-45,45), convert:UC.toFloat, modes:FDM, expert:true}) : null,
             // detectThinWalls: UC.newBoolean("thin wall fill", onBooleanClick, {title: "detect and fill thin openings\nbetween shells walls", modes:FDM, expert:true})
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
