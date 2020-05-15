@@ -216,10 +216,10 @@ input[type=range]::-moz-focus-outer {
 
 #print {
     position: fixed;
-    -webkit-transform: translate(-50%, 0);
-    transform: translate(-50%, 0);
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
     text-align: center;
-    top: 50px;
+    top: 50%;
     left: 50%;
     color: black;
     border: 10px solid #ddd;
@@ -345,10 +345,10 @@ input[type=range]::-moz-focus-outer {
 
 #help {
     position: fixed;
-    -webkit-transform: translate(-50%, 0);
-    transform: translate(-50%, 0);
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
     text-align: left;
-    top: 50px;
+    top: 50%;
     left: 50%;
     color: black;
     border-radius: 10px;

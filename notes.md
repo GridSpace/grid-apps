@@ -15,6 +15,7 @@
 
 # FDM
 
+* `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
 * `F` polishing and other non-planar work
