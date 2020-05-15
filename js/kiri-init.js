@@ -465,11 +465,11 @@ var gs_kiri_init = exports;
     }
 
     function settingsExport() {
-        if (!confirm('Download Kiri:Moto Settings?')) return;
-        let json = API.conf.export();
-        let blob = new Blob([json], {type: "octet/stream"});
-        let url = WIN.URL.createObjectURL(blob);
-        $('help').innerHTML = `<a id="sexport" href="${url}" download="kiriconf.b64">x</a>`;
+        let name = WIN.prompt("Download Settings Filename", "kiriconf");
+        if (!name) return;
+        let json = API.conf.export(),
+            url = WIN.URL.createObjectURL(new Blob([json], {type: "octet/stream"}));
+        $('help').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
         $('sexport').click();
     }
 
