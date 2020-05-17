@@ -346,8 +346,7 @@ let gs_kiri_slice = exports;
             groups = slice.groups ? slice.groups.sort(function(a,b) { return b.area() - a.area() }) : null,
             tops = slice.tops,
             pbuf = [],
-            coloridx = 0,
-            open = (slice.camMode === process.FINISH_X || slice.camMode === process.FINISH_Y);
+            coloridx = 0;
 
         layer.clear();
         // layer.setOpacity(0.05);
@@ -385,7 +384,7 @@ let gs_kiri_slice = exports;
             // all polygons in yellow
             case 4:
                 tops.forEach(function(top) {
-                    layer.poly(top.poly, outline_colors[color], true, open);
+                    layer.poly(top.poly, outline_colors[color], true, false);
                     // layer.solid(top.poly, outline_solid_colors[color]);
                     if (top.inner) layer.poly(top.inner, 0xdddddd, true);
                     // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
@@ -553,27 +552,8 @@ let gs_kiri_slice = exports;
             process = KIRI.driver.CAM.process;
 
         layer.clear();
-        if (scope.camMode) {
-            layers.solid.clear(); // finish
-            layers.bridge.clear(); // finish x
-            layers.flat.clear(); // finish y
-        }
 
         scope.tops.forEach(function(top) {
-            switch (scope.camMode) {
-                case process.FINISH:
-                    layer = layers.solid;
-                    break;
-                case process.FINISH_X:
-                    layer = layers.bridge;
-                    break;
-                case process.FINISH_Y:
-                    layer = layers.flat;
-                    break;
-                default:
-                    layer = layers.trace;
-                    break;
-            }
             if (top.traces) {
                 layer.poly(top.traces, trace_color, true, null);
                 // layer.setTransparent(false);
@@ -587,12 +567,6 @@ let gs_kiri_slice = exports;
 
         // layer.renderSolid();
         layer.render();
-
-        if (scope.camMode) {
-            layers.solid.render();
-            layers.bridge.render();
-            layers.flat.render();
-        }
     };
 
     /**

@@ -332,18 +332,15 @@ let gs_kiri_print = exports;
             process = settings.process,
             origin = settings.origin,
             mode = settings.mode,
-            driver = KIRI.driver[mode],
-            firstPoint;
+            driver = KIRI.driver[mode];
 
         switch (mode) {
             case 'SLA':
                 driver.printRender(scope);
                 break;
             case 'CAM':
-                console.log(scope.settings);
-                firstPoint = newPoint(origin.x, origin.y, process.camOriginTop ? settings.stock.z : origin.z);
             case 'FDM':
-                scope.renderMoves(true, 0x888888, firstPoint);
+                scope.renderMoves(true, 0x888888);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);
