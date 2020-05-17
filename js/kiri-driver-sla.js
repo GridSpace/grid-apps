@@ -1347,7 +1347,9 @@ let gs_kiri_sla = exports;
                     let polys = slice.solids.unioned;
                     if (!polys) polys = slice.tops.map(t => t.poly);
                     if (slice.supports) polys.appendAll(slice.supports);
-                    array.appendAll(polys);
+                    array.appendAll(polys.map(poly => {
+                        return poly.clone(true).move(widget.track.pos);
+                    }));
                     count += polys.length;
                 }
             });
