@@ -16,6 +16,7 @@ var gs_kiri_cam = exports;
         POLY = BASE.polygons,
         CAM = KIRI.driver.CAM = {
             slice,
+            sliceRender,
             printSetup,
             printExport,
             getToolById,
@@ -420,7 +421,7 @@ var gs_kiri_cam = exports;
                 x, y, tv, ltv;
 
             // for each Y slice, find z grid value (x/z swapped)
-            for (let j=0; j<slices.length; j++) {
+            for (let j=0, jl=slices.length; j<jl; j++) {
                 let slice = slices[j],
                     lines = slice.lines;
                 gridy = 0;
@@ -429,8 +430,7 @@ var gs_kiri_cam = exports;
                     gridi = gridx * stepsy + gridy;
                     gridv = data[gridi] || 0;
                     // strategy using raw lines (faster slice, but more lines)
-                    for (let i=0; i<lines.length; i++) {
-                        // let {p1, p2} = lines[i];
+                    for (let i=0, il=lines.length; i<il; i++) {
                         let line = lines[i], p1 = line.p1, p2 = line.p2;
                         if (
                             (p1.z > zMin || p2.z > zMin) && // one endpoint above 0
@@ -514,7 +514,7 @@ var gs_kiri_cam = exports;
             if (proc.finishingYOn) {
                 startTime = time();
                 // emit slice per Y
-                for (y = minY; y < maxY; y += toolStep) {
+                for (y = minY; y <= maxY; y += toolStep) {
                     gridy = Math.round(((y - minY) / boundsY) * stepsy);
                     lx = gridx = 0;
                     slice = newSlice(gridy, mesh.newGroup ? mesh.newGroup() : null);
@@ -1049,6 +1049,68 @@ var gs_kiri_cam = exports;
 
         ondone();
     };
+
+    // runs in browser main
+    function sliceRender(widget) {
+        let slices = widget.slices;
+        if (!slices) return;
+
+        slices.forEach(function(slice) {
+            let tops = slice.tops,
+                layers = slice.layers,
+                outline = layers.outline,
+                open = (slice.camMode === CPRO.FINISH_X || slice.camMode === CPRO.FINISH_Y);
+
+            layers.outline.clear(); // slice raw edges
+            layers.trace.clear();   // roughing
+            layers.solid.clear();   // finish
+            layers.bridge.clear();  // finish x
+            layers.flat.clear();    // finish y
+            layers.fill.clear();    // facing
+
+            tops.forEach(function(top) {
+                outline.poly(top.poly, 0x999900, true, open);
+                if (top.inner) outline.poly(top.inner, 0xdddddd, true);
+            });
+
+            // various finishing
+            let layer;
+            slice.tops.forEach(function(top) {
+                switch (slice.camMode) {
+                    case CPRO.FINISH:
+                        layer = layers.solid;
+                        break;
+                    case CPRO.FINISH_X:
+                        layer = layers.bridge;
+                        break;
+                    case CPRO.FINISH_Y:
+                        layer = layers.flat;
+                        break;
+                    default: // roughing
+                        layer = layers.trace;
+                        break;
+                }
+                if (top.traces) {
+                    layer.poly(top.traces, 0x0, true, null);
+                }
+            });
+
+            // facing (once used fill, now part of roughing)
+            layer = slice.layers.fill;
+            slice.tops.forEach(function(top) {
+                if (top.fill_lines) {
+                    layer.lines(top.fill_lines, fill_color);
+                }
+            });
+
+            outline.render();
+            layers.trace.render();
+            layers.solid.render();
+            layers.bridge.render();
+            layers.flat.render();
+            layers.fill.render();
+        });
+    }
 
     /**
      * DRIVER PRINT CONTRACT

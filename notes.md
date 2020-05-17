@@ -43,6 +43,7 @@
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `F` z bounded slices (extension of z bottom offset feature)
 * `F` do not mill out thru-pockets. cut outline only.
 * `F` use arcs to connect hard angles
 * `F` do not rough areas that go all the way through the part

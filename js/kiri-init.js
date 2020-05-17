@@ -468,7 +468,8 @@ var gs_kiri_init = exports;
         let name = WIN.prompt("Download Settings Filename", "kiriconf");
         if (!name) return;
         let json = API.conf.export(),
-            url = WIN.URL.createObjectURL(new Blob([json], {type: "octet/stream"}));
+            blob = new Blob([json], {type: "octet/stream"}),
+            url = WIN.URL.createObjectURL(blob);
         $('help').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
         $('sexport').click();
     }
@@ -1296,7 +1297,7 @@ var gs_kiri_init = exports;
             layers:        UC.setGroup($("layers")),
             layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
             layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
-            layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:CAM}),
+            layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
             layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
             layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
             layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
