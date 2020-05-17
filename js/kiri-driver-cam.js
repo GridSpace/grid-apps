@@ -1095,7 +1095,7 @@ var gs_kiri_cam = exports;
                 }
             });
 
-            // facing (once used fill, now part of roughing)
+            // facing (previously separate. now part of roughing)
             layer = slice.layers.fill;
             slice.tops.forEach(function(top) {
                 if (top.fill_lines) {
