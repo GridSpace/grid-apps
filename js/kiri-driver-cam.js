@@ -1143,13 +1143,15 @@ var gs_kiri_cam = exports;
             startCenter = process.outputOriginCenter,
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
-            // zadd_outer = hasStock ? stock.z - outerz : alignTop ? outerz : 0,
             zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
-            zmax = outerz + zclear,//hasStock ? stock.z + zclear : boundsz + zclear,
+            zmax = outerz + zclear,
+            wmpos = widget.mesh.position,
+            wmx = wmpos.x,
+            wmy = wmpos.y,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
             originy = startCenter ? 0 : hasStock ? -stock.y / 2 : bounds.min.y,
-            origin = newPoint(originx, originy, zmax),
+            origin = newPoint(originx + wmx, originy + wmy, zmax),
             output = print.output,
             modes = CPRO,
             depthFirst = process.camDepthFirst,
@@ -1284,9 +1286,6 @@ var gs_kiri_cam = exports;
         }
 
         function camOut(point, cut) {
-            let wmx = widget.mesh.position.x;
-            let wmy = widget.mesh.position.y;
-
             point = point.clone();
             point.x += wmx;
             point.y += wmy;
@@ -1595,7 +1594,6 @@ var gs_kiri_cam = exports;
                 // deferred linear y finishing
                 if (depthData.lineary.length > 0) {
                     // force start at lower left corner
-                    // printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
                     printPoint = tip2tipEmit(depthData.lineary, printPoint, function(el, point, count) {
                         let poly = el.poly;
                         if (poly.last() === point) poly.reverse();
