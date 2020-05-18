@@ -541,15 +541,21 @@ var gs_moto_ui = exports;
         let b = DOC.createElement('button'),
             t = DOC.createTextNode(label);
 
-        b.appendChild(t);
         b.onclick = function() {
             if (compact) hidePoppers();
             if (action) action();
         };
 
-        if (options && options.class) {
-            b.classList.add(options.class);
+        if (options) {
+            if (options.class) b.classList.add(options.class);
+            if (compact && options.icon) {
+                let d = DOC.createElement('div');
+                d.innerHTML = options.icon;
+                b.appendChild(d);
+            }
         }
+
+        b.appendChild(t);
 
         addModeControls(b, options);
         addId(b, options);

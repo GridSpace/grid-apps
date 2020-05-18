@@ -1204,16 +1204,16 @@ var gs_kiri_init = exports;
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
-                    UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }),
+                    UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: KIRI.icons.fdm}),
                 ],[
                     UI.modeSLA =
-                    UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }),
+                    UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: KIRI.icons.sla}),
                 ],[
                     UI.modeLASER =
-                    UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }),
+                    UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: KIRI.icons.laser}),
                 ],[
                     UI.modeCAM =
-                    UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {id:"modeCAM"}),
+                    UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: KIRI.icons.cam, id:"modeCAM"}),
                 ]
             ]),
             system: UC.newGroup(LANG.su_menu),
