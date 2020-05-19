@@ -25,6 +25,14 @@ input[type=range]::-moz-focus-outer {
 .popper.right {
     right: 105%;
 }
+.popper svg {
+    width: 40px;
+    height: 40px;
+}
+.poprow > div {
+    display: flex;
+    flex-direction: row;
+}
 .dialog {
     display: none;
     color: black;

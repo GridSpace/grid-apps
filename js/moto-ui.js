@@ -139,6 +139,7 @@ var gs_moto_ui = exports;
             let pop = DOC.createElement('div');
             pop.classList.add('popper');
             if (lastRegion) pop.classList.add(lastRegion);
+            if (opt.poprow) pop.classList.add('poprow')
             row.appendChild(pop);
             addTo = pop;
         } else {

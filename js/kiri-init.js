@@ -1200,7 +1200,7 @@ var gs_kiri_init = exports;
             gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3}),
             gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3}),
 
-            mode: UC.newGroup(LANG.mo_menu, assets, {region:"left"}),
+            mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
             modeTable: UC.newTableRow([
                 [
                     UI.modeFDM =
