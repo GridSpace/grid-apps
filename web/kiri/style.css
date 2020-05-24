@@ -722,13 +722,14 @@ button[import="1"] {
 }
 #layer-view button {
     margin: 0 !important;
-    border: 1px solid rgba(255,255,255,0.75);
+    border: 1px solid #bbb;
 }
 #layer-view input {
     border-width: 1px;
     padding: 2px;
+    border: 1px solid #bbb;
 }
-#layer-view > button,input {
+#layer-view > button, #layer-view > input {
     margin-left: 4px !important;
     margin-right: 4px !important;
 }

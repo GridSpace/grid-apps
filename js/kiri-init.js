@@ -1294,22 +1294,6 @@ var gs_kiri_init = exports;
             // allow modules to insert new items at the bottom of the left menu
             appendLeft:    UC.checkpoint(),
 
-            layers:        UC.setGroup($("layers")),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
-            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
-            layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
-            layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
-            layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
-            layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
-            layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
-            layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
-            layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
-            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
-            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
-            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
-
             settingsGroup: UC.newGroup(LANG.se_menu, control, {region:"right"}),
             settingsTable: UC.newTableRow([
                 [
@@ -1493,7 +1477,23 @@ var gs_kiri_init = exports;
 
             slaOutput:           UC.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
-            slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias")
+            slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
+
+            layers:        UC.setGroup($("layers")),
+            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
+            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
+            layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
+            layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
+            layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
+            layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
+            layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
+            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
+            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
+            layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
+            layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
+            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
+            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
+            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 
         if (!lang_set) {

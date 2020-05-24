@@ -207,6 +207,7 @@ th, tr, td, span, div, label, button {
     background-color: #eee;
     margin-bottom: 1px;
     text-align: right;
+    border: 1px solid #bbb;
 }
 .control input:focus {
     background-color: #fec;
@@ -221,12 +222,14 @@ th, tr, td, span, div, label, button {
     width: 85px;
     background-color: transparent;
 }
+.control select {
+    border: 1px solid #bbb;
+    background-color: #eee;
+    margin-bottom: 1px !important;
+    border-radius: 3px;
+}
 .control button {
     margin: 1px;
-}
-.control select {
-    margin-bottom: 1px !important;
-    margin-right: 2px !important;
 }
 .control .flow-row {
     align-items: center;
