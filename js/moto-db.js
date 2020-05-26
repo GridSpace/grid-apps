@@ -43,9 +43,12 @@ var gs_moto_db = exports;
     SP.keys = function(callback, lower, upper) {
         var out = [];
         this.iterate(function(k,v) {
-            if (k) out.push(k);
+            if (k === null) {
+                callback(out);
+            } else {
+                out.push(k);
+            }
         }, lower, upper, true);
-        callback(out);
     };
 
     SP.iterate = function(callback, lower, upper, nullterm) {

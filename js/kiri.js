@@ -1520,6 +1520,14 @@ self.kiri.copyright = exports.COPYRIGHT;
         oldWidgets.forEach(function(wid) {
             Widget.deleteFromState(wid);
         });
+        // eliminate dangling saved widgets
+        ODB.keys(keys => {
+            keys.forEach(key => {
+                if (newWidgets.indexOf(key.substring(8)) < 0) {
+                    ODB.remove(key);
+                }
+            })
+        }, "ws-save-" ,"ws-savf");
         alert2("workspace saved", 1);
     }
 
