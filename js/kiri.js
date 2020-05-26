@@ -1018,7 +1018,7 @@ self.kiri.copyright = exports.COPYRIGHT;
                 if (b) b.classList.remove('buton');
             }
             forSelectedWidgets(w => {
-                let ext = settings.widget[w.id].extruder || 0;
+                let ext = (settings.widget[w.id] || {}).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
                 if (b) b.classList.add('buton');
             });

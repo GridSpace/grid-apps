@@ -580,7 +580,7 @@ let gs_kiri_fdm = exports;
         // generate list of used extruders for purge blocks
         widgets.forEach(function(widget) {
             maxLayers = Math.max(maxLayers, widget.slices.length);
-            let extruder = settings.widget[widget.id].extruder;
+            let extruder = (settings.widget[widget.id] || {}).extruder || 0;
             if (!extruders[extruder]) {
                 extruders[extruder] = {};
                 extcount++;
