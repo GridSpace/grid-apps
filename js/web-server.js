@@ -343,7 +343,7 @@ function setup(req, res, next) {
     let host = req.headers['host'] || '',
         beta = getCookieValue(req.headers['cookie'],'beta');
 
-    if (beta === 'true' && req.url.indexOf('?nobeta') > 0) {
+    if (beta === 'true' && req.url.indexOf('?prod') > 0) {
         res.setHeader('Set-Cookie', 'beta=false; path=/;');
         beta = 'false';
     } else if (beta !== 'true' && req.url.indexOf('?beta') > 0) {
