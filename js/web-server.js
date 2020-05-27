@@ -340,6 +340,21 @@ function rewrite(req, res, next) {
  * @param {Function} next
  */
 function setup(req, res, next) {
+    let host = req.headers['host'] || '',
+        beta = getCookieValue(req.headers['cookie'],'beta');
+
+    if (beta === 'true' && req.url.indexOf('?nobeta') > 0) {
+        res.setHeader('Set-Cookie', 'beta=false; path=/;');
+        beta = 'false';
+    } else if (beta !== 'true' && req.url.indexOf('?beta') > 0) {
+        res.setHeader('Set-Cookie', 'beta=true; path=/;');
+        beta = 'true';
+    }
+
+    if (beta === 'true' && host.indexOf('beta.') !== 0) {
+        return redirect(res, `//beta.${host}${req.url}`);
+    }
+
     let parsed = url.parse(req.url, true),
         ipaddr = remoteIP(req),
         dbikey = db.key(["ip",ipaddr]),
