@@ -1,6 +1,4 @@
 {
-    "name": "kiri:moto",
-    "main": "app.js",
-    "host": ["localhost:8080", "grid.space"],
-    "debug": true
+    "name": "kiri",
+    "main": "app.js"
 }

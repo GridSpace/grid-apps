@@ -8,7 +8,6 @@ const fs = require('fs');
 const uglify = require('uglify-es');
 const moment = require('moment');
 const agent = require('express-useragent');
-const level = require('level')('./persist', {valueEncoding:"json"});
 const ver = require_fresh('./js/license.js');
 
 const fileCache = {};
@@ -23,24 +22,38 @@ const device = {
     laser: []
 };
 
+let level;
+let cacheDir;
 let startTime;
 let lastmod;
 let logger;
 let debug;
+let http;
 let util;
 let dir;
+let log;
 
 function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
-    debug = mod.env.debug || mod.info.debug;
+    debug = mod.env.debug || mod.meta.debug;
+    http = mod.http;
     util = mod.util;
     dir = mod.dir;
+    log = mod.log;
+    level = require('level')(mod.util.datadir("kvstore"), {valueEncoding:"json"});
+    cacheDir = mod.util.datadir("cache");
 
     mod.on.reload(() => level.close());
+    mod.on.test((req) => {
+        if (mod.meta.version && mod.meta.version !== "*") {
+            return (cookieValue(req.headers.cookie, "version") === mod.meta.version);
+        } else {
+            return true;
+        }
+    });
 
-    mod.add(handleBetaKey);
     mod.add(handleOptions);
     mod.add(fullpath({
         "/kiri/index.html" : redir("/kiri/"),
@@ -52,10 +65,13 @@ function init(mod) {
         [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
-    mod.sync("/reload", (info) => { mod.reload(); return "reload" });
     if (debug) {
         mod.static("/js/", "js");
         mod.static("/mod/", "mod");
+        mod.sync("/reload", () => {
+            mod.reload();
+            return "reload";
+        });
     }
     mod.static("/obj/", "web/obj");
     mod.static("/moto/", "web/moto");
@@ -122,12 +138,13 @@ function initModule(mod, file, dir) {
             log: logger.log,
             time: time,
             guid: guid,
-            mkdirs: mkdirs,
+            mkdirs: util.mkdir,
+            datadir: util.datadir,
             lastmod: lastmod,
             obj2string: obj2string,
             string2obj: string2obj,
             getCookieValue: cookieValue,
-            logger: util.logger
+            logger: log.new
         },
         db: {
             api: db,
@@ -170,9 +187,8 @@ function initModule(mod, file, dir) {
         },
         handler: {
             addCORS: addCorsHeaders,
-            static: util.handleStatic,
-            redirect: util.redirect,
-            reply404: util.reply404,
+            redirect: http.redirect,
+            reply404: http.reply404,
             reply: quickReply
         },
         ws: {
@@ -351,18 +367,6 @@ function string2obj(s) {
     return JSON.parse(s);
 }
 
-function mkdirs(path) {
-    let root = "";
-    path.forEach(seg => {
-        if (root) {
-            root = root + "/" + seg;
-        } else {
-            root = seg;
-        }
-        lastmod(root) || fs.mkdirSync(root);
-    });
-}
-
 function handleOptions(req, res, next) {
     if (req.method === 'OPTIONS') {
         addCorsHeaders(req, res);
@@ -401,7 +405,7 @@ function handleCode(req, res, next) {
         js = code[key];
 
     if (!js) {
-        return reply404(req, res);
+        return http.reply404(req, res);
     }
 
     if (ck) {
@@ -425,7 +429,7 @@ function handleCode(req, res, next) {
 
 function serveCode(req, res, code) {
     if (code.deny) {
-        return reply404(req, res);
+        return http.reply404(req, res);
     }
 
     let imd = ifModifiedDate(req);
@@ -495,8 +499,8 @@ function concatCode(array) {
     }
 
     array.forEach(file => {
-        let cached = getCachedFile(dir, file, function(path) {
-            return minify(dir + "/" + file);
+        let cached = getCachedFile(file, function(path) {
+            return minify(`${dir}/${file}`);
         });
         code.push(cached);
     });
@@ -504,12 +508,11 @@ function concatCode(array) {
     return code.join('');
 }
 
-function getCachedFile(dir, file, fn) {
-    let filePath = dir + "/" + file;
-    let cachePath = dir + "/.cache/" + file
+function getCachedFile(file, fn) {
+    let filePath = `${dir}/${file}`;
+    let cachePath = cacheDir + "/" + file
             .replace(/\//g,'_')
             .replace(/\\/g,'_')
-            // .replace(/-/g,'_')
             .replace(/:/g,'_'),
         cached = fileCache[filePath],
         now = time();
@@ -564,17 +567,6 @@ function minify(path) {
 function quickReply(res, code, msg) {
     res.writeHead(code);
     res.end(msg+"\n");
-}
-
-function reply404(req, res) {
-    // logger.emit([
-    //     '404',
-    //     req.url,
-    //     req.socket.remoteAddress,
-    //     req.headers
-    // ]);
-    res.writeHead(404);
-    res.end("[404]");
 }
 
 function ifModifiedDate(req) {
@@ -644,7 +636,7 @@ function fixedmap(prefix, map) {
 
 // HTTP 307 redirect
 function redir(path) {
-    return (req, res, next) => util.redirect(res, path);
+    return (req, res, next) => http.redirect(res, path);
 }
 
 // mangle request path
@@ -663,26 +655,6 @@ function cookieValue(cookie,key) {
         return cookie.substring(kpos+key.length).split(';')[0];
     } else {
         return null;
-    }
-}
-
-function handleBetaKey(req, res, next) {
-    let host = req.headers['host'] || '',
-        beta = cookieValue(req.headers['cookie'],'beta');
-
-    if (beta === 'true' && req.url.indexOf('?prod') > 0) {
-        res.setHeader('Set-Cookie', 'beta=false; path=/;');
-        beta = 'false';
-    } else if (beta !== 'true' && req.url.indexOf('?beta') > 0) {
-        res.setHeader('Set-Cookie', 'beta=true; path=/;');
-        beta = 'true';
-    }
-
-    if (beta === 'true' && host.indexOf('beta.') !== 0) {
-        res.writeHead(307, { "Location": `//beta.${host}${req.url}` });
-        res.end();
-    } else {
-        next();
     }
 }
 
