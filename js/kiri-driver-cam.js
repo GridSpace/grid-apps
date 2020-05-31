@@ -212,7 +212,7 @@ var gs_kiri_cam = exports;
     }
 
     /**
-     * top down progressive union for CAM
+     * top down progressive union
      */
     function pancake(slices, onupdate) {
         let union, tops, last;
@@ -235,6 +235,40 @@ var gs_kiri_cam = exports;
         });
 
         return last.clone(false);
+    }
+
+    /**
+     * bottom up progressive intersection of holes
+     */
+    function holes(slices, offset, onupdate) {
+        let last;
+
+        slices.reverse().forEach(function(slice,index) {
+            let holes = slice.gatherTopPolyInners([]).clone();
+            if (last) {
+                let inter = [];
+                holes.forEach(hole => {
+                    last.forEach(poly => {
+                        inter.appendAll(hole.intersect(poly));
+                    });
+                });
+                last = inter.filter((poly, index, arr) => {
+                    for (let i=index+1, il=arr.length; i<il; i++) {
+                        if (arr[i].isEquivalent(poly)) return false;
+                    }
+                    return true;
+                });
+            } else {
+                last = holes;
+            }
+            // console.log('holes', slice.z, index, holes, last);
+            if (onupdate) onupdate(index/slices.length);
+        });
+
+        let out = [];
+        POLY.expand(last, -offset*1.1, 0, out, 1);
+
+        return out;
     }
 
     /**
@@ -625,10 +659,16 @@ var gs_kiri_cam = exports;
      * @param {boolean} true for pocket only mode
      * @returns {Object} shell or newly generated shell
      */
-    function createRoughingSlices(slice, shell, diameter, stock, overlap, pocket) {
+    function createRoughingSlices(slice, shell, diameter, stock, overlap, pocket, holes) {
         let tops = slice.gatherTopPolys([]).clone(true),
             outer = [],
             offset = [];
+
+        // when holes present, use them as fake top offsets
+        // to prevent clearing out the entire thru pocket
+        if (holes) {
+            tops.appendAll(holes);
+        }
 
         // clone and flatten the shell with tops to offset array
         shell.clone(true).forEach(function(poly) { poly.setZ(slice.z).flattenTo(offset) });
@@ -810,9 +850,11 @@ var gs_kiri_cam = exports;
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
             zMin = MAX(bounds.min.z, proc.camZBottom) * units,
+            roughingStock = proc.roughingStock * units,
             shellRough,
             shellFinish,
-            facePolys;
+            facePolys,
+            thruHoles;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return ondone('stock X too small for part. disable or use offset stock');
@@ -902,14 +944,14 @@ var gs_kiri_cam = exports;
 
             if (procRough && !pocketOnlyRough) {
                 // expand shell by half tool diameter + stock to leave
-                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
+                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + roughingStock, 0);
             } else {
                 // expand shell minimally triggering a clean
                 shellRough = facePolys = POLY.expand(shellRough, 0.01, 0);
             }
 
             if (anyFinish && pocketOnlyRough && !pocketOnlyFinish) {
-                facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + proc.roughingStock, 0);
+                facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + roughingStock, 0);
             }
 
             if (anyFinish && pocketOnlyFinish) {
@@ -941,6 +983,9 @@ var gs_kiri_cam = exports;
                 let selected = [];
                 selectSlices(slices, proc.roughingDown * units, CPRO.ROUGH, selected);
                 sliceAll.appendAll(selected);
+                if (!proc.roughingPocket) {
+                    thruHoles = holes(slices, roughToolDiam + roughingStock);
+                }
             }
 
             if (procFinish) {
@@ -1034,7 +1079,7 @@ var gs_kiri_cam = exports;
                     break;
                 case CPRO.ROUGH:
                     modekey = "roughing";
-                    createRoughingSlices(slice, shellRough, roughToolDiam, proc.roughingStock * units, proc.roughingOver, pocketOnlyRough);
+                    createRoughingSlices(slice, shellRough, roughToolDiam, roughingStock, proc.roughingOver, pocketOnlyRough, thruHoles);
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.FINISH:

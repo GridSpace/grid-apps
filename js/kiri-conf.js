@@ -359,6 +359,7 @@ let gs_kiri_conf = exports;
                     roughingSpeed: 1000,
                     roughingPlunge: 250,
                     roughingStock: 0,
+                    roughingPocket: true,
                     roughingOn: true,
                     finishingTool: 1000,
                     finishingSpindle: 1000,

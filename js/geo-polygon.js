@@ -864,9 +864,9 @@ var gs_base_polygon = exports;
      * @param {number} [tolerance]
      * @returns {boolean} all points inside poly AND not inside children
      */
-    PRO.contains = function(poly, tolerance) {
-        return (poly && poly.isInside(this, tolerance) && poly.isOutsideAll(this.inner, tolerance));
-    };
+    // PRO.contains = function(poly, tolerance) {
+    //     return (poly && poly.isInside(this, tolerance) && poly.isOutsideAll(this.inner, tolerance));
+    // };
 
     /**
      *
@@ -1095,7 +1095,9 @@ var gs_base_polygon = exports;
      */
     PRO.isEquivalent = function(poly, recurse, precision) {
         // throw new Error("isEquivalent");
-        if (UTIL.isCloseTo(this.area(), poly.area(), precision || CONF.precision_poly_area) &&
+        let area1 = Math.abs(this.area());
+        let area2 = Math.abs(poly.area());
+        if (UTIL.isCloseTo(area1, area2, precision || CONF.precision_poly_area) &&
             this.bounds.equals(poly.bounds, precision || CONF.precision_poly_bounds))
         {
             // use circularity near 1 to eliminate the extensive check below
@@ -1243,6 +1245,38 @@ var gs_base_polygon = exports;
             return null;
         }
     };
+
+    PRO.intersect = function(poly, min) {
+        if (!this.overlaps(poly)) return null;
+
+        let clib = self.ClipperLib,
+            ctyp = clib.ClipType,
+            ptyp = clib.PolyType,
+            cfil = clib.PolyFillType,
+            clip = new clib.Clipper(),
+            ctre = new clib.PolyTree(),
+            sp1 = this.toClipper(),
+            sp2 = poly.toClipper(),
+            minarea = min >= 0 ? min : 0.1;
+
+        if (this.isInside(poly)) {
+            return [ this ];
+        }
+
+        clip.AddPaths(sp1, ptyp.ptSubject, true);
+        clip.AddPaths(sp2, ptyp.ptClip, true);
+
+        if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftNonZero)) {
+            let inter = POLY()
+                .fromClipperTreeUnion(ctre, poly.getZ(), minarea)
+                // .filter(p => p.isEquivalent(this) || p.isInside(this))
+                .filter(p => p.isInside(this))
+                ;
+            return inter;
+        }
+
+        return null;
+    }
 
     /**
      * return logical OR of two polygons' enclosed areas

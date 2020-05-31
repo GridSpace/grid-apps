@@ -245,6 +245,8 @@ kiri.lang['en-us'] = {
     cr_lsto_l:      "horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units",
     cr_ease_s:      "ease down",
     cr_ease_l:      "plunge cuts will\nspiral down or ease\nalong a linear path",
+    cr_clrp_s:      "pocket clear",
+    cr_clrp_l:      "mill out entire pocket instead\nof just cutting the outline",
 
     // CNC FINISHING
     cf_menu:        "finishing",
