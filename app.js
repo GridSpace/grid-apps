@@ -57,12 +57,15 @@ function init(mod) {
 
     mod.add(handleOptions);
     mod.add(fullpath({
-        "/kiri/index.html" : redir("/kiri/"),
-        "/kiri"            : redir("/kiri/", 301)
+        "/kiri"            : redir("/kiri/", 301),
+        "/meta"            : redir("/meta/", 301),
+        "/kiri/index.html" : redir("/kiri/", 301),
+        "/meta/index.html" : redir("/meta/", 301)
     }));
     mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
+        [ "/data/", handleData ],
         [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
@@ -74,9 +77,10 @@ function init(mod) {
             return "reload";
         });
     }
+    mod.add(rewriteHtmlVersion);
     mod.static("/obj/", "web/obj");
     mod.static("/moto/", "web/moto");
-    mod.add(rewriteHtmlVersion);
+    mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
 
     // load modules
@@ -307,6 +311,35 @@ const script = {
     ].map(p => `js/${p}.js`),
     worker : [
         "kiri-worker"
+    ].map(p => `js/${p}.js`),
+    meta : [
+        "ext-three",
+        "license",
+        "ext-tween",
+        "ext-fsave",
+        "ext-earcut",
+        "add-array",
+        "add-three",
+        "geo",
+        "geo-debug",
+        "geo-render",
+        "geo-point",
+        "geo-slope",
+        "geo-line",
+        "geo-bounds",
+        "geo-polygon",
+        "geo-polygons",
+        "geo-gyroid",
+        "kiri-layer",
+        "moto-kv",
+        "moto-ajax",
+        "moto-ctrl",
+        "moto-space",
+        "moto-load-stl",
+        "moto-db",
+        "moto-ui",
+        "kiri-db",
+        "meta"
     ].map(p => `js/${p}.js`)
 };
 
@@ -389,6 +422,117 @@ function handleOptions(req, res, next) {
     }
 }
 
+function handleData(req, res, next) {
+    addCorsHeaders(req, res);
+    res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
+
+    let tok = req.app.url.path.split('/'),
+        muid = req.headers['x-moto-ajax'],
+        space = tok[2] || null,
+        version = tok[3],
+        valid = space && space.length >= 4 && space.length <= 8;
+
+    function genKey() {
+        while (true) {
+            let k = Math.round(Math.random() * 9999999999).toString(36);
+            if (k.length >= 4 && k.length <= 8) return k;
+        }
+    }
+
+    function countKey(space) {
+        return db.key(['meta/counter',space]);
+    }
+
+    function ownerKey(space) {
+        return db.key(['meta/owner',muid,'space',space]);
+    }
+
+    function recordKey(space, version) {
+        return db.key(["meta/space",space,version]);
+    }
+
+    // retrieve latest space data
+    if (valid && req.method === 'GET' && valid) {
+        function send(rec, version) {
+            if (rec) {
+                res.write(obj2string({space:space,ver:version,rec:rec}));
+                res.end();
+            } else {
+                res.end();
+            }
+        }
+
+        function retrieve(version) {
+            return db.get(recordKey(space,version))
+                .then(record => {
+                    send(record || null, version);
+                })
+        }
+
+        if (version) {
+            retrieve(version)
+        } else {
+            db.get(countKey(space)).then(version => retrieve(version));
+        }
+
+        return;
+
+    } else if (valid && req.method === 'POST') {
+
+        let dbOwner = null,
+            dbVersion = null,
+            postBody = null,
+            spacein = space,
+            version = 0,
+            body = '';
+
+        function checkDone() {
+            if (!(dbVersion && postBody)) return;
+            // if not owner, assign new space id
+            if (dbVersion > 1) {
+                if (!dbOwner) {
+                    space = genKey();
+                    version = 1;
+                    log({forked:space,from:spacein,by:muid});
+                }
+            }
+            // log what we have
+            log({
+                space: space,
+                ver: dbVersion,
+                uid: muid,
+                size: postBody.length
+            });
+            if (muid && muid.length > 0) {
+                level.put(recordKey(space, dbVersion), body);
+                level.put(ownerKey(space), {time: time(), ver: dbVersion});
+                level.put(countKey(space), dbVersion);
+            }
+            res.end(obj2string({space: space, ver: dbVersion}));
+        }
+
+        // accumulate post body
+        req.on('data', data => { body += data });
+        req.on('end', () => {
+            postBody = body;
+            checkDone();
+        });
+
+        // fetch owner and version information
+        db.get(ownerKey(space))
+            .then(owner => {
+                dbOwner = owner;
+                return db.get(countKey(space));
+             })
+            .then(version => {
+                dbVersion = parseInt(version || "0") + 1;
+                checkDone();
+            });
+
+        return;
+    }
+}
+
 function handleWasm(req, res, next) {
     let [root, file] = req.app.path.split('/').slice(1);
     let ext = (file || '').split('.')[1];
@@ -465,6 +609,7 @@ function serveCode(req, res, code) {
 }
 
 function prepareScripts() {
+    code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
     code.work = concatCode(script.work);
     code.worker = concatCode(script.worker);
