@@ -8,7 +8,8 @@ const fs = require('fs');
 const uglify = require('uglify-es');
 const moment = require('moment');
 const agent = require('express-useragent');
-const ver = require_fresh('./js/license.js');
+const license = require_fresh('./js/license.js');
+const version = license.VERSION || "rogue";
 
 const fileCache = {};
 const code_src = {};
@@ -57,9 +58,9 @@ function init(mod) {
     mod.add(handleOptions);
     mod.add(fullpath({
         "/kiri/index.html" : redir("/kiri/"),
-        "/kiri"            : redir("/kiri/"),
-        "/kiri/"           : remap("/kiri/index.html")
+        "/kiri"            : redir("/kiri/", 301)
     }));
+    mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
         [ "/wasm/", handleWasm ]
@@ -127,7 +128,7 @@ function initModule(mod, file, dir) {
             script: script,
             moddir: dir,
             rootdir: mod.dir,
-            version: ver.VERSION
+            version: version
         },
         pkg: {
             agent,
@@ -367,6 +368,18 @@ function string2obj(s) {
     return JSON.parse(s);
 }
 
+function handleVersion(req, res, next) {
+    if (req.app.path === "/kiri/" && req.url.indexOf(version) < 0) {
+        if (req.url.indexOf("?") > 0) {
+            return http.redirect(res, `${req.url}&ver=${version}`);
+        } else {
+            return http.redirect(res, `${req.url}?ver=${version}`);
+        }
+    } else {
+        next();
+    }
+}
+
 function handleOptions(req, res, next) {
     if (req.method === 'OPTIONS') {
         addCorsHeaders(req, res);
@@ -480,7 +493,7 @@ function concatCode(array) {
             // if (file.indexOf(":\\") > 0) {
             //     file = `/${file}`;
             // }
-            code.push(`"/${file.replace(/\\/g,'/')}",`);
+            code.push(`"/${file.replace(/\\/g,'/')}?${version}",`);
         });
         code.push([
             ']; function load_next() {',
@@ -635,8 +648,8 @@ function fixedmap(prefix, map) {
 }
 
 // HTTP 307 redirect
-function redir(path) {
-    return (req, res, next) => http.redirect(res, path);
+function redir(path, type) {
+    return (req, res, next) => http.redirect(res, path, type);
 }
 
 // mangle request path
@@ -659,16 +672,16 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (req.url.indexOf(".html") > 0) {
+    if (req.app.path === "/kiri/") {
         let real_write = res.write;
         let real_end = res.end;
         res.write = function() {
-            arguments[0] = arguments[0].toString().replace(/{{version}}/g,ver.VERSION);
+            arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
             real_write.apply(res, arguments);
         };
         res.end = function() {
             if (arguments[0]) {
-                arguments[0] = arguments[0].toString().replace(/{{version}}/g,ver.VERSION);
+                arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
             }
             real_end.apply(res, arguments);
         };
