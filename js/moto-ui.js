@@ -28,7 +28,6 @@ var gs_moto_ui = exports;
         DOC = SELF.document,
         prefix = "tab",
         NOMODE = "nomode",
-        compact = false,
         exitimer = undefined;
 
     SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
@@ -57,35 +56,17 @@ var gs_moto_ui = exports;
         newBlank: newBlank,
         newGroup: newGroup,
         setGroup: setGroup,
-        setCompact: setCompact,
-        setDefaults: setDefaults,
         hidePoppers: hidePoppers,
         checkpoint,
         restore
     };
 
-    function setDefaults(bool) {
-        Object.keys(localStorage).forEach(name => {
-            let namepre = `${prefix}-show-`;
-            if (name.indexOf(namepre) === 0) {
-                localStorage[name] = bool;
-            }
-        });
-    }
-
-    function setCompact(bool) {
-        compact = bool;
-        return this;
-    }
-
     function setMode(mode) {
-        if (compact) {
-            $('control-left').classList.add('compact');
-            $('control-right').classList.add('compact');
-            Object.keys(groupShow).forEach(group => {
-                updateGroupShow(group);
-            });
-        }
+        $('control-left').classList.add('compact');
+        $('control-right').classList.add('compact');
+        Object.keys(groupShow).forEach(group => {
+            updateGroupShow(group);
+        });
         letMode = mode;
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
@@ -132,8 +113,8 @@ var gs_moto_ui = exports;
 
         let row = DOC.createElement('div'),
             a = DOC.createElement('a'),
-            dbkey = `${prefix}-show-${group}`,
-            popper = compact && !opt.nocompact;
+            dbkey = `beta-${prefix}-show-${group}`,
+            popper = !opt.nocompact;
 
         if (popper) {
             let pop = DOC.createElement('div');
@@ -185,9 +166,7 @@ var gs_moto_ui = exports;
     }
 
     function hidePoppers() {
-        if (compact) {
-            showGroup(undefined);
-        }
+        showGroup(undefined);
     }
 
     function showGroup(groupname) {
@@ -543,13 +522,13 @@ var gs_moto_ui = exports;
             t = DOC.createTextNode(label);
 
         b.onclick = function() {
-            if (compact) hidePoppers();
+            hidePoppers();
             if (action) action();
         };
 
         if (options) {
             if (options.class) b.classList.add(options.class);
-            if (compact && options.icon) {
+            if (options.icon) {
                 let d = DOC.createElement('div');
                 d.innerHTML = options.icon;
                 b.appendChild(d);

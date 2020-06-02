@@ -81,7 +81,6 @@ var gs_kiri_init = exports;
 
     function booleanSave() {
         let control = settings().controller;
-        let isCompact = control.compact;
         let isDark = control.dark;
         let isReload = false;
         control.expert = UI.expert.checked;
@@ -90,17 +89,11 @@ var gs_kiri_init = exports;
         control.freeLayout = UI.freeLayout.checked;
         control.alignTop = UI.alignTop.checked;
         control.reverseZoom = UI.reverseZoom.checked;
-        control.compact = UI.compact.checked;
         control.dark = UI.dark.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
         platform.update_stock();
         API.conf.save();
-        // if compact mode changed, reload UI
-        if (isCompact !== control.compact) {
-            UC.setDefaults(isCompact);
-            isReload = true;
-        }
         // if dark mode changed, reload UI
         if (isDark !== control.dark) {
             isReload = true;
@@ -1071,7 +1064,6 @@ var gs_kiri_init = exports;
             container = $('container'),
             welcome = $('welcome'),
             controller = settings().controller,
-            compact = SETUP.compact || controller.compact,
             dark = controller.dark;
 
         WIN.addEventListener("resize", API.dialog.update);
@@ -1088,8 +1080,6 @@ var gs_kiri_init = exports;
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
         SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
-
-        UC.setCompact(compact);
 
         Object.assign(UI, {
             // from static HTML
@@ -1282,7 +1272,6 @@ var gs_kiri_init = exports;
 
             layout:        UC.newGroup(LANG.op_menu),
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
-            compact:       UC.newBoolean(LANG.op_comp_s, booleanSave, {title:LANG.op_comp_l}),
             dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
@@ -1651,9 +1640,7 @@ var gs_kiri_init = exports;
             settings().device.bedHeight
         );
 
-        if (compact) {
-            UI.selection.classList.add('compact');
-        }
+        UI.selection.classList.add('compact');
 
         if (dark) {
             SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
@@ -1749,7 +1736,6 @@ var gs_kiri_init = exports;
         UI.autoLayout.checked = control.autoLayout;
         UI.alignTop.checked = control.alignTop;
         UI.reverseZoom.checked = control.reverseZoom;
-        UI.compact.checked = control.compact;
 
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {
