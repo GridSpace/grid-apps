@@ -85,9 +85,13 @@ kiri.lang['en-us'] = {
     su_xprt:        "Export",
     su_help:        "Help",
 
-    // FUNCTION
-    fn_menu:        "function",
+    // LOAD
+    fe_menu:        "file",
+    fn_recn:        "Recent",
     fn_impo:        "Import",
+
+    // FUNCTION
+    fn_menu:        "action",
     fn_arra:        "Arrange",
     fn_slic:        "Slice",
     fn_prev:        "Preview",

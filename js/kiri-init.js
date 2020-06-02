@@ -1192,72 +1192,35 @@ var gs_kiri_init = exports;
 
             mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
             modeTable: UC.newTableRow([
-                [
-                    UI.modeFDM =
-                    UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: KIRI.icons.fdm}),
-                ],[
-                    UI.modeSLA =
-                    UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: KIRI.icons.sla}),
-                ],[
-                    UI.modeLASER =
-                    UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: KIRI.icons.laser}),
-                ],[
-                    UI.modeCAM =
-                    UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: KIRI.icons.cam, id:"modeCAM"}),
-                ]
+                [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: KIRI.icons.fdm}) ],
+                [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: KIRI.icons.sla}) ],
+                [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: KIRI.icons.laser}) ],
+                [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: KIRI.icons.cam, id:"modeCAM"}) ]
             ]),
             system: UC.newGroup(LANG.su_menu),
             sysTable: UC.newTableRow([
-                [
-                    UI.setupDevices =
-                    UC.newButton(LANG.su_devi, showDevices)
-                ],[
-                    UI.setupTools =
-                    UC.newButton(LANG.su_tool, showTools, {modes:CAM})
-                ],[
-                    UI.setupExport =
-                    UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true})
-                ],[
-                    UI.localButton =
-                    UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true})
-                ],[
-                    UI.helpButton =
-                    UC.newButton(LANG.su_help, API.help.show)
-                ]
+                [ UI.setupDevices = UC.newButton(LANG.su_devi, showDevices) ],
+                [ UI.setupTools = UC.newButton(LANG.su_tool, showTools, {modes:CAM}) ],
+                [ UI.setupExport = UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true}) ],
+                [ UI.localButton = UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true}) ]
+            ]),
+            wsFile: UC.newGroup(LANG.fe_menu),
+            wsFileTable: UC.newTableRow([
+                [ UI.import = UC.newButton(LANG.fn_recn, undefined, {class:"asym"}) ],
+                [ UI.load = UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}) ]
             ]),
             wsFunc: UC.newGroup(LANG.fn_menu),
             wsFuncTable: UC.newTableRow([
-                [
-                    UI.load =
-                    UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}),
-                    UI.import =
-                    UC.newButton("+", undefined, {class:"asym"})
-                ],[
-                    UI.modeArrange =
-                    UC.newButton(LANG.fn_arra, platform.layout),
-                ],[
-                    UI.modeSlice =
-                    UC.newButton(LANG.fn_slic, API.function.slice)
-                ],[
-                    UI.modePreview =
-                    UC.newButton(LANG.fn_prev, API.function.print),
-                ],[
-                    UI.modeExport =
-                    UC.newButton(LANG.fn_expo, API.function.export)
-                ]
+                [ UI.modeArrange = UC.newButton(LANG.fn_arra, platform.layout) ],
+                [ UI.modeSlice = UC.newButton(LANG.fn_slic, API.function.slice) ],
+                [ UI.modePreview = UC.newButton(LANG.fn_prev, API.function.print) ],
+                [ UI.modeExport = UC.newButton(LANG.fn_expo, API.function.export) ]
             ]),
             camera: UC.newGroup(LANG.vu_menu),
             camTable: UC.newTableRow([
-                [
-                    UC.newButton(LANG.vu_home, SPACE.view.home),
-                    UC.newButton(LANG.vu_rset, SPACE.view.reset)
-                ],[
-                    UC.newButton(LANG.vu_sptp, SPACE.view.top),
-                    UC.newButton(LANG.vu_spfr, SPACE.view.front),
-                ],[
-                    UC.newButton(LANG.vu_splt, SPACE.view.left),
-                    UC.newButton(LANG.vu_sprt, SPACE.view.right)
-                ]
+                [ UC.newButton(LANG.vu_sptp, SPACE.view.top) ],
+                [ UC.newButton(LANG.vu_home, SPACE.view.home) ],
+                [ UC.newButton(LANG.vu_rset, SPACE.view.reset) ]
             ]),
 
             workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
@@ -1265,7 +1228,6 @@ var gs_kiri_init = exports;
                 [
                     UI.saveButton =
                     UC.newButton(LANG.ws_save, API.space.save),
-                ],[
                     UC.newButton(LANG.ws_cler, API.space.clear)
                 ]
             ], {modes:ALL, expert:true}),
@@ -1788,9 +1750,6 @@ var gs_kiri_init = exports;
 
         // ensure hot keys work even in iframes
         API.focus();
-
-        // place version number a couple of places to help users
-        UI.helpButton.title = `${LANG.version} ` + KIRI.version;
 
         // restore expert setting preference
         UC.setExpert(control.expert);

@@ -387,21 +387,21 @@ var MOTO = window.moto = window.moto || {};
             case cca('h'):
                 Space.view.home();
                 break;
-            case cca('f'):
-                Space.view.front();
-                break;
-            case cca('l'):
-                Space.view.left();
-                break;
-            case cca('r'):
-                Space.view.right();
-                break;
             case cca('t'):
                 Space.view.top();
                 break;
-            case cca('b'):
-                Space.view.back();
-                break;
+            // case cca('f'):
+            //     Space.view.front();
+            //     break;
+            // case cca('l'):
+            //     Space.view.left();
+            //     break;
+            // case cca('r'):
+            //     Space.view.right();
+            //     break;
+            // case cca('b'):
+            //     Space.view.back();
+            //     break;
             default:
                 handled = false;
                 break;
