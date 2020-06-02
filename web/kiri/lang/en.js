@@ -99,12 +99,12 @@ kiri.lang['en-us'] = {
 
     // VIEW
     vu_menu:        "view",
-    vu_home:        "home",
-    vu_rset:        "reset",
-    vu_sptp:        "top",
-    vu_spfr:        "front",
-    vu_splt:        "left",
-    vu_sprt:        "right",
+    vu_home:        "Home",
+    vu_rset:        "Reset",
+    vu_sptp:        "Top",
+    vu_spfr:        "Front",
+    vu_splt:        "Left",
+    vu_sprt:        "Right",
 
     // WORKSPACE
     ws_menu:        "workspace",

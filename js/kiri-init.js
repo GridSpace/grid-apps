@@ -1448,16 +1448,6 @@ var gs_kiri_init = exports;
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 
-        if (!lang_set) {
-            // for english only, add underlined labels for hotkeys
-            UI.setupDevices.innerHTML   = "D<u>e</u>vices";
-            UI.setupTools.innerHTML     = "T<u>o</u>ols";
-            UI.modeArrange.innerHTML    = "<u>A</u>rrange";
-            UI.modeSlice.innerHTML      = "<u>S</u>lice";
-            UI.modePreview.innerHTML    = "<u>P</u>review";
-            UI.modeExport.innerHTML     = "E<u>x</u>port";
-        }
-
         // populate language drop-down
         let lp = $('langpop');
         let elp = DOC.createElement("div");
