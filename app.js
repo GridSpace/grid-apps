@@ -426,7 +426,7 @@ function handleData(req, res, next) {
     addCorsHeaders(req, res);
     res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
 
-    let tok = req.app.url.path.split('/'),
+    let tok = req.app.path.split('/'),
         muid = req.headers['x-moto-ajax'],
         space = tok[2] || null,
         version = tok[3],
@@ -474,11 +474,7 @@ function handleData(req, res, next) {
         } else {
             db.get(countKey(space)).then(version => retrieve(version));
         }
-
-        return;
-
     } else if (valid && req.method === 'POST') {
-
         let dbOwner = null,
             dbVersion = null,
             postBody = null,
@@ -528,8 +524,8 @@ function handleData(req, res, next) {
                 dbVersion = parseInt(version || "0") + 1;
                 checkDone();
             });
-
-        return;
+    } else {
+        next();
     }
 }
 
