@@ -65,6 +65,9 @@ self.kiri.copyright = exports.COPYRIGHT;
     if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     DBUG.enable();
 
+    // remove version, preserve other settings
+    WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);
+
     // add show() to catalog for API
     CATALOG.show = showCatalog;
 
@@ -404,6 +407,7 @@ self.kiri.copyright = exports.COPYRIGHT;
         let opt = {}, kv, kva;
         // handle kiri legacy and proper url encoding better
         ov.replace(/&/g,',').split(',').forEach(function(el) {
+            el = el.replace(/=/g,':');
             kv = decodeURIComponent(el).split(':');
             if (kv.length === 2) {
                 kva = opt[kv[0]] = opt[kv[0]] || [];
@@ -411,6 +415,16 @@ self.kiri.copyright = exports.COPYRIGHT;
             }
         });
         return opt;
+    }
+
+    function encodeOpt(opt) {
+        let out = [];
+        Object.keys(opt).forEach(key => {
+            if (key === 'ver') return;
+            let val = opt[key];
+            out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+        });
+        return out.length ? '?' + out.join('&') : '';
     }
 
     function ajax(url, fn, rt, po, hd) {
