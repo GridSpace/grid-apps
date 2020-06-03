@@ -1216,16 +1216,13 @@ var gs_kiri_init = exports;
                 [ UI.modePreview = UC.newButton(LANG.fn_prev, API.function.print) ],
                 [ UI.modeExport = UC.newButton(LANG.fn_expo, API.function.export) ]
             ]),
-            camera: UC.newGroup(LANG.vu_menu),
-            camTable: UC.newTableRow([
-                [ UC.newButton(LANG.vu_sptp, SPACE.view.top) ],
-                [ UC.newButton(LANG.vu_home, SPACE.view.home) ],
-                [ UC.newButton(LANG.vu_rset, SPACE.view.reset) ]
-            ]),
 
             workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
             wsTable: UC.newTableRow([
                 [
+                    UC.newButton(LANG.vu_sptp, SPACE.view.top),
+                    UC.newButton(LANG.vu_home, SPACE.view.home),
+                ],[
                     UI.saveButton =
                     UC.newButton(LANG.ws_save, API.space.save),
                     UC.newButton(LANG.ws_cler, API.space.clear)

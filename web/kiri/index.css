@@ -533,8 +533,12 @@ input[type=range]::-moz-focus-outer {
 .sel-span:hover .sel-pop {
     display: block;
 }
+.compact .sel-span .value {
+    font-size: 16px;
+    color: #444466 !important;
+}
 .compact .sel-span label {
-    font-size: 24px;
+    font-size: 20px;
 }
 .compact .sel-span input {
     font-size: 18px;
