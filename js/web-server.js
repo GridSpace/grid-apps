@@ -1136,7 +1136,12 @@ function initModule(file, dir) {
             obj2string: obj2string,
             string2obj: string2obj,
             getCookieValue: getCookieValue,
-            logger: open_logger
+            logger: open_logger,
+            datadir: (dst) => {
+                let ddir = `./.data-${dst}`;
+                mkdirs([ddir]);
+                return ddir;
+            }
         },
         db: {
             api: db,
