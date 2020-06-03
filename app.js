@@ -414,6 +414,11 @@ function handleVersion(req, res, next) {
 }
 
 function handleOptions(req, res, next) {
+    try {
+        req.app.ua = agent.parse(req.headers['user-agent'] || '');
+    } catch (e) {
+        logger.log("ua parse error on : "+req.headers['user-agent']);
+    }
     if (req.method === 'OPTIONS') {
         addCorsHeaders(req, res);
         res.end();
