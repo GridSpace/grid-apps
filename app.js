@@ -124,6 +124,7 @@ function initModule(mod, file, dir) {
         },
         const: {
             args: {},
+            meta: mod.meta,
             debug: debug,
             script: script,
             moddir: dir,
