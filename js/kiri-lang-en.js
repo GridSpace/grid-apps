@@ -1,1 +1,0 @@
-../web/kiri/lang/en.js
