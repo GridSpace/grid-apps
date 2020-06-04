@@ -613,12 +613,12 @@ function prepareScripts() {
 
 function concatCode(array) {
     let code = [];
+    let direct = array.filter(f => f.charAt(0) !== '@');
+    let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
 
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        let direct = array.filter(f => f.charAt(0) !== '@');
-        let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
         let code = [ `(function() { let load = [ `];
         direct.forEach(file => {
             code.push(`"/${file.replace(/\\/g,'/')}?${version}",`);
