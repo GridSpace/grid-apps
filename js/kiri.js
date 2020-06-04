@@ -407,7 +407,6 @@ self.kiri.copyright = exports.COPYRIGHT;
         let opt = {}, kv, kva;
         // handle kiri legacy and proper url encoding better
         ov.replace(/&/g,',').split(',').forEach(function(el) {
-            // el = el.replace(/=/g,':');
             kv = decodeURIComponent(el).split(':');
             if (kv.length === 2) {
                 kva = opt[kv[0]] = opt[kv[0]] || [];
@@ -422,9 +421,9 @@ self.kiri.copyright = exports.COPYRIGHT;
         Object.keys(opt).forEach(key => {
             if (key === 'ver') return;
             let val = opt[key];
-            out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+            out.push(encodeURIComponent(key) + ":" + encodeURIComponent(val));
         });
-        return out.length ? '?' + out.join('&') : '';
+        return out.length ? '?' + out.join(',') : '';
     }
 
     function ajax(url, fn, rt, po, hd) {
