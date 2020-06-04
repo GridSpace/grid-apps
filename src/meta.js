@@ -428,7 +428,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         markTypeButtons[MARK.SLIDE] = mtypStop;
         markTypeButtons[MARK.CLEAR] = mtypClear;
 
-        UC.newGroup('workspace', assets);
+        UC.newGroup('workspace', assets, {region:"left"});
         UC.newTableRow([[
             UC.newButton('new',  newWorkspace),
             UC.newButton('fork', forkWorkspace),
@@ -489,25 +489,22 @@ THREE.Face3.prototype.mVisible = function(show) {
         ]);
         UC.newGroup('export').setAttribute("title","send selection to target");
         UC.newTableRow([
-            [
-                UC.newButton('library',     selectionToLibrary ),
-                UC.newButton('kiri',        selectionToKiri    )
-            ],[
-                UC.newButton('download',    downloadSelection  )
-            ]
+            [ UC.newButton('to library',  selectionToLibrary ) ],
+            [ UC.newButton('to kiri',     selectionToKiri    ) ],
+            [ UC.newButton('download',    downloadSelection  ) ]
         ]);
 
         UC.newGroup('options');
         UI.invert = UC.newBoolean('invert zoom', setZoom);
 
-        UC.newGroup('space', control);
+        UC.newGroup('space', control, {region:"right", nocompact: true});
         UI.name = UC.newInput('name', {size:10});
         UI.units = UC.newInput('units');
         UI.grid = UC.newInput('grid');
         UI.version = UC.newInput('version', {disabled:true});
         UC.newTableRow([[ verDown, verUp ]]);
 
-        UC.newGroup('selection');
+        UC.newGroup('selection', undefined, {nocompact: true});
         UI.sel_x = UC.newInput('width', {disabled:true});
         UI.sel_y = UC.newInput('depth', {disabled:true});
         UI.sel_z = UC.newInput('height', {disabled:true});
@@ -516,7 +513,7 @@ THREE.Face3.prototype.mVisible = function(show) {
         UC.newGroup('spaces');
         UI.models = UC.newRow();
 
-        UC.newGroup('import mesh');
+        UC.newGroup('import', undefined, {nocompact: true});
         UI.libdrop = UC.newButton('(drop mesh here)');
         UI.libdrop.id = "dropbutton";
         UC.newRow([UI.libdrop]);
@@ -537,6 +534,8 @@ THREE.Face3.prototype.mVisible = function(show) {
             UI.name, function(ev) { updateSpaceName(UI.name.value) },
             UI.units, function(ev) { setSpaceUnits(UI.units.value) }
         ]);
+
+        UC.hidePoppers();
 
         /** prevent mouse hover, click in control panels from affecting space */
 

@@ -115,6 +115,7 @@ th, tr, td, span, div, label, button {
     font-size: 12px;
     font-weight: bold;
     text-align: center;
+    position: relative;
 }
 .grouphead > a {
     text-transform: uppercase;
@@ -518,4 +519,139 @@ button.del {
     height: 50px;
     background-color: #ccc;
     border-width: 1px;
+}
+
+.compact {
+    overflow: visible !important;
+    bottom: auto !important;
+    border: 0 !important;
+    background-color: rgba(255,255,255,0.5) !important;
+}
+.compact .grouphead {
+    padding: 10px 5px 10px 5px !important;
+    background-color: rgba(170,221,255,0.25);
+}
+.compact .grouphead:hover {
+    background-color: rgba(170,221,255,0.9);
+}
+.compact .grouphead a {
+    font-size: larger !important;
+    margin: 5px !important;
+}
+.compact .flow-row label {
+    font-size: 18px !important;
+}
+.compact .flow-row input {
+    font-size: 18px !important;
+}
+.compact .flow-row select {
+    font-size: 18px !important;
+}
+.compact .flow-row {
+    margin: 3px 0 3px 0;
+}
+.compact .asym {
+    width: auto !important;
+}
+.compact button {
+    font-size: larger !important;
+    padding: 5px 10px 5px 10px;
+}
+:-moz-any(#control-left.compact) {
+ overflow-x: display !important;
+ overflow-y: display !important;
+}
+:-moz-any(#control-right.compact) {
+ overflow-x: display !important;
+ overflow-y: display !important;
+ margin-right: auto !important;
+ margin-bottom: auto !important;
+}
+
+.compact .sel-span .value {
+    font-size: 16px;
+    color: #444466 !important;
+}
+.compact .sel-span label {
+    font-size: 20px;
+}
+.compact .sel-span input {
+    font-size: 18px;
+    margin: 4px;
+}
+
+.popper {
+    position: absolute;
+    top: 0;
+    z-index: 50000;
+    background-color: white;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 5px;
+    white-space: nowrap;
+    text-align: left;
+}
+.popper.left {
+    left: 105%;
+}
+.popper.right {
+    right: 105%;
+}
+.popper svg {
+    width: 40px;
+    height: 40px;
+}
+.poprow > div {
+    display: flex;
+    flex-direction: row;
+}
+
+.poptext {
+    display: none;
+    position: absolute;
+    margin-left: 30px;
+    border: 3px solid #ddd;
+    border-radius: 3px;
+    transform: translate(0, -25%);
+    flex-direction: column;
+    align-items: stretch;
+    z-Index: 10000;
+}
+.poptext label {
+    text-align: center !important;
+    border-top: 1px solid #888;
+    border-left: 1px solid #888;
+    border-right: 1px solid #888;
+    background-color: rgba(170,221,255,0.75);
+    padding: 3px 0 3px 0;
+    margin: 0;
+    color: black;
+}
+.poptext textarea {
+    flex-grow: 1;
+    margin: 0;
+    opacity: 0.95;
+    outline: none;
+    overflow-y: scroll !important;
+}
+
+.sel-span {
+    position: relative;
+    display: inline-block;
+}
+.sel-pop {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    padding-bottom: 5px;
+}
+.sel-pop div, .sel-pop table {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px;
+}
+.sel-span:hover .sel-pop {
+    display: block;
 }
