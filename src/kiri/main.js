@@ -403,7 +403,7 @@
         let opt = {}, kv, kva;
         // handle kiri legacy and proper url encoding better
         ov.replace(/&/g,',').split(',').forEach(function(el) {
-            el = el.replace(/=/g,':');
+            // el = el.replace(/=/g,':');
             kv = decodeURIComponent(el).split(':');
             if (kv.length === 2) {
                 kva = opt[kv[0]] = opt[kv[0]] || [];
