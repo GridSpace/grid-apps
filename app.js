@@ -380,9 +380,9 @@ function string2obj(s) {
 function handleVersion(req, res, next) {
     if (req.app.path === "/kiri/" && req.url.indexOf(version) < 0) {
         if (req.url.indexOf("?") > 0) {
-            return http.redirect(res, `${req.url}&ver=${version}`);
+            return http.redirect(res, `${req.url},ver:${version}`);
         } else {
-            return http.redirect(res, `${req.url}?ver=${version}`);
+            return http.redirect(res, `${req.url}?ver:${version}`);
         }
     } else {
         next();
