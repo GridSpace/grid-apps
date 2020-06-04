@@ -17,6 +17,7 @@ const code = {};
 const mods = {};
 const load = [];
 const synth = {};
+const api = {};
 
 let level;
 let cacheDir;
@@ -63,6 +64,7 @@ function init(mod) {
         [ "/data/", handleData ],
         [ "/wasm/", handleWasm ]
     ]));
+    mod.add(fixedmap("/api/", api));
     if (debug) {
         mod.static("/src/", "src");
         mod.static("/mod/", "mod");
@@ -116,7 +118,7 @@ function loadModule(mod, dir) {
 function initModule(mod, file, dir) {
     logger.log({module: file});
     require_fresh(file)({
-        api: {},
+        api: api,
         adm: {
             reload: prepareScripts
         },
