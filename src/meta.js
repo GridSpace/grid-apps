@@ -22,12 +22,9 @@
 
 "use strict";
 
-let gs_meta = exports;
-let gs_meta_debug = false; // 'line', 'poly', or 'cut'
-
 THREE.Material.prototype.motoSetup = function() {
     this.fog = false;
-    this.transparent = gs_meta_debug ? true : false;
+    this.transparent = false;
 
     let hidden = this.clone();
     hidden.visible = false;
@@ -271,7 +268,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     let debugGroup = new THREE.Group(),
         debugAdded = false,
         debugLayer = new Layer(debugGroup),
-        debugExport = gs_meta_debug;
+        debugExport = false;
 
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()

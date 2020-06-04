@@ -253,7 +253,7 @@ const script = {
         "kiri/export",
         "@devices"
     ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
-    work : [
+    worker : [
         "kiri",
         "ext/three",
         "ext/pngjs",
@@ -282,11 +282,7 @@ const script = {
         "mode/laser/driver",
         "kiri/widget",
         "kiri/print",
-        "kiri/codec"
-    ].map(p => `src/${p}.js`),
-    worker : [
-        "kiri",
-        "license",
+        "kiri/codec",
         "kiri/worker"
     ].map(p => `src/${p}.js`),
     meta : [
@@ -607,7 +603,6 @@ function prepareScripts() {
     synth.devices = `devices = ${JSON.stringify(devs)};`;
     code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
-    code.work = concatCode(script.work);
     code.worker = concatCode(script.worker);
 }
 

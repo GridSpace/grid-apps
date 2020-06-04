@@ -2,8 +2,6 @@
 
 "use strict";
 
-importScripts(`/code/work.js${location.search}`);
-
 const base = self.base,
     util = base.util,
     time = util.time,
