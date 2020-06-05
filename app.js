@@ -1,3 +1,5 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
 function require_fresh(path) {
     const rpa = require.resolve(path);
     delete require.cache[rpa];
@@ -234,7 +236,6 @@ const script = {
         "moto/load-stl",
         "moto/db",
         "moto/ui",
-        "kiri/icons",
         "kiri/lang",
         "kiri/lang-en",
         "kiri/fill",
@@ -254,7 +255,8 @@ const script = {
         "kiri/main",
         "kiri/init",
         "kiri/export",
-        "@devices"
+        "@devices",
+        "@icons"
     ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
     worker : [
         "kiri",
@@ -594,7 +596,17 @@ function serveCode(req, res, code) {
     res.end(code.code);
 }
 
-function prepareScripts() {
+function generateIcons() {
+    let root = `${dir}/src/ico`;
+    let icos = {};
+    fs.readdirSync(root).forEach(file => {
+        let name = file.split(".")[0]   ;
+        icos[name] = fs.readFileSync(`${root}/${file}`).toString();
+    });
+    synth.icons = `self.icons = ${JSON.stringify(icos)};`;
+}
+
+function generateDevices() {
     let root = `${dir}/src/dev`;
     let devs = {};
     fs.readdirSync(root).forEach(type => {
@@ -603,7 +615,12 @@ function prepareScripts() {
             map[device] = JSON.parse(fs.readFileSync(`${root}/${type}/${device}`));
         });
     });
-    synth.devices = `devices = ${JSON.stringify(devs)};`;
+    synth.devices = `self.devices = ${JSON.stringify(devs)};`;
+}
+
+function prepareScripts() {
+    generateIcons();
+    generateDevices();
     code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
     code.worker = concatCode(script.worker);
@@ -617,7 +634,7 @@ function concatCode(array) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        let code = [ `(function() { let load = [ `];
+        let code = [ '(function() { let load = [ ' ];
         direct.forEach(file => {
             code.push(`"/${file.replace(/\\/g,'/')}?${version}",`);
         });
@@ -631,7 +648,7 @@ function concatCode(array) {
             's.src = file;',
             's.onload = load_next;',
             'document.head.appendChild(s);',
-            '}; load_next(); })();',
+            '} load_next(); })();',
             'self.debug=true;'
         ].join('\n'));
         inject.forEach(key => {

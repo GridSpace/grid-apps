@@ -1186,10 +1186,10 @@
 
             mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
             modeTable: UC.newTableRow([
-                [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: KIRI.icons.fdm}) ],
-                [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: KIRI.icons.sla}) ],
-                [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: KIRI.icons.laser}) ],
-                [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: KIRI.icons.cam, id:"modeCAM"}) ]
+                [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: icons.fdm}) ],
+                [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: icons.sla}) ],
+                [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: icons.laser}) ],
+                [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: icons.cam, id:"modeCAM"}) ]
             ]),
             system: UC.newGroup(LANG.su_menu),
             sysTable: UC.newTableRow([

@@ -16,8 +16,10 @@
             sliceRender,
             printSetup,
             printExport,
+            // printDownload,
+            // printRender
             getToolById,
-            getToolDiameter
+            getToolDiameter,
         },
         CPRO = CAM.process = {
             ROUGH: 1,
