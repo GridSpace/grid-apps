@@ -87,33 +87,54 @@
                     </div>
                 </div>
             </div>
+            <div id="lt-rotate" class="lt-menu">
+                <i class="fas fa-sync-alt"></i>
+                <label>rotate</label>
+                <div id="pop-view" class="pop-lcol row">
+
+                </div>
+            </div>
+            <div id="lt-scale" class="lt-menu">
+                <i class="fas fa-expand"></i>
+                <label>scale</label>
+                <div id="pop-view" class="pop-lcol row">
+
+                </div>
+            </div>
             <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
             <div id="modal">
-                <div id="mod-help">
+                <div class="col">
+                    <div id="mod-top" class="row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+
+                <div id="mod-help" class="mdialog col">
                     <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
                     <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
                     <a href="https://www.inov3d.net/3d-printing-slicer-software-download/">slicer news</a>
                     <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
                     <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
                 </div>
-                <div id="mod-setup">
+                <div id="mod-setup" class="mdialog">
                     <div id="device">temp device</div>
                     <div id="layers">temp layers</div>
                     <div id="langpop">temp language</div>
                 </div>
-                <div id="mod-tools"></div>
-                <div id="mod-local"></div>
-                <div id="mod-print"></div>
+                <div id="mod-files" class="mdialog"></div>
+                <div id="mod-tools" class="mdialog"></div>
+                <div id="mod-local" class="mdialog"></div>
+                <div id="mod-print" class="mdialog"></div>
                 <!-- hidden file input loader -->
                 <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
+
+                    <div id="mod-end"></div>
+                </div>
             </div>
         </div>
         <div id="mid-rcol" class="col j-center">
-            <div id="set-top" class="setgroup"><a>settings</a></div>
+            <div id="set-top" class="set-group"><a>settings</a></div>
             <div id="settings" class="col"></div>
-            <div id="set-end" class="setgroup"></div>
+            <div id="set-end" class="set-group"></div>
             <div id="slider" class="col">
                 <div id="slider-begin">0</div>
                 <div id="slider-center" class="grow">

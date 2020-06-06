@@ -78,6 +78,9 @@ select {
 th, tr, td, span, div, label, button {
     user-select: none;
 }
+th, tr, td {
+    white-space: nowrap;
+}
 .noselect {
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -280,11 +283,47 @@ th, tr, td, span, div, label, button {
     display: none;
     position: fixed;
     z-index: 10000;
-    top: 0px;
+    transform: translateY(-50%);
+    top: 50%;
     left: 0px;
     right: 0px;
     bottom: 0px;
-    background-color: rgba(0,0,0,0.5);
+    height: 300px;
+    background-color: rgba(0,0,0,0.25);
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+    overflow: hidden;
+}
+#modal > div {
+    position: absolute;
+    transform: translateX(50%) translateY(-50%);
+    right: 50%;
+    top: 50%;
+}
+.mdialog {
+    display: none;
+    padding: 10px;
+    font-size: smaller;
+    font-family: monospace;
+    background-color: rgba(255,255,255,0.75);
+}
+#mod-top {
+    height: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    background-color: rgba(0,0,0,0.25);
+}
+#mod-x {
+    position: absolute;
+    z-index: 30000;
+    bottom: -20px;
+    right: 5px;
+}
+#mod-end {
+    height: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: rgba(0,0,0,0.25);
 }
 
 #slider {
@@ -298,22 +337,18 @@ th, tr, td, span, div, label, button {
     border: 1px solid #aaa;
     border-radius: 3px;
 }
-
 #slider > div {
     flex-direction: column;
     align-items: center;
 }
-
 #slider-begin {
     background-color: #ccc;
     border-bottom: 1px solid #aaa;
 }
-
 #slider-end {
     background-color: #ccc;
     border-top: 1px solid #aaa;
 }
-
 #slider-hold {
     background-color: #ccc;
     position: absolute;
@@ -321,7 +356,6 @@ th, tr, td, span, div, label, button {
     left: 0;
     border: 3px solid white;
 }
-
 #slider-hold .shim {
     width: 100%;
     height: 10px;
@@ -382,7 +416,7 @@ th, tr, td, span, div, label, button {
     background-color: #abc;
     height: 10px;
 }
-.setgroup {
+.set-group {
     align-items: center;
     flex-direction: column;
     background-color: rgba(255,255,255,0.75);
@@ -393,12 +427,12 @@ th, tr, td, span, div, label, button {
     color: #89a;
     right: -5px;
 }
-.setgroup:hover {
+.set-group:hover {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
 }
-.setpop {
+.set-pop {
     top: 50%;
     right: 100%;
     position: absolute;
@@ -407,11 +441,11 @@ th, tr, td, span, div, label, button {
     transform: translateY(-50%);
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #aaa;
-    border-radius: 3px;
-    padding: 5px;
+    border-radius: 5px;
     margin-right: 5px;
+    padding: 5px;
 }
-.setpop label {
+.set-pop label {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
 }

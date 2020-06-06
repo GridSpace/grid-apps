@@ -184,9 +184,8 @@
             set: undefined // set during init
         },
         dialog: {
-            show: showDialog,
-            hide: hideDialog,
-            update: updateDialogLeft
+            show: showModal,
+            hide: hideModal,
         },
         help: {
             show: showHelp,
@@ -1619,37 +1618,62 @@
     }
 
     function modalShowing() {
-        let showing = $('modal').style.display !== 'none';
-        return showing || UC.isPopped();
+        return UI.modal.style.display === 'flex';
     }
 
     function showModal(which) {
-        UI.modal.style.display = 'block';
-        ["print","help","local"].forEach(function(modal) {
-            UI[modal].style.display = (modal === which ? 'block' : 'none');
+        let mod = UI.modal,
+            style = mod.style,
+            visible = modalShowing(),
+            info = { pct: 0 };
+
+        ["print","help","files","local"].forEach(function(name) {
+            UI[name].style.display = name === which ? 'flex' : '';
         });
-        if (which) API.event.emit('modal.show', which);
+
+        function ondone() {
+            // UI[which].style.display = 'flex';
+            API.event.emit('modal.show', which);
+        }
+
+        if (visible) {
+            return ondone();
+        }
+
+        style.height = '0';
+        style.display = 'flex';
+
+        new TWEEN.Tween(info).
+            easing(TWEEN.Easing.Quadratic.InOut).
+            to({ pct: 100 }, 100).
+            onUpdate(() => { style.height = `${info.pct}%` }).
+            onComplete(ondone).
+            start();
+    }
+
+    function hideModal() {
+        if (!modalShowing()) {
+            return;
+        }
+        let mod = UI.modal, style = mod.style, info={pct:100};
+        new TWEEN.Tween(info).
+            easing(TWEEN.Easing.Quadratic.InOut).
+            to({pct:0}, 100).
+            onUpdate(() => { style.height = `${info.pct}%` }).
+            onComplete(() => { style.display = '' }).
+            start();
     }
 
     function hideDialog() {
-        showDialog(null);
+        hideModal();
     }
 
-    function showDialog(which, force) {
-        return console.log('TODO showDialog');
-        if (UC.isPopped()) {
-            UC.hidePop();
-            return;
-        }
-        ["catalog","devices","tools","settings"].forEach(function(dialog) {
-            let style = UI[dialog].style;
-            style.display = (dialog === which && (force || style.display !== 'flex') ? 'flex' : 'none');
-        });
-        if (which) API.event.emit('dialog.show', which);
+    function showDialog(which) {
+        showModal(which);
     }
 
     function showCatalog() {
-        showDialog("catalog");
+        showDialog("files");
     }
 
     function getSettings() {
@@ -1776,10 +1800,6 @@
         UI.settings.style.right = (right.width + 5) + 'px';
     }
 
-    function hideModal() {
-        UI.modal.style.display = 'none';
-    }
-
     function showHelp() {
         showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html`);
     }
@@ -1792,7 +1812,6 @@
         }
         ajax(local, function(html) {
             UI.help.innerHTML = html;
-            $('help-close').onclick = hideModal;
             $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
             showModal('help');
         });

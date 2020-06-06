@@ -168,7 +168,7 @@ kiri.lang['en-us'] = {
     sl_lbot_l:      "number of solid layers\nto enforce at the\nbottom of the print",
 
     // FDM FILL
-    fi_menu:        "fill",
+    fi_menu:        "infill",
     fi_type:        "type",
     fi_pcnt_s:      "percentage",
     fi_pcnt_l:      "fill density values\n0.0 - 1.0",
@@ -178,7 +178,7 @@ kiri.lang['en-us'] = {
     fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
 
     // FDM FIRST LAYER
-    fl_menu:        "first layer",
+    fl_menu:        "1st layer",
     fl_lahi_s:      "layer height",
     fl_lahi_l:      "height of each slice\nin millimeters\nshould be >= slice height",
     fl_rate_s:      "shell speed",

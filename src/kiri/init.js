@@ -1091,10 +1091,15 @@
             layerView:          $('layer-view'),
             layerSlider:        $('layer-slider'),
             modelOpacity:       $('opacity'),
+
             modal:              $('modal'),
-            print:              $('print'),
-            local:              $('local'),
-            help:               $('help'),
+            help:               $('mod-help'),
+            print:              $('mod-print'),
+            local:              $('mod-local'),
+            files:              $('mod-files'),
+            catalogBody:        $('catalogBody'),
+            catalogList:        $('catalogList'),
+
             devices:            $('devices'),
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
@@ -1119,9 +1124,6 @@
             // toolTaperAngle: $('tool-tangle'),
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
-            catalog:            $('catalog'),
-            catalogBody:        $('catalogBody'),
-            catalogList:        $('catalogList'),
             settings:           $('settings'),
             settingsBody:       $('settingsBody'),
             settingsList:       $('settingsList'),
@@ -1763,11 +1765,11 @@
         // add ability to override
         API.show.controls(API.feature.controls);
 
-        // set initial layer slider size
-        API.dialog.update();
-
         // show version on startup
         $('app-vers').innerHTML = KIRI.version;
+
+        // enable modal hiding
+        $('mod-x').onclick = API.modal.hide;
 
         if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
 

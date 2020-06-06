@@ -113,7 +113,7 @@
 
         if (popper) {
             let pop = DOC.createElement('div');
-            pop.classList.add('setpop');
+            pop.classList.add('set-pop');
             row.appendChild(pop);
             addTo = pop;
         } else {
@@ -121,7 +121,7 @@
         }
 
         div.appendChild(row);
-        row.setAttribute("class", "setgroup noselect");
+        row.setAttribute("class", "set-group noselect");
         row.appendChild(a);
         a.appendChild(DOC.createTextNode(label));
         addModeControls(row, opt);
