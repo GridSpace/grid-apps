@@ -8,7 +8,6 @@
 
     let SELF = self,
         KIRI = self.kiri,
-        lastRegion = null,
         lastGroup = null,
         lastDiv = null,
         addTo = null,
@@ -77,7 +76,7 @@
     }
 
     function checkpoint() {
-        return { addTo, lastDiv, lastGroup, lastRegion, groupName };
+        return { addTo, lastDiv, lastGroup, groupName };
     }
 
     function restore(opt) {
@@ -85,7 +84,6 @@
             addTo = opt.addTo;
             lastDiv = opt.lastDiv;
             lastGroup = opt.lastGroup;
-            lastRegion = opt.lastRegion;
             groupName = opt.groupName;
         }
     }
@@ -106,7 +104,6 @@
     function addCollapsableGroup(label, div, options) {
         let opt = options || {};
         let group = opt.group || label;
-        lastRegion = opt.region || lastRegion;
         hideable[group] = opt.nocompact === true ? false : true;
 
         let row = DOC.createElement('div'),
@@ -116,9 +113,7 @@
 
         if (popper) {
             let pop = DOC.createElement('div');
-            pop.classList.add('popper');
-            if (lastRegion) pop.classList.add(lastRegion);
-            if (opt.poprow) pop.classList.add('poprow')
+            pop.classList.add('setpop');
             row.appendChild(pop);
             addTo = pop;
         } else {
@@ -126,7 +121,7 @@
         }
 
         div.appendChild(row);
-        row.setAttribute("class", "grouphead noselect");
+        row.setAttribute("class", "setgroup noselect");
         row.appendChild(a);
         a.appendChild(DOC.createTextNode(label));
         addModeControls(row, opt);

@@ -1,4 +1,4 @@
-a, a:hover, a:visited {
+setpopsetpopa, a:hover, a:visited {
     border: none;
     outline: none;
     color: inherit;
@@ -170,6 +170,20 @@ th, tr, td, span, div, label, button {
 #mid-sep {
     height: 1px;
     background-image: linear-gradient(to right, #ddd, #666, #ddd);
+}
+
+#lt-top {
+    height: 10px;
+    border-top-right-radius: 10px;
+    background-color: #abc;
+    left: -5px;
+}
+
+#lt-end {
+    height: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: #abc;
+    left: -5px;
 }
 
 .pop-lcol {
@@ -348,4 +362,56 @@ th, tr, td, span, div, label, button {
 #alert-text p {
     margin: 5px;
     text-align: center;
+}
+
+#settings {
+    align-items: stretch;
+}
+#set-top {
+    color: black;
+    padding: 1px 10px 2px 2px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 0;
+    background-color: #abc;
+}
+#set-end {
+    color: black;
+    padding: 1px 10px 2px 2px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 10px;
+    background-color: #abc;
+    height: 10px;
+}
+.setgroup {
+    align-items: center;
+    flex-direction: column;
+    background-color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(0,0,0,0);
+    border-radius: 3px;
+    margin: 2px 0 2px 4px;
+    padding: 8px 10px 8px 5px;
+    color: #89a;
+    right: -5px;
+}
+.setgroup:hover {
+    background-color: #eee;
+    border: 1px solid #aaa;
+    color: #000;
+}
+.setpop {
+    top: 50%;
+    right: 100%;
+    position: absolute;
+    white-space: nowrap;
+    flex-direction: column;
+    transform: translateY(-50%);
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 5px;
+    margin-right: 5px;
+}
+.setpop label {
+    padding: 2px 4px 2px 0;
+    flex-grow: 1;
 }

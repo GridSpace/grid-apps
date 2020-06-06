@@ -150,7 +150,7 @@ kiri.lang['en-us'] = {
     la_move:        "moves",
 
     // SETTINGS
-    se_menu:        "settings",
+    se_menu:        "library",
     se_load:        "load",
     se_save:        "save",
 
@@ -275,7 +275,7 @@ kiri.lang['en-us'] = {
     cd_lift_l:      "lift between plunges\nafter dwell period\nin workspace units\n0 to disable",
 
     // CNC CUTOUT TABS
-    ct_menu:        "cutout tabs",
+    ct_menu:        "tabs",
     ct_angl_s:      "angle",
     ct_angl_l:      "starting angle for tab spacing\nin degrees (0-360)",
     ct_numb_s:      "count",

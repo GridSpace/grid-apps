@@ -1238,17 +1238,7 @@
             // allow modules to insert new items at the bottom of the left menu
             // appendLeft:    UC.checkpoint(),
 
-            settingsGroup: UC.newGroup(LANG.se_menu, $('settings'), {region:"right"}),
-            settingsTable: UC.newTableRow([
-                [
-                    UI.settingsLoad =
-                    UC.newButton(LANG.se_load, settingsLoad),
-                    UI.settingsSave =
-                    UC.newButton(LANG.se_save, settingsSave)
-                ]
-            ]),
-
-            process:             UC.newGroup(LANG.sl_menu, control, {modes:FDM_LASER}),
+            process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
             sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),
             sliceShells:         UC.newInput(LANG.sl_shel_s, {title:LANG.sl_shel_l, convert:UC.toInt, modes:FDM}),
             sliceTopLayers:      UC.newInput(LANG.sl_ltop_s, {title:LANG.sl_ltop_l, convert:UC.toInt, modes:FDM}),
@@ -1259,7 +1249,7 @@
             laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER}),
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
-            process:             UC.newGroup(LANG.fi_menu, control, {modes:FDM}),
+            process:             UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
             sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
             sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1423,6 +1413,16 @@
             slaOutput:           UC.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
             slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
             slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
+
+            settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
+            settingsTable: UC.newTableRow([
+                [
+                    UI.settingsLoad =
+                    UC.newButton(LANG.se_load, settingsLoad),
+                    UI.settingsSave =
+                    UC.newButton(LANG.se_save, settingsSave)
+                ]
+            ]),
 
             layers:        UC.setGroup($("layers")),
             layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
