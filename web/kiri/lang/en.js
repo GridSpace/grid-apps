@@ -107,7 +107,7 @@ kiri.lang['en-us'] = {
     vu_sprt:        "Right",
 
     // WORKSPACE
-    ws_menu:        "workspace",
+    ws_menu:        "view",
     ws_save:        "Save",
     ws_cler:        "Clear",
 

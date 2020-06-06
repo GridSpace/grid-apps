@@ -39,7 +39,7 @@
         newWidget = kiri.newWidget,
         // ---------------
         UI = {},
-        UC = MOTO.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
+        UC = KIRI.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
         MODE = MODES.FDM,
         onEvent = {},
         currentPrint = null,
@@ -502,6 +502,7 @@
     }
 
     function updateSliderMax(set) {
+        return console.log('TODO updateSliderMax');
         let max = 0;
         if (viewMode === VIEWS.PREVIEW && currentPrint) {
             max = currentPrint.getLayerCount();
@@ -558,8 +559,8 @@
 
         layer = bound(layer, 0, API.var.layer_max);
 
-        UI.layerID.value = layer;
-        UI.layerSlider.value = layer;
+        // UI.layerID.value = layer;
+        // UI.layerSlider.value = layer;
 
         let j,
             slice,
@@ -849,12 +850,12 @@
         });
         if (bounds.min.x === Infinity) {
             if (selectedMeshes.length === 0) {
-                UI.sizeX.value = 0;
-                UI.sizeY.value = 0;
-                UI.sizeZ.value = 0;
-                UI.scaleX.value = 1;
-                UI.scaleY.value = 1;
-                UI.scaleZ.value = 1;
+                // UI.sizeX.value = 0;
+                // UI.sizeY.value = 0;
+                // UI.sizeZ.value = 0;
+                // UI.scaleX.value = 1;
+                // UI.scaleY.value = 1;
+                // UI.scaleZ.value = 1;
             }
             return;
         }
@@ -862,17 +863,17 @@
             dy = bounds.max.y - bounds.min.y,
             dz = bounds.max.z - bounds.min.z,
             scale = unitScale();
-        UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
-        UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
-        UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
-        UI.scaleX.value = UI.scaleX.was = track.scale.x;
-        UI.scaleY.value = UI.scaleY.was = track.scale.y;
-        UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
+        // UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
+        // UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
+        // UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
+        // UI.scaleX.value = UI.scaleX.was = track.scale.x;
+        // UI.scaleY.value = UI.scaleY.was = track.scale.y;
+        // UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
     }
 
     function setOpacity(value) {
         forAllWidgets(function (w) { w.setOpacity(value) });
-        UI.modelOpacity.value = value * 100;
+        // UI.modelOpacity.value = value * 100;
         SPACE.update();
     }
 
@@ -1018,8 +1019,8 @@
     }
 
     function platformUpdateSelected() {
-        UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
-        $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
+        // UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        // $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
         let extruders = settings.device.extruders;
         if (extruders) {
             for (let i=0; i<extruders.length; i++) {
@@ -1225,7 +1226,7 @@
         camTopZ = topZ;
         // create/inject cam stock if stock size other than default
         if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
-            UI.stock.style.display = offset ? 'inline-block' : 'none';
+            // UI.stock.style.display = offset ? 'inline-block' : 'none';
             let csx = sd.camStockX * scale;
             let csy = sd.camStockY * scale;
             let csz = sd.camStockZ * scale;
@@ -1253,9 +1254,9 @@
                 csz += max.z - min.z;
                 csox = min.x + ((max.x - min.x) / 2);
                 csoy = min.y + ((max.y - min.y) / 2);
-                $('stock-width').innerText = (csx/scale).toFixed(2);
-                $('stock-depth').innerText = (csy/scale).toFixed(2);
-                $('stock-height').innerText = (csz/scale).toFixed(2);
+                // $('stock-width').innerText = (csx/scale).toFixed(2);
+                // $('stock-depth').innerText = (csy/scale).toFixed(2);
+                // $('stock-height').innerText = (csz/scale).toFixed(2);
             }
             if (!camStock) {
                 let geo = new THREE.BoxGeometry(1, 1, 1);
@@ -1635,6 +1636,7 @@
     }
 
     function showDialog(which, force) {
+        return console.log('TODO showDialog');
         if (UC.isPopped()) {
             UC.hidePop();
             return;
@@ -1694,9 +1696,9 @@
         settings.devproc[currentDeviceName()] = name;
 
         // update selection display
-        $('selected-mode').innerHTML = API.mode.get();
-        $('selected-device').innerHTML = API.device.get();
-        $('selected-process').innerHTML = name;
+        // $('selected-mode').innerHTML = API.mode.get();
+        // $('selected-device').innerHTML = API.device.get();
+        // $('selected-process').innerHTML = name;
 
         // FDM process settings overridden by device
         if (mode == "FDM") {
@@ -1765,6 +1767,7 @@
     }
 
     function updateDialogLeft() {
+        return console.log('TODO updateDialogLeft');
         let left = UI.ctrlLeft.getBoundingClientRect();
         let right = UI.ctrlRight.getBoundingClientRect();
         UI.catalog.style.left = (left.width + 5) + 'px';
@@ -1828,14 +1831,15 @@
     }
 
     function setFocus(el) {
-        el = [ el || UI.load, UI.import, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
-        for (let es, i=0; i<el.length; i++) {
-            es = el[i];
-            es.focus();
-            if (DOC.activeElement === es) {
-                break;
-            }
-        }
+        console.log('TODO setFocus')
+        // el = [ el || UI.load, UI.import, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
+        // for (let es, i=0; i<el.length; i++) {
+        //     es = el[i];
+        //     es.focus();
+        //     if (DOC.activeElement === es) {
+        //         break;
+        //     }
+        // }
     }
 
     function setViewMode(mode) {
@@ -1868,6 +1872,7 @@
     }
 
     function showModeActive(el) {
+        return console.log('TODO showModeActive');
         [ UI.modeArrange, UI.modeSlice, UI.modePreview, UI.modeExport ].forEach(function(b) {
             if (b === el) {
                 b.classList.add('buton');
@@ -1878,7 +1883,7 @@
     }
 
     function showLayerView(bool) {
-        UI.layerView.style.display = bool ? 'flex' : 'none';
+        // UI.layerView.style.display = bool ? 'flex' : 'none';
     }
 
     function setExpert(bool) {
@@ -1923,14 +1928,14 @@
         API.conf.save();
         clearWidgetCache();
         SPACE.update();
-        UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
-        UI.modeSLA.setAttribute('class', MODE === MODES.SLA ? 'buton' : '');
-        UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
-        UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
-        UI.mode.style.display = lock ? 'none' : '';
-        UI.modeTable.style.display = lock ? 'none' : '';
-        UI.modelOpacity.style.display = MODE === MODES.SLA ? 'none' : '';
-        UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
+        // UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
+        // UI.modeSLA.setAttribute('class', MODE === MODES.SLA ? 'buton' : '');
+        // UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
+        // UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
+        // UI.mode.style.display = lock ? 'none' : '';
+        // UI.modeTable.style.display = lock ? 'none' : '';
+        // UI.modelOpacity.style.display = MODE === MODES.SLA ? 'none' : '';
+        // UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
@@ -1950,8 +1955,9 @@
     }
 
     function setControlsVisible(show) {
-        UI.ctrlLeft.style.display = show ? 'block' : 'none';
-        UI.ctrlRight.style.display = show ? 'block' : 'none';
+        console.log('TODO setControlsVisible');
+        // UI.ctrlLeft.style.display = show ? 'block' : 'none';
+        // UI.ctrlRight.style.display = show ? 'block' : 'none';
     }
 
     // prevent safari from exiting full screen mode

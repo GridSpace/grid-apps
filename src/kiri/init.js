@@ -522,7 +522,7 @@
             let code = devices[API.mode.get_lower()][devicename];
             setDeviceCode(code, devicename);
         }
-        $('selected-device').innerHTML = devicename;
+        // $('selected-device').innerHTML = devicename;
     }
 
     // only for local filters
@@ -535,6 +535,7 @@
     }
 
     function setDeviceCode(code, devicename) {
+        return console.log('TODO setDeviceCode');
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
 
@@ -1010,6 +1011,7 @@
     }
 
     function updateCatalog(files) {
+        return console.log('TODO catalog render');
         let table = UI.catalogList,
             list = [];
         table.innerHTML = '';
@@ -1126,9 +1128,9 @@
             layerID:            $('layer-id'),
             layerSpan:          $('layer-span'),
             layerRange:         $('layer-range'),
-            loading:            $('loading').style,
-            progress:           $('progress').style,
-            prostatus:          $('prostatus'),
+            loading:            $('progress').style,
+            progress:           $('progbar').style,
+            prostatus:          $('progtxt'),
             selection:          $('selection'),
             sizeX:              $('size_x'),
             sizeY:              $('size_y'),
@@ -1184,44 +1186,44 @@
             gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3}),
             gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3}),
 
-            mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
-            modeTable: UC.newTableRow([
-                [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: icons.fdm}) ],
-                [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: icons.sla}) ],
-                [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: icons.laser}) ],
-                [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: icons.cam, id:"modeCAM"}) ]
-            ]),
-            system: UC.newGroup(LANG.su_menu),
-            sysTable: UC.newTableRow([
-                [ UI.setupDevices = UC.newButton(LANG.su_devi, showDevices) ],
-                [ UI.setupTools = UC.newButton(LANG.su_tool, showTools, {modes:CAM}) ],
-                [ UI.setupExport = UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true}) ],
-                [ UI.localButton = UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true}) ]
-            ]),
-            wsFile: UC.newGroup(LANG.fe_menu),
-            wsFileTable: UC.newTableRow([
-                [ UI.import = UC.newButton(LANG.fn_recn, undefined, {class:"asym"}) ],
-                [ UI.load = UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}) ]
-            ]),
-            wsFunc: UC.newGroup(LANG.fn_menu),
-            wsFuncTable: UC.newTableRow([
-                [ UI.modeArrange = UC.newButton(LANG.fn_arra, platform.layout) ],
-                [ UI.modeSlice = UC.newButton(LANG.fn_slic, API.function.slice) ],
-                [ UI.modePreview = UC.newButton(LANG.fn_prev, API.function.print) ],
-                [ UI.modeExport = UC.newButton(LANG.fn_expo, API.function.export) ]
-            ]),
-
-            workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
-            wsTable: UC.newTableRow([
-                [
-                    UC.newButton(LANG.vu_sptp, SPACE.view.top),
-                    UC.newButton(LANG.vu_home, SPACE.view.home),
-                ],[
-                    UI.saveButton =
-                    UC.newButton(LANG.ws_save, API.space.save),
-                    UC.newButton(LANG.ws_cler, API.space.clear)
-                ]
-            ], {modes:ALL, expert:true}),
+            // mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
+            // modeTable: UC.newTableRow([
+            //     [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: icons.fdm}) ],
+            //     [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: icons.sla}) ],
+            //     [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: icons.laser}) ],
+            //     [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: icons.cnc, id:"modeCAM"}) ]
+            // ]),
+            // system: UC.newGroup(LANG.su_menu),
+            // sysTable: UC.newTableRow([
+            //     [ UI.setupDevices = UC.newButton(LANG.su_devi, showDevices) ],
+            //     [ UI.setupTools = UC.newButton(LANG.su_tool, showTools, {modes:CAM}) ],
+            //     [ UI.setupExport = UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true}) ],
+            //     [ UI.localButton = UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true}) ]
+            // ]),
+            // wsFile: UC.newGroup(LANG.fe_menu),
+            // wsFileTable: UC.newTableRow([
+            //     [ UI.import = UC.newButton(LANG.fn_recn, undefined, {class:"asym"}) ],
+            //     [ UI.load = UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}) ]
+            // ]),
+            // wsFunc: UC.newGroup(LANG.fn_menu),
+            // wsFuncTable: UC.newTableRow([
+            //     [ UI.modeArrange = UC.newButton(LANG.fn_arra, platform.layout) ],
+            //     [ UI.modeSlice = UC.newButton(LANG.fn_slic, API.function.slice) ],
+            //     [ UI.modePreview = UC.newButton(LANG.fn_prev, API.function.print) ],
+            //     [ UI.modeExport = UC.newButton(LANG.fn_expo, API.function.export) ]
+            // ]),
+            //
+            // workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
+            // wsTable: UC.newTableRow([
+            //     [
+            //         UC.newButton(LANG.vu_sptp, SPACE.view.top),
+            //         UC.newButton(LANG.vu_home, SPACE.view.home),
+            //     ],[
+            //         UI.saveButton =
+            //         UC.newButton(LANG.ws_save, API.space.save),
+            //         UC.newButton(LANG.ws_cler, API.space.clear)
+            //     ]
+            // ], {modes:ALL, expert:true}),
 
             layout:        UC.newGroup(LANG.op_menu),
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
@@ -1234,9 +1236,9 @@
             units:         UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
 
             // allow modules to insert new items at the bottom of the left menu
-            appendLeft:    UC.checkpoint(),
+            // appendLeft:    UC.checkpoint(),
 
-            settingsGroup: UC.newGroup(LANG.se_menu, control, {region:"right"}),
+            settingsGroup: UC.newGroup(LANG.se_menu, $('settings'), {region:"right"}),
             settingsTable: UC.newTableRow([
                 [
                     UI.settingsLoad =
@@ -1508,74 +1510,74 @@
         }
 
         SPACE.onEnterKey([
-            UI.layerSpan,     function() { API.show.slices() },
-            UI.layerID,       function() { API.show.layer(UI.layerID.value) },
-            UI.scaleX,        selectionScale,
-            UI.scaleY,        selectionScale,
-            UI.scaleZ,        selectionScale,
-            UI.sizeX,         selectionSize,
-            UI.sizeY,         selectionSize,
-            UI.sizeZ,         selectionSize,
-            UI.toolName,      updateTool,
-            UI.toolNum,       updateTool,
-            UI.toolFluteDiam, updateTool,
-            UI.toolFluteLen,  updateTool,
-            UI.toolShaftDiam, updateTool,
-            UI.toolShaftLen,  updateTool,
-            UI.toolTaperTip,  updateTool,
-            $('rot_x'),       selectionRotate,
-            $('rot_y'),       selectionRotate,
-            $('rot_z'),       selectionRotate
+            // UI.layerSpan,     function() { API.show.slices() },
+            // UI.layerID,       function() { API.show.layer(UI.layerID.value) },
+            // UI.scaleX,        selectionScale,
+            // UI.scaleY,        selectionScale,
+            // UI.scaleZ,        selectionScale,
+            // UI.sizeX,         selectionSize,
+            // UI.sizeY,         selectionSize,
+            // UI.sizeZ,         selectionSize,
+            // UI.toolName,      updateTool,
+            // UI.toolNum,       updateTool,
+            // UI.toolFluteDiam, updateTool,
+            // UI.toolFluteLen,  updateTool,
+            // UI.toolShaftDiam, updateTool,
+            // UI.toolShaftLen,  updateTool,
+            // UI.toolTaperTip,  updateTool,
+            // $('rot_x'),       selectionRotate,
+            // $('rot_y'),       selectionRotate,
+            // $('rot_z'),       selectionRotate
         ]);
 
-        UI.layerID.convert = UC.toFloat.bind(UI.layerID);
-        UI.layerSpan.convert = UC.toFloat.bind(UI.layerSpan);
-        UI.layerRange.onclick = function() {
-            UI.layerRange.checked = !(UI.layerRange.checked || false);
-            API.show.slices();
-        };
+        // UI.layerID.convert = UC.toFloat.bind(UI.layerID);
+        // UI.layerSpan.convert = UC.toFloat.bind(UI.layerSpan);
+        // UI.layerRange.onclick = function() {
+        //     UI.layerRange.checked = !(UI.layerRange.checked || false);
+        //     API.show.slices();
+        // };
+        //
+        // $('layer-toggle').onclick = function(ev) {
+        //     let ls = UI.layers.style;
+        //     ls.display = ls.display !== 'block' ? 'block' : 'none';
+        //     UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
+        // };
 
-        $('layer-toggle').onclick = function(ev) {
-            let ls = UI.layers.style;
-            ls.display = ls.display !== 'block' ? 'block' : 'none';
-            UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
-        };
+        // UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
+        //     API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);
+        // };
+        //
+        // UI.layerSlider.ondblclick = function() {
+        //     UI.layerRange.checked = !UI.layerRange.checked;
+        //     API.show.slices();
+        // };
+        //
+        // UI.layerSlider.onmousedown = function(ev) {
+        //     if (ev.shiftKey) UI.layerRange.checked = !UI.layerRange.checked;
+        // };
+        //
+        // UI.layerSlider.onclick = function() {
+        //     API.show.layer(UI.layerSlider.value);
+        // };
+        //
+        // UI.layerSlider.onmousemove = UI.layerSlider.onchange = function() {
+        //     API.show.layer(UI.layerSlider.value);
+        // };
+        //
+        // UI.layerSlider.onmouseup = function() { API.focus() };
+        //
+        // UI.import.setAttribute("import","1");
+        // UI.import.onclick = function() {
+        //     UC.hidePoppers();
+        //     API.dialog.show("catalog");
+        // };
+        //
+        // $('cache-close').onclick = API.dialog.hide;
+        //
+        // UI.toolMetric.onclick = updateTool;
+        // UI.toolType.onchange = updateTool;
 
-        UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
-            API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);
-        };
-
-        UI.layerSlider.ondblclick = function() {
-            UI.layerRange.checked = !UI.layerRange.checked;
-            API.show.slices();
-        };
-
-        UI.layerSlider.onmousedown = function(ev) {
-            if (ev.shiftKey) UI.layerRange.checked = !UI.layerRange.checked;
-        };
-
-        UI.layerSlider.onclick = function() {
-            API.show.layer(UI.layerSlider.value);
-        };
-
-        UI.layerSlider.onmousemove = UI.layerSlider.onchange = function() {
-            API.show.layer(UI.layerSlider.value);
-        };
-
-        UI.layerSlider.onmouseup = function() { API.focus() };
-
-        UI.import.setAttribute("import","1");
-        UI.import.onclick = function() {
-            UC.hidePoppers();
-            API.dialog.show("catalog");
-        };
-
-        $('cache-close').onclick = API.dialog.hide;
-
-        UI.toolMetric.onclick = updateTool;
-        UI.toolType.onchange = updateTool;
-
-        $('apphelp').onclick = API.help.show;
+        $('app-name').onclick = API.help.show;
 
         SPACE.platform.setSize(
             settings().device.bedWidth,
@@ -1583,7 +1585,7 @@
             settings().device.bedHeight
         );
 
-        UI.selection.classList.add('compact');
+        // UI.selection.classList.add('compact');
 
         if (dark) {
             SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
@@ -1765,7 +1767,7 @@
         API.dialog.update();
 
         // show version on startup
-        API.show.alert(`${LANG.version} ${KIRI.version}`);
+        $('app-vers').innerHTML = KIRI.version;
 
         if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
 

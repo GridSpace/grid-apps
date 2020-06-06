@@ -235,7 +235,7 @@ const script = {
         "moto/space",
         "moto/load-stl",
         "moto/db",
-        "moto/ui",
+        "kiri/ui",
         "kiri/lang",
         "kiri/lang-en",
         "kiri/fill",
