@@ -23,7 +23,7 @@
 <body class="col">
     <div id="container"></div>
     <div id="top" class="row">
-        <div id="app-vers">version</div>
+        <div id="app-mode"></div>
         <div class="grow"></div>
         <div id="app-name">Kiri:Moto</div>
         <div class="grow"></div>
@@ -31,6 +31,7 @@
     </div>
     <div id="mid-sep"></div>
     <div id="mid" class="grow row">
+        <div id="curtain" class="j-center a-center">loading...</div>
         <div id="mid-lcol" class="col j-center">
             <div id="lt-top"></div>
             <div id="lt-setup" class="lt-menu">
@@ -45,7 +46,7 @@
                         <i class="fas fa-list"></i>
                         <label>recent</label>
                     </div>
-                    <div id="file-recent">
+                    <div id="file-import">
                         <i class="fas fa-file-upload"></i>
                         <label>import<label>
                     </div>
@@ -87,14 +88,15 @@
                     </div>
                 </div>
             </div>
-            <div id="lt-rotate" class="lt-menu">
+            <div id="lt-sep" class="noshow"></div>
+            <div id="lt-rotate" class="lt-menu noshow">
                 <i class="fas fa-sync-alt"></i>
                 <label>rotate</label>
                 <div id="pop-view" class="pop-lcol row">
 
                 </div>
             </div>
-            <div id="lt-scale" class="lt-menu">
+            <div id="lt-scale" class="lt-menu noshow">
                 <i class="fas fa-expand"></i>
                 <label>scale</label>
                 <div id="pop-view" class="pop-lcol row">
@@ -115,7 +117,7 @@
                     <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
                     <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
                 </div>
-                <div id="mod-setup" class="mdialog">
+                <div id="mod-setup" class="mdialog col">
                     <div id="device">temp device</div>
                     <div id="layers">temp layers</div>
                     <div id="langpop">temp language</div>
@@ -148,7 +150,7 @@
             </div>
         </div>
     </div>
-    <div id="bot" class="col a-center">
+    <div id="end" class="col a-center">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
         <div id="bottom"></div>
         <div id="alert-area">

@@ -1018,7 +1018,10 @@
     }
 
     function platformUpdateSelected() {
-        // UI.selection.style.display = platform.selected_count() ? 'inline' : 'none';
+        let menu_show = platform.selected_count() ? 'flex': '';
+        UI.scale.style.display = menu_show;
+        UI.rotate.style.display = menu_show;
+        UI.menusep.style.display = menu_show;
         // $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
         let extruders = settings.device.extruders;
         if (extruders) {
@@ -1627,7 +1630,7 @@
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["print","help","files","local"].forEach(function(name) {
+        ["setup","print","help","files","local"].forEach(function(name) {
             UI[name].style.display = name === which ? 'flex' : '';
         });
 
@@ -1652,6 +1655,7 @@
     }
 
     function hideModal() {
+// console.trace({hideModal: modalShowing()});
         if (!modalShowing()) {
             return;
         }
@@ -1664,16 +1668,8 @@
             start();
     }
 
-    function hideDialog() {
-        hideModal();
-    }
-
-    function showDialog(which) {
-        showModal(which);
-    }
-
     function showCatalog() {
-        showDialog("files");
+        showModal("files");
     }
 
     function getSettings() {
@@ -1730,7 +1726,7 @@
         }
 
         if (!named) {
-            hideDialog();
+            hideModal();
         }
 
         updateFields();
@@ -1787,7 +1783,7 @@
 
     function showSettings() {
         updateSettingsList();
-        showDialog("settings");
+        showModal("settings");
     }
 
     function updateDialogLeft() {
@@ -1805,7 +1801,7 @@
     }
 
     function showHelpFile(local) {
-        hideDialog();
+        hideModal();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
             return;
@@ -1923,11 +1919,11 @@
 
     function setMode(mode, lock, then) {
         hideModal();
-        hideDialog();
         if (!MODES[mode]) {
             DBUG.log("invalid mode: "+mode);
             mode = 'FDM';
         }
+        $('app-mode').innerHTML = mode;
         settings.mode = mode;
         // restore cached device profile for this mode
         if (settings.cdev[mode]) {

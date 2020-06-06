@@ -1,3 +1,7 @@
+:root {
+    --fg-blue-gray: #89a;
+    --bg-blue-gray: #abc;
+}
 setpopsetpopa, a:hover, a:visited {
     border: none;
     outline: none;
@@ -88,6 +92,9 @@ th, tr, td {
     user-select: none;
 }
 
+.noshow {
+    display: none;
+}
 .row {
     flex-direction: row;
 }
@@ -133,9 +140,20 @@ th, tr, td {
  margin-bottom: -14px !important;
 }
 
+#curtain {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    background-color: #fff;
+    font-family: 'Russo One', sans-serif;
+    z-index: 100;
+}
+
 #container {
     position: fixed;
-    z-index: -1000;
+    z-index: -1;
     width: 100%;
     height: 100%;
 }
@@ -154,7 +172,7 @@ th, tr, td {
     margin: 0 5px 0 5px;
 }
 
-#app-vers, #app-acct {
+#app-mode, #app-acct {
     width: 125px;
 }
 
@@ -178,14 +196,20 @@ th, tr, td {
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;
-    background-color: #abc;
+    background-color: var(--bg-blue-gray);
+    left: -5px;
+}
+
+#lt-sep {
+    background-color: var(--bg-blue-gray);
+    height: 10px;
     left: -5px;
 }
 
 #lt-end {
     height: 10px;
     border-bottom-right-radius: 10px;
-    background-color: #abc;
+    background-color: var(--bg-blue-gray);
     left: -5px;
 }
 
@@ -206,7 +230,7 @@ th, tr, td {
     border: 1px solid rgba(0,0,0,0);
     border-radius: 3px;
     width: 60px;
-    color: #89a;
+    color: var(--fg-blue-gray);
 }
 
 .pop-lcol > div:hover {
@@ -222,7 +246,7 @@ th, tr, td {
     padding: 5px 5px 5px 10px;
     border: 1px solid rgba(0,0,0,0);
     border-radius: 3px;
-    color: #89a;
+    color: var(--fg-blue-gray);
     left: -5px;
     background-color: rgba(255,255,255,0.75);
 }
@@ -246,7 +270,7 @@ th, tr, td {
     display: flex;
 }
 
-#bot {
+#end {
     text-align: center;
     font-size: smaller;
     height: 25px;
@@ -282,7 +306,7 @@ th, tr, td {
 #modal {
     display: none;
     position: fixed;
-    z-index: 10000;
+    z-index: 20;
     transform: translateY(-50%);
     top: 50%;
     left: 0px;
@@ -303,6 +327,7 @@ th, tr, td {
 .mdialog {
     display: none;
     padding: 10px;
+    min-height: 20px;
     font-size: smaller;
     font-family: monospace;
     background-color: rgba(255,255,255,0.75);
@@ -315,7 +340,7 @@ th, tr, td {
 }
 #mod-x {
     position: absolute;
-    z-index: 30000;
+    z-index: 30;
     bottom: -20px;
     right: 5px;
 }
@@ -406,14 +431,14 @@ th, tr, td {
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 0;
-    background-color: #abc;
+    background-color: var(--bg-blue-gray);
 }
 #set-end {
     color: black;
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 10px;
-    background-color: #abc;
+    background-color: var(--bg-blue-gray);
     height: 10px;
 }
 .set-group {
@@ -424,7 +449,7 @@ th, tr, td {
     border-radius: 3px;
     margin: 2px 0 2px 4px;
     padding: 8px 10px 8px 5px;
-    color: #89a;
+    color: var(--fg-blue-gray);
     right: -5px;
 }
 .set-group:hover {

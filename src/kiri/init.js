@@ -1084,19 +1084,23 @@
                 text:           $('alert-text')
             },
             container:          container,
-            assets:             assets,
-            control:            control,
-            ctrlLeft:           $('control-left'),
-            ctrlRight:          $('control-right'),
-            layerView:          $('layer-view'),
-            layerSlider:        $('layer-slider'),
-            modelOpacity:       $('opacity'),
+            // assets:             assets,
+            // control:            control,
+            // ctrlLeft:           $('control-left'),
+            // ctrlRight:          $('control-right'),
+            // layerView:          $('layer-view'),
+            // layerSlider:        $('layer-slider'),
+            // modelOpacity:       $('opacity'),
+            menusep:            $('lt-sep'),
+            rotate:             $('lt-rotate'),
+            scale:              $('lt-scale'),
 
             modal:              $('modal'),
             help:               $('mod-help'),
             print:              $('mod-print'),
             local:              $('mod-local'),
             files:              $('mod-files'),
+            setup:              $('mod-setup'),
             catalogBody:        $('catalogBody'),
             catalogList:        $('catalogList'),
 
@@ -1579,7 +1583,17 @@
         // UI.toolMetric.onclick = updateTool;
         // UI.toolType.onchange = updateTool;
 
+        // bind interface action elements
         $('app-name').onclick = API.help.show;
+        $('lt-setup').onclick = () => { API.modal.show('setup') };
+        $('file-recent').onclick = () => { API.modal.show('files') };
+        $('file-import').onclick = API.event.import;
+        $('act-slice').onclick = API.function.slice;
+        $('act-preview').onclick = API.function.print;
+        $('act-export').onclick = API.function.export;
+        $('view-arrange').onclick = API.platform.layout;
+        $('view-top').onclick = SPACE.view.top;
+        $('view-home').onclick = SPACE.view.home;
 
         SPACE.platform.setSize(
             settings().device.bedWidth,
@@ -1669,8 +1683,6 @@
 
         let current = settings(),
             control = current.controller;
-
-        SPACE.scene.freeze(true);
 
         platform.deselect();
         CATALOG.addFileListener(updateCatalog);
@@ -1765,9 +1777,6 @@
         // add ability to override
         API.show.controls(API.feature.controls);
 
-        // show version on startup
-        $('app-vers').innerHTML = KIRI.version;
-
         // enable modal hiding
         $('mod-x').onclick = API.modal.hide;
 
@@ -1776,7 +1785,8 @@
         // send init-done event
         API.event.emit('init-done', STATS);
 
-        SPACE.scene.freeze(false);
+        // lift curtain
+        $('curtain').style.display = 'none';
     }
 
     // if a language needs to load, the script is injected and loaded
