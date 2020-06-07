@@ -1,8 +1,9 @@
 :root {
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
+    --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
 }
-a:hover, a:visited {
+a, a:hover, a:visited {
     border: none;
     color: inherit;
     text-decoration: none;
@@ -240,7 +241,7 @@ th, tr, td {
 
 #mid-sep {
     height: 1px;
-    background-image: linear-gradient(to right, #ddd, #666, #ddd);
+    background-image: var(--gradbar);
 }
 
 #lt-top {
@@ -270,7 +271,6 @@ th, tr, td {
     left: 100%;
     z-index: 10;
 }
-
 .pop-lcol > div {
     flex-direction: column;
     align-items: center;
@@ -282,7 +282,6 @@ th, tr, td {
     width: 60px;
     color: var(--fg-gray);
 }
-
 .pop-lcol > div:hover {
     background-color: #eee;
     border: 1px solid #aaa;
@@ -300,24 +299,34 @@ th, tr, td {
     left: -5px;
     background-color: rgba(255,255,255,0.75);
 }
-
 .lt-menu svg {
     font-size: 40px;
     text-align: center;
 }
-
 .lt-menu label {
     font-size: smaller;
 }
-
 .lt-menu:hover {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
 }
-
 .lt-menu:hover .pop-lcol {
     display: flex;
+}
+
+.ext-buttons button {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-grow: 1;
+    margin-top: 3px;
+}
+.txt-sel {
+    background-color: #eee;
+}
+.txt-sel button {
+    background-color: #ccc;
 }
 
 #end {
@@ -379,7 +388,7 @@ th, tr, td {
     padding: 10px;
     min-height: 20px;
     font-size: smaller;
-    font-family: monospace;
+    xfont-family: monospace;
     background-color: rgba(255,255,255,0.75);
 }
 
@@ -400,6 +409,53 @@ th, tr, td {
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     background-color: var(--bg-gray);
+}
+
+#help p {
+    margin: 2px;
+}
+#help a {
+    font-weight: bold;
+    text-decoration: underline;
+}
+#help #kiri-version {
+    font-weight: bold;
+}
+#help .header {
+    background-image: var(--gradbar);
+    white-space: nowrap;
+    text-align: center;
+    justify-content: center;
+    border-radius: 5px;
+    padding: 1px 0 2px 0;
+    margin-bottom: 5px;
+    font-family: monospace;
+    color: white;
+}
+#help .title {
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    font-size: larger;
+    font-weight: bold;
+    padding: 10px;
+}
+#help .content {
+    white-space: nowrap;
+    flex-direction: column;
+    font-family: monospace;
+    margin: 3px 0 8px 0;
+}
+#help .footer {
+    font-family: monospace;
+    align-items: center;
+    white-space: nowrap;
+    flex-direction: column;
+    padding: 8px 0 3px 0;
+    border-top: 1px dashed black;
+}
+#help th, #help td {
+    font-family: monospace;
 }
 
 .dev-type {
@@ -423,9 +479,10 @@ th, tr, td {
     width: 33%;
 }
 .t-group {
-    background-image: linear-gradient(to right, #ddd, #666, #ddd);
+    background-image: var(--gradbar);
     white-space: nowrap;
     text-align: center;
+    justify-content: center;
     border-radius: 2px;
     padding: 1px 0 2px 0;
     margin: 5px 0 5px 0;

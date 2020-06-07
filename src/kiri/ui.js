@@ -267,6 +267,7 @@
         return div;
     }
 
+    let lastTxt = null;
     let lastPop = null;
     let savePop = null;
 
@@ -289,7 +290,6 @@
         let opt = options || {},
             row = newDiv(options),
             btn = DOC.createElement("button"),
-            box = DOC.createElement("div"),
             pop = DOC.createElement("div"),
             txt = DOC.createElement("textarea"),
             area = opt.area;
@@ -298,7 +298,6 @@
         txt.setAttribute("spellcheck", "false");
         txt.setAttribute("style", "resize: none");
 
-        box.appendChild(pop);
         btn.appendChild(DOC.createTextNode("edit"));
 
         btn.onclick = function(ev) {
@@ -311,7 +310,6 @@
                 if (fc) area.removeChild(fc);
                 area.appendChild(txt);
                 // first time, button click / show
-                btn.parentNode.appendChild(box);
                 btn.parentNode.onclick = btn.onclick;
                 txt.scrollTop = 0;
                 txt.scrollLeft = 0;
@@ -327,9 +325,14 @@
                 let showing = pop === lastPop;
                 hidePop();
                 if (!showing) {
+                    if (lastTxt) {
+                        lastTxt.classList.remove('txt-sel');
+                    }
+                    row.classList.add('txt-sel');
                     savePop = inputAction;
                     pop.style.display = "flex";
                     lastPop = pop;
+                    lastTxt = row;
                     txt.focus();
                 } else {
                     inputAction();
@@ -510,24 +513,27 @@
     }
 
     function newButton(label, action, options) {
-        let b = DOC.createElement('button'),
-            t = DOC.createTextNode(label);
+        let opt = options || {},
+            b = DOC.createElement('button');
 
         b.onclick = function() {
             hidePoppers();
             if (action) action();
         };
 
-        if (options) {
-            if (options.class) b.classList.add(options.class);
-            if (options.icon) {
-                let d = DOC.createElement('div');
-                d.innerHTML = options.icon;
-                b.appendChild(d);
-            }
+        if (opt.class) {
+            opt.class.split(' ').forEach(ce => {
+                b.classList.add(ce);
+            });
         }
-
-        b.appendChild(t);
+        if (opt.icon) {
+            let d = DOC.createElement('div');
+            d.innerHTML = opt.icon;
+            b.appendChild(d);
+        }
+        if (label) {
+            b.appendChild(DOC.createTextNode(label));
+        }
 
         addModeControls(b, options);
         addId(b, options);
@@ -560,6 +566,11 @@
         let row = addCollapsableElement((options && options.noadd) ? null : addTo);
         if (children) children.forEach(function (c) { row.appendChild(c) });
         addModeControls(row, options);
+        if (options && options.class) {
+            options.class.split(' ').forEach(ce => {
+                row.classList.add(ce);
+            });
+        }
         return row;
     }
 

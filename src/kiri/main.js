@@ -1807,14 +1807,13 @@
         }
         ajax(local, function(html) {
             UI.help.innerHTML = html;
-            $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
+            $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
             showModal('help');
         });
         API.event.emit('help.show', local);
     }
 
     function showLocal() {
-//        $('local-close').onclick = hideModal;
         showModal('local');
         fetch("/api/grid_local")
             .then(r => r.json())
@@ -1901,7 +1900,7 @@
     }
 
     function setExpert(bool) {
-        UC.setExpert(UI.expert.checked = control.expert = bool);
+        UC.setExpert(UI.expert.checked = bool);
     }
 
     function getMode() {

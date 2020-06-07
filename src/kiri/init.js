@@ -1167,12 +1167,12 @@
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
             extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true, area:gcode}),
             extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
-            extActions:       UC.newTableRow([[
-                UI.extPrev = UC.newButton("<"),
-                UI.extAdd = UC.newButton("+"),
-                UI.extDel = UC.newButton("-"),
-                UI.extNext = UC.newButton(">")
-            ]], {modes:FDM, expert:true}),
+            extActions:       UC.newRow([
+                UI.extPrev = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
+                UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
+                UI.extDel = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
+                UI.extNext = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
+            ], {modes:FDM, expert:true, class:"ext-buttons"}),
 
             gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", inline:true, modes:GCODE}),
             gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),

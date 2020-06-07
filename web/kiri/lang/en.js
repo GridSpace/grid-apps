@@ -112,7 +112,7 @@ kiri.lang['en-us'] = {
     ws_cler:        "Clear",
 
     // OPTIONS
-    op_menu:        "options",
+    op_menu:        "preferences",
     op_xprt_s:      "expert",
     op_xprt_l:      "enable expert options",
     op_dark_s:      "dark mode",
