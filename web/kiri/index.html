@@ -27,7 +27,21 @@
         <div class="grow"></div>
         <div id="app-name">Kiri:Moto</div>
         <div class="grow"></div>
-        <div id="app-acct"><i class="fas fa-user-cog"></i></div>
+        <div id="app-acct">
+            <i class="fas fa-user-cog"></i>
+            <div id="acct-pop" class="col">
+                <div class="col">
+                    <div id="acct-lang">
+                        <label><i class="fas fa-caret-left"></i>&nbsp;language</label>
+                        <div id="lang-pop" class="col">
+                            <div id="lset-en">english</div>
+                            <div id="lset-da">danish</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
     <div id="mid-sep"></div>
     <div id="mid" class="grow row">
@@ -37,6 +51,20 @@
             <div id="lt-setup" class="lt-menu">
                 <i class="fas fa-cogs"></i>
                 <label>setup</label>
+                <div id="set-pop" class="pop-lcol row">
+                    <div id="set-device">
+                        <i class="fas fa-tablet-alt"></i>
+                        <label>device</label>
+                    </div>
+                    <div id="set-tools">
+                        <i class="fas fa-tools"></i>
+                        <label>tools<label>
+                    </div>
+                    <div id="set-prefs">
+                        <i class="fas fa-sliders-h"></i>
+                        <label>prefs<label>
+                    </div>
+                </div>
             </div>
             <div id="lt-file" class="lt-menu">
                 <i class="fas fa-folder"></i>
@@ -92,24 +120,29 @@
             <div id="lt-rotate" class="lt-menu noshow">
                 <i class="fas fa-sync-alt"></i>
                 <label>rotate</label>
-                <div id="pop-view" class="pop-lcol row">
+                <div id="pop-rotate" class="pop-lcol row">
 
                 </div>
             </div>
             <div id="lt-scale" class="lt-menu noshow">
                 <i class="fas fa-expand"></i>
                 <label>scale</label>
-                <div id="pop-view" class="pop-lcol row">
+                <div id="pop-scale" class="pop-lcol row">
 
                 </div>
+            </div>
+            <div id="lt-nozzle" class="lt-menu noshow">
+                <i class="fas fa-map-marker"></i>
+                <label>nozzle</label>
+                <div id="pop-nozzle" class="pop-lcol row"></div>
             </div>
             <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
             <div id="modal">
                 <div class="col">
-                    <div id="mod-top" class="row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
 
+                <div class="mod-top row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
                 <div id="mod-help" class="mdialog col">
                     <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
                     <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
@@ -118,18 +151,69 @@
                     <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
                 </div>
                 <div id="mod-setup" class="mdialog col">
-                    <div id="device">temp device</div>
-                    <div id="layers">temp layers</div>
-                    <div id="langpop">temp language</div>
+                    <div class="col a-center">select device type</div>
+                    <div class="row j-center">
+                        <button id="mode-fdm" class="dev-type"><label>FDM</label></button>
+                        <button id="mode-sla" class="dev-type"><label>SLA</label></button>
+                        <button id="mode-cam" class="dev-type"><label>CNC</label></button>
+                        <button id="mode-laser" class="dev-type"><label>LASER</label></button>
+                    </div>
+                    <div class="row">
+                        <div id="devices" class="col"><select id="device-list" size="15"></select></div>
+                        <div id="device" class="col"></div>
+                    </div>
                 </div>
                 <div id="mod-files" class="mdialog"></div>
-                <div id="mod-tools" class="mdialog"></div>
+                <div id="mod-tools" class="mdialog">
+                    <div class="col">
+                        <div class="row">
+                            <label>tool</label>
+                            <label>detail</label>
+                            <label>view</label>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <select id="tool-select" size="15"></select>
+                            </div>
+                            <div class="col">
+                                <div class="row"><label>type</label>
+                                    <select id="tool-type">
+                                        <option value="endmill" selected>end</option>
+                                        <option value="ballmill">ball</option>
+                                        <option value="tapermill">taper</option>
+                                    </select>
+                                </div>
+                                <div class="row"><label>name</label><input id="tool-name" size="15"></input></div>
+                                <div class="row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
+                                <div class="row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
+                                <div class="grouphead">shaft</div>
+                                <div class="row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
+                                <div class="row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
+                                <div class="grouphead">flute</div>
+                                <div class="row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
+                                <div class="row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
+                                <div class="grouphead">taper</div>
+                                <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
+                                <div class="row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
+                            </div>
+                            <div id="tool-view" class="col"></div>
+                        </div>
+                        <div id="tool-action" class="row">
+                            <button id="tool-add">+</button>
+                            <button id="tool-del">-</button>
+                            <span id="tool-spacer"></span>
+                            <button id="tools-save">save</button>
+                            <button id="tools-close">done</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="mod-prefs" class="mdialog col"></div>
                 <div id="mod-local" class="mdialog"></div>
                 <div id="mod-print" class="mdialog"></div>
                 <!-- hidden file input loader -->
                 <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
+                <div class="mod-end"></div>
 
-                    <div id="mod-end"></div>
                 </div>
             </div>
         </div>
@@ -152,7 +236,9 @@
     </div>
     <div id="end" class="col a-center">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-        <div id="bottom"></div>
+        <div id="bottom">
+            <div id="layers">layers</div>
+        </div>
         <div id="alert-area">
             <div id="alert-border">
                 <div id="alert-text">alerts<br>alerts<br>alerts</div>

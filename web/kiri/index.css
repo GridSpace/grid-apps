@@ -1,6 +1,6 @@
 :root {
-    --fg-blue-gray: #89a;
-    --bg-blue-gray: #abc;
+    --fg-gray: #495057;
+    --bg-gray: rgba(0,0,0,0.25);
 }
 setpopsetpopa, a:hover, a:visited {
     border: none;
@@ -29,6 +29,7 @@ div {
     position: relative;
 }
 button {
+    display: flex;
     outline: none;
     border: 1px solid #ccc;
     border-radius: 3px;
@@ -179,6 +180,53 @@ th, tr, td {
 #app-acct {
     justify-content: flex-end;
 }
+#app-acct:hover #acct-pop {
+    display: flex;
+}
+#acct-pop {
+    display: none;
+    color: var(--fg-gray);
+    font-family: sans-serif;
+    position: absolute;
+    z-index: 10;
+    top: 100%;
+    right: -3px;
+}
+#acct-pop > div {
+    margin-top: 10px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 5px 0 5px 0;
+}
+#acct-pop > div > div {
+    padding: 0 5px 0 5px;
+}
+#acct-pop > div:hover {
+    color: #000;
+    background-color: #f4f4f4;
+}
+#acct-lang:hover #lang-pop {
+    display: flex;
+}
+#lang-pop {
+    display: none;
+    position: absolute;
+    right: 100%;
+    top: -6px;
+    align-items: stretch;
+    text-align: right;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+#lang-pop > div {
+    padding: 4px 6px 4px 6px;
+}
+#lang-pop > div:hover {
+    color: #000;
+    background-color: #f4f4f4;
+}
 
 #mid {
     pointer-events: none;
@@ -196,12 +244,12 @@ th, tr, td {
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;
-    background-color: var(--bg-blue-gray);
+    background-color: var(--bg-gray);
     left: -5px;
 }
 
 #lt-sep {
-    background-color: var(--bg-blue-gray);
+    background-color: var(--bg-gray);
     height: 10px;
     left: -5px;
 }
@@ -209,7 +257,7 @@ th, tr, td {
 #lt-end {
     height: 10px;
     border-bottom-right-radius: 10px;
-    background-color: var(--bg-blue-gray);
+    background-color: var(--bg-gray);
     left: -5px;
 }
 
@@ -230,7 +278,7 @@ th, tr, td {
     border: 1px solid rgba(0,0,0,0);
     border-radius: 3px;
     width: 60px;
-    color: var(--fg-blue-gray);
+    color: var(--fg-gray);
 }
 
 .pop-lcol > div:hover {
@@ -246,7 +294,7 @@ th, tr, td {
     padding: 5px 5px 5px 10px;
     border: 1px solid rgba(0,0,0,0);
     border-radius: 3px;
-    color: var(--fg-blue-gray);
+    color: var(--fg-gray);
     left: -5px;
     background-color: rgba(255,255,255,0.75);
 }
@@ -313,7 +361,7 @@ th, tr, td {
     right: 0px;
     bottom: 0px;
     height: 300px;
-    background-color: rgba(0,0,0,0.25);
+    background-color: var(--bg-gray);
     border-bottom: 1px solid black;
     border-top: 1px solid black;
     overflow: hidden;
@@ -332,11 +380,12 @@ th, tr, td {
     font-family: monospace;
     background-color: rgba(255,255,255,0.75);
 }
-#mod-top {
+
+.mod-top {
     height: 10px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    background-color: rgba(0,0,0,0.25);
+    background-color: var(--bg-gray);
 }
 #mod-x {
     position: absolute;
@@ -344,11 +393,23 @@ th, tr, td {
     bottom: -20px;
     right: 5px;
 }
-#mod-end {
+.mod-end {
     height: 10px;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
-    background-color: rgba(0,0,0,0.25);
+    background-color: var(--bg-gray);
+}
+
+.dev-type {
+    font-family: 'Russo One', sans-serif;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    margin: 5px;
+}
+.dev-sel {
+    color: #033;
+    background-color: #bbb;
 }
 
 #slider {
@@ -431,14 +492,14 @@ th, tr, td {
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 0;
-    background-color: var(--bg-blue-gray);
+    background-color: var(--bg-gray);
 }
 #set-end {
     color: black;
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 10px;
-    background-color: var(--bg-blue-gray);
+    background-color: var(--bg-gray);
     height: 10px;
 }
 .set-group {
@@ -449,7 +510,7 @@ th, tr, td {
     border-radius: 3px;
     margin: 2px 0 2px 4px;
     padding: 8px 10px 8px 5px;
-    color: var(--fg-blue-gray);
+    color: var(--fg-gray);
     right: -5px;
 }
 .set-group:hover {
@@ -470,7 +531,7 @@ th, tr, td {
     margin-right: 5px;
     padding: 5px;
 }
-.set-pop label {
+.var-row label {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
 }

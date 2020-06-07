@@ -361,7 +361,7 @@ kiri.lang['en-us'] = {
     or_topp_l:      "origin is references from the top of objects",
 
     // FDM ADVANCED
-    ad_menu:        "advanced",
+    ad_menu:        "expert",
     ad_rdst_s:      "retract dist",
     ad_rdst_l:      "amount to retract filament\nfor long moves. in millimeters",
     ad_rrat_s:      "retract rate",

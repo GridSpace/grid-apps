@@ -808,8 +808,6 @@
                         callback();
                     }
                 }
-                // update slider window
-                API.dialog.update();
                 // handle slicing errors
                 if (error && !errored) {
                     errored = true;
@@ -1019,8 +1017,10 @@
 
     function platformUpdateSelected() {
         let menu_show = platform.selected_count() ? 'flex': '';
+        let ext_show = platform.selected_count() && MODE === 'FDM' ? 'flex': '';
         UI.scale.style.display = menu_show;
         UI.rotate.style.display = menu_show;
+        UI.nozzle.style.display = menu_show;
         UI.menusep.style.display = menu_show;
         // $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
         let extruders = settings.device.extruders;
@@ -1281,7 +1281,7 @@
             camStock.material.visible = settings.mode === 'CAM';
             camTopZ = csz;
         } else if (camStock) {
-            UI.stock.style.display = 'none';
+            // UI.stock.style.display = 'none';
             SPACE.platform.remove(camStock);
             camStock = null;
             camTopZ = topZ;
@@ -1630,7 +1630,7 @@
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["setup","print","help","files","local"].forEach(function(name) {
+        ["help","setup","tools","prefs","files","print","local"].forEach(function(name) {
             UI[name].style.display = name === which ? 'flex' : '';
         });
 
@@ -1725,9 +1725,9 @@
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
         }
 
-        if (!named) {
-            hideModal();
-        }
+        // if (!named) {
+        //     hideModal();
+        // }
 
         updateFields();
         API.conf.update();
@@ -1778,7 +1778,6 @@
             row.appendChild(del);
             table.appendChild(row);
         });
-        API.dialog.update();
     }
 
     function showSettings() {
@@ -1801,7 +1800,7 @@
     }
 
     function showHelpFile(local) {
-        hideModal();
+        // hideModal();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
             return;
@@ -1815,7 +1814,7 @@
     }
 
     function showLocal() {
-        $('local-close').onclick = hideModal;
+//        $('local-close').onclick = hideModal;
         showModal('local');
         fetch("/api/grid_local")
             .then(r => r.json())
@@ -1918,12 +1917,12 @@
     }
 
     function setMode(mode, lock, then) {
-        hideModal();
         if (!MODES[mode]) {
             DBUG.log("invalid mode: "+mode);
             mode = 'FDM';
         }
         $('app-mode').innerHTML = mode;
+        $('set-tools').style.display = mode === 'CAM' ? '' : 'none';
         settings.mode = mode;
         // restore cached device profile for this mode
         if (settings.cdev[mode]) {
@@ -1943,6 +1942,14 @@
         API.conf.save();
         clearWidgetCache();
         SPACE.update();
+        ["fdm","sla","cam","laser"].forEach(dev => {
+            let cl = $(`mode-${dev}`).classList;
+            if (dev === mode.toLowerCase()) {
+                cl.add("dev-sel");
+            } else {
+                cl.remove("dev-sel");
+            }
+        });
         // UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
         // UI.modeSLA.setAttribute('class', MODE === MODES.SLA ? 'buton' : '');
         // UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
@@ -1959,7 +1966,7 @@
         triggerSettingsEvent();
         platformUpdateSelected();
         updateFields();
-        if (settings.device.new) {
+        if (modalShowing()) {
             API.show.devices();
         }
         API.event.emit("mode.set", mode);

@@ -510,7 +510,7 @@
     }
 
     function getSelectedDevice() {
-        return UI.deviceSelect.options[UI.deviceSelect.selectedIndex].text;
+        return UI.deviceList.options[UI.deviceList.selectedIndex].text;
     }
 
     function selectDevice(devicename, lock) {
@@ -535,7 +535,6 @@
     }
 
     function setDeviceCode(code, devicename) {
-        return console.log('TODO setDeviceCode');
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
 
@@ -559,19 +558,21 @@
             if (dev.extruders) {
                 let ext = API.lists.extruders = [];
                 dev.internal = 0;
-                let selext = $('sel-ext');
+                let selext = $('pop-nozzle');
                 selext.innerHTML = '';
                 for (let i=dev.extruders.length-1; i>=0; i--) {
+                    let d = DOC.createElement('div');
                     let b = DOC.createElement('button');
                     b.appendChild(DOC.createTextNode(i));
-                    b.setAttribute('id', `sel-ext-${i}`);
+                    d.appendChild(b);
+                    // b.setAttribute('id', `pop-nozzle-${i}`);
                     b.onclick = function() {
                         API.selection.for_widgets(w => {
                             current.widget[w.id] = {extruder: i};
                         });
                         API.platform.update_selected();
                     };
-                    selext.appendChild(b);
+                    selext.appendChild(d);
                     ext.push({id:i, name:i});
                 }
             }
@@ -627,9 +628,9 @@
                 e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
             });
 
-            UI.deviceSave.disabled = !local;
-            UI.deviceDelete.disabled = !local;
-            UI.deviceAdd.disabled = dev.noclone;
+            // UI.deviceSave.disabled = !local;
+            // UI.deviceDelete.disabled = !local;
+            // UI.deviceAdd.disabled = dev.noclone;
 
             API.view.update_fields();
             platform.update_size();
@@ -665,9 +666,6 @@
     }
 
     function renderDevices(devices) {
-        UI.devices.onclick = UC.hidePop;
-        UC.hidePop();
-
         let selectedIndex = -1,
             selected = API.device.get(),
             devs = settings().devices;
@@ -687,33 +685,33 @@
 
         devices = devices.sort();
 
-        UI.deviceClose.onclick = API.dialog.hide;
-        UI.deviceSave.onclick = function() {
-            API.function.clear();
-            API.conf.save();
-            showDevices();
-        };
-        UI.deviceAdd.onclick = function() {
-            API.function.clear();
-            cloneDevice();
-            showDevices();
-        };
-        UI.deviceDelete.onclick = function() {
-            API.function.clear();
-            removeLocalDevice(getSelectedDevice());
-            showDevices();
-        };
-
-        UI.deviceAll.onclick = function() {
-            API.show.favorites(false);
-            showDevices();
-        };
-        UI.deviceFavorites.onclick = function() {
-            API.show.favorites(true);
-            showDevices();
-        };
-
-        UI.deviceSelect.innerHTML = '';
+        // UI.deviceClose.onclick = API.dialog.hide;
+        // UI.deviceSave.onclick = function() {
+        //     API.function.clear();
+        //     API.conf.save();
+        //     showDevices();
+        // };
+        // UI.deviceAdd.onclick = function() {
+        //     API.function.clear();
+        //     cloneDevice();
+        //     showDevices();
+        // };
+        // UI.deviceDelete.onclick = function() {
+        //     API.function.clear();
+        //     removeLocalDevice(getSelectedDevice());
+        //     showDevices();
+        // };
+        //
+        // UI.deviceAll.onclick = function() {
+        //     API.show.favorites(false);
+        //     showDevices();
+        // };
+        // UI.deviceFavorites.onclick = function() {
+        //     API.show.favorites(true);
+        //     showDevices();
+        // };
+        //
+        UI.deviceList.innerHTML = '';
         let incr = 0;
         let faves = API.show.favorites();
         let found = false;
@@ -751,7 +749,7 @@
             };
             if (loc) opt.setAttribute("local", 1);
             if (loc || fav) opt.setAttribute("favorite", 1);
-            UI.deviceSelect.appendChild(opt);
+            UI.deviceList.appendChild(opt);
             if (device === selected) {
                 selectedIndex = incr;
                 found = true;
@@ -760,17 +758,12 @@
         });
 
         if (selectedIndex >= 0) {
-            UI.deviceSelect.selectedIndex = selectedIndex;
+            UI.deviceList.selectedIndex = selectedIndex;
             selectDevice(selected);
         } else {
-            UI.deviceSelect.selectedIndex = 0;
+            UI.deviceList.selectedIndex = 0;
             selectDevice(first);
         }
-
-        API.dialog.show('devices', true);
-        API.dialog.update();
-
-        UI.deviceSelect.focus();
     }
 
     function renderTools() {
@@ -968,10 +961,15 @@
         UI.toolSelect.focus();
     }
 
+    function updateDeviceList() {
+        renderDevices(Object.keys(devices[API.mode.get_lower()]).sort());
+    }
+
     function showDevices() {
         if (deviceLock) return;
-        API.modal.hide();
-        renderDevices(Object.keys(devices[API.mode.get_lower()]).sort());
+        updateDeviceList();
+        API.modal.show('setup');
+        UI.deviceList.focus();
     }
 
     function dragOverHandler(evt) {
@@ -1094,25 +1092,28 @@
             menusep:            $('lt-sep'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
+            nozzle:             $('lt-nozzle'),
 
             modal:              $('modal'),
             help:               $('mod-help'),
+            setup:              $('mod-setup'),
+            tools:              $('mod-tools'),
+            prefs:              $('mod-prefs'),
+            files:              $('mod-files'),
             print:              $('mod-print'),
             local:              $('mod-local'),
-            files:              $('mod-files'),
-            setup:              $('mod-setup'),
+
             catalogBody:        $('catalogBody'),
             catalogList:        $('catalogList'),
 
             devices:            $('devices'),
+            deviceList:         $('device-list'),
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
             deviceSave:         $('device-save'),
             deviceClose:        $('device-close'),
-            deviceSelect:       $('device-select'),
             deviceFavorites:    $('device-favorites'),
             deviceAll:          $('device-all'),
-            tools:              $('tools'),
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
             toolSelect:         $('tool-select'),
@@ -1231,14 +1232,14 @@
             //     ]
             // ], {modes:ALL, expert:true}),
 
-            layout:        UC.newGroup(LANG.op_menu),
+            layout:        UC.newGroup(LANG.op_menu, $('mod-prefs'), {nocompact: true}),
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
             alignTop:      UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:    UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-            freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL, expert:true}),
-            reverseZoom:   UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL, expert:true}),
+            freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
+            reverseZoom:   UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
             units:         UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
 
             // allow modules to insert new items at the bottom of the left menu
@@ -1447,19 +1448,12 @@
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 
-        // populate language drop-down
-        let lp = $('langpop');
-        let elp = DOC.createElement("div");
-        let dlp = DOC.createElement("div");
-        elp.appendChild(DOC.createTextNode('english'));
-        dlp.appendChild(DOC.createTextNode('danish'));
-        lp.appendChild(elp);
-        lp.appendChild(dlp);
-        elp.onclick = function() {
+        // bind language choices
+        $('lset-en').onclick = function() {
             SDB.setItem('kiri-lang', 'en-us');
             API.space.reload();
         };
-        dlp.onclick = function() {
+        $('lset-da').onclick = function() {
             SDB.setItem('kiri-lang', 'da-dk');
             API.space.reload();
         };
@@ -1579,13 +1573,20 @@
         // };
         //
         // $('cache-close').onclick = API.dialog.hide;
-        //
-        // UI.toolMetric.onclick = updateTool;
-        // UI.toolType.onchange = updateTool;
+
+        UI.toolMetric.onclick = updateTool;
+        UI.toolType.onchange = updateTool;
+
+        function showSetup() {
+            API.modal.show('setup');
+        }
 
         // bind interface action elements
         $('app-name').onclick = API.help.show;
-        $('lt-setup').onclick = () => { API.modal.show('setup') };
+        $('app-mode').onclick = showSetup;
+        $('set-device').onclick = showSetup;
+        $('set-tools').onclick = showTools;
+        $('set-prefs').onclick = () => { API.modal.show('prefs') };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = API.event.import;
         $('act-slice').onclick = API.function.slice;
@@ -1595,13 +1596,27 @@
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;
 
+        $('mode-fdm').onclick = () => { API.mode.set('FDM') };
+        $('mode-sla').onclick = () => { API.mode.set('SLA') };
+        $('mode-cam').onclick = () => { API.mode.set('CAM') };
+        $('mode-laser').onclick = () => { API.mode.set('LASER') };
+
+        function mksvg(src) {
+            let svg = DOC.createElement('svg');
+            svg.innerHTML = src;
+            return svg;
+        }
+
+        $('mode-fdm').appendChild(mksvg(icons.fdm));
+        $('mode-sla').appendChild(mksvg(icons.sla));
+        $('mode-cam').appendChild(mksvg(icons.cnc));
+        $('mode-laser').appendChild(mksvg(icons.laser));
+
         SPACE.platform.setSize(
             settings().device.bedWidth,
             settings().device.bedDepth,
             settings().device.bedHeight
         );
-
-        // UI.selection.classList.add('compact');
 
         if (dark) {
             SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
@@ -1634,22 +1649,6 @@
                 return API.widgets.meshes();
             }
         });
-
-        // SPACE.mouse.onHover(function(d,me) {
-        //     if (d) {
-        //         // console.log(d,d.object.widget.id,d.face.materialIndex)
-        //         // d.object.material.vertexColors = true;
-        //         // d.object.material.needsUpdate = true;
-        //         // d.face.vertexColors = [
-        //         //     new THREE.Color(0xffaa88),
-        //         //     new THREE.Color(0xffaa88),
-        //         //     new THREE.Color(0xffaa88)
-        //         // ];
-        //         // d.face.materialIndex = 1;
-        //     } else {
-        //         return API.widgets.meshes();
-        //     }
-        // });
 
         SPACE.mouse.onDrag(function(delta) {
             if (delta && UI.freeLayout.checked) {
@@ -1753,6 +1752,9 @@
 
         // setup tab visibility watcher
         // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
+
+        // fill device list
+        updateDeviceList();
 
         // ensure settings has gcode
         selectDevice(DEVNAME || API.device.get(), DEVNAME);

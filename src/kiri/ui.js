@@ -59,8 +59,6 @@
     };
 
     function setMode(mode) {
-        // $('control-left').classList.add('compact');
-        // $('control-right').classList.add('compact');
         Object.keys(groupShow).forEach(group => {
             updateGroupShow(group);
         });
@@ -344,7 +342,7 @@
 
         row.appendChild(newLabel(label));
         row.appendChild(btn);
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         if (opt.title) row.setAttribute("title", options.title);
         btn.setVisible = row.setVisible;
 
@@ -362,7 +360,7 @@
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         if (height > 1) {
             ip.setAttribute("cols", size);
             ip.setAttribute("rows", height);
@@ -432,7 +430,7 @@
 
         if (label) row.appendChild(newLabel(label));
         row.appendChild(ip);
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         ip.setAttribute("type", "range");
         ip.setAttribute("min", (options && options.min ? options.min : 0));
         ip.setAttribute("max", (options && options.max ? options.max : 100));
@@ -459,7 +457,7 @@
         row.appendChild(newLabel(label));
         row.appendChild(ip);
         row.setAttribute("source", source || "tools");
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
         if (options) {
             if (options.convert) ip.convert = options.convert.bind(ip);
@@ -482,7 +480,7 @@
             row.appendChild(newLabel(label));
         }
         row.appendChild(ip);
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
         ip.setAttribute("type", "checkbox");
         ip.checked = false;
@@ -503,7 +501,7 @@
         let row = newDiv(options),
             hide = options && options.hide;
 
-        row.setAttribute("class", "flow-row");
+        row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
         ip.setVisible = row.setVisible;
 
