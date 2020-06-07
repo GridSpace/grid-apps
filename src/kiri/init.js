@@ -1008,7 +1008,6 @@
     }
 
     function updateCatalog(files) {
-        return console.log('TODO catalog render');
         let table = UI.catalogList,
             list = [];
         table.innerHTML = '';
@@ -1040,8 +1039,6 @@
             row.appendChild(del);
             table.appendChild(row);
         }
-        // fix layer scroll size
-        API.dialog.update();
     }
 
     // MAIN INITIALIZATION FUNCTION
@@ -1467,22 +1464,22 @@
         SPACE.onEnterKey([
             // UI.layerSpan,     function() { API.show.slices() },
             // UI.layerID,       function() { API.show.layer(UI.layerID.value) },
-            // UI.scaleX,        selectionScale,
-            // UI.scaleY,        selectionScale,
-            // UI.scaleZ,        selectionScale,
-            // UI.sizeX,         selectionSize,
-            // UI.sizeY,         selectionSize,
-            // UI.sizeZ,         selectionSize,
-            // UI.toolName,      updateTool,
-            // UI.toolNum,       updateTool,
-            // UI.toolFluteDiam, updateTool,
-            // UI.toolFluteLen,  updateTool,
-            // UI.toolShaftDiam, updateTool,
-            // UI.toolShaftLen,  updateTool,
-            // UI.toolTaperTip,  updateTool,
-            // $('rot_x'),       selectionRotate,
-            // $('rot_y'),       selectionRotate,
-            // $('rot_z'),       selectionRotate
+            UI.scaleX,        selectionScale,
+            UI.scaleY,        selectionScale,
+            UI.scaleZ,        selectionScale,
+            UI.sizeX,         selectionSize,
+            UI.sizeY,         selectionSize,
+            UI.sizeZ,         selectionSize,
+            UI.toolName,      updateTool,
+            UI.toolNum,       updateTool,
+            UI.toolFluteDiam, updateTool,
+            UI.toolFluteLen,  updateTool,
+            UI.toolShaftDiam, updateTool,
+            UI.toolShaftLen,  updateTool,
+            UI.toolTaperTip,  updateTool,
+            $('rot_x'),       selectionRotate,
+            $('rot_y'),       selectionRotate,
+            $('rot_z'),       selectionRotate
         ]);
 
         // UI.layerID.convert = UC.toFloat.bind(UI.layerID);

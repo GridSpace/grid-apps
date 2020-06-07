@@ -847,12 +847,12 @@
         });
         if (bounds.min.x === Infinity) {
             if (selectedMeshes.length === 0) {
-                // UI.sizeX.value = 0;
-                // UI.sizeY.value = 0;
-                // UI.sizeZ.value = 0;
-                // UI.scaleX.value = 1;
-                // UI.scaleY.value = 1;
-                // UI.scaleZ.value = 1;
+                UI.sizeX.value = 0;
+                UI.sizeY.value = 0;
+                UI.sizeZ.value = 0;
+                UI.scaleX.value = 1;
+                UI.scaleY.value = 1;
+                UI.scaleZ.value = 1;
             }
             return;
         }
@@ -860,12 +860,12 @@
             dy = bounds.max.y - bounds.min.y,
             dz = bounds.max.z - bounds.min.z,
             scale = unitScale();
-        // UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
-        // UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
-        // UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
-        // UI.scaleX.value = UI.scaleX.was = track.scale.x;
-        // UI.scaleY.value = UI.scaleY.was = track.scale.y;
-        // UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
+        UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
+        UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
+        UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
+        UI.scaleX.value = UI.scaleX.was = track.scale.x;
+        UI.scaleY.value = UI.scaleY.was = track.scale.y;
+        UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
     }
 
     function setOpacity(value) {
@@ -1655,7 +1655,6 @@
     }
 
     function hideModal() {
-// console.trace({hideModal: modalShowing()});
         if (!modalShowing()) {
             return;
         }
@@ -1715,19 +1714,10 @@
         // associate named process with the current device
         settings.devproc[currentDeviceName()] = name;
 
-        // update selection display
-        // $('selected-mode').innerHTML = API.mode.get();
-        // $('selected-device').innerHTML = API.device.get();
-        // $('selected-process').innerHTML = name;
-
         // FDM process settings overridden by device
         if (mode == "FDM") {
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
         }
-
-        // if (!named) {
-        //     hideModal();
-        // }
 
         updateFields();
         API.conf.update();
@@ -1800,7 +1790,6 @@
     }
 
     function showHelpFile(local) {
-        // hideModal();
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
             return;
@@ -1949,14 +1938,6 @@
                 cl.remove("dev-sel");
             }
         });
-        // UI.modeFDM.setAttribute('class', MODE === MODES.FDM ? 'buton' : '');
-        // UI.modeSLA.setAttribute('class', MODE === MODES.SLA ? 'buton' : '');
-        // UI.modeCAM.setAttribute('class', MODE === MODES.CAM ? 'buton' : '');
-        // UI.modeLASER.setAttribute('class', MODE === MODES.LASER ? 'buton' : '');
-        // UI.mode.style.display = lock ? 'none' : '';
-        // UI.modeTable.style.display = lock ? 'none' : '';
-        // UI.modelOpacity.style.display = MODE === MODES.SLA ? 'none' : '';
-        // UI.modePreview.style.display = MODE === MODES.SLA ? 'none' : '';
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
@@ -1977,8 +1958,6 @@
 
     function setControlsVisible(show) {
         console.log('TODO setControlsVisible');
-        // UI.ctrlLeft.style.display = show ? 'block' : 'none';
-        // UI.ctrlRight.style.display = show ? 'block' : 'none';
     }
 
     // prevent safari from exiting full screen mode

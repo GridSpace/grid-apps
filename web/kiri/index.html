@@ -120,21 +120,51 @@
             <div id="lt-rotate" class="lt-menu noshow">
                 <i class="fas fa-sync-alt"></i>
                 <label>rotate</label>
-                <div id="pop-rotate" class="pop-lcol row">
-
+                <div id="pop-rotate" class="pop-lcol row fillh russo">
+                    <div>
+                        <label class="grow">X</label>
+                        <input id="rot_x" class="value center" size="5"/ value="0">
+                    </div>
+                    <div>
+                        <label class="grow">Y</label>
+                        <input id="rot_y" class="value center" size="5"/ value="0">
+                    </div>
+                    <div>
+                        <label class="grow">Z</label>
+                        <input id="rot_z" class="value center" size="5"/ value="0">
+                    </div>
                 </div>
             </div>
             <div id="lt-scale" class="lt-menu noshow">
                 <i class="fas fa-expand"></i>
                 <label>scale</label>
-                <div id="pop-scale" class="pop-lcol row">
-
+                <div id="pop-scale" class="pop-lcol row fillh russo">
+                    <div>
+                        <div><label>X</label><input id="lock_x" type="checkbox" checked/></div>
+                        <div><input id="size_x" size="8" class="value"/></div>
+                        <div><input id="scale_x" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>Y</label><input id="lock_y" type="checkbox" checked/></div>
+                        <div><input id="size_y" size="8" class="value"/></div>
+                        <div><input id="scale_y" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>Z</label><input id="lock_z" type="checkbox" checked/></div>
+                        <div><input id="size_z" size="8" class="value"/></div>
+                        <div><input id="scale_z" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>axis</label></div>
+                        <div><label>size</label></div>
+                        <div><label>scale</label></div>
+                    </div>
                 </div>
             </div>
             <div id="lt-nozzle" class="lt-menu noshow">
                 <i class="fas fa-map-marker"></i>
                 <label>nozzle</label>
-                <div id="pop-nozzle" class="pop-lcol row"></div>
+                <div id="pop-nozzle" class="pop-lcol row fillh"></div>
             </div>
             <div id="lt-end"></div>
         </div>
@@ -180,7 +210,10 @@
                         <div class="grow"></div>
                     </div>
                 </div>
-                <div id="mod-files" class="mdialog"></div>
+                <div id="mod-files" class="mdialog col">
+                    <label class="t-group">recent files</label>
+                    <div id="catalogList" class="col"></div>
+                </div>
                 <div id="mod-tools" class="mdialog">
                     <div class="col">
                         <div class="row t-head">

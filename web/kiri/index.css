@@ -53,12 +53,16 @@ input {
     margin-bottom: 1px;
     text-align: right;
     border: 1px solid #bbb;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 1px;
+    margin-bottom: 1px;
 }
 input:focus {
     background-color: #fec;
 }
 input[disabled] {
-    background-color: #ccc;
+    background-color: #ddd;
     color: #000;
     border-width: 1px;
 }
@@ -131,6 +135,12 @@ th, tr, td {
 }
 .space-between {
     justify-content: space-between;
+}
+.center {
+    text-align: center;
+}
+.russo {
+    font-family: 'Russo One', sans-serif;
 }
 
 :-moz-any() {
@@ -478,6 +488,10 @@ th, tr, td {
 .t-33 {
     width: 33%;
 }
+.fillh {
+    top: 0;
+    bottom: 0;
+}
 .t-group {
     background-image: var(--gradbar);
     white-space: nowrap;
@@ -503,13 +517,17 @@ th, tr, td {
     width: 10px;
 }
 #devices {
-    width: 150px;
+    width: 200px;
 }
 #device {
-    width: 225px;
+    width: 200px;
 }
 #gcode-edit {
-    width: 225px;
+    width: 200px;
+}
+#dev-gcode textarea {
+    font-family: monospace;
+    width: 100%;
 }
 #device-action, #tool-action {
     margin-top: 5px;
@@ -517,6 +535,11 @@ th, tr, td {
 #device-action button, #tool-action button {
     flex-direction: column;
     justify-content: center;
+}
+#catalogList {
+    min-width: 150px;
+    height: 350px;
+    overflow-y: scroll;
 }
 
 #slider {
@@ -644,6 +667,14 @@ th, tr, td {
 .var-row label {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
+}
+.var-row input {
+    margin-right: 0;
+    margin-bottom: 1px;
+}
+.var-row button {
+    margin-right: 0;
+    margin-bottom: 1px;
 }
 .table-row {
     flex-direction: row;
