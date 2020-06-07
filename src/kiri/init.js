@@ -628,9 +628,9 @@
                 e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
             });
 
-            // UI.deviceSave.disabled = !local;
-            // UI.deviceDelete.disabled = !local;
-            // UI.deviceAdd.disabled = dev.noclone;
+            UI.deviceSave.disabled = !local;
+            UI.deviceDelete.disabled = !local;
+            UI.deviceAdd.disabled = dev.noclone;
 
             API.view.update_fields();
             platform.update_size();
@@ -685,32 +685,31 @@
 
         devices = devices.sort();
 
-        // UI.deviceClose.onclick = API.dialog.hide;
-        // UI.deviceSave.onclick = function() {
-        //     API.function.clear();
-        //     API.conf.save();
-        //     showDevices();
-        // };
-        // UI.deviceAdd.onclick = function() {
-        //     API.function.clear();
-        //     cloneDevice();
-        //     showDevices();
-        // };
-        // UI.deviceDelete.onclick = function() {
-        //     API.function.clear();
-        //     removeLocalDevice(getSelectedDevice());
-        //     showDevices();
-        // };
-        //
-        // UI.deviceAll.onclick = function() {
-        //     API.show.favorites(false);
-        //     showDevices();
-        // };
-        // UI.deviceFavorites.onclick = function() {
-        //     API.show.favorites(true);
-        //     showDevices();
-        // };
-        //
+        UI.deviceSave.onclick = function() {
+            API.function.clear();
+            API.conf.save();
+            showDevices();
+        };
+        UI.deviceAdd.onclick = function() {
+            API.function.clear();
+            cloneDevice();
+            showDevices();
+        };
+        UI.deviceDelete.onclick = function() {
+            API.function.clear();
+            removeLocalDevice(getSelectedDevice());
+            showDevices();
+        };
+
+        UI.deviceAll.onclick = function() {
+            API.show.favorites(false);
+            showDevices();
+        };
+        UI.deviceFavorites.onclick = function() {
+            API.show.favorites(true);
+            showDevices();
+        };
+
         UI.deviceList.innerHTML = '';
         let incr = 0;
         let faves = API.show.favorites();
@@ -1053,10 +1052,10 @@
         // ensure we have settings from last session
         API.conf.restore();
 
-        let assets = $('assets'),
-            control = $('control'),
+        let xcontrol = $('control'),
             container = $('container'),
             welcome = $('welcome'),
+            gcode = $('dev-gcode'),
             controller = settings().controller,
             dark = controller.dark;
 
@@ -1082,13 +1081,7 @@
                 text:           $('alert-text')
             },
             container:          container,
-            // assets:             assets,
-            // control:            control,
-            // ctrlLeft:           $('control-left'),
-            // ctrlRight:          $('control-right'),
-            // layerView:          $('layer-view'),
-            // layerSlider:        $('layer-slider'),
-            // modelOpacity:       $('opacity'),
+
             menusep:            $('lt-sep'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
@@ -1111,9 +1104,9 @@
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
             deviceSave:         $('device-save'),
-            deviceClose:        $('device-close'),
             deviceFavorites:    $('device-favorites'),
             deviceAll:          $('device-all'),
+
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
             toolSelect:         $('tool-select'),
@@ -1129,15 +1122,19 @@
             // toolTaperAngle: $('tool-tangle'),
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
+
             settings:           $('settings'),
             settingsBody:       $('settingsBody'),
             settingsList:       $('settingsList'),
+
             layerID:            $('layer-id'),
             layerSpan:          $('layer-span'),
             layerRange:         $('layer-range'),
+
             loading:            $('progress').style,
             progress:           $('progbar').style,
             prostatus:          $('progtxt'),
+
             selection:          $('selection'),
             sizeX:              $('size_x'),
             sizeY:              $('size_y'),
@@ -1153,7 +1150,7 @@
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", nocompact:true}),
+            device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", inline:true}),
             deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true, action:updateDeviceName}),
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6}),
@@ -1163,12 +1160,12 @@
             deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
-            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", nocompact:true, modes:FDM}),
+            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
             extNozzle:        UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
             extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true}),
+            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true, area:gcode}),
             extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
             extActions:       UC.newTableRow([[
                 UI.extPrev = UC.newButton("<"),
@@ -1177,62 +1174,23 @@
                 UI.extNext = UC.newButton(">")
             ]], {modes:FDM, expert:true}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", nocompact:true, modes:GCODE}),
+            gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", inline:true, modes:GCODE}),
             gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
             gcodeTrack:       UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
-            gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2}),
+            gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2, area:gcode}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
-            gcodeDwell:       UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2}),
-            gcodeChange:      UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2}),
-            gcodeSpindle:     UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2}),
-            gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3}),
-            gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3}),
-            gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3}),
-            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3}),
-            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3}),
+            gcodeDwell:       UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2, area:gcode}),
+            gcodeChange:      UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2, area:gcode}),
+            gcodeSpindle:     UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2, area:gcode}),
+            gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3, area:gcode}),
+            gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3, area:gcode}),
+            gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3, area:gcode}),
+            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3, area:gcode}),
+            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3, area:gcode}),
 
-            // mode: UC.newGroup(LANG.mo_menu, assets, {region:"left", poprow:false}),
-            // modeTable: UC.newTableRow([
-            //     [ UI.modeFDM = UC.newButton(LANG.mo_fdmp, function() { API.mode.set('FDM',null,platform.update_size) }, {icon: icons.fdm}) ],
-            //     [ UI.modeSLA = UC.newButton(LANG.mo_slap, function() { API.mode.set('SLA',null,platform.update_size) }, {icon: icons.sla}) ],
-            //     [ UI.modeLASER = UC.newButton(LANG.mo_lazr, function() { API.mode.set('LASER',null,platform.update_size) }, {icon: icons.laser}) ],
-            //     [ UI.modeCAM = UC.newButton(LANG.mo_cncm, function() { API.mode.set('CAM',null,platform.update_size) }, {icon: icons.cnc, id:"modeCAM"}) ]
-            // ]),
-            // system: UC.newGroup(LANG.su_menu),
-            // sysTable: UC.newTableRow([
-            //     [ UI.setupDevices = UC.newButton(LANG.su_devi, showDevices) ],
-            //     [ UI.setupTools = UC.newButton(LANG.su_tool, showTools, {modes:CAM}) ],
-            //     [ UI.setupExport = UC.newButton(LANG.su_xprt, settingsExport, {modes:ALL, expert:true}) ],
-            //     [ UI.localButton = UC.newButton(LANG.su_locl, API.show.local, {modes:FDM_CAM, expert:true}) ]
-            // ]),
-            // wsFile: UC.newGroup(LANG.fe_menu),
-            // wsFileTable: UC.newTableRow([
-            //     [ UI.import = UC.newButton(LANG.fn_recn, undefined, {class:"asym"}) ],
-            //     [ UI.load = UC.newButton(LANG.fn_impo, function() { API.event.import() }, {class:"asym"}) ]
-            // ]),
-            // wsFunc: UC.newGroup(LANG.fn_menu),
-            // wsFuncTable: UC.newTableRow([
-            //     [ UI.modeArrange = UC.newButton(LANG.fn_arra, platform.layout) ],
-            //     [ UI.modeSlice = UC.newButton(LANG.fn_slic, API.function.slice) ],
-            //     [ UI.modePreview = UC.newButton(LANG.fn_prev, API.function.print) ],
-            //     [ UI.modeExport = UC.newButton(LANG.fn_expo, API.function.export) ]
-            // ]),
-            //
-            // workspace: UC.newGroup(LANG.ws_menu, undefined, {modes:ALL, expert:true}),
-            // wsTable: UC.newTableRow([
-            //     [
-            //         UC.newButton(LANG.vu_sptp, SPACE.view.top),
-            //         UC.newButton(LANG.vu_home, SPACE.view.home),
-            //     ],[
-            //         UI.saveButton =
-            //         UC.newButton(LANG.ws_save, API.space.save),
-            //         UC.newButton(LANG.ws_cler, API.space.clear)
-            //     ]
-            // ], {modes:ALL, expert:true}),
-
-            layout:        UC.newGroup(LANG.op_menu, $('mod-prefs'), {nocompact: true}),
+            layout:        UC.newGroup(LANG.op_menu, $('mod-prefs'), {inline: true}),
             expert:        UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             dark:          UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:    UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
@@ -1241,9 +1199,6 @@
             freeLayout:    UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
             reverseZoom:   UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
             units:         UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
-
-            // allow modules to insert new items at the bottom of the left menu
-            // appendLeft:    UC.checkpoint(),
 
             process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
             sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),

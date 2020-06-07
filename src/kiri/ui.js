@@ -16,13 +16,13 @@
         groups = {},
         groupShow = {},
         groupName = undefined,
-        hideable = {},
+        poppable = {},
         hasModes = [],
         isExpert = [],
         letMode = null,
         letExpert = false,
-        SDB = moto.KV,
         DOC = SELF.document,
+        state = {},
         prefix = "tab",
         NOMODE = "nomode",
         exitimer = undefined;
@@ -102,31 +102,32 @@
     function addCollapsableGroup(label, div, options) {
         let opt = options || {};
         let group = opt.group || label;
-        hideable[group] = opt.nocompact === true ? false : true;
+        poppable[group] = opt.inline === true ? false : true;
 
         let row = DOC.createElement('div'),
             a = DOC.createElement('a'),
             dbkey = `beta-${prefix}-show-${group}`,
-            popper = !opt.nocompact;
+            popper = !opt.inline;
 
         if (popper) {
             let pop = DOC.createElement('div');
             pop.classList.add('set-pop');
             row.appendChild(pop);
+            row.setAttribute("class", "set-group noselect");
             addTo = pop;
         } else {
+            row.setAttribute("class", "t-group col");
             addTo = lastDiv;
         }
 
         div.appendChild(row);
-        row.setAttribute("class", "set-group noselect");
         row.appendChild(a);
         a.appendChild(DOC.createTextNode(label));
         addModeControls(row, opt);
         lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
         groupName = group;
-        groupShow[group] = popper ? SDB[dbkey] === 'true' : SDB[dbkey] !== 'false';
+        groupShow[group] = popper ? state[dbkey] === 'true' : state[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== a && ev.target !== row) {
                 return;
@@ -163,19 +164,19 @@
     function showGroup(groupname) {
         Object.keys(groups).forEach(name => {
             let group = groups[name];
-            groupShow[name] = SDB[group.key] = (groupname === name);
+            groupShow[name] = state[group.key] = (groupname === name);
             updateGroupShow(name);
         });
     }
 
     function toggleGroup(groupname, dbkey) {
-        let show = SDB[dbkey] === 'false';
-        groupShow[groupname] = hideable[groupname] ? SDB[dbkey] = show : true;
+        let show = state[dbkey] === 'false';
+        groupShow[groupname] = poppable[groupname] ? state[dbkey] = show : true;
         updateGroupShow(groupname);
     }
 
     function updateGroupShow(groupname) {
-        let show = groupShow[groupname] || !hideable[groupname];
+        let show = groupShow[groupname] || !poppable[groupname];
         let group = groups[groupname];
         group.forEach(div => {
             if (show) div.setMode(letMode);
@@ -290,27 +291,25 @@
             btn = DOC.createElement("button"),
             box = DOC.createElement("div"),
             pop = DOC.createElement("div"),
-            lbl = DOC.createElement("label"),
-            txt = DOC.createElement("textarea");
+            txt = DOC.createElement("textarea"),
+            area = opt.area;
 
-        pop.setAttribute("class", "poptext flow-col");
-        box.setAttribute("style", "position: relative");
-        box.appendChild(pop);
-        pop.appendChild(lbl);
-        pop.appendChild(txt);
-        lbl.appendChild(DOC.createTextNode(label));
-
-        txt.setAttribute("cols", 40);
-        txt.setAttribute("rows", 20);
         txt.setAttribute("wrap", "off");
+        txt.setAttribute("spellcheck", "false");
+        txt.setAttribute("style", "resize: none");
 
+        box.appendChild(pop);
         btn.appendChild(DOC.createTextNode("edit"));
+
         btn.onclick = function(ev) {
             ev.stopPropagation();
             if (ev.target === txt) {
                 // drop clicks on TextArea
                 ev.target.focus();
             } else {
+                let fc = area.firstChild;
+                if (fc) area.removeChild(fc);
+                area.appendChild(txt);
                 // first time, button click / show
                 btn.parentNode.appendChild(box);
                 btn.parentNode.onclick = btn.onclick;
@@ -337,6 +336,7 @@
                 }
             }
         };
+
         addModeControls(btn, opt);
         addId(btn, opt);
 
@@ -373,6 +373,7 @@
             }
         }
         ip.setAttribute("type", "text");
+        ip.setAttribute("spellcheck", "false");
         row.style.display = hide ? 'none' : '';
         if (opt) {
             if (opt.disabled) ip.setAttribute("disabled", "true");
@@ -548,7 +549,7 @@
 
     function newRowTable(array) {
         let div = newDiv();
-        div.setAttribute("class", "tablerow");
+        div.setAttribute("class", "table-row");
         array.forEach(function(c) {
             div.appendChild(c);
         });

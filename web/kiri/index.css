@@ -2,9 +2,8 @@
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
 }
-setpopsetpopa, a:hover, a:visited {
+a:hover, a:visited {
     border: none;
-    outline: none;
     color: inherit;
     text-decoration: none;
 }
@@ -30,7 +29,6 @@ div {
 }
 button {
     display: flex;
-    outline: none;
     border: 1px solid #ccc;
     border-radius: 3px;
     background-color: #eee;
@@ -57,7 +55,6 @@ input {
 }
 input:focus {
     background-color: #fec;
-    outline: none;
 }
 input[disabled] {
     background-color: #ccc;
@@ -71,14 +68,19 @@ input[type="range"] {
 input[type=range]::-moz-focus-outer {
     border: 0;
 }
-select {
+select, textarea, button, input, a {
     outline: none;
 }
 select {
     border: 1px solid #bbb;
-    background-color: #eee;
-    margin-bottom: 1px !important;
+    background-color: white;
     border-radius: 3px;
+}
+select option[local="1"] {
+    color: #55d;
+}
+select option[favorite="1"] {
+    font-weight: bold;
 }
 th, tr, td, span, div, label, button {
     user-select: none;
@@ -412,6 +414,54 @@ th, tr, td {
     background-color: #bbb;
 }
 
+.t-head {
+    text-align: center;
+    font-weight: bold;
+    padding-bottom: 5px;
+}
+.t-33 {
+    width: 33%;
+}
+.t-group {
+    background-image: linear-gradient(to right, #ddd, #666, #ddd);
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 2px;
+    padding: 1px 0 2px 0;
+    margin: 5px 0 5px 0;
+    color: white;
+}
+.t-body {
+    background-color: white;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+}
+.t-inset {
+    padding: 3px;
+}
+.t-pad {
+    width: 5px;
+}
+.t-pad2 {
+    width: 10px;
+}
+#devices {
+    width: 150px;
+}
+#device {
+    width: 225px;
+}
+#gcode-edit {
+    width: 225px;
+}
+#device-action, #tool-action {
+    margin-top: 5px;
+}
+#device-action button, #tool-action button {
+    flex-direction: column;
+    justify-content: center;
+}
+
 #slider {
     display: none;
     position: absolute;
@@ -531,7 +581,14 @@ th, tr, td {
     margin-right: 5px;
     padding: 5px;
 }
+.var-row {
+    white-space: nowrap;
+}
 .var-row label {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
+}
+.table-row {
+    flex-direction: row;
+    align-items: stretch;
 }
