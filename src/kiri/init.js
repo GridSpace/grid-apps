@@ -1566,10 +1566,6 @@
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
 
-        function showSetup() {
-            API.modal.show('setup');
-        }
-
         function mksvg(src) {
             let svg = DOC.createElement('svg');
             svg.innerHTML = src;
@@ -1758,6 +1754,10 @@
 
         // lift curtain
         $('curtain').style.display = 'none';
+
+        function showSetup() {
+            API.modal.show('setup');
+        }
 
         // bind interface action elements
         $('app-name').onclick = API.help.show;

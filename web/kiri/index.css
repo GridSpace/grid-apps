@@ -722,10 +722,13 @@ th, tr, td {
 .var-row label {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
+    font-size: smaller;
 }
 .var-row input {
     margin-right: 0;
     margin-bottom: 1px;
+    padding-bottom: 1px;
+    padding-top: 1px;
 }
 .var-row button {
     margin-right: 0;
