@@ -154,7 +154,7 @@
                 // kill any poppers in compact mode
                 UC.hidePoppers();
                 // hide layers menu
-                UI.layers.style.display = 'none';
+                // UI.layers.style.display = 'none';
                 break;
         }
         return false;
@@ -560,13 +560,12 @@
                 dev.internal = 0;
                 let selext = $('pop-nozzle');
                 selext.innerHTML = '';
-                for (let i=dev.extruders.length-1; i>=0; i--) {
+                for (let i=0; i<dev.extruders.length; i++) {
                     let d = DOC.createElement('div');
-                    let b = DOC.createElement('button');
-                    b.appendChild(DOC.createTextNode(i));
-                    d.appendChild(b);
-                    // b.setAttribute('id', `pop-nozzle-${i}`);
-                    b.onclick = function() {
+                    d.appendChild(DOC.createTextNode(i));
+                    d.setAttribute('id', `sel-ext-${i}`);
+                    d.setAttribute('class', 'col j-center');
+                    d.onclick = function() {
                         API.selection.for_widgets(w => {
                             current.widget[w.id] = {extruder: i};
                         });
@@ -1049,10 +1048,10 @@
         // ensure we have settings from last session
         API.conf.restore();
 
-        let xcontrol = $('control'),
-            container = $('container'),
+        let container = $('container'),
             welcome = $('welcome'),
             gcode = $('dev-gcode'),
+            tracker = $('tracker'),
             controller = settings().controller,
             dark = controller.dark;
 
@@ -1073,6 +1072,7 @@
 
         Object.assign(UI, {
             // from static HTML
+            load:               $('load-file'),
             alert: {
                 dialog:         $('alert-area'),
                 text:           $('alert-text')
@@ -1090,6 +1090,7 @@
             tools:              $('mod-tools'),
             prefs:              $('mod-prefs'),
             files:              $('mod-files'),
+            saves:              $('mod-saves'),
             print:              $('mod-print'),
             local:              $('mod-local'),
 
@@ -1120,13 +1121,18 @@
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
 
+            setMenu:            $('set-menu'),
             settings:           $('settings'),
             settingsBody:       $('settingsBody'),
             settingsList:       $('settingsList'),
 
-            layerID:            $('layer-id'),
-            layerSpan:          $('layer-span'),
-            layerRange:         $('layer-range'),
+            slider:             $('slider'),
+            sliderMax:          $('slider-max'),
+            sliderLo:           $('slider-lo'),
+            sliderMid:          $('slider-mid'),
+            sliderHi:           $('slider-hi'),
+            sliderHold:         $('slider-hold'),
+            sliderRange:        $('slider-center'),
 
             loading:            $('progress').style,
             progress:           $('progbar').style,
@@ -1400,6 +1406,79 @@
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 
+        // slider setup
+        const slider = UI.sliderRange;
+        const drag = { };
+        function pxToInt(txt) {
+            return txt ? parseInt(txt.substring(0,txt.length-2)) : 0;
+        }
+        function sliderUpdate() {
+            let start = drag.top / drag.maxval;
+            let end = (drag.top + drag.mid - 20) / drag.maxval;
+            API.event.emit('slider.pos', { start, end });
+            API.var.layer_hi = Math.round((1 - start) * API.var.layer_max);
+            API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
+            API.show.layer();
+        }
+        function dragit(el, delta) {
+            el.onmousedown = (ev) => {
+                tracker.style.display = 'block';
+                ev.stopPropagation();
+                drag.height = slider.clientHeight;
+                drag.maxval = drag.height - 40;
+                drag.start = ev.screenY;
+                drag.hiat = drag.top = pxToInt(UI.sliderHold.style.marginTop);
+                drag.mdat = drag.mid = UI.sliderMid.clientHeight;
+                drag.mdmax = drag.height - 20 - drag.hiat;
+                drag.himax = drag.height - 20 - drag.mdat;
+                tracker.onmousemove = (ev) => {
+                    ev.stopPropagation();
+                    if (delta) delta(ev.screenY - drag.start);
+                };
+                tracker.onmouseout = tracker.onmouseup = (ev) => {
+                    ev.stopPropagation();
+                    slider.onmousemove = undefined;
+                    tracker.style.display = '';
+                };
+            };
+        }
+
+        dragit(UI.sliderHi, (delta) => {
+            let midval = drag.mdat - delta;
+            let topval = drag.hiat + delta;
+            if (midval < 20 || topval < 0) {
+                return;
+            }
+            UI.sliderHold.style.marginTop = `${topval}px`;
+            UI.sliderMid.style.height = `${midval}px`;
+            drag.top = topval;
+            drag.mid = midval;
+            sliderUpdate();
+        });
+        dragit(UI.sliderMid, (delta) => {
+            let topoff = Math.max(0, Math.min(drag.himax, drag.hiat + delta));
+            UI.sliderHold.style.marginTop = `${topoff}px`;
+            drag.top = topoff;
+            sliderUpdate();
+        });
+        dragit(UI.sliderLo, (delta) => {
+            let midlen = Math.max(20, Math.min(drag.mdmax, drag.mdat + delta));
+            UI.sliderMid.style.height = `${midlen}px`;
+            drag.mid = midlen;
+            sliderUpdate();
+        });
+
+        API.event.on('slider.set', (values) => {
+            let height = slider.clientHeight;
+            let maxval = height - 40;
+            let start = Math.max(0, Math.min(1, values.start));
+            let end = Math.max(start, Math.min(1, values.end));
+            let topval = start * maxval;
+            let midval = ((end - start) * maxval) + 20;
+            UI.sliderHold.style.marginTop = `${topval}px`;
+            UI.sliderMid.style.height = `${midval}px`;
+        });
+
         // bind language choices
         $('lset-en').onclick = function() {
             SDB.setItem('kiri-lang', 'en-us');
@@ -1482,50 +1561,6 @@
             $('rot_z'),       selectionRotate
         ]);
 
-        // UI.layerID.convert = UC.toFloat.bind(UI.layerID);
-        // UI.layerSpan.convert = UC.toFloat.bind(UI.layerSpan);
-        // UI.layerRange.onclick = function() {
-        //     UI.layerRange.checked = !(UI.layerRange.checked || false);
-        //     API.show.slices();
-        // };
-        //
-        // $('layer-toggle').onclick = function(ev) {
-        //     let ls = UI.layers.style;
-        //     ls.display = ls.display !== 'block' ? 'block' : 'none';
-        //     UI.layers.style.left = ev.target.getBoundingClientRect().left + 'px';
-        // };
-
-        // UI.modelOpacity.onchange = UI.modelOpacity.onclick = function(ev) {
-        //     API.widgets.opacity(parseInt(UI.modelOpacity.value)/100);
-        // };
-        //
-        // UI.layerSlider.ondblclick = function() {
-        //     UI.layerRange.checked = !UI.layerRange.checked;
-        //     API.show.slices();
-        // };
-        //
-        // UI.layerSlider.onmousedown = function(ev) {
-        //     if (ev.shiftKey) UI.layerRange.checked = !UI.layerRange.checked;
-        // };
-        //
-        // UI.layerSlider.onclick = function() {
-        //     API.show.layer(UI.layerSlider.value);
-        // };
-        //
-        // UI.layerSlider.onmousemove = UI.layerSlider.onchange = function() {
-        //     API.show.layer(UI.layerSlider.value);
-        // };
-        //
-        // UI.layerSlider.onmouseup = function() { API.focus() };
-        //
-        // UI.import.setAttribute("import","1");
-        // UI.import.onclick = function() {
-        //     UC.hidePoppers();
-        //     API.dialog.show("catalog");
-        // };
-        //
-        // $('cache-close').onclick = API.dialog.hide;
-
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
 
@@ -1541,9 +1576,10 @@
         $('set-prefs').onclick = () => { API.modal.show('prefs') };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = API.event.import;
-        $('act-slice').onclick = API.function.slice;
-        $('act-preview').onclick = API.function.print;
-        $('act-export').onclick = API.function.export;
+        $('lt-action').onclick = API.platform.layout;
+        $('act-slice').onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
+        $('act-preview').onclick = (ev) => { ev.stopPropagation(); API.function.print() };
+        $('act-export').onclick = (ev) => { ev.stopPropagation(); API.function.export() };
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;

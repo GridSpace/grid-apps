@@ -175,9 +175,9 @@
             SETUP
         },
         var: {
-            layer_at: Infinity,
-            layer_max: 0,
-            layer_range: 0
+            layer_lo: 0,
+            layer_hi: 0,
+            layer_max: 0
         },
         device: {
             get: currentDeviceName,
@@ -457,8 +457,18 @@
         return Math.max(min,Math.min(max,v));
     }
 
-    function setVisibleLayer(v) {
-        showSlices(API.var.layer_at = bound(v, 0, API.var.layer_max));
+    function updateSlider() {
+        API.event.emit("slider.set", {
+            start: 1 - (API.var.layer_hi / API.var.layer_max),
+            end: 1 - (API.var.layer_lo / API.var.layer_max)
+        });
+    }
+
+    function setVisibleLayer(h, l) {
+        API.var.layer_hi = bound(h || API.var.layer_hi, 0, API.var.layer_max);
+        API.var.layer_lo = bound(l || API.var.layer_lo, 0, API.var.layer_hi);
+        updateSlider();
+        showSlices();
     }
 
     function meshArray() {
@@ -501,7 +511,6 @@
     }
 
     function updateSliderMax(set) {
-        return console.log('TODO updateSliderMax');
         let max = 0;
         if (viewMode === VIEWS.PREVIEW && currentPrint) {
             max = currentPrint.getLayerCount();
@@ -512,16 +521,10 @@
             });
         }
         max = Math.max(0, max - 1);
-        API.var.layer_max = max;
-        if (UI.layerID.convert() > max || API.var.layer_at > max) {
-            API.var.layer_at = max;
-            UI.layerID.value = max;
-            UI.layerSlider.value = API.var.layer_max;
-        }
-        UI.layerSlider.max = max;
-        if (set) {
-            API.var.layer_at = API.var.layer_max;
-            UI.layerSlider.value = API.var.layer_max;
+        API.var.layer_max = UI.sliderMax.innerText = max;
+        if (set || max < API.var.layer_hi) {
+            API.var.layer_hi = API.var.layer_max;
+            updateSlider();
         }
     }
 
@@ -536,85 +539,64 @@
         return showing;
     }
 
-    function showSlice(index, range, layer) {
-        if (range) {
-            return index <= layer && index > layer-range;
-        } else {
-            return index <= layer;
-        }
-    }
-
     /**
      * hide or show slice-layers and their sub-elements
      *
      * @param {number} [layer]
      */
     function showSlices(layer) {
+        showSlider();
+
         if (typeof(layer) === 'string' || typeof(layer) === 'number') {
             layer = parseInt(layer);
         } else {
-            layer = API.var.layer_at;
+            layer = API.var.layer_hi;
         }
 
         layer = bound(layer, 0, API.var.layer_max);
+        API.var.layer_hi = layer;
 
-        // UI.layerID.value = layer;
-        // UI.layerSlider.value = layer;
+        let print = UI.layerPrint.checked,
+            moves = UI.layerMoves.checked,
+            cam = MODE === MODES.CAM,
+            hi = cam ? API.var.layer_max - API.var.layer_lo : API.var.layer_hi,
+            lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
 
-        let j,
-            slice,
-            slices,
-            layers,
-            range = UI.layerRange.checked ? UI.layerSpan.convert() || 1 : 0,
-            print = UI.layerPrint.checked,
-            moves = UI.layerMoves.checked;
-
-        if (MODE === MODES.CAM && API.var.layer_range !== range && range && layer === API.var.layer_max) {
-            layer = 0;
-        }
-
-        API.var.layer_range = range;
-        API.var.layer_at = layer;
+        updateSlider();
 
         forAllWidgets(function(widget) {
             if (print) return widget.hideSlices();
 
-            slices = widget.slices;
+            let slices = widget.slices;
             if (!slices) return;
 
-            for (j = 0; j < slices.length; j++) {
-                slice = slices[j];
-                slice.view.visible = showSlice(j, range, layer);
-                layers = slice.layers;
-                layers.outline.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerOutline.checked && LOCAL :
-                        UI.layerOutline.checked
+            for (let j = 0; j < slices.length; j++) {
+                let slice = slices[j];
+                slice.view.visible = j >= lo && j <= hi;
+                let layers = slice.layers;
+                layers.outline.setVisible(cam ?
+                    UI.layerOutline.checked && LOCAL :
+                    UI.layerOutline.checked
                 );
-                layers.trace.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerRough.checked :
-                        UI.layerTrace.checked
+                layers.trace.setVisible(cam ?
+                    UI.layerRough.checked :
+                    UI.layerTrace.checked
                 );
-                layers.bridge.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerFinishX.checked :
-                        UI.layerDelta.checked
+                layers.bridge.setVisible(cam ?
+                    UI.layerFinishX.checked :
+                    UI.layerDelta.checked
                 );
-                layers.flat.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerFinishY.checked :
-                        UI.layerDelta.checked
+                layers.flat.setVisible(cam ?
+                    UI.layerFinishY.checked :
+                    UI.layerDelta.checked
                 );
-                layers.solid.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerFinish.checked :
-                        UI.layerSolid.checked
+                layers.solid.setVisible(cam ?
+                    UI.layerFinish.checked :
+                    UI.layerSolid.checked
                 );
-                layers.fill.setVisible(
-                    MODE === MODES.CAM ?
-                        UI.layerFacing.checked :
-                        UI.layerFill.checked
+                layers.fill.setVisible(cam ?
+                    UI.layerFacing.checked :
+                    UI.layerFill.checked
                 );
                 layers.sparse.setVisible(UI.layerSparse.checked);
                 layers.support.setVisible(UI.layerSupport.checked);
@@ -623,10 +605,11 @@
 
         if (currentPrint) {
             let len = currentPrint.getLayerCount();
-            for (j = 0; j < len; j++) {
-                currentPrint.showLayer(j, print && showSlice(j, range, layer), moves);
+            for (let j = 0; j < len; j++) {
+                currentPrint.showLayer(j, print && j >= lo && j <= hi, moves);
             }
         }
+
         UI.layerPrint.parentNode.style.display = currentPrint ? '' : 'none';
         UI.layerMoves.parentNode.style.display = currentPrint ? '' : 'none';
 
@@ -663,6 +646,7 @@
 
     function preparePrint(callback) {
         if (viewMode === VIEWS.PREVIEW) return;
+        hideSlider(true);
 
         // kick off slicing it hasn't been done already
         for (let i=0; i < WIDGETS.length; i++) {
@@ -738,6 +722,18 @@
         });
     }
 
+    function showSlider() {
+        UI.layers.style.display = 'flex';
+        UI.slider.style.display = 'flex';
+        UI.setMenu.style.display = 'none';
+    }
+
+    function hideSlider(andmenu) {
+        UI.layers.style.display = 'none';
+        UI.slider.style.display = 'none';
+        UI.setMenu.style.display = andmenu ? 'none' : 'flex';
+    }
+
     /**
      * incrementally slice all meshes then incrementally update them
      *
@@ -750,6 +746,7 @@
             KIRI.work.snap(API.view.snapshot);
         }
 
+        hideSlider(true);
         clearPrint();
         platform.deselect();
         setViewMode(VIEWS.SLICE);
@@ -758,7 +755,7 @@
         let firstMesh = true,
             countdown = WIDGETS.length,
             preserveMax = API.var.layer_max,
-            preserveLayer = API.var.layer_at,
+            preserveLayer = API.var.layer_hi,
             totalProgress,
             track = {},
             now = UTIL.time();
@@ -988,7 +985,9 @@
     }
 
     function platformSelect(widget, shift) {
-        if (viewMode !== VIEWS.ARRANGE) return;
+        if (viewMode !== VIEWS.ARRANGE) {
+            return;
+        }
         let mesh = widget.mesh,
             sel = (selectedMeshes.indexOf(mesh) >= 0);
         if (sel) {
@@ -1016,23 +1015,23 @@
     }
 
     function platformUpdateSelected() {
+        let extruders = settings.device.extruders;
         let menu_show = platform.selected_count() ? 'flex': '';
         let ext_show = platform.selected_count() && MODE === 'FDM' ? 'flex': '';
         UI.scale.style.display = menu_show;
         UI.rotate.style.display = menu_show;
-        UI.nozzle.style.display = menu_show;
+        UI.nozzle.style.display = extruders && extruders.length > 1 ? menu_show : '';
         UI.menusep.style.display = menu_show;
-        // $('ext-sel').style.display = (MODE === MODES.FDM) ? 'inline-block' : 'none';
-        let extruders = settings.device.extruders;
         if (extruders) {
             for (let i=0; i<extruders.length; i++) {
                 let b = $(`sel-ext-${i}`);
-                if (b) b.classList.remove('buton');
+                if (b) b.classList.remove('pop-sel');
             }
             forSelectedWidgets(w => {
+                w.setColor(color.selected, settings);
                 let ext = (settings.widget[w.id] || {}).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
-                if (b) b.classList.add('buton');
+                if (b) b.classList.add('pop-sel');
             });
         }
     }
@@ -1630,7 +1629,7 @@
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["help","setup","tools","prefs","files","print","local"].forEach(function(name) {
+        ["help","setup","tools","prefs","saves","files","print","local"].forEach(function(name) {
             UI[name].style.display = name === which ? 'flex' : '';
         });
 
@@ -1738,6 +1737,7 @@
         for (let k in sp) {
             if (sp.hasOwnProperty(k)) list.push(k);
         }
+        console.log({list});
         list.sort().forEach(function(sk) {
             let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
@@ -1772,7 +1772,7 @@
 
     function showSettings() {
         updateSettingsList();
-        showModal("settings");
+        showModal("saves");
     }
 
     function updateDialogLeft() {
@@ -1833,15 +1833,14 @@
     }
 
     function setFocus(el) {
-        console.log('TODO setFocus')
-        // el = [ el || UI.load, UI.import, UI.ctrlLeft, UI.container, UI.assets, UI.control, UI.modeFDM, UI.reverseZoom, UI.modelOpacity, DOC.body ];
-        // for (let es, i=0; i<el.length; i++) {
-        //     es = el[i];
-        //     es.focus();
-        //     if (DOC.activeElement === es) {
-        //         break;
-        //     }
-        // }
+        el = [ el || UI.load, DOC.body ];
+        for (let es, i=0; i<el.length; i++) {
+            es = el[i];
+            es.focus();
+            if (DOC.activeElement === es) {
+                break;
+            }
+        }
     }
 
     function setViewMode(mode) {
@@ -1852,19 +1851,14 @@
         switch (mode) {
             case VIEWS.ARRANGE:
                 KIRI.work.clear();
+                hideSlider();
                 clearWidgetCache();
-                showLayerView(false);
                 updateSliderMax();
-                showModeActive(UI.modeArrange);
                 break;
             case VIEWS.SLICE:
-                showLayerView(true);
                 updateSliderMax();
-                showModeActive(UI.modeSlice);
                 break;
             case VIEWS.PREVIEW:
-                showLayerView(true);
-                showModeActive(UI.modePreview);
                 break;
             default:
                 DBUG.log("invalid view mode: "+mode);
@@ -1873,23 +1867,8 @@
         DOC.activeElement.blur();
     }
 
-    function showModeActive(el) {
-        return console.log('TODO showModeActive');
-        [ UI.modeArrange, UI.modeSlice, UI.modePreview, UI.modeExport ].forEach(function(b) {
-            if (b === el) {
-                b.classList.add('buton');
-            } else {
-                b.classList.remove('buton');
-            }
-        });
-    }
-
-    function showLayerView(bool) {
-        // UI.layerView.style.display = bool ? 'flex' : 'none';
-    }
-
     function setExpert(bool) {
-        UC.setExpert(UI.expert.checked = bool);
+        UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
     }
 
     function getMode() {
@@ -1957,7 +1936,8 @@
     }
 
     function setControlsVisible(show) {
-        console.log('TODO setControlsVisible');
+        $('mid-lcol').style.display = show ? 'flex' : 'none';
+        $('mid-rcol').style.display = show ? 'flex' : 'none';
     }
 
     // prevent safari from exiting full screen mode

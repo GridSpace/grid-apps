@@ -2,6 +2,7 @@
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --holdbar: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1), rgba(255,255,255,0));
 }
 a, a:hover, a:visited {
     border: none;
@@ -165,6 +166,16 @@ th, tr, td {
     z-index: 100;
 }
 
+#tracker {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    display: none;
+    z-index: 101;
+}
+
 #container {
     position: fixed;
     z-index: -1;
@@ -296,6 +307,9 @@ th, tr, td {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
+}
+.pop-sel {
+    background-color: #ddd !important;
 }
 
 .lt-menu {
@@ -545,38 +559,52 @@ th, tr, td {
 #slider {
     display: none;
     position: absolute;
-    top: 5px;
+    font-size: smaller;
+    top: 10px;
     right: 3px;
-    bottom: 5px;
+    bottom: 10px;
     width: 50px;
-    background-color: #f8f8f8;
-    border: 1px solid #aaa;
-    border-radius: 3px;
 }
 #slider > div {
     flex-direction: column;
     align-items: center;
 }
-#slider-begin {
+#slider-max {
     background-color: #ccc;
-    border-bottom: 1px solid #aaa;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    margin-bottom: 3px;
 }
-#slider-end {
+#slider-center {
+    background-image: var(--holdbar);
+}
+#slider-zero {
+    margin-top: 3px;
     background-color: #ccc;
-    border-top: 1px solid #aaa;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 #slider-hold {
-    background-color: #ccc;
+    background-color: rgba(0,0,0,0.15);
     position: absolute;
     right: 0;
     left: 0;
-    border: 3px solid white;
+    top: 0;
 }
-#slider-hold .shim {
+#slider-hold .handle {
     width: 100%;
     height: 10px;
-    background-color: #aaa;
-    border: 1px solid #999;
+    border-radius: 3px;
+    background-color: var(--bg-gray);
+}
+#slider-hi {
+    pointer-events: all;
+}
+#slider-mid {
+    height: 20px;
+}
+#slider-lo {
+    pointer-events: all;
 }
 
 #alert-area {
@@ -661,8 +689,15 @@ th, tr, td {
     margin-right: 5px;
     padding: 5px;
 }
+#layers .var-row {
+    border-radius: 10px;
+    background-color: #ddd;
+    padding: 2px 5px 2px 5px;
+    margin: 0 2px 0 2px;
+}
 .var-row {
     white-space: nowrap;
+    align-items: center;
 }
 .var-row label {
     padding: 2px 4px 2px 0;

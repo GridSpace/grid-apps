@@ -22,6 +22,7 @@
 </head>
 <body class="col">
     <div id="container"></div>
+    <div id="tracker"></div>
     <div id="top" class="row">
         <div id="app-mode"></div>
         <div class="grow"></div>
@@ -164,7 +165,7 @@
             <div id="lt-nozzle" class="lt-menu noshow">
                 <i class="fas fa-map-marker"></i>
                 <label>nozzle</label>
-                <div id="pop-nozzle" class="pop-lcol row fillh"></div>
+                <div id="pop-nozzle" class="pop-lcol row fillh russo"></div>
             </div>
             <div id="lt-end"></div>
         </div>
@@ -213,6 +214,10 @@
                 <div id="mod-files" class="mdialog col">
                     <label class="t-group">recent files</label>
                     <div id="catalogList" class="col"></div>
+                </div>
+                <div id="mod-saves" class="mdialog col">
+                    <label class="t-group">saved settings</label>
+                    <div id="settingsList" class="col"></div>
                 </div>
                 <div id="mod-tools" class="mdialog">
                     <div class="col">
@@ -272,19 +277,21 @@
             </div>
         </div>
         <div id="mid-rcol" class="col j-center">
-            <div id="set-top" class="set-group"><a>settings</a></div>
-            <div id="settings" class="col"></div>
-            <div id="set-end" class="set-group"></div>
-            <div id="slider" class="col">
-                <div id="slider-begin">0</div>
+            <div id="set-menu" class="col">
+                <div id="set-top" class="set-group"><a>settings</a></div>
+                <div id="settings" class="col"></div>
+                <div id="set-end" class="set-group"></div>
+            </div>
+            <div id="slider" class="col russo">
+                <div id="slider-max">&infin;</div>
                 <div id="slider-center" class="grow">
-                    <div id="slider-hold" class="col a-center">
-                        <div id="slider-hold-top" class="shim"></div>
-                        <div id="slider-hold-mid">&nbsp;</div>
-                        <div id="slider-hold-bot" class="shim"></div>
+                    <div id="slider-hold" class="col xa-center">
+                        <div id="slider-hi" class="handle"></div>
+                        <div id="slider-mid">&nbsp;</div>
+                        <div id="slider-lo" class="handle"></div>
                     </div>
                 </div>
-                <div id="slider-end">&infin;</div>
+                <div id="slider-zero">0</div>
             </div>
         </div>
     </div>
