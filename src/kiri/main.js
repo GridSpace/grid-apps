@@ -577,7 +577,7 @@
                 slice.view.visible = j >= lo && j <= hi;
                 let layers = slice.layers;
                 layers.outline.setVisible(cam ?
-                    UI.layerOutline.checked && LOCAL :
+                    UI.layerOutline.checked :
                     UI.layerOutline.checked
                 );
                 layers.trace.setVisible(cam ?
