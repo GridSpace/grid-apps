@@ -1,3 +1,5 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
 function require_fresh(path) {
     const rpa = require.resolve(path);
     delete require.cache[rpa];
