@@ -1437,14 +1437,21 @@
                 drag.mdat = drag.mid = UI.sliderMid.clientHeight;
                 drag.mdmax = drag.height - 20 - drag.hiat;
                 drag.himax = drag.height - 20 - drag.mdat;
-                tracker.onmousemove = (ev) => {
-                    ev.stopPropagation();
-                    if (delta) delta(ev.screenY - drag.start);
-                };
-                tracker.onmouseout = tracker.onmouseup = (ev) => {
-                    ev.stopPropagation();
+                let cancel_drag = tracker.onmouseup = (ev) => {
+                    if (ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                    }
                     slider.onmousemove = undefined;
                     tracker.style.display = 'none';
+                };
+                tracker.onmousemove = (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    if (ev.buttons === 0) {
+                        return cancel_drag();
+                    }
+                    if (delta) delta(ev.screenY - drag.start);
                 };
             };
         }
@@ -1717,7 +1724,7 @@
         API.focus();
 
         // restore expert setting preference
-        UC.setExpert(control.expert);
+        API.mode.set_expert(control.expert);
 
         // setup tab visibility watcher
         // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
@@ -1770,8 +1777,10 @@
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
         $('set-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
+        $('acct-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
+        $('lt-back').onclick = API.platform.layout;
         $('lt-action').onclick = API.platform.layout;
         $('act-slice').onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         $('act-preview').onclick = (ev) => { ev.stopPropagation(); API.function.print() };

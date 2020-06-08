@@ -1858,15 +1858,18 @@
         updateSelectedInfo();
         switch (mode) {
             case VIEWS.ARRANGE:
+                $('lt-back').style.display = '';
                 KIRI.work.clear();
                 hideSlider();
                 clearWidgetCache();
                 updateSliderMax();
                 break;
             case VIEWS.SLICE:
+                $('lt-back').style.display = 'flex';
                 updateSliderMax();
                 break;
             case VIEWS.PREVIEW:
+            $('lt-back').style.display = 'flex';
                 break;
             default:
                 DBUG.log("invalid view mode: "+mode);
@@ -1877,6 +1880,8 @@
 
     function setExpert(bool) {
         UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
+        $('lt-sep-help').style.display = bool ? 'none' : '';
+        $('set-help').style.display = bool ? 'none' : '';
     }
 
     function getMode() {

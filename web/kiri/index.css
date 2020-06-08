@@ -262,15 +262,16 @@ th, tr, td {
 }
 #acct-pop > div {
     margin-top: 5px;
+    align-items: stretch;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 3px;
-    padding: 5px 0 5px 0;
+    padding: 0;
 }
 #acct-pop > div > div {
-    padding: 0 5px 0 5px;
+    padding: 5px;
 }
-#acct-pop > div:hover {
+#acct-pop > div > div:hover {
     color: #000;
     background-color: #f4f4f4;
 }
@@ -281,7 +282,7 @@ th, tr, td {
     display: none;
     position: absolute;
     right: 100%;
-    top: -6px;
+    top: -1px;
     align-items: stretch;
     text-align: right;
     border-radius: 3px;
@@ -289,7 +290,7 @@ th, tr, td {
     background-color: white;
 }
 #lang-pop > div {
-    padding: 4px 6px 4px 6px;
+    padding: 5px 7px 5px 7px;
 }
 #lang-pop > div:hover {
     color: #000;
@@ -320,7 +321,12 @@ th, tr, td {
     left: -5px;
 }
 
-#lt-sep {
+#lt-back {
+    position: absolute;
+    display: none;
+    top: 0;
+}
+#lt-sep, #lt-sep-help {
     background-color: var(--bg-gray);
     height: 10px;
     left: -5px;
