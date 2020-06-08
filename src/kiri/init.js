@@ -1440,7 +1440,7 @@
                 tracker.onmouseout = tracker.onmouseup = (ev) => {
                     ev.stopPropagation();
                     slider.onmousemove = undefined;
-                    tracker.style.display = '';
+                    tracker.style.display = 'none';
                 };
             };
         }

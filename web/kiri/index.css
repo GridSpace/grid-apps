@@ -192,12 +192,13 @@ th, tr, td {
     font-family: 'Russo One', sans-serif;
     background-color: rgba(255,255,255,0.75);
     padding: 3px;
+    z-index: 15;
 }
 #top > div {
     margin: 0 5px 0 5px;
 }
-#top, #mid-sep {
-    z-index: 15;
+#mid-sep {
+    z-index: 14;
 }
 
 #app-mode, #app-acct {
@@ -215,12 +216,11 @@ th, tr, td {
     color: var(--fg-gray);
     font-family: sans-serif;
     position: absolute;
-    z-index: 10;
+    right: -6px;
     top: 100%;
-    right: -3px;
 }
 #acct-pop > div {
-    margin-top: 10px;
+    margin-top: 5px;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 3px;
@@ -617,14 +617,8 @@ th, tr, td {
     border-radius: 3px;
     background-color: var(--bg-gray);
 }
-#slider-hi {
-    pointer-events: all;
-}
 #slider-mid {
     height: 20px;
-}
-#slider-lo {
-    pointer-events: all;
 }
 
 #alert-area {
