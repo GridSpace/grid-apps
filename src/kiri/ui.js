@@ -117,7 +117,7 @@
             row.setAttribute("class", "set-group noselect");
             addTo = pop;
         } else {
-            row.setAttribute("class", "t-group col");
+            row.setAttribute("class", "set-header col");
             addTo = lastDiv;
         }
 

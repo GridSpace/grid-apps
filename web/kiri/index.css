@@ -453,15 +453,14 @@ th, tr, td {
     font-weight: bold;
 }
 #help .header {
-    background-image: var(--gradbar);
+    background-color: rgba(0,0,0,0.1);
+    justify-content: center;
     white-space: nowrap;
     text-align: center;
-    justify-content: center;
     border-radius: 5px;
-    padding: 1px 0 2px 0;
     margin-bottom: 5px;
+    padding: 1px 0 2px 0;
     font-family: monospace;
-    color: white;
 }
 #help .title {
     justify-content: center;
@@ -506,7 +505,9 @@ th, tr, td {
     font-family: 'Russo One', sans-serif;
     flex-direction: column;
     align-items: center;
-    background-color: white;
+    background-color: rgba(255,255,255,0.75);
+    border-radius: 5px;
+    width: 100px;
     margin: 5px;
 }
 .dev-sel {
@@ -673,6 +674,15 @@ th, tr, td {
     border-bottom-left-radius: 10px;
     background-color: var(--bg-gray);
     height: 10px;
+}
+.set-header {
+    background-color: rgba(0,0,0,0.1);
+    text-align: center;
+    white-space: nowrap;
+    justify-content: center;
+    border-radius: 2px;
+    padding: 1px 0 2px 0;
+    margin: 5px 0 5px 0;
 }
 .set-group {
     align-items: center;
