@@ -547,6 +547,10 @@
      * @param {number} [layer]
      */
     function showSlices(layer) {
+        if (viewMode === VIEWS.ARRANGE) {
+            return;
+        }
+
         showSlider();
 
         if (typeof(layer) === 'string' || typeof(layer) === 'number') {

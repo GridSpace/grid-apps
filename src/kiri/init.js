@@ -333,7 +333,11 @@
                 API.show.local();
                 break;
             case cca('v'): // toggle single slice view mode
-                UI.layerRange.checked = !UI.layerRange.checked;
+                if (API.var.layer_hi == API.var.layer_lo) {
+                    API.var.layer_lo = 0;
+                } else {
+                    API.var.layer_lo = API.var.layer_hi;
+                }
                 API.show.slices();
                 break;
             case cca('d'): // duplicate object
