@@ -495,9 +495,11 @@
         });
     }
 
-    function forSelectedWidgets(f) {
+    function forSelectedWidgets(f,noauto) {
         let m = selectedMeshes;
-        if (m.length === 0 && WIDGETS.length === 1) m = [ WIDGETS[0].mesh ];
+        if (m.length === 0 && WIDGETS.length === 1) {
+            m = noauto ? [] : [ WIDGETS[0].mesh ];
+        }
         m.slice().forEach(function (mesh) { f(mesh.widget) });
     }
 
@@ -1032,7 +1034,7 @@
                 let ext = (settings.widget[w.id] || {}).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
                 if (b) b.classList.add('pop-sel');
-            });
+            }, true);
         }
     }
 
