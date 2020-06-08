@@ -1071,14 +1071,15 @@
         SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
 
         Object.assign(UI, {
-            // from static HTML
-            load:               $('load-file'),
             alert: {
                 dialog:         $('alert-area'),
                 text:           $('alert-text')
             },
-            container:          container,
 
+            load:               $('load-file'),
+            focuser:            $('focuser'),
+
+            container:          container,
             menusep:            $('lt-sep'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
@@ -1568,27 +1569,6 @@
             API.modal.show('setup');
         }
 
-        // bind interface action elements
-        $('app-name').onclick = API.help.show;
-        $('app-mode').onclick = showSetup;
-        $('set-device').onclick = showSetup;
-        $('set-tools').onclick = showTools;
-        $('set-prefs').onclick = () => { API.modal.show('prefs') };
-        $('file-recent').onclick = () => { API.modal.show('files') };
-        $('file-import').onclick = API.event.import;
-        $('lt-action').onclick = API.platform.layout;
-        $('act-slice').onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
-        $('act-preview').onclick = (ev) => { ev.stopPropagation(); API.function.print() };
-        $('act-export').onclick = (ev) => { ev.stopPropagation(); API.function.export() };
-        $('view-arrange').onclick = API.platform.layout;
-        $('view-top').onclick = SPACE.view.top;
-        $('view-home').onclick = SPACE.view.home;
-
-        $('mode-fdm').onclick = () => { API.mode.set('FDM') };
-        $('mode-sla').onclick = () => { API.mode.set('SLA') };
-        $('mode-cam').onclick = () => { API.mode.set('CAM') };
-        $('mode-laser').onclick = () => { API.mode.set('LASER') };
-
         function mksvg(src) {
             let svg = DOC.createElement('svg');
             svg.innerHTML = src;
@@ -1777,6 +1757,27 @@
 
         // lift curtain
         $('curtain').style.display = 'none';
+
+        // bind interface action elements
+        $('app-name').onclick = API.help.show;
+        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showSetup() };
+        $('set-device').onclick = (ev) => { ev.stopPropagation(); showSetup() };
+        $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
+        $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
+        $('set-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
+        $('file-recent').onclick = () => { API.modal.show('files') };
+        $('file-import').onclick = () => { API.event.import() };
+        $('lt-action').onclick = API.platform.layout;
+        $('act-slice').onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
+        $('act-preview').onclick = (ev) => { ev.stopPropagation(); API.function.print() };
+        $('act-export').onclick = (ev) => { ev.stopPropagation(); API.function.export() };
+        $('view-arrange').onclick = API.platform.layout;
+        $('view-top').onclick = SPACE.view.top;
+        $('view-home').onclick = SPACE.view.home;
+        $('mode-fdm').onclick = () => { API.mode.set('FDM') };
+        $('mode-sla').onclick = () => { API.mode.set('SLA') };
+        $('mode-cam').onclick = () => { API.mode.set('CAM') };
+        $('mode-laser').onclick = () => { API.mode.set('LASER') };
     }
 
     // if a language needs to load, the script is injected and loaded

@@ -21,6 +21,8 @@
     <script src="/code/kiri.js?{{version}}"></script>
 </head>
 <body class="col">
+    <input id="focuser" size=10></input>
+    <div id="curtain" class="j-center a-center">loading...</div>
     <div id="container"></div>
     <div id="tracker"></div>
     <div id="top" class="row">
@@ -47,8 +49,7 @@
     <div id="mid-sep"></div>
     <div id="mid" class="grow row">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-        <div id="curtain" class="j-center a-center">loading...</div>
-        <div id="mid-lcol" class="col j-center">
+        <div id="mid-lcol" class="col j-center noshow">
             <div id="lt-top"></div>
             <div id="lt-setup" class="lt-menu">
                 <i class="fas fa-cogs"></i>
@@ -65,6 +66,10 @@
                     <div id="set-prefs">
                         <i class="fas fa-sliders-h"></i>
                         <label>prefs<label>
+                    </div>
+                    <div id="set-help">
+                        <i class="far fa-question-circle"></i>
+                        <label>help<label>
                     </div>
                 </div>
             </div>
@@ -271,13 +276,13 @@
                 <div id="mod-local" class="mdialog"></div>
                 <div id="mod-print" class="mdialog"></div>
                 <!-- hidden file input loader -->
-                <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
+                <input id="load-file" type="file" name="loadme" xstyle="display:none" accept=".stl,.gcode,.nc"/>
                 <div class="mod-end"></div>
 
                 </div>
             </div>
         </div>
-        <div id="mid-rcol" class="col j-center">
+        <div id="mid-rcol" class="col j-center noshow">
             <div id="set-menu" class="col">
                 <div id="set-top" class="set-group"><a>settings</a></div>
                 <div id="settings" class="col"></div>

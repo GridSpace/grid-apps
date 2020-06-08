@@ -79,7 +79,7 @@ select, textarea, button, input, a {
 }
 select {
     border: 1px solid #bbb;
-    background-color: white;
+    background-color: rgba(255,255,255,0.5);
     border-radius: 3px;
 }
 select option[local="1"] {
@@ -160,10 +160,10 @@ th, tr, td {
     left: 0;
     right: 0;
     bottom: 0;
-    position: absolute;
+    position: fixed;
     background-color: #fff;
     font-family: 'Russo One', sans-serif;
-    z-index: 100;
+    z-index: 11;
 }
 
 #tracker {
@@ -195,6 +195,9 @@ th, tr, td {
 }
 #top > div {
     margin: 0 5px 0 5px;
+}
+#top, #mid-sep {
+    z-index: 15;
 }
 
 #app-mode, #app-acct {
@@ -534,7 +537,7 @@ th, tr, td {
     color: white;
 }
 .t-body {
-    background-color: white;
+    background-color: rgba(255,255,255,0.5);
     border: 1px solid #bbb;
     border-radius: 3px;
 }
@@ -731,4 +734,11 @@ th, tr, td {
 .table-row {
     flex-direction: row;
     align-items: stretch;
+}
+
+#focuser {
+    position: fixed;
+    z-index: -100;
+    left: -100%;
+    top: -100%;
 }

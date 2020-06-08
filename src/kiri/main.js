@@ -1833,7 +1833,7 @@
     }
 
     function setFocus(el) {
-        el = [ el || UI.load, DOC.body ];
+        el = [ el || UI.focuser, UI.load, UI.sizeX, DOC.body ];
         for (let es, i=0; i<el.length; i++) {
             es = el[i];
             es.focus();
