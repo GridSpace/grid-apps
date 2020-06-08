@@ -1664,7 +1664,7 @@
         if (SETUP.s) SETUP.s.forEach(function(lib) {
             let scr = DOC.createElement('script');
             scr.setAttribute('defer',true);
-            scr.setAttribute('src','/code/'+lib+'.js');
+            scr.setAttribute('src',`/code/${lib}.js?${KIRI.version}`);
             DOC.body.appendChild(scr);
             STATS.add('load_'+lib);
             API.event.emit('load.lib', lib);
@@ -1676,7 +1676,7 @@
             let ss = DOC.createElement('link');
             ss.setAttribute("type", "text/css");
             ss.setAttribute("rel", "stylesheet");
-            ss.setAttribute("href", `${style}.css`);
+            ss.setAttribute("href", `${style}.css?${KIRI.version}`);
             DOC.body.appendChild(ss);
         });
 
