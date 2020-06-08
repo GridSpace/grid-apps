@@ -66,6 +66,7 @@
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
         });
+        hidePoppers();
     }
 
     function setExpert(bool) {

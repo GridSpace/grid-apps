@@ -354,6 +354,10 @@ th, tr, td {
 }
 
 #end {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
     text-align: center;
     font-size: smaller;
     height: 25px;
@@ -362,24 +366,24 @@ th, tr, td {
 #progress {
     display: none;
     position: absolute;
-    bottom: 0px;
     top: 0px;
     left: 10%;
     right: 10%;
     text-align: center;
-    background-color: #ddd;
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 3px;
 }
 #progbar {
     width: 100%;
     text-align: left;
     position: relative;
-    background-color: rgba(255,0,0,0.75);
+    background-color: rgba(255,0,0,0.65);
+    border-radius: 3px;
 }
 #progtxt {
     color: white;
-    height: 25px;
-    padding: 0 5px 0 5px;
     margin: 0 5px 0 5px;
+    padding: 0 5px 2px 5px;
     white-space: nowrap;
     flex-direction: row;
     align-items: center;
