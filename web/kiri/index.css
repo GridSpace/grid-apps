@@ -480,10 +480,23 @@ th, tr, td {
     white-space: nowrap;
     flex-direction: column;
     padding: 8px 0 3px 0;
-    border-top: 1px dashed black;
+    border-top: 1px dashed #aaa;
 }
 #help th, #help td {
     font-family: monospace;
+}
+#help td label {
+    font-weight: bold;
+}
+#help-left {
+    padding-right: 5px;
+    border-right: 1px dashed #aaa;
+}
+#help-left .title {
+    margin-bottom: 2px;
+}
+#help-right {
+    padding-left: 3px;
 }
 
 .dev-type {
