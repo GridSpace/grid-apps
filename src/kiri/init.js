@@ -1780,7 +1780,10 @@
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
 
+        // add app name hover info
         $('app-info').innerText = KIRI.version;
+        // show topline separator when iframed
+        try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
     }
 
     // if a language needs to load, the script is injected and loaded

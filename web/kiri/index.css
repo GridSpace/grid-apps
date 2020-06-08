@@ -197,9 +197,6 @@ th, tr, td {
 #top > div {
     margin: 0 5px 0 5px;
 }
-#mid-sep {
-    z-index: 14;
-}
 
 #app-mode, #app-acct {
     width: 125px;
@@ -306,7 +303,11 @@ th, tr, td {
     pointer-events: visible;
 }
 
-#mid-sep {
+#top-sep {
+    display: none;
+}
+#top-sep, #mid-sep {
+    z-index: 14;
     height: 1px;
     background-image: var(--gradbar);
 }
