@@ -1779,6 +1779,8 @@
         $('mode-sla').onclick = () => { API.mode.set('SLA') };
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
+
+        $('app-info').innerText = KIRI.version;
     }
 
     // if a language needs to load, the script is injected and loaded

@@ -204,6 +204,49 @@ th, tr, td {
 #app-mode, #app-acct {
     width: 125px;
 }
+#app-mode:hover #mode-info {
+    display: flex;
+}
+#mode-info {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-top: 5px;
+    padding: 5px;
+    left: -6px;
+    top: 100%;
+    color: var(--fg-gray);
+    border-radius: 3px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+#mode-info > div {
+    padding: 2px 0 2px 0;
+}
+#mode-info label {
+    font-weight: bold;
+    padding-right: 5px;
+}
+
+#app-name:hover #app-info {
+    display: flex;
+}
+#app-info {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-top: 5px;
+    padding: 5px;
+    top: 100%;
+    color: var(--fg-gray);
+    border-radius: 3px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
 
 #app-acct {
     justify-content: flex-end;

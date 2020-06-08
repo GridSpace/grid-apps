@@ -1431,6 +1431,8 @@
         }
         API.conf.save();
         platform.update_stock();
+        $('mode-device').innerText = settings.device.deviceName;
+        $('mode-profile').innerText = settings.process.processName;
     }
 
     function saveSettings() {
@@ -1890,7 +1892,7 @@
             DBUG.log("invalid mode: "+mode);
             mode = 'FDM';
         }
-        $('app-mode').innerHTML = mode;
+        $('app-mode-name').innerHTML = mode;
         $('set-tools').style.display = mode === 'CAM' ? '' : 'none';
         settings.mode = mode;
         // restore cached device profile for this mode
