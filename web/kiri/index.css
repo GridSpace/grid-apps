@@ -246,6 +246,7 @@ th, tr, td {
 }
 
 #app-acct {
+    align-items: center;
     justify-content: flex-end;
 }
 #app-acct:hover #acct-pop {
