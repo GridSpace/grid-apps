@@ -206,7 +206,7 @@
             clear: clearWidgetCache
         },
         hide: {
-            import: function() { UI.import.style.display = 'none' }
+            import: function() { }
         },
         language: KIRI.lang,
         lists,
@@ -1648,7 +1648,6 @@
         });
 
         function ondone() {
-            // UI[which].style.display = 'flex';
             API.event.emit('modal.show', which);
         }
 
