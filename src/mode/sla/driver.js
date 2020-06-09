@@ -795,8 +795,7 @@
             $('print-filename').value = filename;
             $('print-layers').value = lines.length;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
-            $('print-close').onclick = API.modal.hide;
-
+            
             switch (device.deviceName) {
                 case 'Anycubic.Photon':
                     download.innerText += " .photon";

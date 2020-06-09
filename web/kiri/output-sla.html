@@ -1,22 +1,20 @@
-<button id="print-close" class="modal-x">X</button>
-
-<span>output options</span>
-
-<div>
-    <table id="print-info">
-        <tr><th>file name</th><td><input id="print-filename" size="30" spellcheck="false" /></td></tr>
-        <tr><th>print layers</th><td><input id="print-layers" size="10" spellcheck="false" /></td></tr>
-        <tr><th>print time</th><td><input id="print-time" size="10" spellcheck="false" /></td></tr>
-    </table>
+<div class="header"><label>export</label></div>
+<div id="print-info" class="col box">
+    <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+    <div><label>print layers</label><input id="print-layers" size="10" spellcheck="false" /></div>
+    <div><label>print time</label><input id="print-time" size="10" spellcheck="false" /></div>
 </div>
 
-<div class="print-sel">
-    <table>
-        <tr><th><button id="print-photon">download</button></th></tr>
-    </table>
+<div class="header"><label>download</label></div>
+<div class="row box">
+    <button id="print-photon" class="grow">download</button>
 </div>
 
-<div class="print-sel">
-    <input id="print-range" type="range"><label id="print-layer"></label>
+<div class="header"><label>preview</label></div>
+<div class="col box a-center j-center">
+    <div class="row a-center j-center">
+        <input id="print-range" type="range" class="grow">
+        <label id="print-layer"></label>
+    </div>
     <canvas id="print-canvas" width="1440" height="2560"></canvas>
 </div>

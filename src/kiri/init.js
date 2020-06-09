@@ -1133,6 +1133,7 @@
 
             slider:             $('slider'),
             sliderMax:          $('slider-max'),
+            sliderMin:          $('slider-zero'),
             sliderLo:           $('slider-lo'),
             sliderMid:          $('slider-mid'),
             sliderHi:           $('slider-hi'),
@@ -1415,9 +1416,11 @@
         // slider setup
         const slider = UI.sliderRange;
         const drag = { };
+
         function pxToInt(txt) {
             return txt ? parseInt(txt.substring(0,txt.length-2)) : 0;
         }
+
         function sliderUpdate() {
             let start = drag.top / drag.maxval;
             let end = (drag.top + drag.mid - 20) / drag.maxval;
@@ -1426,6 +1429,7 @@
             API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
             API.show.layer();
         }
+
         function dragit(el, delta) {
             el.onmousedown = (ev) => {
                 tracker.style.display = 'block';
@@ -1479,6 +1483,34 @@
             UI.sliderMid.style.height = `${midlen}px`;
             drag.mid = midlen;
             sliderUpdate();
+        });
+
+        UI.sliderMin.onclick = () => {
+            API.show.layer(0,0);
+        }
+
+        UI.sliderMax.onclick = () => {
+            API.show.layer(API.var.layer_max,0);
+        }
+
+        UI.slider.onmouseover = (ev) => {
+            API.event.emit('slider.label');
+        };
+
+        UI.slider.onmouseleave = (ev) => {
+            if (!ev.buttons) API.event.emit('slider.unlabel');
+        };
+
+        API.event.on('slider.unlabel', (values) => {
+            $('slider-hi-val').style.display = 'none';
+            $('slider-lo-val').style.display = 'none';
+        });
+
+        API.event.on('slider.label', (values) => {
+            $('slider-hi-val').style.display = 'flex';
+            $('slider-lo-val').style.display = 'flex';
+            $('slider-hi-val').innerText = API.var.layer_hi;
+            $('slider-lo-val').innerText = API.var.layer_lo;
         });
 
         API.event.on('slider.set', (values) => {

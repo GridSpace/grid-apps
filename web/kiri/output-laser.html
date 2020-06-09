@@ -1,18 +1,12 @@
-<button id="print-close" class="modal-x">X</button>
-
-<span>output options</span>
-
-<div>
-    <table id="print-info">
-        <tr><th>file name</th><td><input id="print-filename" size="30" spellcheck="false" /></td></tr>
-        <tr><th>segments</th><td><input id="print-lines" size="12" disabled="true" /></td></tr>
-    </table>
+<div class="header"><label>export</label></div>
+<div id="print-info" class="col box">
+    <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+    <div><label>segments</label><input id="print-lines" size="12" disabled="true" /></div>
 </div>
 
-<div class="print-sel">
-    <table>
-        <tr><th><button id="print-svg">download as svg</button></th></tr>
-        <tr><th><button id="print-dxf">download as dxf</button></th></tr>
-        <tr><th><button id="print-lg">download as gcode</button></th></tr>
-    </table>
+<div class="header"><label>download</label></div>
+<div class="row box">
+    <button id="print-svg" class="grow">svg</button>
+    <button id="print-dxf" class="grow">dxf</button>
+    <button id="print-lg" class="grow">gcode</button>
 </div>

@@ -113,7 +113,6 @@
             UI.print.innerHTML = html;
             $('print-filename').value = filename;
             $('print-lines').value = UTIL.comma(segments);
-            $('print-close').onclick = API.modal.hide;
             $('print-svg').onclick = download_svg;
             $('print-dxf').onclick = download_dxf;
             $('print-lg').onclick = download_gcode;
@@ -213,7 +212,15 @@
                 let dev = devs[uuid];
                 html.push(`<option id="gl-${uuid}" value="${uuid}">${dev.stat.device.name}</option>`);
             }
-            $('grid-local').innerHTML = html.join('\n');
+
+            if (html.length) {
+                $('grid-local').innerHTML = html.join('\n');
+                $('send-to-gridhead').style.display = 'flex';
+                $('send-to-gridspool').style.display = 'flex';
+            } else {
+                $('send-to-gridhead').style.display = '';
+                $('send-to-gridspool').style.display = '';
+            }
         }
 
         function sendto_gridlocal() {
@@ -412,19 +419,18 @@
                 mins = floor(newtime / 60),
                 secs = newtime - mins * 60;
 
-            $('mill-time').value = $('print-time').value = [pad(hours),pad(mins),pad(secs)].join(':');
+            $('output-time').value = [pad(hours),pad(mins),pad(secs)].join(':');
         }
 
         API.ajax("/kiri/output-gcode.html", function(html) {
             UI.print.innerHTML = html;
-            $('print-close').onclick = API.modal.hide;
             $('print-download').onclick = download;
             $('print-octoprint').onclick = sendto_octoprint;
             $('print-gridhost').onclick = sendto_gridhost;
             $('print-gridlocal').onclick = sendto_gridlocal;
             $('admin-gridlocal').onclick = admin_gridlocal;
-            $('print-filament-row').style.display = MODE === MODES.FDM ? '' : 'none';
-            $('mill-info').style.display = MODE === MODES.CAM ? '' : 'none';
+            $('print-filament-head').style.display = MODE === MODES.FDM ? '' : 'none';
+            $('print-filament-info').style.display = MODE === MODES.FDM ? '' : 'none';
             $('print-filename').value = filename;
             $('print-filesize').value = UTIL.comma(currentPrint.bytes);
             $('print-filament').value = Math.round(currentPrint.distance);
@@ -437,8 +443,10 @@
             octo_host = $('octo-host');
             octo_apik = $('octo-apik');
             if (MODE === MODES.CAM) {
+                $('send-to-octohead').style.display = 'none';
                 $('send-to-octoprint').style.display = 'none';
             } else {
+                $('send-to-octohead').style.display = '';
                 $('send-to-octoprint').style.display = '';
             }
             // hide octoprint when hard-coded in the url

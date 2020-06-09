@@ -253,6 +253,7 @@
         view: {
             get: function() { return viewMode },
             set: setViewMode,
+            update_slider: updateSlider,
             update_fields: updateFields,
             wireframe: toggleWireframe,
             snapshot: null
@@ -465,8 +466,11 @@
     }
 
     function setVisibleLayer(h, l) {
-        API.var.layer_hi = bound(h || API.var.layer_hi, 0, API.var.layer_max);
-        API.var.layer_lo = bound(l || API.var.layer_lo, 0, API.var.layer_hi);
+        h = h >= 0 ? h : API.var.layer_hi;
+        l = l >= 0 ? l : API.var.layer_lo;
+        API.var.layer_hi = bound(h, 0, API.var.layer_max);
+        API.var.layer_lo = bound(l, 0, h);
+        API.event.emit("slider.label");
         updateSlider();
         showSlices();
     }
@@ -526,6 +530,7 @@
         API.var.layer_max = UI.sliderMax.innerText = max;
         if (set || max < API.var.layer_hi) {
             API.var.layer_hi = API.var.layer_max;
+            API.event.emit("slider.label");
             updateSlider();
         }
     }
@@ -561,6 +566,7 @@
 
         layer = bound(layer, 0, API.var.layer_max);
         API.var.layer_hi = layer;
+        API.event.emit("slider.label");
 
         let print = UI.layerPrint.checked,
             moves = UI.layerMoves.checked,
@@ -1815,6 +1821,7 @@
         fetch("/api/grid_local")
             .then(r => r.json())
             .then(j => {
+                let devc = 0;
                 let bind = [];
                 let html = ['<table>'];
                 html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
@@ -1828,10 +1835,15 @@
                     html.push(`<td>${r.state}</td>`);
                     html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
                     html.push(`</tr>`);
+                    devc++;
                 }
                 html.push(`</tbody>`);
                 html.push(`</table>`);
-                $('local-dev').innerHTML = html.join('');
+                if (devc) {
+                    $('mod-local').innerHTML = html.join('');
+                } else {
+                    $('mod-local').innerHTML = `<br><b>no local devices</b>`;
+                }
                 bind.forEach(rec => {
                     $(rec.uuid).onclick = () => {
                         window.open(`http://${rec.host}:${rec.port||4080}/`);

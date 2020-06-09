@@ -125,6 +125,9 @@ th, tr, td {
 .a-end {
     align-items: flex-end;
 }
+.a-stretch {
+    align-items: stretch;
+}
 .j-start {
     justify-content: flex-start;
 }
@@ -486,6 +489,78 @@ th, tr, td {
     bottom: -20px;
     right: 5px;
 }
+#mod-print {
+    background-color: rgba(255,255,255,0.85);
+}
+#mod-print .grow button {
+    margin-left: 5px;
+}
+#mod-print .hint {
+    color: #345;
+    font-size: 12px;
+    font-style: italic;
+    text-align: center;
+    font-weight: normal;
+    padding-top: 5px;
+}
+#mod-print .box {
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    padding: 20px 10px 10px 10px;
+}
+#mod-print .box select {
+    min-width: 10em;
+}
+#mod-print .header {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transform: translateY(50%);
+    z-index: 10;
+}
+#mod-print .header label {
+    background-color: white;
+    padding: 0 10px 0 10px;
+    border-radius: 5px;
+    border-right: 1px solid #bbb;
+    border-left: 1px solid #bbb;
+}
+#mod-print a {
+    text-decoration: underline;
+}
+#mod-print a:hover {
+    color: #567;
+    background-color: #ddd;
+}
+#mod-print label {
+    flex-grow: 1;
+    font-weight: bold;
+    padding-right: 10px;
+}
+#mod-print button {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 2em;
+}
+#print-canvas {
+    width: 180px;
+    height: 320px;
+    border: 1px solid #ccc;
+    background-color: #f5f5f5;
+    transform: scale(-1, 1);
+}
+#print-layer {
+    font-family: 'Russo One', sans-serif;
+    font-size: small;
+    width: 5em;
+    padding: 0 !important;
+    text-align: right;
+}
+#print-download {
+    min-height: 4em !important;
+}
 .mod-end {
     height: 10px;
     border-bottom-left-radius: 10px;
@@ -637,6 +712,17 @@ th, tr, td {
     bottom: 10px;
     width: 50px;
 }
+#slider-hi-val, #slider-lo-val {
+    display: none;
+    position: absolute;
+    font-family: monospace;
+    transform: translateY(-50%);
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    right: 110%;
+    top: 50%;
+}
 #slider > div {
     flex-direction: column;
     align-items: center;
@@ -651,6 +737,7 @@ th, tr, td {
     background-image: var(--holdbar);
 }
 #slider-zero {
+    z-index: 10;
     margin-top: 3px;
     background-color: #ccc;
     border-bottom-left-radius: 10px;
