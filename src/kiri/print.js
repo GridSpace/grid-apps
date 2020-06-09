@@ -50,6 +50,8 @@
         this.distance = 0;
         this.bounds = null;
         this.imported = null;
+
+        this.hsv2rgb = hsv2rgb;
     }
 
     PRO.addOutput = addOutput;
@@ -339,7 +341,8 @@
                 break;
             case 'CAM':
             case 'FDM':
-                scope.renderMoves(true, 0x888888);
+                driver.printRender(scope);
+                // scope.renderMoves(true, 0x888888);
                 break;
             case 'LASER':
                 scope.renderMoves(false, 0x0088aa);

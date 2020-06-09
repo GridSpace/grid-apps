@@ -601,7 +601,7 @@
                 UI.gcodeLayer,
                 UI.extFilament,
                 UI.extNozzle,
-                UI.deviceMaxSpindle,
+                UI.spindleMax,
                 UI.gcodeSpindle,
                 UI.gcodeDwell,
                 UI.gcodeChange,
@@ -621,16 +621,7 @@
                 e.disabled = !local;
             });
 
-            // hide spindle fields when device doens't support it
-            if (mode === 'CAM') [
-                UI.extrudeAbs,
-                UI.roughingSpindle,
-                UI.finishingSpindle,
-                UI.drillSpindle
-            ].forEach(function(e) {
-                e.parentNode.style.display = dev.spindleMax >= 0 ? 'none' : 'block';
-            });
-
+            UI.extrudeAbs.style.display = mode === 'CAM' ? 'none' : 'flex';
             UI.deviceSave.disabled = !local;
             UI.deviceDelete.disabled = !local;
             UI.deviceAdd.disabled = dev.noclone;
@@ -1176,7 +1167,7 @@
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6}),
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
-            deviceMaxSpindle: UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
+            spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:GCODE}),
             deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),

@@ -19,7 +19,7 @@
             printSetup,
             printExport,
             // printDownload,
-            // printRender
+            printRender
         },
         SLICER = KIRI.slicer,
         newPoint = BASE.newPoint;
@@ -1225,5 +1225,75 @@
 
         return online ? null : output.join("\n");
     };
+
+    function printRender(print) {
+        let debug = KIRI.api.const.LOCAL;
+        let scope = print, emits, moves, last;
+        // render layered output
+        scope.lines = 0;
+        scope.output.forEach(function(layerout) {
+            let move = [], print = {}, z;
+            layerout.forEach(function(out, index) {
+                let point = out.point;
+                if (last) {
+                    if (UTIL.distSq(last, point) < 0.001 && point.z === last.z) {
+                        return;
+                    }
+                    if (out.emit > 0) {
+                        let spd = out.speed || 4000;
+                        let arr = print[spd] || [];
+                        print[spd] = arr;
+                        arr.push(last);
+                        arr.push(point);
+                    } else {
+                        move.push(last);
+                        move.push(point);
+                    }
+                    // move direction arrow heads
+                    if (debug && last.z == point.z) {
+                        let rs = BASE.newSlope(
+                            {x: point.x, y: point.y},
+                            {x: last.x, y: last.y}
+                        );
+                        let ao1 = BASE.newSlopeFromAngle(rs.angle + 25);
+                        let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
+                        let sp = BASE.newPoint(point.x, point.y, point.z);
+                        move.push(sp);
+                        move.push(sp.projectOnSlope(ao1, 0.5));
+                        move.push(sp);
+                        move.push(sp.projectOnSlope(ao2, 0.5));
+                    }
+                } else {
+                    z = point.z;
+                }
+                last = point;
+            });
+            // printing moves
+            emits = KIRI.newLayer(scope.group);
+            scope.printView.push(emits);
+            // non-printing moves
+            moves = KIRI.newLayer(scope.group);
+            moves.lines(move, 0x888888);
+            scope.movesView.push(moves);
+            moves.render();
+            for (let speed in print) {
+                let sint = Math.min(6000, parseInt(speed));
+                let rgb = scope.hsv2rgb({h:sint/6000, s:1, v:0.6});
+                // emits.noodle_lines(print[speed], 0.2,
+                //     ((rgb.r * 0xff) << 16) |
+                //     ((rgb.g * 0xff) <<  8) |
+                //     ((rgb.b * 0xff) <<  0),
+                //     0, print[speed][0].z
+                // );
+                emits.lines(print[speed],
+                    ((rgb.r * 0xff) << 16) |
+                    ((rgb.g * 0xff) <<  8) |
+                    ((rgb.b * 0xff) <<  0)
+                );
+            }
+            emits.render();
+            scope.lines += print.length;
+        });
+    }
 
 })();
