@@ -79,30 +79,35 @@
         this.view = view;
         this.bycolor = {};
         this.opacity = 0.15,
-        this.specular = 0x181818,
-        this.shininess = 100,
+        this.specular = 0x181818;
+        this.shininess = 100;
         this.transparent = true;
     };
 
     LP.setOpacity = function(v) {
         this.opacity = v;
+        return this;
     };
 
     LP.setSpecular = function(v) {
         this.specular = v;
+        return this;
     };
 
     LP.setShininess = function(v) {
         this.shininess = v;
+        return this;
     };
 
     LP.setTransparent = function(b) {
         this.transparent = b;
+        return this;
     };
 
     LP.setVisible = function(vis) {
         if (this.group) this.group.visible = vis;
         if (this.solids) this.solids.visible = vis;
+        return this;
     };
 
     LP.clear = function() {
@@ -114,6 +119,7 @@
         let ca = this.bycolor[color];
         if (!ca) ca = this.bycolor[color] = [];
         ca.push(obj);
+        return this;
     };
 
     LP.poly = function(poly, color, deep, open) {
@@ -124,11 +130,13 @@
             this.add(color, {poly:poly, deep:deep, open:open});
             this.changed = true;
         }
+        return this;
     };
 
     LP.solid = function(poly, color) {
         this.add(color, {solid: poly});
         this.changed = true;
+        return this;
     };
 
     LP.noodle = function(poly, offset, color, traceColor, open) {
@@ -146,21 +154,21 @@
             POLY.expand([p], -offset, z-0.01, exp, 1);
             POLY.nest(exp).forEach((p,i) => {
                 this.add(color, {solid: p});
-                p = p.clone(true).setZ(z + 0.01);
-                this.add(traceColor, {poly: p, deep: true, open});
+                this.add(traceColor, {poly: p.clone(true).setZ(z + 0.01), deep: true, open});
             });
         })
         this.changed = true;
+        return this;
     };
 
     LP.noodle_open = function(poly, offset, color, traceColor, z) {
         poly = POLY.expand_lines(poly, offset, z);
         poly.forEach(p => {
             this.add(color, {solid: p});
-            p = p.setZ(z + 0.01);
-            this.add(traceColor, {poly: p, deep: false, open: true});
+            this.add(traceColor, {poly: p.clone().setZ(z + 0.01), deep: false, open: false});
         })
         this.changed = true;
+        return this;
     };
 
     LP.noodle_lines = function(points, offset, color, traceColor, z) {
@@ -172,11 +180,12 @@
             let l2 = p2.offsetLineTo(p1, offset);
             let poly = base.newPolygon().addPoints([
                 l1.p1, l1.p2, l2.p1, l2.p2
-            ]).setZ(z + 0.01);
+            ]);
             this.add(color, {solid: poly});
-            this.add(traceColor, {poly: poly, deep: false, open: true});
+            this.add(traceColor, {poly: poly.clone().setZ(z + 0.01), deep: false, open: false});
         }
         this.changed = true;
+        return this;
     };
 
     LP.points = function(points, color, size, opacity) {
@@ -212,11 +221,13 @@
                 toVector({x:p.x-sz, y:p.y-sz, z:p.z-sz}),
             ], color);
         });
+        return this;
     };
 
     LP.lines = function(points, color) {
         this.add(color, {lines:points});
         this.changed = true;
+        return this;
     };
 
     LP.renderAll = function() {

@@ -416,8 +416,6 @@
     function expand_lines(poly, distance, z) {
         let fact = CONF.clipper,
             clib = self.ClipperLib,
-            clip = clib.Clipper,
-            cpft = clib.PolyFillType,
             cjnt = clib.JoinType,
             cety = clib.EndType,
             coff = new clib.ClipperOffset(),
