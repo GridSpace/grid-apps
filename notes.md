@@ -16,6 +16,7 @@
 
 # FDM
 
+* `B` fix nozzle offset for new rendering modes
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
