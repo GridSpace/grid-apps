@@ -1409,18 +1409,18 @@
             ]),
 
             layers:        UC.setGroup($("layers")),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:ALL}),
             layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
             layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
             layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
             layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
             layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
             layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
             layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
             layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
+            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:ALL}),
+            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
+            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });

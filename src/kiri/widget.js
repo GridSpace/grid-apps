@@ -722,7 +722,7 @@
             driver = DRIVERS[settings.mode.toUpperCase()];
 
         // allow driver to override widget slice rendering (new in SLA)
-        if (driver.sliceRender) return driver.sliceRender(this);
+        if (driver.sliceRender) return driver.sliceRender(this, renderMode);
 
         let extruder = this.getExtruder(settings);
         // render outline

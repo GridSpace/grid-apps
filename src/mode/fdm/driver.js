@@ -15,8 +15,11 @@
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM = {
             slice,
+            sliceRender,
             printSetup,
-            printExport
+            printExport,
+            // printDownload,
+            // printRender
         },
         SLICER = KIRI.slicer,
         newPoint = BASE.newPoint;
@@ -385,6 +388,118 @@
         }
 
     };
+
+    /**
+     * DRIVER SLICE RENDER CONTRACT
+     *
+     * @param {Object} widget to render
+     * @param {number} mode to use to select colors
+     */
+    function sliceRender(widget, mode) {
+        let slices = widget.slices;
+        let settings = widget.settings;
+        let extruder = widget.getExtruder(settings);
+
+        if (!slices) return;
+
+        // render outline
+        slices.forEach(function(s) {
+            let layers = s.layers;
+            let tops = s.tops;
+            let outline = layers.outline;
+            let shells = layers.trace;
+            let solids = layers.fill;
+            let sparse = layers.sparse;
+            let support = layers.support;
+            let outsolid = layers.solid;
+            let outbridge = layers.bridge;
+            let outflat = layers.flat;
+
+            outline.clear();
+            shells.clear();
+            solids.clear();
+            sparse.clear();
+            support.clear();
+            outsolid.clear();
+            outbridge.clear();
+            outflat.clear();
+
+            outline.setTransparent(true);
+            shells.setTransparent(false);
+            solids.setTransparent(false);
+            sparse.setTransparent(false);
+            support.setTransparent(false);
+            outsolid.setTransparent(true);
+            outbridge.setTransparent(true);
+            outflat.setTransparent(true);
+
+            tops.forEach(function(top) {
+                // outline
+                outline.poly(top.poly, 0xdddddd, true, false);
+                outline.solid(top.poly, 0xcccccc);
+                if (top.inner) outline.poly(top.inner, 0xdddddd, true);
+                // if (top.thinner) outline.poly(top.thinner, 0x559999, true, null);
+
+                // shells
+                shells.noodle(top.traces, 0.2, 0x88aadd, 0x77bbcc);
+                if (top.polish) {
+                    shells.poly(top.polish.x, 0x880000, true, null);
+                    shells.poly(top.polish.y, 0x880000, true, null);
+                }
+
+                // solid fill
+                solids.noodle_lines(top.fill_lines, 0.2, 0x88aadd, 0x77bbcc, s.z);
+
+                // sparse fill
+                if (top.fill_sparse) {
+                    top.fill_sparse.forEach(function(poly) {
+                        // todo cull polys with single point before this
+                        sparse.noodle_open(poly, 0.2, 0x88aadd, 0x77bbcc, s.z);
+                        // poly.render(sparse, 0x0, false, true);
+                    });
+                }
+
+                // support
+                if (s.supports) {
+                    support.noodle(s.supports, 0.2, 0x88aadd, 0x77bbcc);
+                    s.supports.forEach(function(poly) {
+                        support.noodle_lines(poly.fills, 0.2, 0x88aadd, 0x77bbcc, s.z);
+                    });
+                }
+            });
+
+            // solid outlines
+            let trimmed = s.solids.trimmed;
+            if (trimmed) trimmed.forEach(function(poly) {
+                poly.setZ(s.z + 0.025);
+                outsolid.poly(poly, 0x00cc00, true, false);
+                outsolid.solid(poly, 0x00dd00);
+            });
+
+            // diff bridges
+            if (s.bridges) s.bridges.forEach(function (poly) {
+                poly.setZ(s.z + 0.05);
+                outbridge.poly(poly, 0x0099ee, true, false);
+                outbridge.solid(poly, 0x00aaff);
+            });
+
+            // diff flats
+            if (s.flats) s.flats.forEach(function (poly) {
+                poly.setZ(s.z + 0.05);
+                outflat.poly(poly, 0xee0099, true, false);
+                outflat.solid(poly, 0xff00aa);
+            });
+
+            outline.renderAll();
+            shells.renderAll();
+            solids.renderAll();
+            sparse.renderAll();
+            support.renderAll();
+            outsolid.renderAll();
+            outbridge.renderAll();
+            outflat.renderAll();
+        });
+    }
 
     /**
      * DRIVER PRINT CONTRACT

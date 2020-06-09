@@ -28,6 +28,7 @@
         trimTo : trimTo,
         expand2 : expand2,
         expand : expand,
+        expand_lines: expand_lines,
         union : union,
         nest : nest,
         diff : doDiff,
@@ -405,6 +406,27 @@
             sum += poly.circularityDeep();
         });
         return sum;
+    }
+
+    /**
+     * @param {Polygon[]} polys
+     * @param {number} distance offset
+     * @param {number} [z] defaults to 0
+     */
+    function expand_lines(poly, distance, z) {
+        let fact = CONF.clipper,
+            clib = self.ClipperLib,
+            clip = clib.Clipper,
+            cpft = clib.PolyFillType,
+            cjnt = clib.JoinType,
+            cety = clib.EndType,
+            coff = new clib.ClipperOffset(),
+            ctre = new clib.PolyTree();
+
+        coff.AddPaths(poly.toClipper(), cjnt.jtMiter, cety.etOpenSquare);
+        coff.Execute(ctre, distance * fact);
+
+        return fromClipperTree(ctre, z, null, null, 0);
     }
 
     /**

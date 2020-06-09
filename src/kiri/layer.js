@@ -132,6 +132,7 @@
     };
 
     LP.noodle = function(poly, offset, color, traceColor, open) {
+        if (!poly) return;
         if (Array.isArray(poly)) {
             poly = POLY.flatten(poly, [], true);
         } else {
@@ -149,6 +150,32 @@
                 this.add(traceColor, {poly: p, deep: true, open});
             });
         })
+        this.changed = true;
+    };
+
+    LP.noodle_open = function(poly, offset, color, traceColor, z) {
+        poly = POLY.expand_lines(poly, offset, z);
+        poly.forEach(p => {
+            this.add(color, {solid: p});
+            p = p.setZ(z + 0.01);
+            this.add(traceColor, {poly: p, deep: false, open: true});
+        })
+        this.changed = true;
+    };
+
+    LP.noodle_lines = function(points, offset, color, traceColor, z) {
+        if (!(points && points.length)) return;
+        for (let i=0; i<points.length; i += 2) {
+            let p1 = points[i];
+            let p2 = points[i+1];
+            let l1 = p1.offsetLineTo(p2, offset);
+            let l2 = p2.offsetLineTo(p1, offset);
+            let poly = base.newPolygon().addPoints([
+                l1.p1, l1.p2, l2.p1, l2.p2
+            ]).setZ(z + 0.01);
+            this.add(color, {solid: poly});
+            this.add(traceColor, {poly: poly, deep: false, open: true});
+        }
         this.changed = true;
     };
 

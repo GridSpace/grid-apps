@@ -135,7 +135,7 @@ kiri.lang['en-us'] = {
     // LAYERS pop-menu
     la_menu:        "layers",
     la_olin:        "outline",
-    la_trce:        "trace",
+    la_trce:        "shells",
     la_face:        "facing",
     la_ruff:        "roughing",
     la_fini:        "finishing",
@@ -144,8 +144,8 @@ kiri.lang['en-us'] = {
     la_dlta:        "delta",
     la_slds:        "solids",
     la_fill:        "solid fill",
-    la_sprs:        "sparse",
-    la_sprt:        "support",
+    la_sprs:        "infill",
+    la_sprt:        "supports",
     la_prnt:        "print",
     la_move:        "moves",
 
