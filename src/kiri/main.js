@@ -185,7 +185,7 @@
         },
         dialog: {
             show: showModal,
-            hide: hideModal,
+            hide: hideModal
         },
         help: {
             show: showHelp,

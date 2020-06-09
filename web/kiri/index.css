@@ -146,6 +146,15 @@ th, tr, td {
 .russo {
     font-family: 'Russo One', sans-serif;
 }
+.overy {
+    overflow-y: auto;
+}
+.mh0 {
+    min-height: 0;
+}
+.mh85 {
+    max-height: 85%;
+}
 
 :-moz-any() {
  overflow-x: hidden !important;
@@ -451,12 +460,12 @@ th, tr, td {
     display: none;
     position: fixed;
     z-index: 20;
-    transform: translateY(-50%);
     top: 50%;
     left: 0px;
     right: 0px;
     bottom: 0px;
     height: 300px;
+    transform: translateY(-50%);
     background-color: var(--bg-gray);
     border-bottom: 1px solid black;
     border-top: 1px solid black;
@@ -473,7 +482,6 @@ th, tr, td {
     padding: 10px;
     min-height: 20px;
     font-size: smaller;
-    xfont-family: monospace;
     background-color: rgba(255,255,255,0.75);
 }
 
@@ -677,6 +685,7 @@ th, tr, td {
 .t-pad2 {
     width: 10px;
 }
+
 #devices {
     width: 200px;
 }

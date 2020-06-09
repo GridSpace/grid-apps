@@ -1059,7 +1059,18 @@
             controller = settings().controller,
             dark = controller.dark;
 
-        WIN.addEventListener("resize", API.dialog.update);
+        WIN.addEventListener("resize", () => {
+            API.event.emit('resize');
+        });
+
+        API.event.on('resize', () => {
+            if (WIN.innerHeight < 800) {
+                UI.modalBox.classList.add('mh85');
+            } else {
+                UI.modalBox.classList.remove('mh85');
+            }
+            API.view.update_slider();
+        });
 
         SPACE.showSkyGrid(false);
         SPACE.setSkyColor(dark ? 0 : 0xffffff);
@@ -1090,6 +1101,7 @@
             nozzle:             $('lt-nozzle'),
 
             modal:              $('modal'),
+            modalBox:           $('modal-box'),
             help:               $('mod-help'),
             setup:              $('mod-setup'),
             tools:              $('mod-tools'),
