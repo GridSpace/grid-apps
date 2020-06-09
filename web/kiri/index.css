@@ -714,6 +714,14 @@ th, tr, td {
     height: 350px;
     overflow-y: scroll;
 }
+#catalogList .label {
+    width: 10em;
+    justify-content: flex-end;
+}
+#catalogList .rename {
+    font-style: italic;
+    color: #335;
+}
 
 #slider {
     display: none;

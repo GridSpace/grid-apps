@@ -7,6 +7,7 @@
     if (self.kiri.init) return;
 
     const KIRI = self.kiri,
+        BASE = self.base,
         MOTO = self.moto,
         CONF = KIRI.conf,
         WIN = self.window,
@@ -317,6 +318,9 @@
             case cca('P'): // position widget
                 positionSelection();
                 break;
+            case cca('r'): // recent files
+                API.modal.show('files');
+                break;
             case cca('R'): // position widget
                 rotateInputSelection();
                 break;
@@ -395,7 +399,7 @@
             API.show.alert("select object to rotate");
             return;
         }
-        let coord = prompt("Enter X,Y,Z degrees of rotation").split(','),
+        let coord = (prompt("Enter X,Y,Z degrees of rotation") || '').split(','),
             prod = Math.PI / 180,
             x = parseFloat(coord[0] || 0.0) * prod,
             y = parseFloat(coord[1] || 0.0) * prod,
@@ -1013,23 +1017,46 @@
         });
         for (let i=0; i<list.length; i++) {
             let row = DOC.createElement('div'),
+                renm = DOC.createElement('button'),
                 load = DOC.createElement('button'),
+                size = DOC.createElement('button'),
                 del = DOC.createElement('button'),
                 file = list[i],
-                name = file.n;
+                name = file.n,
+                split = name.split('.'),
+                short = split[0],
+                ext = split[1] ? `.${split[1]}` : '';
+
+            renm.setAttribute('class', 'rename');
+            renm.setAttribute('title', 'rename file');
+            renm.appendChild(DOC.createTextNode('n'));
+            renm.onclick = () => {
+                let newname = prompt(`rename file`, short);
+                if (newname && newname !== short) {
+                    CATALOG.rename(name, `${newname}${ext}`, then => {
+                        CATALOG.refresh();
+                    });
+                }
+            };
 
             load.setAttribute('load', name);
             load.setAttribute('title', 'file: '+name+'\nvertices: '+file.v);
             load.onclick = loadCatalogFile;
-            load.appendChild(DOC.createTextNode(name.split('.')[0]));
+            load.appendChild(DOC.createTextNode(short));
 
             del.setAttribute('del', name);
             del.setAttribute('title', "remove '"+name+"'");
             del.onclick = deleteCatalogFile;
             del.appendChild(DOC.createTextNode('x'));
 
-            row.setAttribute("class", "flow-row");
+            size.setAttribute("disabled", true);
+            size.setAttribute("class", "label");
+            size.appendChild(DOC.createTextNode(BASE.util.comma(file.v)));
+
+            row.setAttribute("class", "row a-center");
+            row.appendChild(renm);
             row.appendChild(load);
+            row.appendChild(size);
             row.appendChild(del);
             table.appendChild(row);
         }

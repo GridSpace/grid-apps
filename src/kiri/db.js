@@ -109,6 +109,33 @@
         });
     };
 
+    DP.rename = function(name, newname, callback) {
+        if (!this.files[name]) return callback({error: 'no such file'});
+        if (!newname || newname == name) return callback({error: 'invalid new name'});
+        let done = 0;
+        let error = [];
+        let store = this;
+        function complete(ok, err) {
+            if (err) error.push(err);
+            if (++done === 2) {
+                store.files[newname] = store.files[name];
+                delete store.files[name];
+                saveFileList(store);
+                store.db.remove(`fdec-${name}`);
+                store.db.remove(`file-${name}`);
+                callback(error.length ? {error} : {});
+            }
+        }
+        store.db.get(`fdec-${name}`, (vertices) => {
+            if (!vertices) return complete(false, 'no decimation');
+            store.db.put(`fdec-${newname}`, vertices, complete);
+        });
+        store.db.get(`file-${name}`, (vertices) => {
+            if (!vertices) return complete(false, 'no raw file');
+            store.db.put(`file-${newname}`, vertices, complete);
+        });
+    };
+
     /**
      * @param {String} name
      * @param {Function} callback
