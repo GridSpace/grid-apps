@@ -774,21 +774,20 @@ th, tr, td {
     justify-content: center;
     align-items: center;
     max-width: 50%;
-    background-color: rgba(230,245,255,0.8);
-    border: 3px solid rgba(200,215,255,0.6);
+    background-color: rgba(255,255,255,0.5);
+    border: 3px solid var(--bg-gray);
     border-radius: 5px;
 }
 #alert-border:hover {
-    background-color: rgba(230,245,255,0.9);
-    border: 3px solid rgba(200,215,255,0.95);
+    background-color: rgba(0,0,0,0.1);
 }
 #alert-text {
     display: flex;
-    flex-direction: column;
     text-align: left;
     font-weight: bold;
+    flex-direction: column;
+    margin: 3px 5px 3px 5px;
     color: black;
-    margin: 5px;
 }
 #alert-text p {
     margin: 5px;
