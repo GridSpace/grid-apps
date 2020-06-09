@@ -18,7 +18,6 @@
             sliceRender,
             printSetup,
             printExport,
-            // printDownload,
             printRender
         },
         SLICER = KIRI.slicer,
@@ -1230,10 +1229,12 @@
         return base.newPoint(obj.x, obj.y, obj.z);
     }
 
-    function printRender(print) {
+    function printRender(print, options) {
         let debug = KIRI.api.const.LOCAL;
-        let scope = print, emits, moves, last;
-        let moving = true;
+        let scope = print, emits, last,
+            moves, moving = true,
+            opt = options || {},
+            showmoves = !opt.nomoves;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
@@ -1276,8 +1277,10 @@
                 last = point;
             });
             emits = KIRI.newLayer(scope.group);
-            moves = KIRI.newLayer(scope.group);
-            moves.lines(move, 0x888888);
+            if (showmoves) {
+                moves = KIRI.newLayer(scope.group);
+                moves.lines(move, 0x888888);
+            }
             emits.setTransparent(false);
             // emit printing shapes
             print.forEach(segment => {
@@ -1287,15 +1290,19 @@
                 let color = ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0);
-                // emits.poly(poly, color, false, true);
-                emits.noodle_open(poly, 0.2, color, 0x0, poly.getZ());
+                if (opt.aslines) {
+                    emits.poly(poly, color, false, true);
+                } else {
+                    emits.noodle_open(poly, 0.2, color, 0x0, poly.getZ());
+                }
             });
-            moves.render();
             emits.renderAll();
-            scope.lines += print.length;
-            // for slider hide/show
+            if (showmoves) {
+                moves.render();
+                scope.movesView.push(moves);
+            }
             scope.printView.push(emits);
-            scope.movesView.push(moves);
+            scope.lines += print.length;
         });
     }
 

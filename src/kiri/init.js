@@ -1082,6 +1082,12 @@
                 text:           $('alert-text')
             },
 
+            act: {
+                slice:          $('act-slice'),
+                preview:        $('act-preview'),
+                export:         $('act-export')
+            },
+
             load:               $('load-file'),
             focuser:            $('focuser'),
 
@@ -1817,9 +1823,9 @@
         $('file-import').onclick = () => { API.event.import() };
         $('lt-back').onclick = API.platform.layout;
         $('lt-action').onclick = API.platform.layout;
-        $('act-slice').onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
-        $('act-preview').onclick = (ev) => { ev.stopPropagation(); API.function.print() };
-        $('act-export').onclick = (ev) => { ev.stopPropagation(); API.function.export() };
+        UI.act.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
+        UI.act.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
+        UI.act.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;

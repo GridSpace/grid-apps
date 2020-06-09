@@ -328,26 +328,12 @@
     };
 
     PRO.render = function() {
-        let scope = this,
-            settings = scope.settings,
-            process = settings.process,
+        let settings = this.settings,
             origin = settings.origin,
             mode = settings.mode,
             driver = KIRI.driver[mode];
 
-        switch (mode) {
-            case 'SLA':
-                driver.printRender(scope);
-                break;
-            case 'CAM':
-            case 'FDM':
-                driver.printRender(scope);
-                // scope.renderMoves(true, 0x888888);
-                break;
-            case 'LASER':
-                scope.renderMoves(false, 0x0088aa);
-                break;
-        }
+        driver.printRender(this);
     };
 
     function pref(a,b) {
@@ -425,69 +411,6 @@
         }
 
         return out;
-    }
-
-    PRO.renderMoves = function(showMoves, moveColor, firstPoint) {
-        let debug = KIRI.api.const.LOCAL;
-        let scope = this, emits, moves, last = firstPoint;
-        // render layered output
-        scope.lines = 0;
-        scope.output.forEach(function(layerout) {
-            let move = [], print = {}, z;
-            layerout.forEach(function(out, index) {
-                let point = out.point;
-                if (last) {
-                    if (UTIL.distSq(last, point) < 0.001 && point.z === last.z) {
-                        return;
-                    }
-                    if (out.emit > 0) {
-                        let spd = out.speed || 4000;
-                        let arr = print[spd] || [];
-                        print[spd] = arr;
-                        arr.push(last);
-                        arr.push(point);
-                    } else {
-                        move.push(last);
-                        move.push(point);
-                    }
-                    if (debug && showMoves && last.z == point.z) {
-                        let rs = BASE.newSlope(
-                            {x: point.x, y: point.y},
-                            {x: last.x, y: last.y}
-                        );
-                        let ao1 = BASE.newSlopeFromAngle(rs.angle + 25);
-                        let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
-                        let sp = BASE.newPoint(point.x, point.y, point.z);
-                        move.push(sp);
-                        move.push(sp.projectOnSlope(ao1, 0.5));
-                        move.push(sp);
-                        move.push(sp.projectOnSlope(ao2, 0.5));
-                    }
-                } else {
-                    z = point.z;
-                }
-                last = point;
-            });
-            emits = KIRI.newLayer(scope.group);
-            scope.printView.push(emits);
-            if (showMoves) {
-                moves = KIRI.newLayer(scope.group);
-                moves.lines(move, moveColor);
-                scope.movesView.push(moves);
-                moves.render();
-            }
-            for (let speed in print) {
-                let sint = Math.min(6000, parseInt(speed));
-                let rgb = hsv2rgb({h:sint/6000, s:1, v:0.6});
-                emits.lines(print[speed],
-                    ((rgb.r * 0xff) << 16) |
-                    ((rgb.g * 0xff) <<  8) |
-                    ((rgb.b * 0xff) <<  0)
-                );
-            }
-            emits.render();
-            scope.lines += print.length;
-        });
     }
 
     PRO.getLayerCount = function() {

@@ -757,6 +757,9 @@
             API.view.snapshot = snap.substring(snap.indexOf(",")+1);
             KIRI.work.snap(API.view.snapshot);
         }
+        if (MODE === MODES.SLA && !callback) {
+            callback = preparePrint;
+        }
 
         hideSlider(true);
         clearPrint();
@@ -1915,6 +1918,7 @@
         $('app-mode-name').innerHTML = mode;
         $('set-tools').style.display = mode === 'CAM' ? '' : 'none';
         settings.mode = mode;
+        MODE = MODES[mode];
         // restore cached device profile for this mode
         if (settings.cdev[mode]) {
             settings.device = clone(settings.cdev[mode]);
@@ -1925,7 +1929,11 @@
         } else {
             SPACE.platform.setColor(0xcccccc);
         }
-        MODE = MODES[mode];
+        if (MODE === MODES.SLA) {
+            UI.act.preview.classList.add('hide');
+        } else {
+            UI.act.preview.classList.remove('hide');
+        }
         // updates right-hand menu by enabling/disabling fields
         setViewMode(VIEWS.ARRANGE);
         UC.setMode(MODE);

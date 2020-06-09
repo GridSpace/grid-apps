@@ -16,8 +16,7 @@
             sliceRender,
             printSetup,
             printExport,
-            // printDownload,
-            // printRender
+            printRender,
             getToolById,
             getToolDiameter,
         },
@@ -1923,5 +1922,9 @@
 
         return online ? null : output.join("\n");
     };
+
+    function printRender(print) {
+        return KIRI.driver.FDM.printRender(print, {aslines: true});
+    }
 
 })();

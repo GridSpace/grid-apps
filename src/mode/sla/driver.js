@@ -672,6 +672,9 @@
 
     // runs in browser main
     function sliceRender(widget) {
+        // legacy debug
+        return;
+
         widget.slices.forEach(slice => {
             let layers = slice.layers,
                 outline = layers.outline,
@@ -743,7 +746,7 @@
             if (count === 0) {
                 // TODO fix with contract for exposing layer count
                 // hack uses expected gcode output array in print object
-                // print.output = print.printView;
+                print.output = print.printView;
                 return;
             }
 
@@ -795,7 +798,7 @@
             $('print-filename').value = filename;
             $('print-layers').value = lines.length;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
-            
+
             switch (device.deviceName) {
                 case 'Anycubic.Photon':
                     download.innerText += " .photon";

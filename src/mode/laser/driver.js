@@ -14,7 +14,9 @@
         DBUG = BASE.debug,
         LASER = KIRI.driver.LASER = {
             slice,
+            sliceRender,
             printSetup,
+            printRender,
             exportGCode,
             exportSVG,
             exportDXF
@@ -51,9 +53,10 @@
         });
     };
 
-    /**
-     *
-     */
+    function sliceRender(widget) {
+        return KIRI.driver.CAM.sliceRender(widget);
+    }
+
     function sliceEmitObjects(print, slice, groups) {
         let start = newPoint(0,0,0);
         let process = print.settings.process;
@@ -454,5 +457,9 @@
 
         return lines.join('\n');
     };
+
+    function printRender(print) {
+        return KIRI.driver.FDM.printRender(print, {aslines: true, nomoves: true});
+    }
 
 })();

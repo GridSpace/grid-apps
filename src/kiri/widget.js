@@ -711,34 +711,9 @@
 
     /**
      * render all slice and processed data
-     * @param {number} renderMode
-     * @param {boolean} cam mode
      */
-    PRO.render = function(renderMode, cam) {
-        let slices = this.slices;
-        if (!slices) return;
-
-        let settings = this.settings,
-            driver = DRIVERS[settings.mode.toUpperCase()];
-
-        // allow driver to override widget slice rendering (new in SLA)
-        if (driver.sliceRender) return driver.sliceRender(this, renderMode);
-
-        let extruder = this.getExtruder(settings);
-        // render outline
-        slices.forEach(function(s) { s.renderOutline(renderMode,extruder) });
-        // render shells
-        slices.forEach(function(s) { s.renderShells(renderMode) });
-        // render diff
-        if (!cam) slices.forEach(function(s) { s.renderDiff() });
-        // render solid fill (include solid flats/bridges)
-        slices.forEach(function(s) { s.renderSolidFill() });
-        // render solid fill outlines
-        if (!cam) slices.forEach(function(s) { s.renderSolidOutlines() });
-        // render sparse fill
-        if (!cam) slices.forEach(function(s) { s.renderSparseFill() });
-        // render supports
-        if (!cam) slices.forEach(function(s) { s.renderSupport() });
+    PRO.render = function() {
+        DRIVERS[this.settings.mode.toUpperCase()].sliceRender(this);
     };
 
     PRO.hideSlices = function() {

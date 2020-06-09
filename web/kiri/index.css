@@ -101,6 +101,9 @@ th, tr, td {
     user-select: none;
 }
 
+.hide {
+    display: none !important;
+}
 .noshow {
     display: none;
 }
