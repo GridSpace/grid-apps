@@ -1397,7 +1397,7 @@
             ]),
 
             layers:        UC.setGroup($("layers")),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:LOCAL ? ALL : FDM_LASER}),
+            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:ALL}),
             layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
             layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
             layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
