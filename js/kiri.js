@@ -1793,8 +1793,8 @@ self.kiri.copyright = exports.COPYRIGHT;
         }
         ajax(local, function(html) {
             UI.help.innerHTML = html;
-            $('help-close').onclick = hideModal;
-            $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`;
+            try { $('help-close').onclick = hideModal; } catch (e) { console.log(e, html) }
+            try { $('kiri-version').innerHTML = `<i>${LANG.version} ${KIRI.version}</i>`; } catch (e) { }
             showModal('help');
         });
         API.event.emit('help.show', local);
