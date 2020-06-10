@@ -88,6 +88,7 @@
         control.freeLayout = UI.freeLayout.checked;
         control.alignTop = UI.alignTop.checked;
         control.reverseZoom = UI.reverseZoom.checked;
+        control.thinRender = UI.thinRender.checked;
         control.dark = UI.dark.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
@@ -1241,6 +1242,7 @@
             autoLayout:     UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:     UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
             reverseZoom:    UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
+            thinRender:     UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
             units:          UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
             prefadd:        UC.checkpoint(),
 

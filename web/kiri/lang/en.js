@@ -129,6 +129,8 @@ kiri.lang['en-us'] = {
     op_free_l:      "permit dragable layout",
     op_invr_s:      "invert zoom",
     op_invr_l:      "invert mouse wheel\nscroll zoom",
+    op_thin_s:      "thin lines",
+    op_thin_l:      "faster part visualization",
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
 

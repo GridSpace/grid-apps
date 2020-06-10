@@ -538,6 +538,7 @@
                 dark: false,
                 expert: false,
                 zoomSpeed: 1.0,
+                thinRender: false,
                 reverseZoom: true,
                 showOrigin: false,
                 freeLayout: true,

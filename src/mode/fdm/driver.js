@@ -404,13 +404,14 @@
      * @param {Object} widget to render
      * @param {number} mode to use to select colors
      */
-    function sliceRender(widget, mode) {
+    function sliceRender(widget) {
         let slices = widget.slices;
         let settings = widget.settings;
         let extnum = widget.getExtruder(settings);
         let extarr = settings.device.extruders || [];
         let extinfo = extarr[extnum || 0];
         let extoff = (extinfo.extNozzle || 0.4) / 2;
+        let thin = settings.controller.thinRender && settings.mode === 'FDM';
 
         if (!slices) return;
 
@@ -448,35 +449,53 @@
             tops.forEach(function(top) {
                 // outline
                 outline.poly(top.poly, 0xdddddd, true, false);
-                outline.solid(top.poly, 0xcccccc);
+                outline.solid(top.poly, thin ? 0xdddddd : 0xcccccc);
                 if (top.inner) outline.poly(top.inner, 0xdddddd, true);
                 // if (top.thinner) outline.poly(top.thinner, 0x559999, true, null);
 
                 // shells
-                shells.noodle(top.traces, extoff, 0x88aadd, 0x77bbcc);
+                if (thin) {
+                    shells.poly(top.traces, 0x77bbcc, true);
+                } else {
+                    shells.noodle(top.traces, extoff, 0x88aadd, 0x77bbcc);
+                }
                 if (top.polish) {
-                    shells.poly(top.polish.x, 0x880000, true, null);
-                    shells.poly(top.polish.y, 0x880000, true, null);
+                    shells.poly(top.polish.x, 0x880000, true);
+                    shells.poly(top.polish.y, 0x880000, true);
                 }
 
                 // solid fill
-                solids.noodle_lines(top.fill_lines, extoff, 0x88aadd, 0x77bbcc, s.z);
+                if (thin) {
+                    solids.lines(top.fill_lines, 0x77bbcc);
+                } else {
+                    solids.noodle_lines(top.fill_lines, extoff, 0x88aadd, 0x77bbcc, s.z);
+                }
 
                 // sparse fill
                 if (top.fill_sparse) {
                     top.fill_sparse.forEach(function(poly) {
-                        // todo cull polys with single point before this
-                        sparse.noodle_open(poly, extoff, 0x88aadd, 0x77bbcc, s.z);
-                        // poly.render(sparse, 0x0, false, true);
+                        if (thin) {
+                            // todo cull polys with single point before this
+                            if (poly.length > 1) poly.render(sparse, 0x0, false, true);
+                        } else {
+                            sparse.noodle_open(poly, extoff, 0x88aadd, 0x77bbcc, s.z);
+                        }
                     });
                 }
 
                 // support
                 if (s.supports) {
-                    support.noodle(s.supports, extoff, 0x88aadd, 0x77bbcc);
-                    s.supports.forEach(function(poly) {
-                        support.noodle_lines(poly.fills, extoff, 0x88aadd, 0x77bbcc, s.z);
-                    });
+                    if (thin) {
+                        s.supports.forEach(function(poly) {
+                            support.poly(poly, 0x88aadd, true);
+                            support.lines(poly.fills, 0x88aadd);
+                        });
+                    } else {
+                        support.noodle(s.supports, extoff, 0x88aadd, 0x77bbcc);
+                        s.supports.forEach(function(poly) {
+                            support.noodle_lines(poly.fills, extoff, 0x88aadd, 0x77bbcc, s.z);
+                        });
+                    }
                 }
             });
 
@@ -1254,21 +1273,29 @@
         scope.output.forEach(function(layerout) {
             let move = [], print = [], cprint;
             layerout.forEach(function(out, index) {
-                let point = out.point;
+                let point = toPoint(out.point);
                 if (last) {
                     // drop short segments
-                    if (point.emit === last.emit && UTIL.distSq(last, point) < 0.001 && point.z === last.z) {
-                        return;
-                    }
+                    // if (point.emit === last.emit && UTIL.distSq(last, point) < 0.001 && point.z === last.z) {
+                    //     return;
+                    // }
                     if (out.emit > 0) {
-                        if (moving) {
-                            let spd = out.speed || 4000;
-                            cprint = base.newPolygon().setOpen(true).append(toPoint(last));
-                            print.push({speed: spd, poly: cprint, tool:tools[out.tool]});
+                        if (moving || !cprint) {
+                            cprint = base.newPolygon().setOpen(true).append(last);
+                            print.push({
+                                poly: cprint,
+                                speed: out.speed || 4000,
+                                tool:tools[out.tool]
+                            });
                         }
-                        cprint.append(toPoint(point));
+                        try {
+                            cprint.append(point);
+                        } catch (e) {
+                            console.log(e, {cprint});
+                        }
                         moving = false;
                     } else {
+                        cprint = null;
                         move.push(last);
                         move.push(point);
                         moving = true;
