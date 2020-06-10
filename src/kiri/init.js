@@ -288,17 +288,8 @@
             case cca('C'): // refresh catalog
                 CATALOG.refresh();
                 break;
-            case cca('i'): // single settings edit
-                let v = prompt('edit "'+current.process.processName+'"', JSON.stringify(current.process));
-                if (v) {
-                    try {
-                        current.process = JSON.parse(v);
-                        API.view.update_fields();
-                    } catch (e) {
-                        console.log(e);
-                        API.show.alert("invalid settings format");
-                    }
-                }
+            case cca('i'): // file import
+                API.event.import();
                 break;
             case cca('U'): // full settings url
                 storeSettingsToServer(true);
@@ -327,7 +318,11 @@
             case cca('x'): // export print
                 API.function.export();
                 break;
-            case cca('e'): // devices
+            case cca('q'): // preferences
+                API.modal.show('prefs');
+                break;
+            case cca('d'): // device
+            case cca('e'): // device
                 showDevices();
                 break;
             case cca('o'): // tools
@@ -1023,6 +1018,7 @@
                 del = DOC.createElement('button'),
                 file = list[i],
                 name = file.n,
+                date = new Date(file.t),
                 split = name.split('.'),
                 short = split[0],
                 ext = split[1] ? `.${split[1]}` : '';
@@ -1040,7 +1036,7 @@
             };
 
             load.setAttribute('load', name);
-            load.setAttribute('title', 'file: '+name+'\nvertices: '+file.v);
+            load.setAttribute('title', `file: ${name}\nvertices: ${file.v}\ndate: ${date}`);
             load.onclick = loadCatalogFile;
             load.appendChild(DOC.createTextNode(short));
 
@@ -1200,7 +1196,7 @@
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6}),
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
-            spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, modes:CAM}),
+            spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:GCODE}),
             deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),

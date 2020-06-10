@@ -397,7 +397,10 @@
     function sliceRender(widget, mode) {
         let slices = widget.slices;
         let settings = widget.settings;
-        let extruder = widget.getExtruder(settings);
+        let extnum = widget.getExtruder(settings);
+        let extarr = settings.device.extruders || [];
+        let extinfo = extarr[extnum || 0];
+        let extoff = (extinfo.extNozzle || 0.4) / 2;
 
         if (!slices) return;
 
@@ -440,29 +443,29 @@
                 // if (top.thinner) outline.poly(top.thinner, 0x559999, true, null);
 
                 // shells
-                shells.noodle(top.traces, 0.2, 0x88aadd, 0x77bbcc);
+                shells.noodle(top.traces, extoff, 0x88aadd, 0x77bbcc);
                 if (top.polish) {
                     shells.poly(top.polish.x, 0x880000, true, null);
                     shells.poly(top.polish.y, 0x880000, true, null);
                 }
 
                 // solid fill
-                solids.noodle_lines(top.fill_lines, 0.2, 0x88aadd, 0x77bbcc, s.z);
+                solids.noodle_lines(top.fill_lines, extoff, 0x88aadd, 0x77bbcc, s.z);
 
                 // sparse fill
                 if (top.fill_sparse) {
                     top.fill_sparse.forEach(function(poly) {
                         // todo cull polys with single point before this
-                        sparse.noodle_open(poly, 0.2, 0x88aadd, 0x77bbcc, s.z);
+                        sparse.noodle_open(poly, extoff, 0x88aadd, 0x77bbcc, s.z);
                         // poly.render(sparse, 0x0, false, true);
                     });
                 }
 
                 // support
                 if (s.supports) {
-                    support.noodle(s.supports, 0.2, 0x88aadd, 0x77bbcc);
+                    support.noodle(s.supports, extoff, 0x88aadd, 0x77bbcc);
                     s.supports.forEach(function(poly) {
-                        support.noodle_lines(poly.fills, 0.2, 0x88aadd, 0x77bbcc, s.z);
+                        support.noodle_lines(poly.fills, extoff, 0x88aadd, 0x77bbcc, s.z);
                     });
                 }
             });
@@ -1234,6 +1237,7 @@
         let scope = print, emits, last,
             moves, moving = true,
             opt = options || {},
+            tools = opt.tools || [],
             showmoves = !opt.nomoves;
         // render layered output
         scope.lines = 0;
@@ -1250,7 +1254,7 @@
                         if (moving) {
                             let spd = out.speed || 4000;
                             cprint = base.newPolygon().setOpen(true).append(toPoint(last));
-                            print.push({speed: spd, poly: cprint});
+                            print.push({speed: spd, poly: cprint, tool:tools[out.tool]});
                         }
                         cprint.append(toPoint(point));
                         moving = false;
@@ -1284,16 +1288,17 @@
             emits.setTransparent(false);
             // emit printing shapes
             print.forEach(segment => {
-                let {poly, speed} = segment;
-                let sint = Math.min(6000, parseInt(speed));
-                let rgb = scope.hsv2rgb({h:sint/6000, s:1, v:1});
+                let {poly, speed, tool} = segment;
+                let off = tool ? (tool.extNozzle || 0.4) / 2 : 0.2;
+                let sint = Math.min(9000, parseInt(speed));
+                let rgb = scope.hsv2rgb({h:sint/9000, s:1, v:1});
                 let color = ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0);
                 if (opt.aslines) {
                     emits.poly(poly, color, false, true);
                 } else {
-                    emits.noodle_open(poly, 0.2, color, 0x0, poly.getZ());
+                    emits.noodle_open(poly, off, color, 0x0, poly.getZ());
                 }
             });
             emits.renderAll();

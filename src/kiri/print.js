@@ -229,6 +229,8 @@
         } else {
 
             // executed from kiri-worker.js
+            // uses encodeOutput in this class to produce scope.output above
+            // this encoding could be made vastly more efficient
             let driver = KIRI.driver[mode];
             if (driver) driver.printSetup(scope, onupdate);
             else console.log({missing_print_driver: mode});
@@ -318,7 +320,8 @@
                         emit: out.emit,
                         speed: out.speed * 60,
                         retract: out.retract,
-                        point: {x: out.point.x, y: out.point.y, z: out.point.z}
+                        point: {x: out.point.x, y: out.point.y, z: out.point.z},
+                        tool: out.tool
                     });
                 }
             });
@@ -331,9 +334,14 @@
         let settings = this.settings,
             origin = settings.origin,
             mode = settings.mode,
+            tools = [],
             driver = KIRI.driver[mode];
 
-        driver.printRender(this);
+        if (mode === 'FDM') {
+            tools = settings.device.extruders || [];
+        }
+
+        driver.printRender(this, {tools});
     };
 
     function pref(a,b) {

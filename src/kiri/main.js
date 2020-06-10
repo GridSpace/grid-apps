@@ -1812,7 +1812,9 @@
         }
         ajax(local, function(html) {
             UI.help.innerHTML = html;
-            $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
+            try {
+                $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
+            } catch (e) { }
             showModal('help');
         });
         API.event.emit('help.show', local);
