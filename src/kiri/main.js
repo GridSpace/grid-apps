@@ -1803,7 +1803,7 @@
     }
 
     function showHelp() {
-        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html`);
+        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`);
     }
 
     function showHelpFile(local) {
