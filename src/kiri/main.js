@@ -172,7 +172,8 @@
             LOCAL,
             MODES,
             VIEWS,
-            SETUP
+            SETUP,
+            SECURE
         },
         var: {
             layer_lo: 0,
@@ -249,6 +250,9 @@
             restore: restoreWorkspace,
             clear: clearWorkspace,
             save: saveWorkspace,
+        },
+        util: {
+            isSecure
         },
         view: {
             get: function() { return viewMode },
