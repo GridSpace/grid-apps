@@ -103,7 +103,7 @@ let gs_kiri_slicer = exports;
             bounds = btmp;
         }
 
-        let zMin = options.zmin || Math.floor(bounds.min.z),
+        let zMin = options.zmin || options.firstHeight || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
             zInc = options.height,
             zIncMin = options.minHeight,
