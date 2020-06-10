@@ -321,6 +321,9 @@
             case cca('q'): // preferences
                 API.modal.show('prefs');
                 break;
+            case cca('l'): // device
+                settingsLoad();
+                break;
             case cca('e'): // device
                 showDevices();
                 break;

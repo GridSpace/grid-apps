@@ -100,7 +100,7 @@
             bounds = btmp;
         }
 
-        let zMin = options.zmin || Math.floor(bounds.min.z),
+        let zMin = options.zmin || options.firstHeight || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
             zInc = options.height,
             zIncMin = options.minHeight,
@@ -268,6 +268,7 @@
             // copy to store original z
             zHeights = zIndexes.slice();
         } else if (zIncMin) {
+            // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
             // FDM adaptive slicing
             let zPos = zMin + zIncFirst,
                 zOI = 0,
@@ -308,6 +309,7 @@
                 }
             }
         } else {
+            // console.log('fixed slicing', zInc, 'from', zMin, 'to', zMax);
             // FDM fixed slicing
             if (options.firstHeight) {
                 zIndexes.push(options.firstHeight / 2);
@@ -319,6 +321,7 @@
                 zHeights.push(zInc);
             }
         }
+
         // create a Slice for each z offset in the zIndexes array
         for (let i = 0; i < zIndexes.length; i++) {
             let ik = zIndexes[i].toFixed(5),

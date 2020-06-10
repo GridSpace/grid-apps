@@ -1719,7 +1719,6 @@
         let mode = getMode(),
             name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
             load = settings.sproc[mode][name];
-
         if (!load) return;
 
         settings.process = clone(load);
@@ -1753,7 +1752,6 @@
         for (let k in sp) {
             if (sp.hasOwnProperty(k)) list.push(k);
         }
-        console.log({list});
         list.sort().forEach(function(sk) {
             let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
@@ -1762,7 +1760,10 @@
                 name = sk;
 
             load.setAttribute('load', sk);
-            load.onclick = API.conf.load;
+            load.onclick = (ev) => {
+                API.conf.load(undefined, sk);
+                updateSettingsList();
+            }
             load.appendChild(DOC.createTextNode(sk));
             if (sk == settings.process.processName) {
                 load.setAttribute('class', 'selected')

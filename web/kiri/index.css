@@ -578,6 +578,13 @@ th, tr, td {
     border-bottom-right-radius: 10px;
     background-color: var(--bg-gray);
 }
+#settingsList button.selected {
+    font-weight: bold;
+    background-color: #ccc;
+}
+#settingsList button.selected:hover {
+    background-color: #aaa;
+}
 
 #help p {
     margin: 2px;

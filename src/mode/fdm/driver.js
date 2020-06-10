@@ -106,7 +106,17 @@
         }
 
         function onSliceDone(slices) {
-            slices = slices.filter(slice => slice.tops.length);
+            // slices = slices.filter(slice => slice.tops.length);
+            // remove all empty slices above part but leave below
+            // for multi-part (multi-extruder) setups where the void is ok
+            let found = false;
+            slices = slices.reverse().filter(slice => {
+                if (slice.tops.length) {
+                    return found = true;
+                } else {
+                    return found;
+                }
+            }).reverse();
 
             widget.slices = slices;
 

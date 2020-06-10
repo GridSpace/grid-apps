@@ -16,7 +16,8 @@
 
 # FDM
 
-* `B` fix nozzle offset for new rendering modes
+* `B` fix adaptive slicing with multi-extruder
+* `B` fix supports with grouped parts
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
