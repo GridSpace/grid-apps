@@ -1335,7 +1335,7 @@
                 if (opt.aslines) {
                     emits.poly(poly, color, false, true);
                 } else {
-                    emits.noodle_open(poly, off, color, 0x0, poly.getZ());
+                    emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ());
                 }
             });
             emits.renderAll();
