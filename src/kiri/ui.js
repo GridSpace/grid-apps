@@ -298,6 +298,7 @@
         txt.setAttribute("wrap", "off");
         txt.setAttribute("spellcheck", "false");
         txt.setAttribute("style", "resize: none");
+        txt.onblur = inputAction;
 
         btn.appendChild(DOC.createTextNode("edit"));
 

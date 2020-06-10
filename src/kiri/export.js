@@ -344,7 +344,7 @@
                 API.show.alert("host:port malformed");
                 return;
             }
-            if (SECURE && !isSecure(host)) {
+            if (API.const.SECURE && !API.util.isSecure(host)) {
                 API.show.alert("host must begin with 'https' on a secure site");
                 return;
             }
@@ -371,7 +371,7 @@
                 }
             };
             xhtr.upload.addEventListener('progress', function(evt) {
-                API.show.progress(Math.ceil(evt.loaded/evt.total), "sending");
+                API.show.progress(evt.loaded/evt.total, "sending");
             });
             filename = $('print-filename').value;
             xhtr.open("POST",
