@@ -176,7 +176,8 @@ self.kiri.copyright = exports.COPYRIGHT;
             LOCAL,
             MODES,
             VIEWS,
-            SETUP
+            SETUP,
+            SECURE
         },
         var: {
             layer_at: Infinity,
@@ -254,6 +255,9 @@ self.kiri.copyright = exports.COPYRIGHT;
             restore: restoreWorkspace,
             clear: clearWorkspace,
             save: saveWorkspace,
+        },
+        util: {
+            isSecure
         },
         view: {
             get: function() { return viewMode },

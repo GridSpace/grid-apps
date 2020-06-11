@@ -164,7 +164,7 @@ let gs_kiri_export = exports;
                 API.show.alert("host missing protocol (http:// or https://)");
                 return;
             }
-            if (SECURE && !isSecure(host)) {
+            if (API.const.SECURE && !API.util.isSecure(host)) {
                 API.show.alert("host must begin with 'https' on a secure site");
                 return;
             }
@@ -184,9 +184,10 @@ let gs_kiri_export = exports;
                         API.show.alert("octoprint error\nstatus: "+status+"\nmessage: "+ajax.responseText);
                     }
                 }
+                API.show.progress(0);
             };
             ajax.upload.addEventListener('progress', function(evt) {
-                setProgress(Math.ceil(evt.loaded/evt.total), "sending");
+                API.show.progress(evt.loaded/evt.total, "sending");
             });
             ajax.open("POST", host+"/api/files/local");
             ajax.setRequestHeader("X-Api-Key", apik);
@@ -334,7 +335,7 @@ let gs_kiri_export = exports;
                 API.show.alert("host:port malformed");
                 return;
             }
-            if (SECURE && !isSecure(host)) {
+            if (API.const.SECURE && !API.util.isSecure(host)) {
                 API.show.alert("host must begin with 'https' on a secure site");
                 return;
             }
@@ -357,11 +358,11 @@ let gs_kiri_export = exports;
                     } else {
                         API.show.alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
                     }
-                    setProgress(0);
+                    API.show.progress(0);
                 }
             };
             xhtr.upload.addEventListener('progress', function(evt) {
-                setProgress(Math.ceil(evt.loaded/evt.total), "sending");
+                API.show.progress(evt.loaded/evt.total, "sending");
             });
             filename = $('print-filename').value;
             xhtr.open("POST",
