@@ -544,7 +544,10 @@
                 freeLayout: true,
                 autoLayout: true,
                 alignTop: true,
-                units: "mm"
+                units: "mm",
+                exportOcto: true,
+                exportGhost: false,
+                exportLocal: false
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

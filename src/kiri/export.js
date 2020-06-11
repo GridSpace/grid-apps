@@ -427,52 +427,75 @@
             $('output-time').value = [pad(hours),pad(mins),pad(secs)].join(':');
         }
 
-        API.ajax("/kiri/output-gcode.html", function(html) {
+        fetch("/kiri/output-gcode.html").then(r => r.text()).then(html => {
             UI.print.innerHTML = html;
+            let set = API.conf.get();
+            let fdm = MODE === MODES.FDM;
+            let octo = set.controller.exportOcto && MODE !== MODES.CAM;
+            let ghost = set.controller.exportGhost;
+            let local = set.controller.exportLocal;
             $('print-download').onclick = download;
-            $('print-octoprint').onclick = sendto_octoprint;
-            $('print-gridhost').onclick = sendto_gridhost;
-            $('print-gridlocal').onclick = sendto_gridlocal;
-            $('admin-gridlocal').onclick = admin_gridlocal;
-            $('print-filament-head').style.display = MODE === MODES.FDM ? '' : 'none';
-            $('print-filament-info').style.display = MODE === MODES.FDM ? '' : 'none';
+            $('print-filament-head').style.display = fdm ? '' : 'none';
+            $('print-filament-info').style.display = fdm ? '' : 'none';
             $('print-filename').value = filename;
             $('print-filesize').value = UTIL.comma(currentPrint.bytes);
             $('print-filament').value = Math.round(currentPrint.distance);
-            $('grid-host').onkeyup = gridhost_probe;
-            $('grid-apik').onkeyup = gridhost_probe;
             calcTime();
-            if (MODE === MODES.FDM) {
+            if (fdm) {
                 calcWeight();
             }
-            octo_host = $('octo-host');
-            octo_apik = $('octo-apik');
-            if (MODE === MODES.CAM) {
-                $('send-to-octohead').style.display = 'none';
-                $('send-to-octoprint').style.display = 'none';
-            } else {
-                $('send-to-octohead').style.display = '';
-                $('send-to-octoprint').style.display = '';
-            }
-            // hide octoprint when hard-coded in the url
-            if (API.const.OCTO) {
-                $('ophost').style.display = 'none';
-                $('opapik').style.display = 'none';
-                $('ophint').style.display = 'none';
-                $('send-to-gridhost').style.display = 'none';
-            }
-            octo_host.value = SDB['octo-host'] || '';
-            octo_apik.value = SDB['octo-apik'] || '';
-            grid_host = $('grid-host');
-            grid_apik = $('grid-apik');
-            grid_target = $('grid-target');
-            grid_target.onchange = function(ev) {
-                SDB['grid-target'] = grid_targets[grid_target.selectedIndex];
-            };
-            grid_host.value = SDB['grid-host'] || '';
-            grid_apik.value = SDB['grid-apik'] || '';
-            gridhost_probe();
-            gridlocal_probe();
+
+            // octoprint setup
+            $('send-to-octohead').style.display = octo ? '' : 'none';
+            $('send-to-octoprint').style.display = octo ? '' : 'none';
+            if (octo) try {
+                $('print-octoprint').onclick = sendto_octoprint;
+                octo_host = $('octo-host');
+                octo_apik = $('octo-apik');
+                if (MODE === MODES.CAM) {
+                    $('send-to-octohead').style.display = 'none';
+                    $('send-to-octoprint').style.display = 'none';
+                } else {
+                    $('send-to-octohead').style.display = '';
+                    $('send-to-octoprint').style.display = '';
+                }
+                // hide octoprint when hard-coded in the url
+                if (API.const.OCTO) {
+                    $('ophost').style.display = 'none';
+                    $('opapik').style.display = 'none';
+                    $('ophint').style.display = 'none';
+                    $('send-to-gridhost').style.display = 'none';
+                }
+                octo_host.value = SDB['octo-host'] || '';
+                octo_apik.value = SDB['octo-apik'] || '';
+            } catch (e) { console.log(e) }
+
+            // grid:host setup
+            $('send-to-hosthead').style.display = ghost ? '' : 'none';
+            $('send-to-gridhost').style.display = ghost ? '' : 'none';
+            if (ghost) try {
+                $('print-gridhost').onclick = sendto_gridhost;
+                $('grid-host').onkeyup = gridhost_probe;
+                $('grid-apik').onkeyup = gridhost_probe;
+                grid_host = $('grid-host');
+                grid_apik = $('grid-apik');
+                grid_target = $('grid-target');
+                grid_target.onchange = function(ev) {
+                    SDB['grid-target'] = grid_targets[grid_target.selectedIndex];
+                };
+                grid_host.value = SDB['grid-host'] || '';
+                grid_apik.value = SDB['grid-apik'] || '';
+                gridhost_probe();
+            } catch (e) { console.log(e) }
+
+            // grid:local setup
+            if (local) try {
+                gridlocal_probe();
+                $('print-gridlocal').onclick = sendto_gridlocal;
+                $('admin-gridlocal').onclick = admin_gridlocal;
+            } catch (e) { console.log(e) }
+
+            // show dialog
             API.modal.show('print');
         });
     }

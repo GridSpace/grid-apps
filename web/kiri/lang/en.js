@@ -134,6 +134,8 @@ kiri.lang['en-us'] = {
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
 
+    xp_menu:        "export",
+
     // LAYERS pop-menu
     la_menu:        "layers",
     la_olin:        "outline",

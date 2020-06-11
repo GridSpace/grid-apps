@@ -90,6 +90,9 @@
         control.reverseZoom = UI.reverseZoom.checked;
         control.thinRender = UI.thinRender.checked;
         control.dark = UI.dark.checked;
+        control.exportOcto = UI.exportOcto.checked;
+        control.exportGhost = UI.exportGhost.checked;
+        control.exportLocal = UI.exportLocal.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
         platform.update_stock();
@@ -1234,17 +1237,22 @@
             gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3, area:gcode}),
             gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3, area:gcode}),
 
-            layout:         UC.newGroup(LANG.op_menu, $('mod-prefs'), {inline: true}),
-            expert:         UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
-            dark:           UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-            showOrigin:     UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
-            alignTop:       UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
-            autoLayout:     UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-            freeLayout:     UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
-            reverseZoom:    UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
-            thinRender:     UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
-            units:          UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
-            prefadd:        UC.checkpoint(),
+            layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
+            expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
+            dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
+            showOrigin:       UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
+            alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
+            autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
+            freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
+            reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
+            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
+            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
+            prefadd:          UC.checkpoint(),
+
+            export:           UC.newGroup(LANG.xp_menu, $('prefs-out'), {inline: true}),
+            exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
+            exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
+            exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
 
             process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
             sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),
