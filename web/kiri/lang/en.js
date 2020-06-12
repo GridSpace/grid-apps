@@ -427,7 +427,7 @@ kiri.lang['en-us'] = {
     sa_pldr_s:      "peel drop rate",
     sa_pldr_l:      "peel drop speed\nin mm/sec",
 
-    sa_base_m:      "base layers",
+    sa_base_m:      "base",
     sa_balc_s:      "layer count",
     sa_balc_l:      "number of\nbase layers",
     sa_bltn_l:      "base layer light on\ntime in seconds",
