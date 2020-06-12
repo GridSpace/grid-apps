@@ -10,7 +10,7 @@ const fs = require('fs');
 const uglify = require('uglify-es');
 const moment = require('moment');
 const agent = require('express-useragent');
-const license = require_fresh('./js/license.js');
+const license = require_fresh('./src/license.js');
 const version = license.VERSION || "rogue";
 
 const fileCache = {};
@@ -18,12 +18,8 @@ const code_src = {};
 const code = {};
 const mods = {};
 const load = [];
-const device = {
-    fdm: [],
-    sla: [],
-    cam: [],
-    laser: []
-};
+const synth = {};
+const api = {};
 
 let level;
 let cacheDir;
@@ -72,7 +68,7 @@ function init(mod) {
     ]));
     mod.add(fixedmap("/api/", api));
     if (debug) {
-        mod.static("/js/", "js");
+        mod.static("/src/", "src");
         mod.static("/mod/", "mod");
         mod.sync("/reload", () => {
             mod.reload();
@@ -130,6 +126,7 @@ function initModule(mod, file, dir) {
         },
         const: {
             args: {},
+            meta: mod.meta,
             debug: debug,
             script: script,
             moddir: dir,
@@ -210,139 +207,118 @@ function initModule(mod, file, dir) {
     });
 }
 
-const api = {
-    "filters-fdm": (req, res, next) => {
-        res.setHeader("Content-Type", "application/javascript");
-        res.end(JSON.stringify(device.fdm));
-    },
-
-    "filters-sla": (req, res, next) => {
-        res.setHeader("Content-Type", "application/javascript");
-        res.end(JSON.stringify(device.sla));
-    },
-
-    "filters-cam": (req, res, next) => {
-        res.setHeader("Content-Type", "application/javascript");
-        res.end(JSON.stringify(device.cam));
-    },
-
-    "filters-laser": (req, res, next) => {
-        res.setHeader("Content-Type", "application/javascript");
-        res.end(JSON.stringify(device.laser));
-    }
-};
-
 const script = {
     kiri : [
-        "ext-three",
-        "license",
-        "ext-clip2",
-        "ext-tween",
-        "ext-fsave",
-        "ext-earcut",
-        "add-array",
-        "add-three",
-        "geo",
-        "geo-debug",
-        "geo-render",
-        "geo-point",
-        "geo-slope",
-        "geo-line",
-        "geo-bounds",
-        "geo-polygon",
-        "geo-polygons",
-        "geo-gyroid",
-        "moto-kv",
-        "moto-ajax",
-        "moto-ctrl",
-        "moto-space",
-        "moto-load-stl",
-        "moto-db",
-        "moto-ui",
-        "kiri-icons",
-        "kiri-lang",
-        "kiri-lang-en",
-        "kiri-fill",
-        "kiri-db",
-        "kiri-slice",
-        "kiri-slicer",
-        "kiri-driver-fdm",
-        "kiri-driver-sla",
-        "kiri-driver-cam",
-        "kiri-driver-laser",
-        "kiri-pack",
-        "kiri-layer",
-        "kiri-widget",
-        "kiri-print",
-        "kiri-codec",
-        "kiri-work",
-        "kiri-conf",
         "kiri",
-        "kiri-init",
-        "kiri-export"
-    ].map(p => `js/${p}.js`),
-    work : [
-        "ext-three",
-        "ext-pngjs",
+        "ext/three",
         "license",
-        "ext-clip2",
-        "add-array",
-        "add-three",
-        "add-class",
-        "geo",
-        // "geo-wasm",
-        "geo-debug",
-        "geo-point",
-        "geo-slope",
-        "geo-line",
-        "geo-bounds",
-        "geo-polygon",
-        "geo-polygons",
-        "geo-gyroid",
-        "kiri-fill",
-        "kiri-slice",
-        "kiri-slicer",
-        "kiri-driver-fdm",
-        "kiri-driver-sla",
-        "kiri-driver-cam",
-        "kiri-driver-laser",
-        "kiri-pack",
-        "kiri-widget",
-        "kiri-print",
-        "kiri-codec"
-    ].map(p => `js/${p}.js`),
+        "ext/clip2",
+        "ext/tween",
+        "ext/fsave",
+        "ext/earcut",
+        "add/array",
+        "add/three",
+        "geo/base",
+        "geo/debug",
+        "geo/render",
+        "geo/point",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/gyroid",
+        "moto/kv",
+        "moto/ajax",
+        "moto/ctrl",
+        "moto/pack",
+        "moto/space",
+        "moto/load-stl",
+        "moto/db",
+        "kiri/ui",
+        "kiri/lang",
+        "kiri/lang-en",
+        "kiri/fill",
+        "kiri/db",
+        "kiri/slice",
+        "kiri/slicer",
+        "mode/fdm/driver",
+        "mode/sla/driver",
+        "mode/cam/driver",
+        "mode/laser/driver",
+        "kiri/layer",
+        "kiri/widget",
+        "kiri/print",
+        "kiri/codec",
+        "kiri/work",
+        "kiri/conf",
+        "kiri/main",
+        "kiri/init",
+        "kiri/export",
+        "@devices",
+        "@icons"
+    ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
     worker : [
-        "kiri-worker"
-    ].map(p => `js/${p}.js`),
-    meta : [
-        "ext-three",
+        "kiri",
+        "ext/three",
+        "ext/pngjs",
         "license",
-        "ext-tween",
-        "ext-fsave",
-        "ext-earcut",
-        "add-array",
-        "add-three",
-        "geo",
-        "geo-debug",
-        "geo-render",
-        "geo-point",
-        "geo-slope",
-        "geo-line",
-        "geo-bounds",
-        "geo-polygon",
-        "geo-polygons",
-        "geo-gyroid",
-        "kiri-layer",
-        "moto-kv",
-        "moto-ajax",
-        "moto-ctrl",
-        "moto-space",
-        "moto-load-stl",
-        "moto-db",
-        "moto-ui",
-        "kiri-db",
+        "ext/clip2",
+        "add/array",
+        "add/three",
+        "add/class",
+        "geo/base",
+        // "geo/wasm",
+        "geo/debug",
+        "geo/point",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/gyroid",
+        "moto/pack",
+        "kiri/fill",
+        "kiri/slice",
+        "kiri/slicer",
+        "mode/fdm/driver",
+        "mode/sla/driver",
+        "mode/cam/driver",
+        "mode/laser/driver",
+        "kiri/widget",
+        "kiri/print",
+        "kiri/codec",
+        "kiri/worker"
+    ].map(p => `src/${p}.js`),
+    meta : [
+        "ext/three",
+        "license",
+        "ext/tween",
+        "ext/fsave",
+        "ext/earcut",
+        "add/array",
+        "add/three",
+        "geo/base",
+        "geo/debug",
+        "geo/render",
+        "geo/point",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/gyroid",
+        "kiri/layer",
+        "moto/kv",
+        "moto/ajax",
+        "moto/ctrl",
+        "moto/space",
+        "moto/load-stl",
+        "moto/db",
+        "moto/ui",
+        "kiri/db",
         "meta"
-    ].map(p => `js/${p}.js`)
+    ].map(p => `src/${p}.js`)
 };
 
 const db = {
@@ -531,8 +507,13 @@ function handleData(req, res, next) {
                 dbVersion = parseInt(version || "0") + 1;
                 checkDone();
             });
-    } else {
+
+        return;
+
+    }  else {
+
         next();
+
     }
 }
 
@@ -611,36 +592,46 @@ function serveCode(req, res, code) {
     res.end(code.code);
 }
 
+function generateIcons() {
+    let root = `${dir}/src/ico`;
+    let icos = {};
+    fs.readdirSync(root).forEach(file => {
+        let name = file.split(".")[0]   ;
+        icos[name] = fs.readFileSync(`${root}/${file}`).toString();
+    });
+    synth.icons = `self.icons = ${JSON.stringify(icos)};`;
+}
+
+function generateDevices() {
+    let root = `${dir}/src/dev`;
+    let devs = {};
+    fs.readdirSync(root).forEach(type => {
+        let map = devs[type] = devs[type] || {};
+        fs.readdirSync(`${root}/${type}`).forEach(device => {
+            map[device] = JSON.parse(fs.readFileSync(`${root}/${type}/${device}`));
+        });
+    });
+    synth.devices = `self.devices = ${JSON.stringify(devs)};`;
+}
+
 function prepareScripts() {
+    generateIcons();
+    generateDevices();
     code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
-    code.work = concatCode(script.work);
     code.worker = concatCode(script.worker);
-    fs.readdir(dir + "/web/kiri/filter/FDM", function(err, files) {
-        device.fdm = files || device.fdm;
-    });
-    fs.readdir(dir + "/web/kiri/filter/SLA", function(err, files) {
-        device.sla = files || device.sla;
-    });
-    fs.readdir(dir + "/web/kiri/filter/CAM", function(err, files) {
-        device.cam = files || device.cam;
-    });
-    fs.readdir(dir + "/web/kiri/filter/LASER", function(err, files) {
-        device.laser = files || device.laser;
-    });
 }
 
 function concatCode(array) {
     let code = [];
+    let direct = array.filter(f => f.charAt(0) !== '@');
+    let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
 
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        let code = [ `(function() { let load = [ `];
-        array.forEach(file => {
-            // if (file.indexOf(":\\") > 0) {
-            //     file = `/${file}`;
-            // }
+        let code = [ '(function() { let load = [ ' ];
+        direct.forEach(file => {
             code.push(`"/${file.replace(/\\/g,'/')}?${version}",`);
         });
         code.push([
@@ -653,17 +644,24 @@ function concatCode(array) {
             's.src = file;',
             's.onload = load_next;',
             'document.head.appendChild(s);',
-            '}; load_next(); })();',
+            '} load_next(); })();',
             'self.debug=true;'
         ].join('\n'));
+        inject.forEach(key => {
+            code.push(synth[key]);
+        });
         return code.join('\n');
     }
 
-    array.forEach(file => {
+    direct.forEach(file => {
         let cached = getCachedFile(file, function(path) {
             return minify(`${dir}/${file}`);
         });
         code.push(cached);
+    });
+
+    inject.forEach(key => {
+        code.push(synth[key]);
     });
 
     return code.join('');
