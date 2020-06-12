@@ -1459,6 +1459,7 @@
             settings.controller.view = view;
         }
         SDB.setItem('ws-settings', JSON.stringify(settings));
+        API.event.emit('settings.saved', settings);
     }
 
     function settingsImport(data, ask) {

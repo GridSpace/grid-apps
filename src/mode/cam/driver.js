@@ -54,6 +54,16 @@
             $('set-tools').style.display = isCAM ? '' : 'none';
             kiri.space.platform.setColor(isCAM ? 0xeeeeee : 0xcccccc);
         });
+        api.event.on("settings.saved", (settings) => {
+            let proc = settings.process;
+            api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
+            api.ui.roughing.marker.style.display = proc.roughingOn ? 'flex' : 'none';
+            api.ui.drilling.marker.style.display = proc.drillingOn ? 'flex' : 'none';
+            api.ui.finishing.marker.style.display =
+                proc.finishingOn ||
+                proc.finishingXOn ||
+                proc.finishingYOn ? 'flex' : 'none';
+        });
     }
 
     function getToolById(settings, id) {

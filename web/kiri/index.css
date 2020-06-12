@@ -882,6 +882,16 @@ th, tr, td {
     margin-right: 5px;
     padding: 5px;
 }
+.marker {
+    xdisplay: none;
+    position:absolute;
+    border-radius: 2px;
+    background-color: rgba(0,0,0,0.25);
+    bottom: 1px;
+    left: 1px;
+    width: 4px;
+    height: 4px;
+}
 #layers .var-row {
     border-radius: 10px;
     background-color: #ddd;
