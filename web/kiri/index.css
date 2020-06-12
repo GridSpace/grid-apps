@@ -839,6 +839,11 @@ th, tr, td {
     background-color: var(--bg-gray);
     height: 10px;
 }
+.set-sep {
+    background-color: var(--bg-gray) !important;
+    height: 10px;
+    right: -9px;
+}
 .set-header {
     background-color: rgba(0,0,0,0.1);
     text-align: center;

@@ -106,9 +106,10 @@
         poppable[group] = opt.inline === true ? false : true;
 
         let row = DOC.createElement('div'),
-            a = DOC.createElement('a'),
             dbkey = `beta-${prefix}-show-${group}`,
-            popper = !opt.inline;
+            popper = !opt.inline && label,
+            link;
+
 
         if (popper) {
             let pop = DOC.createElement('div');
@@ -117,34 +118,43 @@
             row.setAttribute("class", "set-group noselect");
             addTo = pop;
         } else {
-            row.setAttribute("class", "set-header col");
+            if (opt.class) {
+                opt.class.split(' ').forEach(ce => {
+                    row.classList.add(ce);
+                });
+            } else {
+                row.setAttribute("class", "set-header col");
+            }
             addTo = lastDiv;
         }
 
         div.appendChild(row);
-        row.appendChild(a);
-        a.appendChild(DOC.createTextNode(label));
+        if (label) {
+            link = DOC.createElement('a');
+            link.appendChild(DOC.createTextNode(label));
+            row.appendChild(link);
+        }
         addModeControls(row, opt);
         lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
         groupName = group;
         groupShow[group] = popper ? state[dbkey] === 'true' : state[dbkey] !== 'false';
         row.onclick = function(ev) {
-            if (ev.target !== a && ev.target !== row) {
+            if (ev.target !== link && ev.target !== row) {
                 return;
             }
             toggleGroup(group, dbkey);
         };
         if (popper) {
             row.onmouseenter = function(ev) {
-                if (ev.target !== a && ev.target !== row) {
+                if (ev.target !== link && ev.target !== row) {
                     return;
                 }
                 clearTimeout(exitimer);
                 showGroup(group);
             };
             row.onmouseleave = function(ev) {
-                if (ev.target !== a && ev.target !== row) {
+                if (ev.target !== link && ev.target !== row) {
                     return;
                 }
                 clearTimeout(exitimer);
