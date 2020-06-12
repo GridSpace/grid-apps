@@ -14,6 +14,7 @@
         CONF = BASE.config,
         POLY = BASE.polygons,
         SLA = KIRI.driver.SLA = {
+            init,
             slice,
             sliceRender,
             printSetup,
@@ -34,6 +35,16 @@
         legacy = false;
 
     if (legacy) console.log("SLA Driver in Legacy Mode");
+
+    function init(kiri, api) {
+        api.event.on("mode.set", (mode) => {
+            if (mode === 'SLA') {
+                api.ui.act.preview.classList.add('hide');
+            } else {
+                api.ui.act.preview.classList.remove('hide');
+            }
+        });
+    }
 
     /**
      * DRIVER SLICE CONTRACT - runs in worker

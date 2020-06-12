@@ -12,6 +12,7 @@
         UTIL = BASE.util,
         POLY = BASE.polygons,
         CAM = KIRI.driver.CAM = {
+            init,
             slice,
             sliceRender,
             printSetup,
@@ -46,6 +47,14 @@
         newPoint = BASE.newPoint,
         newPolygon = BASE.newPolygon,
         time = UTIL.time;
+
+    function init(kiri, api) {
+        api.event.on("mode.set", (mode) => {
+            let isCAM = mode === 'CAM';
+            $('set-tools').style.display = isCAM ? '' : 'none';
+            kiri.space.platform.setColor(isCAM ? 0xeeeeee : 0xcccccc);
+        });
+    }
 
     function getToolById(settings, id) {
         for (let i=0, t=settings.tools; i<t.length; i++) {
@@ -1341,75 +1350,72 @@
             let rate = feedRate;
 
             if (!lastPoint) {
+                // before first point, move cutting head to point above it
+                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
+                // then set that as the lastPoint
                 lastPoint = newPoint(origin.x, origin.y, point.z);
             }
 
-            // only when we have a previous point to compare to
-            // TODO obsolete check. lastPoint now synthesized.
-            if (lastPoint) {
-                let deltaXY = lastPoint.distTo2D(point),
-                    deltaZ = point.z - lastPoint.z,
-                    absDeltaZ = Math.abs(deltaZ),
-                    isMove = !cut;
-                // drop points too close together
-                if (deltaXY < 0.001 && point.z === lastPoint.z) {
-                    console.trace(["drop dup",lastPoint,point]);
-                    return;
-                }
-                if (isMove && deltaXY <= toolDiamMove) {
-                    // convert short planar moves to cuts
-                     if (absDeltaZ <= tolerance) {
-                        cut = 1;
-                        isMove = false;
-                    } else if (deltaZ <= -tolerance) {
-                        // move over before descending
-                        layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.number);
-                        // new pos for plunge calc
-                        deltaXY = 0;
-                    }
-                } //else (TODO verify no else here b/c above could change isMove)
-                // move over things
-                if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                    let maxz = toolProfile ? MAX(
-                            getTopoZPathMax(
-                                widget,
-                                toolProfile,
-                                lastPoint.x - wmx,
-                                lastPoint.y - wmy,
-                                point.x - wmx,
-                                point.y - wmy) + zadd,
-                            point.z,
-                            lastPoint.z) : zmax,
-                        mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,
-                        clearz = maxz;
-                    // up if any point between higher than start/finish
-                    if (mustGoUp) {
-                        clearz = maxz + zclear;
-                        layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.number);
-                    }
-                    // over to point above where we descend to
-                    if (mustGoUp || point.z < maxz) {
-                        layerPush(point.clone().setZ(clearz), 0, 0, tool.number);
-                        // new pos for plunge calc
-                        deltaXY = 0;
-                    }
-                }
-                // synth new plunge rate
-                if (deltaZ <= -tolerance) {
-                    let threshold = MIN(deltaXY / 2, absDeltaZ),
-                        modifier = threshold / absDeltaZ;
-                    if (threshold && modifier && deltaXY > tolerance) {
-                        // use modifier to speed up long XY move plunge rates
-                        rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
-                    } else {
-                        rate = plungeRate;
-                    }
-                    // console.log({deltaZ: deltaZ, deltaXY: deltaXY, threshold:threshold, modifier:modifier, rate:rate, plungeRate:plungeRate});
-                }
-            } else {
-                // before first point, move cutting head to point above it
-                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
+            let deltaXY = lastPoint.distTo2D(point),
+                deltaZ = point.z - lastPoint.z,
+                absDeltaZ = Math.abs(deltaZ),
+                isMove = !cut;
+            // drop points too close together
+            if (deltaXY < 0.001 && point.z === lastPoint.z) {
+                console.trace(["drop dup",lastPoint,point]);
+                return;
             }
+            if (isMove && deltaXY <= toolDiamMove) {
+                // convert short planar moves to cuts
+                 if (absDeltaZ <= tolerance) {
+                    cut = 1;
+                    isMove = false;
+                } else if (deltaZ <= -tolerance) {
+                    // move over before descending
+                    layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.number);
+                    // new pos for plunge calc
+                    deltaXY = 0;
+                }
+            } //else (TODO verify no else here b/c above could change isMove)
+            // move over things
+            if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
+                let maxz = toolProfile ? MAX(
+                        getTopoZPathMax(
+                            widget,
+                            toolProfile,
+                            lastPoint.x - wmx,
+                            lastPoint.y - wmy,
+                            point.x - wmx,
+                            point.y - wmy) + zadd,
+                        point.z,
+                        lastPoint.z) : zmax,
+                    mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,
+                    clearz = maxz;
+                // up if any point between higher than start/finish
+                if (mustGoUp) {
+                    clearz = maxz + zclear;
+                    layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.number);
+                }
+                // over to point above where we descend to
+                if (mustGoUp || point.z < maxz) {
+                    layerPush(point.clone().setZ(clearz), 0, 0, tool.number);
+                    // new pos for plunge calc
+                    deltaXY = 0;
+                }
+            }
+            // synth new plunge rate
+            if (deltaZ <= -tolerance) {
+                let threshold = MIN(deltaXY / 2, absDeltaZ),
+                    modifier = threshold / absDeltaZ;
+                if (threshold && modifier && deltaXY > tolerance) {
+                    // use modifier to speed up long XY move plunge rates
+                    rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
+                } else {
+                    rate = plungeRate;
+                }
+                // console.log({deltaZ: deltaZ, deltaXY: deltaXY, threshold:threshold, modifier:modifier, rate:rate, plungeRate:plungeRate});
+            }
+
             // todo synthesize move speed from feed / plunge accordingly
             layerPush(
                 point,
@@ -1779,12 +1785,6 @@
         function moveTo(out) {
             let newpos = out.point;
 
-            // first point out sets the current position (but not Z)
-            if (points === 0) {
-                pos.x = newpos.x;
-                pos.y = newpos.y;
-            }
-
             // no point == dwell
             // out.speed = time to dwell in ms
             if (!newpos) {
@@ -1808,13 +1808,32 @@
                 filterEmit(cmdToolChange, consts);
             }
 
+            // first point out sets the current position (but not Z)
+            // hacky AF way to split initial x,y,z into z then x,y
+            if (points === 0) {
+                pos.x = pos.y = pos.z = 0;
+                points++;
+                moveTo({
+                    tool: out.tool,
+                    point: { x: 0, y: 0, z: newpos.z },
+                    speed: spro.camFastFeedZ
+                });
+                moveTo({
+                    tool: out.tool,
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z },
+                    speed: spro.camFastFeed
+                });
+                points--;
+                return;
+            }
+
             let speed = out.speed,
-                feed = speed || spro.camFastFeed,
                 nl = [speed ? 'G1' : 'G0'],
                 dx = newpos.x - pos.x,
                 dy = newpos.y - pos.y,
                 dz = newpos.z - pos.z,
-                dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
+                feed = Math.min(speed || spro.camFastFeed, dz ? spro.camFastFeedZ : spro.camFastFeed);
 
             // drop dup points (all deltas are 0)
             if (!(dx || dy || dz)) {

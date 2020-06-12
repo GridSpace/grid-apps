@@ -243,9 +243,11 @@ kiri.lang['en-us'] = {
     cc_pock_l:      "constrain cuts to\npart boundaries",
 
     // CNC COMMON
-    cc_menu:        "common",
-    cc_rapd_s:      "rapid feed",
-    cc_rapd_l:      "rapid moves feedrate\nin workspace units / minute",
+    cc_menu:        "limits",
+    cc_rapd_s:      "xy feed",
+    cc_rapd_l:      "max xy moves feedrate\nin workspace units / minute",
+    cc_rzpd_s:      "z feed",
+    cc_rzpd_l:      "max z moves feedrate\nin workspace units / minute",
 
     // CNC ROUGHING
     cr_menu:        "roughing",
@@ -333,7 +335,7 @@ kiri.lang['en-us'] = {
 
     // OUTPUT CAM
     ou_toll_s:      "tolerance",
-    ou_toll_l:      "surface precision\nin workspace units",
+    ou_toll_l:      "surface precision\nin workspace units\nlower is slower and\nuses more memory",
     ou_ztof_s:      "z top offset",
     ou_ztof_l:      "offset from stock surface\nto top face of part\nin workspace units",
     ou_zbot_s:      "z bottom",

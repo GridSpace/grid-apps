@@ -41,6 +41,7 @@
         UI = {},
         UC = KIRI.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
         MODE = MODES.FDM,
+        DRIVER = undefined,
         onEvent = {},
         currentPrint = null,
         selectedMeshes = [],
@@ -797,7 +798,7 @@
             widget.slice(settings, function(sliced, error) {
                 let mark = UTIL.time();
                 // on done
-                widget.render(renderMode, MODE === MODES.CAM);
+                widget.render();
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                 widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
@@ -1922,32 +1923,13 @@
             DBUG.log("invalid mode: "+mode);
             mode = 'FDM';
         }
-        $('app-mode-name').innerHTML = mode;
-        $('set-tools').style.display = mode === 'CAM' ? '' : 'none';
+        // change mode constants
         settings.mode = mode;
         MODE = MODES[mode];
-        // restore cached device profile for this mode
-        if (settings.cdev[mode]) {
-            settings.device = clone(settings.cdev[mode]);
-            API.event.emit('device.set', currentDeviceName());
-        }
-        if (MODE === MODES.CAM) {
-            SPACE.platform.setColor(0xeeeeee);
-        } else {
-            SPACE.platform.setColor(0xcccccc);
-        }
-        if (MODE === MODES.SLA) {
-            UI.act.preview.classList.add('hide');
-        } else {
-            UI.act.preview.classList.remove('hide');
-        }
-        // updates right-hand menu by enabling/disabling fields
-        setViewMode(VIEWS.ARRANGE);
-        UC.setMode(MODE);
-        API.conf.load();
-        API.conf.save();
-        clearWidgetCache();
-        SPACE.update();
+        DRIVER = KIRI.driver[mode];
+        // update mode display
+        $('app-mode-name').innerHTML = mode;
+        // highlight relevant device mode button
         ["fdm","sla","cam","laser"].forEach(dev => {
             let cl = $(`mode-${dev}`).classList;
             if (dev === mode.toLowerCase()) {
@@ -1956,18 +1938,35 @@
                 cl.remove("dev-sel");
             }
         });
+        // restore cached device profile for this mode
+        if (settings.cdev[mode]) {
+            settings.device = clone(settings.cdev[mode]);
+            API.event.emit('device.set', currentDeviceName());
+        }
+        // really belongs in CAM driver (lots of work / abstraction needed)
         if (camStock) {
             camStock.material.visible = settings.mode === 'CAM';
         }
-        API.space.restore(null, true);
-        if (then) then();
+        // updates right-hand menu by enabling/disabling fields
+        setViewMode(VIEWS.ARRANGE);
+        UC.setMode(MODE);
+        // sanitize and persist settings
+        API.conf.load();
+        API.conf.save();
+        // other housekeeping
+        clearWidgetCache();
         triggerSettingsEvent();
         platformUpdateSelected();
         updateFields();
+        // because device dialog, if showing, needs to be updated
         if (modalShowing()) {
             API.show.devices();
         }
+        API.space.restore(null, true);
         API.event.emit("mode.set", mode);
+        if (then) {
+            then();
+        }
     }
 
     function currentDeviceName() {

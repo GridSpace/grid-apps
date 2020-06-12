@@ -347,6 +347,7 @@
                 p:{
                     processName: "default",
                     camFastFeed: 6000,
+                    camFastFeedZ: 300,
                     roughingTool: 1000,
                     roughingSpindle: 1000,
                     roughingDown: 2,
