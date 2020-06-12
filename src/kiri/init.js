@@ -1292,7 +1292,7 @@
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
 
-            roughing:            UC.newGroup(LANG.cr_menu, null, {modes:CAM}),
+            roughing:            UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
             roughingTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
             roughingSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
             roughingOver:        UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
@@ -1304,7 +1304,7 @@
             camPocketOnlyRough:  UC.newBoolean(LANG.cc_pock_s, onBooleanClick, {title:LANG.cc_pock_l, modes:CAM}),
             roughingOn:          UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
 
-            finishing:           UC.newGroup(LANG.cf_menu, null, {modes:CAM}),
+            finishing:           UC.newGroup(LANG.cf_menu, null, {modes:CAM, marker:true}),
             finishingTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             finishingSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
             finishingOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
@@ -1318,7 +1318,7 @@
             finishingYOn:        UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
             finishCurvesOnly:    UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
 
-            drilling:            UC.newGroup(LANG.cd_menu, null, {modes:CAM}),
+            drilling:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
             drillTool:           UC.newSelect(LANG.cc_tool, {modes:CAM}),
             drillSpindle:        UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
             drillDown:           UC.newInput(LANG.cd_plpr_s, {title:LANG.cd_plpr_l, convert:UC.toFloat, modes:CAM}),
@@ -1327,18 +1327,18 @@
             drillLift:           UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
             drillingOn:          UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
 
-            camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
-
             output:              UC.newGroup(LANG.fr_menu, null, {modes:FDM}),
             outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
             outputRaft:          UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
-            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM}),
+            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount:        UC.newInput(LANG.ct_numb_s, {title:LANG.ct_numb_l, convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
             camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.1,100), modes:CAM}),
             camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.1,100), modes:CAM}),
             camTabsOn:           UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ct_nabl_l, modes:CAM}),
+
+            camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
 
             camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM}),
             camStockX:           UC.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),

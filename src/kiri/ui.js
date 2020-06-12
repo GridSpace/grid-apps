@@ -128,6 +128,12 @@
             addTo = lastDiv;
         }
 
+        if (opt.marker) {
+            let marker = row.marker = DOC.createElement('div');
+            marker.setAttribute('class', 'marker');
+            row.appendChild(marker);
+        }
+
         div.appendChild(row);
         if (label) {
             link = DOC.createElement('a');
