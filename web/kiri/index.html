@@ -2,10 +2,10 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <meta name="author" content="Stewart Allen">
+    <meta name="keywords" content="3d slicer,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode" />
     <meta name="copyright" content="stewart allen [sa@grid.space]">
     <meta name="description" content="3d slice modeler, gcode and CNC toolpath generator">
-    <meta name="keywords" content="3d slicer,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode" />
-    <meta name="author" content="Stewart Allen">
     <meta property="og:description" content="Kiri:Moto is a unique multi-modal 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
     <meta property="og:title" content="Free 3D Tools for Makers">
     <meta property="og:type" content="website">
@@ -14,211 +14,319 @@
     <title>Kiri:Moto</title>
     <link rel="icon" href="/kiri/favicon.ico">
     <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png">
-    <link rel="stylesheet" type="text/css" href="/moto/style.css?{{version}}">
-    <link rel="stylesheet" type="text/css" href="/kiri/style.css?{{version}}">
+    <link rel="stylesheet" type="text/css" href="/kiri/index.css?{{version}}">
+    <link href="https://fonts.googleapis.com/css?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
     <script src="/code/kiri.js?{{version}}"></script>
 </head>
-<body>
-    <!-- app title home page links -->
-    <div id="appid">
-        <span id="applang" title="language">A<div id="langpop"></div></span>
-        <span><a href="/" id="appname" target="home">Kiri:Moto Slicer</a></span>
-        <span id="apphelp" title="help">?</span>
-    </div>
-    <!-- left control menu -->
-    <div id="control-left" class="control"><div id="assets"></div></div>
-    <!-- right control menu -->
-    <div id="control-right" class="control"><div id="control"></div></div>
-    <!-- selected device and print profiles -->
-    <div id="selected" class="control">
-        <span id="selected-mode">mode</span>
-        <span>&nbsp;&nbsp;:&nbsp;&nbsp;</span>
-        <span id="selected-device">device</span>
-        <span>&nbsp;&nbsp;:&nbsp;&nbsp;</span>
-        <span id="selected-process">settings</span>
-    </div>
-    <!-- all modal dialogs -->
-    <div id="modal">
-        <div id="help">
-            <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
-            <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
-            <a href="https://www.inov3d.net/3d-printing-slicer-software-download/">slicer news</a>
-            <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
-            <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
-        </div>
-        <!-- changeable print dialog -->
-        <div id="print"></div>
-        <!-- local devices dialog -->
-        <div id="local" class="dialog">
-            <button id="local-close" class="modal-x">X</button>
-            <center><b><u>Grid.Local Devices</u></b></center>
-            <br><div id="local-dev" class="flow-col"></div>
-        </div>
-        <!-- hidden file input loader -->
-        <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
-    </div>
-    <!-- 3js -->
+<body class="col">
+    <input id="focuser" size=10></input>
+    <div id="curtain" class="j-center a-center">loading...</div>
     <div id="container"></div>
-    <!-- progress bar -->
-    <div id="loading"><div id="progress"><span id="prostatus">status</span></div></div>
-    <!-- file load catalog -->
-    <div id="catalog" class="dialog">
-        <div id="catalogBody" class="flow-col">
-            <label id="localCache">recent files<button id="cache-close">x</button></label>
-            <div id="catalogList"></div>
-        </div>
-    </div>
-    <!-- settings load dialog -->
-    <div id="settings" class="dialog">
-        <div id="settingsBody" class="flow-col">
-            <label id="settingsCache">saved settings</label>
-            <div id="settingsList"></div>
-        </div>
-    </div>
-    <!-- GCode filter editor -->
-    <div id="devices" class="dialog flex-col">
-        <div id="devices-body" class="flow-col">
-            <div id="device-labels" class="flow-row">
-                <label>device</label>
-                <label>settings</label>
-            </div>
-            <div id="device-cols" class="flow-row">
-                <div id="device-list" class="flow-col">
-                    <select id="device-select" size="15"></select>
-                </div>
-                <div id="device-info">
-                    <div id="device"></div>
-                </div>
-            </div>
-            <div style="position:relative">
-                <div id="insert" style="position:absolute"></div>
-            </div>
-            <div id="device-action" class="flow-row">
-                <button id="device-add">+</button>
-                <button id="device-del">-</button>
-                <span id="device-spacer"></span>
-                <button id="device-favorites">favorites</button>
-                <button id="device-all">all</button>
-                <span id="device-spacer"></span>
-                <button id="device-save">save</button>
-                <button id="device-close">close</button>
+    <div id="tracker"></div>
+    <div id="top-sep"></div>
+    <div id="top" class="row">
+        <div id="app-mode">
+            <div id="app-mode-name"></div>
+            <div id="mode-info" class="col">
+                <div><label>Device:</label><div id="mode-device">123</div></div>
+                <div><label>Profile:</label><div id="mode-profile">456</div></div>
             </div>
         </div>
-    </div>
-    <!-- CAM tools dialog -->
-    <div id="tools" class="dialog">
-        <div id="tools-body" class="flow-col">
-            <div id="tool-labels" class="flow-row">
-                <label>tool</label>
-                <label>detail</label>
-                <label>view</label>
-            </div>
-            <div id="tool-cols" class="flow-row">
-                <div id="tool-list" class="flow-col">
-                    <select id="tool-select" size="15"></select>
-                </div>
-                <div id="tool-info" class="flow-col">
-                    <div class="flow-row"><label>type</label>
-                        <select id="tool-type">
-                            <option value="endmill" selected>end</option>
-                            <option value="ballmill">ball</option>
-                            <option value="tapermill">taper</option>
-                        </select>
+        <div class="grow"></div>
+        <div id="app-name" class="col a-center">
+            <div>Kiri:Moto</div>
+            <div id="app-info">version</div>
+        </div>
+        <div class="grow"></div>
+        <div id="app-acct">
+            <i class="fas fa-user-cog"></i>
+            <div id="acct-pop" class="col">
+                <div class="col">
+                    <div id="acct-lang">
+                        <label><i class="fas fa-caret-left"></i>&nbsp;language</label>
+                        <div id="lang-pop" class="col">
+                            <div id="lset-en">english</div>
+                            <div id="lset-da">danish</div>
+                        </div>
                     </div>
-                    <div class="flow-row"><label>name</label><input id="tool-name" size="15"></input></div>
-                    <div class="flow-row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
-                    <div class="flow-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
-                    <div class="grouphead">shaft</div>
-                    <div class="flow-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
-                    <div class="flow-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
-                    <div class="grouphead">flute</div>
-                    <div class="flow-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
-                    <div class="flow-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
-                    <div class="grouphead">taper</div>
-                    <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
-                    <div class="flow-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
+                    <div id="acct-help" class="col a-end">
+                        <label>help</label>
+                    </div>
                 </div>
-                <div id="tool-view" class="flow-col"></div>
-            </div>
-            <div id="tool-action" class="flow-row">
-                <button id="tool-add">+</button>
-                <button id="tool-del">-</button>
-                <span id="tool-spacer"></span>
-                <button id="tools-save">save</button>
-                <button id="tools-close">done</button>
             </div>
         </div>
     </div>
-    <!-- selection info -->
-    <div id="widget-info">
-        <div id="selection">
-            <span class="sel-span">
-                <label class="label">scale</label>
-                <div class="sel-pop">
-                    <table><tr>
-                        <th></th>
-                        <td><label>size</label></td>
-                        <td><label>scale</label></td>
-                        <td><label>lock</label></td>
-                    </tr><tr>
-                        <td><label>x</label></td>
-                        <td><input id="size_x" size="8" class="value"/></td>
-                        <td><input id="scale_x" size="3" class="value" value="1"/></td>
-                        <td><input id="lock_x" type="checkbox" checked/></td>
-                    </tr><tr>
-                        <td><label>y</label></td>
-                        <td><input id="size_y" size="8" class="value"/></td>
-                        <td><input id="scale_y" size="3" class="value" value="1"/></td>
-                        <td><input id="lock_y" type="checkbox" checked/></td>
-                    </tr><tr>
-                        <td><label>z</label></td>
-                        <td><input id="size_z" size="8" class="value"/></td>
-                        <td><input id="scale_z" size="3" class="value" value="1"/></td>
-                        <td><input id="lock_z" type="checkbox" checked/></td>
-                    </tr></table>
+    <div id="mid-sep"></div>
+    <div id="mid" class="grow row">
+        <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
+        <div id="mid-lcol" class="col j-center noshow">
+            <div id="lt-back" class="lt-menu">
+                <i class="fas fa-arrow-circle-left"></i>
+            </div>
+            <div id="lt-top"></div>
+            <div id="lt-setup" class="lt-menu">
+                <i class="fas fa-cogs"></i>
+                <label>setup</label>
+                <div id="set-pop" class="pop-lcol row">
+                    <div id="set-device">
+                        <i class="fas fa-tablet-alt"></i>
+                        <label>device</label>
+                    </div>
+                    <div id="set-tools">
+                        <i class="fas fa-tools"></i>
+                        <label>tools<label>
+                    </div>
+                    <div id="set-prefs">
+                        <i class="fas fa-sliders-h"></i>
+                        <label>prefs<label>
+                    </div>
                 </div>
-            </span>
-            <span class="sel-span">
-                <label class="label">rotate</label>
-                <div class="sel-pop">
-                    <table><tr><td>
-                        <label>z</label>
-                        <input id="rot_z" class="value" size="5"/ value="0">
-                    </td></tr><tr><td>
-                        <label>y</label>
-                        <input id="rot_y" class="value" size="5"/ value="0">
-                    </td></tr><tr><td>
-                        <label>x</label>
-                        <input id="rot_x" class="value" size="5"/ value="0">
-                    </td></tr></table>
+            </div>
+            <div id="lt-file" class="lt-menu">
+                <i class="fas fa-folder"></i>
+                <label>files</label>
+                <div id="file-pop" class="pop-lcol row">
+                    <div id="file-recent">
+                        <i class="fas fa-list"></i>
+                        <label>recent</label>
+                    </div>
+                    <div id="file-import">
+                        <i class="fas fa-file-upload"></i>
+                        <label>import<label>
+                    </div>
                 </div>
-            </span>
-            <span id="ext-sel" class="sel-span">
-                <label class="label">extruder</label>
-                <div class="sel-pop"><div id="sel-ext"></div></div>
-            </span>
-            <span id="stock" class="sel-span">
-                <label class="label">stock</label>
-                <label id="stock-width" class="value">mm</label> x
-                <label id="stock-depth" class="value">mm</label> x
-                <label id="stock-height" class="value">mm</label>
-            </span>
+            </div>
+            <div id="lt-action" class="lt-menu">
+                <i class="fas fa-layer-group"></i>
+                <label>action</label>
+                <div id="pop-act" class="pop-lcol row">
+                    <div id="act-slice">
+                        <i class="fas fa-bars"></i>
+                        <label>slice</label>
+                    </div>
+                    <div id="act-preview">
+                        <i class="fas fa-cubes"></i>
+                        <label>preview</label>
+                    </div>
+                    <div id="act-export">
+                        <i class="fas fa-file-download"></i>
+                        <label>export</label>
+                    </div>
+                </div>
+            </div>
+            <div id="lt-view" class="lt-menu">
+                <i class="fas fa-eye"></i>
+                <label>view</label>
+                <div id="pop-view" class="pop-lcol row">
+                    <div id="view-arrange">
+                        <i class="fas fa-th"></i>
+                        <label>arrange</label>
+                    </div>
+                    <div id="view-top">
+                        <i class="fas fa-square"></i>
+                        <label>top</label>
+                    </div>
+                    <div id="view-home">
+                        <i class="fas fa-home"></i>
+                        <label>home</label>
+                    </div>
+                </div>
+            </div>
+            <div id="lt-sep" class="noshow"></div>
+            <div id="lt-rotate" class="lt-menu noshow">
+                <i class="fas fa-sync-alt"></i>
+                <label>rotate</label>
+                <div id="pop-rotate" class="pop-lcol row fillh russo">
+                    <div>
+                        <label class="grow">X</label>
+                        <input id="rot_x" class="value center" size="5"/ value="0">
+                    </div>
+                    <div>
+                        <label class="grow">Y</label>
+                        <input id="rot_y" class="value center" size="5"/ value="0">
+                    </div>
+                    <div>
+                        <label class="grow">Z</label>
+                        <input id="rot_z" class="value center" size="5"/ value="0">
+                    </div>
+                </div>
+            </div>
+            <div id="lt-scale" class="lt-menu noshow">
+                <i class="fas fa-expand"></i>
+                <label>scale</label>
+                <div id="pop-scale" class="pop-lcol row fillh russo">
+                    <div>
+                        <div><label>X</label><input id="lock_x" type="checkbox" checked/></div>
+                        <div><input id="size_x" size="8" class="value"/></div>
+                        <div><input id="scale_x" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>Y</label><input id="lock_y" type="checkbox" checked/></div>
+                        <div><input id="size_y" size="8" class="value"/></div>
+                        <div><input id="scale_y" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>Z</label><input id="lock_z" type="checkbox" checked/></div>
+                        <div><input id="size_z" size="8" class="value"/></div>
+                        <div><input id="scale_z" size="8" class="value" value="1"/></div>
+                    </div>
+                    <div>
+                        <div><label>axis</label></div>
+                        <div><label>size</label></div>
+                        <div><label>scale</label></div>
+                    </div>
+                </div>
+            </div>
+            <div id="lt-nozzle" class="lt-menu noshow">
+                <i class="fas fa-map-marker"></i>
+                <label>nozzle</label>
+                <div id="pop-nozzle" class="pop-lcol row fillh russo"></div>
+            </div>
+            <div id="lt-sep-help"></div>
+            <div id="set-help" class="lt-menu">
+                <i class="far fa-question-circle"></i>
+                <label>help<label>
+            </div>
+            <div id="lt-end"></div>
+        </div>
+        <div id="mid-mcol" class="grow">
+            <div id="modal">
+                <div id="modal-box" class="col">
+
+                <div class="mod-top row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+                <div id="mod-help" class="mdialog col">
+                    <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
+                    <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
+                    <a href="https://www.inov3d.net/3d-printing-slicer-software-download/">slicer news</a>
+                    <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
+                    <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
+                </div>
+                <div id="mod-setup" class="mdialog col">
+                    <div class="col a-center">select device type</div>
+                    <div class="row j-center">
+                        <button id="mode-fdm" class="dev-type"><label>FDM</label></button>
+                        <button id="mode-sla" class="dev-type"><label>SLA</label></button>
+                        <button id="mode-cam" class="dev-type"><label>CNC</label></button>
+                        <button id="mode-laser" class="dev-type"><label>LASER</label></button>
+                    </div>
+                    <div class="row mh0">
+                        <div id="devices" class="t-33 col"><select id="device-list" size="15" class="grow"></select></div>
+                        <div class="t-pad"></div>
+                        <div id="device" class="col t-body t-inset overy"></div>
+                        <div class="t-pad"></div>
+                        <div id="gcode-edit" class="t-body t-inset col">
+                            <div class="set-header col">gcode editor</div>
+                            <div id="dev-gcode" class="grow"></div>
+                        </div>
+                    </div>
+                    <div id="device-action" class="row">
+                        <div class="grow"></div>
+                        <button id="device-add"><i class="fas fa-plus"></i></button>
+                        <button id="device-del"><i class="fas fa-minus"></i></button>
+                        <div class="t-pad2"></div>
+                        <button id="device-favorites">favorites</button>
+                        <button id="device-all">all</button>
+                        <div class="t-pad2"></div>
+                        <button id="device-save">save</button>
+                        <div class="grow"></div>
+                    </div>
+                </div>
+                <div id="mod-files" class="mdialog col">
+                    <label class="set-header">recent files</label>
+                    <div id="catalogList" class="col"></div>
+                </div>
+                <div id="mod-saves" class="mdialog col">
+                    <label class="set-header">saved settings</label>
+                    <div id="settingsList" class="col"></div>
+                </div>
+                <div id="mod-tools" class="mdialog">
+                    <div class="col">
+                        <div class="row t-head">
+                            <label class="t-33">tool</label>
+                            <div class="t-pad"></div>
+                            <label class="t-33">detail</label>
+                            <div class="t-pad"></div>
+                            <label class="t-33">view</label>
+                        </div>
+                        <div class="row">
+                            <div class="col t-33">
+                                <select id="tool-select" size="10" class="grow"></select>
+                            </div>
+                            <div class="t-pad"></div>
+                            <div class="col t-33 t-body t-inset">
+                                <div class="row var-row"><label>name</label><input id="tool-name" size="15"></input></div>
+                                <div class="row var-row"><label>type</label>
+                                    <select id="tool-type">
+                                        <option value="endmill" selected>end</option>
+                                        <option value="ballmill">ball</option>
+                                        <option value="tapermill">taper</option>
+                                    </select>
+                                </div>
+                                <div class="row var-row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
+                                <div class="row var-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
+                                <div class="set-header col">shaft</div>
+                                <div class="row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
+                                <div class="row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
+                                <div class="set-header col">flute</div>
+                                <div class="row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
+                                <div class="row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
+                                <div class="set-header col">taper</div>
+                                <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
+                                <div class="row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
+                            </div>
+                            <div class="t-pad"></div>
+                            <div id="tool-view" class="col t-33 t-body"></div>
+                        </div>
+                        <div id="tool-action" class="row j-center">
+                            <button id="tool-add"><i class="fas fa-plus"></i></button>
+                            <button id="tool-del"><i class="fas fa-minus"></i></button>
+                            <div class="t-pad2"></div>
+                            <button id="tools-save">save</button>
+                            <button id="tools-close">done</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="mod-prefs" class="mdialog row">
+                    <div id="prefs-gen" class="col"></div>
+                    <div class="t-pad2"></div>
+                    <div id="prefs-out" class="col"></div>
+                </div>
+                <div id="mod-local" class="mdialog col"></div>
+                <div id="mod-print" class="mdialog col"></div>
+                <!-- hidden file input loader -->
+                <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
+                <div class="mod-end"></div></div>
+            </div>
+        </div>
+        <div id="mid-rcol" class="col j-center noshow">
+            <div id="set-menu" class="col">
+                <div id="set-top" class="set-group"><a>settings</a></div>
+                <div id="settings" class="col"></div>
+                <div id="set-end" class="set-group"></div>
+            </div>
+            <div id="slider" class="col russo">
+                <div id="slider-max">&infin;</div>
+                <div id="slider-center" class="grow">
+                    <div id="slider-hold" class="col xa-center">
+                        <div id="slider-hi" class="handle"><div id="slider-hi-val"></div></div>
+                        <div id="slider-mid">&nbsp;</div>
+                        <div id="slider-lo" class="handle"><div id="slider-lo-val"></div></div>
+                    </div>
+                </div>
+                <div id="slider-zero">0</div>
+            </div>
         </div>
     </div>
-    <!-- layer slider -->
-    <div id="layer-view" class="flow-row">
-        <button id="layer-toggle" title="toggle layers">layers</button>
-        <div id="layers"></div>
-        <input id="layer-id" size="4" title="selected layer">
-        <input id="layer-slider" type="range" title="layer selection">
-        <button id="layer-range" title="toggle section view">section</button>
-        <input id="layer-span" size="4" value="1" title="layer span">
-        <input id="opacity" type="range" title="opacity" min=0 max=100>
-    </div>
-    <!-- alert area -->
-    <div id="alert-area">
-        <div id="alert-border">
-            <div id="alert-text"></div>
+    <div id="end" class="col a-center">
+        <div id="bottom">
+            <div id="layers"></div>
+        </div>
+        <div id="alert-area">
+            <div id="alert-border">
+                <div id="alert-text">alerts<br>alerts<br>alerts</div>
+            </div>
         </div>
     </div>
 </body>

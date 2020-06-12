@@ -85,9 +85,13 @@ kiri.lang['en-us'] = {
     su_xprt:        "Export",
     su_help:        "Help",
 
-    // FUNCTION
-    fn_menu:        "function",
+    // LOAD
+    fe_menu:        "file",
+    fn_recn:        "Recent",
     fn_impo:        "Import",
+
+    // FUNCTION
+    fn_menu:        "action",
     fn_arra:        "Arrange",
     fn_slic:        "Slice",
     fn_prev:        "Preview",
@@ -95,20 +99,20 @@ kiri.lang['en-us'] = {
 
     // VIEW
     vu_menu:        "view",
-    vu_home:        "home",
-    vu_rset:        "reset",
-    vu_sptp:        "top",
-    vu_spfr:        "front",
-    vu_splt:        "left",
-    vu_sprt:        "right",
+    vu_home:        "Home",
+    vu_rset:        "Reset",
+    vu_sptp:        "Top",
+    vu_spfr:        "Front",
+    vu_splt:        "Left",
+    vu_sprt:        "Right",
 
     // WORKSPACE
-    ws_menu:        "workspace",
+    ws_menu:        "view",
     ws_save:        "Save",
     ws_cler:        "Clear",
 
     // OPTIONS
-    op_menu:        "options",
+    op_menu:        "preferences",
     op_xprt_s:      "expert",
     op_xprt_l:      "enable expert options",
     op_dark_s:      "dark mode",
@@ -125,13 +129,17 @@ kiri.lang['en-us'] = {
     op_free_l:      "permit dragable layout",
     op_invr_s:      "invert zoom",
     op_invr_l:      "invert mouse wheel\nscroll zoom",
+    op_thin_s:      "thin lines",
+    op_thin_l:      "faster part visualization\nsacrificing visual quality",
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
+
+    xp_menu:        "export",
 
     // LAYERS pop-menu
     la_menu:        "layers",
     la_olin:        "outline",
-    la_trce:        "trace",
+    la_trce:        "shells",
     la_face:        "facing",
     la_ruff:        "roughing",
     la_fini:        "finishing",
@@ -140,13 +148,13 @@ kiri.lang['en-us'] = {
     la_dlta:        "delta",
     la_slds:        "solids",
     la_fill:        "solid fill",
-    la_sprs:        "sparse",
-    la_sprt:        "support",
+    la_sprs:        "infill",
+    la_sprt:        "supports",
     la_prnt:        "print",
     la_move:        "moves",
 
     // SETTINGS
-    se_menu:        "settings",
+    se_menu:        "library",
     se_load:        "load",
     se_save:        "save",
 
@@ -164,7 +172,7 @@ kiri.lang['en-us'] = {
     sl_lbot_l:      "number of solid layers\nto enforce at the\nbottom of the print",
 
     // FDM FILL
-    fi_menu:        "fill",
+    fi_menu:        "infill",
     fi_type:        "type",
     fi_pcnt_s:      "percentage",
     fi_pcnt_l:      "fill density values\n0.0 - 1.0",
@@ -174,7 +182,7 @@ kiri.lang['en-us'] = {
     fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
 
     // FDM FIRST LAYER
-    fl_menu:        "first layer",
+    fl_menu:        "1st layer",
     fl_lahi_s:      "layer height",
     fl_lahi_l:      "height of each slice\nin millimeters\nshould be >= slice height",
     fl_rate_s:      "shell speed",
@@ -235,9 +243,11 @@ kiri.lang['en-us'] = {
     cc_pock_l:      "constrain cuts to\npart boundaries",
 
     // CNC COMMON
-    cc_menu:        "common",
-    cc_rapd_s:      "rapid feed",
-    cc_rapd_l:      "rapid moves feedrate\nin workspace units / minute",
+    cc_menu:        "limits",
+    cc_rapd_s:      "xy feed",
+    cc_rapd_l:      "max xy moves feedrate\nin workspace units / minute",
+    cc_rzpd_s:      "z feed",
+    cc_rzpd_l:      "max z moves feedrate\nin workspace units / minute",
 
     // CNC ROUGHING
     cr_menu:        "roughing",
@@ -271,7 +281,7 @@ kiri.lang['en-us'] = {
     cd_lift_l:      "lift between plunges\nafter dwell period\nin workspace units\n0 to disable",
 
     // CNC CUTOUT TABS
-    ct_menu:        "cutout tabs",
+    ct_menu:        "tabs",
     ct_angl_s:      "angle",
     ct_angl_l:      "starting angle for tab spacing\nin degrees (0-360)",
     ct_numb_s:      "count",
@@ -325,7 +335,7 @@ kiri.lang['en-us'] = {
 
     // OUTPUT CAM
     ou_toll_s:      "tolerance",
-    ou_toll_l:      "surface precision\nin workspace units",
+    ou_toll_l:      "surface precision\nin workspace units\nlower is slower and\nuses more memory",
     ou_ztof_s:      "z top offset",
     ou_ztof_l:      "offset from stock surface\nto top face of part\nin workspace units",
     ou_zbot_s:      "z bottom",
@@ -357,7 +367,7 @@ kiri.lang['en-us'] = {
     or_topp_l:      "origin is references from the top of objects",
 
     // FDM ADVANCED
-    ad_menu:        "advanced",
+    ad_menu:        "expert",
     ad_rdst_s:      "retract dist",
     ad_rdst_l:      "amount to retract filament\nfor long moves. in millimeters",
     ad_rrat_s:      "retract rate",

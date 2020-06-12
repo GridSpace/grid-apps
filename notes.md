@@ -2,6 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `C` hover mode to see device / settings selections
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -15,6 +16,8 @@
 
 # FDM
 
+* `B` fix adaptive slicing with multi-extruder
+* `B` fix supports with grouped parts
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
@@ -29,6 +32,7 @@
 * `F` determine start point from gcode preamble
 * `F` trim support offset from layer below
 * `F` option to support interior bridges when 0% infill
+* `F` calculate filament use per extruder per print
 * `P` refactor thin fill to use outline and inside poly normal dist to self
 * `P` segment large polygons for extremely large parts / infill
 * `P` implement infill clipping in wasm
@@ -44,7 +48,6 @@
 * `B` linear finishing should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `F` z bounded slices (extension of z bottom offset feature)
-* `F` do not mill out thru-pockets. cut outline only.
 * `F` use arcs to connect hard angles
 * `F` do not rough areas that go all the way through the part
       https://github.com/GridSpace/grid-apps/issues/20
