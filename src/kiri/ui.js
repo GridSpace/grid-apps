@@ -520,14 +520,20 @@
     }
 
     function newBlank(options) {
-        let row = newDiv(options),
-            hide = options && options.hide;
+        let opt = options || {},
+            row = newDiv(opt),
+            hide = opt.hide;
 
         row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
-        ip.setVisible = row.setVisible;
 
-        return ip;
+        if (opt.class) {
+            opt.class.split(' ').forEach(ce => {
+                row.classList.add(ce);
+            });
+        }
+
+        return row;
     }
 
     function newButton(label, action, options) {

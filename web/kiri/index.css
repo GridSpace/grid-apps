@@ -839,6 +839,11 @@ th, tr, td {
     background-color: var(--bg-gray);
     height: 10px;
 }
+.pop-sep {
+    height: 1.5px;
+    margin-top: 2px;
+    background-color: #bbb;
+}
 .set-sep {
     background-color: var(--bg-gray) !important;
     height: 10px;
