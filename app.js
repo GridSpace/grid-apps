@@ -50,10 +50,13 @@ function init(mod) {
 
     mod.on.reload(() => level.close());
     mod.on.test((req) => {
-        if (mod.meta.version && mod.meta.version !== "*") {
-            return (cookieValue(req.headers.cookie, "version") === mod.meta.version);
+        let vmatch = mod.meta.version || undefined;
+        let strict = (vmatch && mod.vmatch !== "*") ? true : false;
+        let cookie = cookieValue(req.headers.cookie, "version") || undefined;
+        if (strict) {
+            return cookie === mod.meta.version;
         } else {
-            return true;
+            return (!vmatch && !cookie) || (vmatch && cookie);
         }
     });
 
