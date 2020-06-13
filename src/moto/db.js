@@ -11,9 +11,14 @@
 
     // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 
-    let IDB = self.indexedDB || self.mozIndexedDB || self.webkitIndexedDB || self.msIndexedDB,
-        IRR = self.IDBKeyRange,
-        local = null;
+    let IDB, IRR, local = null;
+
+    try {
+        IDB = self.indexedDB || self.mozIndexedDB || self.webkitIndexedDB || self.msIndexedDB;
+        IRR = self.IDBKeyRange;
+    } catch (e) {
+        console.log("in private or restricted browsing mode. database storage blocked. application may not function.");
+    }
 
     /**
      * @param {String} dbname

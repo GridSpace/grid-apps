@@ -840,7 +840,9 @@ th, tr, td {
     height: 10px;
 }
 .pop-sep {
-    height: 1.5px;
+    border: 0 !important;
+    padding: 0 !important;
+    height: 1px;
     margin-top: 2px;
     background-color: #bbb;
 }
