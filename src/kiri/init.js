@@ -1136,6 +1136,7 @@
             saves:              $('mod-saves'),
             print:              $('mod-print'),
             local:              $('mod-local'),
+            any:                $('mod-any'),
 
             catalogBody:        $('catalogBody'),
             catalogList:        $('catalogList'),
@@ -1265,7 +1266,7 @@
             laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER}),
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
-            process:             UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
+            fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM, marker:true}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
             sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
             sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1281,7 +1282,7 @@
             firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM, expert:true}),
             firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM, expert:true}),
 
-            support:             UC.newGroup(LANG.sp_menu, null, {modes:FDM}),
+            fdmSupport:          UC.newGroup(LANG.sp_menu, null, {modes:FDM, marker:true}),
             sliceSupportDensity: UC.newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
             sliceSupportSize:    UC.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
@@ -1291,6 +1292,10 @@
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
+
+            fdmRaft:             UC.newGroup(LANG.fr_menu, null, {modes:FDM, marker:true}),
+            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
+            outputRaft:          UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
             roughing:            UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
             roughingTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
@@ -1329,10 +1334,6 @@
             drillLift:           UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
             drillingSep:         UC.newBlank({class:"pop-sep"}),
             drillingOn:          UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
-
-            output:              UC.newGroup(LANG.fr_menu, null, {modes:FDM}),
-            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
-            outputRaft:          UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
             camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),

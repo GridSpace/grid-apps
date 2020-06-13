@@ -888,7 +888,6 @@ th, tr, td {
     padding: 5px;
 }
 .marker {
-    xdisplay: none;
     position:absolute;
     border-radius: 2px;
     background-color: rgba(0,0,0,0.25);

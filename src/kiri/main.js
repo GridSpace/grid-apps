@@ -1652,7 +1652,7 @@
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["help","setup","tools","prefs","saves","files","print","local"].forEach(function(name) {
+        ["help","setup","tools","prefs","saves","files","print","local","any"].forEach(function(name) {
             UI[name].style.display = name === which ? 'flex' : '';
         });
 

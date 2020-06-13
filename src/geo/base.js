@@ -386,6 +386,7 @@
         intersect : intersect,
         determinant : determinant,
         comma: (v) => {
+            if (!v) return v;
             let [lt,rt] = v.toString().split('.');
             lt = lt.toString().split('').reverse().map((v,i,a) => {
                 return (i < a.length - 1 && i % 3 === 2) ? `,${v}` : v
