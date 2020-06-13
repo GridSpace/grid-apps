@@ -12,8 +12,8 @@
         self.moto.KV.setItem('__test', 1);
         self.moto.KV.getItem('__test');
     } catch (e) {
-        self.moto.KV = new KV();
-        kv.setItem("__paranoid__", "in private browsing mode or 3rd party storage blocked. application may not function.");
+        let kv = self.moto.KV = new KV();
+        kv.setItem("__paranoid__", "in private or restricted browsing mode. local storage blocked. application may not function.");
         console.log(kv.getItem("__paranoid__"));
     }
 
