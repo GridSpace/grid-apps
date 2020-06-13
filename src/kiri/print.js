@@ -341,7 +341,7 @@
             tools = settings.device.extruders || [];
         }
 
-        driver.printRender(this, {tools});
+        driver.printRender(this, {tools, aslines:settings.controller.thinRender});
     };
 
     function pref(a,b) {
