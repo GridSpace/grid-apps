@@ -831,6 +831,21 @@ th, tr, td {
     border-bottom-left-radius: 0;
     background-color: var(--bg-gray);
 }
+#set-top:hover #set-now {
+    display: flex;
+}
+#set-now {
+    display: none;
+    position: absolute;
+    top: -1px;
+    right: 100%;
+    padding: 5px;
+    margin-right: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: white;
+    z-index: 10;
+}
 #set-end {
     color: black;
     padding: 1px 10px 2px 2px;

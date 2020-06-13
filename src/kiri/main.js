@@ -1725,22 +1725,32 @@
         let mode = getMode(),
             name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
             load = settings.sproc[mode][name];
+
         if (!load) return;
 
+        // clone loaded process into settings
         settings.process = clone(load);
+        // update process name
         settings.process.processName = name;
+        // set currenet process name for this mode
         settings.cproc[mode] = name;
-
-        // associate named process with the current device
+        // save named process with the current device
         settings.devproc[currentDeviceName()] = name;
+        // update settings hover-pop with current process name
+        UI.setNow.innerText = named;
+
+        // allow mode driver to take any necessary actions
+        API.event.emit("settings.load", settings);
 
         // FDM process settings overridden by device
-        if (mode == "FDM") {
-            settings.process.outputOriginCenter = (settings.device.originCenter || false);
-        }
+        // if (mode == "FDM") {
+        //     settings.process.outputOriginCenter = (settings.device.originCenter || false);
+        // }
 
+        // update UI fields to reflect current settings
         updateFields();
         API.conf.update();
+
         if (e) triggerSettingsEvent();
     }
 

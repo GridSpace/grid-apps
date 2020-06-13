@@ -158,8 +158,6 @@
                 if (KIRI.work.isSlicing()) KIRI.work.restart();
                 // kill any poppers in compact mode
                 UC.hidePoppers();
-                // hide layers menu
-                // UI.layers.style.display = 'none';
                 break;
         }
         return false;
@@ -1165,6 +1163,7 @@
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
 
+            setNow:             $('set-now'),
             setMenu:            $('set-menu'),
             settings:           $('settings'),
             settingsBody:       $('settingsBody'),
@@ -1583,6 +1582,10 @@
         $('lset-da').onclick = function() {
             SDB.setItem('kiri-lang', 'da-dk');
             API.space.reload();
+        };
+
+        $('set-top').onmouseover = () => {
+            UC.hidePoppers();
         };
 
         SPACE.addEventHandlers(self, [

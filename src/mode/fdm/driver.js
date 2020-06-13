@@ -45,6 +45,9 @@
     }
 
     function init(kiri, api) {
+        api.event.on("settings.load", (settings) => {
+            settings.process.outputOriginCenter = (settings.device.originCenter || false);
+        });
         api.event.on("settings.saved", (settings) => {
             let proc = settings.process;
             api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
