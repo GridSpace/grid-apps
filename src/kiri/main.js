@@ -21,11 +21,7 @@
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
         SDB     = MOTO.KV,
-        PARA    = SDB.getItem("__paranoid__");
-
-    if (PARA) alert(PARA);
-
-    let ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
+        ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB,autoDecimate),

@@ -7,16 +7,6 @@
     if (!self.moto) self.moto = {};
     if (self.moto.KV) return;
 
-    try {
-        self.moto.KV = self.localStorage;
-        self.moto.KV.setItem('__test', 1);
-        self.moto.KV.getItem('__test');
-    } catch (e) {
-        let kv = self.moto.KV = new KV();
-        kv.setItem("__paranoid__", "in private or restricted browsing mode. local storage blocked. application may not function.");
-        console.log(kv.getItem("__paranoid__"));
-    }
-
     /**
      * @param {String} dbname
      * @param {number} [version]
@@ -51,5 +41,16 @@
             }
         }
     };
+
+    try {
+        self.moto.KV = self.localStorage;
+        self.moto.KV.setItem('__test', 1);
+        self.moto.KV.getItem('__test');
+    } catch (e) {
+        self.moto.KV = new KV();
+        let msg = "in private or restricted browsing mode. local storage blocked. application may not function.";
+        console.log(msg);
+        alert(msg);
+    }
 
 })();
