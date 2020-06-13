@@ -467,13 +467,13 @@
         }).request("/data/"+ settings().id + "/" + settings().ver, set);
     }
 
-    function settingsExport() {
-        let name = WIN.prompt("Download Settings Filename", "kiriconf");
+    function profileExport() {
+        let name = WIN.prompt("Export Profile Filename", "kiriconf");
         if (!name) return;
         let json = API.conf.export(),
             blob = new Blob([json], {type: "octet/stream"}),
             url = WIN.URL.createObjectURL(blob);
-        $('help').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
+        $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
         $('sexport').click();
     }
 
@@ -1865,6 +1865,7 @@
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
         $('set-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
         $('acct-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
+        $('acct-export').onclick = (ev) => { ev.stopPropagation(); profileExport() };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
         $('lt-back').onclick = API.platform.layout;
