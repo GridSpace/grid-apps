@@ -230,27 +230,32 @@
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
-            xr = ROUND(x / unitMajor) * unitMajor,
-            yr = ROUND(y / unitMajor) * unitMajor,
-            xo = isRound ? Math.floor(x/2) : Math.ceil(xr / 2),
-            yo = isRound ? Math.floor(y/2) : Math.ceil(yr / 2),
+            xr = Math.round(x / unitMinor) * unitMinor,
+            yr = Math.round(y / unitMinor) * unitMinor,
+            xo = isRound ? x/2 : xr/2,
+            yo = isRound ? y/2 : yr/2,
+            divs = Math.round(unitMajor / unitMinor),
             w = x / 2,
             h = y / 2,
             d = z / 2,
             zp = -d - platformZOff + gridZOff,
             majors = [], minors = unitMinor ? [] : null, i;
-        for (i = -xo; i <= xo; i++) {
-            if (i >= -w && i <= w) {
-                let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h;
-                if (i % unitMajor === 0) majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
-                else if (minors && i % unitMinor === 0) minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
+        for (i = -xo; i <= xo; i += unitMinor) {
+            let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h,
+                dM = Math.abs(i % unitMajor);
+            if (dM < 0.1 || Math.abs(unitMajor - dM) < 0.1) {
+                majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
+            } else {
+                minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
             }
         }
-        for (i = -yo; i <= yo; i++) {
-            if (i >= -h && i <= h) {
-                let ow = isRound ? Math.sqrt(1-(i/yo)*(i/yo)) * w : w;
-                if (i % unitMajor === 0) majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
-                else if (minors && i % unitMinor === 0) minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
+        for (i = -yo; i <= yo; i += unitMinor) {
+            let ow = isRound ? Math.sqrt(1-(i/yo)*(i/yo)) * w : w,
+                dM = Math.abs(i % unitMajor);
+            if (dM < 0.1 || Math.abs(unitMajor - dM) < 0.1) {
+                majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
+            } else {
+                minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
             }
         }
         gridView.add(makeLinesFromPoints(majors, gridColorMajor || 0x999999, 1));
