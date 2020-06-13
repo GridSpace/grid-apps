@@ -1048,13 +1048,19 @@
     }
 
     function platformUpdateSelected() {
+        let selcount = platform.selected_count();
         let extruders = settings.device.extruders;
-        let menu_show = platform.selected_count() ? 'flex': '';
-        let ext_show = platform.selected_count() && MODE === 'FDM' ? 'flex': '';
-        UI.scale.style.display = menu_show;
-        UI.rotate.style.display = menu_show;
-        UI.nozzle.style.display = extruders && extruders.length > 1 ? menu_show : '';
-        UI.menusep.style.display = menu_show;
+        let menu_show = selcount ? 'flex': '';
+        if (selcount) {
+            UI.scale.classList.add('lt-enabled');
+            UI.rotate.classList.add('lt-enabled');
+            UI.nozzle.classList.add('lt-enabled');
+        } else {
+            UI.scale.classList.remove('lt-enabled');
+            UI.rotate.classList.remove('lt-enabled');
+            UI.nozzle.classList.remove('lt-enabled');
+        }
+        UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
         if (extruders) {
             for (let i=0; i<extruders.length; i++) {
                 let b = $(`sel-ext-${i}`);

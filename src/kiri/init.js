@@ -1129,7 +1129,6 @@
             focuser:            $('focuser'),
 
             container:          container,
-            menusep:            $('lt-sep'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
