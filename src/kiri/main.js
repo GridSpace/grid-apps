@@ -1916,8 +1916,6 @@
 
     function setExpert(bool) {
         UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
-        $('lt-sep-help').style.display = bool ? 'none' : '';
-        $('set-help').style.display = bool ? 'none' : '';
     }
 
     function getMode() {

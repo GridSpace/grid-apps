@@ -74,8 +74,8 @@
                 <label>setup</label>
                 <div id="set-pop" class="pop-lcol row">
                     <div id="set-device">
-                        <i class="fas fa-tablet-alt"></i>
-                        <label>device</label>
+                        <i class="fas fa-cube"></i>
+                        <label>machine</label>
                     </div>
                     <div id="set-tools">
                         <i class="fas fa-tools"></i>
@@ -101,24 +101,6 @@
                     </div>
                 </div>
             </div>
-            <div id="lt-action" class="lt-menu">
-                <i class="fas fa-layer-group"></i>
-                <label>action</label>
-                <div id="pop-act" class="pop-lcol row">
-                    <div id="act-slice">
-                        <i class="fas fa-bars"></i>
-                        <label>slice</label>
-                    </div>
-                    <div id="act-preview">
-                        <i class="fas fa-cubes"></i>
-                        <label>preview</label>
-                    </div>
-                    <div id="act-export">
-                        <i class="fas fa-file-download"></i>
-                        <label>export</label>
-                    </div>
-                </div>
-            </div>
             <div id="lt-view" class="lt-menu">
                 <i class="fas fa-eye"></i>
                 <label>view</label>
@@ -136,6 +118,19 @@
                         <label>home</label>
                     </div>
                 </div>
+            </div>
+            <div id="act-sep"></div>
+            <div id="act-slice" class="lt-menu">
+                <i class="fas fa-bars"></i>
+                <label>slice</label>
+            </div>
+            <div id="act-preview" class="lt-menu">
+                <i class="fas fa-cubes"></i>
+                <label>preview</label>
+            </div>
+            <div id="act-export" class="lt-menu">
+                <i class="fas fa-file-download"></i>
+                <label>export</label>
             </div>
             <div id="lt-sep" class="noshow"></div>
             <div id="lt-rotate" class="lt-menu noshow">
@@ -187,11 +182,6 @@
                 <label>nozzle</label>
                 <div id="pop-nozzle" class="pop-lcol row fillh russo"></div>
             </div>
-            <div id="lt-sep-help"></div>
-            <div id="set-help" class="lt-menu">
-                <i class="far fa-question-circle"></i>
-                <label>help<label>
-            </div>
             <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
@@ -207,7 +197,7 @@
                     <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
                 </div>
                 <div id="mod-setup" class="mdialog col">
-                    <div class="col a-center">select device type</div>
+                    <div class="col a-center">select machine type</div>
                     <div class="row j-center">
                         <button id="mode-fdm" class="dev-type"><label>FDM</label></button>
                         <button id="mode-sla" class="dev-type"><label>SLA</label></button>
