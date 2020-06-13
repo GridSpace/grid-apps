@@ -20,11 +20,10 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        SDB     = MOTO.KV;
+        SDB     = MOTO.KV,
+        PARA    = SDB.getItem("__paranoid__");
 
-    if (SDB.isLocal()) {
-        alert(SDB.getItem("__local__"));
-    }
+    if (PARA) alert(PARA);
 
     let ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
