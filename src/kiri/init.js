@@ -1872,13 +1872,11 @@
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showSetup() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
-        $('set-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
         $('acct-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
         $('acct-export').onclick = (ev) => { ev.stopPropagation(); profileExport() };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
         $('lt-back').onclick = API.platform.layout;
-        $('lt-action').onclick = API.platform.layout;
         UI.act.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         UI.act.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
         UI.act.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };

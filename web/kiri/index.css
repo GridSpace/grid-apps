@@ -341,7 +341,7 @@ th, tr, td {
     display: none;
     top: 0;
 }
-#lt-sep, #lt-sep-help {
+#act-sep, #lt-sep {
     background-color: var(--bg-gray);
     height: 10px;
     left: -5px;
