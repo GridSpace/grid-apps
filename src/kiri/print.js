@@ -335,13 +335,15 @@
             origin = settings.origin,
             mode = settings.mode,
             tools = [],
-            driver = KIRI.driver[mode];
+            driver = KIRI.driver[mode],
+            mark = Date.now();
 
         if (mode === 'FDM') {
             tools = settings.device.extruders || [];
         }
 
         driver.printRender(this, {tools, aslines:settings.controller.thinRender});
+        if (KIRI.api.const.LOCAL) console.log({printRender: Date.now() - mark});
     };
 
     function pref(a,b) {

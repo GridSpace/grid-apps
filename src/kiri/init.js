@@ -78,6 +78,11 @@
         return false;
     }
 
+    function unitsSave() {
+        API.conf.update();
+        platform.update_size();
+    }
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
@@ -1246,7 +1251,7 @@
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
             thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
-            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM}, "units"),
+            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM, action:unitsSave}, "units"),
             prefadd:          UC.checkpoint(),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-out'), {inline: true}),
@@ -1674,20 +1679,7 @@
         $('mode-cam').appendChild(mksvg(icons.cnc));
         $('mode-laser').appendChild(mksvg(icons.laser));
 
-        SPACE.platform.setSize(
-            settings().device.bedWidth,
-            settings().device.bedDepth,
-            settings().device.bedHeight
-        );
-
-        if (dark) {
-            SPACE.platform.setGrid(25, 5, 0x999999, 0x333333);
-            SPACE.platform.opacity(0.8);
-            DOC.body.classList.add('dark');
-        } else {
-            SPACE.platform.setGrid(25, 5, 0x999999, 0xcccccc);
-            SPACE.platform.opacity(0.3);
-        }
+        API.platform.update_size();
 
         SPACE.mouse.downSelect(function(int,event) {
             // lay flat with meta or ctrl clicking a selected face

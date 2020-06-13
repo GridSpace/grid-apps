@@ -713,7 +713,9 @@
      * render all slice and processed data
      */
     PRO.render = function() {
+        let mark = Date.now();
         DRIVERS[this.settings.mode.toUpperCase()].sliceRender(this);
+        if (KIRI.api.const.LOCAL) console.log({sliceRender: Date.now() - mark});
     };
 
     PRO.hideSlices = function() {

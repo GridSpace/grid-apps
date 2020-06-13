@@ -985,6 +985,19 @@
             depth = parseInt(dev.bedDepth),
             height = parseFloat(dev.bedHeight)
         );
+        let ctrl = settings.controller,
+            unitMM = ctrl.units === 'mm',
+            gridMajor = unitMM ? 25 : 25.4,
+            gridMinor = unitMM ? 5 : 25.4 / 4;
+        if (ctrl.dark) {
+            SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
+            SPACE.platform.opacity(0.8);
+            DOC.body.classList.add('dark');
+        } else {
+            SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
+            SPACE.platform.opacity(0.3);
+            DOC.body.classList.remove('dark');
+        }
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
         SPACE.scene.freeze(frozen);

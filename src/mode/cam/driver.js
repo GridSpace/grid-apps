@@ -1272,8 +1272,8 @@
                 }
                 lastTool = toolID;
             }
-            feedRate = feed;
-            plungeRate = plunge;
+            feedRate = feed * units;
+            plungeRate = plunge * units;
         }
 
         function emitDrills(polys) {
@@ -1709,9 +1709,11 @@
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
             bounds = widget.getCamBounds(settings),
-            units = 1,//settings.controller.units === 'in' ? 25.4 : 1,
-            spro = settings.process,
             dev = settings.device,
+            spro = settings.process,
+            units = settings.controller.units === 'in' ? 25.4 : 1,
+            maxZd = spro.camFastFeedZ * units,
+            maxXYd = spro.camFastFeed * units,
             decimals = 4,
             pos = { x:null, y:null, z:null, f:null, t:null },
             line,
@@ -1732,10 +1734,10 @@
             consts = {
                     tool: 0,
                     tool_name: "unknown",
-                    top: (offset ? dev.bedDepth : dev.bedDepth/2) * units,
-                    left: (offset ? 0 : -dev.bedWidth/2) * units,
-                    right: (offset ? dev.bedWidth : dev.bedWidth/2) * units,
-                    bottom: (offset ? 0 : -dev.bedDepth/2) * units,
+                    top: (offset ? dev.bedDepth : dev.bedDepth/2),
+                    left: (offset ? 0 : -dev.bedWidth/2),
+                    right: (offset ? dev.bedWidth : dev.bedWidth/2),
+                    bottom: (offset ? 0 : -dev.bedDepth/2),
                     time_sec: 0,
                     time_ms: 0,
                     time: 0
@@ -1826,12 +1828,12 @@
                 moveTo({
                     tool: out.tool,
                     point: { x: 0, y: 0, z: newpos.z },
-                    speed: spro.camFastFeedZ
+                    speed: maxZd
                 });
                 moveTo({
                     tool: out.tool,
                     point: { x: newpos.x, y: newpos.y, z: newpos.z },
-                    speed: spro.camFastFeed
+                    speed: maxXYd
                 });
                 points--;
                 return;
@@ -1843,7 +1845,7 @@
                 dy = newpos.y - pos.y,
                 dz = newpos.z - pos.z,
                 dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
-                feed = Math.min(speed || spro.camFastFeed, dz ? spro.camFastFeedZ : spro.camFastFeed);
+                feed = Math.min(speed || maxXYd, dz ? maxZd : maxXYd);
 
             // drop dup points (all deltas are 0)
             if (!(dx || dy || dz)) {
@@ -1854,23 +1856,23 @@
                 pos.x = newpos.x;
                 runbox.min.x = Math.min(runbox.min.x, pos.x);
                 runbox.max.x = Math.max(runbox.max.x, pos.x);
-                nl.append(space).append("X").append(add0(pos.x * units));
+                nl.append(space).append("X").append(add0(pos.x));
             }
             if (newpos.y !== pos.y) {
                 pos.y = newpos.y;
                 runbox.min.y = Math.min(runbox.min.y, pos.y);
                 runbox.max.y = Math.max(runbox.max.y, pos.y);
-                nl.append(space).append("Y").append(add0(pos.y * units));
+                nl.append(space).append("Y").append(add0(pos.y));
             }
             if (newpos.z !== pos.z) {
                 pos.z = newpos.z;
                 runbox.min.z = Math.min(runbox.min.z, pos.z);
                 runbox.max.z = Math.max(runbox.max.z, pos.z);
-                nl.append(space).append("Z").append(add0(pos.z * units));
+                nl.append(space).append("Z").append(add0(pos.z));
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;
-                nl.append(space).append("F").append(feed * units);
+                nl.append(space).append("F").append(feed);
             }
 
             // update time calculation
