@@ -388,7 +388,7 @@ th, tr, td {
     padding: 5px 5px 5px 10px;
     border: 1px solid rgba(0,0,0,0);
     border-radius: 3px;
-    color: var(--fg-gray);
+    color: #ccc;
     left: -5px;
     background-color: rgba(255,255,255,0.75);
 }
@@ -399,12 +399,15 @@ th, tr, td {
 .lt-menu label {
     font-size: smaller;
 }
-.lt-menu:hover {
+.lt-enabled {
+    color: var(--fg-gray);
+}
+.lt-enabled:hover {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
 }
-.lt-menu:hover .pop-lcol {
+.lt-enabled:hover .pop-lcol {
     display: flex;
 }
 
