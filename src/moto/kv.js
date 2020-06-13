@@ -13,8 +13,8 @@
         self.moto.KV.getItem('__test');
     } catch (e) {
         self.moto.KV = new KV();
-        kv.setItem("__local__", "in private browsing mode or 3rd party storage blocked. application may not function.");
-        console.log(kv.getItem("__local__"));
+        kv.setItem("__paranoid__", "in private browsing mode or 3rd party storage blocked. application may not function.");
+        console.log(kv.getItem("__paranoid__"));
     }
 
     /**
@@ -50,10 +50,6 @@
                 delete this[key];
             }
         }
-    };
-
-    KP.isLocal = function() {
-        return this.getItem("__local__");
     };
 
 })();
