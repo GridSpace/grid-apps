@@ -988,7 +988,7 @@
         let ctrl = settings.controller,
             unitMM = ctrl.units === 'mm',
             gridMajor = unitMM ? 25 : 25.4,
-            gridMinor = unitMM ? 5 : 25.4 / 4;
+            gridMinor = unitMM ? 5 : 25.4 / 10;
         if (ctrl.dark) {
             SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
             SPACE.platform.opacity(0.8);

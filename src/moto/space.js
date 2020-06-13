@@ -230,11 +230,10 @@
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
-            xr = Math.round(x / unitMinor) * unitMinor,
-            yr = Math.round(y / unitMinor) * unitMinor,
-            xo = isRound ? x/2 : xr/2,
-            yo = isRound ? y/2 : yr/2,
-            divs = Math.round(unitMajor / unitMinor),
+            xr = Math.ceil(x/2 / unitMinor) * unitMinor,
+            yr = Math.ceil(y/2 / unitMinor) * unitMinor,
+            xo = isRound ? x/2 : xr,
+            yo = isRound ? y/2 : yr,
             w = x / 2,
             h = y / 2,
             d = z / 2,
@@ -243,7 +242,8 @@
         for (i = -xo; i <= xo; i += unitMinor) {
             let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h,
                 dM = Math.abs(i % unitMajor);
-            if (dM < 0.1 || Math.abs(unitMajor - dM) < 0.1) {
+            if (i < -w || i > w) continue;
+            if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
                 majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
             } else {
                 minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
@@ -252,7 +252,8 @@
         for (i = -yo; i <= yo; i += unitMinor) {
             let ow = isRound ? Math.sqrt(1-(i/yo)*(i/yo)) * w : w,
                 dM = Math.abs(i % unitMajor);
-            if (dM < 0.1 || Math.abs(unitMajor - dM) < 0.1) {
+            if (i < -h || i > h) continue;
+            if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
                 majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
             } else {
                 minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
