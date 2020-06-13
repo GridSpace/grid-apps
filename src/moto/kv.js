@@ -9,11 +9,12 @@
 
     try {
         self.moto.KV = self.localStorage;
-        self.moto.KV.setItem('__test',1);
+        self.moto.KV.setItem('__test', 1);
         self.moto.KV.getItem('__test');
     } catch (e) {
-        console.log("in private browsing mode or 3rd party storage blocked. some settings will be lost.");
         self.moto.KV = new KV();
+        kv.setItem("__local__", "in private browsing mode or 3rd party storage blocked. application may not function.");
+        console.log(kv.getItem("__local__"));
     }
 
     /**
@@ -49,6 +50,10 @@
                 delete this[key];
             }
         }
+    };
+
+    KP.isLocal = function() {
+        return this.getItem("__local__");
     };
 
 })();

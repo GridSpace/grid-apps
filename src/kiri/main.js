@@ -20,8 +20,13 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        SDB     = MOTO.KV,
-        ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
+        SDB     = MOTO.KV;
+
+    if (SDB.isLocal()) {
+        alert(SDB.getItem("__local__"));
+    }
+
+    let ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB,autoDecimate),
