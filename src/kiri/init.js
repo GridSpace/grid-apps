@@ -477,7 +477,11 @@
         $('sexport').click();
     }
 
-    function settingsSave() {
+    function settingsSave(ev) {
+        if (ev) {
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
         API.dialog.hide();
         let mode = API.mode.get(),
             s = settings(),
@@ -500,6 +504,7 @@
     }
 
     function settingsLoad() {
+        UC.hidePoppers();
         API.conf.show();
     }
 
@@ -1589,9 +1594,13 @@
             API.space.reload();
         };
 
+        // when profile hover/pop, hide other poppers
         $('set-top').onmouseover = () => {
             UC.hidePoppers();
         };
+
+        // shortcut to load settings
+        UI.settingsGroup.onclick = settingsLoad;
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
