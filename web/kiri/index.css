@@ -840,13 +840,15 @@ th, tr, td {
 #set-now {
     display: none;
     position: absolute;
-    top: -1px;
+    transform: translateY(-50%);
+    top: 50%;
     right: 100%;
     padding: 5px;
     margin-right: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
     background-color: white;
+    white-space: nowrap;
     z-index: 10;
 }
 #set-end {
