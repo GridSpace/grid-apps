@@ -14,6 +14,7 @@
         CONF = BASE.config,
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM = {
+            init,
             slice,
             sliceRender,
             printSetup,
@@ -41,6 +42,18 @@
             }
         });
         return settings;
+    }
+
+    function init(kiri, api) {
+        api.event.on("settings.load", (settings) => {
+            settings.process.outputOriginCenter = (settings.device.originCenter || false);
+        });
+        api.event.on("settings.saved", (settings) => {
+            let proc = settings.process;
+            api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
+            api.ui.fdmInfill.marker.style.display = proc.sliceFillSparse > 0 ? 'flex' : 'none';
+            api.ui.fdmRaft.marker.style.display = proc.outputRaft ? 'flex' : 'none';
+        });
     }
 
     /**

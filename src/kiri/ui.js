@@ -542,7 +542,7 @@
 
         b.onclick = function() {
             hidePoppers();
-            if (action) action();
+            if (action) action(...arguments);
         };
 
         if (opt.class) {
