@@ -1,3 +1,4 @@
+
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
@@ -1103,10 +1104,25 @@
         SPACE.showSkyGrid(false);
         SPACE.setSkyColor(dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
-            if (API.var.layer_max === 0) return;
+            if (API.var.layer_max === 0 || !delta) return;
             if (settings().controller.reverseZoom) delta = -delta;
-            if (delta > 0) API.var.layer_at--;
-            else if (delta < 0) API.var.layer_at++;
+            let same = API.var.layer_hi === API.var.layer_lo;
+            let track = API.var.layer_lo > 0;
+            if (delta > 0) {
+                API.var.layer_hi = Math.max(same ? 0 : API.var.layer_lo, API.var.layer_hi - 1);
+                if (track) {
+                    API.var.layer_lo = Math.max(0, API.var.layer_lo - 1);
+                }
+            } else if (delta < 0) {
+                API.var.layer_hi = Math.min(API.var.layer_max, API.var.layer_hi + 1);
+                if (track) {
+                    API.var.layer_lo = Math.min(API.var.layer_hi, API.var.layer_lo + 1);
+                }
+            }
+            if (same) {
+                API.var.layer_lo = API.var.layer_hi;
+            }
+            API.view.update_slider();
             API.show.slices();
         });
         SPACE.platform.onMove(API.conf.save);
