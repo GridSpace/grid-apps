@@ -1845,6 +1845,17 @@
         // send init-done event
         API.event.emit('init-done', STATS);
 
+        // show gdpr if it's never been seen
+        if (!SDB.gdpr) {
+            $('gdpr').style.display = 'flex';
+        }
+
+        // dismiss gdpr alert
+        $('gotit').onclick = () => {
+            $('gdpr').style.display = 'none';
+            SDB.gdpr = Date.now();
+        };
+
         // lift curtain
         $('curtain').style.display = 'none';
 
