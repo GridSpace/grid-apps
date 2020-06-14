@@ -1858,8 +1858,8 @@
         // send init-done event
         API.event.emit('init-done', STATS);
 
-        // show gdpr if it's never been seen
-        if (!SDB.gdpr) {
+        // show gdpr if it's never been seen and we're not iframed
+        if (!SDB.gdpr && WIN.self === WIN.top) {
             $('gdpr').style.display = 'flex';
         }
 

@@ -405,7 +405,7 @@ kiri.lang['en-us'] = {
     ag_paws_l:      "comma-separated list of layers\nto inject pause commands before",
 
     // SLA MENU
-    sa_menu:        "slice",
+    sa_menu:        "slicing",
     sa_lahe_s:      "layer height",
     sa_lahe_l:      "layer height\nin millimeters",
     sa_shel_s:      "hollow shell",
