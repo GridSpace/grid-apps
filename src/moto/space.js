@@ -715,7 +715,10 @@
                     clearTimeout(platformMoveTimer);
                     platformMoveTimer = setTimeout(platformOnMove, 500);
                 }
-            }, slider);
+            }, (val) => {
+                updateLastAction();
+                slider(val);
+            });
 
             viewControl.noKeys = true;
             viewControl.maxDistance = 1000;
@@ -770,8 +773,8 @@
                 'mouseup', onMouseUp,
                 'keypress', keyHandler,
                 // dup with touch but need to observe here
-                'DOMMouseScroll', updateLastAction,
-                'mousewheel', updateLastAction,
+                // 'DOMMouseScroll', updateLastAction,
+                // 'mousewheel', updateLastAction,
                 'touchstart', updateLastAction,
                 'touchmove', updateLastAction,
                 'touchend', updateLastAction
@@ -781,7 +784,7 @@
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (docVisible && !freeze && Date.now() - lastAction < 2000) {
+                if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                     renderer.render(SCENE, camera);
                 }
             }

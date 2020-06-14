@@ -409,6 +409,8 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
             return;
         }
 
+        slider(null);
+
         let delta = -(event.deltaY || event.wheelDelta || event.detail || 0);
 
         if (delta === 0) return;
