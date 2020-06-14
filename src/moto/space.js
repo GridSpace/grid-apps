@@ -76,7 +76,8 @@
         }),
         hiddenKey,
         vizChange,
-        docVisible = true;
+        docVisible = true,
+        lastAction = Date.now();
 
     if (typeof DOC.hidden !== "undefined") {
         hiddenKey = "hidden";
@@ -93,6 +94,10 @@
         docVisible = DOC[hiddenKey] ? false : true;
     }, false);
 
+    function updateLastAction() {
+        lastAction = Date.now();
+    }
+
     /** ******************************************************************
      * TWEENing Functions
      ******************************************************************* */
@@ -105,6 +110,7 @@
     tweenit();
 
     function tweenCamPan(x,y,z) {
+        updateLastAction();
         let pos = viewControl.getPosition();
         pos.panX = x;
         pos.panY = y;
@@ -115,6 +121,7 @@
     function tweenCam(pos) {
         let tf = function () {
             viewControl.setPosition(this);
+            updateLastAction();
             refresh();
         };
         new TWEEN.Tween(viewControl.getPosition()).
@@ -133,6 +140,7 @@
             },
             update = function() {
                 setPlatformSize(this.x, this.y, this.z);
+                updateLastAction();
                 refresh();
             },
             complete = function() {
@@ -354,6 +362,7 @@
     }
 
     function onResize() {
+        updateLastAction();
         camera.aspect = aspect();
         camera.updateProjectionMatrix();
         renderer.setSize(width(), height());
@@ -384,6 +393,7 @@
     }
 
     function keyHandler(evt) {
+        updateLastAction();
         if (!defaultKeys || inputHasFocus()) return false;
         if (evt.metaKey) return false;
         let handled = true;
@@ -438,6 +448,7 @@
      ******************************************************************* */
 
     function onMouseDown(event) {
+        updateLastAction();
         if (event.target === renderer.domElement) {
             DOC.activeElement.blur();
             event.preventDefault();
@@ -484,6 +495,7 @@
     }
 
     function onMouseUp(event) {
+        updateLastAction();
         if (!viewControl.enabled) {
             viewControl.enabled = true;
             viewControl.onMouseUp(event);
@@ -518,6 +530,7 @@
     }
 
     function onMouseMove(event) {
+        updateLastAction();
         let int, vis;
         if (viewControl.enabled) {
             event.preventDefault();
@@ -755,12 +768,22 @@
                 'mousemove', onMouseMove,
                 'mousedown', onMouseDown,
                 'mouseup', onMouseUp,
-                'keypress', keyHandler
+                'keypress', keyHandler,
+                // dup with touch but need to observe here
+                'DOMMouseScroll', updateLastAction,
+                'mousewheel', updateLastAction,
+                'touchstart', updateLastAction,
+                'touchmove', updateLastAction,
+                'touchend', updateLastAction
             ]);
+
+            let animating = true;
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (docVisible && !freeze) renderer.render(SCENE, camera);
+                if (docVisible && !freeze && Date.now() - lastAction < 2000) {
+                    renderer.render(SCENE, camera);
+                }
             }
 
             animate();
