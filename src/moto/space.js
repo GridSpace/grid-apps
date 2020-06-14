@@ -663,7 +663,8 @@
             downSelect: function(f) { mouseDownSelect = f },
             upSelect:   function(f) { mouseUpSelect = f },
             onDrag:     function(f) { mouseDrag = f },
-            onHover:    function(f) { mouseHover = f }
+            onHover:    function(f) { mouseHover = f },
+            active:     updateLastAction
         },
 
         useDefaultKeys: function(b) {
@@ -772,9 +773,6 @@
                 'mousedown', onMouseDown,
                 'mouseup', onMouseUp,
                 'keypress', keyHandler,
-                // dup with touch but need to observe here
-                // 'DOMMouseScroll', updateLastAction,
-                // 'mousewheel', updateLastAction,
                 'touchstart', updateLastAction,
                 'touchmove', updateLastAction,
                 'touchend', updateLastAction

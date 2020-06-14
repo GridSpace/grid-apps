@@ -1503,6 +1503,7 @@
             API.var.layer_hi = Math.round((1 - start) * API.var.layer_max);
             API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
             API.show.layer();
+            SPACE.mouse.active();
         }
 
         function dragit(el, delta) {
