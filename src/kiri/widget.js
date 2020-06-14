@@ -112,6 +112,7 @@
         if (groups.indexOf(this.group) < 0) {
             groups.push(this.group);
         }
+        this.roto = new THREE.Matrix4();
         this.mesh = null;
         this.points = null;
         // todo resolve use of this vs. mesh.bounds
@@ -548,13 +549,18 @@
         } else {
             m4 = m4.makeRotationFromQuaternion(x);
         }
-        this.mesh.geometry.applyMatrix4(m4);
+        this.roto.multiply(m4);
+        this.mesh.geometry.applyMatrix4(new THREE.Matrix4().getInverse(m4));
         if (!temp && euler) {
             let rot = this.track.rot;
             rot.x += (x || 0);
             rot.y += (y || 0);
             rot.z += (z || 0);
         }
+    };
+
+    PRO.unrotate = function() {
+        this.mesh.geometry.applyMatrix4(this.roto);
     };
 
     PRO.mirror = function() {
