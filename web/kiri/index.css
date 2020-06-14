@@ -424,6 +424,14 @@ th, tr, td {
 .txt-sel button {
     background-color: #ccc;
 }
+#pop-rotate .value, #pop-scale .value {
+    width: 90%;
+}
+#lock_x, #lock_y, #lock_z {
+    position: absolute;
+    left: 2px;
+    top: 7px;
+}
 
 #end {
     left: 0;
