@@ -1897,7 +1897,7 @@
         $('mode-sla').onclick = () => { API.mode.set('SLA') };
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
-        // $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
+        $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
 
         // add app name hover info
         $('app-info').innerText = KIRI.version;

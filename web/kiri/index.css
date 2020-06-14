@@ -853,7 +853,7 @@ th, tr, td {
     padding: 5px;
     margin-right: 5px;
     border: 1px solid #ccc;
-    border-radius: 3px;
+    border-radius: 4px;
     background-color: white;
     z-index: 10;
 }
