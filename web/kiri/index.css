@@ -435,6 +435,21 @@ and (orientation : landscape) {
 #pop-rotate .value, #pop-scale .value {
     width: 90%;
 }
+#pop-rotate label {
+    padding: 3px;
+}
+#pop-rotate svg {
+    padding: 3px;
+    font-size: 20px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0);
+}
+#pop-rotate svg:hover {
+    color: #345;
+    font-size: 20px;
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid #aaa;
+}
 #lock_x, #lock_y, #lock_z {
     position: absolute;
     left: 2px;
