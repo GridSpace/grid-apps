@@ -30,6 +30,7 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 * [Facebook Kiri:Moto Users Group](https://www.facebook.com/groups/kirimoto/)
 * [YouTube Videos](https://www.youtube.com/c/gridspace)
 * [Twitter Updates](https://twitter.com/grid_space_3d)
+* [Discord Chat](https://discord.com/channels/688863523207774209/688863523211968535)
 * [Wiki Reference](https://github.com/GridSpace/grid-apps/wiki)
 
 ### Testing Locally
