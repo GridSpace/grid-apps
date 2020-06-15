@@ -977,13 +977,6 @@ and (orientation : landscape) {
     align-items: stretch;
 }
 
-#focuser {
-    position: fixed;
-    z-index: -100;
-    left: -100%;
-    top: -100%;
-}
-
 #gdpr {
     position: absolute;
     display: none;

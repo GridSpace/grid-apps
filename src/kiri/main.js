@@ -152,7 +152,7 @@
         js2o: js2o,
         ajax: ajax,
         clone: clone,
-        focus: setFocus,
+        focus: () => {},
         stats: STATS,
         catalog: CATALOG,
         conf: {
@@ -1887,17 +1887,6 @@
                     };
                 });
             });
-    }
-
-    function setFocus(el) {
-        el = [ el || UI.focuser, UI.load, UI.sizeX, DOC.body ];
-        for (let es, i=0; i<el.length; i++) {
-            es = el[i];
-            es.focus();
-            if (DOC.activeElement === es) {
-                break;
-            }
-        }
     }
 
     function setViewMode(mode) {
