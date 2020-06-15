@@ -1,9 +1,12 @@
-[Grid.Space](https://grid.space) hosts live versions of the latest tagged code
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
-### About
+Contributions in all forms (code, bug reports, community engagenment, cash money, etc) are warmly welcomed. They all go to the bottom line of making better apps.
 
-* [Kiri:Moto](https://grid.space/kiri) - A Unique, Multi-Modal, Cloud-based Slicer for FDM, CNC and Laser
-* [Meta:Moto](https://grid.space/meta) - Recursive Block-based Modeling
+### Hosted Apps
+
+* [Grid.Space](https://grid.space) hosts [several live versions](https://grid.space/choose) of the code
+* [Kiri:Moto](https://grid.space/kiri) -- A Unique, Multi-Modal, Browser-based Slicer for 3D printers, CNC mills and Laser cutters
+* [Meta:Moto](https://grid.space/meta) -- A Recursive Block-based Modeler
 
 ### Getting Started
 
@@ -14,7 +17,11 @@ npm start
 
 to start a local instance of the apps. then open
 [Kiri:Moto](http://localhost:8080/kiri) or
-[Meta:Moto](http://localhost:8080/meta)
+[Meta:Moto](http://localhost:8080/meta) on your local host
+
+### Windows Developers
+
+this git repo requires symbolic link support. on Windows, this means you have to clone the repo in a shell window running with Administrator privileges.
 
 ### Other Start Options
 
