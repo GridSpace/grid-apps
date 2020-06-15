@@ -733,7 +733,7 @@ th, tr, td {
     overflow-y: scroll;
 }
 #catalogList .label {
-    width: 10em;
+    width: 12em;
     justify-content: flex-end;
 }
 #catalogList .rename {

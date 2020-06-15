@@ -1294,9 +1294,6 @@
                 csz += max.z - min.z;
                 csox = min.x + ((max.x - min.x) / 2);
                 csoy = min.y + ((max.y - min.y) / 2);
-                // $('stock-width').innerText = (csx/scale).toFixed(2);
-                // $('stock-depth').innerText = (csy/scale).toFixed(2);
-                // $('stock-height').innerText = (csz/scale).toFixed(2);
             }
             if (!camStock) {
                 let geo = new THREE.BoxGeometry(1, 1, 1);
