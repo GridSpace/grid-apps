@@ -38,8 +38,6 @@
             "facing",
             "drilling"
         ],
-        MIN = Math.min,
-        MAX = Math.max,
         HPI = Math.PI/2,
         SLICER = KIRI.slicer,
         newLine = BASE.newLine,
@@ -468,7 +466,7 @@
                 gridy,
                 gridi, // index
                 gridv, // value
-                zMin = MAX(bounds.min.z, outp.camZBottom) + 0.0001,
+                zMin = Math.max(bounds.min.z, outp.camZBottom) + 0.0001,
                 x, y, tv, ltv;
 
             // for each Y slice, find z grid value (x/z swapped)
@@ -857,7 +855,7 @@
             anyFinish = procFinish || procFinishX || procFinishY,
             procFacing = proc.roughingOn && proc.camZTopOffset,
             procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
-            sliceDepth = MAX(0.1, MIN(proc.roughingDown, proc.finishingDown) / 3) * units,
+            sliceDepth = Math.max(0.1, Math.min(proc.roughingDown, proc.finishingDown) / 3) * units,
             pocketOnlyRough = proc.camPocketOnlyRough,
             pocketOnlyFinish = proc.camPocketOnlyFinish,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
@@ -866,7 +864,7 @@
             tabHeight = proc.camTabsHeight * units,
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
-            zMin = MAX(bounds.min.z, proc.camZBottom) * units,
+            zMin = Math.max(bounds.min.z, proc.camZBottom) * units,
             roughingStock = proc.roughingStock * units,
             shellRough,
             shellFinish,
@@ -982,7 +980,7 @@
                     zstep = proc.roughingDown * units;
 
                 while (zpos >= ztop) {
-                    zpos = zpos - MIN(zstep, zpos - ztop);
+                    zpos = zpos - Math.min(zstep, zpos - ztop);
 
                     const slice = newSlice(zpos, mesh.newGroup ? mesh.newGroup() : null);
                     slice.camMode = CPRO.FACING;
@@ -1363,7 +1361,7 @@
                 // before first point, move cutting head to point above it
                 layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
                 // then set that as the lastPoint
-                lastPoint = newPoint(origin.x, origin.y, point.z);
+                lastPoint = point;
             }
 
             let deltaXY = lastPoint.distTo2D(point),
@@ -1389,7 +1387,7 @@
             } //else (TODO verify no else here b/c above could change isMove)
             // move over things
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                let maxz = toolProfile ? MAX(
+                let maxz = toolProfile ? Math.max(
                         getTopoZPathMax(
                             widget,
                             toolProfile,
@@ -1399,7 +1397,7 @@
                             point.y - wmy) + zadd,
                         point.z,
                         lastPoint.z) : zmax,
-                    mustGoUp = MAX(maxz - point.z, maxz - lastPoint.z) >= tolerance,
+                    mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/finish
                 if (mustGoUp) {
@@ -1415,7 +1413,7 @@
             }
             // synth new plunge rate
             if (deltaZ <= -tolerance) {
-                let threshold = MIN(deltaXY / 2, absDeltaZ),
+                let threshold = Math.min(deltaXY / 2, absDeltaZ),
                     modifier = threshold / absDeltaZ;
                 if (threshold && modifier && deltaXY > tolerance) {
                     // use modifier to speed up long XY move plunge rates
@@ -1827,13 +1825,11 @@
                 points++;
                 moveTo({
                     tool: out.tool,
-                    point: { x: 0, y: 0, z: newpos.z },
-                    speed: maxZd
+                    point: { x: 0, y: 0, z: newpos.z }
                 });
                 moveTo({
                     tool: out.tool,
-                    point: { x: newpos.x, y: newpos.y, z: newpos.z },
-                    speed: maxXYd
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z }
                 });
                 points--;
                 return;

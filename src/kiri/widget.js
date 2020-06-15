@@ -171,14 +171,15 @@
                 let vertices = data.geo || data,
                     track = data.track || undefined,
                     group = data.group || id,
-                    widget = newWidget(id, Group.forid(group));
+                    widget = newWidget(id, Group.forid(group)),
+                    ptr = widget.loadVertices(vertices);
                 widget.saved = time();
-                ondone(widget.loadVertices(vertices));
                 // restore widget position if specified
                 if (move && track && track.pos) {
                     widget.track = track;
                     widget.move(track.pos.x, track.pos.y, track.pos.z, true);
                 }
+                ondone(ptr);
             } else {
                 ondone(null);
             }
