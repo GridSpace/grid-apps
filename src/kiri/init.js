@@ -1915,6 +1915,14 @@
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
         $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
+        // rotation buttons
+        let d = (Math.PI / 180) * 5;
+        $('rot_x_lt').onclick = () => { API.selection.rotate(-d,0,0) };
+        $('rot_x_gt').onclick = () => { API.selection.rotate( d,0,0) };
+        $('rot_y_lt').onclick = () => { API.selection.rotate(0,-d,0) };
+        $('rot_y_gt').onclick = () => { API.selection.rotate(0, d,0) };
+        $('rot_z_lt').onclick = () => { API.selection.rotate(0,0,-d) };
+        $('rot_z_gt').onclick = () => { API.selection.rotate(0,0, d) };
 
         // add app name hover info
         $('app-info').innerText = KIRI.version;
