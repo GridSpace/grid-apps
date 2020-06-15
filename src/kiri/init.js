@@ -1142,7 +1142,7 @@
             },
 
             load:               $('load-file'),
-            focuser:            $('focuser'),
+            // focuser:            $('focuser'),
 
             container:          container,
             rotate:             $('lt-rotate'),
@@ -1834,9 +1834,6 @@
         // update everything dependent on the platform size
         platform.update_size();
 
-        // ensure hot keys work even in iframes
-        API.focus();
-
         // restore expert setting preference
         API.mode.set_expert(control.expert);
 
@@ -1881,6 +1878,14 @@
         if (!SDB.gdpr && WIN.self === WIN.top) {
             $('gdpr').style.display = 'flex';
         }
+
+        // add keyboard focus handler (must use for iframes)
+        WIN.addEventListener('load', function () {
+            WIN.focus();
+            DOC.body.addEventListener('click', function() {
+                WIN.focus();
+            },false);
+        });
 
         // dismiss gdpr alert
         $('gotit').onclick = () => {
