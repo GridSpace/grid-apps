@@ -1489,6 +1489,8 @@
         });
 
         // slider setup
+        const slbar = 30;
+        const slbar2 = slbar * 2;
         const slider = UI.sliderRange;
         const drag = { };
 
@@ -1498,7 +1500,7 @@
 
         function sliderUpdate() {
             let start = drag.top / drag.maxval;
-            let end = (drag.top + drag.mid - 20) / drag.maxval;
+            let end = (drag.top + drag.mid - slbar) / drag.maxval;
             API.event.emit('slider.pos', { start, end });
             API.var.layer_hi = Math.round((1 - start) * API.var.layer_max);
             API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
@@ -1511,12 +1513,12 @@
                 tracker.style.display = 'block';
                 ev.stopPropagation();
                 drag.height = slider.clientHeight;
-                drag.maxval = drag.height - 40;
+                drag.maxval = drag.height - slbar2;
                 drag.start = ev.screenY;
                 drag.hiat = drag.top = pxToInt(UI.sliderHold.style.marginTop);
                 drag.mdat = drag.mid = UI.sliderMid.clientHeight;
-                drag.mdmax = drag.height - 20 - drag.hiat;
-                drag.himax = drag.height - 20 - drag.mdat;
+                drag.mdmax = drag.height - slbar - drag.hiat;
+                drag.himax = drag.height - slbar - drag.mdat;
                 let cancel_drag = tracker.onmouseup = (ev) => {
                     if (ev) {
                         ev.stopPropagation();
@@ -1539,7 +1541,7 @@
         dragit(UI.sliderHi, (delta) => {
             let midval = drag.mdat - delta;
             let topval = drag.hiat + delta;
-            if (midval < 20 || topval < 0) {
+            if (midval < slbar || topval < 0) {
                 return;
             }
             UI.sliderHold.style.marginTop = `${topval}px`;
@@ -1555,7 +1557,7 @@
             sliderUpdate();
         });
         dragit(UI.sliderLo, (delta) => {
-            let midlen = Math.max(20, Math.min(drag.mdmax, drag.mdat + delta));
+            let midlen = Math.max(slbar, Math.min(drag.mdmax, drag.mdat + delta));
             UI.sliderMid.style.height = `${midlen}px`;
             drag.mid = midlen;
             sliderUpdate();
@@ -1591,11 +1593,11 @@
 
         API.event.on('slider.set', (values) => {
             let height = slider.clientHeight;
-            let maxval = height - 40;
+            let maxval = height - slbar2;
             let start = Math.max(0, Math.min(1, values.start));
             let end = Math.max(start, Math.min(1, values.end));
             let topval = start * maxval;
-            let midval = ((end - start) * maxval) + 20;
+            let midval = ((end - start) * maxval) + slbar;
             UI.sliderHold.style.marginTop = `${topval}px`;
             UI.sliderMid.style.height = `${midval}px`;
         });
