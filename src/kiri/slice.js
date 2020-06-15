@@ -15,37 +15,7 @@
         POLY = BASE.polygons,
         NOKEY = BASE.key.NONE,
         fillArea = POLY.fillArea,
-        newPoint = BASE.newPoint,
-        outline_colors = [
-            0xeeee00,
-            0xeebb00,
-            0xee8800
-        ],
-        outline_solid_colors = [
-            0xffff00,
-            0xffcc00,
-            0xff9900
-        ],
-        debug_colors = [
-            0xffff00,
-            0x00ffff,
-            0xff00ff,
-            0xff0000,
-            0x00ff00,
-            0x0000ff,
-            0xffffff,
-            0x000000
-        ],
-        trace_color = 0x0,
-        sparse_fill_color = 0x333366,
-        fill_offset_color = 0xeeeeee,
-        fill_color = 0x333333,
-        flat_outline_color = 0xee0099,
-        flat_solid_color = 0xff00aa,
-        bridge_outline_color = 0x0099ee,
-        bridge_solid_color = 0x00aaff,
-        solid_outline_color = 0x00cc00,
-        solid_solid_color = 0x00dd00;
+        newPoint = BASE.newPoint;
 
     KIRI.Top = Top;
     KIRI.newTop = newTop;
@@ -326,72 +296,6 @@
     };
 
     /**
-     * render raw slices in various formats to help debugging
-     *
-     * @param {number} renderMode
-     */
-    PRO.renderOutline = function(renderMode, color) {
-        if (!this.view) return;
-
-        let process = KIRI.driver.CAM.process,
-            slice = this,
-            layers = slice.layers,
-            layer = layers.outline,
-            colors = debug_colors,
-            groups = slice.groups ? slice.groups.sort(function(a,b) { return b.area() - a.area() }) : null,
-            tops = slice.tops,
-            pbuf = [],
-            coloridx = 0;
-
-        layer.clear();
-        // layer.setOpacity(0.05);
-
-        switch (renderMode % 5) {
-            // un-processed lines
-            case 0:
-                if (!slice.lines) return;
-                slice.lines.forEach(function(line) {
-                    let pa = [line.p1, line.p2];
-                    layer.lines(pa, colors[coloridx++ % colors.length]);
-                    layer.points(pa, 0x0, 0.1);
-                });
-                break;
-            // lines grouped as polygons (shown open)
-            case 1:
-                if (!groups) return;
-                groups.forEach(function(group) {
-                    renderPolygon(layer, group, colors, coloridx++, false, true);
-                });
-                break;
-            // lines grouped as polygons
-            case 2:
-                if (!groups) return;
-                groups.forEach(function(group) {
-                    renderPolygon(layer, group, colors, coloridx++, false, false);
-                });
-                break;
-            // polygons with color representing outer / inner
-            case 3:
-                tops.forEach(function(top) {
-                    renderPolygon(layer, top.poly, colors, 0, true, false);
-                });
-                break;
-            // all polygons in yellow
-            case 4:
-                tops.forEach(function(top) {
-                    layer.poly(top.poly, outline_colors[color], true, false);
-                    // layer.solid(top.poly, outline_solid_colors[color]);
-                    if (top.inner) layer.poly(top.inner, 0xdddddd, true);
-                    // if (top.thinner) layer.poly(top.thinner, 0x559999, true, null);
-                });
-                break;
-        }
-
-        // layer.renderSolid();
-        layer.render();
-    };
-
-    /**
      * given two arrays of points (lines), eliminate intersections of the second
      * to the first, then return a unified array.
      *
@@ -536,35 +440,6 @@
     };
 
     /**
-     * Runs in client. Generate shell lines in the correct view layer.
-     *
-     * @param {number} renderMode
-     */
-    PRO.renderShells = function(renderMode) {
-        let scope = this,
-            layers = scope.layers,
-            layer = layers.trace,
-            process = KIRI.driver.CAM.process;
-
-        layer.clear();
-
-        scope.tops.forEach(function(top) {
-            if (top.traces) {
-                layer.poly(top.traces, trace_color, true, null);
-                // layer.setTransparent(false);
-                // layer.noodle(top.traces, 0.19, 0x88aadd, 0x77bbcc);
-            }
-            if (top.polish) {
-                layer.poly(top.polish.x, 0x880000, true, null);
-                layer.poly(top.polish.y, 0x880000, true, null);
-            }
-        });
-
-        // layer.renderSolid();
-        layer.render();
-    };
-
-    /**
      * Clear fill cache in preparation for a slice or re-slice of a widget
      */
     PRO.invalidateFill = function() {
@@ -613,27 +488,6 @@
     };
 
     /**
-     * Runs in client. Generate solid lines in the correct view layer.
-     */
-    PRO.renderSolidFill = function() {
-        let layer = this.layers.fill,
-            render;
-
-        layer.clear();
-        // layer.setTransparent(false);
-
-        this.tops.forEach(function(top) {
-            if (top.fill_lines) {
-                layer.lines(top.fill_lines, fill_color);
-                // layer.noodle(top.fill_lines, 0.19, 0x88aadd, 0x77bbcc, true);
-            }
-        });
-
-        layer.render();
-        // layer.renderSolid();
-    };
-
-    /**
      * Take output from pluggable sparse infill algorithm and clip to
      * the bounds of the top polygons and their inner solid areas.
      */
@@ -666,15 +520,18 @@
             solids = [],
             // callback passed to pluggable infill algorithm
             target = {
+                // slice and slice property access
                 slice: function() { return scope },
+                zIndex: function() { return scope.index },
+                zValue: function() { return scope.z },
+                // various option map access
                 options: function() { return options },
                 lineWidth: function() { return options.lineWidth },
                 bounds: function() { return bounds },
-                zIndex: function() { return scope.index },
-                zValue: function() { return scope.z },
                 zHeight: function() { return height },
                 offset: function() { return spacing },
                 density: function() { return density },
+                // output functions
                 emit: function(x,y) {
                     if (isNaN(x)) {
                         solids.push(x);
@@ -694,22 +551,28 @@
         // use specified fill type
         if (type && FILL[type]) {
             FILL[type](target);
+        } else {
+            console.log({missing_infill: type});
+            return;
         }
 
         // force emit of last line
         target.newline();
 
+        // prepare top infill structure
         tops.forEach(function(top) {
             top.fill_sparse = [];
             polys.appendAll(top.inner);
             polys.appendAll(top.solids);
         });
 
+        // update fill fingerprint for this slice
         scope._fill_finger = POLY.fingerprint(polys);
 
         let skippable = FILLFIXED[type] ? true : false;
         let miss = false;
-        // if the layer below has the same fingerprint, we may be able to clone its infill
+        // if the layer below has the same fingerprint,
+        // we may be able to clone the infill instead of regenerating it
         if (skippable && scope.fingerprintSame(down)) {
             // the fill fingerprint can slightly different because of solid projections
             if (down._fill_finger && POLY.fingerprintCompare(scope._fill_finger, down._fill_finger)) {
@@ -792,26 +655,6 @@
     };
 
     /**
-     * Runs in client. Generate sparse lines in the correct view layer.
-     */
-    PRO.renderSparseFill = function() {
-        let layer = this.layers.sparse;
-
-        layer.clear();
-
-        this.tops.forEach(function(top) {
-            if (top.fill_sparse) {
-                top.fill_sparse.forEach(function(poly) {
-                    // todo cull polys with single point before this
-                    if (poly.length > 1) poly.render(layer, sparse_fill_color, false, true);
-                });
-            }
-        });
-
-        layer.render();
-    };
-
-    /**
      * Find difference between fill inset poly on two adjacent layers.
      * Used to calculate bridges, flats and then solid projections.
      * 'expand' is used for top offsets in SLA mode
@@ -856,38 +699,6 @@
             top.bridges = bridges;
             bottom.flats = flats;
         }
-    };
-
-    /**
-    * Runs in client. Generate polygon lines in the correct view layer.
-     */
-    PRO.renderDiff = function() {
-        let scope = this,
-            layers = scope.layers,
-            bridgeLayer = layers.bridge,
-            flatLayer = layers.flat,
-            bridges = scope.bridges,
-            flats = scope.flats;
-
-        bridgeLayer.clear();
-        flatLayer.clear();
-
-        if (bridges) bridges.forEach(function (t) {
-            t.setZ(scope.z);
-            t.render(bridgeLayer, bridge_outline_color, true);
-            t.renderSolid(bridgeLayer, bridge_solid_color);
-        });
-
-        if (flats) flats.forEach(function (t) {
-            t.setZ(scope.z);
-            t.render(flatLayer, flat_outline_color, true);
-            t.renderSolid(flatLayer, flat_solid_color);
-        });
-
-        bridgeLayer.renderSolid();
-        bridgeLayer.render();
-        flatLayer.renderSolid();
-        flatLayer.render();
     };
 
     /**
@@ -1023,21 +834,6 @@
         });
 
         return true;
-    };
-
-    PRO.renderSolidOutlines = function() {
-        let layer = this.layers.solid,
-            trimmed = this.solids.trimmed;
-
-        layer.clear();
-
-        if (trimmed) trimmed.forEach(function(poly) {
-            poly.render(layer, solid_outline_color, true);
-            poly.renderSolid(layer, solid_solid_color, true);
-        });
-
-        layer.renderSolid();
-        layer.render();
     };
 
     /**
@@ -1219,24 +1015,6 @@
 
         // re-assign new supports back to slice
         slice.supports = supports;
-    };
-
-    /**
-     *
-     */
-    PRO.renderSupport = function() {
-        let slice = this,
-            layer = slice.layers.support,
-            supports = slice.supports;
-
-        layer.clear();
-
-        if (supports) supports.forEach(function(poly) {
-            layer.poly(poly, 0xff0000, true);
-            layer.lines(poly.fills, 0xff0000);
-        });
-
-        layer.render();
     };
 
     /**
