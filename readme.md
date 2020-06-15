@@ -2,7 +2,7 @@
 
 Contributions in all forms (code, bug reports, community engagenment, cash money, etc) are warmly welcomed. They all go to the bottom line of making better apps.
 
-![Discord](https://img.shields.io/discord/688863523207774209)
+[![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
 ![Twitter Follow](https://img.shields.io/twitter/follow/grid_space_3d?label=follow&style=social)
 
@@ -14,7 +14,7 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 
 ### Live Versions
 
-![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)](https://grid.space/kiri/)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.0)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.1)
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/GridSpace/grid-apps)
