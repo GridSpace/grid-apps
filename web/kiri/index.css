@@ -768,9 +768,9 @@ and (orientation : landscape) {
     display: none;
     position: absolute;
     font-size: smaller;
-    top: 10px;
+    top: 15px;
     right: 3px;
-    bottom: 10px;
+    bottom: 15px;
     width: 50px;
 }
 #slider-hi-val, #slider-lo-val {
@@ -813,7 +813,7 @@ and (orientation : landscape) {
 }
 #slider-hold .handle {
     width: 100%;
-    height: 10px;
+    height: 15px;
     border-radius: 3px;
     background-color: var(--bg-gray);
 }
