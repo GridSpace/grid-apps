@@ -1840,8 +1840,9 @@
                 dx = newpos.x - pos.x,
                 dy = newpos.y - pos.y,
                 dz = newpos.z - pos.z,
-                dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
-                feed = Math.min(speed || maxXYd, dz ? maxZd : maxXYd);
+                maxf = dz ? maxZd : maxXYd,
+                feed = Math.min(speed || maxf, maxf),
+                dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
             // drop dup points (all deltas are 0)
             if (!(dx || dy || dz)) {
