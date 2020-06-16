@@ -1,4 +1,4 @@
-class DataWriter {
+self.DataWriter = class DataWriter {
     constructor(view, pos) {
         this.view = view;
         this.pos = pos || 0;
@@ -56,7 +56,7 @@ class DataWriter {
     }
 }
 
-class DataReader {
+self.DataReader = class DataReader {
     constructor(view, pos) {
         this.view = view;
         this.pos = pos || 0;

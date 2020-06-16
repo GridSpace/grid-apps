@@ -26,7 +26,8 @@
         newTop = KIRI.newTop,
         newSlice = KIRI.newSlice,
         newPoint = BASE.newPoint,
-        newPolygon = BASE.newPolygon;
+        newPolygon = BASE.newPolygon,
+        plugin = {};
 
     let preview,
         previewSmall,
@@ -633,7 +634,7 @@
             layermax = Math.max(widget.slices.length);
         });
 
-        let render = legacyMode ? renderLayer : renderLayerWasm;
+        let render = legacyMode ? plugin.renderLayer : plugin.renderLayerWasm;
 
         // generate layer bitmaps
         // in wasm mode, rle layers generated here, too
@@ -643,11 +644,12 @@
             images.push(image);
             slices.push(layers);
             // transfer images to browser main
+            image = image.buffer;
             online({
                 progress: (index / layermax) * part1,
                 message: "image_gen",
                 data: image
-            });
+            },[image]);
             if (end) break;
         }
 
@@ -672,7 +674,6 @@
         }, (progress, message) => {
             online({progress: progress * part2 + part1, message});
         });
-
         ondone({
             width: width,
             height: height,
@@ -831,7 +832,7 @@
             range.min = 0;
             range.max = lines.length - 1;
             range.oninput = function() {
-                let lineDV = new DataView(lines[range.value].buffer);
+                let lineDV = new DataView(lines[range.value]);
                 for (let i=0; i<lineDV.byteLength; i++) {
                     imgDV.setUint32(i*4, lineDV.getUint8(i));
                 }
@@ -914,7 +915,7 @@
 
         let buflen = 3000 + coded.length + (layerCount * subcount * 28) + small.byteLength + large.byteLength;
         let filebuf = new ArrayBuffer(buflen);
-        let filedat = new DataWriter(new DataView(filebuf));
+        let filedat = new self.DataWriter(new DataView(filebuf));
         let printtime = (process.slaBaseLayers * process.slaBaseOn) +
                 (coded.layers.length - process.slaBaseLayers) * process.slaLayerOn;
 
@@ -1303,7 +1304,7 @@
             });
 
         // new WebAssembly rasterizer
-        self.renderLayerWasm = function renderLayer(params) {
+        plugin.renderLayerWasm = function renderLayer(params) {
             let { width, height, index, widgets, scaleX, scaleY, masks } = params;
             let width2 = width / 2, height2 = height / 2;
             let array = [];
@@ -1367,7 +1368,7 @@
             });
 
             let imagelen = width * height;
-            let writer = new DataWriter(new DataView(wasm.memory.buffer), imagelen);
+            let writer = new self.DataWriter(new DataView(wasm.memory.buffer), imagelen);
             writer.writeU16(width, true);
             writer.writeU16(height, true);
             writer.writeU16(array.length, true);
@@ -1378,10 +1379,8 @@
                 scaleMovePoly(poly);
                 writePoly(writer, poly);
             }
-
             wasm.render(0, imagelen, 0);
             let image = wasm.heap.slice(0, imagelen), layers = [];
-
             // one rle encoded bitstream for each mash (anti-alias sublayer)
             for (let l=0; l<masks.length; l++) {
                 // while the image is still in wasm heap memory, rle encode it
@@ -1393,7 +1392,7 @@
         }
 
         // legacy JS-only rasterizer uses OffscreenCanvas
-        self.renderLayer = function renderLayer(params) {
+        plugin.renderLayer = function renderLayer(params) {
             let {width, height, index, widgets, scaleX, scaleY} = params;
             let layer = new OffscreenCanvas(height,width);
             let opt = { scaleX, scaleY, width, height, width2: width/2, height2: height/2 };
