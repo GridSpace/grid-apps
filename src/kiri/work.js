@@ -31,6 +31,14 @@ function send(fn, data, onreply, async, zerocopy) {
 }
 
 KIRI.work = {
+    newWorker: function() {
+        if (self.createWorker) {
+            return self.createWorker();
+        } else {
+            return new Worker(`/code/worker.js?${self.kiri.version}`);
+        }
+    },
+
     isSlicing : function() {
         let current = 0;
         for (let key in slicing) {
@@ -50,14 +58,15 @@ KIRI.work = {
 
         slicing = {};
         running = {};
-        worker = new Worker(`/code/worker.js?${self.kiri.version}`);
+        worker = KIRI.work.newWorker();
 
         worker.onmessage = function(e) {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],
                 onreply = record.fn;
-                // console.log('recv', reply.data)
+
+            // console.log('recv', reply.data)
             if (reply.done) {
                 delete running[reply.seq];
             }
@@ -100,8 +109,8 @@ KIRI.work = {
             centerz = (bbox2.max.z - bbox2.min.z)/2;
             movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
         }
-        let vertices = widget.getGeoVertices().buffer.slice(0),
-            snapshot = KIRI.api.view.snapshot;
+        let vertices = widget.getGeoVertices().buffer.slice(0);
+            // snapshot = KIRI.api.view.snapshot;
         if (rotation) {
             widget._rotate(0,-rotation,0,true);
             widget.center();
@@ -113,7 +122,7 @@ KIRI.work = {
             vertices: vertices,
             position: widget.mesh.position,
             tracking: widget.track,
-            snapshot: snapshot,
+            // snapshot: snapshot,
             // for rotation / unrotation
             state: {
                 rotation: rotation,
