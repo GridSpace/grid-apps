@@ -858,7 +858,7 @@
                 // find new endpoints that are not shared point
                 let p1 = l1.p1 != point ? l1.p1 : l1.p2,
                     p2 = l2.p1 != point ? l2.p1 : l2.p2,
-                    newline = base.newOrderedLine(p1,p2);
+                    newline = BASE.newOrderedLine(p1,p2);
                 // remove deleted lines from associated points
                 p1.group.remove(l1);
                 p1.group.remove(l2);

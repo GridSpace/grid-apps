@@ -2,16 +2,20 @@
 
 "use strict";
 
+// (function() {
+
 const base = self.base,
     util = base.util,
     time = util.time,
     kiri = self.kiri,
     ver = kiri.version,
-    Widget = kiri.Widget;
+    Widget = kiri.Widget,
+    current = self.worker = {
+        print: null,
+        snap: null
+    };
 
-let currentPrint,
-    currentSnap,
-    cache = {};
+let cache = {};
 
 console.log(`kiri | init work | ${ver}`);
 base.debug.disable();
@@ -29,7 +33,7 @@ let dispatch = {
     },
 
     snap: function(data, send) {
-        currentSnap = data;
+        current.snap = data;
         send.done();
     },
 
@@ -109,8 +113,8 @@ let dispatch = {
 
         send.data({update:0.05, updateStatus:"preview"});
 
-        currentPrint = kiri.newPrint(data.settings, widgets, data.id);
-        currentPrint.setup(false, function(update, msg) {
+        current.print = kiri.newPrint(data.settings, widgets, data.id);
+        current.print.setup(false, function(update, msg) {
             send.data({
                 update: update,
                 updateStatus: msg
@@ -118,13 +122,13 @@ let dispatch = {
         }, function() {
             send.done({
                 done: true,
-                output: currentPrint.encodeOutput()
+                output: current.print.encodeOutput()
             });
         });
     },
 
     printExport: function(data, send) {
-        currentPrint.export(false, function(line, direct) {
+        current.print.export(false, function(line, direct) {
             send.data({line}, direct);
         }, function(done, direct) {
             send.done({done}, direct);
@@ -132,14 +136,14 @@ let dispatch = {
     },
 
     printGCode: function(data, send) {
-        currentPrint.exportGCode(false, function(gcode) {
+        current.print.exportGCode(false, function(gcode) {
             send.done({
                 gcode: gcode,
-                lines: currentPrint.lines,
-                bytes: currentPrint.bytes,
-                bounds: currentPrint.bounds,
-                distance: currentPrint.distance,
-                time: currentPrint.time
+                lines: current.print.lines,
+                bytes: current.print.bytes,
+                bounds: current.print.bounds,
+                distance: current.print.distance,
+                time: current.print.time
             });
         }, function(line) {
             send.data({line:line});
@@ -147,8 +151,8 @@ let dispatch = {
     },
 
     clear: function(data, send) {
-        currentSnap = null;
-        currentPrint = null;
+        current.snap = null;
+        current.print = null;
         if (!data.id) {
             cache = {};
             send.done({ clear: true });
@@ -206,3 +210,5 @@ self.onmessage = function(e) {
         console.log({kiri_msg:e});
     }
 };
+
+// })();

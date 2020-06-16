@@ -8,11 +8,16 @@
 
     const BASE = self.base, KIRI = self.kiri, handlers = {};
 
-    KIRI.codec = {
+    const codec = KIRI.codec = {
         encode: encode,
         decode: decode,
-        registerDecoder: registerDecoder
+        registerDecoder: registerDecoder,
+        allocFloat32Array: allocFloat32Array
     };
+
+    function allocFloat32Array(len) {
+        return new Float32Array(len);
+    }
 
     function encode(o, state) {
         state = state || {};
@@ -140,7 +145,7 @@
     function encodePointArray(points, state) {
         if (!points) return null;
 
-        let array = new Float32Array(points.length * 3),
+        let array = codec.allocFloat32Array(points.length * 3),
             pos = 0;
 
         points.forEach(function(point) {

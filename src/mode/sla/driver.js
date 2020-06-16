@@ -78,9 +78,10 @@
             });
         }
 
-        let b64 = atob(currentSnap);
+        let b64 = atob(self.worker.snap);
         let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
-        let img = new png.PNG().parse(bin, (err, data) => {
+        let img = new png.PNG();
+        img.parse(bin, (err, data) => {
             preview = img;
             previewSmall = samplePNG(img, 200, 125);
             previewLarge = samplePNG(img, 400, 300);
