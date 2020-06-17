@@ -475,11 +475,11 @@ function handleData(req, res, next) {
                 if (!dbOwner) {
                     space = genKey();
                     version = 1;
-                    log({forked:space,from:spacein,by:muid});
+                    logger.log({forked:space,from:spacein,by:muid});
                 }
             }
             // log what we have
-            log({
+            logger.log({
                 space: space,
                 ver: dbVersion,
                 uid: muid,
