@@ -20,11 +20,6 @@
         "gcode",
         "slicer"
     ],
-    "scripts": {
-        "start": "node js/web-server debug",
-        "start-secure": "node js/web-server nolocal",
-        "update": "git pull && npm i"
-    },
     "dependencies": {
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
