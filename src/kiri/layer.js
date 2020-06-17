@@ -14,6 +14,90 @@
     KIRI.Layer = Layer;
     KIRI.newLayer = function(view) { return new Layer(view) };
 
+    // from https://jsfiddle.net/qcm6g290/22/
+    // https://discourse.threejs.org/t/simple-rectangular-geometry-extrusion-anyone/743/6
+    function ProfiledContourGeometry(profileShape, contour, contourClosed) {
+
+        contourClosed = contourClosed !== undefined ? contourClosed : true;
+
+        let profileGeometry = new THREE.ShapeBufferGeometry(profileShape);
+        profileGeometry.rotateX(Math.PI * .5);
+
+        let profile = profileGeometry.attributes.position;
+        let profilePoints = new Float32Array(profile.count * contour.length * 3);
+
+        for (let i = 0; i < contour.length; i++) {
+            let v1 = new THREE.Vector2().subVectors(contour[i - 1 < 0 ? contour.length - 1 : i - 1], contour[i]);
+            let v2 = new THREE.Vector2().subVectors(contour[i + 1 == contour.length ? 0 : i + 1], contour[i]);
+            let angle = v2.angle() - v1.angle();
+            let halfAngle = angle * .5;
+            let hA = halfAngle;
+            let tA = v2.angle() + Math.PI * .5;
+
+            if (!contourClosed){
+                if (i == 0 || i == contour.length - 1) {hA = Math.PI * .5;}
+                if (i == contour.length - 1) {tA = v1.angle() - Math.PI * .5;}
+            }
+
+            let shift = Math.tan(hA - Math.PI * .5);
+            let shiftMatrix = new THREE.Matrix4().set(
+                1, 0, 0, 0, -shift, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            let tempAngle = tA;
+            let rotationMatrix = new THREE.Matrix4().set(
+                Math.cos(tempAngle), -Math.sin(tempAngle), 0, 0,
+                Math.sin(tempAngle), Math.cos(tempAngle), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            let translationMatrix = new THREE.Matrix4().set(
+                1, 0, 0, contour[i].x,
+                0, 1, 0, contour[i].y,
+                0, 0, 1, 0,
+                0, 0, 0, 1,
+            );
+
+            let cloneProfile = profile.clone();
+            cloneProfile.applyMatrix4(shiftMatrix);
+            cloneProfile.applyMatrix4(rotationMatrix);
+            cloneProfile.applyMatrix4(translationMatrix);
+
+            profilePoints.set(cloneProfile.array, cloneProfile.count * i * 3);
+        }
+
+        let fullProfileGeometry = new THREE.BufferGeometry();
+        fullProfileGeometry.setAttribute("position", new THREE.BufferAttribute(profilePoints, 3));
+
+        let index = [];
+        let lastCorner = contourClosed == false ? contour.length - 1: contour.length;
+
+        for (let i = 0; i < lastCorner; i++) {
+            for (let j = 0; j < profile.count; j++) {
+                let currCorner = i;
+                let nextCorner = i + 1 == contour.length ? 0 : i + 1;
+                let currPoint = j;
+                let nextPoint = j + 1 == profile.count ? 0 : j + 1;
+
+                let a = nextPoint + profile.count * currCorner;
+                let b = currPoint + profile.count * currCorner;
+                let c = currPoint + profile.count * nextCorner;
+                let d = nextPoint + profile.count * nextCorner;
+
+                index.push(a, b, d);
+                index.push(b, c, d);
+            }
+        }
+
+        fullProfileGeometry.setIndex(index);
+        fullProfileGeometry.computeVertexNormals();
+
+        return fullProfileGeometry;
+    }
+
     function materialFor(layer, color, mesh, linewidth) {
         let m = mcache[color];
         if (!m) {
@@ -141,6 +225,15 @@
 
     LP.noodle = function(poly, offset, color, traceColor, open) {
         if (!poly) return;
+
+        // if (!Array.isArray(poly)) {
+        //     poly = [ poly ];
+        // }
+        // poly.forEach(p => {
+        //     this.add(color, {path: p, offset});
+        // });
+        // return;
+
         if (Array.isArray(poly)) {
             poly = POLY.flatten(poly, [], true);
         } else {
@@ -245,18 +338,49 @@
         for (let key in bycolor) {
             if (!bycolor.hasOwnProperty(key)) continue;
 
-            let arr = [], mat = materialFor(this, parseInt(key), true);
+            let sarr = [], mat = materialFor(this, parseInt(key), true);
+            let parr = [];
 
             bycolor[key].forEach(function(obj) {
                 if (obj.solid) {
-                    addSolid(arr, obj.solid);
+                    addSolid(sarr, obj.solid);
+                }
+                if (obj.path) {
+                    parr.append(obj);
                 }
             });
 
-            if (arr.length > 0) {
+            if (parr.length > 0) {
+                parr.forEach(obj => {
+                    let poly = obj.path;
+                    let offx = obj.offset;
+                    let offy = 0.1;
+
+                    let profile = new THREE.Shape();
+                    profile.moveTo(-offx, -offy);
+                    profile.lineTo(-offx,  offy);
+                    profile.lineTo( offx,  offy);
+                    profile.lineTo( offx, -offy);
+
+                    let contour = [];
+                    poly.points.forEach(p => {
+                        contour.push(new THREE.Vector2(p.x, p.y));
+                    });
+                    // contour.push(contour[0]);
+
+                    let geo = ProfiledContourGeometry(profile, contour, true);
+                    let mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.z = poly.points[0].z;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    this.solids.add(mesh);
+                });
+            }
+
+            if (sarr.length > 0) {
                 let geo = new THREE.BufferGeometry();
 
-                geo.setAttribute('position', new THREE.BufferAttribute(arr.toFloat32(), 3));
+                geo.setAttribute('position', new THREE.BufferAttribute(sarr.toFloat32(), 3));
                 geo.computeFaceNormals();
                 geo.computeVertexNormals();
 
