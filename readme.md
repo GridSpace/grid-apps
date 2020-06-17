@@ -38,7 +38,8 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 ```
 git clone git@github.com:GridSpace/grid-apps.git
 npm i
-npm start
+git install -g @gridspace/app-server
+gs-app-server --debug
 ```
 
 to start a local instance of the apps. then open
@@ -52,10 +53,9 @@ this git repo requires symbolic link support. on Windows, this means you have to
 ### Other Start Options
 
 ```
-npm run-script start-secure
+gs-app-server
 ```
 serves code as obfuscated, compressed bundles. this is the mode used to run on a public
-web site, so you can't use "localhost" to test. to accommodate this, alias "debug" to 127.0.0.1
-then access the apps from http://debug:8080/
+web site.
 
 requires node.js 12+
