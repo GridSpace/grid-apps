@@ -1942,6 +1942,9 @@
         $('rot_z_lt').onclick = () => { API.selection.rotate(0,0,-d) };
         $('rot_z_gt').onclick = () => { API.selection.rotate(0,0, d) };
 
+        UI.modal.onclick = API.modal.hide;
+        UI.modalBox.onclick = (ev) => { ev.stopPropagation() };
+
         // add app name hover info
         $('app-info').innerText = KIRI.version;
         // show topline separator when iframed
