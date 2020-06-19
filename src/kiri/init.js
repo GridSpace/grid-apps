@@ -568,9 +568,8 @@
             dev.new = false;
             dev.deviceName = devicename;
 
-            proc.outputOriginCenter = dev.outputOriginCenter;
             UI.deviceName.value = devicename;
-            UI.deviceOrigin.checked = proc.outputOriginCenter;
+            UI.deviceOrigin.checked = dev.outputOriginCenter;
 
             // add extruder selection buttons
             if (dev.extruders) {

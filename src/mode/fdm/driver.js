@@ -46,6 +46,7 @@
 
     function init(kiri, api) {
         api.event.on("settings.load", (settings) => {
+            if (settings.mode !== 'FDM') return;
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
         });
         api.event.on("settings.saved", (settings) => {
