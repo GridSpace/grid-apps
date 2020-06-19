@@ -394,7 +394,7 @@
                     camStockZ: 0,
                     camStockOffset: true,
                     outputClockwise: false,
-                    outputOriginCenter: true,
+                    outputOriginCenter: false,
                     outputInvertX: false,
                     outputInvertY: false
                 }

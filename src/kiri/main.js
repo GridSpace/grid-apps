@@ -1758,11 +1758,6 @@
         // allow mode driver to take any necessary actions
         API.event.emit("settings.load", settings);
 
-        // FDM process settings overridden by device
-        // if (mode == "FDM") {
-        //     settings.process.outputOriginCenter = (settings.device.originCenter || false);
-        // }
-
         // update UI fields to reflect current settings
         updateFields();
         API.conf.update();
