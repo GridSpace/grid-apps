@@ -41,7 +41,8 @@
 
             let shift = Math.tan(hA - Math.PI * .5);
             let shiftMatrix = new THREE.Matrix4().set(
-                1, 0, 0, 0, -shift, 1, 0, 0,
+                1, 0, 0, 0,
+                -shift, 1, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
             );

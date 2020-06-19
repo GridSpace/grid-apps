@@ -678,6 +678,25 @@ and (orientation : landscape) {
 #help-right {
     padding-left: 3px;
 }
+.confirm {
+    padding-top: 15px;
+}
+.confirm > div {
+    padding-top: 10px;
+}
+.confirm label {
+    text-align: center;
+    line-height: 1.5em;
+    padding: 0 10px 0 10px;
+}
+.confirm button {
+    margin-left: 4px;
+}
+.confirm input {
+    padding: 3px;
+    margin: 0 10px 0 10px;
+    text-align: left;
+}
 
 .dev-type {
     font-family: 'Russo One', sans-serif;

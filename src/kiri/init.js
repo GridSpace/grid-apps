@@ -289,9 +289,9 @@
                 API.help.show();
                 break;
             case cca('Z'): // reset stored state
-                if (confirm('clear all settings?')) {
-                    SDB.clear();
-                }
+                UC.confirm('clear all settings and preferences?').then(yes => {
+                    if (yes) SDB.clear();
+                });
                 break;
             case cca('C'): // refresh catalog
                 CATALOG.refresh();
@@ -303,7 +303,9 @@
                 storeSettingsToServer(true);
                 break;
             case cca('u'): // full settings url
-                loadSettingsFromServer(prompt("settings id to load"));
+                UC.prompt("settings id to load", "").then(id => {
+                    if (id) loadSettingsFromServer(id);
+                });
                 break;
             case cca('s'): // complete slice
                 API.function.slice();
@@ -460,7 +462,9 @@
                 let res = JSON.parse(reply);
                 if (res && res.ver) {
                     LOC.hash = res.space + "/" + res.ver;
-                    if (display) alert("unique settings id is: " + res.space + "/" + res.ver);
+                    if (display)  {
+                        UC.alert(`unique settings id is: <b>${res.space}/${res.ver}</b>`);
+                    }
                 }
             } else {
                 updateSpaceState();
@@ -469,13 +473,15 @@
     }
 
     function profileExport() {
-        let name = WIN.prompt("Export Profile Filename", "kiriconf");
-        if (!name) return;
-        let json = API.conf.export(),
-            blob = new Blob([json], {type: "octet/stream"}),
-            url = WIN.URL.createObjectURL(blob);
-        $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
-        $('sexport').click();
+        UC.prompt("Export Profile Filename", "kiriconf").then(name => {
+            if (name) {
+                let json = API.conf.export(),
+                    blob = new Blob([json], {type: "octet/stream"}),
+                    url = WIN.URL.createObjectURL(blob);
+                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
+                $('sexport').click();
+            }
+        });
     }
 
     function settingsSave(ev) {
@@ -483,25 +489,27 @@
             ev.stopPropagation();
             ev.preventDefault();
         }
+
         API.dialog.hide();
         let mode = API.mode.get(),
             s = settings(),
             def = "default",
             cp = s.process,
-            pl = s.sproc[mode],
-            // pt = sf[mode.toLowerCase()].p, // process field mask
-            name = WIN.prompt("Save Settings As", cp ? cp.processName || def : def);
-        if (!name) return;
-        let np = pl[name] = {};
-        cp.processName = name;
-        for (let k in cp) {
-            if (!cp.hasOwnProperty(k)) continue;
-            // if (!pt.hasOwnProperty(k)) continue; // mask out invalid fields
-            np[k] = cp[k];
-        }
-        s.cproc[API.mode.get()] = name;
-        API.conf.save();
-        API.event.settings();
+            pl = s.sproc[mode];
+
+        UC.prompt("Save Settings As", cp ? cp.processName || def : def).then(name => {
+            if (name) {
+                let np = pl[name] = {};
+                cp.processName = name;
+                for (let k in cp) {
+                    if (!cp.hasOwnProperty(k)) continue;
+                    np[k] = cp[k];
+                }
+                s.cproc[API.mode.get()] = name;
+                API.conf.save();
+                API.event.settings();
+            }
+        });
     }
 
     function settingsLoad() {
@@ -996,11 +1004,25 @@
 
         SPACE.platform.setColor(platformColor);
 
-        let files = evt.dataTransfer.files,
-            plate = files.length < 5 || confirm(`add ${files.length} objects to workspace?`),
-            group = files.length < 2 ? undefined : confirm('group files?') ? [] : undefined;
+        let files = evt.dataTransfer.files;
 
-        if (plate) API.platform.load_files(files,group);
+        function ck_group() {
+            if (files.length === 1) {
+                API.platform.load_files(files);
+            } else {
+                UC.confirm(`group ${files.length} files?`).then(yes => {
+                    API.platform.load_files(files, yes ? [] : undefined);
+                });
+            }
+        }
+
+        if (files.length > 5) {
+            UC.confirm(`add ${files.length} objects to workspace?`).then(yes => {
+                if (yes) ck_group();
+            });
+        } else {
+            ck_group();
+        }
     }
 
     function loadCatalogFile(e) {
@@ -1504,7 +1526,7 @@
             API.var.layer_hi = Math.round((1 - start) * API.var.layer_max);
             API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
             API.show.layer();
-            SPACE.mouse.active();
+            SPACE.scene.active();
         }
 
         function dragit(el, delta) {

@@ -54,9 +54,72 @@
         newGroup: newGroup,
         setGroup: setGroup,
         hidePoppers: hidePoppers,
+        confirm: confirm,
+        prompt: prompt,
+        alert: alert,
         checkpoint,
         restore
     };
+
+    function alert(message) {
+        return confirm(message, {ok:true});
+    }
+
+    function prompt(message, value) {
+        return confirm(message, {ok:true, cancel:false}, value);
+    }
+
+    function confirm(message, buttons, input) {
+        return new Promise((resolve, reject) => {
+            let btns = buttons || {
+                "yes": true,
+                "no": false
+            };
+            let rnd = Date.now().toString(36);
+            let any = $('mod-any');
+            let html = [
+                `<div class="confirm col a-stretch">`,
+                `<label>${message}</label>`,
+            ];
+            let iid;
+            if (input !== undefined) {
+                iid = `confirm-input-${rnd}`;
+                html.append(`<div><input class="grow" type="text" spellcheck="false" value="${input}" id="${iid}"/></div>`);
+            }
+            html.append(`<div class="row j-end">`);
+            Object.entries(btns).forEach((row,i) => {
+                html.append(`<button id="confirm-${i}-${rnd}">${row[0]}</button>`);
+            });
+            $('mod-any').innerHTML = html.append(`</div></div>`).join('');
+            function done(value) {
+                KIRI.api.modal.hide();
+                setTimeout(() => { resolve(value) }, 150);
+            }
+            if (iid) {
+                iid = $(iid);
+                iid.onkeypress = (ev) => {
+                    if (ev.key === 'Enter' || ev.charCode === 13) {
+                        done(ev.target.value);
+                    }
+                };
+            }
+            Object.entries(btns).forEach((row,i) => {
+                $(`confirm-${i}-${rnd}`).onclick = (ev) => {
+                    let value = iid && row[1] ? iid.value : row[1];
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    done(value);
+                }
+            });
+            setTimeout(() => {
+                KIRI.api.modal.show('any');
+                if (iid) {
+                    iid.focus();
+                    iid.selectionStart = iid.value.length;
+                }
+            }, 150);
+        });
+    }
 
     function setMode(mode) {
         Object.keys(groupShow).forEach(group => {

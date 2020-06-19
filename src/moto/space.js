@@ -595,7 +595,8 @@
                 let fz = freeze;
                 freeze = b;
                 return fz;
-            }
+            },
+            active: updateLastAction
         },
 
         platform: {
@@ -663,8 +664,7 @@
             downSelect: function(f) { mouseDownSelect = f },
             upSelect:   function(f) { mouseUpSelect = f },
             onDrag:     function(f) { mouseDrag = f },
-            onHover:    function(f) { mouseHover = f },
-            active:     updateLastAction
+            onHover:    function(f) { mouseHover = f }
         },
 
         useDefaultKeys: function(b) {

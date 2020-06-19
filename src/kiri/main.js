@@ -683,7 +683,9 @@
         clearPrint();
         API.conf.save();
 
-        if (MODE === MODES.CAM) {
+        let isCam = MODE === MODES.CAM;
+
+        if (isCam) {
             setOpacity(color.cam_preview_opacity);
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
@@ -701,7 +703,7 @@
             }
 
             setProgress(0);
-            setOpacity(0);
+            if (!isCam) setOpacity(0);
 
             currentPrint.render();
 
@@ -778,6 +780,7 @@
             preserveLayer = API.var.layer_hi,
             totalProgress,
             track = {},
+            mode = settings.mode,
             now = UTIL.time();
 
         // require topo be sent back from worker for local printing
@@ -791,7 +794,8 @@
                 segNumber = 0,
                 errored = false,
                 startTime,
-                lastMsg;
+                lastMsg,
+                camOrLaser = mode === 'CAM' || mode === 'LASER';
 
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
@@ -801,7 +805,7 @@
                 widget.render();
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                widget.setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
+                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
                 widget.setColor(color.deselected);
                 // update UI info
                 if (sliced) {
@@ -820,7 +824,7 @@
                 if (--countdown === 0 || error || errored) {
                     setProgress(0);
                     showSlices(preserveLayer);
-                    setOpacity(settings.mode === 'CAM' ? color.cam_sliced_opacity : color.sliced_opacity);
+                    SPACE.scene.active();
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
@@ -1483,22 +1487,28 @@
             try {
                 data = JSON.parse(atob(data));
             } catch (e) {
-                alert('invalid settings format');
+                UC.alert('invalid settings format');
                 console.log('data',data);
                 return;
             }
         }
         if (!(data.settings && data.version && data.time)) {
-            alert('invalid settings format');
+            UC.alert('invalid settings format');
             console.log('data',data);
             return;
         }
-        if (ask && !confirm(`Import settings made on ${new Date(data.time)} from Kiri:Moto version ${data.version}?`)) {
-            return;
+        function doit() {
+            settings = CONF.normalize(data.settings);
+            API.conf.save();
+            API.space.reload();
         }
-        settings = CONF.normalize(data.settings);
-        API.conf.save();
-        API.space.reload();
+        if (ask) {
+            UC.confirm(`Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`).then((yes) => {
+                if (yes) doit();
+            });
+        } else {
+            doit();
+        }
     }
 
     function settingsExport() {
@@ -1732,7 +1742,7 @@
                 }
                 API.conf.save();
             } catch (e) {
-                alert('malformed settings object');
+                UC.alert('malformed settings object');
             }
         }
     }
