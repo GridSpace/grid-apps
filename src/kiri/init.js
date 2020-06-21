@@ -540,7 +540,6 @@
             let code = devices[API.mode.get_lower()][devicename];
             setDeviceCode(code, devicename);
         }
-        // $('selected-device').innerHTML = devicename;
     }
 
     // only for local filters
@@ -645,8 +644,12 @@
             current.filter[mode] = devicename;
             current.cdev[mode] = dev;
 
-            // restore last process associated with this device
-            if (dproc) API.conf.load(null, dproc);
+            if (dproc) {
+                // restore last process associated with this device
+                API.conf.load(null, dproc);
+            } else {
+                API.conf.update();
+            }
 
             API.conf.save();
         } catch (e) {
@@ -669,6 +672,7 @@
             delete devs[selected];
             UI.deviceSave.onclick();
             selectDevice(newname);
+            updateDeviceList();
         }
     }
 
