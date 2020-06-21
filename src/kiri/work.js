@@ -70,8 +70,10 @@ KIRI.work = {
     },
 
     decimate : function(vertices, callback) {
+        let alert = KIRI.api.show.alert('decimating imported model', 1000);
         vertices = vertices.buffer.slice(0);
         send("decimate", vertices, function(output) {
+            KIRI.api.hide.alert(alert);
             callback(output);
         });
     },

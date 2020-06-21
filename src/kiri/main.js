@@ -208,6 +208,7 @@
             clear: clearWidgetCache
         },
         hide: {
+            alert: function(rec) { alert2cancel(rec) },
             import: function() { }
         },
         language: KIRI.lang,
@@ -345,7 +346,14 @@
          if (message === undefined) {
              return updateAlerts(true);
          }
-         alerts.push([message, Date.now(), time]);
+         let rec = [message, Date.now(), time, true];
+         alerts.push(rec);
+         updateAlerts();
+         return rec;
+     }
+
+     function alert2cancel(rec) {
+         rec[3] = false;
          updateAlerts();
      }
 
@@ -354,9 +362,9 @@
              alerts = [];
          }
          let now = Date.now();
-         // filter out by age
+         // filter out by age and active flag
          alerts = alerts.filter(alert => {
-             return (now - alert[1]) < ((alert[2] || 5) * 1000);
+             return alert[3] && (now - alert[1]) < ((alert[2] || 5) * 1000);
          });
          // limit to 5 showing
          while (alerts.length > 5) {
