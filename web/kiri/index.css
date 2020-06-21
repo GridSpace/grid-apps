@@ -429,7 +429,7 @@ and (orientation : landscape) {
 .txt-sel {
     background-color: #eee;
 }
-.txt-sel button {
+.txt-sel button, .btn-sel {
     background-color: #ccc;
 }
 #pop-rotate .value, #pop-scale .value {

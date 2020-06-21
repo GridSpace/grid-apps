@@ -1270,18 +1270,28 @@
             gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", inline:true, modes:GCODE}),
             gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
             gcodeTrack:       UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
-            gcodeLayer:       UC.newText(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2, area:gcode}),
+            gcodeLayerPause: UC.newRow([
+                (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2, area:gcode})).button,
+                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3, area:gcode})).button,
+            ], {modes:FDM, class:"ext-buttons row"}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
-            gcodeDwell:       UC.newText(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2, area:gcode}),
-            gcodeChange:      UC.newText(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2, area:gcode}),
-            gcodeSpindle:     UC.newText(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2, area:gcode}),
-            gcodePause:       UC.newText(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3, area:gcode}),
-            gcodeLaserOn:     UC.newText(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3, area:gcode}),
-            gcodeLaserOff:    UC.newText(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3, area:gcode}),
-            gcodePre:         UC.newText(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3, area:gcode}),
-            gcodePost:        UC.newText(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3, area:gcode}),
+            gcodeLaserOnOff: UC.newRow([
+                (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3, area:gcode})).button,
+                (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3, area:gcode})).button,
+            ], {modes:LASER, class:"ext-buttons row"}),
+            gcodeCam1: UC.newRow([
+                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2, area:gcode})).button
+            ], {modes:CAM, class:"ext-buttons row"}),
+            gcodeCam2: UC.newRow([
+                (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2, area:gcode})).button,
+                (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2, area:gcode})).button
+            ], {modes:CAM, class:"ext-buttons row"}),
+            gcodeHeadFoot: UC.newRow([
+                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3, area:gcode})).button,
+                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3, area:gcode})).button
+            ], {modes:GCODE, class:"ext-buttons row"}),
 
             layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),

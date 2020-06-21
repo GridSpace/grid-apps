@@ -41,6 +41,7 @@
         hidePop: hidePop,
         isPopped: isPopped,
         newText: newTextArea,
+        newGCode: newGCode,
         newLabel: newLabel,
         newRange: newRange,
         newInput: newInputField,
@@ -347,6 +348,7 @@
         return div;
     }
 
+    let lastBtn = null;
     let lastTxt = null;
     let lastPop = null;
     let savePop = null;
@@ -366,9 +368,9 @@
         return lastPop !== null;
     }
 
-    function newTextArea(label, options) {
+    function newGCode(label, options) {
         let opt = options || {},
-            row = newDiv(options),
+            row = lastDiv,
             btn = DOC.createElement("button"),
             pop = DOC.createElement("div"),
             txt = DOC.createElement("textarea"),
@@ -379,7 +381,68 @@
         txt.setAttribute("style", "resize: none");
         txt.onblur = inputAction;
 
-        btn.appendChild(DOC.createTextNode("edit"));
+        btn.appendChild(DOC.createTextNode(label));
+
+        btn.onclick = function(ev) {
+            ev.stopPropagation();
+            if (ev.target === txt) {
+                // drop clicks on TextArea
+                ev.target.focus();
+            } else {
+                let fc = area.firstChild;
+                if (fc) area.removeChild(fc);
+                area.appendChild(txt);
+                txt.scrollTop = 0;
+                txt.scrollLeft = 0;
+                txt.selectionEnd = 0;
+                let rows = txt.value.split('\n');
+                let cols = 0;
+                rows.forEach(row => {
+                    cols = Math.max(cols, row.length);
+                });
+                txt.setAttribute("cols", Math.max(30, cols + 1));
+                txt.setAttribute("rows", Math.max(10, rows.length + 1));
+
+                let showing = btn === lastBtn;
+                hidePop();
+                if (lastTxt) {
+                    lastTxt.classList.remove('txt-sel');
+                }
+                if (lastBtn) {
+                    lastBtn.classList.remove('btn-sel');
+                }
+                if (!showing) {
+                    btn.classList.add('btn-sel');
+                    lastTxt = btn;
+                    lastBtn = btn;
+                    txt.focus();
+                } else {
+                    inputAction();
+                }
+            }
+        };
+        addModeControls(btn, opt);
+        if (opt.title) row.setAttribute("title", options.title);
+        txt.button = btn;
+
+        return txt;
+    }
+
+    function newTextArea(label, options) {
+        let opt = options || {},
+            inline = opt.row,
+            row = inline ? lastDiv : newDiv(options),
+            btn = DOC.createElement("button"),
+            pop = DOC.createElement("div"),
+            txt = DOC.createElement("textarea"),
+            area = opt.area;
+
+        txt.setAttribute("wrap", "off");
+        txt.setAttribute("spellcheck", "false");
+        txt.setAttribute("style", "resize: none");
+        txt.onblur = inputAction;
+
+        btn.appendChild(DOC.createTextNode(inline ? label : "edit"));
 
         btn.onclick = function(ev) {
             ev.stopPropagation();
@@ -405,10 +468,13 @@
 
                 let showing = pop === lastPop;
                 hidePop();
+                if (lastBtn) {
+                    lastBtn.classList.remove('btn-sel');
+                }
+                if (lastTxt) {
+                    lastTxt.classList.remove('txt-sel');
+                }
                 if (!showing) {
-                    if (lastTxt) {
-                        lastTxt.classList.remove('txt-sel');
-                    }
                     row.classList.add('txt-sel');
                     savePop = inputAction;
                     pop.style.display = "flex";
@@ -420,15 +486,18 @@
                 }
             }
         };
-
         addModeControls(btn, opt);
         addId(btn, opt);
 
-        row.appendChild(newLabel(label));
+        if (!inline) {
+            row.appendChild(newLabel(label));
+            row.setAttribute("class", "var-row");
+        }
         row.appendChild(btn);
-        row.setAttribute("class", "var-row");
         if (opt.title) row.setAttribute("title", options.title);
-        btn.setVisible = row.setVisible;
+        if (row.setVisible) {
+            btn.setVisible = row.setVisible;
+        }
 
         return txt;
     }
