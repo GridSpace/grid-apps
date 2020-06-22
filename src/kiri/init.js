@@ -1534,11 +1534,11 @@
         }
 
         function sliderUpdate() {
-            let start = drag.top / drag.maxval;
-            let end = (drag.top + drag.mid - slbar) / drag.maxval;
+            let start = drag.low / drag.maxval;
+            let end = (drag.low + drag.mid - slbar) / drag.maxval;
             API.event.emit('slider.pos', { start, end });
-            API.var.layer_hi = Math.round((1 - start) * API.var.layer_max);
-            API.var.layer_lo = Math.round((1 - end) * API.var.layer_max);
+            API.var.layer_lo = Math.round(start * API.var.layer_max);
+            API.var.layer_hi = Math.round(end * API.var.layer_max);
             API.show.layer();
             SPACE.scene.active();
         }
@@ -1547,13 +1547,14 @@
             el.onmousedown = (ev) => {
                 tracker.style.display = 'block';
                 ev.stopPropagation();
-                drag.height = slider.clientHeight;
-                drag.maxval = drag.height - slbar2;
-                drag.start = ev.screenY;
-                drag.hiat = drag.top = pxToInt(UI.sliderHold.style.marginTop);
-                drag.mdat = drag.mid = UI.sliderMid.clientHeight;
-                drag.mdmax = drag.height - slbar - drag.hiat;
-                drag.himax = drag.height - slbar - drag.mdat;
+                drag.width = slider.clientWidth;
+                drag.maxval = drag.width - slbar2;
+                drag.start = ev.screenX;
+                drag.loat = drag.low = pxToInt(UI.sliderHold.style.marginLeft);
+                drag.mdat = drag.mid = UI.sliderMid.clientWidth;
+                drag.hiat = pxToInt(UI.sliderHold.style.marginRight);
+                drag.mdmax = drag.width - slbar - drag.loat;
+                drag.himax = drag.width - slbar - drag.mdat;
                 let cancel_drag = tracker.onmouseup = (ev) => {
                     if (ev) {
                         ev.stopPropagation();
@@ -1568,33 +1569,39 @@
                     if (ev.buttons === 0) {
                         return cancel_drag();
                     }
-                    if (delta) delta(ev.screenY - drag.start);
+                    if (delta) delta(ev.screenX - drag.start);
                 };
             };
         }
 
-        dragit(UI.sliderHi, (delta) => {
+        dragit(UI.sliderLo, (delta) => {
             let midval = drag.mdat - delta;
-            let topval = drag.hiat + delta;
-            if (midval < slbar || topval < 0) {
+            let lowval = drag.loat + delta;
+            if (midval < slbar || lowval < 0) {
                 return;
             }
-            UI.sliderHold.style.marginTop = `${topval}px`;
-            UI.sliderMid.style.height = `${midval}px`;
-            drag.top = topval;
+            UI.sliderHold.style.marginLeft = `${lowval}px`;
+            UI.sliderMid.style.width = `${midval}px`;
+            drag.low = lowval;
             drag.mid = midval;
             sliderUpdate();
         });
         dragit(UI.sliderMid, (delta) => {
-            let topoff = Math.max(0, Math.min(drag.himax, drag.hiat + delta));
-            UI.sliderHold.style.marginTop = `${topoff}px`;
-            drag.top = topoff;
+            let loval = drag.loat + delta;
+            let hival = drag.hiat - delta;
+            if (loval < 0 || hival < 0) return;
+            UI.sliderHold.style.marginLeft = `${loval}px`;
+            UI.sliderHold.style.marginRight = `${hival}px`;
+            drag.low = loval;
             sliderUpdate();
         });
-        dragit(UI.sliderLo, (delta) => {
-            let midlen = Math.max(slbar, Math.min(drag.mdmax, drag.mdat + delta));
-            UI.sliderMid.style.height = `${midlen}px`;
-            drag.mid = midlen;
+        dragit(UI.sliderHi, (delta) => {
+            let midval = drag.mdat + delta;
+            let hival = drag.hiat - delta;
+            if (midval < slbar || midval > drag.mdmax || hival < 0) return;
+            UI.sliderMid.style.width = `${midval}px`;
+            UI.sliderHold.style.marginRight = `${hival}px`;
+            drag.mid = midval;
             sliderUpdate();
         });
 
@@ -1615,26 +1622,27 @@
         };
 
         API.event.on('slider.unlabel', (values) => {
-            $('slider-hi-val').style.display = 'none';
-            $('slider-lo-val').style.display = 'none';
         });
 
         API.event.on('slider.label', (values) => {
-            $('slider-hi-val').style.display = 'flex';
-            $('slider-lo-val').style.display = 'flex';
-            $('slider-hi-val').innerText = API.var.layer_hi;
-            $('slider-lo-val').innerText = API.var.layer_lo;
+            let digits = API.var.layer_max.toString().length;
+            $('slider-zero').style.width = `${digits}em`;
+            $('slider-max').style.width = `${digits}em`;
+            $('slider-zero').innerText = API.var.layer_lo;
+            $('slider-max').innerText = API.var.layer_hi;
         });
 
         API.event.on('slider.set', (values) => {
-            let height = slider.clientHeight;
-            let maxval = height - slbar2;
+            let width = slider.clientWidth;
+            let maxval = width - slbar2;
             let start = Math.max(0, Math.min(1, values.start));
             let end = Math.max(start, Math.min(1, values.end));
-            let topval = start * maxval;
+            let lowval = start * maxval;
             let midval = ((end - start) * maxval) + slbar;
-            UI.sliderHold.style.marginTop = `${topval}px`;
-            UI.sliderMid.style.height = `${midval}px`;
+            let hival = maxval - end * maxval;
+            UI.sliderHold.style.marginLeft = `${lowval}px`;
+            UI.sliderMid.style.width = `${midval}px`;
+            UI.sliderHold.style.marginRight = `${hival}px`;
         });
 
         // bind language choices

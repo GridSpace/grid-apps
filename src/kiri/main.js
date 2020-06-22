@@ -473,8 +473,8 @@
 
     function updateSlider() {
         API.event.emit("slider.set", {
-            start: 1 - (API.var.layer_hi / API.var.layer_max),
-            end: 1 - (API.var.layer_lo / API.var.layer_max)
+            start: (API.var.layer_lo / API.var.layer_max),
+            end: (API.var.layer_hi / API.var.layer_max)
         });
     }
 
@@ -752,13 +752,13 @@
     function showSlider() {
         UI.layers.style.display = 'flex';
         UI.slider.style.display = 'flex';
-        UI.setMenu.style.display = 'none';
+        // UI.setMenu.style.display = 'none';
     }
 
     function hideSlider(andmenu) {
         UI.layers.style.display = 'none';
         UI.slider.style.display = 'none';
-        UI.setMenu.style.display = andmenu ? 'none' : 'flex';
+        // UI.setMenu.style.display = andmenu ? 'none' : 'flex';
     }
 
     /**
