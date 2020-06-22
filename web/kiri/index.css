@@ -2,7 +2,8 @@
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
-    --holdbar: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1), rgba(255,255,255,0));
+    --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
+    --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
 }
 a, a:hover, a:visited {
     border: none;
@@ -764,14 +765,19 @@ and (orientation : landscape) {
     color: #335;
 }
 
-#slider {
-    display: none;
+#layer-slider {
     position: absolute;
     font-size: smaller;
-    top: 15px;
-    right: 3px;
-    bottom: 15px;
-    width: 50px;
+    left: 15px;
+    right: 15px;
+    bottom: 3px;
+    pointer-events: all;
+}
+
+#slider {
+    display: none;
+    height: 30px;
+    z-index: 100;
 }
 #slider-hi-val, #slider-lo-val {
     display: none;
@@ -781,44 +787,45 @@ and (orientation : landscape) {
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #ddd;
     border-radius: 3px;
-    right: 110%;
-    top: 50%;
+    bottom: 110%;
+    left: 50%;
 }
 #slider > div {
-    flex-direction: column;
+    justify-content: center;
+    flex-direction: row;
     align-items: center;
 }
 #slider-max {
     background-color: #ccc;
-    border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    margin-bottom: 3px;
+    border-bottom-right-radius: 10px;
+    margin-left: 3px;
 }
 #slider-center {
     background-image: var(--holdbar);
 }
 #slider-zero {
     z-index: 10;
-    margin-top: 3px;
+    margin-right: 3px;
     background-color: #ccc;
+    border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
 }
 #slider-hold {
     background-color: rgba(0,0,0,0.15);
     position: absolute;
+    bottom: 0;
     right: 0;
-    left: 0;
     top: 0;
 }
 #slider-hold .handle {
-    width: 100%;
-    height: 15px;
+    width: 15px;
+    height: 100%;
     border-radius: 3px;
     background-color: var(--bg-gray);
 }
 #slider-mid {
-    height: 20px;
+    width: 20px;
 }
 
 #alert-area {
@@ -951,7 +958,7 @@ and (orientation : landscape) {
     border-radius: 10px;
     background-color: #ddd;
     padding: 2px 5px 2px 5px;
-    margin: 0 2px 0 2px;
+    margin: 0 2px 3px 2px;
 }
 .var-row {
     white-space: nowrap;

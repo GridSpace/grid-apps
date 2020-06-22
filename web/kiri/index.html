@@ -308,6 +308,20 @@
                 <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
                 <div class="mod-end"></div></div>
             </div>
+            <div id="layer-slider" class="col a-stretch">
+                <div id="layers" class="row j-center"></div>
+                <div id="slider" class="row russo">
+                    <div id="slider-zero">0</div>
+                    <div id="slider-center" class="grow">
+                        <div id="slider-hold" class="row">
+                            <div id="slider-lo" class="handle"><div id="slider-lo-val"></div></div>
+                            <div id="slider-mid">&nbsp;</div>
+                            <div id="slider-hi" class="handle"><div id="slider-hi-val"></div></div>
+                        </div>
+                    </div>
+                    <div id="slider-max">&infin;</div>
+                </div>
+            </div>
         </div>
         <div id="mid-rcol" class="col j-center noshow">
             <div id="set-menu" class="col">
@@ -315,23 +329,10 @@
                 <div id="settings" class="col"></div>
                 <div id="set-end" class="set-group"></div>
             </div>
-            <div id="slider" class="col russo">
-                <div id="slider-max">&infin;</div>
-                <div id="slider-center" class="grow">
-                    <div id="slider-hold" class="col xa-center">
-                        <div id="slider-hi" class="handle"><div id="slider-hi-val"></div></div>
-                        <div id="slider-mid">&nbsp;</div>
-                        <div id="slider-lo" class="handle"><div id="slider-lo-val"></div></div>
-                    </div>
-                </div>
-                <div id="slider-zero">0</div>
-            </div>
         </div>
     </div>
     <div id="end" class="col a-center">
-        <div id="bottom">
-            <div id="layers"></div>
-        </div>
+        <div id="bottom"></div>
         <div id="alert-area">
             <div id="alert-border">
                 <div id="alert-text">alerts<br>alerts<br>alerts</div>
