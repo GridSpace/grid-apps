@@ -19,11 +19,23 @@
     // remove fields from o(bject) that don't exist in d(efault)
     function fill_cull_once(obj, def) {
         if (!obj) return;
-        // add missing
+        // handle renaming
+        for (let k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                let nam = renamed[k] || k;
+                if (nam !== k) {
+                    // handle field renames
+                    obj[nam] = obj[k];
+                    delete obj[k];
+                }
+            }
+        }
+        // fill missing
         for (let k in def) {
             if (def.hasOwnProperty(k)) {
                 let okv = obj[k];
                 if ((okv === undefined || okv === null)) {
+                    // handle fill
                     // console.log({fill: k});
                     obj[k] = def[k];
                 }
@@ -49,6 +61,9 @@
     }
 
     function valueOf(val, dv) {
+        if (typeof(val) === 'string' && Array.isArray(dv)) {
+            val = [val];
+        }
         return typeof(val) !== 'undefined' ? val : dv;
     }
 
@@ -94,11 +109,14 @@
             originCenter: valueOf(set.origin_center, false),
             extrudeAbs: valueOf(set.extrude_abs, false),
             spindleMax: valueOf(set.spindle_max, 0),
-            gcodeFan: valueOf(cmd.fan_power, ''),
-            gcodeTrack: valueOf(cmd.progress, ''),
+            gcodeFan: valueOf(cmd.fan_power, []),
+            gcodeTrack: valueOf(cmd.progress, []),
             gcodeLayer: valueOf(cmd.layer, []),
             gcodePre: valueOf(code.pre, []),
             gcodePost: valueOf(code.post, []),
+            // post processor script of which only one exists
+            // for XYZ.daVinci.Mini.w triggered in kiri.export
+            // in the fdm driver to turn gcode into base64
             gcodeProc: valueOf(code.proc, ''),
             gcodePause: valueOf(code.pause, []),
             gcodeDwell: valueOf(code.dwell, []),
@@ -174,6 +192,38 @@
         return settings;
     }
 
+    // auto field renaming on import
+    const renamed = {
+        roughingTool: "camRoughTool",
+        roughingSpindle: "camRoughSpindle",
+        roughingDown: "camRoughDown",
+        roughingOver: "camRoughOver",
+        roughingSpeed: "camRoughSpeed",
+        roughingPlunge: "camRoughPlunge",
+        roughingStock: "camRoughStock",
+        roughingPocket: "camRoughVoid",
+        roughingOn: "camRoughOn",
+        finishingTool: "camOutlineTool",
+        finishingSpindle: "camOutlineSpindle",
+        finishingDown: "camOutlineDown",
+        finishingOver: "camOutlineOver",
+        finishingSpeed: "camOutlineSpeed",
+        finishingPlunge: "camOutlinePlunge",
+        finishingOn: "camOutlineOn",
+        finishingXOn: "camContourXOn",
+        finishingYOn: "camContourYOn",
+        drillTool: "camDrillTool",
+        drillSpindle: "camDrillSpindle",
+        drillDownSpeed: "camDrillDownSpeed",
+        drillDown: "camDrillDown",
+        drillDwell: "camDrillDwell",
+        drillLift: "camDrillLift",
+        drillingOn: "camDrillingOn",
+        camPocketOnlyRough: "camRoughPocket",
+        camPocketOnlyFinish: "camOutlinePocket",
+        outputClockwise: "camConventional"
+    };
+
     let CONF = KIRI.conf = {
         // --------------- helper functions
         normalize: normalize,
@@ -208,8 +258,8 @@
                     gcodePost: [],
                     gcodePause: [],
                     gcodeProc: "",
-                    gcodeFan: "",
-                    gcodeTrack: "",
+                    gcodeFan: [],
+                    gcodeTrack: [],
                     gcodeLayer: [],
                     gcodeFExt: "",
                     extruders:[{
@@ -348,40 +398,45 @@
                     processName: "default",
                     camFastFeed: 6000,
                     camFastFeedZ: 300,
-                    roughingTool: 1000,
-                    roughingSpindle: 1000,
-                    roughingDown: 2,
-                    roughingOver: 0.5,
-                    roughingSpeed: 1000,
-                    roughingPlunge: 250,
-                    roughingStock: 0,
-                    roughingPocket: true,
-                    roughingOn: true,
-                    finishingTool: 1000,
-                    finishingSpindle: 1000,
-                    finishingDown: 3,
-                    finishingOver: 0.5,
-                    finishingAngle: 85,
-                    finishingSpeed: 800,
-                    finishingPlunge: 250,
-                    finishingOn: true,
-                    finishingXOn: true,
-                    finishingYOn: true,
-                    finishCurvesOnly: false,
-                    drillTool: 1000,
-                    drillSpindle: 1000,
-                    drillDownSpeed: 250,
-                    drillDown: 5,
-                    drillDwell: 250,
-                    drillLift: 2,
-                    drillingOn: false,
+                    camRoughTool: 1000,     // roughingTool
+                    camRoughSpindle: 1000,  // camRoughSpindle
+                    camRoughDown: 2,        // roughingDown
+                    camRoughOver: 0.5,      // roughingOver
+                    camRoughSpeed: 1000,    // roughingSpeed
+                    camRoughPlunge: 250,    // roughingPlunge
+                    camRoughStock: 0,       // roughingStock
+                    camRoughVoid: true,     // roughingPocket
+                    camRoughOn: true,       // roughingOn
+                    camOutlineTool: 1000,   // finishingTool
+                    camOutlineSpindle: 1000,// finishingSpindle
+                    camOutlineDown: 3,      // finishingDown
+                    camOutlineOver: 0.5,    // finishingOver
+                    camOutlineSpeed: 800,   // finishingSpeed
+                    camOutlinePlunge: 250,  // finishingPlunge
+                    camOutlineOn: true,     // finishingOn
+                    camContourTool: 1000,
+                    camContourSpindle: 1000,// (new)
+                    camContourSpeed: 1000,  // (new)
+                    camContourAngle: 85,    // finishingAngle
+                    camContourCurves: false,// finishCurvesOnly
+                    camContourXOn: true,    // finishingXOn
+                    camContourYOn: true,    // finishingYOn
+                    camTraceTool: 1000,
+                    camTraceEnable: false,
+                    camDrillTool: 1000,     // drillTool
+                    camDrillSpindle: 1000,  // drillSpindle
+                    camDrillDownSpeed: 250, // drillDownSpeed
+                    camDrillDown: 5,        // drillDown
+                    camDrillDwell: 250,     // drillDwell
+                    camDrillLift: 2,        // drillLift
+                    camDrillingOn: false,   // drillingOn
                     camTabsAngle: 0,
                     camTabsCount: 4,
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsOn: false,
-                    camPocketOnlyRough: false,
-                    camPocketOnlyFinish: false,
+                    camRoughPocket: false,   // camPocketOnlyRough
+                    camOutlinePocket: false, // camPocketOnlyFinish
                     camDepthFirst: true,
                     camEaseDown: false,
                     camOriginTop: true,
@@ -393,7 +448,7 @@
                     camStockY: 0,
                     camStockZ: 0,
                     camStockOffset: true,
-                    outputClockwise: false,
+                    camConventional: false, // outputClockwise
                     outputOriginCenter: false,
                     outputInvertX: false,
                     outputInvertY: false

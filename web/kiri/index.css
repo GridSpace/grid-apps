@@ -92,7 +92,7 @@ select option[favorite="1"] {
 th, tr, td, span, div, label, button {
     user-select: none;
 }
-th, tr, td {
+th, tr, td, label {
     white-space: nowrap;
 }
 .noselect {
@@ -116,6 +116,9 @@ th, tr, td {
 }
 .auto {
     flex-basis: auto;
+}
+.basis-50 {
+    flex-basis: 50%;
 }
 .grow {
     flex-grow: 1;
@@ -411,12 +414,15 @@ th, tr, td {
 .lt-enabled:hover .pop-lcol {
     display: flex;
 }
-@media only screen
-and (min-device-width : 768px)
-and (max-device-width : 1024px)
-and (orientation : landscape) {
+@media only screen and (max-height : 850px) {
+    .lt-menu, .pop-lcol {
+        font-size: 16px !important;
+    }
     .lt-menu svg {
         font-size: 30px !important;
+    }
+    .pop-lcol svg {
+        font-size: 20px !important;
     }
 }
 

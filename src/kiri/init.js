@@ -1272,29 +1272,31 @@
             ], {modes:FDM, expert:true, class:"ext-buttons"}),
 
             gcode:            UC.newGroup(LANG.dv_gr_gco, $('device'), {group:"dgco", inline:true, modes:GCODE}),
-            gcodeFan:         UC.newInput(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, size:"40%", text:true}),
-            gcodeTrack:       UC.newInput(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, size:"40%", text:true}),
+            gcodeFanTrack: UC.newRow([
+                (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
+                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button
+            ], {modes:FDM, class:"ext-buttons row"}),
             gcodeLayerPause: UC.newRow([
-                (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, size:14, height: 2, area:gcode})).button,
-                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, size:14, height:3, area:gcode})).button,
+                (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
+                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button
             ], {modes:FDM, class:"ext-buttons row"}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
             gcodeLaserOnOff: UC.newRow([
-                (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, size:14, height:3, area:gcode})).button,
-                (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, size:14, height:3, area:gcode})).button,
+                (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
+                (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
             ], {modes:LASER, class:"ext-buttons row"}),
             gcodeCam1: UC.newRow([
-                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, size:14, height:2, area:gcode})).button
+                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button
             ], {modes:CAM, class:"ext-buttons row"}),
             gcodeCam2: UC.newRow([
-                (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, size:14, height:2, area:gcode})).button,
-                (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, size:14, height:2, area:gcode})).button
+                (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
+                (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
             ], {modes:CAM, class:"ext-buttons row"}),
             gcodeHeadFoot: UC.newRow([
-                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, size:14, height:3, area:gcode})).button,
-                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, size:14, height:3, area:gcode})).button
+                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
+                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button
             ], {modes:GCODE, class:"ext-buttons row"}),
 
             layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
@@ -1352,48 +1354,54 @@
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
 
-            fdmRaft:             UC.newGroup(LANG.fr_menu, null, {modes:FDM, marker:true}),
-            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
-            outputRaft:          UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
+            fdmRaft:            UC.newGroup(LANG.fr_menu, null, {modes:FDM, marker:true}),
+            outputRaftSpacing:  UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
+            outputRaft:         UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
-            roughing:            UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
-            roughingTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            roughingSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
-            roughingOver:        UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
-            roughingDown:        UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
-            roughingSpeed:       UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
-            roughingPlunge:      UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM}),
-            roughingStock:       UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, modes:CAM}),
-            roughingPocket:      UC.newBoolean(LANG.cr_clrp_s, onBooleanClick, {title:LANG.cr_clrp_l, modes:CAM}),
-            camPocketOnlyRough:  UC.newBoolean(LANG.cc_pock_s, onBooleanClick, {title:LANG.cc_pock_l, modes:CAM}),
-            roughingSep:         UC.newBlank({class:"pop-sep"}),
-            roughingOn:          UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
-
-            finishing:           UC.newGroup(LANG.cf_menu, null, {modes:CAM, marker:true}),
-            finishingTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            finishingSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
-            finishingOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
-            finishingDown:       UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
-            finishingAngle:      UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
-            finishingSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
-            finishingPlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM}),
-            camPocketOnlyFinish: UC.newBoolean(LANG.cc_pock_s, onBooleanClick, {title:LANG.cc_pock_l, modes:CAM}),
-            finishCurvesOnly:    UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
-            finishingSep:        UC.newBlank({class:"pop-sep"}),
-            finishingOn:         UC.newBoolean(LANG.cf_watr_s, onBooleanClick, {title:LANG.cf_watr_l, modes:CAM}),
-            finishingXOn:        UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
-            finishingYOn:        UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
-
-            drilling:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
-            drillTool:           UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            drillSpindle:        UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
-            drillDown:           UC.newInput(LANG.cd_plpr_s, {title:LANG.cd_plpr_l, convert:UC.toFloat, modes:CAM}),
-            drillDownSpeed:      UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, modes:CAM}),
-            drillDwell:          UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, modes:CAM}),
-            drillLift:           UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
-            drillingSep:         UC.newBlank({class:"pop-sep"}),
-            drillingOn:          UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
-
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
+            camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
+            camRoughDown:       UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
+            camRoughSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
+            camRoughPlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM}),
+            camRoughStock:      UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, modes:CAM}),
+            camRoughVoid:       UC.newBoolean(LANG.cr_clrp_s, onBooleanClick, {title:LANG.cr_clrp_l, modes:CAM}),
+            camRoughPocket:     UC.newBoolean(LANG.cc_pock_s, onBooleanClick, {title:LANG.cc_pock_l, modes:CAM}),
+            camRoughSep:        UC.newBlank({class:"pop-sep"}),
+            camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
+            camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM, marker:true}),
+            camOutlineTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camOutlineOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
+            camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
+            camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
+            camOutlinePlunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM}),
+            camOutlinePocket:   UC.newBoolean(LANG.cc_pock_s, onBooleanClick, {title:LANG.cc_pock_l, modes:CAM}),
+            camOutlineSep:      UC.newBlank({class:"pop-sep"}),
+            camOutlineOn:       UC.newBoolean(LANG.cf_watr_s, onBooleanClick, {title:LANG.cf_watr_l, modes:CAM}),
+            camContour:         UC.newGroup(LANG.cn_menu, null, {modes:CAM, marker:true}),
+            camContourTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camContourSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
+            camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
+            camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
+            camContourSep:      UC.newBlank({class:"pop-sep"}),
+            camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
+            camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
+            // camTracing:          UC.newGroup(LANG.cu_menu, null, {modes:CAM, marker:true}),
+            // camTraceTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            // camTracingSep:       UC.newBlank({class:"pop-sep"}),
+            // camTraceEnable:      UC.newBoolean(LANG.enable, onBooleanClick, {title:'todo', modes:CAM}),
+            camDrill:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
+            camDrillTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camDrillSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camDrillDown:        UC.newInput(LANG.cd_plpr_s, {title:LANG.cd_plpr_l, convert:UC.toFloat, modes:CAM}),
+            camDrillDownSpeed:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, modes:CAM}),
+            camDrillDwell:       UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, modes:CAM}),
+            camDrillLift:        UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
+            camDrillSep:         UC.newBlank({class:"pop-sep"}),
+            camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
             camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount:        UC.newInput(LANG.ct_numb_s, {title:LANG.ct_numb_l, convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
@@ -1403,7 +1411,6 @@
             camTabsOn:           UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ct_nabl_l, modes:CAM}),
 
             camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
-
             camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM}),
             camStockX:           UC.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockY:           UC.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
@@ -1426,7 +1433,7 @@
             outputFillMult:      UC.newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:    UC.newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputFanLayer:      UC.newInput(LANG.ou_fanl_s, {title:LANG.ou_fanl_l, convert:UC.toInt, bound:UC.bound(0,100), modes:FDM, expert:true}),
-            outputClockwise:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
+            camConventional:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         UC.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
             camDepthFirst:       UC.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
@@ -1744,6 +1751,12 @@
             return svg;
         }
 
+        function mklbl(src) {
+            let lbl = DOC.createElement('label');
+            lbl.innerText = src;
+            return lbl;
+        }
+
         $('mode-fdm').appendChild(mksvg(icons.fdm));
         $('mode-sla').appendChild(mksvg(icons.sla));
         $('mode-cam').appendChild(mksvg(icons.cnc));
@@ -1971,8 +1984,8 @@
         $('rot_x_gt').onclick = () => { API.selection.rotate( d,0,0) };
         $('rot_y_lt').onclick = () => { API.selection.rotate(0,-d,0) };
         $('rot_y_gt').onclick = () => { API.selection.rotate(0, d,0) };
-        $('rot_z_lt').onclick = () => { API.selection.rotate(0,0,-d) };
-        $('rot_z_gt').onclick = () => { API.selection.rotate(0,0, d) };
+        $('rot_z_lt').onclick = () => { API.selection.rotate(0,0, d) };
+        $('rot_z_gt').onclick = () => { API.selection.rotate(0,0,-d) };
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };

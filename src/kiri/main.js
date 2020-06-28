@@ -578,6 +578,7 @@
         }
 
         layer = bound(layer, 0, API.var.layer_max);
+        if (layer < API.var.layer_lo) API.var.layer_lo = layer;
         API.var.layer_hi = layer;
         API.event.emit("slider.label");
 

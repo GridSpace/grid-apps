@@ -372,7 +372,6 @@
         let opt = options || {},
             row = lastDiv,
             btn = DOC.createElement("button"),
-            pop = DOC.createElement("div"),
             txt = DOC.createElement("textarea"),
             area = opt.area;
 
@@ -381,6 +380,7 @@
         txt.setAttribute("style", "resize: none");
         txt.onblur = inputAction;
 
+        btn.setAttribute("class", "basis-50");
         btn.appendChild(DOC.createTextNode(label));
 
         btn.onclick = function(ev) {

@@ -1,4 +1,4 @@
-// english. other language maps will defer to english
+"spindle rpm"// english. other language maps will defer to english
 // map for any missing key/value pairs
 kiri.lang['en'] =
 kiri.lang['en-us'] = {
@@ -39,10 +39,10 @@ kiri.lang['en-us'] = {
     dv_prog_l:      "output on each % progress",
     dv_layr_s:      "layer",
     dv_layr_l:      "output at each\nlayer change",
-    dv_tksp_s:      "token spacing",
-    dv_tksp_l:      "gcode token spacer",
+    dv_tksp_s:      "token spacer",
+    dv_tksp_l:      "add a space between\ngcode axis parameters\nG0X0Y0X0\nvs\nG0 X0 Y0 Z0",
     dv_strc_s:      "strip comments",
-    dv_strc_l:      "strip gcode comments",
+    dv_strc_l:      "strip gcode comments\ncomments begin with ;",
     dv_fext_s:      "file extension",
     dv_fext_l:      "file name extension",
     dv_dwll_s:      "dwell",
@@ -229,7 +229,7 @@ kiri.lang['en-us'] = {
 
     // CNC COMMON terms
     cc_tool:        "tool",
-    cc_spnd_s:      "spindle speed",
+    cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      "spindle speed in\nrevolutions / minute",
     cc_sovr_s:      "step over",
     cc_sovr_l:      "0.1 - 1.0\npercentage of\ntool diameter",
@@ -250,7 +250,7 @@ kiri.lang['en-us'] = {
     cc_rzpd_l:      "max z moves feedrate\nin workspace units / minute",
 
     // CNC ROUGHING
-    cr_menu:        "roughing",
+    cr_menu:        "rough",
     cr_lsto_s:      "leave stock",
     cr_lsto_l:      "horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units",
     cr_ease_s:      "ease down",
@@ -258,21 +258,30 @@ kiri.lang['en-us'] = {
     cr_clrp_s:      "pocket clear",
     cr_clrp_l:      "mill out entire pocket instead\nof just cutting the outline",
 
-    // CNC FINISHING
-    cf_menu:        "finishing",
+    // CNC OUTLINE
+    co_menu:        "outline",
+    cf_watr_s:      "enable",
+    cf_watr_l:      "enable contour finishing\ndisabled when pocketing",
+
+    // CNC CONTOUR
+    cn_menu:        "contour",
     cf_angl_s:      "max angle",
     cf_angl_l:      "angles greater than this\nare considered vertical",
-    cf_watr_s:      "enable waterline",
-    cf_watr_l:      "enable contour finishing\ndisabled when pocketing",
-    cf_linx_s:      "enable linear x",
-    cf_linx_l:      "linear x-axis finishing",
-    cf_liny_s:      "enable linear y",
-    cf_liny_l:      "linear y-axis finishing",
     cf_curv_s:      "curves only",
     cf_curv_l:      "limit linear cleanup\nto curved surfaces",
+    cf_linx_s:      "enable x pass",
+    cf_linx_l:      "linear x-axis finishing",
+    cf_liny_s:      "enable y pass",
+    cf_liny_l:      "linear y-axis finishing",
+
+    // CNC CONTOUR
+    cu_menu:        "trace",
+
+    // CNC FINISHING
+    // cf_menu:        "finishing",
 
     // CNC DRILLING
-    cd_menu:        "drilling",
+    cd_menu:        "drill",
     cd_plpr_s:      "plunge per",
     cd_plpr_l:      "max plunge between\ndwell periods\nin workspace units\n0 to disable",
     cd_dwll_s:      "dwell time",

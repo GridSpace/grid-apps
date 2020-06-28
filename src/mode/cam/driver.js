@@ -23,9 +23,9 @@
         },
         CPRO = CAM.process = {
             ROUGH: 1,
-            FINISH: 2,
-            FINISH_X: 3,
-            FINISH_Y: 4,
+            OUTLINE: 2,
+            CONTOUR_X: 3,
+            CONTOUR_Y: 4,
             FACING: 5,
             DRILL: 6
         },
@@ -55,12 +55,11 @@
         api.event.on("settings.saved", (settings) => {
             let proc = settings.process;
             api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
-            api.ui.roughing.marker.style.display = proc.roughingOn ? 'flex' : 'none';
-            api.ui.drilling.marker.style.display = proc.drillingOn ? 'flex' : 'none';
-            api.ui.finishing.marker.style.display =
-                proc.finishingOn ||
-                proc.finishingXOn ||
-                proc.finishingYOn ? 'flex' : 'none';
+            api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
+            api.ui.camDrill.marker.style.display = proc.camDrillingOn ? 'flex' : 'none';
+            api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
+            api.ui.camContour.marker.style.display =
+                proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
         });
     }
 
@@ -386,11 +385,11 @@
             outp = settings.process,
             units = settings.controller.units === 'in' ? 25.4 : 1,
             resolution = outp.camTolerance * units,
-            diameter = getToolDiameter(settings, proc.finishingTool),
-            tool = getToolById(settings, proc.finishingTool),
-            toolStep = diameter * proc.finishingOver,
+            diameter = getToolDiameter(settings, proc.camOutlineTool),
+            tool = getToolById(settings, proc.camOutlineTool),
+            toolStep = diameter * proc.camOutlineOver,
             traceJoin = diameter / 2,
-            pocketOnly = proc.camPocketOnlyFinish,
+            pocketOnly = proc.camOutlinePocket,
             bounds = widget.getBoundingBox().clone(),
             minX = bounds.min.x,// - diameter,
             maxX = bounds.max.x,// + diameter,
@@ -412,7 +411,7 @@
                 diameter: diameter,
                 resolution: resolution
             },
-            toolOffset = createToolProfile(settings, proc.finishingTool, topo),
+            toolOffset = createToolProfile(settings, proc.camOutlineTool, topo),
             newslices = [],
             newlines,
             newtop,
@@ -503,14 +502,14 @@
             }
 
             // do x linear finishing
-            if (proc.finishingXOn) {
+            if (proc.camContourXOn) {
                 startTime = time();
                 // emit slice per X
                 for (x = minX; x <= maxX; x += toolStep) {
                     gridx = Math.round(((x - minX) / boundsX) * stepsx);
                     ly = gridy = 0;
                     slice = newSlice(gridx, mesh.newGroup ? mesh.newGroup() : null);
-                    slice.camMode = CPRO.FINISH_X;
+                    slice.camMode = CPRO.CONTOUR_X;
                     slice.lines = newlines = [];
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
@@ -560,14 +559,14 @@
             }
 
             // do y linear finishing
-            if (proc.finishingYOn) {
+            if (proc.camContourYOn) {
                 startTime = time();
                 // emit slice per Y
                 for (y = minY; y <= maxY; y += toolStep) {
                     gridy = Math.round(((y - minY) / boundsY) * stepsy);
                     lx = gridx = 0;
                     slice = newSlice(gridy, mesh.newGroup ? mesh.newGroup() : null);
-                    slice.camMode = CPRO.FINISH_Y;
+                    slice.camMode = CPRO.CONTOUR_Y;
                     slice.lines = newlines = [];
                     newtop = slice.addTop(newPolygon().setOpen()).poly;
                     newtrace = newPolygon().setOpen();
@@ -845,19 +844,19 @@
             sliceAll = widget.slices = [],
             unitsName = settings.controller.units,
             units = unitsName === 'in' ? 25.4 : 1,
-            roughToolDiam = getToolDiameter(conf, proc.roughingTool),
-            finishToolDiam = getToolDiameter(conf, proc.finishingTool),
-            drillToolDiam = getToolDiameter(conf, proc.drillTool),
-            procRough = proc.roughingOn && proc.roughingDown && roughToolDiam,
-            procFinish = proc.finishingOn && proc.finishingDown && finishToolDiam,
-            procFinishX = proc.finishingXOn && proc.finishingPlunge && finishToolDiam,
-            procFinishY = proc.finishingYOn && proc.finishingPlunge && finishToolDiam,
+            roughToolDiam = getToolDiameter(conf, proc.camRoughTool),
+            finishToolDiam = getToolDiameter(conf, proc.camOutlineTool),
+            drillToolDiam = getToolDiameter(conf, proc.camDrillTool),
+            procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
+            procFinish = proc.camOutlineOn && proc.camOutlineDown && finishToolDiam,
+            procFinishX = proc.camContourXOn && proc.camOutlinePlunge && finishToolDiam,
+            procFinishY = proc.camContourYOn && proc.camOutlinePlunge && finishToolDiam,
             anyFinish = procFinish || procFinishX || procFinishY,
-            procFacing = proc.roughingOn && proc.camZTopOffset,
-            procDrill = proc.drillingOn && proc.drillDown && proc.drillDownSpeed,
-            sliceDepth = Math.max(0.1, Math.min(proc.roughingDown, proc.finishingDown) / 3) * units,
-            pocketOnlyRough = proc.camPocketOnlyRough,
-            pocketOnlyFinish = proc.camPocketOnlyFinish,
+            procFacing = proc.camRoughOn && proc.camZTopOffset,
+            procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
+            sliceDepth = Math.max(0.1, Math.min(proc.camRoughDown, proc.camOutlineDown) / 3) * units,
+            pocketOnlyRough = proc.camRoughPocket,
+            pocketOnlyFinish = proc.camOutlinePocket,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
             addTabsFinish = procFinish && proc.camTabsOn && !pocketOnlyFinish,
             tabWidth = proc.camTabsWidth * units,
@@ -865,7 +864,7 @@
             mesh = widget.mesh,
             bounds = widget.getBoundingBox(),
             zMin = Math.max(bounds.min.z, proc.camZBottom) * units,
-            roughingStock = proc.roughingStock * units,
+            camRoughStock = proc.camRoughStock * units,
             shellRough,
             shellFinish,
             facePolys,
@@ -959,14 +958,14 @@
 
             if (procRough && !pocketOnlyRough) {
                 // expand shell by half tool diameter + stock to leave
-                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + roughingStock, 0);
+                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
             } else {
                 // expand shell minimally triggering a clean
                 shellRough = facePolys = POLY.expand(shellRough, 0.01, 0);
             }
 
             if (anyFinish && pocketOnlyRough && !pocketOnlyFinish) {
-                facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + roughingStock, 0);
+                facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
             }
 
             if (anyFinish && pocketOnlyFinish) {
@@ -977,7 +976,7 @@
             if (procFacing) {
                 let ztop = bounds.max.z,
                     zpos = ztop + (proc.camZTopOffset * units),
-                    zstep = proc.roughingDown * units;
+                    zstep = proc.camRoughDown * units;
 
                 while (zpos >= ztop) {
                     zpos = zpos - Math.min(zstep, zpos - ztop);
@@ -996,16 +995,16 @@
 
             if (procRough) {
                 let selected = [];
-                selectSlices(slices, proc.roughingDown * units, CPRO.ROUGH, selected);
+                selectSlices(slices, proc.camRoughDown * units, CPRO.ROUGH, selected);
                 sliceAll.appendAll(selected);
-                if (!proc.roughingPocket) {
-                    thruHoles = holes(slices, roughToolDiam + roughingStock);
+                if (!proc.camRoughVoid) {
+                    thruHoles = holes(slices, roughToolDiam + camRoughStock);
                 }
             }
 
             if (procFinish) {
                 let selected = [];
-                selectSlices(slices, proc.finishingDown * units, CPRO.FINISH, selected);
+                selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
                 sliceAll.appendAll(selected);
             }
 
@@ -1076,9 +1075,9 @@
         let tool;
         let profile;
         if (procFinish) {
-            tool = getToolById(conf, proc.finishingTool);
+            tool = getToolById(conf, proc.camOutlineTool);
             if (tool.type !== 'endmill') {
-                profile = createToolProfile(conf, proc.finishingTool, widget.topo);
+                profile = createToolProfile(conf, proc.camOutlineTool, widget.topo);
             }
         }
 
@@ -1090,14 +1089,14 @@
             switch (slice.camMode) {
                 case CPRO.FACING:
                     modekey = "facing";
-                    createFacingSlices(slice, facePolys, roughToolDiam, proc.roughingOver, pocketOnlyRough);
+                    createFacingSlices(slice, facePolys, roughToolDiam, proc.camRoughOver, pocketOnlyRough);
                     break;
                 case CPRO.ROUGH:
                     modekey = "roughing";
-                    createRoughingSlices(slice, shellRough, roughToolDiam, roughingStock, proc.roughingOver, pocketOnlyRough, thruHoles);
+                    createRoughingSlices(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, pocketOnlyRough, thruHoles);
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
-                case CPRO.FINISH:
+                case CPRO.OUTLINE:
                     modekey = "finishing";
                     if (profile) findTracingPaths(widget, slice, tool, profile);
                     createFinishingSlices(slice, shellFinish, finishToolDiam, pocketOnlyFinish);
@@ -1119,7 +1118,7 @@
             let tops = slice.tops,
                 layers = slice.layers,
                 outline = layers.outline,
-                open = (slice.camMode === CPRO.FINISH_X || slice.camMode === CPRO.FINISH_Y);
+                open = (slice.camMode === CPRO.CONTOUR_X || slice.camMode === CPRO.CONTOUR_Y);
 
             layers.outline.clear(); // slice raw edges
             layers.trace.clear();   // roughing
@@ -1137,13 +1136,13 @@
             let layer;
             slice.tops.forEach(function(top) {
                 switch (slice.camMode) {
-                    case CPRO.FINISH:
+                    case CPRO.OUTLINE:
                         layer = layers.solid;
                         break;
-                    case CPRO.FINISH_X:
+                    case CPRO.CONTOUR_X:
                         layer = layers.bridge;
                         break;
-                    case CPRO.FINISH_Y:
+                    case CPRO.CONTOUR_Y:
                         layer = layers.flat;
                         break;
                     default: // roughing
@@ -1217,9 +1216,9 @@
             depthFirst = process.camDepthFirst,
             easeDown = process.camEaseDown,
             tolerance = process.camTolerance * units,
-            drillDown = process.drillDown * units,
-            drillLift = process.drillLift * units,
-            drillDwell = process.drillDwell,
+            drillDown = process.camDrillDown * units,
+            drillLift = process.camDrillLift * units,
+            drillDwell = process.camDrillDwell,
             newOutput = widgetIndex === 0 ? [] : print.output,
             layerOut = [],
             printPoint,
@@ -1463,8 +1462,8 @@
 
             switch (slice.camMode) {
                 case modes.FACING:
-                    setTool(process.roughingTool, process.roughingSpeed, 0);
-                    spindle = Math.min(spindleMax, process.roughingSpindle);
+                    setTool(process.camRoughTool, process.camRoughSpeed, 0);
+                    spindle = Math.min(spindleMax, process.camRoughSpindle);
                     slice.tops.forEach(function(top) {
                         if (!top.traces) return;
                         let polys = [];
@@ -1477,7 +1476,7 @@
                             }
                         });
                         // set winding specified in output
-                        POLY.setWinding(polys, process.outputClockwise, false);
+                        POLY.setWinding(polys, process.camConventional, false);
                         printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                             poly.forEachPoint(function(point, pidx, points, offset) {
                                 camOut(point.clone(), offset !== 0);
@@ -1487,17 +1486,17 @@
                     });
                     break;
                 case modes.ROUGH:
-                case modes.FINISH:
-                    let dir = process.outputClockwise;
+                case modes.OUTLINE:
+                    let dir = process.camConventional;
                     if (slice.camMode === modes.ROUGH) {
-                        setTool(process.roughingTool, process.roughingSpeed, process.roughingPlunge);
-                        spindle = Math.min(spindleMax, process.roughingSpindle);
+                        setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
+                        spindle = Math.min(spindleMax, process.camRoughSpindle);
                         depthData.roughDiam = toolDiam;
                     } else {
-                        setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
-                        spindle = Math.min(spindleMax, process.finishingSpindle);
+                        setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
+                        spindle = Math.min(spindleMax, process.camOutlineSpindle);
                         depthData.finishDiam = toolDiam;
-                        if (!process.camPocketOnlyFinish) {
+                        if (!process.camOutlinePocket) {
                             dir = !dir;
                         }
                     }
@@ -1529,14 +1528,14 @@
                         }
                     });
                     break;
-                case modes.FINISH_X:
-                case modes.FINISH_Y:
+                case modes.CONTOUR_X:
+                case modes.CONTOUR_Y:
                     if (isNewMode || !printPoint) {
                         // force start at lower left corner
                         printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
                     }
-                    setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
-                    spindle = Math.min(spindleMax, process.finishingSpindle);
+                    setTool(process.camContourTool, process.camContourSpeed, process.camFastFeedZ);
+                    spindle = Math.min(spindleMax, process.camContourSpindle);
                     depthData.finishDiam = toolDiam;
                     // todo find closest next trace/trace-point
                     slice.tops.forEach(function(top) {
@@ -1547,7 +1546,7 @@
                             polys.push({first:poly.first(), last:poly.last(), poly:poly});
                         });
                         if (depthFirst) {
-                            (slice.camMode === modes.FINISH_X ? depthData.linearx : depthData.lineary).appendAll(polys);
+                            (slice.camMode === modes.CONTOUR_X ? depthData.linearx : depthData.lineary).appendAll(polys);
                         } else {
                             printPoint = tip2tipEmit(polys, printPoint, function(el, point, count) {
                                 poly = el.poly;
@@ -1562,7 +1561,7 @@
                     });
                     break;
                 case modes.DRILL:
-                    setTool(process.drillTool, process.drillDownSpeed, process.drillDownSpeed);
+                    setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
                     // drilling is always depth-first
                     slice.tops.forEach(function(top) {
                         if (!top.traces) return;
@@ -1577,8 +1576,8 @@
         if (depthFirst) {
             // roughing depth first
             if (depthData.rough.length > 0) {
-                setTool(process.roughingTool, process.roughingSpeed, process.roughingPlunge);
-                spindle = Math.min(spindleMax, process.roughingSpindle);
+                setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
+                spindle = Math.min(spindleMax, process.camRoughSpindle);
                 printPoint = poly2polyDepthFirstEmit(depthData.rough, printPoint, function(poly, index, count, fromPoint) {
                     let last = null;
                     if (easeDown && poly.isClosed()) {
@@ -1592,12 +1591,12 @@
                     }
                     newLayer();
                     return last;
-                }, depthData.roughDiam * process.roughingOver * 1.01);
+                }, depthData.roughDiam * process.camRoughOver * 1.01);
             }
             // finishing depth first
             if (depthData.finish.length > 0) {
-                setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
-                spindle = Math.min(spindleMax, process.finishingSpindle);
+                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
+                spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 printPoint = poly2polyDepthFirstEmit(depthData.finish, printPoint, function(poly, index, count, fromPoint) {
                     let last = null;
                     if (easeDown && poly.isClosed()) {
@@ -1616,8 +1615,8 @@
             }
             // two modes for deferred finishing: x then y or combined
             if (process.finishCurvesOnly) {
-                setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
-                spindle = Math.min(spindleMax, process.finishingSpindle);
+                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
+                spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 // combined deferred linear x and y finishing
                 let linearxy = [].appendAll(depthData.linearx).appendAll(depthData.lineary);
                 printPoint = tip2tipEmit(linearxy, printPoint, function(el, point, count) {
@@ -1632,8 +1631,8 @@
                     return lastPoint;
                 });
             } else {
-                setTool(process.finishingTool, process.finishingSpeed, process.finishingPlunge);
-                spindle = Math.min(spindleMax, process.finishingSpindle);
+                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
+                spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 // deferred linear x finishing
                 if (depthData.linearx.length > 0) {
                     // force start at lower left corner
@@ -1666,7 +1665,7 @@
 
         // drilling is always depth first
         if (depthData.drill.length > 0) {
-            setTool(process.drillTool, process.drillDownSpeed, process.drillDownSpeed);
+            setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
             emitDrills(depthData.drill);
         }
 
@@ -1885,7 +1884,7 @@
         }
 
         if (!stripComments) {
-            append(`; Generated by Kiri:Moto ${KIRI.VERSION}`);
+            append(`; Generated by Kiri:Moto ${KIRI.version}`);
             append(`; ${new Date().toString()}`);
             filterEmit(["; Bed left:{left} right:{right} top:{top} bottom:{bottom}"], consts);
             append(`; Target: ${settings.filter[settings.mode]}`);
