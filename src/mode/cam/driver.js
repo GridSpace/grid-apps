@@ -1358,10 +1358,11 @@
             let rate = feedRate;
 
             if (!lastPoint) {
+                let above = point.clone().setZ(zmax);
                 // before first point, move cutting head to point above it
-                layerPush(point.clone().setZ(zmax), 0, 0, tool.number);
+                layerPush(above, 0, 0, tool.number);
                 // then set that as the lastPoint
-                lastPoint = point;
+                lastPoint = above;
             }
 
             let deltaXY = lastPoint.distTo2D(point),
