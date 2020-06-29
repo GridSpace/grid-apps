@@ -206,7 +206,7 @@
         finishingTool: "camOutlineTool",
         finishingSpindle: "camOutlineSpindle",
         finishingDown: "camOutlineDown",
-        finishingOver: "camOutlineOver",
+        finishingOver: "camContourOver",
         finishingSpeed: "camOutlineSpeed",
         finishingPlunge: "camOutlinePlunge",
         finishingOn: "camOutlineOn",
@@ -396,8 +396,6 @@
                 // process defaults CAM:Process
                 p:{
                     processName: "default",
-                    camFastFeed: 6000,
-                    camFastFeedZ: 300,
                     camRoughTool: 1000,     // roughingTool
                     camRoughSpindle: 1000,  // camRoughSpindle
                     camRoughDown: 2,        // roughingDown
@@ -410,19 +408,20 @@
                     camOutlineTool: 1000,   // finishingTool
                     camOutlineSpindle: 1000,// finishingSpindle
                     camOutlineDown: 3,      // finishingDown
-                    camOutlineOver: 0.5,    // finishingOver
                     camOutlineSpeed: 800,   // finishingSpeed
                     camOutlinePlunge: 250,  // finishingPlunge
                     camOutlineOn: true,     // finishingOn
                     camContourTool: 1000,
                     camContourSpindle: 1000,// (new)
+                    camContourOver: 0.5,    // (new)
                     camContourSpeed: 1000,  // (new)
                     camContourAngle: 85,    // finishingAngle
                     camContourCurves: false,// finishCurvesOnly
                     camContourXOn: true,    // finishingXOn
                     camContourYOn: true,    // finishingYOn
                     camTraceTool: 1000,
-                    camTraceEnable: false,
+                    camTraceSpeed: 250,
+                    camTraceOn: false,
                     camDrillTool: 1000,     // drillTool
                     camDrillSpindle: 1000,  // drillSpindle
                     camDrillDownSpeed: 250, // drillDownSpeed
@@ -440,10 +439,12 @@
                     camDepthFirst: true,
                     camEaseDown: false,
                     camOriginTop: true,
-                    camTolerance: 0.15,
                     camZTopOffset: 0,
                     camZBottom: 0,
                     camZClearance: 1,
+                    camFastFeed: 6000,
+                    camFastFeedZ: 300,
+                    camTolerance: 0.15,
                     camStockX: 0,
                     camStockY: 0,
                     camStockZ: 0,
