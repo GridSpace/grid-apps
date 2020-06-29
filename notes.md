@@ -45,13 +45,10 @@
 # CAM
 
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
-* `B` linear finishing should extend beyond part boundaries by tool radius
+* `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` use arcs to connect hard angles
-* `F` do not rough areas that go all the way through the part
-      https://github.com/GridSpace/grid-apps/issues/20
-* `F` send gcode to cncjs
 * `F` lead-in milling
 * `F` trapezoidal tabs (in the Z axis)
 * `F` ease-in and ease-out especially on tab cut-out start/stop
@@ -62,9 +59,9 @@
 * `F` warn when part > stock or cuts go outside bed
 * `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling
-* `P` disable topo generation when no linear xy and no depth first
+* `P` disable topo generation when no contour xy and no depth first
 * `P` store tab and camshell polys in widget.topo to minimize z on edge moves
-* `P` linear finishing is going back to z top too often
+* `P` contouring is going back to z top too often
 * `P` option to skip milling holes that would be drilled
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` background worker to speculatively generate topo maps (and maybe pre-slicing)

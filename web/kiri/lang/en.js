@@ -239,7 +239,7 @@ kiri.lang['en-us'] = {
     cc_feed_l:      "max cutting speed in\nworkspace units / minute",
     cc_plng_s:      "plunge rate",
     cc_plng_l:      "max z axis speed in\nworkspace units / minute",
-    cc_pock_s:      "pocket only",
+    cc_pock_s:      "inside only",
     cc_pock_l:      "constrain cuts to\npart boundaries",
 
     // CNC COMMON
@@ -299,7 +299,7 @@ kiri.lang['en-us'] = {
     ct_wdth_l:      "width in workspace units",
     ct_hght_s:      "height",
     ct_hght_l:      "height in workspace units",
-    ct_nabl_l:      "enable or disable tabs\ntab generation skipped when\npocket only mode enabled",
+    ct_nabl_l:      "enable or disable tabs\ntab generation skipped when\ninside only mode enabled",
 
     // FDM RAFT
     fr_menu:        "raft",

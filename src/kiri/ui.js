@@ -305,7 +305,7 @@
     }
 
     function addModeControls(el, options) {
-        options = options || {};
+        let opt = options || {};
         el.__show = true;
         el.__modeSave = null;
         el.showMe = function() {
@@ -325,16 +325,17 @@
             else el.hideMe();
         };
         el.setMode = function(mode) {
-            let show = options.expert === undefined || (options.expert === letExpert);
-            el.setVisible(el.hasMode(mode) && show);
+            let show = opt.expert === undefined || (opt.expert === letExpert);
+            let disp = opt.visible ? opt.visible() : true;
+            el.setVisible(el.hasMode(mode) && show && disp);
         }
         el.hasMode = function(mode) {
             if (mode === NOMODE) return false;
             if (!el.modes) return true;
             return el.modes.contains(mode);
         }
-        if (options.modes) {
-            el.modes = options.modes;
+        if (opt.modes) {
+            el.modes = opt.modes;
             hasModes.push(el);
         }
     }

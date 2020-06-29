@@ -1360,7 +1360,7 @@
 
             camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.1,1.0), modes:CAM}),
             camRoughDown:       UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
             camRoughSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
@@ -1372,7 +1372,7 @@
             camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
             camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM, marker:true}),
             camOutlineTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camOutlineOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM}),
             camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
@@ -1382,7 +1382,7 @@
             camOutlineOn:       UC.newBoolean(LANG.cf_watr_s, onBooleanClick, {title:LANG.cf_watr_l, modes:CAM}),
             camContour:         UC.newGroup(LANG.cn_menu, null, {modes:CAM, marker:true}),
             camContourTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            camContourSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camContourSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
@@ -1391,11 +1391,12 @@
             camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
             // camTracing:          UC.newGroup(LANG.cu_menu, null, {modes:CAM, marker:true}),
             // camTraceTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            // camTraceSpeed:       UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
             // camTracingSep:       UC.newBlank({class:"pop-sep"}),
-            // camTraceEnable:      UC.newBoolean(LANG.enable, onBooleanClick, {title:'todo', modes:CAM}),
+            // camTraceOn:          UC.newBoolean(LANG.enable, onBooleanClick, {title:'todo', modes:CAM}),
             camDrill:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
             camDrillTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
-            camDrillSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM}),
+            camDrillSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camDrillDown:        UC.newInput(LANG.cd_plpr_s, {title:LANG.cd_plpr_l, convert:UC.toFloat, modes:CAM}),
             camDrillDownSpeed:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, modes:CAM}),
             camDrillDwell:       UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, modes:CAM}),
@@ -1529,6 +1530,10 @@
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
+
+        function spindleShow() {
+            return settings().device.spindleMax > 0;
+        }
 
         // slider setup
         const slbar = 30;
