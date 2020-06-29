@@ -403,7 +403,7 @@
                     camRoughSpeed: 1000,    // roughingSpeed
                     camRoughPlunge: 250,    // roughingPlunge
                     camRoughStock: 0,       // roughingStock
-                    camRoughVoid: true,     // roughingPocket
+                    camRoughVoid: false,    // roughingPocket
                     camRoughOn: true,       // roughingOn
                     camOutlineTool: 1000,   // finishingTool
                     camOutlineSpindle: 1000,// finishingSpindle

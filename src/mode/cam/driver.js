@@ -400,8 +400,8 @@
             maxY = bounds.max.y,// + diameter,
             boundsX = maxX - minX,
             boundsY = maxY - minY,
-            maxangle = proc.finishingAngle,
-            curvesOnly = proc.finishCurvesOnly,
+            maxangle = proc.camContourAngle,
+            curvesOnly = proc.camContourCurves,
             R2A = 180 / Math.PI,
             stepsx = Math.ceil(boundsX / resolution),
             stepsy = Math.ceil(boundsY / resolution),
@@ -1628,7 +1628,7 @@
                 }, depthData.finishDiam * 0.01);
             }
             // two modes for deferred finishing: x then y or combined
-            if (process.finishCurvesOnly) {
+            if (process.camContourCurves) {
                 setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
                 spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 // combined deferred linear x and y finishing
