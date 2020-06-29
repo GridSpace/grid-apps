@@ -193,14 +193,14 @@
     function getMaxTopoToolZ(topo, profile, x, y, floormax) {
         let tv, tx, ty, tz, gv, i = 0, mz = -1;
 
-        const sx = topo.stepsx, sy = topo.stepsy;
+        const sx = topo.stepsx, sy = topo.stepsy, lx = sx - 1, ly = sy - 1;
 
         while (i < profile.length) {
             // tool profile point x, y, and z offsets
             let tx = profile[i++] + x;
             let ty = profile[i++] + y;
             let tz = profile[i++];
-            if (tx < 0 || tx >= sx || ty < 0 || ty >= sy) {
+            if (tx < 0 || tx > lx || ty < 0 || ty > ly) {
                 // if outside max topo steps, use 0
                 gv = 0;
             } else {
@@ -475,7 +475,7 @@
                     lines = slice.lines;
                 gridy = 0;
                 // slices have x/z swapped
-                for (y = minY; y <= maxY; y += resolution) {
+                for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
                     gridi = gridx * stepsy + gridy;
                     gridv = data[gridi] || 0;
                     // strategy using raw lines (faster slice, but more lines)
