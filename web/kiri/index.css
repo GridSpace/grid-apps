@@ -414,7 +414,7 @@ th, tr, td, label {
 .lt-enabled:hover .pop-lcol {
     display: flex;
 }
-@media only screen and (max-height : 850px) {
+@media only screen and (max-height : 800px) {
     .lt-menu, .pop-lcol {
         font-size: 16px !important;
     }
