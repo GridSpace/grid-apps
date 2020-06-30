@@ -349,6 +349,7 @@
 
     function refresh() {
         refreshRequested = false;
+        updateLastAction();
         viewControl.update();
     }
 
