@@ -719,7 +719,7 @@
                 }
             }, (val) => {
                 updateLastAction();
-                slider(val);
+                if (slider) slider(val);
             });
 
             viewControl.noKeys = true;
