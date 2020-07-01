@@ -1089,7 +1089,7 @@
             size.setAttribute("class", "label");
             size.appendChild(DOC.createTextNode(BASE.util.comma(file.v)));
 
-            row.setAttribute("class", "row a-center");
+            row.setAttribute("class", "f-row a-center");
             row.appendChild(renm);
             row.appendChild(load);
             row.appendChild(size);
@@ -1275,29 +1275,29 @@
             gcodeFanTrack: UC.newRow([
                 (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button
-            ], {modes:FDM, class:"ext-buttons row"}),
+            ], {modes:FDM, class:"ext-buttons f-row"}),
             gcodeLayerPause: UC.newRow([
                 (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
                 (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button
-            ], {modes:FDM, class:"ext-buttons row"}),
+            ], {modes:FDM, class:"ext-buttons f-row"}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
             gcodeLaserOnOff: UC.newRow([
                 (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
                 (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
-            ], {modes:LASER, class:"ext-buttons row"}),
+            ], {modes:LASER, class:"ext-buttons f-row"}),
             gcodeCam1: UC.newRow([
                 (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button
-            ], {modes:CAM, class:"ext-buttons row"}),
+            ], {modes:CAM, class:"ext-buttons f-row"}),
             gcodeCam2: UC.newRow([
                 (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
                 (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
-            ], {modes:CAM, class:"ext-buttons row"}),
+            ], {modes:CAM, class:"ext-buttons f-row"}),
             gcodeHeadFoot: UC.newRow([
                 (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
                 (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button
-            ], {modes:GCODE, class:"ext-buttons row"}),
+            ], {modes:GCODE, class:"ext-buttons f-row"}),
 
             layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),

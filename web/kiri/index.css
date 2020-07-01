@@ -108,10 +108,10 @@ th, tr, td, label {
 .noshow {
     display: none;
 }
-.row {
+.f-row {
     flex-direction: row;
 }
-.col {
+.f-col {
     flex-direction: column;
 }
 .auto {

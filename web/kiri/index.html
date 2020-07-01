@@ -20,40 +20,40 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
     <script src="/code/kiri.js?{{version}}"></script>
 </head>
-<body class="col">
+<body class="f-col">
     <div id="curtain" class="j-center a-center">loading...</div>
     <div id="container"></div>
     <div id="tracker"></div>
     <div id="top-sep"></div>
-    <div id="top" class="row">
+    <div id="top" class="f-row">
         <div id="app-mode">
             <div id="app-mode-name"></div>
-            <div id="mode-info" class="col">
+            <div id="mode-info" class="f-col">
                 <div><label>Device:</label><div id="mode-device">123</div></div>
                 <div><label>Profile:</label><div id="mode-profile">456</div></div>
             </div>
         </div>
         <div class="grow"></div>
-        <div id="app-name" class="col a-center">
+        <div id="app-name" class="f-col a-center">
             <div>Kiri:Moto</div>
             <div id="app-info">version</div>
         </div>
         <div class="grow"></div>
         <div id="app-acct">
             <i class="fas fa-user-cog"></i>
-            <div id="acct-pop" class="col">
-                <div class="col">
+            <div id="acct-pop" class="f-col">
+                <div class="f-col">
                     <div id="acct-lang">
                         <label><i class="fas fa-caret-left"></i>&nbsp;language</label>
-                        <div id="lang-pop" class="col">
+                        <div id="lang-pop" class="f-col">
                             <div id="lset-en">english</div>
                             <div id="lset-da">danish</div>
                         </div>
                     </div>
-                    <div id="acct-export" class="col a-end">
+                    <div id="acct-export" class="f-col a-end">
                         <label>export</label>
                     </div>
-                    <div id="acct-help" class="col a-end">
+                    <div id="acct-help" class="f-col a-end">
                         <label>help</label>
                     </div>
                 </div>
@@ -61,9 +61,9 @@
         </div>
     </div>
     <div id="mid-sep"></div>
-    <div id="mid" class="grow row">
+    <div id="mid" class="grow f-row">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-        <div id="mid-lcol" class="col j-center noshow">
+        <div id="mid-lcol" class="f-col j-center noshow">
             <div id="lt-back" class="lt-menu lt-enabled">
                 <i class="fas fa-arrow-circle-left"></i>
             </div>
@@ -71,7 +71,7 @@
             <div id="lt-setup" class="lt-menu lt-enabled">
                 <i class="fas fa-cogs"></i>
                 <label>setup</label>
-                <div id="set-pop" class="pop-lcol row">
+                <div id="set-pop" class="pop-lcol f-row">
                     <div id="set-device">
                         <i class="fas fa-cube"></i>
                         <label>machine</label>
@@ -89,7 +89,7 @@
             <div id="lt-file" class="lt-menu lt-enabled">
                 <i class="fas fa-folder"></i>
                 <label>files</label>
-                <div id="file-pop" class="pop-lcol row">
+                <div id="file-pop" class="pop-lcol f-row">
                     <div id="file-recent">
                         <i class="fas fa-list"></i>
                         <label>recent</label>
@@ -103,7 +103,7 @@
             <div id="lt-view" class="lt-menu lt-enabled">
                 <i class="fas fa-eye"></i>
                 <label>view</label>
-                <div id="pop-view" class="pop-lcol row">
+                <div id="pop-view" class="pop-lcol f-row">
                     <div id="view-arrange">
                         <i class="fas fa-th"></i>
                         <label>arrange</label>
@@ -135,7 +135,7 @@
             <div id="lt-rotate" class="lt-menu">
                 <i class="fas fa-sync-alt"></i>
                 <label>rotate</label>
-                <div id="pop-rotate" class="pop-lcol row fillh russo">
+                <div id="pop-rotate" class="pop-lcol f-row fillh russo">
                     <div>
                         <div class="grow a-center">
                             <i id="rot_x_lt" class="fas fa-chevron-left"></i>
@@ -160,14 +160,14 @@
                         </div>
                         <input id="rot_z" class="value center" size="5"/ value="0">
                     </div>
-                    <!-- <div id="lay-flat" class="col j-center center">lay flat</div> -->
-                    <div id="unrotate" class="col j-center">reset</div>
+                    <!-- <div id="lay-flat" class="f-col j-center center">lay flat</div> -->
+                    <div id="unrotate" class="f-col j-center">reset</div>
                 </div>
             </div>
             <div id="lt-scale" class="lt-menu">
                 <i class="fas fa-expand"></i>
                 <label>scale</label>
-                <div id="pop-scale" class="pop-lcol row fillh russo">
+                <div id="pop-scale" class="pop-lcol f-row fillh russo">
                     <div>
                         <input id="lock_x" type="checkbox" checked/>
                         <div><label>X</label></div>
@@ -186,7 +186,7 @@
                         <div><input id="size_z" xsize="8" class="value"/></div>
                         <div><input id="scale_z" xsize="8" class="value" value="1"/></div>
                     </div>
-                    <div class="col j-center">
+                    <div class="f-col j-center">
                         <div><label>axis</label></div>
                         <div><label>size</label></div>
                         <div><label>scale</label></div>
@@ -196,41 +196,41 @@
             <div id="lt-nozzle" class="lt-menu noshow">
                 <i class="fas fa-map-marker"></i>
                 <label>nozzle</label>
-                <div id="pop-nozzle" class="pop-lcol row fillh russo"></div>
+                <div id="pop-nozzle" class="pop-lcol f-row fillh russo"></div>
             </div>
             <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
             <div id="modal">
-                <div id="modal-box" class="col">
+                <div id="modal-box" class="f-col">
 
-                <div class="mod-top row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
-                <div id="mod-help" class="mdialog col">
+                <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+                <div id="mod-help" class="mdialog f-col">
                     <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
                     <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
                     <a href="https://www.inov3d.net/3d-printing-slicer-software-download/">slicer news</a>
                     <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
                     <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
                 </div>
-                <div id="mod-setup" class="mdialog col">
-                    <div class="col a-center">select machine type</div>
-                    <div class="row j-center">
+                <div id="mod-setup" class="mdialog f-col">
+                    <div class="f-col a-center">select machine type</div>
+                    <div class="f-row j-center">
                         <button id="mode-fdm" class="dev-type"><label>FDM</label></button>
                         <button id="mode-sla" class="dev-type"><label>SLA</label></button>
                         <button id="mode-cam" class="dev-type"><label>CNC</label></button>
                         <button id="mode-laser" class="dev-type"><label>LASER</label></button>
                     </div>
-                    <div class="row mh0">
-                        <div id="devices" class="t-33 col"><select id="device-list" size="15" class="grow"></select></div>
+                    <div class="f-row mh0">
+                        <div id="devices" class="t-33 f-col"><select id="device-list" size="15" class="grow"></select></div>
                         <div class="t-pad"></div>
-                        <div id="device" class="col t-body t-inset overy"></div>
+                        <div id="device" class="f-col t-body t-inset overy"></div>
                         <div class="t-pad"></div>
-                        <div id="gcode-edit" class="t-body t-inset col">
-                            <div class="set-header col">gcode editor</div>
+                        <div id="gcode-edit" class="t-body t-inset f-col">
+                            <div class="set-header f-col">gcode editor</div>
                             <div id="dev-gcode" class="grow"></div>
                         </div>
                     </div>
-                    <div id="device-action" class="row">
+                    <div id="device-action" class="f-row">
                         <div class="grow"></div>
                         <button id="device-add"><i class="fas fa-plus"></i></button>
                         <button id="device-del"><i class="fas fa-minus"></i></button>
@@ -242,53 +242,53 @@
                         <div class="grow"></div>
                     </div>
                 </div>
-                <div id="mod-files" class="mdialog col">
+                <div id="mod-files" class="mdialog f-col">
                     <label class="set-header">recent files</label>
-                    <div id="catalogList" class="col"></div>
+                    <div id="catalogList" class="f-col"></div>
                 </div>
-                <div id="mod-saves" class="mdialog col">
+                <div id="mod-saves" class="mdialog f-col">
                     <label class="set-header">saved settings</label>
-                    <div id="settingsList" class="col"></div>
+                    <div id="settingsList" class="f-col"></div>
                 </div>
                 <div id="mod-tools" class="mdialog">
-                    <div class="col">
-                        <div class="row t-head">
+                    <div class="f-col">
+                        <div class="f-row t-head">
                             <label class="t-33">tool</label>
                             <div class="t-pad"></div>
                             <label class="t-33">detail</label>
                             <div class="t-pad"></div>
                             <label class="t-33">view</label>
                         </div>
-                        <div class="row">
-                            <div class="col t-33">
+                        <div class="f-row">
+                            <div class="f-col t-33">
                                 <select id="tool-select" size="10" class="grow"></select>
                             </div>
                             <div class="t-pad"></div>
-                            <div class="col t-33 t-body t-inset">
-                                <div class="row var-row"><label>name</label><input id="tool-name" size="15"></input></div>
-                                <div class="row var-row"><label>type</label>
+                            <div class="f-col t-33 t-body t-inset">
+                                <div class="f-row var-row"><label>name</label><input id="tool-name" size="15"></input></div>
+                                <div class="f-row var-row"><label>type</label>
                                     <select id="tool-type">
                                         <option value="endmill" selected>end</option>
                                         <option value="ballmill">ball</option>
                                         <option value="tapermill">taper</option>
                                     </select>
                                 </div>
-                                <div class="row var-row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
-                                <div class="row var-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
-                                <div class="set-header col">shaft</div>
-                                <div class="row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
-                                <div class="row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
-                                <div class="set-header col">flute</div>
-                                <div class="row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
-                                <div class="row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
-                                <div class="set-header col">taper</div>
+                                <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
+                                <div class="f-row var-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
+                                <div class="set-header f-col">shaft</div>
+                                <div class="f-row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
+                                <div class="f-row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
+                                <div class="set-header f-col">flute</div>
+                                <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
+                                <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
+                                <div class="set-header f-col">taper</div>
                                 <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
-                                <div class="row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
+                                <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
                             </div>
                             <div class="t-pad"></div>
-                            <div id="tool-view" class="col t-33 t-body"></div>
+                            <div id="tool-view" class="f-col t-33 t-body"></div>
                         </div>
-                        <div id="tool-action" class="row j-center">
+                        <div id="tool-action" class="f-row j-center">
                             <button id="tool-add"><i class="fas fa-plus"></i></button>
                             <button id="tool-del"><i class="fas fa-minus"></i></button>
                             <div class="t-pad2"></div>
@@ -297,24 +297,24 @@
                         </div>
                     </div>
                 </div>
-                <div id="mod-prefs" class="mdialog row">
-                    <div id="prefs-gen" class="col"></div>
+                <div id="mod-prefs" class="mdialog f-row">
+                    <div id="prefs-gen" class="f-col"></div>
                     <div class="t-pad2"></div>
-                    <div id="prefs-out" class="col"></div>
+                    <div id="prefs-out" class="f-col"></div>
                 </div>
-                <div id="mod-local" class="mdialog col"></div>
-                <div id="mod-print" class="mdialog col"></div>
-                <div id="mod-any" class="mdialog col"></div>
+                <div id="mod-local" class="mdialog f-col"></div>
+                <div id="mod-print" class="mdialog f-col"></div>
+                <div id="mod-any" class="mdialog f-col"></div>
                 <!-- hidden file input loader -->
                 <input id="load-file" type="file" name="loadme" style="display:none" accept=".stl,.gcode,.nc"/>
                 <div class="mod-end"></div></div>
             </div>
-            <div id="layer-slider" class="col a-stretch">
-                <div id="layers" class="row j-center"></div>
-                <div id="slider" class="row russo">
+            <div id="layer-slider" class="f-col a-stretch">
+                <div id="layers" class="f-row j-center"></div>
+                <div id="slider" class="f-row russo">
                     <div id="slider-zero">0</div>
                     <div id="slider-center" class="grow">
-                        <div id="slider-hold" class="row">
+                        <div id="slider-hold" class="f-row">
                             <div id="slider-lo" class="handle"><div id="slider-lo-val"></div></div>
                             <div id="slider-mid">&nbsp;</div>
                             <div id="slider-hi" class="handle"><div id="slider-hi-val"></div></div>
@@ -324,15 +324,15 @@
                 </div>
             </div>
         </div>
-        <div id="mid-rcol" class="col j-center noshow">
-            <div id="set-menu" class="col">
+        <div id="mid-rcol" class="f-col j-center noshow">
+            <div id="set-menu" class="f-col">
                 <div id="set-top" class="set-group"><a>settings</a><div id="set-now"></div></div>
-                <div id="settings" class="col"></div>
+                <div id="settings" class="f-col"></div>
                 <div id="set-end" class="set-group"></div>
             </div>
         </div>
     </div>
-    <div id="end" class="col a-center">
+    <div id="end" class="f-col a-center">
         <div id="bottom"></div>
         <div id="alert-area">
             <div id="alert-border">
@@ -342,7 +342,7 @@
     </div>
     <div id="gdpr" class="noshow">
         <p>this site uses cookies to preserve application preferences</p>
-        <button id="gotit" class="col j-center">got it</button>
+        <button id="gotit" class="f-col j-center">got it</button>
     </div>
 </body>
 </html>
