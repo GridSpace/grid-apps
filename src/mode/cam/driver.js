@@ -903,56 +903,58 @@
             // skip if no tops | traces
             if (slice.tops.length === 0) return;
 
-            let trace, index, maxArea = 0, tmpArea;
+            let notabs = 0;
+            let nutrace = [];
 
             // find trace with greatest area
-            slice.tops[0].traces.forEach(function(trc, idx) {
-                if ((tmpArea = trc.area()) > maxArea) {
-                    maxArea = tmpArea;
-                    index = idx;
-                    trace = trc;
+            slice.tops[0].traces.forEach(function(trace, index) {
+
+                // required to match computed order of cutouts
+                trace.setClockwise();
+
+                let count = proc.camTabsCount,
+                    angle = proc.camTabsAngle,
+                    angle_inc = 360 / count,
+                    center = trace.circleCenter(),//BASE.newPoint(0,0,slice.z),
+                    offset = (tabWidth + toolDiam) / 2,
+                    ints = [],
+                    segs = [];
+
+                while (count-- > 0) {
+                    let slope = BASE.newSlopeFromAngle(angle),
+                        normal = BASE.newSlopeFromAngle(angle + 90),
+                        c1 = center.projectOnSlope(normal, offset),
+                        c2 = center.projectOnSlope(normal, -offset),
+                        o1 = c1.projectOnSlope(slope, 10000),
+                        o2 = c2.projectOnSlope(slope, 10000),
+                        int1 = trace.intersections(c1, o1).pop(),
+                        int2 = trace.intersections(c2, o2).pop();
+                    if (int1 && int2) {
+                        ints.push(int1);
+                        ints.push(int2);
+                    }
+                    angle -= angle_inc;
                 }
+
+                if (ints.length) {
+                    ints.push(ints.shift());
+                    for (let i=0; i<ints.length; i+=2) {
+                        segs.push(trace.emitSegment(ints[i], ints[i+1]));
+                    }
+                    // replace intersected trace with segments
+                    nutrace.appendAll(segs);
+                } else {
+                    nutrace.push(trace);
+                    notabs++;
+                }
+
             });
 
-            // required to match computed order of cutouts
-            trace.setClockwise();
-
-            let count = proc.camTabsCount,
-                angle = proc.camTabsAngle,
-                angle_inc = 360 / count,
-                center = BASE.newPoint(0,0,slice.z),
-                offset = (tabWidth + toolDiam) / 2,
-                ints = [],
-                segs = [];
-
-            while (count-- > 0) {
-                let slope = BASE.newSlopeFromAngle(angle),
-                    normal = BASE.newSlopeFromAngle(angle + 90),
-                    c1 = center.projectOnSlope(normal, offset),
-                    c2 = center.projectOnSlope(normal, -offset),
-                    o1 = c1.projectOnSlope(slope, 10000),
-                    o2 = c2.projectOnSlope(slope, 10000),
-                    int1 = trace.intersections(c1, o1).pop(),
-                    int2 = trace.intersections(c2, o2).pop();
-                if (int1 && int2) {
-                    ints.push(int1);
-                    ints.push(int2);
-                }
-                angle -= angle_inc;
-                // segs.push(newPolygon([c1,o1]));
-                // segs.push(newPolygon([c2,o2]));
+            if (notabs) {
+                console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`, trace);
             }
 
-            if (ints.length) {
-                ints.push(ints.shift());
-                for (let i=0; i<ints.length; i+=2) {
-                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
-                }
-                // replace intersected trace with segments
-                slice.tops[0].traces.splice(index, 1, ...segs);
-            } else {
-                console.log(`unable to compute tabs for slice @ ${slice.z}`);
-            }
+            slice.tops[0].traces = nutrace;
         }
 
         // called when z-index slicing complete
@@ -1223,6 +1225,7 @@
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
             zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
+            ztoff = process.camZTopOffset,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
             wmpos = widget.mesh.position,
@@ -1407,7 +1410,7 @@
             } //else (TODO verify no else here b/c above could change isMove)
             // move over things
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                let maxz = toolProfile ? Math.max(
+                let maxz = (toolProfile ? Math.max(
                         getTopoZPathMax(
                             widget,
                             toolProfile,
@@ -1416,7 +1419,7 @@
                             point.x - wmx,
                             point.y - wmy) + zadd,
                         point.z,
-                        lastPoint.z) : zmax,
+                        lastPoint.z) : zmax) + ztoff,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/outline
