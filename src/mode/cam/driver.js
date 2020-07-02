@@ -896,6 +896,10 @@
             return ondone("no processes selected");
         }
 
+        if (zMin >= bounds.max.z) {
+            return ondone(`invalid z bottom >= bounds z max ${bounds.max.z}`);
+        }
+
         // cut outside traces at the right points
         const addCutoutTabs = function(slice, toolDiam) {
             // too high
@@ -951,7 +955,7 @@
             });
 
             if (notabs) {
-                console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`, trace);
+                console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
             }
 
             slice.tops[0].traces = nutrace;
