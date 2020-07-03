@@ -18,10 +18,10 @@
         let m = mcache[color];
         if (!m) {
             m = mcache[color] = mesh ? new THREE.MeshPhongMaterial({
-                transparent: layer.transparent,
+                transparent: color ? layer.transparent : true,
                 shininess: layer.shininess,
                 specular: layer.specular,
-                opacity: layer.opacity,
+                opacity: color ? layer.opacity : 0.25,
                 color: color,
                 side: THREE.DoubleSide
             }) : new THREE.LineBasicMaterial({
