@@ -709,13 +709,13 @@
 
         currentPrint = kiri.newPrint(settings, WIDGETS);
         currentPrint.setup(true, function(update, status) {
-            setProgress(update, status);
+            API.show.progress(update, status);
         }, function() {
             if (!currentPrint) {
                 return setViewMode(VIEWS.ARRANGE);
             }
 
-            setProgress(0);
+            API.show.progress(0);
             if (!isCam) setOpacity(0);
 
             currentPrint.render();
@@ -842,7 +842,7 @@
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    setProgress(0);
+                    API.show.progress(0);
                     showSlices(preserveLayer);
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
@@ -872,7 +872,7 @@
                 forAllWidgets(function(w) {
                     totalProgress += (track[w.id] || 0);
                 });
-                setProgress((totalProgress / WIDGETS.length), msg);
+                API.show.progress((totalProgress / WIDGETS.length), msg);
             }, true);
         });
     }
