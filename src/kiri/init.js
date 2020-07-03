@@ -55,6 +55,7 @@
     // extend KIRI API with local functions
     API.show.devices = showDevices;
     API.device.set = selectDevice;
+    API.device.clone = cloneDevice;
 
     function settings() {
         return API.conf.get();

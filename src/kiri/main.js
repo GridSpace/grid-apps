@@ -183,7 +183,8 @@
         },
         device: {
             get: currentDeviceName,
-            set: undefined // set during init
+            set: undefined, // set during init
+            clone: undefined // set during init
         },
         dialog: {
             show: showModal,
@@ -688,11 +689,12 @@
             }
         }
 
+        let isCam = MODE === MODES.CAM, pMode = getMode();
+
         setViewMode(VIEWS.PREVIEW);
         clearPrint();
         API.conf.save();
-
-        let isCam = MODE === MODES.CAM;
+        API.event.emit('preview.begin', pMode);
 
         if (isCam) {
             setOpacity(color.cam_preview_opacity);
@@ -716,7 +718,8 @@
 
             currentPrint.render();
 
-            API.event.emit('print', getMode());
+            API.event.emit('print', pMode);
+            API.event.emit('preview.end', pMode);
             SPACE.platform.add(currentPrint.group);
             SPACE.update();
 
@@ -781,7 +784,9 @@
         clearPrint();
         platform.deselect();
         setViewMode(VIEWS.SLICE);
+
         API.conf.save();
+        API.event.emit('slice.begin', getMode());
 
         let firstMesh = true,
             countdown = WIDGETS.length,
@@ -834,6 +839,7 @@
                     setProgress(0);
                     showSlices(preserveLayer);
                     SPACE.scene.active();
+                    API.event.emit('slice.end', getMode());
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
