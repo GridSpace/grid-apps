@@ -404,6 +404,7 @@
              onEvent[name] = onEvent[name] || [];
              onEvent[name].push(handler);
          }
+         return API.event;
      }
 
      function triggerSettingsEvent() {
