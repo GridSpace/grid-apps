@@ -1939,6 +1939,7 @@
                 DBUG.log("invalid view mode: "+mode);
                 return;
         }
+        API.event.emit('view.mode', mode);
         DOC.activeElement.blur();
     }
 
