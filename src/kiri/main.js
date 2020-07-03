@@ -206,6 +206,7 @@
             slice: prepareSlices,
             print: preparePrint,
             export: function() { KIRI.export() },
+            cancel: cancelWorker,
             clear: clearWidgetCache
         },
         hide: {
@@ -731,6 +732,10 @@
                 callback();
             }
         });
+    }
+
+    function cancelWorker() {
+        if (KIRI.work.isSlicing()) KIRI.work.restart();
     }
 
     function clearWidgetCache() {
@@ -1885,7 +1890,7 @@
                 html.push(`<tbody>`);
                 for (let k in j) {
                     let r = j[k].stat;
-                    bind.push({uuid: r.device.uuid, host: r.device.addr[0], post: r.device.port});
+                    bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
                     html.push(`<tr>`);
                     html.push(`<td>${r.device.name}</td>`);
                     html.push(`<td>${r.device.mode}</td>`);
