@@ -1,26 +1,26 @@
 <div class="header"><label>export</label></div>
-<div id="print-info" class="col box">
+<div id="print-info" class="f-col box">
     <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
     <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
     <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
 </div>
 
 <div id="print-filament-head" class="header"><label>filament</label></div>
-<div id="print-filament-info" class="col box">
+<div id="print-filament-info" class="f-col box">
     <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
     <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
     <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
 </div>
 
 <div class="header"><label>gcode</label></div>
-<div class="row box">
+<div class="f-row box">
     <button id="print-download" class="grow">download</button>
 </div>
 
 <div id="send-to-octohead" class="header"><label>octoprint</label></div>
-<div id="send-to-octoprint" class="col box">
-    <div class="grow row">
-        <div class="col grow">
+<div id="send-to-octoprint" class="f-col box">
+    <div class="grow f-row">
+        <div class="f-col grow">
             <div id="ophost"><label>host</label><input id="octo-host" size="20" placeholder="http(s)://host:port" /></div>
             <div id="opapik"><label>key</label><input id="octo-apik" size="20" /></div>
         </div>
@@ -30,9 +30,9 @@
 </div>
 
 <div id="send-to-hosthead" class="header"><label>grid:host</label></div>
-<div id="send-to-gridhost" class="col box">
-    <div class="grow row">
-        <div class="col grow">
+<div id="send-to-gridhost" class="f-col box">
+    <div class="grow f-row">
+        <div class="f-col grow">
             <div><label>host</label><input id="grid-host" size="20" placeholder="http(s)://host:port" /></div>
             <div id="gpapik"><label>api key</label><input id="grid-apik" size="20" /></div>
             <div><label>target</label><select id="grid-target"></select></div>
@@ -43,13 +43,13 @@
 </div>
 
 <div id="send-to-gridhead" class="header noshow"><label>grid:local</label></div>
-<div id="send-to-gridspool" class="row box noshow">
-    <div class="grow row">
+<div id="send-to-gridspool" class="f-row box noshow">
+    <div class="grow f-row">
         <div class="grow a-center j-center">
             <label>target</label>
             <select id="grid-local"></select>
         </div>
-        <div class="col">
+        <div class="f-col">
             <button id="print-gridlocal">send</button>
             <button id="admin-gridlocal">admin</button>
         </div>
