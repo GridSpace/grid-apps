@@ -205,7 +205,7 @@
         function: {
             slice: prepareSlices,
             print: preparePrint,
-            export: function() { KIRI.export() },
+            export: function() { KIRI.export(...arguments) },
             cancel: cancelWorker,
             clear: clearWidgetCache
         },

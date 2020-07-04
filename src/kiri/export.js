@@ -19,18 +19,18 @@
 
     let printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1;
 
-    function exportPrint() {
+    function exportPrint(options) {
         let currentPrint = API.print.get();
         if (currentPrint) {
             API.event.emit('export', API.mode.get());
             switch (API.mode.get()) {
                 case 'LASER': return exportPrintLaser(currentPrint);
-                case 'FDM': return exportPrintGCODE(currentPrint);
-                case 'CAM': return exportPrintGCODE(currentPrint);
+                case 'FDM': return exportPrintGCODE(currentPrint, options);
+                case 'CAM': return exportPrintGCODE(currentPrint, options);
                 case 'SLA': return exportPrintSLA(currentPrint);
             }
         } else {
-            API.function.print(exportPrint);
+            API.function.print(function() { exportPrint(options) });
         }
     }
 
@@ -73,13 +73,17 @@
         }
     }
 
-    function exportPrintGCODE(currentPrint) {
+    function exportPrintGCODE(currentPrint, options) {
         if (currentPrint) {
             currentPrint.exportGCode(true, function(gcode) {
-                exportGCode(gcode,currentPrint);
+                if (typeof(options) === 'function') {
+                    options(gcode);
+                } else {
+                    exportGCode(gcode, currentPrint);
+                }
             });
         } else {
-            API.function.print(exportPrint);
+            API.function.print(function() { exportPrint(options) });
         }
     }
 
