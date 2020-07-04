@@ -505,7 +505,7 @@
             x: (event.clientX / width()) * 2 - 1,
             y: -(event.clientY / height()) * 2 + 1};
         // only fire on mouse move between mouseStart (down) and up
-        if (mouseEnd.x - mouseStart.x + mouseEnd.y - mouseStart.y === 0) {
+        if (mouseStart && mouseEnd.x - mouseStart.x + mouseEnd.y - mouseStart.y === 0) {
             event.preventDefault();
             let refresh = false,
                 selection = null;
@@ -523,6 +523,7 @@
                 platformClick(platformClickAt);
             }
             if (refresh) requestRefresh();
+            mouseStart = null;
         } else if (mouseDrag && mouseDragStart) {
             mouseDrag(null,null,true);
         }
