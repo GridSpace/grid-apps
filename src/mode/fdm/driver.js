@@ -1347,7 +1347,7 @@
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0);
                 if (opt.aslines) {
-                    emits.poly(poly, color, false, true);
+                    emits.poly(poly, opt.color || color, false, true);
                 } else {
                     emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ());
                 }

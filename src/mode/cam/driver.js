@@ -1176,7 +1176,7 @@
                         break;
                 }
                 if (top.traces) {
-                    layer.poly(top.traces, 0x0, true, null);
+                    layer.poly(top.traces, 0x010101, true, null);
                 }
             });
 
@@ -1985,7 +1985,7 @@
     };
 
     function printRender(print) {
-        return KIRI.driver.FDM.printRender(print, {aslines: true});
+        return KIRI.driver.FDM.printRender(print, {aslines: true, color: 0x010101});
     }
 
 })();
