@@ -1,8 +1,5 @@
-*.log
-.cache
-.bukit
+mod
+tmp
 .DS_Store
 node_modules
-persist
-mod
 package-lock.json
