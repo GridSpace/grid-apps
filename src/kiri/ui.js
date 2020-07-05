@@ -79,15 +79,15 @@
             let rnd = Date.now().toString(36);
             let any = $('mod-any');
             let html = [
-                `<div class="confirm col a-stretch">`,
-                `<label>${message}</label>`,
+                `<div class="confirm f-col a-stretch">`,
+                `<label style="user-select:text">${message}</label>`,
             ];
             let iid;
             if (input !== undefined) {
                 iid = `confirm-input-${rnd}`;
                 html.append(`<div><input class="grow" type="text" spellcheck="false" value="${input}" id="${iid}"/></div>`);
             }
-            html.append(`<div class="row j-end">`);
+            html.append(`<div class="f-row j-end">`);
             Object.entries(btns).forEach((row,i) => {
                 html.append(`<button id="confirm-${i}-${rnd}">${row[0]}</button>`);
             });
