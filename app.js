@@ -41,7 +41,23 @@ function init(mod) {
     util = mod.util;
     dir = mod.dir;
     log = mod.log;
-    level = require('level')(mod.util.datadir("kvstore"), {valueEncoding:"json"});
+
+    if (mod.util.globdir) {
+        // when globdir available, look for shared kvstore
+        // and if not present, create and share in through env
+        if (mod.env._level) {
+            level = mod.env._level;
+            logger.log("using shared kvstore");
+        } else {
+            level = require('level')(mod.util.globdir("kvstore"), {valueEncoding:"json"});
+            mod.env._level = level;
+            logger.log("creating shared kvstore");
+        }
+    } else {
+        logger.log("fallback to local kvstore");
+        level = require('level')(mod.util.datadir("kvstore"), {valueEncoding:"json"});
+    }
+
     cacheDir = mod.util.datadir("cache");
 
     mod.on.reload(() => level.close());
