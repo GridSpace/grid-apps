@@ -116,6 +116,10 @@
         return this.maxy - this.miny;
     };
 
+    PRO.center = function(z) {
+        return BASE.newPoint(this.centerx(), this.centery(), z);
+    };
+
     PRO.centerx = function() {
         return this.minx + this.width() / 2;
     };

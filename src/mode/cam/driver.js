@@ -919,7 +919,7 @@
                 let count = proc.camTabsCount,
                     angle = proc.camTabsAngle,
                     angle_inc = 360 / count,
-                    center = trace.circleCenter(),//BASE.newPoint(0,0,slice.z),
+                    center = trace.bounds.center(slice.z),
                     offset = (tabWidth + toolDiam) / 2,
                     ints = [],
                     segs = [];
