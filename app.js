@@ -152,6 +152,7 @@ function initModule(mod, file, dir) {
             rootdir: mod.dir,
             version: version
         },
+        env: mod.env,
         pkg: {
             agent,
             moment
