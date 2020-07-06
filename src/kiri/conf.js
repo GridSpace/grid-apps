@@ -537,7 +537,7 @@
             controller:{
                 view: null,
                 dark: false,
-                expert: false,
+                expert: true,
                 zoomSpeed: 1.0,
                 thinRender: false,
                 reverseZoom: true,
