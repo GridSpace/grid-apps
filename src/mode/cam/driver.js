@@ -945,8 +945,20 @@
                     for (let i=0; i<ints.length; i+=2) {
                         segs.push(trace.emitSegment(ints[i], ints[i+1]));
                     }
-                    // replace intersected trace with segments
-                    nutrace.appendAll(segs);
+                    // check for and eliminate overlaps
+                    for (let i=0, il=segs.length; i < il; i++) {
+                        let si = segs[i];
+                        for (let j=i+1; j<il; j++) {
+                            let sj = segs[j];
+                            if (sj.overlaps(si)) {
+                                if (sj.perimeter() > si.perimeter()) {
+                                    sj._overlap = true;
+                                }
+                            }
+                        }
+                    }
+                    // replace intersected trace with non-overlapping segments
+                    nutrace.appendAll(segs.filter(seg => !seg._overlap));
                 } else {
                     nutrace.push(trace);
                     notabs++;
