@@ -1248,8 +1248,8 @@
         // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
         if (MODE === MODES.CAM && WIDGETS.length > 1) {
             let spacing = space || 1, CAM = KIRI.driver.CAM;
-            if (proc.roughingOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.roughingTool));
-            if (proc.finishingOn || proc.finishingXOn || proc.finishingYOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.finishingTool));
+            if (proc.camRoughOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camRoughTool));
+            if (proc.camOutlineOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camOutlineTool));
             gap = spacing * 1.5;
         }
 
