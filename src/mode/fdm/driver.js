@@ -1001,10 +1001,14 @@
         }
 
         function appendAll(arr) {
+            if (!arr) return;
+            if (!Array.isArray(arr)) arr = [ arr ];
             arr.forEach(function(line) { append(line) });
         }
 
         function appendAllSub(arr) {
+            if (!arr) return;
+            if (!Array.isArray(arr)) arr = [ arr ];
             arr.forEach(function(line) { appendSub(line) });
         }
 
