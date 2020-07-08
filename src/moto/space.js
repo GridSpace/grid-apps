@@ -730,6 +730,7 @@
                     clearTimeout(platformMoveTimer);
                     platformMoveTimer = setTimeout(platformOnMove, 500);
                 }
+                updateLastAction();
             }, (val) => {
                 updateLastAction();
                 if (slider) slider(val);
