@@ -1746,6 +1746,7 @@
             settings = print.settings,
             device = settings.device,
             gcodes = settings.device || {},
+            tools = settings.tools,
             space = gcodes.gcodeSpace ? ' ' : '',
             stripComments = gcodes.gcodeStrip || false,
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
@@ -1771,19 +1772,19 @@
                 min: { x:Infinity, y:Infinity, z:Infinity}
             },
             offset = {
-                    x: -settings.origin.x,
-                    y:  settings.origin.y
+                x: -settings.origin.x,
+                y:  settings.origin.y
             },
             consts = {
-                    tool: 0,
-                    tool_name: "unknown",
-                    top: (offset ? dev.bedDepth : dev.bedDepth/2),
-                    left: (offset ? 0 : -dev.bedWidth/2),
-                    right: (offset ? dev.bedWidth : dev.bedWidth/2),
-                    bottom: (offset ? 0 : -dev.bedDepth/2),
-                    time_sec: 0,
-                    time_ms: 0,
-                    time: 0
+                tool: 0,
+                tool_name: "unknown",
+                top: (offset ? dev.bedDepth : dev.bedDepth/2),
+                left: (offset ? 0 : -dev.bedWidth/2),
+                right: (offset ? dev.bedWidth : dev.bedWidth/2),
+                bottom: (offset ? 0 : -dev.bedDepth/2),
+                time_sec: 0,
+                time_ms: 0,
+                time: 0
             },
             append;
 
@@ -1830,7 +1831,14 @@
             }
         }
 
-        function toolNameByNumber(number, tools) {
+        function toolByNumber(number) {
+            for (let i=0; i<tools.length; i++) {
+                if (tools[i].number === number) return tools[i];
+            }
+            return undefined;
+        }
+
+        function toolNameByNumber(number) {
             for (let i=0; i<tools.length; i++) {
                 if (tools[i].number === number) return tools[i].name;
             }
@@ -1859,7 +1867,7 @@
             if (out.tool != pos.t) {
                 pos.t = out.tool;
                 consts.tool = pos.t;
-                consts.tool_name = toolNameByNumber(out.tool, settings.tools);
+                consts.tool_name = toolNameByNumber(out.tool);
                 filterEmit(cmdToolChange, consts);
             }
 
@@ -1940,12 +1948,16 @@
             }
         }
 
-        // emit gcode preamble
-        filterEmit(gcodes.gcodePre, consts);
+        // collect tool info to add to header
+        let toolz = {}, ctool;
 
         // remap points as necessary for origins, offsets, inversions
         print.output.forEach(function(layer) {
             layer.forEach(function(out) {
+                if (out.tool && out.tool !== ctool) {
+                    ctool = toolByNumber(out.tool);
+                    toolz[out.tool] = ctool;
+                }
                 point = out.point;
                 if (!point || point.mod) return;
                 // ensure not point is modified twice
@@ -1959,6 +1971,18 @@
                 if (spro.camOriginTop) point.z = point.z - zmax;
             });
         });
+
+        if (!stripComments) {
+            // emit tools used in comments
+            append("; --- tools ---");
+            Object.keys(toolz).sort().forEach(tn => {
+                let tool = toolz[tn];
+                append(`; tool=${tn} flute=${tool.flute_diam} len=${tool.flute_len} metric=${tool.metric}`);
+            });
+        }
+
+        // emit gcode preamble
+        filterEmit(gcodes.gcodePre, consts);
 
         // emit all points in layer/point order
         print.output.forEach(function (layerout) {
