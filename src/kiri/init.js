@@ -88,7 +88,6 @@
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
-        let isReload = false;
         control.expert = UI.expert.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.autoLayout = UI.autoLayout.checked;
@@ -104,14 +103,8 @@
         platform.layout();
         platform.update_stock();
         API.conf.save();
-        // if dark mode changed, reload UI
-        if (isDark !== control.dark) {
-            isReload = true;
-        }
         API.mode.set_expert(control.expert);
-        if (isReload) {
-            API.space.reload();
-        }
+        API.platform.update_size();
     }
 
     function onLayerToggle() {

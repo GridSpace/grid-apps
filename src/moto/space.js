@@ -29,6 +29,8 @@
         alignedTracking = false,
         skyColor = 0xbbbbbb,
         skyGridColor = 0xcccccc,
+        skyMaterial = undefined,
+        skyGridMaterial = undefined,
         showSkyGrid = true,
         showPlatform = true,
         hidePlatformBelow = true,
@@ -581,9 +583,19 @@
         update: requestRefresh,
         refresh: refresh,
 
-        showSkyGrid: function(b) { showSkyGrid = b },
-        setSkyColor: function(c) { skyColor = c },
-        setSkyGridColor: function(c) { skyGridColor = c },
+        showSkyGrid: function(b) {
+            showSkyGrid = b;
+        },
+
+        setSkyColor: function(c) {
+            skyColor = c;
+            if (skyMaterial) skyMaterial.color = new THREE.Color(c);
+        },
+
+        setSkyGridColor: function(c) {
+            skyGridColor = c;
+            if (skyGridMaterial) skyGridMaterial.color = new THREE.Color(c);
+        },
 
         scene: {
             add: function (o) {
@@ -752,10 +764,12 @@
 
             let sky = new THREE.Mesh(
                     new THREE.BoxGeometry(50000, 50000, 50000, 1, 1, 1),
+                    skyMaterial =
                     new THREE.MeshBasicMaterial({ color: skyColor, side: THREE.DoubleSide })
                 ),
                 skygrid = new THREE.Mesh(
                     new THREE.BoxGeometry(5000, 5000, 5000, 10, 10, 10),
+                    skyGridMaterial =
                     new THREE.MeshBasicMaterial({ color: skyGridColor, side: THREE.DoubleSide })
                 );
 

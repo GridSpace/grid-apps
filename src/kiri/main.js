@@ -1017,10 +1017,12 @@
         if (ctrl.dark) {
             SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
             SPACE.platform.opacity(0.8);
+            SPACE.setSkyColor(0);
             DOC.body.classList.add('dark');
         } else {
             SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
             SPACE.platform.opacity(0.3);
+            SPACE.setSkyColor(0xffffff);
             DOC.body.classList.remove('dark');
         }
         SPACE.platform.setGZOff(height/2 - 0.1);
