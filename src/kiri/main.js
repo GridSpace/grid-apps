@@ -293,7 +293,7 @@
         let o = this.obj, k;
         for (k in o) {
             if (!o.hasOwnProperty(k)) continue;
-            if (k === 'dn' || k.indexOf('-') > 0 || k.indexOf('_') > 0) {
+            if (['dn','lo','re'].indexOf(k) >= 0 || k.indexOf('-') > 0 || k.indexOf('_') > 0) {
                 delete o[k];
             }
         }
