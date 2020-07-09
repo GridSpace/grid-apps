@@ -1004,6 +1004,13 @@
 
         let files = evt.dataTransfer.files;
 
+        switch (API.feature.drop_group) {
+            case true:
+                return API.platform.load_files(files, []);
+            case false:
+                return API.platform.load_files(files, undefined);
+        }
+
         function ck_group() {
             if (files.length === 1) {
                 API.platform.load_files(files);

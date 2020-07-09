@@ -70,7 +70,8 @@
 
     const feature = {
         seed: true,
-        controls: true
+        controls: true,
+        drop_group: undefined
     };
 
     const selection = {
