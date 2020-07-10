@@ -1884,7 +1884,7 @@
 
     function showLocal() {
         showModal('local');
-        fetch("/api/grid_local")
+        fetch("https://live.grid.space/api/grid_local")
             .then(r => r.json())
             .then(j => {
                 let devc = 0;
