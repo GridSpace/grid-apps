@@ -1884,38 +1884,36 @@
 
     function showLocal() {
         showModal('local');
-        fetch("https://live.grid.space/api/grid_local")
-            .then(r => r.json())
-            .then(j => {
-                let devc = 0;
-                let bind = [];
-                let html = ['<table>'];
-                html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
-                html.push(`<tbody>`);
-                for (let k in j) {
-                    let r = j[k].stat;
-                    bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
-                    html.push(`<tr>`);
-                    html.push(`<td>${r.device.name}</td>`);
-                    html.push(`<td>${r.device.mode}</td>`);
-                    html.push(`<td>${r.state}</td>`);
-                    html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
-                    html.push(`</tr>`);
-                    devc++;
-                }
-                html.push(`</tbody>`);
-                html.push(`</table>`);
-                if (devc) {
-                    $('mod-local').innerHTML = html.join('');
-                } else {
-                    $('mod-local').innerHTML = `<br><b>no local devices</b>`;
-                }
-                bind.forEach(rec => {
-                    $(rec.uuid).onclick = () => {
-                        window.open(`http://${rec.host}:${rec.port||4080}/`);
-                    };
-                });
+        API.probe.local((err,data) => {
+            let devc = 0;
+            let bind = [];
+            let html = ['<table>'];
+            html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
+            html.push(`<tbody>`);
+            for (let k in data) {
+                let r = data[k].stat;
+                bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
+                html.push(`<tr>`);
+                html.push(`<td>${r.device.name}</td>`);
+                html.push(`<td>${r.device.mode}</td>`);
+                html.push(`<td>${r.state}</td>`);
+                html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
+                html.push(`</tr>`);
+                devc++;
+            }
+            html.push(`</tbody>`);
+            html.push(`</table>`);
+            if (devc) {
+                $('mod-local').innerHTML = html.join('');
+            } else {
+                $('mod-local').innerHTML = `<br><b>no local devices</b>`;
+            }
+            bind.forEach(rec => {
+                $(rec.uuid).onclick = () => {
+                    window.open(`http://${rec.host}:${rec.port||4080}/`);
+                };
             });
+        });
     }
 
     function setViewMode(mode) {
