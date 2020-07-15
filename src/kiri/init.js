@@ -1524,11 +1524,11 @@
             layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
             layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
-            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:ALL}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
-            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
+            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
+            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:GCODE}),
+            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
+            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
+            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle, {modes:GCODE}),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 

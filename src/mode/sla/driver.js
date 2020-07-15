@@ -748,7 +748,7 @@
                 if (slice.supports) polys.appendAll(slice.supports);
                 polys.forEach(poly => {
                     poly = poly.clone(true).move(widget.track.pos);
-                    layer.poly(poly, 0x010101, true);
+                    layer.poly(poly, 0x777777, true);
                     layer.solid(poly, 0x0099cc);
                 });
             });

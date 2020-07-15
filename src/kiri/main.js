@@ -589,6 +589,7 @@
         let print = UI.layerPrint.checked,
             moves = UI.layerMoves.checked,
             cam = MODE === MODES.CAM,
+            sla = MODE === MODES.SLA,
             hi = cam ? API.var.layer_max - API.var.layer_lo : API.var.layer_hi,
             lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
 
@@ -640,8 +641,8 @@
             }
         }
 
-        UI.layerPrint.parentNode.style.display = currentPrint ? '' : 'none';
-        UI.layerMoves.parentNode.style.display = currentPrint ? '' : 'none';
+        UI.layerPrint.parentNode.style.display = currentPrint && !sla ? '' : 'none';
+        UI.layerMoves.parentNode.style.display = currentPrint && !sla ? '' : 'none';
 
         SPACE.update();
     }
