@@ -142,6 +142,11 @@
             { name: "2", id: 2 },
             { name: "4", id: 4 },
             { name: "8", id: 8 }
+        ],
+        drillreg: [
+            { name: "none" },
+            { name: "x axis" },
+            { name: "y axis" }
         ]
     };
 

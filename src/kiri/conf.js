@@ -429,6 +429,7 @@
                     camDrillDwell: 250,     // drillDwell
                     camDrillLift: 2,        // drillLift
                     camDrillingOn: false,   // drillingOn
+                    camDrillReg: "none",
                     camTabsAngle: 0,
                     camTabsCount: 4,
                     camTabsWidth: 5,

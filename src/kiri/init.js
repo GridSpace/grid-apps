@@ -1404,6 +1404,8 @@
             camDrillLift:        UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
             camDrillSep:         UC.newBlank({class:"pop-sep"}),
             camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
+            camDrillSep:         UC.newBlank({class:"pop-sep"}),
+            camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
             camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount:        UC.newInput(LANG.ct_numb_s, {title:LANG.ct_numb_l, convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),

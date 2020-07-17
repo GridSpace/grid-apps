@@ -288,6 +288,8 @@ kiri.lang['en-us'] = {
     cd_dwll_l:      "dwell time\nbetween plunges in\nin milliseconds",
     cd_lift_s:      "drill lift",
     cd_lift_l:      "lift between plunges\nafter dwell period\nin workspace units\n0 to disable",
+    cd_regi_s:      "register",
+    cd_regi_l:      "drill registration holes\nfor double-sided parts\nindependent of enable\ndrilling but uses same\ntool and settings",
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",

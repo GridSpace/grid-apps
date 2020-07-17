@@ -58,7 +58,8 @@
             let proc = settings.process;
             api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
-            api.ui.camDrill.marker.style.display = proc.camDrillingOn ? 'flex' : 'none';
+            api.ui.camDrill.marker.style.display =
+                proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
             api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
@@ -859,6 +860,7 @@
             procContourY = proc.camContourYOn && proc.camOutlinePlunge && contourToolDiam,
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
+            procDrillReg = proc.camDrillReg,
             procTrace = proc.camTraceOn,
             sliceDepth = Math.max(0.1, Math.min(proc.camRoughDown, proc.camOutlineDown) / 3) * units,
             pocketOnlyRough = proc.camRoughPocket,
@@ -892,7 +894,7 @@
             return ondone(`invalid slice depth (${sliceDepth.toFixed(2)} ${unitsName})`);
         }
 
-        if (!(procFacing || procRough || procOutline || procContour || procDrill)) {
+        if (!(procFacing || procRough || procOutline || procContour || procDrill || procDrillReg)) {
             return ondone("no processes selected");
         }
 
@@ -983,6 +985,10 @@
 
             // set all default shells
             const camShellPolys = shellRough = shellOutline = facePolys = camShell.gatherTopPolys([]);
+
+            if (procDrillReg) {
+                sliceDrillReg(settings, widget, sliceAll);
+            }
 
             if (procDrill) {
                 sliceDrill(settings, widget, slices, sliceAll);
@@ -1145,6 +1151,41 @@
             slice.addTop(null).traces = [ drill ];
             output.append(slice);
         });
+    }
+
+    function sliceDrillReg(settings, widget, output) {
+        let proc = settings.process,
+            bounds = settings.bounds,
+            stock = settings.stock,
+            mx = (bounds.max.x + bounds.min.x) / 2,
+            my = (bounds.max.y + bounds.min.y) / 2,
+            dx = (stock.x - (bounds.max.x - bounds.min.x)) / 4,
+            dy = (stock.y - (bounds.max.y - bounds.min.y)) / 4,
+            dz = stock.z,
+            points = [];
+
+        switch(proc.camDrillReg) {
+            case "x axis":
+                points.push(newPoint(bounds.min.x - dx, my, 0));
+                points.push(newPoint(bounds.max.x + dx, my, 0));
+                break;
+            case "y axis":
+                points.push(newPoint(mx, bounds.min.y - dy, 0));
+                points.push(newPoint(mx, bounds.max.y + dy, 0));
+                break;
+        }
+
+        if (points.length) {
+            let slice = newSlice(0,null), polys = [];
+            points.forEach(point => {
+                polys.push(newPolygon()
+                    .append(point.clone().setZ(bounds.max.z))
+                    .append(point.clone().setZ(bounds.max.z - stock.z)));
+            });
+            slice.camMode = CPRO.DRILL;
+            slice.addTop(null).traces = polys;
+            output.append(slice);
+        }
     }
 
     // runs in browser main
