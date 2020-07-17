@@ -1395,7 +1395,7 @@
             }
             points.forEach(function(point, index) {
                 camOut(point, 1);
-                if (index < points.length - 1) {
+                if (index > 0 && index < points.length - 1) {
                     if (dwell) camDwell(dwell);
                     if (lift) camOut(point.clone().setZ(point.z + lift), 0);
                 }
@@ -1437,7 +1437,7 @@
             let rate = feedRate;
 
             if (!lastPoint) {
-                let above = point.clone().setZ(zmax);
+                let above = point.clone().setZ(zmax + zadd);
                 // before first point, move cutting head to point above it
                 layerPush(above, 0, 0, tool.number);
                 // then set that as the lastPoint
@@ -1474,9 +1474,9 @@
                             lastPoint.x - wmx,
                             lastPoint.y - wmy,
                             point.x - wmx,
-                            point.y - wmy) + zadd,
+                            point.y - wmy),
                         point.z,
-                        lastPoint.z) : zmax) + ztoff,
+                        lastPoint.z) : zmax) + ztoff + zadd,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/outline
