@@ -1236,7 +1236,7 @@
             bounds = widget.getCamBounds(settings),
             boundsz = bounds.max.z,
             units = settings.controller.units === 'in' ? 25.4 : 1,
-            hasStock = process.camStockZ && process.camStockX && process.camStockY,
+            hasStock = process.camStockOffset || (process.camStockZ && process.camStockX && process.camStockY),
             startCenter = process.outputOriginCenter,
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
