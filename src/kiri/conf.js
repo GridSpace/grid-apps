@@ -603,9 +603,9 @@
                 autoLayout: true,
                 alignTop: true,
                 units: "mm",
-                exportOcto: true,
+                exportOcto: false,
                 exportGhost: false,
-                exportLocal: false
+                exportLocal: true
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

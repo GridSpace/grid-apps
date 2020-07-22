@@ -1806,7 +1806,7 @@
             mode = 0,
             point,
             points = 0,
-            hasStock = spro.camStockZ && spro.camStockX && spro.camStockY,
+            hasStock = spro.camStockOffset || (spro.camStockZ && spro.camStockX && spro.camStockY),
             zmax = hasStock ? settings.stock.z : bounds.max.z,
             runbox = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
