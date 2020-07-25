@@ -1883,7 +1883,7 @@
 
     function showLocal() {
         showModal('local');
-        fetch("/api/grid_local")
+        fetch(`/api/grid_local?rand=${Date.now().toString(36)}`)
             .then(r => r.json())
             .then(j => {
                 let devc = 0;
