@@ -1140,16 +1140,19 @@
         } else {
             ajax(url, function(vertices) {
                 vertices = js2o(vertices).toFloat32();
-                platform.add(newWidget().loadVertices(vertices));
-                if (onload) onload(vertices);
+                let widget = newWidget().loadVertices(vertices);
+                platform.add(widget);
+                if (onload) onload(vertices, widget);
             });
         }
     }
 
     function platformLoadSTL(url, onload) {
-        new MOTO.STL().load(url, function(vertices) {
-            platform.add(newWidget().loadVertices(vertices));
-            if (onload) onload(vertices);
+        new MOTO.STL().load(url, function(vertices, filename) {
+            let widget = newWidget().loadVertices(vertices);
+            widget.filename = filename;
+            platform.add(widget);
+            if (onload) onload(vertices, widget);
         })
     }
 

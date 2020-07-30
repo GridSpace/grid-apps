@@ -32,7 +32,15 @@
         function onloaded (event)  {
             if (event.target.status === 200 || event.target.status === 0)  {
                 stl.parse(event.target.response || event.target.responseText);
-                if (callback) callback(stl.vertices);
+                let cd = xhr.getResponseHeader('Content-Disposition');
+                if (cd) {
+                    cd = cd.split(';').map(v => v.trim()).filter(v => {
+                        return v.indexOf('filename=') === 0;
+                    }).map(v => {
+                        return v.substring(10,v.length-1);
+                    });
+                }
+                if (callback) callback(stl.vertices, cd ? cd[0] : undefined);
             } else {
                 if (callback) callback(null, event.target.statusText);
             }
