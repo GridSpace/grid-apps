@@ -77,7 +77,7 @@
         if (currentPrint) {
             currentPrint.exportGCode(true, function(gcode) {
                 if (typeof(options) === 'function') {
-                    options(gcode);
+                    options(gcode, currentPrint);
                 } else {
                     exportGCode(gcode, currentPrint);
                 }
