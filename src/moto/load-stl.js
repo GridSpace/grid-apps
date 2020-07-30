@@ -12,6 +12,7 @@
     if (self.moto.STL) return;
 
     const SP = STL.prototype;
+    const CDH = 'Content-Disposition';
 
     self.moto.STL = STL;
 
@@ -32,15 +33,16 @@
         function onloaded (event)  {
             if (event.target.status === 200 || event.target.status === 0)  {
                 stl.parse(event.target.response || event.target.responseText);
-                let cd = xhr.getResponseHeader('Content-Disposition');
-                if (cd) {
-                    cd = cd.split(';').map(v => v.trim()).filter(v => {
-                        return v.indexOf('filename=') === 0;
-                    }).map(v => {
-                        return v.substring(10,v.length-1);
-                    });
+                let cd = undefined;
+                if (xhr.getAllResponseHeaders().indexOf(CDH) > 0) {
+                    cd = xhr.getResponseHeader(CDH)
+                        .split(';').map(v => v.trim()).filter(v => {
+                            return v.indexOf('filename=') === 0;
+                        }).map(v => {
+                            return v.substring(10,v.length-1);
+                        })[0];
                 }
-                if (callback) callback(stl.vertices, cd ? cd[0] : undefined);
+                if (callback) callback(stl.vertices, cd);
             } else {
                 if (callback) callback(null, event.target.statusText);
             }
