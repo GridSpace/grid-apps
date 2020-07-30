@@ -357,6 +357,8 @@ kiri.lang['en-us'] = {
     ou_conv_l:      "milling direction\nuncheck for 'climb'",
     ou_depf_s:      "depth first",
     ou_depf_l:      "optimize pocket cuts\nwith depth priority",
+    ou_wide_s:      "wide cutout",
+    ou_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
 
     // CAM STOCK
     cs_menu:        "stock",

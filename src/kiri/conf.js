@@ -438,6 +438,7 @@
                     camRoughPocket: false,   // camPocketOnlyRough
                     camOutlinePocket: false, // camPocketOnlyFinish
                     camDepthFirst: true,
+                    camWideCutout: false,
                     camEaseDown: false,
                     camOriginTop: true,
                     camZTopOffset: 0,
