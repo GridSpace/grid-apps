@@ -1449,6 +1449,7 @@
             camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM}),
             camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM}),
             camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
+            camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM}),
             camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toInt, modes:CAM}),
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
             camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),

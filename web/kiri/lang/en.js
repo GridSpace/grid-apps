@@ -353,6 +353,8 @@ kiri.lang['en-us'] = {
     ou_zbot_l:      "offset from part bottom\nto limit cutting depth\nin workspace units",
     ou_zclr_s:      "z clearance",
     ou_zclr_l:      "travel offset from z top\nin workspace units",
+    ou_ztru_s:      "z thru",
+    ou_ztru_l:      "extend cutout pass down\nin workspace units",
     ou_conv_s:      "conventional",
     ou_conv_l:      "milling direction\nuncheck for 'climb'",
     ou_depf_s:      "depth first",

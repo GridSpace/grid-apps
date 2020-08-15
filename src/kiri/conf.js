@@ -444,6 +444,7 @@
                     camZTopOffset: 0,
                     camZBottom: 0,
                     camZClearance: 1,
+                    camZThru: 0,
                     camFastFeed: 6000,
                     camFastFeedZ: 300,
                     camTolerance: 0.15,

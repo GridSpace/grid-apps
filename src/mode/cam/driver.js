@@ -882,6 +882,7 @@
             bounds = widget.getBoundingBox(),
             mesh = widget.mesh,
             zMin = Math.max(bounds.min.z, proc.camZBottom) * units,
+            zThru = (proc.camZThru || 0) * units,
             camRoughStock = proc.camRoughStock * units,
             shellRough,
             shellOutline,
@@ -986,6 +987,18 @@
             slice.tops[0].traces = nutrace;
         }
 
+        // extend bottom cutout
+        const addZThru = function(selected) {
+            let last = selected[selected.length-1];
+            let add = last.clone(true);
+            add.camMode = last.camMode;
+            add.z -= zThru;
+            add.tops.forEach(top => {
+                top.poly.setZ(add.z);
+            });
+            selected.push(add);
+        };
+
         // called when z-index slicing complete
         const camSlicesDone = function(slices) {
 
@@ -1049,6 +1062,9 @@
             if (procRough) {
                 let selected = [];
                 selectSlices(slices, proc.camRoughDown * units, CPRO.ROUGH, selected);
+                if (zThru) {
+                    addZThru(selected);
+                }
                 sliceAll.appendAll(selected);
                 if (!proc.camRoughVoid) {
                     thruHoles = holes(slices, roughToolDiam + camRoughStock);
@@ -1058,6 +1074,9 @@
             if (procOutline) {
                 let selected = [];
                 selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
+                if (zThru) {
+                    addZThru(selected);
+                }
                 sliceAll.appendAll(selected);
             }
         }
