@@ -1011,7 +1011,7 @@
             const camShellPolys = shellRough = shellOutline = facePolys = camShell.gatherTopPolys([]);
 
             if (procDrillReg) {
-                sliceDrillReg(settings, widget, sliceAll);
+                sliceDrillReg(settings, widget, sliceAll, zThru);
             }
 
             if (procDrill) {
@@ -1183,12 +1183,14 @@
         });
     }
 
-    function sliceDrillReg(settings, widget, output) {
+    // drill registration holes
+    function sliceDrillReg(settings, widget, output, zThru) {
         let proc = settings.process,
-            bounds = settings.bounds,
             stock = settings.stock,
+            bounds = settings.bounds,
             mx = (bounds.max.x + bounds.min.x) / 2,
             my = (bounds.max.y + bounds.min.y) / 2,
+            mz = zThru || 0,
             dx = (stock.x - (bounds.max.x - bounds.min.x)) / 4,
             dy = (stock.y - (bounds.max.y - bounds.min.y)) / 4,
             dz = stock.z,
@@ -1210,7 +1212,7 @@
             points.forEach(point => {
                 polys.push(newPolygon()
                     .append(point.clone().setZ(bounds.max.z))
-                    .append(point.clone().setZ(bounds.max.z - stock.z)));
+                    .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
             });
             slice.camMode = CPRO.DRILL;
             slice.addTop(null).traces = polys;
