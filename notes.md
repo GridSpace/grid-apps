@@ -2,7 +2,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `C` hover mode to see device / settings selections
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -18,6 +17,7 @@
 
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
+* `F` speculative background preview generation
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
@@ -47,6 +47,7 @@
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `B` widen outside cuts to prevent chatter on deep (metal) features
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` use arcs to connect hard angles
 * `F` lead-in milling

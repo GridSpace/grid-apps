@@ -295,6 +295,7 @@
     PRO.saveToCatalog = function(filename) {
         let widget = this;
         let time = UTIL.time();
+        widget.filename = filename;
         KIRI.catalog.putFile(filename, this.getGeoVertices(), function(vertices) {
             if (vertices && vertices.length) {
                 console.log("saving decimated mesh ["+vertices.length+"] time ["+(UTIL.time()-time)+"]");

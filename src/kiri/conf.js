@@ -429,6 +429,7 @@
                     camDrillDwell: 250,     // drillDwell
                     camDrillLift: 2,        // drillLift
                     camDrillingOn: false,   // drillingOn
+                    camDrillReg: "none",
                     camTabsAngle: 0,
                     camTabsCount: 4,
                     camTabsWidth: 5,
@@ -437,11 +438,13 @@
                     camRoughPocket: false,   // camPocketOnlyRough
                     camOutlinePocket: false, // camPocketOnlyFinish
                     camDepthFirst: true,
+                    camWideCutout: false,
                     camEaseDown: false,
                     camOriginTop: true,
                     camZTopOffset: 0,
                     camZBottom: 0,
                     camZClearance: 1,
+                    camZThru: 0,
                     camFastFeed: 6000,
                     camFastFeedZ: 300,
                     camTolerance: 0.15,
@@ -602,9 +605,9 @@
                 autoLayout: true,
                 alignTop: true,
                 units: "mm",
-                exportOcto: true,
+                exportOcto: false,
                 exportGhost: false,
-                exportLocal: false
+                exportLocal: true
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

@@ -70,7 +70,8 @@
 
     const feature = {
         seed: true,
-        controls: true
+        controls: true,
+        drop_group: undefined
     };
 
     const selection = {
@@ -141,6 +142,11 @@
             { name: "2", id: 2 },
             { name: "4", id: 4 },
             { name: "8", id: 8 }
+        ],
+        drillreg: [
+            { name: "none" },
+            { name: "x axis" },
+            { name: "y axis" }
         ]
     };
 
@@ -588,6 +594,7 @@
         let print = UI.layerPrint.checked,
             moves = UI.layerMoves.checked,
             cam = MODE === MODES.CAM,
+            sla = MODE === MODES.SLA,
             hi = cam ? API.var.layer_max - API.var.layer_lo : API.var.layer_hi,
             lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
 
@@ -639,8 +646,8 @@
             }
         }
 
-        UI.layerPrint.parentNode.style.display = currentPrint ? '' : 'none';
-        UI.layerMoves.parentNode.style.display = currentPrint ? '' : 'none';
+        UI.layerPrint.parentNode.style.display = currentPrint && !sla ? '' : 'none';
+        UI.layerMoves.parentNode.style.display = currentPrint && !sla ? '' : 'none';
 
         SPACE.update();
     }
@@ -1133,16 +1140,19 @@
         } else {
             ajax(url, function(vertices) {
                 vertices = js2o(vertices).toFloat32();
-                platform.add(newWidget().loadVertices(vertices));
-                if (onload) onload(vertices);
+                let widget = newWidget().loadVertices(vertices);
+                platform.add(widget);
+                if (onload) onload(vertices, widget);
             });
         }
     }
 
     function platformLoadSTL(url, onload) {
-        new MOTO.STL().load(url, function(vertices) {
-            platform.add(newWidget().loadVertices(vertices));
-            if (onload) onload(vertices);
+        new MOTO.STL().load(url, function(vertices, filename) {
+            let widget = newWidget().loadVertices(vertices);
+            widget.filename = filename;
+            platform.add(widget);
+            if (onload) onload(vertices, widget);
         })
     }
 
@@ -1883,38 +1893,36 @@
 
     function showLocal() {
         showModal('local');
-        fetch(`/api/grid_local?rand=${Date.now().toString(36)}`)
-            .then(r => r.json())
-            .then(j => {
-                let devc = 0;
-                let bind = [];
-                let html = ['<table>'];
-                html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
-                html.push(`<tbody>`);
-                for (let k in j) {
-                    let r = j[k].stat;
-                    bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
-                    html.push(`<tr>`);
-                    html.push(`<td>${r.device.name}</td>`);
-                    html.push(`<td>${r.device.mode}</td>`);
-                    html.push(`<td>${r.state}</td>`);
-                    html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
-                    html.push(`</tr>`);
-                    devc++;
-                }
-                html.push(`</tbody>`);
-                html.push(`</table>`);
-                if (devc) {
-                    $('mod-local').innerHTML = html.join('');
-                } else {
-                    $('mod-local').innerHTML = `<br><b>no local devices</b>`;
-                }
-                bind.forEach(rec => {
-                    $(rec.uuid).onclick = () => {
-                        window.open(`http://${rec.host}:${rec.port||4080}/`);
-                    };
-                });
+        API.probe.local((err,data) => {
+            let devc = 0;
+            let bind = [];
+            let html = ['<table>'];
+            html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
+            html.push(`<tbody>`);
+            for (let k in data) {
+                let r = data[k].stat;
+                bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
+                html.push(`<tr>`);
+                html.push(`<td>${r.device.name}</td>`);
+                html.push(`<td>${r.device.mode}</td>`);
+                html.push(`<td>${r.state}</td>`);
+                html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
+                html.push(`</tr>`);
+                devc++;
+            }
+            html.push(`</tbody>`);
+            html.push(`</table>`);
+            if (devc) {
+                $('mod-local').innerHTML = html.join('');
+            } else {
+                $('mod-local').innerHTML = `<br><b>no local devices</b>`;
+            }
+            bind.forEach(rec => {
+                $(rec.uuid).onclick = () => {
+                    window.open(`http://${rec.host}:${rec.port||4080}/`);
+                };
             });
+        });
     }
 
     function setViewMode(mode) {

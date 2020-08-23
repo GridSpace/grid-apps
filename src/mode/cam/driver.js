@@ -58,7 +58,8 @@
             let proc = settings.process;
             api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
-            api.ui.camDrill.marker.style.display = proc.camDrillingOn ? 'flex' : 'none';
+            api.ui.camDrill.marker.style.display =
+                proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
             api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
@@ -676,9 +677,10 @@
      * @param {number} stock to leave (mm)
      * @param {number} percent overlap on each pass
      * @param {boolean} true for pocket only mode
+     * @param {boolean} widecut expand outer cutout
      * @returns {Object} shell or newly generated shell
      */
-    function createRoughPaths(slice, shell, diameter, stock, overlap, pocket, holes) {
+    function createRoughPaths(slice, shell, diameter, stock, overlap, pocket, holes, widecut) {
         let tops = slice.gatherTopPolys([]).clone(true),
             outer = [],
             offset = [];
@@ -715,6 +717,10 @@
             // re-nest offset polys
             // outer = POLY.nest(offset);
             outer = offset;
+            // more outer
+            if (widecut) {
+                POLY.expand(offset, diameter * overlap, slice.z, outer, 1);
+            }
         }
 
         slice.tops[0].traces = outer;
@@ -800,8 +806,9 @@
      * @param {Polygon[]} outermost pancacked shells for fill
      * @param {number} tool diameter
      * @param {boolean} pocket only
+     * @param {boolean} widecut expand outer cutout
      */
-    function createOutlinePaths(slice, shell, diameter, pocket) {
+    function createOutlinePaths(slice, shell, diameter, pocket, widecut) {
         if (slice.tops.length === 0) return shell;
 
         let tops = slice.gatherTopPolys([]).clone(true),
@@ -820,6 +827,10 @@
                     }
                 }
                 return poly;
+            });
+        } else if (widecut) {
+            offset.slice().forEach(op => {
+                POLY.expand([op], diameter * 0.5, slice.z, offset, 1);
             });
         }
 
@@ -859,6 +870,7 @@
             procContourY = proc.camContourYOn && proc.camOutlinePlunge && contourToolDiam,
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
+            procDrillReg = proc.camDrillReg,
             procTrace = proc.camTraceOn,
             sliceDepth = Math.max(0.1, Math.min(proc.camRoughDown, proc.camOutlineDown) / 3) * units,
             pocketOnlyRough = proc.camRoughPocket,
@@ -870,11 +882,13 @@
             bounds = widget.getBoundingBox(),
             mesh = widget.mesh,
             zMin = Math.max(bounds.min.z, proc.camZBottom) * units,
+            zThru = (proc.camZThru || 0) * units,
             camRoughStock = proc.camRoughStock * units,
             shellRough,
             shellOutline,
             facePolys,
-            thruHoles;
+            thruHoles,
+            wideCut = proc.camWideCutout;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return ondone('stock X too small for part. disable stock or use offset stock');
@@ -892,7 +906,7 @@
             return ondone(`invalid slice depth (${sliceDepth.toFixed(2)} ${unitsName})`);
         }
 
-        if (!(procFacing || procRough || procOutline || procContour || procDrill)) {
+        if (!(procFacing || procRough || procOutline || procContour || procDrill || procDrillReg)) {
             return ondone("no processes selected");
         }
 
@@ -973,6 +987,18 @@
             slice.tops[0].traces = nutrace;
         }
 
+        // extend bottom cutout
+        const addZThru = function(selected) {
+            let last = selected[selected.length-1];
+            let add = last.clone(true);
+            add.camMode = last.camMode;
+            add.z -= zThru;
+            add.tops.forEach(top => {
+                top.poly.setZ(add.z);
+            });
+            selected.push(add);
+        };
+
         // called when z-index slicing complete
         const camSlicesDone = function(slices) {
 
@@ -983,6 +1009,10 @@
 
             // set all default shells
             const camShellPolys = shellRough = shellOutline = facePolys = camShell.gatherTopPolys([]);
+
+            if (procDrillReg) {
+                sliceDrillReg(settings, widget, sliceAll, zThru);
+            }
 
             if (procDrill) {
                 sliceDrill(settings, widget, slices, sliceAll);
@@ -1032,6 +1062,9 @@
             if (procRough) {
                 let selected = [];
                 selectSlices(slices, proc.camRoughDown * units, CPRO.ROUGH, selected);
+                if (zThru) {
+                    addZThru(selected);
+                }
                 sliceAll.appendAll(selected);
                 if (!proc.camRoughVoid) {
                     thruHoles = holes(slices, roughToolDiam + camRoughStock);
@@ -1041,6 +1074,9 @@
             if (procOutline) {
                 let selected = [];
                 selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
+                if (zThru) {
+                    addZThru(selected);
+                }
                 sliceAll.appendAll(selected);
             }
         }
@@ -1083,11 +1119,11 @@
                     createLevelPaths(slice, facePolys, roughToolDiam, proc.camRoughOver, pocketOnlyRough);
                     break;
                 case CPRO.ROUGH:
-                    createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, pocketOnlyRough, thruHoles);
+                    createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, pocketOnlyRough, thruHoles, wideCut);
                     if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
                     break;
                 case CPRO.OUTLINE:
-                    createOutlinePaths(slice, shellOutline, outlineToolDiam, pocketOnlyOutline);
+                    createOutlinePaths(slice, shellOutline, outlineToolDiam, pocketOnlyOutline, wideCut);
                     if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
                     if (traceToolProfile) findTracingPaths(widget, slice, traceTool, traceToolProfile);
                     break;
@@ -1145,6 +1181,43 @@
             slice.addTop(null).traces = [ drill ];
             output.append(slice);
         });
+    }
+
+    // drill registration holes
+    function sliceDrillReg(settings, widget, output, zThru) {
+        let proc = settings.process,
+            stock = settings.stock,
+            bounds = settings.bounds,
+            mx = (bounds.max.x + bounds.min.x) / 2,
+            my = (bounds.max.y + bounds.min.y) / 2,
+            mz = zThru || 0,
+            dx = (stock.x - (bounds.max.x - bounds.min.x)) / 4,
+            dy = (stock.y - (bounds.max.y - bounds.min.y)) / 4,
+            dz = stock.z,
+            points = [];
+
+        switch(proc.camDrillReg) {
+            case "x axis":
+                points.push(newPoint(bounds.min.x - dx, my, 0));
+                points.push(newPoint(bounds.max.x + dx, my, 0));
+                break;
+            case "y axis":
+                points.push(newPoint(mx, bounds.min.y - dy, 0));
+                points.push(newPoint(mx, bounds.max.y + dy, 0));
+                break;
+        }
+
+        if (points.length) {
+            let slice = newSlice(0,null), polys = [];
+            points.forEach(point => {
+                polys.push(newPolygon()
+                    .append(point.clone().setZ(bounds.max.z))
+                    .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
+            });
+            slice.camMode = CPRO.DRILL;
+            slice.addTop(null).traces = polys;
+            output.append(slice);
+        }
     }
 
     // runs in browser main
@@ -1765,7 +1838,7 @@
             mode = 0,
             point,
             points = 0,
-            hasStock = spro.camStockZ && spro.camStockX && spro.camStockY,
+            hasStock = spro.camStockOffset || (spro.camStockZ && spro.camStockX && spro.camStockY),
             zmax = hasStock ? settings.stock.z : bounds.max.z,
             runbox = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
