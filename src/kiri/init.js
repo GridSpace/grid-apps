@@ -570,7 +570,8 @@
             dev.deviceName = devicename;
 
             UI.deviceName.value = devicename;
-            UI.deviceOrigin.checked = dev.outputOriginCenter;
+            UI.deviceRound.checked = dev.bedRound;
+            UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
             // add extruder selection buttons
             if (dev.extruders) {

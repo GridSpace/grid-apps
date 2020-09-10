@@ -1511,6 +1511,8 @@
         if (view.left || view.up) {
             settings.controller.view = view;
         }
+        settings.device.bedRound = UI.deviceRound.checked;
+        settings.device.originCenter = UI.deviceOrigin.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
         API.event.emit('settings.saved', settings);
     }
