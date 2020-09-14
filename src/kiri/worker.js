@@ -52,6 +52,28 @@ let dispatch = {
             state.rotate = new THREE.Matrix4().makeRotationY(-rotation);
         }
 
+        // let buf = new THREE.BufferGeometry();
+        // buf.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        // let geo = new THREE.Geometry().fromBufferGeometry(buf);
+        // geo.computeFaceNormals();
+        // console.log(geo);
+        // let z0 = new THREE.Vector3(0,0,1);
+        // let ve = geo.vertices;
+        // geo.faces.forEach((face,ind) => {
+        //     let n = face.normal;
+        //     let v3 = new THREE.Vector3(n.x, n.y, n.z);
+        //     if (n.z >= 0) {
+        //         console.log({skip:ind});
+        //         return;
+        //     }
+        //     let va = v3.angleTo(z0) / Math.PI;
+        //     let i3 = ind * 3;
+        //     let v = [
+        //         ve[i3], ve[i3+1], ve[i3+2]
+        //     ];
+        //     console.log({ind, va, v});
+        // });
+
         send.data({update:0.05, updateStatus:"slicing"});
 
         let widget = kiri.newWidget(data.id).setPoints(points),
@@ -166,6 +188,17 @@ let dispatch = {
             has: cache[data.id] !== undefined
         });
     },
+
+    config: function(data, send) {
+        const update = {};
+        if (data.base) {
+            update.base = data.base;
+            Object.assign(self.base.config, data.base);
+        } else {
+            console.log({invalid:data});
+        }
+        send.done({config: update});
+    }
 };
 
 self.onmessage = function(e) {

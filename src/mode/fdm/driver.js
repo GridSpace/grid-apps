@@ -410,7 +410,7 @@
             ondone();
         }
 
-    };
+    }
 
     /**
      * DRIVER SLICE RENDER CONTRACT
@@ -501,8 +501,8 @@
                 if (s.supports) {
                     if (thin) {
                         s.supports.forEach(function(poly) {
-                            support.poly(poly, 0x88aadd, true);
-                            support.lines(poly.fills, 0x88aadd);
+                            support.poly(poly, 0xffaadd, true);
+                            support.lines(poly.fills, 0xffaadd);
                         });
                     } else {
                         support.noodle(s.supports, extoff, 0x88aadd, 0x77bbcc);
@@ -930,7 +930,7 @@
             output = [],
             outputLength = 0,
             lastProgress = 0,
-            decimals = 5,
+            decimals = BASE.config.gcode_decimals || 4,
             progress = 0,
             distance = 0,
             emitted = 0,

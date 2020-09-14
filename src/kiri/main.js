@@ -150,6 +150,11 @@
         ]
     };
 
+    const tweak = {
+        line_precision: (v) => { API.work.config({base:{clipperClean: v}}) },
+        gcode_decimals: (v) => { API.work.config({base:{gcode_decimals: v}}) }
+    };
+
     const API = KIRI.api = {
         ui: UI,
         uc: UC,
@@ -261,6 +266,7 @@
             clear: clearWorkspace,
             save: saveWorkspace,
         },
+        tweak,
         util: {
             isSecure
         },

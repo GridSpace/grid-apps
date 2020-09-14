@@ -307,6 +307,8 @@
     };
 
     BASE.config = {
+        // default # of decimal places in generated gcode
+        gcode_decimals : 4,
         // heal disjoint polygons in slicing (experimental)
         bridgeLineGapDistance : 0,
         // Bounds default margin nearTo

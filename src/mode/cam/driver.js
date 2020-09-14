@@ -1831,7 +1831,7 @@
             units = settings.controller.units === 'in' ? 25.4 : 1,
             maxZd = spro.camFastFeedZ * units,
             maxXYd = spro.camFastFeed * units,
-            decimals = 4,
+            decimals = BASE.config.gcode_decimals || 4,
             pos = { x:null, y:null, z:null, f:null, t:null },
             line,
             cidx,
