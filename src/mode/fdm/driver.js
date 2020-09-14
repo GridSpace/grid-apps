@@ -1141,7 +1141,7 @@
                 append(`;; --- layer ${layer} (${subst.height} @ ${subst.z}) ---`);
             }
 
-            if (layer > 0 && process.layerRetract) {
+            if (layer > 0 && process.outputLayerRetract) {
                 retract();
             }
 
