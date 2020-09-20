@@ -77,8 +77,8 @@
         }
 
         slice.tops.forEach(function(top) {
-            laserOut(top.traces, group);
             laserOut(top.innerTraces(), group);
+            laserOut(top.traces, group);
             if (!grouped) {
                 groups.push(group);
                 group = [];
