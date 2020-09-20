@@ -748,7 +748,7 @@
                 if (slice.supports) polys.appendAll(slice.supports);
                 polys.forEach(poly => {
                     poly = poly.clone(true).move(widget.track.pos);
-                    layer.poly(poly, 0x010101, true);
+                    layer.poly(poly, 0x777777, true);
                     layer.solid(poly, 0x0099cc);
                 });
             });
@@ -913,7 +913,8 @@
             };
         }
 
-        let buflen = 3000 + coded.length + (layerCount * subcount * 28) + small.byteLength + large.byteLength;
+        let codelen = coded.layers.length;
+        let buflen = 3000 + coded.length + (codelen * subcount * 28) + small.byteLength + large.byteLength;
         let filebuf = new ArrayBuffer(buflen);
         let filedat = new self.DataWriter(new DataView(filebuf));
         let printtime = (process.slaBaseLayers * process.slaBaseOn) +
@@ -934,7 +935,7 @@
         filedat.writeU32(2560, true); // device y
         let hirez = filedat.skip(4); // hirez preview address filled pater
         let layerpos = filedat.skip(4); // layer data address filled later
-        filedat.writeU32(layerCount, true);
+        filedat.writeU32(codelen, true);
         let lorez = filedat.skip(4); // hirez preview address filled later
         filedat.writeU32(printtime, true); // print time seconds
         filedat.writeU32(1, true); // projection type (1=lcd, 0=cast)

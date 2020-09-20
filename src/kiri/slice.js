@@ -847,8 +847,8 @@
      * @param {number} gap layers between supports and part
      */
     PRO.doSupport = function(minOffset, maxBridge, expand, minArea, pillarSize, offset, gap) {
-        let min = minArea || 0.1,
-            size = (pillarSize || 2),
+        let min = minArea || 0.01,
+            size = (pillarSize || 1),
             slice = this,
             mergeDist = size * 3, // pillar merge dist
             tops = slice.gatherTopPolys([]),
@@ -879,7 +879,9 @@
             let supported = point.isInPolygonOnly(down_tops);
             if (!supported) down_traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) {
-                    if (point.distToLine(p1, p2) <= minOffset) return supported = true;
+                    if (point.distToLine(p1, p2) <= minOffset) {
+                        return supported = true;
+                    }
                 });
                 return supported;
             });

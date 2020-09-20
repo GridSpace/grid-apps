@@ -87,6 +87,12 @@ KIRI.work = {
         });
     },
 
+    config : function(obj) {
+        send("config", obj, function(reply) {
+            // console.log({config:reply});
+        });
+    },
+
     clear : function(widget) {
         send("clear", widget ? {id:widget.id} : {}, function(reply) {
             // console.log({clear:reply});

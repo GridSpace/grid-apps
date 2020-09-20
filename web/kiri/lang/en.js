@@ -288,6 +288,8 @@ kiri.lang['en-us'] = {
     cd_dwll_l:      "dwell time\nbetween plunges in\nin milliseconds",
     cd_lift_s:      "drill lift",
     cd_lift_l:      "lift between plunges\nafter dwell period\nin workspace units\n0 to disable",
+    cd_regi_s:      "register",
+    cd_regi_l:      "drill registration holes\nfor double-sided parts\nindependent of enable\ndrilling but uses same\ntool and settings",
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
@@ -351,10 +353,14 @@ kiri.lang['en-us'] = {
     ou_zbot_l:      "offset from part bottom\nto limit cutting depth\nin workspace units",
     ou_zclr_s:      "z clearance",
     ou_zclr_l:      "travel offset from z top\nin workspace units",
+    ou_ztru_s:      "z thru",
+    ou_ztru_l:      "extend cutout pass down\nin workspace units",
     ou_conv_s:      "conventional",
     ou_conv_l:      "milling direction\nuncheck for 'climb'",
     ou_depf_s:      "depth first",
     ou_depf_l:      "optimize pocket cuts\nwith depth priority",
+    ou_wide_s:      "wide cutout",
+    ou_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
 
     // CAM STOCK
     cs_menu:        "stock",

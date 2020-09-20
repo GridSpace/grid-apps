@@ -570,7 +570,8 @@
             dev.deviceName = devicename;
 
             UI.deviceName.value = devicename;
-            UI.deviceOrigin.checked = dev.outputOriginCenter;
+            UI.deviceRound.checked = dev.bedRound;
+            UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
             // add extruder selection buttons
             if (dev.extruders) {
@@ -1004,6 +1005,13 @@
 
         let files = evt.dataTransfer.files;
 
+        switch (API.feature.drop_group) {
+            case true:
+                return API.platform.load_files(files, []);
+            case false:
+                return API.platform.load_files(files, undefined);
+        }
+
         function ck_group() {
             if (files.length === 1) {
                 API.platform.load_files(files);
@@ -1343,7 +1351,7 @@
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, expert:true}),
             sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.1,200.0), convert:UC.toFloat, modes:FDM}),
+            sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
@@ -1397,6 +1405,8 @@
             camDrillLift:        UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM}),
             camDrillSep:         UC.newBlank({class:"pop-sep"}),
             camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
+            camDrillSep:         UC.newBlank({class:"pop-sep"}),
+            camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
             camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount:        UC.newInput(LANG.ct_numb_s, {title:LANG.ct_numb_l, convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
@@ -1431,6 +1441,7 @@
             camConventional:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         UC.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
             camDepthFirst:       UC.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
+            camWideCutout:       UC.newBoolean(LANG.ou_wide_s, onBooleanClick, {title:LANG.ou_wide_l, modes:CAM}),
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
@@ -1439,6 +1450,7 @@
             camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM}),
             camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM}),
             camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
+            camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM}),
             camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toInt, modes:CAM}),
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
             camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
@@ -1517,11 +1529,11 @@
             layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
             layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
             layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
-            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM_SLA}),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:ALL}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM_SLA}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM_SLA}),
-            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle),
+            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
+            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:GCODE}),
+            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
+            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
+            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle, {modes:GCODE}),
             layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
         });
 

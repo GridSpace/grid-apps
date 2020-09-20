@@ -77,7 +77,7 @@
         if (currentPrint) {
             currentPrint.exportGCode(true, function(gcode) {
                 if (typeof(options) === 'function') {
-                    options(gcode);
+                    options(gcode, currentPrint);
                 } else {
                     exportGCode(gcode, currentPrint);
                 }
@@ -239,7 +239,7 @@
             if (dev) {
                 let file = $('print-filename').value;
                 fetch(
-                    `/api/grid_send?uuid=${uuid}&file=${encodeURIComponent(file + "." + fileext)}`,
+                    `https://live.grid.space/api/grid_send?uuid=${uuid}&file=${encodeURIComponent(file + "." + fileext)}`,
                     {method: "POST", body: gcode}
                 )
                 .then(t => t.text())
