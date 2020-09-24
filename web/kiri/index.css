@@ -769,6 +769,11 @@ th, tr, td, label {
     font-family: monospace;
     width: 100%;
 }
+#device-exp {
+    position: absolute;
+    left: 0;
+    z-index: 10;
+}
 #device-action, #tool-action {
     margin-top: 5px;
 }

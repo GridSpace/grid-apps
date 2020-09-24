@@ -6,6 +6,7 @@
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
 * `F` gcode color to speed visualization bar
+* `F` X,Y,Z colored axes visaliztions
 * `P` bail on decimation if it's proving ineffective
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` server-side processing (determine protocol and storage)
@@ -48,7 +49,9 @@
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `B` widen outside cuts to prevent chatter on deep (metal) features
+* `F` provide planar or other visual hint of current z bottom offset
 * `F` z bounded slices (extension of z bottom offset feature)
+* `F` z planar settings visualizations
 * `F` use arcs to connect hard angles
 * `F` lead-in milling
 * `F` trapezoidal tabs (in the Z axis)
