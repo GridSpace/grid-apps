@@ -1533,18 +1533,39 @@
                 return;
             }
         }
-        if (!(data.settings && data.version && data.time)) {
-            UC.alert('invalid settings format');
+        let isSettings = (data.settings && data.version && data.time);
+        let isDevice = (data.device && data.version && data.time);
+        if (!isSettings && !isDevice) {
+            UC.alert('invalid settings or device format');
             console.log('data',data);
             return;
         }
         function doit() {
-            settings = CONF.normalize(data.settings);
-            API.conf.save();
-            API.space.reload();
+            if (isSettings) {
+                settings = CONF.normalize(data.settings);
+                API.conf.save();
+                API.space.reload();
+            }
+            if (isDevice) {
+                if (settings.devices[data.device]) {
+                    UC.confirm(`Replace device ${data.device}?`).then(yes => {
+                        if (yes) {
+                            settings.devices[data.device] = data.code;
+                            API.show.devices();
+                        }
+                    });
+                } else {
+                    settings.devices[data.device] = data.code;
+                    API.show.devices();
+                }
+            }
         }
         if (ask) {
-            UC.confirm(`Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`).then((yes) => {
+            let prompt = `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
+            if (isDevice) {
+                prompt = `Import device "${data.device}"?`;
+            }
+            UC.confirm(prompt).then((yes) => {
                 if (yes) doit();
             });
         } else {

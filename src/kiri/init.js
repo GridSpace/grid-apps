@@ -466,6 +466,21 @@
         }).request("/data/"+ settings().id + "/" + settings().ver, set);
     }
 
+    function deviceExport(exp, name) {
+        name = (name || "kiridev")
+            .toLowerCase()
+            .replace(/ /g,'_')
+            .replace(/\./g,'_');
+        UC.prompt("Export Device Filename", name).then(name => {
+            if (name) {
+                let blob = new Blob([exp], {type: "octet/stream"}),
+                    url = WIN.URL.createObjectURL(blob);
+                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
+                $('sexport').click();
+            }
+        });
+    }
+
     function profileExport() {
         UC.prompt("Export Profile Filename", "kiriconf").then(name => {
             if (name) {
@@ -640,6 +655,7 @@
             UI.deviceSave.disabled = !local;
             UI.deviceDelete.disabled = !local;
             UI.deviceAdd.disabled = dev.noclone;
+            UI.deviceExport.disabled = !local;
 
             API.view.update_fields();
             platform.update_size();
@@ -713,6 +729,15 @@
             API.function.clear();
             removeLocalDevice(getSelectedDevice());
             showDevices();
+        };
+        UI.deviceExport.onclick = function() {
+            let exp = btoa(JSON.stringify({
+                version: KIRI.version,
+                device: selected,
+                code: devs[selected],
+                time: Date.now()
+            }));
+            deviceExport(exp, selected);
         };
 
         UI.deviceAll.onclick = function() {
@@ -1195,6 +1220,7 @@
             deviceList:         $('device-list'),
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
+            deviceExport:       $('device-exp'),
             deviceSave:         $('device-save'),
             deviceFavorites:    $('device-favorites'),
             deviceAll:          $('device-all'),
