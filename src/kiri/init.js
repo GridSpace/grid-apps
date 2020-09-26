@@ -217,7 +217,7 @@
                 if (evt.ctrlKey) {
                     evt.preventDefault();
                     API.conf.save();
-                    log("settings saved");
+                    console.log("settings saved");
                 } else
                 if (evt.metaKey) {
                     evt.preventDefault();

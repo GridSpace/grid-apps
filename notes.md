@@ -6,7 +6,7 @@
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
 * `F` gcode color to speed visualization bar
-* `F` X,Y,Z colored axes visaliztions
+* `F` X,Y,Z colored axes visualizations
 * `P` bail on decimation if it's proving ineffective
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` server-side processing (determine protocol and storage)
