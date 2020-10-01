@@ -386,7 +386,6 @@
             q = hsv.v * (1.0 - (hsv.s * rem)),
             t = hsv.v * (1.0 - (hsv.s * (1.0 - rem))),
             out = {};
-
         switch (seg) {
             case 0:
                 out.r = hsv.v;
