@@ -1286,7 +1286,16 @@
             moves, moving = true,
             opt = options || {},
             tools = opt.tools || [],
-            showmoves = !opt.nomoves;
+            showmoves = !opt.nomoves,
+            maxspeed = 0;
+        // find max speed
+        scope.output.forEach(function(layerout) {
+            layerout.forEach(function(out, index) {
+                if (out.emit && out.speed) {
+                    maxspeed = Math.max(maxspeed, out.speed);
+                }
+            });
+        });
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
@@ -1303,7 +1312,7 @@
                             cprint = base.newPolygon().setOpen(true).append(last);
                             print.push({
                                 poly: cprint,
-                                speed: out.speed || 4000,
+                                speed: out.speed || maxspeed || 4000,
                                 tool:tools[out.tool]
                             });
                         }
@@ -1346,8 +1355,8 @@
             print.forEach(segment => {
                 let {poly, speed, tool} = segment;
                 let off = tool ? (tool.extNozzle || 0.4) / 2 : 0.2;
-                let sint = Math.min(9000, parseInt(speed));
-                let rgb = scope.hsv2rgb({h:sint/9000, s:1, v:1});
+                let sint = Math.min(maxspeed, parseInt(speed));
+                let rgb = scope.hsv2rgb({h:sint/maxspeed, s:1, v:1});
                 let color = ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0);
