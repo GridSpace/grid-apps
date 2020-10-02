@@ -949,6 +949,7 @@
                 y: device.bedDepth/2
             },
             subst = {
+                travel_speed: seekMMM,
                 retract_speed: retSpeed,
                 retract_distance: retDist,
                 temp: process.firstLayerNozzleTemp || process.outputTemp,
