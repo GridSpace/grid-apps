@@ -505,9 +505,9 @@
                             support.lines(poly.fills, 0xffaadd);
                         });
                     } else {
-                        support.noodle(s.supports, extoff, 0x88aadd, 0x77bbcc);
+                        support.noodle(s.supports, extoff, 0xeeaadd, 0x77bbcc);
                         s.supports.forEach(function(poly) {
-                            support.noodle_lines(poly.fills, extoff, 0x88aadd, 0x77bbcc, s.z);
+                            support.noodle_lines(poly.fills, extoff, 0xeeaadd, 0x77bbcc, s.z);
                         });
                     }
                 }
@@ -1296,6 +1296,7 @@
                 }
             });
         });
+        maxspeed *= 1.001;
         // render layered output
         scope.lines = 0;
         scope.output.forEach(function(layerout) {
