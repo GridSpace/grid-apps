@@ -15,7 +15,7 @@
     "post":[
         "M104 S0                        ; turn off right extruder",
         "M107                           ; turn off filament cooling fan",
-        "G1 Z{z_max} F25                ; drop bed G1 42 mm at travel_speed",
+        "G1 Z{z_max} F25                ; drop bed",
         "G28 X0 Y0                      ; home XY axes",
         "M84                            ; disable stepper motors"
     ],
