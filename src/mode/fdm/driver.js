@@ -1361,6 +1361,9 @@
                 let color = ((rgb.r * 0xff) << 16) |
                     ((rgb.g * 0xff) <<  8) |
                     ((rgb.b * 0xff) <<  0);
+                if (opt.flat) {
+                    poly = poly.clone().setZ(0);
+                }
                 if (opt.aslines) {
                     emits.poly(poly, opt.color || color, false, true);
                 } else {

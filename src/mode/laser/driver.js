@@ -199,7 +199,7 @@
                 e = o.point;
                 e.x += p.max.w / 2 - m.fit.x;
                 e.y += p.max.h / 2 - m.fit.y;
-                e.z = 0;
+                // e.z = 0;
             });
         }
     };
@@ -348,7 +348,7 @@
      *
      */
     function exportSVG(print, cut_color) {
-        let lines = [], dx = 0, dy = 0, my;
+        let lines = [], dx = 0, dy = 0, my, z = 0;
         let colors = [
             "black",
             "purple",
@@ -375,12 +375,13 @@
             },
             function(poly, color) {
                 let cout = colors[((color-1) % colors.length)];
-                lines.push(`<polyline points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
+                lines.push(`<polyline z="${z}" points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
             },
             function() {
                 lines.push("</svg>");
             },
             function(point) {
+                z = point.z;
                 return UTIL.round(point.x - dx, 3) + "," + UTIL.round(my - point.y - dy, 3);
             }
         );
@@ -459,7 +460,7 @@
     };
 
     function printRender(print) {
-        return KIRI.driver.FDM.printRender(print, {aslines: true, nomoves: true});
+        return KIRI.driver.FDM.printRender(print, {aslines: true, nomoves: true, flat: true});
     }
 
 })();
