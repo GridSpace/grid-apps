@@ -224,6 +224,8 @@ kiri.lang['en-us'] = {
     ls_offs_l:      "adjust for beam width\nin millimeters",
     ls_lahi_s:      "height",
     ls_lahi_l:      "layer height\nin millimeters\n0 = auto/detect",
+    ls_lahm_s:      "min",
+    ls_lahm_l:      "layer height minimum\nwill merge auto slices\nunder this thickness\nin millimeters",
     ls_sngl_s:      "single",
     ls_sngl_l:      "perform only one slice\nat specified layer height",
 

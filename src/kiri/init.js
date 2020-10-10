@@ -1352,7 +1352,8 @@
             sliceBottomLayers:   UC.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:UC.toInt, modes:FDM}),
 
             laserOffset:         UC.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:UC.toFloat, modes:LASER}),
-            laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER}),
+            laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER, trigger: true}),
+            laserSliceHeightMin: UC.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:UC.toFloat, modes:LASER, show:() => { return UI.laserSliceHeight.value == 0 }}),
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM, marker:true}),

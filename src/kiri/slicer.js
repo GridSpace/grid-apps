@@ -241,6 +241,18 @@
             // use Z indices in auto slice mode for laser
             // find unique z-index offsets for slicing
             let zl = zOrdered
+            // if zIncMin also present, then merge adjacent
+            // slices less than that value
+            if (zIncMin) {
+                let last = undefined;
+                zl = zl.filter(v => {
+                    if (last !== undefined && v - last < zIncMin) {
+                        return false;
+                    }
+                    last = v;
+                    return true;
+                });
+            }
             for (i = 0; i < zl.length - 1; i++) {
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
             }

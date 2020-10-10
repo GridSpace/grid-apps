@@ -479,6 +479,7 @@
                     processName: "default",
                     laserOffset: 0.25,
                     laserSliceHeight: 1,
+                    laserSliceHeightMin: 0,
                     laserSliceSingle: false,
                     outputTileSpacing: 1,
                     outputTileScaling: 1,

@@ -122,7 +122,7 @@
         });
     }
 
-    function setMode(mode) {
+    function setMode(mode, nohide) {
         Object.keys(groupShow).forEach(group => {
             updateGroupShow(group);
         });
@@ -130,7 +130,9 @@
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
         });
-        hidePoppers();
+        if (!nohide) {
+            hidePoppers();
+        }
     }
 
     function setExpert(bool) {
@@ -326,8 +328,9 @@
         };
         el.setMode = function(mode) {
             let show = opt.expert === undefined || (opt.expert === letExpert);
+            let test = !opt.show || (opt.show && opt.show());
             let disp = opt.visible ? opt.visible() : true;
-            el.setVisible(el.hasMode(mode) && show && disp);
+            el.setVisible(el.hasMode(mode) && test && show && disp);
         }
         el.hasMode = function(mode) {
             if (mode === NOMODE) return false;
@@ -569,6 +572,9 @@
             });
             ip.addEventListener('blur', function(event) {
                 action(event);
+                if (opt.trigger) {
+                    setMode(letMode, true);
+                }
             });
         }
         if (!ip.convert) ip.convert = raw.bind(ip);

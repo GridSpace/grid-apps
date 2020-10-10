@@ -40,7 +40,9 @@
         }
 
         SLICER.sliceWidget(widget, {
-            height: proc.laserSliceHeight, single: proc.laserSliceSingle
+            single: proc.laserSliceSingle,
+            height: proc.laserSliceHeight,
+            minHeight: proc.laserSliceHeight === 0 ? proc.laserSliceHeightMin : 0
         }, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
