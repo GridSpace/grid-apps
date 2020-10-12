@@ -55,6 +55,7 @@
         camStock = null,
         camTopZ = 0,
         topZ = 0,
+        busy = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
         grouping = false;
@@ -166,6 +167,10 @@
         focus: () => {},
         stats: STATS,
         catalog: CATALOG,
+        busy: {
+            inc: () => { kiri.api.event.emit("busy", ++busy) },
+            dec: () => { kiri.api.event.emit("busy", --busy) }
+        },
         conf: {
             get: getSettings,
             put: putSettings,
@@ -291,8 +296,19 @@
 
     function reload() {
         API.event.emit('reload');
-        // allow time for async saves to complete
-        setTimeout(() => { LOC.reload() }, 50);
+        do_reload(100);
+    }
+
+    function do_reload(time) {
+        // allow time for async saves to complete and busy to to to zero
+        setTimeout(() => {
+            if (busy === 0) {
+                LOC.reload();
+            } else {
+                console.log(`reload deferred on busy=${busy}`);
+                do_reload(250);
+            }
+        }, time || 100);
     }
 
     /** ******************************************************************
