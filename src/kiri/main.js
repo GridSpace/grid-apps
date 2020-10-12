@@ -168,6 +168,7 @@
         stats: STATS,
         catalog: CATALOG,
         busy: {
+            val: () => { return busy },
             inc: () => { kiri.api.event.emit("busy", ++busy) },
             dec: () => { kiri.api.event.emit("busy", --busy) }
         },
@@ -990,7 +991,7 @@
          if (MODE === MODES.CAM && proc.camOriginTop) {
              z = camTopZ + 0.01;
              if (!camStock) {
-                 z += proc.camZTopOffset;
+                 z += proc.camZTopOffset * unitScale();
              }
          }
          if (!proc.outputOriginCenter) {
@@ -1022,7 +1023,7 @@
      function platformUpdateTopZ() {
          let alignTopOk = WIDGETS.length > 1 && settings.controller.alignTop;
          let camz = (MODE === MODES.CAM) && (settings.stock.z || alignTopOk);
-         let ztop = camz ? camTopZ - settings.process.camZTopOffset : 0;
+         let ztop = camz ? camTopZ - settings.process.camZTopOffset * unitScale() : 0;
          forAllWidgets(function(widget) {
              widget.setTopZ(ztop);
          });
@@ -1249,7 +1250,7 @@
             proc = settings.process,
             oldmode = viewMode,
             layout = (viewMode === VIEWS.ARRANGE && auto),
-            topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset : 0;
+            topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset * unitScale() : 0;
 
         switch (MODE) {
             case MODES.SLA:
