@@ -316,13 +316,24 @@
                     // used for renderMoves client side. can drop non-essential
                     // data to speed up worker -> browser transfer. perhaps a
                     // more compact encoding (arrays, etc)
-                    newlayer.push({
-                        emit: out.emit,
-                        speed: out.speed * 60,
-                        retract: out.retract,
-                        point: {x: out.point.x, y: out.point.y, z: out.point.z},
-                        tool: out.tool
-                    });
+                    let push = { };
+                    if (out.emit !== undefined) push.emit = out.emit;
+                    if (out.speed !== undefined) push.speed = out.speed * 60;
+                    if (out.retract !== undefined) push.retract = out.retract;
+                    if (out.point !== undefined) push.point = {
+                        x: out.point.x, y: out.point.y, z: out.point.z
+                    };
+                    if (out.tool !== undefined) push.tool = out.tool;
+                    if (layerout.thick !== undefined) push.thick = layerout.thick;
+                    newlayer.push(push);
+                    // newlayer.push({
+                    //     emit: out.emit,
+                    //     speed: out.speed * 60,
+                    //     retract: out.retract,
+                    //     point: {x: out.point.x, y: out.point.y, z: out.point.z},
+                    //     tool: out.tool,
+                    //     thick: layerout.thick
+                    // });
                 }
             });
         });

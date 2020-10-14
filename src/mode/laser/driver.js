@@ -65,6 +65,8 @@
         let grouped = process.outputLaserGroup;
         let group = [];
 
+        group.thick = slice.thick;
+
         function laserOut(poly, group) {
             if (!poly) {
                 return;
@@ -84,6 +86,7 @@
             if (!grouped) {
                 groups.push(group);
                 group = [];
+                group.thick = slice.thick;
             }
         });
 
@@ -210,7 +213,6 @@
      *
      */
     function exportElements(print, onpre, onpoly, onpost, onpoint) {
-
         let process = print.settings.process,
             output = print.output,
             last,
@@ -266,8 +268,10 @@
         onpre(min, max, process.outputLaserPower, process.outputLaserSpeed);
 
         output.forEach(function(layer) {
+            let thick = 0;
             let color = 0;
             layer.forEach(function(out) {
+                thick = out.thick;
                 point = out.point;
                 if (out.emit) {
                     color = out.emit;
@@ -276,13 +280,13 @@
                     }
                     poly.push(onpoint(point));
                 } else if (poly.length > 0) {
-                    onpoly(poly, color);
+                    onpoly(poly, color, thick);
                     poly = [];
                 }
                 last = point;
             });
             if (poly.length > 0) {
-                onpoly(poly, color);
+                onpoly(poly, color, thick);
                 poly = [];
             }
         });
@@ -375,9 +379,12 @@
                 lines.push('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
                 lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
             },
-            function(poly, color) {
+            function(poly, color, thick) {
                 let cout = colors[((color-1) % colors.length)];
-                lines.push(`<polyline z="${z}" points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
+                let def = ["polyline"];
+                if (z != undefined) def.push(`z="${z}"`);
+                if (thick != undefined) def.push(`h="${thick}"`);
+                lines.push(`<${def.join(' ')} points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
             },
             function() {
                 lines.push("</svg>");
