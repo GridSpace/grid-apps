@@ -382,8 +382,8 @@
             function(poly, color, thick) {
                 let cout = colors[((color-1) % colors.length)];
                 let def = ["polyline"];
-                if (z != undefined) def.push(`z="${z}"`);
-                if (thick != undefined) def.push(`h="${thick}"`);
+                if (z !== undefined) def.push(`z="${z}"`);
+                if (thick !== undefined) def.push(`h="${thick}"`);
                 lines.push(`<${def.join(' ')} points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
             },
             function() {
