@@ -181,18 +181,18 @@
         // do object layout packing
         let i, m, e,
             MOTO = self.moto,
-            mp = [device.bedWidth, device.bedDepth],
-            ms = [mp[0] / 2, mp[1] / 2],
-            mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
-            // sort objects by size
-            c = output.sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
-            p = new MOTO.Pack(ms[0], ms[1], process.outputTileSpacing).fit(c);
+            dw = device.bedWidth / 2,
+            dh = device.bedDepth / 2,
+            sort = !process.outputLaserLayer,
+            // sort objects by size when not using laser layer ordering
+            c = sort ? output.sort(MOTO.Sort) : output,
+            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c, !sort);
 
         // test different ratios until packed
         while (!p.packed) {
-            ms[0] += mi[0];
-            ms[1] += mi[1];
-            p = new MOTO.Pack(ms[0], ms[1], process.outputTileSpacing).fit(c);
+            dw *= 1.1;
+            dh *= 1.1;
+            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
         }
 
         for (i = 0; i < c.length; i++) {
