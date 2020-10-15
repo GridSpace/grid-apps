@@ -1291,13 +1291,12 @@
         let i, m, sz = SPACE.platform.size(),
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
-            mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
-            c = Widget.Groups.blocks().sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
+            c = Widget.Groups.blocks().sort(MOTO.Sort),
             p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
-            ms[0] += mi[0];
-            ms[1] += mi[1];
+            ms[0] *= 1.1;
+            ms[1] *= 1.1;
             p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
         }
 

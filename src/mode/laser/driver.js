@@ -40,7 +40,9 @@
         }
 
         SLICER.sliceWidget(widget, {
-            height: proc.laserSliceHeight, single: proc.laserSliceSingle
+            single: proc.laserSliceSingle,
+            height: proc.laserSliceHeight,
+            minHeight: proc.laserSliceHeight === 0 ? proc.laserSliceHeightMin : 0
         }, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
@@ -63,6 +65,8 @@
         let grouped = process.outputLaserGroup;
         let group = [];
 
+        group.thick = slice.thick;
+
         function laserOut(poly, group) {
             if (!poly) {
                 return;
@@ -82,6 +86,7 @@
             if (!grouped) {
                 groups.push(group);
                 group = [];
+                group.thick = slice.thick;
             }
         });
 
@@ -176,18 +181,18 @@
         // do object layout packing
         let i, m, e,
             MOTO = self.moto,
-            mp = [device.bedWidth, device.bedDepth],
-            ms = [mp[0] / 2, mp[1] / 2],
-            mi = mp[0] > mp[1] ? [(mp[0] / mp[1]) * 10, 10] : [10, (mp[1] / mp[1]) * 10],
-            // sort objects by size
-            c = output.sort(function (a, b) { return (b.w * b.h) - (a.w * a.h) }),
-            p = new MOTO.Pack(ms[0], ms[1], process.outputTileSpacing).fit(c);
+            dw = device.bedWidth / 2,
+            dh = device.bedDepth / 2,
+            sort = !process.outputLaserLayer,
+            // sort objects by size when not using laser layer ordering
+            c = sort ? output.sort(MOTO.Sort) : output,
+            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c, !sort);
 
         // test different ratios until packed
         while (!p.packed) {
-            ms[0] += mi[0];
-            ms[1] += mi[1];
-            p = new MOTO.Pack(ms[0], ms[1], process.outputTileSpacing).fit(c);
+            dw *= 1.1;
+            dh *= 1.1;
+            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
         }
 
         for (i = 0; i < c.length; i++) {
@@ -208,7 +213,6 @@
      *
      */
     function exportElements(print, onpre, onpoly, onpost, onpoint) {
-
         let process = print.settings.process,
             output = print.output,
             last,
@@ -264,8 +268,10 @@
         onpre(min, max, process.outputLaserPower, process.outputLaserSpeed);
 
         output.forEach(function(layer) {
+            let thick = 0;
             let color = 0;
             layer.forEach(function(out) {
+                thick = out.thick;
                 point = out.point;
                 if (out.emit) {
                     color = out.emit;
@@ -274,13 +280,13 @@
                     }
                     poly.push(onpoint(point));
                 } else if (poly.length > 0) {
-                    onpoly(poly, color);
+                    onpoly(poly, color, thick);
                     poly = [];
                 }
                 last = point;
             });
             if (poly.length > 0) {
-                onpoly(poly, color);
+                onpoly(poly, color, thick);
                 poly = [];
             }
         });
@@ -373,9 +379,12 @@
                 lines.push('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
                 lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
             },
-            function(poly, color) {
+            function(poly, color, thick) {
                 let cout = colors[((color-1) % colors.length)];
-                lines.push(`<polyline z="${z}" points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
+                let def = ["polyline"];
+                if (z !== undefined) def.push(`z="${z}"`);
+                if (thick !== undefined) def.push(`h="${thick}"`);
+                lines.push(`<${def.join(' ')} points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
             },
             function() {
                 lines.push("</svg>");

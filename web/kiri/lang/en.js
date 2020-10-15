@@ -224,6 +224,8 @@ kiri.lang['en-us'] = {
     ls_offs_l:      "adjust for beam width\nin millimeters",
     ls_lahi_s:      "height",
     ls_lahi_l:      "layer height\nin millimeters\n0 = auto/detect",
+    ls_lahm_s:      "min",
+    ls_lahm_l:      "layer height minimum\nwill merge auto slices\nunder this thickness\nin millimeters",
     ls_sngl_s:      "single",
     ls_sngl_l:      "perform only one slice\nat specified layer height",
 
@@ -325,6 +327,8 @@ kiri.lang['en-us'] = {
     ou_mrgd_l:      "merge all layers using\ncolor coding to denote\nstacking depth",
     ou_grpd_s:      "grouped",
     ou_grpd_l:      "retain each layer as\na unified grouping\ninstead of separated\npolygons",
+    ou_layr_s:      "layer order",
+    ou_layr_l:      "output layer order\nfrom top right to\nbottom left",
 
     // OUTPUT FDM
     ou_nozl_s:      "nozzle temp",

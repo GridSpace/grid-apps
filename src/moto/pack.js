@@ -13,6 +13,15 @@
     if (self.moto.Pack) return;
 
     self.moto.Pack = Packer;
+    self.moto.Sort = function (a, b) {
+        let aa = (a.w * a.h);
+        let ab = (b.w * b.h);
+        if (Math.abs(aa-ab) < 1) {
+            return (b.w / b.h) - (a.w / a.h);
+        } else {
+            return ab - aa;
+        }
+    };
 
     function Packer (w, h, spacing) {
         this.root = { x: 0, y: 0, w: w, h: h };
@@ -24,7 +33,32 @@
 
     Packer.prototype = {
 
-        fit: function (blocks) {
+        simple: function (blocks) {
+            let n = 0, block, x = 0, y = 0, mh = 0;
+            while (n < blocks.length) {
+                block = blocks[n++];
+                block.fit = { x, y };
+                this.max.w = Math.max(this.max.w, x + block.w);
+                this.max.h = Math.max(this.max.h, y + block.h);
+                mh = Math.max(mh, block.h);
+                x += block.w + this.spacing;
+                if (x > this.root.w) {
+                    x = 0;
+                    y += mh + this.spacing;
+                    mh = 0;
+                }
+                if (y > this.root.h) {
+                    return this;
+                }
+            }
+            this.packed = true;
+            return this;
+        },
+
+        fit: function (blocks, simple) {
+            if (simple) {
+                return this.simple(blocks);
+            }
             let n = 0, node, block, w, h;
             while (n < blocks.length) {
                 block = blocks[n++];

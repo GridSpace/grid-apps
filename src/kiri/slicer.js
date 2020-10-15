@@ -109,6 +109,7 @@
             zHeights = [],      // heights for zIndexes in adaptive mode
             zIndexes = [],      // auto-detected z slicing offsets (laser/cam)
             zOrdered = [],      // ordered list of Z indexes
+            zThick = [],        // ordered list of Z slice thickness (laser)
             zList = {},         // map count of z index points for adaptive slicing
             zFlat = {},         // map area of z index flat areas (cam)
             zLines = {},        // map count of z index lines
@@ -241,8 +242,21 @@
             // use Z indices in auto slice mode for laser
             // find unique z-index offsets for slicing
             let zl = zOrdered
+            // if zIncMin also present, then merge adjacent
+            // slices less than that value
+            if (zIncMin) {
+                let last = undefined;
+                zl = zl.filter(v => {
+                    if (last !== undefined && v - last < zIncMin) {
+                        return false;
+                    }
+                    last = v;
+                    return true;
+                });
+            }
             for (i = 0; i < zl.length - 1; i++) {
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
+                zThick.push(zl[i+1] - zl[i]);
             }
         } else if (isCam) {
             // re-divide slice height so that top and
@@ -334,7 +348,7 @@
                 zIndexes[i] += isCam ? 0.001 : -0.001;
             }
             // slice next layer and add to slices[] array
-            let slice = sliceZ(zIndexes[i], zHeights[i], onFlat, onLine);
+            let slice = sliceZ(zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
             // override z in cam in case it was moved for a flat or line
             if (isCam && slice) {
                 slice.z = zHeights[i];
@@ -439,7 +453,7 @@
          * @param {number} z
          * @param {number} [height] optional real height (fdm)
          */
-        function sliceZ(z, height, onflat, online) {
+        function sliceZ(z, height, onflat, online, thick) {
             let phash = {},
                 lines = [],
                 slice = newSlice(z, options.view ? options.view.newGroup() : null),
@@ -495,6 +509,7 @@
             slice.height = height;
             slice.index = slices.length;
             slice.lines = removeDuplicateLines(lines);
+            slice.thick = thick;
 
             // for topo slices, we just need the raw lines
             if (!topoMode && !simpleMode) {
