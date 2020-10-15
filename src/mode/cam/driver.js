@@ -401,6 +401,7 @@
             maxX = bounds.max.x,// + diameter,
             minY = bounds.min.y,// - diameter,
             maxY = bounds.max.y,// + diameter,
+            zBottom = outp.camZBottom * units,
             boundsX = maxX - minX,
             boundsY = maxY - minY,
             maxangle = proc.camContourAngle,
@@ -471,7 +472,7 @@
                 gridy,
                 gridi, // index
                 gridv, // value
-                zMin = Math.max(bounds.min.z, outp.camZBottom) + 0.0001,
+                zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
                 x, y, tv, ltv;
 
             // for each Y slice, find z grid value (x/z swapped)
@@ -872,7 +873,7 @@
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
             procDrillReg = proc.camDrillReg,
             procTrace = proc.camTraceOn,
-            sliceDepth = Math.max(0.1, Math.min(proc.camRoughDown, proc.camOutlineDown) / 3) * units,
+            sliceDepth = Math.max(0.1, Math.min(proc.camRoughDown, proc.camOutlineDown) / 3 * units),
             pocketOnlyRough = proc.camRoughPocket,
             pocketOnlyOutline = proc.camOutlinePocket,
             addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
@@ -881,9 +882,12 @@
             tabHeight = proc.camTabsHeight * units,
             bounds = widget.getBoundingBox(),
             mesh = widget.mesh,
-            zMin = Math.max(bounds.min.z, proc.camZBottom) * units,
+            zBottom = proc.camZBottom * units,
+            zMin = Math.max(bounds.min.z, zBottom),
             zThru = (proc.camZThru || 0) * units,
+            ztoff = proc.camZTopOffset * units,
             camRoughStock = proc.camRoughStock * units,
+            camRoughDown = proc.camRoughDown * units,
             shellRough,
             shellOutline,
             facePolys,
@@ -1041,8 +1045,8 @@
             // clear area from top of stock to top of part
             if (procFacing) {
                 let ztop = bounds.max.z,
-                    zpos = ztop + (proc.camZTopOffset * units),
-                    zstep = proc.camRoughDown * units;
+                    zpos = ztop + ztoff,
+                    zstep = camRoughDown;
 
                 while (zpos >= ztop) {
                     zpos = zpos - Math.min(zstep, zpos - ztop);
@@ -1061,7 +1065,7 @@
 
             if (procRough) {
                 let selected = [];
-                selectSlices(slices, proc.camRoughDown * units, CPRO.ROUGH, selected);
+                selectSlices(slices, camRoughDown, CPRO.ROUGH, selected);
                 if (zThru) {
                     addZThru(selected);
                 }
@@ -1082,7 +1086,7 @@
         }
 
         // horizontal slices for rough/outline
-        doSlicing(widget, {height: sliceDepth, cam:true, zmin:proc.camZBottom, noEmpty:true}, camSlicesDone, function(update) {
+        doSlicing(widget, {height:sliceDepth, cam:true, zmin:zBottom, noEmpty:true}, camSlicesDone, function(update) {
             onupdate(0.0 + update * 0.25, "slicing");
         });
 
@@ -1314,7 +1318,7 @@
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
             zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
-            ztoff = process.camZTopOffset,
+            ztoff = process.camZTopOffset * units,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
             wmpos = widget.mesh.position,
