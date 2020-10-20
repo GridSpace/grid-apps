@@ -73,6 +73,7 @@
 # Laser
 
 * `F` overcuts, radii for drag knives
+* `F` output option to uniquely color code each layer
 
 # References
 
