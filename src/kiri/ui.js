@@ -33,6 +33,7 @@
         prefix: function(pre) { prefix = pre; return kiri.ui },
         hideAction: function(fn) { hideAction = fn; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
+        refresh: refresh,
         setMode: setMode,
         setExpert: setExpert,
         bound: bound,
@@ -120,6 +121,10 @@
                 }
             }, 150);
         });
+    }
+
+    function refresh() {
+        setMode(letMode, true);
     }
 
     function setMode(mode, nohide) {
@@ -573,7 +578,7 @@
             ip.addEventListener('blur', function(event) {
                 action(event);
                 if (opt.trigger) {
-                    setMode(letMode, true);
+                    refresh();
                 }
             });
         }

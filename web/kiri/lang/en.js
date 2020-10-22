@@ -329,6 +329,8 @@ kiri.lang['en-us'] = {
     ou_grpd_l:      "retain each layer as\na unified grouping\ninstead of separated\npolygons",
     ou_layr_s:      "layer order",
     ou_layr_l:      "output layer order\nfrom top right to\nbottom left",
+    ou_layo_s:      "layer color",
+    ou_layo_l:      "output layer colors\nfor each z index\noverridden by merged",
 
     // OUTPUT FDM
     ou_nozl_s:      "nozzle temp",
