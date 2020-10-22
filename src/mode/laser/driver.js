@@ -64,6 +64,7 @@
         let process = print.settings.process;
         let grouped = process.outputLaserGroup;
         let group = [];
+        let zcolor = print.settings.process.outputLaserZColor;
 
         group.thick = slice.thick;
 
@@ -76,7 +77,9 @@
                     laserOut(pi, group);
                 });
             } else {
-                print.polyPrintPath(poly, start, group, {extrude: 1});
+                print.polyPrintPath(poly, start, group,
+                    zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1}
+                );
             }
         }
 
@@ -212,9 +215,10 @@
     /**
      *
      */
-    function exportElements(print, onpre, onpoly, onpost, onpoint) {
+    function exportElements(print, onpre, onpoly, onpost, onpoint, onlayer) {
         let process = print.settings.process,
             output = print.output,
+            zcolor = process.outputLaserZColor,
             last,
             point,
             poly = [],
@@ -267,12 +271,15 @@
 
         onpre(min, max, process.outputLaserPower, process.outputLaserSpeed);
 
-        output.forEach(function(layer) {
+        output.forEach(function(layer, index) {
             let thick = 0;
             let color = 0;
-            layer.forEach(function(out) {
+            layer.forEach(function(out, li) {
                 thick = out.thick;
                 point = out.point;
+                if (onlayer) {
+                    onlayer(index, point.z, out.thick, output.length);
+                }
                 if (out.emit) {
                     color = out.emit;
                     if (last && poly.length === 0) {
@@ -298,7 +305,7 @@
      *
      */
     function exportGCode(print) {
-        let lines = [], dx = 0, dy = 0, feedrate;
+        let lines = [], dx = 0, dy = 0, z = 0, feedrate;
         let dev = print.settings.device;
         let space = dev.gcodeSpace ? ' ' : '';
         let power = 255;
@@ -320,13 +327,17 @@
                     lines.push(line);
                 });
             },
-            function(poly, color) {
+            function(poly, color, thick) {
                 poly.forEach(function(point, index) {
                     if (index === 0) {
                         lines.push(`G0${space}${point}`);
                     } else if (index === 1) {
                         laser_on.forEach(line => {
-                            lines.push(line.replace('{power}', power));
+                            line = line.replace('{power}', power);
+                            line = line.replace('{color}', color);
+                            line = line.replace('{thick}', thick);
+                            line = line.replace('{z}', z);
+                            lines.push(line);
                         });
                         lines.push(`G1${space}${point}${feedrate}`);
                     } else {
@@ -343,7 +354,11 @@
                 });
             },
             function(point) {
+                z = point.z;
                 return `X${(point.x - dx).toFixed(3)}${space}Y${(point.y - dy).toFixed(3)}`;
+            },
+            function(layer, z, thick, layers) {
+                // ununsed
             }
         );
 
@@ -354,6 +369,7 @@
      *
      */
     function exportSVG(print, cut_color) {
+        let zcolor = print.settings.process.outputLaserZColor ? 1 : 0;
         let lines = [], dx = 0, dy = 0, my, z = 0;
         let colors = [
             "black",
@@ -380,7 +396,7 @@
                 lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
             },
             function(poly, color, thick) {
-                let cout = colors[((color-1) % colors.length)];
+                let cout = zcolor || colors[((color-1) % colors.length)];
                 let def = ["polyline"];
                 if (z !== undefined) def.push(`z="${z}"`);
                 if (thick !== undefined) def.push(`h="${thick}"`);
@@ -392,6 +408,12 @@
             function(point) {
                 z = point.z;
                 return UTIL.round(point.x - dx, 3) + "," + UTIL.round(my - point.y - dy, 3);
+            },
+            function(layer, z, thick, layers) {
+                if (zcolor) {
+                    zcolor = Math.round(((layer + 1) / layers) * 0xffffff).toString(16);
+                    zcolor = `#${zcolor.padStart(6,0)}`;
+                }
             }
         );
 

@@ -1296,6 +1296,9 @@
                 }
             });
         });
+        if (maxspeed === 0) {
+            maxspeed = 4000;
+        }
         maxspeed *= 1.001;
         // render layered output
         scope.lines = 0;

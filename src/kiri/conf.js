@@ -486,6 +486,7 @@
                     outputLaserPower: 100,
                     outputLaserSpeed: 1000,
                     outputLaserGroup: true,
+                    outputLaserZColor: false,
                     outputLaserLayer: false,
                     outputLaserMerged: false,
                     outputOriginCenter: true,
