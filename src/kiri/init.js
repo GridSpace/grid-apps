@@ -207,7 +207,7 @@
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
-                if (evt.metaKey) {
+                if (evt.metaKey || evt.ctrlKey) {
                     if (inputHasFocus()) return false;
                     evt.preventDefault();
                     platform.deselect();
