@@ -126,7 +126,7 @@ kiri.lang['en-us'] = {
     op_auto_s:      "auto layout",
     op_auto_l:      "automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once",
     op_free_s:      "free layout",
-    op_free_l:      "permit dragable layout",
+    op_free_l:      "permit dragable layout\nno effect in laser mode",
     op_invr_s:      "invert zoom",
     op_invr_l:      "invert mouse wheel\nscroll zoom",
     op_thin_s:      "thin lines",

@@ -75,6 +75,7 @@
 
 * `F` overcuts, radii for drag knives
 * `F` output option to uniquely color code each layer
+* `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
 
 # References
 
