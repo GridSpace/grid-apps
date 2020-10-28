@@ -261,7 +261,7 @@
     function holes(slices, offset, onupdate) {
         let last;
 
-        slices.reverse().forEach(function(slice,index) {
+        slices.slice().reverse().forEach(function(slice,index) {
             let holes = slice.gatherTopPolyInners([]).clone();
             if (last) {
                 let inter = [];
@@ -391,8 +391,8 @@
             outp = settings.process,
             units = settings.controller.units === 'in' ? 25.4 : 1,
             resolution = outp.camTolerance * units,
-            diameter = getToolDiameter(settings, proc.camOutlineTool),
-            tool = getToolById(settings, proc.camOutlineTool),
+            diameter = getToolDiameter(settings, proc.camContourTool),
+            tool = getToolById(settings, proc.camContourTool),
             toolStep = diameter * proc.camContourOver,
             traceJoin = diameter / 2,
             pocketOnly = proc.camOutlinePocket,
@@ -418,7 +418,7 @@
                 diameter: diameter,
                 resolution: resolution
             },
-            toolOffset = createToolProfile(settings, proc.camOutlineTool, topo),
+            toolOffset = createToolProfile(settings, proc.camContourTool, topo),
             newslices = [],
             newlines,
             newtop,
@@ -1065,7 +1065,7 @@
 
             if (procRough) {
                 let selected = [];
-                selectSlices(slices, camRoughDown, CPRO.ROUGH, selected);
+                selectSlices(slices, camRoughDown * units, CPRO.ROUGH, selected);
                 if (zThru) {
                     addZThru(selected);
                 }
@@ -1362,6 +1362,7 @@
             }
             newOutput.push(layerOut);
             layerOut = [];
+            layerOut.spindle = spindle;
         }
 
         function setTool(toolID, feed, plunge) {
@@ -1735,8 +1736,8 @@
             // two modes for deferred outlining: x then y or combined
             if (process.camContourCurves) {
                 lastMode = CPRO.CONTOUR_X;
-                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                spindle = Math.min(spindleMax, process.camOutlineSpindle);
+                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
+                spindle = Math.min(spindleMax, process.camContourSpindle);
                 // combined deferred contour x and y outlining
                 let contourxy = [].appendAll(depthData.contourx).appendAll(depthData.contoury);
                 printPoint = tip2tipEmit(contourxy, printPoint, function(el, point, count) {
@@ -1751,8 +1752,8 @@
                     return lastPoint;
                 });
             } else {
-                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                spindle = Math.min(spindleMax, process.camOutlineSpindle);
+                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
+                spindle = Math.min(spindleMax, process.camContourSpindle);
                 // deferred contour x outlining
                 if (depthData.contourx.length > 0) {
                     lastMode = CPRO.CONTOUR_X;

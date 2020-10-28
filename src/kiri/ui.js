@@ -15,12 +15,14 @@
         inputAction = null,
         groups = {},
         groupShow = {},
+        groupSticky = false,
         groupName = undefined,
         poppable = {},
         hasModes = [],
         isExpert = [],
         letMode = null,
         letExpert = false,
+        letHoverPop = true,
         DOC = SELF.document,
         state = {},
         prefix = "tab",
@@ -36,6 +38,7 @@
         refresh: refresh,
         setMode: setMode,
         setExpert: setExpert,
+        setHoverPop: setHoverPop,
         bound: bound,
         toInt: toInt,
         toFloat: toFloat,
@@ -145,6 +148,10 @@
         setMode(letMode);
     }
 
+    function setHoverPop(bool) {
+        letHoverPop = bool;
+    }
+
     function checkpoint() {
         return { addTo, lastDiv, lastGroup, groupName };
     }
@@ -180,7 +187,6 @@
             dbkey = `beta-${prefix}-show-${group}`,
             popper = !opt.inline && label,
             link;
-
 
         if (popper) {
             let pop = DOC.createElement('div');
@@ -223,7 +229,20 @@
             toggleGroup(group, dbkey);
         };
         if (popper) {
-            row.onmouseenter = function(ev) {
+            let saveclick = row.onclick;
+            row.onclick = function(ev) {
+                let showing = groupShow[group];
+                if (saveclick && showing) {
+                    saveclick(ev);
+                } else {
+                    row.onmouseenter(ev, true);
+                }
+            };
+            row.onmouseenter = function(ev, click) {
+                let showing = groupShow[group];
+                if (!(letHoverPop || click || showing)) {
+                    return;
+                }
                 if (ev.target !== link && ev.target !== row) {
                     return;
                 }
@@ -231,6 +250,9 @@
                 showGroup(group);
             };
             row.onmouseleave = function(ev) {
+                if (groupSticky) {
+                    return;
+                }
                 if (ev.target !== link && ev.target !== row) {
                     return;
                 }
@@ -255,6 +277,7 @@
             groupShow[name] = state[group.key] = (groupname === name);
             updateGroupShow(name);
         });
+        groupSticky = false;
     }
 
     function toggleGroup(groupname, dbkey) {
@@ -431,7 +454,9 @@
             }
         };
         addModeControls(btn, opt);
-        if (opt.title) row.setAttribute("title", options.title);
+        if (opt.title) {
+            row.setAttribute("title", options.title);
+        }
         txt.button = btn;
 
         return txt;
@@ -631,8 +656,13 @@
             if (options.title) row.setAttribute("title", options.title);
             if (options.action) action = options.action;
         }
-        ip.onchange = function() { action() };
+        ip.onchange = function() {
+            action();
+        };
         ip.setVisible = row.setVisible;
+        ip.onclick = (ev) => {
+            groupSticky = true;
+        };
 
         return ip;
     }

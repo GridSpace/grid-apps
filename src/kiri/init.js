@@ -89,6 +89,7 @@
         let control = settings().controller;
         let isDark = control.dark;
         control.expert = UI.expert.checked;
+        control.hoverPop = UI.hoverPop.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
@@ -105,6 +106,7 @@
         API.conf.save();
         API.mode.set_expert(control.expert);
         API.platform.update_size();
+        UC.setHoverPop(control.hoverPop);
     }
 
     function onLayerToggle() {
@@ -207,7 +209,7 @@
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
-                if (evt.metaKey) {
+                if (evt.metaKey || evt.ctrlKey) {
                     if (inputHasFocus()) return false;
                     evt.preventDefault();
                     platform.deselect();
@@ -1138,8 +1140,9 @@
             welcome = $('welcome'),
             gcode = $('dev-gcode'),
             tracker = $('tracker'),
-            controller = settings().controller,
-            dark = controller.dark;
+            controller = settings().controller;
+
+        UC.setHoverPop(controller.hoverPop);
 
         WIN.addEventListener("resize", () => {
             API.event.emit('resize');
@@ -1155,7 +1158,7 @@
         });
 
         SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(dark ? 0 : 0xffffff);
+        SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
             if (API.var.layer_max === 0 || !delta) return;
             if (settings().controller.reverseZoom) delta = -delta;
@@ -1330,6 +1333,7 @@
 
             layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
+            hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:       UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
@@ -1450,6 +1454,15 @@
             camStockZ:           UC.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM}),
             camStockOffset:      UC.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
 
+            camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
+            camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM}),
+            camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM}),
+            camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
+            camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM}),
+            camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toInt, modes:CAM}),
+            camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
+            camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
+
             output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
             outputTileSpacing:   UC.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
             outputTileScaling:   UC.newInput(LANG.ou_scal_s, {title:LANG.ou_scal_l, convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
@@ -1475,15 +1488,6 @@
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
-
-            camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
-            camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM}),
-            camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM}),
-            camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM}),
-            camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM}),
-            camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toInt, modes:CAM}),
-            camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
-            camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
 
             advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM, expert:true}),
             outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1707,9 +1711,6 @@
         $('set-top').onmouseover = () => {
             UC.hidePoppers();
         };
-
-        // shortcut to load settings
-        UI.settingsGroup.onclick = settingsLoad;
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,

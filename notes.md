@@ -2,6 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `F` add click-to-activate/dismiss for configuration panels
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -45,6 +46,7 @@
 
 # CAM
 
+* `B` outline slicing should be distinct from roughing which handles flats
 * `B` excessive moves with tabs. allow reversing in open polys or do not nest them
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` contouring should extend beyond part boundaries by tool radius
@@ -74,6 +76,8 @@
 # Laser
 
 * `F` overcuts, radii for drag knives
+* `F` output option to uniquely color code each layer
+* `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
 
 # References
 

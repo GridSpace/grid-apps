@@ -72,7 +72,8 @@
     const feature = {
         seed: true,
         controls: true,
-        drop_group: undefined
+        drop_group: undefined,
+        preview: true
     };
 
     const selection = {
@@ -723,8 +724,10 @@
 
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
-        setViewMode(VIEWS.PREVIEW);
-        clearPrint();
+        if (feature.preview) {
+            setViewMode(VIEWS.PREVIEW);
+            clearPrint();
+        }
         API.conf.save();
         API.event.emit('preview.begin', pMode);
 
@@ -733,7 +736,7 @@
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else {
+        } else if (feature.preview) {
             setOpacity(color.preview_opacity);
         }
 
@@ -748,16 +751,20 @@
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
-            currentPrint.render();
+            if (feature.preview) {
+                currentPrint.render();
+            }
 
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);
-            SPACE.platform.add(currentPrint.group);
-            SPACE.update();
 
-            UI.layerPrint.checked = true;
-            updateSliderMax(true);
-            showSlices();
+            if (feature.preview) {
+                SPACE.platform.add(currentPrint.group);
+                SPACE.update();
+                UI.layerPrint.checked = true;
+                updateSliderMax(true);
+                showSlices();
+            }
 
             if (typeof(callback) === 'function') {
                 callback();
