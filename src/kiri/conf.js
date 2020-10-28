@@ -600,6 +600,7 @@
                 view: null,
                 dark: false,
                 expert: true,
+                hoverPop: true,
                 zoomSpeed: 1.0,
                 thinRender: false,
                 reverseZoom: true,

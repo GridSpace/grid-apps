@@ -115,6 +115,8 @@ kiri.lang['en-us'] = {
     op_menu:        "preferences",
     op_xprt_s:      "expert",
     op_xprt_l:      "enable expert options",
+    op_hopo_s:      "hover pop",
+    op_hopo_l:      "enable menu hover\nto activate",
     op_dark_s:      "dark mode",
     op_dark_l:      "dark mode interface",
     op_comp_s:      "compact ui",

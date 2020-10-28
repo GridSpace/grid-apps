@@ -1362,6 +1362,7 @@
             }
             newOutput.push(layerOut);
             layerOut = [];
+            layerOut.spindle = spindle;
         }
 
         function setTool(toolID, feed, plunge) {
@@ -1735,8 +1736,8 @@
             // two modes for deferred outlining: x then y or combined
             if (process.camContourCurves) {
                 lastMode = CPRO.CONTOUR_X;
-                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                spindle = Math.min(spindleMax, process.camOutlineSpindle);
+                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
+                spindle = Math.min(spindleMax, process.camContourSpindle);
                 // combined deferred contour x and y outlining
                 let contourxy = [].appendAll(depthData.contourx).appendAll(depthData.contoury);
                 printPoint = tip2tipEmit(contourxy, printPoint, function(el, point, count) {
@@ -1751,8 +1752,8 @@
                     return lastPoint;
                 });
             } else {
-                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                spindle = Math.min(spindleMax, process.camOutlineSpindle);
+                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
+                spindle = Math.min(spindleMax, process.camContourSpindle);
                 // deferred contour x outlining
                 if (depthData.contourx.length > 0) {
                     lastMode = CPRO.CONTOUR_X;

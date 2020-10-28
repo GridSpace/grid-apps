@@ -89,6 +89,7 @@
         let control = settings().controller;
         let isDark = control.dark;
         control.expert = UI.expert.checked;
+        control.hoverPop = UI.hoverPop.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
@@ -105,6 +106,7 @@
         API.conf.save();
         API.mode.set_expert(control.expert);
         API.platform.update_size();
+        UC.setHoverPop(control.hoverPop);
     }
 
     function onLayerToggle() {
@@ -1138,8 +1140,9 @@
             welcome = $('welcome'),
             gcode = $('dev-gcode'),
             tracker = $('tracker'),
-            controller = settings().controller,
-            dark = controller.dark;
+            controller = settings().controller;
+
+        UC.setHoverPop(controller.hoverPop);
 
         WIN.addEventListener("resize", () => {
             API.event.emit('resize');
@@ -1155,7 +1158,7 @@
         });
 
         SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(dark ? 0 : 0xffffff);
+        SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
             if (API.var.layer_max === 0 || !delta) return;
             if (settings().controller.reverseZoom) delta = -delta;
@@ -1330,6 +1333,7 @@
 
             layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
+            hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             showOrigin:       UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
@@ -1707,9 +1711,6 @@
         $('set-top').onmouseover = () => {
             UC.hidePoppers();
         };
-
-        // shortcut to load settings
-        UI.settingsGroup.onclick = settingsLoad;
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
