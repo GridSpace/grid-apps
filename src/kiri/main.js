@@ -1229,7 +1229,7 @@
         if (Array.isArray(widget)) {
             let mc = widget.slice(), i;
             for (i=0; i<mc.length; i++) {
-                platform.delete(mc[i].widget);
+                platform.delete(mc[i].widget || mc[i]);
             }
             return;
         }

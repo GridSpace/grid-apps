@@ -2015,6 +2015,7 @@
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;
+        $('view-clear').onclick = () => { API.platform.delete(API.widgets.all()) };
         $('mode-fdm').onclick = () => { API.mode.set('FDM') };
         $('mode-sla').onclick = () => { API.mode.set('SLA') };
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
