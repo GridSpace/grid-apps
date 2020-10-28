@@ -1245,7 +1245,6 @@
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
 
-            setNow:             $('set-now'),
             setMenu:            $('set-menu'),
             settings:           $('settings'),
             settingsBody:       $('settingsBody'),
@@ -1705,11 +1704,6 @@
         $('lset-da').onclick = function() {
             SDB.setItem('kiri-lang', 'da-dk');
             API.space.reload();
-        };
-
-        // when profile hover/pop, hide other poppers
-        $('set-top').onmouseover = () => {
-            UC.hidePoppers();
         };
 
         SPACE.addEventHandlers(self, [

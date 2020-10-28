@@ -1847,8 +1847,6 @@
         settings.cproc[mode] = name;
         // save named process with the current device
         settings.devproc[currentDeviceName()] = name;
-        // update settings hover-pop with current process name
-        UI.setNow.innerText = named;
 
         // allow mode driver to take any necessary actions
         API.event.emit("settings.load", settings);
