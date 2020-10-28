@@ -261,7 +261,7 @@
     function holes(slices, offset, onupdate) {
         let last;
 
-        slices.reverse().forEach(function(slice,index) {
+        slices.slice().reverse().forEach(function(slice,index) {
             let holes = slice.gatherTopPolyInners([]).clone();
             if (last) {
                 let inter = [];
@@ -1065,7 +1065,7 @@
 
             if (procRough) {
                 let selected = [];
-                selectSlices(slices, camRoughDown, CPRO.ROUGH, selected);
+                selectSlices(slices, camRoughDown * units, CPRO.ROUGH, selected);
                 if (zThru) {
                     addZThru(selected);
                 }
