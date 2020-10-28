@@ -46,6 +46,7 @@
 
 # CAM
 
+* `B` outline slicing should be distinct from roughing which handles flats
 * `B` excessive moves with tabs. allow reversing in open polys or do not nest them
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` contouring should extend beyond part boundaries by tool radius
