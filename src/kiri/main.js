@@ -251,6 +251,7 @@
             clear: clearPrint
         },
         probe: {
+            live : "https://live.grid.space",
             grid : function() { return false },
             local : function() { return false }
         },

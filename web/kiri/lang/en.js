@@ -128,7 +128,7 @@ kiri.lang['en-us'] = {
     op_alig_s:      "align top",
     op_alig_l:      "align parts to the\ntallest part when\nno stock is set",
     op_auto_s:      "auto layout",
-    op_auto_l:      "automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once",
+    op_auto_l:      "automatically layout platform\nwhen new items added",
     op_free_s:      "free layout",
     op_free_l:      "permit dragable layout\nno effect in laser mode",
     op_invr_s:      "invert zoom",
