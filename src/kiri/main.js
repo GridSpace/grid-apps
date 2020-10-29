@@ -993,6 +993,10 @@
          let dev = settings.device;
          let proc = settings.process;
          let ruler = settings.controller.showRulers;
+         let center = MODE === MODES.FDM ? dev.originCenter :
+            MODE === MODES.SLA ? false :
+            MODE === MODES.CAM ? proc.outputOriginCenter :
+            dev.originCenter || proc.outputOriginCenter;
          let x = 0;
          let y = 0;
          let z = 0;
@@ -1002,7 +1006,7 @@
                  z += proc.camZTopOffset * unitScale();
              }
          }
-         if (!proc.outputOriginCenter) {
+         if (!center) {
              if (camStock) {
                  x = (-camStock.scale.x / 2) + camStock.position.x;
                  y = (camStock.scale.y / 2) - camStock.position.y;
@@ -1021,7 +1025,7 @@
              y = -camStock.position.y;
          }
          settings.origin = {x, y, z};
-         SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter);
+         SPACE.platform.setRulers(ruler, ruler, center);
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
              SPACE.platform.setOrigin(x,y,z);
          } else {
