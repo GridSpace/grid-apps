@@ -152,8 +152,8 @@
         letHoverPop = bool;
     }
 
-    function checkpoint() {
-        return { addTo, lastDiv, lastGroup, groupName };
+    function checkpoint(at) {
+        return { addTo: at || addTo, lastDiv: at || lastDiv, lastGroup, groupName };
     }
 
     function restore(opt) {

@@ -992,6 +992,7 @@
          platform.update_bounds();
          let dev = settings.device;
          let proc = settings.process;
+         let ruler = settings.controller.showRulers;
          let x = 0;
          let y = 0;
          let z = 0;
@@ -1020,6 +1021,7 @@
              y = -camStock.position.y;
          }
          settings.origin = {x, y, z};
+         SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter);
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
              SPACE.platform.setOrigin(x,y,z);
          } else {
@@ -1047,7 +1049,9 @@
             depth = parseInt(dev.bedDepth),
             height = parseFloat(dev.bedHeight)
         );
-        let ctrl = settings.controller,
+        let proc = settings.process,
+            ctrl = settings.controller,
+            ruler = ctrl.showRulers,
             unitMM = ctrl.units === 'mm',
             gridMajor = unitMM ? 25 : 25.4,
             gridMinor = unitMM ? 5 : 25.4 / 10;
@@ -1062,6 +1066,7 @@
             SPACE.setSkyColor(0xffffff);
             DOC.body.classList.remove('dark');
         }
+        SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter);
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
         SPACE.scene.freeze(frozen);

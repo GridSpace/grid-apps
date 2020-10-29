@@ -605,6 +605,7 @@
                 thinRender: false,
                 reverseZoom: true,
                 showOrigin: false,
+                showRulers: false,
                 freeLayout: true,
                 autoLayout: true,
                 alignTop: true,

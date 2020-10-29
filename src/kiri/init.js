@@ -91,6 +91,7 @@
         control.expert = UI.expert.checked;
         control.hoverPop = UI.hoverPop.checked;
         control.showOrigin = UI.showOrigin.checked;
+        control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
         control.alignTop = UI.alignTop.checked;
@@ -1330,23 +1331,26 @@
                 (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button
             ], {modes:GCODE, class:"ext-buttons f-row"}),
 
-            layout:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
+            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-            showOrigin:       UC.newBoolean(LANG.op_show_s, booleanSave, {title:LANG.op_show_l, modes:GCODE}),
+            reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
+            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
+
+            layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l, modes:GCODE}),
+            showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l, modes:GCODE}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
-            reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l, modes:ALL}),
-            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:ALL}),
             units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM, action:unitsSave}, "units"),
-            prefadd:          UC.checkpoint(),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-out'), {inline: true}),
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
+            prefadd:          UC.checkpoint($('prefs-add')),
 
             process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
             sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),
@@ -1872,6 +1876,7 @@
 
         // restore UI state from settings
         UI.showOrigin.checked = control.showOrigin;
+        UI.showRulers.checked = control.showRulers;
         UI.freeLayout.checked = control.freeLayout;
         UI.autoLayout.checked = control.autoLayout;
         UI.alignTop.checked = control.alignTop;
