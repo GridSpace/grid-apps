@@ -326,15 +326,15 @@
         // Slope.isSame (vert/horiz w/in this value)
         // isCloseTo() default for dist
         // sliceIntersects point merge dist for non-fill
-        precision_merge : 0.0001,
-        precision_slice_z : 0.0001,
+        precision_merge : 0.005,
+        precision_slice_z : 0.005,
         // Point.isInPolygon nearPolygon value
         // Point.isInPolygonNotNear nearPolygon value
         // Point.isMergable2D distToSq2D value
         // Point.isMergable3D distToSq2D value
         // Polygon.isInside nearPolygon value
         // Polygon.isOutside nearPolygon value
-        precision_merge_sq : sqr(0.0001),
+        precision_merge_sq : sqr(0.005),
         // Bound.isNested inflation value for potential parent
         precision_bounds : 0.0001,
         // Slope.isSame default precision

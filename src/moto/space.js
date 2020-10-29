@@ -50,6 +50,11 @@
         gridColorMajor,
         gridColorMinor,
         gridView,
+        rulersView,
+        rulerXFirst = null,
+        rulerXLast = null,
+        rulerYFirst = null,
+        rulerYLast = null,
         viewControl,
         trackPlane,
         platform,
@@ -229,6 +234,78 @@
         return was;
     }
 
+    function setRulers(drawX, drawY, offsetCenter) {
+        let x = platform.scale.x,
+            y = isRound ? platform.scale.z : platform.scale.y,
+            z = isRound ? platform.scale.y : platform.scale.z,
+            w = x / 2,
+            h = y / 2,
+            d = z / 2,
+            zp = -d - platformZOff + gridZOff,
+            oldRulersView = rulersView,
+            labelSize = gridUnitMinor * 1.4;
+
+        let canvasInMesh = function(w, h, textAlign, textBaseline) {
+            let canvas = document.createElement('canvas'),
+                ctx = canvas.getContext('2d'),
+                scale = 8,
+                plane,
+                canvasTexture,
+                material,
+                mesh;
+
+            canvas.width = w * scale;
+            canvas.height = h * scale;
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#333333';
+            ctx.font = labelSize + 'px sans-serif';
+            ctx.textAlign = textAlign;
+            ctx.textBaseline = textBaseline;
+            plane = new THREE.PlaneGeometry(w, h);
+            canvasTexture = new THREE.CanvasTexture(canvas);
+            canvasTexture.minFilter = THREE.LinearFilter;
+            // set 'transparent' to false to debug mesh bounds
+            material = new THREE.MeshBasicMaterial({transparent: true, map: canvasTexture});
+            mesh = new THREE.Mesh(plane, material);
+            return {ctx: ctx, mesh: mesh};
+        }
+
+        if (drawX || drawY) {
+            rulersView = new THREE.Group();
+        } else {
+            rulersView = null;
+        }
+
+        if (drawX) {
+            let xPadding = labelSize * 4;
+            let canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top');
+
+            for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
+                let label = offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i;
+                canvas.ctx.fillText('' + label, i + xPadding / 2, 0);
+            }
+            canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
+            rulersView.add(canvas.mesh);
+        }
+
+        if (drawY) {
+            let yPadding = labelSize;
+            let canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle');
+
+            for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
+                let label = offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
+                    rulerYFirst + rulerYLast - i;
+                canvas.ctx.fillText('' + label, labelSize * 4, i + yPadding / 2);
+            }
+            canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
+            rulersView.add(canvas.mesh);
+        }
+
+        if (oldRulersView) Space.scene.remove(oldRulersView);
+        if (rulersView) Space.scene.add(rulersView);
+        Space.refresh();
+    }
+
     function setGrid(unitMajor, unitMinor, colorMajor, colorMinor) {
         if (!unitMajor) return;
         let oldGridView = gridView;
@@ -249,12 +326,20 @@
             d = z / 2,
             zp = -d - platformZOff + gridZOff,
             majors = [], minors = unitMinor ? [] : null, i;
+
+        rulerXFirst = null;
+        rulerXLast = null;
+        rulerYFirst = null;
+        rulerYLast = null;
+
         for (i = -xo; i <= xo; i += unitMinor) {
             let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h,
                 dM = Math.abs(i % unitMajor);
             if (i < -w || i > w) continue;
             if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
                 majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
+                if (rulerXFirst === null) rulerXFirst = i + w;
+                rulerXLast = i + w;
             } else {
                 minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
             }
@@ -265,6 +350,8 @@
             if (i < -h || i > h) continue;
             if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
                 majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
+                if (rulerYFirst === null) rulerYFirst = i + h;
+                rulerYLast = i + h;
             } else {
                 minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
             }
@@ -618,6 +705,7 @@
             setSize:   setPlatformSizeUpdateGrid,
             setColor:  setPlatformColor,
             setOrigin: setOrigin,
+            setRulers: setRulers,
             setGrid:   setGrid,
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },

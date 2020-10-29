@@ -121,12 +121,14 @@ kiri.lang['en-us'] = {
     op_dark_l:      "dark mode interface",
     op_comp_s:      "compact ui",
     op_comp_l:      "compact user interface\nbetter for small screens\nand tablets",
-    op_show_s:      "show origin",
-    op_show_l:      "show device or process origin",
+    op_shor_s:      "show origin",
+    op_shor_l:      "show device or process origin",
+    op_shru_s:      "show rulers",
+    op_shru_l:      "show axes rulers\non major gridlines",
     op_alig_s:      "align top",
     op_alig_l:      "align parts to the\ntallest part when\nno stock is set",
     op_auto_s:      "auto layout",
-    op_auto_l:      "automatically layout platform\nwhen new items added\nor when arrange clicked\nmore than once",
+    op_auto_l:      "automatically layout platform\nwhen new items added",
     op_free_s:      "free layout",
     op_free_l:      "permit dragable layout\nno effect in laser mode",
     op_invr_s:      "invert zoom",
@@ -136,7 +138,9 @@ kiri.lang['en-us'] = {
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
 
-    xp_menu:        "export",
+    lo_menu:        "layout",
+
+    xp_menu:        "exports",
 
     // LAYERS pop-menu
     la_menu:        "layers",

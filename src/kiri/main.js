@@ -251,6 +251,7 @@
             clear: clearPrint
         },
         probe: {
+            live : "https://live.grid.space",
             grid : function() { return false },
             local : function() { return false }
         },
@@ -992,6 +993,11 @@
          platform.update_bounds();
          let dev = settings.device;
          let proc = settings.process;
+         let ruler = settings.controller.showRulers;
+         let center = MODE === MODES.FDM ? dev.originCenter :
+            MODE === MODES.SLA ? false :
+            MODE === MODES.CAM ? proc.outputOriginCenter :
+            dev.originCenter || proc.outputOriginCenter;
          let x = 0;
          let y = 0;
          let z = 0;
@@ -1001,7 +1007,7 @@
                  z += proc.camZTopOffset * unitScale();
              }
          }
-         if (!proc.outputOriginCenter) {
+         if (!center) {
              if (camStock) {
                  x = (-camStock.scale.x / 2) + camStock.position.x;
                  y = (camStock.scale.y / 2) - camStock.position.y;
@@ -1020,6 +1026,7 @@
              y = -camStock.position.y;
          }
          settings.origin = {x, y, z};
+         SPACE.platform.setRulers(ruler, ruler, center);
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
              SPACE.platform.setOrigin(x,y,z);
          } else {
@@ -1047,7 +1054,9 @@
             depth = parseInt(dev.bedDepth),
             height = parseFloat(dev.bedHeight)
         );
-        let ctrl = settings.controller,
+        let proc = settings.process,
+            ctrl = settings.controller,
+            ruler = ctrl.showRulers,
             unitMM = ctrl.units === 'mm',
             gridMajor = unitMM ? 25 : 25.4,
             gridMinor = unitMM ? 5 : 25.4 / 10;
@@ -1062,6 +1071,7 @@
             SPACE.setSkyColor(0xffffff);
             DOC.body.classList.remove('dark');
         }
+        SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter);
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
         SPACE.scene.freeze(frozen);
@@ -1229,7 +1239,7 @@
         if (Array.isArray(widget)) {
             let mc = widget.slice(), i;
             for (i=0; i<mc.length; i++) {
-                platform.delete(mc[i].widget);
+                platform.delete(mc[i].widget || mc[i]);
             }
             return;
         }
@@ -1847,8 +1857,6 @@
         settings.cproc[mode] = name;
         // save named process with the current device
         settings.devproc[currentDeviceName()] = name;
-        // update settings hover-pop with current process name
-        UI.setNow.innerText = named;
 
         // allow mode driver to take any necessary actions
         API.event.emit("settings.load", settings);
