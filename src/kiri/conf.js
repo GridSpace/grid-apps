@@ -481,8 +481,8 @@
                     laserSliceHeight: 1,
                     laserSliceHeightMin: 0,
                     laserSliceSingle: false,
+                    laserKnife: false,
                     outputTileSpacing: 1,
-                    outputTileScaling: 1,
                     outputLaserPower: 100,
                     outputLaserSpeed: 1000,
                     outputLaserGroup: true,
@@ -491,7 +491,10 @@
                     outputLaserMerged: false,
                     outputOriginCenter: true,
                     outputInvertX: false,
-                    outputInvertY: false
+                    outputInvertY: false,
+                    outputKnifeDepth: 1,
+                    outputKnifePasses: 1,
+                    outputTipOffset: 2
                 }
             }
         },

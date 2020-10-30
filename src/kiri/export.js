@@ -238,7 +238,6 @@
                 $('send-to-gridhead').style.display = '';
                 $('send-to-gridspool').style.display = '';
             }
-
         }
 
         function sendto_gridlocal() {
