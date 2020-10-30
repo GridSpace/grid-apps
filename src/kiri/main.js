@@ -593,6 +593,19 @@
         return showing;
     }
 
+    function setWidgetVisibility(bool) {
+        if (bool) {
+            UI.layerParts.checked = true;
+        }
+        forAllWidgets(w => {
+            if (bool) {
+                w.show();
+            } else {
+                w.hide();
+            }
+        });
+    }
+
     /**
      * hide or show slice-layers and their sub-elements
      *
@@ -601,6 +614,10 @@
     function showSlices(layer) {
         if (viewMode === VIEWS.ARRANGE) {
             return;
+        }
+
+        if (MODE === MODES.CAM) {
+            setWidgetVisibility(UI.layerParts.checked);
         }
 
         showSlider();
@@ -1997,13 +2014,16 @@
                 hideSlider();
                 clearWidgetCache();
                 updateSliderMax();
+                setWidgetVisibility(true);
                 break;
             case VIEWS.SLICE:
                 $('lt-back').style.display = 'flex';
                 updateSliderMax();
+                setWidgetVisibility(true);
                 break;
             case VIEWS.PREVIEW:
-            $('lt-back').style.display = 'flex';
+                $('lt-back').style.display = 'flex';
+                setWidgetVisibility(true);
                 break;
             default:
                 DBUG.log("invalid view mode: "+mode);

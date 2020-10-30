@@ -2101,7 +2101,7 @@
     };
 
     function printRender(print) {
-        return KIRI.driver.FDM.printRender(print, {aslines: true, color: 0x010101});
+        return KIRI.driver.FDM.printRender(print, {aslines: true, color: 0x010101, move_color: 0xcc3333});
     }
 
 })();

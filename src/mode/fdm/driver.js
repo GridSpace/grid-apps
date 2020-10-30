@@ -1352,7 +1352,7 @@
             emits = KIRI.newLayer(scope.group);
             if (showmoves) {
                 moves = KIRI.newLayer(scope.group);
-                moves.lines(move, 0x888888);
+                moves.lines(move, opt.move_color || 0x888888);
             }
             emits.setTransparent(false);
             // emit printing shapes

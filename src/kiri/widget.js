@@ -758,4 +758,12 @@
         }
     };
 
+    PRO.show = function() {
+        this.mesh.visible = true;
+    };
+
+    PRO.hide = function() {
+        this.mesh.visible = false;
+    };
+
 })();

@@ -158,6 +158,7 @@ kiri.lang['en-us'] = {
     la_sprt:        "supports",
     la_prnt:        "print",
     la_move:        "moves",
+    la_part:        "parts",
 
     // SETTINGS
     se_menu:        "library",

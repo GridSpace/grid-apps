@@ -1578,7 +1578,8 @@
             layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
             layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle, {modes:GCODE}),
-            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
+            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
+            layerParts:    UC.newBoolean(LANG.la_part, onLayerToggle, {modes:CAM})
         });
 
         function showLaserKnife() {
