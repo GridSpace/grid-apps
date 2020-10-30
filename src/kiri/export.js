@@ -217,20 +217,28 @@
 
             grid_local = devs;
 
+            let gdev = SDB['grid-local'];
+            let gloc = $('grid-local');
             let html = [];
             for (let uuid in devs) {
+                gdev = gdev || uuid;
                 let dev = devs[uuid];
-                html.push(`<option id="gl-${uuid}" value="${uuid}">${dev.stat.device.name}</option>`);
+                let sel = uuid === gdev ? ' selected' : '';
+                html.push(`<option id="gl-${uuid}" value="${uuid}" ${sel}>${dev.stat.device.name}</option>`);
             }
 
             if (html.length) {
-                $('grid-local').innerHTML = html.join('\n');
+                gloc.innerHTML = html.join('\n');
+                gloc.onchange = (ev) => {
+                    SDB['grid-local'] = gloc.options[gloc.selectedIndex].value
+                };
                 $('send-to-gridhead').style.display = 'flex';
                 $('send-to-gridspool').style.display = 'flex';
             } else {
                 $('send-to-gridhead').style.display = '';
                 $('send-to-gridspool').style.display = '';
             }
+
         }
 
         function sendto_gridlocal() {
