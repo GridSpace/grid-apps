@@ -1466,13 +1466,19 @@
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
             camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
 
-            output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
+            laserLayout:         UC.newGroup(LANG.lo_menu, null, {modes:GCODE}),
             outputTileSpacing:   UC.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
-            outputTileScaling:   UC.newInput(LANG.ou_scal_s, {title:LANG.ou_scal_l, convert:UC.toInt, bound:UC.bound(0.1,100), modes:LASER}),
-            outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
-            outputLaserSpeed:    UC.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:UC.toInt, modes:LASER}),
             outputLaserMerged:   UC.newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:LASER}),
             outputLaserGroup:    UC.newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, modes:LASER}),
+
+            knife:               UC.newGroup(LANG.dk_menu, null, {modes:LASER, show:showLaserKnife }),
+            outputKnifeDepth:    UC.newInput(LANG.dk_dpth_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,5.0), modes:LASER, show:showLaserKnife}),
+            outputKnifePasses:   UC.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:UC.toInt, bound:UC.bound(0,5), modes:LASER, show:showLaserKnife}),
+            outputTipOffset:     UC.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:UC.toFloat, bound:UC.bound(0.0,10.0), modes:LASER, show:showLaserKnife}),
+
+            output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
+            outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
+            outputLaserSpeed:    UC.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:UC.toInt, modes:LASER}),
             outputLaserZColor:   UC.newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:LASER, show:() => { return UI.outputLaserMerged.checked === false }}),
             outputLaserLayer:    UC.newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:LASER}),
             outputTemp:          UC.newInput(LANG.ou_nozl_s, {title:LANG.ou_nozl_l, convert:UC.toInt, modes:FDM}),
@@ -1491,6 +1497,7 @@
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
+            laserKnife:          UC.newBoolean(LANG.ou_drkn_s, onBooleanClick, {title:LANG.ou_drkn_l, modes:[]}),
 
             advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM, expert:true}),
             outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1571,8 +1578,13 @@
             layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
             layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
             layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle, {modes:GCODE}),
-            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE})
+            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
+            layerParts:    UC.newBoolean(LANG.la_part, onLayerToggle, {modes:CAM})
         });
+
+        function showLaserKnife() {
+            return UI.laserKnife.checked;
+        }
 
         function spindleShow() {
             return settings().device.spindleMax > 0;
