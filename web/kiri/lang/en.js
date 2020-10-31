@@ -138,8 +138,7 @@ kiri.lang['en-us'] = {
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
 
-    ll_menu:        "layout", // laser layout
-    lo_menu:        "layout", // prefs layout
+    lo_menu:        "layout",
 
     xp_menu:        "exports",
 

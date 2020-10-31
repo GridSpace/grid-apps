@@ -77,7 +77,6 @@
                     laserOut(pi, group);
                 });
             } else {
-                // console.log({seo: poly});
                 print.polyPrintPath(poly, start, group,
                     zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1}
                 );
