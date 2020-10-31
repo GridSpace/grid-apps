@@ -210,6 +210,10 @@
                 // e.z = 0;
             });
         }
+
+        // if (process.laserKnife) {
+        //     console.log({laser_it: output});
+        // }
     };
 
     /**
