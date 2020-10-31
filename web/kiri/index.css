@@ -362,6 +362,7 @@ th, tr, td, label {
     position: absolute;
     display: none;
     top: -3px;
+    bottom: -3px;
     left: 100%;
     z-index: 10;
 }
@@ -726,10 +727,6 @@ th, tr, td, label {
 }
 .t-33 {
     width: 33%;
-}
-.fillh {
-    top: 0;
-    bottom: 0;
 }
 .t-group {
     background-image: var(--gradbar);
