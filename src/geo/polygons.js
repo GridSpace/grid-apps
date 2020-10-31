@@ -531,7 +531,7 @@
             let circ1 = sumCirc(orig),
                 circ2 = sumCirc(polys),
                 diff = Math.abs(1 - (circ1 / circ2));
-
+            // if circularity of original and offset differ, possible wall gaps
             if (diff > 0.2) {
                 thins(orig, out.length ? polys : null, diff, -over);
             }

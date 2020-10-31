@@ -358,20 +358,21 @@
             }
 
             if (count) {
-                // permit offset of 0 for laser
+                // permit offset of 0 for laser and drag knife
                 if (offset1 === 0 && count === 1) {
                     last = top_poly.clone(true);
                     top.traces = last;
                 } else {
                     if (opt.thin) {
+                        // thin wall offset strategy
                         let on1s2 = offset1 * 2,
                             on2s2 = offsetN * 2;
                         POLY.expand2(
-                            top_poly,
-                            -offset1,
-                            -offsetN,
-                            top.traces,
-                            count,
+                            top_poly,   // reference polygon(s)
+                            -offset1,   // first inset distance
+                            -offsetN,   // subsequent inset distnace
+                            top.traces, // accumulator array
+                            count,      // numberof insets to perform
                             // on each new offset trace ...
                             function(polys, countNow) {
                                 last = polys;
@@ -385,6 +386,10 @@
                                 });
                             },
                             // thin wall probe
+                            // p1 = original polys
+                            // p2 = collected polys
+                            // diff = circularity difference
+                            // dist = over-expansion distance
                             function(p1, p2, diff, dist) {
                                 if (p2) {
                                     // nth offset
@@ -405,13 +410,14 @@
                             },
                             z);
                     } else {
+                        // standard wall offsetting strategy
                         POLY.expand(
-                            top_poly,
-                            -offset1,
-                            z,
-                            top.traces,
-                            count,
-                            -offsetN,
+                            top_poly,   // reference polygon(s)
+                            -offset1,   // first inset distance
+                            z,          // set new polys to this z
+                            top.traces, // accumulator array
+                            count,      // number of insets to perform
+                            -offsetN,   // subsequent inset distance
                             // on each new offset trace ...
                             function(polys, countNow) {
                                 last = polys;
@@ -427,6 +433,7 @@
                     }
                 }
             } else {
+                // no shells, just infill, is permitted
                 last = [top.poly];
             }
 

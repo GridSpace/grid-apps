@@ -86,3 +86,7 @@
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
 * http://photon.chrisgraf.de/
+
+# More CNC
+
+* https://www.researchgate.net/publication/250328721_Toolpath_Optimization_on_Automatic_Removal_Uncut_and_Application

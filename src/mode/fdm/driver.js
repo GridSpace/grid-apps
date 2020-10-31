@@ -172,7 +172,7 @@
                     ) && !vaseMode;
                 slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, {
                     vase: vaseMode,
-                    thin: false && spro.detectThinWalls
+                    thin: spro.detectThinWalls
                 });
                 if (solid) slice.doSolidLayerFill(fillSpacing, sliceFillAngle);
                 sliceFillAngle += 90.0;
@@ -192,6 +192,11 @@
                     slice.doThinFill(fillSpacing, sliceFillAngle);
                     sliceFillAngle += 90.0;
                 }, "solids");
+            } else if (spro.detectThinWalls) {
+                forSlices(0.35, 0.5, function(slice) {
+                    slice.doThinFill(fillSpacing, sliceFillAngle);
+                    sliceFillAngle += 90.0;
+                }, "thins");
             }
 
             // calculations only relevant when supports are enabled
