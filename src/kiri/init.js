@@ -1343,7 +1343,7 @@
             showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l, modes:GCODE}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l, modes:CAM}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-            freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l, modes:ALL}),
+            freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
             units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, modes:CAM, action:unitsSave}, "units"),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-out'), {inline: true}),
@@ -1466,7 +1466,7 @@
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toInt, modes:CAM}),
             camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM}),
 
-            laserLayout:         UC.newGroup(LANG.lo_menu, null, {modes:GCODE}),
+            laserLayout:         UC.newGroup(LANG.ll_menu, null, {modes:GCODE}),
             outputTileSpacing:   UC.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
             outputLaserMerged:   UC.newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:LASER}),
             outputLaserGroup:    UC.newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, modes:LASER}),
@@ -1497,7 +1497,7 @@
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
-            laserKnife:          UC.newBoolean(LANG.ou_drkn_s, onBooleanClick, {title:LANG.ou_drkn_l, modes:[]}),
+            laserKnife:          UC.newBoolean(LANG.ou_drkn_s, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
 
             advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM, expert:true}),
             outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM, expert:true}),

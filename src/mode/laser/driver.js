@@ -77,6 +77,7 @@
                     laserOut(pi, group);
                 });
             } else {
+                // console.log({seo: poly});
                 print.polyPrintPath(poly, start, group,
                     zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1}
                 );
@@ -210,6 +211,10 @@
                 // e.z = 0;
             });
         }
+
+        // if (process.laserKnife) {
+        //     console.log({laser_it: output});
+        // }
     };
 
     /**
