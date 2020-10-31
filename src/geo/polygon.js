@@ -828,10 +828,9 @@
      */
     PRO.isInside = function(poly, tolerance) {
         // throw new Error("isInside");
-        if (!(
-            // poly.overlaps(this) &&
-            this.bounds.isNested(poly.bounds)
-        )) return false;
+        if (!this.bounds.isNested(poly.bounds, tolerance * 3)) {
+            return false;
+        }
 
         let mid,
             midcheck,
