@@ -230,8 +230,6 @@
                 point = out.point;
                 if (process.outputInvertX) point.x = -point.x;
                 if (process.outputInvertY) point.y = -point.y;
-                point.x *= process.outputTileScaling;
-                point.y *= process.outputTileScaling;
                 min.x = Math.min(min.x, point.x);
                 max.x = Math.max(max.x, point.x);
                 min.y = Math.min(min.y, point.y);

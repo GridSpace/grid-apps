@@ -87,12 +87,13 @@
      * @param {Bounds} parent
      * @returns {boolean} true if fully inside parent bounds
      */
-    PRO.isNested = function(parent) {
+    PRO.isNested = function(parent, tolerance) {
+        let grace = tolerance || CONF.precision_bounds;
         return (
-            this.minx >= parent.minx - CONF.precision_bounds && // min-x
-            this.maxx <= parent.maxx + CONF.precision_bounds && // max-x
-            this.miny >= parent.miny - CONF.precision_bounds && // min-y
-            this.maxy <= parent.maxy + CONF.precision_bounds    // max-y
+            this.minx >= parent.minx - grace && // min-x
+            this.maxx <= parent.maxx + grace && // max-x
+            this.miny >= parent.miny - grace && // min-y
+            this.maxy <= parent.maxy + grace    // max-y
         );
     };
 

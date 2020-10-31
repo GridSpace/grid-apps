@@ -995,7 +995,8 @@
      * @param {Function} emitter called to emit each polygon
      * @param {number} offset tool diameter used for this depth-first cut
      *
-     * used for CAM depth first layer output
+     * used for CAM depth first layer output. included here for convenience
+     * because it relies heavily on other functions in the print library.
      */
     function poly2polyDepthFirstEmit(array, startPoint, emitter, offset) {
         let layers = [],
@@ -1012,7 +1013,7 @@
                 // sort by area descending
                 return p2.area() - p1.area();
             }).forEach(function (poly) {
-                // a polygon should be made into a pool if:
+                // a polygon should be made into a pool if any is true:
                 // - it is open
                 // - it has more than one sibling
                 // - it has no parent (top/outer most)
@@ -1022,7 +1023,7 @@
                     poly.pool = [];
                     poly.poolsDown = [];
                 } else {
-                    // otherwise walk up the parent tree to find a pool to join
+                    // otherwise search the poly's parents (same layer) to find a pool to join
                     let search = poly.parent;
                     // walk up until pool found
                     while (search && !search.pool) {
@@ -1105,8 +1106,6 @@
 
     function polygonFitsIn(inside, outside, tolerance) {
         return inside.isInside(outside, tolerance);
-        // return inside.area() <= outside.area() + tolerance &&
-        //     (polygonWithinOffset(inside, outside, tolerance) || inside.isInside(outside, tolerance));
     }
 
     function polygonWithinOffset(poly1, poly2, offset) {
