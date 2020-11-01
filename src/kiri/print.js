@@ -1056,6 +1056,10 @@
                         // console.log({skip_open_above:above});
                         continue;
                     }
+                    // do not allow inner and outer polys to mix
+                    if (!above.sameWindings(pool)) {
+                        continue;
+                    }
                     // if pool fits into smallest above pool, add it and break
                     if (polygonFitsIn(pool, above, 0.1)) {
                         above.poolsDown.push(pool);

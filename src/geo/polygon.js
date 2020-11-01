@@ -646,6 +646,13 @@
     };
 
     /**
+     * @returns {boolean} true if both polygons wind the same way
+     */
+    PRO.sameWindings = function(poly) {
+        return this.isClockwise() === poly.isClockwise();
+    };
+
+    /**
      * reverse direction of polygon points.
      * @returns {Polygon} self
      */
