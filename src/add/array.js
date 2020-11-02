@@ -34,9 +34,13 @@
      * @param v
      * @returns {Array}
      */
-    AP.append = function(v) {
-        this.push(v);
-        return this;
+    AP.append = function(v, flat) {
+        if (flat) {
+            return this.appendAll(v);
+        } else {
+            this.push(v);
+            return this;
+        }
     };
 
     /**

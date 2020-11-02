@@ -693,10 +693,12 @@
         }
 
         // clone and flatten the shell with tops to offset array
-        shell.clone(true).forEach(function(poly) { poly.setZ(slice.z).flattenTo(offset) });
+        shell.clone(true).forEach(function(poly) {
+            poly.setZ(slice.z).flattenTo(offset);
+        });
         POLY.flatten(tops, offset, true);
 
-        // only tab cut polys should be open
+        // only tab cut polys should be open (happens later)
         offset.forEach(function(trace) {
             trace.setClosed();
         });
@@ -705,7 +707,12 @@
         offset = POLY.nest(offset);
 
         // inset offset array by 1/2 diameter then by tool overlap %
-        POLY.expand(offset, - (diameter / 2 + stock), slice.z, outer, 0, -diameter * overlap);
+        POLY.offset(offset, [-(diameter / 2 + stock), -diameter * overlap], {
+            z: slice.z,
+            count: 999,
+            flat: true,
+            outs: outer
+        });
 
         if (!pocket) {
             // re-flatten offset polys
@@ -718,7 +725,7 @@
             // re-nest offset polys
             // outer = POLY.nest(offset);
             outer = offset;
-            // more outer
+            // add another wider pass to the cutout polygon(s)
             if (widecut) {
                 POLY.expand(offset, diameter * overlap, slice.z, outer, 1);
             }

@@ -520,17 +520,17 @@
 
         // if specified, perform offset gap analysis
         if (opt.gaps && polys.length) {
-            let negoff = offset(polys, -offs, {
+            let oneg = offset(polys, -offs, {
                 fill: opt.fill, join: opt.join, type: opt.type, z: opt.z, minArea: mina
             });
             let suba = [];
-            let diff = subtract(orig, negoff, suba, null, zed);
-            opt.gaps.push(suba);
+            let diff = subtract(orig, oneg, suba, null, zed);
+            opt.gaps.append(suba, opt.flat);
         }
 
         // if offset fails, consider last polygons as gap areas
         if (opt.gaps && !polys.length) {
-            opt.gaps.push(orig);
+            opt.gaps.append(orig, opt.flat);
         }
 
         // if specified, perform up to *count* successive offsets
@@ -538,7 +538,7 @@
             // ensure opts has offset accumulator array
             opt.outs = opt.outs || [];
             // store polys in accumulator
-            opt.outs.push(polys);
+            opt.outs.append(polys, opt.flat);
             if (opt.count > 1) {
                 // decrement count, increment depth
                 opt.count--;
