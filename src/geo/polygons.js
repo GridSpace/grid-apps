@@ -18,7 +18,6 @@
         newPoint = BASE.newPoint;
 
     BASE.polygons = {
-        trace2count : trace2count,
         rayIntersect : rayIntersect,
         alignWindings : alignWindings,
         setWinding : setWinding,
@@ -548,60 +547,7 @@
             }
         }
 
-        return polys;
-    }
-
-    /**
-     * @param {Polygon} poly input
-     * @param {Polygon[]} traces output
-     * @param {number} offset distance to offset
-     * @param {number} count number of offsets
-     * @param {number} depth current depth (count) into offsets
-     * @param {Polygon[]} [last]
-     * @param {Polygon[]} [first]
-     */
-    function trace2count(poly, traces, offset, count, depth, last, first) {
-        if (count === 0) {
-            if (last) last.append(poly);
-            return;
-        }
-
-        // offset polygon to outer traces array
-        let calcoff = depth === 0 && last ? offset / 2 : offset,
-            outer = poly.offset(calcoff, []),
-            inner = [],
-            j;
-
-        // outer offset failed
-        if (outer.length === 0) {
-            if (last) last.append(poly);
-            return;
-        }
-
-        // offset poly children to inner traces array
-        if (poly.inner) {
-            poly.inner.forEach(function(ic) {
-                ic.offset(-calcoff, inner);
-            });
-        }
-
-        let newouter = [], newinner = [];
-        subtract(outer, inner, newouter, newinner, poly.getZ());
-
-        if (newouter.length > 0) {
-            traces.appendAll(newouter);
-            if (depth === 0 && first) {
-                first.appendAll(newouter);
-            }
-            // recurse for multiple shells
-            if (count > 0) {
-                for (j=0; j<newouter.length; j++) {
-                    trace2count(newouter[j], traces, offset, count - 1, depth + 1, last);
-                }
-            }
-        } else if (last) {
-            last.append(poly);
-        }
+        return opt.flat ? opt.outs : polys;
     }
 
     /**
