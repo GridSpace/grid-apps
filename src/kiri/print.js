@@ -114,6 +114,7 @@
             seq = [],
             abs = true,
             move = false,
+            factor = 1,
             tool = 0,
             E0G0 = false,
             G0 = function() {
@@ -154,6 +155,12 @@
                 }
             }
             switch (cmd) {
+                case 'G20':
+                    factor = 25.4;
+                    break;
+                case 'G21':
+                    factor = 1;
+                    break;
                 case 'G90':
                     // absolute positioning
                     abs = true;
@@ -168,12 +175,12 @@
                     line.forEach(function(tok) {
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
-                    if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X);
-                    if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X);
-                    if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y);
-                    if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y);
-                    if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z);
-                    if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z);
+                    if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
+                    if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
+                    if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
+                    if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y * factor);
+                    if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z * factor);
+                    if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
                     if (pos.E) E0G0 = true;
                     if (E0G0 && pos.E === 0.0) {
                         if (LZ != pos.Z) G0();
@@ -182,9 +189,9 @@
                     addOutput(
                         seq,
                         {
-                            x:pos.X + off.X + xoff.X,
-                            y:pos.Y + off.Y + xoff.Y,
-                            z:pos.Z + off.Z + xoff.Z
+                            x:(factor * pos.X + off.X + xoff.X),
+                            y:(factor * pos.Y + off.Y + xoff.Y),
+                            z:(factor * pos.Z + off.Z + xoff.Z)
                         },
                         !move,
                         pos.F,
