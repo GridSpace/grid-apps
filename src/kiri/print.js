@@ -980,7 +980,7 @@
      * to be more like outputOrderClosest() and have the option to account for
      * depth in determining distance
      */
-    function poly2polyEmit(array, startPoint, emitter, mark) {
+    function poly2polyEmit(array, startPoint, emitter, mark, weight) {
         let mindist, dist, found, count = 0, marker = mark || 'delete';
         for (;;) {
             found = null;
@@ -1005,7 +1005,9 @@
                 }
                 let area = poly.area();
                 poly.forEachPoint(function(point, index) {
-                    dist = startPoint.distTo3D(point) * area * area;
+                    dist = weight ?
+                        startPoint.distTo3D(point) * area * area :
+                        startPoint.distTo2D(point);
                     if (dist < mindist) {
                         found = {poly:poly, index:index, point:point};
                         mindist = dist;

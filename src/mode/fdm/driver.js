@@ -683,7 +683,7 @@
                             }
                         }
                     });
-                });
+                }, null, true);
 
                 print.addPrintPoints(preout, layerout, null);
 
