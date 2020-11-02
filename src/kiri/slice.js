@@ -392,8 +392,12 @@
                         oso.outs.forEach((polys, i) => {
                             polys.forEach(p => {
                                 p.depth = i;
+                                if (p.inner) {
+                                    p.inner.forEach(pi => pi.depth = i);
+                                }
                                 top.traces.push(p);
                             });
+                            last = polys;
                         });
 
                         // slice.solids.trimmed = slice.solids.trimmed || [];
@@ -624,7 +628,9 @@
                     // fill intersected areas
                     if (inter.length) {
                         scope.isSparseFill = true;
-                        if (!top.fill_lines) top.fill_lines = [];
+                        if (!top.fill_lines) {
+                            top.fill_lines = [];
+                        }
                         inter.forEach(p => {
                             p.forEachSegment((p1, p2) => {
                                 top.fill_lines.push(p1, p2);

@@ -502,8 +502,8 @@
     /**
      * @returns {number} z value of first point
      */
-    PRO.getZ = function() {
-        return this.points[0].z;
+    PRO.getZ = function(i) {
+        return this.points[i || 0].z;
     };
 
     /**

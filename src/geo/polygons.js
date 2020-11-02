@@ -528,6 +528,7 @@
             opt.gaps.push(suba);
         }
 
+        // if offset fails, consider last polygons as gap areas
         if (opt.gaps && !polys.length) {
             opt.gaps.push(orig);
         }
@@ -545,11 +546,6 @@
                 // call next offset
                 offset(polys, dist, opt);
             }
-        }
-
-        // if the polys fail to offset at the top level, consider them gaps
-        if (opt.gaps && polys.length === 0 && depth === 0) {
-            opt.gaps.push(orig);
         }
 
         return polys;

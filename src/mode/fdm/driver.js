@@ -1371,7 +1371,8 @@
                 if (opt.aslines) {
                     emits.poly(poly, opt.color || color, false, true);
                 } else {
-                    emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ());
+                    // first point may be from the layer below, so use second point
+                    emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ(1));
                 }
             });
             emits.renderAll();
