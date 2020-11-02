@@ -441,9 +441,9 @@
      * @returns {Polygon[]} last offset
      */
     function expand(polys, distance, z, out, count, distance2, collector, min) {
-        // return offset(polys, [distance, distance2 || distance], {
-        //     z, outs: out, call: collector, minArea: min, count, flat: true
-        // });
+        return offset(polys, [distance, distance2 || distance], {
+            z, outs: out, call: collector, minArea: min, count, flat: true
+        });
 
         // prepare alignments for clipper lib
         alignWindings(polys);

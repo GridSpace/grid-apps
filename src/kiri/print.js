@@ -1095,10 +1095,6 @@
                         // console.log({skip_open_above:above});
                         continue;
                     }
-                    // do not allow inner and outer polys to mix
-                    // if (!above.sameWindings(pool)) {
-                    //     continue;
-                    // }
                     // if pool fits into smallest above pool, add it and break
                     if (polygonFitsIn(pool, above, 0.1)) {
                         above.poolsDown.push(pool);
@@ -1109,7 +1105,9 @@
         });
 
         const emitPool = function(poolPoly) {
-            if (poolPoly.mark) return;
+            if (poolPoly.mark) {
+                return;
+            }
             poolPoly.mark = true;
             const polys = poolPoly.pool.slice().append(poolPoly);
             startPoint = poly2polyEmit(polys, startPoint, emitter, null, false);
@@ -1121,8 +1119,22 @@
         // pools are sorted smallest to largest. pools are polygons with an
         // attached 'pool' array of polygons
         layers.forEach(function(pools) {
-            startPoint = poly2polyEmit(pools, startPoint, emitPool, "del_ptop", true);
+            pools.forEach(ppoly => {
+                if (!(ppoly.pool && ppoly.pool.length)) {
+                    return ppoly.smallest = ppoly;
+                }
+                ppoly.pool.sort((a, b) => {
+                    return a.perimeter() - b.perimeter();
+                });
+                ppoly.smallest = ppoly.pool[0];
+            });
+            pools.sort((a, b) => {
+                return a.smallest.perimeter() - b.smallest.perimeter();
+            }).forEach((ppoly, count) => {
+                startPoint = emitPool(ppoly) || startPoint;
+            });
         })
+
         return startPoint;
     }
 
