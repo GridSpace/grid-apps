@@ -1057,7 +1057,8 @@
                 // - it has more than one sibling
                 // - it has no parent (top/outer most)
                 // - it is offset from its parent by more than diameter
-                if (poly.isOpen() || !poly.parent || poly.parent.innerCount() > 1 || !polygonWithinOffset(poly, poly.parent, offset)) {
+                // if (poly.isOpen() || !poly.parent || poly.parent.innerCount() > 1 || !polygonWithinOffset(poly, poly.parent, offset)) {
+                if (poly.depth === 0) {
                     pools.push(poly);
                     poly.pool = [];
                     poly.poolsDown = [];

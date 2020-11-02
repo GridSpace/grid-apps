@@ -148,7 +148,9 @@
      * @returns {Polygon[]} top level parent polygons
      */
     function nest(polygons, deep, opentop) {
-        if (!polygons) return polygons;
+        if (!polygons) {
+            return polygons;
+        }
         // sort groups by size
         polygons.sort(function (a, b) {
             return a.area() - b.area();
@@ -167,7 +169,9 @@
             for (let j = i + 1; j < polygons.length; j++) {
                 let parent = polygons[j];
                 // prevent open polys from having inners
-                if (opentop && parent.isOpen()) continue;
+                if (opentop && parent.isOpen()) {
+                    continue;
+                }
                 if (poly.isNested(parent)) {
                     parent.addInner(poly);
                     break;
@@ -545,7 +549,7 @@
             opt.outs.append(polys, opt.flat);
             // callback for expand() compatibility
             if (opt.call) {
-                opt.call(polys, count);
+                opt.call(polys, count, depth);
             }
             // check for more offsets
             if (count > 1) {

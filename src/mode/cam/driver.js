@@ -686,8 +686,8 @@
             outer = [],
             offset = [];
 
-        // when holes present, use them as fake top offsets
-        // to prevent clearing out the entire thru pocket
+        // when thru holes present, treat them as top offsets
+        // to prevent roughing out the entire hole
         if (holes) {
             tops.appendAll(holes);
         }
@@ -711,7 +711,13 @@
             z: slice.z,
             count: 999,
             flat: true,
-            outs: outer
+            outs: outer,
+            call: (polys, count, depth) => {
+                polys.forEach(p => {
+                    p.depth = depth;
+                    if (p.inner) p.inner.forEach(p => p.depth = depth);
+                });
+            }
         });
 
         if (!pocket) {
@@ -721,6 +727,7 @@
             shell.clone(true).forEach(function(poly) {
                 poly.setZ(slice.z).flattenTo(offset);
                 poly.setClosed();
+                poly.depth = 0;
             });
             // re-nest offset polys
             // outer = POLY.nest(offset);
