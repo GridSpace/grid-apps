@@ -441,6 +441,10 @@
      * @returns {Polygon[]} last offset
      */
     function expand(polys, distance, z, out, count, distance2, collector, min) {
+        // return offset(polys, [distance, distance2 || distance], {
+        //     z, outs: out, call: collector, minArea: min, count, flat: true
+        // });
+
         // prepare alignments for clipper lib
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -491,6 +495,7 @@
 
         let orig = polys,
             opts = opt || {},
+            count = numOrDefault(opt.count, 1),
             depth = numOrDefault(opt.depth, 0),
             clean = opts.clean !== false,
             simple = opts.simple !== false,
@@ -538,12 +543,21 @@
             opt.outs = opt.outs || [];
             // store polys in accumulator
             opt.outs.append(polys, opt.flat);
-            if (opt.count > 1) {
+            // callback for expand() compatibility
+            if (opt.call) {
+                opt.call(polys, count);
+            }
+            // check for more offsets
+            if (count > 1) {
                 // decrement count, increment depth
-                opt.count--;
+                opt.count = count - 1;
                 opt.depth = depth + 1;
                 // call next offset
                 offset(polys, dist, opt);
+            // } else if (count === 0) {
+            //     // depth = 0 means offset until failure
+            //     opt.depth = depth + 1;
+            //     offset(polys, dist, opt);
             }
         }
 
