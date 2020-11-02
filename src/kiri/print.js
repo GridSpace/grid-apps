@@ -682,7 +682,7 @@
                 near = opt.near || false,
                 fast = opt.fast || false,
                 fill = opt.fill >= 0 ? opt.fill : fillMult,
-                thinDist = near ? thinWall * 3 : thinWall;
+                thinDist = near ? thinWall : thinWall;
 
             while (lines && marked < lines.length) {
                 group = null;

@@ -376,7 +376,9 @@
             // top.thinner = [];
             top.traces = [];
             top.inner = [];
-            let last = [], z = top.poly.getZ();
+            let last = [],
+                gaps = [],
+                z = top.poly.getZ();
 
             if (count) {
                 // permit offset of 0 for laser and drag knife
@@ -411,6 +413,7 @@
                                 // fillArea(polys, 90, off, [], 0.05, off*4),
                                 // fillArea(polys, 180, off, [], 0.05, off*4),
                             ));
+                            gaps = polys;
                         });
                     } else {
                         // standard wall offsetting strategy
@@ -442,7 +445,14 @@
 
             // generate fill offset poly set from last offset to top.inner
             if (fillOffset && last.length > 0) {
+                // if gaps present, remove that area from fill inset
+                if (gaps.length) {
+                    let nulast = [];
+                    POLY.subtract(last, gaps, nulast);
+                    last = nulast;
+                }
                 last.forEach(function(inner) {
+                    // TODO replace with new offset() function
                     POLY.trace2count(inner, top.inner, fillOffset, 1, 0);
                 });
             }
