@@ -25,8 +25,8 @@
         fillArea : fillArea,
         subtract : subtract,
         flatten : flatten,
+        offset : offset,
         trimTo : trimTo,
-        expand2 : expand2,
         expand : expand,
         expand_lines: expand_lines,
         union : union,
@@ -46,6 +46,10 @@
      * Polygon array utility functions
      ******************************************************************* */
 
+    function numOrDefault(num, def) {
+        return num !== undefined ? num : def;
+    }
+
     function toClipper(polys,debug) {
         let out = [];
         polys.forEach(function(poly) { poly.toClipper(out,debug) });
@@ -62,9 +66,9 @@
     };
 
     function fromClipperTree(tnode, z, tops, parent, minarea) {
-        let polys = tops || [],
-            poly,
-            min = minarea || 0.1;
+        let poly,
+            polys = tops || [],
+            min = numOrDefault(minarea, 0.1);
 
         tnode.m_Childs.forEach(function(child) {
             poly = fromClipperNode(child, z);
@@ -473,75 +477,75 @@
     }
 
     /**
-     * by "over" expanding then contracting, this causes shells that are too
-     * close together to merge and cancel out.  it's a more expensive operation
-     * but prevents shells that are too close together to extrude properly.
-     *
-     * @param {Polygon[]} polys
-     * @param {number} dist1 first offset distance
-     * @param {number} dist2 2nd thru last offset distance
-     * @param {Polygon[]} out optional collector
-     * @param {number} count offset passes (0 == until no space left)
-     * @param {Function} collector receives output of each pass
-     * @param {Function} thins receives output of each pass
-     * @param {number} [z] defaults to 0
-     * @returns {Polygon[]} last offset
+     * offset an array of polygons by distance with options to recurse
+     * and return resulting gaps from offsets for thin wall detection in
+     * in FDM mode and uncleared areas in CAM mode.
      */
-    function expand2(polys, dist1, dist2, out, count, collector, thins, z) {
-        // prepare alignments for clipper lib
+    function offset(polys, dist, opt) {
+        // cause inner / outer polys to be reversed from each other
         alignWindings(polys);
         polys.forEach(function(poly) {
-            if (poly.inner) setWinding(poly.inner, !poly.isClockwise());
-        });
-
-        let fact = CONF.clipper,
-            clib = self.ClipperLib,
-            clip = clib.Clipper,
-            cpft = clib.PolyFillType,
-            cjnt = clib.JoinType,
-            cety = clib.EndType,
-            coff = new clib.ClipperOffset(),
-            ctre = new clib.PolyTree(),
-            orig = polys,
-            over = dist1 * 0.45;
-
-        // inset
-        polys.forEach(function(poly) {
-            let clean = clip.CleanPolygons(poly.toClipper(), CONF.clipperClean);
-            let simple = clip.SimplifyPolygons(clean, cpft.pftNonZero);
-            coff.AddPaths(simple, cjnt.jtMiter, cety.etClosedPolygon);
-        });
-
-        coff.Execute(ctre, (dist1 + over) * fact);
-        polys = fromClipperTree(ctre, z);
-
-        // outset
-        coff = new clib.ClipperOffset();
-        ctre = new clib.PolyTree();
-        polys.forEach(function(poly) {
-            let clean = clip.CleanPolygons(poly.toClipper(), CONF.clipperClean);
-            let simple = clip.SimplifyPolygons(clean, cpft.pftNonZero);
-            coff.AddPaths(simple, cjnt.jtMiter, cety.etClosedPolygon);
-        });
-        coff.Execute(ctre, -over * fact);
-        polys = fromClipperTree(ctre, z);
-
-        // detect possible thin walls
-        if (thins) {
-            let circ1 = sumCirc(orig),
-                circ2 = sumCirc(polys),
-                diff = Math.abs(1 - (circ1 / circ2));
-
-            if (diff > 0.2) {
-                thins(orig, out.length ? polys : null, diff, -over);
+            if (poly.inner) {
+                setWinding(poly.inner, !poly.isClockwise());
             }
+        });
+
+        let orig = polys,
+            opts = opt || {},
+            depth = numOrDefault(opt.depth, 0),
+            clean = opts.clean !== false,
+            simple = opts.simple !== false,
+            fill = opts.fill || ClipperLib.PolyFillType.pftNonZero,
+            join = opts.join || ClipperLib.JoinType.jtMiter,
+            type = opts.type || ClipperLib.EndType.etClosedPolygon,
+            coff = new ClipperLib.ClipperOffset(),
+            ctre = new ClipperLib.PolyTree(),
+            // if dist is array with values, shift out next offset
+            offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,
+            mina = numOrDefault(opts.minArea, 0.1),
+            zed = opt.z || 0;
+
+        // setup offset
+        polys.forEach(function(poly) {
+            // convert to clipper format
+            poly = poly.toClipper();
+            if (clean) poly = ClipperLib.Clipper.CleanPolygons(poly, CONF.clipperClean);
+            if (simple) poly = ClipperLib.Clipper.SimplifyPolygons(poly, fill);
+            coff.AddPaths(poly, join, type);
+        });
+        // perform offset
+        coff.Execute(ctre, offs * CONF.clipper);
+        // convert back from clipper output format
+        polys = fromClipperTree(ctre, zed, null, null, mina);
+
+        // if specified, perform offset gap analysis
+        if (opt.gaps && polys.length) {
+            let negoff = offset(polys, -offs, {
+                fill: opt.fill, join: opt.join, type: opt.type, z: opt.z, minArea: mina
+            });
+            let suba = [];
+            let diff = subtract(orig, negoff, suba, null, zed);
+            opt.gaps.push(suba);
         }
 
-        // process
-        if (out) out.appendAll(polys);
-        if (collector) collector(polys, count);
-        if ((count === 0 || count > 1) && polys.length > 0) {
-            expand2(polys, dist2 || dist1, dist2, out, count > 0 ? count-1 : 0, collector, thins, z);
+        // if offset fails, consider last polygons as gap areas
+        if (opt.gaps && !polys.length) {
+            opt.gaps.push(orig);
+        }
+
+        // if specified, perform up to *count* successive offsets
+        if (polys.length) {
+            // ensure opts has offset accumulator array
+            opt.outs = opt.outs || [];
+            // store polys in accumulator
+            opt.outs.push(polys);
+            if (opt.count > 1) {
+                // decrement count, increment depth
+                opt.count--;
+                opt.depth = depth + 1;
+                // call next offset
+                offset(polys, dist, opt);
+            }
         }
 
         return polys;

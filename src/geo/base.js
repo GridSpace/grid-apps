@@ -307,6 +307,8 @@
     };
 
     BASE.config = {
+        // size of gcode debug arrow head
+        debug_arrow : 0.25,
         // default # of decimal places in generated gcode
         gcode_decimals : 4,
         // heal disjoint polygons in slicing (experimental)

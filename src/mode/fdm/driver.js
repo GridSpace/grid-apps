@@ -172,7 +172,7 @@
                     ) && !vaseMode;
                 slice.doShells(spro.sliceShells, firstOffset, shellOffset, fillOffset, {
                     vase: vaseMode,
-                    thin: false && spro.detectThinWalls
+                    thin: spro.detectThinWalls
                 });
                 if (solid) slice.doSolidLayerFill(fillSpacing, sliceFillAngle);
                 sliceFillAngle += 90.0;
@@ -189,7 +189,6 @@
                 }, "solids");
                 forSlices(0.35, 0.5, function(slice) {
                     slice.doSolidsFill(fillSpacing, sliceFillAngle, minSolid);
-                    slice.doThinFill(fillSpacing, sliceFillAngle);
                     sliceFillAngle += 90.0;
                 }, "solids");
             }
@@ -480,8 +479,10 @@
 
                 // solid fill
                 if (thin) {
+                    solids.lines(top.thin_fill, 0x77bbcc);
                     solids.lines(top.fill_lines, 0x77bbcc);
                 } else {
+                    solids.noodle_lines(top.thin_fill, extoff, 0x88aadd, 0x77bbcc, s.z);
                     solids.noodle_lines(top.fill_lines, extoff, 0x88aadd, 0x77bbcc, s.z);
                 }
 
@@ -682,7 +683,7 @@
                             }
                         }
                     });
-                });
+                }, null, true);
 
                 print.addPrintPoints(preout, layerout, null);
 
@@ -1342,9 +1343,9 @@
                         let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
                         let sp = BASE.newPoint(point.x, point.y, point.z);
                         move.push(sp);
-                        move.push(sp.projectOnSlope(ao1, 0.5));
+                        move.push(sp.projectOnSlope(ao1, BASE.config.debug_arrow));
                         move.push(sp);
-                        move.push(sp.projectOnSlope(ao2, 0.5));
+                        move.push(sp.projectOnSlope(ao2, BASE.config.debug_arrow));
                     }
                 }
                 last = point;
@@ -1370,7 +1371,8 @@
                 if (opt.aslines) {
                     emits.poly(poly, opt.color || color, false, true);
                 } else {
-                    emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ());
+                    // first point may be from the layer below, so use second point
+                    emits.noodle_open(poly, off - 0.02, color, 0x0, poly.getZ(1));
                 }
             });
             emits.renderAll();

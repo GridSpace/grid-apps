@@ -122,6 +122,7 @@
             inner: encode(this.inner, state),
             // thinner: encode(this.thinner, state),
             solids: encode(this.solids, state),
+            thin_fill: encodePointArray(this.thin_fill, state),
             fill_lines: encodePointArray(this.fill_lines, state),
             fill_sparse: encode(this.fill_sparse, state),
             polish: encode(this.polish, state)
@@ -135,6 +136,7 @@
         top.inner = decode(v.inner, state);
         // top.thinner = decode(v.thinner, state);
         top.solids = decode(v.solids, state);
+        top.thin_fill = decodePointArray(v.thin_fill, state);
         top.fill_lines = decodePointArray(v.fill_lines, state);
         top.fill_sparse = decode(v.fill_sparse, state);
         top.polish = decode(v.polish, state);

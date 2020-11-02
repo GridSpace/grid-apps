@@ -502,8 +502,8 @@
     /**
      * @returns {number} z value of first point
      */
-    PRO.getZ = function() {
-        return this.points[0].z;
+    PRO.getZ = function(i) {
+        return this.points[i || 0].z;
     };
 
     /**
@@ -643,6 +643,13 @@
         } else if (this.isClockwise() === poly.isClockwise()) {
             this.reverse();
         }
+    };
+
+    /**
+     * @returns {boolean} true if both polygons wind the same way
+     */
+    PRO.sameWindings = function(poly) {
+        return this.isClockwise() === poly.isClockwise();
     };
 
     /**

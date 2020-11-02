@@ -362,11 +362,13 @@ th, tr, td, label {
     position: absolute;
     display: none;
     top: -3px;
+    bottom: -3px;
     left: 100%;
     z-index: 10;
 }
 .pop-lcol > div {
     flex-direction: column;
+    justify-content: center;
     align-items: center;
     margin: 2px;
     padding: 5px;
@@ -423,6 +425,11 @@ th, tr, td, label {
     }
     .pop-lcol svg {
         font-size: 20px !important;
+    }
+    #mod-x {
+        position: absolute;
+        font-size: 30px;
+        top: 8px;
     }
 }
 
@@ -726,10 +733,6 @@ th, tr, td, label {
 }
 .t-33 {
     width: 33%;
-}
-.fillh {
-    top: 0;
-    bottom: 0;
 }
 .t-group {
     background-image: var(--gradbar);

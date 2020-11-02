@@ -1725,7 +1725,7 @@
     }
 
     function restoreWorkspace(ondone, skip_widget_load) {
-        let newset = restoreSettings(true),
+        let newset = restoreSettings(false),
             camera = newset.controller.view,
             toload = ls2o('ws-widgets',[]),
             loaded = 0,
