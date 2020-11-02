@@ -448,7 +448,7 @@
                 // if gaps present, remove that area from fill inset
                 if (gaps.length) {
                     let nulast = [];
-                    POLY.subtract(last, gaps, nulast);
+                    POLY.subtract(last, gaps, nulast, null, slice.z);
                     last = nulast;
                 }
                 last.forEach(function(inner) {
