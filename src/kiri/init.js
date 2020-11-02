@@ -1513,7 +1513,7 @@
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             sliceRotation:       LOCAL ? UC.newInput(LANG.ad_slrt_s, {title:LANG.ad_slrt_l, bound:UC.bound(-45,45), convert:UC.toFloat, modes:FDM, expert:true}) : null,
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
-            detectThinWalls:     LOCAL ? UC.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM, expert:true}) : null,
+            detectThinWalls:     UC.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM, expert:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
 
             // SLA

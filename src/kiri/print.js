@@ -670,29 +670,63 @@
         }
 
         function outputFills(lines, options) {
+            if (!lines || lines.length === 0) {
+                return;
+            }
             let p, p1, p2, dist, len, found, group, mindist, t1, t2,
                 marked = 0,
                 start = 0,
                 skip = false,
                 lastIndex = -1,
                 opt = options || {},
+                near = opt.near || false,
                 fast = opt.fast || false,
-                fill = opt.fill >= 0 ? opt.fill : fillMult;
+                fill = opt.fill >= 0 ? opt.fill : fillMult,
+                thinDist = near ? thinWall * 3 : thinWall;
 
             while (lines && marked < lines.length) {
-                found = false;
                 group = null;
+                found = false;
                 mindist = Infinity;
 
+                // use next nearest line strategy
+                if (near)
+                for (i=0; i<lines.length; i += 2) {
+                    t1 = lines[i];
+                    if (t1.del) {
+                        continue;
+                    }
+                    t2 = lines[i+1];
+                    let d1 = t1.distToSq2D(startPoint);
+                    let d2 = t2.distToSq2D(startPoint);
+                    if (d1 < mindist || d2 < mindist) {
+                        if (d2 < d1) {
+                            p2 = t1;
+                            p1 = t2;
+                        } else {
+                            p1 = t1;
+                            p2 = t2;
+                        }
+                        mindist = Math.min(d1, d2);
+                        lastIndex = i;
+                    }
+                }
+
+                // use next index line strategy
                 // order all points by distance to last point
+                if (!near)
                 for (i=start; i<lines.length; i += 2) {
                     p = lines[i];
-                    if (p.del) continue;
+                    if (p.del) {
+                        continue;
+                    }
                     if (group === null && p.index > lastIndex) {
                         group = p.index;
                     }
                     if (group !== null) {
-                        if (p.index !== group) break;
+                        if (p.index !== group) {
+                            break;
+                        }
                         if (p.index % 2 === 0) {
                             t1 = lines[i];
                             t2 = lines[i+1];
@@ -712,7 +746,7 @@
                 }
 
                 // go back to start and try again
-                if (!found) {
+                if (!near && !found) {
                     if (start === 0 && lastIndex === -1) {
                         console.log('infinite loop', lines, {
                             marked, options, i, group, start, lastIndex,
@@ -725,11 +759,11 @@
                     continue;
                 }
 
-                dist = startPoint.distTo2D(p1);
-                len = p1.distTo2D(p2);
+                dist = startPoint.distToSq2D(p1);
+                len = p1.distToSq2D(p2);
 
                 // go back to start when dist > retractDist
-                if (!fast && !skip && dist > retractDist) {
+                if (!near && !fast && !skip && dist > retractDist) {
                     skip = true;
                     start = 0;
                     lastIndex = -1;
@@ -747,7 +781,7 @@
                 // and segment length is less than thinWall then
                 // just extrude to midpoint of next segment. this is
                 // to avoid shaking the printer to death.
-                if (dist <= thinWall && len <= thinWall) {
+                if (dist <= thinDist && len <= thinDist) {
                     p2 = p1.midPointTo(p2);
                     addOutput(preout, p2, fill * (dist / thinWall), fillSpeed, extruder);
                 } else {
@@ -762,7 +796,7 @@
                     }
 
                     // bridge ends of fill when they're close together
-                    if (dist < thinWall) {
+                    if (dist < thinDist) {
                         addOutput(preout, p1, fill, fillSpeed, extruder);
                     } else {
                         addOutput(preout, p1, 0, moveSpeed, extruder);
@@ -854,9 +888,12 @@
                     outputTraces(poly);
                 });
 
-                // output inner polygons
+                // output outer polygons
                 if (dir === -1)
                 outputTraces([].appendAll(next.innerTraces() || []));
+
+                // output thin fill
+                outputFills(next.thin_fill, {near: true});
 
                 // then output solid and sparse fill
                 outputFills(next.fill_lines);

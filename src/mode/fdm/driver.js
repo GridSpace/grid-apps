@@ -189,14 +189,8 @@
                 }, "solids");
                 forSlices(0.35, 0.5, function(slice) {
                     slice.doSolidsFill(fillSpacing, sliceFillAngle, minSolid);
-                    slice.doThinFill(fillSpacing, sliceFillAngle);
                     sliceFillAngle += 90.0;
                 }, "solids");
-            } else if (spro.detectThinWalls) {
-                forSlices(0.35, 0.5, function(slice) {
-                    slice.doThinFill(fillSpacing, sliceFillAngle);
-                    sliceFillAngle += 90.0;
-                }, "thins");
             }
 
             // calculations only relevant when supports are enabled
@@ -485,8 +479,10 @@
 
                 // solid fill
                 if (thin) {
+                    solids.lines(top.thin_fill, 0x77bbcc);
                     solids.lines(top.fill_lines, 0x77bbcc);
                 } else {
+                    solids.noodle_lines(top.thin_fill, extoff, 0x88aadd, 0x77bbcc, s.z);
                     solids.noodle_lines(top.fill_lines, extoff, 0x88aadd, 0x77bbcc, s.z);
                 }
 
@@ -1347,9 +1343,9 @@
                         let ao2 = BASE.newSlopeFromAngle(rs.angle - 25);
                         let sp = BASE.newPoint(point.x, point.y, point.z);
                         move.push(sp);
-                        move.push(sp.projectOnSlope(ao1, 0.5));
+                        move.push(sp.projectOnSlope(ao1, BASE.config.debug_arrow));
                         move.push(sp);
-                        move.push(sp.projectOnSlope(ao2, 0.5));
+                        move.push(sp.projectOnSlope(ao2, BASE.config.debug_arrow));
                     }
                 }
                 last = point;

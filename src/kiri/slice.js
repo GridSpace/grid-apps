@@ -296,28 +296,53 @@
     };
 
     /**
-     * given two arrays of points (lines), eliminate intersections of the second
-     * to the first, then return a unified array.
+     * given an array of arrays of points (lines), eliminate intersections
+     * between groups, then return a unified array of shortest non-intersects.
      *
-     * @param {Point[]} r1
-     * @param {Point[]} r2
      * @returns {Point[]}
      */
-    function cullIntersections(r1, r2) {
-        if (!(r1 && r2 && r1.length && r2.length)) return;
-        let valid = r2.slice();
-        outer: for (let i=0; i<r1.length; i += 2) {
-            for (let j=0; j<r2.length; j += 2) {
-                if (UTIL.intersect(r1[i], r1[i+1], r2[j], r2[j+1], BASE.key.SEGINT)) continue outer;
+    function cullIntersections() {
+        function toLines(pts) {
+            let lns = [];
+            for (let i=0, il=pts.length; i<il; i += 2) {
+                lns.push({a: pts[i], b: pts[i+1], l: pts[i].distTo2D(pts[i+1])});
             }
-            valid.push(r1[i]);
-            valid.push(r1[i+1]);
+            return lns;
         }
-        // add index to point for fill order storeSettingsToServer
-        for (let k=0; k<valid.length; k++) {
-            valid[k].index = Infinity;
+        let aOa = [...arguments].filter(t => t);
+        if (aOa.length < 1) return;
+        let aa = toLines(aOa.shift());
+        while (aOa.length) {
+            let bb = toLines(aOa.shift());
+            loop: for (let i=0, il=aa.length; i<il; i++) {
+                let al = aa[i];
+                if (al.del) {
+                    continue;
+                }
+                for (let j=0, jl=bb.length; j<jl; j++) {
+                    let bl = bb[j];
+                    if (bl.del) {
+                        continue;
+                    }
+                    if (UTIL.intersect(al.a, al.b, bl.a, bl.b, BASE.key.SEGINT)) {
+                        if (al.l < bl.l) {
+                            bl.del = true;
+                        } else {
+                            al.del = true;
+                        }
+                        continue;
+                    }
+                }
+            }
+            aa = aa.filter(l => !l.del).concat(bb.filter(l => !l.del));
         }
-        return valid.length > 2 ? valid : [];
+        let good = [];
+        for (let i=0, il=aa.length; i<il; i++) {
+            let al = aa[i];
+            good.push(al.a);
+            good.push(al.b);
+        }
+        return good.length > 2 ? good : [];
     }
 
     /**
@@ -353,10 +378,6 @@
             top.inner = [];
             let last = [], z = top.poly.getZ();
 
-            if (opt.thin) {
-                top.thin_fill = [];
-            }
-
             if (count) {
                 // permit offset of 0 for laser and drag knife
                 if (offset1 === 0 && count === 1) {
@@ -364,51 +385,29 @@
                     top.traces = last;
                 } else {
                     if (opt.thin) {
-                        // thin wall offset strategy
-                        let on1s2 = offset1 * 2,
-                            on2s2 = offsetN * 2;
-                        POLY.expand2(
-                            top_poly,   // reference polygon(s)
-                            -offset1,   // first inset distance
-                            -offsetN,   // subsequent inset distnace
-                            top.traces, // accumulator array
-                            count,      // numberof insets to perform
-                            // on each new offset trace ...
-                            function(polys, countNow) {
-                                last = polys;
-                                // mark each poly with depth (offset #) starting at 0
-                                polys.forEach(function(p) {
-                                    p.depth = count - countNow;
-                                    if (p.inner) p.inner.forEach(function(pi) {
-                                        // use negative offset for inners
-                                        pi.depth = -(count - countNow);
-                                    });
-                                });
-                            },
-                            // thin wall probe
-                            // p1 = original polys
-                            // p2 = collected polys
-                            // diff = circularity difference
-                            // dist = over-expansion distance
-                            function(p1, p2, diff, dist) {
-                                if (p2) {
-                                    // nth offset
-                                    let pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
-                                        pnew1 = POLY.expand(pall, -dist, z, null, 1),
-                                        r1 = fillArea(pnew1, 45, offsetN, [], dist / 2, on2s2),
-                                        r2 = fillArea(pnew1, 135, offsetN, [], dist / 2, on2s2),
-                                        rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
-                                } else {
-                                    // first offset
-                                    let pall = POLY.nest(POLY.flatten([].appendAll(p1).appendAll(p2)).clone()),
-                                        pnew1 = POLY.expand(pall, -dist, z, null, 1),
-                                        r1 = fillArea(pnew1, 45, offsetN, [], 0, on1s2),
-                                        r2 = fillArea(pnew1, 135, offsetN, [], 0, on1s2),
-                                        rall = top.thin_fill.appendAll(cullIntersections(r1, r2));
-                                }
-                                // top.thinner.appendAll(pnew1).appendAll(pnew2);
-                            },
-                            z);
+                        top.thin_fill = [];
+                        let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
+                        POLY.offset(top_poly, [-offset1, -offsetN], oso);
+
+                        oso.outs.forEach((polys, i) => {
+                            polys.forEach(p => {
+                                p.depth = i;
+                                top.traces.push(p);
+                            });
+                        });
+
+                        // slice.solids.trimmed = slice.solids.trimmed || [];
+                        oso.gaps.forEach((polys, i) => {
+                            let off = (i == 0 ? offset1 : offsetN);
+                            polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
+                            // polys.forEach(p => { slice.solids.trimmed.push(p); });
+                            top.thin_fill.appendAll(cullIntersections(
+                                fillArea(polys, 45, off/2, [], 0.01, off*2),
+                                fillArea(polys, 135, off/2, [], 0.01, off*2),
+                                // fillArea(polys, 90, off, [], 0.05, off*4),
+                                // fillArea(polys, 180, off, [], 0.05, off*4),
+                            ));
+                        });
                     } else {
                         // standard wall offsetting strategy
                         POLY.expand(
@@ -796,7 +795,7 @@
 
         // create empty filled line array for each top
         tops.forEach(function(top) {
-            top.fill_lines = top.thin_fill || [];
+            top.fill_lines = [];
             let tofill = [],
                 angfill = [];
             trims.forEach(function(solid) {
@@ -822,24 +821,6 @@
             }
 
         });
-        return true;
-    };
-
-    /**
-     * fill thin areas, if present
-     * @return {boolean} true if filled, false if not
-     */
-    PRO.doThinFill = function(spacing, angle) {
-        this.tops.forEach(function(top) {
-            if (top.thin_fill && top.thin_fill.length > 0) {
-                if (top.fill_lines) {
-                    top.fill_lines.appendAll(top.thin_fill)
-                } else {
-                    top.fill_lines = top.thin_fill;
-                }
-            }
-        });
-
         return true;
     };
 

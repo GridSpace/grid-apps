@@ -368,6 +368,7 @@ th, tr, td, label {
 }
 .pop-lcol > div {
     flex-direction: column;
+    justify-content: center;
     align-items: center;
     margin: 2px;
     padding: 5px;
@@ -424,6 +425,11 @@ th, tr, td, label {
     }
     .pop-lcol svg {
         font-size: 20px !important;
+    }
+    #mod-x {
+        position: absolute;
+        font-size: 30px;
+        top: 8px;
     }
 }
 
