@@ -638,22 +638,21 @@
      * @params {Object} settings
      * @params {Function} [ondone]
      * @params {Function} [onupdate]
-     * @params {boolean} [remote]
      */
-    PRO.slice = function(settings, ondone, onupdate, remote) {
-        let widget = this,
-            startTime = UTIL.time();
+    PRO.slice = function(settings, ondone, onupdate) {
+        let widget = this;
+        let startTime = UTIL.time();
 
         widget.settings = settings;
         widget.clearSlices();
         onupdate(0.0001, "slicing");
 
-        if (remote) {
+        if (KIRI.client) {
             // in case result of slice is nothing, do not preserve previous
             widget.slices = []
 
             // executed from kiri.js
-            KIRI.work.slice(settings, this, function (reply) {
+            KIRI.client.slice(settings, this, function(reply) {
                 if (reply.update) {
                     onupdate(reply.update, reply.updateStatus);
                 }
@@ -683,9 +682,9 @@
                     ondone(true);
                 }
             });
+        }
 
-        } else {
-
+        if (KIRI.server) {
             // executed from kiri-worker.js
             let catchdone = function(error) {
                 if (error) {

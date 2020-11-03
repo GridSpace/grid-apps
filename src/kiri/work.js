@@ -17,6 +17,13 @@ let loc = self.location,
     slicing = {},
     worker = null;
 
+/**
+ * @param {Function} fn name of function in KIRI.worker
+ * @param {Object} data to send to server
+ * @param {Function} onreply function to call on reply messages
+ * @param {Boolean} async true of function returns many messages
+ * @param {Object[]} zerocopy array of objects to pass using zerocopy
+ */
 function send(fn, data, onreply, async, zerocopy) {
     let seq = seqid++;
 
@@ -30,7 +37,11 @@ function send(fn, data, onreply, async, zerocopy) {
     }, zerocopy);
 }
 
+// code is running in the browser / client context
+KIRI.client =
 KIRI.work = {
+    send: send,
+
     newWorker: function() {
         if (self.createWorker) {
             return self.createWorker();

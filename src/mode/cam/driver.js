@@ -845,6 +845,11 @@
      * @param {Function} output
      */
     function slice(settings, widget, onupdate, ondone) {
+
+        // * find flats
+        // * generate master slices (used instead of topo)
+        // * generate shadow from master
+
         let conf = settings,
             proc = conf.process,
             sliceAll = widget.slices = [],

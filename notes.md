@@ -2,18 +2,16 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` add click-to-activate/dismiss for configuration panels
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
 * `F` gcode color to speed visualization bar
 * `F` X,Y,Z colored axes visualizations
+* `F` 2D image import
 * `P` bail on decimation if it's proving ineffective
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` server-side processing (determine protocol and storage)
-* `P` refactor / simplify POLY.expand (put onus on collector)
 * `P` duplicate objects should share same slice data unless rotated or scaled
-* `F` https://poeditor.com/projects/view_terms?id=336467&per_page=20
 
 # FDM
 
@@ -35,7 +33,6 @@
 * `F` trim support offset from layer below
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
-* `P` refactor thin fill to use outline and inside poly normal dist to self
 * `P` segment large polygons for extremely large parts / infill
 * `P` implement infill clipping in wasm
 
@@ -51,13 +48,13 @@
 * `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
-* `B` widen outside cuts to prevent chatter on deep (metal) features
 * `F` provide planar or other visual hint of current z bottom offset
 * `F` redo collision code use fixed slices and path/poly intersection instead of a topo map
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` use arcs to connect hard angles
 * `F` lead-in milling
+* `F` adaptive clearing in roughing mode
 * `F` trapezoidal tabs (in the Z axis)
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` implement z line-only follows for ball/taper
@@ -65,19 +62,14 @@
 * `F` add endmill spiral direction to fully respect climb vs conventional
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
-* `F` add M03 tool feedrate support
 * `P` refactor slicing around flats w/ interpolation instead of culling
 * `P` disable topo generation when no contour xy and no depth first
-* `P` store tab and camshell polys in widget.topo to minimize z on edge moves
-* `P` contouring is going back to z top too often
-* `P` option to skip milling holes that would be drilled
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 
 # Laser
 
 * `F` overcuts, radii for drag knives
-* `F` output option to uniquely color code each layer
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
 
 # References

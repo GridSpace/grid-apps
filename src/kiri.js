@@ -4,8 +4,10 @@
 
 (function () {
 
-    if (self.kiri) return;
-
-    self.kiri = { };
+    if (!self.kiri) {
+        self.kiri = {
+            loader: []     // module loading: array of functions
+        };
+    }
 
 })();

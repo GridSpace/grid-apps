@@ -928,7 +928,7 @@
                     totalProgress += (track[w.id] || 0);
                 });
                 API.show.progress((totalProgress / WIDGETS.length), msg);
-            }, true);
+            });
         });
     }
 
@@ -2116,5 +2116,7 @@
     if (Array.isArray(self.kirimod)) {
         kirimod.forEach(function(mod) { mod(kiri.api) });
     }
+    // new module loading
+    kiri.loader.forEach(mod => { mod(kiri.api)} );
 
 })();

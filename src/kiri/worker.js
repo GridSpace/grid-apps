@@ -2,30 +2,31 @@
 
 "use strict";
 
-// (function() {
-
-const base = self.base,
-    util = base.util,
-    time = util.time,
-    kiri = self.kiri,
-    ver = kiri.version,
-    Widget = kiri.Widget,
+let BASE = self.base,
+    KIRI = self.kiri,
+    UTIL = BASE.util,
+    Widget = KIRI.Widget,
+    time = UTIL.time,
     current = self.worker = {
         print: null,
         snap: null
-    };
-
-let cache = {};
-
-console.log(`kiri | init work | ${ver}`);
-base.debug.disable();
+    },
+    cache = {};
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
     console.log(o);
 };
 
-let dispatch = {
+console.log(`kiri | init work | ${KIRI.version}`);
+BASE.debug.disable();
+
+// code is running in the worker / server context
+const dispatch =
+KIRI.server =
+KIRI.worker = {
+    cache: cache,
+
     decimate: function(vertices, send) {
         vertices = new Float32Array(vertices),
         vertices = Widget.pointsToVertices(Widget.verticesToPoints(vertices, true));
@@ -52,32 +53,10 @@ let dispatch = {
             state.rotate = new THREE.Matrix4().makeRotationY(-rotation);
         }
 
-        // let buf = new THREE.BufferGeometry();
-        // buf.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        // let geo = new THREE.Geometry().fromBufferGeometry(buf);
-        // geo.computeFaceNormals();
-        // console.log(geo);
-        // let z0 = new THREE.Vector3(0,0,1);
-        // let ve = geo.vertices;
-        // geo.faces.forEach((face,ind) => {
-        //     let n = face.normal;
-        //     let v3 = new THREE.Vector3(n.x, n.y, n.z);
-        //     if (n.z >= 0) {
-        //         console.log({skip:ind});
-        //         return;
-        //     }
-        //     let va = v3.angleTo(z0) / Math.PI;
-        //     let i3 = ind * 3;
-        //     let v = [
-        //         ve[i3], ve[i3+1], ve[i3+2]
-        //     ];
-        //     console.log({ind, va, v});
-        // });
-
         send.data({update:0.05, updateStatus:"slicing"});
 
-        let widget = kiri.newWidget(data.id).setPoints(points),
-            last = util.time(),
+        let widget = KIRI.newWidget(data.id).setPoints(points),
+            last = time(),
             now;
 
         // do it here so cancel can work
@@ -108,13 +87,13 @@ let dispatch = {
                     send.data({index: index, slice: slice.encode(state)});
                 })
                 if (self.debug && widget.polish) {
-                    send.data({polish: kiri.codec.encode(widget.polish)});
+                    send.data({polish: KIRI.codec.encode(widget.polish)});
                 }
                 send.data({send_end: time()});
             }
             send.done({done: true});
         }, function(update, msg) {
-            now = util.time();
+            now = time();
             if (now - last < 10 && update < 0.99) return;
             // on update
             send.data({update: (0.05 + update * 0.95), updateStatus: msg});
@@ -135,7 +114,7 @@ let dispatch = {
 
         send.data({update:0.05, updateStatus:"preview"});
 
-        current.print = kiri.newPrint(data.settings, widgets, data.id);
+        current.print = KIRI.newPrint(data.settings, widgets, data.id);
         current.print.setup(false, function(update, msg) {
             send.data({
                 update: update,
@@ -193,7 +172,7 @@ let dispatch = {
         const update = {};
         if (data.base) {
             update.base = data.base;
-            Object.assign(self.base.config, data.base);
+            Object.assign(BASE.config, data.base);
         } else {
             console.log({invalid:data});
         }
@@ -202,7 +181,7 @@ let dispatch = {
 };
 
 self.onmessage = function(e) {
-    let time_recv = util.time(),
+    let time_recv = time(),
         msg = e.data,
         run = dispatch[msg.task],
         send = {
@@ -227,7 +206,7 @@ self.onmessage = function(e) {
     if (run) {
         let time_xfer = (time_recv - msg.time),
             output = run(msg.data, send),
-            time_send = util.time(),
+            time_send = time(),
             time_proc = time_send - time_recv;
 
         if (output) self.postMessage({
@@ -236,7 +215,7 @@ self.onmessage = function(e) {
             time_send: time_xfer,
             time_proc: time_proc,
             // replaced on reply side
-            time_recv: util.time(),
+            time_recv: time(),
             data: output
         });
     } else {
@@ -244,4 +223,7 @@ self.onmessage = function(e) {
     }
 };
 
-// })();
+// load kiri modules
+KIRI.loader.forEach(fn => {
+    fn(dispatch);
+});
