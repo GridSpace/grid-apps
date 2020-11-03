@@ -189,6 +189,13 @@
         return scope.addTop(poly);
     };
 
+    PRO.addTops = function(polys) {
+        polys.forEach(p => {
+            this.addTop(p);
+        });
+        return this;
+    }
+
     /**
      * Create a new top object given a polygon
      *

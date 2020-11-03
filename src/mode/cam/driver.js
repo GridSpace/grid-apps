@@ -845,11 +845,6 @@
      * @param {Function} output
      */
     function slice(settings, widget, onupdate, ondone) {
-
-        // * find flats
-        // * generate master slices (used instead of topo)
-        // * generate shadow from master
-
         let conf = settings,
             proc = conf.process,
             sliceAll = widget.slices = [],
@@ -1074,7 +1069,32 @@
                 sliceAll.appendAll(selected);
             }
         }
+/*
+        let slicer = new KIRI.slicer2(widget.getPoints(), {
+            zlist: true,
+            zline: true,
+            genso: true // generate slice object
+        });
+        let zindex = slicer.interval(1, { down: true });
+        let terrain = slicer.slice(zindex, { each: (data, index, total) => {
+            console.log('terrain', index, total, data);
+        } });
+        let shadow = [];
+        // shadow generation bottom-up is faster
+        terrain.reverse().forEach(data => {
+            if (data.tops) {
+                shadow = POLY.union(shadow.appendAll(data.tops));
+            }
+        });
+        console.log({slicer, zindex, shadow, terrain});
 
+        // do roughing slices
+        if (procRough)
+        slicer.slice(slicer.interval(roughDown, { down: true }), { each: (data, index, total) => {
+            // annotate slice
+            console.log('rough', data.z, data);
+        } });
+*/
         // horizontal slices for rough/outline
         doSlicing(widget, {height:sliceDepth, cam:true, zmin:zBottom, noEmpty:true}, camSlicesDone, function(update) {
             onupdate(0.0 + update * 0.25, "slicing");
