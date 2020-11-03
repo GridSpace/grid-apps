@@ -60,7 +60,8 @@
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =
                 proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
-            api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
+            api.ui.camOutline.marker.style.display =
+                proc.camOutlineIn || proc.camOutlineOut ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
         });
@@ -638,11 +639,10 @@
      * @param {Polygon[]} shell enclosing slice tops
      * @param {number} diameter of tool
      * @param {number} overlap % on each pass
-     * @param {boolean} true for pocket only mode
      * @param {number} bounds shell offset
      * @returns {Object} shell
      */
-    function createLevelPaths(slice, shell, diameter, overlap, pocket) {
+    function createLevelPaths(slice, shell, diameter, overlap) {
         let outer = [],
             offset = [];
 
@@ -654,15 +654,6 @@
 
         // inset offset array by 1/2 diameter then by tool overlap %
         POLY.expand(offset, - (diameter / 2), slice.z, outer, 0, -diameter * overlap);
-
-        if (!pocket) {
-            // re-flatten offset polys
-            offset = POLY.flatten(outer.slice(), []);
-            // re-clone shell to offset polys (because it was lost in the offset)
-            shell.clone(true).forEach(function(poly) { poly.setZ(slice.z).flattenTo(offset) });
-            // re-nest offset polys
-            outer = POLY.nest(offset);
-        }
 
         if (!slice.tops.length) { console.log({no_top: slice.z}); slice.addTop() }
 
@@ -677,11 +668,10 @@
      * @param {number} diameter of tool (mm)
      * @param {number} stock to leave (mm)
      * @param {number} percent overlap on each pass
-     * @param {boolean} true for pocket only mode
      * @param {boolean} widecut expand outer cutout
      * @returns {Object} shell or newly generated shell
      */
-    function createRoughPaths(slice, shell, diameter, stock, overlap, pocket, holes, widecut) {
+    function createRoughPaths(slice, shell, diameter, stock, overlap, holes) {
         let tops = slice.gatherTopPolys([]).clone(true),
             outer = [],
             offset = [];
@@ -719,24 +709,6 @@
                 });
             }
         });
-
-        if (!pocket) {
-            // re-flatten offset polys
-            offset = POLY.flatten(outer.slice(), [], true);
-            // re-clone shell to offset polys (because it was lost in the offset)
-            shell.clone(true).forEach(function(poly) {
-                poly.setZ(slice.z).flattenTo(offset);
-                poly.setClosed();
-                poly.depth = 0;
-            });
-            // re-nest offset polys
-            // outer = POLY.nest(offset);
-            outer = offset;
-            // add another wider pass to the cutout polygon(s)
-            if (widecut) {
-                POLY.expand(offset, diameter * overlap, slice.z, outer, 1);
-            }
-        }
 
         slice.tops[0].traces = outer;
     };
@@ -820,20 +792,23 @@
      * @param {Slice} slice target
      * @param {Polygon[]} outermost pancacked shells for fill
      * @param {number} tool diameter
-     * @param {boolean} pocket only
-     * @param {boolean} widecut expand outer cutout
+     * @param {boolean} inside emit polys inside part boundaries
+     * @param {boolean} outside emit polys outside part boundaries
+     * @param {boolean} wide expand outside poly cuts
      */
-    function createOutlinePaths(slice, shell, diameter, pocket, widecut) {
+    function createOutlinePaths(slice, shell, diameter, inside, outside, wide) {
         if (slice.tops.length === 0) return shell;
 
-        let tops = slice.gatherTopPolys([]).clone(true),
-            offset = POLY.expand(tops, diameter / 2, slice.z);
+        let tops = slice.gatherTopPolys([]).clone(inside);
+        let offset = POLY.expand(tops, diameter / 2, slice.z);
 
         // when pocket only, drop first outer poly
         // if it matches the shell and promote inner polys
-        if (pocket) {
+        if (!outside) {
             offset = POLY.filter(POLY.diff(shell, offset, slice.z), [], function(poly) {
-                if (poly.area() < 1) return null;
+                if (poly.area() < 1) {
+                    return null;
+                }
                 for (let sp=0; sp<shell.length; sp++) {
                     // eliminate shell only polys
                     if (poly.isEquivalent(shell[sp])) {
@@ -843,7 +818,7 @@
                 }
                 return poly;
             });
-        } else if (widecut) {
+        } else if (wide) {
             offset.slice().forEach(op => {
                 POLY.expand([op], diameter * 0.5, slice.z, offset, 1);
             });
@@ -880,7 +855,10 @@
             contourToolDiam = getToolDiameter(conf, proc.camContourTool),
             procFacing = proc.camRoughOn && proc.camZTopOffset,
             procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
-            procOutline = proc.camOutlineOn && proc.camOutlineDown && outlineToolDiam,
+            procOutlineIn = proc.camOutlineIn,
+            procOutlineOut = proc.camOutlineOut,
+            procOutlineWide = proc.camOutlineWide,
+            procOutline = (procOutlineIn || procOutlineOut) && proc.camOutlineDown && outlineToolDiam,
             procContourX = proc.camContourXOn && proc.camOutlinePlunge && contourToolDiam,
             procContourY = proc.camContourYOn && proc.camOutlinePlunge && contourToolDiam,
             procContour = procContourX || procContourY,
@@ -890,10 +868,7 @@
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3 * units),
-            pocketOnlyRough = proc.camRoughPocket,
-            pocketOnlyOutline = proc.camOutlinePocket,
-            addTabsRough = procRough && proc.camTabsOn && !pocketOnlyRough,
-            addTabsOutline = procOutline && proc.camTabsOn && !pocketOnlyOutline,
+            addTabsOutline = procOutlineOut && proc.camTabsOn,
             tabWidth = proc.camTabsWidth * units,
             tabHeight = proc.camTabsHeight * units,
             bounds = widget.getBoundingBox(),
@@ -907,8 +882,7 @@
             shellRough,
             shellOutline,
             facePolys,
-            thruHoles,
-            wideCut = proc.camWideCutout;
+            thruHoles;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return ondone('stock X too small for part. disable stock or use offset stock');
@@ -1039,17 +1013,12 @@
             }
 
             if (procRough) {
-                if (pocketOnlyRough) {
-                    // expand shell minimally triggering a clean
-                    shellRough = POLY.expand(shellRough, 0.01, 0);
-                } else {
-                    // expand shell by half tool diameter + stock to leave
-                    shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
-                }
+                // expand shell by half tool diameter + stock to leave
+                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
             }
 
             if (procOutline) {
-                if (pocketOnlyOutline) {
+                if (!procOutlineOut) {
                     // expand shell minimally triggering a clean
                     shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 0);
                 } else {
@@ -1136,14 +1105,13 @@
             let modekey = MODES[slice.camMode] || "?mode?";
             switch (slice.camMode) {
                 case CPRO.LEVEL:
-                    createLevelPaths(slice, facePolys, roughToolDiam, proc.camRoughOver, pocketOnlyRough);
+                    createLevelPaths(slice, facePolys, roughToolDiam, proc.camRoughOver);
                     break;
                 case CPRO.ROUGH:
-                    createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, pocketOnlyRough, thruHoles, wideCut);
-                    if (addTabsRough) addCutoutTabs(slice, roughToolDiam);
+                    createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, thruHoles);
                     break;
                 case CPRO.OUTLINE:
-                    createOutlinePaths(slice, shellOutline, outlineToolDiam, pocketOnlyOutline, wideCut);
+                    createOutlinePaths(slice, shellOutline, outlineToolDiam, procOutlineIn, procOutlineOut, procOutlineWide);
                     if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
                     if (traceToolProfile) findTracingPaths(widget, slice, traceTool, traceToolProfile);
                     break;

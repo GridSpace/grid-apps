@@ -248,8 +248,6 @@ kiri.lang['en-us'] = {
     cc_feed_l:      "max cutting speed in\nworkspace units / minute",
     cc_plng_s:      "plunge rate",
     cc_plng_l:      "max z axis speed in\nworkspace units / minute",
-    cc_pock_s:      "inside only",
-    cc_pock_l:      "constrain cuts to\npart boundaries",
 
     // CNC COMMON
     cc_menu:        "limits",
@@ -269,8 +267,12 @@ kiri.lang['en-us'] = {
 
     // CNC OUTLINE
     co_menu:        "outline",
-    cf_watr_s:      "enable",
-    cf_watr_l:      "enable contour finishing\ndisabled when pocketing",
+    co_wide_s:      "wide cutout",
+    co_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
+    co_olin_s:      "inside",
+    co_olin_l:      "enable outline cutting\ninside part boundaries",
+    co_olot_s:      "outside",
+    co_olot_l:      "enabled outline cutting\noutside part boundaries",
 
     // CNC CONTOUR
     cn_menu:        "contour",
@@ -383,8 +385,6 @@ kiri.lang['en-us'] = {
     ou_conv_l:      "milling direction\nuncheck for 'climb'",
     ou_depf_s:      "depth first",
     ou_depf_l:      "optimize pocket cuts\nwith depth priority",
-    ou_wide_s:      "wide cutout",
-    ou_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
 
     // CAM STOCK
     cs_menu:        "stock",

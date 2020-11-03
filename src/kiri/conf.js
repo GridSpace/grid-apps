@@ -209,7 +209,8 @@
         finishingOver: "camContourOver",
         finishingSpeed: "camOutlineSpeed",
         finishingPlunge: "camOutlinePlunge",
-        finishingOn: "camOutlineOn",
+        camOutlineOn: "camOutlineOut",
+        finishingOn: "camOutlineOut",
         finishingXOn: "camContourXOn",
         finishingYOn: "camContourYOn",
         drillTool: "camDrillTool",
@@ -219,8 +220,8 @@
         drillDwell: "camDrillDwell",
         drillLift: "camDrillLift",
         drillingOn: "camDrillingOn",
-        camPocketOnlyRough: "camRoughPocket",
         camPocketOnlyFinish: "camOutlinePocket",
+        camWideCutout: "camOutlineWide",
         outputClockwise: "camConventional"
     };
 
@@ -396,49 +397,48 @@
                 // process defaults CAM:Process
                 p:{
                     processName: "default",
-                    camRoughTool: 1000,     // roughingTool
-                    camRoughSpindle: 1000,  // camRoughSpindle
-                    camRoughDown: 2,        // roughingDown
-                    camRoughOver: 0.5,      // roughingOver
-                    camRoughSpeed: 1000,    // roughingSpeed
-                    camRoughPlunge: 250,    // roughingPlunge
-                    camRoughStock: 0,       // roughingStock
-                    camRoughVoid: false,    // roughingPocket
-                    camRoughOn: true,       // roughingOn
-                    camOutlineTool: 1000,   // finishingTool
-                    camOutlineSpindle: 1000,// finishingSpindle
-                    camOutlineDown: 3,      // finishingDown
-                    camOutlineSpeed: 800,   // finishingSpeed
-                    camOutlinePlunge: 250,  // finishingPlunge
-                    camOutlineOn: true,     // finishingOn
+                    camRoughTool: 1000,
+                    camRoughSpindle: 1000,
+                    camRoughDown: 2,
+                    camRoughOver: 0.5,
+                    camRoughSpeed: 1000,
+                    camRoughPlunge: 250,
+                    camRoughStock: 0,
+                    camRoughVoid: false,
+                    camRoughOn: true,
+                    camOutlineTool: 1000,
+                    camOutlineSpindle: 1000,
+                    camOutlineDown: 3,
+                    camOutlineSpeed: 800,
+                    camOutlinePlunge: 250,
+                    camOutlineWide: false,
+                    camOutlineIn: false,
+                    camOutlineOut: false,
                     camContourTool: 1000,
-                    camContourSpindle: 1000,// (new)
-                    camContourOver: 0.5,    // (new)
-                    camContourSpeed: 1000,  // (new)
-                    camContourAngle: 85,    // finishingAngle
-                    camContourCurves: false,// finishCurvesOnly
-                    camContourXOn: true,    // finishingXOn
-                    camContourYOn: true,    // finishingYOn
+                    camContourSpindle: 1000,
+                    camContourOver: 0.5,
+                    camContourSpeed: 1000,
+                    camContourAngle: 85,
+                    camContourCurves: false,
+                    camContourXOn: true,
+                    camContourYOn: true,
                     camTraceTool: 1000,
                     camTraceSpeed: 250,
                     camTraceOn: false,
-                    camDrillTool: 1000,     // drillTool
-                    camDrillSpindle: 1000,  // drillSpindle
-                    camDrillDownSpeed: 250, // drillDownSpeed
-                    camDrillDown: 5,        // drillDown
-                    camDrillDwell: 250,     // drillDwell
-                    camDrillLift: 2,        // drillLift
-                    camDrillingOn: false,   // drillingOn
+                    camDrillTool: 1000,
+                    camDrillSpindle: 1000,
+                    camDrillDownSpeed: 250,
+                    camDrillDown: 5,
+                    camDrillDwell: 250,
+                    camDrillLift: 2,
+                    camDrillingOn: false,
                     camDrillReg: "none",
                     camTabsAngle: 0,
                     camTabsCount: 4,
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsOn: false,
-                    camRoughPocket: false,   // camPocketOnlyRough
-                    camOutlinePocket: false, // camPocketOnlyFinish
                     camDepthFirst: false,
-                    camWideCutout: false,
                     camEaseDown: false,
                     camOriginTop: true,
                     camZTopOffset: 0,

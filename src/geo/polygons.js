@@ -448,39 +448,6 @@
         return offset(polys, [distance, distance2 || distance], {
             z, outs: out, call: collector, minArea: min, count, flat: true
         });
-
-        // prepare alignments for clipper lib
-        alignWindings(polys);
-        polys.forEach(function(poly) {
-            if (poly.inner) setWinding(poly.inner, !poly.isClockwise());
-        });
-
-        let fact = CONF.clipper,
-            clib = self.ClipperLib,
-            clip = clib.Clipper,
-            cpft = clib.PolyFillType,
-            cjnt = clib.JoinType,
-            cety = clib.EndType,
-            coff = new clib.ClipperOffset(),
-            ctre = new clib.PolyTree(),
-            circ = sumCirc(polys);
-
-        polys.forEach(function(poly) {
-            let clean = clip.CleanPolygons(poly.toClipper(), CONF.clipperClean);
-            let simple = clip.SimplifyPolygons(clean, cpft.pftNonZero);
-            coff.AddPaths(simple, cjnt.jtMiter, cety.etClosedPolygon);
-        });
-
-        coff.Execute(ctre, distance * fact);
-        polys = fromClipperTree(ctre, z, null, null, min);
-
-        if (out) out.appendAll(polys);
-        if (collector) collector(polys, count);
-        if ((count === 0 || count > 1) && polys.length > 0) {
-            expand(polys, distance2 || distance, z, out, count > 0 ? count-1 : 0, distance2, collector);
-        }
-
-        return polys;
     }
 
     /**

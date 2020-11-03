@@ -53,6 +53,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` widen outside cuts to prevent chatter on deep (metal) features
 * `F` provide planar or other visual hint of current z bottom offset
+* `F` redo collision code use fixed slices and path/poly intersection instead of a topo map
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` use arcs to connect hard angles
