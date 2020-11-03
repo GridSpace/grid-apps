@@ -452,8 +452,7 @@
                     last = nulast;
                 }
                 last.forEach(function(inner) {
-                    // TODO replace with new offset() function
-                    POLY.trace2count(inner, top.inner, fillOffset, 1, 0);
+                    POLY.offset([inner], -fillOffset, {outs: top.inner, flat: true, z: slice.z});
                 });
             }
         });
@@ -1008,14 +1007,15 @@
 
         if (supports) supports.forEach(function (poly) {
             // angle based on width/height ratio
-            let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0,
-                // calculate fill density
-                spacing = linewidth * (1 / density),
-                offsets = [];
-            // offset support poly for fill lines
-            POLY.trace2count(poly, offsets, linewidth/4, 1, 0);
+            let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
+            // calculate fill density
+            let spacing = linewidth * (1 / density);
+            // inset support poly for fill lines 33% of nozzle width
+            let inset = POLY.offset([poly], -linewidth/3, {flat: true, z: slice.z});
             // do the fill
-            if (offsets.length > 0) fillArea(offsets, angle, spacing, poly.fills = []);
+            if (inset.length > 0) {
+                fillArea(inset, angle, spacing, poly.fills = []);
+            }
             return true;
         });
 

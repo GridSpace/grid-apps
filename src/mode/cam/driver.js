@@ -686,17 +686,19 @@
             outer = [],
             offset = [];
 
-        // when holes present, use them as fake top offsets
-        // to prevent clearing out the entire thru pocket
+        // when thru holes present, treat them as top offsets
+        // to prevent roughing out the entire hole
         if (holes) {
             tops.appendAll(holes);
         }
 
         // clone and flatten the shell with tops to offset array
-        shell.clone(true).forEach(function(poly) { poly.setZ(slice.z).flattenTo(offset) });
+        shell.clone(true).forEach(function(poly) {
+            poly.setZ(slice.z).flattenTo(offset);
+        });
         POLY.flatten(tops, offset, true);
 
-        // only tab cut polys should be open
+        // only tab cut polys should be open (happens later)
         offset.forEach(function(trace) {
             trace.setClosed();
         });
@@ -705,7 +707,18 @@
         offset = POLY.nest(offset);
 
         // inset offset array by 1/2 diameter then by tool overlap %
-        POLY.expand(offset, - (diameter / 2 + stock), slice.z, outer, 0, -diameter * overlap);
+        POLY.offset(offset, [-(diameter / 2 + stock), -diameter * overlap], {
+            z: slice.z,
+            count: 999,
+            flat: true,
+            outs: outer,
+            call: (polys, count, depth) => {
+                polys.forEach(p => {
+                    p.depth = depth;
+                    if (p.inner) p.inner.forEach(p => p.depth = depth);
+                });
+            }
+        });
 
         if (!pocket) {
             // re-flatten offset polys
@@ -714,11 +727,12 @@
             shell.clone(true).forEach(function(poly) {
                 poly.setZ(slice.z).flattenTo(offset);
                 poly.setClosed();
+                poly.depth = 0;
             });
             // re-nest offset polys
             // outer = POLY.nest(offset);
             outer = offset;
-            // more outer
+            // add another wider pass to the cutout polygon(s)
             if (widecut) {
                 POLY.expand(offset, diameter * overlap, slice.z, outer, 1);
             }
@@ -1820,6 +1834,7 @@
             time = 0,
             lines = 0,
             bytes = 0,
+            factor = 1,
             output = [],
             spindle = 0,
             modes = CPRO,
@@ -1897,6 +1912,11 @@
                     line = line.substring(0, cidx).trim();
                     if (line.length === 0) continue;
                 }
+                if (line.indexOf('G20') === 0) {
+                    factor = 1/25.4;
+                } else if (line.indexOf('G21') === 0) {
+                    factor = 1;
+                }
                 append(line);
             }
         }
@@ -1907,7 +1927,7 @@
             if (d < 0) {
                 return s + '.0';
             } else {
-                return s;
+                return val.toFixed(decimals);
             }
         }
 
@@ -1986,19 +2006,19 @@
                 pos.x = newpos.x;
                 runbox.min.x = Math.min(runbox.min.x, pos.x);
                 runbox.max.x = Math.max(runbox.max.x, pos.x);
-                nl.append(space).append("X").append(add0(pos.x));
+                nl.append(space).append("X").append(add0(pos.x * factor));
             }
             if (newpos.y !== pos.y) {
                 pos.y = newpos.y;
                 runbox.min.y = Math.min(runbox.min.y, pos.y);
                 runbox.max.y = Math.max(runbox.max.y, pos.y);
-                nl.append(space).append("Y").append(add0(pos.y));
+                nl.append(space).append("Y").append(add0(pos.y * factor));
             }
             if (newpos.z !== pos.z) {
                 pos.z = newpos.z;
                 runbox.min.z = Math.min(runbox.min.z, pos.z);
                 runbox.max.z = Math.max(runbox.max.z, pos.z);
-                nl.append(space).append("Z").append(add0(pos.z));
+                nl.append(space).append("Z").append(add0(pos.z * factor));
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;

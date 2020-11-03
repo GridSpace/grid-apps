@@ -114,6 +114,7 @@
             seq = [],
             abs = true,
             move = false,
+            factor = 1,
             tool = 0,
             E0G0 = false,
             G0 = function() {
@@ -154,6 +155,12 @@
                 }
             }
             switch (cmd) {
+                case 'G20':
+                    factor = 25.4;
+                    break;
+                case 'G21':
+                    factor = 1;
+                    break;
                 case 'G90':
                     // absolute positioning
                     abs = true;
@@ -168,12 +175,12 @@
                     line.forEach(function(tok) {
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
-                    if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X);
-                    if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X);
-                    if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y);
-                    if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y);
-                    if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z);
-                    if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z);
+                    if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
+                    if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
+                    if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
+                    if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y * factor);
+                    if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z * factor);
+                    if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
                     if (pos.E) E0G0 = true;
                     if (E0G0 && pos.E === 0.0) {
                         if (LZ != pos.Z) G0();
@@ -182,9 +189,9 @@
                     addOutput(
                         seq,
                         {
-                            x:pos.X + off.X + xoff.X,
-                            y:pos.Y + off.Y + xoff.Y,
-                            z:pos.Z + off.Z + xoff.Z
+                            x:(factor * pos.X + off.X + xoff.X),
+                            y:(factor * pos.Y + off.Y + xoff.Y),
+                            z:(factor * pos.Z + off.Z + xoff.Z)
                         },
                         !move,
                         pos.F,
@@ -1057,7 +1064,8 @@
                 // - it has more than one sibling
                 // - it has no parent (top/outer most)
                 // - it is offset from its parent by more than diameter
-                if (poly.isOpen() || !poly.parent || poly.parent.innerCount() > 1 || !polygonWithinOffset(poly, poly.parent, offset)) {
+                // if (poly.isOpen() || !poly.parent || poly.parent.innerCount() > 1 || !polygonWithinOffset(poly, poly.parent, offset)) {
+                if (poly.depth === 0) {
                     pools.push(poly);
                     poly.pool = [];
                     poly.poolsDown = [];
@@ -1095,10 +1103,6 @@
                         // console.log({skip_open_above:above});
                         continue;
                     }
-                    // do not allow inner and outer polys to mix
-                    if (!above.sameWindings(pool)) {
-                        continue;
-                    }
                     // if pool fits into smallest above pool, add it and break
                     if (polygonFitsIn(pool, above, 0.1)) {
                         above.poolsDown.push(pool);
@@ -1109,11 +1113,13 @@
         });
 
         const emitPool = function(poolPoly) {
-            if (poolPoly.mark) return;
+            if (poolPoly.mark) {
+                return;
+            }
             poolPoly.mark = true;
             const polys = poolPoly.pool.slice().append(poolPoly);
-            startPoint = poly2polyEmit(polys, startPoint, emitter);
-            startPoint = poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown");
+            startPoint = poly2polyEmit(polys, startPoint, emitter, null, false);
+            startPoint = poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown", false);
             return startPoint;
         };
 
@@ -1121,8 +1127,22 @@
         // pools are sorted smallest to largest. pools are polygons with an
         // attached 'pool' array of polygons
         layers.forEach(function(pools) {
-            startPoint = poly2polyEmit(pools, startPoint, emitPool, "del_ptop");
+            pools.forEach(ppoly => {
+                if (!(ppoly.pool && ppoly.pool.length)) {
+                    return ppoly.smallest = ppoly;
+                }
+                ppoly.pool.sort((a, b) => {
+                    return a.perimeter() - b.perimeter();
+                });
+                ppoly.smallest = ppoly.pool[0];
+            });
+            pools.sort((a, b) => {
+                return a.smallest.perimeter() - b.smallest.perimeter();
+            }).forEach((ppoly, count) => {
+                startPoint = emitPool(ppoly) || startPoint;
+            });
         })
+
         return startPoint;
     }
 

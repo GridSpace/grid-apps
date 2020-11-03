@@ -669,7 +669,7 @@
 
                 // expand specified # of brims
                 brims.forEach(function(brim) {
-                    POLY.trace2count(brim, polys, -nozzle, process.outputBrimCount, 0);
+                    POLY.offset([brim], nozzle, {outs: polys, flat: true, count: process.outputBrimCount});
                 });
 
                 // output brim points

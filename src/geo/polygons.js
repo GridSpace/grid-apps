@@ -18,7 +18,6 @@
         newPoint = BASE.newPoint;
 
     BASE.polygons = {
-        trace2count : trace2count,
         rayIntersect : rayIntersect,
         alignWindings : alignWindings,
         setWinding : setWinding,
@@ -149,7 +148,9 @@
      * @returns {Polygon[]} top level parent polygons
      */
     function nest(polygons, deep, opentop) {
-        if (!polygons) return polygons;
+        if (!polygons) {
+            return polygons;
+        }
         // sort groups by size
         polygons.sort(function (a, b) {
             return a.area() - b.area();
@@ -168,7 +169,9 @@
             for (let j = i + 1; j < polygons.length; j++) {
                 let parent = polygons[j];
                 // prevent open polys from having inners
-                if (opentop && parent.isOpen()) continue;
+                if (opentop && parent.isOpen()) {
+                    continue;
+                }
                 if (poly.isNested(parent)) {
                     parent.addInner(poly);
                     break;
@@ -442,6 +445,10 @@
      * @returns {Polygon[]} last offset
      */
     function expand(polys, distance, z, out, count, distance2, collector, min) {
+        return offset(polys, [distance, distance2 || distance], {
+            z, outs: out, call: collector, minArea: min, count, flat: true
+        });
+
         // prepare alignments for clipper lib
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -492,6 +499,7 @@
 
         let orig = polys,
             opts = opt || {},
+            count = numOrDefault(opt.count, 1),
             depth = numOrDefault(opt.depth, 0),
             clean = opts.clean !== false,
             simple = opts.simple !== false,
@@ -520,17 +528,17 @@
 
         // if specified, perform offset gap analysis
         if (opt.gaps && polys.length) {
-            let negoff = offset(polys, -offs, {
+            let oneg = offset(polys, -offs, {
                 fill: opt.fill, join: opt.join, type: opt.type, z: opt.z, minArea: mina
             });
             let suba = [];
-            let diff = subtract(orig, negoff, suba, null, zed);
-            opt.gaps.push(suba);
+            let diff = subtract(orig, oneg, suba, null, zed);
+            opt.gaps.append(suba, opt.flat);
         }
 
         // if offset fails, consider last polygons as gap areas
         if (opt.gaps && !polys.length) {
-            opt.gaps.push(orig);
+            opt.gaps.append(orig, opt.flat);
         }
 
         // if specified, perform up to *count* successive offsets
@@ -538,70 +546,26 @@
             // ensure opts has offset accumulator array
             opt.outs = opt.outs || [];
             // store polys in accumulator
-            opt.outs.push(polys);
-            if (opt.count > 1) {
+            opt.outs.append(polys, opt.flat);
+            // callback for expand() compatibility
+            if (opt.call) {
+                opt.call(polys, count, depth);
+            }
+            // check for more offsets
+            if (count > 1) {
                 // decrement count, increment depth
-                opt.count--;
+                opt.count = count - 1;
                 opt.depth = depth + 1;
                 // call next offset
                 offset(polys, dist, opt);
+            // } else if (count === 0) {
+            //     // depth = 0 means offset until failure
+            //     opt.depth = depth + 1;
+            //     offset(polys, dist, opt);
             }
         }
 
-        return polys;
-    }
-
-    /**
-     * @param {Polygon} poly input
-     * @param {Polygon[]} traces output
-     * @param {number} offset distance to offset
-     * @param {number} count number of offsets
-     * @param {number} depth current depth (count) into offsets
-     * @param {Polygon[]} [last]
-     * @param {Polygon[]} [first]
-     */
-    function trace2count(poly, traces, offset, count, depth, last, first) {
-        if (count === 0) {
-            if (last) last.append(poly);
-            return;
-        }
-
-        // offset polygon to outer traces array
-        let calcoff = depth === 0 && last ? offset / 2 : offset,
-            outer = poly.offset(calcoff, []),
-            inner = [],
-            j;
-
-        // outer offset failed
-        if (outer.length === 0) {
-            if (last) last.append(poly);
-            return;
-        }
-
-        // offset poly children to inner traces array
-        if (poly.inner) {
-            poly.inner.forEach(function(ic) {
-                ic.offset(-calcoff, inner);
-            });
-        }
-
-        let newouter = [], newinner = [];
-        subtract(outer, inner, newouter, newinner, poly.getZ());
-
-        if (newouter.length > 0) {
-            traces.appendAll(newouter);
-            if (depth === 0 && first) {
-                first.appendAll(newouter);
-            }
-            // recurse for multiple shells
-            if (count > 0) {
-                for (j=0; j<newouter.length; j++) {
-                    trace2count(newouter[j], traces, offset, count - 1, depth + 1, last);
-                }
-            }
-        } else if (last) {
-            last.append(poly);
-        }
+        return opt.flat ? opt.outs : polys;
     }
 
     /**
