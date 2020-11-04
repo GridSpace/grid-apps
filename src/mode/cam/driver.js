@@ -648,9 +648,6 @@
         let tops = slice.shadow.clone(true);
         let offset = POLY.expand(tops, diameter / 2, slice.z);
 
-        if (!inside)
-        POLY.offset(shell, diameter/2, { outs: offset, flat: true, z: slice.z });
-
         // when pocket only, drop first outer poly
         // if it matches the shell and promote inner polys
         if (inside) {
@@ -667,10 +664,13 @@
                 }
                 return poly;
             });
-        } else if (wide) {
-            offset.slice().forEach(op => {
-                POLY.expand([op], diameter * 0.5, slice.z, offset, 1);
-            });
+        } else {
+            POLY.offset(shell, diameter/2, { outs: offset, flat: true, z: slice.z });
+            if (wide) {
+                offset.slice().forEach(op => {
+                    POLY.expand([op], diameter * 0.5, slice.z, offset, 1);
+                });
+            }
         }
 
         slice.tops[0].traces = offset;
