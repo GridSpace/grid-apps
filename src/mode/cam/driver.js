@@ -894,12 +894,12 @@
                     }
                 }
 
+                slice.tops[0].traces = offset;
+                slice.index = sliceIndex++;
+
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
                     addCutoutTabs(slice, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
-
-                slice.tops[0].traces = offset;
-                slice.index = sliceIndex++;
             });
             sliceAll.appendAll(slices);
         }
@@ -1688,6 +1688,10 @@
                 }
                 if (line.indexOf('G20') === 0) {
                     factor = 1/25.4;
+                    consts.top = (offset ? dev.bedDepth : dev.bedDepth/2) * factor;
+                    consts.left = (offset ? 0 : -dev.bedWidth/2) * factor;
+                    consts.right = (offset ? dev.bedWidth : dev.bedWidth/2) * factor;
+                    consts.bottom = (offset ? 0 : -dev.bedDepth/2) * factor;
                 } else if (line.indexOf('G21') === 0) {
                     factor = 1;
                 }
@@ -1796,7 +1800,7 @@
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;
-                nl.append(space).append("F").append(feed);
+                nl.append(space).append("F").append(feed * factor);
             }
 
             // update time calculation
