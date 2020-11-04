@@ -60,8 +60,7 @@
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =
                 proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
-            api.ui.camOutline.marker.style.display =
-                proc.camOutlineIn || proc.camOutlineOut ? 'flex' : 'none';
+            api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
         });
@@ -776,15 +775,13 @@
      * @param {boolean} outside emit polys outside part boundaries
      * @param {boolean} wide expand outside poly cuts
      */
-    function createOutlinePaths(slice, shell, diameter, inside, outside, wide) {
-        if (slice.tops.length === 0) return shell;
-
-        let tops = slice.gatherTopPolys([]).clone(inside);
+    function createOutlinePaths(slice, shell, diameter, inside, wide) {
+        let tops = slice.shadow.clone(true);
         let offset = POLY.expand(tops, diameter / 2, slice.z);
 
         // when pocket only, drop first outer poly
         // if it matches the shell and promote inner polys
-        if (!outside) {
+        if (inside) {
             offset = POLY.filter(POLY.diff(shell, offset, slice.z), [], function(poly) {
                 if (poly.area() < 1) {
                     return null;
@@ -807,14 +804,6 @@
         const output = POLY.flatten(offset, [], true);
 
         slice.tops[0].traces = output;
-
-        // append inner traces from findTracingPaths
-        let inner = slice.tops[0].inner;
-        if (inner) {
-            // console.log(slice.z,'inner',inner.length)
-            // output.append(...inner);
-            // slice.tops[0].inner = null;
-        }
     };
 
     /**
@@ -836,9 +825,9 @@
             procFacing = false && proc.camRoughOn && proc.camZTopOffset,
             procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
             procOutlineIn = proc.camOutlineIn,
-            procOutlineOut = proc.camOutlineOut,
+            procOutlineOn = proc.camOutlineOn,
             procOutlineWide = proc.camOutlineWide,
-            procOutline = (procOutlineIn || procOutlineOut) && proc.camOutlineDown && outlineToolDiam,
+            procOutline = procOutlineOn && proc.camOutlineDown && outlineToolDiam,
             procContourX = proc.camContourXOn && proc.camOutlinePlunge && contourToolDiam,
             procContourY = proc.camContourYOn && proc.camOutlinePlunge && contourToolDiam,
             procContour = procContourX || procContourY,
@@ -848,14 +837,14 @@
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3 * units),
-            addTabsOutline = procOutlineOut && proc.camTabsOn,
+            addTabsOutline = procOutlineOn && proc.camTabsOn,
             tabWidth = proc.camTabsWidth * units,
             tabHeight = proc.camTabsHeight * units,
             bounds = widget.getBoundingBox(),
             mesh = widget.mesh,
             zBottom = proc.camZBottom * units,
             zMin = Math.max(bounds.min.z, zBottom),
-            zThru = (proc.camZThru || 0) * units,
+            zThru = zBottom === 0 ? (proc.camZThru || 0) * units : 0,
             ztoff = proc.camZTopOffset * units,
             camRoughStock = proc.camRoughStock * units,
             camRoughDown = proc.camRoughDown * units,
@@ -961,28 +950,16 @@
             slice.tops[0].traces = nutrace;
         }
 
-        // extend bottom cutout
-        const addZThru = function(selected) {
-            let last = selected[selected.length-1];
-            let add = last.clone(true);
-            add.camMode = last.camMode;
-            add.z -= zThru;
-            add.tops.forEach(top => {
-                top.poly.setZ(add.z);
-            });
-            selected.push(add);
-        };
-
         // called when z-index slicing complete
         const camSlicesDone = function(slices) {
 
             // return outermost (bottom layer) "top" polys
-            const camShell = pancake(slices, function(update) {
-                onupdate(0.25 + update * 0.15, "shelling");
-            });
-
-            // set all default shells
-            const camShellPolys = shellOutline = facePolys = camShell.gatherTopPolys([]);
+            // const camShell = pancake(slices, function(update) {
+            //     onupdate(0.25 + update * 0.15, "shelling");
+            // });
+            //
+            // // set all default shells
+            // const camShellPolys = shellOutline = facePolys = camShell.gatherTopPolys([]);
 
             if (procDrillReg) {
                 sliceDrillReg(settings, widget, sliceAll, zThru);
@@ -992,45 +969,45 @@
                 sliceDrill(settings, widget, slices, sliceAll);
             }
 
-            if (procOutline) {
-                if (!procOutlineOut) {
-                    // expand shell minimally triggering a clean
-                    shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 0);
-                } else {
-                    // expand shell by half tool diameter (not needed because only one offset)
-                    // shellOutline = POLY.expand(shellOutline, outlineToolDiam / 2, 0);
-                }
-            }
+            // if (procOutline) {
+            //     if (!procOutlineOn) {
+            //         // expand shell minimally triggering a clean
+            //         shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 0);
+            //     } else {
+            //         // expand shell by half tool diameter (not needed because only one offset)
+            //         // shellOutline = POLY.expand(shellOutline, outlineToolDiam / 2, 0);
+            //     }
+            // }
 
             // clear area from top of stock to top of part
-            if (procFacing) {
-                let ztop = bounds.max.z,
-                    zpos = ztop + ztoff,
-                    zstep = camRoughDown;
+            // if (procFacing) {
+            //     let ztop = bounds.max.z,
+            //         zpos = ztop + ztoff,
+            //         zstep = camRoughDown;
+            //
+            //     while (zpos >= ztop) {
+            //         zpos = zpos - Math.min(zstep, zpos - ztop);
+            //
+            //         const slice = newSlice(zpos, mesh.newGroup ? mesh.newGroup() : null);
+            //         slice.camMode = CPRO.LEVEL;
+            //         sliceAll.append(slice);
+            //
+            //         shellRough.clone().forEach(function(poly) {
+            //             slice.addTop(poly);
+            //         })
+            //
+            //         if (Math.abs(zpos - ztop) < 0.001) break;
+            //     }
+            // }
 
-                while (zpos >= ztop) {
-                    zpos = zpos - Math.min(zstep, zpos - ztop);
-
-                    const slice = newSlice(zpos, mesh.newGroup ? mesh.newGroup() : null);
-                    slice.camMode = CPRO.LEVEL;
-                    sliceAll.append(slice);
-
-                    shellRough.clone().forEach(function(poly) {
-                        slice.addTop(poly);
-                    })
-
-                    if (Math.abs(zpos - ztop) < 0.001) break;
-                }
-            }
-
-            if (procOutline) {
-                let selected = [];
-                selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
-                if (zThru) {
-                    addZThru(selected);
-                }
-                sliceAll.appendAll(selected);
-            }
+            // if (procOutline) {
+            //     let selected = [];
+            //     selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
+            //     if (zThru) {
+            //         addZThru(selected);
+            //     }
+            //     sliceAll.appendAll(selected);
+            // }
         }
 
         let slicer = new KIRI.slicer2(widget.getPoints(), {
@@ -1045,14 +1022,14 @@
         } });
         console.log({slicer, tzindex, tshadow, terrain});
 
-        // do creating roughing slices
+        // creating roughing slices
         if (procRough) {
             // identify through holes
             thruHoles = tshadow.map(p => p.inner || []).flat();
 
             let shadow = [];
             let slices = [];
-            slicer.slice(slicer.interval(roughDown, { down: true }), { each: (data, index, total) => {
+            slicer.slice(slicer.interval(roughDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = CPRO.ROUGH;
@@ -1081,8 +1058,34 @@
             // expand shadow by half tool diameter + stock to leave
             shellRough = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
 
+            sliceAll.appendAll(slices);
+        }
+
+        // creating outline slices
+        if (procOutline) {
+            let shadow = [];
+            let slices = [];
+            slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
+                shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                data.shadow = shadow.clone(true);
+                data.slice.camMode = CPRO.OUTLINE;
+                data.slice.shadow = data.shadow;
+                slices.push(data.slice);
+            }, genso: true });
+
+            shellOutline = tshadow;
+
+            // extend cut thru (only when z bottom is 0)
             if (zThru) {
-                addZThru(slices);
+                let last = slices[slices.length-1];
+                let add = last.clone(true);
+                add.camMode = last.camMode;
+                add.tops.forEach(top => {
+                    top.poly.setZ(add.z);
+                });
+                add.shadow = last.shadow.clone(true);
+                add.z -= zThru;
+                slices.push(add);
             }
 
             sliceAll.appendAll(slices);
@@ -1129,7 +1132,7 @@
                     createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, thruHoles);
                     break;
                 case CPRO.OUTLINE:
-                    createOutlinePaths(slice, shellOutline, outlineToolDiam, procOutlineIn, procOutlineOut, procOutlineWide);
+                    createOutlinePaths(slice, shellOutline, outlineToolDiam, procOutlineIn, procOutlineWide);
                     if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
                     if (traceToolProfile) findTracingPaths(widget, slice, traceTool, traceToolProfile);
                     break;

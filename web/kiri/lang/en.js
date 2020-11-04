@@ -269,10 +269,10 @@ kiri.lang['en-us'] = {
     co_menu:        "outline",
     co_wide_s:      "wide cutout",
     co_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
-    co_olin_s:      "inside",
-    co_olin_l:      "enable outline cutting\ninside part boundaries",
-    co_olot_s:      "outside",
-    co_olot_l:      "enabled outline cutting\noutside part boundaries",
+    co_olin_s:      "inside only",
+    co_olin_l:      "limit cutting to\ninside part boundaries",
+    co_olen_s:      "enable",
+    co_olen_l:      "enabled outline cutting",
 
     // CNC CONTOUR
     cn_menu:        "contour",
