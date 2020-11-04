@@ -229,68 +229,6 @@
     }
 
     /**
-     * top down progressive union
-     */
-    function pancake(slices, onupdate) {
-        let union, tops, last;
-
-        slices.forEach(function(slice,index) {
-            tops = slice.gatherTopPolys([]).clone(true);
-            if (!union) {
-                union = tops;
-            } else {
-                // replace slice's tops with unioned tops
-                tops.appendAll(union);
-                union = POLY.union(tops);
-                slice.tops = [];
-                union.forEach(function(poly) {
-                    slice.addTop(poly);
-                    poly.setZ(slice.z);
-                });
-            }
-            last = slice;
-            if (onupdate) onupdate(index/slices.length);
-        });
-
-        return last.clone(false);
-    }
-
-    /**
-     * bottom up progressive intersection of holes
-     */
-    function holes(slices, offset, onupdate) {
-        let last;
-
-        slices.slice().reverse().forEach(function(slice,index) {
-            let holes = slice.gatherTopPolyInners([]).clone();
-            if (last) {
-                let inter = [];
-                // find intersection of hole below and hole in this layer
-                holes.forEach(hole => {
-                    last.forEach(hole_under => {
-                        inter.appendAll(hole.intersect(hole_under));
-                    });
-                });
-                // filter dup polygons (which intersect can produce)
-                last = inter.filter((poly, index, arr) => {
-                    for (let i=index+1, il=arr.length; i<il; i++) {
-                        if (arr[i].isEquivalent(poly)) return false;
-                    }
-                    return true;
-                });
-            } else {
-                last = holes;
-            }
-            // console.log('holes', slice.z, index, holes, last);
-            if (onupdate) onupdate(index/slices.length);
-        });
-
-        let out = [];
-        POLY.expand(last, -offset*1.1, 0, out, 1);
-        return out;
-    }
-
-    /**
      * @param {Slice[]} slices
      * @param {number} z position
      *
@@ -308,74 +246,6 @@
             }
         });
         return selected;
-    }
-
-    /**
-     * select from pancaked layers
-     */
-    function selectSlices(slices, step, mode, output) {
-        let last, zlastout, emitted = [];
-
-        function emit(slice) {
-            // prevent double emit at end
-            if (last === slice) return;
-            last = slice;
-            if (slice.camMode) {
-                // clone to prevent double emit
-                let nuslice = newSlice(slice.z);
-                slice.tops.forEach(function(top) {
-                    nuslice.addTop(top.poly.clone(true));
-                });
-                slice = nuslice;
-            }
-            slice.camMode = mode;
-            zlastout = slice.z;
-            emitted.push(slice);
-        }
-
-        // - find mandatory slices (with flats)
-        // - divide space between by step (interpolate)
-        // - select smallest divisible gap
-        let forced = [ slices[0] ];
-        slices.forEach(function(slice) {
-            if (slice.hasFlats) forced.push(slice);
-        })
-
-        let mid = [];
-        forced.forEachPair(function(s1, s2) {
-            // skip last to first pair
-            if (s2.z > s1.z) return;
-            let delta = Math.abs(s2.z - s1.z),
-                inc = delta / step,
-                nstep = step,
-                dec = inc - Math.floor(inc),
-                slop = step * 0.02; // allow 2% over/under on step alignment
-            // skip if delta close to step
-            if (Math.abs(delta - step) < slop) {
-                return;
-            }
-            // add another step if decimal too high
-            if (dec > slop) nstep = delta / Math.ceil(inc);
-            // find closest slices in-between
-            for (let zv = s1.z - nstep; zv >= s2.z + nstep/2; zv -= nstep) {
-                mid.push(closestSliceToZ(slices, zv));
-            }
-        }, 1);
-
-        forced.appendAll(mid);
-        forced.sort(function(s1, s2) { return s2.z - s1.z; });
-
-        // drop first/top slice. it's not an actual cut. it was
-        // added in the beginning to force layer interpolation.
-        forced = forced.slice(1);
-        forced.forEach(function(slice) {
-            emit(slice);
-        });
-
-        // add to output array
-        emitted.forEach(function(slice) {
-            output.push(slice);
-        });
     }
 
     /**
@@ -977,10 +847,11 @@
             sliceDrill(settings, widget, tslices, sliceAll);
         }
 
-        // creating roughing slices
+        // identify through holes
+        thruHoles = tshadow.map(p => p.inner || []).flat();
+
+        // create roughing slices
         if (procRough) {
-            // identify through holes
-            thruHoles = tshadow.map(p => p.inner || []).flat();
 
             let shadow = [];
             let slices = [];
@@ -1017,7 +888,7 @@
             sliceAll.appendAll(slices);
         }
 
-        // creating outline slices
+        // create outline slices
         if (procOutline) {
             let shadow = [];
             let slices = [];
