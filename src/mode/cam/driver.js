@@ -738,7 +738,6 @@
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
-        let shadowBase = terrain[0];
         console.log({slicer, tzindex, tshadow, terrain});
 
         if (procDrillReg) {
@@ -785,7 +784,7 @@
                 onupdate(0.1 + (index/total) * 0.1, "roughing");
             }, genso: true });
 
-            shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
+            shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
 
             // inset or eliminate thru holes from shadow
             shadow = POLY.flatten(shadow.clone(true), [], true);
@@ -813,7 +812,8 @@
                 let offset = [shell.clone(true),shadow.clone(true)].flat();
                 let flat = POLY.flatten(offset, [], true);
                 let nest = POLY.setZ(POLY.nest(flat), slice.z);
-                // slice.tops[0].inner = shell.clone(true);
+                // slice.tops[0].inner = nest;
+                // slice.tops[0].inner = POLY.setZ(shell.clone(true), slice.z);
 
                 // inset offset array by 1/2 diameter then by tool overlap %
                 offset = POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
@@ -839,7 +839,7 @@
 
         // create outline slices
         if (procOutline) {
-            let shadow = [];//shadowTop.tops;
+            let shadow = [];
             let slices = [];
             slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
@@ -851,7 +851,7 @@
                 slices.push(data.slice);
                 onupdate(0.2 + (index/total) * 0.1, "outlines");
             }, genso: true });
-            shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
+            shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
 
             // extend cut thru (only when z bottom is 0)
             if (zThru) {
@@ -1699,11 +1699,11 @@
             }
         }
 
-        function add0(val) {
+        function add0(val, opt) {
             let s = val.toString(),
                 d = s.indexOf(".");
             if (d < 0) {
-                return s + '.0';
+                return opt ? s : s + '.0';
             } else {
                 return val.toFixed(decimals);
             }
@@ -1800,7 +1800,7 @@
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;
-                nl.append(space).append("F").append(feed * factor);
+                nl.append(space).append("F").append(add0(feed * factor, true));
             }
 
             // update time calculation
