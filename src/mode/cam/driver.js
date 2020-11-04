@@ -673,7 +673,6 @@
         let flat = POLY.flatten(offset, [], true);
 
         offset = POLY.setZ(POLY.nest(flat), slice.z);
-        // slice.tops[0].inner = offset;
 
         // inset offset array by 1/2 diameter then by tool overlap %
         slice.tops[0].traces =
@@ -1027,8 +1026,9 @@
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = CPRO.OUTLINE;
                 data.slice.shadow = data.shadow;
+                // data.slice.tops[0].inner = shadow;
                 slices.push(data.slice);
-                onupdate(0.2 + (index/total) * 0.1, "roughing");
+                onupdate(0.2 + (index/total) * 0.1, "outlines");
             }, genso: true });
 
             shellOutline = tshadow;

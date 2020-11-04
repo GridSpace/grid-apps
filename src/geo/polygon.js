@@ -1306,6 +1306,15 @@
         if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
             let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
             if (all) {
+                if (union.length === 2) {
+                    // TODO look for faster equivalence check. area? perimeter?
+                    let src = [this, poly].sort((a,b) => { return a.area() - b.area() });
+                    let dst = union.sort((a,b) => { return a.area() - b.area() });
+                    if (src[0].isEquivalent(dst[0]) && src[1].isEquivalent(dst[1])) {
+                        return null;
+                    }
+                    return union;
+                }
                 return union;
             }
             if (union.length === 1) {
@@ -1313,7 +1322,7 @@
                 union.fillang = fillang;
                 return union;
             } else {
-                console.log({check_union_call_path: union});
+                console.log({check_union_call_path: union, this: this, poly});
             }
         }
 
