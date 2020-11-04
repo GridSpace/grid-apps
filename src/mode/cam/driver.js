@@ -779,6 +779,9 @@
         let tops = slice.shadow.clone(true);
         let offset = POLY.expand(tops, diameter / 2, slice.z);
 
+        if (!inside)
+        POLY.offset(shell, diameter/2, { outs: offset, flat: true, z: slice.z });
+
         // when pocket only, drop first outer poly
         // if it matches the shell and promote inner polys
         if (inside) {
@@ -801,9 +804,7 @@
             });
         }
 
-        const output = POLY.flatten(offset, [], true);
-
-        slice.tops[0].traces = output;
+        slice.tops[0].traces = offset;
     };
 
     /**
@@ -950,77 +951,32 @@
             slice.tops[0].traces = nutrace;
         }
 
-        // called when z-index slicing complete
-        const camSlicesDone = function(slices) {
-
-            // return outermost (bottom layer) "top" polys
-            // const camShell = pancake(slices, function(update) {
-            //     onupdate(0.25 + update * 0.15, "shelling");
-            // });
-            //
-            // // set all default shells
-            // const camShellPolys = shellOutline = facePolys = camShell.gatherTopPolys([]);
-
-            if (procDrillReg) {
-                sliceDrillReg(settings, widget, sliceAll, zThru);
-            }
-
-            if (procDrill) {
-                sliceDrill(settings, widget, slices, sliceAll);
-            }
-
-            // if (procOutline) {
-            //     if (!procOutlineOn) {
-            //         // expand shell minimally triggering a clean
-            //         shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 0);
-            //     } else {
-            //         // expand shell by half tool diameter (not needed because only one offset)
-            //         // shellOutline = POLY.expand(shellOutline, outlineToolDiam / 2, 0);
-            //     }
-            // }
-
-            // clear area from top of stock to top of part
-            // if (procFacing) {
-            //     let ztop = bounds.max.z,
-            //         zpos = ztop + ztoff,
-            //         zstep = camRoughDown;
-            //
-            //     while (zpos >= ztop) {
-            //         zpos = zpos - Math.min(zstep, zpos - ztop);
-            //
-            //         const slice = newSlice(zpos, mesh.newGroup ? mesh.newGroup() : null);
-            //         slice.camMode = CPRO.LEVEL;
-            //         sliceAll.append(slice);
-            //
-            //         shellRough.clone().forEach(function(poly) {
-            //             slice.addTop(poly);
-            //         })
-            //
-            //         if (Math.abs(zpos - ztop) < 0.001) break;
-            //     }
-            // }
-
-            // if (procOutline) {
-            //     let selected = [];
-            //     selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
-            //     if (zThru) {
-            //         addZThru(selected);
-            //     }
-            //     sliceAll.appendAll(selected);
-            // }
-        }
-
+        // TODO cache terrain slicer info in widget
+        // TODO pass widget.isModified() on slice and re-use if false
+        // TODO pre-slice in background from client signal
+        // TODO same applies to topo map generation
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
             zline: true
         });
+        let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(1); // bottom up
+        let tzindex = slicer.interval(1); // bottom up 1mm steps
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             console.log('terrain', index, total, data);
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
-        } });
+            tslices.push(data.slice);
+            onupdate(0.0 + (index/total) * 0.1, "mapping");
+        }, genso: true });
         console.log({slicer, tzindex, tshadow, terrain});
+
+        if (procDrillReg) {
+            sliceDrillReg(settings, widget, sliceAll, zThru);
+        }
+
+        if (procDrill) {
+            sliceDrill(settings, widget, tslices, sliceAll);
+        }
 
         // creating roughing slices
         if (procRough) {
@@ -1035,6 +991,7 @@
                 data.slice.camMode = CPRO.ROUGH;
                 data.slice.shadow = data.shadow;
                 slices.push(data.slice);
+                onupdate(0.1 + (index/total) * 0.1, "roughing");
             }, genso: true });
 
             // inset or eliminate thru holes from shadow
@@ -1071,6 +1028,7 @@
                 data.slice.camMode = CPRO.OUTLINE;
                 data.slice.shadow = data.shadow;
                 slices.push(data.slice);
+                onupdate(0.2 + (index/total) * 0.1, "roughing");
             }, genso: true });
 
             shellOutline = tshadow;
@@ -1091,23 +1049,15 @@
             sliceAll.appendAll(slices);
         }
 
-        // horizontal slices for rough/outline
-        doSlicing(widget, {height:sliceDepth, cam:true, zmin:zBottom, noEmpty:true}, camSlicesDone, function(update) {
-            onupdate(0.0 + update * 0.25, "slicing");
-        });
-
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
-        // if (procRough || procOutline || procContour)
-        // generateTopoMap(widget, settings, function(slices) {
-        //     sliceAll.appendAll(slices);
-        //     // todo union rough / outline shells
-        //     // todo union rough / outline tabs
-        //     // todo append to generated topo map
-        // }, function(update, msg) {
-        //     onupdate(0.40 + update * 0.50, msg || "create topo");
-        // });
+        if (procContour)
+        generateTopoMap(widget, settings, function(slices) {
+            sliceAll.appendAll(slices);
+        }, function(update, msg) {
+            onupdate(0.40 + update * 0.50, msg || "create topo");
+        });
 
         // prepare for tracing paths
         let traceTool;
