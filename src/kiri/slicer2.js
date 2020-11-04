@@ -253,23 +253,33 @@
         interval(step, options) {
             let opt = options || {},
                 bounds = this.bounds,
-                boff = opt.boff || 0, // bottom offset
-                toff = opt.toff || 0, // top offset
+                boff = opt.boff || opt.off || 0, // bottom offset
+                toff = opt.toff || opt.off || 0, // top offset
                 zmin = (opt.min || this.bounds.min.z) + boff,
                 zmax = (opt.max || this.bounds.max.z) - toff,
-                count = Math.floor((zmax - zmin) / step),
-                array = new Array(count);
+                steps = (zmax - zmin) / step,
+                count = Math.floor(steps),
+                array = [];
+
+            if (opt.fit) {
+                count++;
+                step = (zmax - zmin) / count;
+            }
 
             if (opt.down) {
-                for (let i=0, il=array.length; i<il; i++) {
-                    array[i] = zmax;
+                for (let i=0; i<count; i++) {
+                    array.push(zmax);
                     zmax -= step;
                 }
             } else {
-                for (let i=0, il=array.length; i<il; i++) {
-                    array[i] = zmin;
+                for (let i=0; i<count; i++) {
+                    array.push(zmin);
                     zmin += step;
                 }
+            }
+
+            if (opt.fit) {
+                array.push(opt.down ? zmax : zmin);
             }
 
             return array;

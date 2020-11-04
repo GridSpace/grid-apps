@@ -1313,7 +1313,6 @@
                     if (src[0].isEquivalent(dst[0]) && src[1].isEquivalent(dst[1])) {
                         return null;
                     }
-                    return union;
                 }
                 return union;
             }

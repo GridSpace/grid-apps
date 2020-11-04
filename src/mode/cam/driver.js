@@ -538,8 +538,8 @@
      * @param {number} overlap on each pass
      */
     function createRoughPaths(slice, shell, diameter, stock, overlap) {
-        let tops = slice.shadow;
-        let offset = [shell.clone(true),tops.clone(true)].flat();
+        let shadow = slice.shadow;
+        let offset = [shell.clone(true),shadow.clone(true)].flat();
         let flat = POLY.flatten(offset, [], true);
 
         offset = POLY.setZ(POLY.nest(flat), slice.z);
@@ -830,13 +830,15 @@
         });
         let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(1); // bottom up 1mm steps
+        let tzindex = slicer.interval(1, { fit: true, off: 0.01 }); // bottom up 1mm steps
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             console.log('terrain', index, total, data);
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
+        let shadowTop = terrain[terrain.length - 1];
+        let shadowBase = terrain[0];
         console.log({slicer, tzindex, tshadow, terrain});
 
         if (procDrillReg) {
@@ -849,20 +851,22 @@
 
         // identify through holes
         thruHoles = tshadow.map(p => p.inner || []).flat();
+        console.log({thruHoles})
 
         // create roughing slices
         if (procRough) {
-
-            let shadow = [];
+            let shadow = shadowTop.tops;
             let slices = [];
             slicer.slice(slicer.interval(roughDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = CPRO.ROUGH;
                 data.slice.shadow = data.shadow;
+                // data.slice.tops[0].inner = shadow.clone(true);
                 slices.push(data.slice);
                 onupdate(0.1 + (index/total) * 0.1, "roughing");
             }, genso: true });
+            shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
 
             // inset or eliminate thru holes from shadow
             shadow = POLY.flatten(shadow.clone(true), [], true);
@@ -890,7 +894,7 @@
 
         // create outline slices
         if (procOutline) {
-            let shadow = [];
+            let shadow = shadowTop.tops;
             let slices = [];
             slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
@@ -901,6 +905,7 @@
                 slices.push(data.slice);
                 onupdate(0.2 + (index/total) * 0.1, "outlines");
             }, genso: true });
+            shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
 
             shellOutline = tshadow;
 
