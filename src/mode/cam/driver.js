@@ -501,34 +501,6 @@
     }
 
     /**
-     * Create facing passes in CAM mode
-     *
-     * @param {Slice} slice target
-     * @param {Polygon[]} shell enclosing slice tops
-     * @param {number} diameter of tool
-     * @param {number} overlap % on each pass
-     * @param {number} bounds shell offset
-     * @returns {Object} shell
-     */
-    function createLevelPaths(slice, shell, diameter, overlap) {
-        let outer = [],
-            offset = [];
-
-        // clone and flatten the shell with tops to offset array
-        shell.clone(true).forEach(function(poly) { poly.setZ(slice.z).flattenTo(offset) });
-
-        // re-nest offset array
-        offset = POLY.nest(offset);
-
-        // inset offset array by 1/2 diameter then by tool overlap %
-        POLY.expand(offset, - (diameter / 2), slice.z, outer, 0, -diameter * overlap);
-
-        if (!slice.tops.length) { console.log({no_top: slice.z}); slice.addTop() }
-
-        slice.tops[0].traces = outer;
-    };
-
-    /**
      * Create roughing offsets in CAM mode
      *
      * @param {Slice} slice target
@@ -692,7 +664,7 @@
             roughToolDiam = getToolDiameter(conf, proc.camRoughTool),
             outlineToolDiam = getToolDiameter(conf, proc.camOutlineTool),
             contourToolDiam = getToolDiameter(conf, proc.camContourTool),
-            procFacing = false && proc.camRoughOn && proc.camZTopOffset,
+            procFacing = proc.camRoughOn && proc.camZTopOffset,
             procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOn = proc.camOutlineOn,
@@ -714,13 +686,11 @@
             mesh = widget.mesh,
             zBottom = proc.camZBottom * units,
             zMin = Math.max(bounds.min.z, zBottom),
+            zMax = bounds.max.z,
             zThru = zBottom === 0 ? (proc.camZThru || 0) * units : 0,
-            ztoff = proc.camZTopOffset * units,
+            ztOff = proc.camZTopOffset * units,
             camRoughStock = proc.camRoughStock * units,
             camRoughDown = proc.camRoughDown * units,
-            shellRough,
-            shellOutline,
-            facePolys,
             thruHoles;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
@@ -853,6 +823,25 @@
         thruHoles = tshadow.map(p => p.inner || []).flat();
         console.log({thruHoles})
 
+        let sliceIndex = 0;
+
+        // create facing slices
+        if (procFacing) {
+            let shadow = shadowTop.tops.clone();
+            let inset = POLY.offset(shadow, (roughToolDiam / 4));
+            let facing = POLY.offset(inset, -(roughToolDiam * proc.camRoughOver), { count: 999, flat: true });
+            let zdiv = ztOff / roughDown;
+            let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
+            for (let z = zMax + ztOff - zstep; z >= zMax; z -= zstep) {
+                let slice = shadowTop.slice.clone(false);
+                slice.z = z;
+                slice.index = sliceIndex++;
+                slice.camMode = CPRO.LEVEL;
+                slice.tops[0].traces = POLY.setZ(facing.clone(), slice.z);
+                sliceAll.push(slice);
+            }
+        }
+
         // create roughing slices
         if (procRough) {
             let shadow = shadowTop.tops;
@@ -887,8 +876,12 @@
             shadow = POLY.nest(shadow);
 
             // expand shadow by half tool diameter + stock to leave
-            shellRough = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
+            let shell = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
 
+            slices.forEach(slice => {
+                slice.index = sliceIndex++;
+                createRoughPaths(slice, shell, roughToolDiam, camRoughStock, proc.camRoughOver, thruHoles);
+            });
             sliceAll.appendAll(slices);
         }
 
@@ -907,8 +900,6 @@
             }, genso: true });
             shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
 
-            shellOutline = tshadow;
-
             // extend cut thru (only when z bottom is 0)
             if (zThru) {
                 let last = slices[slices.length-1];
@@ -922,6 +913,11 @@
                 slices.push(add);
             }
 
+            slices.forEach(slice => {
+                slice.index = sliceIndex++;
+                createOutlinePaths(slice, tshadow, outlineToolDiam, procOutlineIn, procOutlineWide);
+                if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
+            });
             sliceAll.appendAll(slices);
         }
 
@@ -944,27 +940,6 @@
                 traceToolProfile = createToolProfile(conf, proc.camTraceTool, widget.topo);
             }
         }
-
-        // for each final slice, do post-processing
-        sliceAll.forEach(function(slice, index) {
-            // re-index
-            slice.index = index;
-            let modekey = MODES[slice.camMode] || "?mode?";
-            switch (slice.camMode) {
-                case CPRO.LEVEL:
-                    createLevelPaths(slice, facePolys, roughToolDiam, proc.camRoughOver);
-                    break;
-                case CPRO.ROUGH:
-                    createRoughPaths(slice, shellRough, roughToolDiam, camRoughStock, proc.camRoughOver, thruHoles);
-                    break;
-                case CPRO.OUTLINE:
-                    createOutlinePaths(slice, shellOutline, outlineToolDiam, procOutlineIn, procOutlineWide);
-                    if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
-                    if (traceToolProfile) findTracingPaths(widget, slice, traceTool, traceToolProfile);
-                    break;
-            }
-            onupdate(0.90 + (index / sliceAll.length) * 0.10, modekey);
-        }, "cam post");
 
         ondone();
     };
@@ -1150,7 +1125,7 @@
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1) * units,
             zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
-            ztoff = process.camZTopOffset * units,
+            ztOff = process.camZTopOffset * units,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
             wmpos = widget.mesh.position,
@@ -1345,7 +1320,7 @@
                             point.x - wmx,
                             point.y - wmy),
                         point.z,
-                        lastPoint.z) : zmax) + ztoff + zadd,
+                        lastPoint.z) : zmax) + ztOff + zadd,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/outline
