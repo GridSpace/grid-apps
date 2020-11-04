@@ -180,11 +180,18 @@
                 return rarr;
             }
 
-            let phash = {},
+            let znorm = z.toFixed(5),
+                flatoff = opt.flatoff || 0.007,
+                onflat = this.zFlat[znorm],
+                phash = {},
                 lines = [],
                 zScale = this.zScale,
                 buckets = this.buckets,
                 bucket = buckets.length ? buckets[Math.floor(z * zScale)] : points;
+
+            if (onflat) {
+                z += flatoff;
+            }
 
             if (!bucket) {
                 console.log({no_bucket_for_z: z});
@@ -236,7 +243,7 @@
                 }
             }
 
-            if (opt.each) {
+            if (opt.each && (lines.length || opt.emptyok)) {
                 opt.each(retn, index, total, UTIL.time() - mark);
             }
 

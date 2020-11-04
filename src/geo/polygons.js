@@ -31,6 +31,7 @@
         union : union,
         nest : nest,
         diff : doDiff,
+        setZ : setZ,
         filter : filter,
         toClipper : toClipper,
         fromClipperNode : fromClipperNode,
@@ -47,6 +48,11 @@
 
     function numOrDefault(num, def) {
         return num !== undefined ? num : def;
+    }
+
+    function setZ(polys, z) {
+        polys.forEach(p => p.setZ(z));
+        return polys;
     }
 
     function toClipper(polys,debug) {
@@ -336,7 +342,7 @@
      * @param {Polygon[]} polys
      * @returns {Polygon[]}
      */
-     function union(polys, minarea) {
+     function union(polys, minarea, all) {
          if (polys.length < 2) return polys;
 
          let out = polys.slice(), i, j, union, uset = [];
@@ -345,11 +351,15 @@
              if (!out[i]) continue;
              for (j=i+1; j<out.length; j++) {
                  if (!out[j]) continue;
-                 union = out[i].union(out[j], minarea);
+                 union = out[i].union(out[j], minarea, all);
                  if (union) {
                      out[i] = null;
                      out[j] = null;
-                     out.push(union);
+                     if (all) {
+                         out.appendAll(union);
+                     } else {
+                         out.push(union);
+                     }
                      continue outer;
                  }
              }
@@ -455,7 +465,7 @@
      * and return resulting gaps from offsets for thin wall detection in
      * in FDM mode and uncleared areas in CAM mode.
      */
-    function offset(polys, dist, opt) {
+    function offset(polys, dist, options) {
         // cause inner / outer polys to be reversed from each other
         alignWindings(polys);
         polys.forEach(function(poly) {
@@ -465,9 +475,9 @@
         });
 
         let orig = polys,
-            opts = opt || {},
-            count = numOrDefault(opt.count, 1),
-            depth = numOrDefault(opt.depth, 0),
+            opts = options || {},
+            count = numOrDefault(opts.count, 1),
+            depth = numOrDefault(opts.depth, 0),
             clean = opts.clean !== false,
             simple = opts.simple !== false,
             fill = opts.fill || ClipperLib.PolyFillType.pftNonZero,
@@ -478,7 +488,7 @@
             // if dist is array with values, shift out next offset
             offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,
             mina = numOrDefault(opts.minArea, 0.1),
-            zed = opt.z || 0;
+            zed = opts.z || 0;
 
         // setup offset
         polys.forEach(function(poly) {
@@ -494,45 +504,41 @@
         polys = fromClipperTree(ctre, zed, null, null, mina);
 
         // if specified, perform offset gap analysis
-        if (opt.gaps && polys.length) {
+        if (opts.gaps && polys.length) {
             let oneg = offset(polys, -offs, {
-                fill: opt.fill, join: opt.join, type: opt.type, z: opt.z, minArea: mina
+                fill: opts.fill, join: opts.join, type: opts.type, z: opts.z, minArea: mina
             });
             let suba = [];
             let diff = subtract(orig, oneg, suba, null, zed);
-            opt.gaps.append(suba, opt.flat);
+            opts.gaps.append(suba, opts.flat);
         }
 
         // if offset fails, consider last polygons as gap areas
-        if (opt.gaps && !polys.length) {
-            opt.gaps.append(orig, opt.flat);
+        if (opts.gaps && !polys.length) {
+            opts.gaps.append(orig, opts.flat);
         }
 
         // if specified, perform up to *count* successive offsets
         if (polys.length) {
             // ensure opts has offset accumulator array
-            opt.outs = opt.outs || [];
+            opts.outs = opts.outs || [];
             // store polys in accumulator
-            opt.outs.append(polys, opt.flat);
+            opts.outs.append(polys, opts.flat);
             // callback for expand() compatibility
-            if (opt.call) {
-                opt.call(polys, count, depth);
+            if (opts.call) {
+                opts.call(polys, count, depth);
             }
             // check for more offsets
             if (count > 1) {
                 // decrement count, increment depth
-                opt.count = count - 1;
-                opt.depth = depth + 1;
+                opts.count = count - 1;
+                opts.depth = depth + 1;
                 // call next offset
-                offset(polys, dist, opt);
-            // } else if (count === 0) {
-            //     // depth = 0 means offset until failure
-            //     opt.depth = depth + 1;
-            //     offset(polys, dist, opt);
+                offset(polys, dist, opts);
             }
         }
 
-        return opt.flat ? opt.outs : polys;
+        return opts.flat ? opts.outs : polys;
     }
 
     /**

@@ -288,7 +288,6 @@
 
         let out = [];
         POLY.expand(last, -offset*1.1, 0, out, 1);
-
         return out;
     }
 
@@ -667,50 +666,31 @@
      * @param {Polygon[]} shell enclosing slice tops
      * @param {number} diameter of tool (mm)
      * @param {number} stock to leave (mm)
-     * @param {number} percent overlap on each pass
-     * @param {boolean} widecut expand outer cutout
-     * @returns {Object} shell or newly generated shell
+     * @param {number} overlap on each pass
      */
-    function createRoughPaths(slice, shell, diameter, stock, overlap, holes) {
-        let tops = slice.gatherTopPolys([]).clone(true),
-            outer = [],
-            offset = [];
+    function createRoughPaths(slice, shell, diameter, stock, overlap) {
+        let tops = slice.shadow;
+        let offset = [shell.clone(true),tops.clone(true)].flat();
+        let flat = POLY.flatten(offset, [], true);
 
-        // when thru holes present, treat them as top offsets
-        // to prevent roughing out the entire hole
-        if (holes) {
-            tops.appendAll(holes);
-        }
-
-        // clone and flatten the shell with tops to offset array
-        shell.clone(true).forEach(function(poly) {
-            poly.setZ(slice.z).flattenTo(offset);
-        });
-        POLY.flatten(tops, offset, true);
-
-        // only tab cut polys should be open (happens later)
-        offset.forEach(function(trace) {
-            trace.setClosed();
-        });
-
-        // re-nest offset array
-        offset = POLY.nest(offset);
+        offset = POLY.setZ(POLY.nest(flat), slice.z);
+        // slice.tops[0].inner = offset;
 
         // inset offset array by 1/2 diameter then by tool overlap %
+        slice.tops[0].traces =
         POLY.offset(offset, [-(diameter / 2 + stock), -diameter * overlap], {
             z: slice.z,
             count: 999,
             flat: true,
-            outs: outer,
             call: (polys, count, depth) => {
                 polys.forEach(p => {
                     p.depth = depth;
-                    if (p.inner) p.inner.forEach(p => p.depth = depth);
+                    if (p.inner) {
+                        p.inner.forEach(p => p.depth = depth);
+                    }
                 });
             }
         });
-
-        slice.tops[0].traces = outer;
     };
 
     /**
@@ -853,7 +833,7 @@
             roughToolDiam = getToolDiameter(conf, proc.camRoughTool),
             outlineToolDiam = getToolDiameter(conf, proc.camOutlineTool),
             contourToolDiam = getToolDiameter(conf, proc.camContourTool),
-            procFacing = proc.camRoughOn && proc.camZTopOffset,
+            procFacing = false && proc.camRoughOn && proc.camZTopOffset,
             procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOut = proc.camOutlineOut,
@@ -1002,7 +982,7 @@
             });
 
             // set all default shells
-            const camShellPolys = shellRough = shellOutline = facePolys = camShell.gatherTopPolys([]);
+            const camShellPolys = shellOutline = facePolys = camShell.gatherTopPolys([]);
 
             if (procDrillReg) {
                 sliceDrillReg(settings, widget, sliceAll, zThru);
@@ -1010,11 +990,6 @@
 
             if (procDrill) {
                 sliceDrill(settings, widget, slices, sliceAll);
-            }
-
-            if (procRough) {
-                // expand shell by half tool diameter + stock to leave
-                shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
             }
 
             if (procOutline) {
@@ -1048,18 +1023,6 @@
                 }
             }
 
-            if (procRough) {
-                let selected = [];
-                selectSlices(slices, camRoughDown * units, CPRO.ROUGH, selected);
-                if (zThru) {
-                    addZThru(selected);
-                }
-                sliceAll.appendAll(selected);
-                if (!proc.camRoughVoid) {
-                    thruHoles = holes(slices, roughToolDiam + camRoughStock);
-                }
-            }
-
             if (procOutline) {
                 let selected = [];
                 selectSlices(slices, proc.camOutlineDown * units, CPRO.OUTLINE, selected);
@@ -1069,32 +1032,62 @@
                 sliceAll.appendAll(selected);
             }
         }
-/*
+
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
-            zline: true,
-            genso: true // generate slice object
+            zline: true
         });
-        let zindex = slicer.interval(1, { down: true });
-        let terrain = slicer.slice(zindex, { each: (data, index, total) => {
+        let tshadow = [];
+        let tzindex = slicer.interval(1); // bottom up
+        let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             console.log('terrain', index, total, data);
+            tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
         } });
-        let shadow = [];
-        // shadow generation bottom-up is faster
-        terrain.reverse().forEach(data => {
-            if (data.tops) {
-                shadow = POLY.union(shadow.appendAll(data.tops));
-            }
-        });
-        console.log({slicer, zindex, shadow, terrain});
+        console.log({slicer, tzindex, tshadow, terrain});
 
-        // do roughing slices
-        if (procRough)
-        slicer.slice(slicer.interval(roughDown, { down: true }), { each: (data, index, total) => {
-            // annotate slice
-            console.log('rough', data.z, data);
-        } });
-*/
+        // do creating roughing slices
+        if (procRough) {
+            // identify through holes
+            thruHoles = tshadow.map(p => p.inner || []).flat();
+
+            let shadow = [];
+            let slices = [];
+            slicer.slice(slicer.interval(roughDown, { down: true }), { each: (data, index, total) => {
+                shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                data.shadow = shadow.clone(true);
+                data.slice.camMode = CPRO.ROUGH;
+                data.slice.shadow = data.shadow;
+                slices.push(data.slice);
+            }, genso: true });
+
+            // inset or eliminate thru holes from shadow
+            shadow = POLY.flatten(shadow.clone(true), [], true);
+            thruHoles.forEach(hole => {
+                shadow = shadow.map(p => {
+                    if (p.isEquivalent(hole)) {
+                        // eliminate thru holes when roughing voids enabled
+                        if (proc.camRoughVoid) {
+                            return undefined;
+                        }
+                        let po = POLY.offset([p], -(roughToolDiam + camRoughStock));
+                        return po ? po[0] : undefined;
+                    } else {
+                        return p;
+                    }
+                }).filter(p => p);
+            });
+            shadow = POLY.nest(shadow);
+
+            // expand shadow by half tool diameter + stock to leave
+            shellRough = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
+
+            if (zThru) {
+                addZThru(slices);
+            }
+
+            sliceAll.appendAll(slices);
+        }
+
         // horizontal slices for rough/outline
         doSlicing(widget, {height:sliceDepth, cam:true, zmin:zBottom, noEmpty:true}, camSlicesDone, function(update) {
             onupdate(0.0 + update * 0.25, "slicing");
@@ -1103,15 +1096,15 @@
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
-        if (procRough || procOutline || procContour)
-        generateTopoMap(widget, settings, function(slices) {
-            sliceAll.appendAll(slices);
-            // todo union rough / outline shells
-            // todo union rough / outline tabs
-            // todo append to generated topo map
-        }, function(update, msg) {
-            onupdate(0.40 + update * 0.50, msg || "create topo");
-        });
+        // if (procRough || procOutline || procContour)
+        // generateTopoMap(widget, settings, function(slices) {
+        //     sliceAll.appendAll(slices);
+        //     // todo union rough / outline shells
+        //     // todo union rough / outline tabs
+        //     // todo append to generated topo map
+        // }, function(update, msg) {
+        //     onupdate(0.40 + update * 0.50, msg || "create topo");
+        // });
 
         // prepare for tracing paths
         let traceTool;
@@ -1253,7 +1246,8 @@
 
             tops.forEach(function(top) {
                 outline.poly(top.poly, 0x999900, true, open);
-                if (top.inner) outline.poly(top.inner, 0xdddddd, true);
+                // if (top.inner) outline.poly(top.inner, 0xdddddd, true);
+                if (top.inner) outline.poly(top.inner, 0xff0000, true);
             });
 
             // various outlining

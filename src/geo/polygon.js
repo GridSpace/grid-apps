@@ -1286,7 +1286,7 @@
      * @param {Polygon} poly
      * @returns {?Polygon} intersected polygon or null if no intersection
      */
-    PRO.union = function(poly, min) {
+    PRO.union = function(poly, min, all) {
         if (!this.overlaps(poly)) return null;
 
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
@@ -1305,10 +1305,15 @@
 
         if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
             let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+            if (all) {
+                return union;
+            }
             if (union.length === 1) {
                 union = union[0];
                 union.fillang = fillang;
                 return union;
+            } else {
+                console.log({check_union_call_path: union});
             }
         }
 
