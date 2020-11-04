@@ -501,39 +501,6 @@
     }
 
     /**
-     * Create roughing offsets in CAM mode
-     *
-     * @param {Slice} slice target
-     * @param {Polygon[]} shell enclosing slice tops
-     * @param {number} diameter of tool (mm)
-     * @param {number} stock to leave (mm)
-     * @param {number} overlap on each pass
-     */
-    function createRoughPaths(slice, shell, diameter, stock, overlap) {
-        let shadow = slice.shadow;
-        let offset = [shell.clone(true),shadow.clone(true)].flat();
-        let flat = POLY.flatten(offset, [], true);
-
-        offset = POLY.setZ(POLY.nest(flat), slice.z);
-
-        // inset offset array by 1/2 diameter then by tool overlap %
-        slice.tops[0].traces =
-        POLY.offset(offset, [-(diameter / 2 + stock), -diameter * overlap], {
-            z: slice.z,
-            count: 999,
-            flat: true,
-            call: (polys, count, depth) => {
-                polys.forEach(p => {
-                    p.depth = depth;
-                    if (p.inner) {
-                        p.inner.forEach(p => p.depth = depth);
-                    }
-                });
-            }
-        });
-    };
-
-    /**
      * Find top paths to trace when using ball and taper mills
      * in waterline outlining and tracing modes.
      */
@@ -604,6 +571,77 @@
             // console.log(slice.z,'nups',nups.length);
             slice.tops[0].inner = nups;
         }
+    }
+
+    // cut outside traces at the right points
+    function addCutoutTabs(slice, toolDiam, tabWidth, tabCount, tabAngle) {
+        // skip if no tops | traces
+        if (slice.tops.length === 0) return;
+
+        let notabs = 0;
+        let nutrace = [];
+
+        // find trace with greatest area
+        slice.tops[0].traces.forEach(function(trace, index) {
+
+            // required to match computed order of cutouts
+            trace.setClockwise();
+
+            let count = tabCount,
+                angle = tabAngle,
+                angle_inc = 360 / count,
+                center = trace.bounds.center(slice.z),
+                offset = (tabWidth + toolDiam) / 2,
+                ints = [],
+                segs = [];
+
+            while (count-- > 0) {
+                let slope = BASE.newSlopeFromAngle(angle),
+                    normal = BASE.newSlopeFromAngle(angle + 90),
+                    c1 = center.projectOnSlope(normal, offset),
+                    c2 = center.projectOnSlope(normal, -offset),
+                    o1 = c1.projectOnSlope(slope, 10000),
+                    o2 = c2.projectOnSlope(slope, 10000),
+                    int1 = trace.intersections(c1, o1).pop(),
+                    int2 = trace.intersections(c2, o2).pop();
+                if (int1 && int2) {
+                    ints.push(int1);
+                    ints.push(int2);
+                }
+                angle -= angle_inc;
+            }
+
+            if (ints.length) {
+                ints.push(ints.shift());
+                for (let i=0; i<ints.length; i+=2) {
+                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
+                }
+                // check for and eliminate overlaps
+                for (let i=0, il=segs.length; i < il; i++) {
+                    let si = segs[i];
+                    for (let j=i+1; j<il; j++) {
+                        let sj = segs[j];
+                        if (sj.overlaps(si)) {
+                            if (sj.perimeter() > si.perimeter()) {
+                                sj._overlap = true;
+                            }
+                        }
+                    }
+                }
+                // replace intersected trace with non-overlapping segments
+                nutrace.appendAll(segs.filter(seg => !seg._overlap));
+            } else {
+                nutrace.push(trace);
+                notabs++;
+            }
+
+        });
+
+        if (notabs) {
+            console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
+        }
+
+        slice.tops[0].traces = nutrace;
     }
 
     /**
@@ -717,79 +755,6 @@
             return ondone(`invalid z bottom >= bounds z max ${bounds.max.z}`);
         }
 
-        // cut outside traces at the right points
-        const addCutoutTabs = function(slice, toolDiam) {
-            // too high
-            if (slice.z > zMin + tabHeight) return;
-            // skip if no tops | traces
-            if (slice.tops.length === 0) return;
-
-            let notabs = 0;
-            let nutrace = [];
-
-            // find trace with greatest area
-            slice.tops[0].traces.forEach(function(trace, index) {
-
-                // required to match computed order of cutouts
-                trace.setClockwise();
-
-                let count = proc.camTabsCount,
-                    angle = proc.camTabsAngle,
-                    angle_inc = 360 / count,
-                    center = trace.bounds.center(slice.z),
-                    offset = (tabWidth + toolDiam) / 2,
-                    ints = [],
-                    segs = [];
-
-                while (count-- > 0) {
-                    let slope = BASE.newSlopeFromAngle(angle),
-                        normal = BASE.newSlopeFromAngle(angle + 90),
-                        c1 = center.projectOnSlope(normal, offset),
-                        c2 = center.projectOnSlope(normal, -offset),
-                        o1 = c1.projectOnSlope(slope, 10000),
-                        o2 = c2.projectOnSlope(slope, 10000),
-                        int1 = trace.intersections(c1, o1).pop(),
-                        int2 = trace.intersections(c2, o2).pop();
-                    if (int1 && int2) {
-                        ints.push(int1);
-                        ints.push(int2);
-                    }
-                    angle -= angle_inc;
-                }
-
-                if (ints.length) {
-                    ints.push(ints.shift());
-                    for (let i=0; i<ints.length; i+=2) {
-                        segs.push(trace.emitSegment(ints[i], ints[i+1]));
-                    }
-                    // check for and eliminate overlaps
-                    for (let i=0, il=segs.length; i < il; i++) {
-                        let si = segs[i];
-                        for (let j=i+1; j<il; j++) {
-                            let sj = segs[j];
-                            if (sj.overlaps(si)) {
-                                if (sj.perimeter() > si.perimeter()) {
-                                    sj._overlap = true;
-                                }
-                            }
-                        }
-                    }
-                    // replace intersected trace with non-overlapping segments
-                    nutrace.appendAll(segs.filter(seg => !seg._overlap));
-                } else {
-                    nutrace.push(trace);
-                    notabs++;
-                }
-
-            });
-
-            if (notabs) {
-                console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
-            }
-
-            slice.tops[0].traces = nutrace;
-        }
-
         // TODO cache terrain slicer info in widget
         // TODO pass widget.isModified() on slice and re-use if false
         // TODO pre-slice in background from client signal
@@ -880,7 +845,27 @@
 
             slices.forEach(slice => {
                 slice.index = sliceIndex++;
-                createRoughPaths(slice, shell, roughToolDiam, camRoughStock, proc.camRoughOver, thruHoles);
+                let shadow = slice.shadow;
+                let offset = [shell.clone(true),shadow.clone(true)].flat();
+                let flat = POLY.flatten(offset, [], true);
+                let nest = POLY.setZ(POLY.nest(flat), slice.z);
+
+                // inset offset array by 1/2 diameter then by tool overlap %
+                slice.tops[0].traces =
+                POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
+                    z: slice.z,
+                    count: 999,
+                    flat: true,
+                    call: (polys, count, depth) => {
+                        // used in depth-first path creation
+                        polys.forEach(p => {
+                            p.depth = depth;
+                            if (p.inner) {
+                                p.inner.forEach(p => p.depth = depth);
+                            }
+                        });
+                    }
+                });
             });
             sliceAll.appendAll(slices);
         }
@@ -916,7 +901,9 @@
             slices.forEach(slice => {
                 slice.index = sliceIndex++;
                 createOutlinePaths(slice, tshadow, outlineToolDiam, procOutlineIn, procOutlineWide);
-                if (addTabsOutline) addCutoutTabs(slice, outlineToolDiam);
+                if (addTabsOutline && slice.z <= zMin + tabHeight) {
+                    addCutoutTabs(slice, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                }
             });
             sliceAll.appendAll(slices);
         }
