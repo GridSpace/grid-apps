@@ -1925,11 +1925,11 @@
             }
         }
 
-        function add0(val) {
+        function add0(val, opt) {
             let s = val.toString(),
                 d = s.indexOf(".");
             if (d < 0) {
-                return s + '.0';
+                return opt ? s : s + '.0';
             } else {
                 return val.toFixed(decimals);
             }
@@ -2026,7 +2026,7 @@
             }
             if (feed && feed !== pos.f) {
                 pos.f = feed;
-                nl.append(space).append("F").append(feed * factor);
+                nl.append(space).append("F").append(add0(feed * factor, true));
             }
 
             // update time calculation
