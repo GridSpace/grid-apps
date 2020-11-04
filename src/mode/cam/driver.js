@@ -645,48 +645,6 @@
     }
 
     /**
-     * Create CAM outlining offsets
-     *
-     * @param {Slice} slice target
-     * @param {Polygon[]} outermost pancacked shells for fill
-     * @param {number} tool diameter
-     * @param {boolean} inside emit polys inside part boundaries
-     * @param {boolean} outside emit polys outside part boundaries
-     * @param {boolean} wide expand outside poly cuts
-     */
-    function createOutlinePaths(slice, shell, diameter, inside, wide) {
-        let tops = slice.shadow.clone(true);
-        let offset = POLY.expand(tops, diameter / 2, slice.z);
-
-        // when pocket only, drop first outer poly
-        // if it matches the shell and promote inner polys
-        if (inside) {
-            offset = POLY.filter(POLY.diff(shell, offset, slice.z), [], function(poly) {
-                if (poly.area() < 1) {
-                    return null;
-                }
-                for (let sp=0; sp<shell.length; sp++) {
-                    // eliminate shell only polys
-                    if (poly.isEquivalent(shell[sp])) {
-                        if (poly.inner) return poly.inner;
-                        return null;
-                    }
-                }
-                return poly;
-            });
-        } else {
-            POLY.offset(shell, diameter/2, { outs: offset, flat: true, z: slice.z });
-            if (wide) {
-                offset.slice().forEach(op => {
-                    POLY.expand([op], diameter * 0.5, slice.z, offset, 1);
-                });
-            }
-        }
-
-        slice.tops[0].traces = offset;
-    };
-
-    /**
      * DRIVER SLICE CONTRACT
      *
      * @param {Object} settings
@@ -729,6 +687,7 @@
             ztOff = proc.camZTopOffset * units,
             camRoughStock = proc.camRoughStock * units,
             camRoughDown = proc.camRoughDown * units,
+            sliceIndex = 0,
             thruHoles;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
@@ -765,11 +724,17 @@
         });
         let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(1, { fit: true, off: 0.01 }); // bottom up 1mm steps
+        let tzindex = slicer.interval(1, { fit: true, off: 0.01, down: true }); // bottom up 1mm steps
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             console.log('terrain', index, total, data);
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
+            // let slice = data.slice;
+            // slice.z = data.z;
+            // slice.index = sliceIndex++;
+            // slice.camMode = CPRO.LEVEL;
+            // slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
+            // sliceAll.push(slice);
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
@@ -786,9 +751,7 @@
 
         // identify through holes
         thruHoles = tshadow.map(p => p.inner || []).flat();
-        console.log({thruHoles})
-
-        let sliceIndex = 0;
+        console.log({tshadow, thruHoles: thruHoles.clone(true)});
 
         // create facing slices
         if (procFacing) {
@@ -809,17 +772,19 @@
 
         // create roughing slices
         if (procRough) {
-            let shadow = shadowTop.tops;
+            let shadow = [];
             let slices = [];
             slicer.slice(slicer.interval(roughDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = CPRO.ROUGH;
                 data.slice.shadow = data.shadow;
-                // data.slice.tops[0].inner = shadow.clone(true);
+                // data.slice.tops[0].inner = data.shadow;
+                // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
                 slices.push(data.slice);
                 onupdate(0.1 + (index/total) * 0.1, "roughing");
             }, genso: true });
+
             shadow = POLY.union(shadow.appendAll(shadowBase.tops), 0.01, true);
 
             // inset or eliminate thru holes from shadow
@@ -844,15 +809,14 @@
             let shell = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
 
             slices.forEach(slice => {
-                slice.index = sliceIndex++;
                 let shadow = slice.shadow;
                 let offset = [shell.clone(true),shadow.clone(true)].flat();
                 let flat = POLY.flatten(offset, [], true);
                 let nest = POLY.setZ(POLY.nest(flat), slice.z);
+                // slice.tops[0].inner = shell.clone(true);
 
                 // inset offset array by 1/2 diameter then by tool overlap %
-                slice.tops[0].traces =
-                POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
+                offset = POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
                     z: slice.z,
                     count: 999,
                     flat: true,
@@ -866,20 +830,24 @@
                         });
                     }
                 });
+
+                slice.tops[0].traces = offset;
+                slice.index = sliceIndex++;
             });
             sliceAll.appendAll(slices);
         }
 
         // create outline slices
         if (procOutline) {
-            let shadow = shadowTop.tops;
+            let shadow = [];//shadowTop.tops;
             let slices = [];
             slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = CPRO.OUTLINE;
                 data.slice.shadow = data.shadow;
-                // data.slice.tops[0].inner = shadow;
+                // data.slice.tops[0].inner = data.shadow;
+                // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
                 slices.push(data.slice);
                 onupdate(0.2 + (index/total) * 0.1, "outlines");
             }, genso: true });
@@ -899,11 +867,39 @@
             }
 
             slices.forEach(slice => {
-                slice.index = sliceIndex++;
-                createOutlinePaths(slice, tshadow, outlineToolDiam, procOutlineIn, procOutlineWide);
+                let tops = slice.shadow;//.clone(true);
+                let offset = POLY.expand(tops, outlineToolDiam / 2, slice.z);
+                // when pocket only, drop first outer poly
+                // if it matches the shell and promote inner polys
+                if (procOutlineIn) {
+                    let shell = POLY.expand(tops.clone(), outlineToolDiam / 2);
+                    offset = POLY.filter(offset, [], function(poly) {
+                        if (poly.area() < 1) {
+                            return null;
+                        }
+                        for (let sp=0; sp<shell.length; sp++) {
+                            // eliminate shell only polys
+                            if (poly.isEquivalent(shell[sp])) {
+                                if (poly.inner) return poly.inner;
+                                return null;
+                            }
+                        }
+                        return poly;
+                    });
+                } else {
+                    if (procOutlineWide) {
+                        offset.slice().forEach(op => {
+                            POLY.expand([op], outlineToolDiam * 0.5, slice.z, offset, 1);
+                        });
+                    }
+                }
+
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
                     addCutoutTabs(slice, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
+
+                slice.tops[0].traces = offset;
+                slice.index = sliceIndex++;
             });
             sliceAll.appendAll(slices);
         }

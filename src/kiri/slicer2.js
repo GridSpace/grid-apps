@@ -181,7 +181,7 @@
             }
 
             let znorm = z.toFixed(5),
-                flatoff = opt.flatoff || 0.007,
+                flatoff = opt.flatoff || 0.01,
                 onflat = this.zFlat[znorm],
                 phash = {},
                 lines = [],
@@ -282,7 +282,7 @@
                 array.push(opt.down ? zmax : zmin);
             }
 
-            return array;
+            return array.map(v => parseFloat(v.toFixed(2)));
         }
     }
 
