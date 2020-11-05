@@ -95,7 +95,6 @@
             flats: encode(this.flats, state),
             solids: encode(this.solids, state),
             supports: encode(this.supports, state)
-            //groups: encode(this.groups, state)
         };
     };
 
@@ -109,7 +108,6 @@
         slice.flats = decode(v.flats, state);
         slice.solids = decode(v.solids, state);
         slice.supports = decode(v.supports, state);
-        //slice.groups = decode(v.groups, state);
 
         return slice;
     });

@@ -17,9 +17,7 @@
             sliceRender,
             printSetup,
             printExport,
-            printRender,
-            getToolById,
-            getToolDiameter,
+            printRender
         },
         CPRO = CAM.process = {
             LEVEL: 1,
@@ -66,99 +64,10 @@
         });
     }
 
-    function getToolById(settings, id) {
-        for (let i=0, t=settings.tools; i<t.length; i++) {
-            if (t[i].id === id) return t[i];
-        }
-        return null;
-    };
-
-    function getToolDiameter(settings, id) {
-        let tool = getToolById(settings, id);
-        if (!tool) return 0;
-        return (tool.metric ? 1 : 25.4) * tool.flute_diam;
-    };
-
-    function getToolTipDiameter(settings, id) {
-        let tool = getToolById(settings, id);
-        if (!tool) return 0;
-        return (tool.metric ? 1 : 25.4) * tool.taper_tip;
-    };
-
-    function getToolShaftDiameter(settings, id) {
-        let tool = getToolById(settings, id);
-        if (!tool) return 0;
-        return (tool.metric ? 1 : 25.4) * tool.shaft_diam;
-    };
-
-    function getToolShaftOffset(settings, id) {
-        let tool = getToolById(settings, id);
-        if (!tool) return 0;
-        return (tool.metric ? 1 : 25.4) * tool.flute_len;
-    };
-
-    function createToolProfile(settings, id, topo) {
-        // generate tool profile
-        let tool = getToolById(settings, id),
-            ball = tool.type === "ballmill",
-            taper = tool.type === "tapermill",
-            shaft_diameter = getToolShaftDiameter(settings, id),
-            shaft_radius = shaft_diameter / 2,
-            shaft_pix_float = shaft_diameter / topo.resolution,
-            shaft_pix_int = Math.round(shaft_pix_float),
-            shaft_radius_pix_float = shaft_pix_float / 2,
-            shaft_offset = getToolShaftOffset(settings, id),
-            flute_diameter = getToolDiameter(settings, id),
-            flute_radius = flute_diameter / 2,
-            flute_pix_float = flute_diameter / topo.resolution,
-            // flute_pix_int = Math.round(flute_pix_float),
-            flute_radius_pix_float = flute_pix_float / 2,
-            tip_diameter = getToolTipDiameter(settings, id),
-            tip_pix_float = tip_diameter / topo.resolution,
-            tip_radius_pix_float = tip_pix_float / 2,
-            tip_max_radius_offset = flute_radius_pix_float - tip_radius_pix_float,
-            profile_pix_iter = shaft_pix_int + (1 - shaft_pix_int % 2),
-            toolCenter = (shaft_pix_int - (shaft_pix_int % 2)) / 2,
-            toolOffset = [],
-            larger_shaft = shaft_diameter - flute_diameter > 0.001;
-
-        // console.log({
-        //     tool: tool.name,
-        //     rez: topo.resolution,
-        //     diam: flute_diameter,
-        //     pix: flute_pix_float.toFixed(2),
-        //     rad: flute_radius_pix_float.toFixed(2),
-        //     tocks: profile_pix_iter,
-        //     shaft_offset,
-        //     larger_shaft
-        // });
-
-        // for each point in tool profile, check inside radius
-        for (let x = 0; x < profile_pix_iter; x++) {
-            for (let y = 0; y < profile_pix_iter; y++) {
-                let dx = x - toolCenter,
-                    dy = y - toolCenter,
-                    dist_from_center = Math.sqrt(dx * dx + dy * dy);
-                if (dist_from_center <= flute_radius_pix_float) {
-                    // console.log({x,y,dx,dy,dist:dist_from_center,ln:dbl.length})
-                    // flute offset points
-                    let z_offset = 0;
-                    if (ball) {
-                        z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
-                    } else if (taper && dist_from_center >= tip_radius_pix_float) {
-                        z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
-                    }
-                    toolOffset.push(dx, dy, z_offset);
-                } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
-                    // shaft offset points
-                    toolOffset.push(dx, dy, -shaft_offset);
-                }
-            }
-        }
-        return toolOffset;
-    };
-
-    function getMaxZBetween(terrain, x1, y1, x2, y2, z, zadd, off, over) {
+    /**
+     * return tool Z clearance height for a line segment movement path
+     */
+    function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
         let maxz = z;
         let check = [];
         for (let i=0; i<terrain.length; i++) {
@@ -200,69 +109,6 @@
     }
 
     /**
-     * find highest z on a line segment
-     * x,y are in platform coodinates
-     */
-    function getTopoZPathMax(widget, profile, x1, y1, x2, y2) {
-
-        let topo = widget.topo,
-            rez = topo.resolution,
-            bounds = widget.getBoundingBox(),
-            dx = x2-x1,
-            dy = y2-y1,
-            md = Math.max(Math.abs(dx),Math.abs(dy)),
-            mi = md / rez,
-            ix = dx / mi,
-            iy = dy / mi,
-            zmax = 0;
-
-        // implement fast grid fingerprinting. if no z variance within
-        // the scan area (or min scan delta set from last point), then
-        // use the last computed zmax and carry on
-        while (mi-- > 0) {
-            let tx1 = Math.round((x1 - bounds.min.x) / rez),
-                ty1 = Math.round((y1 - bounds.min.y) / rez);
-            zmax = Math.max(zmax, getMaxTopoToolZ(topo, profile, tx1, ty1, true));
-            x1 += ix;
-            y1 += iy;
-        }
-
-        return zmax;
-    };
-
-    /**
-     * x,y are in topo grid int coordinates
-     */
-    function getMaxTopoToolZ(topo, profile, x, y, floormax) {
-        let tv, tx, ty, tz, gv, i = 0, mz = -1;
-
-        const sx = topo.stepsx, sy = topo.stepsy, xl = sx - 1, yl = sy - 1;
-
-        while (i < profile.length) {
-            // tool profile point x, y, and z offsets
-            let tx = profile[i++] + x;
-            let ty = profile[i++] + y;
-            let tz = profile[i++];
-            if (tx < 0 || tx > xl || ty < 0 || ty > yl) {
-                // if outside max topo steps, use 0
-                gv = 0;
-            } else {
-                // lookup grid value @ tx, ty
-                gv = topo.data[tx * sy + ty] || 0;
-            }
-            // inside the topo but off the part
-            if (floormax && gv === 0) {
-                // return topo.bounds.max.z;
-                gv = topo.bounds.max.z;
-            }
-            // update the rest
-            mz = Math.max(tz + gv, mz);
-        }
-
-        return Math.max(mz,0);
-    };
-
-    /**
      * call out to slicer
      */
     function doSlicing(widget, options, ondone, onupdate) {
@@ -287,257 +133,6 @@
             }
         });
         return selected;
-    }
-
-    /**
-     * @param {Widget} widget
-     * @param {Object} settings
-     * @param {Function} ondone
-     * @param {Function} onupdate
-     */
-    function generateTopoMap(widget, settings, ondone, onupdate) {
-        let mesh = widget.mesh,
-            proc = settings.process,
-            outp = settings.process,
-            resolution = outp.camTolerance,
-            diameter = getToolDiameter(settings, proc.camContourTool),
-            tool = getToolById(settings, proc.camContourTool),
-            toolStep = diameter * proc.camContourOver,
-            traceJoin = diameter / 2,
-            pocketOnly = proc.camOutlinePocket,
-            bounds = widget.getBoundingBox().clone(),
-            minX = bounds.min.x,// - diameter,
-            maxX = bounds.max.x,// + diameter,
-            minY = bounds.min.y,// - diameter,
-            maxY = bounds.max.y,// + diameter,
-            zBottom = outp.camZBottom,
-            boundsX = maxX - minX,
-            boundsY = maxY - minY,
-            maxangle = proc.camContourAngle,
-            curvesOnly = proc.camContourCurves,
-            R2A = 180 / Math.PI,
-            stepsx = Math.ceil(boundsX / resolution),
-            stepsy = Math.ceil(boundsY / resolution),
-            data = new Float32Array(stepsx * stepsy),
-            topo = widget.topo = {
-                data: data,
-                stepsx: stepsx,
-                stepsy: stepsy,
-                bounds: bounds,
-                diameter: diameter,
-                resolution: resolution
-            },
-            toolOffset = createToolProfile(settings, proc.camContourTool, topo),
-            newslices = [],
-            newlines,
-            newtop,
-            newtrace,
-            sliceout,
-            latent,
-            lastP,
-            slice, lx, ly,
-            startTime = time();
-
-        // return highest z within tools radius
-        function maxzat(x,y) {
-            return getMaxTopoToolZ(topo, toolOffset, x, y);
-        }
-
-        function push_point(x,y,z) {
-            let newP = newPoint(x,y,z);
-            if (lastP && lastP.z === z) {
-                if (curvesOnly) {
-                    end_poly();
-                } else {
-                    latent = newP;
-                }
-            } else {
-                if (latent) {
-                    newtrace.push(latent);
-                    latent = null;
-                }
-                newtrace.push(newP);
-            }
-            lastP = newP;
-        }
-
-        function end_poly() {
-            if (latent) {
-                newtrace.push(latent);
-            }
-            if (newtrace.length > 0) {
-                // add additional constraint on min perimeter()
-                if (newtrace.length > 1) {
-                    sliceout.push(newtrace);
-                }
-                newtrace = newPolygon().setOpen();
-            }
-            latent = undefined;
-            lastP = undefined;
-        }
-
-        function topoSlicesDone(slices) {
-            let gridx = 0,
-                gridy,
-                gridi, // index
-                gridv, // value
-                zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
-                x, y, tv, ltv;
-
-            // for each Y slice, find z grid value (x/z swapped)
-            for (let j=0, jl=slices.length; j<jl; j++) {
-                let slice = slices[j],
-                    lines = slice.lines;
-                gridy = 0;
-                // slices have x/z swapped
-                for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
-                    gridi = gridx * stepsy + gridy;
-                    gridv = data[gridi] || 0;
-                    // strategy using raw lines (faster slice, but more lines)
-                    for (let i=0, il=lines.length; i<il; i++) {
-                        let line = lines[i], p1 = line.p1, p2 = line.p2;
-                        if (
-                            (p1.z > zMin || p2.z > zMin) && // one endpoint above 0
-                            (p1.z > gridv || p2.z > gridv) && // one endpoint above gridv
-                            ((p1.y <= y && p2.y >= y) || // one endpoint left
-                             (p2.y <= y && p1.y >= y)) // one endpoint right
-                        ) {
-                            let dy = p1.y - p2.y,
-                                dz = p1.z - p2.z,
-                                pct = (p1.y - y) / dy,
-                                nz = p1.z - (dz * pct);
-                            if (nz > gridv) {
-                                gridv = data[gridi] = Math.max(nz, zMin);
-                            }
-                        }
-                    }
-                    gridy++;
-                }
-                gridx++;
-                onupdate(0.20 + (gridx/stepsx) * 0.50, "trace surface");
-            }
-
-            // x contouring
-            if (proc.camContourXOn) {
-                startTime = time();
-                // emit slice per X
-                for (x = minX; x <= maxX; x += toolStep) {
-                    gridx = Math.round(((x - minX) / boundsX) * stepsx);
-                    ly = gridy = 0;
-                    slice = newSlice(gridx, mesh.newGroup ? mesh.newGroup() : null);
-                    slice.camMode = CPRO.CONTOUR_X;
-                    slice.lines = newlines = [];
-                    newtop = slice.addTop(newPolygon().setOpen()).poly;
-                    newtrace = newPolygon().setOpen();
-                    sliceout = slice.tops[0].traces = [ ];
-                    for (y = minY; y < maxY; y += resolution) {
-                        if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
-                            end_poly();
-                            gridy++;
-                            ly = 0;
-                            continue;
-                        }
-                        tv = maxzat(gridx, gridy);
-                        if (tv === 0) {
-                            end_poly();
-                            gridy++;
-                            ly = 0;
-                            continue;
-                        }
-                        if (ly) {
-                            if (mesh) newlines.push(newLine(
-                                newPoint(x,ly,ltv),
-                                newPoint(x,y,tv)
-                            ));
-                            let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
-                            // over max angle, turn into square edge (up or down)
-                            if (ang > maxangle) {
-                                if (ltv > tv) {
-                                    // down = forward,down
-                                    push_point(x,y,ltv);
-                                } else {
-                                    // up = up,forward
-                                    push_point(x,ly,tv);
-                                }
-                            }
-                        }
-                        push_point(x,y,tv);
-                        ly = y;
-                        ltv = tv;
-                        gridy++;
-                    }
-                    end_poly();
-                    if (sliceout.length > 0) {
-                        newslices.push(slice);
-                    }
-                    onupdate(0.70 + (gridx/stepsx) * 0.15, "contour x");
-                }
-            }
-
-            // y contouring
-            if (proc.camContourYOn) {
-                startTime = time();
-                // emit slice per Y
-                for (y = minY; y <= maxY; y += toolStep) {
-                    gridy = Math.round(((y - minY) / boundsY) * stepsy);
-                    lx = gridx = 0;
-                    slice = newSlice(gridy, mesh.newGroup ? mesh.newGroup() : null);
-                    slice.camMode = CPRO.CONTOUR_Y;
-                    slice.lines = newlines = [];
-                    newtop = slice.addTop(newPolygon().setOpen()).poly;
-                    newtrace = newPolygon().setOpen();
-                    sliceout = slice.tops[0].traces = [ ];
-                    for (x = minX; x <= maxX; x += resolution) {
-                        if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
-                            end_poly();
-                            gridx++;
-                            ly = 0;
-                            continue;
-                        }
-                        tv = maxzat(gridx, gridy);
-                        if (tv === 0) {
-                            end_poly();
-                            gridx++;
-                            lx = 0;
-                            continue;
-                        }
-                        if (lx) {
-                            if (mesh) newlines.push(newLine(
-                                newPoint(lx,y,ltv),
-                                newPoint(x,y,tv)
-                            ));
-                            let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
-                            // over max angle, turn into square edge (up or down)
-                            if (ang > maxangle) {
-                                if (ltv > tv) {
-                                    // down = forward,down
-                                    push_point(x,y,ltv);
-                                } else {
-                                    // up = up,forward
-                                    push_point(lx,y,tv);
-                                }
-                            }
-                        }
-                        push_point(x,y,tv);
-                        lx = x;
-                        ltv = tv;
-                        gridx++;
-                    }
-                    end_poly();
-                    if (sliceout.length > 0) {
-                        newslices.push(slice);
-                    }
-                    onupdate(0.85 + (gridy/stepsy) * 0.15, "contour y");
-                }
-            }
-
-            ondone(newslices);
-        }
-
-        // slices progress left-to-right along the X axis
-        doSlicing(widget, {height:resolution, swapX:true, topo:true}, topoSlicesDone, function(update) {
-            onupdate(0.0 + update * 0.20, "topo slice");
-        });
     }
 
     /**
@@ -696,18 +291,18 @@
             proc = conf.process,
             sliceAll = widget.slices = [],
             unitsName = settings.controller.units,
-            roughToolDiam = getToolDiameter(conf, proc.camRoughTool),
-            outlineToolDiam = getToolDiameter(conf, proc.camOutlineTool),
-            contourToolDiam = getToolDiameter(conf, proc.camContourTool),
-            drillToolDiam = getToolDiameter(conf, proc.camDrillTool),
+            roughTool = new CAM.Tool(conf, proc.camRoughTool),
+            roughToolDiam = roughTool.fluteDiameter(),
+            drillTool = new CAM.Tool(conf, proc.camDrillTool),
+            drillToolDiam = drillTool.fluteDiameter(),
             procFacing = proc.camRoughOn && proc.camZTopOffset,
-            procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
+            procRough = proc.camRoughOn && proc.camRoughDown,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOn = proc.camOutlineOn,
             procOutlineWide = proc.camOutlineWide,
-            procOutline = procOutlineOn && proc.camOutlineDown && outlineToolDiam,
-            procContourX = proc.camContourXOn && proc.camOutlinePlunge && contourToolDiam,
-            procContourY = proc.camContourYOn && proc.camOutlinePlunge && contourToolDiam,
+            procOutline = procOutlineOn && proc.camOutlineDown,
+            procContourX = proc.camContourXOn && proc.camOutlinePlunge,
+            procContourY = proc.camContourYOn && proc.camOutlinePlunge,
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
             procDrillReg = proc.camDrillReg,
@@ -784,12 +379,12 @@
 
         if (procDrillReg) {
             maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
-            sliceDrillReg(settings, widget, sliceAll, zThru);
+            sliceDrillReg(settings, sliceAll, zThru);
         }
 
         if (procDrill) {
             maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
-            sliceDrill(settings, widget, tslices, sliceAll);
+            sliceDrill(drillTool, tslices, sliceAll);
         }
 
         // identify through holes
@@ -884,7 +479,10 @@
 
         // create outline slices
         if (procOutline) {
+            let outlineTool = new CAM.Tool(conf, proc.camOutlineTool);
+            let outlineToolDiam = outlineTool.fluteDiameter();
             maxToolDiam = Math.max(maxToolDiam, outlineToolDiam);
+
             let shadow = [];
             let slices = [];
             slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
@@ -953,12 +551,16 @@
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
-        if (procContour)
-        generateTopoMap(widget, settings, function(slices) {
-            sliceAll.appendAll(slices);
-        }, function(update, msg) {
-            onupdate(0.40 + update * 0.50, msg || "create topo");
-        });
+        if (procContour) {
+            new CAM.Topo(widget, settings, {
+                onupdate: (update, msg) => {
+                    onupdate(0.40 + update * 0.50, msg || "create topo");
+                },
+                ondone: (slices) => {
+                    sliceAll.appendAll(slices);
+                }
+            });
+        }
 
         // prepare for tracing paths
         let traceTool;
@@ -978,9 +580,9 @@
     };
 
     // drilling op
-    function sliceDrill(settings, widget, slices, output) {
+    function sliceDrill(tool, slices, output) {
         let drills = [],
-            drillToolDiam = getToolDiameter(settings, settings.process.camDrillTool),
+            drillToolDiam = tool.flueDiameter(),
             centerDiff = drillToolDiam * 0.1,
             area = (drillToolDiam/2) * (drillToolDiam/2) * Math.PI,
             areaDelta = area * 0.05;
@@ -1027,7 +629,7 @@
     }
 
     // drill registration holes
-    function sliceDrillReg(settings, widget, output, zThru) {
+    function sliceDrillReg(settings, output, zThru) {
         let proc = settings.process,
             stock = settings.stock,
             bounds = settings.bounds,
@@ -1142,8 +744,7 @@
 
         if (widgetIndex >= widgetCount || !widget) return;
 
-        let getTool = getToolById,
-            settings = print.settings,
+        let settings = print.settings,
             device = settings.device,
             process = settings.process,
             stock = settings.stock,
@@ -1181,7 +782,6 @@
             tool,
             toolDiam,
             toolDiamMove,
-            toolProfile,
             feedRate,
             plungeRate,
             lastTool,
@@ -1198,7 +798,7 @@
             terrain = widget.terrain.map(data => {
                 return {
                     z: data.z,
-                    tops: data.tops,//POLY.offset(data.tops, maxToolDiam, {z: data.z})
+                    tops: data.tops,
                 };
             });
 
@@ -1213,12 +813,9 @@
 
         function setTool(toolID, feed, plunge) {
             if (toolID !== lastTool) {
-                tool = getToolById(settings, toolID);
-                toolDiam = getToolDiameter(settings, toolID);
+                tool = new CAM.Tool(settings, toolID);
+                toolDiam = tool.fluteDiameter();
                 toolDiamMove = toolDiam; // TODO validate w/ multiple models
-                if (widget.topo) {
-                    toolProfile = createToolProfile(settings, toolID, widget.topo);
-                }
                 lastTool = toolID;
             }
             feedRate = feed;
@@ -1303,7 +900,7 @@
                 null,
                 0,
                 time,
-                tool.number
+                tool.getNumber()
             );
         }
 
@@ -1322,7 +919,7 @@
             if (!lastPoint) {
                 let above = point.clone().setZ(zmax + zadd);
                 // before first point, move cutting head to point above it
-                layerPush(above, 0, 0, tool.number);
+                layerPush(above, 0, 0, tool.getNumber());
                 // then set that as the lastPoint
                 lastPoint = above;
             }
@@ -1343,14 +940,14 @@
                     isMove = false;
                 } else if (deltaZ <= -tolerance) {
                     // move over before descending
-                    layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.number);
+                    layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.getNumber());
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
             } //else (TODO verify no else here b/c above could change isMove)
             // move over things
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                let maxz = getMaxZBetween(
+                let maxz = getZClearPath(
                         terrain,
                         lastPoint.x,// - wmx,
                         lastPoint.y,// - wmy,
@@ -1361,26 +958,16 @@
                         maxToolDiam/2,
                         zclear
                     ) + ztOff,
-                // let maxz = (toolProfile ? Math.max(
-                //         getTopoZPathMax(
-                //             widget,
-                //             toolProfile,
-                //             lastPoint.x - wmx,
-                //             lastPoint.y - wmy,
-                //             point.x - wmx,
-                //             point.y - wmy),
-                //         point.z,
-                //         lastPoint.z) : zmax) + ztOff + zadd,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/outline
                 if (mustGoUp) {
                     clearz = maxz + zclear;
-                    layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.number);
+                    layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
                 }
                 // over to point above where we descend to
                 if (mustGoUp || point.z < maxz) {
-                    layerPush(point.clone().setZ(clearz), 0, 0, tool.number);
+                    layerPush(point.clone().setZ(clearz), 0, 0, tool.getNumber());
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
@@ -1403,7 +990,7 @@
                 point,
                 cut ? 1 : 0,
                 rate,
-                tool.number
+                tool.getNumber()
             );
             lastPoint = point;
             layerOut.spindle = spindle;
@@ -1653,7 +1240,7 @@
         // last layer/move is to zmax
         // injected into the last layer generated
         if (lastPoint)
-        addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.number);
+        addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
 
         // replace output single flattened layer with all points
         print.output = newOutput;

@@ -16,26 +16,35 @@
 
     class Slicer {
         constructor(points, options) {
+            this.options = {};
             if (points) {
                 this.setPoints(points, options);
             }
         }
 
+        setOptions(options) {
+            Object.assign(this.options, options || {});
+            return this.options;
+        }
+
         setPoints(points, options) {
-            this.points = points;
+            this.bounds = null;
+            this.points = this.swap(points, options);
             this.zFlat = {}; // accumulated flat area at z height
             this.zLine = {}; // count of z coplanar lines
             this.zList = {}; // count of z values for auto slicing
             this.zSum = 0;   // used in bucketing calculations
             return this
                 .computeBounds()
-                .computeFeatures(options)
+                .computeFeatures()
                 .computeBuckets();
         }
 
         computeBounds() {
-            this.bounds = new THREE.Box3();
-            this.bounds.setFromPoints(this.points);
+            if (!this.bounds) {
+                this.bounds = new THREE.Box3();
+                this.bounds.setFromPoints(this.points);
+            }
             return this;
         }
 
@@ -43,7 +52,7 @@
         // these are used for auto-slicing in laser
         // and to flats detection in CAM mode
         computeFeatures(options) {
-            const opt = options || {};
+            const opt = this.setOptions(options);
             const points = this.points;
             const bounds = this.bounds;
             const zFlat = this.zFlat;
@@ -169,7 +178,7 @@
 
         // slice through points at given Z and return polygons
         slice(z, options, index, total, mark) {
-            let opt = options || {};
+            const opt = this.setOptions(options);
 
             if (Array.isArray(z)) {
                 const mark = UTIL.time();
@@ -238,8 +247,14 @@
                 retn.lines = removeDuplicateLines(lines);
                 retn.tops = POLY.nest(connectLines(retn.lines));
 
+                if (opt.swapX || opt.swapY) {
+                    this.unswap(opt.swapX, opt.swapY, retn.lines, retn.tops);
+                }
+
                 if (opt.genso) {
                     retn.slice = newSlice(z).addTops(retn.tops);
+                    retn.slice.lines = retn.lines;
+                    retn.slice.groups = retn.tops;
                 }
             }
 
@@ -248,6 +263,91 @@
             }
 
             return retn;
+        }
+
+        swap(points, options) {
+            const opt = this.setOptions(options);
+
+            if (!(opt && (opt.swapX || opt.swapY))) {
+                return points;
+            }
+
+            let btmp = new THREE.Box3(),
+                pref = {},
+                cached;
+
+            points = points.slice();
+            btmp.setFromPoints(points);
+            if (opt.swapX) this.ox = -btmp.max.x;
+            if (opt.swapY) this.oy = -btmp.max.y;
+
+            // array re-uses points so we need
+            // to be careful not to alter a point
+            // more than once
+            for (let p, index=0; index<points.length; index++) {
+                p = points[index];
+                cached = pref[p.key];
+                // skip points already altered
+                if (cached) {
+                    points[index] = cached;
+                    continue;
+                }
+                cached = p.clone();
+                if (opt.swapX) cached.swapXZ();
+                if (opt.swapY) cached.swapYZ();
+                cached.rekey();
+                pref[p.key] = cached;
+                points[index] = cached;
+            }
+
+            // update temp bounds from new points
+            btmp.setFromPoints(points);
+            for (let p, index=0; index<points.length; index++) {
+                p = points[index];
+                if (p.mod === 1) continue;
+                p.mod = 1;
+                p.z -= btmp.min.z;
+            }
+
+            // update temp bounds from points with altered Z
+            btmp.setFromPoints(points);
+            this.bounds = btmp;
+
+            return points;
+        }
+
+        unswap(swapX, swapY, lines, polys) {
+            let move = {x: this.ox || 0, y: this.oy || 0, z: 0};
+
+            // unswap lines
+            let llen = lines.length,
+                idx, line;
+
+            // shared points causing problems
+            for (idx=0; idx<llen; idx++) {
+                line = lines[idx];
+                line.p1 = line.p1.clone();
+                line.p2 = line.p2.clone();
+            }
+
+            for (idx=0; idx<llen; idx++) {
+                line = lines[idx];
+                if (swapX) {
+                    line.p1.swapXZ();
+                    line.p2.swapXZ();
+                }
+                if (swapY) {
+                    line.p1.swapYZ();
+                    line.p2.swapYZ();
+                }
+                line.p1.move(move);
+                line.p2.move(move);
+            }
+
+            polys.forEach(poly => {
+                poly.swap(swapX, swapY);
+                poly.move(move);
+            });
         }
 
         interval(step, options) {

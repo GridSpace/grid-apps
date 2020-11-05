@@ -254,14 +254,22 @@
     PRO.swap = function(x,y) {
         let poly = this,
             points = poly.points,
-            length = points.length;
-        poly.bounds = new Bounds();
-        for (let i=0; i<length; i++) {
-            let p = points[i];
-            if (x) p.swapXZ();
-            else if (y) p.swapYZ();
-            poly.bounds.update(p);
+            length = points.length,
+            bounds = new Bounds();
+        if (x) {
+            for (let i=0; i<length; i++) {
+                let p = points[i];
+                p.swapXZ();
+                bounds.update(p);
+            }
+        } else if (y) {
+            for (let i=0; i<length; i++) {
+                let p = points[i];
+                p.swapYZ();
+                bounds.update(p);
+            }
         }
+        poly.bounds = bounds;
         if (poly.inner) poly.inner.forEach(function(i) {
             i.swap(x,y);
         });
@@ -408,7 +416,11 @@
             p.move(offset);
             bounds.update(p);
         });
-        if (scope.inner) scope.inner.forEach(function(p) { p.move(offset) });
+        if (scope.inner) {
+            scope.inner.forEach(function(p) {
+                p.move(offset);
+            });
+        }
         return scope;
     };
 

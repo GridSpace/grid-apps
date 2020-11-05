@@ -116,7 +116,10 @@
     }
 
     function onBooleanClick() {
-        UC.refresh();
+        // prevent hiding elements in device editor on clicks
+        if (!API.modal.visible()) {
+            UC.refresh();
+        }
         API.conf.update();
         DOC.activeElement.blur();
     }
