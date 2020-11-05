@@ -158,6 +158,30 @@
         return toolOffset;
     };
 
+    function getMaxZBetween(terrain, x1, y1, x2, y2, z) {
+        let maxz = z;
+        let check = [];
+        for (let i=0; i<terrain.length; i++) {
+            let data = terrain[i];
+            check.push(data);
+            if (data.z < z) {
+                break;
+            }
+        }
+        check.reverse();
+        for (let i=0; i<check.length; i++) {
+            let data = check[i];
+            let int = data.tops.map(p => p.intersections({x:x1, y:y1},{x:x2, y:y2})).flat();
+            if (int.length) {
+                maxz = Math.max(maxz, data.z);
+                console.log({z, check, int, maxz, dataz: data.z});
+                continue;
+            }
+            break;
+        }
+        return maxz;
+    }
+
     /**
      * find highest z on a line segment
      * x,y are in platform coodinates
@@ -738,6 +762,7 @@
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
+        widget.terrain = terrain;
         console.log({slicer, tzindex, tshadow, terrain});
 
         if (procDrillReg) {
@@ -1294,6 +1319,14 @@
             } //else (TODO verify no else here b/c above could change isMove)
             // move over things
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
+                // let maxz = getMaxZBetween(
+                //         widget.terrain,
+                //         lastPoint.x,// - wmx,
+                //         lastPoint.y,// - wmy,
+                //         point.x,// - wmx,
+                //         point.y,// - wmy,
+                //         Math.min(point.z, lastPoint.z)
+                //     ) + ztOff,
                 let maxz = (toolProfile ? Math.max(
                         getTopoZPathMax(
                             widget,
