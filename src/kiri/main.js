@@ -1432,7 +1432,11 @@
             if (UI.hasOwnProperty(key)) {
                 let uie = UI[key], typ = uie ? uie.type : null;
                 if (typ === 'text') {
-                    uie.value = val;
+                    if (uie.setv) {
+                        uie.setv(val);
+                    } else {
+                        uie.value = val;
+                    }
                 } else if (typ === 'checkbox') {
                     uie.checked = val;
                 } else if (typ === 'select-one') {
@@ -1549,6 +1553,10 @@
 
     function updateSettings() {
         updateSettingsFromFields(settings.controller);
+        switch (settings.controller.units) {
+            case 'mm': UC.setUnits(1); break;
+            case 'in': UC.setUnits(25.4); break;
+        }
         updateSettingsFromFields(settings.device);
         updateSettingsFromFields(settings.process);
         updateSettingsFromFields(settings.layers);

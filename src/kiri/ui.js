@@ -20,6 +20,7 @@
         poppable = {},
         hasModes = [],
         isExpert = [],
+        setters = [],
         letMode = null,
         letExpert = false,
         letHoverPop = true,
@@ -27,7 +28,8 @@
         state = {},
         prefix = "tab",
         NOMODE = "nomode",
-        exitimer = undefined;
+        exitimer = undefined,
+        units = 1;
 
     SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
 
@@ -58,6 +60,8 @@
         newBlank: newBlank,
         newGroup: newGroup,
         setGroup: setGroup,
+        setUnits: setUnits,
+        addUnits: addUnits,
         hidePoppers: hidePoppers,
         confirm: confirm,
         prompt: prompt,
@@ -128,6 +132,11 @@
 
     function refresh() {
         setMode(letMode, true);
+        setters.forEach(input => {
+            if (input.setv) {
+                input.setv(input.real);
+            }
+        });
     }
 
     function setMode(mode, nohide) {
@@ -295,21 +304,6 @@
         });
     }
 
-    function toInt() {
-        let nv = this.value !== '' ? parseInt(this.value) : null;
-        if (isNaN(nv)) nv = 0;
-        if (nv !== null && this.bound) nv = this.bound(nv);
-        this.value = nv;
-        return nv;
-    }
-
-    function toFloat() {
-        let nv = this.value !== '' ? parseFloat(this.value) : null;
-        if (nv !== null && this.bound) nv = this.bound(nv);
-        this.value = nv;
-        return nv;
-    }
-
     function bound(low,high) {
         return function(v) {
             if (isNaN(v)) return low;
@@ -317,8 +311,36 @@
         };
     }
 
+    function toInt() {
+        let nv = this.value !== '' ? parseInt(this.value) : null;
+        if (isNaN(nv)) nv = 0;
+        if (nv !== null && this.bound) nv = this.bound(nv);
+        this.value = nv;
+        if (this.setv) {
+            return this.real = Math.round(nv * units);
+        };
+        return nv;
+    }
+
+    function toFloat() {
+        let nv = this.value !== '' ? parseFloat(this.value) : null;
+        if (nv !== null && this.bound) nv = this.bound(nv);
+        this.value = nv;
+        if (this.setv) {
+            return this.real = nv * units;
+        };
+        return nv;
+    }
+
     function raw() {
         return this.value !== '' ? this.value : null;
+    }
+
+    function setUnits(v) {
+        if (v !== units) {
+            units = v;
+            refresh();
+        }
     }
 
     function newLabel(text) {
@@ -596,7 +618,6 @@
             });
             ip.addEventListener('keyup', function(event) {
                 if (event.keyCode === 13) {
-                    // action(event);
                     ip.blur();
                 }
             });
@@ -606,11 +627,27 @@
                     refresh();
                 }
             });
+            if (opt.units) {
+                addUnits(ip);
+            }
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
         ip.setVisible = row.setVisible;
 
         return ip;
+    }
+
+    function addUnits(input) {
+        setters.push(input);
+        input.setv = function(value) {
+            if (typeof(value) === 'number') {
+                input.real = value;
+                input.value = value / units;
+            } else {
+                input.value = value;
+            }
+        };
+        return input;
     }
 
     function newRange(label, options) {
