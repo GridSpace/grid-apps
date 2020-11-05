@@ -751,7 +751,7 @@
     /**
      * returns intersections sorted by closest to lp1
      */
-    PRO.intersections = function(lp1, lp2) {
+    PRO.intersections = function(lp1, lp2, deep) {
         let list = [];
         this.forEachSegment(function(pp1, pp2, ip1, ip2) {
             let int = UTIL.intersect(lp1, lp2, pp1, pp2, BASE.key.SEGINT, false);
@@ -764,6 +764,12 @@
         list.sort(function(p1, p2) {
             return UTIL.distSq(lp1, p1) - UTIL.distSq(lp1, p2);
         });
+        if (deep && this.inner) {
+            this.inner.forEach(p => {
+                let ints = p.intersections(lp1, lp2);
+                if (ints) list.appendAll(ints);
+            });
+        }
         return list;
     };
 

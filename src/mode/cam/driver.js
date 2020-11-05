@@ -158,26 +158,43 @@
         return toolOffset;
     };
 
-    function getMaxZBetween(terrain, x1, y1, x2, y2, z) {
+    function getMaxZBetween(terrain, x1, y1, x2, y2, z, zadd, off, over) {
         let maxz = z;
         let check = [];
         for (let i=0; i<terrain.length; i++) {
             let data = terrain[i];
             check.push(data);
-            if (data.z < z) {
+            if (data.z + zadd < z) {
                 break;
             }
         }
         check.reverse();
         for (let i=0; i<check.length; i++) {
             let data = check[i];
-            let int = data.tops.map(p => p.intersections({x:x1, y:y1},{x:x2, y:y2})).flat();
+            let p1 = newPoint(x1, y1);
+            let p2 = newPoint(x2, y2);
+            let int = data.tops.map(p => p.intersections(p1, p2, true)).flat();
             if (int.length) {
-                maxz = Math.max(maxz, data.z);
-                console.log({z, check, int, maxz, dataz: data.z});
+                maxz = Math.max(maxz, data.z + zadd + over);
                 continue;
             }
-            break;
+
+            let s1 = p1.slopeTo(p2).toUnit().normal();
+            let s2 = p2.slopeTo(p1).toUnit().normal();
+            let pa = p1.projectOnSlope(s1, off);
+            let pb = p2.projectOnSlope(s1, off);
+            int = data.tops.map(p => p.intersections(pa, pb, true)).flat();
+            if (int.length) {
+                maxz = Math.max(maxz, data.z + zadd + over);
+                continue;
+            }
+            pa = p1.projectOnSlope(s2, off);
+            pb = p2.projectOnSlope(s2, off);
+            int = data.tops.map(p => p.intersections(pa, pb, true)).flat();
+            if (int.length) {
+                maxz = Math.max(maxz, data.z + zadd + over);
+                continue;
+            }
         }
         return maxz;
     }
@@ -684,6 +701,7 @@
             roughToolDiam = getToolDiameter(conf, proc.camRoughTool),
             outlineToolDiam = getToolDiameter(conf, proc.camOutlineTool),
             contourToolDiam = getToolDiameter(conf, proc.camContourTool),
+            drillToolDiam = getToolDiameter(conf, proc.camDrillTool),
             procFacing = proc.camRoughOn && proc.camZTopOffset,
             procRough = proc.camRoughOn && proc.camRoughDown && roughToolDiam,
             procOutlineIn = proc.camOutlineIn,
@@ -711,6 +729,8 @@
             ztOff = proc.camZTopOffset * units,
             camRoughStock = proc.camRoughStock * units,
             camRoughDown = proc.camRoughDown * units,
+            minStepDown = Math.min(1, roughDown, outlineDown),
+            maxToolDiam = 0,
             sliceIndex = 0,
             thruHoles;
 
@@ -748,7 +768,7 @@
         });
         let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(1, { fit: true, off: 0.01, down: true }); // bottom up 1mm steps
+        let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true });
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             console.log('terrain', index, total, data);
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
@@ -762,14 +782,15 @@
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
-        widget.terrain = terrain;
         console.log({slicer, tzindex, tshadow, terrain});
 
         if (procDrillReg) {
+            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
             sliceDrillReg(settings, widget, sliceAll, zThru);
         }
 
         if (procDrill) {
+            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
             sliceDrill(settings, widget, tslices, sliceAll);
         }
 
@@ -796,6 +817,7 @@
 
         // create roughing slices
         if (procRough) {
+            maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
             let shadow = [];
             let slices = [];
             slicer.slice(slicer.interval(roughDown, { down: true, min: zBottom }), { each: (data, index, total) => {
@@ -864,6 +886,7 @@
 
         // create outline slices
         if (procOutline) {
+            maxToolDiam = Math.max(maxToolDiam, outlineToolDiam);
             let shadow = [];
             let slices = [];
             slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
@@ -948,6 +971,10 @@
                 traceToolProfile = createToolProfile(conf, proc.camTraceTool, widget.topo);
             }
         }
+
+        // used in printSetup()
+        widget.terrain = terrain;
+        widget.maxToolDiam = maxToolDiam;
 
         ondone();
     };
@@ -1169,7 +1196,14 @@
             addOutput = print.addOutput,
             tip2tipEmit = print.tip2tipEmit,
             poly2polyEmit = print.poly2polyEmit,
-            poly2polyDepthFirstEmit = print.poly2polyDepthFirstEmit;
+            poly2polyDepthFirstEmit = print.poly2polyDepthFirstEmit,
+            maxToolDiam = widget.maxToolDiam,
+            terrain = widget.terrain.map(data => {
+                return {
+                    z: data.z,
+                    tops: data.tops,//POLY.offset(data.tops, maxToolDiam, {z: data.z})
+                };
+            });
 
         function newLayer() {
             if (layerOut.length < 2) {
@@ -1319,24 +1353,27 @@
             } //else (TODO verify no else here b/c above could change isMove)
             // move over things
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                // let maxz = getMaxZBetween(
-                //         widget.terrain,
-                //         lastPoint.x,// - wmx,
-                //         lastPoint.y,// - wmy,
-                //         point.x,// - wmx,
-                //         point.y,// - wmy,
-                //         Math.min(point.z, lastPoint.z)
-                //     ) + ztOff,
-                let maxz = (toolProfile ? Math.max(
-                        getTopoZPathMax(
-                            widget,
-                            toolProfile,
-                            lastPoint.x - wmx,
-                            lastPoint.y - wmy,
-                            point.x - wmx,
-                            point.y - wmy),
-                        point.z,
-                        lastPoint.z) : zmax) + ztOff + zadd,
+                let maxz = getMaxZBetween(
+                        terrain,
+                        lastPoint.x,// - wmx,
+                        lastPoint.y,// - wmy,
+                        point.x,// - wmx,
+                        point.y,// - wmy,
+                        Math.max(point.z, lastPoint.z),
+                        zadd,
+                        maxToolDiam/2,
+                        zclear
+                    ) + ztOff,
+                // let maxz = (toolProfile ? Math.max(
+                //         getTopoZPathMax(
+                //             widget,
+                //             toolProfile,
+                //             lastPoint.x - wmx,
+                //             lastPoint.y - wmy,
+                //             point.x - wmx,
+                //             point.y - wmy),
+                //         point.z,
+                //         lastPoint.z) : zmax) + ztOff + zadd,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
                 // up if any point between higher than start/outline
