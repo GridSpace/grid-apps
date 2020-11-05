@@ -293,7 +293,6 @@
                 onupdate(0.0 + (index/total) * 0.20, "topo slice");
             }, genso: true });
 
-            // ondone(slices.map(data => data.slice));
             processSlices(slices.map(data => data.slice));
         }
     }
