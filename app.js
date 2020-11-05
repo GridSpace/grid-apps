@@ -308,6 +308,7 @@ const script = {
         "mode/cam/tool",
         "mode/cam/topo",
         "mode/cam/prepare",
+        "mode/cam/export",
         "mode/laser/driver",
         "kiri/widget",
         "kiri/print",

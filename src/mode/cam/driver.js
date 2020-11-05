@@ -15,8 +15,8 @@
             init,
             slice,
             sliceRender,
-            // printSetup, // src/mode/cam/prepare.js
-            printExport,
+            // printSetup,  // src/mode/cam/prepare.js
+            // printExport, // src/mode/cam/export.js
             printRender
         },
         CPRO = CAM.process = {
@@ -28,16 +28,6 @@
             TRACE: 6,
             DRILL: 7
         },
-        MODES = [
-            "unset",
-            "level",
-            "rough",
-            "outline",
-            "contour-x",
-            "contour-y",
-            "trace",
-            "drill"
-        ],
         SLICER = KIRI.slicer,
         newLine = BASE.newLine,
         newSlice = KIRI.newSlice,
@@ -61,150 +51,6 @@
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
         });
-    }
-
-    /**
-     * Find top paths to trace when using ball and taper mills
-     * in waterline outlining and tracing modes.
-     */
-    function findTracingPaths(widget, slice, tool, profile, partial) {
-        // for now, only emit completed polys and not segments
-        // TODO consider limiting to nup path lengths that are >= tool radius
-        let only_whole = !partial;
-        // check for ball and taper mills paths and add to top[0].inner
-        let polys = [];
-        let nups = [];
-        let cull = [];
-        slice.gatherTopPolys([]).forEach(poly => poly.flattenTo(polys));
-        polys.forEach(poly => {
-            let pz = poly.first().z;
-            let mz = -Infinity;
-            let np = newPolygon().setOpen();
-            let mp = 0;
-            // find top poly segments that are not significantly offset
-            // from tool profile and add to new polygons which accumulate
-            // to the top inner array
-            poly.forEachSegment((p1,p2) => {
-                let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
-                if (nz > mz) {
-                    mz = nz;
-                }
-                // this # should be computed from topo resolution
-                if (nz - pz < 0.01) {
-                    mp++
-                    if (np.length) {
-                        if (!np.first().isEqual(p2)) {
-                            np.append(p2);
-                        } else {
-                            np.setClosed();
-                        }
-                    } else {
-                        np.append(p1).append(p2);
-                    }
-                } else if (np.length) {
-                    if (!only_whole) {
-                        nups.append(np);
-                    }
-                    np = newPolygon().setOpen();
-                }
-            });
-            if (np.length) {
-                if (np.length === poly.length) {
-                    np.setClosed();
-                }
-                // if a trace poly has no interruptions for an endmill
-                // and it's an inner poly, eliminate it from the parent
-                // so it won't be offset.
-                let parent = poly.parent;
-                if (np.isClosed() && parent) {
-                    // console.log(slice.z,'cull',poly);
-                    if (parent.inner) {
-                        parent.inner = parent.inner.filter(p => p !== poly);
-                    }
-                    if (only_whole) {
-                        nups.append(np);
-                    }
-                }
-                if (!only_whole) {
-                    nups.append(np);
-                }
-            }
-        });
-        if (nups.length) {
-            // console.log(slice.z,'nups',nups.length);
-            slice.tops[0].inner = nups;
-        }
-    }
-
-    // cut outside traces at the right points
-    function addCutoutTabs(slice, toolDiam, tabWidth, tabCount, tabAngle) {
-        // skip if no tops | traces
-        if (slice.tops.length === 0) return;
-
-        let notabs = 0;
-        let nutrace = [];
-
-        // find trace with greatest area
-        slice.tops[0].traces.forEach(function(trace, index) {
-
-            // required to match computed order of cutouts
-            trace.setClockwise();
-
-            let count = tabCount,
-                angle = tabAngle,
-                angle_inc = 360 / count,
-                center = trace.bounds.center(slice.z),
-                offset = (tabWidth + toolDiam) / 2,
-                ints = [],
-                segs = [];
-
-            while (count-- > 0) {
-                let slope = BASE.newSlopeFromAngle(angle),
-                    normal = BASE.newSlopeFromAngle(angle + 90),
-                    c1 = center.projectOnSlope(normal, offset),
-                    c2 = center.projectOnSlope(normal, -offset),
-                    o1 = c1.projectOnSlope(slope, 10000),
-                    o2 = c2.projectOnSlope(slope, 10000),
-                    int1 = trace.intersections(c1, o1).pop(),
-                    int2 = trace.intersections(c2, o2).pop();
-                if (int1 && int2) {
-                    ints.push(int1);
-                    ints.push(int2);
-                }
-                angle -= angle_inc;
-            }
-
-            if (ints.length) {
-                ints.push(ints.shift());
-                for (let i=0; i<ints.length; i+=2) {
-                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
-                }
-                // check for and eliminate overlaps
-                for (let i=0, il=segs.length; i < il; i++) {
-                    let si = segs[i];
-                    for (let j=i+1; j<il; j++) {
-                        let sj = segs[j];
-                        if (sj.overlaps(si)) {
-                            if (sj.perimeter() > si.perimeter()) {
-                                sj._overlap = true;
-                            }
-                        }
-                    }
-                }
-                // replace intersected trace with non-overlapping segments
-                nutrace.appendAll(segs.filter(seg => !seg._overlap));
-            } else {
-                nutrace.push(trace);
-                notabs++;
-            }
-
-        });
-
-        if (notabs) {
-            console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
-        }
-
-        slice.tops[0].traces = nutrace;
     }
 
     /**
@@ -279,8 +125,7 @@
             return ondone(`invalid z bottom >= bounds z max ${bounds.max.z}`);
         }
 
-        // TODO cache terrain slicer info in widget
-        // TODO pass widget.isModified() on slice and re-use if false
+        // TODO pass widget.isModified() on slice and re-use cache if false
         // TODO pre-slice in background from client signal
         // TODO same applies to topo map generation
         let slicer = new KIRI.slicer2(widget.getPoints(), {
@@ -291,7 +136,6 @@
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true });
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-            console.log('terrain', index, total, data);
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
             // let slice = data.slice;
@@ -303,7 +147,6 @@
             onupdate(0.0 + (index/total) * 0.1, "mapping");
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
-        console.log({slicer, tzindex, tshadow, terrain});
 
         if (procDrillReg) {
             maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
@@ -317,7 +160,6 @@
 
         // identify through holes
         thruHoles = tshadow.map(p => p.inner || []).flat();
-        console.log({tshadow, thruHoles: thruHoles.clone(true)});
 
         // create facing slices
         if (procFacing) {
@@ -593,6 +435,77 @@
         }
     }
 
+    // cut outside traces at the right points
+    function addCutoutTabs(slice, toolDiam, tabWidth, tabCount, tabAngle) {
+        // skip if no tops | traces
+        if (slice.tops.length === 0) return;
+
+        let notabs = 0;
+        let nutrace = [];
+
+        // find trace with greatest area
+        slice.tops[0].traces.forEach(function(trace, index) {
+
+            // required to match computed order of cutouts
+            trace.setClockwise();
+
+            let count = tabCount,
+                angle = tabAngle,
+                angle_inc = 360 / count,
+                center = trace.bounds.center(slice.z),
+                offset = (tabWidth + toolDiam) / 2,
+                ints = [],
+                segs = [];
+
+            while (count-- > 0) {
+                let slope = BASE.newSlopeFromAngle(angle),
+                    normal = BASE.newSlopeFromAngle(angle + 90),
+                    c1 = center.projectOnSlope(normal, offset),
+                    c2 = center.projectOnSlope(normal, -offset),
+                    o1 = c1.projectOnSlope(slope, 10000),
+                    o2 = c2.projectOnSlope(slope, 10000),
+                    int1 = trace.intersections(c1, o1).pop(),
+                    int2 = trace.intersections(c2, o2).pop();
+                if (int1 && int2) {
+                    ints.push(int1);
+                    ints.push(int2);
+                }
+                angle -= angle_inc;
+            }
+
+            if (ints.length) {
+                ints.push(ints.shift());
+                for (let i=0; i<ints.length; i+=2) {
+                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
+                }
+                // check for and eliminate overlaps
+                for (let i=0, il=segs.length; i < il; i++) {
+                    let si = segs[i];
+                    for (let j=i+1; j<il; j++) {
+                        let sj = segs[j];
+                        if (sj.overlaps(si)) {
+                            if (sj.perimeter() > si.perimeter()) {
+                                sj._overlap = true;
+                            }
+                        }
+                    }
+                }
+                // replace intersected trace with non-overlapping segments
+                nutrace.appendAll(segs.filter(seg => !seg._overlap));
+            } else {
+                nutrace.push(trace);
+                notabs++;
+            }
+
+        });
+
+        if (notabs) {
+            console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
+        }
+
+        slice.tops[0].traces = nutrace;
+    }
+
     // runs in browser main
     function sliceRender(widget) {
         let slices = widget.slices;
@@ -656,318 +569,81 @@
         });
     }
 
-    /**
-     * DRIVER PRINT CONTRACT
-     *
-     * @param {Object} print state object
-     * @param {Function} update incremental callback
-     * @param {Number} [index] into widget array
-     * @param {Object} [firstPoint] starting point
-     */
-
-    /**
-     * @returns {Array} gcode lines
-     */
-    function printExport(print, online) {
-        let widget = print.widgets[0];
-
-        if (!widget) return;
-
-        let i,
-            time = 0,
-            lines = 0,
-            bytes = 0,
-            factor = 1,
-            output = [],
-            spindle = 0,
-            modes = CPRO,
-            settings = print.settings,
-            device = settings.device,
-            gcodes = settings.device || {},
-            tools = settings.tools,
-            space = gcodes.gcodeSpace ? ' ' : '',
-            stripComments = gcodes.gcodeStrip || false,
-            cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
-            cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
-            cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
-            bounds = widget.getCamBounds(settings),
-            dev = settings.device,
-            spro = settings.process,
-            maxZd = spro.camFastFeedZ,
-            maxXYd = spro.camFastFeed,
-            decimals = BASE.config.gcode_decimals || 4,
-            pos = { x:null, y:null, z:null, f:null, t:null },
-            line,
-            cidx,
-            mode = 0,
-            point,
-            points = 0,
-            hasStock = spro.camStockOffset || (spro.camStockZ && spro.camStockX && spro.camStockY),
-            zmax = hasStock ? settings.stock.z : bounds.max.z,
-            runbox = {
-                max: { x:-Infinity, y:-Infinity, z:-Infinity},
-                min: { x:Infinity, y:Infinity, z:Infinity}
-            },
-            offset = {
-                x: -settings.origin.x,
-                y:  settings.origin.y
-            },
-            consts = {
-                tool: 0,
-                tool_name: "unknown",
-                top: (offset ? dev.bedDepth : dev.bedDepth/2),
-                left: (offset ? 0 : -dev.bedWidth/2),
-                right: (offset ? dev.bedWidth : dev.bedWidth/2),
-                bottom: (offset ? 0 : -dev.bedDepth/2),
-                time_sec: 0,
-                time_ms: 0,
-                time: 0
-            },
-            append;
-
-        if (online) {
-            append = function(line) {
-                if (line) {
-                    lines++;
-                    bytes += line.length;
-                    output.append(line);
-                }
-                if (!line || output.length > 1000) {
-                    online(output.join("\n"));
-                    output = [];
-                }
-            };
-        } else {
-            append = function(line) {
-                if (!line) return;
-                output.append(line);
-                lines++;
-                bytes += line.length;
-            }
-        }
-
-        function filterEmit(array, consts) {
-            if (!array) return;
-            for (i=0; i<array.length; i++) {
-                line = print.constReplace(array[i], consts);
-                if (stripComments && (cidx = line.indexOf(";")) >= 0) {
-                    line = line.substring(0, cidx).trim();
-                    if (line.length === 0) continue;
-                }
-                if (line.indexOf('G20') === 0) {
-                    factor = 1/25.4;
-                    consts.top = (offset ? dev.bedDepth : dev.bedDepth/2) * factor;
-                    consts.left = (offset ? 0 : -dev.bedWidth/2) * factor;
-                    consts.right = (offset ? dev.bedWidth : dev.bedWidth/2) * factor;
-                    consts.bottom = (offset ? 0 : -dev.bedDepth/2) * factor;
-                } else if (line.indexOf('G21') === 0) {
-                    factor = 1;
-                }
-                append(line);
-            }
-        }
-
-        function add0(val, opt) {
-            let s = val.toString(),
-                d = s.indexOf(".");
-            if (d < 0) {
-                return opt ? s : s + '.0';
-            } else {
-                return val.toFixed(decimals);
-            }
-        }
-
-        function toolByNumber(number) {
-            for (let i=0; i<tools.length; i++) {
-                if (tools[i].number === number) return tools[i];
-            }
-            return undefined;
-        }
-
-        function toolNameByNumber(number) {
-            for (let i=0; i<tools.length; i++) {
-                if (tools[i].number === number) return tools[i].name;
-            }
-            return "unknown";
-        }
-
-        function moveTo(out) {
-            let newpos = out.point;
-
-            // no point == dwell
-            // out.speed = time to dwell in ms
-            if (!newpos) {
-                time += out.speed / 60;
-                consts.time_sec = out.speed / 1000;
-                consts.time_ms = out.speed;
-                consts.time = consts.time_sec;
-                filterEmit(cmdDwell, consts);
-                return;
-            }
-
-            newpos.x = UTIL.round(newpos.x, decimals);
-            newpos.y = UTIL.round(newpos.y, decimals);
-            newpos.z = UTIL.round(newpos.z, decimals);
-
-            // on tool change
-            if (out.tool != pos.t) {
-                pos.t = out.tool;
-                consts.tool = pos.t;
-                consts.tool_name = toolNameByNumber(out.tool);
-                filterEmit(cmdToolChange, consts);
-            }
-
-            // first point out sets the current position (but not Z)
-            // hacky AF way to split initial x,y,z into z then x,y
-            if (points === 0) {
-                pos.x = pos.y = pos.z = 0;
-                points++;
-                moveTo({
-                    tool: out.tool,
-                    point: { x: 0, y: 0, z: newpos.z }
-                });
-                moveTo({
-                    tool: out.tool,
-                    point: { x: newpos.x, y: newpos.y, z: newpos.z }
-                });
-                points--;
-                return;
-            }
-
-            let speed = out.speed,
-                nl = [speed ? 'G1' : 'G0'],
-                dx = newpos.x - pos.x,
-                dy = newpos.y - pos.y,
-                dz = newpos.z - pos.z,
-                maxf = dz ? maxZd : maxXYd,
-                feed = Math.min(speed || maxf, maxf),
-                dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-            // drop dup points (all deltas are 0)
-            if (!(dx || dy || dz)) {
-                return;
-            }
-
-            if (newpos.x !== pos.x) {
-                pos.x = newpos.x;
-                runbox.min.x = Math.min(runbox.min.x, pos.x);
-                runbox.max.x = Math.max(runbox.max.x, pos.x);
-                nl.append(space).append("X").append(add0(pos.x * factor));
-            }
-            if (newpos.y !== pos.y) {
-                pos.y = newpos.y;
-                runbox.min.y = Math.min(runbox.min.y, pos.y);
-                runbox.max.y = Math.max(runbox.max.y, pos.y);
-                nl.append(space).append("Y").append(add0(pos.y * factor));
-            }
-            if (newpos.z !== pos.z) {
-                pos.z = newpos.z;
-                runbox.min.z = Math.min(runbox.min.z, pos.z);
-                runbox.max.z = Math.max(runbox.max.z, pos.z);
-                nl.append(space).append("Z").append(add0(pos.z * factor));
-            }
-            if (feed && feed !== pos.f) {
-                pos.f = feed;
-                nl.append(space).append("F").append(add0(feed * factor, true));
-            }
-
-            // update time calculation
-            time += (dist / (pos.f || 1000)) * 60;
-
-            // if (comment && !stripComments) {
-            //     nl.append(" ; ").append(comment);
-            //     nl.append(" ; ").append(points);
-            // }
-
-            append(nl.join(''));
-            points++;
-        }
-
-        if (!stripComments) {
-            append(`; Generated by Kiri:Moto ${KIRI.version}`);
-            append(`; ${new Date().toString()}`);
-            filterEmit(["; Bed left:{left} right:{right} top:{top} bottom:{bottom}"], consts);
-            append(`; Target: ${settings.filter[settings.mode]}`);
-            append("; --- process ---");
-            for (let pk in spro) {
-                append("; " + pk + " = " + spro[pk]);
-            }
-        }
-
-        // collect tool info to add to header
-        let toolz = {}, ctool;
-
-        // remap points as necessary for origins, offsets, inversions
-        print.output.forEach(function(layer) {
-            layer.forEach(function(out) {
-                if (out.tool && out.tool !== ctool) {
-                    ctool = toolByNumber(out.tool);
-                    toolz[out.tool] = ctool;
-                }
-                point = out.point;
-                if (!point || point.mod) return;
-                // ensure not point is modified twice
-                point.mod = 1;
-                if (offset) {
-                    point.x += offset.x;
-                    point.y += offset.y;
-                }
-                if (spro.outputInvertX) point.x = -point.x;
-                if (spro.outputInvertY) point.y = -point.y;
-                if (spro.camOriginTop) point.z = point.z - zmax;
-            });
-        });
-
-        if (!stripComments) {
-            // emit tools used in comments
-            append("; --- tools ---");
-            Object.keys(toolz).sort().forEach(tn => {
-                let tool = toolz[tn];
-                append(`; tool=${tn} flute=${tool.flute_diam} len=${tool.flute_len} metric=${tool.metric}`);
-            });
-        }
-
-        // emit gcode preamble
-        filterEmit(gcodes.gcodePre, consts);
-
-        // emit all points in layer/point order
-        print.output.forEach(function (layerout) {
-            if (mode !== layerout.mode) {
-                if (mode && !stripComments) append("; ending " + MODES[mode] + " pass after " + Math.round(time/60) + " seconds");
-                mode = layerout.mode;
-                if (!stripComments) append("; starting " + MODES[mode] + " pass");
-            }
-            if (layerout.spindle && layerout.spindle !== spindle) {
-                spindle = layerout.spindle;
-                if (spindle > 0) {
-                    filterEmit(cmdSpindle, {speed: Math.abs(spindle)});
-                } else {
-                    append("M4");
-                }
-                // append((spindle > 0 ? "M3" : "M4") + " S" + Math.abs(spindle));
-            }
-            layerout.forEach(function(out) {
-                moveTo(out);
-            });
-        });
-        if (mode && !stripComments) append("; ending " + MODES[mode] + " pass after " + Math.round(time/60) + " seconds");
-
-        // emit gcode post
-        filterEmit(gcodes.gcodePost, consts);
-
-        // flush buffered gcode
-        append();
-
-        print.time = time;
-        print.lines = lines;
-        print.bytes = bytes + lines - 1;
-        print.bounds = runbox;
-
-        return online ? null : output.join("\n");
-    };
-
     function printRender(print) {
         return KIRI.driver.FDM.printRender(print, {aslines: true, color: 0x010101, move_color: 0xcc3333});
+    }
+
+    /**
+     * Find top paths to trace when using ball and taper mills
+     * in waterline outlining and tracing modes.
+     */
+    function findTracingPaths(widget, slice, tool, profile, partial) {
+        // for now, only emit completed polys and not segments
+        // TODO consider limiting to nup path lengths that are >= tool radius
+        let only_whole = !partial;
+        // check for ball and taper mills paths and add to top[0].inner
+        let polys = [];
+        let nups = [];
+        let cull = [];
+        slice.gatherTopPolys([]).forEach(poly => poly.flattenTo(polys));
+        polys.forEach(poly => {
+            let pz = poly.first().z;
+            let mz = -Infinity;
+            let np = newPolygon().setOpen();
+            let mp = 0;
+            // find top poly segments that are not significantly offset
+            // from tool profile and add to new polygons which accumulate
+            // to the top inner array
+            poly.forEachSegment((p1,p2) => {
+                let nz = getTopoZPathMax(widget, profile, p1.x, p1.y, p2.x, p2.y);
+                if (nz > mz) {
+                    mz = nz;
+                }
+                // this # should be computed from topo resolution
+                if (nz - pz < 0.01) {
+                    mp++
+                    if (np.length) {
+                        if (!np.first().isEqual(p2)) {
+                            np.append(p2);
+                        } else {
+                            np.setClosed();
+                        }
+                    } else {
+                        np.append(p1).append(p2);
+                    }
+                } else if (np.length) {
+                    if (!only_whole) {
+                        nups.append(np);
+                    }
+                    np = newPolygon().setOpen();
+                }
+            });
+            if (np.length) {
+                if (np.length === poly.length) {
+                    np.setClosed();
+                }
+                // if a trace poly has no interruptions for an endmill
+                // and it's an inner poly, eliminate it from the parent
+                // so it won't be offset.
+                let parent = poly.parent;
+                if (np.isClosed() && parent) {
+                    // console.log(slice.z,'cull',poly);
+                    if (parent.inner) {
+                        parent.inner = parent.inner.filter(p => p !== poly);
+                    }
+                    if (only_whole) {
+                        nups.append(np);
+                    }
+                }
+                if (!only_whole) {
+                    nups.append(np);
+                }
+            }
+        });
+        if (nups.length) {
+            // console.log(slice.z,'nups',nups.length);
+            slice.tops[0].inner = nups;
+        }
     }
 
 })();

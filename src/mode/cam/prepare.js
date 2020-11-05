@@ -12,6 +12,14 @@
         PRO = CAM.process,
         newPoint = BASE.newPoint;
 
+    /**
+     * DRIVER PRINT CONTRACT
+     *
+     * @param {Object} print state object
+     * @param {Function} update incremental callback
+     * @param {Number} [index] into widget array
+     * @param {Object} [firstPoint] starting point
+     */
     CAM.printSetup = function(print, update, index, firstPoint) {
         let widgetIndex = index || 0,
             widgetArray = print.widgets,
