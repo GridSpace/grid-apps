@@ -38,7 +38,6 @@
             "trace",
             "drill"
         ],
-        HPI = Math.PI/2,
         SLICER = KIRI.slicer,
         newLine = BASE.newLine,
         newSlice = KIRI.newSlice,

@@ -7,6 +7,7 @@
     let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
+        HPI = Math.PI/2,
         CAM = KIRI.driver.CAM;
 
     class Tool {
