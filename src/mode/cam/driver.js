@@ -4,20 +4,14 @@
 
 (function() {
 
-    if (!self.kiri.driver) self.kiri.driver = { };
-    if (self.kiri.driver.CAM) return;
-
-    const KIRI = self.kiri,
-        BASE = self.base,
-        UTIL = BASE.util,
-        POLY = BASE.polygons,
+    let KIRI = self.kiri,
         CAM = KIRI.driver.CAM = {
-            init,
+            // init,        // src/mode/cam/client.js
+            // sliceRender, // src/mode/cam/client.js
+            // printRender  // src/mode/cam/client.js
             // slice,       // src/mode/cam/slice.js
-            sliceRender,
             // printSetup,  // src/mode/cam/prepare.js
             // printExport, // src/mode/cam/export.js
-            printRender
         },
         CPRO = CAM.process = {
             LEVEL: 1,
@@ -27,96 +21,7 @@
             CONTOUR_Y: 5,
             TRACE: 6,
             DRILL: 7
-        },
-        newLine = BASE.newLine,
-        newSlice = KIRI.newSlice,
-        newPoint = BASE.newPoint,
-        newPolygon = BASE.newPolygon;
-
-    function init(kiri, api) {
-        api.event.on("mode.set", (mode) => {
-            let isCAM = mode === 'CAM';
-            $('set-tools').style.display = isCAM ? '' : 'none';
-            kiri.space.platform.setColor(isCAM ? 0xeeeeee : 0xcccccc);
-        });
-        api.event.on("settings.saved", (settings) => {
-            let proc = settings.process;
-            api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
-            api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
-            api.ui.camDrill.marker.style.display =
-                proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
-            api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
-            api.ui.camContour.marker.style.display =
-                proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
-        });
-    }
-
-    // runs in browser main
-    function sliceRender(widget) {
-        let slices = widget.slices;
-        if (!slices) return;
-
-        slices.forEach(function(slice) {
-            let tops = slice.tops,
-                layers = slice.layers,
-                outline = layers.outline,
-                open = (slice.camMode === CPRO.CONTOUR_X || slice.camMode === CPRO.CONTOUR_Y);
-
-            layers.outline.clear(); // slice raw edges
-            layers.trace.clear();   // roughing
-            layers.solid.clear();   // outline
-            layers.bridge.clear();  // outline x
-            layers.flat.clear();    // outline y
-            layers.fill.clear();    // facing
-
-            tops.forEach(function(top) {
-                outline.poly(top.poly, 0x999900, true, open);
-                // if (top.inner) outline.poly(top.inner, 0xdddddd, true);
-                if (top.inner) outline.poly(top.inner, 0xff0000, true);
-            });
-
-            // various outlining
-            let layer;
-            slice.tops.forEach(function(top) {
-                switch (slice.camMode) {
-                    case CPRO.OUTLINE:
-                        layer = layers.solid;
-                        break;
-                    case CPRO.CONTOUR_X:
-                        layer = layers.bridge;
-                        break;
-                    case CPRO.CONTOUR_Y:
-                        layer = layers.flat;
-                        break;
-                    default: // roughing
-                        layer = layers.trace;
-                        break;
-                }
-                if (top.traces) {
-                    layer.poly(top.traces, 0x010101, true, null);
-                }
-            });
-
-            // facing (previously separate. now part of roughing)
-            layer = slice.layers.fill;
-            slice.tops.forEach(function(top) {
-                if (top.fill_lines) {
-                    layer.lines(top.fill_lines, fill_color);
-                }
-            });
-
-            outline.render();
-            layers.trace.render();
-            layers.solid.render();
-            layers.bridge.render();
-            layers.flat.render();
-            layers.fill.render();
-        });
-    }
-
-    function printRender(print) {
-        return KIRI.driver.FDM.printRender(print, {aslines: true, color: 0x010101, move_color: 0xcc3333});
-    }
+        };
 
     /**
      * Find top paths to trace when using ball and taper mills

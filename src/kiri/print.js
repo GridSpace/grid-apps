@@ -248,18 +248,18 @@
 
     // more generic. only used by SLA at the moment
     PRO.export = function(remote, online, ondone) {
-        let driver = KIRI.driver[this.settings.mode];
-
-        if (!(driver && driver.printExport)) {
-            console.log({missing_export_driver: mode});
-            ondone(null);
-            return;
-        }
+        let mode = this.settings.mode;
+        let driver = KIRI.driver[mode];
 
         if (remote) {
             // executed from kiri.js
             KIRI.work.printExport(this.settings, online, ondone);
         } else {
+            if (!(driver && driver.printExport)) {
+                console.log({missing_export_driver: mode});
+                ondone(null);
+                return;
+            }
             // executed from kiri-worker.js
             driver.printExport(this, online, ondone);
         }
