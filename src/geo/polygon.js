@@ -845,6 +845,39 @@
     };
 
     /**
+     * returns true if any point on this polygon
+     * is within radius of a point on the target
+     */
+    PRO.isNear = function(poly, radius, cache) {
+        const midcheck = CONF.precision_midpoint_check_dist;
+        const dist = radius || CONF.precision_close_to_poly_sq;
+        let near = false;
+        let mem = cache ? this.cacheNear = this.cacheNear || {} : undefined;
+
+        if (mem && mem[poly.id] !== undefined) {
+            return mem[poly.id];
+        }
+
+        this.forEachSegment(function(prev, next) {
+            // check midpoint on long lines
+            if (prev.distToSq2D(next) > midcheck) {
+                if (prev.midPointTo(next).nearPolygon(poly, dist)) {
+                    return near = true; // stops iteration
+                }
+            }
+            if (next.nearPolygon(poly, dist)) {
+                return near = true; // stops iteration
+            }
+        });
+
+        if (mem) {
+            mem[poly.id] = near;
+        }
+
+        return near;
+    };
+
+    /**
      * TODO replace isNested() with isInside() ?
      *
      * @param {Polygon} poly
@@ -858,12 +891,12 @@
         }
 
         let mid,
-            midcheck,
+            midcheck = CONF.precision_midpoint_check_dist,
             exit = true;
 
         this.forEachSegment(function(prev, next) {
-            // check midpoint on long lines
-            if (prev.distTo2D(next) > CONF.precision_midpoint_check_dist) {
+            // check midpoint on long lines (TODO: should be distToSq2D()?)
+            if (prev.distTo2D(next) > midcheck) {
                 mid = prev.midPointTo(next);
                 if (!(mid.inPolygon(poly) || mid.nearPolygon(poly, tolerance || CONF.precision_close_to_poly_sq))) {
                     exit = false;
@@ -1130,9 +1163,13 @@
             if (recurse) {
                 let i, ai = this.inner, bi = poly.inner;
                 if (ai !== bi) {
-                    if (ai === null || bi === null || ai.length != bi.length) return false;
+                    if (ai === null || bi === null || ai.length != bi.length) {
+                        return false;
+                    }
                     for (i=0; i < ai.length; i++) {
-                        if (!ai[i].isEquivalent(bi[i])) return false;
+                        if (!ai[i].isEquivalent(bi[i])) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -1146,7 +1183,9 @@
                 pointok = false;
                 poly.forEachSegment(function(i1p1, i1p2) {
                     // if point is close to poly, terminate search, go to next point
-                    if ((dist = i2p.distToLine(i1p1, i1p2)) < CONF.precision_poly_merge) return pointok = true;
+                    if ((dist = i2p.distToLine(i1p1, i1p2)) < CONF.precision_poly_merge) {
+                        return pointok = true;
+                    }
                     // otherwise track min and keep searching
                     min = Math.min(min, dist);
                 });

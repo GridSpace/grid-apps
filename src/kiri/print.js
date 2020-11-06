@@ -60,7 +60,6 @@
     PRO.constReplace = constReplace;
     PRO.poly2polyEmit = poly2polyEmit;
     PRO.addPrintPoints = addPrintPoints;
-    PRO.poly2polyDepthFirstEmit = poly2polyDepthFirstEmit;
 
     PRO.parseSVG = function(code, offset) {
         let scope = this,
@@ -987,8 +986,10 @@
      * to be more like outputOrderClosest() and have the option to account for
      * depth in determining distance
      */
-    function poly2polyEmit(array, startPoint, emitter, mark, weight) {
-        let mindist, dist, found, count = 0, marker = mark || 'delete';
+    function poly2polyEmit(array, startPoint, emitter, options) {
+        let opt = options || {};
+        let marker = opt.mark || 'delete';
+        let mindist, dist, found, count = 0;
         for (;;) {
             found = null;
             mindist = Infinity;
@@ -1012,7 +1013,7 @@
                 }
                 let area = poly.area();
                 poly.forEachPoint(function(point, index) {
-                    dist = weight ?
+                    dist = opt.weight ?
                         startPoint.distTo3D(point) * area * area :
                         startPoint.distTo2D(point);
                     if (dist < mindist) {
@@ -1021,127 +1022,15 @@
                     }
                 });
             });
-            if (found) {
-                found.poly[marker] = true;
-                startPoint = emitter(found.poly, found.index, ++count, startPoint) || found.point;
-            } else {
+            if (!found || opt.term) {
                 break;
             }
+            found.poly[marker] = true;
+            startPoint = emitter(found.poly, found.index, ++count, startPoint) || found.point;
         }
 
         // undo delete marks
         array.forEach(function(poly) { poly[marker] = false });
-
-        return startPoint;
-    }
-
-    /**
-     * @param {Polygon[][]} array of array of polygons representing each layer (top down)
-     * @param {Point} startPoint entry point for algorithm
-     * @param {Function} emitter called to emit each polygon
-     * @param {number} offset tool diameter used for this depth-first cut
-     *
-     * used for CAM depth first layer output. included here for convenience
-     * because it relies heavily on other functions in the print library.
-     */
-    function poly2polyDepthFirstEmit(array, startPoint, emitter, offset) {
-        let layers = [],
-            pools;
-
-        array.forEach(function(layerPolys, layerIndex) {
-            pools = [];
-            layers.push(pools);
-
-            // flattening but preserving inner relationships
-            // allows iterating over all layer polys to determine
-            // if they deserve their own pool
-            flattenPolygons(POLY.nest(layerPolys, true, true)).sort(function(p1,p2) {
-                // sort by area descending
-                return p2.area() - p1.area();
-            }).forEach(function (poly) {
-                // a polygon should be made into a pool if any is true:
-                // - it is open
-                // - it has more than one sibling
-                // - it has no parent (top/outer most)
-                // - it is offset from its parent by more than diameter
-                // if (poly.isOpen() || !poly.parent || poly.parent.innerCount() > 1 || !polygonWithinOffset(poly, poly.parent, offset)) {
-                if (poly.depth === 0) {
-                    pools.push(poly);
-                    poly.pool = [];
-                    poly.poolsDown = [];
-                } else {
-                    // otherwise search the poly's parents (same layer) to find a pool to join
-                    let search = poly.parent;
-                    // walk up until pool found
-                    while (search && !search.pool) {
-                        search = search.parent;
-                    }
-                    // open polygons can be unparented and without a pool
-                    if (!search) {
-                        console.log({orphan:poly});
-                        return;
-                    }
-                    // add to pool
-                    search.pool.push(poly);
-                }
-            });
-
-            // sort pools increasing in size to aid fitting from below
-            pools.sort(function (p1, p2) {
-                return p1.area() - p2.area();
-            });
-
-            // add add pools to smallest enclosing pool in layer above
-            const poolsAbove = layers[layerIndex - 1];
-
-            if (layerIndex > 0)
-            pools.forEach(function(pool) {
-                for (let i=0; i<poolsAbove.length; i++) {
-                    const above = poolsAbove[i];
-                    // can only add open polys to open polys
-                    if (above.isOpen() && pool.isClosed()) {
-                        // console.log({skip_open_above:above});
-                        continue;
-                    }
-                    // if pool fits into smallest above pool, add it and break
-                    if (polygonFitsIn(pool, above, 0.1)) {
-                        above.poolsDown.push(pool);
-                        return;
-                    }
-                }
-            });
-        });
-
-        const emitPool = function(poolPoly) {
-            if (poolPoly.mark) {
-                return;
-            }
-            poolPoly.mark = true;
-            const polys = poolPoly.pool.slice().append(poolPoly);
-            startPoint = poly2polyEmit(polys, startPoint, emitter, null, false);
-            startPoint = poly2polyEmit(poolPoly.poolsDown, startPoint, emitPool, "del_pdown", false);
-            return startPoint;
-        };
-
-        // from the top layer, iterate and descend through all connected pools
-        // pools are sorted smallest to largest. pools are polygons with an
-        // attached 'pool' array of polygons
-        layers.forEach(function(pools) {
-            pools.forEach(ppoly => {
-                if (!(ppoly.pool && ppoly.pool.length)) {
-                    return ppoly.smallest = ppoly;
-                }
-                ppoly.pool.sort((a, b) => {
-                    return a.perimeter() - b.perimeter();
-                });
-                ppoly.smallest = ppoly.pool[0];
-            });
-            pools.sort((a, b) => {
-                return a.smallest.perimeter() - b.smallest.perimeter();
-            }).forEach((ppoly, count) => {
-                startPoint = emitPool(ppoly) || startPoint;
-            });
-        })
 
         return startPoint;
     }

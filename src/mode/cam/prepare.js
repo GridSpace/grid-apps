@@ -76,7 +76,6 @@
             addOutput = print.addOutput,
             tip2tipEmit = print.tip2tipEmit,
             poly2polyEmit = print.poly2polyEmit,
-            poly2polyDepthFirstEmit = print.poly2polyDepthFirstEmit,
             maxToolDiam = widget.maxToolDiam,
             terrain = widget.terrain.map(data => {
                 return {
@@ -213,7 +212,7 @@
                 isMove = !cut;
             // drop points too close together
             if (deltaXY < 0.001 && point.z === lastPoint.z) {
-                console.trace(["drop dup",lastPoint,point]);
+                console.log(["drop dup",lastPoint,point]);
                 return;
             }
             if (isMove && deltaXY <= toolDiamMove) {
@@ -352,7 +351,7 @@
                         let polys = [], t = [], c = [];
                         POLY.flatten(top.traces, top.inner || []).forEach(function (poly) {
                             let child = poly.parent;
-                            if (depthFirst) poly = poly.clone(true);
+                            if (depthFirst) poly = poly.clone();
                             if (child) c.push(poly); else t.push(poly);
                             poly.layer = depthData.layer;
                             polys.push(poly);
@@ -425,6 +424,7 @@
                 }, fromPoint);
             } else {
                 poly.forEachPoint(function(point, pidx, points, offset) {
+                    last = point;
                     camOut(point.clone(), offset !== 0);
                 }, poly.isClosed(), index);
             }
@@ -432,7 +432,7 @@
             return last;
         }
 
-        function polyLevelEmitter(start, depth, levels, tops, emitter, fit) {
+        function depthRoughPath(start, depth, levels, tops, emitter, fit) {
             let level = levels[depth];
             if (!level) {
                 return start;
@@ -443,22 +443,39 @@
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
                 start = poly2polyEmit(inside, start, emitter);
-                start = polyLevelEmitter(start, depth + 1, levels, tops, emitter, top);
+                start = depthRoughPath(start, depth + 1, levels, tops, emitter, top);
             });
             return start;
         }
 
-        function polyArrayEmitter(levels, printPoint, emitter, info, fit) {
-            let tops = levels.map(level => {
-                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+        function depthOutlinePath(start, depth, levels, radius, emitter, clr) {
+            let bottm = depth < levels.length - 1 ? levels[levels.length - 1] : null;
+            let above = levels[depth-1];
+            let level = levels[depth];
+            if (!level) {
+                return start;
+            }
+            if (above) {
+                level = level.filter(lp => {
+                    return above.filter(ap => !ap.level_emit && lp.isNear(ap, radius, true)).length === 0;
+                });
+            }
+            level = level.filter(lp => {
+                if (lp.level_emit) return false;
+                if (bottm && !clr) {
+                    return bottm.filter(bp => lp.isEquivalent(bp)).length === 0;
+                }
+                return true;
             });
-            // start with the smallest polygon on the top
-            // printPoint = levels[0]
-            //     .filter(p => p.depth)
-            //     .sort((a,b) => { return a.area() - b.area() })
-            //     .shift()
-            //     .average();
-            return polyLevelEmitter(printPoint, 0, levels, tops, emitter);
+            // omit polys that match bottom level polys unless level above is cleared
+            start = poly2polyEmit(level, start, (poly, index, count, fromPoint) => {
+                poly.level_emit = true;
+                fromPoint = polyEmit(poly, index, count, fromPoint);
+                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr);
+                return fromPoint;
+            }, {weight: true});
+            start = depthOutlinePath(start, depth + 1, levels, radius, emitter, clr);
+            return start;
         }
 
         // act on accumulated layer data
@@ -468,16 +485,26 @@
                 lastMode = PRO.ROUGH;
                 setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
                 spindle = Math.min(spindleMax, process.camRoughSpindle);
-                printPoint = polyArrayEmitter(depthData.rough, printPoint, polyEmit);
+                let tops = depthData.rough.map(level => {
+                    return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+                });
+                printPoint = depthRoughPath(printPoint, 0, depthData.rough, tops, polyEmit);
             }
             // outline depth first
             if (depthData.outline.length > 0) {
                 lastMode = PRO.OUTLINE;
                 setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
                 spindle = Math.min(spindleMax, process.camOutlineSpindle);
-                printPoint = poly2polyDepthFirstEmit(
-                    depthData.outline, printPoint, polyEmit,
-                    depthData.outlineDiam * 0.01);
+                let flatLevels = depthData.outline.map(level => {
+                    return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
+                })
+                // start with the smallest polygon on the top
+                printPoint = flatLevels[0]
+                    .sort((a,b) => { return a.area() - b.area() })
+                    .shift()
+                    .average();
+                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
+                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
             }
             // two modes for deferred outlining: x then y or combined
             if (process.camContourCurves) {

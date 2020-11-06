@@ -205,6 +205,7 @@
                 slice.tops[0].traces = offset;
                 slice.index = sliceIndex++;
             });
+
             sliceAll.appendAll(slices);
         }
 
@@ -278,6 +279,7 @@
                     addCutoutTabs(slice, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
             });
+
             sliceAll.appendAll(slices);
         }
 
