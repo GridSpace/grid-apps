@@ -264,7 +264,9 @@
                 } else {
                     if (procOutlineWide) {
                         offset.slice().forEach(op => {
-                            POLY.expand([op], outlineToolDiam * 0.5, slice.z, offset, 1);
+                            // clone removes inners but the real solution is
+                            // to limit expanded shells to through holes
+                            POLY.expand([op.clone()], outlineToolDiam * 0.5, slice.z, offset, 1);
                         });
                     }
                 }

@@ -439,7 +439,8 @@
             }
             let ltops = tops[depth];
             let fitted = fit ? ltops.filter(poly => poly.isInside(fit)) : ltops;
-            fitted.forEach(top => {
+            fitted.filter(top => !top.level_emit).forEach(top => {
+                top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
                 start = poly2polyEmit(inside, start, emitter);
                 start = polyLevelEmitter(start, depth + 1, levels, tops, emitter, top);
