@@ -417,6 +417,49 @@
             update(sliceIndex / slices.length);
         });
 
+        function polyEmit(poly, index, count, fromPoint) {
+            let last = null;
+            if (easeDown && poly.isClosed()) {
+                last = poly.forEachPointEaseDown(function(point, offset) {
+                    camOut(point.clone(), offset > 0);
+                }, fromPoint);
+            } else {
+                poly.forEachPoint(function(point, pidx, points, offset) {
+                    camOut(point.clone(), offset !== 0);
+                }, poly.isClosed(), index);
+            }
+            newLayer();
+            return last;
+        }
+
+        function polyLevelEmitter(start, depth, levels, tops, emitter, fit) {
+            let level = levels[depth];
+            if (!level) {
+                return start;
+            }
+            let ltops = tops[depth];
+            let fitted = fit ? ltops.filter(poly => poly.isInside(fit)) : ltops;
+            fitted.forEach(top => {
+                let inside = level.filter(poly => poly.isInside(top));
+                start = poly2polyEmit(inside, start, emitter);
+                start = polyLevelEmitter(start, depth + 1, levels, tops, emitter, top);
+            });
+            return start;
+        }
+
+        function polyArrayEmitter(levels, printPoint, emitter, info, fit) {
+            let tops = levels.map(level => {
+                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+            });
+            // start with the smallest polygon on the top
+            // printPoint = levels[0]
+            //     .filter(p => p.depth)
+            //     .sort((a,b) => { return a.area() - b.area() })
+            //     .shift()
+            //     .average();
+            return polyLevelEmitter(printPoint, 0, levels, tops, emitter);
+        }
+
         // act on accumulated layer data
         if (depthFirst) {
             // roughing depth first
@@ -424,41 +467,16 @@
                 lastMode = PRO.ROUGH;
                 setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
                 spindle = Math.min(spindleMax, process.camRoughSpindle);
-                printPoint = poly2polyDepthFirstEmit(depthData.rough, printPoint, function(poly, index, count, fromPoint) {
-                    let last = null;
-                    if (easeDown && poly.isClosed()) {
-                        last = poly.forEachPointEaseDown(function(point, offset) {
-                            camOut(point.clone(), offset > 0);
-                        }, fromPoint);
-                    } else {
-                        poly.forEachPoint(function(point, pidx, points, offset) {
-                            camOut(point.clone(), offset !== 0);
-                        }, poly.isClosed(), index);
-                    }
-                    newLayer();
-                    return last;
-                }, depthData.roughDiam * process.camRoughOver * 1.01);
+                printPoint = polyArrayEmitter(depthData.rough, printPoint, polyEmit);
             }
             // outline depth first
             if (depthData.outline.length > 0) {
                 lastMode = PRO.OUTLINE;
                 setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
                 spindle = Math.min(spindleMax, process.camOutlineSpindle);
-                printPoint = poly2polyDepthFirstEmit(depthData.outline, printPoint, function(poly, index, count, fromPoint) {
-                    let last = null;
-                    if (easeDown && poly.isClosed()) {
-                        last = poly.forEachPointEaseDown(function(point, offset) {
-                            camOut(point.clone(), offset > 0);
-                        }, fromPoint);
-                    } else {
-                        poly.forEachPoint(function(point, pidx, points, offset) {
-                            camOut(point.clone(), offset !== 0);
-                            last = point;
-                        }, poly.isClosed(), index);
-                    }
-                    newLayer();
-                    return last;
-                }, depthData.outlineDiam * 0.01);
+                printPoint = poly2polyDepthFirstEmit(
+                    depthData.outline, printPoint, polyEmit,
+                    depthData.outlineDiam * 0.01);
             }
             // two modes for deferred outlining: x then y or combined
             if (process.camContourCurves) {

@@ -18,28 +18,28 @@
         newPoint = BASE.newPoint;
 
     BASE.polygons = {
-        rayIntersect : rayIntersect,
-        alignWindings : alignWindings,
-        setWinding : setWinding,
-        fillArea : fillArea,
-        subtract : subtract,
-        flatten : flatten,
-        offset : offset,
-        trimTo : trimTo,
-        expand : expand,
-        expand_lines: expand_lines,
-        union : union,
-        nest : nest,
-        diff : doDiff,
-        setZ : setZ,
-        filter : filter,
-        toClipper : toClipper,
-        fromClipperNode : fromClipperNode,
-        fromClipperTree : fromClipperTree,
-        fromClipperTreeUnion: fromClipperTreeUnion,
-        cleanClipperTree : cleanClipperTree,
-        fingerprintCompare: fingerprintCompare,
-        fingerprint: fingerprint
+        rayIntersect,
+        alignWindings,
+        setWinding,
+        fillArea,
+        subtract,
+        flatten,
+        offset,
+        trimTo,
+        expand,
+        expand_lines,
+        union,
+        nest,
+        diff,
+        setZ,
+        filter,
+        toClipper,
+        fromClipperNode,
+        fromClipperTree,
+        fromClipperTreeUnion,
+        cleanClipperTree,
+        fingerprintCompare,
+        fingerprint
     };
 
     /** ******************************************************************
@@ -376,7 +376,7 @@
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    function doDiff(setA, setB, z) {
+    function diff(setA, setB, z) {
         let clib = self.ClipperLib,
             ctyp = clib.ClipType,
             ptyp = clib.PolyType,
