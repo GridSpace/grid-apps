@@ -5,7 +5,6 @@
 let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
-    Widget = KIRI.Widget,
     time = UTIL.time,
     current = self.worker = {
         print: null,
@@ -27,9 +26,10 @@ KIRI.server =
 KIRI.worker = {
     cache: cache,
 
-    decimate: function(vertices, send) {
+    decimate: function(data, send) {
+        let { vertices, options } = data;
         vertices = new Float32Array(vertices),
-        vertices = Widget.pointsToVertices(Widget.verticesToPoints(vertices, true));
+        vertices = BASE.pointsToVertices(BASE.verticesToPoints(vertices, options));
         send.done(vertices);
     },
 
@@ -43,7 +43,7 @@ KIRI.worker = {
             vertices = new Float32Array(data.vertices),
             position = data.position,
             tracking = data.tracking,
-            points = Widget.verticesToPoints(vertices),
+            points = BASE.verticesToPoints(vertices, { maxpass: 0 }),
             state = data.state || {},
             rotation = state.rotation,
             centerz = state.centerz,

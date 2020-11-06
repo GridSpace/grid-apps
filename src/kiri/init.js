@@ -85,6 +85,25 @@
         platform.update_size();
     }
 
+    function detailSave() {
+        let level = UI.detail.options[UI.detail.selectedIndex];
+        if (level) {
+            level = level.value;
+            let rez = BASE.config.clipperClean;
+            switch (level) {
+                case 'best': rez = 50; break;
+                case 'good': rez = BASE.config.clipperClean; break;
+                case 'fair': rez = 500; break;
+                case 'poor': rez = 1000; break;
+            }
+            KIRI.client.config({
+                base: { clipperClean: rez }
+            });
+            settings().controller.detail = level;
+            API.conf.save();
+        }
+    }
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
@@ -101,12 +120,16 @@
         control.exportOcto = UI.exportOcto.checked;
         control.exportGhost = UI.exportGhost.checked;
         control.exportLocal = UI.exportLocal.checked;
+        control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
         platform.update_stock();
         API.conf.save();
         API.mode.set_expert(control.expert);
         API.platform.update_size();
+        API.catalog.setOptions({
+            maxpass: control.decimate ? 10 : 0
+        });
         UC.setHoverPop(control.hoverPop);
     }
 
@@ -1349,10 +1372,15 @@
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
             units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave}, "units"),
 
-            export:           UC.newGroup(LANG.xp_menu, $('prefs-out'), {inline: true}),
+            export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
+
+            parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
+            detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
+            decimate:         UC.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
+
             prefadd:          UC.checkpoint($('prefs-add')),
 
             process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
@@ -1895,6 +1923,8 @@
         UI.autoLayout.checked = control.autoLayout;
         UI.alignTop.checked = control.alignTop;
         UI.reverseZoom.checked = control.reverseZoom;
+        UI.decimate.checked = control.decimate;
+        detailSave();
 
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {

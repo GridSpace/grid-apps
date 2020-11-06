@@ -112,7 +112,7 @@ kiri.lang['en-us'] = {
     ws_cler:        "Clear",
 
     // OPTIONS
-    op_menu:        "preferences",
+    op_menu:        "interface",
     op_xprt_s:      "expert",
     op_xprt_l:      "enable expert options",
     op_hopo_s:      "hover pop",
@@ -139,6 +139,12 @@ kiri.lang['en-us'] = {
     op_unit_l:      "workspace units affects\nspeeds and distances",
 
     lo_menu:        "layout",
+
+    pt_menu:        "parts",
+    pt_deci_s:      "decimate",
+    pt_deci_l:      "enable or disable\npoint decimation\nfor faster slicing",
+    pt_qual_s:      "quality",
+    pt_qual_l:      "level of detail\nto retain on\nimported part",
 
     xp_menu:        "exports",
 

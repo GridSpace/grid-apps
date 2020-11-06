@@ -14,7 +14,6 @@
         UTIL = BASE.util,
         POLY = BASE.polygons,
         MATH = Math,
-        SQRT = MATH.sqrt,
         PRO = Widget.prototype,
         time = UTIL.time,
         solid_opacity = 1.0;
@@ -188,104 +187,6 @@
 
     Widget.deleteFromState = function(id,ondone) {
         KIRI.odb.remove('ws-save-'+id, ondone);
-    };
-
-    /**
-     * converts a geometry point array into a kiri point array
-     * with auto-decimation
-     *
-     * @param {Float32Array} array
-     * @param {boolean} [decimate]
-     * @returns {Array}
-     */
-    Widget.verticesToPoints = function(array,decimate) {
-        let parr = new Array(array.length / 3),
-            i = 0,
-            j = 0,
-            t = time(),
-            hash = {},
-            unique = 0,
-            passes = 0,
-            points,
-            oldpoints = parr.length,
-            newpoints;
-        // replace point objects with their equivalents
-        while (i < array.length) {
-            let p = BASE.newPoint(array[i++], array[i++], array[i++]),
-                k = p.key,
-                m = hash[k];
-            if (!m) {
-                m = p;
-                hash[k] = p;
-                unique++;
-            }
-            parr[j++] = m;
-        }
-        // decimate until all point spacing > precision_decimate
-        while (parr.length > BASE.config.decimate_threshold && decimate && BASE.config.precision_decimate > 0.0) {
-            let lines = [], line, dec = 0;
-            for (i=0; i<oldpoints; ) {
-                let p1 = parr[i++],
-                    p2 = parr[i++],
-                    p3 = parr[i++];
-                lines.push( {p1:p1, p2:p2, d:SQRT(p1.distToSq3D(p2))} );
-                lines.push( {p1:p1, p2:p3, d:SQRT(p1.distToSq3D(p3))} );
-                lines.push( {p1:p2, p2:p3, d:SQRT(p2.distToSq3D(p3))} );
-            }
-            // sort by ascending line length
-            lines.sort(function(a,b) {
-                return a.d - b.d
-            });
-            // create offset mid-points
-            for (i=0; i<lines.length; i++) {
-                line = lines[i];
-                if (line.d >= BASE.config.precision_decimate) break;
-                if (line.p1.op || line.p2.op) continue;
-                // todo skip dropping lines where either point is a "sharp" on 3 vectors
-                line.p1.op = line.p2.op = line.p1.midPointTo3D(line.p2);
-                dec++;
-            }
-            // exit if nothing to decimate
-            if (dec === 0) break;
-            passes++;
-            // create new facets
-            points = new Array(oldpoints);
-            newpoints = 0;
-            for (i=0; i<oldpoints; ) {
-                let p1 = parr[i++],
-                    p2 = parr[i++],
-                    p3 = parr[i++];
-                // drop facets with two offset points
-                if (p1.op && p1.op === p2.op) continue;
-                if (p1.op && p1.op === p3.op) continue;
-                if (p2.op && p2.op === p3.op) continue;
-                // otherwise emit altered facet
-                points[newpoints++] = p1.op || p1;
-                points[newpoints++] = p2.op || p2;
-                points[newpoints++] = p3.op || p3;
-            }
-            parr = points.slice(0,newpoints);
-            oldpoints = newpoints;
-        }
-        if (passes) DBUG.log({
-            before: array.length / 3,
-            after: parr.length,
-            unique: unique,
-            decimations: passes,
-            time: (time() - t)
-        });
-        return parr;
-    };
-
-    Widget.pointsToVertices = function(points) {
-        let vertices = new Float32Array(points.length * 3),
-            i = 0, vi = 0;
-        while (i < points.length) {
-            vertices[vi++] = points[i].x;
-            vertices[vi++] = points[i].y;
-            vertices[vi++] = points[i++].z;
-        }
-        return vertices;
     };
 
     /** ******************************************************************
@@ -601,7 +502,9 @@
     PRO.getPoints = function() {
         if (!this.points) {
             // convert and cache points from geometry vertices
-            this.points = Widget.verticesToPoints(this.getGeoVertices());
+            this.points = BASE.verticesToPoints(this.getGeoVertices(), {
+                maxpass: 0 // disable decimation
+            });
         }
         return this.points;
     };

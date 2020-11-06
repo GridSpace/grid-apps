@@ -5,7 +5,6 @@
 (function () {
 
     let iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
-        autoDecimate = true,
         // ---------------
         MOTO    = moto,
         KIRI    = self.kiri,
@@ -24,7 +23,7 @@
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
-        CATALOG = KIRI.catalog = KIRI.openCatalog(ODB,autoDecimate),
+        CATALOG = KIRI.catalog = KIRI.openCatalog(ODB),
         STATS   = new Stats(SDB),
         SEED    = 'kiri-seed',
         // ---------------
@@ -149,6 +148,12 @@
             { name: "none" },
             { name: "x axis" },
             { name: "y axis" }
+        ],
+        detail: [
+            { name: "best" },
+            { name: "good" },
+            { name: "fair" },
+            { name: "poor" },
         ]
     };
 
@@ -1444,17 +1449,20 @@
                     let source = uie.parentNode.getAttribute('source'),
                         list = settings[source] || lists[source],
                         chosen = null;
-                    if (list) list.forEach(function(tool, index) {
-                        let id = tool.id || tool.name;
+                    if (list) list.forEach(function(el, index) {
+                        let id = el.id || el.name;
+                        let ev = el.value || id;
                         if (val == id) {
                             chosen = index;
                         }
                         let opt = DOC.createElement('option');
-                        opt.appendChild(DOC.createTextNode(tool.name));
-                        opt.setAttribute('value', id);
+                        opt.appendChild(DOC.createTextNode(el.name));
+                        opt.setAttribute('value', ev);
                         uie.appendChild(opt);
                     });
-                    if (chosen) uie.selectedIndex = chosen;
+                    if (chosen) {
+                        uie.selectedIndex = chosen;
+                    }
                 } else if (typ === 'textarea') {
                     if (Array.isArray(val)) {
                         uie.value = val.join('\n');

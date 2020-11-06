@@ -21,20 +21,24 @@ let loc = self.location,
  * @param {Function} fn name of function in KIRI.worker
  * @param {Object} data to send to server
  * @param {Function} onreply function to call on reply messages
- * @param {Boolean} async true of function returns many messages
  * @param {Object[]} zerocopy array of objects to pass using zerocopy
  */
-function send(fn, data, onreply, async, zerocopy) {
+function send(fn, data, onreply, zerocopy) {
     let seq = seqid++;
 
-    running[seq] = {fn:onreply, async:async||false};
+    running[seq] = { fn:onreply };
     // console.log('send', data);
-    worker.postMessage({
-        seq: seq,
-        task: fn,
-        time: time(),
-        data: data
-    }, zerocopy);
+
+    try {
+        worker.postMessage({
+            seq: seq,
+            task: fn,
+            time: time(),
+            data: data
+        }, zerocopy);
+    } catch (error) {
+        console.trace('work send error', {data, error});
+    }
 }
 
 // code is running in the browser / client context
@@ -89,10 +93,10 @@ KIRI.work = {
         };
     },
 
-    decimate : function(vertices, callback) {
-        let alert = KIRI.api.show.alert('decimating imported model', 1000);
+    decimate : function(vertices, options, callback) {
+        let alert = KIRI.api.show.alert('processing model', 1000);
         vertices = vertices.buffer.slice(0);
-        send("decimate", vertices, function(output) {
+        send("decimate", {vertices, options}, function(output) {
             KIRI.api.hide.alert(alert);
             callback(output);
         });
@@ -151,13 +155,13 @@ KIRI.work = {
         }, function(reply) {
             if (reply.done || reply.error) delete slicing[widget.id];
             callback(reply);
-        }, null, [vertices]);
+        }, [vertices]);
     },
 
     printSetup : function(settings, callback) {
         send("printSetup", {settings:settings}, function(reply) {
             callback(reply);
-        }, undefined);
+        });
     },
 
     printExport : function(settings, online, ondone) {
@@ -194,7 +198,7 @@ KIRI.work = {
                 send("printGCode", {}, function(reply) {
                     callback(reply);
                 });
-            }, null, [vertices]);
+            }, [vertices]);
             callback(reply);
         });
     }

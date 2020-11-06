@@ -614,7 +614,9 @@
                 units: "mm",
                 exportOcto: false,
                 exportGhost: false,
-                exportLocal: true
+                exportLocal: true,
+                decimate: true,
+                detail: "good"
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

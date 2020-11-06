@@ -100,5 +100,8 @@
     }
 
     CAM.Tool = Tool;
+    CAM.getToolDiameter = function(settings, id) {
+        return new CAM.Tool(settings, id).fluteDiameter();
+    };
 
 })();

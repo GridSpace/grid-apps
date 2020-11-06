@@ -349,7 +349,7 @@
         // other values break cube-s9 (wtf)
         precision_decimate : 0.05,
         // decimate test over this many points
-        decimate_threshold : 100000,
+        decimate_threshold : 500000,
         // Point.onLine precision distance (endpoints in Polygon.intersect)
         precision_point_on_line : 0.01,
         // Polygon.isEquivalent value for determining similar enough to test
