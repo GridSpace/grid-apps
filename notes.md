@@ -11,7 +11,6 @@
 * `F` 2D image import
 * `P` bail on decimation if it's proving ineffective
 * `P` improve decimation speed by avoiding in/out of Point?
-* `P` server-side processing (determine protocol and storage)
 * `P` duplicate objects should share same slice data unless rotated or scaled
 
 # FDM
@@ -46,11 +45,8 @@
 
 * `B` outline slicing should be distinct from roughing which handles flats
 * `B` excessive moves with tabs. allow reversing in open polys or do not nest them
-* `B` fails in pancaking (clone) when there are no sliced layers (like z bottom too high)
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
-* `F` provide planar or other visual hint of current z bottom offset
-* `F` redo collision code use fixed slices and path/poly intersection instead of a topo map
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` use arcs to connect hard angles
@@ -63,8 +59,6 @@
 * `F` add endmill spiral direction to fully respect climb vs conventional
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
-* `P` refactor slicing around flats w/ interpolation instead of culling
-* `P` disable topo generation when no contour xy and no depth first
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 
