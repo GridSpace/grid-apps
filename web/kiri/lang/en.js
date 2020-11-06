@@ -142,9 +142,9 @@ kiri.lang['en-us'] = {
 
     pt_menu:        "parts",
     pt_deci_s:      "decimate",
-    pt_deci_l:      "enable or disable\npoint decimation\nfor faster slicing",
+    pt_deci_l:      "enable or disable point decimation\nduring port import. for faster slicing\nand lower memory usage",
     pt_qual_s:      "quality",
-    pt_qual_l:      "level of detail\nto retain on\nimported part",
+    pt_qual_l:      "level of detail to retain\nduring slicing operations\nlower is faster",
 
     xp_menu:        "exports",
 

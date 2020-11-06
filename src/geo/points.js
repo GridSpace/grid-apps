@@ -22,7 +22,7 @@
         let parr = new Array(array.length / 3),
             i = 0,
             j = 0,
-            t = time(),
+            t = Date.now(),
             hash = {},
             unique = 0,
             passes = 0,
@@ -109,7 +109,7 @@
             after: parr.length,
             unique: unique,
             decimations: passes,
-            time: (time() - t)
+            time: (Date.now() - t)
         });
 
         return parr;
