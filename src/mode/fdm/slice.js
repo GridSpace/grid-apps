@@ -24,10 +24,15 @@
         };
 
     let isThin = false; // force line rendering
+    let isFlat = false; // force flat rendering
     let offset = 0; // poly line generation offsets
 
-    function thin(opt) {
-        return isThin ? null : opt;
+    function vopt(opt) {
+        if (opt) {
+            if (isFlat) { opt.flat = true; return opt }
+            if (isThin) return null;
+        }
+        return opt;
     }
 
     /**
@@ -64,6 +69,7 @@
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
+        isFlat = false;
         isThin = settings.controller.thinRender;
         offset = nozzleSize / 2;
 
@@ -113,6 +119,10 @@
             if (!slices) {
                 return;
             }
+
+            // if (!isThin && slices.length > 100) {
+            //     isFlat = true;
+            // }
 
             if (slices.length > 150) {
                 isThin = true;
@@ -414,49 +424,50 @@
 
             output
                 .setLayer("shells", COLOR.shell)
-                .addPolys(top.shells, thin({ offset }));
+                .addPolys(top.shells, vopt({ offset }));
 
             // if (isThin && debug) {
             //     slice.output()
             //         .setLayer('offset', { face: 0, line: 0x888888 })
             //         .addPolys(top.fill_off)
             //         .setLayer('last', { face: 0, line: 0x008888 })
-            //         .addPolys(top.last)
-            //     ;
+            //         .addPolys(top.last);
             // }
 
             if (top.fill_lines) output
                 .setLayer("fill", COLOR.fill)
-                .addLines(top.fill_lines, thin({ offset }));
+                .addLines(top.fill_lines, vopt({ offset }));
 
             if (top.fill_sparse) output
                 .setLayer("infill", COLOR.infill)
-                .addPolys(top.fill_sparse, thin({ offset }))
+                .addPolys(top.fill_sparse, vopt({ offset, open: true, outline: true }))
 
             // emit solid areas
             // if (isThin && debug) {
-            //     render.setLayer("solids", { face: 0x00dd00 }).addAreas(solids);
+            //     output
+            //         .setLayer("solids", { face: 0x00dd00 })
+            //         .addAreas(slice.solids);
             // }
         });
 
         if (slice.supports) output
             .setLayer("support", COLOR.support)
-            .addPolys(slice.supports, thin({ offset }));
+            .addPolys(slice.supports, vopt({ offset }));
 
         if (slice.supports) slice.supports.forEach(poly => {
             output
                 .setLayer("support", COLOR.support)
-                .addLines(poly.fill, thin({ offset }));
+                .addLines(poly.fill, vopt({ offset }));
         })
 
         // if (isThin && debug) {
-        //     top.output()
+        //     output
         //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
-        //         .addAreas(bridges)
+        //         .addAreas(top.bridges);
         //
-        //     down.output()
+        //     output
         //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
-        //         .addAreas(flats)
+        //         .addAreas(top.flats);
         // }
     }
 

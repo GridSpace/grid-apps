@@ -41,14 +41,15 @@
 
         addLines(lines, options) {
             if (options) {
+                options.open = true;
+                const polys = [];
                 for (let i=0; i<lines.length-1; i += 2) {
-                    const poly = new BASE.Polygon()
+                    polys.push(new BASE.Polygon()
                         .append(lines[i])
                         .append(lines[i+1])
-                        .setOpen();
-                    this.addPoly(poly, options);
+                        .setOpen());
                 }
-                return;
+                return this.addPolys(polys, options);
             }
             for (let i=0; i<lines.length-1; i += 2) {
                 this.addLine(lines[i], lines[i+1]);
@@ -56,22 +57,18 @@
         }
 
         addPoly(poly, options) {
-            if (options) {
-                this.addPaths([poly], options);
-            } else {
-                this.current.polys.push(poly);
-            }
-            return this;
+            return this.addPolys([poly], options);
         }
 
         addPolys(polys, options) {
+            if (options && options.flat) {
+                return this.addFlats(polys, options);
+            }
             if (options) {
                 return this.addPaths(polys, options);
             }
             polys = flat(polys);
-            for (let i=0; i<polys.length; i++) {
-                this.addPoly(polys[i]);
-            }
+            this.current.polys.appendAll(polys);
             return this;
         }
 
@@ -96,10 +93,20 @@
                 return;
             }
             const z = polys[0].getZ(), faces = this.current.faces;
+            const open = opts.open || false;
+            const off_opt = {
+                z,
+                flat: true,
+                type: open ? ClipperLib.EndType.etOpenSquare : undefined,
+            };
             polys.forEach(poly => {
-                let exp = [];
-                POLY.offset([poly],  offset/2, { z, outs: exp, flat: true });
-                POLY.offset([poly], -offset/2, { z, outs: exp, flat: true });
+                let exp = off_opt.outs = [];
+                if (open) {
+                    exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
+                } else {
+                    POLY.offset([poly],  offset * 0.9, off_opt);
+                    POLY.offset([poly], -offset * 0.9, off_opt);
+                }
                 if (opts.outline) {
                     this.addPolys(exp.clone());
                 }

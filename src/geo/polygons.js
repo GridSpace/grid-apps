@@ -480,9 +480,9 @@
             depth = numOrDefault(opts.depth, 0),
             clean = opts.clean !== false,
             simple = opts.simple !== false,
-            fill = opts.fill || ClipperLib.PolyFillType.pftNonZero,
-            join = opts.join || ClipperLib.JoinType.jtMiter,
-            type = opts.type || ClipperLib.EndType.etClosedPolygon,
+            fill = numOrDefault(opts.fill, ClipperLib.PolyFillType.pftNonZero),
+            join = numOrDefault(opts.join, ClipperLib.JoinType.jtMiter),
+            type = numOrDefault(opts.type, ClipperLib.EndType.etClosedPolygon),
             coff = new ClipperLib.ClipperOffset(),
             ctre = new ClipperLib.PolyTree(),
             // if dist is array with values, shift out next offset
