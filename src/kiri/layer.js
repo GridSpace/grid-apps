@@ -490,10 +490,10 @@
             }
             if (faces.length) {
                 const mat = new THREE.MeshPhongMaterial({
-                    transparent: true,
-                    shininess: 100,
-                    specular: 0x222222,
-                    opacity: 1,
+                    transparent: data.color.opacity != 1,
+                    shininess: shininess,
+                    specular: specular,
+                    opacity: data.color.opacity,
                     color: data.color.face,
                     side: THREE.DoubleSide
                 });
@@ -509,10 +509,10 @@
             }
             if (paths.length) {
                 const mat = new THREE.MeshPhongMaterial({
-                    transparent: true,
-                    shininess: 100,
-                    specular: 0x222222,
-                    opacity: 1,
+                    transparent: data.color.opacity != 1,
+                    shininess: shininess,
+                    specular: specular,
+                    opacity: data.color.opacity,
                     color: data.color.face,
                     side: THREE.DoubleSide
                 });
@@ -535,4 +535,7 @@
 
         slice.view.add(group);
     };
+
+    const shininess = 15;
+    const specular = 0x444444;
 })();

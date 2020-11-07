@@ -16,7 +16,8 @@
             if (typeof(colors) === 'number') {
                 colors = {
                     line: color,
-                    face: color
+                    face: color,
+                    opacity: 1
                 };
             }
             this.current = layers[layer] = layers[layer] || {
@@ -26,8 +27,9 @@
                 paths: [],
                 color: colors || {
                     line: 0,
-                    face: 0
-                }
+                    face: 0,
+                    opacity: 1
+                },
             };
             return this;
         }

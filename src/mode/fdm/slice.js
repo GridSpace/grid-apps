@@ -4,7 +4,7 @@
 
 (function() {
 
-    let KIRI = self.kiri,
+    const KIRI = self.kiri,
         BASE = self.base,
         POLY = BASE.polygons,
         UTIL = BASE.util,
@@ -16,7 +16,15 @@
         newSlice = KIRI.newSlice,
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
-        isThin = false;
+        COLOR = {
+            shell: { face: 0x003399, line: 0x003399, opacity: 1 },
+            fill: { face: 0x003399, line: 0x003399, opacity: 1 },
+            infill: { face: 0x003399, line: 0x003399, opacity: 1 },
+            support: { face: 0x993399, line: 0x006699, opacity: 1 }
+        };
+
+    let isThin = false; // force line rendering
+    let offset = 0; // poly line generation offsets
 
     function thin(opt) {
         return isThin ? null : opt;
@@ -57,6 +65,7 @@
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
         isThin = settings.controller.thinRender;
+        offset = nozzleSize / 2;
 
         if (!(sliceHeight > 0 && sliceHeight < 100)) {
             return ondone("invalid slice height");
@@ -101,7 +110,13 @@
 
             widget.slices = slices;
 
-            if (!slices) return;
+            if (!slices) {
+                return;
+            }
+
+            if (slices.length > 150) {
+                isThin = true;
+            }
 
             // calculate % complete and call onupdate()
             function doupdate(index, from, to, msg) {
@@ -119,9 +134,11 @@
             // do not hint polygin fill longer than a max span length
             CONF.hint_len_max = UTIL.sqr(spro.sliceBridgeMax);
 
-            // reset (if necessary) for solids and support projections
+            // reset for solids, support projections
+            // and other annotations
             slices.forEach(function(slice) {
                 slice.extruder = extruder;
+                slice.solids = [];
             });
 
             let supportEnabled = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
@@ -178,13 +195,17 @@
 
             // calculations only relevant when supports are enabled
             if (supportEnabled) {
-                forSlices(0.7, 0.9, function(slice) {
+                forSlices(0.7, 0.8, function(slice) {
                     if (slice.index > 0) doSupport(slice, spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
                 }, "support");
-                forSlices(0.9, 1.0, function(slice) {
+                forSlices(0.8, 0.9, function(slice) {
                     doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, supportMinArea);
                 }, "support");
             }
+
+            forSlices(0.9, 1.0, function(slice) {
+                doRender(slice);
+            }, "render");
 
             // let polish = spro.polishLayers;
             // // experimental polishing
@@ -381,6 +402,63 @@
         return Math.max(min,Math.min(max,v));
     }
 
+    function doRender(slice) {
+        const output = slice.output();
+
+        slice.tops.forEach(top => {
+            if (isThin) {
+                output
+                    .setLayer('slice', { line: 0x000066 })
+                    .addPolys(top.poly);
+            }
+
+            output
+                .setLayer("shells", COLOR.shell)
+                .addPolys(top.shells, thin({ offset }));
+
+            // if (isThin && debug) {
+            //     slice.output()
+            //         .setLayer('offset', { face: 0, line: 0x888888 })
+            //         .addPolys(top.fill_off)
+            //         .setLayer('last', { face: 0, line: 0x008888 })
+            //         .addPolys(top.last)
+            //     ;
+            // }
+
+            if (top.fill_lines) output
+                .setLayer("fill", COLOR.fill)
+                .addLines(top.fill_lines, thin({ offset }));
+
+            if (top.fill_sparse) output
+                .setLayer("infill", COLOR.infill)
+                .addPolys(top.fill_sparse, thin({ offset }))
+
+            // emit solid areas
+            // if (isThin && debug) {
+            //     render.setLayer("solids", { face: 0x00dd00 }).addAreas(solids);
+            // }
+        });
+
+        if (slice.supports) output
+            .setLayer("support", COLOR.support)
+            .addPolys(slice.supports, thin({ offset }));
+
+        if (slice.supports) slice.supports.forEach(poly => {
+            output
+                .setLayer("support", COLOR.support)
+                .addLines(poly.fill, thin({ offset }));
+        })
+
+        // if (isThin && debug) {
+        //     top.output()
+        //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
+        //         .addAreas(bridges)
+        //
+        //     down.output()
+        //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
+        //         .addAreas(flats)
+        // }
+    }
 
     /**
      * Compute offset shell polygons. For FDM, the first offset is usually half
@@ -397,8 +475,6 @@
      */
     function doShells(slice, count, offset1, offsetN, fillOffset, options) {
         const opt = options || {};
-
-        slice.solids = [];
 
         slice.tops.forEach(function(top) {
             let top_poly = [ top.poly ];
@@ -499,21 +575,6 @@
 
             // for diffing
             top.last = last;
-
-            slice.output()
-                .setLayer("shells", { face: 0x0000aa, line: 0x0000aa })
-                .addPolys(top.shells, thin({ offset: offset1 }));
-
-            // if (isThin && debug) {
-            //     slice.output()
-            //         .setLayer('slice', { face: 0, line: 0x888800 })
-            //         .addPolys(top.poly)
-            //         .setLayer('offset', { face: 0, line: 0x888888 })
-            //         .addPolys(top.fill_off)
-            //         .setLayer('last', { face: 0, line: 0x008888 })
-            //         .addPolys(top.last)
-            //     ;
-            // }
         });
     };
 
@@ -536,9 +597,6 @@
         slice.tops.forEach(function(top) {
             const lines = fillArea(top.fill_off, angle, spacing, null);
             top.fill_lines.appendAll(lines);
-            render
-                .setLayer("fill", { face: 0x0000aa, line: 0x0000aa })
-                .addLines(lines, thin({ offset: spacing/2 }));
         });
 
         slice.isSolidLayer = true;
@@ -622,14 +680,6 @@
             polys.appendAll(top.solids);
         });
 
-        function ondone() {
-            tops.forEach(top => {
-                slice.output()
-                    .setLayer("infill", { face: 0x0000aa, line: 0x0000aa })
-                    .addPolys(top.fill_sparse, thin({ offset: spacing/2 }))
-            });
-        }
-
         // update fill fingerprint for this slice
         slice._fill_finger = POLY.fingerprint(polys);
 
@@ -652,7 +702,6 @@
                 }
                 // if any of the fills as missing from below, re-compute
                 if (!miss) {
-                    ondone();
                     return;
                 }
             }
@@ -699,7 +748,6 @@
 
         // if only solids were added and no lines to clip
         if (!sparse_clip) {
-            ondone();
             return;
         }
 
@@ -717,8 +765,6 @@
                 });
             });
         }
-
-        ondone();
     };
 
     /**
@@ -742,16 +788,6 @@
         }
 
         POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea);
-
-        // if (isThin && debug) {
-        //     top.output()
-        //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
-        //         .addAreas(bridges)
-        //
-        //     down.output()
-        //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
-        //         .addAreas(flats)
-        // }
     };
 
     /**
@@ -834,10 +870,6 @@
                 }
             });
         });
-        // emit solid areas
-        // if (isThin && debug) {
-        //     render.setLayer("solids", { face: 0x00dd00 }).addAreas(solids);
-        // }
 
         // for SLA to bypass line infill
         if (isSLA) {
@@ -873,9 +905,6 @@
             }
 
             top.fill_lines.appendAll(newfill);
-            render
-                .setLayer("fill", { line: 0x003399, face: 0x003399 })
-                .addLines(newfill, thin({ offset: 0.2 }));
         });
 
         return true;
@@ -1053,22 +1082,14 @@
             // inset support poly for fill lines 33% of nozzle width
             let inset = POLY.offset([poly], -linewidth/3, {flat: true, z: slice.z});
             // do the fill
-            if (inset.length > 0) {
+            if (inset && inset.length > 0) {
                 fillArea(inset, angle, spacing, poly.fill = []);
-                if (poly.fill.length);
-                slice.output()
-                    .setLayer("support", { line: 0xaa0000, face: 0xaa0000 })
-                    .addLines(poly.fill, thin({ offset: 0.2 }))
             }
             return true;
         });
 
         // re-assign new supports back to slice
         slice.supports = supports;
-
-        slice.output()
-            .setLayer("support", { line: 0xff0000, face: 0xff0000 })
-            .addPolys(supports, thin({ offset: 0.2 }))
     };
 
     /**
