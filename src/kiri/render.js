@@ -22,6 +22,7 @@
                 lines: [],
                 polys: [],
                 faces: [],
+                paths: [],
                 color: colors || {
                     line: 0,
                     face: 0
@@ -37,33 +38,21 @@
 
         addPoly(poly) {
             this.current.polys.push(poly);
-            // const lines = this.current.lines;
-            // const points = poly.points;
-            // const len = points.length;
-            // for (let i=1; i<len; i++) {
-            //     lines.push(points[i-1], points[i]);
-            // }
-            // if (!poly.open) {
-            //     lines.push(points[len - 1], points[0]);
-            // }
             return this;
         }
 
-        addPolys(arr) {
-            for (let i=0; i<arr.length; i++) {
-                this.addPoly(arr[i]);
+        addPolys(polys) {
+            polys = flat(polys);
+            for (let i=0; i<polys.length; i++) {
+                this.addPoly(polys[i]);
             }
             return this;
         }
 
-        addFlat(polys, options) {
-            let opts = options || {};
-            let offset = opts.offset || 1;
-            if (Array.isArray(polys)) {
-                polys = POLY.flatten(polys, [], true);
-            } else {
-                polys = POLY.flatten([polys], [], true);
-            }
+        addFlats(polys, options) {
+            const opts = options || {};
+            const offset = opts.offset || 1;
+            polys = flat(polys);
             if (!polys.length) {
                 return;
             }
@@ -81,7 +70,118 @@
                     });
                 });
             });
+            return this;
         }
+
+        addPaths(polys, options) {
+            const opts = options || {};
+            const offset = opts.offset || 1;
+            polys = flat(polys);
+            if (!polys.length) {
+                return;
+            }
+
+            const profile = new THREE.Shape();
+            profile.moveTo(-offset, -offset);
+            profile.lineTo(-offset,  offset);
+            profile.lineTo( offset,  offset);
+            profile.lineTo( offset, -offset);
+
+            polys.forEach(poly => {
+                const contour = [];
+                poly.points.forEach(p => {
+                    contour.push(new THREE.Vector2(p.x, p.y));
+                });
+                const {index, faces} = ProfiledContourGeometry(profile, contour, true);
+                this.current.paths.push({ index, faces, z: poly.getZ() });
+            });
+            return this;
+        }
+    }
+
+    function flat(polys) {
+        if (Array.isArray(polys)) {
+            return POLY.flatten(polys, [], true);
+        } else {
+            return POLY.flatten([polys], [], true);
+        }
+    }
+
+    function ProfiledContourGeometry(profileShape, contour, contourClosed) {
+
+        contourClosed = contourClosed !== undefined ? contourClosed : true;
+
+        let profileGeometry = new THREE.ShapeBufferGeometry(profileShape);
+        profileGeometry.rotateX(Math.PI * .5);
+
+        let profile = profileGeometry.attributes.position;
+        let faces = new Float32Array(profile.count * contour.length * 3);
+
+        for (let i = 0; i < contour.length; i++) {
+            let v1 = new THREE.Vector2().subVectors(contour[i - 1 < 0 ? contour.length - 1 : i - 1], contour[i]);
+            let v2 = new THREE.Vector2().subVectors(contour[i + 1 == contour.length ? 0 : i + 1], contour[i]);
+            let angle = v2.angle() - v1.angle();
+            let halfAngle = angle * .5;
+            let hA = halfAngle;
+            let tA = v2.angle() + Math.PI * .5;
+
+            if (!contourClosed){
+                if (i == 0 || i == contour.length - 1) {hA = Math.PI * .5;}
+                if (i == contour.length - 1) {tA = v1.angle() - Math.PI * .5;}
+            }
+
+            let shift = Math.tan(hA - Math.PI * .5);
+            let shiftMatrix = new THREE.Matrix4().set(
+                1, 0, 0, 0,
+                -shift, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            let tempAngle = tA;
+            let rotationMatrix = new THREE.Matrix4().set(
+                Math.cos(tempAngle), -Math.sin(tempAngle), 0, 0,
+                Math.sin(tempAngle), Math.cos(tempAngle), 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            );
+
+            let translationMatrix = new THREE.Matrix4().set(
+                1, 0, 0, contour[i].x,
+                0, 1, 0, contour[i].y,
+                0, 0, 1, 0,
+                0, 0, 0, 1,
+            );
+
+            let cloneProfile = profile.clone();
+            cloneProfile.applyMatrix4(shiftMatrix);
+            cloneProfile.applyMatrix4(rotationMatrix);
+            cloneProfile.applyMatrix4(translationMatrix);
+
+            faces.set(cloneProfile.array, cloneProfile.count * i * 3);
+        }
+
+        let index = [];
+        let lastCorner = contourClosed == false ? contour.length - 1: contour.length;
+
+        for (let i = 0; i < lastCorner; i++) {
+            for (let j = 0; j < profile.count; j++) {
+                let currCorner = i;
+                let nextCorner = i + 1 == contour.length ? 0 : i + 1;
+                let currPoint = j;
+                let nextPoint = j + 1 == profile.count ? 0 : j + 1;
+
+                let a = nextPoint + profile.count * currCorner;
+                let b = currPoint + profile.count * currCorner;
+                let c = currPoint + profile.count * nextCorner;
+                let d = nextPoint + profile.count * nextCorner;
+
+                index.push(a, b, d);
+                index.push(b, c, d);
+            }
+        }
+
+        return {index, faces};
     }
 
     self.kiri.Render = Render;

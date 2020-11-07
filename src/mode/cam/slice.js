@@ -124,8 +124,9 @@
             // sliceAll.push(data.slice);
             // data.slice.output()
             //     .setLayer("debug", {face: 0xff0000, line: 0})
-            //     // .addFlat(POLY.setZ(tshadow.clone(true), data.z), {offset: 1, outline: true});
-            //     .addPolys(POLY.setZ(tshadow.clone(true), data.z));
+            //     // .addFlats(POLY.setZ(tshadow.clone(true), data.z), {offset: 1, outline: true});
+            //     // .addPolys(POLY.setZ(tshadow.clone(true), data.z));
+            //     .addPaths(POLY.setZ(tshadow.clone(true), data.z));
             updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];

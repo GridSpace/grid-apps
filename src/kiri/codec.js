@@ -125,7 +125,14 @@
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
                 faces: codec.allocFloat32Array(layer.faces),
-                color: layer.color
+                color: layer.color,
+                paths: layer.paths.map(path => {
+                    return {
+                        index: path.index,
+                        faces: path.faces,
+                        z: path.z
+                    }
+                })
             } })
         };
         return enc;
@@ -138,7 +145,8 @@
                 polys: decode(v.data[i].polys, state),
                 lines: decodePointArray(v.data[i].lines),
                 faces: v.data[i].faces,
-                color: v.data[i].color
+                color: v.data[i].color,
+                paths: v.data[i].paths
             };
         }
         return render;

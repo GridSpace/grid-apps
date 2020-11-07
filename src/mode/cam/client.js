@@ -46,7 +46,7 @@
         }
 
         for (const [layer, data] of Object.entries(render.layers)) {
-            const { polys, lines, faces } = data;
+            const { polys, lines, faces, paths } = data;
             if (polys.length || lines.length) {
                 const mat = new THREE.LineBasicMaterial({ color: data.color.line });
                 const geo = new THREE.Geometry(), vert = geo.vertices;
@@ -78,6 +78,29 @@
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 group.add(mesh);
+            }
+            if (paths.length) {
+                const mat = new THREE.MeshPhongMaterial({
+                    transparent: true,
+                    shininess: 100,
+                    specular: 0x181818,
+                    opacity: 1,
+                    color: data.color.face,
+                    side: THREE.DoubleSide
+                });
+                paths.forEach((path, i) => {
+                    const { index, faces, z } = path;
+                    const geo = new THREE.BufferGeometry();
+                    geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+                    geo.setIndex(index);
+                    geo.computeFaceNormals();
+                    geo.computeVertexNormals();
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.z = z;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    group.add(mesh);
+                });
             }
         }
 
