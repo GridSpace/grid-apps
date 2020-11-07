@@ -111,6 +111,11 @@
         return this.tops.map(top => top.poly);
     };
 
+    // CAM only
+    PRO.topPolyInners = function() {
+        return this.tops.map(top => top.poly.inner).flat().filter(poly => poly);
+    };
+
     // FDM / SLA only
     PRO.topInners = function() {
         return this.tops.map(top => top.last).flat().filter(poly => poly);

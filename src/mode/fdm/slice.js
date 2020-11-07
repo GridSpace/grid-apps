@@ -159,19 +159,9 @@
                 }, "solids");
             }
 
-            // calculations only relevant when supports are enabled
-            if (supportEnabled) {
-                forSlices(0.5, 0.7, function(slice) {
-                    if (slice.index > 0) doSupport(slice, spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
-                }, "support");
-                forSlices(0.7, 0.8, function(slice) {
-                    doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, supportMinArea);
-                }, "support");
-            }
-
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!vaseMode && spro.sliceFillSparse > 0.0) {
-                forSlices(0.8, 1.0, function(slice) {
+                forSlices(0.5, 0.7, function(slice) {
                     doSparseLayerFill(slice, {
                         settings: settings,
                         process: spro,
@@ -184,6 +174,16 @@
                         type: spro.sliceFillType
                     });
                 }, "infill");
+            }
+
+            // calculations only relevant when supports are enabled
+            if (supportEnabled) {
+                forSlices(0.7, 0.9, function(slice) {
+                    if (slice.index > 0) doSupport(slice, spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
+                }, "support");
+                forSlices(0.9, 1.0, function(slice) {
+                    doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, supportMinArea);
+                }, "support");
             }
 
             // let polish = spro.polishLayers;
@@ -501,15 +501,19 @@
             top.last = last;
 
             slice.output()
-                .setLayer('shells', { face: 0x0000aa, line: 0x0000aa })
-                .addPolys(top.shells, thin({ offset: offset1 }))
-                .setLayer('slice', { face: 0, line: 0x888800 })
-                .addPolys(top.poly)
-                .setLayer('offset', { face: 0, line: 0x888888 })
-                .addPolys(top.fill_off)
-                .setLayer('last', { face: 0, line: 0x008888 })
-                .addPolys(top.last)
-                ;
+                .setLayer("shells", { face: 0x0000aa, line: 0x0000aa })
+                .addPolys(top.shells, thin({ offset: offset1 }));
+
+            // if (isThin && debug) {
+            //     slice.output()
+            //         .setLayer('slice', { face: 0, line: 0x888800 })
+            //         .addPolys(top.poly)
+            //         .setLayer('offset', { face: 0, line: 0x888888 })
+            //         .addPolys(top.fill_off)
+            //         .setLayer('last', { face: 0, line: 0x008888 })
+            //         .addPolys(top.last)
+            //     ;
+            // }
         });
     };
 
@@ -533,7 +537,7 @@
             const lines = fillArea(top.fill_off, angle, spacing, null);
             top.fill_lines.appendAll(lines);
             render
-                .setLayer('fill', { face: 0x0000aa, line: 0x0000aa })
+                .setLayer("fill", { face: 0x0000aa, line: 0x0000aa })
                 .addLines(lines, thin({ offset: spacing/2 }));
         });
 
@@ -621,7 +625,7 @@
         function ondone() {
             tops.forEach(top => {
                 slice.output()
-                    .setLayer('infill', { face: 0x0000aa, line: 0x0000aa })
+                    .setLayer("infill", { face: 0x0000aa, line: 0x0000aa })
                     .addPolys(top.fill_sparse, thin({ offset: spacing/2 }))
             });
         }
@@ -739,13 +743,15 @@
 
         POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea);
 
-        top.output()
-            .setLayer('bridges', { face: 0x00aaaa, line: 0x00aaaa })
-            .addAreas(bridges)
-
-        down.output()
-            .setLayer('flats', { face: 0xaa00aa, line: 0xaa00aa })
-            .addAreas(flats)
+        // if (isThin && debug) {
+        //     top.output()
+        //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
+        //         .addAreas(bridges)
+        //
+        //     down.output()
+        //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
+        //         .addAreas(flats)
+        // }
     };
 
     /**
@@ -829,7 +835,9 @@
             });
         });
         // emit solid areas
-        render.setLayer("solids", { face: 0x00dd00 }).addAreas(solids);
+        // if (isThin && debug) {
+        //     render.setLayer("solids", { face: 0x00dd00 }).addAreas(solids);
+        // }
 
         // for SLA to bypass line infill
         if (isSLA) {
@@ -865,7 +873,9 @@
             }
 
             top.fill_lines.appendAll(newfill);
-            render.setLayer("fill", { line: 0, face: 0 }).addLines(newfill);
+            render
+                .setLayer("fill", { line: 0x003399, face: 0x003399 })
+                .addLines(newfill, thin({ offset: 0.2 }));
         });
 
         return true;
@@ -996,9 +1006,6 @@
             // new bridge polys for next pass (skip first layer below)
             if (depth >= gap) {
                 down.supports.appendAll(culled);
-                // down.output()
-                //     .setLayer("support", { line: 0xff0000 })
-                //     .addPolys(culled, thin({ offset: 0.4 }))
             }
 
             supports = culled;
@@ -1047,11 +1054,11 @@
             let inset = POLY.offset([poly], -linewidth/3, {flat: true, z: slice.z});
             // do the fill
             if (inset.length > 0) {
-                fillArea(inset, angle, spacing, poly.fills = []);
-                if (poly.fills.length);
+                fillArea(inset, angle, spacing, poly.fill = []);
+                if (poly.fill.length);
                 slice.output()
-                    .setLayer("support", { line: 0xff0000 })
-                    .addLines(poly.fills, thin({ offset: 0.4 }))
+                    .setLayer("support", { line: 0xaa0000, face: 0xaa0000 })
+                    .addLines(poly.fill, thin({ offset: 0.2 }))
             }
             return true;
         });
@@ -1060,8 +1067,8 @@
         slice.supports = supports;
 
         slice.output()
-            .setLayer("support", { line: 0xff0000 })
-            .addPolys(supports, thin({ offset: 0.4 }))
+            .setLayer("support", { line: 0xff0000, face: 0xff0000 })
+            .addPolys(supports, thin({ offset: 0.2 }))
     };
 
     /**

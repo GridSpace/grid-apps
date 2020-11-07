@@ -361,7 +361,7 @@
         // for each slice, look for polygons with 98.5% circularity whose
         // area is within the tolerance of a circle matching the tool diameter
         slices.forEach(function(slice) {
-            let inner = slice.gatherTopPolyInners([]);
+            let inner = slice.topPolyInners([]);
             inner.forEach(function(poly) {
                 if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
                     let center = poly.circleCenter(),
