@@ -1595,21 +1595,6 @@
             ]),
 
             layers:        UC.setGroup($("layers")),
-            layerTrace:    UC.newBoolean(LANG.la_trce, onLayerToggle, {modes:FDM_LASER}),
-            layerFacing:   UC.newBoolean(LANG.la_face, onLayerToggle, {modes:[]}), // see sliceRender() in CAM
-            layerRough:    UC.newBoolean(LANG.la_ruff, onLayerToggle, {modes:CAM}),
-            layerFinish:   UC.newBoolean(LANG.la_fini, onLayerToggle, {modes:CAM}),
-            layerFinishX:  UC.newBoolean(LANG.la_finx, onLayerToggle, {modes:CAM}),
-            layerFinishY:  UC.newBoolean(LANG.la_finy, onLayerToggle, {modes:CAM}),
-            layerFill:     UC.newBoolean(LANG.la_fill, onLayerToggle, {modes:FDM}),
-            layerSparse:   UC.newBoolean(LANG.la_sprs, onLayerToggle, {modes:FDM}),
-            layerSupport:  UC.newBoolean(LANG.la_sprt, onLayerToggle, {modes:FDM}),
-            layerOutline:  UC.newBoolean(LANG.la_olin, onLayerToggle, {modes:GCODE}),
-            layerDelta:    UC.newBoolean(LANG.la_dlta, onLayerToggle, {modes:FDM}),
-            layerSolid:    UC.newBoolean(LANG.la_slds, onLayerToggle, {modes:FDM}),
-            layerPrint:    UC.newBoolean(LANG.la_prnt, onLayerToggle, {modes:GCODE}),
-            layerMoves:    UC.newBoolean(LANG.la_move, onLayerToggle, {modes:GCODE}),
-            layerParts:    UC.newBoolean(LANG.la_part, onLayerToggle, {modes:CAM})
         });
 
         function showLaserKnife() {

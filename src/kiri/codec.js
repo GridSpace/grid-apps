@@ -92,12 +92,6 @@
             type: 'slice',
             z: this.z,
             index: this.index,
-            camMode: this.camMode,
-            tops: encode(this.tops, state),
-            bridges: encode(this.bridges, state),
-            flats: encode(this.flats, state),
-            solids: encode(this.solids, state),
-            supports: encode(this.supports, state),
             render: encode(this.render, state)
         };
     };
@@ -106,12 +100,6 @@
         let slice = KIRI.newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
 
         slice.index = v.index;
-        slice.camMode = v.camMode;
-        slice.tops = decode(v.tops, state);
-        slice.bridges = decode(v.bridges, state);
-        slice.flats = decode(v.flats, state);
-        slice.solids = decode(v.solids, state);
-        slice.supports = decode(v.supports, state);
         slice.render = decode(v.render, state)
 
         return slice;
@@ -156,28 +144,28 @@
         return {
             type: 'top',
             poly: encode(this.poly, state),
-            traces: encode(this.traces, state),
-            inner: encode(this.inner, state),
-            // thinner: encode(this.thinner, state),
-            solids: encode(this.solids, state),
-            thin_fill: encodePointArray(this.thin_fill, state),
-            fill_lines: encodePointArray(this.fill_lines, state),
-            fill_sparse: encode(this.fill_sparse, state),
-            polish: encode(this.polish, state)
+            // traces: encode(this.traces, state),
+            // inner: encode(this.inner, state),
+            // // thinner: encode(this.thinner, state),
+            // solids: encode(this.solids, state),
+            // thin_fill: encodePointArray(this.thin_fill, state),
+            // fill_lines: encodePointArray(this.fill_lines, state),
+            // fill_sparse: encode(this.fill_sparse, state),
+            // polish: encode(this.polish, state)
         };
     };
 
     registerDecoder('top', function(v, state) {
         let top = KIRI.newTop(decode(v.poly, state));
 
-        top.traces = decode(v.traces, state);
-        top.inner = decode(v.inner, state);
-        // top.thinner = decode(v.thinner, state);
-        top.solids = decode(v.solids, state);
-        top.thin_fill = decodePointArray(v.thin_fill, state);
-        top.fill_lines = decodePointArray(v.fill_lines, state);
-        top.fill_sparse = decode(v.fill_sparse, state);
-        top.polish = decode(v.polish, state);
+        // top.traces = decode(v.traces, state);
+        // top.inner = decode(v.inner, state);
+        // // top.thinner = decode(v.thinner, state);
+        // top.solids = decode(v.solids, state);
+        // top.thin_fill = decodePointArray(v.thin_fill, state);
+        // top.fill_lines = decodePointArray(v.fill_lines, state);
+        // top.fill_sparse = decode(v.fill_sparse, state);
+        // top.polish = decode(v.polish, state);
 
         return top;
     });

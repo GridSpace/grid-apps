@@ -26,94 +26,13 @@
         });
     }
 
-    CAM.renderSlice = function(slice) {
-        let group = new THREE.Group();
-        let render = slice.render;
-        let view = slice.view;
-
-        function addPoly(vertices, poly) {
-            const points = poly.points, len = points.length;
-            for (let i=1; i<len; i++) {
-                const p1 = points[i-1], p2 = points[i];
-                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
-            }
-            if (!poly.open) {
-                const p1 = points[len - 1], p2 = points[0];
-                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
-            }
-        }
-
-        for (const [layer, data] of Object.entries(render.layers)) {
-            const { polys, lines, faces, paths } = data;
-            if (polys.length || lines.length) {
-                const mat = new THREE.LineBasicMaterial({ color: data.color.line });
-                const geo = new THREE.Geometry(), vert = geo.vertices;
-                for (let i=0, il=polys.length; i<il; i++) {
-                    addPoly(vert, polys[i]);
-                }
-                for (let i=0, il=lines.length; i<il; i++) {
-                    const p = lines[i];
-                    vert.push(new THREE.Vector3(p.x, p.y, p.z));
-                }
-                if (vert.length) {
-                    group.add(new THREE.LineSegments(geo, mat));
-                }
-            }
-            if (faces.length) {
-                const mat = new THREE.MeshPhongMaterial({
-                    transparent: true,
-                    shininess: 100,
-                    specular: 0x181818,
-                    opacity: 1,
-                    color: data.color.face,
-                    side: THREE.DoubleSide
-                });
-                const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
-                geo.computeFaceNormals();
-                geo.computeVertexNormals();
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                group.add(mesh);
-            }
-            if (paths.length) {
-                const mat = new THREE.MeshPhongMaterial({
-                    transparent: true,
-                    shininess: 100,
-                    specular: 0x181818,
-                    opacity: 1,
-                    color: data.color.face,
-                    side: THREE.DoubleSide
-                });
-                paths.forEach((path, i) => {
-                    const { index, faces, z } = path;
-                    const geo = new THREE.BufferGeometry();
-                    geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
-                    geo.setIndex(index);
-                    geo.computeFaceNormals();
-                    geo.computeVertexNormals();
-                    const mesh = new THREE.Mesh(geo, mat);
-                    mesh.position.z = z;
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-                    group.add(mesh);
-                });
-            }
-        }
-
-        slice.view.add(group);
-    };
-
     CAM.sliceRender = function(widget) {
+        return KIRI.Layer.renderSetup().renderSlices(widget.slices);
+
         let slices = widget.slices;
         if (!slices) return;
 
         slices.forEach(function(slice) {
-            if (slice.render) return CAM.renderSlice(slice);
-
             let tops = slice.tops,
                 layers = slice.layers,
                 outline = layers.outline,

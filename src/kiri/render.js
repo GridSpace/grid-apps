@@ -8,6 +8,7 @@
     class Render {
         constructor() {
             this.layers = {};
+            this.profiles = {};
         }
 
         setLayer(layer, colors) {
@@ -36,17 +37,53 @@
             return this;
         }
 
-        addPoly(poly) {
-            this.current.polys.push(poly);
+        addLines(lines, options) {
+            if (options) {
+                for (let i=0; i<lines.length-1; i += 2) {
+                    const poly = new BASE.Polygon()
+                        .append(lines[i])
+                        .append(lines[i+1])
+                        .setOpen();
+                    this.addPoly(poly, options);
+                }
+                return;
+            }
+            for (let i=0; i<lines.length-1; i += 2) {
+                this.addLine(lines[i], lines[i+1]);
+            }
+        }
+
+        addPoly(poly, options) {
+            if (options) {
+                this.addPaths([poly], options);
+            } else {
+                this.current.polys.push(poly);
+            }
             return this;
         }
 
-        addPolys(polys) {
+        addPolys(polys, options) {
+            if (options) {
+                return this.addPaths(polys, options);
+            }
             polys = flat(polys);
             for (let i=0; i<polys.length; i++) {
                 this.addPoly(polys[i]);
             }
             return this;
+        }
+
+        addAreas(polys, options) {
+            const faces = this.current.faces;
+            polys = Array.isArray(polys) ? polys : [ polys ];
+            polys.forEach(poly => {
+                poly.earcut().forEach(ep => {
+                    ep.forEachPoint(p => { faces.push(p.x, p.y, p.z) });
+                });
+            });
+            if (options && options.outline) {
+                this.addPolys(poly.clone());
+            }
         }
 
         addFlats(polys, options) {
@@ -81,18 +118,23 @@
                 return;
             }
 
-            const profile = new THREE.Shape();
-            profile.moveTo(-offset, -offset);
-            profile.lineTo(-offset,  offset);
-            profile.lineTo( offset,  offset);
-            profile.lineTo( offset, -offset);
+            const profiles = this.profiles;
+            if (!profiles[offset]) {
+                const profile = new THREE.Shape();
+                profile.moveTo(-offset, -offset);
+                profile.lineTo(-offset,  offset);
+                profile.lineTo( offset,  offset);
+                profile.lineTo( offset, -offset);
+                profiles[offset] = profile;
+            }
+            const profile = profiles[offset].clone();
 
             polys.forEach(poly => {
                 const contour = [];
                 poly.points.forEach(p => {
                     contour.push(new THREE.Vector2(p.x, p.y));
                 });
-                const {index, faces} = ProfiledContourGeometry(profile, contour, true);
+                const {index, faces} = ProfiledContourGeometry(profile, contour, poly.isClosed());
                 this.current.paths.push({ index, faces, z: poly.getZ() });
             });
             return this;
@@ -101,9 +143,9 @@
 
     function flat(polys) {
         if (Array.isArray(polys)) {
-            return POLY.flatten(polys, [], true);
+            return POLY.flatten(polys.clone(true), [], true);
         } else {
-            return POLY.flatten([polys], [], true);
+            return POLY.flatten([polys.clone(true)], [], true);
         }
     }
 

@@ -136,11 +136,6 @@
             sliceDrillReg(settings, sliceAll, zThru);
         }
 
-        if (procDrill) {
-            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
-            sliceDrill(drillTool, tslices, sliceAll);
-        }
-
         // identify through holes
         thruHoles = tshadow.map(p => p.inner || []).flat();
 
@@ -156,7 +151,9 @@
                 slice.z = z;
                 slice.index = sliceIndex++;
                 slice.camMode = PRO.LEVEL;
-                slice.tops[0].traces = POLY.setZ(facing.clone(), slice.z);
+                slice.output()
+                    .setLayer("facing", {face: 0, line: 0})
+                    .addPolys(POLY.setZ(facing.clone(true), slice.z));
                 sliceAll.push(slice);
             }
         }
@@ -226,7 +223,9 @@
                     }
                 });
 
-                slice.tops[0].traces = offset;
+                slice.output()
+                    .setLayer("roughing", {face: 0, line: 0})
+                    .addPolys(offset);
                 slice.index = sliceIndex++;
                 updateOp(index, slices.length);
             });
@@ -299,12 +298,14 @@
                     }
                 }
 
-                slice.tops[0].traces = offset;
-                slice.index = sliceIndex++;
-
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                    addCutoutTabs(slice, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                    offset = addCutoutTabs(offset, slice.z, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
+
+                slice.index = sliceIndex++;
+                slice.output()
+                    .setLayer("outline", {face: 0, line: 0})
+                    .addPolys(offset);
             });
 
             sliceAll.appendAll(slices);
@@ -337,6 +338,11 @@
             }
         }
 
+        if (procDrill) {
+            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
+            sliceDrill(drillTool, tslices, sliceAll);
+        }
+
         // used in printSetup()
         widget.terrain = terrain;
         widget.maxToolDiam = maxToolDiam;
@@ -347,7 +353,7 @@
     // drilling op
     function sliceDrill(tool, slices, output) {
         let drills = [],
-            drillToolDiam = tool.flueDiameter(),
+            drillToolDiam = tool.fluteDiameter(),
             centerDiff = drillToolDiam * 0.1,
             area = (drillToolDiam/2) * (drillToolDiam/2) * Math.PI,
             areaDelta = area * 0.05;
@@ -388,7 +394,9 @@
                 point.y = center.y;
             });
             slice.camMode = PRO.DRILL;
-            slice.addTop(null).traces = [ drill ];
+            slice.output()
+                .setLayer("drill", {face: 0, line: 0})
+                .addPolys(drill);
             output.append(slice);
         });
     }
@@ -425,21 +433,23 @@
                     .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
             });
             slice.camMode = PRO.DRILL;
-            slice.addTop(null).traces = polys;
+            slice.output()
+                .setLayer("register", {face: 0, line: 0})
+                .addPolys(polys);
             output.append(slice);
         }
     }
 
     // cut outside traces at the right points
-    function addCutoutTabs(slice, toolDiam, tabWidth, tabCount, tabAngle) {
+    function addCutoutTabs(offset, z, toolDiam, tabWidth, tabCount, tabAngle) {
         // skip if no tops | traces
-        if (slice.tops.length === 0) return;
+        if (offset.length === 0) return offset;
 
         let notabs = 0;
         let nutrace = [];
 
         // find trace with greatest area
-        slice.tops[0].traces.forEach(function(trace, index) {
+        offset.forEach(function(trace, index) {
 
             // required to match computed order of cutouts
             trace.setClockwise();
@@ -447,7 +457,7 @@
             let count = tabCount,
                 angle = tabAngle,
                 angle_inc = 360 / count,
-                center = trace.bounds.center(slice.z),
+                center = trace.bounds.center(z),
                 offset = (tabWidth + toolDiam) / 2,
                 ints = [],
                 segs = [];
@@ -498,7 +508,7 @@
             console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
         }
 
-        slice.tops[0].traces = nutrace;
+        return nutrace;
     }
 
 })();

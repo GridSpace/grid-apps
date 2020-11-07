@@ -29,6 +29,8 @@
      * @param {number} mode to use to select colors
      */
     FDM.sliceRender = function(widget) {
+        return KIRI.Layer.renderSetup().renderSlices(widget.slices);
+
         let slices = widget.slices;
         let settings = widget.settings;
         let extnum = widget.getExtruder(settings);

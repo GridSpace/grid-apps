@@ -184,7 +184,7 @@
                         slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
-                        sliceout = slice.tops[0].traces = [ ];
+                        sliceout = [];
                         for (y = minY; y < maxY; y += resolution) {
                             if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
                                 end_poly();
@@ -224,6 +224,9 @@
                         end_poly();
                         if (sliceout.length > 0) {
                             newslices.push(slice);
+                            slice.output()
+                                .setLayer("contour x", {face: 0, line: 0})
+                                .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour x");
                     }
@@ -241,7 +244,7 @@
                         slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
-                        sliceout = slice.tops[0].traces = [ ];
+                        sliceout = [];
                         for (x = minX; x <= maxX; x += resolution) {
                             if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
                                 end_poly();
@@ -281,6 +284,9 @@
                         end_poly();
                         if (sliceout.length > 0) {
                             newslices.push(slice);
+                            slice.output()
+                                .setLayer("contour y", {face: 0, line: 0})
+                                .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour y");
                     }

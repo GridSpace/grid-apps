@@ -599,9 +599,6 @@
     }
 
     function setWidgetVisibility(bool) {
-        if (bool) {
-            UI.layerParts.checked = true;
-        }
         forAllWidgets(w => {
             if (bool) {
                 w.show();
@@ -621,10 +618,6 @@
             return;
         }
 
-        if (MODE === MODES.CAM) {
-            setWidgetVisibility(UI.layerParts.checked);
-        }
-
         showSlider();
 
         if (typeof(layer) === 'string' || typeof(layer) === 'number') {
@@ -638,9 +631,7 @@
         API.var.layer_hi = layer;
         API.event.emit("slider.label");
 
-        let print = UI.layerPrint.checked,
-            moves = UI.layerMoves.checked,
-            cam = MODE === MODES.CAM,
+        let cam = MODE === MODES.CAM,
             sla = MODE === MODES.SLA,
             hi = cam ? API.var.layer_max - API.var.layer_lo : API.var.layer_hi,
             lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
@@ -648,7 +639,7 @@
         updateSlider();
 
         forAllWidgets(function(widget) {
-            if (print) return widget.hideSlices();
+            if (currentPrint) return widget.hideSlices();
 
             let slices = widget.slices;
             if (!slices) return;
@@ -656,45 +647,15 @@
             for (let j = 0; j < slices.length; j++) {
                 let slice = slices[j];
                 slice.view.visible = j >= lo && j <= hi;
-                let layers = slice.layers;
-                layers.outline.setVisible(cam ?
-                    UI.layerOutline.checked :
-                    UI.layerOutline.checked
-                );
-                layers.trace.setVisible(cam ?
-                    UI.layerRough.checked :
-                    UI.layerTrace.checked
-                );
-                layers.bridge.setVisible(cam ?
-                    UI.layerFinishX.checked :
-                    UI.layerDelta.checked
-                );
-                layers.flat.setVisible(cam ?
-                    UI.layerFinishY.checked :
-                    UI.layerDelta.checked
-                );
-                layers.solid.setVisible(cam ?
-                    UI.layerFinish.checked :
-                    UI.layerSolid.checked
-                );
-                layers.fill.setVisible(cam ?
-                    UI.layerFacing.checked :
-                    UI.layerFill.checked
-                );
-                layers.sparse.setVisible(UI.layerSparse.checked);
-                layers.support.setVisible(UI.layerSupport.checked);
             }
         });
 
         if (currentPrint) {
             let len = currentPrint.getLayerCount();
             for (let j = 0; j < len; j++) {
-                currentPrint.showLayer(j, print && j >= lo && j <= hi, moves);
+                currentPrint.showLayer(j, print && j >= lo && j <= hi);
             }
         }
-
-        UI.layerPrint.parentNode.style.display = currentPrint && !sla ? '' : 'none';
-        UI.layerMoves.parentNode.style.display = currentPrint && !sla ? '' : 'none';
 
         SPACE.update();
     }
@@ -810,7 +771,6 @@
             SPACE.platform.remove(currentPrint.group);
             currentPrint = null;
         }
-        UI.layerPrint.checked = false;
     }
 
     function clearSlices() {
