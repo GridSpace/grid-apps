@@ -2,14 +2,12 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` ui control of import + decimation + precision
 * `F` implement an in-app bug reporting system
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
 * `F` gcode color to speed visualization bar
 * `F` X,Y,Z colored axes visualizations
 * `F` 2D image import
-* `P` bail on decimation if it's proving ineffective
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
 
@@ -43,13 +41,12 @@
 
 # CAM
 
-* `B` outline slicing should be distinct from roughing which handles flats
-* `B` excessive moves with tabs. allow reversing in open polys or do not nest them
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
-* `F` use arcs to connect hard angles
+* `F` use arcs to connect acute angles
+* `F` extend acute roughing on inside polys to clear small voids
 * `F` lead-in milling
 * `F` adaptive clearing in roughing mode
 * `F` trapezoidal tabs (in the Z axis)
@@ -60,7 +57,6 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
-* `P` background worker to speculatively generate topo maps (and maybe pre-slicing)
 
 # Laser
 

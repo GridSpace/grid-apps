@@ -60,7 +60,9 @@
                 latent,
                 lastP,
                 slice, lx, ly,
-                startTime = time();
+                startTime = time(),
+                stepsTaken = 0,
+                stepsTotal = 0;
 
             // return the touching z given topo x,y and a tool profile
             function toolTipZ(x,y) {
@@ -167,7 +169,7 @@
                         gridy++;
                     }
                     gridx++;
-                    onupdate(0.20 + (gridx/stepsx) * 0.50, "trace surface");
+                    onupdate(++stepsTaken, stepsTotal, "trace surface");
                 }
 
                 // x contouring
@@ -223,7 +225,7 @@
                         if (sliceout.length > 0) {
                             newslices.push(slice);
                         }
-                        onupdate(0.70 + (gridx/stepsx) * 0.15, "contour x");
+                        onupdate(++stepsTaken, stepsTotal, "contour x");
                     }
                 }
 
@@ -280,7 +282,7 @@
                         if (sliceout.length > 0) {
                             newslices.push(slice);
                         }
-                        onupdate(0.85 + (gridy/stepsy) * 0.15, "contour y");
+                        onupdate(++stepsTaken, stepsTotal, "contour y");
                     }
                 }
 
@@ -289,10 +291,12 @@
 
             let slicer = new KIRI.slicer2(widget.getPoints(), { swapX: true });
             let sindex = slicer.interval(resolution);
+            stepsTotal += sindex.length * 2;
+            if (proc.camContourXOn) stepsTotal += (maxX-minX) / toolStep;
+            if (proc.camContourYOn) stepsTotal += (maxY-minY) / toolStep;
             let slices = slicer.slice(sindex, { each: (data, index, total) => {
-                onupdate(0.0 + (index/total) * 0.20, "topo slice");
+                onupdate(++stepsTaken, stepsTotal, "topo slice");
             }, genso: true });
-
             processSlices(slices.map(data => data.slice));
         }
     }

@@ -86,9 +86,31 @@
             return ondone(`invalid z bottom >= bounds z max ${bounds.max.z}`);
         }
 
+        // allows progress output to me weighted and matched to processes
+        let ops = [ [ "mapping", 1.5 ] ];
+        if (procRough) ops.push([ "roughing", 1 ]);
+        if (procRough) ops.push([ "rough offset", 1 ]);
+        if (procOutline) ops.push([ "outline", 0.5 ]);
+        if (procContour) ops.push([ "contour", 4 ]);
+        let opsTot = ops.map(op => op[1]).reduce((a,v) => a + v);
+        let opSum = 0;
+        let opTot;
+        let opOn;
+
+        function nextOp() {
+            if (opOn) opSum += opOn[1];
+            opOn = ops.shift();
+            opTot = opOn[1] / opsTot;
+        }
+
+        function updateOp(index, total, msg) {
+            onupdate((opSum/opsTot) + (index/total) * opTot, msg || opOn[0]);
+        }
+
         // TODO pass widget.isModified() on slice and re-use cache if false
         // TODO pre-slice in background from client signal
         // TODO same applies to topo map generation
+        nextOp();
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
             zline: true
@@ -105,7 +127,8 @@
             // slice.camMode = PRO.LEVEL;
             // slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
             // sliceAll.push(slice);
-            onupdate(0.0 + (index/total) * 0.1, "mapping");
+            // onupdate(opSum + (index/total) * opOn[1], opOn[0]);
+            updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
 
@@ -141,6 +164,7 @@
 
         // create roughing slices
         if (procRough) {
+            nextOp();
             maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
             let shadow = [];
             let slices = [];
@@ -152,7 +176,7 @@
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
                 slices.push(data.slice);
-                onupdate(0.1 + (index/total) * 0.1, "roughing");
+                updateOp(index, total);
             }, genso: true });
 
             shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
@@ -178,7 +202,8 @@
             // expand shadow by half tool diameter + stock to leave
             let shell = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
 
-            slices.forEach(slice => {
+            nextOp();
+            slices.forEach((slice, index) => {
                 let shadow = slice.shadow;
                 let offset = [shell.clone(true),shadow.clone(true)].flat();
                 let flat = POLY.flatten(offset, [], true);
@@ -204,6 +229,7 @@
 
                 slice.tops[0].traces = offset;
                 slice.index = sliceIndex++;
+                updateOp(index, slices.length);
             });
 
             sliceAll.appendAll(slices);
@@ -211,6 +237,7 @@
 
         // create outline slices
         if (procOutline) {
+            nextOp();
             let outlineTool = new CAM.Tool(conf, proc.camOutlineTool);
             let outlineToolDiam = outlineTool.fluteDiameter();
             maxToolDiam = Math.max(maxToolDiam, outlineToolDiam);
@@ -225,7 +252,8 @@
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
                 slices.push(data.slice);
-                onupdate(0.2 + (index/total) * 0.1, "outlines");
+                // onupdate(0.2 + (index/total) * 0.1, "outlines");
+                updateOp(index, total);
             }, genso: true });
             shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
 
@@ -287,9 +315,12 @@
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
         if (procContour) {
+            nextOp();
             new CAM.Topo(widget, settings, {
-                onupdate: (update, msg) => {
-                    onupdate(0.40 + update * 0.50, msg || "create topo");
+                // onupdate: (update, msg) => {
+                onupdate: (index, total, msg) => {
+                    updateOp(index, total, msg);
+                    // onupdate(0.30 + update * 0.50, msg || "create topo");
                 },
                 ondone: (slices) => {
                     sliceAll.appendAll(slices);
