@@ -94,7 +94,8 @@
             bridges: encode(this.bridges, state),
             flats: encode(this.flats, state),
             solids: encode(this.solids, state),
-            supports: encode(this.supports, state)
+            supports: encode(this.supports, state),
+            render: encode(this.render, state)
         };
     };
 
@@ -108,8 +109,36 @@
         slice.flats = decode(v.flats, state);
         slice.solids = decode(v.solids, state);
         slice.supports = decode(v.supports, state);
+        slice.render = decode(v.render, state)
 
         return slice;
+    });
+
+    KIRI.Render.prototype.encode = function(state) {
+        let enc = {
+            type: 'render',
+            layers: Object.keys(this.layers),
+            data: Object.values(this.layers).map(layer => { return {
+                polys: encode(layer.polys, state),
+                lines: encodePointArray(layer.lines, state),
+                faces: encodePointArray(layer.faces, state),
+                color: layer.color
+            } })
+        };
+        return enc;
+    };
+
+    registerDecoder('render', function(v, state) {
+        let render = new KIRI.Render();
+        for (let i=0; i<v.layers.length; i++) {
+            render.layers[v.layers[i]] = {
+                polys: decode(v.data[i].polys, state),
+                lines: decodePointArray(v.data[i].lines),
+                faces: decodePointArray(v.data[i].faces),
+                color: v.data[i].color
+            };
+        }
+        return render;
     });
 
     KIRI.Top.prototype.encode = function(state) {

@@ -121,13 +121,10 @@
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
-            // let slice = data.slice;
-            // slice.z = data.z;
-            // slice.index = sliceIndex++;
-            // slice.camMode = PRO.LEVEL;
-            // slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
-            // sliceAll.push(slice);
-            // onupdate(opSum + (index/total) * opOn[1], opOn[0]);
+            // sliceAll.push(data.slice);
+            // data.slice.output()
+            //     .setLayer("debug", 0xff0000)
+            //     .addPolys(POLY.setZ(tshadow.clone(true), data.z));
             updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];

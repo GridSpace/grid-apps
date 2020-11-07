@@ -56,6 +56,7 @@
         this.camMode = null; // CAM mode
         this.layers = null;
         this.finger = null; // cached fingerprint
+        this.render = null; // will replace most of the layer output data
 
         if (view) this.addLayers(view);
     }
@@ -111,6 +112,14 @@
     /** ******************************************************************
      * Slice Prototype Functions
      ******************************************************************* */
+
+    /**
+     * return Render object for this slice. creates it if necessary.
+     */
+    PRO.output = function() {
+        if (this.render) return this.render;
+        return this.render = new KIRI.Render();
+    };
 
     /**
      * returns a cloned slice the option of a deep clone on the top polys

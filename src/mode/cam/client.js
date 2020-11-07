@@ -26,11 +26,50 @@
         });
     }
 
+    CAM.renderSlice = function(slice) {
+        let group = new THREE.Group();
+        let render = slice.render;
+        let view = slice.view;
+
+        function addPoly(vertices, poly) {
+            const points = poly.points, len = points.length;
+            for (let i=1; i<len; i++) {
+                const p1 = points[i-1], p2 = points[i];
+                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
+                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+            }
+            if (!poly.open) {
+                const p1 = points[len - 1], p2 = points[0];
+                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
+                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+            }
+        }
+
+        for (const [layer, data] of Object.entries(render.layers)) {
+            const mat = new THREE.LineBasicMaterial({ color: data.color });
+            const geo = new THREE.Geometry(), vertices = geo.vertices;
+            const polys = data.polys;
+            for (let i=0, il=polys.length; i<il; i++) {
+                addPoly(vertices, polys[i]);
+            }
+            const lines = data.lines;
+            for (let i=0, il=lines.length; i<il; i++) {
+                const p = lines[i];
+                vertices.push(new THREE.Vector3(p.x, p.y, p.z));
+            }
+            group.add(new THREE.LineSegments(geo, mat));
+        }
+
+        slice.view.add(group);
+    };
+
     CAM.sliceRender = function(widget) {
         let slices = widget.slices;
         if (!slices) return;
 
         slices.forEach(function(slice) {
+            if (slice.render) return CAM.renderSlice(slice);
+
             let tops = slice.tops,
                 layers = slice.layers,
                 outline = layers.outline,
