@@ -290,6 +290,7 @@ const script = {
         "ext/pngjs",
         "license",
         "ext/clip2",
+        "ext/earcut",
         "add/array",
         "add/three",
         "add/class",

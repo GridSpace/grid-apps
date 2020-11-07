@@ -46,18 +46,39 @@
         }
 
         for (const [layer, data] of Object.entries(render.layers)) {
-            const mat = new THREE.LineBasicMaterial({ color: data.color });
-            const geo = new THREE.Geometry(), vertices = geo.vertices;
-            const polys = data.polys;
-            for (let i=0, il=polys.length; i<il; i++) {
-                addPoly(vertices, polys[i]);
+            const { polys, lines, faces } = data;
+            if (polys.length || lines.length) {
+                const mat = new THREE.LineBasicMaterial({ color: data.color.line });
+                const geo = new THREE.Geometry(), vert = geo.vertices;
+                for (let i=0, il=polys.length; i<il; i++) {
+                    addPoly(vert, polys[i]);
+                }
+                for (let i=0, il=lines.length; i<il; i++) {
+                    const p = lines[i];
+                    vert.push(new THREE.Vector3(p.x, p.y, p.z));
+                }
+                if (vert.length) {
+                    group.add(new THREE.LineSegments(geo, mat));
+                }
             }
-            const lines = data.lines;
-            for (let i=0, il=lines.length; i<il; i++) {
-                const p = lines[i];
-                vertices.push(new THREE.Vector3(p.x, p.y, p.z));
+            if (faces.length) {
+                const mat = new THREE.MeshPhongMaterial({
+                    transparent: true,
+                    shininess: 100,
+                    specular: 0x181818,
+                    opacity: 1,
+                    color: data.color.face,
+                    side: THREE.DoubleSide
+                });
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+                geo.computeFaceNormals();
+                geo.computeVertexNormals();
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                group.add(mesh);
             }
-            group.add(new THREE.LineSegments(geo, mat));
         }
 
         slice.view.add(group);

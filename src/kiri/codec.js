@@ -16,6 +16,9 @@
     };
 
     function allocFloat32Array(len) {
+        if (Array.isArray(len)) {
+            return new Float32Array(len);
+        }
         return new Float32Array(len);
     }
 
@@ -121,7 +124,7 @@
             data: Object.values(this.layers).map(layer => { return {
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
-                faces: encodePointArray(layer.faces, state),
+                faces: codec.allocFloat32Array(layer.faces),
                 color: layer.color
             } })
         };
@@ -134,7 +137,7 @@
             render.layers[v.layers[i]] = {
                 polys: decode(v.data[i].polys, state),
                 lines: decodePointArray(v.data[i].lines),
-                faces: decodePointArray(v.data[i].faces),
+                faces: v.data[i].faces,
                 color: v.data[i].color
             };
         }
