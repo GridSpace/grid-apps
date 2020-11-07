@@ -286,7 +286,7 @@
         });
 
         let out = [];
-        POLY.expand(last, -offset*1.1, 0, out, 1);
+        POLY.expand(last, -offset*1.1, 999, out, 1);
 
         return out;
     }
@@ -653,7 +653,7 @@
         offset = POLY.nest(offset);
 
         // inset offset array by 1/2 diameter then by tool overlap %
-        POLY.expand(offset, - (diameter / 2), slice.z, outer, 0, -diameter * overlap);
+        POLY.expand(offset, - (diameter / 2), slice.z, outer, 999, -diameter * overlap);
 
         if (!pocket) {
             // re-flatten offset polys
@@ -1028,7 +1028,7 @@
             });
 
             // set all default shells
-            const camShellPolys = shellRough = shellOutline = facePolys = camShell.gatherTopPolys([]);
+            const camShellPolys = facePolys = shellRough = shellOutline = camShell.gatherTopPolys([]);
 
             if (procDrillReg) {
                 sliceDrillReg(settings, widget, sliceAll, zThru);
@@ -1041,17 +1041,17 @@
             if (procRough) {
                 if (pocketOnlyRough) {
                     // expand shell minimally triggering a clean
-                    shellRough = POLY.expand(shellRough, 0.01, 0);
+                    shellRough = facePolys = POLY.expand(shellRough, 0.01, 999);
                 } else {
                     // expand shell by half tool diameter + stock to leave
-                    shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 0);
+                    shellRough = facePolys = POLY.expand(shellRough, (roughToolDiam / 2) + camRoughStock, 999);
                 }
             }
 
             if (procOutline) {
                 if (pocketOnlyOutline) {
                     // expand shell minimally triggering a clean
-                    shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 0);
+                    shellOutline = POLY.expand(shellOutline, -outlineToolDiam / 2, 999);
                 } else {
                     // expand shell by half tool diameter (not needed because only one offset)
                     // shellOutline = POLY.expand(shellOutline, outlineToolDiam / 2, 0);
@@ -1071,7 +1071,7 @@
                     slice.camMode = CPRO.LEVEL;
                     sliceAll.append(slice);
 
-                    shellRough.clone().forEach(function(poly) {
+                    facePolys.clone().forEach(function(poly) {
                         slice.addTop(poly);
                     })
 
