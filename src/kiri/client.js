@@ -171,22 +171,22 @@ KIRI.work = {
         });
     },
 
-    printExport : function(settings, online, ondone) {
+    export : function(settings, online, ondone) {
         let lines = [];
-        send("printExport", {settings:settings}, function(reply) {
+        send("export", {settings:settings}, function(reply) {
             if (reply.line) {
                 online(reply.line);
             }
             if (reply.done) {
-                ondone(reply.done);
+                ondone(reply.output);
             }
         });
     },
 
-    printGCode : function(callback) {
+    gcode : function(callback) {
         let gcode = [];
         let start = BASE.util.time();
-        send("printGCode", {}, function(reply) {
+        send("gcode", {}, function(reply) {
             if (reply.line) {
                 gcode.push(reply.line);
             } else {
@@ -194,19 +194,6 @@ KIRI.work = {
                 // console.log({printGCode:(BASE.util.time() - start)});
                 callback(reply);
             }
-        });
-    },
-
-    sliceToGCode : function(settings, vertices, callback) {
-        vertices = widget.getGeoVertices().buffer.slice(0);
-        let wid = new Date().toString(36);
-        send("slice", {settings:settings, id:wiwd, vertices:vertices, position:{x:0,y:0,z:0}}, function(reply) {
-            send("printSetup", {settings:settings}, function(reply) {
-                send("printGCode", {}, function(reply) {
-                    callback(reply);
-                });
-            }, [vertices]);
-            callback(reply);
         });
     }
 };

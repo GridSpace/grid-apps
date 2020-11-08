@@ -24,7 +24,7 @@
     /**
      * @returns {Array} gcode lines
      */
-    CAM.printExport = function printExport(print, online) {
+    CAM.export = function printExport(print, online) {
         let widget = print.widgets[0];
 
         if (!widget) return;

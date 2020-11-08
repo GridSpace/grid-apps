@@ -220,9 +220,9 @@
 
         if (KIRI.client) {
             // executed from kiri.js
-            KIRI.client.printExport(this.settings, online, ondone);
+            KIRI.client.export(this.settings, online, ondone);
         } else {
-            if (!(driver && driver.printExport)) {
+            if (!(driver && driver.export)) {
                 console.log({missing_export_driver: mode});
                 ondone(null);
                 return;

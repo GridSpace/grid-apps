@@ -12,7 +12,7 @@
     /**
      * @returns {Array} gcode lines
      */
-    FDM.printExport = function(print, online) {
+    FDM.export = function(print, online) {
         let layers = print.output,
             settings = FDM.fixExtruders(print.settings),
             device = settings.device,

@@ -15,27 +15,45 @@
         STATS = API.stats,
         MODES = API.const.MODES;
 
-    KIRI.export = exportPrint;
+    KIRI.export = exportFile;
 
     let printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1;
 
-    function exportPrint(options) {
-        let currentPrint = API.print.get();
-        if (currentPrint) {
+    function isPrepared() {
+        return API.view.get() === API.const.VIEWS.PREVIEW;
+    }
+
+    function exportFile(options) {
+        if (isPrepared()) {
             API.event.emit('export', API.mode.get());
             switch (API.mode.get()) {
-                case 'LASER': return exportPrintLaser(currentPrint);
-                case 'FDM': return exportPrintGCODE(currentPrint, options);
-                case 'CAM': return exportPrintGCODE(currentPrint, options);
-                case 'SLA': return exportPrintSLA(currentPrint);
+                case 'LASER': return callExport();
+                case 'FDM': return callExport(options);
+                case 'CAM': return callExport(options);
+                case 'SLA': return exportSLA();
             }
         } else {
-            API.function.print(function() { exportPrint(options) });
+            API.function.prepare(function() {
+                exportFile(options)
+            });
         }
     }
 
-    function exportPrintSLA(currentPrint) {
-        if (currentPrint) {
+    function callExport(options) {
+        if (isPrepared()) {
+            const gcode = [];
+            KIRI.client.export(API.conf.get(), (line) => {
+                gcode.push(line);
+            }, (output) => {
+                exportGCodeDialog(gcode.join('\n'), output);
+            });
+        } else {
+            API.function.prepare(function() { exportPrint(options) });
+        }
+    }
+
+    function exportSLADialog(currentPrint) {
+        if (isPrepared()) {
             if (currentPrint.exported) {
                 KIRI.driver.SLA.printDownload(currentPrint);
                 return;
@@ -69,27 +87,13 @@
                 KIRI.driver.SLA.printDownload(currentPrint);
             });
         } else {
-            API.function.print(exportPrintSLA);
+            API.function.prepare(exportSLA);
         }
     }
 
-    function exportPrintGCODE(currentPrint, options) {
-        if (currentPrint) {
-            currentPrint.exportGCode(true, function(gcode) {
-                if (typeof(options) === 'function') {
-                    options(gcode, currentPrint);
-                } else {
-                    exportGCode(gcode, currentPrint);
-                }
-            });
-        } else {
-            API.function.print(function() { exportPrint(options) });
-        }
-    }
-
-    function exportPrintLaser(currentPrint) {
-        if (!currentPrint) {
-            return API.function.print(exportPrintLaser);
+    function exportLaserDialog(currentPrint) {
+        if (!isPrepared()) {
+            return API.function.prepare(exportLaser);
         }
 
         let filename = "laser-"+(new Date().getTime().toString(36));
@@ -128,7 +132,7 @@
         });
     }
 
-    function exportGCode(gcode, currentPrint) {
+    function exportGCodeDialog(gcode, currentPrint) {
         SDB['kiri-print-seq'] = printSeq++;
 
         let settings = API.conf.get(),

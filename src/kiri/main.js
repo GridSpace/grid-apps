@@ -43,7 +43,6 @@
         STACKS = KIRI.stacks,
         DRIVER = undefined,
         onEvent = {},
-        currentPrint = null,
         selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
@@ -229,9 +228,10 @@
         function: {
             slice: prepareSlices,
             print: preparePrint,
+            prepare: preparePrint,
             export: function() { KIRI.export(...arguments) },
             cancel: cancelWorker,
-            clear: clearWidgetCache
+            clear: () => { console.log("api.function.clear unimplemented") }
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
@@ -251,10 +251,6 @@
             set: setMode,
             switch: switchMode,
             set_expert: setExpert
-        },
-        print: {
-            get: function() { return currentPrint },
-            clear: clearPrint
         },
         probe: {
             live : "https://live.grid.space",
@@ -580,13 +576,11 @@
     }
 
     function hideSlices() {
-        let showing = false;
-        setOpacity(color.model_opacity);
         STACKS.clear();
+        setOpacity(color.model_opacity);
         forAllWidgets(function(widget) {
             widget.setWireframe(false);
         });
-        return showing;
     }
 
     function setWidgetVisibility(bool) {
@@ -634,8 +628,9 @@
     }
 
     function loadCode(code, type) {
+        return alert2('currently unavailable');
+
         setViewMode(VIEWS.PREVIEW);
-        clearPrint();
         setOpacity(0);
         currentPrint = kiri.newPrint(settings, []);
         let center = settings.process.outputOriginCenter;
@@ -682,7 +677,6 @@
 
         if (feature.preview) {
             setViewMode(VIEWS.PREVIEW);
-            clearPrint();
         }
         API.conf.save();
         API.event.emit('preview.begin', pMode);
@@ -730,25 +724,6 @@
         if (KIRI.work.isSlicing()) KIRI.work.restart();
     }
 
-    function clearWidgetCache() {
-        hideSlices();
-        clearSlices();
-        clearPrint();
-    }
-
-    function clearPrint() {
-        if (currentPrint) {
-            SPACE.platform.remove(currentPrint.group);
-            currentPrint = null;
-        }
-    }
-
-    function clearSlices() {
-        forAllWidgets(function(widget) {
-            widget.slices = null;
-        });
-    }
-
     function showSlider() {
         UI.layers.style.display = 'flex';
         UI.slider.style.display = 'flex';
@@ -777,7 +752,6 @@
         }
 
         hideSlider(true);
-        clearPrint();
         platform.deselect();
         setViewMode(VIEWS.SLICE);
 
@@ -1954,10 +1928,11 @@
             case VIEWS.ARRANGE:
                 $('lt-back').style.display = '';
                 KIRI.work.clear();
+                STACKS.clear();
                 hideSlider();
-                clearWidgetCache();
                 updateSliderMax();
                 setWidgetVisibility(true);
+                setOpacity(1);
                 break;
             case VIEWS.SLICE:
                 $('lt-back').style.display = 'flex';
@@ -2028,7 +2003,6 @@
         API.conf.load();
         API.conf.save();
         // other housekeeping
-        clearWidgetCache();
         triggerSettingsEvent();
         platformUpdateSelected();
         updateFields();

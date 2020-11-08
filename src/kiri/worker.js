@@ -129,15 +129,27 @@ KIRI.worker = {
         send.done({ done: true, output: KIRI.codec.encode(layers) });
     },
 
-    printExport: function(data, send) {
-        current.print.export(false, function(line, direct) {
-            send.data({line}, direct);
-        }, function(done, direct) {
-            send.done({done}, direct);
+    export: function(data, send) {
+        const mode = data.settings.mode;
+        const driver = KIRI.driver[mode];
+
+        if (!(driver && driver.export)) {
+            console.log({missing_export_driver: mode});
+            return send.done()
+        }
+
+        const output = driver.export(current.print, function(line) {
+            send.data({line});
+        });
+        const { time, lines, bytes, bounds } = current.print;
+
+        send.done({
+            done: true,
+            output: { time, lines, bytes, bounds }
         });
     },
 
-    printGCode: function(data, send) {
+    gcode: function(data, send) {
         current.print.exportGCode(false, function(gcode) {
             send.done({
                 gcode: gcode,
