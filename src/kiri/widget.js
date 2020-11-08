@@ -624,21 +624,14 @@
     };
 
     /**
-     * render all slice and processed data
+     * render to provided stack
      */
-    PRO.render = function() {
+    PRO.render = function(stack) {
         const mark = Date.now();
-        DRIVERS[this.settings.mode.toUpperCase()].sliceRender(this);
-        return Date.now() - mark;
-    };
-
-    PRO.hideSlices = function() {
-        let showing = false;
-        if (this.slices) this.slices.forEach(function(slice) {
-            showing = showing || slice.view.visible;
-            slice.view.visible = false;
+        this.slices.forEach(slice => {
+            stack.add(slice.render);
         });
-        return showing;
+        return Date.now() - mark;
     };
 
     PRO.toggleWireframe = function (color, opacity) {
@@ -652,7 +645,6 @@
             mesh.remove(this.wire);
             this.wire = null;
             this.setOpacity(solid_opacity);
-            this.hideSlices();
         }
         if (set) {
             widget.wire = base.render.wireframe(mesh, this.getPoints(), color);

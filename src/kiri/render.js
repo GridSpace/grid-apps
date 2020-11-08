@@ -22,8 +22,8 @@
             let layers = this.layers;
             if (typeof(colors) === 'number') {
                 colors = {
-                    line: color,
-                    face: color,
+                    line: colors,
+                    face: colors,
                     opacity: 1
                 };
             }
@@ -62,6 +62,7 @@
                 this.addLine(lines[i], lines[i+1]);
                 this.stats.line++;
             }
+            return this;
         }
 
         addPoly(poly, options) {

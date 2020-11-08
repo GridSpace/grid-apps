@@ -107,23 +107,27 @@ KIRI.worker = {
     },
 
     printSetup: function(data, send) {
-        let widgets = [], key;
-        for (key in cache) {
-            if (cache.hasOwnProperty(key)) widgets.push(cache[key]);
+        // create widget array from id:widget cache
+        const widgets = [];
+        for (let key in cache) {
+            if (cache.hasOwnProperty(key)) {
+                widgets.push(cache[key]);
+            }
         }
 
+        // let client know we've started
         send.data({update:0.05, updateStatus:"preview"});
 
         current.print = KIRI.newPrint(data.settings, widgets, data.id);
-        current.print.setup(false, function(update, msg) {
+        current.print.setup(false, function(progress, message) {
             send.data({
-                update: update,
-                updateStatus: msg
+                progress,
+                message
             });
         }, function() {
             send.done({
                 done: true,
-                output: current.print.encodeOutput()
+                output: KIRI.codec.encode(current.print.output)
             });
         });
     },

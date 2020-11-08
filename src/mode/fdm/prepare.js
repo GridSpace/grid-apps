@@ -9,7 +9,8 @@
         UTIL = BASE.util,
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM,
-        newPoint = BASE.newPoint;
+        newPoint = BASE.newPoint,
+        newPolygon = BASE.newPolygon;
 
     /**
      * DRIVER PRINT CONTRACT
@@ -24,7 +25,7 @@
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
             mode = settings.mode,
-            output = print.output,
+            output = [],
             bounds = settings.bounds,
             printPoint = newPoint(0,0,0),
             firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
@@ -229,7 +230,7 @@
                 pos = {x:blokpos.x, y:blokpos.y, z:0},
                 rec = {
                     extruder: i,
-                    poly: BASE.newPolygon().centerSpiral(pos, blok.x, blok.y, noz*2, 3)
+                    poly: newPolygon().centerSpiral(pos, blok.x, blok.y, noz*2, 3)
                 };
             blokpos.x += walkpos.x;
             blokpos.y += walkpos.y;
@@ -370,7 +371,63 @@
             lastOut = undefined;
         }
 
-        console.log({output});
+        print.output = render(output, progress => {
+            // console.log({render: progress});
+        }, device.extruders);
     };
+
+    function render(output, update, tools) {
+        const layers = [];
+        output.forEach((level, index) => {
+            update(index / output.length);
+            const prints = {};
+            const moves = [];
+            const pushPrint = (tool, poly) => {
+                let array = prints[tool] = prints[tool] || [];
+                array.width = tools[tool].extNozzle / 2;
+                array.push(poly);
+            };
+            let lastOut = null;
+            let current = null;
+            let height = level.height / 2;
+            let width = 1;
+            level.forEach(out => {
+                if (lastOut) {
+                    if (out.emit) {
+                        if (!lastOut.emit) {
+                            current = newPolygon().setOpen();
+                            current.push(lastOut.point);
+                            pushPrint(out.tool, current);
+                        }
+                        current.push(out.point);
+                    } else {
+                        if (lastOut.emit) {
+                            current = newPolygon().setOpen();
+                            current.push(lastOut.point);
+                            moves.push(current);
+                        }
+                        current.push(out.point);
+                    }
+                } else {
+                    current = newPolygon().setOpen();
+                    current.push(out.point);
+                    if (out.emit) {
+                        pushPrint(out.tool, current);
+                    } else {
+                        moves.push(current);
+                    }
+                }
+                lastOut = out;
+            });
+            const out = new KIRI.Render();
+            layers.push(out);
+            out.setLayer('move', 0xaaaaaa).addPolys(moves);
+            Object.values(prints).forEach(array => {
+                out.setLayer('print', 0x888800).addPolys(array, { offset: array.width, height })
+            })
+        });
+
+        return layers;
+    }
 
 })();

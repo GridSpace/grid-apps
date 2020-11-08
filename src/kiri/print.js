@@ -46,7 +46,7 @@
         this.time = 0;
         this.lines = 0;
         this.bytes = 0;
-        this.output = [];
+        this.output = null;
         this.distance = 0;
         this.bounds = null;
         this.imported = null;
@@ -213,35 +213,31 @@
     };
 
     PRO.setup = function(remote, onupdate, ondone) {
-        let scope = this,
-            settings = scope.settings,
+        let print = this,
+            settings = print.settings,
             mode = settings.mode;
 
         lastPoint = null;
         lastEmit = null;
 
-        if (remote) {
-
-            // executed from kiri.js
-            KIRI.work.printSetup(settings, function(reply) {
+        if (KIRI.client) {
+            // executed main kiri.js
+            KIRI.client.printSetup(settings, function(reply) {
                 if (reply.done) {
-                    scope.output = reply.output;
+                    print.output = KIRI.codec.decode(reply.output);
                     ondone();
                 } else {
-                    onupdate(reply.update, reply.updateStatus)
+                    onupdate(reply.progress, reply.message)
                 }
             });
-
         } else {
-
             // executed from kiri-worker.js
-            // uses encodeOutput in this class to produce scope.output above
+            // uses encodeOutput in this class to produce print.output above
             // this encoding could be made vastly more efficient
             let driver = KIRI.driver[mode];
-            if (driver) driver.printSetup(scope, onupdate);
+            if (driver) driver.printSetup(print, onupdate);
             else console.log({missing_print_driver: mode});
             ondone();
-
         }
     };
 
@@ -250,9 +246,9 @@
         let mode = this.settings.mode;
         let driver = KIRI.driver[mode];
 
-        if (remote) {
+        if (KIRI.client) {
             // executed from kiri.js
-            KIRI.work.printExport(this.settings, online, ondone);
+            KIRI.client.printExport(this.settings, online, ondone);
         } else {
             if (!(driver && driver.printExport)) {
                 console.log({missing_export_driver: mode});
@@ -273,9 +269,9 @@
             return ondone(scope.imported);
         }
 
-        if (remote) {
+        if (KIRI.client) {
             // executed from kiri.js
-            KIRI.work.printGCode(function(reply) {
+            KIRI.client.printGCode(function(reply) {
                 scope.lines = reply.lines;
                 scope.bytes = reply.bytes;
                 scope.bounds = reply.bounds;
@@ -283,10 +279,7 @@
                 scope.time = reply.time;
                 ondone(reply.gcode);
             });
-            return;
-
         } else {
-
             // executed from kiri-worker.js
             let driver = KIRI.driver[mode];
             if (driver && driver.printExport) {
@@ -295,7 +288,6 @@
                 console.log({missing_export_driver: mode});
                 ondone(null);
             }
-
         }
     };
 
@@ -347,20 +339,11 @@
         return newout;
     };
 
-    PRO.render = function() {
-        let settings = this.settings,
-            origin = settings.origin,
-            mode = settings.mode,
-            tools = [],
-            driver = KIRI.driver[mode],
-            mark = Date.now();
-
-        if (mode === 'FDM') {
-            tools = settings.device.extruders || [];
-        }
-
-        driver.printRender(this, {tools, aslines:settings.controller.thinRender});
-        if (KIRI.api.const.LOCAL) console.log({printRender: Date.now() - mark});
+    PRO.render = function(stack) {
+        console.log({print_render: this.output});
+        this.output.forEach(layer => {
+            stack.add(layer);
+        });
     };
 
     function pref(a,b) {

@@ -4,11 +4,7 @@
 
 (function() {
 
-    return; // todo remove
-    if (self.kiri.Layer) return;
-
     const KIRI = self.kiri,
-        POLY = self.base.polygons,
         shininess = 15,
         specular = 0x444444,
         emissive = 0x101010,
@@ -16,34 +12,74 @@
         roughness = 0.3,
         newMesh = createPhongMesh;
 
-    KIRI.Layer = Layer;
-    KIRI.newLayer = function() { return new Layer() };
+    let stacks = {},
+        tallest = 0,
+        min = 0,
+        max = 0,
+        labels, API, UC, UI, DYN;
 
-    function Layer(view) { }
+    function init() {
+        labels = $("layers");
+        API = KIRI.api,
+        UC = API.uc,
+        UI = API.ui,
+        DYN = UI.dyn = {};
+    }
 
-    Layer.renderSetup = function() {
-        const API = KIRI.api, UC = API.uc, UI = API.ui;
-        const dyn = UI.dyn = {};
-        const layers = $("layers");
-        UC.setGroup(layers);
-        layers.innerHTML = '';
-        return Layer;
-    };
-
-    Layer.renderSlices = function(slices) {
-        if (slices && slices.length) {
-            slices.forEach(slice => Layer.renderSlice(slice));
+    function clear() {
+        if (!API) {
+            init();
         }
-        return Layer;
-    };
 
-    Layer.renderSlice = function(slice) {
-        let group = new THREE.Group();
-        let render = slice.render;
-        let view = slice.view;
+        // remove stacks from their views
+        for (const [stack, data] of Object.entries(stacks)) {
+            data.clear();
+        }
+        min = max = tallest = 0;
+        stacks = {};
 
-        if (!render) return;
+        // clear labels
+        UC.setGroup(labels);
+        labels.innerHTML = '';
 
+    }
+
+    function create(name, view) {
+        if (stacks[name]) {
+            return stacks[name];
+        }
+        const stack = stacks[name] = {
+            layers: [ ],
+            view: view.newGroup(),
+            add: function(layer) {
+                const nuview = stack.view.newGroup();
+                stack.layers.push(nuview);
+                render(layer, nuview);
+                tallest = Math.max(tallest, stack.layers.length);
+            },
+            clear: function() {
+                view.remove(stack.view);
+            }
+        };
+        return stack;
+    }
+
+    function getRange() {
+        return {min, max, tallest};
+    }
+
+    function setRange(newMin, newMax) {
+        for (const [stack, data] of Object.entries(stacks)) {
+            const layers = data.layers, len = layers.length;
+            for (let i=0; i<len; i++) {
+                layers[i].visible = i >= newMin && i <= newMax;
+            }
+        }
+        min = newMin;
+        max = newMax;
+    }
+
+    function render(render, group) {
         function addPoly(vertices, poly) {
             const points = poly.points, len = points.length;
             for (let i=1; i<len; i++) {
@@ -58,20 +94,18 @@
             }
         }
 
-        const API = KIRI.api, UC = API.uc, UI = API.ui, DYN = UI.dyn;;
-
-        for (const [layer, data] of Object.entries(render.layers)) {
-            if (!DYN[layer]) {
-                DYN[layer] = {
+        for (const [label, data] of Object.entries(render.layers)) {
+            if (!DYN[label]) {
+                DYN[label] = {
                     group: [],
-                    toggle: UC.newBoolean(layer, (abc) => {
+                    toggle: UC.newBoolean(label, (abc) => {
                         ctrl.group.forEach(mat => {
                             mat.visible = ctrl.toggle.checked;
                         });
                     })
                 };
             }
-            const ctrl = DYN[layer];
+            const ctrl = DYN[label];
             ctrl.toggle.checked = true;
 
             const { polys, lines, faces, paths } = data;
@@ -120,8 +154,6 @@
                 ctrl.group.push(mat);
             }
         }
-
-        slice.view.add(group);
     };
 
     function createStandardMesh(data) {
@@ -146,4 +178,12 @@
             side: THREE.DoubleSide
         });
     }
+
+    KIRI.stacks = {
+        clear,
+        create,
+        getRange,
+        setRange
+    };
+
 })();

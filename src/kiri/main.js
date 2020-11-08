@@ -40,6 +40,7 @@
         UI = {},
         UC = KIRI.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
         MODE = MODES.FDM,
+        STACKS = KIRI.stacks,
         DRIVER = undefined,
         onEvent = {},
         currentPrint = null,
@@ -590,11 +591,10 @@
     function hideSlices() {
         let showing = false;
         setOpacity(color.model_opacity);
+        STACKS.clear();
         forAllWidgets(function(widget) {
             widget.setWireframe(false);
-            showing = widget.hideSlices() || showing;
         });
-        clearPrint();
         return showing;
     }
 
@@ -637,25 +637,7 @@
             lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
 
         updateSlider();
-
-        forAllWidgets(function(widget) {
-            if (currentPrint) return widget.hideSlices();
-
-            let slices = widget.slices;
-            if (!slices) return;
-
-            for (let j = 0; j < slices.length; j++) {
-                let slice = slices[j];
-                slice.view.visible = j >= lo && j <= hi;
-            }
-        });
-
-        if (currentPrint) {
-            let len = currentPrint.getLayerCount();
-            for (let j = 0; j < len; j++) {
-                currentPrint.showLayer(j, print && j >= lo && j <= hi);
-            }
-        }
+        STACKS.setRange(API.var.layer_lo, API.var.layer_hi);
 
         SPACE.update();
     }
@@ -683,7 +665,6 @@
         currentPrint.render();
         SPACE.platform.add(currentPrint.group);
         SPACE.update();
-        UI.layerPrint.checked = true;
         updateSliderMax(true);
         showSlices();
     }
@@ -736,16 +717,15 @@
             if (!isCam) setOpacity(0);
 
             if (feature.preview) {
-                currentPrint.render();
+                STACKS.clear();
+                currentPrint.render(STACKS.create('print', SPACE.platform.world));
             }
 
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);
 
             if (feature.preview) {
-                SPACE.platform.add(currentPrint.group);
                 SPACE.update();
-                UI.layerPrint.checked = true;
                 updateSliderMax(true);
                 showSlices();
             }
@@ -828,6 +808,8 @@
 
         setOpacity(color.slicing_opacity);
 
+        STACKS.clear();
+
         // for each widget, slice
         forAllWidgets(function(widget) {
             let segtimes = {},
@@ -835,7 +817,8 @@
                 errored = false,
                 startTime,
                 lastMsg,
-                camOrLaser = mode === 'CAM' || mode === 'LASER';
+                camOrLaser = mode === 'CAM' || mode === 'LASER',
+                stack = STACKS.create(widget.id, widget.mesh);
 
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
@@ -854,7 +837,7 @@
                     firstMesh = false;
                 }
                 // on done
-                segtimes[`${segNumber}_draw`] = widget.render();
+                segtimes[`${segNumber}_draw`] = widget.render(stack);
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                 widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
