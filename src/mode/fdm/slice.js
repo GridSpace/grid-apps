@@ -469,6 +469,8 @@
         //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
         //         .addAreas(top.flats);
         // }
+
+        // console.log(slice.index, slice.render.stats);
     }
 
     /**

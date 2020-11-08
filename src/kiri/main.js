@@ -841,18 +841,11 @@
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
                 let mark = UTIL.time();
-                // on done
-                widget.render();
-                // clear wireframe
-                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
-                widget.setColor(color.deselected);
                 // update UI info
                 if (sliced) {
                     // update segment time
-                    if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
+                    if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
                     segtimes.total = UTIL.time() - now;
-                    DBUG.log(segtimes);
                     API.event.emit('slice', getMode());
                     updateSliderMax(true);
                     if (preserveMax != API.var.layer_max) {
@@ -860,12 +853,20 @@
                     }
                     firstMesh = false;
                 }
+                // on done
+                segtimes[`${segNumber}_draw`] = widget.render();
+                // clear wireframe
+                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
+                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
+                widget.setColor(color.deselected);
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
                     API.show.progress(0);
                     showSlices(preserveLayer);
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
+                    // print stats
+                    DBUG.log(segtimes);
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
@@ -881,10 +882,9 @@
             }, function(update, msg) {
                 if (msg !== lastMsg) {
                     let mark = UTIL.time();
-                    if (lastMsg) segtimes[segNumber+"_"+lastMsg] = mark - startTime;
+                    if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
                     lastMsg = msg;
                     startTime = mark;
-                    segNumber++;
                 }
                 // on update
                 track[widget.id] = update;

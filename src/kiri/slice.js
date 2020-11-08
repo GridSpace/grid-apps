@@ -4,8 +4,6 @@
 
 (function() {
 
-    if (self.kiri.Slice) return;
-
     const KIRI = self.kiri,
         PRO = Slice.prototype,
         BASE = self.base,
@@ -14,8 +12,8 @@
         NOKEY = BASE.key.NONE;
 
     KIRI.Top = Top;
-    KIRI.newTop = newTop;
     KIRI.Slice = Slice;
+    KIRI.newTop = newTop;
     KIRI.newSlice = newSlice;
 
     /**
@@ -156,24 +154,6 @@
         return slice ? POLY.fingerprintCompare(this.fingerprint(), slice.fingerprint()) : false;
     };
 
-    /**
-     * Add a polygon to a slice creating a new top when necessary.
-     *
-     * @param {Polygon} poly to merge into a top
-     */
-    // PRO.mergeTop = function(poly) {
-    //     let slice = this,
-    //         tops = slice.tops,
-    //         union, i;
-    //     for (i=0; i<tops.length; i++) {
-    //         if (union = poly.union(tops[i].poly)) {
-    //             tops[i].poly = union;
-    //             return tops[i];
-    //         }
-    //     }
-    //     return slice.addTop(poly);
-    // };
-
     PRO.addTops = function(polys) {
         polys.forEach(p => {
             this.addTop(p);
@@ -191,85 +171,6 @@
         this.tops.push(top);
         return top;
     };
-
-    /**
-     * Returns all top polygons as an array
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    // PRO.gatherTopPolys = function(out) {
-    //     this.tops.forEach(function(top) {
-    //         out.push(top.poly);
-    //     });
-    //     return out;
-    // };
-
-    /**
-     * Appends all inner trace inner polygons (holes)
-     * into a given array and returns it
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    // PRO.gatherTopPolyInners = function(out) {
-    //     this.tops.forEach(function(top) {
-    //         if (top.poly.inner) out.appendAll(top.poly.inner);
-    //     });
-    //     return out;
-    // };
-
-    /**
-     * Appends all trace polygons into a given array and returns it
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    // PRO.gatherTraces = function(out) {
-    //     this.tops.forEach(function(top) {
-    //         out.appendAll(top.traces);
-    //     });
-    //     return out;
-    // };
-
-    /**
-     * Appends all innermost trace polygons into a given array and returns it
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    // PRO.gatherInner = function(out) {
-    //     this.tops.forEach(function(top) {
-    //         out.appendAll(top.inner);
-    //     });
-    //     return out;
-    // };
-
-    /**
-     * Appends all solid area polygons into a given array and returns it
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    // PRO.gatherSolids = function(out) {
-    //     this.tops.forEach(function(top) {
-    //         out.appendAll(top.solids);
-    //     });
-    //     return out;
-    // };
-
-    /**
-     * return all fill lines. includes points for solid layers,
-     * solid polygon regions and support line polygons.
-     *
-     * @param {Point[]} [lines] array to append to
-     */
-    // PRO.gatherFillLines = function(lines) {
-    //     this.tops.forEach(function(top) {
-    //         if (top.fill_lines) lines.appendAll(top.fill_lines);
-    //     });
-    //     return lines;
-    // };
 
     function newTop(poly) {
         return new Top(poly);

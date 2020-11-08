@@ -9,6 +9,13 @@
         constructor() {
             this.layers = {};
             this.profiles = {};
+            this.stats = {
+                contour: 0,
+                flat_line: 0,
+                flat_poly: 0,
+                line_poly: 0,
+                line: 0
+            };
         }
 
         setLayer(layer, colors) {
@@ -53,6 +60,7 @@
             }
             for (let i=0; i<lines.length-1; i += 2) {
                 this.addLine(lines[i], lines[i+1]);
+                this.stats.line++;
             }
         }
 
@@ -69,6 +77,7 @@
             }
             polys = flat(polys);
             this.current.polys.appendAll(polys);
+            this.stats.line_poly += polys.length;
             return this;
         }
 
@@ -103,9 +112,11 @@
                 let exp = off_opt.outs = [];
                 if (open) {
                     exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
+                    this.stats.flat_line = 0;
                 } else {
                     POLY.offset([poly],  offset * 0.9, off_opt);
                     POLY.offset([poly], -offset * 0.9, off_opt);
+                    this.stats.flat_poly = 0;
                 }
                 if (opts.outline) {
                     this.addPolys(exp.clone());
@@ -145,6 +156,7 @@
                 });
                 const {index, faces} = ProfiledContourGeometry(profile, contour, poly.isClosed());
                 this.current.paths.push({ index, faces, z: poly.getZ() });
+                this.stats.contour++;
             });
             return this;
         }

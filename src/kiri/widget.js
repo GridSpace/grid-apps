@@ -594,7 +594,7 @@
                     return ondone(error);
                 }
 
-                onupdate(1.0, "transferring");
+                onupdate(1.0, "transfer");
 
                 widget.stats.slice_time = UTIL.time() - startTime;
                 widget.modified = false;
@@ -627,9 +627,9 @@
      * render all slice and processed data
      */
     PRO.render = function() {
-        let mark = Date.now();
+        const mark = Date.now();
         DRIVERS[this.settings.mode.toUpperCase()].sliceRender(this);
-        if (KIRI.api.const.LOCAL) console.log({sliceRender: Date.now() - mark});
+        return Date.now() - mark;
     };
 
     PRO.hideSlices = function() {
