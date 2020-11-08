@@ -8,6 +8,7 @@
         BASE = self.base,
         UTIL = BASE.util,
         SLA = KIRI.driver.SLA,
+        FDM = KIRI.driver.FDM.share,
         SLICER = KIRI.slicer,
         newTop = KIRI.newTop,
         newSlice = KIRI.newSlice,
@@ -120,12 +121,12 @@
                 slices[i].down = slices[i-1];
             }
             // reset for solids and support projections
-            slices.forEach(function(slice) {
-                slice.invalidateFill();
-                slice.invalidateSolids();
-                slice.invalidateSupports();
-                slice.isSolidFill = false;
-            });
+            // slices.forEach(function(slice) {
+            //     slice.invalidateFill();
+            //     slice.invalidateSolids();
+            //     slice.invalidateSupports();
+            //     slice.isSolidFill = false;
+            // });
             let solidLayers = Math.round(process.slaShell / process.slaSlice);
             work_total = [
                 5,  // shell
@@ -139,34 +140,34 @@
             work_remain = work_total;
             forSlices(slices, 5, (slice,index) => {
                 if (process.slaShell) {
-                    slice.doShells(2, 0, process.slaShell);
+                    FDM.doShells(slice, 2, 0, process.slaShell);
                 } else {
-                    slice.doShells(1, 0);
+                    FDM.doShells(slice, 1, 0);
                 }
             }, "slice");
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
-                slice.doDiff(0.000001, 0.005, !process.slaOpenBase);
+                FDM.doDiff(slice, 0.000001, 0.005, true, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
-                    slice.projectFlats(solidLayers);
-                    slice.projectBridges(solidLayers);
+                    FDM.projectFlats(slice, solidLayers);
+                    FDM.projectBridges(slice, solidLayers);
                 }, "project");
                 forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
-                    slice.doSolidsFill(undefined, undefined, 0.001);
-                    let traces = POLY.nest(POLY.flatten(slice.gatherTraces([])));
-                    let trims = slice.solids.trimmed || [];
+                    FDM.doSolidsFill(slice, undefined, undefined, 0.001);
+                    let traces = POLY.nest(POLY.flatten(slice.topShells()));
+                    let trims = slice.solids || [];
                     traces.appendAll(trims);
                     let union = POLY.union(traces);
-                    slice.solids.unioned = union;
+                    slice.unioned = union;
                 }, "solid");
             } else {
                 forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
-                    slice.solids.unioned = slice.gatherTopPolys([]);
+                    slice.unioned = slice.topPolys();
                 }, "solid");
             }
             if (process.slaFillDensity && process.slaShell) {
@@ -181,11 +182,45 @@
                     doupdate(100 * progress, "support");
                 });
             }
+            doRender(widget);
             ondone();
         }, function(update) {
             return onupdate(0.0 + update * 0.25);
         });
     };
+
+    function doRender(widget) {
+        widget.slices.forEach(slice => {
+            const render = slice.output();
+
+            if (slice.unioned) {
+                // console.log('solid', slice.index)
+                slice.unioned.forEach(poly => {
+                    poly = poly.clone(true);//.move(widget.track.pos);
+                    render
+                        .setLayer("layers", { line: 0x010101, face: 0x0099cc, opacity: 0.2 })
+                        .addAreas([poly], { outline: true });
+                });
+            } else if (slice.tops) {
+                // console.log('top', slice.index)
+                slice.tops.forEach(top => {
+                    let poly = top.poly;//.clone(true).move(widget.track.pos);
+                    render
+                        .setLayer("layers", { line: 0x010101, face: 0xfcba03, opacity: 0.2 })
+                        .addAreas([poly], { outline: true });
+                });
+            }
+
+            if (slice.supports) {
+                // console.log('support', slice.index)
+                slice.supports.forEach(poly => {
+                    render
+                        .setLayer("support", { line: 0x010101, face: 0xfcba03, opacity: 0.2 })
+                        .addAreas([poly], { outline: true });
+                });
+            }
+        });
+    }
 
     function computeSupports(widget, process, progress) {
         let area = widget.union.reduce((t,p) => { return t + p.areaDeep() }, 0),
@@ -199,7 +234,7 @@
 
         // compute total "mass" by slice
         ops.forEach(slice => {
-            slice.mass = slice.solids.unioned.reduce((t,p) => { return t + p.areaDeep() }, 0);
+            slice.mass = slice.unioned.reduce((t,p) => { return t + p.areaDeep() }, 0);
             if (slice.up && slice.up.bridges) {
                 slice.bear = slice.up.bridges.reduce((t,p) => { return t + p.areaDeep() }, 0);
                 slice.bear_up = slice.up.bridges;
@@ -499,7 +534,7 @@
     function fillPolys(slice, settings) {
         let process = settings.process,
             device = settings.device,
-            polys = slice.solids.unioned,
+            polys = slice.unioned,
             bounds = settings.bounds,
             width = bounds.max.x - bounds.min.x,
             depth = bounds.max.y - bounds.min.y,
@@ -550,9 +585,9 @@
         }
 
         fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
-        fill = POLY.union(slice.solids.unioned.appendAll(fill));
+        fill = POLY.union(slice.unioned.appendAll(fill));
 
-        slice.solids.unioned = fill;
+        slice.unioned = fill;
     }
 
     function pixAt(png,x,y) {

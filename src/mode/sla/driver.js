@@ -10,11 +10,9 @@
     const KIRI = self.kiri,
         SLA = KIRI.driver.SLA = {
             // init,           // src/mode/sla/client.js
-            // printRender     // src/mode/sla/client.js
-            // sliceRender,    // src/mode/sla/client.js
             // slice,          // src/mode/sla/slice.js
             printSetup,
-            // printExport,    // src/mode/sla/export.js
+            // export,         // src/mode/sla/export.js
             // printDownload,  // src/mode/sla/client.js
             legacy: false
         };

@@ -479,6 +479,15 @@
         // console.log(slice.index, slice.render.stats);
     }
 
+    // shared with SLA driver
+    FDM.share = {
+        doShells,
+        doDiff,
+        projectFlats,
+        projectBridges,
+        doSolidsFill
+    };
+
     /**
      * Compute offset shell polygons. For FDM, the first offset is usually half
      * of the nozzle width.  Each subsequent offset is a full nozzle width.  User
@@ -789,11 +798,11 @@
      * Used to calculate bridges, flats and then solid projections.
      * 'expand' is used for top offsets in SLA mode
      */
-    function doDiff(slice, minArea, sla) {
+    function doDiff(slice, minArea, sla, fakedown) {
         const top = slice,
-            down = slice.down,
+            down = slice.down || (fakedown ? newSlice(-1) : null),
             topInner = sla ? top.topPolys() : top.topInners(),
-            downInner = sla ? down.downPolys() : down.topInners(),
+            downInner = sla ? down.topPolys() : down.topInners(),
             bridges = top.bridges = [],
             flats = down.flats = [];
 

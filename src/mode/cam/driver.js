@@ -9,7 +9,7 @@
             // init,        // src/mode/cam/client.js
             // slice,       // src/mode/cam/slice.js
             // prepare,     // src/mode/cam/prepare.js
-            // printExport, // src/mode/cam/export.js
+            // export       // src/mode/cam/export.js
         },
         CPRO = CAM.process = {
             LEVEL: 1,

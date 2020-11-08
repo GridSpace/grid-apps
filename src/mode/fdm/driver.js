@@ -13,7 +13,7 @@
             // init,           // src/mode/fdm/client.js
             // slice,          // src/mode/fdm/slice.js
             // prepare,        // src/mode/fdm/prepare.js
-            // printExport,    // src/mode/fdm/export.js
+            // export,         // src/mode/fdm/export.js
             fixExtruders
         };
 

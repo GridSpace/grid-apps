@@ -110,7 +110,11 @@
 
             const { polys, lines, faces, paths } = data;
             if (polys.length || lines.length) {
-                const mat = new THREE.LineBasicMaterial({ color: data.color.line });
+                const mat = new THREE.LineBasicMaterial({
+                    transparent: data.color.opacity != 1,
+                    opacity: data.color.opacity,
+                    color: data.color.line
+                });
                 const geo = new THREE.Geometry(), vert = geo.vertices;
                 for (let i=0, il=polys.length; i<il; i++) {
                     addPoly(vert, polys[i]);

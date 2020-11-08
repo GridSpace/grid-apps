@@ -141,11 +141,11 @@ KIRI.worker = {
         const output = driver.export(current.print, function(line) {
             send.data({line});
         });
-        const { time, lines, bytes, bounds } = current.print;
+        const { bounds, time, lines, bytes, distance } = current.print;
 
         send.done({
             done: true,
-            output: { time, lines, bytes, bounds }
+            output: { bounds, time, lines, bytes, distance }
         });
     },
 

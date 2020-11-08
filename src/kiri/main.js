@@ -47,7 +47,6 @@
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         // ---------------
-        renderMode = 4,
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
         local = SETUP.local,
@@ -59,7 +58,6 @@
         alerts = [],
         grouping = false;
 
-    if (SETUP.rm) renderMode = parseInt(SETUP.rm[0]);
     DBUG.enable();
 
     // remove version, preserve other settings
@@ -227,11 +225,11 @@
         feature,
         function: {
             slice: prepareSlices,
-            print: preparePrint,
-            prepare: preparePrint,
+            print: preparePreview,
+            prepare: preparePreview,
             export: function() { KIRI.export(...arguments) },
             cancel: cancelWorker,
-            clear: () => { console.log("api.function.clear unimplemented") }
+            clear: KIRI.client.clear
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
@@ -655,71 +653,6 @@
         showSlices();
     }
 
-    function preparePrint(callback) {
-        if (viewMode === VIEWS.PREVIEW) return;
-        hideSlider(true);
-
-        // kick off slicing it hasn't been done already
-        for (let i=0; i < WIDGETS.length; i++) {
-            if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                prepareSlices(function() {
-                    if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                        alert2("nothing to print");
-                    } else {
-                        preparePrint(callback);
-                    }
-                });
-                return;
-            }
-        }
-
-        let isCam = MODE === MODES.CAM, pMode = getMode();
-
-        if (feature.preview) {
-            setViewMode(VIEWS.PREVIEW);
-        }
-        API.conf.save();
-        API.event.emit('preview.begin', pMode);
-
-        if (isCam) {
-            setOpacity(color.cam_preview_opacity);
-            forAllWidgets(function(widget) {
-                widget.setColor(color.cam_preview);
-            });
-        } else if (feature.preview) {
-            setOpacity(color.preview_opacity);
-        }
-
-        KIRI.client.prepare(settings, function(progress, message) {
-            API.show.progress(progress, message);
-        }, function (output) {
-            API.show.progress(0);
-            if (!isCam) setOpacity(0);
-
-            output = KIRI.codec.decode(output);
-            if (feature.preview && output) {
-                STACKS.clear();
-                const stack = STACKS.create('print', SPACE.platform.world)
-                output.forEach(layer => {
-                    stack.add(layer);
-                });
-            }
-
-            API.event.emit('print', pMode);
-            API.event.emit('preview.end', pMode);
-
-            if (feature.preview) {
-                SPACE.update();
-                updateSliderMax(true);
-                showSlices();
-            }
-
-            if (typeof(callback) === 'function') {
-                callback();
-            }
-        });
-    }
-
     function cancelWorker() {
         if (KIRI.work.isSlicing()) KIRI.work.restart();
     }
@@ -736,11 +669,6 @@
         // UI.setMenu.style.display = andmenu ? 'none' : 'flex';
     }
 
-    /**
-     * incrementally slice all meshes then incrementally update them
-     *
-     * @param {Function} callback
-     */
     function prepareSlices(callback) {
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
@@ -748,7 +676,7 @@
             KIRI.work.snap(API.view.snapshot);
         }
         if (MODE === MODES.SLA && !callback) {
-            callback = preparePrint;
+            callback = preparePreview;
         }
 
         hideSlider(true);
@@ -835,6 +763,77 @@
                 });
                 API.show.progress((totalProgress / WIDGETS.length), msg);
             });
+        });
+    }
+
+    function preparePreview(callback) {
+        if (viewMode === VIEWS.PREVIEW) return;
+        if (viewMode === VIEWS.ARRANGE) {
+            prepareSlices(() => {
+                preparePreview(callback);
+            });
+        }
+
+        hideSlider(true);
+
+        // kick off slicing it hasn't been done already
+        for (let i=0; i < WIDGETS.length; i++) {
+            if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
+                prepareSlices(function() {
+                    if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
+                        alert2("nothing to print");
+                    } else {
+                        preparePreview(callback);
+                    }
+                });
+                return;
+            }
+        }
+
+        let isCam = MODE === MODES.CAM, pMode = getMode();
+
+        if (feature.preview) {
+            setViewMode(VIEWS.PREVIEW);
+        }
+        API.conf.save();
+        API.event.emit('preview.begin', pMode);
+
+        if (isCam) {
+            setOpacity(color.cam_preview_opacity);
+            forAllWidgets(function(widget) {
+                widget.setColor(color.cam_preview);
+            });
+        } else if (feature.preview) {
+            setOpacity(color.preview_opacity);
+        }
+
+        KIRI.client.prepare(settings, function(progress, message) {
+            API.show.progress(progress, message);
+        }, function (output) {
+            API.show.progress(0);
+            if (!isCam) setOpacity(0);
+
+            output = KIRI.codec.decode(output);
+            if (feature.preview && output) {
+                STACKS.clear();
+                const stack = STACKS.create('print', SPACE.platform.world)
+                output.forEach(layer => {
+                    stack.add(layer);
+                });
+            }
+
+            API.event.emit('print', pMode);
+            API.event.emit('preview.end', pMode);
+
+            if (feature.preview) {
+                SPACE.update();
+                updateSliderMax(true);
+                showSlices();
+            }
+
+            if (typeof(callback) === 'function') {
+                callback();
+            }
         });
     }
 

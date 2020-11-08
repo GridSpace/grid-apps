@@ -39,7 +39,7 @@
 
         this.settings = settings;
         this.widgets = widgets;
-        this.group = new THREE.Group();
+        // this.group = new THREE.Group();
         this.printView = [];
         this.movesView = [];
 
@@ -387,23 +387,23 @@
         return out;
     }
 
-    PRO.getLayerCount = function() {
-        return this.output.length;
-    }
+    // PRO.getLayerCount = function() {
+    //     return this.output.length;
+    // }
 
-    PRO.hide = function() {
-        this.printView.forEach(function(layer) {
-            layer.setVisible(false);
-        })
-        this.movesView.forEach(function(layer) {
-            layer.setVisible(false);
-        })
-    };
-
-    PRO.showLayer = function(index, show, moves) {
-        if (this.printView[index]) this.printView[index].setVisible(show);
-        if (this.movesView[index]) this.movesView[index].setVisible(show && moves);
-    };
+    // PRO.hide = function() {
+    //     this.printView.forEach(function(layer) {
+    //         layer.setVisible(false);
+    //     })
+    //     this.movesView.forEach(function(layer) {
+    //         layer.setVisible(false);
+    //     })
+    // };
+    //
+    // PRO.showLayer = function(index, show, moves) {
+    //     if (this.printView[index]) this.printView[index].setVisible(show);
+    //     if (this.movesView[index]) this.movesView[index].setVisible(show && moves);
+    // };
 
     /**
      * @constructor

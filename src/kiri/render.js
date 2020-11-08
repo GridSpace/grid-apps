@@ -91,7 +91,7 @@
                 });
             });
             if (options && options.outline) {
-                this.addPolys(poly.clone());
+                this.addPolys(polys.clone(true));
             }
         }
 
