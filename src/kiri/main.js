@@ -705,20 +705,19 @@
             setOpacity(color.preview_opacity);
         }
 
-        currentPrint = kiri.newPrint(settings, WIDGETS);
-        currentPrint.setup(true, function(update, status) {
-            API.show.progress(update, status);
-        }, function() {
-            if (!currentPrint) {
-                return setViewMode(VIEWS.ARRANGE);
-            }
-
+        KIRI.client.prepare(settings, function(progress, message) {
+            API.show.progress(progress, message);
+        }, function (output) {
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
-            if (feature.preview) {
+            output = KIRI.codec.decode(output);
+            if (feature.preview && output) {
                 STACKS.clear();
-                currentPrint.render(STACKS.create('print', SPACE.platform.world));
+                const stack = STACKS.create('print', SPACE.platform.world)
+                output.forEach(layer => {
+                    stack.add(layer);
+                });
             }
 
             API.event.emit('print', pMode);

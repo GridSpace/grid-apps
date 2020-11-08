@@ -20,16 +20,28 @@
      * @param {Number} [index] into widget array
      * @param {Object} [firstPoint] starting point
      */
-    CAM.printSetup = function(print, update, index, firstPoint) {
-        let widgetIndex = index || 0,
-            widgetArray = print.widgets,
-            widgetCount = widgetArray.length,
-            widget = widgetArray[widgetIndex];
+    CAM.prepare = function(widgets, settings, update) {
+        const count = widgets.length;
+        const weight = 1/count;
+        const print = KIRI.newPrint(settings, widgets);
+        print.output = [];
 
-        if (widgetIndex >= widgetCount || !widget) return;
+        let point;
+        widgets.forEach((widget, index) => {
+            point = prepEach(widget, settings, print, point, progress => {
+                update((index * weight + progress * weight) * 0.5);
+            });
+        });
 
-        let settings = print.settings,
-            device = settings.device,
+        print.output = KIRI.driver.FDM.prepareRender(print.output, progress => {
+            update(0.5 + progress * 0.5);
+        }, { thin: true });
+
+        return print.output;
+    };
+
+    function prepEach(widget, settings, print, firstPoint, update) {
+        let device = settings.device,
             process = settings.process,
             stock = settings.stock,
             outer = settings.bounds,
@@ -58,7 +70,7 @@
             drillDown = process.camDrillDown,
             drillLift = process.camDrillLift,
             drillDwell = process.camDrillDwell,
-            newOutput = widgetIndex === 0 ? [] : print.output,
+            newOutput = print.output || [],
             layerOut = [],
             printPoint,
             isNewMode,
@@ -574,9 +586,7 @@
         // replace output single flattened layer with all points
         print.output = newOutput;
 
-        if (widgetIndex + 1 < widgetCount) {
-            printSetup(print, update, widgetIndex + 1, printPoint);
-        }
+        return printPoint;
     };
 
     /**

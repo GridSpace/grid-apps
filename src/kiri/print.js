@@ -212,34 +212,6 @@
         scope.bytes = gcode.length;
     };
 
-    PRO.setup = function(remote, onupdate, ondone) {
-        let print = this,
-            settings = print.settings,
-            mode = settings.mode;
-
-        lastPoint = null;
-        lastEmit = null;
-
-        if (KIRI.client) {
-            // executed main kiri.js
-            KIRI.client.printSetup(settings, function(reply) {
-                if (reply.done) {
-                    print.output = KIRI.codec.decode(reply.output);
-                    ondone();
-                } else {
-                    onupdate(reply.progress, reply.message)
-                }
-            });
-        } else {
-            // executed from kiri-worker.js
-            // uses encodeOutput in this class to produce print.output above
-            // this encoding could be made vastly more efficient
-            let driver = KIRI.driver[mode];
-            if (driver) driver.printSetup(print, onupdate);
-            else console.log({missing_print_driver: mode});
-            ondone();
-        }
-    };
 
     // more generic. only used by SLA at the moment
     PRO.export = function(remote, online, ondone) {
@@ -337,12 +309,6 @@
         });
 
         return newout;
-    };
-
-    PRO.render = function(stack) {
-        this.output.forEach(layer => {
-            stack.add(layer);
-        });
     };
 
     function pref(a,b) {

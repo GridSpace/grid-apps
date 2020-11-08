@@ -15,13 +15,13 @@
     /**
      * DRIVER PRINT CONTRACT
      *
-     * @param {Object} print state object
-     * @param {Function} update incremental callback
+     * @param {Function} update progress callback
+     * @returns {Object[]} returns array of render objects
      */
-    FDM.printSetup = function(print, update) {
-        let widgets = print.widgets.slice(),
-            settings = FDM.fixExtruders(print.settings),
-            device = settings.device,
+    FDM.prepare = function(widgets, settings, update) {
+        settings = FDM.fixExtruders(settings);
+
+        let device = settings.device,
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
             mode = settings.mode,
@@ -40,7 +40,9 @@
             find,
             layerout = [],
             slices = [],
-            sliceEntry;
+            sliceEntry,
+            print = KIRI.newPrint(settings, widgets),
+            isThin = settings.controller.thinRender;
 
         // TODO pick a widget with a slice on the first layer and use that nozzle
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
@@ -371,19 +373,26 @@
             lastOut = undefined;
         }
 
-        print.output = render(output, progress => {
+        print.output = FDM.prepareRender(output, progress => {
             update(0.5 + progress * 0.5);
-        }, device.extruders);
+        }, { tools: device.extruders, thin: isThin });
+
+        return print.output;
     };
 
-    function render(output, update, tools) {
+    FDM.prepareRender = function(levels, update, options) {
+        const opts = options || {};
+        const tools = opts.tools;
+        const thin = opts.thin || false;
         const layers = [];
-        output.forEach((level, index) => {
+        levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
-            const pushPrint = (tool, poly) => {
-                let array = prints[tool] = prints[tool] || [];
-                array.width = tools[tool].extNozzle / 2;
+            const pushPrint = (toolid, poly) => {
+                toolid = toolid || 0;
+                const array = prints[toolid] = prints[toolid] || [];
+                const tool = tools[toolid];
+                array.width = (tool.extNozzle || 1) / 2;
                 array.push(poly);
             };
             let lastOut = null;
@@ -418,11 +427,13 @@
                 }
                 lastOut = out;
             });
-            const out = new KIRI.Render();
-            layers.push(out);
-            out.setLayer('move', 0xaaaaaa).addPolys(moves);
+            const output = new KIRI.Render();
+            layers.push(output);
+            output.setLayer('move', 0xaaaaaa).addPolys(moves);
             Object.values(prints).forEach(array => {
-                out.setLayer('print', 0x888800).addPolys(array, { offset: array.width, height })
+                output
+                    .setLayer('print', 0x888800)
+                    .addPolys(array, thin ? null : { offset: array.width, height })
             })
             update(index / output.length);
         });

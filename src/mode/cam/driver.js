@@ -4,7 +4,7 @@
 
 (function() {
 
-    let KIRI = self.kiri,
+    const KIRI = self.kiri,
         CAM = KIRI.driver.CAM = {
             // init,        // src/mode/cam/client.js
             // sliceRender, // src/mode/cam/client.js

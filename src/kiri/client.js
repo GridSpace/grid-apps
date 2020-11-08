@@ -153,14 +153,21 @@ KIRI.work = {
                 movez: movez
             }
         }, function(reply) {
-            if (reply.done || reply.error) delete slicing[widget.id];
+            if (reply.done || reply.error) {
+                delete slicing[widget.id];
+            }
             callback(reply);
         }, [vertices]);
     },
 
-    printSetup : function(settings, callback) {
-        send("printSetup", {settings:settings}, function(reply) {
-            callback(reply);
+    prepare : function(settings, update, done) {
+        send("prepare", {settings:settings}, function(reply) {
+            if (reply.progress) {
+                update(reply.progress, reply.message);
+            }
+            if (reply.done) {
+                done(reply.output);
+            }
         });
     },
 

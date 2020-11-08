@@ -106,30 +106,27 @@ KIRI.worker = {
         }
     },
 
-    printSetup: function(data, send) {
+    prepare: function(data, send) {
         // create widget array from id:widget cache
-        const widgets = [];
-        for (let key in cache) {
-            if (cache.hasOwnProperty(key)) {
-                widgets.push(cache[key]);
-            }
-        }
+        const widgets = Object.values(cache);
 
         // let client know we've started
         send.data({update:0.05, updateStatus:"preview"});
 
-        current.print = KIRI.newPrint(data.settings, widgets, data.id);
-        current.print.setup(false, function(progress, message) {
-            send.data({
-                progress,
-                message
-            });
-        }, function() {
-            send.done({
-                done: true,
-                output: KIRI.codec.encode(current.print.output)
-            });
+        const drivers = KIRI.driver;
+        const settings = data.settings;
+        const mode = settings.mode;
+        const driver = drivers[mode];
+
+        if (!(driver && driver.prepare)) {
+            return console.log({invalid_print_driver: mode, driver});
+        }
+
+        const layers = driver.prepare(widgets, settings, (progress, message) => {
+            send.data({ progress, message });
         });
+
+        send.done({ done: true, output: KIRI.codec.encode(layers) });
     },
 
     printExport: function(data, send) {
