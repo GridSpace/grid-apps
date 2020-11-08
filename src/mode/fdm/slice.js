@@ -6,6 +6,7 @@
 
     const KIRI = self.kiri,
         BASE = self.base,
+        DBUG = BASE.debug,
         POLY = BASE.polygons,
         UTIL = BASE.util,
         CONF = BASE.config,
@@ -414,6 +415,7 @@
 
     function doRender(slice) {
         const output = slice.output();
+        const height = slice.height / 2;
 
         slice.tops.forEach(top => {
             if (isThin) {
@@ -424,7 +426,7 @@
 
             output
                 .setLayer("shells", COLOR.shell)
-                .addPolys(top.shells, vopt({ offset }));
+                .addPolys(top.shells, vopt({ offset, height }));
 
             // if (isThin && debug) {
             //     slice.output()
@@ -436,11 +438,11 @@
 
             if (top.fill_lines) output
                 .setLayer("fill", COLOR.fill)
-                .addLines(top.fill_lines, vopt({ offset }));
+                .addLines(top.fill_lines, vopt({ offset, height }));
 
             if (top.fill_sparse) output
                 .setLayer("infill", COLOR.infill)
-                .addPolys(top.fill_sparse, vopt({ offset, open: true, outline: true }))
+                .addPolys(top.fill_sparse, vopt({ offset, height, open: true, outline: true }))
 
             // emit solid areas
             // if (isThin && debug) {
@@ -452,12 +454,12 @@
 
         if (slice.supports) output
             .setLayer("support", COLOR.support)
-            .addPolys(slice.supports, vopt({ offset }));
+            .addPolys(slice.supports, vopt({ offset, height }));
 
         if (slice.supports) slice.supports.forEach(poly => {
             output
                 .setLayer("support", COLOR.support)
-                .addLines(poly.fill, vopt({ offset }));
+                .addLines(poly.fill, vopt({ offset, height }));
         })
 
         // if (isThin && debug) {

@@ -132,6 +132,7 @@
 
         addPaths(polys, options) {
             const opts = options || {};
+            const height = opts.height || 1;
             const offset = opts.offset || 1;
             polys = flat(polys);
             if (!polys.length) {
@@ -139,15 +140,16 @@
             }
 
             const profiles = this.profiles;
-            if (!profiles[offset]) {
+            const prokey = `${offset}x${height}`;
+            if (!profiles[prokey]) {
                 const profile = new THREE.Shape();
-                profile.moveTo(-offset, -offset);
-                profile.lineTo(-offset,  offset);
-                profile.lineTo( offset,  offset);
-                profile.lineTo( offset, -offset);
-                profiles[offset] = profile;
+                profile.moveTo(-offset, -height);
+                profile.lineTo(-offset,  height);
+                profile.lineTo( offset,  height);
+                profile.lineTo( offset, -height);
+                profiles[prokey] = profile;
             }
-            const profile = profiles[offset].clone();
+            const profile = profiles[prokey].clone();
 
             polys.forEach(poly => {
                 const contour = [];
