@@ -157,7 +157,6 @@
 
     registerDecoder('top', function(v, state) {
         let top = KIRI.newTop(decode(v.poly, state));
-
         // top.traces = decode(v.traces, state);
         // top.inner = decode(v.inner, state);
         // // top.thinner = decode(v.thinner, state);
@@ -166,7 +165,6 @@
         // top.fill_lines = decodePointArray(v.fill_lines, state);
         // top.fill_sparse = decode(v.fill_sparse, state);
         // top.polish = decode(v.polish, state);
-
         return top;
     });
 

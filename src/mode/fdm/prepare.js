@@ -7,6 +7,7 @@
     let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
+        POLY = BASE.polygons,
         FDM = KIRI.driver.FDM,
         newPoint = BASE.newPoint;
 
@@ -368,6 +369,8 @@
             layerout = [];
             lastOut = undefined;
         }
+
+        console.log({output});
     };
 
 })();

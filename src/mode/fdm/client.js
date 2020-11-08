@@ -160,7 +160,6 @@
         });
     }
 
-
     FDM.printRender = function(print, options) {
         let debug = KIRI.api.const.LOCAL;
         let scope = print, emits, last,

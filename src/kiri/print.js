@@ -614,7 +614,7 @@
 
         function intersectsTop(p1, p2) {
             let int = false;
-            POLY.flatten(slice.gatherTopPolys([])).forEach(function(poly) {
+            POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
                         int = true;
@@ -879,7 +879,7 @@
                 }
             } else {
                 // top object
-                let bounds = POLY.flatten(next.gatherOuter([]));
+                let bounds = POLY.flatten(next.shellsAtDepth(0));
 
                 let dir = -1; // 1 == inside out, -1 == outside-in
 
@@ -888,7 +888,7 @@
                 outputTraces([].appendAll(next.innerTraces() || []));
 
                 // sort perimeter polygon by length to go out-to-in or in-to-out
-                (next.traces || []).sort(function(a,b) {
+                (next.shells || []).sort(function(a,b) {
                     return a.perimeter() > b.perimeter() ? dir : -dir;
                 }).forEach(function(poly, index) {
                     outputTraces(poly);

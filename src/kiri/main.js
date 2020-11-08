@@ -32,7 +32,7 @@
         VIEWS   = CONF.VIEWS,
         clone   = Object.clone,
         settings = clone(CONF.template),
-        settingsDefault = clone(settings),
+        // settingsDefault = clone(settings),
         // ---------------
         Widget    = kiri.Widget,
         newWidget = kiri.newWidget,

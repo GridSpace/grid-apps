@@ -444,6 +444,10 @@
                 .setLayer("infill", COLOR.infill)
                 .addPolys(top.fill_sparse, vopt({ offset, height, open: true, outline: true }))
 
+            if (top.thin_fill) output
+                .setLayer("fill", COLOR.fill)
+                .addLines(top.thin_fill, vopt({ offset, height }));
+
             // emit solid areas
             // if (isThin && debug) {
             //     output
@@ -606,8 +610,6 @@
             slice.isSolidLayer = false;
             return;
         }
-
-        const render = slice.output();
 
         slice.tops.forEach(function(top) {
             const lines = fillArea(top.fill_off, angle, spacing, null);

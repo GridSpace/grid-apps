@@ -69,17 +69,14 @@
     };
 
     /**
-     * Appends all outermost trace polygons into a given array
-     * and returns it. used by Print
+     * Returns shell polygons of a given depth
+     * used by Print (FDM)
      *
      * @param {Polygon[]} out array to populate
      * @returns {Polygon[]} array of top polygons
      */
-    Top.prototype.gatherOuter = function(out) {
-        this.traces.forEach(function(trace) {
-            if (trace.depth === 0) out.append(trace);
-        });
-        return out;
+    Top.prototype.shellsAtDepth = function(depth) {
+        return this.shells.filter(poly => poly.depth === depth);
     };
 
     /** ******************************************************************
@@ -161,15 +158,32 @@
         return this;
     }
 
-    /**
-     * Create a new top object given a polygon
-     *
-     * @param {Polygon} poly to add
-     */
     PRO.addTop = function(poly) {
         let top = new Top(poly);
         this.tops.push(top);
         return top;
+    };
+
+    PRO.findClosestPointTo = function(target) {
+        let min, find;
+
+        if (this.tops.length) {
+            this.tops.forEach(function(top) {
+                find = top.poly.findClosestPointTo(target);
+                if (!min || find.distance < min.distance) {
+                    min = find;
+                }
+            });
+        } else if (this.supports) {
+            this.supports.forEach(function(poly) {
+                find = poly.findClosestPointTo(target);
+                if (!min || find.distance < min.distance) {
+                    min = find;
+                }
+            });
+        }
+
+        return min;
     };
 
     function newTop(poly) {
