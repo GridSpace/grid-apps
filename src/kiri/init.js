@@ -401,9 +401,6 @@
             case cca('a'): // auto arrange items on platform
                 platform.layout();
                 break;
-            case cca('w'): // toggle wireframe on widgets
-                API.view.wireframe(API.color.wireframe, API.color.wireframe_opacity);
-                break;
             default:
                 API.event.emit('keypress', evt);
                 handled = false;

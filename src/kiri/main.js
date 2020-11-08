@@ -569,11 +569,6 @@
         SPACE.update();
     }
 
-    function toggleWireframe(color, opacity) {
-        forAllWidgets(function(w) { w.toggleWireframe(color, opacity) });
-        SPACE.update();
-    }
-
     function updateSliderMax(set) {
         let max = STACKS.getRange().tallest - 1;
         API.var.layer_max = UI.sliderMax.innerText = max;

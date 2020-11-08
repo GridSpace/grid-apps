@@ -634,10 +634,6 @@
         return Date.now() - mark;
     };
 
-    PRO.toggleWireframe = function (color, opacity) {
-        this.setWireframe(!this.wire, color, opacity);
-    };
-
     PRO.setWireframe = function(set, color, opacity) {
         let mesh = this.mesh,
             widget = this;
