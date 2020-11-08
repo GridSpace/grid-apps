@@ -125,9 +125,9 @@
             //     isFlat = true;
             // }
 
-            if (slices.length > 150) {
-                isThin = true;
-            }
+            // if (slices.length > 150) {
+            //     isThin = true;
+            // }
 
             // calculate % complete and call onupdate()
             function doupdate(index, from, to, msg) {

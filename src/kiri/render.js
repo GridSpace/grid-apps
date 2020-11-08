@@ -157,7 +157,21 @@
                     contour.push(new THREE.Vector2(p.x, p.y));
                 });
                 const {index, faces} = ProfiledContourGeometry(profile, contour, poly.isClosed());
-                this.current.paths.push({ index, faces, z: poly.getZ() });
+                const one = this.current.paths[0];
+                if (one) {
+                    // merge all contour geometry for massive speed gain
+                    const add = one.faces.length / 3;
+                    for (let i=0; i<index.length; i++) {
+                        index[i] += add;
+                    }
+                    const feces = new Float32Array(one.faces.length + faces.length);
+                    feces.set(one.faces);
+                    feces.set(faces, one.faces.length);
+                    one.faces = feces;
+                    one.index.appendAll(index);
+                } else {
+                    this.current.paths.push({ index, faces, z: poly.getZ() });
+                }
                 this.stats.contour++;
             });
             return this;

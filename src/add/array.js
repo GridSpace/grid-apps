@@ -50,7 +50,8 @@
      * @returns {Array}
      */
     AP.appendAll = function(arr) {
-        if (arr && arr.length > 0) this.push.apply(this,arr);
+        // if (arr && arr.length > 0) this.push.apply(this,arr);
+        if (arr && arr.length > 0) this.push(...arr);
         return this;
     };
 

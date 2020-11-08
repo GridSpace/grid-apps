@@ -12,7 +12,8 @@
         specular = 0x444444,
         emissive = 0x101010,
         metalness = 0,
-        roughness = 0.3;
+        roughness = 0.3,
+        newMesh = createPhongMesh;
 
     KIRI.Layer = Layer;
     KIRI.newLayer = function() { return new Layer() };
@@ -89,18 +90,7 @@
                 ctrl.group.push(mat);
             }
             if (faces.length) {
-                // const mat = new THREE.MeshPhongMaterial({
-                const mat = new THREE.MeshStandardMaterial({
-                    transparent: data.color.opacity != 1,
-                    emissive,
-                    roughness,
-                    metalness,
-                    // shininess,
-                    // specular,
-                    opacity: data.color.opacity,
-                    color: data.color.face,
-                    side: THREE.DoubleSide
-                });
+                const mat = newMesh(data);
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                 geo.computeFaceNormals();
@@ -112,18 +102,7 @@
                 ctrl.group.push(mat);
             }
             if (paths.length) {
-                // const mat = new THREE.MeshPhongMaterial({
-                const mat = new THREE.MeshStandardMaterial({
-                    transparent: data.color.opacity != 1,
-                    emissive,
-                    roughness,
-                    metalness,
-                    // shininess,
-                    // specular,
-                    opacity: data.color.opacity,
-                    color: data.color.face,
-                    side: THREE.DoubleSide
-                });
+                const mat = newMesh(data);
                 paths.forEach((path, i) => {
                     const { index, faces, z } = path;
                     const geo = new THREE.BufferGeometry();
@@ -143,4 +122,27 @@
 
         slice.view.add(group);
     };
+
+    function createStandardMesh(data) {
+        return new THREE.MeshStandardMaterial({
+            emissive,
+            roughness,
+            metalness,
+            transparent: data.color.opacity != 1,
+            opacity: data.color.opacity,
+            color: data.color.face,
+            side: THREE.DoubleSide
+        });
+    }
+
+    function createPhongMesh(data) {
+        return new THREE.MeshPhongMaterial({
+            shininess,
+            specular,
+            transparent: data.color.opacity != 1,
+            opacity: data.color.opacity,
+            color: data.color.face,
+            side: THREE.DoubleSide
+        });
+    }
 })();
