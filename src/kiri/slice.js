@@ -59,10 +59,10 @@
      * return innermost traces under a given top. for FDM, this represents
      * the outline shell that the fill touches. used by Print, Laser
      */
-    Top.prototype.innerTraces = function() {
-        let traces = this.traces,
+    Top.prototype.innerShells = function() {
+        let shells = this.shells,
             array = [];
-        if (traces) traces.forEach(function(p) {
+        if (shells) shells.forEach(function(p) {
             if (p.inner) array.appendAll(p.inner);
         });
         return array;

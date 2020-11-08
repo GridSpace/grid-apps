@@ -359,7 +359,7 @@
 
             // notify progress
             layerout.layer = layer++;
-            update(layer / maxLayers);
+            update((layer / maxLayers) * 0.5);
 
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
@@ -372,14 +372,13 @@
         }
 
         print.output = render(output, progress => {
-            // console.log({render: progress});
+            update(0.5 + progress * 0.5);
         }, device.extruders);
     };
 
     function render(output, update, tools) {
         const layers = [];
         output.forEach((level, index) => {
-            update(index / output.length);
             const prints = {};
             const moves = [];
             const pushPrint = (tool, poly) => {
@@ -425,6 +424,7 @@
             Object.values(prints).forEach(array => {
                 out.setLayer('print', 0x888800).addPolys(array, { offset: array.width, height })
             })
+            update(index / output.length);
         });
 
         return layers;

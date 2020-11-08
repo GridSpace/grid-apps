@@ -340,7 +340,6 @@
     };
 
     PRO.render = function(stack) {
-        console.log({print_render: this.output});
         this.output.forEach(layer => {
             stack.add(layer);
         });
@@ -862,13 +861,13 @@
                 }
             } else {
                 // top object
-                let bounds = POLY.flatten(next.shellsAtDepth(0));
+                let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
 
                 let dir = -1; // 1 == inside out, -1 == outside-in
 
                 // output inner polygons
                 if (dir === 1)
-                outputTraces([].appendAll(next.innerTraces() || []));
+                outputTraces([].appendAll(next.innerShells() || []));
 
                 // sort perimeter polygon by length to go out-to-in or in-to-out
                 (next.shells || []).sort(function(a,b) {
@@ -879,7 +878,7 @@
 
                 // output outer polygons
                 if (dir === -1)
-                outputTraces([].appendAll(next.innerTraces() || []));
+                outputTraces([].appendAll(next.innerShells() || []));
 
                 // output thin fill
                 outputFills(next.thin_fill, {near: true});
