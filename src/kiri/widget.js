@@ -648,6 +648,8 @@
         }
         if (set) {
             widget.wire = base.render.wireframe(mesh, this.getPoints(), color);
+        }
+        if (opacity !== undefined) {
             widget.setOpacity(opacity);
         }
     };

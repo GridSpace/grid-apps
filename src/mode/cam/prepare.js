@@ -23,7 +23,7 @@
     CAM.prepare = function(widgets, settings, update) {
         const count = widgets.length;
         const weight = 1/count;
-        const print = KIRI.newPrint(settings, widgets);
+        const print = self.worker.print = KIRI.newPrint(settings, widgets);
         print.output = [];
 
         let point;
@@ -33,11 +33,11 @@
             });
         });
 
-        print.output = KIRI.driver.FDM.prepareRender(print.output, progress => {
+        print.render = KIRI.driver.FDM.prepareRender(print.output, progress => {
             update(0.5 + progress * 0.5);
-        }, { thin: true });
+        }, { thin: true, print: 0, move: 0x003366 });
 
-        return print.output;
+        return print.render;
     };
 
     function prepEach(widget, settings, print, firstPoint, update) {
@@ -276,7 +276,6 @@
                 } else {
                     rate = plungeRate;
                 }
-                // console.log({deltaZ: deltaZ, deltaXY: deltaXY, threshold:threshold, modifier:modifier, rate:rate, plungeRate:plungeRate});
             }
 
             // todo synthesize move speed from feed / plunge accordingly
@@ -320,26 +319,23 @@
                 case PRO.LEVEL:
                     setTool(process.camRoughTool, process.camRoughSpeed, 0);
                     spindle = Math.min(spindleMax, process.camRoughSpindle);
-                    slice.tops.forEach(function(top) {
-                        if (!top.traces) return;
-                        let polys = [];
-                        top.traces.forEach(function (poly) {
-                            polys.push(poly);
-                            if (poly.inner) {
-                                poly.inner.forEach(function(inner) {
-                                    polys.push(inner);
-                                })
-                            }
-                        });
-                        // set winding specified in output
-                        POLY.setWinding(polys, process.camConventional, false);
-                        printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                            poly.forEachPoint(function(point, pidx, points, offset) {
-                                camOut(point.clone(), offset !== 0);
-                            }, true, index);
-                        });
-                        newLayer();
+                    const level = [];
+                    slice.camLines.forEach(function (poly) {
+                        level.push(poly);
+                        if (poly.inner) {
+                            poly.inner.forEach(function(inner) {
+                                level.push(inner);
+                            })
+                        }
                     });
+                    // set winding specified in output
+                    POLY.setWinding(level, process.camConventional, false);
+                    printPoint = poly2polyEmit(level, printPoint, function(poly, index, count) {
+                        poly.forEachPoint(function(point, pidx, points, offset) {
+                            camOut(point.clone(), offset !== 0);
+                        }, true, index);
+                    });
+                    newLayer();
                     break;
                 case PRO.ROUGH:
                 case PRO.OUTLINE:
@@ -356,33 +352,28 @@
                             dir = !dir;
                         }
                     }
-                    // todo find closest next trace/trace-point
-                    slice.tops.forEach(function(top) {
-                        if (!top.poly) return;
-                        if (!top.traces) return;
-                        let polys = [], t = [], c = [];
-                        POLY.flatten(top.traces, top.inner || []).forEach(function (poly) {
-                            let child = poly.parent;
-                            if (depthFirst) poly = poly.clone();
-                            if (child) c.push(poly); else t.push(poly);
-                            poly.layer = depthData.layer;
-                            polys.push(poly);
-                        });
-                        // set cut direction on outer polys
-                        POLY.setWinding(t, dir);
-                        // set cut direction on inner polys
-                        POLY.setWinding(c, !dir);
-                        if (depthFirst) {
-                            (slice.camMode === PRO.ROUGH ? depthData.rough : depthData.outline).append(polys);
-                        } else {
-                            printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                                poly.forEachPoint(function(point, pidx, points, offset) {
-                                    camOut(point.clone(), offset !== 0);
-                                }, poly.isClosed(), index);
-                            });
-                            newLayer();
-                        }
+                    let polys = [], t = [], c = [];
+                    POLY.flatten(slice.camLines).forEach(function (poly) {
+                        let child = poly.parent;
+                        if (depthFirst) poly = poly.clone();
+                        if (child) c.push(poly); else t.push(poly);
+                        poly.layer = depthData.layer;
+                        polys.push(poly);
                     });
+                    // set cut direction on outer polys
+                    POLY.setWinding(t, dir);
+                    // set cut direction on inner polys
+                    POLY.setWinding(c, !dir);
+                    if (depthFirst) {
+                        (slice.camMode === PRO.ROUGH ? depthData.rough : depthData.outline).append(polys);
+                    } else {
+                        printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
+                            poly.forEachPoint(function(point, pidx, points, offset) {
+                                camOut(point.clone(), offset !== 0);
+                            }, poly.isClosed(), index);
+                        });
+                        newLayer();
+                    }
                     break;
                 case PRO.CONTOUR_X:
                 case PRO.CONTOUR_Y:
@@ -394,10 +385,9 @@
                     spindle = Math.min(spindleMax, process.camContourSpindle);
                     depthData.outlineDiam = toolDiam;
                     // todo find closest next trace/trace-point
-                    slice.tops.forEach(function(top) {
-                        if (!top.traces) return;
+                    {
                         let polys = [], poly, emit;
-                        top.traces.forEach(function (poly) {
+                        slice.camLines.forEach(function (poly) {
                             if (depthFirst) poly = poly.clone(true);
                             polys.push({first:poly.first(), last:poly.last(), poly:poly});
                         });
@@ -414,15 +404,11 @@
                             });
                             newLayer();
                         }
-                    });
+                    }
                     break;
                 case PRO.DRILL:
                     setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
-                    // drilling is always depth-first
-                    slice.tops.forEach(function(top) {
-                        if (!top.traces) return;
-                        depthData.drill.appendAll(top.traces);
-                    });
+                    depthData.drill.appendAll(slice.camLines);
                     break;
             }
             update(sliceIndex / slices.length);

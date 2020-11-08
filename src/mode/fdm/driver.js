@@ -11,10 +11,8 @@
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM = {
             // init,           // src/mode/fdm/client.js
-            // sliceRender,    // src/mode/fdm/client.js
-            // printRender     // src/mode/fdm/client.js
             // slice,          // src/mode/fdm/slice.js
-            // printSetup,     // src/mode/fdm/prepare.js
+            // prepare,        // src/mode/fdm/prepare.js
             // printExport,    // src/mode/fdm/export.js
             fixExtruders
         };

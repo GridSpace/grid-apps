@@ -7,10 +7,8 @@
     const KIRI = self.kiri,
         CAM = KIRI.driver.CAM = {
             // init,        // src/mode/cam/client.js
-            // sliceRender, // src/mode/cam/client.js
-            // printRender  // src/mode/cam/client.js
             // slice,       // src/mode/cam/slice.js
-            // printSetup,  // src/mode/cam/prepare.js
+            // prepare,     // src/mode/cam/prepare.js
             // printExport, // src/mode/cam/export.js
         },
         CPRO = CAM.process = {

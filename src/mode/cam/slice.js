@@ -59,7 +59,6 @@
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown, outlineDown),
             maxToolDiam = 0,
-            sliceIndex = 0,
             thruHoles;
 
         if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
@@ -149,11 +148,11 @@
             for (let z = zMax + ztOff - zstep; z >= zMax; z -= zstep) {
                 let slice = shadowTop.slice.clone(false);
                 slice.z = z;
-                slice.index = sliceIndex++;
                 slice.camMode = PRO.LEVEL;
+                slice.camLines = POLY.setZ(facing.clone(true), slice.z);
                 slice.output()
                     .setLayer("facing", {face: 0, line: 0})
-                    .addPolys(POLY.setZ(facing.clone(true), slice.z));
+                    .addPolys(slice.camLines);
                 sliceAll.push(slice);
             }
         }
@@ -223,10 +222,10 @@
                     }
                 });
 
+                slice.camLines = offset;
                 slice.output()
                     .setLayer("roughing", {face: 0, line: 0})
                     .addPolys(offset);
-                slice.index = sliceIndex++;
                 updateOp(index, slices.length);
             });
 
@@ -302,7 +301,7 @@
                     offset = addCutoutTabs(offset, slice.z, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
 
-                slice.index = sliceIndex++;
+                slice.camLines = offset;
                 slice.output()
                     .setLayer("outline", {face: 0, line: 0})
                     .addPolys(offset);
@@ -342,6 +341,8 @@
             maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
             sliceDrill(drillTool, tslices, sliceAll);
         }
+
+        sliceAll.forEach((slice, index) => slice.index = index);
 
         // used in printSetup()
         widget.terrain = terrain;
@@ -394,6 +395,7 @@
                 point.y = center.y;
             });
             slice.camMode = PRO.DRILL;
+            slice.camLines = [ drill ];
             slice.output()
                 .setLayer("drill", {face: 0, line: 0})
                 .addPolys(drill);
@@ -433,6 +435,7 @@
                     .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
             });
             slice.camMode = PRO.DRILL;
+            slice.camLines = polys;
             slice.output()
                 .setLayer("register", {face: 0, line: 0})
                 .addPolys(polys);

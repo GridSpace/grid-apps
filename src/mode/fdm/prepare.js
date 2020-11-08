@@ -41,7 +41,7 @@
             layerout = [],
             slices = [],
             sliceEntry,
-            print = KIRI.newPrint(settings, widgets),
+            print = self.worker.print = KIRI.newPrint(settings, widgets),
             isThin = settings.controller.thinRender;
 
         // TODO pick a widget with a slice on the first layer and use that nozzle
@@ -373,33 +373,45 @@
             lastOut = undefined;
         }
 
-        print.output = FDM.prepareRender(output, progress => {
+        print.output = output;
+        print.render = FDM.prepareRender(output, progress => {
             update(0.5 + progress * 0.5);
         }, { tools: device.extruders, thin: isThin });
 
-        return print.output;
+        return print.render;
     };
 
     FDM.prepareRender = function(levels, update, options) {
         const opts = options || {};
-        const tools = opts.tools;
+        const tools = opts.tools || {};
         const thin = opts.thin || false;
+        const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
+        const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
+
+        let lastOut = null;
+        let current = null;
+
         levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
+
             const pushPrint = (toolid, poly) => {
                 toolid = toolid || 0;
                 const array = prints[toolid] = prints[toolid] || [];
-                const tool = tools[toolid];
+                const tool = tools[toolid] || {};
                 array.width = (tool.extNozzle || 1) / 2;
                 array.push(poly);
             };
-            let lastOut = null;
-            let current = null;
+
             let height = level.height / 2;
             let width = 1;
+
             level.forEach(out => {
+                if (!out.point) {
+                    // in cam mode, these are drilling or dwell ops
+                    return;
+                }
                 if (lastOut) {
                     if (out.emit) {
                         if (!lastOut.emit) {
@@ -427,14 +439,21 @@
                 }
                 lastOut = out;
             });
+            if (lastOut.emit) {
+                pushPrint(lastOut.tool, current)
+            } else {
+                moves.push(current);
+            }
+
             const output = new KIRI.Render();
             layers.push(output);
-            output.setLayer('move', 0xaaaaaa).addPolys(moves);
+            output.setLayer('move', moveColor).addPolys(moves);
             Object.values(prints).forEach(array => {
                 output
-                    .setLayer('print', 0x888800)
+                    .setLayer('print', printColor)
                     .addPolys(array, thin ? null : { offset: array.width, height })
-            })
+            });
+
             update(index / output.length);
         });
 

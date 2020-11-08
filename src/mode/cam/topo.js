@@ -19,7 +19,6 @@
             let opt = options || {},
                 ondone = opt.ondone || noop,
                 onupdate = opt.onupdate || noop,
-                mesh = widget.mesh,
                 proc = settings.process,
                 resolution = proc.camTolerance,
                 tool = new CAM.Tool(settings, proc.camContourTool),
@@ -179,9 +178,9 @@
                     for (x = minX; x <= maxX; x += toolStep) {
                         gridx = Math.round(((x - minX) / boundsX) * stepsx);
                         ly = gridy = 0;
-                        slice = newSlice(gridx, mesh.newGroup ? mesh.newGroup() : null);
+                        slice = newSlice(gridx);
                         slice.camMode = CPRO.CONTOUR_X;
-                        slice.lines = newlines = [];
+                        // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
@@ -200,10 +199,6 @@
                                 continue;
                             }
                             if (ly) {
-                                if (mesh) newlines.push(newLine(
-                                    newPoint(x,ly,ltv),
-                                    newPoint(x,y,tv)
-                                ));
                                 let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                                 // over max angle, turn into square edge (up or down)
                                 if (ang > maxangle) {
@@ -224,6 +219,7 @@
                         end_poly();
                         if (sliceout.length > 0) {
                             newslices.push(slice);
+                            slice.camLines = sliceout;
                             slice.output()
                                 .setLayer("contour x", {face: 0, line: 0})
                                 .addPolys(sliceout);
@@ -239,9 +235,9 @@
                     for (y = minY; y <= maxY; y += toolStep) {
                         gridy = Math.round(((y - minY) / boundsY) * stepsy);
                         lx = gridx = 0;
-                        slice = newSlice(gridy, mesh.newGroup ? mesh.newGroup() : null);
+                        slice = newSlice(gridy);
                         slice.camMode = CPRO.CONTOUR_Y;
-                        slice.lines = newlines = [];
+                        // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
@@ -260,10 +256,6 @@
                                 continue;
                             }
                             if (lx) {
-                                if (mesh) newlines.push(newLine(
-                                    newPoint(lx,y,ltv),
-                                    newPoint(x,y,tv)
-                                ));
                                 let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
                                 // over max angle, turn into square edge (up or down)
                                 if (ang > maxangle) {
@@ -284,6 +276,7 @@
                         end_poly();
                         if (sliceout.length > 0) {
                             newslices.push(slice);
+                            slice.camLines = sliceout;
                             slice.output()
                                 .setLayer("contour y", {face: 0, line: 0})
                                 .addPolys(sliceout);

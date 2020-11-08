@@ -289,7 +289,7 @@
             set: setViewMode,
             update_slider: updateSlider,
             update_fields: updateFields,
-            wireframe: toggleWireframe,
+            wireframe: setWireframe,
             snapshot: null
         },
         widgets: {
@@ -564,22 +564,18 @@
         selectedMeshes.slice().forEach(function (mesh) { f(mesh) });
     }
 
+    function setWireframe(bool, color, opacity) {
+        forAllWidgets(function(w) { w.setWireframe(bool, color, opacity) });
+        SPACE.update();
+    }
+
     function toggleWireframe(color, opacity) {
         forAllWidgets(function(w) { w.toggleWireframe(color, opacity) });
         SPACE.update();
     }
 
     function updateSliderMax(set) {
-        let max = 0;
-        if (viewMode === VIEWS.PREVIEW && currentPrint) {
-            max = currentPrint.getLayerCount();
-        } else {
-            forAllWidgets(function(widget) {
-                if (!widget.slices) return;
-                max = Math.max(max, widget.slices.length);
-            });
-        }
-        max = Math.max(0, max - 1);
+        let max = STACKS.getRange().tallest - 1;
         API.var.layer_max = UI.sliderMax.innerText = max;
         if (set || max < API.var.layer_hi) {
             API.var.layer_hi = API.var.layer_max;
@@ -795,8 +791,6 @@
 
         let firstMesh = true,
             countdown = WIDGETS.length,
-            preserveMax = API.var.layer_max,
-            preserveLayer = API.var.layer_hi,
             totalProgress,
             track = {},
             mode = settings.mode,
@@ -829,14 +823,11 @@
                     if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
                     segtimes.total = UTIL.time() - now;
                     API.event.emit('slice', getMode());
-                    updateSliderMax(true);
-                    if (preserveMax != API.var.layer_max) {
-                        preserveLayer = API.var.layer_max;
-                    }
                     firstMesh = false;
                 }
                 // on done
                 segtimes[`${segNumber}_draw`] = widget.render(stack);
+                updateSliderMax(true);
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                 widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
@@ -844,7 +835,6 @@
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
                     API.show.progress(0);
-                    showSlices(preserveLayer);
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
                     // print stats

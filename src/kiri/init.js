@@ -2057,6 +2057,11 @@
         $('rot_y_gt').onclick = () => { API.selection.rotate(0, d,0) };
         $('rot_z_lt').onclick = () => { API.selection.rotate(0,0, d) };
         $('rot_z_gt').onclick = () => { API.selection.rotate(0,0,-d) };
+        // rendering options
+        $('render-hide').onclick = () => { API.view.wireframe(false, 0, 0); };
+        $('render-ghost').onclick = () => { API.view.wireframe(false, 0, 0.5); };
+        $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
+        $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };
