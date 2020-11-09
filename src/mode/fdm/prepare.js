@@ -455,7 +455,7 @@
             }
 
             output
-                .setLayer('move', moveColor)
+                .setLayer('move', moveColor, true)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
                 array.forEach(poly => {

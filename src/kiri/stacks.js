@@ -105,8 +105,10 @@
                     })
                 };
             }
+            const defstate = !data.off;
             const ctrl = DYN[label];
-            ctrl.toggle.checked = true;
+
+            ctrl.toggle.checked = defstate;
 
             const { polys, lines, faces, paths, cpath } = data;
             if (polys.length || lines.length) {
@@ -127,6 +129,7 @@
                     group.add(new THREE.LineSegments(geo, mat));
                 }
                 ctrl.group.push(mat);
+                mat.visible = defstate;
             }
             if (faces.length) {
                 const mat = newMat(data);
@@ -139,6 +142,7 @@
                 mesh.receiveShadow = true;
                 group.add(mesh);
                 ctrl.group.push(mat);
+                mat.visible = defstate;
             }
             if (paths.length) {
                 let mat = [];
@@ -147,6 +151,7 @@
                 } else {
                     mat.push(newMat(data));
                 }
+                mat.forEach(m => m.visible = defstate);
                 // const mat = newMat(data);
                 paths.forEach((path, i) => {
                     const { index, faces, z, colors } = path;

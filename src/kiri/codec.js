@@ -115,7 +115,8 @@
                 faces: codec.allocFloat32Array(layer.faces),
                 color: layer.color,
                 paths: layer.paths,
-                cpath: layer.cpath
+                cpath: layer.cpath,
+                off: layer.off
             } })
         };
         return enc;
@@ -130,7 +131,8 @@
                 faces: v.data[i].faces,
                 color: v.data[i].color,
                 paths: v.data[i].paths,
-                cpath: v.data[i].cpath
+                cpath: v.data[i].cpath,
+                off: v.data[i].off
             };
         }
         return render;

@@ -18,7 +18,7 @@
             };
         }
 
-        setLayer(layer, colors) {
+        setLayer(layer, colors, off) {
             let layers = this.layers;
             if (typeof(colors) === 'number') {
                 colors = {
@@ -28,6 +28,7 @@
                 };
             }
             this.current = layers[layer] = layers[layer] || {
+                off: off === true,
                 lines: [],
                 polys: [],
                 faces: [],
