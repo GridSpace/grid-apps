@@ -475,7 +475,7 @@
                 //         })
             });
 
-            update(index / output.length);
+            update(index / levels.length);
         });
 
         return layers;
