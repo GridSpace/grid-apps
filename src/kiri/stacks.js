@@ -10,7 +10,7 @@
         emissive = 0x101010,
         metalness = 0,
         roughness = 0.3,
-        newMat = createPhongMat;
+        newMat = createPhongMaterial;
 
     let stacks = {},
         tallest = 0,
@@ -112,12 +112,15 @@
 
             const { polys, lines, faces, paths, cpath } = data;
             if (polys.length || lines.length) {
-                const mat = new THREE.LineBasicMaterial({
-                    transparent: data.color.opacity != 1,
-                    opacity: data.color.opacity || 1,
-                    color: data.color.line
-                });
-                const geo = new THREE.Geometry(), vert = geo.vertices;
+                const mat = [];
+                if (cpath) {
+                    cpath.forEach(c => { mat.push(createLineMaterial({ color: c })) });
+                } else {
+                    mat.push(createLineMaterial(data));
+                }
+                mat.forEach(m => m.visible = defstate);
+                const geo = new THREE.BufferGeometry();
+                const vert = [];
                 for (let i=0, il=polys.length; i<il; i++) {
                     addPoly(vert, polys[i]);
                 }
@@ -126,10 +129,15 @@
                     vert.push(new THREE.Vector3(p.x, p.y, p.z));
                 }
                 if (vert.length) {
+                    if (cpath) {
+                        cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
+                    } else {
+                        geo.addGroup(0, Infinity, 0);
+                    }
                     group.add(new THREE.LineSegments(geo, mat));
                 }
+                geo.setFromPoints(vert);
                 ctrl.group.push(mat);
-                mat.visible = defstate;
             }
             if (faces.length) {
                 const mat = newMat(data);
@@ -145,7 +153,7 @@
                 mat.visible = defstate;
             }
             if (paths.length) {
-                let mat = [];
+                const mat = [];
                 if (cpath) {
                     cpath.forEach(c => { mat.push(newMat({ color: c })) });
                 } else {
@@ -176,7 +184,15 @@
         }
     };
 
-    function createStandardMat(data) {
+    function createLineMaterial(data) {
+        return new THREE.LineBasicMaterial({
+            transparent: data.color.opacity != 1,
+            opacity: data.color.opacity || 1,
+            color: data.color.line
+        });
+    }
+
+    function createStandardMaterial(data) {
         return new THREE.MeshStandardMaterial({
             emissive,
             roughness,
@@ -188,7 +204,7 @@
         });
     }
 
-    function createPhongMat(data) {
+    function createPhongMaterial(data) {
         return new THREE.MeshPhongMaterial({
             shininess,
             specular,

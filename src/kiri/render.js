@@ -78,8 +78,11 @@
                 return this.addPaths(polys, options);
             }
             polys = flat(polys);
-            if (options && options.thin && options.z !== undefined) {
-                polys.forEach(p => p.setZ(options.z));
+            if (options) {
+                polys.forEach(p => {
+                    if (options.z !== undefined) p.setZ(options.z);
+                    if (options.color) p.color = options.color;
+                });
             }
             this.current.polys.appendAll(polys);
             this.stats.line_poly += polys.length;
