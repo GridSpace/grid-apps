@@ -381,6 +381,22 @@
         return print.render;
     };
 
+    class Counter {
+        constructor() {
+            this.map = {};
+            this.total = 0;
+        }
+        put(key) {
+            const map = this.map;
+            const kp = key || 'bad';
+            map[kp] = (map[kp] || 0) + 1;
+            this.total++;
+        }
+        get() {
+            return { map: this.map, total: this.total };
+        }
+    }
+
     FDM.prepareRender = function(levels, update, options) {
         const opts = options || {};
         const tools = opts.tools || {};
@@ -390,11 +406,13 @@
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
         const maxspd = levels.map(level => {
-            return level.map(o => o.speed || 0).reduce((a, v) => Math.max(a,v));
-        }).reduce((a, v) => Math.max(a, v));
+            return level.map(o => o.emit || true ? o.speed || 0 : 0).reduce((a, v) => Math.max(a,v));
+        }).reduce((a, v) => Math.max(a, v)) + 1;
 
         let lastOut = null;
         let current = null;
+        const cn_len = new Counter();
+        const cn_col = new Counter();
 
         levels.forEach((level, index) => {
             const prints = {};
@@ -458,17 +476,18 @@
                 .setLayer('move', moveColor, true)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
-                array.forEach(poly => { output
+                array.forEach(poly => { if (poly.length > 1) output
                     .setLayer(opts.action || 'print', printColor)
                     .addPolys([ poly ], thin ? { thin, z: opts.z } : {
                         offset: array.width, height, z: opts.z,
                         color: { face: poly.color, line: poly.color }
-                    })
-                })
+                    })// & cn_len.put(poly.length) & cn_col.put(poly.color) & console.log(poly.points)
+                });
             });
 
             update(index / levels.length);
         });
+        // console.log(cn_len.get(), cn_col.get());
 
         return layers;
     }

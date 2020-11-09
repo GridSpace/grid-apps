@@ -113,11 +113,12 @@
             seq = [],
             abs = true,
             move = false,
+            defh = 0,
             height = 0,
             factor = 1,
             tool = 0,
             E0G0 = false,
-            G0 = function() {
+            moving = function() {
                 move = true;
                 if (seq.length > 0) {
                     output.push(seq);
@@ -146,6 +147,10 @@
             };
 
         lines.forEach(function(line) {
+            if (line.indexOf('- LAYER ') > 0) {
+                const hd = line.replace('(','').replace(')','').split(' ');
+                defh = parseFloat(hd[4]);
+            }
             line = line.split(";")[0].split(" ");
             let cmd = line.shift();
             if (cmd.charAt(0) === 'T') {
@@ -172,11 +177,14 @@
                     abs = false;
                     break;
                 case 'G0':
-                    G0();
+                    moving();
                 case 'G1':
                     line.forEach(function(tok) {
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
+                    if (seq.Z === undefined && pos.Z) {
+                        seq.Z = pos.Z;
+                    }
                     if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
                     if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
                     if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
@@ -185,10 +193,10 @@
                     if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
                     if (pos.E) E0G0 = true;
                     if (E0G0 && pos.E === 0.0) {
-                        if (LZ != pos.Z) G0();
+                        if (LZ != pos.Z) moving();
                         else move = true;
                         if (move && pos.Z > LMZ) {
-                            height = seq.height = pos.Z - LMZ;
+                            height = seq.height = defh || pos.Z - LMZ;
                         }
                     }
                     addOutput(
@@ -206,13 +214,15 @@
                 case 'M6':
                     break;
             }
+            if (move) {
+                LMZ = Math.max(pos.Z, LMZ);
+            }
             move = false;
             pos.E = 0.0;
             LZ = pos.Z;
-            LMZ = Math.max(LZ, LMZ);
         });
 
-        G0();
+        moving();
 
         scope.imported = gcode;
         scope.lines = lines.length;
