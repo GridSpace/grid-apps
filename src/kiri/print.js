@@ -25,6 +25,8 @@
     let lastPoint = null,
         lastEmit = null;
 
+    KIRI.Print = Print;
+
     KIRI.newPrint = function(settings, widgets, id) {
         return new Print(settings, widgets, id);
     };
@@ -51,8 +53,10 @@
         this.bounds = null;
         this.imported = null;
 
-        this.hsv2rgb = hsv2rgb;
+        // this.hsv2rgb = hsv2rgb;
     }
+
+    Print.hsv2rgb = hsv2rgb;
 
     PRO.addOutput = addOutput;
     PRO.tip2tipEmit = tip2tipEmit;
@@ -245,7 +249,7 @@
     }
 
     // hsv values all = 0 to 1
-    function hsv2rgb(hsv) {
+    function hsv2rgb(hsv, hex) {
         let seg  = Math.floor(hsv.h * 6),
             rem  = hsv.h - (seg * (1/6)),
             p = hsv.v * (1.0 - (hsv.s)),
@@ -285,7 +289,11 @@
                 break;
         }
 
-        return out;
+        return hex ? (
+            ((out.r * 255) << 16) ||
+            ((out.g * 255) << 8) ||
+            (out.b * 255)
+        ) : out;
     }
 
     // PRO.getLayerCount = function() {

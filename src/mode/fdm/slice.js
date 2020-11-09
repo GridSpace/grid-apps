@@ -671,7 +671,7 @@
         let minarea = minArea || 1,
             tops = slice.tops,
             solids = slice.solids,
-            unioned = POLY.union(solids),
+            unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
             isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;

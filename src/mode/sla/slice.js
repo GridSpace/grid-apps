@@ -160,7 +160,7 @@
                     let traces = POLY.nest(POLY.flatten(slice.topShells()));
                     let trims = slice.solids || [];
                     traces.appendAll(trims);
-                    let union = POLY.union(traces);
+                    let union = POLY.union(traces, undefined, true);
                     slice.unioned = union;
                 }, "solid");
             } else {

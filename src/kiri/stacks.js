@@ -10,7 +10,7 @@
         emissive = 0x101010,
         metalness = 0,
         roughness = 0.3,
-        newMesh = createPhongMesh;
+        newMat = createPhongMat;
 
     let stacks = {},
         tallest = 0,
@@ -108,11 +108,11 @@
             const ctrl = DYN[label];
             ctrl.toggle.checked = true;
 
-            const { polys, lines, faces, paths } = data;
+            const { polys, lines, faces, paths, cpath } = data;
             if (polys.length || lines.length) {
                 const mat = new THREE.LineBasicMaterial({
                     transparent: data.color.opacity != 1,
-                    opacity: data.color.opacity,
+                    opacity: data.color.opacity || 1,
                     color: data.color.line
                 });
                 const geo = new THREE.Geometry(), vert = geo.vertices;
@@ -129,7 +129,7 @@
                 ctrl.group.push(mat);
             }
             if (faces.length) {
-                const mat = newMesh(data);
+                const mat = newMat(data);
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                 geo.computeFaceNormals();
@@ -141,43 +141,54 @@
                 ctrl.group.push(mat);
             }
             if (paths.length) {
-                const mat = newMesh(data);
+                let mat = [];
+                if (cpath) {
+                    cpath.forEach(c => { mat.push(newMat({ color: c })) });
+                } else {
+                    mat.push(newMat(data));
+                }
+                // const mat = newMat(data);
                 paths.forEach((path, i) => {
-                    const { index, faces, z } = path;
+                    const { index, faces, z, colors } = path;
                     const geo = new THREE.BufferGeometry();
                     geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                     geo.setIndex(index);
                     geo.computeFaceNormals();
                     geo.computeVertexNormals();
+                    if (cpath) {
+                        cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
+                    } else {
+                        geo.addGroup(0, Infinity, 0);
+                    }
                     const mesh = new THREE.Mesh(geo, mat);
                     mesh.position.z = z;
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
                     group.add(mesh);
                 });
-                ctrl.group.push(mat);
+                ctrl.group.appendAll(mat);
             }
         }
     };
 
-    function createStandardMesh(data) {
+    function createStandardMat(data) {
         return new THREE.MeshStandardMaterial({
             emissive,
             roughness,
             metalness,
             transparent: data.color.opacity != 1,
-            opacity: data.color.opacity,
+            opacity: data.color.opacity || 1,
             color: data.color.face,
             side: THREE.DoubleSide
         });
     }
 
-    function createPhongMesh(data) {
+    function createPhongMat(data) {
         return new THREE.MeshPhongMaterial({
             shininess,
             specular,
             transparent: data.color.opacity != 1,
-            opacity: data.color.opacity,
+            opacity: data.color.opacity || 1,
             color: data.color.face,
             side: THREE.DoubleSide
         });

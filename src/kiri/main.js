@@ -1929,7 +1929,7 @@
                 KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
-                updateSliderMax();
+                setVisibleLayer(0,0);
                 setWidgetVisibility(true);
                 setOpacity(1);
                 break;

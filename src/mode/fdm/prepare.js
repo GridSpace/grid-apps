@@ -24,9 +24,9 @@
         let device = settings.device,
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
+            bounds = settings.bounds,
             mode = settings.mode,
             output = [],
-            bounds = settings.bounds,
             printPoint = newPoint(0,0,0),
             firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
             maxLayers = 0,
@@ -388,6 +388,10 @@
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
+        const hsv2rgb = KIRI.Print.hsv2rgb;
+        const maxspd = levels.map(level => {
+            return level.map(o => o.speed || 0).reduce((a, v) => Math.max(a,v));
+        }).reduce((a, v) => Math.max(a, v));
 
         let lastOut = null;
         let current = null;
@@ -395,6 +399,8 @@
         levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
+            const output = new KIRI.Render();
+            layers.push(output);
 
             const pushPrint = (toolid, poly) => {
                 toolid = toolid || 0;
@@ -414,9 +420,10 @@
                 }
                 if (lastOut) {
                     if (out.emit) {
-                        if (!lastOut.emit) {
+                        if (!lastOut.emit || out.speed !== lastOut.speed) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
+                            current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
                             pushPrint(out.tool, current);
                         }
                         current.push(out.point);
@@ -432,6 +439,7 @@
                     current = newPolygon().setOpen();
                     current.push(out.point);
                     if (out.emit) {
+                        current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
                         pushPrint(out.tool, current);
                     } else {
                         moves.push(current);
@@ -445,17 +453,25 @@
                 moves.push(current);
             }
 
-            const output = new KIRI.Render();
-            layers.push(output);
             output
                 .setLayer('move', moveColor)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
-                output
-                    .setLayer(opts.action || 'print', printColor)
-                    .addPolys(array, thin ?
-                        { thin, z: opts.z } :
-                        { offset: array.width, height, z: opts.z })
+                array.forEach(poly => {
+                    output
+                        .setLayer(opts.action || 'print', printColor)
+                        .addPolys([ poly ], thin ? { thin, z: opts.z } :
+                            {
+                                offset: array.width, height, z: opts.z,
+                                color: { face: poly.color, line: poly.color }
+                            })
+                })
+                // output
+                //     .setLayer(opts.action || 'print', printColor)
+                //     .addPolys(array, thin ? { thin, z: opts.z } :
+                //         { offset: array.width, height, z: opts.z,
+                //             xcolor: { face: hsv2rgb({h:index/levels.length, s:1, v:1}, true) }
+                //         })
             });
 
             update(index / output.length);

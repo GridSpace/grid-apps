@@ -1378,7 +1378,7 @@
                 union.fillang = fillang;
                 return union;
             } else {
-                console.log({check_union_call_path: union, this: this, poly});
+                console.trace({check_union_call_path: union, this: this, poly});
             }
         }
 

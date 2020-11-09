@@ -161,7 +161,8 @@
                     contour.push(new THREE.Vector2(p.x, p.y));
                 });
                 const {index, faces} = ProfiledContourGeometry(profile, contour, poly.isClosed());
-                const one = this.current.paths[0];
+                const cur = this.current;
+                const one = cur.paths[0];
                 if (one) {
                     // merge all contour geometry for massive speed gain
                     const add = one.faces.length / 3;
@@ -169,12 +170,27 @@
                         index[i] += add;
                     }
                     const feces = new Float32Array(one.faces.length + faces.length);
+                    const indln = one.index.length;
                     feces.set(one.faces);
                     feces.set(faces, one.faces.length);
                     one.faces = feces;
                     one.index.appendAll(index);
+                    // allow changing colors
+                    if (opts.color) {
+                        if (!cur.cpath) {
+                            // seed
+                            cur.cpath = [ Object.assign({ start: 0, count: indln - 1 }, cur.color) ];
+                        } else {
+                            // rewrite last color count if color or opacity have changed
+                            const pc = cur.cpath[cur.cpath.length - 1];
+                            if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
+                                pc.count = indln - 1;
+                                cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
+                            }
+                        }
+                    }
                 } else {
-                    this.current.paths.push({ index, faces, z: poly.getZ() });
+                    cur.paths.push({ index, faces, z: poly.getZ() });
                 }
                 this.stats.contour++;
             });

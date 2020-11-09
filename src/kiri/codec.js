@@ -114,13 +114,8 @@
                 lines: encodePointArray(layer.lines, state),
                 faces: codec.allocFloat32Array(layer.faces),
                 color: layer.color,
-                paths: layer.paths.map(path => {
-                    return {
-                        index: path.index,
-                        faces: path.faces,
-                        z: path.z
-                    }
-                })
+                paths: layer.paths,
+                cpath: layer.cpath
             } })
         };
         return enc;
@@ -134,7 +129,8 @@
                 lines: decodePointArray(v.data[i].lines),
                 faces: v.data[i].faces,
                 color: v.data[i].color,
-                paths: v.data[i].paths
+                paths: v.data[i].paths,
+                cpath: v.data[i].cpath
             };
         }
         return render;
