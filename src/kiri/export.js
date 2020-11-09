@@ -40,12 +40,16 @@
         }
     }
 
-    function callExport(options, mode) {
+    function callExport(callback, mode) {
         const gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
         }, (output) => {
-            exportGCodeDialog(gcode.join('\n'), output);
+            if (callback) {
+                callback(gcode.join('\n'), output);
+            } else {
+                exportGCodeDialog(gcode.join('\n'), output);
+            }
         });
     }
 

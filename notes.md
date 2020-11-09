@@ -2,7 +2,8 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` implement an in-app bug reporting system
+* `F` gcode generation progress bar
+* `F` implement an in-app bug reporting system. add workspace to export option.
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
 * `F` gcode color to speed visualization bar
