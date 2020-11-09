@@ -419,19 +419,16 @@
                     // in cam mode, these are drilling or dwell ops
                     return;
                 }
-                // if (out.point && out.speed && out.emit) console.log((out.speed || -1).toFixed(2));
                 if (lastOut) {
                     const op = out.point, lp = lastOut.point,
                         moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;
                     if (out.emit) {
-                        // if (!moved) return;
                         if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed)) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
-                            current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
+                            current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:0.75}, true);
                             pushPrint(out.tool, current);
                         }
-                        // current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
                         current.push(out.point);
                     } else {
                         if (lastOut.emit) {
