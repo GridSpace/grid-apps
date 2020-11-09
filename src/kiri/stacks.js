@@ -137,7 +137,7 @@
                     group.add(new THREE.LineSegments(geo, mat));
                 }
                 geo.setFromPoints(vert);
-                ctrl.group.push(mat);
+                ctrl.group.appendAll(mat);
             }
             if (faces.length) {
                 const mat = newMat(data);
