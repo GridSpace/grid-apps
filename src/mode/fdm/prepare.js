@@ -405,8 +405,9 @@
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
+
         const maxspd = levels.map(level => {
-            return level.map(o => o.emit || true ? o.speed || 0 : 0).reduce((a, v) => Math.max(a,v));
+            return level.map(o => o.speed || 0).reduce((a, v) => Math.max(a,v));
         }).reduce((a, v) => Math.max(a, v)) + 1;
 
         let lastOut = null;

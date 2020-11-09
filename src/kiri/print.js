@@ -93,8 +93,10 @@
         scope.bytes = code.length;
     };
 
-    PRO.parseGCode = function(gcode, offset, progress, done) {
-        let lines = gcode
+    PRO.parseGCode = function(gcode, offset, progress, done, options) {
+        const opts = options || {};
+        const fdm = opts.fdm;
+        const lines = gcode
             .toUpperCase()
             .replace("X", " X")
             .replace("Y", " Y")
@@ -104,30 +106,11 @@
             .replace("  ", " ")
             .split("\n");
 
-        let scope = this,
-            output = scope.output = [],
+        const scope = this,
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
             },
-            seq = [],
-            abs = true,
-            move = false,
-            defh = 0,
-            height = 0,
-            factor = 1,
-            tool = 0,
-            E0G0 = false,
-            moving = function() {
-                move = true;
-                if (seq.length > 0) {
-                    output.push(seq);
-                    seq = [];
-                    seq.height = height;
-                }
-            },
-            LZ = 0.0,
-            LMZ = 0.0,
             pos = {
                 X: 0.0,
                 Y: 0.0,
@@ -146,6 +129,53 @@
                 Z: 0
             };
 
+        let dz = 0,
+            abs = true,
+            defh = 0,
+            height = 0,
+            factor = 1,
+            tool = 0,
+            seq = [];
+
+        const output = scope.output = [ seq ];
+
+        function G0G1(moving) {
+            if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
+            if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
+            if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
+            if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y * factor);
+            if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z * factor);
+            if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
+
+            const point = newPoint(
+                factor * pos.X + off.X + xoff.X,
+                factor * pos.Y + off.Y + xoff.Y,
+                factor * pos.Z + off.Z + xoff.Z + dz
+            );
+
+            // always add moves to the current sequence
+            if (moving) {
+                addOutput(seq, point, false, pos.F, tool);
+                return;
+            }
+
+            if (seq.Z === undefined) {
+                seq.Z = pos.Z;
+            }
+
+            // non-move in a new plane means burp out
+            // the old sequence and start a new one
+            if (seq.Z != pos.Z) {
+                seq = [];
+                seq.height = height = (defh || pos.Z - seq.Z);
+                if (fdm) dz = -height / 2;
+                output.push(seq);
+            }
+
+            // add point to current sequence
+            addOutput(seq, point, true, pos.F, tool);
+        }
+
         lines.forEach(function(line) {
             if (line.indexOf('- LAYER ') > 0) {
                 const hd = line.replace('(','').replace(')','').split(' ');
@@ -161,6 +191,7 @@
                     xoff.Y = -ext[pos].extOffsetY;
                 }
             }
+            pos.E = 0.0;
             switch (cmd) {
                 case 'G20':
                     factor = 25.4;
@@ -177,52 +208,18 @@
                     abs = false;
                     break;
                 case 'G0':
-                    moving();
+                    G0G1(true);
+                    break;
                 case 'G1':
                     line.forEach(function(tok) {
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
-                    if (seq.Z === undefined && pos.Z) {
-                        seq.Z = pos.Z;
-                    }
-                    if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
-                    if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
-                    if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
-                    if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y * factor);
-                    if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z * factor);
-                    if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
-                    if (pos.E) E0G0 = true;
-                    if (E0G0 && pos.E === 0.0) {
-                        if (LZ != pos.Z) moving();
-                        else move = true;
-                        if (move && pos.Z > LMZ) {
-                            height = seq.height = defh || pos.Z - LMZ;
-                        }
-                    }
-                    addOutput(
-                        seq,
-                        newPoint(
-                            factor * pos.X + off.X + xoff.X,
-                            factor * pos.Y + off.Y + xoff.Y,
-                            factor * pos.Z + off.Z + xoff.Z
-                        ),
-                        !move,
-                        pos.F,
-                        tool
-                    );
+                    G0G1(fdm ? pos.E == 0 : false);
                     break;
                 case 'M6':
                     break;
             }
-            if (move) {
-                LMZ = Math.max(pos.Z, LMZ);
-            }
-            move = false;
-            pos.E = 0.0;
-            LZ = pos.Z;
         });
-
-        moving();
 
         scope.imported = gcode;
         scope.lines = lines.length;
