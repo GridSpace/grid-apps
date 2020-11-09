@@ -195,7 +195,9 @@
             MODES,
             VIEWS,
             SETUP,
-            SECURE
+            SECURE,
+            STACKS,
+            SPACE
         },
         var: {
             layer_lo: 0,
@@ -272,7 +274,7 @@
             reload: reload,
             restore: restoreWorkspace,
             clear: clearWorkspace,
-            save: saveWorkspace,
+            save: saveWorkspace
         },
         tweak,
         util: {

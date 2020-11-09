@@ -178,15 +178,13 @@
                     // allow changing colors
                     if (opts.color) {
                         if (!cur.cpath) {
-                            // seed
                             cur.cpath = [ Object.assign({ start: 0, count: indln - 1 }, cur.color) ];
-                        } else {
-                            // rewrite last color count if color or opacity have changed
-                            const pc = cur.cpath[cur.cpath.length - 1];
-                            if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
-                                pc.count = indln - 1;
-                                cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
-                            }
+                        }
+                        // rewrite last color count if color or opacity have changed
+                        const pc = cur.cpath[cur.cpath.length - 1];
+                        if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
+                            pc.count = indln - 1;
+                            cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
                         }
                     }
                 } else {
