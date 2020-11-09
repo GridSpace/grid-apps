@@ -163,13 +163,15 @@ KIRI.worker = {
             z: origin.z
         };
         const print = KIRI.newPrint(settings, Object.values(cache));
+        const tools = settings.device.extruders;
+        const thin = settings.controller.thinRender || settings.mode !== 'FDM';
 
         const parsed = print.parseGCode(code, offset, progress => {
-            send.data({progress});
+            send.data({ progress: progress * 0.5 });
         }, done => {
-            const layers = KIRI.driver.FDM.prepareRender(done, progress => {
-                send.data({progress});
-            }, { thin: true });
+            const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
+                send.data({ progress: 0.5 + progress * 0.5 });
+            }, { thin, tools });
             send.done({parsed: KIRI.codec.encode(layers)});
         });
     },

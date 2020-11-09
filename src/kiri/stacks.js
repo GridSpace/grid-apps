@@ -95,7 +95,6 @@
 
         for (const [label, data] of Object.entries(render.layers)) {
             if (!DYN[label]) {
-console.log('new label', label);
                 DYN[label] = {
                     group: [],
                     toggle: UC.newBoolean(label, (abc) => {

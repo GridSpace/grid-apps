@@ -113,6 +113,7 @@
             seq = [],
             abs = true,
             move = false,
+            height = 0,
             factor = 1,
             tool = 0,
             E0G0 = false,
@@ -121,9 +122,11 @@
                 if (seq.length > 0) {
                     output.push(seq);
                     seq = [];
+                    seq.height = height;
                 }
             },
             LZ = 0.0,
+            LMZ = 0.0,
             pos = {
                 X: 0.0,
                 Y: 0.0,
@@ -184,6 +187,9 @@
                     if (E0G0 && pos.E === 0.0) {
                         if (LZ != pos.Z) G0();
                         else move = true;
+                        if (move && pos.Z > LMZ) {
+                            height = seq.height = pos.Z - LMZ;
+                        }
                     }
                     addOutput(
                         seq,
@@ -203,6 +209,7 @@
             move = false;
             pos.E = 0.0;
             LZ = pos.Z;
+            LMZ = Math.max(LZ, LMZ);
         });
 
         G0();
@@ -211,7 +218,7 @@
         scope.lines = lines.length;
         scope.bytes = gcode.length;
 
-        done(scope.output);
+        done({ output: scope.output });
     };
 
     function pref(a,b) {
