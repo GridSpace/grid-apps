@@ -447,11 +447,15 @@
 
             const output = new KIRI.Render();
             layers.push(output);
-            output.setLayer('move', moveColor).addPolys(moves);
+            output
+                .setLayer('move', moveColor)
+                .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
                 output
-                    .setLayer('print', printColor)
-                    .addPolys(array, thin ? null : { offset: array.width, height })
+                    .setLayer(opts.action || 'print', printColor)
+                    .addPolys(array, thin ?
+                        { thin, z: opts.z } :
+                        { offset: array.width, height, z: opts.z })
             });
 
             update(index / output.length);

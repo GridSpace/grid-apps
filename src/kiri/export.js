@@ -25,11 +25,12 @@
 
     function exportFile(options) {
         if (isPrepared()) {
-            API.event.emit('export', API.mode.get());
-            switch (API.mode.get()) {
-                case 'LASER': return callExport();
-                case 'FDM': return callExport(options);
-                case 'CAM': return callExport(options);
+            const mode = API.mode.get();
+            API.event.emit('export', mode);
+            switch (mode) {
+                case 'LASER': return callExportLaser(options);
+                case 'FDM': return callExport(options, mode);
+                case 'CAM': return callExport(options, mode);
                 case 'SLA': return callExportSLA(options);
             }
         } else {
@@ -39,12 +40,20 @@
         }
     }
 
-    function callExport(options) {
+    function callExport(options, mode) {
         const gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
         }, (output) => {
             exportGCodeDialog(gcode.join('\n'), output);
+        });
+    }
+
+    function callExportLaser(options) {
+        KIRI.client.export(API.conf.get(), (line) => {
+            console.log({unexpected_line: line});
+        }, (output) => {
+            exportLaserDialog(output);
         });
     }
 
@@ -61,37 +70,39 @@
         });
     }
 
-    function exportLaserDialog(currentPrint) {
+    function exportLaserDialog(data) {
         if (!isPrepared()) {
             return API.function.prepare(exportLaser);
         }
 
-        let filename = "laser-"+(new Date().getTime().toString(36));
+        const filename = "laser-"+(new Date().getTime().toString(36));
+        const settings = API.conf.get();
+        const driver = KIRI.driver.LASER;
 
         function download_svg() {
             saveAs(new Blob(
-                [currentPrint.exportSVG()],
+                [driver.exportSVG(settings, data)],
                 {type:"application/octet-stream"}),
                 $('print-filename').value + ".svg");
         }
 
         function download_dxf() {
             saveAs(new Blob(
-                [currentPrint.exportDXF()],
+                [driver.exportDXF(settings, data)],
                 {type:"application/octet-stream"}),
                 $('print-filename').value + ".dxf");
         }
 
         function download_gcode() {
             saveAs(new Blob(
-                [currentPrint.exportLaserGCode()],
+                [driver.exportGCode(settings, data)],
                 {type:"application/octet-stream"}),
                 $('print-filename').value + ".gcode");
         }
 
         API.ajax("/kiri/output-laser.html", function(html) {
             let segments = 0;
-            currentPrint.output.forEach(layer => { segments += layer.length });
+            data.forEach(layer => { segments += layer.length });
             UI.print.innerHTML = html;
             $('print-filename').value = filename;
             $('print-lines').value = UTIL.comma(segments);

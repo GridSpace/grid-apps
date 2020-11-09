@@ -73,10 +73,13 @@
             if (options && options.flat) {
                 return this.addFlats(polys, options);
             }
-            if (options) {
+            if (options && !options.thin) {
                 return this.addPaths(polys, options);
             }
             polys = flat(polys);
+            if (options && options.thin && options.z !== undefined) {
+                polys.forEach(p => p.setZ(options.z));
+            }
             this.current.polys.appendAll(polys);
             this.stats.line_poly += polys.length;
             return this;

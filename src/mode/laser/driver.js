@@ -11,11 +11,12 @@
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
-        DBUG = BASE.debug,
+        FDM = KIRI.driver.FDM,
+        CAM = KIRI.driver.CAM,
         LASER = KIRI.driver.LASER = {
             slice,
-            sliceRender,
-            printSetup,
+            prepare,
+            export: exportLaser,
             printRender,
             exportGCode,
             exportSVG,
@@ -46,7 +47,8 @@
         }, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
-                slice.doShells(1, -proc.laserOffset);
+                FDM.share.doShells(slice, 1, -proc.laserOffset);
+                slice.output().setLayer("slice").addPolys(slice.topPolys());
                 onupdate(0.80 + (index/slices.length) * 0.20);
             });
             ondone();
@@ -54,10 +56,6 @@
             onupdate(0.0 + update * 0.80)
         });
     };
-
-    function sliceRender(widget) {
-        return KIRI.driver.CAM.sliceRender(widget);
-    }
 
     function sliceEmitObjects(print, slice, groups) {
         let start = newPoint(0,0,0);
@@ -83,15 +81,13 @@
             }
         }
 
-        slice.tops.forEach(function(top) {
-            laserOut(top.innerTraces(), group);
-            laserOut(top.traces, group);
-            if (!grouped) {
-                groups.push(group);
-                group = [];
-                group.thick = slice.thick;
-            }
-        });
+        laserOut(slice.topPolyInners(), group);
+        laserOut(slice.topShells(), group);
+        if (!grouped) {
+            groups.push(group);
+            group = [];
+            group.thick = slice.thick;
+        }
 
         if (grouped) {
             groups.push(group);
@@ -104,12 +100,11 @@
      * @param {Object} print state object
      * @param {Function} update incremental callback
      */
-    function printSetup(print, update) {
-        let widgets = print.widgets,
-            settings = print.settings,
-            device = settings.device,
+    function prepare(widgets, settings, update) {
+        let device = settings.device,
             process = settings.process,
-            output = print.output,
+            print = self.worker.print = KIRI.newPrint(settings, widgets),
+            output = print.output = [],
             totalSlices = 0,
             slices = 0;
 
@@ -125,7 +120,7 @@
                 let merged = [];
                 widget.slices.forEach(function(slice) {
                     let polys = [];
-                    slice.gatherTopPolys([]).forEach(p => p.flattenTo(polys));
+                    slice.topPolys().clone(true).forEach(p => p.flattenTo(polys));
                     polys.forEach(p => {
                         let match = false;
                         for (let i=0; i<merged.length; i++) {
@@ -214,14 +209,19 @@
         // if (process.laserKnife) {
         //     console.log({laser_it: output});
         // }
+
+        return print.render = FDM.prepareRender(output, update, { thin: true, z: 0, action: "cut" });
     };
+
+    function exportLaser(print, online, ondone) {
+        ondone(print.output);
+    }
 
     /**
      *
      */
-    function exportElements(print, onpre, onpoly, onpost, onpoint, onlayer) {
-        let process = print.settings.process,
-            output = print.output,
+    function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlayer) {
+        let process = settings.process,
             zcolor = process.outputLaserZColor,
             last,
             point,
@@ -306,16 +306,17 @@
     /**
      *
      */
-    function exportGCode(print) {
+    function exportGCode(settings, data) {
         let lines = [], dx = 0, dy = 0, z = 0, feedrate;
-        let dev = print.settings.device;
+        let dev = settings.device;
         let space = dev.gcodeSpace ? ' ' : '';
         let power = 255;
         let laser_on = dev.gcodeLaserOn || [];
         let laser_off = dev.gcodeLaserOff || [];
 
         exportElements(
-            print,
+            settings,
+            data,
             function(min, max, power, speed) {
                 let width = (max.x - min.x),
                     height = (max.y - min.y);
@@ -370,8 +371,8 @@
     /**
      *
      */
-    function exportSVG(print, cut_color) {
-        let zcolor = print.settings.process.outputLaserZColor ? 1 : 0;
+    function exportSVG(settings, data, cut_color) {
+        let zcolor = settings.process.outputLaserZColor ? 1 : 0;
         let lines = [], dx = 0, dy = 0, my, z = 0;
         let colors = [
             "black",
@@ -386,7 +387,8 @@
         ];
 
         exportElements(
-            print,
+            settings,
+            data,
             function(min, max) {
                 let width = (max.x - min.x),
                     height = (max.y - min.y);
@@ -425,11 +427,12 @@
     /**
      *
      */
-    function exportDXF(print) {
+    function exportDXF(settings, data) {
         let lines = [];
 
         exportElements(
-            print,
+            settings,
+            data,
             function(min, max) {
                 lines.appendAll([
                     '  0',
