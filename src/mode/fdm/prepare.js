@@ -419,6 +419,7 @@
                     // in cam mode, these are drilling or dwell ops
                     return;
                 }
+                // if (out.point && out.speed && out.emit) console.log((out.speed || -1).toFixed(2));
                 if (lastOut) {
                     const op = out.point, lp = lastOut.point,
                         moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;
@@ -453,11 +454,10 @@
                 lastOut = out;
             });
             if (lastOut.emit) {
-                pushPrint(lastOut.tool, current)
+                // pushPrint(lastOut.tool, current)
             } else {
                 moves.push(current);
             }
-
             output
                 .setLayer('move', moveColor, true)
                 .addPolys(moves, { thin: true, z: opts.z });
