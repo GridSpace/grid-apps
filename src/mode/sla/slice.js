@@ -6,6 +6,7 @@
 
     let KIRI = self.kiri,
         BASE = self.base,
+        POLY = BASE.polygons,
         UTIL = BASE.util,
         SLA = KIRI.driver.SLA,
         FDM = KIRI.driver.FDM.share,
@@ -120,14 +121,12 @@
                 slices[i-1].up = slices[i];
                 slices[i].down = slices[i-1];
             }
-            // reset for solids and support projections
-            // slices.forEach(function(slice) {
-            //     slice.invalidateFill();
-            //     slice.invalidateSolids();
-            //     slice.invalidateSupports();
-            //     slice.isSolidFill = false;
-            // });
             let solidLayers = Math.round(process.slaShell / process.slaSlice);
+            // setup solid fill
+            slices.forEach(function(slice) {
+                slice.solids = [];
+            });
+            // compute total work for progress bar
             work_total = [
                 5,  // shell
                 10, // diff
@@ -147,7 +146,7 @@
             }, "slice");
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
-                FDM.doDiff(slice, 0.000001, 0.005, true, !process.slaOpenBase);
+                FDM.doDiff(slice, 0.000001, true, !process.slaOpenBase);
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 10, (slice) => {

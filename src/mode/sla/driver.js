@@ -11,7 +11,7 @@
         SLA = KIRI.driver.SLA = {
             // init,           // src/mode/sla/client.js
             // slice,          // src/mode/sla/slice.js
-            printSetup,
+            prepare,
             // export,         // src/mode/sla/export.js
             // printDownload,  // src/mode/sla/client.js
             legacy: false
@@ -19,13 +19,10 @@
 
     if (SLA.legacy) console.log("SLA Driver in Legacy Mode");
 
-    /**
-     * DRIVER PRINT CONTRACT - runs in worker
-     * @param {Object} print state object
-     * @param {Function} update incremental callback
-     */
-    function printSetup(print, update) {
+    // runs in worker. would usually be in src/mode/sla/prepare.js
+    function prepare(widgets, settings, update) {
+        self.worker.print = KIRI.newPrint(settings, widgets);
         update(1);
-    };
+    }
 
 })();

@@ -15,7 +15,7 @@
      * @param {Function} online streaming reply
      * @param {Function} ondone last reply
      */
-    SLA.printExport = function(print, online, ondone) {
+    SLA.export = function(print, online, ondone) {
         let widgets = print.widgets,
             settings = print.settings,
             device = settings.device,

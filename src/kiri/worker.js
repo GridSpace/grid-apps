@@ -138,14 +138,18 @@ KIRI.worker = {
             return send.done()
         }
 
-        const output = driver.export(current.print, function(line) {
-            send.data({line});
+        let output;
+        driver.export(current.print, function(line, direct) {
+            send.data({line}, direct);
+        }, function(done) {
+            // SLA workaround
+            output = done;
         });
-        const { bounds, time, lines, bytes, distance } = current.print;
+        const { bounds, time, lines, bytes, distance, settings } = current.print;
 
         send.done({
             done: true,
-            output: { bounds, time, lines, bytes, distance }
+            output: output ? output : { bounds, time, lines, bytes, distance, settings }
         });
     },
 

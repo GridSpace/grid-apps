@@ -24,7 +24,7 @@
     /**
      * @returns {Array} gcode lines
      */
-    CAM.export = function printExport(print, online) {
+    CAM.export = function(print, online) {
         let widget = print.widgets[0];
 
         if (!widget) return;
@@ -80,26 +80,17 @@
             },
             append;
 
-        if (online) {
-            append = function(line) {
-                if (line) {
-                    lines++;
-                    bytes += line.length;
-                    output.append(line);
-                }
-                if (!line || output.length > 1000) {
-                    online(output.join("\n"));
-                    output = [];
-                }
-            };
-        } else {
-            append = function(line) {
-                if (!line) return;
-                output.append(line);
+        append = function(line) {
+            if (line) {
                 lines++;
                 bytes += line.length;
+                output.append(line);
             }
-        }
+            if (!line || output.length > 1000) {
+                online(output.join("\n"));
+                output = [];
+            }
+        };
 
         function filterEmit(array, consts) {
             if (!array) return;
@@ -317,8 +308,6 @@
         print.lines = lines;
         print.bytes = bytes + lines - 1;
         print.bounds = runbox;
-
-        return online ? null : output.join("\n");
     };
 
 })();

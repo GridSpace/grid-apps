@@ -79,26 +79,17 @@
             if (v >= 0) pause.push(v);
         });
 
-        if (online) {
-            append = function(line) {
-                if (line) {
-                    lines++;
-                    bytes += line.length;
-                    output.append(line);
-                }
-                if (!line || output.length > 1000) {
-                    online(output.join("\n"));
-                    output = [];
-                }
-            };
-        } else {
-            append = function(line) {
-                if (!line) return;
-                output.append(line);
+        append = function(line) {
+            if (line) {
                 lines++;
                 bytes += line.length;
+                output.append(line);
             }
-        }
+            if (!line || output.length > 1000) {
+                online(output.join("\n"));
+                output = [];
+            }
+        };
 
         function appendSub(line) {
             append(print.constReplace(line, subst));
@@ -375,8 +366,6 @@
         print.lines = lines;
         print.bytes = bytes + lines - 1;
         print.time = time;
-
-        return online ? null : output.join("\n");
     };
 
 })();

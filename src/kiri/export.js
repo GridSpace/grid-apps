@@ -30,7 +30,7 @@
                 case 'LASER': return callExport();
                 case 'FDM': return callExport(options);
                 case 'CAM': return callExport(options);
-                case 'SLA': return exportSLA();
+                case 'SLA': return callExportSLA(options);
             }
         } else {
             API.function.prepare(function() {
@@ -40,55 +40,25 @@
     }
 
     function callExport(options) {
-        if (isPrepared()) {
-            const gcode = [];
-            KIRI.client.export(API.conf.get(), (line) => {
-                gcode.push(line);
-            }, (output) => {
-                exportGCodeDialog(gcode.join('\n'), output);
-            });
-        } else {
-            API.function.prepare(function() { exportPrint(options) });
-        }
+        const gcode = [];
+        KIRI.client.export(API.conf.get(), (line) => {
+            gcode.push(line);
+        }, (output) => {
+            exportGCodeDialog(gcode.join('\n'), output);
+        });
     }
 
-    function exportSLADialog(currentPrint) {
-        if (isPrepared()) {
-            if (currentPrint.exported) {
-                KIRI.driver.SLA.printDownload(currentPrint);
-                return;
+    function callExportSLA(options) {
+        const preview = [];
+        KIRI.client.export(API.conf.get(), (line) => {
+            API.show.progress(line.progress, "exporting");
+            if (line.data) {
+                preview.push(line.data);
             }
-            let lines = [];
-            let times = {};
-            let mark = Date.now();
-            let seq = 1;
-            let segment;
-            currentPrint.export(true, function(line) {
-                if (line.message) {
-                    if (segment && segment !== line.message) {
-                        let now = Date.now();
-                        times[`${seq++}_${segment}`] = now - mark;
-                        mark = now;
-                    }
-                    segment = line.message;
-                }
-                if (line.progress) {
-                    API.show.progress(line.progress, "exporting");
-                }
-                if (line.data) {
-                    lines.push(line.data);
-                }
-            }, function(done) {
-                currentPrint.exported = true;
-                times[`${seq++}_${segment}`] = Date.now() - mark;
-                console.log(times);
-                API.show.progress(0);
-                currentPrint.sla = { lines, done, API };
-                KIRI.driver.SLA.printDownload(currentPrint);
-            });
-        } else {
-            API.function.prepare(exportSLA);
-        }
+        }, (output) => {
+            API.show.progress(0);
+            KIRI.driver.SLA.printDownload(preview, output, API);
+        });
     }
 
     function exportLaserDialog(currentPrint) {
@@ -132,7 +102,7 @@
         });
     }
 
-    function exportGCodeDialog(gcode, currentPrint) {
+    function exportGCodeDialog(gcode, info) {
         SDB['kiri-print-seq'] = printSeq++;
 
         let settings = API.conf.get(),
@@ -395,8 +365,8 @@
                 "filename=" + filename +
                 "&target=" + target +
                 "&key=" + apik +
-                "&time=" + Math.round(currentPrint.time) +
-                "&length=" + Math.round(currentPrint.distance) +
+                "&time=" + Math.round(info.time) +
+                "&length=" + Math.round(info.distance) +
                 "&image=" + filename
             );
             xhtr.setRequestHeader("Content-Type", "text/plain");
@@ -420,9 +390,9 @@
             let density = $('print-density');
             $('print-weight').value = (
                 (Math.PI * UTIL.sqr(
-                    currentPrint.settings.device.extruders[0].extFilament / 2
+                    info.settings.device.extruders[0].extFilament / 2
                 )) *
-                currentPrint.distance *
+                info.distance *
                 (parseFloat(density.value) || 1.25) /
                 1000
             ).toFixed(2);
@@ -434,7 +404,7 @@
 
         function calcTime() {
             let floor = Math.floor,
-                time = floor(currentPrint.time),
+                time = floor(info.time),
                 hours = floor(time / 3600),
                 newtime = time - hours * 3600,
                 mins = floor(newtime / 60),
@@ -454,8 +424,8 @@
             $('print-filament-head').style.display = fdm ? '' : 'none';
             $('print-filament-info').style.display = fdm ? '' : 'none';
             $('print-filename').value = filename;
-            $('print-filesize').value = UTIL.comma(currentPrint.bytes);
-            $('print-filament').value = Math.round(currentPrint.distance);
+            $('print-filesize').value = UTIL.comma(info.bytes);
+            $('print-filament').value = Math.round(info.distance);
             calcTime();
             if (fdm) {
                 calcWeight();

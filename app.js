@@ -263,7 +263,6 @@ const script = {
         "kiri/db",
         "kiri/slice",
         "kiri/render",
-        // "kiri/slicer",
         "mode/fdm/driver",
         "mode/fdm/client",
         "mode/sla/driver",
