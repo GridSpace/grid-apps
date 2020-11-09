@@ -686,8 +686,7 @@
         API.conf.save();
         API.event.emit('slice.begin', getMode());
 
-        let firstMesh = true,
-            countdown = WIDGETS.length,
+        let countdown = WIDGETS.length,
             totalProgress,
             track = {},
             mode = settings.mode,
@@ -720,11 +719,11 @@
                     if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
                     segtimes.total = UTIL.time() - now;
                     API.event.emit('slice', getMode());
-                    firstMesh = false;
                 }
                 // on done
                 segtimes[`${segNumber}_draw`] = widget.render(stack);
                 updateSliderMax(true);
+                setVisibleLayer(-1, 0);
                 // clear wireframe
                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                 widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
@@ -828,7 +827,7 @@
             if (feature.preview) {
                 SPACE.update();
                 updateSliderMax(true);
-                showSlices();
+                setVisibleLayer(-1, 0);
             }
 
             if (typeof(callback) === 'function') {
@@ -1929,7 +1928,7 @@
                 KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
-                setVisibleLayer(0,0);
+                setVisibleLayer();
                 setWidgetVisibility(true);
                 setOpacity(1);
                 break;

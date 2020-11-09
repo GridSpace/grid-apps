@@ -385,6 +385,7 @@
         const opts = options || {};
         const tools = opts.tools || {};
         const thin = opts.thin || false;
+        const ckspeed = opts.speed !== false;
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
@@ -420,7 +421,7 @@
                 }
                 if (lastOut) {
                     if (out.emit) {
-                        if (!lastOut.emit || out.speed !== lastOut.speed) {
+                        if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed)) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
                             current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
