@@ -153,18 +153,24 @@ KIRI.worker = {
         });
     },
 
-    gcode: function(data, send) {
-        current.print.exportGCode(false, function(gcode) {
-            send.done({
-                gcode: gcode,
-                lines: current.print.lines,
-                bytes: current.print.bytes,
-                bounds: current.print.bounds,
-                distance: current.print.distance,
-                time: current.print.time
-            });
-        }, function(line) {
-            send.data({line:line});
+    parse: function(args, send) {
+        const { settings, code, type } = args;
+        const center = settings.process.outputOriginCenter;
+        const origin = settings.origin;
+        const offset = {
+            x: origin.x,
+            y: -origin.y,
+            z: origin.z
+        };
+        const print = KIRI.newPrint(settings, Object.values(cache));
+
+        const parsed = print.parseGCode(code, offset, progress => {
+            send.data({progress});
+        }, done => {
+            const layers = KIRI.driver.FDM.prepareRender(done, progress => {
+                send.data({progress});
+            }, { thin: true });
+            send.done({parsed: KIRI.codec.encode(layers)});
         });
     },
 

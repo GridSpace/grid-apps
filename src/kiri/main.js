@@ -628,31 +628,20 @@
     }
 
     function loadCode(code, type) {
-        return alert2('currently unavailable');
-
         setViewMode(VIEWS.PREVIEW);
         setOpacity(0);
-        currentPrint = kiri.newPrint(settings, []);
-        let center = settings.process.outputOriginCenter;
-        let origin = settings.origin;
-        let offset = {
-            x: origin.x,
-            y: -origin.y,
-            z: origin.z
-        };
-        switch (type) {
-            case 'svg':
-                currentPrint.parseSVG(code, offset);
-                break;
-            default:
-                currentPrint.parseGCode(code, offset);
-                break;
-        }
-        currentPrint.render();
-        SPACE.platform.add(currentPrint.group);
-        SPACE.update();
-        updateSliderMax(true);
-        showSlices();
+
+        KIRI.client.parse({code, type, settings}, progress => {
+            API.show.progress(progress, "parsing");
+        }, layers => {
+            API.show.progress(0);
+            STACKS.clear();
+            const stack = STACKS.create('parse', SPACE.platform.world);
+            layers.forEach(layer => stack.add(layer));
+            updateSliderMax(true);
+            showSlices();
+            SPACE.update();
+        });
     }
 
     function cancelWorker() {

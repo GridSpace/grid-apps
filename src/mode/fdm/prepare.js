@@ -389,7 +389,6 @@
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
-        const hsv2rgb = KIRI.Print.hsv2rgb;
         const maxspd = levels.map(level => {
             return level.map(o => o.speed || 0).reduce((a, v) => Math.max(a,v));
         }).reduce((a, v) => Math.max(a, v));
@@ -459,27 +458,67 @@
                 .setLayer('move', moveColor, true)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
-                array.forEach(poly => {
-                    output
-                        .setLayer(opts.action || 'print', printColor)
-                        .addPolys([ poly ], thin ? { thin, z: opts.z } :
-                            {
-                                offset: array.width, height, z: opts.z,
-                                color: { face: poly.color, line: poly.color }
-                            })
+                array.forEach(poly => { output
+                    .setLayer(opts.action || 'print', printColor)
+                    .addPolys([ poly ], thin ? { thin, z: opts.z } : {
+                        offset: array.width, height, z: opts.z,
+                        color: { face: poly.color, line: poly.color }
+                    })
                 })
-                // output
-                //     .setLayer(opts.action || 'print', printColor)
-                //     .addPolys(array, thin ? { thin, z: opts.z } :
-                //         { offset: array.width, height, z: opts.z,
-                //             xcolor: { face: hsv2rgb({h:index/levels.length, s:1, v:1}, true) }
-                //         })
             });
 
             update(index / levels.length);
         });
 
         return layers;
+    }
+
+    // hsv values all = 0 to 1
+    function hsv2rgb(hsv, int) {
+        let seg  = Math.floor(hsv.h * 6),
+            rem  = hsv.h - (seg * (1/6)),
+            p = hsv.v * (1.0 - (hsv.s)),
+            q = hsv.v * (1.0 - (hsv.s * rem)),
+            t = hsv.v * (1.0 - (hsv.s * (1.0 - rem))),
+            out = {};
+        switch (seg) {
+            case 0:
+                out.r = hsv.v;
+                out.g = t;
+                out.b = p;
+                break;
+            case 1:
+                out.r = q;
+                out.g = hsv.v;
+                out.b = p;
+                break;
+            case 2:
+                out.r = p;
+                out.g = hsv.v;
+                out.b = t;
+                break;
+            case 3:
+                out.r = p;
+                out.g = q;
+                out.b = hsv.v;
+                break;
+            case 4:
+                out.r = t;
+                out.g = p;
+                out.b = hsv.v;
+                break;
+            case 5:
+                out.r = hsv.v;
+                out.g = p;
+                out.b = q;
+                break;
+        }
+
+        return int ? (
+            (((out.r * 255) & 0xff) << 16) |
+            (((out.g * 255) & 0xff) << 8) |
+             ((out.b * 255) & 0xff)
+        ) : out;
     }
 
 })();

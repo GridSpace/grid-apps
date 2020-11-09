@@ -222,6 +222,8 @@
                     }
                 });
 
+                if (!offset) return;
+
                 slice.camLines = offset;
                 slice.output()
                     .setLayer("roughing", {face: 0, line: 0})
@@ -229,7 +231,7 @@
                 updateOp(index, slices.length);
             });
 
-            sliceAll.appendAll(slices);
+            sliceAll.appendAll(slices.filter(slice => slice.camLines));
         }
 
         // create outline slices
@@ -508,7 +510,7 @@
         });
 
         if (notabs) {
-            console.log(`unable to compute tabs for ${notabs} traces @ z=${slice.z}`);
+            console.log(`unable to compute tabs for ${notabs} traces @ z=${z}`);
         }
 
         return nutrace;

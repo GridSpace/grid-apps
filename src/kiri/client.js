@@ -161,7 +161,7 @@ KIRI.work = {
     },
 
     prepare : function(settings, update, done) {
-        send("prepare", {settings:settings}, function(reply) {
+        send("prepare", { settings }, function(reply) {
             if (reply.progress) {
                 update(reply.progress, reply.message);
             }
@@ -172,8 +172,7 @@ KIRI.work = {
     },
 
     export : function(settings, online, ondone) {
-        let lines = [];
-        send("export", {settings:settings}, function(reply) {
+        send("export", { settings }, function(reply) {
             if (reply.line) {
                 online(reply.line);
             }
@@ -183,16 +182,13 @@ KIRI.work = {
         });
     },
 
-    gcode : function(callback) {
-        let gcode = [];
-        let start = BASE.util.time();
-        send("gcode", {}, function(reply) {
-            if (reply.line) {
-                gcode.push(reply.line);
-            } else {
-                if (!reply.gcode) reply.gcode = gcode.join("\n");
-                // console.log({printGCode:(BASE.util.time() - start)});
-                callback(reply);
+    parse : function(args, progress, done) {
+        send("parse", args, function(reply) {
+            if (reply.progress) {
+                progress(reply);
+            }
+            if (reply.parsed) {
+                done(KIRI.codec.decode(reply.parsed));
             }
         });
     }

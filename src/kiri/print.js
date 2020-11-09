@@ -52,11 +52,7 @@
         this.distance = 0;
         this.bounds = null;
         this.imported = null;
-
-        // this.hsv2rgb = hsv2rgb;
     }
-
-    Print.hsv2rgb = hsv2rgb;
 
     PRO.addOutput = addOutput;
     PRO.tip2tipEmit = tip2tipEmit;
@@ -97,7 +93,7 @@
         scope.bytes = code.length;
     };
 
-    PRO.parseGCode = function(gcode, offset) {
+    PRO.parseGCode = function(gcode, offset, progress, done) {
         let lines = gcode
             .toUpperCase()
             .replace("X", " X")
@@ -191,11 +187,11 @@
                     }
                     addOutput(
                         seq,
-                        {
-                            x:(factor * pos.X + off.X + xoff.X),
-                            y:(factor * pos.Y + off.Y + xoff.Y),
-                            z:(factor * pos.Z + off.Z + xoff.Z)
-                        },
+                        newPoint(
+                            factor * pos.X + off.X + xoff.X,
+                            factor * pos.Y + off.Y + xoff.Y,
+                            factor * pos.Z + off.Z + xoff.Z
+                        ),
                         !move,
                         pos.F,
                         tool
@@ -214,137 +210,13 @@
         scope.imported = gcode;
         scope.lines = lines.length;
         scope.bytes = gcode.length;
+
+        done(scope.output);
     };
 
     function pref(a,b) {
         return a !== undefined ? a : b;
     }
-
-    function rgb2hsv(ir, ig, ib) {
-        let H = 0,
-            S = 0,
-            V = 0,
-            r = ir / 255,
-            g = ig / 255,
-            b = ib / 255;
-
-        let minRGB = Math.min(r, Math.min(g, b)),
-            maxRGB = Math.max(r, Math.max(g, b));
-
-        // Black-gray-white
-        if (minRGB == maxRGB) {
-            V = minRGB;
-            return [0, 0, V];
-        }
-
-        // Colors other than black-gray-white:
-        let d = (r == minRGB) ? g - b : ((b == minRGB) ? r - g : b - r),
-            h = (r == minRGB) ? 3 : ((b == minRGB) ? 1 : 5);
-
-        H = 60 * (h - d / (maxRGB - minRGB));
-        S = (maxRGB - minRGB) / maxRGB;
-        V = maxRGB;
-
-        return [H, S, V];
-    }
-
-    function hsl2rgb(h, s, l) {
-        let r, g, b;
-
-        if (s == 0) {
-            r = g = b = l; // achromatic
-        } else {
-            let hue2rgb = function hue2rgb(p, q, t) {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
-            }
-
-            let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            let p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1 / 3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1 / 3);
-        }
-
-        const rgb =
-            (((r * 255) & 0xff) << 16) |
-            (((g * 255) & 0xff) << 8) |
-             ((b * 255) & 0xff);
-
-        return rgb;
-    }
-
-    // hsv values all = 0 to 1
-    function hsv2rgb(hsv, hex) {
-        let seg  = Math.floor(hsv.h * 6),
-            rem  = hsv.h - (seg * (1/6)),
-            p = hsv.v * (1.0 - (hsv.s)),
-            q = hsv.v * (1.0 - (hsv.s * rem)),
-            t = hsv.v * (1.0 - (hsv.s * (1.0 - rem))),
-            out = {};
-        switch (seg) {
-            case 0:
-                out.r = hsv.v;
-                out.g = t;
-                out.b = p;
-                break;
-            case 1:
-                out.r = q;
-                out.g = hsv.v;
-                out.b = p;
-                break;
-            case 2:
-                out.r = p;
-                out.g = hsv.v;
-                out.b = t;
-                break;
-            case 3:
-                out.r = p;
-                out.g = q;
-                out.b = hsv.v;
-                break;
-            case 4:
-                out.r = t;
-                out.g = p;
-                out.b = hsv.v;
-                break;
-            case 5:
-                out.r = hsv.v;
-                out.g = p;
-                out.b = q;
-                break;
-        }
-
-        // if (hex) return hsl2rgb(hsv.h, hsv.s, hsv.v);
-
-        return hex ? (
-            (((out.r * 255) & 0xff) << 16) |
-            (((out.g * 255) & 0xff) << 8) |
-             ((out.b * 255) & 0xff)
-        ) : out;
-    }
-
-    // PRO.getLayerCount = function() {
-    //     return this.output.length;
-    // }
-
-    // PRO.hide = function() {
-    //     this.printView.forEach(function(layer) {
-    //         layer.setVisible(false);
-    //     })
-    //     this.movesView.forEach(function(layer) {
-    //         layer.setVisible(false);
-    //     })
-    // };
-    //
-    // PRO.showLayer = function(index, show, moves) {
-    //     if (this.printView[index]) this.printView[index].setVisible(show);
-    //     if (this.movesView[index]) this.movesView[index].setVisible(show && moves);
-    // };
 
     /**
      * @constructor
@@ -375,18 +247,6 @@
         lastEmit = emit;
         array.push(new Output(point, emit, speed, tool));
     }
-
-    // function segmentedOutput(output, p1, p2, s1, s2, steps, mult) {
-    //     let sd = (s2 - s1) / (steps + 1);
-    //     let dd = p1.distTo2D(p2) / steps;
-    //     let dist = dd;
-    //     let spd = s1;
-    //     while (steps-- > 0) {
-    //         spd += sd;
-    //         p1 = p1.offsetPointTo(p2, dd);
-    //         addOutput(output, p1, mult, spd);
-    //     }
-    // }
 
     /**
      * FDM & Laser. add points in polygon to an output array (print path)

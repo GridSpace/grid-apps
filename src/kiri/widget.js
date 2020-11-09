@@ -629,7 +629,7 @@
     PRO.render = function(stack) {
         const mark = Date.now();
         this.slices.forEach(slice => {
-            stack.add(slice.render);
+            if (slice.render) stack.add(slice.render);
         });
         return Date.now() - mark;
     };

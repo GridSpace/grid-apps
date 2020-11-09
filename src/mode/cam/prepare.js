@@ -353,9 +353,9 @@
                         }
                     }
                     let polys = [], t = [], c = [];
-                    POLY.flatten(slice.camLines).forEach(function (poly) {
+                    POLY.flatten(slice.camLines.clone(true)).forEach(function (poly) {
                         let child = poly.parent;
-                        if (depthFirst) poly = poly.clone();
+                        if (depthFirst) poly = poly.clone(true);
                         if (child) c.push(poly); else t.push(poly);
                         poly.layer = depthData.layer;
                         polys.push(poly);

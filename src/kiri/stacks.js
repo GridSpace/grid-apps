@@ -22,21 +22,20 @@
         labels = $("layers");
         API = KIRI.api,
         UC = API.uc,
-        UI = API.ui,
-        DYN = UI.dyn = {};
+        UI = API.ui;
     }
 
     function clear() {
         if (!API) {
             init();
         }
-
         // remove stacks from their views
         for (const [stack, data] of Object.entries(stacks)) {
             data.clear();
         }
         min = max = tallest = 0;
         stacks = {};
+        DYN = UI.dyn = {};
 
         // clear labels
         UC.setGroup(labels);
@@ -96,6 +95,7 @@
 
         for (const [label, data] of Object.entries(render.layers)) {
             if (!DYN[label]) {
+console.log('new label', label);
                 DYN[label] = {
                     group: [],
                     toggle: UC.newBoolean(label, (abc) => {
