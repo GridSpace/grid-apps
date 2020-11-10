@@ -111,35 +111,52 @@
 
             const { polys, cpoly, lines, faces, paths, cpath } = data;
             if (polys.length || lines.length) {
-                const mat = [];
-                if (cpoly) {
-                    cpoly.forEach(c => { mat.push(createLineMaterial({ color: c })) });
-                } else {
-                    mat.push(createLineMaterial(data));
-                }
-                mat.forEach(m => m.visible = defstate);
+                const vert = []; // vertexes
+                const mat = []; // materials
+                const grp = []; // material groups
                 const geo = new THREE.BufferGeometry();
-                const vert = [];
+                // map all the poly and line colors
+                const cmap = {}
+                let cidx = 0;
+                let last = undefined;
                 for (let i=0, il=polys.length; i<il; i++) {
-                    addPoly(vert, polys[i]);
+                    const vl = vert.length;
+                    const poly = polys[i];
+                    addPoly(vert, poly);
+                    const pc = poly.color ? { line: poly.color, opacity: data.color.opacity } : data.color;
+                    const pk = pc.line;
+                    cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                    if (last !== pk) {
+                        if (grp.length) {
+                            // rewrite counts for last group
+                            const prev = grp[grp.length - 1]
+                            prev[1] = prev[1] - vl;
+                        }
+                        grp.push([vl, Infinity, cidx - 1]);
+                        last = pk;
+                    }
                 }
+                // for now, line segments inherit the last color
                 for (let i=0, il=lines.length; i<il; i++) {
                     const p = lines[i];
                     vert.push(new THREE.Vector3(p.x, p.y, p.z));
                 }
-                if (vert.length) {
-                    if (cpoly) {
-                        cpoly.forEach((c, i) => geo.addGroup(c.start, c.count, i));
-                    } else {
-                        geo.addGroup(0, Infinity, 0);
-                    }
-                    group.add(new THREE.LineSegments(geo, mat));
+                // ensure at least one group using the default color settings
+                if (grp.length === 0) {
+                    grp.push([0, Infinity, 0]);
+                    mat.push(createLineMaterial(data.color));
                 }
+                mat.forEach(m => m.visible = defstate);
+                for (let i=0; i<grp.length; i++) {
+                    const g = grp[i];
+                    geo.addGroup(g[0], g[1], g[2]);
+                }
+                group.add(new THREE.LineSegments(geo, mat));
                 geo.setFromPoints(vert);
                 ctrl.group.appendAll(mat);
             }
             if (faces.length) {
-                const mat = newMat(data);
+                const mat = newMat(data.color);
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                 geo.computeFaceNormals();
@@ -154,9 +171,9 @@
             if (paths.length) {
                 const mat = [];
                 if (cpath) {
-                    cpath.forEach(c => { mat.push(newMat({ color: c })) });
+                    cpath.forEach(c => { mat.push(newMat(c)) });
                 } else {
-                    mat.push(newMat(data));
+                    mat.push(newMat(data.color));
                 }
                 mat.forEach(m => m.visible = defstate);
                 // const mat = newMat(data);
@@ -183,33 +200,37 @@
         }
     };
 
-    function createLineMaterial(data) {
-        return new THREE.LineBasicMaterial({
-            transparent: data.color.opacity != 1,
-            opacity: data.color.opacity || 1,
-            color: data.color.line
+    function createLineMaterial(color, array) {
+        const mat = new THREE.LineBasicMaterial({
+            transparent: color.opacity != 1,
+            opacity: color.opacity || 1,
+            color: color.line
         });
+        if (array) {
+            array.push(mat);
+        }
+        return mat;
     }
 
-    function createStandardMaterial(data) {
+    function createStandardMaterial(color) {
         return new THREE.MeshStandardMaterial({
             emissive,
             roughness,
             metalness,
-            transparent: data.color.opacity != 1,
-            opacity: data.color.opacity || 1,
-            color: data.color.face,
+            transparent: color.opacity != 1,
+            opacity: color.opacity || 1,
+            color: color.face,
             side: THREE.DoubleSide
         });
     }
 
-    function createPhongMaterial(data) {
+    function createPhongMaterial(color) {
         return new THREE.MeshPhongMaterial({
             shininess,
             specular,
-            transparent: data.color.opacity != 1,
-            opacity: data.color.opacity || 1,
-            color: data.color.face,
+            transparent: color.opacity != 1,
+            opacity: color.opacity || 1,
+            color: color.face,
             side: THREE.DoubleSide
         });
     }

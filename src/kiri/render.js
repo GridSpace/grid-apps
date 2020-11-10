@@ -83,6 +83,7 @@
                     if (options.z !== undefined) p.setZ(options.z);
                     if (options.color) p.color = options.color;
                 });
+                // if (options.color) console.log({polys, options})
             }
             this.current.polys.appendAll(polys);
             this.stats.line_poly += polys.length;

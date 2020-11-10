@@ -483,7 +483,7 @@
             Object.values(prints).forEach(array => {
                 array.forEach(poly => { if (poly.length > 1) output
                     .setLayer(opts.action || 'print', printColor)
-                    .addPolys([ poly ], thin ? { thin, z: opts.z } : {
+                    .addPolys([ poly ], thin ? { thin, z: opts.z, color: poly.color } : {
                         offset: array.width, height, z: opts.z,
                         color: { face: poly.color, line: poly.color }
                     })// & cn_len.put(poly.length) & cn_col.put(poly.color) & console.log(poly.points)
