@@ -412,8 +412,6 @@
 
         let lastOut = null;
         let current = null;
-        const cn_len = new Counter();
-        const cn_col = new Counter();
 
         function color(point) {
             return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75}, true);
@@ -478,7 +476,7 @@
                 moves.push(current);
             }
             output
-                .setLayer('move', moveColor, true)
+                .setLayer('move', moveColor, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
                 array.forEach(poly => { if (poly.length > 1) output
@@ -486,13 +484,12 @@
                     .addPolys([ poly ], thin ? { thin, z: opts.z, color: poly.color } : {
                         offset: array.width, height, z: opts.z,
                         color: { face: poly.color, line: poly.color }
-                    })// & cn_len.put(poly.length) & cn_col.put(poly.color) & console.log(poly.points)
+                    })
                 });
             });
 
             update(index / levels.length);
         });
-        // console.log(cn_len.get(), cn_col.get());
 
         return layers;
     }
