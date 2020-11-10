@@ -415,6 +415,10 @@
         const cn_len = new Counter();
         const cn_col = new Counter();
 
+        function color(point) {
+            return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75}, true);
+        }
+
         levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
@@ -444,7 +448,7 @@
                         if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed)) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
-                            current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:0.75}, true);
+                            current.color = color(out);
                             pushPrint(out.tool, current);
                         }
                         current.push(out.point);
@@ -460,7 +464,7 @@
                     current = newPolygon().setOpen();
                     current.push(out.point);
                     if (out.emit) {
-                        current.color = hsv2rgb({h:out.speed/maxspd, s:1, v:1}, true);
+                        current.color = color(out);
                         pushPrint(out.tool, current);
                     } else {
                         moves.push(current);

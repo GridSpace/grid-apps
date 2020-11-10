@@ -172,7 +172,7 @@ KIRI.worker = {
         }, done => {
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.5 + progress * 0.5 });
-            }, { thin, tools });
+            }, { thin, tools, xspeed: mode === 'FDM' });
             send.done({parsed: KIRI.codec.encode(layers)});
         }, { fdm : mode === 'FDM' });
     },

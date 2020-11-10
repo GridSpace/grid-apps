@@ -109,11 +109,11 @@
 
             ctrl.toggle.checked = defstate;
 
-            const { polys, lines, faces, paths, cpath } = data;
+            const { polys, cpoly, lines, faces, paths, cpath } = data;
             if (polys.length || lines.length) {
                 const mat = [];
-                if (cpath) {
-                    cpath.forEach(c => { mat.push(createLineMaterial({ color: c })) });
+                if (cpoly) {
+                    cpoly.forEach(c => { mat.push(createLineMaterial({ color: c })) });
                 } else {
                     mat.push(createLineMaterial(data));
                 }
@@ -128,8 +128,8 @@
                     vert.push(new THREE.Vector3(p.x, p.y, p.z));
                 }
                 if (vert.length) {
-                    if (cpath) {
-                        cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
+                    if (cpoly) {
+                        cpoly.forEach((c, i) => geo.addGroup(c.start, c.count, i));
                     } else {
                         geo.addGroup(0, Infinity, 0);
                     }

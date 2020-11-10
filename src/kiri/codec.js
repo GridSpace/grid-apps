@@ -127,6 +127,7 @@
         for (let i=0; i<v.layers.length; i++) {
             render.layers[v.layers[i]] = {
                 polys: decode(v.data[i].polys, state),
+                cpoly: v.data[i].cpoly,
                 lines: decodePointArray(v.data[i].lines),
                 faces: v.data[i].faces,
                 color: v.data[i].color,
@@ -142,27 +143,11 @@
         return {
             type: 'top',
             poly: encode(this.poly, state),
-            // traces: encode(this.traces, state),
-            // inner: encode(this.inner, state),
-            // // thinner: encode(this.thinner, state),
-            // solids: encode(this.solids, state),
-            // thin_fill: encodePointArray(this.thin_fill, state),
-            // fill_lines: encodePointArray(this.fill_lines, state),
-            // fill_sparse: encode(this.fill_sparse, state),
-            // polish: encode(this.polish, state)
         };
     };
 
     registerDecoder('top', function(v, state) {
         let top = KIRI.newTop(decode(v.poly, state));
-        // top.traces = decode(v.traces, state);
-        // top.inner = decode(v.inner, state);
-        // // top.thinner = decode(v.thinner, state);
-        // top.solids = decode(v.solids, state);
-        // top.thin_fill = decodePointArray(v.thin_fill, state);
-        // top.fill_lines = decodePointArray(v.fill_lines, state);
-        // top.fill_sparse = decode(v.fill_sparse, state);
-        // top.polish = decode(v.polish, state);
         return top;
     });
 
@@ -215,10 +200,7 @@
         let cached = state.poly[this.id];
 
         if (cached) {
-            return {
-                type: 'poly',
-                ref: this.id
-            };
+            return { type: 'poly', ref: this.id };
         }
 
         state.poly[this.id] = this;
@@ -230,8 +212,9 @@
             open: this.isOpen(),
             inner: encode(this.inner, state),
             parent: encode(this.parent, state),
-            fills: encodePointArray(this.fills, state),
-            depth: this.depth
+            // fills: encodePointArray(this.fills, state),
+            depth: this.depth,
+            color: this.color
         };
     };
 
@@ -255,8 +238,9 @@
 
         poly.inner = decode(v.inner, state);
         poly.parent = decode(v.parent, state);
-        poly.fills = decodePointArray(v.fills);
+        // poly.fills = decodePointArray(v.fills);
         poly.depth = v.depth;
+        poly.color = v.color;
 
         return poly;
     });

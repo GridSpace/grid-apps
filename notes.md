@@ -3,7 +3,6 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `F` detect and report slow framerates
-* `F` gcode generation progress bar
 * `F` implement an in-app bug reporting system. add workspace to export option.
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
@@ -12,6 +11,8 @@
 * `F` 2D image import
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
+* `P` worker state cache cleanup and organization
+* `P` client/worker interface normalization and cleanup
 
 # FDM
 

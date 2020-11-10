@@ -18,9 +18,9 @@
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
         COLOR = {
-            shell: { face: 0x003399, line: 0x003399, opacity: 1 },
-            fill: { face: 0x003399, line: 0x003399, opacity: 1 },
-            infill: { face: 0x003399, line: 0x003399, opacity: 1 },
+            shell: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
+            fill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
+            infill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             support: { face: 0x006699, line: 0x006699, opacity: 1 }
         };
 

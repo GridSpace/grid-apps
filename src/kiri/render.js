@@ -89,6 +89,7 @@
             return this;
         }
 
+        // z planar closed polygonal areas
         addAreas(polys, options) {
             const faces = this.current.faces;
             polys = Array.isArray(polys) ? polys : [ polys ];
@@ -102,6 +103,7 @@
             }
         }
 
+        // misleading name. these are flat offset paths (old style rendering)
         addFlats(polys, options) {
             const opts = options || {};
             const offset = opts.offset || 1;
@@ -121,7 +123,7 @@
                 if (open) {
                     exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
                     this.stats.flat_line = 0;
-                } else {
+                } else if (offset) {
                     POLY.offset([poly],  offset * 0.9, off_opt);
                     POLY.offset([poly], -offset * 0.9, off_opt);
                     this.stats.flat_poly = 0;

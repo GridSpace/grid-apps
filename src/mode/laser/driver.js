@@ -17,7 +17,6 @@
             slice,
             prepare,
             export: exportLaser,
-            printRender,
             exportGCode,
             exportSVG,
             exportDXF
@@ -256,8 +255,8 @@
             min.y = 0;
         } else {
             // normalize against center of build area
-            let w = print.settings.device.bedWidth;
-            let h = print.settings.device.bedDepth;
+            let w = settings.device.bedWidth;
+            let h = settings.device.bedDepth;
             output.forEach(function(layer) {
                 layer.forEach(function(out) {
                     point = out.point;
@@ -494,9 +493,5 @@
 
         return lines.join('\n');
     };
-
-    function printRender(print) {
-        return KIRI.driver.FDM.printRender(print, {aslines: true, nomoves: true, flat: true});
-    }
 
 })();
