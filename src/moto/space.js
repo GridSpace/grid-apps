@@ -55,6 +55,11 @@
         rulerXLast = null,
         rulerYFirst = null,
         rulerYLast = null,
+        rulerX = true,
+        rulerY = true,
+        rulerCenter = true,
+        fontColor = '#333333',
+        fontScale = 1.4, // computed relative to grid size
         viewControl,
         trackPlane,
         platform,
@@ -234,7 +239,21 @@
         return was;
     }
 
+    function setFont(options) {
+        if (options.color) fontColor = options.color;
+        if (options.scale) fontScale = options.scale;
+        setRulers();
+    }
+
     function setRulers(drawX, drawY, offsetCenter) {
+        if (drawX === undefined) drawX = rulerX;
+        if (drawY === undefined) drawY = rulerY;
+        if (offsetCenter === undefined) offsetCenter = rulerCenter;
+
+        rulerX = drawX;
+        rulerY = drawY;
+        rulerCenter = offsetCenter;
+
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
@@ -243,7 +262,7 @@
             d = z / 2,
             zp = -d - platformZOff + gridZOff,
             oldRulersView = rulersView,
-            labelSize = gridUnitMinor * 1.4;
+            labelSize = gridUnitMinor * fontScale;
 
         let canvasInMesh = function(w, h, textAlign, textBaseline) {
             let canvas = document.createElement('canvas'),
@@ -257,7 +276,7 @@
             canvas.width = w * scale;
             canvas.height = h * scale;
             ctx.scale(scale, scale);
-            ctx.fillStyle = '#333333';
+            ctx.fillStyle = fontColor;
             ctx.font = labelSize + 'px sans-serif';
             ctx.textAlign = textAlign;
             ctx.textBaseline = textBaseline;
@@ -707,6 +726,7 @@
             setOrigin: setOrigin,
             setRulers: setRulers,
             setGrid:   setGrid,
+            setFont:   setFont,
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },

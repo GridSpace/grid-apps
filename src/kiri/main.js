@@ -104,7 +104,8 @@
         update_selected: platformUpdateSelected,
         load_files: platformLoadFiles,
         group: platformGroup,
-        group_done: platformGroupDone
+        group_done: platformGroupDone,
+        set_font: SPACE.platform.setFont
     };
 
     const color = {
