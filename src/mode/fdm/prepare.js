@@ -413,9 +413,15 @@
         let lastOut = null;
         let current = null;
 
-        function color(point) {
+        function colorDefault(point) {
             return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75}, true);
         }
+
+        function colorCustom(point) {
+            return FDM.rateToColor(point.speed, maxspd);
+        }
+
+        const color = FDM.rateToColor ? colorCustom : colorDefault;
 
         levels.forEach((level, index) => {
             const prints = {};
