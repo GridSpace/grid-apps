@@ -2,7 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` gcode color to speed visualization bar
+* `C` fix extreme acute angle rendering for path mode
 * `F` detect and report slow framerates
 * `F` implement an in-app bug reporting system. add workspace to export option.
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)

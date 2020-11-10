@@ -105,7 +105,8 @@
         load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone,
-        set_font: SPACE.platform.setFont
+        set_font: SPACE.platform.setFont,
+        set_axes: SPACE.platform.setAxes
     };
 
     const color = {

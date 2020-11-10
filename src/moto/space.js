@@ -60,6 +60,9 @@
         rulerCenter = true,
         fontColor = '#333333',
         fontScale = 1.4, // computed relative to grid size
+        rulerColor,
+        axisColor,
+        axesOn = true,
         viewControl,
         trackPlane,
         platform,
@@ -242,6 +245,13 @@
     function setFont(options) {
         if (options.color) fontColor = options.color;
         if (options.scale) fontScale = options.scale;
+        if (options.axisColor) axisColor = options.axisColor;
+        if (options.rulerColor) rulerColor = options.rulerColor;
+        setRulers();
+    }
+
+    function setAxes(bool) {
+        axesOn = bool;
         setRulers();
     }
 
@@ -264,7 +274,7 @@
             oldRulersView = rulersView,
             labelSize = gridUnitMinor * fontScale;
 
-        let canvasInMesh = function(w, h, textAlign, textBaseline) {
+        let canvasInMesh = function(w, h, textAlign, textBaseline, color) {
             let canvas = document.createElement('canvas'),
                 ctx = canvas.getContext('2d'),
                 scale = 8,
@@ -276,7 +286,7 @@
             canvas.width = w * scale;
             canvas.height = h * scale;
             ctx.scale(scale, scale);
-            ctx.fillStyle = fontColor;
+            ctx.fillStyle = color || fontColor;
             ctx.font = labelSize + 'px sans-serif';
             ctx.textAlign = textAlign;
             ctx.textBaseline = textBaseline;
@@ -297,7 +307,7 @@
 
         if (drawX) {
             let xPadding = labelSize * 4;
-            let canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top');
+            let canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', rulerColor);
 
             for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
                 let label = offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i;
@@ -305,11 +315,18 @@
             }
             canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
             rulersView.add(canvas.mesh);
+
+            if (axesOn) {
+                canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', axisColor);
+                canvas.mesh.position.set(0, - h - labelSize - 12, zp);
+                canvas.ctx.fillText('X', (xPadding + rulerXLast + rulerXFirst) / 2, 0);
+                rulersView.add(canvas.mesh);
+            }
         }
 
         if (drawY) {
             let yPadding = labelSize;
-            let canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle');
+            let canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
 
             for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
                 let label = offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
@@ -318,6 +335,13 @@
             }
             canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
             rulersView.add(canvas.mesh);
+
+            if (axesOn) {
+                canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', axisColor);
+                canvas.mesh.position.set(- w - yPadding * 5, 0, zp);
+                canvas.ctx.fillText('Y', labelSize * 4, (yPadding + rulerYLast - rulerYFirst) / 2);
+                rulersView.add(canvas.mesh);
+            }
         }
 
         if (oldRulersView) Space.scene.remove(oldRulersView);
@@ -727,6 +751,7 @@
             setRulers: setRulers,
             setGrid:   setGrid,
             setFont:   setFont,
+            setAxes:   setAxes,
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },
