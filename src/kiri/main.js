@@ -1529,10 +1529,14 @@
         }
     }
 
-    function settingsExport() {
+    function settingsExport(options) {
+        const opts = options || {};
+        const shot = opts.screen ? SPACE.screenshot() : undefined;
         return btoa(JSON.stringify({
             settings: settings,
             version: KIRI.version,
+            screen: shot,
+            space: SPACE.info,
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()

@@ -91,11 +91,35 @@
             spro.firstSliceHeight = sliceHeight;
         }
 
+        // const slicer = new KIRI.slicer2(widget.getPoints(), { });
+        // const levels = slicer.interval(sliceHeight, {
+        //     zlist: true,
+        //     zline: true,
+        //     boff: spro.firstSliceHeight || spro.sliceHeight
+        // });
+        // const slices = [];
+        // let last;
+        // slicer.slice(levels, { genso: true, each: (data, idx, tot, time) => {
+        //     const slice = data.slice;
+        //     if (last) {
+        //         slice.down = last;
+        //         last.up = slice;
+        //     }
+        //     last = slice;
+        //     slice.index = idx;
+        //     slice.height = spro.firstSliceHeight || spro.sliceHeight;
+        //     slices.push(slice);
+        //     onupdate((idx / tot) * 0.5);
+        // } });
+        // onSliceDone(slices);
+
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
             minHeight: sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
             firstHeight: spro.firstSliceHeight,
-            view: view
+            // debug: true,
+            // xray: 3,
+            // view: view
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
@@ -120,14 +144,6 @@
             if (!slices) {
                 return;
             }
-
-            // if (!isThin && slices.length > 100) {
-            //     isFlat = true;
-            // }
-
-            // if (slices.length > 150) {
-            //     isThin = true;
-            // }
 
             // calculate % complete and call onupdate()
             function doupdate(index, from, to, msg) {
@@ -318,7 +334,6 @@
      */
     function doShells(slice, count, offset1, offsetN, fillOffset, options) {
         const opt = options || {};
-
         slice.tops.forEach(function(top) {
             let top_poly = [ top.poly ];
 
@@ -617,7 +632,6 @@
         if (slice.index === 0 && !fakedown) {
             return;
         }
-
         const top = slice,
             down = slice.down || (fakedown ? newSlice(-1) : null),
             topInner = sla ? top.topPolys() : top.topInners(),

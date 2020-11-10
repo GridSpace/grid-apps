@@ -16,11 +16,14 @@
 
 # FDM
 
+* `B` miter acute angles (benchy + square render)
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
+* `B` fix preview/gcode layer size (first layer)
 * `F` speculative background preview generation
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
+* `F` show retract/engage in preview
 * `F` manual support addition / control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo

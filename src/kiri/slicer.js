@@ -50,6 +50,8 @@
             simpleMode = options.simple,
             swap = options.swapX || options.swapY,
             isCam = options.cam,
+            debug = options.debug,
+            xray = options.xray,
             ox = 0,
             oy = 0;
 
@@ -513,8 +515,23 @@
 
             // for topo slices, we just need the raw lines
             if (!topoMode && !simpleMode) {
-                slice.groups = connectLines(slice.lines, slices.length);
-                POLY.nest(slice.groups).forEach(function(top) { slice.addTop(top) });
+                slice.groups = connectLines(slice.lines, slice.z);
+                if ((debug && slice.lines.excessive) || xray) {
+                    const dash = xray || 3;
+                    slice.lines.forEach((line, i) => {
+                        const group = i % dash;
+                        const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                        slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
+                    });
+                }
+                POLY.nest(slice.groups).forEach((poly, i) => {
+                    slice.addTop(poly);
+                    if (xray) {
+                        const group = i % (xray || 3);
+                        const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                        slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
+                    }
+                });
             }
 
             // fixup un-rotates polygons for CAM
@@ -543,7 +560,7 @@
                     }
                 } else if (simpleMode) {
                     // fdm polishing mode
-                    slice.groups = connectLines(slice.lines, slices.length);
+                    slice.groups = connectLines(slice.lines, slice.z);
                     slice.groups.forEach(poly => {
                         poly.swap(options.swapX, options.swapY);
                         poly.move(move);
@@ -566,7 +583,7 @@
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input) {
+    function connectLines(input, z) {
         // map points to all other points they're connected to
         let DBUG = BASE.debug,
             CONF = BASE.config,
@@ -611,7 +628,8 @@
         function findPathsMinRecurse(point, path, paths, from) {
             let stack = [ ];
             if (paths.length > 10000) {
-                DBUG.log("excessive path options @ "+paths.length+" #"+input.length);
+                DBUG.log(`indeterminate path @ ${z} from paths=${paths.length} input=${input.length}`);
+                input.excessive = paths.length;
                 return;
             }
             for (;;) {
@@ -721,8 +739,8 @@
 
         // create point map, unique point list and point group arrays
         input.forEach(function(line) {
-            p1 = cachedPoint(line.p1.round(7));
-            p2 = cachedPoint(line.p2.round(7));
+            p1 = cachedPoint(line.p1.round(4));
+            p2 = cachedPoint(line.p2.round(4));
             addConnected(p1,p2);
             addConnected(p2,p1);
         });

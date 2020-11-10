@@ -785,6 +785,10 @@
             return renderer.domElement.toDataURL(format || "image/png");
         },
 
+        internals: function() {
+            return { renderer, camera };
+        },
+
         init: function(domelement, slider) {
             container = domelement;
 
@@ -893,6 +897,17 @@
             }
 
             animate();
+
+            const ctx = renderer.getContext();
+            const ext = ctx.getExtension('WEBGL_debug_renderer_info');
+            const nav = navigator;
+            Space.info = {
+                ver: ctx.getParameter(ctx.VERSION),
+                ven: ctx.getParameter(ctx.VENDOR),
+                glr: ctx.getParameter(ext.UNMASKED_RENDERER_WEBGL),
+                // glv: ctx.getParameter(ext.UNMASKED_VENDOR_WEBGL),
+                pla: nav.platform
+            },
 
             initialized = true;
         }
