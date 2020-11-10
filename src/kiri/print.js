@@ -38,24 +38,11 @@
      */
     function Print(settings, widgets, id) {
         this.id = id || new Date().getTime().toString(36);
-
         this.settings = settings;
         this.widgets = widgets;
-        // this.group = new THREE.Group();
-        this.printView = [];
-        this.movesView = [];
-
-        this.time = 0;
-        this.lines = 0;
-        this.bytes = 0;
-        this.output = null;
-        this.distance = 0;
-        this.bounds = null;
-        this.imported = null;
     }
 
     PRO.addOutput = addOutput;
-    PRO.tip2tipEmit = tip2tipEmit;
     PRO.extrudePerMM = extrudePerMM;
     PRO.constReplace = constReplace;
     PRO.poly2polyEmit = poly2polyEmit;
@@ -84,13 +71,15 @@
                 if (point.y) bounds.max.y = Math.max(bounds.max.y, point.y);
                 if (point.z) bounds.min.z = Math.min(bounds.min.z, point.z);
                 if (point.z) bounds.max.z = Math.max(bounds.max.z, point.z);
-                addOutput(seq, point, seq.length > 0);
+                const { x, y, z } = point; // SVGPoint is not serializable
+                addOutput(seq, { x, y, z }, seq.length > 0);
             });
             output.push(seq);
         });
         scope.imported = code;
         scope.lines = lines.length;
         scope.bytes = code.length;
+        return scope.output;
     };
 
     PRO.parseGCode = function(gcode, offset, progress, done, options) {

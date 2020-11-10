@@ -155,7 +155,6 @@ KIRI.worker = {
 
     parse: function(args, send) {
         const { settings, code, type } = args;
-        const center = settings.process.outputOriginCenter;
         const origin = settings.origin;
         const offset = {
             x: origin.x,
@@ -175,6 +174,19 @@ KIRI.worker = {
             }, { thin, tools, xspeed: mode === 'FDM' });
             send.done({parsed: KIRI.codec.encode(layers)});
         }, { fdm : mode === 'FDM' });
+    },
+
+    parse_svg: function(parsed, send) {
+        parsed.forEach(layer => {
+            layer.forEach(out => {
+                const { x, y, z } = out.point;
+                out.point = BASE.newPoint(x,y,z || 0);
+            });
+        });
+        const layers = KIRI.driver.FDM.prepareRender(parsed, progress => {
+            send.data({ progress });
+        }, { thin:  true });
+        send.done({parsed: KIRI.codec.encode(layers)});
     },
 
     clear: function(data, send) {

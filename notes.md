@@ -2,11 +2,11 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `F` gcode color to speed visualization bar
 * `F` detect and report slow framerates
 * `F` implement an in-app bug reporting system. add workspace to export option.
 * `F` extend mesh object to store raw + annotations (rot,scale,pos)
 *     share raw data w/ dups, encode/decode
-* `F` gcode color to speed visualization bar
 * `F` X,Y,Z colored axes visualizations
 * `F` 2D image import
 * `P` improve decimation speed by avoiding in/out of Point?

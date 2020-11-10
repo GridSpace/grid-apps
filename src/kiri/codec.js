@@ -212,7 +212,6 @@
             open: this.isOpen(),
             inner: encode(this.inner, state),
             parent: encode(this.parent, state),
-            // fills: encodePointArray(this.fills, state),
             depth: this.depth,
             color: this.color
         };
@@ -232,13 +231,11 @@
 
         poly.id = v.id;
         poly.open = v.open;
-        // if (v.open) poly.setOpen(); else poly.setClosed();
 
         state.poly[v.id] = poly;
 
         poly.inner = decode(v.inner, state);
         poly.parent = decode(v.parent, state);
-        // poly.fills = decodePointArray(v.fills);
         poly.depth = v.depth;
         poly.color = v.color;
 

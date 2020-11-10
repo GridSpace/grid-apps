@@ -183,6 +183,28 @@ KIRI.work = {
     },
 
     parse : function(args, progress, done) {
+        // have to do this client side because DOMParser is not in workers
+        if (args.type === 'svg') {
+            const { settings, code, type } = args;
+            const origin = settings.origin;
+            const offset = {
+                x: origin.x,
+                y: -origin.y,
+                z: origin.z
+            };
+            const output = KIRI.newPrint().parseSVG(code, offset);
+            send("parse_svg", output, function(reply) {
+                if (reply.parsed) {
+                    done(KIRI.codec.decode(reply.parsed));
+                }
+            });
+            return;
+            // const layers = KIRI.driver.FDM.prepareRender(output, progress => {
+            //     send.data({ progress: 0.5 + progress * 0.5 });
+            // }, { thin: true });
+            // send.done({parsed: layers});
+            // return;
+        }
         send("parse", args, function(reply) {
             if (reply.progress) {
                 progress(reply);
