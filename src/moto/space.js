@@ -63,6 +63,7 @@
         rulerColor,
         axisColor,
         axesOn = true,
+        volumeOn = true,
         viewControl,
         trackPlane,
         platform,
@@ -71,6 +72,7 @@
         platformClickAt,
         platformOnMove,
         platformMoveTimer,
+        volume,
         light1,
         light2,
         light3,
@@ -215,7 +217,7 @@
         requestRefresh();
     }
 
-    function setPlatformSize(width, depth, height) {
+    function setPlatformSize(width, depth, height, maxz) {
         if (isRound) {
             platform.scale.set(width || 300, height || 5, depth || 175);
         } else {
@@ -228,10 +230,38 @@
         light2.position.set(-width, y, -depth);
         light4.position.set( width, light4.position.y, -depth);
         light5.position.set(-width, light5.position.y,  depth);
+        if (volume) {
+            SCENE.remove(volume);
+            volume = null;
+        }
+        if (maxz) {
+            const points = [
+                // pillars
+                {x: -width/2, z: -depth/2, y: 0},
+                {x: -width/2, z: -depth/2, y: maxz},
+                {x:  width/2, z:  depth/2, y: 0},
+                {x:  width/2, z:  depth/2, y: maxz},
+                {x: -width/2, z:  depth/2, y: 0},
+                {x: -width/2, z:  depth/2, y: maxz},
+                {x:  width/2, z: -depth/2, y: 0},
+                {x:  width/2, z: -depth/2, y: maxz},
+                // top
+                {x: -width/2, z: -depth/2, y: maxz},
+                {x: -width/2, z:  depth/2, y: maxz},
+                {x: -width/2, z: -depth/2, y: maxz},
+                {x:  width/2, z: -depth/2, y: maxz},
+                {x:  width/2, z:  depth/2, y: maxz},
+                {x:  width/2, z: -depth/2, y: maxz},
+                {x:  width/2, z:  depth/2, y: maxz},
+                {x: -width/2, z:  depth/2, y: maxz},
+            ];
+            SCENE.add(volume = makeLinesFromPoints(points, 0x888888, 0.25));
+            setVolume(volumeOn);
+        }
     }
 
-    function setPlatformSizeUpdateGrid(width, depth, height) {
-        setPlatformSize(width, depth, height);
+    function setPlatformSizeUpdateGrid(width, depth, height, maxz) {
+        setPlatformSize(width, depth, height, maxz);
         setGrid(gridUnitMajor, gridUnitMinor);
     }
 
@@ -253,6 +283,12 @@
     function setAxes(bool) {
         axesOn = bool;
         setRulers();
+    }
+
+    function setVolume(bool) {
+        volumeOn = bool;
+        if (volume) volume.visible = bool;
+        requestRefresh();
     }
 
     function setRulers(drawX, drawY, offsetCenter) {
@@ -552,22 +588,23 @@
      * ThreeJS Helper Functions
      ******************************************************************* */
 
-    function makeLinesFromPoints(points, color, width) {
-        if (points.length % 2 != 0) throw "invalid line : "+points.length;
-        let geo = new THREE.Geometry(),
-            i = 0, p1, p2, mesh;
-        while (i < points.length) {
-            p1 = points[i++];
-            p2 = points[i++];
+    function makeLinesFromPoints(points, color, opacity) {
+        if (points.length % 2 != 0) {
+            throw "invalid line : "+points.length;
+        }
+        const geo = new THREE.Geometry();
+        for (let i=0; i < points.length; ) {
+            const p1 = points[i++];
+            const p2 = points[i++];
             geo.vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
             geo.vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
         }
         geo.verticesNeedUpdate = true;
-        mesh = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+        return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
             color: color,
-            linewidth: width || 1
+            opacity: opacity || 1,
+            transparent: opacity != 1
         }));
-        return mesh;
     }
 
     function intersect(objects, recurse) {
@@ -752,6 +789,7 @@
             setGrid:   setGrid,
             setFont:   setFont,
             setAxes:   setAxes,
+            setVolume: setVolume,
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },

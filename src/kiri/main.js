@@ -106,7 +106,8 @@
         group: platformGroup,
         group_done: platformGroupDone,
         set_font: SPACE.platform.setFont,
-        set_axes: SPACE.platform.setAxes
+        set_axes: SPACE.platform.setAxes,
+        set_volume: SPACE.platform.setVolume
     };
 
     const color = {
@@ -966,7 +967,8 @@
         SPACE.platform.setSize(
             width = parseInt(dev.bedWidth),
             depth = parseInt(dev.bedDepth),
-            height = parseFloat(dev.bedHeight)
+            height = parseFloat(dev.bedHeight),
+            parseFloat(dev.maxHeight)
         );
         let proc = settings.process,
             ctrl = settings.controller,
