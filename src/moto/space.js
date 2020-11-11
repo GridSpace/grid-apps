@@ -94,7 +94,8 @@
         hiddenKey,
         vizChange,
         docVisible = true,
-        lastAction = Date.now();
+        lastAction = Date.now(),
+        fps = 0;
 
     if (typeof DOC.hidden !== "undefined") {
         hiddenKey = "hidden";
@@ -842,7 +843,8 @@
             load:  function(cam) { viewControl.setPosition(cam) },
             save:  function()    { return viewControl.getPosition(true) },
             panTo: function(x,y,z) { tweenCamPan(x,y,z) },
-            setZoom: function(r,v) { viewControl.setZoom(r,v) }
+            setZoom: function(r,v) { viewControl.setZoom(r,v) },
+            getFPS: function() { return fps }
         },
 
         mouse: {
@@ -970,9 +972,19 @@
                 'touchend', updateLastAction
             ]);
 
-            let animating = true;
+            let animates = 0;
+            let rateStart = Date.now();
 
             function animate() {
+                animates++;
+                const now = Date.now();
+                if (now - rateStart > 1000) {
+                    const delta = now - rateStart;
+                    fps = 1000 * animates / delta;
+                    animates = 0;
+                    rateStart = now;
+                }
+
                 requestAnimationFrame(animate);
                 if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                     renderer.render(SCENE, camera);

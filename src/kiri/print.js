@@ -129,7 +129,21 @@
 
         const output = scope.output = [ seq ];
 
-        function G0G1(moving) {
+        function G0G1(moving, line) {
+            const mov = {};
+            line.forEach(function(tok) {
+                if (abs) {
+                    pos[tok.charAt(0)] = parseFloat(tok.substring(1));
+                } else {
+                    mov[tok.charAt(0)] = parseFloat(tok.substring(1));
+                }
+            });
+            if (!abs) {
+                for (let [k,v] of Object.entries(mov)) {
+                    pos[k] += v;
+                }
+            }
+
             if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
             if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
             if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
@@ -201,23 +215,10 @@
                     abs = false;
                     break;
                 case 'G0':
-                    G0G1(true);
+                    G0G1(true, line);
                     break;
                 case 'G1':
-                    const mov = {};
-                    line.forEach(function(tok) {
-                        if (abs) {
-                            pos[tok.charAt(0)] = parseFloat(tok.substring(1));
-                        } else {
-                            mov[tok.charAt(0)] = parseFloat(tok.substring(1));
-                        }
-                    });
-                    if (!abs) {
-                        for (let [k,v] of Object.entries(mov)) {
-                            pos[k] += v;
-                        }
-                    }
-                    G0G1(fdm ? pos.E <= 0 : false);
+                    G0G1(fdm ? pos.E <= 0 : false, line);
                     break;
                 case 'M6':
                     break;
