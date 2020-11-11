@@ -356,7 +356,8 @@
                 zmin = (opt.min || this.bounds.min.z) + boff,
                 zmax = (opt.max || this.bounds.max.z) - toff,
                 steps = (zmax - zmin) / step,
-                count = Math.floor(steps),
+                rem = steps % 1 != 0 ? 0 : 1,
+                count = Math.floor(steps) + rem,
                 array = [];
 
             if (opt.fit) {
