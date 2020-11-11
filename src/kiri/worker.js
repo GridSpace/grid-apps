@@ -126,7 +126,21 @@ KIRI.worker = {
             send.data({ progress, message });
         });
 
-        send.done({ done: true, output: KIRI.codec.encode(layers) });
+        const maxSpeed = (current.print || {}).maxSpeed || undefined;
+        let speedColors = {};
+        if (maxSpeed) {
+            const FDM = KIRI.driver.FDM;
+            for (let i=0, sd=maxSpeed/19, so=0; i<20; i++) {
+                speedColors[Math.round(so)] = FDM.colorFunc(so/(maxSpeed+1));
+                so += sd;
+            }
+        }
+
+        send.done({
+            done: true,
+            output: KIRI.codec.encode(layers),
+            speedColors
+        });
     },
 
     export: function(data, send) {

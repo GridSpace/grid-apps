@@ -104,6 +104,11 @@
         }
     }
 
+    function speedSave() {
+        settings().controller.showSpeeds = UI.showSpeeds.checked;
+        API.platform.update_speeds();
+    }
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
@@ -1222,7 +1227,8 @@
             },
 
             load:               $('load-file'),
-            // focuser:            $('focuser'),
+            speeds:             $('speeds'),
+            speedbar:           $('speedbar'),
 
             container:          container,
             rotate:             $('lt-rotate'),
@@ -1354,20 +1360,23 @@
                 (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button
             ], {modes:GCODE, class:"ext-buttons f-row"}),
 
-            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen'), {inline: true}),
+            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
             hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
-            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l}),
 
-            layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen2'), {inline: true}),
+            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:FDM}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
+            showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
+
+            layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave}, "units"),
+            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave, modes:CAM}, "units"),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
@@ -1901,6 +1910,7 @@
         // restore UI state from settings
         UI.showOrigin.checked = control.showOrigin;
         UI.showRulers.checked = control.showRulers;
+        UI.showSpeeds.checked = control.showSpeeds;
         UI.freeLayout.checked = control.freeLayout;
         UI.autoLayout.checked = control.autoLayout;
         UI.alignTop.checked = control.alignTop;

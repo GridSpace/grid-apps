@@ -608,6 +608,7 @@
                 reverseZoom: true,
                 showOrigin: false,
                 showRulers: false,
+                showSpeeds: true,
                 freeLayout: true,
                 autoLayout: true,
                 alignTop: true,

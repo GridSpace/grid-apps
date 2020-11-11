@@ -125,6 +125,8 @@ kiri.lang['en-us'] = {
     op_shor_l:      "show device or process origin",
     op_shru_s:      "show rulers",
     op_shru_l:      "show axes rulers\non major gridlines",
+    op_sped_s:      "show speeds",
+    op_sped_l:      "show speed to color bar\nin preview mode",
     op_alig_s:      "align top",
     op_alig_l:      "align parts to the\ntallest part when\nno stock is set",
     op_auto_s:      "auto layout",

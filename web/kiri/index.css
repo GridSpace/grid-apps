@@ -895,6 +895,41 @@ th, tr, td, label {
     text-align: center;
 }
 
+#speeds {
+    display: none;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 100%;
+    bottom: 0;
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+#speedbar {
+    position: absolute;
+    top: 3px;
+    right: 0;
+    bottom: 3px;
+    border-radius: 5px;
+    border: 3px solid rgba(200,200,200,0.5);
+    background-color: #888;
+}
+
+#speedbar label {
+    flex-grow: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 0 5px 0 5px;
+    color: #fff;
+}
+
 #settings {
     align-items: stretch;
 }

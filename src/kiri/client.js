@@ -166,7 +166,7 @@ KIRI.work = {
                 update(reply.progress, reply.message);
             }
             if (reply.done) {
-                done(reply.output);
+                done(reply.output, reply.speedColors);
             }
         });
     },

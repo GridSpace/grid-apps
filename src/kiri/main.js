@@ -102,6 +102,7 @@
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
         update_selected: platformUpdateSelected,
+        update_speeds: updateSpeeds,
         load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone,
@@ -663,6 +664,23 @@
         // UI.setMenu.style.display = andmenu ? 'none' : 'flex';
     }
 
+    function updateSpeeds(speedColors) {
+        UI.speeds.style.display = viewMode === VIEWS.PREVIEW && UI.showSpeeds.checked ? 'block' : '';
+        if (speedColors) {
+            const list = [];
+            Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
+                const color = speedColors[speed];
+                const hex = color.toString(16).padStart(6,0);
+                const r = (color >> 16) & 0xff;
+                const g = (color >>  8) & 0xff;
+                const b = (color >>  0) & 0xff;
+                const style = `background-color:#${hex}`;
+                list.push(`<label style="${style}">${speed}</label>`);
+            });
+            UI.speedbar.innerHTML = list.join('');
+        }
+    }
+
     function prepareSlices(callback) {
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
@@ -802,7 +820,7 @@
 
         KIRI.client.prepare(settings, function(progress, message) {
             API.show.progress(progress, message);
-        }, function (output) {
+        }, function (output, speedColors) {
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
@@ -822,6 +840,7 @@
                 SPACE.update();
                 updateSliderMax(true);
                 setVisibleLayer(-1, 0);
+                updateSpeeds(speedColors);
             }
 
             if (typeof(callback) === 'function') {
@@ -1927,12 +1946,14 @@
                 KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
+                updateSpeeds();
                 setVisibleLayer();
                 setWidgetVisibility(true);
                 setOpacity(1);
                 break;
             case VIEWS.SLICE:
                 $('lt-back').style.display = 'flex';
+                updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
                 break;
