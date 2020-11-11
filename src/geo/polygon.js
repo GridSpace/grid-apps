@@ -230,10 +230,33 @@
         return Math.abs(diff);
     }
 
+    PRO.debur = function(dist) {
+        if (this.len < 2) {
+            return null;
+        }
+        const pa = this.points,
+            pln = pa.length,
+            open = this.open,
+            newp = newPolygon(),
+            min = dist || BASE.config.precision_merge;
+        let lo;
+        newp.push(lo = pa[0]);
+        for (let i=1; i<pln; i++) {
+            if (lo.distTo2D(pa[i]) >= min) {
+                newp.push(lo = pa[i]);
+            }
+        }
+        newp.open = open;
+        newp.parent = this.parent;
+        if (newp.length < 2) {
+            return null;
+        }
+        return newp;
+    };
+
     PRO.miter = function(debug) {
         if (this.length < 3) return this;
 
-        // todo - to eliminate path sharps in renders
         const slo = [], pa = this.points, pln = pa.length, open = this.open;
         let last;
         for (let i=1; i<pln; i++) {

@@ -164,7 +164,11 @@
 
             polys.forEach(poly => {
                 const contour = [];
-                poly = poly.clean().miter();
+                poly = poly.debur();
+                if (!poly) return;
+                poly = poly.miter();
+                // cleaning converts open to closed which is problematic
+                // poly = poly.clean().miter();
                 // if (poly.debug) {
                 //     const save = this.current;
                 //     this.setLayer('debug.acute', 0xff0000).addPoly(poly, {thin:true});
