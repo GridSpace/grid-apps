@@ -175,7 +175,7 @@ KIRI.worker = {
             y: -origin.y,
             z: origin.z
         };
-        const print = KIRI.newPrint(settings, Object.values(cache));
+        const print = current.print = KIRI.newPrint(settings, Object.values(cache));
         const tools = settings.device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.thinRender || mode !== 'FDM';

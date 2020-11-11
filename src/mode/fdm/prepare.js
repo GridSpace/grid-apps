@@ -402,6 +402,11 @@
     };
 
     FDM.prepareRender = function(levels, update, options) {
+        if (levels.length === 0) {
+            self.worker.print.maxSpeed = 0;
+            return [];
+        }
+
         const opts = options || {};
         const tools = opts.tools || {};
         const thin = opts.thin || false;
