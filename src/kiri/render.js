@@ -164,7 +164,7 @@
 
             polys.forEach(poly => {
                 const contour = [];
-                poly = poly.debur();
+                poly = poly.debur(0.05);
                 if (!poly) return;
                 poly = poly.miter();
                 // cleaning converts open to closed which is problematic

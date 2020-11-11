@@ -271,7 +271,7 @@
         const aln = open ? pln - 1 : pln;
         for (let i=1; i<aln; i++) {
             ang[i] = slopeDiff(slo[i-1], slo[i]);
-            redo |= ang[i] < 90;
+            redo |= ang[i] > 90;
         }
         if (!open) {
             // ang[pln-1] = slopeDiff(slo[pln-2], slo[pln-1]);
@@ -290,8 +290,8 @@
                     const s = slo[(i+pln) % pln];
                     const pp = pa[(i+pln-1) % pln];
                     const ps = slo[(i+pln-1) % pln];
-                    newp.push(p.follow(p.slopeTo(pp), 0.005));
-                    newp.push(p.follow(s, 0.005));
+                    newp.push(p.follow(p.slopeTo(pp), 0.001));
+                    newp.push(p.follow(s, 0.001));
                 } else {
                     p.parent = newp;
                     newp.push(p);
