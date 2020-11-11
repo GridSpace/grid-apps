@@ -398,7 +398,7 @@
     }
 
     FDM.colorFunc = function(rate) {
-        return hsv2rgb({h: rate, s:1, v:0.75}, true);
+        return hsv2rgb({h: rate, s:1, v:0.8});
     };
 
     FDM.prepareRender = function(levels, update, options) {
@@ -426,7 +426,7 @@
         let current = null;
 
         function colorDefault(point) {
-            return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75}, true);
+            return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75});
         }
 
         function colorCustom(point) {
@@ -513,51 +513,40 @@
     }
 
     // hsv values all = 0 to 1
-    function hsv2rgb(hsv, int) {
-        let seg  = Math.floor(hsv.h * 6),
-            rem  = hsv.h - (seg * (1/6)),
-            p = hsv.v * (1.0 - (hsv.s)),
-            q = hsv.v * (1.0 - (hsv.s * rem)),
-            t = hsv.v * (1.0 - (hsv.s * (1.0 - rem))),
-            out = {};
+    function hsv2rgb(hsv, ext) {
+        const { h, s, v } = hsv;
+        const ss = 1 / (ext ? 4 : 3);
+        const seg = Math.floor(h / ss);
+        const rem = h - (seg * ss);
+        const inc = (rem / ss);
+        const dec = (1 - inc);
+        const rgb = {r: 0, g: 0, b: 0};
         switch (seg) {
             case 0:
-                out.r = hsv.v;
-                out.g = t;
-                out.b = p;
+                rgb.r = 1;
+                rgb.g = inc;
+                rgb.b = 0;
                 break;
             case 1:
-                out.r = q;
-                out.g = hsv.v;
-                out.b = p;
+                rgb.r = dec;
+                rgb.g = 1;
+                rgb.b = inc;
                 break;
             case 2:
-                out.r = p;
-                out.g = hsv.v;
-                out.b = t;
+                rgb.r = inc;
+                rgb.g = dec;
+                rgb.b = 1;
                 break;
             case 3:
-                out.r = p;
-                out.g = q;
-                out.b = hsv.v;
-                break;
-            case 4:
-                out.r = t;
-                out.g = p;
-                out.b = hsv.v;
-                break;
-            case 5:
-                out.r = hsv.v;
-                out.g = p;
-                out.b = q;
+                rgb.r = dec;
+                rgb.g = 0;
+                rgb.b = dec;
                 break;
         }
-
-        return int ? (
-            (((out.r * 255) & 0xff) << 16) |
-            (((out.g * 255) & 0xff) << 8) |
-             ((out.b * 255) & 0xff)
-        ) : out;
+        rgb.r = ((rgb.r * 255 * v) & 0xff) << 16;
+        rgb.g = ((rgb.g * 255 * v) & 0xff) << 8;
+        rgb.b = ((rgb.b * 255 * v) & 0xff);
+        return rgb.r | rgb.g | rgb.b;
     }
 
 })();
