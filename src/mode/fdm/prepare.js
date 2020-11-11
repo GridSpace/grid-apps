@@ -397,8 +397,8 @@
         }
     }
 
-    FDM.rateToColor = function(rate, max, ext) {
-        return hsv2rgb({h: rate/max, s:1, v:ext ? 0.7 : 0.8}, ext);
+    FDM.rateToColor = function(rate, max) {
+        return hsv2rgb({h: rate/max, s:1, v:0.85});
     };
 
     FDM.prepareRender = function(levels, update, options) {
@@ -427,7 +427,7 @@
         let current = null;
 
         function color(point) {
-            return FDM.rateToColor(point.speed, maxspd, thin);
+            return FDM.rateToColor(point.speed, maxspd);
         }
 
         levels.forEach((level, index) => {
@@ -508,9 +508,9 @@
     }
 
     // hsv values all = 0 to 1
-    function hsv2rgb(hsv, ext) {
+    function hsv2rgb(hsv) {
         const { h, s, v } = hsv;
-        const ss = 1 / (ext ? 4 : 3);
+        const ss = 1 / 5;
         const seg = Math.floor(h / ss);
         const rem = h - (seg * ss);
         const inc = (rem / ss);
@@ -525,14 +525,19 @@
             case 1:
                 rgb.r = dec;
                 rgb.g = 1;
-                rgb.b = inc;
+                rgb.b = 0;
                 break;
             case 2:
-                rgb.r = inc;
+                rgb.r = 0;
                 rgb.g = dec;
-                rgb.b = 1;
+                rgb.b = inc;
                 break;
             case 3:
+                rgb.r = inc;
+                rgb.g = 0;
+                rgb.b = 1;
+                break;
+            case 4:
                 rgb.r = dec;
                 rgb.g = 0;
                 rgb.b = dec;

@@ -221,6 +221,10 @@
         return ret;
     };
 
+    PRO.miter = function() {
+        // todo - to eliminate path sharps in renders
+    };
+
     PRO.createConvexHull = function(points) {
         function removeMiddle(a, b, c) {
             let cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);

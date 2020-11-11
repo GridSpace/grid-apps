@@ -128,20 +128,11 @@ KIRI.worker = {
 
         const print = current.print || {};
         const maxSpeed = print.maxSpeed || undefined;
-        const thinColor = print.thinColor || false;
-        let speedColors = {};
-        if (maxSpeed) {
-            const FDM = KIRI.driver.FDM;
-            for (let i=0, sd=maxSpeed/19, so=0; i<20; i++) {
-                speedColors[Math.round(so)] = FDM.rateToColor(so, maxSpeed + 1, thinColor);
-                so += sd;
-            }
-        }
 
         send.done({
             done: true,
             output: KIRI.codec.encode(layers),
-            speedColors
+            maxSpeed
         });
     },
 
@@ -167,6 +158,15 @@ KIRI.worker = {
             done: true,
             output: output ? output : { bounds, time, lines, bytes, distance, settings }
         });
+    },
+
+    colors: function(data, send) {
+        const { colors, max } = data;
+        const colorMap = {};
+        colors.forEach(color => {
+            colorMap[color] = KIRI.driver.FDM.rateToColor(color, max);
+        });
+        send.done(colorMap);
     },
 
     parse: function(args, send) {

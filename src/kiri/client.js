@@ -166,7 +166,7 @@ KIRI.work = {
                 update(reply.progress, reply.message);
             }
             if (reply.done) {
-                done(reply.output, reply.speedColors);
+                done(reply.output, reply.maxSpeed);
             }
         });
     },
@@ -179,6 +179,12 @@ KIRI.work = {
             if (reply.done) {
                 ondone(reply.output);
             }
+        });
+    },
+
+    colors : function(colors, max, done) {
+        send("colors", { colors, max }, function(reply) {
+            done(reply);
         });
     },
 

@@ -664,24 +664,30 @@
         // UI.setMenu.style.display = andmenu ? 'none' : 'flex';
     }
 
-    function updateSpeeds(speedColors) {
+    function updateSpeeds(maxSpeed) {
         UI.speeds.style.display =
             settings.mode !== 'SLA' &&
             settings.mode !== 'LASER' &&
             viewMode === VIEWS.PREVIEW &&
             UI.showSpeeds.checked ? 'block' : '';
-        if (speedColors) {
-            const list = [];
-            Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
-                const color = speedColors[speed];
-                const hex = color.toString(16).padStart(6,0);
-                const r = (color >> 16) & 0xff;
-                const g = (color >>  8) & 0xff;
-                const b = (color >>  0) & 0xff;
-                const style = `background-color:#${hex}`;
-                list.push(`<label style="${style}">${speed}</label>`);
+        if (maxSpeed) {
+            const colors = [];
+            for (let i=0; i<= maxSpeed; i += maxSpeed/20) {
+                colors.push(Math.round(Math.max(i,1)));
+            }
+            KIRI.client.colors(colors, maxSpeed, speedColors => {
+                const list = [];
+                Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
+                    const color = speedColors[speed];
+                    const hex = color.toString(16).padStart(6,0);
+                    const r = (color >> 16) & 0xff;
+                    const g = (color >>  8) & 0xff;
+                    const b = (color >>  0) & 0xff;
+                    const style = `background-color:#${hex}`;
+                    list.push(`<label style="${style}">${speed}</label>`);
+                });
+                UI.speedbar.innerHTML = list.join('');
             });
-            UI.speedbar.innerHTML = list.join('');
         }
     }
 
@@ -824,7 +830,7 @@
 
         KIRI.client.prepare(settings, function(progress, message) {
             API.show.progress(progress, message);
-        }, function (output, speedColors) {
+        }, function (output, maxSpeed) {
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
@@ -844,7 +850,7 @@
                 SPACE.update();
                 updateSliderMax(true);
                 setVisibleLayer(-1, 0);
-                updateSpeeds(speedColors);
+                updateSpeeds(maxSpeed);
             }
 
             if (typeof(callback) === 'function') {
