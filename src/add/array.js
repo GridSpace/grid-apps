@@ -6,7 +6,7 @@
     var AP = Array.prototype;
 
     /** ******************************************************************
-     * array prototype helpers
+     * Array prototype helpers
      ******************************************************************* */
 
      if (!AP.flat) {
@@ -148,7 +148,7 @@
     };
 
     /** ******************************************************************
-     * string prototype helpers
+     * String prototype helpers
      ******************************************************************* */
 
     String.prototype.reverse = function() {
@@ -165,6 +165,15 @@
 
     Math.bound = function(val,min,max) {
         return Math.max(min,Math.min(max,val));
+    };
+
+    /** ******************************************************************
+     * Number static helpers
+     ******************************************************************* */
+
+    Number.prototype.round = function(digits) {
+        const pow = Math.pow(10,digits || 3);
+        return Math.round(this.valueOf() * pow) / pow;
     };
 
 })();

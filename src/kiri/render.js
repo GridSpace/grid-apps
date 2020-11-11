@@ -3,7 +3,7 @@
 "use strict";
 
 (function() {
-    const KIRI = self.kiri, BASE = self.base, POLY = BASE.polygons;
+    const KIRI = self.kiri, BASE = self.base, POLY = BASE.polygons, newPolygon = BASE.newPolygon;
 
     class Render {
         constructor() {
@@ -164,6 +164,14 @@
 
             polys.forEach(poly => {
                 const contour = [];
+                poly = poly.miter();
+                // if (poly.debug) {
+                //     const save = this.current;
+                //     this.setLayer('debug.acute', 0xff0000).addPoly(poly, {thin:true});
+                //     this.setLayer('debug.start', 0x00ff00).addPoly(newPolygon().centerRectangle(poly.first(),1,1), {thin:true});
+                //     this.setLayer('debug.end', 0x0000ff).addPoly(newPolygon().centerRectangle(poly.last(),0.8,0.8), {thin:true});
+                //     this.current = save;
+                // }
                 poly.points.forEach(p => {
                     contour.push(new THREE.Vector2(p.x, p.y));
                 });

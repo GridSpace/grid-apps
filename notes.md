@@ -1,5 +1,9 @@
 # Kiri:Moto todo
 
+NEXT
+- contour outside part boundaries
+- fdm first level height render
+
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `F` detect and report slow framerates

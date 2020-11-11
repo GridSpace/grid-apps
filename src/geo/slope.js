@@ -91,7 +91,7 @@
     PRO.invert = function() {
         this.dx = -this.dx;
         this.dy = -this.dy;
-        this.angle = 360 - this.angle;
+        this.angle = 180 - this.angle;
         return this;
     };
 

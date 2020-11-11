@@ -221,8 +221,62 @@
         return ret;
     };
 
-    PRO.miter = function() {
+    function slopeDiff(s1, s2) {
+        const n1 = s1.angle;//(s1.angle + 360) % 360;
+        const n2 = s2.angle;//(s2.angle + 360) % 360;
+        let diff = n2 - n1;
+        while (diff < -180) diff += 360;
+        while (diff > 180) diff -= 360;
+        return Math.abs(diff);
+    }
+
+    PRO.miter = function(debug) {
+        if (this.length < 3) return this;
+
         // todo - to eliminate path sharps in renders
+        const slo = [], pa = this.points, pln = pa.length, open = this.open;
+        let last;
+        for (let i=1; i<pln; i++) {
+            slo.push(pa[i-1].slopeTo(last = pa[i]));
+        }
+        if (!open) {
+            slo.push(last.slopeTo(pa[0]));
+        }
+
+        const ang = new Array(pln).fill(0);
+        let redo = false;
+        const aln = open ? pln - 1 : pln;
+        for (let i=1; i<aln; i++) {
+            ang[i] = slopeDiff(slo[i-1], slo[i]);
+            redo |= ang[i] < 90;
+        }
+        if (!open) {
+            // ang[pln-1] = slopeDiff(slo[pln-2], slo[pln-1]);
+            ang[0] = slopeDiff(slo[pln-1], slo[0]);
+            redo |= ang[pln-1] > 90;
+            redo |= ang[0] > 90;
+        }
+        if (redo) {
+            const newp = newPolygon();
+            // newp.debug = this.debug = true;
+            newp.open = open;
+            for (let i=0; i<pln; i++) {
+                const p = pa[(i+pln) % pln];
+                const d = ang[(i+pln) % pln];
+                if (d > 90) {
+                    const s = slo[(i+pln) % pln];
+                    const pp = pa[(i+pln-1) % pln];
+                    const ps = slo[(i+pln-1) % pln];
+                    newp.push(p.follow(p.slopeTo(pp), 0.005));
+                    newp.push(p.follow(s, 0.005));
+                } else {
+                    p.parent = newp;
+                    newp.push(p);
+                }
+            }
+            return newp;
+        }
+        return this;
     };
 
     PRO.createConvexHull = function(points) {

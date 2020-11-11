@@ -484,7 +484,7 @@
                 lastOut = out;
             });
             if (lastOut.emit) {
-                pushPrint(lastOut.tool, current)
+                // pushPrint(lastOut.tool, current)
             } else {
                 moves.push(current);
             }
