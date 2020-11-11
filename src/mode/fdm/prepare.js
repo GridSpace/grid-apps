@@ -508,14 +508,27 @@
     }
 
     // hsv values all = 0 to 1
-    function hsv2rgb(hsv) {
+    function hsv2rgb(hsv, mode) {
         const { h, s, v } = hsv;
-        const ss = 1 / 5;
+        const div = {linear: 5, pastel: 3}[mode] || 5;
+        const ss = 1 / div;
         const seg = Math.floor(h / ss);
         const rem = h - (seg * ss);
         const inc = (rem / ss);
         const dec = (1 - inc);
         const rgb = {r: 0, g: 0, b: 0};
+        switch (div) {
+            case 3: color3(rgb, inc, seg); break;
+            case 5: color5(rgb, inc, seg); break;
+        }
+        rgb.r = ((rgb.r * 255 * v) & 0xff) << 16;
+        rgb.g = ((rgb.g * 255 * v) & 0xff) << 8;
+        rgb.b = ((rgb.b * 255 * v) & 0xff);
+        return rgb.r | rgb.g | rgb.b;
+    }
+
+    function color5(rgb, inc, seg) {
+        const dec = 1 - inc;
         switch (seg) {
             case 0:
                 rgb.r = 1;
@@ -543,10 +556,27 @@
                 rgb.b = dec;
                 break;
         }
-        rgb.r = ((rgb.r * 255 * v) & 0xff) << 16;
-        rgb.g = ((rgb.g * 255 * v) & 0xff) << 8;
-        rgb.b = ((rgb.b * 255 * v) & 0xff);
-        return rgb.r | rgb.g | rgb.b;
+    }
+
+    function color3(rgb, inc, seg) {
+        const dec = 1 - inc;
+        switch (seg) {
+            case 0:
+                rgb.r = dec;
+                rgb.g = inc;
+                rgb.b = 0;
+                break;
+            case 1:
+                rgb.r = 0;
+                rgb.g = dec;
+                rgb.b = inc;
+                break;
+            case 2:
+                rgb.r = inc/2;
+                rgb.g = 0;
+                rgb.b = dec/2 + 0.5;
+                break;
+        }
     }
 
 })();

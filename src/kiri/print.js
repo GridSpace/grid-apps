@@ -46,6 +46,7 @@
     PRO.extrudePerMM = extrudePerMM;
     PRO.constReplace = constReplace;
     PRO.poly2polyEmit = poly2polyEmit;
+    PRO.tip2tipEmit = tip2tipEmit;
     PRO.addPrintPoints = addPrintPoints;
 
     PRO.parseSVG = function(code, offset) {
