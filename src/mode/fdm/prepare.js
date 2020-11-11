@@ -397,8 +397,8 @@
         }
     }
 
-    FDM.colorFunc = function(rate) {
-        return hsv2rgb({h: rate, s:1, v:0.8});
+    FDM.rateToColor = function(rate, max, ext) {
+        return hsv2rgb({h: rate/max, s:1, v:ext ? 0.7 : 0.8}, ext);
     };
 
     FDM.prepareRender = function(levels, update, options) {
@@ -421,19 +421,14 @@
 
         // for reporting
         self.worker.print.maxSpeed = maxspd - 1;
+        self.worker.print.thinColor = thin;
 
         let lastOut = null;
         let current = null;
 
-        function colorDefault(point) {
-            return hsv2rgb({h:point.speed / maxspd, s:1, v:0.75});
+        function color(point) {
+            return FDM.rateToColor(point.speed, maxspd, thin);
         }
-
-        function colorCustom(point) {
-            return FDM.rateToColor(point.speed, maxspd);
-        }
-
-        const color = FDM.rateToColor ? colorCustom : colorDefault;
 
         levels.forEach((level, index) => {
             const prints = {};

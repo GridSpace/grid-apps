@@ -126,12 +126,14 @@ KIRI.worker = {
             send.data({ progress, message });
         });
 
-        const maxSpeed = (current.print || {}).maxSpeed || undefined;
+        const print = current.print || {};
+        const maxSpeed = print.maxSpeed || undefined;
+        const thinColor = print.thinColor || false;
         let speedColors = {};
         if (maxSpeed) {
             const FDM = KIRI.driver.FDM;
             for (let i=0, sd=maxSpeed/19, so=0; i<20; i++) {
-                speedColors[Math.round(so)] = FDM.colorFunc(so/(maxSpeed+1));
+                speedColors[Math.round(so)] = FDM.rateToColor(so, maxSpeed + 1, thinColor);
                 so += sd;
             }
         }
