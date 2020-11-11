@@ -69,6 +69,32 @@
         return na;
     };
 
+    AP.xray = function(arg) {
+        const na = [], ln = this.length;
+        for (let i=0; i<ln; i++) {
+            na.push(this[i].xray(arg));
+        }
+        return na;
+    };
+
+    AP.xout = function(label, inset) {
+        if (label) console.log(`${label} [${this.length}]`);
+        if (!inset) inset = '  ';
+        this.forEach((el,i) => {
+            if (el.xout) {
+                el.xout(null, inset + i + inset);
+            } else if (el.xray) {
+                const info = el.xray();
+                console.log(inset, info);
+                Object.values(info).forEach(val => {
+                    if (val.xout) {
+                        val.xout(null, inset + inset);
+                    }
+                });
+            }
+        });
+    };
+
     /**
      * remove and return element from array, if present
      *

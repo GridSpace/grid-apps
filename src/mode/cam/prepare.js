@@ -353,9 +353,9 @@
                         }
                     }
                     let polys = [], t = [], c = [];
-                    POLY.flatten(slice.camLines.clone(true)).forEach(function (poly) {
+                    POLY.flatten(slice.camLines).forEach(function (poly) {
                         let child = poly.parent;
-                        if (depthFirst) poly = poly.clone(true);
+                        if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
                         if (child) c.push(poly); else t.push(poly);
                         poly.layer = depthData.layer;
                         polys.push(poly);
@@ -366,6 +366,7 @@
                     POLY.setWinding(c, !dir);
                     if (depthFirst) {
                         (slice.camMode === PRO.ROUGH ? depthData.rough : depthData.outline).append(polys);
+                        // polys.xout(`prep ${slice.z}`);
                     } else {
                         printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                             poly.forEachPoint(function(point, pidx, points, offset) {
@@ -440,7 +441,7 @@
             fitted.filter(top => !top.level_emit).forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
-                start = poly2polyEmit(inside, start, emitter);
+                start = poly2polyEmit(inside, start, emitter, { mark: "emark" });
                 start = depthRoughPath(start, depth + 1, levels, tops, emitter, top);
             });
             return start;
@@ -455,14 +456,20 @@
             }
             if (above) {
                 level = level.filter(lp => {
-                    return above.filter(ap => !ap.level_emit && lp.isNear(ap, radius, true)).length === 0;
+                    const conf = above.filter(ap => !ap.level_emit && lp.isNear(ap, radius, true));
+                    return conf.length === 0;
                 });
             }
+            const thru = []; // match thru polys
             level = level.filter(lp => {
-                if (lp.level_emit) return false;
-                if (bottm && !clr) {
-                    return bottm.filter(bp => lp.isEquivalent(bp)).length === 0;
+                if (lp.level_emit) {
+                    return false;
                 }
+//                 if (bottm && !clr) {
+//                     const tm = bottm.filter(bp => lp.isEquivalent(bp));
+//                     thru.appendAll(tm);
+//                     return tm.length === 0;
+//                 }
                 return true;
             });
             // omit polys that match bottom level polys unless level above is cleared
@@ -472,7 +479,6 @@
                 fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr);
                 return fromPoint;
             }, {weight: true});
-            start = depthOutlinePath(start, depth + 1, levels, radius, emitter, clr);
             return start;
         }
 
@@ -490,16 +496,17 @@
             }
             // outline depth first
             if (depthData.outline.length > 0) {
+                // depthData.outline.xout('depth');
                 lastMode = PRO.OUTLINE;
                 setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
                 spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 let flatLevels = depthData.outline.map(level => {
                     return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
-                })
+                });
+                // flatLevels.xout('flat');
                 // start with the smallest polygon on the top
                 printPoint = flatLevels[0]
-                    .sort((a,b) => { return a.area() - b.area() })
-                    .shift()
+                    .sort((a,b) => { return a.area() - b.area() })[0]
                     .average();
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);

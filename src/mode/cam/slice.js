@@ -302,7 +302,7 @@
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
                     offset = addCutoutTabs(offset, slice.z, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
-
+                // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
                 slice.output()
                     .setLayer("outline", {face: 0, line: 0})

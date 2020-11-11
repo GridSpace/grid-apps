@@ -122,6 +122,20 @@
         }
     };
 
+    PRO.xray = function(deep) {
+        const xray = {
+            id: this.id,
+            len: this.points.length,
+            open: this.open,
+            depth: this.depth,
+            parent: this.parent ? true : false
+        };
+        if (this.inner) {
+            xray.inner = deep ? this.inner.xray(deep) : this.inner;
+        }
+        return xray;
+    };
+
     // return which plane (x,y,z) this polygon is coplanar with
     PRO.alignment = function() {
         if (this._aligned) return this._aligned;
@@ -886,7 +900,8 @@
      */
     PRO.isInside = function(poly, tolerance) {
         // throw new Error("isInside");
-        if (!this.bounds.isNested(poly.bounds, tolerance * 3)) {
+        const neardist = tolerance || CONF.precision_close_to_poly_sq;
+        if (!this.bounds.isNested(poly.bounds, neardist * 3)) {
             return false;
         }
 
@@ -898,12 +913,12 @@
             // check midpoint on long lines (TODO: should be distToSq2D()?)
             if (prev.distTo2D(next) > midcheck) {
                 mid = prev.midPointTo(next);
-                if (!(mid.inPolygon(poly) || mid.nearPolygon(poly, tolerance || CONF.precision_close_to_poly_sq))) {
+                if (!(mid.inPolygon(poly) || mid.nearPolygon(poly, neardist))) {
                     exit = false;
                     return true;
                 }
             }
-            if (!(next.inPolygon(poly) || next.nearPolygon(poly, tolerance || CONF.precision_close_to_poly_sq))) {
+            if (!(next.inPolygon(poly) || next.nearPolygon(poly, neardist))) {
                 exit = false;
                 return true;
             }
