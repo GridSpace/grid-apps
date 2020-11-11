@@ -272,6 +272,8 @@ kiri.lang['en-us'] = {
     cr_ease_l:      "plunge cuts will\nspiral down or ease\nalong a linear path",
     cr_clrp_s:      "clear voids",
     cr_clrp_l:      "mill out through pockets\ninstead of just the outline",
+    cr_olin_s:      "inside only",
+    cr_olin_l:      "limit cutting to\ninside part boundaries",
 
     // CNC OUTLINE
     co_menu:        "outline",

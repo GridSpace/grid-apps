@@ -45,7 +45,7 @@
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3),
-            addTabsOutline = procOutlineOn && proc.camTabsOn,
+            addTabsOutline = (procOutlineOn || procRough) && proc.camTabsOn,
             tabWidth = proc.camTabsWidth,
             tabHeight = proc.camTabsHeight,
             bounds = widget.getBoundingBox(),
@@ -122,11 +122,9 @@
             tslices.push(data.slice);
             // sliceAll.push(data.slice);
             // data.slice.output()
-            //     .setLayer("debug", {face: 0xff0000, line: 0})
-            //     // .addFlats(POLY.setZ(tshadow.clone(true), data.z), {offset: 1, outline: true});
-            //     // .addPolys(POLY.setZ(tshadow.clone(true), data.z));
-            //     .addPaths(POLY.setZ(tshadow.clone(true), data.z));
-            updateOp(index, total);
+            //     .setLayer("debug", {line: 0x888800, thin: true })
+            //     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
+            // updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
 
@@ -194,13 +192,16 @@
             });
             shadow = POLY.nest(shadow);
 
+            const insideOnly = proc.camRoughIn;
+
             // expand shadow by half tool diameter + stock to leave
-            let shell = POLY.offset(shadow, (roughToolDiam / 4) + camRoughStock);
+            const sadd = insideOnly ? roughToolDiam / 4 : roughToolDiam / 2;
+            const shell = POLY.offset(shadow, sadd + camRoughStock);
 
             nextOp();
             slices.forEach((slice, index) => {
-                let shadow = slice.shadow;
-                let offset = [shell.clone(true),shadow.clone(true)].flat();
+                // let shadow = slice.shadow;
+                let offset = [shell.clone(true),slice.shadow.clone(true)].flat();
                 let flat = POLY.flatten(offset, [], true);
                 let nest = POLY.setZ(POLY.nest(flat), slice.z);
                 // slice.tops[0].inner = nest;
@@ -222,10 +223,25 @@
                     }
                 });
 
+                // add outside pass if not inside only
+                if (!insideOnly) {
+                    const outside = POLY.offset(shadow, roughToolDiam * proc.camRoughOver, {z: slice.z});
+                    if (outside) {
+                        offset.appendAll(outside);
+                        if (addTabsOutline && slice.z <= zMin + tabHeight) {
+                            offset = addCutoutTabs(offset, slice.z, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                        }
+                    }
+                }
+
                 if (!offset) return;
 
                 slice.camLines = offset;
                 slice.output()
+                    // .setLayer("rough shadow", {line: 0x00aa00})
+                    // .addPolys(shadow)
+                    // .setLayer("rough shell", {line: 0xaa0000})
+                    // .addPolys(shell)
                     .setLayer("roughing", {face: 0, line: 0})
                     .addPolys(offset);
                 updateOp(index, slices.length);
