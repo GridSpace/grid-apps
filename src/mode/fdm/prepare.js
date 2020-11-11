@@ -398,7 +398,7 @@
     }
 
     FDM.rateToColor = function(rate, max) {
-        return hsv2rgb({h: rate/max, s:1, v:0.85});
+        return currentColorFunction(rate/max, 1, 0.85);
     };
 
     FDM.prepareRender = function(levels, update, options) {
@@ -507,20 +507,23 @@
         return layers;
     }
 
+    const colorFunctions = {
+        default: hsv2rgb.bind({ seg: 5, fn: color5 }),
+        dark: hsv2rgb.bind({ seg: 3, fn: color3 })
+    };
+
+    let currentColorFunction = colorFunctions.default;
+
     // hsv values all = 0 to 1
-    function hsv2rgb(hsv, mode) {
-        const { h, s, v } = hsv;
-        const div = {linear: 5, pastel: 3}[mode] || 5;
+    function hsv2rgb(h, s, v) {
+        const div = this.seg;
         const ss = 1 / div;
         const seg = Math.floor(h / ss);
         const rem = h - (seg * ss);
         const inc = (rem / ss);
         const dec = (1 - inc);
         const rgb = {r: 0, g: 0, b: 0};
-        switch (div) {
-            case 3: color3(rgb, inc, seg); break;
-            case 5: color5(rgb, inc, seg); break;
-        }
+        this.fn(rgb, inc, seg);
         rgb.r = ((rgb.r * 255 * v) & 0xff) << 16;
         rgb.g = ((rgb.g * 255 * v) & 0xff) << 8;
         rgb.b = ((rgb.b * 255 * v) & 0xff);
