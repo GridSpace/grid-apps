@@ -164,7 +164,7 @@
 
             polys.forEach(poly => {
                 const contour = [];
-                poly = poly.miter();
+                poly = poly.clean().miter();
                 // if (poly.debug) {
                 //     const save = this.current;
                 //     this.setLayer('debug.acute', 0xff0000).addPoly(poly, {thin:true});

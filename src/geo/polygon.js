@@ -1159,12 +1159,14 @@
             clip = clib.Clipper,
             clean = clip.CleanPolygon(this.toClipper()[0], CONF.clipperClean),
             poly = fromClipperPath(clean, this.getZ());
+        if (poly.length === 0) return this;
         if (deep && this.inner) {
             poly.inner = this.inner.map(inr => inr.clean(false, poly));
         }
         poly.parent = parent || this.parent;
         poly.area2 = this.area2;
-        return poly || this;
+        poly.open = this.open;
+        return poly;
     };
 
     PRO.toClipper = function(inout,debug) {

@@ -16,7 +16,6 @@ NEXT
 
 # FDM
 
-* `B` miter acute angles (benchy + square render)
 * `B` fix preview/gcode layer size (first layer)
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
