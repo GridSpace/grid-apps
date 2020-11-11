@@ -214,7 +214,6 @@
                     });
                     if (!abs) {
                         for (let [k,v] of Object.entries(mov)) {
-                            console.log(k, v, line);
                             pos[k] += v;
                         }
                     }
