@@ -168,11 +168,14 @@
 
         lines.forEach(function(line) {
             if (line.indexOf('- LAYER ') > 0) {
+                seq.height = defh;
                 const hd = line.replace('(','').replace(')','').split(' ');
                 defh = parseFloat(hd[4]);
+                if (fdm) dz = -defh / 2;
             }
-            line = line.split(";")[0].split(" ");
+            line = line.split(";")[0].split(" ").filter(v => v);
             let cmd = line.shift();
+            if (!cmd) return;
             if (cmd.charAt(0) === 'T') {
                 let ext = scope.settings.device.extruders;
                 let pos = parseInt(cmd.charAt(1));
@@ -201,10 +204,21 @@
                     G0G1(true);
                     break;
                 case 'G1':
+                    const mov = {};
                     line.forEach(function(tok) {
-                        pos[tok.charAt(0)] = parseFloat(tok.substring(1));
+                        if (abs) {
+                            pos[tok.charAt(0)] = parseFloat(tok.substring(1));
+                        } else {
+                            mov[tok.charAt(0)] = parseFloat(tok.substring(1));
+                        }
                     });
-                    G0G1(fdm ? pos.E == 0 : false);
+                    if (!abs) {
+                        for (let [k,v] of Object.entries(mov)) {
+                            console.log(k, v, line);
+                            pos[k] += v;
+                        }
+                    }
+                    G0G1(fdm ? pos.E <= 0 : false);
                     break;
                 case 'M6':
                     break;

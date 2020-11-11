@@ -436,6 +436,13 @@
             const output = new KIRI.Render();
             layers.push(output);
 
+            // const updateTool = (toolid) => {
+            //     toolid = toolid || 0;
+            //     const array = prints[toolid] = prints[toolid] || [];
+            //     const tool = tools[toolid] || {};
+            //     array.width = (tool.extNozzle || 1) / 2;
+            // }
+
             const pushPrint = (toolid, poly) => {
                 toolid = toolid || 0;
                 const array = prints[toolid] = prints[toolid] || [];
@@ -462,6 +469,7 @@
                             current.color = color(out);
                             pushPrint(out.tool, current);
                         }
+                        // updateTool(out.tool);
                         current.push(out.point);
                     } else {
                         if (lastOut.emit) {
@@ -483,11 +491,11 @@
                 }
                 lastOut = out;
             });
-            if (lastOut.emit) {
-                // pushPrint(lastOut.tool, current)
-            } else {
-                moves.push(current);
-            }
+            // if (lastOut.emit) {
+            //     pushPrint(lastOut.tool, current)
+            // } else {
+            //     moves.push(current);
+            // }
             output
                 .setLayer('move', moveColor, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });

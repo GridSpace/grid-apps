@@ -1165,7 +1165,6 @@
         }
         poly.parent = parent || this.parent;
         poly.area2 = this.area2;
-        poly.open = this.open;
         return poly;
     };
 
