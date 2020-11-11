@@ -293,10 +293,12 @@
             stepsTotal += sindex.length * 2;
             if (proc.camContourXOn) stepsTotal += (maxX-minX) / toolStep;
             if (proc.camContourYOn) stepsTotal += (maxY-minY) / toolStep;
+
             let slices = slicer.slice(sindex, { each: (data, index, total) => {
                 onupdate(++stepsTaken, stepsTotal, "topo slice");
             }, genso: true });
-            processSlices(slices.map(data => data.slice));
+
+            processSlices(slices.filter(s => s.lines).map(data => data.slice));
         }
     }
 

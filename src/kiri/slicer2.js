@@ -194,7 +194,7 @@
                 lines = [],
                 zScale = this.zScale,
                 buckets = this.buckets,
-                bucket = buckets.length ? buckets[Math.floor(z * zScale)] : points;
+                bucket = buckets.length ? buckets[Math.floor(z * zScale)] : this.points;
 
             if (onflat) {
                 z += flatoff;

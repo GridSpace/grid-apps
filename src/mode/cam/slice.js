@@ -223,6 +223,8 @@
                     }
                 });
 
+                if (!offset) return;
+
                 // add outside pass if not inside only
                 if (!insideOnly) {
                     const outside = POLY.offset(shadow, roughToolDiam * proc.camRoughOver, {z: slice.z});
