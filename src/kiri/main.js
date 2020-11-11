@@ -1946,13 +1946,16 @@
     }
 
     function setViewMode(mode) {
-        let oldMode = viewMode;
+        const oldMode = viewMode;
+        const isCAM = settings.mode === 'CAM';
         viewMode = mode;
         platform.deselect();
         updateSelectedInfo();
         switch (mode) {
             case VIEWS.ARRANGE:
-                $('lt-back').style.display = '';
+                UI.back.style.display = '';
+                UI.render.style.display = '';
+                UI.render.classList.add('lt-enabled');
                 KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
@@ -1962,13 +1965,15 @@
                 setOpacity(1);
                 break;
             case VIEWS.SLICE:
-                $('lt-back').style.display = 'flex';
+                UI.back.style.display = 'flex';
+                if (!isCAM) UI.render.classList.remove('lt-enabled');
                 updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
                 break;
             case VIEWS.PREVIEW:
-                $('lt-back').style.display = 'flex';
+                UI.back.style.display = 'flex';
+                if (!isCAM) UI.render.classList.remove('lt-enabled');
                 setWidgetVisibility(true);
                 break;
             default:

@@ -1231,9 +1231,11 @@
             speedbar:           $('speedbar'),
 
             container:          container,
+            back:               $('lt-back'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
+            render:             $('lt-render'),
 
             modal:              $('modal'),
             modalBox:           $('modal-box'),
@@ -2044,7 +2046,7 @@
         $('acct-export').onclick = (ev) => { ev.stopPropagation(); profileExport() };
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
-        $('lt-back').onclick = API.platform.layout;
+        UI.back.onclick = API.platform.layout;
         UI.act.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         UI.act.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
         UI.act.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
