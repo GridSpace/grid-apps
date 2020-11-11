@@ -35,7 +35,15 @@
 
         print.render = KIRI.driver.FDM.prepareRender(print.output, progress => {
             update(0.5 + progress * 0.5);
-        }, { thin: true, print: 0, move: 0x003366, speed: false, moves: true });
+        }, {
+            thin: true,
+            print: 0,
+            move: 0x003366,
+            speed: false,
+            moves: true,
+            other: "moving",
+            action: "milling"
+        });
 
         return print.render;
     };

@@ -2,7 +2,6 @@
 
 NEXT
 - contour outside part boundaries
-- fdm first level height render
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -16,8 +15,7 @@ NEXT
 
 # FDM
 
-* `B` fix preview/gcode layer size (first layer)
-* `B` fix adaptive slicing with multi-extruder
+* `B` fix adaptive slicing. also with multi-extruder
 * `B` fix supports with grouped parts
 * `F` speculative background preview generation
 * `F` control for size of purge block (with 0=disabled)
