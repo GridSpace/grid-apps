@@ -665,7 +665,11 @@
     }
 
     function updateSpeeds(speedColors) {
-        UI.speeds.style.display = viewMode === VIEWS.PREVIEW && UI.showSpeeds.checked ? 'block' : '';
+        UI.speeds.style.display =
+            settings.mode !== 'SLA' &&
+            settings.mode !== 'LASER' &&
+            viewMode === VIEWS.PREVIEW &&
+            UI.showSpeeds.checked ? 'block' : '';
         if (speedColors) {
             const list = [];
             Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
