@@ -137,6 +137,8 @@ kiri.lang['en-us'] = {
     op_invr_l:      "invert mouse wheel\nscroll zoom",
     op_thin_s:      "thin lines",
     op_thin_l:      "faster part visualization\nsacrificing visual quality",
+    op_line_s:      "line type",
+    op_line_l:      "line style for path rendering\nimpacts 3d performance\npath: 3d best\nflat: 2d good\nline = 1d fast",
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
 

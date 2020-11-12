@@ -180,14 +180,14 @@ KIRI.worker = {
         const print = current.print = KIRI.newPrint(settings, Object.values(cache));
         const tools = settings.device.extruders;
         const mode = settings.mode;
-        const thin = settings.controller.thinRender || mode !== 'FDM';
-
+        const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
+        const flat = settings.controller.lineType === 'flat' && mode === 'FDM';
         const parsed = print.parseGCode(code, offset, progress => {
             send.data({ progress: progress * 0.5 });
         }, done => {
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.5 + progress * 0.5 });
-            }, { thin, tools, xspeed: mode === 'FDM' });
+            }, { thin, flat, tools });
             send.done({parsed: KIRI.codec.encode(layers)});
         }, { fdm : mode === 'FDM' });
     },

@@ -74,8 +74,8 @@
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
-        isFlat = false;
-        isThin = !isFlat && settings.controller.thinRender;
+        isFlat = settings.controller.lineType === "flat";
+        isThin = !isFlat && settings.controller.lineType === "line";
         offset = nozzleSize / 2;
 
         if (isFlat) {
@@ -84,7 +84,13 @@
                 color.line = 1
                 color.opacity = 0.5;
             });
-        };
+        } else {
+            Object.values(COLOR).forEach(color => {
+                color.flat = false;
+                color.line = 1
+                color.opacity = 1;
+            });
+        }
 
         if (!(sliceHeight > 0 && sliceHeight < 100)) {
             return ondone("invalid slice height");

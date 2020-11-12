@@ -129,7 +129,7 @@
 
         const output = scope.output = [ seq ];
 
-        function G0G1(moving, line) {
+        function G0G1(g0, line) {
             const mov = {};
             line.forEach(function(tok) {
                 if (abs) {
@@ -156,6 +156,8 @@
                 factor * pos.Y + off.Y + xoff.Y,
                 factor * pos.Z + off.Z + xoff.Z + dz
             );
+
+            const moving = g0 || (fdm && pos.E <= 0);
 
             // always add moves to the current sequence
             if (moving) {
@@ -218,7 +220,7 @@
                     G0G1(true, line);
                     break;
                 case 'G1':
-                    G0G1(fdm ? pos.E <= 0 : false, line);
+                    G0G1(false, line);
                     break;
                 case 'M6':
                     break;

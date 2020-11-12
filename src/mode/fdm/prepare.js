@@ -42,7 +42,8 @@
             slices = [],
             sliceEntry,
             print = self.worker.print = KIRI.newPrint(settings, widgets),
-            isThin = settings.controller.thinRender;
+            isThin = settings.controller.lineType === "line",
+            isFlat = settings.controller.lineType === "flat";
 
         // TODO pick a widget with a slice on the first layer and use that nozzle
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
@@ -376,7 +377,7 @@
         print.output = output;
         print.render = FDM.prepareRender(output, progress => {
             update(0.5 + progress * 0.5);
-        }, { tools: device.extruders, thin: isThin });
+        }, { tools: device.extruders, thin: isThin, flat: isFlat });
 
         return print.render;
     };
@@ -507,7 +508,7 @@
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
                 array.forEach(poly => {
-                    if (poly.appearsClosed()) {
+                    if (flat && poly.appearsClosed()) {
                         poly.setClosed();
                         poly.points.pop();
                         poly.length--;

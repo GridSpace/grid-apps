@@ -156,7 +156,13 @@
             { name: "good" },
             { name: "fair" },
             { name: "poor" },
+        ],
+        linetype: [
+            { name: "path" },
+            { name: "flat" },
+            { name: "line" }
         ]
+
     };
 
     const tweak = {
@@ -1447,7 +1453,6 @@
     function updateFields() {
         updateFieldsFromSettings(settings.device);
         updateFieldsFromSettings(settings.process);
-        updateFieldsFromSettings(settings.layers);
         updateFieldsFromSettings(settings.controller);
         updateExtruderFields(settings.device);
     }
@@ -1490,7 +1495,6 @@
         }
         updateSettingsFromFields(settings.device);
         updateSettingsFromFields(settings.process);
-        updateSettingsFromFields(settings.layers);
         let device = settings.device;
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);

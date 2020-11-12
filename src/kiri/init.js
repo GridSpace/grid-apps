@@ -85,6 +85,14 @@
         platform.update_size();
     }
 
+    function lineTypeSave() {
+        const sel = UI.lineType.options[UI.lineType.selectedIndex];
+        if (sel) {
+            settings().controller.lineType = sel.value;
+            API.conf.save();
+        }
+    }
+
     function detailSave() {
         let level = UI.detail.options[UI.detail.selectedIndex];
         if (level) {
@@ -120,7 +128,6 @@
         control.freeLayout = UI.freeLayout.checked;
         control.alignTop = UI.alignTop.checked;
         control.reverseZoom = UI.reverseZoom.checked;
-        control.thinRender = UI.thinRender.checked;
         control.dark = UI.dark.checked;
         control.exportOcto = UI.exportOcto.checked;
         control.exportGhost = UI.exportGhost.checked;
@@ -1369,10 +1376,10 @@
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen2'), {inline: true}),
-            thinRender:       UC.newBoolean(LANG.op_thin_s, booleanSave, {title:LANG.op_thin_l, modes:FDM}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
+            lineType:         UC.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
 
             layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l}),
@@ -1920,6 +1927,7 @@
         UI.alignTop.checked = control.alignTop;
         UI.reverseZoom.checked = control.reverseZoom;
         UI.decimate.checked = control.decimate;
+        lineTypeSave();
         detailSave();
 
         // load script extensions
