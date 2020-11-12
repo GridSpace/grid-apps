@@ -704,6 +704,10 @@
         return !this.open;
     };
 
+    PRO.appearsClosed = function() {
+        return this.first().isEqual(this.last());
+    };
+
     PRO.setClockwise = function() {
         if (!this.isClockwise()) this.reverse();
         return this;

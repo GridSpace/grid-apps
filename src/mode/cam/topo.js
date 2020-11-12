@@ -73,7 +73,7 @@
 
             // return the touching z given topo x,y and a tool profile
             function toolTipZ(x,y) {
-                let profile = toolOffset,
+                const profile = toolOffset,
                     sx = stepsx,
                     sy = stepsy,
                     xl = sx - 1,
@@ -101,7 +101,7 @@
             }
 
             function push_point(x,y,z) {
-                let newP = newPoint(x,y,z);
+                const newP = newPoint(x,y,z);
                 if (lastP && lastP.z === z) {
                     if (curvesOnly) {
                         end_poly();
@@ -138,27 +138,27 @@
                     gridy,
                     gridi, // index
                     gridv, // value
-                    x, y, tv, ltv;
+                    i, il, j, jl, x, y, tv, ltv;
 
                 // for each Y slice, find z grid value (x/z swapped)
-                for (let j=0, jl=slices.length; j<jl; j++) {
-                    let slice = slices[j],
-                        lines = slice.lines;
+                for (j=0, jl=slices.length; j<jl; j++) {
+                    const slice = slices[j];
+                    const lines = slice.lines;
                     gridy = 0;
                     // slices have x/z swapped
                     for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
                         gridi = gridx * stepsy + gridy;
                         gridv = data[gridi] || 0;
                         // strategy using raw lines (faster slice, but more lines)
-                        for (let i=0, il=lines.length; i<il; i++) {
-                            let line = lines[i], p1 = line.p1, p2 = line.p2;
+                        for (i=0, il=lines.length; i<il; i++) {
+                            const line = lines[i], p1 = line.p1, p2 = line.p2;
                             if (
                                 (p1.z > zMin || p2.z > zMin) && // one endpoint above 0
                                 (p1.z > gridv || p2.z > gridv) && // one endpoint above gridv
                                 ((p1.y <= y && p2.y >= y) || // one endpoint left
                                  (p2.y <= y && p1.y >= y)) // one endpoint right
                             ) {
-                                let dy = p1.y - p2.y,
+                                const dy = p1.y - p2.y,
                                     dz = p1.z - p2.z,
                                     pct = (p1.y - y) / dy,
                                     nz = p1.z - (dz * pct);

@@ -409,11 +409,23 @@
 
         const opts = options || {};
         const tools = opts.tools || {};
-        const thin = opts.thin || false;
+        const flat = opts.flat;
+        const thin = opts.thin && !flat;
         const ckspeed = opts.speed !== false;
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
+
+        const moveOpt = {
+            face: moveColor,
+            line: flat ? 1 : moveColor,
+            opacity: flat ? 0.5 : 1
+        };
+        const printOpt = {
+            face: printColor,
+            line: flat ? 1 : printColor,
+            opacity: flat ? 0.5 : 1
+        };
 
         const maxspd = levels.map(level => {
             return level.map(o => o.speed || 0).reduce((a, v) => Math.max(a,v));
@@ -422,6 +434,7 @@
         // for reporting
         self.worker.print.maxSpeed = maxspd - 1;
         self.worker.print.thinColor = thin;
+        self.worker.print.flatColor = flat;
 
         let lastOut = null;
         let current = null;
@@ -490,15 +503,26 @@
                 pushPrint(lastOut.tool, current)
             }
             output
-                .setLayer(opts.other || 'move', moveColor, opts.moves !== true)
+                .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });
             Object.values(prints).forEach(array => {
-                array.forEach(poly => { if (poly.length > 1) output
-                    .setLayer(opts.action || 'print', printColor)
-                    .addPolys([ poly ], thin ? { thin, z: opts.z, color: poly.color } : {
-                        offset: array.width, height, z: opts.z,
-                        color: { face: poly.color, line: poly.color }
-                    })
+                array.forEach(poly => {
+                    if (poly.appearsClosed()) {
+                        poly.setClosed();
+                        poly.points.pop();
+                        poly.length--;
+                    }
+                    output
+                    .setLayer(opts.action || 'print', printOpt)
+                    .addPolys([ poly ],
+                        thin ? { thin, z: opts.z, color: poly.color } :
+                        flat ? {
+                            flat, z: opts.z, color: poly.color,
+                            outline: true, offset: array.width, open: poly.open  } :
+                        {
+                            offset: array.width, height, z: opts.z,
+                            color: { face: poly.color, line: poly.color }
+                        })
                 });
             });
 

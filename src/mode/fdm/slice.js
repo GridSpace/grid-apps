@@ -30,7 +30,11 @@
 
     function vopt(opt) {
         if (opt) {
-            if (isFlat) { opt.flat = true; return opt }
+            if (isFlat) {
+                opt.flat = true;
+                opt.outline = true;
+                return opt
+            }
             if (isThin) return null;
         }
         return opt;
@@ -71,8 +75,16 @@
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
         isFlat = false;
-        isThin = settings.controller.thinRender;
+        isThin = !isFlat && settings.controller.thinRender;
         offset = nozzleSize / 2;
+
+        if (isFlat) {
+            Object.values(COLOR).forEach(color => {
+                color.flat = true;
+                color.line = 1
+                color.opacity = 0.5;
+            });
+        };
 
         if (!(sliceHeight > 0 && sliceHeight < 100)) {
             return ondone("invalid slice height");
