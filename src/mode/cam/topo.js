@@ -55,8 +55,8 @@
                     widget: widget
                 },
                 newslices = [],
-                clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter),
-                partOff = inside ? 0 : toolDiameter / 2,
+                clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter + resolution),
+                partOff = inside ? 0 : toolDiameter / 2 + resolution,
                 gridDelta = Math.floor(partOff / resolution);
 
             let newlines,
