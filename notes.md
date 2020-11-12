@@ -1,7 +1,11 @@
 # Kiri:Moto todo
 
 NEXT
-- contour outside part boundaries
+- contour tabs support
+- path arrows
+- help dialog
+- full bug reports
+- frame rate tracking
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -46,6 +50,7 @@ NEXT
 
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` use arcs to connect acute angles

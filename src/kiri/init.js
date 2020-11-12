@@ -1463,6 +1463,7 @@
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
+            camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
             camContourSep:      UC.newBlank({class:"pop-sep"}),
             camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
             camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),

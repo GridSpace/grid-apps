@@ -420,6 +420,7 @@
                     camContourSpeed: 1000,
                     camContourAngle: 85,
                     camContourCurves: false,
+                    camContourIn: true,
                     camContourXOn: true,
                     camContourYOn: true,
                     camTraceTool: 1000,

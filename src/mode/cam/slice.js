@@ -343,7 +343,8 @@
                 },
                 ondone: (slices) => {
                     sliceAll.appendAll(slices);
-                }
+                },
+                shadow: shadowTop.tops
             });
         }
 

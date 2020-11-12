@@ -290,6 +290,8 @@ kiri.lang['en-us'] = {
     cf_angl_l:      "angles greater than this\nare considered vertical",
     cf_curv_s:      "curves only",
     cf_curv_l:      "limit linear cleanup\nto curved surfaces",
+    cf_olin_s:      "inside only",
+    cf_olin_l:      "limit cutting to\ninside part boundaries",
     cf_linx_s:      "enable x pass",
     cf_linx_l:      "linear x-axis finishing",
     cf_liny_s:      "enable y pass",

@@ -7,7 +7,8 @@
     let KIRI = self.kiri,
         BASE = self.base,
         CAM = KIRI.driver.CAM,
-        CPRO = CAM.process,
+        PRO = CAM.process,
+        POLY = BASE.polygons,
         newSlice = KIRI.newSlice,
         newLine = BASE.newLine,
         newPoint = BASE.newPoint,
@@ -16,10 +17,12 @@
 
     class Topo {
         constructor(widget, settings, options) {
-            let opt = options || {},
+            const opt = options || {},
                 ondone = opt.ondone || noop,
                 onupdate = opt.onupdate || noop,
+                shadow = opt.shadow,
                 proc = settings.process,
+                inside = proc.camContourIn,
                 resolution = proc.camTolerance,
                 tool = new CAM.Tool(settings, proc.camContourTool),
                 toolOffset = tool.generateProfile(resolution).profile,
@@ -52,7 +55,11 @@
                     widget: widget
                 },
                 newslices = [],
-                newlines,
+                clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter),
+                partOff = inside ? 0 : toolDiameter / 2,
+                gridDelta = Math.floor(partOff / resolution);
+
+            let newlines,
                 newtop,
                 newtrace,
                 sliceout,
@@ -171,31 +178,37 @@
                     onupdate(++stepsTaken, stepsTotal, "trace surface");
                 }
 
+                const checkr = newPoint(0,0);
+                const inClip = clipTo ? function() {
+                    checkr.x = x;
+                    checkr.y = y;
+                    for (let i=0; i<clipTo.length; i++) {
+                        if (checkr.isInPolygon(clipTo[i])) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } : function() { return true };
+
                 // x contouring
                 if (proc.camContourXOn) {
                     startTime = time();
                     // emit slice per X
-                    for (x = minX; x <= maxX; x += toolStep) {
+                    for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
                         gridx = Math.round(((x - minX) / boundsX) * stepsx);
-                        ly = gridy = 0;
+                        ly = gridy = -gridDelta;
                         slice = newSlice(gridx);
-                        slice.camMode = CPRO.CONTOUR_X;
+                        slice.camMode = PRO.CONTOUR_X;
                         // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
-                        for (y = minY; y < maxY; y += resolution) {
-                            if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
-                                end_poly();
-                                gridy++;
-                                ly = 0;
-                                continue;
-                            }
+                        for (y = minY - partOff; y < maxY + partOff; y += resolution) {
                             tv = toolTipZ(gridx, gridy);
-                            if (tv === 0) {
+                            if (tv === 0 && clipTo && !inClip()) {
                                 end_poly();
                                 gridy++;
-                                ly = 0;
+                                ly = -gridDelta;
                                 continue;
                             }
                             if (ly) {
@@ -232,27 +245,21 @@
                 if (proc.camContourYOn) {
                     startTime = time();
                     // emit slice per Y
-                    for (y = minY; y <= maxY; y += toolStep) {
+                    for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
                         gridy = Math.round(((y - minY) / boundsY) * stepsy);
-                        lx = gridx = 0;
+                        lx = gridx = -gridDelta;
                         slice = newSlice(gridy);
-                        slice.camMode = CPRO.CONTOUR_Y;
+                        slice.camMode = PRO.CONTOUR_Y;
                         // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
-                        for (x = minX; x <= maxX; x += resolution) {
-                            if (pocketOnly && (data[gridx * stepsy + gridy] || 0) === 0) {
-                                end_poly();
-                                gridx++;
-                                ly = 0;
-                                continue;
-                            }
+                        for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
                             tv = toolTipZ(gridx, gridy);
-                            if (tv === 0) {
+                            if (tv === 0 && clipTo && !inClip()) {
                                 end_poly();
                                 gridx++;
-                                lx = 0;
+                                lx = -gridDelta;
                                 continue;
                             }
                             if (lx) {
