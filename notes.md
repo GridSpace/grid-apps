@@ -2,6 +2,7 @@
 
 NEXT
 - contour tabs support
+- flat render
 - path arrows
 - help dialog
 - full bug reports
@@ -9,9 +10,9 @@ NEXT
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `F` 2D image import
 * `F` detect and report slow framerates
 * `F` implement an in-app bug reporting system. add workspace to export option.
-* `F` 2D image import
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization

@@ -36,6 +36,7 @@
                 minY = bounds.min.y,
                 maxY = bounds.max.y,
                 zBottom = proc.camZBottom,
+                zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
                 boundsX = maxX - minX,
                 boundsY = maxY - minY,
                 maxangle = proc.camContourAngle,
@@ -86,17 +87,12 @@
                     let ty = profile[i++] + y;
                     let tz = profile[i++];
                     if (tx < 0 || tx > xl || ty < 0 || ty > yl) {
-                        // if outside max topo steps, use 0
-                        gv = 0;
+                        // if outside max topo steps, use zMin
+                        gv = zMin;
                     } else {
                         // lookup grid value @ tx, ty
-                        gv = topo.data[tx * sy + ty] || 0;
+                        gv = topo.data[tx * sy + ty] || zMin;
                     }
-                    // inside the topo but off the part
-                    // if (floormax && gv === 0) {
-                    //     // return topo.bounds.max.z;
-                    //     gv = topo.bounds.max.z;
-                    // }
                     // update the rest
                     mz = Math.max(tz + gv, mz);
                 }
@@ -142,7 +138,6 @@
                     gridy,
                     gridi, // index
                     gridv, // value
-                    zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
                     x, y, tv, ltv;
 
                 // for each Y slice, find z grid value (x/z swapped)
