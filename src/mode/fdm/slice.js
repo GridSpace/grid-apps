@@ -22,7 +22,8 @@
             fill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             infill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             support: { face: 0x006699, line: 0x006699, opacity: 1 }
-        };
+        },
+        PROTO = Object.clone(COLOR);
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -85,10 +86,12 @@
                 color.opacity = 0.5;
             });
         } else {
-            Object.values(COLOR).forEach(color => {
-                color.flat = false;
-                color.line = 1
-                color.opacity = 1;
+            Object.keys(COLOR).forEach(key => {
+                const color = COLOR[key];
+                const proto = PROTO[key]
+                color.flat = proto.flat;
+                color.line = proto.line;
+                color.opacity = proto.opacity;
             });
         }
 
