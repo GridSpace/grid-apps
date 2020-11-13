@@ -115,8 +115,8 @@
                 const mat = []; // materials
                 const grp = []; // material groups
                 const geo = new THREE.BufferGeometry();
-                // map all the poly and line colors
-                const cmap = {}
+                // map all the poly and line colors for re-use
+                // const cmap = {}
                 let cidx = 0;
                 let last = undefined;
                 for (let i=0, il=polys.length; i<il; i++) {
@@ -125,12 +125,14 @@
                     addPoly(vert, poly);
                     const pc = poly.color !== undefined ? { line: poly.color, opacity: data.color.opacity } : data.color;
                     const pk = pc.line;
-                    const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
-                    if (last !== pk) {
+                    // const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                    const cc = { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                    // does not appear you can re-use material indices out of order
+                    if (true || last !== pk) {
                         if (grp.length) {
                             // rewrite counts for last group
                             const prev = grp[grp.length - 1]
-                            prev[1] = prev[1] - vl;
+                            prev[1] = vl;
                         }
                         grp.push([vl, Infinity, cc.idx]);
                         last = pk;
@@ -151,8 +153,8 @@
                     const g = grp[i];
                     geo.addGroup(g[0], g[1], g[2]);
                 }
-                group.add(new THREE.LineSegments(geo, mat));
                 geo.setFromPoints(vert);
+                group.add(new THREE.LineSegments(geo, mat));
                 ctrl.group.appendAll(mat);
             }
             if (faces.length) {
