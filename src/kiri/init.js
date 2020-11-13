@@ -50,6 +50,7 @@
         selectedTool = null,
         editTools = null,
         maxTool = 0,
+        fpsTimer = null,
         platformColor;
 
     // extend KIRI API with local functions
@@ -143,6 +144,18 @@
             maxpass: control.decimate ? 10 : 0
         });
         UC.setHoverPop(control.hoverPop);
+        updateFPS();
+    }
+
+    function updateFPS() {
+        clearTimeout(fpsTimer);
+        const on = UI.expert.checked;
+        UI.fps.style.display = on ? 'block' : '';
+        if (on) {
+            setInterval(() => {
+                UI.fps.innerText = SPACE.view.getFPS().toFixed(2);
+            }, 100);
+        }
     }
 
     function onLayerToggle() {
@@ -1233,6 +1246,7 @@
                 export:         $('act-export')
             },
 
+            fps:                $('fps'),
             load:               $('load-file'),
             speeds:             $('speeds'),
             speedbar:           $('speedbar'),
@@ -1929,6 +1943,7 @@
         UI.decimate.checked = control.decimate;
         lineTypeSave();
         detailSave();
+        updateFPS();
 
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {

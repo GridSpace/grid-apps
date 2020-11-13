@@ -230,17 +230,17 @@
 
         contourClosed = contourClosed !== undefined ? contourClosed : true;
 
-        let profileGeometry = new THREE.ShapeBufferGeometry(profileShape);
+        const profileGeometry = new THREE.ShapeBufferGeometry(profileShape);
         profileGeometry.rotateX(Math.PI * .5);
 
-        let profile = profileGeometry.attributes.position;
-        let faces = new Float32Array(profile.count * contour.length * 3);
+        const profile = profileGeometry.attributes.position;
+        const faces = new Float32Array(profile.count * contour.length * 3);
 
         for (let i = 0; i < contour.length; i++) {
-            let v1 = new THREE.Vector2().subVectors(contour[i - 1 < 0 ? contour.length - 1 : i - 1], contour[i]);
-            let v2 = new THREE.Vector2().subVectors(contour[i + 1 == contour.length ? 0 : i + 1], contour[i]);
-            let angle = v2.angle() - v1.angle();
-            let halfAngle = angle * .5;
+            const v1 = new THREE.Vector2().subVectors(contour[i - 1 < 0 ? contour.length - 1 : i - 1], contour[i]);
+            const v2 = new THREE.Vector2().subVectors(contour[i + 1 == contour.length ? 0 : i + 1], contour[i]);
+            const angle = v2.angle() - v1.angle();
+            const halfAngle = angle * .5;
             let hA = halfAngle;
             let tA = v2.angle() + Math.PI * .5;
 
@@ -249,30 +249,30 @@
                 if (i == contour.length - 1) {tA = v1.angle() - Math.PI * .5;}
             }
 
-            let shift = Math.tan(hA - Math.PI * .5);
-            let shiftMatrix = new THREE.Matrix4().set(
+            const shift = Math.tan(hA - Math.PI * .5);
+            const shiftMatrix = new THREE.Matrix4().set(
                 1, 0, 0, 0,
                 -shift, 1, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
             );
 
-            let tempAngle = tA;
-            let rotationMatrix = new THREE.Matrix4().set(
+            const tempAngle = tA;
+            const rotationMatrix = new THREE.Matrix4().set(
                 Math.cos(tempAngle), -Math.sin(tempAngle), 0, 0,
                 Math.sin(tempAngle), Math.cos(tempAngle), 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
             );
 
-            let translationMatrix = new THREE.Matrix4().set(
+            const translationMatrix = new THREE.Matrix4().set(
                 1, 0, 0, contour[i].x,
                 0, 1, 0, contour[i].y,
                 0, 0, 1, 0,
                 0, 0, 0, 1,
             );
 
-            let cloneProfile = profile.clone();
+            const cloneProfile = profile.clone();
             cloneProfile.applyMatrix4(shiftMatrix);
             cloneProfile.applyMatrix4(rotationMatrix);
             cloneProfile.applyMatrix4(translationMatrix);
@@ -280,20 +280,20 @@
             faces.set(cloneProfile.array, cloneProfile.count * i * 3);
         }
 
-        let index = [];
-        let lastCorner = contourClosed == false ? contour.length - 1: contour.length;
+        const index = [];
+        const lastCorner = contourClosed == false ? contour.length - 1: contour.length;
 
         for (let i = 0; i < lastCorner; i++) {
             for (let j = 0; j < profile.count; j++) {
-                let currCorner = i;
-                let nextCorner = i + 1 == contour.length ? 0 : i + 1;
-                let currPoint = j;
-                let nextPoint = j + 1 == profile.count ? 0 : j + 1;
+                const currCorner = i;
+                const nextCorner = i + 1 == contour.length ? 0 : i + 1;
+                const currPoint = j;
+                const nextPoint = j + 1 == profile.count ? 0 : j + 1;
 
-                let a = nextPoint + profile.count * currCorner;
-                let b = currPoint + profile.count * currCorner;
-                let c = currPoint + profile.count * nextCorner;
-                let d = nextPoint + profile.count * nextCorner;
+                const a = nextPoint + profile.count * currCorner;
+                const b = currPoint + profile.count * currCorner;
+                const c = currPoint + profile.count * nextCorner;
+                const d = nextPoint + profile.count * nextCorner;
 
                 index.push(a, b, d);
                 index.push(b, c, d);

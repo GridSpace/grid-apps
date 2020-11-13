@@ -2,11 +2,10 @@
 
 NEXT
 - contour tabs support
-- flat render
+- cap path ends
 - path arrows
 - help dialog
 - full bug reports
-- frame rate tracking
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
