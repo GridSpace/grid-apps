@@ -637,23 +637,6 @@
         SPACE.update();
     }
 
-    function loadCode(code, type) {
-        setViewMode(VIEWS.PREVIEW);
-        setOpacity(0);
-
-        KIRI.client.parse({code, type, settings}, progress => {
-            API.show.progress(progress, "parsing");
-        }, layers => {
-            API.show.progress(0);
-            STACKS.clear();
-            const stack = STACKS.create('parse', SPACE.platform.world);
-            layers.forEach(layer => stack.add(layer));
-            updateSliderMax(true);
-            showSlices();
-            SPACE.update();
-        });
-    }
-
     function cancelWorker() {
         if (KIRI.work.isSlicing()) KIRI.work.restart();
     }
@@ -862,6 +845,24 @@
             if (typeof(callback) === 'function') {
                 callback();
             }
+        });
+    }
+
+    function loadCode(code, type) {
+        setViewMode(VIEWS.PREVIEW);
+        setOpacity(0);
+
+        KIRI.client.parse({code, type, settings}, progress => {
+            API.show.progress(progress, "parsing");
+        }, (layers, maxSpeed) => {
+            API.show.progress(0);
+            STACKS.clear();
+            const stack = STACKS.create('parse', SPACE.platform.world);
+            layers.forEach(layer => stack.add(layer));
+            updateSliderMax(true);
+            updateSpeeds(maxSpeed);
+            showSlices();
+            SPACE.update();
         });
     }
 
@@ -1584,7 +1585,8 @@
         let loaded = files.length;
         platform.group();
         for (let i=0; i<files.length; i++) {
-            let reader = new FileReader(),
+            const file = files[i],
+                reader = new FileReader(),
                 lower = files[i].name.toLowerCase(),
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
@@ -1599,7 +1601,7 @@
                 );
                 if (isstl) {
                     if (API.feature.on_add_stl) {
-                        API.feature.on_add_stl(e.target.result);
+                        API.feature.on_add_stl(e.target.result, file);
                     } else {
                         platform.add(
                             newWidget(undefined,group)

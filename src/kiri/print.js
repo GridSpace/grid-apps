@@ -125,6 +125,7 @@
             height = 0,
             factor = 1,
             tool = 0,
+            maxf = 0,
             seq = [];
 
         const output = scope.output = [ seq ];
@@ -158,6 +159,9 @@
             );
 
             const moving = g0 || (fdm && pos.E <= 0);
+
+            // update max speed
+            maxf = Math.max(maxf, pos.F);
 
             // always add moves to the current sequence
             if (moving) {
@@ -230,6 +234,7 @@
         scope.imported = gcode;
         scope.lines = lines.length;
         scope.bytes = gcode.length;
+        scope.maxSpeed = Math.floor(maxf / 60);
 
         done({ output: scope.output });
     };

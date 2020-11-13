@@ -185,10 +185,11 @@ KIRI.worker = {
         const parsed = print.parseGCode(code, offset, progress => {
             send.data({ progress: progress * 0.5 });
         }, done => {
+            const maxSpeed = print.maxSpeed;
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.5 + progress * 0.5 });
             }, { thin, flat, tools });
-            send.done({parsed: KIRI.codec.encode(layers)});
+            send.done({parsed: KIRI.codec.encode(layers), maxSpeed});
         }, { fdm : mode === 'FDM' });
     },
 

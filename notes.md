@@ -2,6 +2,8 @@
 
 NEXT
 - contour tabs support
+- flat color gradient
+- fix line colors
 - cap path ends
 - path arrows
 - help dialog

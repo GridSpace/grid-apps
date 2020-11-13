@@ -205,18 +205,13 @@ KIRI.work = {
                 }
             });
             return;
-            // const layers = KIRI.driver.FDM.prepareRender(output, progress => {
-            //     send.data({ progress: 0.5 + progress * 0.5 });
-            // }, { thin: true });
-            // send.done({parsed: layers});
-            // return;
         }
         send("parse", args, function(reply) {
             if (reply.progress) {
                 progress(reply);
             }
             if (reply.parsed) {
-                done(KIRI.codec.decode(reply.parsed));
+                done(KIRI.codec.decode(reply.parsed), reply.maxSpeed);
             }
         });
     }
