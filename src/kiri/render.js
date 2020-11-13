@@ -30,9 +30,11 @@
             this.current = layers[layer] = layers[layer] || {
                 off: off === true,
                 lines: [],
-                polys: [],
+                polys: [], // colors are an attribute on polygons
                 faces: [],
+                cface: undefined, // face color indices
                 paths: [],
+                cpath: undefined, // path colors indices
                 color: colors || {
                     line: 0,
                     face: 0,
@@ -80,10 +82,14 @@
             polys = flat(polys);
             if (options) {
                 polys.forEach(p => {
-                    if (options.z !== undefined) p.setZ(options.z);
-                    if (options.color) p.color = options.color;
+                    if (options.z !== undefined) {
+                        p.setZ(options.z);
+                    }
+                    switch (typeof(options.color)) {
+                        case 'number': p.color = options.color; break;
+                        case 'object': p.color = options.color.line; break;
+                    }
                 });
-                // if (options.color) console.log({polys, options})
             }
             this.current.polys.appendAll(polys);
             this.stats.line_poly += polys.length;
@@ -113,15 +119,10 @@
                 return;
             }
             const z = polys[0].getZ(), faces = this.current.faces;
-            const open = opts.open || false;
-            const off_opt = {
-                z,
-                flat: true,
-                type: open ? ClipperLib.EndType.etOpenSquare : undefined,
-            };
+            const off_opt = { z, flat: true };
             polys.forEach(poly => {
                 let exp = off_opt.outs = [];
-                if (open) {
+                if (poly.isOpen()) {
                     exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
                     this.stats.flat_line = 0;
                 } else if (offset) {
@@ -132,11 +133,26 @@
                 if (opts.outline) {
                     this.addPolys(exp.clone());
                 }
+                const faceidx = faces.length / 3;
                 POLY.nest(exp).forEach((poly,i) => {
                     poly.earcut().forEach(ep => {
                         ep.forEachPoint(p => { faces.push(p.x, p.y, p.z) });
                     });
                 });
+                const cur = this.current;
+                const color = opts.color ?
+                    (typeof(opts.color === 'number') ? { line: opts.color, face: opts.color } : opts.color) :
+                    cur.color;
+                if (!cur.cface) {
+                    cur.cface = [ Object.assign({ start: faceidx, count: Infinity }, color) ];
+                } else {
+                    // rewrite last color count if color or opacity have changed
+                    const pc = cur.cface[cur.cface.length - 1];
+                    if (pc.face !== color.face || pc.opacity !== color.opacity) {
+                        pc.count = faceidx;
+                        cur.cface.push(Object.assign({ start: faceidx, count: Infinity }, color));
+                    }
+                }
             });
             return this;
         }
@@ -167,15 +183,6 @@
                 poly = poly.debur(0.05);
                 if (!poly) return;
                 poly = poly.miter();
-                // cleaning converts open to closed which is problematic
-                // poly = poly.clean().miter();
-                // if (poly.debug) {
-                //     const save = this.current;
-                //     this.setLayer('debug.acute', 0xff0000).addPoly(poly, {thin:true});
-                //     this.setLayer('debug.start', 0x00ff00).addPoly(newPolygon().centerRectangle(poly.first(),1,1), {thin:true});
-                //     this.setLayer('debug.end', 0x0000ff).addPoly(newPolygon().centerRectangle(poly.last(),0.8,0.8), {thin:true});
-                //     this.current = save;
-                // }
                 poly.points.forEach(p => {
                     contour.push(new THREE.Vector2(p.x, p.y));
                 });
@@ -202,7 +209,7 @@
                         // rewrite last color count if color or opacity have changed
                         const pc = cur.cpath[cur.cpath.length - 1];
                         if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
-                            pc.count = indln - 1;
+                            pc.count = indln;
                             cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
                         }
                     }

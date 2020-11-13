@@ -294,7 +294,7 @@
 
             if (top.fill_sparse) output
                 .setLayer("infill", COLOR.infill)
-                .addPolys(top.fill_sparse, vopt({ offset, height, open: true, outline: true }))
+                .addPolys(top.fill_sparse, vopt({ offset, height, outline: true }))
 
             if (top.thin_fill) output
                 .setLayer("fill", COLOR.fill)

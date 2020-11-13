@@ -109,7 +109,7 @@
 
             ctrl.toggle.checked = defstate;
 
-            const { polys, cpoly, lines, faces, paths, cpath } = data;
+            const { polys, cpoly, lines, faces, cface, paths, cpath } = data;
             if (polys.length || lines.length) {
                 const vert = []; // vertexes
                 const mat = []; // materials
@@ -123,16 +123,16 @@
                     const vl = vert.length;
                     const poly = polys[i];
                     addPoly(vert, poly);
-                    const pc = poly.color ? { line: poly.color, opacity: data.color.opacity } : data.color;
+                    const pc = poly.color !== undefined ? { line: poly.color, opacity: data.color.opacity } : data.color;
                     const pk = pc.line;
-                    cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                    const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
                     if (last !== pk) {
                         if (grp.length) {
                             // rewrite counts for last group
                             const prev = grp[grp.length - 1]
                             prev[1] = prev[1] - vl;
                         }
-                        grp.push([vl, Infinity, cidx - 1]);
+                        grp.push([vl, Infinity, cc.idx]);
                         last = pk;
                     }
                 }
@@ -156,17 +156,31 @@
                 ctrl.group.appendAll(mat);
             }
             if (faces.length) {
-                const mat = newMat(data.color);
+                const mat = [];
+                if (cface) {
+                    cface.forEach(c => { mat.push(newMat(c)) });
+                } else {
+                    mat.push(newMat(data.color));
+                }
+                mat.forEach(m => m.visible = defstate);
                 const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+                if (faces.toFloat32) {
+                    geo.setAttribute('position', new THREE.BufferAttribute(faces.toFloat32(), 3));
+                } else {
+                    geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+                }
                 geo.computeFaceNormals();
                 geo.computeVertexNormals();
+                if (cface) {
+                    cface.forEach((c, i) => geo.addGroup(c.start, c.count, i));
+                } else {
+                    geo.addGroup(0, Infinity, 0);
+                }
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 group.add(mesh);
                 ctrl.group.push(mat);
-                mat.visible = defstate;
             }
             if (paths.length) {
                 const mat = [];
