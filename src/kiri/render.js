@@ -141,7 +141,7 @@
                 });
                 const cur = this.current;
                 const color = opts.color ?
-                    (typeof(opts.color === 'number') ? { line: opts.color, face: opts.color } : opts.color) :
+                    (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
                     cur.color;
                 if (!cur.cface) {
                     cur.cface = [ Object.assign({ start: faceidx, count: Infinity }, color) ];
