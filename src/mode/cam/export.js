@@ -45,7 +45,6 @@
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
             cmdDwell = gcodes.gcodeDwell || [ "G4 P{time}" ],
-            bounds = widget.getCamBounds(settings),
             dev = settings.device,
             spro = settings.process,
             maxZd = spro.camFastFeedZ,
@@ -58,6 +57,8 @@
             point,
             points = 0,
             hasStock = spro.camStockOffset || (spro.camStockZ && spro.camStockX && spro.camStockY),
+            ztOff = hasStock ? spro.camZTopOffset : 0,
+            bounds = widget.getBoundingBox(),
             zmax = hasStock ? settings.stock.z : bounds.max.z,
             runbox = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
