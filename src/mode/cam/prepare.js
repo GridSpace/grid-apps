@@ -247,8 +247,7 @@
                     deltaXY = 0;
                 }
             } //else (TODO verify no else here b/c above could change isMove)
-            // move over things ... try checking path clearance tests for *every* move
-            if ((deltaXY > toolDiam || (deltaZ > tolerance && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
+            if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
                 let maxz = getZClearPath(
                         terrain,
                         lastPoint.x,// - wmx,
