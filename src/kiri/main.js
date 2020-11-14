@@ -1285,6 +1285,12 @@
         SPACE.update();
     }
 
+    function updateStockVisibility() {
+        if (camStock) {
+            camStock.material.visible = settings.mode === 'CAM' && viewMode === VIEWS.ARRANGE;
+        }
+    }
+
     function platformUpdateStock(refresh) {
         let sd = settings.process;
         let offset = UI.camStockOffset.checked;
@@ -1341,7 +1347,7 @@
             camStock.position.x = csox;
             camStock.position.y = csoy;
             camStock.position.z = csz / 2;
-            camStock.material.visible = settings.mode === 'CAM';
+            updateStockVisibility();
             camTopZ = csz;
         } else if (camStock) {
             // UI.stock.style.display = 'none';
@@ -1957,6 +1963,7 @@
         viewMode = mode;
         platform.deselect();
         updateSelectedInfo();
+        updateStockVisibility();
         switch (mode) {
             case VIEWS.ARRANGE:
                 UI.back.style.display = '';
@@ -2032,9 +2039,7 @@
             API.event.emit('device.set', currentDeviceName());
         }
         // really belongs in CAM driver (lots of work / abstraction needed)
-        if (camStock) {
-            camStock.material.visible = settings.mode === 'CAM';
-        }
+        updateStockVisibility();
         // updates right-hand menu by enabling/disabling fields
         setViewMode(VIEWS.ARRANGE);
         UC.setMode(MODE);

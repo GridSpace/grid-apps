@@ -59,18 +59,21 @@
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown, outlineDown),
             maxToolDiam = 0,
-            thruHoles;
+            thruHoles,
+            stock = settings.stock || {};
 
-        if (settings.stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
-            return ondone('stock X too small for part. disable stock or use offset stock');
-        }
+        if (stock.x && stock.y && stock.z) {
+            if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
+                return ondone('stock X too small for part. disable stock or use offset stock');
+            }
 
-        if (settings.stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
-            return ondone('stock Y too small for part. disable stock or use offset stock');
-        }
+            if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
+                return ondone('stock Y too small for part. disable stock or use offset stock');
+            }
 
-        if (settings.stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
-            return ondone('stock Z too small for part. disable stock or use offset stock');
+            if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
+                return ondone('stock Z too small for part. disable stock or use offset stock');
+            }
         }
 
         if (sliceDepth <= 0.05) {
