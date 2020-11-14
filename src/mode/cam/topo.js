@@ -158,6 +158,21 @@
                     gridv, // value
                     i, il, j, jl, x, y, tv, ltv;
 
+                if (false)
+                slices.map(slice => {
+                    newslices.push(slice);
+                    const points = [];
+                    slice.lines.forEach(line => {
+                        if (line.p1.z > 0 || line.p2.z > 0)
+                        points.push(line.p1, line.p2);
+                    });
+                    slice.output()
+                        .setLayer("topo slices", {face: 0xff00ff, line: 0xff00ff})
+                        .addLines(points)
+                        // .addPolys(slice.topPolys())
+                        ;
+                });
+
                 // for each Y slice, find z grid value (x/z swapped)
                 for (j=0, jl=slices.length; j<jl; j++) {
                     const slice = slices[j];
