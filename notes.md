@@ -1,6 +1,7 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
+* stock to outline for slice mode
 * contour tabs support
 * path arrows, retracts, and engages
 * cap path ends
