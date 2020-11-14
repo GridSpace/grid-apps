@@ -53,7 +53,7 @@
             add: function(layer) {
                 const nuview = stack.view.newGroup();
                 stack.layers.push(nuview);
-                render(layer, nuview);
+                render(layer, nuview, name);
                 tallest = Math.max(tallest, stack.layers.length);
             },
             clear: function() {
@@ -78,7 +78,7 @@
         max = newMax;
     }
 
-    function render(render, group) {
+    function render(render, group, name) {
         function addPoly(vertices, poly) {
             const points = poly.points, len = points.length;
             for (let i=1; i<len; i++) {
@@ -109,14 +109,14 @@
 
             ctrl.toggle.checked = defstate;
 
-            const { polys, cpoly, lines, faces, cface, paths, cpath } = data;
+            const { polys, lines, faces, cface, paths, cpath } = data;
             if (polys.length || lines.length) {
                 const vert = []; // vertexes
                 const mat = []; // materials
                 const grp = []; // material groups
                 const geo = new THREE.BufferGeometry();
                 // map all the poly and line colors for re-use
-                // const cmap = {}
+                const cmap = {}
                 let cidx = 0;
                 let last = undefined;
                 for (let i=0, il=polys.length; i<il; i++) {
@@ -125,10 +125,8 @@
                     addPoly(vert, poly);
                     const pc = poly.color !== undefined ? { line: poly.color, opacity: data.color.opacity } : data.color;
                     const pk = pc.line;
-                    // const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
-                    const cc = { idx: cidx++, mat: createLineMaterial(pc, mat) };
-                    // does not appear you can re-use material indices out of order
-                    if (true || last !== pk) {
+                    const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                    if (last !== pk) {
                         if (grp.length) {
                             // rewrite counts for last group
                             const prev = grp[grp.length - 1]
@@ -154,7 +152,8 @@
                     geo.addGroup(g[0], g[1], g[2]);
                 }
                 geo.setFromPoints(vert);
-                group.add(new THREE.LineSegments(geo, mat));
+                const segs = new THREE.LineSegments(geo, mat);
+                group.add(segs);
                 ctrl.group.appendAll(mat);
             }
             if (faces.length) {
@@ -217,9 +216,10 @@
     };
 
     function createLineMaterial(color, array) {
+        const opacity = color.opacity || 1;
         const mat = new THREE.LineBasicMaterial({
-            transparent: color.opacity != 1,
-            opacity: color.opacity || 1,
+            transparent: true,
+            opacity: opacity,
             color: color.line
         });
         if (array) {

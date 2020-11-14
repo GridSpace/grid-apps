@@ -1,11 +1,16 @@
 # Kiri:Moto todo
 
-NEXT
-- contour tabs support
-- cap path ends
-- path arrows, retracts, and engages
-- help dialog
-- full bug reports
+## 2.3 remaining
+* contour tabs support
+* path arrows, retracts, and engages
+* cap path ends
+* help dialog
+* full bug reports
+
+## 2.4
+* cnc: tracing, visualization, manual tabs
+* fdm: manual supports, continuous printing
+* all: 2d image to 3d part
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
