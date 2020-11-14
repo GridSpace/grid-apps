@@ -50,8 +50,7 @@
         viewMode = VIEWS.ARRANGE,
         layoutOnAdd = true,
         local = SETUP.local,
-        camStock = null,
-        camTopZ = 0,
+        topZD = 0,
         topZ = 0,
         busy = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
@@ -98,7 +97,7 @@
         compute_max_z: platformComputeMaxZ,
         update_origin: platformUpdateOrigin,
         update_bounds: platformUpdateBounds,
-        update_stock: platformUpdateStock,
+        // update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
         update_selected: platformUpdateSelected,
@@ -108,7 +107,8 @@
         group_done: platformGroupDone,
         set_font: SPACE.platform.setFont,
         set_axes: SPACE.platform.setAxes,
-        set_volume: SPACE.platform.setVolume
+        set_volume: SPACE.platform.setVolume,
+        top_z: () => { return topZ }
     };
 
     const color = {
@@ -296,7 +296,8 @@
             update_slider: updateSlider,
             update_fields: updateFields,
             wireframe: setWireframe,
-            snapshot: null
+            snapshot: null,
+            unit_scale: unitScale
         },
         widgets: {
             new: newWidget,
@@ -437,12 +438,17 @@
      }
 
      function sendOnEvent(name, data) {
-         if (name && onEvent[name]) onEvent[name].forEach(function(fn) {
-             fn(data);
-         });
+         if (name && onEvent[name]) {
+             onEvent[name].forEach(function(fn) {
+                 fn(data, name);
+             });
+         }
      }
 
      function addOnEvent(name, handler) {
+         if (Array.isArray(name)) {
+             return name.forEach(n => addOnEvent(n, handler));
+         }
          if (name && typeof(name) === 'string' && typeof(handler) === 'function') {
              onEvent[name] = onEvent[name] || [];
              onEvent[name].push(handler);
@@ -786,20 +792,6 @@
 
         hideSlider(true);
 
-        // kick off slicing it hasn't been done already
-        for (let i=0; i < WIDGETS.length; i++) {
-            if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                prepareSlices(function() {
-                    if (!WIDGETS[i].slices || WIDGETS[i].isModified()) {
-                        alert2("nothing to print");
-                    } else {
-                        preparePreview(callback);
-                    }
-                });
-                return;
-            }
-        }
-
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
         if (feature.preview) {
@@ -901,13 +893,15 @@
 
     function setOpacity(value) {
         forAllWidgets(function (w) { w.setOpacity(value) });
-        // UI.modelOpacity.value = value * 100;
         SPACE.update();
     }
 
     function moveSelection(x, y, z, abs) {
-        forSelectedGroups(function (w) { w.move(x, y, z, abs) });
-        platform.update_stock();
+        forSelectedGroups(function (w) {
+            w.move(x, y, z, abs);
+        });
+        API.event.emit('selection.move', {x, y, z, abs});
+        // platform.update_stock();
         SPACE.update();
     }
 
@@ -916,13 +910,14 @@
         forSelectedGroups(function (w) {
             w.scale(...args);
         });
+        platform.compute_max_z();
+        API.event.emit('selection.scale', [...arguments]);
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
             return;
         }
         updateSelectedInfo();
-        platform.compute_max_z();
-        platform.update_stock(true);
+        // platform.update_stock(true);
         SPACE.update();
     }
 
@@ -930,9 +925,10 @@
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
         });
-        updateSelectedInfo();
         platform.compute_max_z();
-        platform.update_stock(true);
+        API.event.emit('selection.rotate', {x, y, z});
+        updateSelectedInfo();
+        // platform.update_stock(true);
         SPACE.update();
     }
 
@@ -942,9 +938,14 @@
 
      function platformUpdateOrigin() {
          platform.update_bounds();
+         // return;
+
          let dev = settings.device;
          let proc = settings.process;
          let ruler = settings.controller.showRulers;
+         let stock = settings.stock;
+         let stockCenter = stock.center || {};
+         let hasStock = stock.x && stock.y && stock.z;
          let center = MODE === MODES.FDM ? dev.originCenter :
             MODE === MODES.SLA ? false :
             MODE === MODES.CAM ? proc.outputOriginCenter :
@@ -953,15 +954,15 @@
          let y = 0;
          let z = 0;
          if (MODE === MODES.CAM && proc.camOriginTop) {
-             z = camTopZ + 0.01;
-             if (!camStock) {
-                 z += proc.camZTopOffset * unitScale();
-             }
+             z = (topZ + topZD) + 0.01;
+             // if (!hasStock) {
+             //     z += proc.camZTopOffset * unitScale();
+             // }
          }
          if (!center) {
-             if (camStock) {
-                 x = (-camStock.scale.x / 2) + camStock.position.x;
-                 y = (camStock.scale.y / 2) - camStock.position.y;
+             if (hasStock) {
+                 x = (-stock.x / 2) + stockCenter.x;
+                 y = (stock.y / 2) - stockCenter.y;
              } else {
                  if (MODE === MODES.LASER && proc.outputOriginBounds) {
                      let b = settings.bounds;
@@ -972,9 +973,9 @@
                      y = dev.bedDepth / 2;
                  }
              }
-         } else if (camStock) {
-             x = camStock.position.x;
-             y = -camStock.position.y;
+         } else if (hasStock) {
+             x = stockCenter.x;
+             y = -stockCenter.y;
          }
          settings.origin = {x, y, z};
          SPACE.platform.setRulers(ruler, ruler, center);
@@ -985,10 +986,14 @@
          }
      }
 
-     function platformUpdateTopZ() {
+     function platformUpdateTopZ(zdelta) {
+         topZD = zdelta !== undefined ? zdelta : topZD;
+         let stock = settings.stock;
+         let hasStock = stock.x && stock.y && stock.z;
          let alignTopOk = WIDGETS.length > 1 && settings.controller.alignTop;
-         let camz = (MODE === MODES.CAM) && (settings.stock.z || alignTopOk);
-         let ztop = camz ? camTopZ - settings.process.camZTopOffset * unitScale() : 0;
+         let camz = (MODE === MODES.CAM) && (hasStock || alignTopOk);
+         let czto = hasStock ? settings.process.camZTopOffset * unitScale() : 0;
+         let ztop = camz ? (topZ + topZD) - czto : 0;
          forAllWidgets(function(widget) {
              widget.setTopZ(ztop);
          });
@@ -1040,6 +1045,7 @@
             wb.max.y += wp.y;
             bounds.union(wb);
         });
+// console.log(JSON.stringify(bounds))
         return settings.bounds = bounds;
     }
 
@@ -1203,7 +1209,9 @@
         selectedMeshes.remove(widget.mesh);
         updateSliderMax();
         platform.compute_max_z();
-        if (MODE !== MODES.FDM) platform.layout();
+        if (MODE !== MODES.FDM) {
+            platform.layout();
+        }
         SPACE.update();
         platformUpdateSelected();
         if (layoutOnAdd) platform.layout();
@@ -1218,8 +1226,7 @@
         let auto = UI.autoLayout.checked,
             proc = settings.process,
             oldmode = viewMode,
-            layout = (viewMode === VIEWS.ARRANGE && auto),
-            topZ = MODE === MODES.CAM ? camTopZ - proc.camZTopOffset * unitScale() : 0;
+            layout = (viewMode === VIEWS.ARRANGE && auto);
 
         switch (MODE) {
             case MODES.SLA:
@@ -1239,11 +1246,13 @@
 
         // only auto-layout when in arrange mode
         if (oldmode !== VIEWS.ARRANGE) {
+            API.event.emit('platform.layout');
             return SPACE.update();
         }
 
         // do not layout when switching back from slice view
         if (!auto || (!space && !layout)) {
+            API.event.emit('platform.layout');
             return SPACE.update();
         }
 
@@ -1277,92 +1286,9 @@
             // m.material.visible = true;
         }
 
-        if (MODE === MODES.CAM) {
-            platform.update_stock(true);
-        }
         platform.update_origin();
 
-        SPACE.update();
-    }
-
-    function updateStockVisibility() {
-        if (camStock) {
-            camStock.material.visible = settings.mode === 'CAM';// && viewMode === VIEWS.ARRANGE;
-        }
-    }
-
-    function platformUpdateStock(refresh) {
-        let sd = settings.process;
-        let offset = UI.camStockOffset.checked;
-        let stockSet = offset || (sd.camStockX && sd.camStockY && sd.camStockZ > 0);
-        let scale = unitScale();
-        settings.stock = { };
-        camTopZ = topZ;
-        // create/inject cam stock if stock size other than default
-        if (MODE === MODES.CAM && stockSet && WIDGETS.length) {
-            // UI.stock.style.display = offset ? 'inline-block' : 'none';
-            let csx = sd.camStockX * scale;
-            let csy = sd.camStockY * scale;
-            let csz = sd.camStockZ * scale;
-            let csox = 0;
-            let csoy = 0;
-            if (offset) {
-                let min = { x: Infinity, y: Infinity, z: 0 };
-                let max = { x: -Infinity, y: -Infinity, z: -Infinity };
-                forAllWidgets(function(widget) {
-                    let wbnd = widget.getBoundingBox(refresh);
-                    let wpos = widget.track.pos;
-                    min = {
-                        x: Math.min(min.x, wpos.x + wbnd.min.x),
-                        y: Math.min(min.y, wpos.y + wbnd.min.y),
-                        z: 0
-                    };
-                    max = {
-                        x: Math.max(max.x, wpos.x + wbnd.max.x),
-                        y: Math.max(max.y, wpos.y + wbnd.max.y),
-                        z: Math.max(max.z, wbnd.max.z)
-                    };
-                });
-                csx += max.x - min.x;
-                csy += max.y - min.y;
-                csz += max.z - min.z;
-                csox = min.x + ((max.x - min.x) / 2);
-                csoy = min.y + ((max.y - min.y) / 2);
-            }
-            if (!camStock) {
-                let geo = new THREE.BoxGeometry(1, 1, 1);
-                let mat = new THREE.MeshBasicMaterial({
-                    color: 0x777777,
-                    opacity: 0.2,
-                    transparent: true,
-                    side:THREE.DoubleSide
-                });
-                let cube = new THREE.Mesh(geo, mat);
-                SPACE.platform.add(cube);
-                camStock = cube;
-                cube.renderOrder = 2;
-            }
-            settings.stock = {
-                x: csx,
-                y: csy,
-                z: csz
-            };
-            camStock.scale.x = csx;
-            camStock.scale.y = csy;
-            camStock.scale.z = csz;
-            camStock.position.x = csox;
-            camStock.position.y = csoy;
-            camStock.position.z = csz / 2;
-            updateStockVisibility();
-            camTopZ = csz;
-        } else if (camStock) {
-            // UI.stock.style.display = 'none';
-            SPACE.platform.remove(camStock);
-            camStock = null;
-            camTopZ = topZ;
-        }
-        platform.update_top_z();
-        platform.update_origin();
+        API.event.emit('platform.layout');
         SPACE.update();
     }
 
@@ -1513,7 +1439,7 @@
             updateSettingsFromFields(device.extruders[device.internal]);
         }
         API.conf.save();
-        platform.update_stock();
+        // platform.update_stock();
         $('mode-device').innerText = settings.device.deviceName;
         $('mode-profile').innerText = settings.process.processName;
     }
@@ -1694,7 +1620,7 @@
 
         updateFields();
         platform.update_size();
-        platform.update_stock();
+        // platform.update_stock();
 
         let fz = SPACE.scene.freeze(true);
         SPACE.view.reset();
@@ -1969,7 +1895,7 @@
         viewMode = mode;
         platform.deselect();
         updateSelectedInfo();
-        updateStockVisibility();
+        // updateStockVisibility();
         switch (mode) {
             case VIEWS.ARRANGE:
                 UI.back.style.display = '';
@@ -1999,7 +1925,7 @@
                 DBUG.log("invalid view mode: "+mode);
                 return;
         }
-        API.event.emit('view.mode', mode);
+        API.event.emit('view.set', mode);
         DOC.activeElement.blur();
     }
 
@@ -2045,7 +1971,7 @@
             API.event.emit('device.set', currentDeviceName());
         }
         // really belongs in CAM driver (lots of work / abstraction needed)
-        updateStockVisibility();
+        // updateStockVisibility();
         // updates right-hand menu by enabling/disabling fields
         setViewMode(VIEWS.ARRANGE);
         UC.setMode(MODE);

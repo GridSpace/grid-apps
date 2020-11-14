@@ -618,12 +618,6 @@
         }
     };
 
-    PRO.getCamBounds = function(settings) {
-        let bounds = this.getBoundingBox().clone();
-        bounds.max.z += settings.process.camZTopOffset;
-        return bounds;
-    };
-
     /**
      * render to provided stack
      */

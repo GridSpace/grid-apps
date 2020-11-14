@@ -55,14 +55,14 @@
             outer = settings.bounds,
             outerz = outer.max.z,
             slices = widget.slices,
-            bounds = widget.getCamBounds(settings),
-            boundsz = bounds.max.z,
-            hasStock = process.camStockOffset || (process.camStockZ && process.camStockX && process.camStockY),
+            hasStock = stock.x && stock.y && stock.z && process.camStockOn,
             startCenter = process.outputOriginCenter,
             alignTop = settings.controller.alignTop,
             zclear = (process.camZClearance || 1),
             zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
-            ztOff = process.camZTopOffset,
+            ztOff = hasStock ? process.camZTopOffset : 0,
+            bounds = widget.getBoundingBox(),
+            boundsz = bounds.max.z + ztOff,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
             wmpos = widget.mesh.position,
@@ -247,8 +247,8 @@
                     deltaXY = 0;
                 }
             } //else (TODO verify no else here b/c above could change isMove)
-            // move over things
-            if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
+            // move over things ... try checking path clearance tests for *every* move
+            if ((deltaXY > toolDiam || (deltaZ > tolerance && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
                 let maxz = getZClearPath(
                         terrain,
                         lastPoint.x,// - wmx,

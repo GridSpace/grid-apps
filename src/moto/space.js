@@ -84,12 +84,12 @@
         freeze = false,
         isRound = false,
         platformMaterial = new THREE.MeshPhongMaterial({
-            color: 0xcccccc,
-            specular: 0xcccccc,
-            shininess: 5,
+            color: 0xeeeeee,
+            specular: 0xeeeeee,
+            shininess: 0,
             transparent: true,
             opacity: 0.6,
-            // side: THREE.DoubleSide
+            side: THREE.DoubleSide
         }),
         hiddenKey,
         vizChange,
@@ -496,15 +496,16 @@
         ));
         pi4.position.x = 0.25;
         pi4.position.y = -0.25;
-        group.add(new THREE.Mesh(
+        let aa, bb, cc;
+        group.add(aa = new THREE.Mesh(
             new THREE.RingGeometry(5, 5.5, 50),
             rmat
         ));
-        group.add(new THREE.Mesh(
+        group.add(bb = new THREE.Mesh(
             new THREE.PlaneGeometry(0.5, 10),
             rmat
         ));
-        group.add(new THREE.Mesh(
+        group.add(cc = new THREE.Mesh(
             new THREE.PlaneGeometry(10, 0.5),
             rmat
         ));
@@ -512,6 +513,9 @@
         group.position.x = x;
         group.position.y = z;
         group.position.z = y;
+        [bb,cc].forEach(m => {
+            m.renderOrder = 3;
+        });
         Space.scene.add(group);
         Space.update();
     }

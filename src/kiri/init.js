@@ -136,7 +136,7 @@
         control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
-        platform.update_stock();
+        // platform.update_stock();
         API.conf.save();
         API.mode.set_expert(control.expert);
         API.platform.update_size();
@@ -145,6 +145,7 @@
         });
         UC.setHoverPop(control.hoverPop);
         updateFPS();
+        API.event.emit('boolean.update');
     }
 
     function updateFPS() {
@@ -170,6 +171,7 @@
         }
         API.conf.update();
         DOC.activeElement.blur();
+        // API.event.emit("boolean.click");
     }
 
     function inputHasFocus() {
@@ -1483,6 +1485,7 @@
             camContourOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
+            camTolerance:       UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM, units:true}),
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
             camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
             camContourSep:      UC.newBlank({class:"pop-sep"}),
@@ -1518,6 +1521,8 @@
             camStockY:           UC.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockZ:           UC.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockOffset:      UC.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
+            camStockSep:         UC.newBlank({class:"pop-sep"}),
+            camStockOn:          UC.newBoolean(LANG.cs_offe_s, onBooleanClick, {title:LANG.cs_offe_l, modes:CAM}),
 
             camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
             camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM, units:true}),
@@ -1526,7 +1531,6 @@
             camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM, units:true, show:() => { return UI.camZBottom.value == 0 }}),
             camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toFloat, modes:CAM, units:true}),
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toFloat, modes:CAM, units:true}),
-            camTolerance:        UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM, units:true}),
 
             laserLayout:         UC.newGroup(LANG.lo_menu, null, {modes:LASER, group:"lz-lo"}),
             outputTileSpacing:   UC.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
@@ -1900,7 +1904,8 @@
                     widget.move(delta.x, delta.y, 0);
                     API.event.emit('widget.move', {widget, delta});
                 });
-                platform.update_stock();
+                // platform.update_stock();
+                API.event.emit('selection.drag', delta);
             } else {
                 return API.selection.meshes().length > 0;
             }

@@ -410,6 +410,8 @@ kiri.lang['en-us'] = {
     cs_hght_l:      "height (z) in workspace units\n0 defaults to part size",
     cs_offs_s:      "offset",
     cs_offs_l:      "use width, depth, height\nas offsets from max\npart size on platform",
+    cs_offe_s:      "enable",
+    cs_offe_l:      "enable milling stock",
 
     // ORIGIN (CAM & LASER)
     or_bnds_s:      "origin bounds",

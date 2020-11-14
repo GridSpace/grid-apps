@@ -24,13 +24,15 @@
     CAM.slice = function(settings, widget, onupdate, ondone) {
         let conf = settings,
             proc = conf.process,
+            stock = settings.stock || {},
+            hasStock = stock.x && stock.y && stock.z && proc.camStockOn,
             sliceAll = widget.slices = [],
             unitsName = settings.controller.units,
             roughTool = new CAM.Tool(conf, proc.camRoughTool),
             roughToolDiam = roughTool.fluteDiameter(),
             drillTool = new CAM.Tool(conf, proc.camDrillTool),
             drillToolDiam = drillTool.fluteDiameter(),
-            procFacing = proc.camRoughOn && proc.camZTopOffset,
+            procFacing = proc.camRoughOn && proc.camZTopOffset && hasStock,
             procRough = proc.camRoughOn && proc.camRoughDown,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOn = proc.camOutlineOn,
@@ -54,13 +56,12 @@
             zMin = Math.max(bounds.min.z, zBottom),
             zMax = bounds.max.z,
             zThru = zBottom === 0 ? (proc.camZThru || 0) : 0,
-            ztOff = proc.camZTopOffset,
+            ztOff = hasStock ? proc.camZTopOffset : 0,
             camRoughStock = proc.camRoughStock,
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown, outlineDown),
             maxToolDiam = 0,
-            thruHoles,
-            stock = settings.stock || {};
+            thruHoles;
 
         if (stock.x && stock.y && stock.z) {
             if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {

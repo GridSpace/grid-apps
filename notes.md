@@ -1,12 +1,14 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* stock to outline for slice mode
+* adaptive shadow-line generation for small parts collision detection
+* test path clearance for every move > % of tool diam and ...
 * contour tabs support
 * path arrows, retracts, and engages
 * cap path ends
 * help dialog
 * full bug reports
+* onshape mouse mapping option
 
 ## 2.4
 * cnc: tracing, visualization, manual tabs
