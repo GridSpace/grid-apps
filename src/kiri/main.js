@@ -1045,7 +1045,6 @@
             wb.max.y += wp.y;
             bounds.union(wb);
         });
-// console.log(JSON.stringify(bounds))
         return settings.bounds = bounds;
     }
 
@@ -1145,13 +1144,17 @@
         }
     }
 
-    function platformLoadSTL(url, onload) {
+    function platformLoadSTL(url, onload, formdata) {
         new MOTO.STL().load(url, function(vertices, filename) {
-            let widget = newWidget().loadVertices(vertices);
-            widget.filename = filename;
-            platform.add(widget);
-            if (onload) onload(vertices, widget);
-        })
+            if (vertices) {
+                let widget = newWidget().loadVertices(vertices);
+                widget.filename = filename;
+                platform.add(widget);
+                if (onload) {
+                    onload(vertices, widget);
+                }
+            }
+        }, formdata);
     }
 
     function platformComputeMaxZ() {

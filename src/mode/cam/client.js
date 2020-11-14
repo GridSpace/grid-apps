@@ -162,7 +162,7 @@
         }
 
         const {x, y, z} = stock;
-        if (x && y && z) {
+        if (x && y && z && !STACKS.getStack('bounds')) {
             const render = new KIRI.Render().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
             const stack = STACKS.create('bounds', SPACE.platform.world);
             stack.add(render.addPolys([

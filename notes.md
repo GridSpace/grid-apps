@@ -11,7 +11,7 @@
 * onshape mouse mapping option
 
 ## 2.4
-* cnc: tracing, visualization, manual tabs
+* cnc: tracing, visualization, manual tabs, auto feature detection (slicing)
 * fdm: manual supports, continuous printing
 * all: 2d image to 3d part
 

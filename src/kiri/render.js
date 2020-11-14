@@ -18,6 +18,10 @@
             };
         }
 
+        getLayer(layer) {
+            return this.layers[layer];
+        }
+
         setLayer(layer, colors, off) {
             let layers = this.layers;
             if (typeof(colors) === 'number') {

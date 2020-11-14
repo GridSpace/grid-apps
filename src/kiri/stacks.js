@@ -43,6 +43,10 @@
 
     }
 
+    function getStack(name) {
+        return stacks[name];
+    }
+
     function create(name, view) {
         if (stacks[name]) {
             return stacks[name];
@@ -254,6 +258,7 @@
     KIRI.stacks = {
         clear,
         create,
+        getStack,
         getRange,
         setRange
     };

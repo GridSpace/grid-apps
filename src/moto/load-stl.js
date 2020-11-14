@@ -26,7 +26,7 @@
     }
 
 
-    SP.load = function(url, callback) {
+    SP.load = function(url, callback, formdata) {
         let stl = this,
             xhr = new XMLHttpRequest();
 
@@ -56,9 +56,9 @@
             xhr.overrideMimeType('text/plain; charset=x-user-defined');
         }
 
-        xhr.open('GET', url, true);
+        xhr.open(formdata ? 'POST' : 'GET', url, true);
         xhr.responseType = 'arraybuffer';
-        xhr.send(null);
+        xhr.send(formdata);
     };
 
     SP.encode = function(vertices, normals) {
