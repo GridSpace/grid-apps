@@ -31,7 +31,7 @@
         skyGridColor = 0xcccccc,
         skyMaterial = undefined,
         skyGridMaterial = undefined,
-        showSkyGrid = true,
+        showSkyGrid = false,
         showPlatform = true,
         hidePlatformBelow = true,
         trackcam = addLight(0, 0, 0, lightIntensity/3),
@@ -89,7 +89,7 @@
             shininess: 5,
             transparent: true,
             opacity: 0.6,
-            side: THREE.DoubleSide
+            // side: THREE.DoubleSide
         }),
         hiddenKey,
         vizChange,
@@ -460,13 +460,13 @@
             shininess: 5,
             transparent: true,
             opacity: 0.5,
-            side: THREE.DoubleSide
+            // side: THREE.DoubleSide
         });
         let rmat = new THREE.MeshPhongMaterial({
             color: 0x88aadd,
             transparent: true,
             opacity: 0.5,
-            side: THREE.DoubleSide
+            // side: THREE.DoubleSide
         });
         let PIP = Math.PI/2;
         let pi1, pi2, pi3, pi4;
@@ -935,7 +935,7 @@
 
             trackPlane = new THREE.Mesh(
                 new THREE.PlaneBufferGeometry(100000, 100000, 1, 1),
-                new THREE.MeshBasicMaterial( { color: 0x777777, opacity: 0, transparent: true, side:THREE.DoubleSide } )
+                new THREE.MeshBasicMaterial( { color: 0x777777, opacity: 0, transparent: true } )
             );
             trackPlane.visible = false;
             trackPlane.rotation.x = PI2;

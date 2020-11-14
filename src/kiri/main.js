@@ -1287,7 +1287,7 @@
 
     function updateStockVisibility() {
         if (camStock) {
-            camStock.material.visible = settings.mode === 'CAM' && viewMode === VIEWS.ARRANGE;
+            camStock.material.visible = settings.mode === 'CAM';// && viewMode === VIEWS.ARRANGE;
         }
     }
 
@@ -1331,10 +1331,16 @@
             }
             if (!camStock) {
                 let geo = new THREE.BoxGeometry(1, 1, 1);
-                let mat = new THREE.MeshBasicMaterial({ color: 0x777777, opacity: 0.2, transparent: true, side:THREE.DoubleSide });
+                let mat = new THREE.MeshBasicMaterial({
+                    color: 0x777777,
+                    opacity: 0.2,
+                    transparent: true,
+                    side:THREE.DoubleSide
+                });
                 let cube = new THREE.Mesh(geo, mat);
                 SPACE.platform.add(cube);
                 camStock = cube;
+                cube.renderOrder = 2;
             }
             settings.stock = {
                 x: csx,

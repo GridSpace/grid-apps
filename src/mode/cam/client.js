@@ -34,8 +34,8 @@
             const stock = api.conf.get().stock;
             const {x, y, z} = stock;
             if (x && y && z) {
-                const render = new KIRI.Render().setLayer('stock', { face: 0xaaaaaa, line: 0xaaaaaa }, true);
-                const stack = STACKS.create('stock', SPACE.platform.world);
+                const render = new KIRI.Render().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa }, true);
+                const stack = STACKS.create('bounds', SPACE.platform.world);
                 stack.add(render.addPolys([
                     newPolygon().centerRectangle({x:0, y:0, z:0}, x, y),
                     newPolygon().centerRectangle({x:0, y:0, z}, x, y)

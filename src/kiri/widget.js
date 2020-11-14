@@ -252,6 +252,7 @@
                 opacity: solid_opacity
             })
         );
+        mesh.renderOrder = 1;
         // fix invalid normals
         geometry.computeFaceNormals();
         geometry.computeVertexNormals();
