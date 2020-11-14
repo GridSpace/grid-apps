@@ -469,43 +469,30 @@
     }
 
     // cut outside traces at the right points
-    function addCutoutTabs(offset, z, toolDiam, tabWidth, tabCount, tabAngle) {
+    function addCutoutTabs(polys, z, toolDiam, tabWidth, tabCount, tabAngle) {
         // skip if no tops | traces
-        if (offset.length === 0) return offset;
+        if (polys.length === 0) return polys;
 
         let notabs = 0;
         let nutrace = [];
 
-        // find trace with greatest area
-        offset.forEach(function(trace, index) {
-
+        polys.forEach(function(trace, index) {
             // required to match computed order of cutouts
             trace.setClockwise();
 
-            let count = tabCount,
-                angle = tabAngle,
-                angle_inc = 360 / count,
-                center = trace.bounds.center(z),
-                offset = (tabWidth + toolDiam) / 2,
-                ints = [],
-                segs = [];
-
-            while (count-- > 0) {
-                let slope = BASE.newSlopeFromAngle(angle),
-                    normal = BASE.newSlopeFromAngle(angle + 90),
-                    c1 = center.projectOnSlope(normal, offset),
-                    c2 = center.projectOnSlope(normal, -offset),
-                    o1 = c1.projectOnSlope(slope, 10000),
-                    o2 = c2.projectOnSlope(slope, 10000),
+            let ints = [];
+            let center = trace.bounds.center(z);
+            CAM.createTabLines(center, toolDiam, tabWidth, tabCount, tabAngle).forEach(tab => {
+                const {c1, c2, o1, o2} = tab,
                     int1 = trace.intersections(c1, o1).pop(),
                     int2 = trace.intersections(c2, o2).pop();
                 if (int1 && int2) {
                     ints.push(int1);
                     ints.push(int2);
                 }
-                angle -= angle_inc;
-            }
+            });
 
+            let segs = [];
             if (ints.length) {
                 ints.push(ints.shift());
                 for (let i=0; i<ints.length; i+=2) {
@@ -529,7 +516,6 @@
                 nutrace.push(trace);
                 notabs++;
             }
-
         });
 
         if (notabs) {
@@ -537,6 +523,25 @@
         }
 
         return nutrace;
+    }
+
+    CAM.createTabLines = function(center, toolDiam, tabWidth, tabCount, tabAngle) {
+        let angle_inc = 360 / tabCount,
+            offset = (tabWidth + toolDiam) / 2,
+            lines = [];
+
+        while (tabCount-- > 0) {
+            let slope = BASE.newSlopeFromAngle(tabAngle),
+                normal = BASE.newSlopeFromAngle(tabAngle + 90),
+                c1 = center.projectOnSlope(normal, offset),
+                c2 = center.projectOnSlope(normal, -offset),
+                o1 = c1.projectOnSlope(slope, 10000),
+                o2 = c2.projectOnSlope(slope, 10000);
+            tabAngle -= angle_inc;
+            lines.push({c1, o1, c2, o2});
+        }
+
+        return lines;
     }
 
 })();

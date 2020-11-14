@@ -3,7 +3,6 @@
 ## 2.3 remaining
 * adaptive shadow-line generation for small parts collision detection
 * test path clearance for every move > % of tool diam and ...
-* contour tabs support
 * path arrows, retracts, and engages
 * cap path ends
 * help dialog

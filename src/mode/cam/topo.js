@@ -56,12 +56,30 @@
                     widget: widget
                 },
                 newslices = [],
+                tabsOn = proc.camTabsOn,
+                tabHeight = proc.camTabsHeight,
+                clipTab = tabsOn ? [] : null,
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter + resolution),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
                 gridDelta = Math.floor(partOff / resolution);
 
-            let newlines,
-                newtop,
+            if (proc.camTabsOn) {
+                CAM.createTabLines(
+                    clipTo[0].bounds.center(),
+                    toolDiameter,
+                    proc.camTabsWidth,
+                    proc.camTabsCount,
+                    proc.camTabsAngle
+                ).forEach(tab => {
+                    const { o1, o2, c1, c2 } = tab;
+                    const poly = newPolygon().addPoints([
+                        o1, c1, c2, o2
+                    ]);
+                    clipTab.push(poly);
+                });
+            }
+
+            let newtop,
                 newtrace,
                 sliceout,
                 latent,
@@ -174,16 +192,16 @@
                 }
 
                 const checkr = newPoint(0,0);
-                const inClip = clipTo ? function() {
+                const inClip = function(polys) {
                     checkr.x = x;
                     checkr.y = y;
-                    for (let i=0; i<clipTo.length; i++) {
-                        if (checkr.isInPolygon(clipTo[i])) {
+                    for (let i=0; i<polys.length; i++) {
+                        if (checkr.isInPolygon(polys[i])) {
                             return true;
                         }
                     }
                     return false;
-                } : function() { return true };
+                };
 
                 // x contouring
                 if (proc.camContourXOn) {
@@ -194,13 +212,15 @@
                         ly = gridy = -gridDelta;
                         slice = newSlice(gridx);
                         slice.camMode = PRO.CONTOUR_X;
-                        // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (y = minY - partOff; y < maxY + partOff; y += resolution) {
                             tv = toolTipZ(gridx, gridy);
-                            if (tv === 0 && clipTo && !inClip()) {
+                            if (tabsOn && tv < tabHeight && inClip(clipTab)) {
+                                tv = tabHeight;
+                            }
+                            if (tv === 0 && clipTo && !inClip(clipTo)) {
                                 end_poly();
                                 gridy++;
                                 ly = -gridDelta;
@@ -245,13 +265,15 @@
                         lx = gridx = -gridDelta;
                         slice = newSlice(gridy);
                         slice.camMode = PRO.CONTOUR_Y;
-                        // slice.lines = newlines = [];
                         newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
                             tv = toolTipZ(gridx, gridy);
-                            if (tv === 0 && clipTo && !inClip()) {
+                            if (tabsOn && tv < tabHeight && inClip(clipTab)) {
+                                tv = tabHeight;
+                            }
+                            if (tv === 0 && clipTo && !inClip(clipTo)) {
                                 end_poly();
                                 gridx++;
                                 lx = -gridDelta;

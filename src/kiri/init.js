@@ -1507,7 +1507,7 @@
             camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
             camDrillSep:         UC.newBlank({class:"pop-sep"}),
             camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
-            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true, show:() => { return UI.camOutlineOn.checked || UI.camRoughOn.checked }}),
+            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
             camTabsAngle:        UC.newInput(LANG.ct_angl_s, {title:LANG.ct_angl_l, convert:UC.toInt, bound:UC.bound(0,360), modes:CAM}),
             camTabsCount:        UC.newInput(LANG.ct_numb_s, {title:LANG.ct_numb_l, convert:UC.toInt, bound:UC.bound(1,20), modes:CAM}),
             camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.1,100), modes:CAM, units:true}),
