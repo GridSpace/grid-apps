@@ -354,10 +354,9 @@
             rulersView.add(canvas.mesh);
 
             if (axesOn) {
-                canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', axisColor);
-                canvas.mesh.position.set(0, - h - labelSize - 12, zp);
-                canvas.ctx.fillText('X', (xPadding + rulerXLast + rulerXFirst) / 2, 0);
-                rulersView.add(canvas.mesh);
+                canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
+                canvas.ctx.fillText('X', rulerXFirst, labelSize * (1/8));
+                canvas.ctx.font = labelSize + 'px sans-serif';
             }
         }
 
@@ -374,10 +373,9 @@
             rulersView.add(canvas.mesh);
 
             if (axesOn) {
-                canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', axisColor);
-                canvas.mesh.position.set(- w - yPadding * 5, 0, zp);
-                canvas.ctx.fillText('Y', labelSize * 4, (yPadding + rulerYLast - rulerYFirst) / 2);
-                rulersView.add(canvas.mesh);
+                canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
+                canvas.ctx.fillText('Y', labelSize * 3.5, y);
+                canvas.ctx.font = labelSize + 'px sans-serif';
             }
         }
 
