@@ -61,7 +61,12 @@
                 clipTab = tabsOn ? [] : null,
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter + resolution),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
-                gridDelta = Math.floor(partOff / resolution);
+                gridDelta = Math.floor(partOff / resolution),
+                debug = false,
+                debug_clips = debug && true,
+                debug_topo = debug && false,
+                debug_topo_lines = debug && false,
+                debug_topo_shells = debug && false;
 
             if (proc.camTabsOn) {
                 CAM.createTabLines(
@@ -79,8 +84,16 @@
                 });
             }
 
-            let newtop,
-                newtrace,
+            // debug clipTab and clipTo
+            if (debug_clips) {
+                const debug = newSlice(-1);
+                const output = debug.output();
+                // if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
+                if (clipTo) output.setLayer("clip.to", { line: 0x00dd00 }).addPolys(clipTo);
+                newslices.push(debug);
+            }
+
+            let newtrace,
                 sliceout,
                 latent,
                 lastP,
@@ -90,20 +103,20 @@
                 stepsTotal = 0;
 
             // return the touching z given topo x,y and a tool profile
-            function toolTipZ(x,y) {
+            function toolAtZ(x,y) {
                 const profile = toolOffset,
                     sx = stepsx,
                     sy = stepsy,
                     xl = sx - 1,
                     yl = sy - 1;
 
-                let tv, tx, ty, tz, gv, i = 0, mz = -1;
+                let tx, ty, tz, gv, i = 0, mz = -1;
 
                 while (i < profile.length) {
                     // tool profile point x, y, and z offsets
-                    let tx = profile[i++] + x;
-                    let ty = profile[i++] + y;
-                    let tz = profile[i++];
+                    const tx = profile[i++] + x;
+                    const ty = profile[i++] + y;
+                    const tz = profile[i++];
                     if (tx < 0 || tx > xl || ty < 0 || ty > yl) {
                         // if outside max topo steps, use zMin
                         gv = zMin;
@@ -115,7 +128,7 @@
                     mz = Math.max(tz + gv, mz);
                 }
 
-                return Math.max(mz,0);
+                return Math.max(mz, 0);
             }
 
             function push_point(x,y,z) {
@@ -158,52 +171,85 @@
                     gridv, // value
                     i, il, j, jl, x, y, tv, ltv;
 
-                if (false)
+                // filter lines pairs to only surface "up-facing", "uncovered" lines
                 slices.map(slice => {
                     newslices.push(slice);
                     const points = [];
-                    slice.lines.forEach(line => {
-                        if (line.p1.z > 0 || line.p2.z > 0)
-                        points.push(line.p1, line.p2);
-                    });
-                    slice.output()
-                        .setLayer("topo slices", {face: 0xff00ff, line: 0xff00ff})
-                        .addLines(points)
-                        // .addPolys(slice.topPolys())
-                        ;
+                    // emit an array of valid line-pairs
+                    const lines = slice.lines;
+                    const len = lines.length;
+                    outer: for (let i=0; i<len; i++) {
+                        let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
+                        // eliminate vertical
+                        if (p1.y === p2.y) continue;
+                        // eliminate if both points below cutoff
+                        if (p1.z < zMin && p2.z < zMin) continue;
+                        // sort p1,p2 by y for comparison
+                        if (p1.y > p2.y) { const tp = p1; p1 = p2; p2 = tp };
+                        // eliminate if points "under" other lines
+                        for (let j=0; j<len; j++) {
+                            // skip self and adjacent
+                            // if (j === i) continue;
+                            if (j >= i-1 && j <= i+1) continue;
+                            let l2 = lines[j], p3 = l2.p1, p4 = l2.p2;
+                            // sort p3,p4 by y for comparison
+                            if (p3.y > p4.y) { const tp = p3; p3 = p4; p4 = tp };
+                            // it's under the other line
+                            if (Math.max(p1.z,p2.z) < Math.min(p3.z,p4.z)) {
+                                // it's inside the other line, too, so skip
+                                if (p1.y >= p3.y && p2.y <= p4.y) continue outer;
+                            }
+                        }
+                        points.push(p1, p2);
+                    }
+                    slice.points = points;
+                    if (debug_topo_lines) slice.output()
+                        .setLayer("topo lines", {face: 0xff00ff, line: 0x880088})
+                        .addLines(points);
+                    if (debug_topo_shells) slice.output()
+                        .setLayer("topo shells", {face: 0xff00ff, line: 0x008888})
+                        .addPolys(slice.topPolys());
                 });
 
                 // for each Y slice, find z grid value (x/z swapped)
                 for (j=0, jl=slices.length; j<jl; j++) {
                     const slice = slices[j];
-                    const lines = slice.lines;
+                    const points = slice.points;
                     gridy = 0;
-                    // slices have x/z swapped
+                    // rasterize one x slice
                     for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
                         gridi = gridx * stepsy + gridy;
                         gridv = data[gridi] || 0;
                         // strategy using raw lines (faster slice, but more lines)
-                        for (i=0, il=lines.length; i<il; i++) {
-                            const line = lines[i], p1 = line.p1, p2 = line.p2;
-                            if (
-                                (p1.z > zMin || p2.z > zMin) && // one endpoint above 0
-                                (p1.z > gridv || p2.z > gridv) && // one endpoint above gridv
-                                ((p1.y <= y && p2.y >= y) || // one endpoint left
-                                 (p2.y <= y && p1.y >= y)) // one endpoint right
-                            ) {
+                        for (i=0, il=points.length; i<il; i += 2) {
+                            const p1 = points[i], p2 = points[i+1];
+                            // one endpoint above grid
+                            const crossz = (p1.z > gridv || p2.z > gridv);
+                            // segment crosses grid y
+                            const spansy = (p1.y <= y && p2.y >= y);
+                            if (crossz && spansy) {
+                                // compute intersection of z ray up
+                                // and segment at this grid point
                                 const dy = p1.y - p2.y,
                                     dz = p1.z - p2.z,
                                     pct = (p1.y - y) / dy,
                                     nz = p1.z - (dz * pct);
+                                // save if point is greater than existing grid point
                                 if (nz > gridv) {
                                     gridv = data[gridi] = Math.max(nz, zMin);
+                                    if (debug_topo) slice.output()
+                                        .setLayer("topo", {face: 0, line: 0})
+                                        .addLine(
+                                            newPoint(p1.x, y, 0),
+                                            newPoint(p1.x, y, gridv)
+                                        );
                                 }
                             }
                         }
                         gridy++;
                     }
                     gridx++;
-                    onupdate(++stepsTaken, stepsTotal, "trace surface");
+                    onupdate(++stepsTaken, stepsTotal, "raster surface");
                 }
 
                 const checkr = newPoint(0,0);
@@ -227,32 +273,23 @@
                         ly = gridy = -gridDelta;
                         slice = newSlice(gridx);
                         slice.camMode = PRO.CONTOUR_X;
-                        newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (y = minY - partOff; y < maxY + partOff; y += resolution) {
-                            tv = toolTipZ(gridx, gridy);
+                            // find tool z at grid point
+                            tv = toolAtZ(gridx, gridy);
+                            // when tabs are on and this point is inside the
+                            // tab polygon, ensure z is at least tabHeight
                             if (tabsOn && tv < tabHeight && inClip(clipTab)) {
                                 tv = tabHeight;
                             }
-                            if (tv === 0 && clipTo && !inClip(clipTo)) {
+                            // if the value is on the floor and inside the clip
+                            // poly (usually shadow), end the segment
+                            if (clipTo && !inClip(clipTo)) {
                                 end_poly();
                                 gridy++;
                                 ly = -gridDelta;
                                 continue;
-                            }
-                            if (ly) {
-                                let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
-                                // over max angle, turn into square edge (up or down)
-                                if (ang > maxangle) {
-                                    if (ltv > tv) {
-                                        // down = forward,down
-                                        push_point(x,y,ltv);
-                                    } else {
-                                        // up = up,forward
-                                        push_point(x,ly,tv);
-                                    }
-                                }
                             }
                             push_point(x,y,tv);
                             ly = y;
@@ -280,32 +317,18 @@
                         lx = gridx = -gridDelta;
                         slice = newSlice(gridy);
                         slice.camMode = PRO.CONTOUR_Y;
-                        newtop = slice.addTop(newPolygon().setOpen()).poly;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
-                            tv = toolTipZ(gridx, gridy);
+                            tv = toolAtZ(gridx, gridy);
                             if (tabsOn && tv < tabHeight && inClip(clipTab)) {
                                 tv = tabHeight;
                             }
-                            if (tv === 0 && clipTo && !inClip(clipTo)) {
+                            if (clipTo && !inClip(clipTo)) {
                                 end_poly();
                                 gridx++;
                                 lx = -gridDelta;
                                 continue;
-                            }
-                            if (lx) {
-                                let ang = Math.abs((Math.atan2(ltv - tv, resolution) * R2A) % 90);
-                                // over max angle, turn into square edge (up or down)
-                                if (ang > maxangle) {
-                                    if (ltv > tv) {
-                                        // down = forward,down
-                                        push_point(x,y,ltv);
-                                    } else {
-                                        // up = up,forward
-                                        push_point(lx,y,tv);
-                                    }
-                                }
                             }
                             push_point(x,y,tv);
                             lx = x;

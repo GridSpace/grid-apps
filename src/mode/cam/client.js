@@ -68,6 +68,11 @@
 
     function updateStock(args, event) {
         const SPACE = API.const.SPACE;
+        const STACKS = API.const.STACKS;
+
+        if (isCamMode && isArrange) {
+            STACKS.clear();
+        }
 
         if (!isCamMode) {
             if (camStock) {
@@ -77,7 +82,6 @@
             return;
         }
 
-        const STACKS = API.const.STACKS;
         const refresh = (event === "selection.scale" || event === 'selection.rotate');
 
         let settings = API.conf.get();
@@ -155,10 +159,6 @@
             SPACE.platform.remove(camStock);
             camStock = null;
             delta = 0;
-        }
-
-        if (isArrange) {
-            STACKS.clear();
         }
 
         const {x, y, z} = stock;
