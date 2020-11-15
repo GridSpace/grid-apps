@@ -59,7 +59,7 @@
             ztOff = hasStock ? proc.camZTopOffset : 0,
             camRoughStock = proc.camRoughStock,
             camRoughDown = proc.camRoughDown,
-            minStepDown = Math.min(1, roughDown, outlineDown),
+            minStepDown = Math.min(1, roughDown/3, outlineDown/3),
             maxToolDiam = 0,
             thruHoles;
 
