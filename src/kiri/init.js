@@ -154,7 +154,10 @@
         UI.fps.style.display = on ? 'block' : '';
         if (on) {
             setInterval(() => {
-                UI.fps.innerText = SPACE.view.getFPS().toFixed(2);
+                const nv = SPACE.view.getFPS().toFixed(2);
+                if (nv !== UI.fps.innerText) {
+                    UI.fps.innerText = nv;
+                }
             }, 100);
         }
     }

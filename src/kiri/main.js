@@ -42,6 +42,7 @@
         MODE = MODES.FDM,
         STACKS = KIRI.stacks,
         DRIVER = undefined,
+        complete = {},
         onEvent = {},
         selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
@@ -239,7 +240,7 @@
             slice: prepareSlices,
             print: preparePreview,
             prepare: preparePreview,
-            export: function() { KIRI.export(...arguments) },
+            export: prepareExport,
             cancel: cancelWorker,
             clear: KIRI.client.clear
         },
@@ -696,6 +697,9 @@
             callback = preparePreview;
         }
 
+        // clear completion marks
+        complete = {};
+
         hideSlider(true);
         platform.deselect();
         setViewMode(VIEWS.SLICE);
@@ -752,6 +756,8 @@
                     API.event.emit('slice.end', getMode());
                     // print stats
                     DBUG.log(segtimes);
+                    // mark slicing complete for prep/preview
+                    complete.slice = true;
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
@@ -783,11 +789,14 @@
     }
 
     function preparePreview(callback) {
-        if (viewMode === VIEWS.PREVIEW) return;
-        if (viewMode === VIEWS.ARRANGE) {
+        if (complete.preview) {
+            return;
+        }
+        if (!complete.slice) {
             prepareSlices(() => {
                 preparePreview(callback);
             });
+            return;
         }
 
         hideSlider(true);
@@ -834,10 +843,25 @@
                 updateSpeeds(maxSpeed);
             }
 
+            // mark preview complete for export
+            complete.preview = true;
+
             if (typeof(callback) === 'function') {
                 callback();
             }
         });
+    }
+
+    function prepareExport() {
+        const argsave = arguments;
+        if (!complete.preview) {
+            preparePreview(() => {
+                prepareExport(...argsave);
+            });
+            return;
+        }
+        complete.export = true;
+        KIRI.export(...argsave);
     }
 
     function loadCode(code, type) {

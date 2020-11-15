@@ -133,6 +133,7 @@
 
             function push_point(x,y,z) {
                 const newP = newPoint(x,y,z);
+                // todo: merge co-linear, not just co-planar
                 if (lastP && lastP.z === z) {
                     if (curvesOnly) {
                         end_poly();
@@ -189,7 +190,6 @@
                         // eliminate if points "under" other lines
                         for (let j=0; j<len; j++) {
                             // skip self and adjacent
-                            // if (j === i) continue;
                             if (j >= i-1 && j <= i+1) continue;
                             let l2 = lines[j], p3 = l2.p1, p4 = l2.p2;
                             // sort p3,p4 by y for comparison
@@ -211,7 +211,7 @@
                         .addPolys(slice.topPolys());
                 });
 
-                // for each Y slice, find z grid value (x/z swapped)
+                // raster grid: for each Y slice, find z grid value (x/z swapped)
                 for (j=0, jl=slices.length; j<jl; j++) {
                     const slice = slices[j];
                     const points = slice.points;

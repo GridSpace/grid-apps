@@ -19,24 +19,14 @@
 
     let printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1;
 
-    function isPrepared() {
-        return API.view.get() === API.const.VIEWS.PREVIEW;
-    }
-
     function exportFile(options) {
-        if (isPrepared()) {
-            const mode = API.mode.get();
-            API.event.emit('export', mode);
-            switch (mode) {
-                case 'LASER': return callExportLaser(options);
-                case 'FDM': return callExport(options, mode);
-                case 'CAM': return callExport(options, mode);
-                case 'SLA': return callExportSLA(options);
-            }
-        } else {
-            API.function.prepare(function() {
-                exportFile(options)
-            });
+        const mode = API.mode.get();
+        API.event.emit('export', mode);
+        switch (mode) {
+            case 'LASER': return callExportLaser(options);
+            case 'FDM': return callExport(options, mode);
+            case 'CAM': return callExport(options, mode);
+            case 'SLA': return callExportSLA(options);
         }
     }
 
