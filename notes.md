@@ -10,6 +10,9 @@
 ## 2.4
 * cnc: tracing (chamfer, engrave), milling visualization
 * cnc: auto feature detection (slicing), manual tabs
+* cnc:  add tabs to shadow and slice model (for topo)
+* cnc:  step down should interpolate top/bottom again
+* cnc:  adaptive shadow-line generation for small parts collision detection
 * fdm: manual supports, continuous printing
 * all: 2d image to 3d part
 
