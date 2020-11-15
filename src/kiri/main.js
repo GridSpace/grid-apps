@@ -49,7 +49,6 @@
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         // ---------------
         viewMode = VIEWS.ARRANGE,
-        layoutOnAdd = true,
         local = SETUP.local,
         topZD = 0,
         topZ = 0,
@@ -68,9 +67,10 @@
 
     const feature = {
         seed: true,
-        controls: true,
-        drop_group: undefined,
-        preview: true
+        controls: true, // show or not side menus
+        drop_group: undefined, // optional array to group multi drop
+        drop_layout: true, // layout on new drop
+        preview: true, // allow bypassing preview generation
     };
 
     const selection = {
@@ -98,7 +98,6 @@
         compute_max_z: platformComputeMaxZ,
         update_origin: platformUpdateOrigin,
         update_bounds: platformUpdateBounds,
-        // update_stock: platformUpdateStock,
         update_size: platformUpdateSize,
         update_top_z: platformUpdateTopZ,
         update_selected: platformUpdateSelected,
@@ -1197,7 +1196,7 @@
     function platformGroupDone(skipLayout) {
         grouping = false;
         Widget.Groups.loadDone();
-        if (layoutOnAdd && !skipLayout) platform.layout();
+        if (feature.drop_layout && !skipLayout) platform.layout();
     }
 
     function platformAdd(widget, shift, nolayout) {
@@ -1212,7 +1211,7 @@
         if (nolayout) return;
         if (!grouping) {
             platformGroupDone();
-        } else if (layoutOnAdd) {
+        } else if (feature.drop_layout) {
             platform.layout();
         }
     }
@@ -1241,7 +1240,7 @@
         }
         SPACE.update();
         platformUpdateSelected();
-        if (layoutOnAdd) platform.layout();
+        if (feature.drop_layout) platform.layout();
         API.event.emit('widget.delete', widget);
     }
 
