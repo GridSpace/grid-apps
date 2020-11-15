@@ -124,11 +124,13 @@
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
-            // sliceAll.push(data.slice);
-            // data.slice.output()
-            //     .setLayer("debug", {line: 0x888800, thin: true })
-            //     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
-            // updateOp(index, total);
+            if (false) {
+                sliceAll.push(data.slice);
+                data.slice.output()
+                    .setLayer("debug", {line: 0x888800, thin: true })
+                    .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
+            }
+            updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
 
@@ -191,7 +193,7 @@
                     }
                 }
             }
-            // console.log('indices', ...indices);
+            // console.log('indices', ...indices, {zBottom});
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
@@ -249,9 +251,7 @@
                             }
                         });
                     }
-                });
-
-                if (!offset) return;
+                }) || [];
 
                 // add outside pass if not inside only
                 if (!insideOnly) {
