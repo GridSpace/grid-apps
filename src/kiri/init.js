@@ -1469,6 +1469,7 @@
             camRoughPlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
             camRoughStock:      UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, modes:CAM, units:true}),
             camRoughVoid:       UC.newBoolean(LANG.cr_clrp_s, onBooleanClick, {title:LANG.cr_clrp_l, modes:CAM}),
+            camRoughFlat:       UC.newBoolean(LANG.cr_clrf_s, onBooleanClick, {title:LANG.cr_clrf_l, modes:CAM}),
             camRoughIn:         UC.newBoolean(LANG.cr_olin_s, onBooleanClick, {title:LANG.cr_olin_l, modes:CAM}),
             camRoughSep:        UC.newBlank({class:"pop-sep"}),
             camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),

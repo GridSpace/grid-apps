@@ -404,6 +404,7 @@
                     camRoughPlunge: 250,
                     camRoughStock: 0,
                     camRoughVoid: false,
+                    camRoughFlat: false,
                     camRoughIn: false,
                     camRoughOn: true,
                     camOutlineTool: 1000,

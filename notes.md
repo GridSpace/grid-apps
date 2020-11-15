@@ -1,7 +1,6 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* add clear flats to roughing
 * path arrows, retracts, and engages
 * cap path ends
 * help dialog

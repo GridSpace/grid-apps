@@ -165,7 +165,31 @@
             maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
             let shadow = [];
             let slices = [];
-            const indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
+            let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
+            // add flats
+            if (proc.camRoughFlat) {
+                let flats = Object.keys(slicer.zFlat).map(v => parseFloat(v).round(4));
+                flats.forEach(v => {
+                    if (!indices.contains(v)) {
+                        indices.push(v);
+                    }
+                });
+                indices = indices.sort((a,b) => { return b - a });
+                // if layer is not on a flat and next one is,
+                // then move this layer up to mid-point to previous layer
+                // this is not perfect. the best method is to interpolate
+                // between flats so that each step is < step down. on todo list
+                for (let i=1; i<indices.length-1; i++) {
+                    const prev = indices[i-1];
+                    const curr = indices[i];
+                    const next = indices[i+1];
+                    if (!flats.contains(curr) && flats.contains(next)) {
+                        console.log('move',curr,'up toward',prev,'b/c next',next,'is flat');
+                        indices[i] = next + ((prev - next) / 2);
+                    }
+                }
+            }
+            // console.log('indices', ...indices);
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
