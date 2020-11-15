@@ -56,10 +56,11 @@
             mode = 0,
             point,
             points = 0,
-            hasStock = spro.camStockOffset || (spro.camStockZ && spro.camStockX && spro.camStockY),
+            stock = settings.stock,
+            hasStock = spro.camStockOn && stock.x && stock.y && stock.z,
             ztOff = hasStock ? spro.camZTopOffset : 0,
             bounds = widget.getBoundingBox(),
-            zmax = hasStock ? settings.stock.z : bounds.max.z,
+            zmax = hasStock ? stock.z : bounds.max.z,
             runbox = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}

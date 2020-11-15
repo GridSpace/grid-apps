@@ -731,12 +731,12 @@
             mindist = Infinity;
             array.forEach(function(el) {
                 if (el.delete) return;
-                dist = startPoint.distTo3D(el.first);
+                dist = startPoint.distTo2D(el.first);
                 if (dist < mindist) {
                     found = {el:el, first:el.first, last:el.last};
                     mindist = dist;
                 }
-                dist = startPoint.distTo3D(el.last);
+                dist = startPoint.distTo2D(el.last);
                 if (dist < mindist) {
                     found = {el:el, first:el.last, last:el.first};
                     mindist = dist;
@@ -744,8 +744,8 @@
             });
             if (found) {
                 found.el.delete = true;
-                // startPoint = found.last;
-                startPoint = emitter(found.el, found.first, ++count);
+                startPoint = found.last;
+                emitter(found.el, found.first, ++count);
             } else {
                 break;
             }

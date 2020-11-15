@@ -378,7 +378,6 @@
         print.render = FDM.prepareRender(output, progress => {
             update(0.5 + progress * 0.5);
         }, { tools: device.extruders, thin: isThin, flat: isFlat });
-
         return print.render;
     };
 
@@ -468,6 +467,7 @@
                     // in cam mode, these are drilling or dwell ops
                     return;
                 }
+
                 if (lastOut) {
                     const op = out.point, lp = lastOut.point,
                         moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;

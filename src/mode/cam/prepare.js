@@ -38,7 +38,7 @@
         }, {
             thin: true,
             print: 0,
-            move: 0x003366,
+            move: 0x557799,
             speed: false,
             moves: true,
             other: "moving",
@@ -195,6 +195,7 @@
         function layerPush(point, emit, speed, tool) {
             layerOut.mode = lastMode;
             addOutput(layerOut, point, emit, speed, tool);
+            return point;
         }
 
         function camDwell(time) {
@@ -216,27 +217,30 @@
                 cut = 0;
                 nextIsMove = false;
             }
+
             let rate = feedRate;
 
+            // before first point, move cutting head to point above it
+            // then set that new point as the lastPoint
             if (!lastPoint) {
                 let above = point.clone().setZ(zmax + zadd);
-                // before first point, move cutting head to point above it
-                layerPush(above, 0, 0, tool.getNumber());
-                // then set that as the lastPoint
-                lastPoint = above;
+                lastPoint = layerPush(above, 0, 0, tool.getNumber());
             }
 
+            // measure deltas to last point in XY and Z
             let deltaXY = lastPoint.distTo2D(point),
                 deltaZ = point.z - lastPoint.z,
                 absDeltaZ = Math.abs(deltaZ),
                 isMove = !cut;
+
             // drop points too close together
             if (deltaXY < 0.001 && point.z === lastPoint.z) {
-                // console.trace(["drop dup",lastPoint,point]);
+                console.trace(["drop dup",lastPoint,point]);
                 return;
             }
+
+            // convert short planar moves to cuts
             if (isMove && deltaXY <= toolDiamMove) {
-                // convert short planar moves to cuts
                  if (absDeltaZ <= tolerance) {
                     cut = 1;
                     isMove = false;
@@ -246,7 +250,8 @@
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
-            } //else (TODO verify no else here b/c above could change isMove)
+            } else
+            // for longer moves, check the terrain to see if we need to go up and over
             if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
                 let maxz = getZClearPath(
                         terrain,
@@ -261,18 +266,19 @@
                     ) + ztOff,
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
-                // up if any point between higher than start/outline
+                // up if any point between higher than start/outline, go up
                 if (mustGoUp) {
                     clearz = maxz + zclear;
                     layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
                 }
-                // over to point above where we descend to
+                // move to point above target point
                 if (mustGoUp || point.z < maxz) {
                     layerPush(point.clone().setZ(clearz), 0, 0, tool.getNumber());
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
             }
+
             // synth new plunge rate
             if (deltaZ <= -tolerance) {
                 let threshold = Math.min(deltaXY / 2, absDeltaZ),
@@ -286,14 +292,13 @@
             }
 
             // todo synthesize move speed from feed / plunge accordingly
-            layerPush(
+            layerOut.spindle = spindle;
+            lastPoint = layerPush(
                 point,
                 cut ? 1 : 0,
                 rate,
                 tool.getNumber()
             );
-            lastPoint = point;
-            layerOut.spindle = spindle;
         }
 
         // coming from a previous widget, use previous last point
@@ -319,6 +324,7 @@
             depthData.layer++;
             isNewMode = slice.camMode != lastMode;
             lastMode = slice.camMode;
+            // force move at start of each slice
             nextIsMove = true;
             if (isNewMode) depthData.layer = 0;
 
@@ -404,11 +410,13 @@
                         } else {
                             printPoint = tip2tipEmit(polys, printPoint, function(el, point, count) {
                                 poly = el.poly;
-                                if (poly.last() === point) poly.reverse();
+                                if (poly.last() === point) {
+                                    poly.reverse();
+                                }
                                 poly.forEachPoint(function(point, pidx) {
                                     camOut(point.clone(), pidx > 0);
                                 }, false);
-                                return lastPoint;
+                                // return lastPoint;
                             });
                             newLayer();
                         }
@@ -585,7 +593,6 @@
 
         // replace output single flattened layer with all points
         print.output = newOutput;
-
         return printPoint;
     };
 
