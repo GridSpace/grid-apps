@@ -347,7 +347,7 @@
             let canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', rulerColor);
 
             for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
-                let label = offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i;
+                let label = (offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i).round(1);
                 canvas.ctx.fillText('' + label, i + xPadding / 2, 0);
             }
             canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
@@ -365,8 +365,8 @@
             let canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
 
             for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
-                let label = offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
-                    rulerYFirst + rulerYLast - i;
+                let label = (offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
+                    rulerYFirst + rulerYLast - i).round(1);
                 canvas.ctx.fillText('' + label, labelSize * 4, i + yPadding / 2);
             }
             canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
