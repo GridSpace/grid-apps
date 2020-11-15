@@ -250,32 +250,38 @@
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
-            } else
-            // for longer moves, check the terrain to see if we need to go up and over
-            if ((deltaXY > toolDiam || (deltaZ > toolDiam && deltaXY > tolerance)) && (isMove || absDeltaZ >= tolerance)) {
-                let maxz = getZClearPath(
-                        terrain,
-                        lastPoint.x,// - wmx,
-                        lastPoint.y,// - wmy,
-                        point.x,// - wmx,
-                        point.y,// - wmy,
-                        Math.max(point.z, lastPoint.z),
-                        zadd,
-                        maxToolDiam/2,
-                        zclear
-                    ) + ztOff,
-                    mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
-                    clearz = maxz;
-                // up if any point between higher than start/outline, go up
-                if (mustGoUp) {
-                    clearz = maxz + zclear;
-                    layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
-                }
-                // move to point above target point
-                if (mustGoUp || point.z < maxz) {
-                    layerPush(point.clone().setZ(clearz), 0, 0, tool.getNumber());
-                    // new pos for plunge calc
-                    deltaXY = 0;
+            } else {
+                // for longer moves, check the terrain to see if we need to go up and over
+                const bigXY = (deltaXY > toolDiam);
+                const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
+                const midZ = (absDeltaZ >= tolerance);
+                if ((bigXY || bigZ) && (isMove || midZ)) {
+                    let maxz = getZClearPath(
+                            terrain,
+                            lastPoint.x,
+                            lastPoint.y,
+                            point.x,
+                            point.y,
+                            Math.max(point.z, lastPoint.z),
+                            zadd,
+                            maxToolDiam/2,
+                            zclear
+                        ) + ztOff,
+                        mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
+                        clearz = maxz;
+                    // up if any point between higher than start/outline, go up
+                    if (mustGoUp) {
+                        if (bigXY) {
+                            clearz += zclear;
+                        }
+                        layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
+                    }
+                    // move to point above target point
+                    if (mustGoUp || point.z < maxz) {
+                        layerPush(point.clone().setZ(clearz), 0, 0, tool.getNumber());
+                        // new pos for plunge calc
+                        deltaXY = 0;
+                    }
                 }
             }
 

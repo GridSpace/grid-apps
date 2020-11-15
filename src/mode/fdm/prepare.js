@@ -436,6 +436,7 @@
         self.worker.print.thinColor = thin;
         self.worker.print.flatColor = flat;
 
+        let lastEnd = null;
         let lastOut = null;
         let current = null;
 
@@ -462,7 +463,7 @@
             let width = 1;
             let emits = 0;
 
-            level.forEach(out => {
+            level.forEach((out,oi) => {
                 if (!out.point) {
                     // in cam mode, these are drilling or dwell ops
                     return;
@@ -472,7 +473,7 @@
                     const op = out.point, lp = lastOut.point,
                         moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;
                     if (out.emit) {
-                        if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed)) {
+                        if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
                             current.color = color(out);
@@ -480,13 +481,14 @@
                         }
                         current.push(out.point);
                     } else {
-                        if (lastOut.emit) {
+                        if (lastOut.emit || lastEnd) {
                             current = newPolygon().setOpen();
                             current.push(lastOut.point);
                             moves.push(current);
                         }
                         current.push(out.point);
                     }
+                    lastEnd = null;
                 } else {
                     current = newPolygon().setOpen();
                     current.push(out.point);
@@ -503,6 +505,7 @@
             if (lastOut.emit && !emits) {
                 pushPrint(lastOut.tool, current)
             }
+            lastEnd = lastOut;
             output
                 .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });
