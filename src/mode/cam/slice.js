@@ -168,7 +168,9 @@
             let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
             // add flats
             if (proc.camRoughFlat) {
-                let flats = Object.keys(slicer.zFlat).map(v => parseFloat(v).round(4));
+                let flats = Object.keys(slicer.zFlat)
+                    .map(v => parseFloat(v).round(4))
+                    .filter(v => v >= zBottom);
                 flats.forEach(v => {
                     if (!indices.contains(v)) {
                         indices.push(v);
