@@ -1005,7 +1005,7 @@ th, tr, td, label {
     white-space: nowrap;
     flex-direction: column;
     transform: translateY(-50%);
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.8);
     border: 1px solid #aaa;
     border-radius: 5px;
     margin-right: 5px;

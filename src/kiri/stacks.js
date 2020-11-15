@@ -55,16 +55,27 @@
             layers: [ ],
             view: view.newGroup(),
             add: function(layer) {
-                const nuview = stack.view.newGroup();
-                stack.layers.push(nuview);
-                render(layer, nuview, name);
+                const lview = stack.view.newGroup();
+                stack.layers.push(lview);
+                render(layer, lview, name);
                 tallest = Math.max(tallest, stack.layers.length);
+            },
+            remove: function() {
+                view.remove(stack.view);
             },
             clear: function() {
                 view.remove(stack.view);
             }
         };
         return stack;
+    }
+
+    function remove(name) {
+        const stack = stacks[name];
+        if (stack) {
+            stack.remove();
+            delete stacks[name];
+        }
     }
 
     function getRange() {
@@ -258,6 +269,7 @@
     KIRI.stacks = {
         clear,
         create,
+        remove,
         getStack,
         getRange,
         setRange

@@ -204,12 +204,9 @@
 
             nextOp();
             slices.forEach((slice, index) => {
-                // let shadow = slice.shadow;
                 let offset = [shell.clone(true),slice.shadow.clone(true)].flat();
                 let flat = POLY.flatten(offset, [], true);
                 let nest = POLY.setZ(POLY.nest(flat), slice.z);
-                // slice.tops[0].inner = nest;
-                // slice.tops[0].inner = POLY.setZ(shell.clone(true), slice.z);
 
                 // inset offset array by 1/2 diameter then by tool overlap %
                 offset = POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
@@ -231,7 +228,7 @@
 
                 // add outside pass if not inside only
                 if (!insideOnly) {
-                    const outside = POLY.offset(shadow, roughToolDiam * proc.camRoughOver, {z: slice.z});
+                    const outside = POLY.offset(shadow.clone(), roughToolDiam * proc.camRoughOver, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
                         if (addTabsOutline && slice.z <= zMin + tabHeight) {
@@ -243,11 +240,14 @@
                 if (!offset) return;
 
                 slice.camLines = offset;
+                // if (true) slice.output()
+                //     .setLayer("top shadow", {line: 0x0000aa})
+                //     .addPolys(tshadow)
+                //     .setLayer("rough shadow", {line: 0x00aa00})
+                //     .addPolys(shadow)
+                //     .setLayer("rough shell", {line: 0xaa0000})
+                //     .addPolys(shell);
                 slice.output()
-                    // .setLayer("rough shadow", {line: 0x00aa00})
-                    // .addPolys(shadow)
-                    // .setLayer("rough shell", {line: 0xaa0000})
-                    // .addPolys(shell)
                     .setLayer("roughing", {face: 0, line: 0})
                     .addPolys(offset);
                 updateOp(index, slices.length);

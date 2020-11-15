@@ -70,6 +70,7 @@
         const SPACE = API.const.SPACE;
         const STACKS = API.const.STACKS;
 
+        STACKS.remove('bounds');
         if (isCamMode && isArrange) {
             STACKS.clear();
         }

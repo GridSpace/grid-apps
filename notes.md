@@ -2,9 +2,8 @@
 
 ## 2.3 remaining
 * adaptive shadow-line generation for small parts collision detection
-* step down should interpolate top/bottom again
-* clear voids broken again
-* fix contour up and over thru holes
+* step down needs to go all the way to the bottom (always)
+* add clear flats to roughing
 * path arrows, retracts, and engages
 * cap path ends
 * help dialog
@@ -60,6 +59,8 @@
 
 * `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
+* `B` clear voids has double interior pass because wrong offset shadow used
+* `B` fix contour up and over thru holes by adding (union) tabs to shadow
 * `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
