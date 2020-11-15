@@ -364,7 +364,6 @@
                 count++;
                 step = (zmax - zmin) / count;
             }
-
             if (opt.down) {
                 for (let i=0; i<count; i++) {
                     array.push(zmax);

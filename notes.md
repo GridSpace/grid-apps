@@ -1,8 +1,6 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* adaptive shadow-line generation for small parts collision detection
-* step down needs to go all the way to the bottom (always)
 * add clear flats to roughing
 * path arrows, retracts, and engages
 * cap path ends
@@ -61,6 +59,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` fix contour up and over thru holes by adding (union) tabs to shadow
+* `F` adaptive shadow-line generation for small parts collision detection
 * `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations

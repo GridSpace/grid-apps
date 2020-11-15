@@ -165,7 +165,8 @@
             maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
             let shadow = [];
             let slices = [];
-            slicer.slice(slicer.interval(roughDown, { down: true, min: zBottom }), { each: (data, index, total) => {
+            const indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
+            slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = PRO.ROUGH;
@@ -240,13 +241,15 @@
                 if (!offset) return;
 
                 slice.camLines = offset;
-                // if (true) slice.output()
-                //     .setLayer("top shadow", {line: 0x0000aa})
-                //     .addPolys(tshadow)
-                //     .setLayer("rough shadow", {line: 0x00aa00})
-                //     .addPolys(shadow)
-                //     .setLayer("rough shell", {line: 0xaa0000})
-                //     .addPolys(shell);
+                if (true) slice.output()
+                    .setLayer("slice", {line: 0xaaaa00}, true)
+                    .addPolys(slice.topPolys())
+                    // .setLayer("top shadow", {line: 0x0000aa})
+                    // .addPolys(tshadow)
+                    // .setLayer("rough shadow", {line: 0x00aa00})
+                    // .addPolys(shadow)
+                    // .setLayer("rough shell", {line: 0xaa0000})
+                    // .addPolys(shell);
                 slice.output()
                     .setLayer("roughing", {face: 0, line: 0})
                     .addPolys(offset);
@@ -265,7 +268,8 @@
 
             let shadow = [];
             let slices = [];
-            slicer.slice(slicer.interval(outlineDown, { down: true, min: zBottom }), { each: (data, index, total) => {
+            const indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true });
+            slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = PRO.OUTLINE;
@@ -326,6 +330,9 @@
                 }
                 // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
+                if (true) slice.output()
+                    .setLayer("slice", {line: 0xaaaa00}, true)
+                    .addPolys(slice.topPolys())
                 slice.output()
                     .setLayer("outline", {face: 0, line: 0})
                     .addPolys(offset);
