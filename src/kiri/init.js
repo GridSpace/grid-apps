@@ -571,8 +571,10 @@
                     if (!cp.hasOwnProperty(k)) continue;
                     np[k] = cp[k];
                 }
-                s.cproc[API.mode.get()] = name;
+                s.cproc[mode] = name;
+                s.devproc[s.device.deviceName] = name;
                 API.conf.save();
+                API.conf.update();
                 API.event.settings();
             }
         });
@@ -1933,27 +1935,6 @@
             }
         });
 
-        let current = settings(),
-            control = current.controller;
-
-        platform.deselect();
-        CATALOG.addFileListener(updateCatalog);
-        SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
-        SPACE.platform.setZOff(0.2);
-
-        // restore UI state from settings
-        UI.showOrigin.checked = control.showOrigin;
-        UI.showRulers.checked = control.showRulers;
-        UI.showSpeeds.checked = control.showSpeeds;
-        UI.freeLayout.checked = control.freeLayout;
-        UI.autoLayout.checked = control.autoLayout;
-        UI.alignTop.checked = control.alignTop;
-        UI.reverseZoom.checked = control.reverseZoom;
-        UI.decimate.checked = control.decimate;
-        lineTypeSave();
-        detailSave();
-        updateFPS();
-
         // load script extensions
         if (SETUP.s) SETUP.s.forEach(function(lib) {
             let scr = DOC.createElement('script');
@@ -1991,32 +1972,62 @@
             console.log({octoprint:ohost});
         }
 
-        // optional set-and-lock mode (hides mode menu)
-        let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
+        // bind this to UI so main can call it on settings import
+        UI.sync = function() {
+            const current = settings();
+            const control = current.controller;
+            const process = settings.process;
 
-        // optional set-and-lock device (hides device menu)
-        let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
+            platform.deselect();
+            CATALOG.addFileListener(updateCatalog);
+            SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
+            SPACE.platform.setZOff(0.2);
 
-        // setup default mode and enable mode locking, if set
-        API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
+            // restore UI state from settings
+            UI.showOrigin.checked = control.showOrigin;
+            UI.showRulers.checked = control.showRulers;
+            UI.showSpeeds.checked = control.showSpeeds;
+            UI.freeLayout.checked = control.freeLayout;
+            UI.autoLayout.checked = control.autoLayout;
+            UI.alignTop.checked = control.alignTop;
+            UI.reverseZoom.checked = control.reverseZoom;
+            UI.decimate.checked = control.decimate;
+            lineTypeSave();
+            detailSave();
+            updateFPS();
 
-        // update everything dependent on the platform size
-        platform.update_size();
+            // optional set-and-lock mode (hides mode menu)
+            let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
 
-        // restore expert setting preference
-        API.mode.set_expert(control.expert);
+            // optional set-and-lock device (hides device menu)
+            let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
-        // setup tab visibility watcher
-        // DOC.addEventListener('visibilitychange', function() { document.title = document.hidden });
+            // setup default mode and enable mode locking, if set
+            API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
 
-        // fill device list
-        updateDeviceList();
+            // restore expert setting preference
+            API.mode.set_expert(control.expert);
 
-        // ensure settings has gcode
-        selectDevice(DEVNAME || API.device.get(), DEVNAME);
+            // fill device list
+            updateDeviceList();
 
-        // ensure field data propagation
-        API.conf.update();
+            // ensure settings has gcode
+            selectDevice(DEVNAME || API.device.get(), DEVNAME);
+
+            // update ui fields from settings
+            API.view.update_fields();
+
+            // default to ARRANGE view mode
+            API.view.set(VIEWS.ARRANGE);
+
+            // add ability to override
+            API.show.controls(API.feature.controls);
+
+            // update everything dependent on the platform size
+            platform.update_size();
+        };
+
+        UI.sync();
 
         // load settings provided in url hash
         loadSettingsFromServer();
@@ -2028,12 +2039,6 @@
         UI.alert.dialog.onclick = function() {
             API.event.alerts(true);
         };
-
-        // default to ARRANGE view mode
-        API.view.set(VIEWS.ARRANGE);
-
-        // add ability to override
-        API.show.controls(API.feature.controls);
 
         // enable modal hiding
         $('mod-x').onclick = API.modal.hide;

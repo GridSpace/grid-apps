@@ -32,7 +32,6 @@
         VIEWS   = CONF.VIEWS,
         clone   = Object.clone,
         settings = clone(CONF.template),
-        // settingsDefault = clone(settings),
         // ---------------
         Widget    = kiri.Widget,
         newWidget = kiri.newWidget,
@@ -1465,16 +1464,17 @@
             updateSettingsFromFields(device.extruders[device.internal]);
         }
         API.conf.save();
-        // platform.update_stock();
         $('mode-device').innerText = settings.device.deviceName;
         $('mode-profile').innerText = settings.process.processName;
     }
 
     function saveSettings() {
-        let view = SPACE.view.save();
+        const view = SPACE.view.save();
         if (view.left || view.up) {
             settings.controller.view = view;
         }
+        const mode = settings.mode, name = settings.process.processName;
+        settings.sproc[mode][name] = settings.process;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
@@ -1491,6 +1491,7 @@
                 return;
             }
         }
+        if (LOCAL) console.log('import',data);
         let isSettings = (data.settings && data.version && data.time);
         let isDevice = (data.device && data.version && data.time);
         if (!isSettings && !isDevice) {
@@ -1501,8 +1502,12 @@
         function doit() {
             if (isSettings) {
                 settings = CONF.normalize(data.settings);
-                API.conf.save();
-                API.space.reload();
+                SDB.setItem('ws-settings', JSON.stringify(settings));
+                if (LOCAL) console.log('settings',Object.clone(settings));
+                restoreSettings();
+                restoreWorkspace(() => {
+                    UI.sync();
+                }, true);
             }
             if (isDevice) {
                 if (settings.devices[data.device]) {
@@ -1657,7 +1662,12 @@
         }
         SPACE.scene.freeze(fz);
 
-        if (skip_widget_load) return;
+        if (skip_widget_load) {
+            if (ondone) {
+                ondone();
+            }
+            return;
+        }
 
         // remove any widgets from platform
         forAllWidgets(function(widget) {
