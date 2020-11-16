@@ -107,7 +107,8 @@
         set_font: SPACE.platform.setFont,
         set_axes: SPACE.platform.setAxes,
         set_volume: SPACE.platform.setVolume,
-        top_z: () => { return topZ }
+        top_z: () => { return topZ },
+        clear: () => { platform.delete(WIDGETS.slice()) }
     };
 
     const color = {
@@ -1494,6 +1495,7 @@
         if (LOCAL) console.log('import',data);
         let isSettings = (data.settings && data.version && data.time);
         let isDevice = (data.device && data.version && data.time);
+        let isWork = (data.work);
         if (!isSettings && !isDevice) {
             UC.alert('invalid settings or device format');
             console.log('data',data);
@@ -1522,13 +1524,29 @@
                     API.show.devices();
                 }
             }
+            if (isWork) {
+                API.platform.clear();
+                KIRI.codec.decode(data.work).forEach(widget => {
+                    platform.add(widget, 0, true);
+                });
+                if (data.view) {
+                    SPACE.view.load(data.view);
+                }
+            }
         }
         if (ask) {
-            let prompt = `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
-            if (isDevice) {
-                prompt = `Import device "${data.device}"?`;
+            let opt = {};
+            let prompt = isDevice ?
+                `Import device "${data.device}"?` :
+                `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
+            if (data.screen) {
+                opt.pre = [
+                    '<div class="f-col a-center">',
+                    `<img src="${data.screen}" style="width:300px"/>`,
+                    '</div>'
+                ];
             }
-            UC.confirm(prompt).then((yes) => {
+            UC.confirm(prompt,undefined,undefined,opt).then((yes) => {
                 if (yes) doit();
             });
         } else {
@@ -1538,12 +1556,18 @@
 
     function settingsExport(options) {
         const opts = options || {};
-        const shot = opts.screen ? SPACE.screenshot() : undefined;
+        const note = opts.node || undefined;
+        const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
+        const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
+        const view = opts.work ? SPACE.view.save() : undefined;
         return btoa(JSON.stringify({
             settings: settings,
             version: KIRI.version,
             screen: shot,
             space: SPACE.info,
+            note: note,
+            work: work,
+            view: view,
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
@@ -1934,6 +1958,7 @@
         // updateStockVisibility();
         switch (mode) {
             case VIEWS.ARRANGE:
+                complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
                 UI.render.classList.add('lt-enabled');

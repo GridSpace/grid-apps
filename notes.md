@@ -5,7 +5,6 @@
 * cap path ends
 * help dialog
 * full bug reports
-* .b64 export may not capture or restore tools properly
 * onshape mouse mapping option
 
 ## 2.4

@@ -539,12 +539,26 @@
     }
 
     function profileExport() {
-        UC.prompt("Export Profile Filename", "kiriconf").then(name => {
+        const opt = {pre: [
+            "<div class='f-col a-center'>",
+            "  <h3>Profile Export</h3>",
+            "  <label>This will create a backup of</label>",
+            "  <label>your device profiles and settings</label>",
+            "  <br>",
+            "  <div class='f-row'>",
+            "  <input id='incwork' type='checkbox'>&nbsp;include workspace",
+            "  </div>",
+            "</div>"
+        ]};
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "km_conf", opt).then(name => {
             if (name) {
-                let json = API.conf.export(),
+                let work = $('incwork').checked,
+                    json = API.conf.export({work}),
                     blob = new Blob([json], {type: "octet/stream"}),
                     url = WIN.URL.createObjectURL(blob);
-                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
+                $('mod-any').innerHTML = [
+                    `<a id="sexport" href="${url}" download="${name}.b64">x</a>`
+                ].join('');
                 $('sexport').click();
             }
         });
@@ -2091,7 +2105,7 @@
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;
-        $('view-clear').onclick = () => { API.platform.delete(API.widgets.all()) };
+        $('view-clear').onclick = API.platform.clear;
         $('mode-fdm').onclick = () => { API.mode.set('FDM') };
         $('mode-sla').onclick = () => { API.mode.set('SLA') };
         $('mode-cam').onclick = () => { API.mode.set('CAM') };

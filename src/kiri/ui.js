@@ -78,7 +78,7 @@
         return confirm(message, {ok:true, cancel:false}, value);
     }
 
-    function confirm(message, buttons, input) {
+    function confirm(message, buttons, input, opt = {}) {
         return new Promise((resolve, reject) => {
             let btns = buttons || {
                 "yes": true,
@@ -90,6 +90,9 @@
                 `<div class="confirm f-col a-stretch">`,
                 `<label style="user-select:text">${message}</label>`,
             ];
+            if (opt.pre) {
+                html = opt.pre.appendAll(html);
+            }
             let iid;
             if (input !== undefined) {
                 iid = `confirm-input-${rnd}`;
@@ -99,7 +102,11 @@
             Object.entries(btns).forEach((row,i) => {
                 html.append(`<button id="confirm-${i}-${rnd}">${row[0]}</button>`);
             });
-            $('mod-any').innerHTML = html.append(`</div></div>`).join('');
+            html.append(`</div></div>`);
+            if (opt.post) {
+                html.appendAll(opt.post);
+            }
+            $('mod-any').innerHTML = html.join('');
             function done(value) {
                 KIRI.api.modal.hide();
                 setTimeout(() => { resolve(value) }, 150);

@@ -84,8 +84,37 @@
     }
 
     /** ******************************************************************
-     * Object CODEC Functions
+     * Object Class CODEC Functions
      ******************************************************************* */
+
+     KIRI.Widget.prototype.encode = function(state) {
+         const json = state._json_;
+         const geo = this.getGeoVertices();
+         const coded = {
+             type: 'widget',
+             id: this.id,
+             ver: 1, // for better future encodings
+             json: json, // safe for JSON (float32array mess)
+             group: this.group.id,
+             track: this.track,
+             geo: json ? Array.from(geo) : geo
+         };
+         return coded;
+     };
+
+     registerDecoder('widget', function(v, state) {
+         const id = v.id,
+             group = v.group || id,
+             track = v.track || undefined,
+             widget = KIRI.newWidget(id, KIRI.Widget.Groups.forid(group));
+         widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
+         widget.saved = time();
+         if (track && track.pos) {
+             widget.track = track;
+             widget.move(track.pos.x, track.pos.y, track.pos.z, true);
+         }
+         return widget;
+    });
 
     KIRI.Slice.prototype.encode = function(state) {
         return {
