@@ -481,16 +481,16 @@
                     return conf.length === 0;
                 });
             }
-            const thru = []; // match thru polys
+            // const thru = []; // match thru polys
             level = level.filter(lp => {
                 if (lp.level_emit) {
                     return false;
                 }
-//                 if (bottm && !clr) {
-//                     const tm = bottm.filter(bp => lp.isEquivalent(bp));
-//                     thru.appendAll(tm);
-//                     return tm.length === 0;
-//                 }
+                // if (bottm && !clr) {
+                //     const tm = bottm.filter(bp => lp.isEquivalent(bp));
+                //     thru.appendAll(tm);
+                //     return tm.length === 0;
+                // }
                 return true;
             });
             // omit polys that match bottom level polys unless level above is cleared

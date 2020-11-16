@@ -1007,7 +1007,7 @@
                 exit = false;
                 return true;
             }
-        });
+        }, this.open);
 
         return exit;
     };
