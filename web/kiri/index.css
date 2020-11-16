@@ -705,6 +705,20 @@ th, tr, td, label {
 #help-right {
     padding-left: 3px;
 }
+.help-label {
+    border: 1px solid rgba(0,0,0,0);
+    border-right: 0;
+    padding: 5px;
+}
+.help-label.sel {
+    border: 1px solid #888;
+    border-right: 0;
+}
+.help-tab {
+    display: none;
+    border: 1px solid #888;
+    padding: 5px;
+}
 .confirm {
     padding-top: 15px;
 }

@@ -1897,10 +1897,28 @@
     }
 
     function showHelp() {
-        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`);
+        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`,() => {
+            return;
+            const sel = $('help-sel');
+            const labels = [...sel.getElementsByTagName('div')];
+            const tabs = [];
+            const click = (label, tab) => {
+                labels.forEach(l => l.classList.remove('sel'));
+                label.classList.add('sel');
+                tabs.forEach(t => t.style.display = 'none');
+                tab.style.display = 'flex';
+            };
+            labels.forEach(label => {
+                const name = label.getAttribute('tab');
+                const tab = $(`help-tab-${name}`);
+                tabs.push(tab);
+                label.onclick = () => { click(label, tab) };
+            });
+            click(labels[0], tabs[0]);
+        });
     }
 
-    function showHelpFile(local) {
+    function showHelpFile(local,then) {
         if (!local) {
             WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
             return;
@@ -1910,6 +1928,9 @@
             try {
                 $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
             } catch (e) { }
+            if (then) {
+                then();
+            }
             showModal('help');
         });
         API.event.emit('help.show', local);
