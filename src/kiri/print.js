@@ -23,7 +23,8 @@
         newPoint = BASE.newPoint;
 
     let lastPoint = null,
-        lastEmit = null;
+        lastEmit = null,
+        lastOut = null;;
 
     KIRI.Print = Print;
 
@@ -158,6 +159,7 @@
                 factor * pos.Z + off.Z + xoff.Z + dz
             );
 
+            const retract = (fdm && pos.E < 0) || undefined;
             const moving = g0 || (fdm && pos.E <= 0);
 
             // update max speed
@@ -165,7 +167,7 @@
 
             // always add moves to the current sequence
             if (moving) {
-                addOutput(seq, point, false, pos.F, tool);
+                addOutput(seq, point, false, pos.F, tool).retract = retract;
                 return;
             }
 
@@ -183,7 +185,7 @@
             }
 
             // add point to current sequence
-            addOutput(seq, point, true, pos.F, tool);
+            addOutput(seq, point, true, pos.F, tool).retract = retract;
         }
 
         lines.forEach(function(line) {
@@ -265,12 +267,14 @@
         if (lastPoint && point) {
             // nested due to uglify confusing browser
             if (point.x == lastPoint.x && point.y == lastPoint.y && point.z == lastPoint.z && lastEmit == emit) {
-                return;
+                return lastOut;
             }
         }
         lastPoint = point;
         lastEmit = emit;
-        array.push(new Output(point, emit, speed, tool));
+        lastOut = new Output(point, emit, speed, tool);
+        array.push(lastOut);
+        return lastOut;
     }
 
     /**
