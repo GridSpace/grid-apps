@@ -196,7 +196,7 @@
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 group.add(mesh);
-                ctrl.group.push(mat);
+                ctrl.group.appendAll(mat);
             }
             if (paths.length) {
                 const mat = [];

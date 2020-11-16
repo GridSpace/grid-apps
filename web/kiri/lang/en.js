@@ -5,6 +5,8 @@ kiri.lang['en-us'] = {
     version:        "version",
     enable:         "enable",
 
+    acct_xpo:       "make a backup of your device\nand device profiles with the\noption to include workspace\nobjects and positions",
+
     // DEVICE dialog groups
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",

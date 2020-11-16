@@ -377,7 +377,7 @@
         print.output = output;
         print.render = FDM.prepareRender(output, progress => {
             update(0.5 + progress * 0.5);
-        }, { tools: device.extruders, thin: isThin, flat: isFlat });
+        }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
         return print.render;
     };
 
@@ -447,6 +447,8 @@
         levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
+            const heads = [];
+            const retracts = [];
             const output = new KIRI.Render();
             layers.push(output);
 
@@ -464,12 +466,18 @@
             let emits = 0;
 
             level.forEach((out,oi) => {
+                if (out.retract) {
+                    retracts.push(out.point);
+                }
                 if (!out.point) {
                     // in cam mode, these are drilling or dwell ops
                     return;
                 }
 
                 if (lastOut) {
+                    if (lastOut.emit !== out.emit) {
+                        heads.push({p1: lastOut.point, p2: out.point});
+                    }
                     const op = out.point, lp = lastOut.point,
                         moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;
                     if (out.emit) {
@@ -506,6 +514,26 @@
                 pushPrint(lastOut.tool, current)
             }
             lastEnd = lastOut;
+            if (retracts.length) {
+                output
+                    .setLayer('retract', { line: 0x550000, face: 0xff0000, opacity: 0.5 }, true)
+                    .addAreas(retracts.map(point => {
+                        return newPolygon().centerCircle(point, 0.2, 16).setZ(point.z + 0.01);
+                    }), { outline: true });
+            }
+            if (heads.length) {
+                output
+                    .setLayer('arrows', { face: moveColor, line: 0x555555, opacity: 0.5 }, true)
+                    .addAreas(heads.map(points => {
+                        const {p1, p2} = points;
+                        const slope = p2.slopeTo(p1);
+                        const s1 = BASE.newSlopeFromAngle(slope.angle + 20);
+                        const s2 = BASE.newSlopeFromAngle(slope.angle - 20);
+                        const p3 = points.p2.projectOnSlope(s1, 0.4);
+                        const p4 = points.p2.projectOnSlope(s2, 0.4);
+                        return newPolygon().addPoints([p2,p3,p4]).setZ(p2.z + 0.01);
+                    }), { thin: true, outline: true });
+            }
             output
                 .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });

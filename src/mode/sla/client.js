@@ -12,9 +12,9 @@
     SLA.init = function(kiri, api) {
         api.event.on("mode.set", (mode) => {
             if (mode === 'SLA') {
-                api.ui.act.preview.classList.add('hide');
+                api.ui.func.preview.classList.add('hide');
             } else {
-                api.ui.act.preview.classList.remove('hide');
+                api.ui.func.preview.classList.remove('hide');
             }
         });
     };

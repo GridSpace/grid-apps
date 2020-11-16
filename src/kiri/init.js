@@ -1261,10 +1261,15 @@
                 text:           $('alert-text')
             },
 
-            act: {
+            func: {
                 slice:          $('act-slice'),
                 preview:        $('act-preview'),
                 export:         $('act-export')
+            },
+
+            acct: {
+                help:           $('acct-help'),
+                export:         $('acct-export')
             },
 
             fps:                $('fps'),
@@ -2094,14 +2099,15 @@
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showSetup() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
-        $('acct-help').onclick = (ev) => { ev.stopPropagation(); API.help.show() };
-        $('acct-export').onclick = (ev) => { ev.stopPropagation(); profileExport() };
+        UI.acct.help.onclick = (ev) => { ev.stopPropagation(); API.help.show() };
+        UI.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
+        UI.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
         UI.back.onclick = API.platform.layout;
-        UI.act.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
-        UI.act.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
-        UI.act.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
+        UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
+        UI.func.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
+        UI.func.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;
         $('view-home').onclick = SPACE.view.home;

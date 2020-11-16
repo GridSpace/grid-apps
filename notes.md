@@ -1,10 +1,8 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* path arrows, retracts, and engages
 * cap path ends
 * help dialog
-* full bug reports
 * onshape mouse mapping option
 
 ## 2.4
