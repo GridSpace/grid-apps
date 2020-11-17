@@ -353,7 +353,7 @@
             canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
             rulersView.add(canvas.mesh);
 
-            if (axesOn) {
+            if (axesOn && false) {
                 canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
                 canvas.ctx.fillText('X', rulerXFirst, labelSize * (1/8));
                 canvas.ctx.font = labelSize + 'px sans-serif';
@@ -372,7 +372,7 @@
             canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
             rulersView.add(canvas.mesh);
 
-            if (axesOn) {
+            if (axesOn && false) {
                 canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
                 canvas.ctx.fillText('Y', labelSize * 3.5, y);
                 canvas.ctx.font = labelSize + 'px sans-serif';

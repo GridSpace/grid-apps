@@ -750,13 +750,13 @@
                 widget.setColor(color.deselected);
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
+                    // mark slicing complete for prep/preview
+                    complete.slice = true;
                     API.show.progress(0);
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
                     // print stats
                     DBUG.log(segtimes);
-                    // mark slicing complete for prep/preview
-                    complete.slice = true;
                     if (callback && typeof callback === 'function') {
                         callback();
                     }

@@ -728,6 +728,10 @@ th, tr, td, label {
     height: 450px;
     transform: translateX(-1px);
 }
+#help-tab-support a:hover {
+    background-color: #aee;
+    border-radius: 5px;
+}
 .help-tab {
     flex-grow: 1;
     display: none;

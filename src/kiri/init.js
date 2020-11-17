@@ -684,9 +684,6 @@
                 }
             }
 
-            if (mode === 'CAM') {
-                proc.camOriginTop = dev.outputOriginTop;
-            }
             // disable editing for non-local devices
             [
                 UI.deviceName,
@@ -698,7 +695,6 @@
                 UI.maxHeight,
                 UI.extrudeAbs,
                 UI.deviceOrigin,
-                UI.deviceOriginTop,
                 UI.deviceRound,
                 UI.gcodeFan,
                 UI.gcodeTrack,
@@ -1364,8 +1360,7 @@
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6, units:true}),
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
             spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
-            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:GCODE}),
-            deviceOriginTop:  UC.newBoolean(LANG.dv_orgt_s, onBooleanClick, {title:LANG.dv_orgt_l, modes:CAM}),
+            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", inline:true, modes:FDM}),

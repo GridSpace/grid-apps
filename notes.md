@@ -1,7 +1,8 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* cnc path routing collisions with two or more parts
+* deprecate cam device origin settings
+* gcode render broken when layer hints disabled
 * cap path ends
 * onshape mouse mapping option
 
