@@ -1898,7 +1898,6 @@
 
     function showHelp() {
         showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`,() => {
-            return;
             const sel = $('help-sel');
             const labels = [...sel.getElementsByTagName('div')];
             const tabs = [];
@@ -1914,7 +1913,7 @@
                 tabs.push(tab);
                 label.onclick = () => { click(label, tab) };
             });
-            click(labels[0], tabs[0]);
+            click(labels[1], tabs[1]);
         });
     }
 
@@ -1927,6 +1926,7 @@
             UI.help.innerHTML = html;
             try {
                 $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
+                // $('kiri-version').innerHTML = `${KIRI.version}`;
             } catch (e) { }
             if (then) {
                 then();

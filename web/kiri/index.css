@@ -654,9 +654,6 @@ th, tr, td, label {
     font-weight: bold;
     text-decoration: underline;
 }
-#help #kiri-version {
-    font-weight: bold;
-}
 #help .header {
     background-color: rgba(0,0,0,0.1);
     justify-content: center;
@@ -668,18 +665,33 @@ th, tr, td, label {
     font-family: monospace;
 }
 #help .title {
-    justify-content: center;
-    flex-direction: column;
     text-align: center;
     font-size: larger;
     font-weight: bold;
-    padding: 10px;
+    padding: 10px 0 5px 50px;
+}
+#help .title label {
+    display: inline-flex;
+}
+#help #kiri-version {
+    position: absolute;
+    right: 10px;
+    bottom: 5px;
+    font-family: monospace;
+    font-weight: normal;
+    font-size: smaller;
+    color: #333;
 }
 #help .content {
-    white-space: nowrap;
     flex-direction: column;
-    font-family: monospace;
     margin: 3px 0 8px 0;
+    line-height: 1.5em;
+}
+#help .content p {
+    text-align: justify;
+}
+#help .content li {
+    line-height: 1.75em;
 }
 #help .footer {
     font-family: monospace;
@@ -695,29 +707,37 @@ th, tr, td, label {
 #help td label {
     font-weight: bold;
 }
-#help-left {
-    padding-right: 5px;
-    border-right: 1px dashed #aaa;
-}
-#help-left .title {
-    margin-bottom: 2px;
-}
-#help-right {
-    padding-left: 3px;
+#help button {
+    display: inline-flex;
 }
 .help-label {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
     border: 1px solid rgba(0,0,0,0);
     border-right: 0;
-    padding: 5px;
+    padding: 12px 10px 12px 8px;
+    z-index: 1000;
 }
 .help-label.sel {
+    background-color: white;
     border: 1px solid #888;
     border-right: 0;
 }
+#help-tabs {
+    width: 550px;
+    height: 450px;
+    transform: translateX(-1px);
+}
 .help-tab {
+    flex-grow: 1;
     display: none;
+    overflow-y: auto;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
     border: 1px solid #888;
-    padding: 5px;
+    padding: 10px;
+    background-color: white;
+    white-space: normal;
 }
 .confirm {
     padding-top: 15px;
@@ -1062,6 +1082,16 @@ th, tr, td, label {
 .table-row {
     flex-direction: row;
     align-items: stretch;
+}
+.nounderline a {
+    text-decoration: none !important;
+    line-height: 2em;
+}
+.nounderline svg {
+    width: 30px !important;
+}
+.mono {
+    font-family: monospace;
 }
 
 #gdpr {

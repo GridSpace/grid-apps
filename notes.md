@@ -2,7 +2,6 @@
 
 ## 2.3 remaining
 * cap path ends
-* help dialog
 * onshape mouse mapping option
 
 ## 2.4

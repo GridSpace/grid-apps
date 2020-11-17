@@ -1,118 +1,165 @@
-<!--
-<div id="help" class="f-row">
+<div id="help" class="f-col a-stretch">
+
+    <div class="title f-row j-center">
+        <label>Kiri:Moto Slicer Help</label>
+        <label id="kiri-version"></label>
+    </div>
+
+    <div class="f-row">
 
     <div id="help-sel" class="f-col">
         <div class="help-label" tab="about">about</div>
-        <div class="help-label" tab="shortcut">shortcuts</div>
+        <div class="help-label" tab="start">starting</div>
+        <div class="help-label" tab="controls">controls</div>
+        <!--
+        <hr width=75%>
+        <div class="help-label" tab="print">3d print</div>
+        <div class="help-label" tab="mill">cnc mill</div>
+        <div class="help-label" tab="laser">laser cut</div>
+        <hr width=75%>
+        -->
+        <div class="help-label" tab="support">support</div>
+        <div class="help-label" tab="project">project</div>
     </div>
 
-    <div id="help-tabs">
-        <div id="help-tab-about" class="help-tab">about</div>
-        <div id="help-tab-shortcut" class="help-tab">shortcuts</div>
-    </div>
-
-</div>
--->
-<div id="help" class="f-row">
-
-    <div id="help-left" class="f-col">
-        <div class="title">Kiri:Moto</div>
-
-        <div class="header">About</div>
-        <div class="content">
-            <p><a href="#" title="Kiri-e is the Japanese art of papercutting"><b>Kiri:Moto</b></a> is an <a href="https://github.com/GridSpace/grid-apps" target="_github">open-source</a> slicer for</p>
-            <p>Laser cutting, 3D printing, CNC milling</p>
-        </div>
-
-        <div class="header">File Loading</div>
-        <div class="content">
-            <p>Drag and drop a <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">file</a> onto the grid</p>
-            <p>or import from your computer</p>
-        </div>
-
-        <div class="header">Integrations</div>
-        <div class="content">
-            <p>Kiri:Moto is also available through</p>
-            <p><a target="_onshape" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description"><b>Onshape</b></a> and
-            <a target="_thingiverse" href="http://www.thingiverse.com/apps/kirimoto/"><b>Thingiverse</b></a> as apps</p>
-        </div>
-
-        <div class="header">Resources</div>
-        <div class="content">
-            <p>Visit the <a target="_fo" href="https://forum.grid.space">forums</a> on Grid.Space</p>
-            <p>Watch a <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24">tutorial</a> on YouTube</p>
-            <p>Read the <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto">Wiki</a> on Github</p>
-            <p>Follow <a target="_tw" href="https://twitter.com/grid_space_3d">Grid.Space</a> on Twitter</p>
-            <p style="text-align:center; font-size:smaller">... also ...</p>
-            <p>Choose another <a target="_help" href="/choose">version</a> of Kiri:Moto</p>
-        </div>
-
-        <div class="grow"></div>
-        <div class="footer">
-            <div id="kiri-version"></div>
-            <div>Please report bugs</div>
-        </div>
-    </div>
-
-    <div id="help-right" class="f-col">
-        <div class="title">Keyboard & Mouse Controls</div>
-
-        <div class="f-row">
-            <table>
-                <tr><td colspan=2 class="header">Mode</td></tr>
-                <tr><td><label>a</label></td><td>Arrange</td></tr>
-                <tr><td><label>s</label></td><td>Slice</td></tr>
-                <tr><td><label>p</label></td><td>Preview</td></tr>
-                <tr><td><label>x</label></td><td>Export</td></tr>
-                <tr><td></td></tr>
-                <tr><td colspan=2 class="header">View</td></tr>
-                <tr><td><label>t</label></td><td>Top</td></tr>
-                <tr><td><label>h</label></td><td>Home</td></tr>
-                <tr><td><label>v</label></td><td>Layer</td></tr>
-                <tr><td><label>shift</label> wheel</td><td>Change Layer</td></tr>
-                <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
-                <tr><td><label>right-drag</label></td><td>Pan</td></tr>
-                <tr><td><label>left-drag</label></td><td>Rotate</td></tr>
-                <tr><td><label>mouse-wheel</label></td><td>Zoom</td></tr>
-                <tr><td><label>middle-drag</label></td><td>Zoom</td></tr>
-                <tr><td><label>z</label></td><td>Reset View</td></tr>
-                <tr><td></td></tr>
-                <tr><td colspan=2 class="header">Help</td></tr>
-                <tr><td><label>?</label></td><td>This Window</td></tr>
-            </table>
-            <table>
-                <tr><td colspan=2 class="header">Config</td></tr>
-                <tr><td><label>e</label></td><td>Device Selection</td></tr>
-                <tr><td><label>o</label></td><td>CAM Tool Selection</td></tr>
-                <tr><td><label>c</label></td><td>Grid Local Devices</td></tr>
-                <tr><td><label>q</label></td><td>Preference panel</td></tr>
-                <tr><td></td></tr>
-                <tr><td colspan=2 class="header">Object</td></tr>
-                <tr><td><label>d</label></td><td>Duplicate</td></tr>
-                <tr><td><label>m</label></td><td>Mirror</td></tr>
-                <tr><td><label>w</label></td><td>Wireframe</td></tr>
-                <tr><td><label>delete</label></td><td>Delete</td></tr>
-                <tr><td><label>arrow</label></td><td>Rotate 90&deg;</td></tr>
-                <tr><td><label>shift-arrow</label></td><td>Rotate 5&deg;</td></tr>
-                <tr><td><label>option-arrow</label></td><td>Move 5mm</td></tr>
-                <tr><td><label>ctrl-click</label></td><td>Align face to bed</td></tr>
-                <tr><td><label>meta-click</label></td><td>of selected object</td></tr>
-                <tr><td><label>ctrl-a</label></td><td>Select all</td></tr>
-                <tr><td></td></tr>
-                <tr><td colspan=2 class="header">File</td></tr>
-                <tr><td><label>i</label></td><td>Import</td></tr>
-                <tr><td><label>r</label></td><td>Recent</td></tr>
-            </table>
-        </div>
-
-        <div class="grow"></div>
-        <div class="footer">
-            <div><b>Kiri:Moto is entirely open source</b>!</div>
-            <div style="display:inline-block">
-                <a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">Donations</a> and
-                <a target="_github" href="https://github.com/GridSpace/grid-apps">Contributions</a> welcome
+    <div id="help-tabs" class="f-grow">
+        <div id="help-tab-about" class="help-tab f-col a-center">
+            <div class="content">
+                <p>
+                    <b>Kiri:Moto</b> is a unique browser-based, fully open source slicer that
+                    turns 3d models into machine instructions for <u>3D printers</u>, <u>CNC mills</u>,
+                    and <u>Laser Cutters</u>.
+                </p><br><p>
+                    Being browser-based means that <i>all</i> processing happens in your local browser,
+                    and not in the cloud. Your data and models stay <i>private</i> to you.
+                </p><br><p>
+                    This means that Kiri behaves just like a native app on your computer with the added
+                    safety of running inside the browser's security sandbox.
+                </p><br><p>
+                    The other benefit of running from the web is that Kiri is always up to date. New
+                    features, bug fixes, and updaets roll out frequently. If you want to run an older
+                    or development version of Kiri, select that version from the user menu on the top right.
+                </p>
             </div>
+            <div class="grow"></div>
+            <i>Kiri comes from Kiri-e which is the Japanese art of papercutting</i>
+            <i>Moto is short for "Modeling Tool"</i>
         </div>
+
+        <div id="help-tab-start" class="help-tab f-col"><div class="content">
+            <b class="header">Quick Start Guide</b>
+            <div class="content">
+                <p>
+                    <li>Use the <button><i class="fas fa-cogs"></i></button> Setup menu to select a <button><i class="fas fa-cube"></i></button> machine</li>
+                    <li><button><i class="fas fa-plus"></i></button> Clone the machine if you want to customize it</li>
+                    <li>Drag and drop an <a href="https://en.wikipedia.org/wiki/STL_(file_format)" target="_stl">STL file</a> onto the grid (turns green)</li>
+                    <li>or use <button><i class="fas fa-folder"></i></button> files <button><i class="fas fa-file-upload"></i></button> import from your computer</li>
+                    <li>use the settings menus (right) to customize slicing parameters</li>
+                    <li><button><i class="fas fa-bars"></i></button> slice objects to see the effect of the parameters</li>
+                    <li><button><i class="fas fa-cubes"></i></button> preview calculates path data from slice objects</li>
+                    <li><button><i class="fas fa-file-download"></i></button> export converts paths to files like GCode and SVG</li>
+                    <li>Explore <button><i class="fas fa-cogs"></i></button> Setup <button><i class="fas fa-sliders-h"></i></button> preferences for app customization</li>
+                </p>
+            </div>
+            <div class="content">
+                <b class="header">Operating Modes</b>
+                <p>Each mode (FDM, CAM, Laser, SLA) has different features and settings.
+                    Explore the Youtube videos to find out more.</p>
+            </div>
+        </div></div>
+
+        <div id="help-tab-print" class="help-tab f-col">about 3d printing</div>
+        <div id="help-tab-mill" class="help-tab f-col">about cnc milling</div>
+        <div id="help-tab-laser" class="help-tab f-col">about laser cutting</div>
+
+        <div id="help-tab-controls" class="help-tab f-col a-center"><div class="content">
+            <b class="header">Keyboard & Mouse Controls</b><br>
+            <div class="f-row">
+                <table>
+                    <tr><td colspan=2 class="header">Mode</td></tr>
+                    <tr><td><label>a</label></td><td>Arrange</td></tr>
+                    <tr><td><label>s</label></td><td>Slice</td></tr>
+                    <tr><td><label>p</label></td><td>Preview</td></tr>
+                    <tr><td><label>x</label></td><td>Export</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header">View</td></tr>
+                    <tr><td><label>t</label></td><td>Top</td></tr>
+                    <tr><td><label>h</label></td><td>Home</td></tr>
+                    <tr><td><label>v</label></td><td>Layer</td></tr>
+                    <tr><td><label>shift</label> wheel</td><td>Change Layer</td></tr>
+                    <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
+                    <tr><td><label>right-drag</label></td><td>Pan</td></tr>
+                    <tr><td><label>left-drag</label></td><td>Rotate</td></tr>
+                    <tr><td><label>mouse-wheel</label></td><td>Zoom</td></tr>
+                    <tr><td><label>middle-drag</label></td><td>Zoom</td></tr>
+                    <tr><td><label>z</label></td><td>Reset View</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header">Help</td></tr>
+                    <tr><td><label>?</label></td><td>This Window</td></tr>
+                </table>
+                <table>
+                    <tr><td colspan=2 class="header">Config</td></tr>
+                    <tr><td><label>e</label></td><td>Device Selection</td></tr>
+                    <tr><td><label>o</label></td><td>CAM Tool Selection</td></tr>
+                    <tr><td><label>c</label></td><td>Grid Local Devices</td></tr>
+                    <tr><td><label>q</label></td><td>Preference panel</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header">Object</td></tr>
+                    <tr><td><label>d</label></td><td>Duplicate</td></tr>
+                    <tr><td><label>m</label></td><td>Mirror</td></tr>
+                    <tr><td><label>w</label></td><td>Wireframe</td></tr>
+                    <tr><td><label>delete</label></td><td>Delete</td></tr>
+                    <tr><td><label>arrow</label></td><td>Rotate 90&deg;</td></tr>
+                    <tr><td><label>shift-arrow</label></td><td>Rotate 5&deg;</td></tr>
+                    <tr><td><label>option-arrow</label></td><td>Move 5mm</td></tr>
+                    <tr><td><label>ctrl-click</label></td><td>Align face to bed</td></tr>
+                    <tr><td><label>meta-click</label></td><td>of selected object</td></tr>
+                    <tr><td><label>ctrl-a</label></td><td>Select all</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header">File</td></tr>
+                    <tr><td><label>i</label></td><td>Import</td></tr>
+                    <tr><td><label>r</label></td><td>Recent</td></tr>
+                </table>
+            </div>
+        </div></div>
+
+        <div id="help-tab-support" class="help-tab f-col"><div class="content">
+            <b class="header">Resources</b>
+            <div class="content nounderline">
+                <a target="_fo" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Grid.Space Discourse forums</a>
+                <a target="_tutor" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24"><i class="fab fa-youtube"></i> Youtube videos and tutorials</a>
+                <a target="_tw" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> Follow Grid.Space on Twitter</a>
+                <a target="_fb" href="https://facebook.com/groups/kirimoto"><i class="fab fa-facebook"></i> Kiri:Moto Users group on Facebook</a>
+                <a target="_help" href="https://wiki.grid.space/wiki/Kiri:Moto"><i class="fab fa-github"></i> Grid.Space Wiki</a>
+            </div>
+            <b class="header">In-App Options</b>
+            <p>
+                Under the <button><i class="fas fa-user-cog"></i></button> user menu on the top right,
+                use the <span class="mono">export</span> option to create a downloadable copy of your device
+                profiles and (optionally) workspace. This file can be used to checkpoint and restore a full
+                snapshot of your setup an any time. It can also be shared so that developers and other users
+                can replicate your environment to help aid in debugging.
+            </p>
+        </div></div>
+
+        <div id="help-tab-project" class="help-tab f-col"><div class="content">
+            <b class="header">Open Source</b>
+            <p>
+                Kiri:Moto is entirely <a href="https://github.com/GridSpace/grid-apps" target="_github">open-source</a>.
+                Check out the Github project page. There are companion projects, both hardware and software.
+                New developers and code contributions are welcome at any time. The code license is MIT.
+            </p><br><p>
+                <a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">Donations</a> are also welcome.
+            </p>
+            <br><b class="header">Integrations</b>
+                <p>Kiri:Moto is also integrated into several other web-based applications</p>
+                <li><a target="app" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description"><b>Onshape</b></a> in the App store</li>
+                <li><a target="app" href="http://www.thingiverse.com/apps/kirimoto/"><b>Thingiverse</b></a> as a native Thing Apps</li>
+                <li><a target="app" href="https://simplyprint.io">SimplyPrint.io</a> as the primary slicer under the covers</li>
+                <li><a target="app" href="https://sienci.com/camlab-help/">CAMLab</a> is a fork of an earlier version of Kiri:Moto</li>
+        </div></div>
+
     </div>
 
+    </div>
 </div>
