@@ -44,7 +44,8 @@
         js2o = API.js2o,
         o2js = API.o2js,
         platform = API.platform,
-        selection = API.selection;
+        selection = API.selection,
+        beta = 2311;
 
     let deviceLock = false,
         selectedTool = null,
@@ -2138,6 +2139,12 @@
         $('app-info').innerText = KIRI.version;
         // show topline separator when iframed
         // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
+
+        // warn users they are running a beta release
+        if (beta && beta > 0 && SDB.kiri_beta != beta) {
+            API.show.alert("this is a beta / development release");
+            SDB.kiri_beta = beta;
+        }
     }
 
     // if a language needs to load, the script is injected and loaded

@@ -30,7 +30,6 @@
 * `F` speculative background preview generation
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
-* `F` show retract/engage in preview
 * `F` manual support addition / control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
@@ -54,7 +53,6 @@
 
 # CAM
 
-* `B` contouring should extend beyond part boundaries by tool radius
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` fix contour up and over thru holes by adding (union) tabs to shadow

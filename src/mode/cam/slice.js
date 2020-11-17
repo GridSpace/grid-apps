@@ -188,7 +188,7 @@
                     const curr = indices[i];
                     const next = indices[i+1];
                     if (!flats.contains(curr) && flats.contains(next)) {
-                        console.log('move',curr,'up toward',prev,'b/c next',next,'is flat');
+                        // console.log('move',curr,'up toward',prev,'b/c next',next,'is flat');
                         indices[i] = next + ((prev - next) / 2);
                     }
                 }
