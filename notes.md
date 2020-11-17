@@ -1,9 +1,9 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* deprecate cam device origin settings
-* gcode render broken when layer hints disabled
 * cap path ends
+* rulers need to follow workspace units
+* gcode render broken when layer hints disabled
 * onshape mouse mapping option
 
 ## 2.4

@@ -178,11 +178,15 @@ function initModule(mod, file, dir) {
             if (!script[code]) {
                 return logger.log(`inject missing target "${code}"`);
             }
-            let opt = options || {};
+            const opt = options || {};
+            const path = `${dir}/${file}`;
             if (opt.end) {
-                script[code].push(dir + "/" + file);
+                script[code].push(path);
             } else {
-                script[code].splice(0, 0, dir + "/" + file);
+                script[code].splice(0, 0, path);
+            }
+            if (opt.nocache) {
+                nocache[path] = true;
             }
         },
         path: {
@@ -358,6 +362,9 @@ const script = {
         "meta"
     ].map(p => `src/${p}.js`)
 };
+
+// prevent caching of specified modules
+const nocache = {};
 
 const db = {
     // --------
@@ -668,9 +675,10 @@ function concatCode(array) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        let code = [ '(function() { let load = [ ' ];
+        const code = [ '(function() { let load = [ ' ];
         direct.forEach(file => {
-            code.push(`"/${file.replace(/\\/g,'/')}?${version}",`);
+            const vers = nocache[file] ? Date.now() : version;
+            code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
         });
         code.push([
             ']; function load_next() {',
