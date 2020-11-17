@@ -3,7 +3,6 @@
 ## 2.3 remaining
 * cap path ends
 * rulers need to follow workspace units
-* gcode render broken when layer hints disabled
 * onshape mouse mapping option
 
 ## 2.4

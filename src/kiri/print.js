@@ -178,8 +178,9 @@
             // non-move in a new plane means burp out
             // the old sequence and start a new one
             if (seq.Z != pos.Z) {
+                const nh = (defh || pos.Z - seq.Z);
                 seq = [];
-                seq.height = height = (defh || pos.Z - seq.Z);
+                seq.height = height = nh;
                 if (fdm) dz = -height / 2;
                 output.push(seq);
             }

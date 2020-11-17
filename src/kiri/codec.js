@@ -15,11 +15,17 @@
         allocFloat32Array: allocFloat32Array
     };
 
-    function allocFloat32Array(len) {
-        if (Array.isArray(len)) {
-            return new Float32Array(len);
+    function allocFloat32Array(arg) {
+        if (arg.byteLength) {
+            // already a float array
+            return arg;
         }
-        return new Float32Array(len);
+        if (Array.isArray(arg)) {
+            // create float array from array
+            return new Float32Array(arg);
+        }
+        // usually a number (size) for array
+        return new Float32Array(arg);
     }
 
     function encode(o, state) {
@@ -138,16 +144,26 @@
         let enc = {
             type: 'render',
             layers: Object.keys(this.layers),
-            data: Object.values(this.layers).map(layer => { return {
-                polys: encode(layer.polys, state),
-                lines: encodePointArray(layer.lines, state),
-                faces: codec.allocFloat32Array(layer.faces),
-                cface: layer.cface,
-                color: layer.color,
-                paths: layer.paths,
-                cpath: layer.cpath,
-                off: layer.off
-            } })
+            data: Object.values(this.layers).map(layer => {
+                const e = {
+                    polys: encode(layer.polys, state),
+                    lines: encodePointArray(layer.lines, state),
+                    faces: codec.allocFloat32Array(layer.faces),
+                    cface: layer.cface,
+                    color: layer.color,
+                    paths: layer.paths.map(lp => {
+                        return {
+                            z: lp.z,
+                            index: lp.index,
+                            faces: codec.allocFloat32Array(lp.faces)
+                        };
+                    }),
+                    cpath: layer.cpath,
+                    off: layer.off
+                };
+                // console.log('-->',e);
+                return e;
+            })
         };
         return enc;
     };
@@ -155,17 +171,39 @@
     registerDecoder('render', function(v, state) {
         let render = new KIRI.Render();
         for (let i=0; i<v.layers.length; i++) {
-            render.layers[v.layers[i]] = {
+            const d = render.layers[v.layers[i]] = {
                 polys: decode(v.data[i].polys, state),
                 cpoly: v.data[i].cpoly,
                 lines: decodePointArray(v.data[i].lines),
-                faces: v.data[i].faces,
+                faces: codec.allocFloat32Array(v.data[i].faces),
                 cface: v.data[i].cface,
                 color: v.data[i].color,
-                paths: v.data[i].paths,
+                paths: v.data[i].paths.map(lp => {
+                    return {
+                        z: lp.z,
+                        index: lp.index,
+                        faces: codec.allocFloat32Array(lp.faces)
+                    };
+                }),
                 cpath: v.data[i].cpath,
                 off: v.data[i].off
             };
+            // fixup null -> Infinity in material counts (JSON stringify sucks)
+            if (d.cface) {
+                d.cface.forEach(rec => {
+                    if (rec.count === null) {
+                        rec.count = Infinity;
+                    }
+                });
+            }
+            if (d.cpoly) {
+                d.cpoly.forEach(rec => {
+                    if (rec.count === null) {
+                        rec.count = Infinity;
+                    }
+                });
+            }
+            // console.log('<--',d);
         }
         return render;
     });

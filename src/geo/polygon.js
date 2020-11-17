@@ -203,7 +203,7 @@
         }
 
         // perform earcut()
-        let cut = earcut(out,holes,3);
+        let cut = self.earcut(out,holes,3);
         let ret = [];
 
         // preserve swaps in new polys
