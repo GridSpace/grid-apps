@@ -268,7 +268,7 @@
             }
 
             const haslines = lines.length || opt.emptyok;
-            const hastops = !opt.genso || retn.tops.length || opt.notopok;
+            const hastops = !opt.genso || opt.notopok || (retn.tops && retn.tops.length);
 
             if (opt.each && haslines && hastops) {
                 opt.each(retn, index, total, UTIL.time() - mark);

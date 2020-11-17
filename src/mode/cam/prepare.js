@@ -258,10 +258,10 @@
                 if ((bigXY || bigZ) && (isMove || midZ)) {
                     let maxz = getZClearPath(
                             terrain,
-                            lastPoint.x,
-                            lastPoint.y,
-                            point.x,
-                            point.y,
+                            lastPoint.x - wmx,
+                            lastPoint.y - wmy,
+                            point.x - wmx,
+                            point.y - wmy,
                             Math.max(point.z, lastPoint.z),
                             zadd,
                             maxToolDiam/2,
