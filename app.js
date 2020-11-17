@@ -185,8 +185,8 @@ function initModule(mod, file, dir) {
             } else {
                 script[code].splice(0, 0, path);
             }
-            if (opt.nocache) {
-                nocache[path] = true;
+            if (opt.cachever) {
+                cachever[path] = opt.cachever;
             }
         },
         path: {
@@ -364,7 +364,7 @@ const script = {
 };
 
 // prevent caching of specified modules
-const nocache = {};
+const cachever = {};
 
 const db = {
     // --------
@@ -677,7 +677,7 @@ function concatCode(array) {
     if (debug) {
         const code = [ '(function() { let load = [ ' ];
         direct.forEach(file => {
-            const vers = nocache[file] ? Date.now() : version;
+            const vers = cachever[file] || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
         });
         code.push([
