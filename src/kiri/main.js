@@ -37,7 +37,7 @@
         newWidget = kiri.newWidget,
         // ---------------
         UI = {},
-        UC = KIRI.ui.prefix('kiri').inputAction(updateSettings).hideAction(updateDialogLeft),
+        UC = KIRI.ui.prefix('kiri').inputAction(updateSettings),
         MODE = MODES.FDM,
         STACKS = KIRI.stacks,
         DRIVER = undefined,
@@ -1885,16 +1885,6 @@
     function showSettings() {
         updateSettingsList();
         showModal("saves");
-    }
-
-    function updateDialogLeft() {
-        return console.log('TODO updateDialogLeft');
-        let left = UI.ctrlLeft.getBoundingClientRect();
-        let right = UI.ctrlRight.getBoundingClientRect();
-        UI.catalog.style.left = (left.width + 5) + 'px';
-        UI.devices.style.left = (left.width + 5) + 'px';
-        UI.tools.style.left = (left.width + 5) + 'px';
-        UI.settings.style.right = (right.width + 5) + 'px';
     }
 
     function showHelp() {

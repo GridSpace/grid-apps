@@ -11,7 +11,6 @@
         lastGroup = null,
         lastDiv = null,
         addTo = null,
-        hideAction = null,
         inputAction = null,
         groups = {},
         groupShow = {},
@@ -35,7 +34,6 @@
 
     KIRI.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
-        hideAction: function(fn) { hideAction = fn; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
         refresh: refresh,
         setMode: setMode,

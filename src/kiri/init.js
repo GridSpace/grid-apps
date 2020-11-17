@@ -308,32 +308,9 @@
         switch (evt.charCode) {
             case cca('`'): API.show.slices(0); break;
             case cca('0'): API.show.slices(API.var.layer_max); break;
-            case cca('1'): // toggle control left
-                if (evt.ctrlKey) {
-                    style = UI.ctrlLeft.style;
-                    style.display = style.display === 'none' ? 'block' : 'none';
-                } else {
-                    API.show.slices(API.var.layer_max/10);
-                }
-                break;
-            case cca('2'): // toggle control right
-                if (evt.ctrlKey) {
-                    style = UI.ctrlRight.style;
-                    style.display = style.display === 'none' ? 'block' : 'none';
-                } else {
-                    API.show.slices(API.var.layer_max*2/10);
-                }
-                break;
-            case cca('3'):
-                if (evt.ctrlKey) {
-                    style = !SPACE.platform.isHidden();
-                    SPACE.platform.setHidden(style);
-                    SPACE.platform.showGrid(!style);
-                    SPACE.update();
-                } else {
-                    API.show.slices(API.var.layer_max*3/10);
-                }
-                break;
+            case cca('1'): API.show.slices(API.var.layer_max/10); break;
+            case cca('2'): API.show.slices(API.var.layer_max*2/10); break;
+            case cca('3'): API.show.slices(API.var.layer_max*3/10); break;
             case cca('4'): API.show.slices(API.var.layer_max*4/10); break;
             case cca('5'): API.show.slices(API.var.layer_max*5/10); break;
             case cca('6'): API.show.slices(API.var.layer_max*6/10); break;
