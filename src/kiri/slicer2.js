@@ -20,6 +20,17 @@
             }
         }
 
+        // notopok = when genso set, allow empty top array
+        // emptyok = allow empty slices
+        // openok = allow open tops
+        // swapX = swap X/Z
+        // swapY = sawp Y/Z
+        // zList = generate list of z vertices
+        // zline = generate list of z vertices with coplanar lines
+        // trace = find z coplanar trace lines
+        // flatoff = amount to offset z when slicing on detected flats
+        // genso = generate a slice object with tops
+        // each = call for each slice generated from an interval
         setOptions(options) {
             Object.assign(this.options, options || {});
             return this.options;
@@ -243,7 +254,7 @@
 
             if (lines.length) {
                 retn.lines = removeDuplicateLines(lines);
-                retn.tops = POLY.nest(connectLines(retn.lines));
+                retn.tops = POLY.nest(connectLines(retn.lines, opt));
 
                 if (opt.swapX || opt.swapY) {
                     this.unswap(opt.swapX, opt.swapY, retn.lines, retn.tops);
@@ -256,11 +267,14 @@
                 }
             }
 
-            if (opt.each && (lines.length || opt.emptyok)) {
+            const haslines = lines.length || opt.emptyok;
+            const hastops = !opt.genso || retn.tops.length || opt.notopok;
+
+            if (opt.each && haslines && hastops) {
                 opt.each(retn, index, total, UTIL.time() - mark);
             }
 
-            return retn;
+            return haslines && hastops ? retn : null;
         }
 
         swap(points, options) {
@@ -466,7 +480,7 @@
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input) {
+    function connectLines(input, opt = {}) {
         // map points to all other points they're connected to
         let DBUG = BASE.debug,
             CONF = BASE.config,
@@ -662,7 +676,9 @@
                 tmp, dist, j;
 
             if (!bridge) {
-                emit(BASE.newPolygon().addPoints(array).setOpen());
+                if (opt.openok) {
+                    emit(BASE.newPolygon().addPoints(array).setOpen());
+                }
                 continue;
             }
 

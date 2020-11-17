@@ -125,8 +125,9 @@
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
             if (false) {
-                sliceAll.push(data.slice);
-                data.slice.output()
+                const slice = data.slice;
+                sliceAll.push(slice);
+                slice.output()
                     .setLayer("debug", {line: 0x888800, thin: true })
                     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
             }
@@ -295,6 +296,7 @@
             let shadow = [];
             let slices = [];
             const indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true });
+            // console.log('indices', ...indices, {zBottom, slicer});
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
                 data.shadow = shadow.clone(true);
@@ -303,6 +305,7 @@
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
                 slices.push(data.slice);
+                // data.slice.xray();
                 // onupdate(0.2 + (index/total) * 0.1, "outlines");
                 updateOp(index, total);
             }, genso: true });
@@ -324,6 +327,10 @@
             slices.forEach(slice => {
                 let tops = slice.shadow;//.clone(true);
                 let offset = POLY.expand(tops, outlineToolDiam / 2, slice.z);
+                if (!(offset && offset.length)) {
+                    return;
+                }
+
                 // when pocket only, drop first outer poly
                 // if it matches the shell and promote inner polys
                 if (procOutlineIn) {
@@ -354,6 +361,7 @@
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
                     offset = addCutoutTabs(offset, slice.z, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
+
                 // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
                 if (true) slice.output()

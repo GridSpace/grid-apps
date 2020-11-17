@@ -1,6 +1,7 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
+* cnc path routing collisions with two or more parts
 * cap path ends
 * onshape mouse mapping option
 
@@ -11,6 +12,7 @@
 * cnc:  step down should interpolate top/bottom again
 * cnc:  adaptive shadow-line generation for small parts collision detection
 * fdm: manual supports, continuous printing
+* onshape: session token timeout bug
 * all: 2d image to 3d part
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix

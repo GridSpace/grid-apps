@@ -186,6 +186,16 @@
         return min;
     };
 
+    PRO.xray = function(dash = 3) {
+        console.log('xray', this);
+        this.output().setLayer(`xp`, 0x888800).addPolys(this.topPolys());
+        this.lines.forEach((line, i) => {
+            const group = i % dash;
+            const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+            this.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
+        });
+    };
+
     function newTop(poly) {
         return new Top(poly);
     }

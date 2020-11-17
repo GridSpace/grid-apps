@@ -466,6 +466,9 @@
      * in FDM mode and uncleared areas in CAM mode.
      */
     function offset(polys, dist, options) {
+        // do not offset open lines
+        polys = polys.filter(p => !p.open);
+
         // cause inner / outer polys to be reversed from each other
         alignWindings(polys);
         polys.forEach(function(poly) {
