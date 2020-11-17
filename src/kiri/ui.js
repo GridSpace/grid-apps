@@ -151,12 +151,13 @@
             updateGroupShow(group);
         });
         letMode = mode;
+        if (nohide) {
+            return;
+        }
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
         });
-        if (!nohide) {
-            hidePoppers();
-        }
+        hidePoppers();
     }
 
     function setExpert(bool) {

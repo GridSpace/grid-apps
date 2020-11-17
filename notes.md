@@ -3,17 +3,27 @@
 ## 2.3 remaining
 * cap path ends
 * rulers need to follow workspace units
+* rough/outline shadow needs to respect flats even when not used as slices
 * onshape mouse mapping option
 
-## 2.4
-* cnc: tracing (chamfer, engrave), milling visualization
-* cnc: auto feature detection (slicing), manual tabs
-* cnc:  add tabs to shadow and slice model (for topo)
-* cnc:  step down should interpolate top/bottom again
-* cnc:  adaptive shadow-line generation for small parts collision detection
-* fdm: manual supports, continuous printing
-* onshape: session token timeout bug
-* all: 2d image to 3d part
+## 2.4 tenative list
+* cnc
+*   tracing (chamfer, engrave)
+*   milling visualization
+*   auto feature detection (slicing), manual tabs
+*   add tabs to shadow and slice model (for topo)
+*   step down should interpolate top/bottom again
+*   adaptive shadow-line generation for small parts collision detection
+* fdm
+*   manual supports
+*   continuous printing (z belt systems)
+* laser
+*   drag knife support
+* onshape
+*   session token timeout bug
+* all
+*   2d image to 3d part
+*   circular fit/layout when no-layout to prevent collisions
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 

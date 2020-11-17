@@ -91,7 +91,6 @@
         let enabled = UI.camStockOn.checked;
         let offset = UI.camStockOffset.checked;
         let stockSet = offset || (proc.camStockX && proc.camStockY && proc.camStockZ > 0);
-        let scale = API.view.unit_scale();
         let topZ = API.platform.top_z();
         let delta = 0;
         let csox = 0;
@@ -100,10 +99,9 @@
 
         // create/inject cam stock if stock size other than default
         if (enabled && stockSet && widgets.length) {
-            // UI.stock.style.display = offset ? 'inline-block' : 'none';
-            let csx = proc.camStockX * scale;
-            let csy = proc.camStockY * scale;
-            let csz = proc.camStockZ * scale;
+            let csx = proc.camStockX;
+            let csy = proc.camStockY;
+            let csz = proc.camStockZ;
             if (offset) {
                 let min = { x: Infinity, y: Infinity, z: 0 };
                 let max = { x: -Infinity, y: -Infinity, z: -Infinity };

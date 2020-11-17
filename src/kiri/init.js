@@ -83,7 +83,7 @@
     }
 
     function unitsSave() {
-        API.conf.update();
+        API.conf.update({controller:true});
         platform.update_size();
     }
 
@@ -1421,7 +1421,7 @@
             alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave, modes:CAM}, "units"),
+            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave, modes:CAM, trace:true}, "units"),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),

@@ -961,7 +961,6 @@
 
      function platformUpdateOrigin() {
          platform.update_bounds();
-         // return;
 
          let dev = settings.device;
          let proc = settings.process;
@@ -978,9 +977,6 @@
          let z = 0;
          if (MODE === MODES.CAM && proc.camOriginTop) {
              z = (topZ + topZD) + 0.01;
-             // if (!hasStock) {
-             //     z += proc.camZTopOffset * unitScale();
-             // }
          }
          if (!center) {
              if (hasStock) {
@@ -1001,7 +997,7 @@
              y = -stockCenter.y;
          }
          settings.origin = {x, y, z};
-         SPACE.platform.setRulers(ruler, ruler, center);
+         SPACE.platform.setRulers(ruler, ruler, center, 1/unitScale());
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
              SPACE.platform.setOrigin(x,y,z);
          } else {
@@ -1051,7 +1047,7 @@
             SPACE.setSkyColor(0xffffff);
             DOC.body.classList.remove('dark');
         }
-        SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter);
+        SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter, 1/unitScale());
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
         SPACE.scene.freeze(frozen);
@@ -1208,7 +1204,9 @@
         platform.select(widget, shift);
         platform.compute_max_z();
         API.event.emit('widget.add', widget);
-        if (nolayout) return;
+        if (nolayout) {
+            return;
+        }
         if (!grouping) {
             platformGroupDone();
         } else if (feature.drop_layout) {
@@ -1452,11 +1450,14 @@
         }
     }
 
-    function updateSettings() {
+    function updateSettings(opt = {}) {
         updateSettingsFromFields(settings.controller);
         switch (settings.controller.units) {
             case 'mm': UC.setUnits(1); break;
             case 'in': UC.setUnits(25.4); break;
+        }
+        if (opt.controller) {
+            return;
         }
         updateSettingsFromFields(settings.device);
         updateSettingsFromFields(settings.process);

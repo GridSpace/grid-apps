@@ -58,6 +58,7 @@
         rulerX = true,
         rulerY = true,
         rulerCenter = true,
+        rulerFactor = 1,
         fontColor = '#333333',
         fontScale = 1.4, // computed relative to grid size
         rulerColor,
@@ -292,14 +293,11 @@
         requestRefresh();
     }
 
-    function setRulers(drawX, drawY, offsetCenter) {
-        if (drawX === undefined) drawX = rulerX;
-        if (drawY === undefined) drawY = rulerY;
-        if (offsetCenter === undefined) offsetCenter = rulerCenter;
-
+    function setRulers(drawX = rulerX, drawY = rulerY, offsetCenter = rulerCenter, factor = rulerFactor) {
         rulerX = drawX;
         rulerY = drawY;
         rulerCenter = offsetCenter;
+        rulerFactor = factor;
 
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
@@ -343,11 +341,11 @@
         }
 
         if (drawX) {
-            let xPadding = labelSize * 4;
-            let canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', rulerColor);
+            const xPadding = labelSize * 4;
+            const canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', rulerColor);
 
             for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
-                let label = (offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i).round(1);
+                const label = ((offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i) * factor).round(1);
                 canvas.ctx.fillText('' + label, i + xPadding / 2, 0);
             }
             canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
@@ -361,12 +359,12 @@
         }
 
         if (drawY) {
-            let yPadding = labelSize;
-            let canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
+            const yPadding = labelSize;
+            const canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
 
             for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
-                let label = (offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
-                    rulerYFirst + rulerYLast - i).round(1);
+                const label = ((offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
+                    rulerYFirst + rulerYLast - i) * factor).round(1);
                 canvas.ctx.fillText('' + label, labelSize * 4, i + yPadding / 2);
             }
             canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
