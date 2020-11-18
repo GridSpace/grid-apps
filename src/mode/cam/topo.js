@@ -59,7 +59,7 @@
                 tabsOn = proc.camTabsOn,
                 tabHeight = proc.camTabsHeight,
                 clipTab = tabsOn ? [] : null,
-                clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter + resolution),
+                clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
                 gridDelta = Math.floor(partOff / resolution),
                 debug = false,

@@ -194,7 +194,10 @@
                 const mark = UTIL.time();
                 const rarr = [];
                 z.forEach((zv,zi) => {
-                    rarr.push(this.slice(zv, opt, zi, z.length, mark));
+                    const data = this.slice(zv, opt, zi, z.length, mark);
+                    if (data) {
+                        rarr.push(data);
+                    }
                 });
                 return rarr;
             }
