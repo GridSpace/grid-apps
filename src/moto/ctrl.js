@@ -62,11 +62,24 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
         BOTTOM: 40
     };
 
-    // Mouse buttons
-    this.mouseButtons = {
+    // default mouse buttons
+    this.mouseDefault = {
         ORBIT: THREE.MOUSE.LEFT,
-        ZOOM: THREE.MOUSE.MIDDLE,
+        // ZOOM: THREE.MOUSE.MIDDLE,
         PAN: THREE.MOUSE.RIGHT
+    };
+
+    // Onshape
+    this.mouseOnshape = {
+        ORBIT: THREE.MOUSE.RIGHT,
+        // ZOOM: THREE.MOUSE.MIDDLE,
+        PAN: THREE.MOUSE.MIDDLE
+    };
+
+    this.mouseButtons = this.mouseDefault;
+
+    this.setMouse = function(bindings) {
+        this.mouseButtons = bindings;
     };
 
     let scope = this,

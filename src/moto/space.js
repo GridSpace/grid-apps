@@ -844,6 +844,13 @@
             save:  function()    { return viewControl.getPosition(true) },
             panTo: function(x,y,z) { tweenCamPan(x,y,z) },
             setZoom: function(r,v) { viewControl.setZoom(r,v) },
+            setCtrl: function(name) {
+                if (name === 'onshape') {
+                    viewControl.setMouse(viewControl.mouseOnshape);
+                } else {
+                    viewControl.setMouse(viewControl.mouseDefault);
+                }
+            },
             getFPS: function() { return fps }
         },
 
