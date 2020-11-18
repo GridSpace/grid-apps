@@ -183,11 +183,11 @@ KIRI.worker = {
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
         const flat = settings.controller.lineType === 'flat' && mode === 'FDM';
         const parsed = print.parseGCode(code, offset, progress => {
-            send.data({ progress: progress * 0.5 });
+            send.data({ progress: progress * 0.25 });
         }, done => {
             const maxSpeed = print.maxSpeed;
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
-                send.data({ progress: 0.5 + progress * 0.5 });
+                send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin, flat, tools });
             send.done({parsed: KIRI.codec.encode(layers), maxSpeed});
         }, { fdm : mode === 'FDM' });

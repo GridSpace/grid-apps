@@ -24,7 +24,8 @@
 
     let lastPoint = null,
         lastEmit = null,
-        lastOut = null;;
+        lastOut = null,
+        lastPos;
 
     KIRI.Print = Print;
 
@@ -122,6 +123,7 @@
 
         let dz = 0,
             abs = true,
+            absE = true,
             defh = 0,
             height = 0,
             factor = 1,
@@ -168,11 +170,16 @@
             // always add moves to the current sequence
             if (moving) {
                 addOutput(seq, point, false, pos.F, tool).retract = retract;
+                lastPos = Object.assign({}, pos);
                 return;
             }
 
             if (seq.Z === undefined) {
                 seq.Z = pos.Z;
+            }
+
+            if (fdm && height === 0) {
+                seq.height = defh = height = pos.Z;
             }
 
             // non-move in a new plane means burp out
@@ -185,8 +192,21 @@
                 output.push(seq);
             }
 
+            // debug extrusion rate
+            if (false && fdm && lastPos) {
+                let dE = (absE ? pos.E - lastPos.E : pos.E);
+                let dV = Math.sqrt(
+                    (Math.pow(pos.X - lastPos.X ,2)) +
+                    (Math.pow(pos.Y - lastPos.Y ,2))
+                );
+                let dR = (dE / dV); // filament per mm
+                if (dR < 0.025) {
+                    console.log(height.round(2), pos.Z.round(2), dV.round(2), dR.round(3));
+                }
+            }
             // add point to current sequence
             addOutput(seq, point, true, pos.F, tool).retract = retract;
+            lastPos = Object.assign({}, pos);
         }
 
         lines.forEach(function(line) {
@@ -209,6 +229,12 @@
             }
             pos.E = 0.0;
             switch (cmd) {
+                case 'M82':
+                    absE = true;
+                    break;
+                case 'M83':
+                    absE = false;
+                    break;
                 case 'G20':
                     factor = 25.4;
                     break;
@@ -222,6 +248,11 @@
                 case 'G91':
                     // relative positioning
                     abs = false;
+                    break;
+                case 'G92':
+                    line.forEach(function(tok) {
+                        pos[tok.charAt(0)] = parseFloat(tok.substring(1));
+                    });
                     break;
                 case 'G0':
                     G0G1(true, line);
@@ -271,6 +302,7 @@
                 return lastOut;
             }
         }
+        // if (emit && emit < 1) console.log(emit);
         lastPoint = point;
         lastEmit = emit;
         lastOut = new Output(point, emit, speed, tool);
@@ -568,7 +600,8 @@
                 // to avoid shaking the printer to death.
                 if (dist <= thinDist && len <= thinDist) {
                     p2 = p1.midPointTo(p2);
-                    addOutput(preout, p2, fill * (dist / thinWall), fillSpeed, extruder);
+                    // addOutput(preout, p2, fill * (dist / thinWall), fillSpeed, extruder);
+                    addOutput(preout, p2, fill, fillSpeed, extruder);
                 } else {
                     // retract if dist trigger or crosses a slice top polygon
                     if (!fast && dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
