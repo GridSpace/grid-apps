@@ -236,10 +236,10 @@ const script = {
         "kiri",
         "ext/three",
         "license",
-        // "ext/clip2",
+        "ext/clip2", // work.test
         "ext/tween",
         "ext/fsave",
-        // "ext/earcut",
+        "ext/earcut", // work.test
         "add/array",
         "add/three",
         "geo/base",

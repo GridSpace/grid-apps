@@ -36,10 +36,12 @@
 
 * `B` fix adaptive slicing. also with multi-extruder
 * `B` fix supports with grouped parts
+* `B` infill follows inside shells
 * `F` speculative background preview generation
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
+* `F` control layer start position
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` feather sharp tips by reducing extrusion in area of overlap

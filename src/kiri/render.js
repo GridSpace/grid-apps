@@ -127,7 +127,13 @@
             polys.forEach(poly => {
                 let exp = off_opt.outs = [];
                 if (poly.isOpen()) {
+                    // shorten line by offset
+                    const pp = poly.points, pl = pp.length;
+                    pp[0] = pp[0].offsetPointTo(pp[1], offset);
+                    pp[pl-1] = pp[pl-1].offsetPointTo(pp[pl-2], offset);
                     exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
+                    // force re-nest if offsets cause ends to join
+                    exp = POLY.flatten(exp,[],true);
                     this.stats.flat_line = 0;
                 } else if (offset) {
                     POLY.offset([poly],  offset * 0.9, off_opt);

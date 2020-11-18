@@ -200,7 +200,7 @@
                     (Math.pow(pos.Y - lastPos.Y ,2))
                 );
                 let dR = (dE / dV); // filament per mm
-                if (dR < 0.025) {
+                if (dR < 0.025 || dR > 0.35) {
                     console.log(height.round(2), pos.Z.round(2), dV.round(2), dR.round(3));
                 }
             }
