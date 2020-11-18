@@ -166,10 +166,11 @@
         if (procRough) {
             nextOp();
             maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
+
+            let flats = [];
             let shadow = [];
             let slices = [];
             let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
-            // add flats
             if (proc.camRoughFlat) {
                 let flats = Object.keys(slicer.zFlat)
                     .map(v => parseFloat(v).round(4))
@@ -193,10 +194,20 @@
                         indices[i] = next + ((prev - next) / 2);
                     }
                 }
+            } else {
+                // add flats to shadow
+                flats = Object.keys(slicer.zFlat)
+                    .map(v => (parseFloat(v) - 0.01).round(5))
+                    .filter(v => v > 0 && indices.indexOf(v) < 0);
+                indices = indices.appendAll(flats).sort((a,b) => b-a);
             }
             // console.log('indices', ...indices, {zBottom});
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                if (flats.indexOf(data.z) >= 0) {
+                    // exclude flats injected to complete shadow
+                    return;
+                }
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = PRO.ROUGH;
                 data.slice.shadow = data.shadow;
@@ -295,10 +306,19 @@
 
             let shadow = [];
             let slices = [];
-            const indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true });
+            let indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true });
+            // add flats to shadow
+            const flats = Object.keys(slicer.zFlat)
+                .map(v => (parseFloat(v) - 0.01).round(5))
+                .filter(v => v > 0 && indices.indexOf(v) < 0);
+            indices = indices.appendAll(flats).sort((a,b) => b-a);
             // console.log('indices', ...indices, {zBottom, slicer});
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                if (flats.indexOf(data.z) >= 0) {
+                    // exclude flats injected to complete shadow
+                    return;
+                }
                 data.shadow = shadow.clone(true);
                 data.slice.camMode = PRO.OUTLINE;
                 data.slice.shadow = data.shadow;
@@ -325,7 +345,7 @@
             }
 
             slices.forEach(slice => {
-                let tops = slice.shadow;//.clone(true);
+                let tops = slice.shadow;
                 let offset = POLY.expand(tops, outlineToolDiam / 2, slice.z);
                 if (!(offset && offset.length)) {
                     return;

@@ -189,6 +189,7 @@
         slice(z, options, index, total, mark) {
             const opt = this.setOptions(options);
 
+            // if Z is supplied as an array, iterate and collect
             if (Array.isArray(z)) {
                 const mark = UTIL.time();
                 const rarr = [];
@@ -207,6 +208,7 @@
                 buckets = this.buckets,
                 bucket = buckets.length ? buckets[Math.floor(z * zScale)] : this.points;
 
+            // compensate by moving z by "flatoff" on flats
             if (onflat) {
                 z += flatoff;
             }

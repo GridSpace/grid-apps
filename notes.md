@@ -2,8 +2,7 @@
 
 ## 2.3 remaining
 * cap path ends
-* rulers need to follow workspace units
-* rough/outline shadow needs to respect flats even when not used as slices
+* fix ruler axis name label
 * onshape mouse mapping option
 
 ## 2.4 tenative list
