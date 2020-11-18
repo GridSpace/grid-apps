@@ -342,18 +342,18 @@
 
         if (drawX) {
             const xPadding = labelSize * 4;
-            const canvas = canvasInMesh(x + xPadding, labelSize, 'center', 'top', rulerColor);
+            const canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor);
 
             for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
                 const label = ((offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i) * factor).round(1);
                 canvas.ctx.fillText('' + label, i + xPadding / 2, 0);
             }
-            canvas.mesh.position.set(0, - h - labelSize / 2 - 5, zp);
+            canvas.mesh.position.set(0, - h - labelSize * 2, zp);
             rulersView.add(canvas.mesh);
 
-            if (axesOn && false) {
+            if (axesOn) {
                 canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
-                canvas.ctx.fillText('X', rulerXFirst, labelSize * (1/8));
+                canvas.ctx.fillText('X', (x + xPadding)/2, labelSize * 1.5);
                 canvas.ctx.font = labelSize + 'px sans-serif';
             }
         }
@@ -370,9 +370,9 @@
             canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
             rulersView.add(canvas.mesh);
 
-            if (axesOn && false) {
+            if (axesOn) {
                 canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
-                canvas.ctx.fillText('Y', labelSize * 3.5, y);
+                canvas.ctx.fillText('Y', labelSize*1.25, (y + yPadding)/2);
                 canvas.ctx.font = labelSize + 'px sans-serif';
             }
         }

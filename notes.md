@@ -1,7 +1,6 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* fix ruler axis name label
 
 ## 2.4 tenative list
 * cnc
