@@ -561,6 +561,9 @@ th, tr, td, label {
     bottom: -20px;
     right: 5px;
 }
+#mod-setup {
+    height: 500px;
+}
 #mod-print {
     background-color: rgba(255,255,255,0.85);
 }

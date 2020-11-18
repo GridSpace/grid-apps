@@ -10,6 +10,7 @@ kiri.lang['en-us'] = {
     // DEVICE dialog groups
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",
+    dv_gr_out:      "output",
     dv_gr_gco:      "gcode",
 
     // DEVICE dialog (_s = label, _l = hover help)
