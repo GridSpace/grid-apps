@@ -1,9 +1,7 @@
 # Kiri:Moto todo
 
 ## 2.3 remaining
-* cap path ends
 * fix ruler axis name label
-* onshape mouse mapping option
 
 ## 2.4 tenative list
 * cnc
@@ -33,6 +31,7 @@
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization
 * `P` client/worker interface normalization and cleanup
+* `C` improve path line caps
 
 # FDM
 

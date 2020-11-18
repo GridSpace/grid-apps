@@ -115,8 +115,9 @@ kiri.lang['en-us'] = {
 
     // OPTIONS
     op_menu:        "interface",
+    op_disp:        "display",
     op_xprt_s:      "expert",
-    op_xprt_l:      "enable expert options",
+    op_xprt_l:      "show more settings options",
     op_hopo_s:      "hover pop",
     op_hopo_l:      "enable menu hover\nto activate",
     op_dark_s:      "dark mode",
@@ -137,8 +138,8 @@ kiri.lang['en-us'] = {
     op_free_l:      "permit dragable layout\nno effect in laser mode",
     op_invr_s:      "invert zoom",
     op_invr_l:      "invert mouse wheel\nscroll zoom",
-    op_thin_s:      "thin lines",
-    op_thin_l:      "faster part visualization\nsacrificing visual quality",
+    op_auto_s:      "auto save",
+    op_auto_l:      "preserve objects in workspace\nbetween application reloads",
     op_line_s:      "line type",
     op_line_l:      "line style for path rendering\nimpacts 3d performance\npath: 3d best\nflat: 2d good\nline = 1d fast",
     op_unit_s:      "units",

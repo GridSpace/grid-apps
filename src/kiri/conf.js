@@ -593,6 +593,7 @@
                 hoverPop: false,
                 zoomSpeed: 1.0,
                 lineType: "path",
+                autoSave: true,
                 reverseZoom: true,
                 showOrigin: false,
                 showRulers: false,

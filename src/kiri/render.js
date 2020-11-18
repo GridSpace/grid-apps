@@ -311,6 +311,23 @@
             }
         }
 
+        if (!contourClosed) {
+            // cheating because we know the profile length is 4 (for now)
+            const p1 = 0 + profile.count * 0;
+            const p2 = 1 + profile.count * 0;
+            const p3 = 2 + profile.count * 0;
+            const p4 = 3 + profile.count * 0;
+            index.push(p1, p2, p3);
+            index.push(p1, p3, p4);
+            const lc = lastCorner;
+            const p5 = 0 + profile.count * lc;
+            const p6 = 1 + profile.count * lc;
+            const p7 = 2 + profile.count * lc;
+            const p8 = 3 + profile.count * lc;
+            index.push(p7, p6, p5);
+            index.push(p8, p7, p5);
+        }
+
         return {index, faces};
     }
 

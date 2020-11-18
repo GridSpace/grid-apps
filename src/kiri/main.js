@@ -54,7 +54,8 @@
         busy = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
-        grouping = false;
+        grouping = false,
+        saveTimer = null;
 
     DBUG.enable();
 
@@ -108,7 +109,7 @@
         set_axes: SPACE.platform.setAxes,
         set_volume: SPACE.platform.setVolume,
         top_z: () => { return topZ },
-        clear: () => { platform.delete(WIDGETS.slice()) }
+        clear: () => { clearWorkspace(); saveWorkspace(true)  }
     };
 
     const color = {
@@ -325,6 +326,16 @@
                 do_reload(250);
             }
         }, time || 100);
+    }
+
+    function auto_save() {
+        if (!settings.controller.autoSave) {
+            return;
+        }
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            API.space.save(true);
+        }, 1000);
     }
 
     /** ******************************************************************
@@ -924,8 +935,8 @@
             w.move(x, y, z, abs);
         });
         API.event.emit('selection.move', {x, y, z, abs});
-        // platform.update_stock();
         SPACE.update();
+        auto_save();
     }
 
     function scaleSelection() {
@@ -940,8 +951,8 @@
             return;
         }
         updateSelectedInfo();
-        // platform.update_stock(true);
         SPACE.update();
+        auto_save();
     }
 
     function rotateSelection(x, y, z) {
@@ -951,8 +962,8 @@
         platform.compute_max_z();
         API.event.emit('selection.rotate', {x, y, z});
         updateSelectedInfo();
-        // platform.update_stock(true);
         SPACE.update();
+        auto_save();
     }
 
     /** ******************************************************************
@@ -1204,6 +1215,7 @@
         platform.select(widget, shift);
         platform.compute_max_z();
         API.event.emit('widget.add', widget);
+        auto_save();
         if (nolayout) {
             return;
         }
@@ -1240,6 +1252,7 @@
         platformUpdateSelected();
         if (feature.drop_layout) platform.layout();
         API.event.emit('widget.delete', widget);
+        auto_save();
     }
 
     function platformSelectAll() {
@@ -1267,6 +1280,7 @@
 
         setViewMode(VIEWS.ARRANGE);
         hideSlices();
+        auto_save();
 
         // only auto-layout when in arrange mode
         if (oldmode !== VIEWS.ARRANGE) {
@@ -1622,7 +1636,7 @@
         // alert2("drag/drop STL files onto platform to import\nreload page to return to last saved state");
     }
 
-    function saveWorkspace() {
+    function saveWorkspace(quiet) {
         API.conf.save();
         let newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
@@ -1643,7 +1657,9 @@
                 }
             })
         }, "ws-save-" ,"ws-savf");
-        alert2("workspace saved", 1);
+        if (!quiet) {
+            alert2("workspace saved", 1);
+        }
     }
 
     function restoreSettings(save) {

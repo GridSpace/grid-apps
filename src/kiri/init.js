@@ -72,7 +72,7 @@
                     CATALOG.putFile("sample cube.stl", vert);
                     platform.compute_max_z();
                     SPACE.view.home();
-                    setTimeout(API.space.save,500);
+                    setTimeout(() => { API.space.save(true) },500);
                     then();
                     API.help.show();
                 });
@@ -129,6 +129,7 @@
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
         control.alignTop = UI.alignTop.checked;
+        control.autoSave = UI.autoSave.checked;
         control.reverseZoom = UI.reverseZoom.checked;
         control.dark = UI.dark.checked;
         control.exportOcto = UI.exportOcto.checked;
@@ -243,27 +244,27 @@
             case 37: // left arrow
                 if (inputHasFocus()) return false;
                 if (deg) API.selection.rotate(0, 0, -deg);
-                if (move > 0) moveSelection(-move, 0, 0);
+                if (move > 0) API.selection.move(-move, 0, 0);
                 evt.preventDefault();
                 break;
             case 39: // right arrow
                 if (inputHasFocus()) return false;
                 if (deg) API.selection.rotate(0, 0, deg);
-                if (move > 0) moveSelection(move, 0, 0);
+                if (move > 0) API.selection.move(move, 0, 0);
                 evt.preventDefault();
                 break;
             case 38: // up arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return API.show.layer(API.var.layer_at+1);
                 if (deg) API.selection.rotate(deg, 0, 0);
-                if (move > 0) moveSelection(0, move, 0);
+                if (move > 0) API.selection.move(0, move, 0);
                 evt.preventDefault();
                 break;
             case 40: // down arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return API.show.layer(API.var.layer_at-1);
                 if (deg) API.selection.rotate(-deg, 0, 0);
-                if (move > 0) moveSelection(0, -move, 0);
+                if (move > 0) API.selection.move(0, -move, 0);
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
@@ -1383,12 +1384,13 @@
             ], {modes:GCODE, class:"ext-buttons f-row"}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
-            expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
+            autoSave:         UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
+            expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
 
-            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen2'), {inline: true}),
+            lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
@@ -1983,6 +1985,7 @@
             UI.autoLayout.checked = control.autoLayout;
             UI.alignTop.checked = control.alignTop;
             UI.reverseZoom.checked = control.reverseZoom;
+            UI.autoSave.checked = control.autoSave;
             UI.decimate.checked = control.decimate;
             lineTypeSave();
             detailSave();

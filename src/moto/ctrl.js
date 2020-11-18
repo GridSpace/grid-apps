@@ -65,14 +65,14 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
     // default mouse buttons
     this.mouseDefault = {
         ORBIT: THREE.MOUSE.LEFT,
-        // ZOOM: THREE.MOUSE.MIDDLE,
+        ZOOM: THREE.MOUSE.MIDDLE,
         PAN: THREE.MOUSE.RIGHT
     };
 
     // Onshape
     this.mouseOnshape = {
         ORBIT: THREE.MOUSE.RIGHT,
-        // ZOOM: THREE.MOUSE.MIDDLE,
+        ZOOM: THREE.MOUSE.LEFT,
         PAN: THREE.MOUSE.MIDDLE
     };
 
