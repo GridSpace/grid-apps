@@ -46,6 +46,7 @@ THREE.Face3.prototype.mVisible = function(show) {
     let $ = function(id) { return document.getElementById(id) },
         // ---------------
         WIN = self,
+        META = self.meta = {},
         DOC = WIN.document,
         LOC = WIN.location,
         BASE = self.base,
@@ -58,7 +59,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         HAS = function(a,b) { return a.hasOwnProperty(b) },
         // ---------------
         POLY = BASE.polygons,
-        Layer = self.kiri.Layer,
         Point = BASE.Point,
         Polygon = BASE.Polygon,
         // ---------------
@@ -264,11 +264,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         selectable = [], // meshes
         selectedBounds = new Bounds(),
         cubeID = 0;
-
-    let debugGroup = new THREE.Group(),
-        debugAdded = false,
-        debugLayer = new Layer(debugGroup),
-        debugExport = false;
 
     /** ******************************************************************
      * LETS_GET_THIS_PARTY_STARTED()
@@ -1543,12 +1538,6 @@ THREE.Face3.prototype.mVisible = function(show) {
             if (!cube.mesh) valid[cube.key] = cube;
         });
 
-        if (debugExport) {
-            debugLayer.clear();
-            if (!debugAdded) SPACE.platform.add(debugAdded = debugGroup)
-            debugGroup.children.slice().forEach(c => debugGroup.remove(c));
-        }
-
         function walk(cube_face, group) {
             let cube = cube_face.cube;
             let face_key = `${cube.key}-${cube_face.key}`;
@@ -1584,7 +1573,7 @@ THREE.Face3.prototype.mVisible = function(show) {
                 }
             });
             if (newgroup) {
-                let debug = debugExport === 'line';
+                let debug = false;
                 let points = [];
                 let map = {};
                 faceGroups.push({map,points});
@@ -1630,15 +1619,6 @@ THREE.Face3.prototype.mVisible = function(show) {
                         if (!op2.p) op2.p = [op1]; else op2.p.push(op1);
                         points.push(op1);
                         points.push(op2);
-                        // debug resulting polygon
-                        if (debugExport === 'line') {
-                            debugLayer.poly(new Polygon()
-                                .add(p1.x,p1.y,p1.z)
-                                .add(p2.x,p2.y,p2.z),
-                                0x0000ff, true);
-                            debugLayer.render();
-                            SPACE.refresh();
-                        }
                     });
                 });
             }
@@ -1723,12 +1703,6 @@ THREE.Face3.prototype.mVisible = function(show) {
                 let poly = new Polygon();
                 out.forEach(p => poly.add(p.x,p.y,p.z));
 
-                // debug resulting polygon
-                if (debugExport === 'poly') {
-                    debugLayer.poly(poly.clone(), 0x0000ff, true);
-                    debugLayer.render(); SPACE.refresh();
-                }
-
                 set.push(poly.ensureXY());
             }
 
@@ -1736,12 +1710,6 @@ THREE.Face3.prototype.mVisible = function(show) {
         });
 
         let cuts = polys.flat().map(p => p.earcut()).flat().map(p => p.restoreXY());
-
-        // debug resulting cuts
-        if (debugExport === 'cut') {
-            cuts.forEach(p => debugLayer.poly(p, 0xff0000, true));
-            debugLayer.render(); SPACE.refresh();
-        }
 
         // exports cut polys back to vertices
         cuts.forEach(poly => {
