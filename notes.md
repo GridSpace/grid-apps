@@ -1,8 +1,6 @@
 # Kiri:Moto todo
 
-## 2.3 remaining
-
-## 2.4 tenative list
+## 2.4 tentative list
 * cnc
 *   tracing (chamfer, engrave)
 *   milling visualization
@@ -37,7 +35,8 @@
 * `B` fix adaptive slicing. also with multi-extruder
 * `B` fix supports with grouped parts
 * `B` infill follows inside shells
-* `F` speculative background preview generation
+* `B` multi-extruder rendering of raft fails to offset the rest of the print
+* `B` multi-extruder purge blocks fail to generate properly for rafts
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
 * `F` manual support addition / control
@@ -46,15 +45,13 @@
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` first layer segment large flat areas for better fill reliability
-* `F` enable purge block when quick layers are detected
+* `F` enable purge blocks when quick layers are detected
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats
 * `F` first layer support speed should be same as shell speed
-* `F` determine start point from gcode preamble
 * `F` trim support offset from layer below
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
-* `P` segment large polygons for extremely large parts / infill
 * `P` implement infill clipping in wasm
 
 # SLA
@@ -66,8 +63,6 @@
 
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
-* `B` fix contour up and over thru holes by adding (union) tabs to shadow
-* `F` adaptive shadow-line generation for small parts collision detection
 * `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
