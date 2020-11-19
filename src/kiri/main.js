@@ -878,6 +878,7 @@
         setViewMode(VIEWS.PREVIEW);
         setOpacity(0);
 
+        API.event.emit("code.load", {code, type});
         KIRI.client.parse({code, type, settings}, progress => {
             API.show.progress(progress, "parsing");
         }, (layers, maxSpeed) => {
@@ -889,6 +890,7 @@
             updateSpeeds(maxSpeed);
             showSlices();
             SPACE.update();
+            API.event.emit("code.loaded", {code, type});
         });
     }
 
