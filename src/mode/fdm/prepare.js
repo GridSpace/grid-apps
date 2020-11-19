@@ -137,7 +137,12 @@
 
                 // expand specified # of brims
                 brims.forEach(function(brim) {
-                    POLY.offset([brim], nozzle, {outs: polys, flat: true, count: process.outputBrimCount});
+                    POLY.offset([brim], nozzle, {
+                        outs: polys,
+                        flat: true,
+                        count: process.outputBrimCount,
+                        z: firstLayerHeight / 2
+                    });
                 });
 
                 // output brim points
