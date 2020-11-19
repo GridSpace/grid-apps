@@ -699,11 +699,15 @@
             if (options.title) row.setAttribute("title", options.title);
             if (options.action) action = options.action;
         }
+        ip.setVisible = row.setVisible;
         ip.onchange = function() {
             action();
         };
-        ip.setVisible = row.setVisible;
         ip.onclick = (ev) => {
+            groupSticky = true;
+        };
+        // because firefox
+        ip.onmouseenter = (ev) => {
             groupSticky = true;
         };
 

@@ -78,6 +78,9 @@ input[type=range]::-moz-focus-outer {
 select, textarea, button, input, a {
     outline: none;
 }
+textarea {
+    overflow: scroll;
+}
 select {
     border: 1px solid #bbb;
     background-color: rgba(255,255,255,0.5);
@@ -164,14 +167,14 @@ th, tr, td, label {
 }
 
 :-moz-any() {
- overflow-x: hidden !important;
- overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
 }
 :-moz-any() {
- overflow-x: scroll !important;
- overflow-y: scroll !important;
- margin-right: -14px !important;
- margin-bottom: -14px !important;
+    overflow-x: scroll !important;
+    overflow-y: scroll !important;
+    margin-right: -14px !important;
+    margin-bottom: -14px !important;
 }
 
 #curtain {
@@ -656,6 +659,11 @@ th, tr, td, label {
 #help a {
     font-weight: bold;
     text-decoration: underline;
+}
+@supports (-moz-appearance:none) {
+    #help li {
+        margin-left: 20px;
+    }
 }
 #help .header {
     background-color: rgba(0,0,0,0.1);
