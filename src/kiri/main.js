@@ -1985,7 +1985,8 @@
         viewMode = mode;
         platform.deselect();
         updateSelectedInfo();
-        // updateStockVisibility();
+        // disable clear in non-arrange modes
+        $('view-clear').style.display = mode === VIEWS.ARRANGE ? '' : 'none';
         switch (mode) {
             case VIEWS.ARRANGE:
                 complete = {};
