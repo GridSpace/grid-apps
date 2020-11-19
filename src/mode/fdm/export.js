@@ -145,7 +145,15 @@
                     }
                 });
             }
-            appendSub(line);
+            if (line.indexOf("{tool}") > 0 && extruders.length > 1) {
+                for (let i=0; i<extruders.length; i++) {
+                    subst.tool = i;
+                    appendSub(line);
+                }
+                subst.tool = 0;
+            } else {
+                appendSub(line);
+            }
         }
 
         function dwell(ms) {

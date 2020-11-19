@@ -664,6 +664,9 @@ th, tr, td, label {
     #help li {
         margin-left: 20px;
     }
+    .content br {
+        margin: 10px;
+    }
 }
 #help .header {
     background-color: rgba(0,0,0,0.1);
