@@ -76,7 +76,7 @@
      * @returns {Polygon[]} array of top polygons
      */
     Top.prototype.shellsAtDepth = function(depth) {
-        return this.shells.filter(poly => poly.depth === depth);
+        return this.shells ? this.shells.filter(poly => poly.depth === depth) : [];
     };
 
     /** ******************************************************************
