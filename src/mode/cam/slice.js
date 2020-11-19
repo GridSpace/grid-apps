@@ -34,6 +34,7 @@
             drillToolDiam = drillTool.fluteDiameter(),
             procFacing = proc.camRoughOn && proc.camZTopOffset && hasStock,
             procRough = proc.camRoughOn && proc.camRoughDown,
+            procRoughIn = proc.camRoughIn,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOn = proc.camOutlineOn,
             procOutlineWide = proc.camOutlineWide,
@@ -146,7 +147,7 @@
         // create facing slices
         if (procFacing || proc.camRoughFlat) {
             let shadow = shadowTop.tops.clone();
-            let inset = POLY.offset(shadow, (roughToolDiam / 4));
+            let inset = POLY.offset(shadow, (roughToolDiam / (procRoughIn ? 2 : 1)));
             let facing = POLY.offset(inset, -(roughToolDiam * proc.camRoughOver), { count: 999, flat: true });
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
@@ -241,10 +242,8 @@
             });
             shadow = POLY.nest(shadow);
 
-            const insideOnly = proc.camRoughIn;
-
             // expand shadow by half tool diameter + stock to leave
-            const sadd = insideOnly ? roughToolDiam / 4 : roughToolDiam / 2;
+            const sadd = procRoughIn ? roughToolDiam / 4 : roughToolDiam / 2;
             const shell = POLY.offset(shadow, sadd + camRoughStock);
 
             nextOp();
@@ -270,7 +269,7 @@
                 }) || [];
 
                 // add outside pass if not inside only
-                if (!insideOnly) {
+                if (!procRoughIn) {
                     const outside = POLY.offset(shadow.clone(), roughToolDiam * proc.camRoughOver, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
