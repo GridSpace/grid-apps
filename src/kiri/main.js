@@ -933,7 +933,8 @@
     }
 
     function moveSelection(x, y, z, abs) {
-        setViewMode(VIEWS.ARRANGE);
+        if (viewMode !== VIEWS.ARRANGE) return;
+        // setViewMode(VIEWS.ARRANGE);
         forSelectedGroups(function (w) {
             w.move(x, y, z, abs);
         });
@@ -943,7 +944,8 @@
     }
 
     function scaleSelection() {
-        setViewMode(VIEWS.ARRANGE);
+        if (viewMode !== VIEWS.ARRANGE) return;
+        // setViewMode(VIEWS.ARRANGE);
         let args = arguments;
         forSelectedGroups(function (w) {
             w.scale(...args);
@@ -960,7 +962,8 @@
     }
 
     function rotateSelection(x, y, z) {
-        setViewMode(VIEWS.ARRANGE);
+        if (viewMode !== VIEWS.ARRANGE) return;
+        // setViewMode(VIEWS.ARRANGE);
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
         });
