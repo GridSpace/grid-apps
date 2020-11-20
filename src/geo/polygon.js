@@ -868,6 +868,8 @@
             let int = UTIL.intersect(lp1, lp2, pp1, pp2, BASE.key.SEGINT, false);
             if (int) {
                 list.push(int);
+                // console.log('pp1.pos',pp1.pos,'to',ip1);
+                // console.log('pp2.pos',pp2.pos,'to',ip2);
                 pp1.pos = ip1;
                 pp2.pos = ip2;
             }
@@ -907,13 +909,18 @@
         let poly = newPolygon(),
             start = i1.p2.pos,
             end = i2.p1.pos;
+        // console.log({emitSeg: this, i1, i2, start, end});
         poly.setOpen();
         poly.push(i1);
         this.forEachPoint(function(p, pos) {
             poly.push(p);
-            if (p === i2.p1) return true;
+            if (p === i2.p1) {
+                // console.log('hit end point @', pos);
+                return true;
+            }
         }, true, start);
         poly.push(i2);
+        // console.log({emit: poly});
         return poly;
     };
 

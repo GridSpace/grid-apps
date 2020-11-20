@@ -274,7 +274,7 @@
                     if (outside) {
                         offset.appendAll(outside);
                         if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                            offset = addCutoutTabs(offset, slice.z, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                            offset = addCutoutTabs(offset, slice.z, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle, slice);
                         }
                     }
                 }
@@ -533,7 +533,7 @@
     }
 
     // cut outside traces at the right points
-    function addCutoutTabs(polys, z, toolDiam, tabWidth, tabCount, tabAngle) {
+    function addCutoutTabs(polys, z, toolDiam, tabWidth, tabCount, tabAngle, slice) {
         // skip if no tops | traces
         if (polys.length === 0) return polys;
 
@@ -553,16 +553,28 @@
                 if (int1 && int2) {
                     ints.push(int1);
                     ints.push(int2);
+                    // slice.output().setLayer('int',0xff0000).addLine(int1, int2);
                 }
             });
 
             let segs = [];
             if (ints.length) {
                 ints.push(ints.shift());
+                // let cv = 0;
                 for (let i=0; i<ints.length; i+=2) {
-                    segs.push(trace.emitSegment(ints[i], ints[i+1]));
+                    const seg = trace.emitSegment(ints[i], ints[i+1]);
+                    // const col = [0x0000ff,0x009900,0x999900];
+                    // seg.setZ(seg.getZ()+i);
+                    // seg.points.forEach((p,i) => p.z += (i*0.01));
+                    // slice.output().setLayer(`seg${i}`,col[cv++]).addPoly(seg);
+                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(seg.first(),1,5));
+                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(seg.last(),1,4));
+                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(trace.first(),2,5));
+                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(trace.last(),2,4));
+                    segs.push(seg);
                 }
                 // check for and eliminate overlaps
+                if (false)
                 for (let i=0, il=segs.length; i < il; i++) {
                     let si = segs[i];
                     for (let j=i+1; j<il; j++) {
