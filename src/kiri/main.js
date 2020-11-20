@@ -1497,8 +1497,8 @@
         if (view.left || view.up) {
             settings.controller.view = view;
         }
-        const mode = settings.mode, name = settings.process.processName;
-        settings.sproc[mode][name] = settings.process;
+        const mode = settings.mode;
+        settings.sproc[mode].default = settings.process;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
@@ -1833,7 +1833,7 @@
 
     function loadSettings(e, named) {
         let mode = getMode(),
-            name = e ? e.target.getAttribute("load") : named || settings.cproc[mode],
+            name = e ? e.target.getAttribute("load") : named || "default",
             load = settings.sproc[mode][name];
 
         if (!load) return;
@@ -1842,11 +1842,12 @@
         settings.process = clone(load);
         // update process name
         settings.process.processName = name;
-        // set currenet process name for this mode
-        settings.cproc[mode] = name;
         // save named process with the current device
         settings.devproc[currentDeviceName()] = name;
-
+        // preserve name of last library loaded
+        if (name !== 'default') {
+            settings.cproc[mode] = name;
+        }
         // allow mode driver to take any necessary actions
         API.event.emit("settings.load", settings);
 
@@ -1871,7 +1872,7 @@
         for (let k in sp) {
             if (sp.hasOwnProperty(k)) list.push(k);
         }
-        list.sort().forEach(function(sk) {
+        list.filter(n => n !=='default').sort().forEach(function(sk) {
             let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
                 edit = DOC.createElement('button'),
@@ -1882,6 +1883,7 @@
             load.onclick = (ev) => {
                 API.conf.load(undefined, sk);
                 updateSettingsList();
+                hideModal();
             }
             load.appendChild(DOC.createTextNode(sk));
             if (sk == settings.process.processName) {
@@ -1890,12 +1892,12 @@
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");
+            del.innerHTML = '<i class="far fa-trash-alt"></i>';
             del.onclick = deleteSettings;
-            del.appendChild(DOC.createTextNode('x'));
 
-            edit.innerHTML = '&uarr;';
             edit.setAttribute('name', sk);
             edit.setAttribute('title', 'edit');
+            edit.innerHTML = '<i class="far fa-edit"></i>';
             edit.onclick = editSettings;
 
             row.setAttribute("class", "flow-row");

@@ -554,9 +554,10 @@
             s = settings(),
             def = "default",
             cp = s.process,
-            pl = s.sproc[mode];
+            pl = s.sproc[mode],
+            lp = s.cproc[mode];
 
-        UC.prompt("Save Settings As", cp ? cp.processName || def : def).then(name => {
+        UC.prompt("Save Settings As", cp ? lp || def : def).then(name => {
             if (name) {
                 let np = pl[name] = {};
                 cp.processName = name;
@@ -564,7 +565,6 @@
                     if (!cp.hasOwnProperty(k)) continue;
                     np[k] = cp[k];
                 }
-                s.cproc[mode] = name;
                 s.devproc[s.device.deviceName] = name;
                 API.conf.save();
                 API.conf.update();
@@ -1140,7 +1140,7 @@
 
             renm.setAttribute('class', 'rename');
             renm.setAttribute('title', 'rename file');
-            renm.appendChild(DOC.createTextNode('n'));
+            renm.innerHTML = '<i class="far fa-edit"></i>';
             renm.onclick = () => {
                 let newname = prompt(`rename file`, short);
                 if (newname && newname !== short) {
@@ -1158,7 +1158,7 @@
             del.setAttribute('del', name);
             del.setAttribute('title', "remove '"+name+"'");
             del.onclick = deleteCatalogFile;
-            del.appendChild(DOC.createTextNode('x'));
+            del.innerHTML = '<i class="far fa-trash-alt"></i>';
 
             size.setAttribute("disabled", true);
             size.setAttribute("class", "label");

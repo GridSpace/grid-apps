@@ -62,14 +62,15 @@ function init(mod) {
 
     mod.on.reload(() => level.close());
     mod.on.test((req) => {
-        let vmatch = mod.meta.version || undefined;
-        let strict = (vmatch && mod.vmatch !== "*") ? true : false;
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
-        if (strict) {
-            return cookie === mod.meta.version;
-        } else {
-            return (!vmatch && !cookie) || (vmatch && cookie);
+        let vmatch = mod.meta.version || "*";
+        if (!Array.isArray(vmatch)) {
+            vmatch = [ vmatch ];
         }
+        if (vmatch.indexOf("*") >= 0) {
+            return true;
+        }
+        return vmatch.indexOf(cookie) >= 0;
     });
 
     mod.add(handleOptions);
