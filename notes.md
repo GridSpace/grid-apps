@@ -1,5 +1,9 @@
 # Kiri:Moto todo
 
+## 2.3 remain
+* objets beyond bounds break drag/move
+* fdm shell order
+
 ## 2.4 tentative list
 * cnc
 *   tracing (chamfer, engrave)
