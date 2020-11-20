@@ -1911,11 +1911,7 @@
                     if (bound.max.x + delta.x >= width) return;
                     if (bound.max.y + delta.y >= depth) return;
                 }
-                API.selection.for_widgets(function(widget) {
-                    widget.move(delta.x, delta.y, 0);
-                    API.event.emit('widget.move', {widget, delta});
-                });
-                API.selection.update_bounds();
+                API.selection.move(delta.x, delta.y, 0);
                 API.event.emit('selection.drag', delta);
             } else {
                 return API.selection.meshes().length > 0;

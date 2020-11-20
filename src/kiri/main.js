@@ -82,8 +82,7 @@
         widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
-        for_widgets: forSelectedWidgets,
-        update_bounds: updateSelectedBounds
+        for_widgets: forSelectedWidgets
     };
 
     const platform = {
@@ -951,10 +950,10 @@
 
     function moveSelection(x, y, z, abs) {
         if (viewMode !== VIEWS.ARRANGE) return;
-        // setViewMode(VIEWS.ARRANGE);
         forSelectedGroups(function (w) {
             w.move(x, y, z, abs);
         });
+        updateSelectedBounds();
         API.event.emit('selection.move', {x, y, z, abs});
         SPACE.update();
         auto_save();
@@ -962,12 +961,12 @@
 
     function scaleSelection() {
         if (viewMode !== VIEWS.ARRANGE) return;
-        // setViewMode(VIEWS.ARRANGE);
         let args = arguments;
         forSelectedGroups(function (w) {
             w.scale(...args);
         });
         platform.compute_max_z();
+        updateSelectedBounds();
         API.event.emit('selection.scale', [...arguments]);
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
@@ -980,10 +979,10 @@
 
     function rotateSelection(x, y, z) {
         if (viewMode !== VIEWS.ARRANGE) return;
-        // setViewMode(VIEWS.ARRANGE);
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
         });
+        updateSelectedBounds();
         platform.compute_max_z();
         API.event.emit('selection.rotate', {x, y, z});
         updateSelectedInfo();
