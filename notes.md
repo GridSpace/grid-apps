@@ -63,6 +63,7 @@
 
 # CAM
 
+* `B` prevent z delta cuts when not contouring
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` top clearing operations should use linear, not offset, passes
