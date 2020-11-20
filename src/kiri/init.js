@@ -1896,18 +1896,26 @@
             if (delta && UI.freeLayout.checked) {
                 let set = settings();
                 let dev = set.device;
-                let bound = set.bounds;
+                let bound = set.bounds_sel;
                 let width = dev.bedWidth/2;
                 let depth = dev.bedDepth/2;
-                if (bound.min.x + delta.x <= -width) return;
-                if (bound.min.y + delta.y <= -depth) return;
-                if (bound.max.x + delta.x >= width) return;
-                if (bound.max.y + delta.y >= depth) return;
+                let isout = (
+                    bound.min.x <= -width ||
+                    bound.min.y <= -depth ||
+                    bound.max.x >= width ||
+                    bound.max.y >= depth
+                );
+                if (!isout) {
+                    if (bound.min.x + delta.x <= -width) return;
+                    if (bound.min.y + delta.y <= -depth) return;
+                    if (bound.max.x + delta.x >= width) return;
+                    if (bound.max.y + delta.y >= depth) return;
+                }
                 API.selection.for_widgets(function(widget) {
                     widget.move(delta.x, delta.y, 0);
                     API.event.emit('widget.move', {widget, delta});
                 });
-                // platform.update_stock();
+                API.selection.update_bounds();
                 API.event.emit('selection.drag', delta);
             } else {
                 return API.selection.meshes().length > 0;

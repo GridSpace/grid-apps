@@ -82,7 +82,8 @@
         widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
-        for_widgets: forSelectedWidgets
+        for_widgets: forSelectedWidgets,
+        update_bounds: updateSelectedBounds
     };
 
     const platform = {
@@ -925,6 +926,22 @@
         UI.scaleX.value = UI.scaleX.was = track.scale.x;
         UI.scaleY.value = UI.scaleY.was = track.scale.y;
         UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
+        updateSelectedBounds();
+    }
+
+    function updateSelectedBounds() {
+        // update bounds on selection for drag limiting
+        let bounds_sel = new THREE.Box3();
+        forSelectedWidgets(function(widget) {
+            let wp = widget.track.pos;
+            let wb = widget.mesh.getBoundingBox().clone();
+            wb.min.x += wp.x;
+            wb.max.x += wp.x;
+            wb.min.y += wp.y;
+            wb.max.y += wp.y;
+            bounds_sel.union(wb);
+        });
+        settings.bounds_sel = bounds_sel;
     }
 
     function setOpacity(value) {

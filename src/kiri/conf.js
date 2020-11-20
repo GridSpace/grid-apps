@@ -504,8 +504,8 @@
         },
         // --------------- settings template
         template: {
-            // CAM only
             bounds: {},
+            // CAM only
             origin: {},
             stock: {},
             tools:[
