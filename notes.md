@@ -34,7 +34,7 @@
 
 * `B` fix adaptive slicing. also with multi-extruder
 * `B` fix supports with grouped parts
-* `B` infill follows inside shells
+* `B` sparse infill should follow polys it intersects
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 * `F` control for size of purge block (with 0=disabled)

@@ -484,7 +484,7 @@
                         if (itop) {
                             retract();
                             emit = 0;
-                        } else if (rdst) {
+                        } else if (dist > nozzleSize) {
                             emit = 0;
                         }
                     }
