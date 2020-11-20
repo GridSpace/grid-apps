@@ -1605,7 +1605,7 @@
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
-                isset = lower.indexOf(".b64") > 0;
+                isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
                 if (israw) platform.add(

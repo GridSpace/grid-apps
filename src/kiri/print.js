@@ -475,11 +475,21 @@
                     poly.reverse();
                 }
                 poly.forEachPoint(function(p, i) {
+                    let dist = lp.distTo2D(p);
+                    let rdst = dist > retractDist;
+                    let itop = rdst && intersectsTop(lp,p);
+                    let emit = extrude;
                     // retract if dist trigger and crosses a slice top polygon
-                    if (i === 0 && lp && lp.distTo2D(p) > retractDist && intersectsTop(lp,p)) {
-                        retract();
+                    if (i === 0) {
+                        if (itop) {
+                            retract();
+                            emit = 0;
+                        } else if (rdst) {
+                            emit = 0;
+                        }
                     }
-                    addOutput(preout, p, i === 0 ? 0 : extrude, speed || printSpeed, extruder);
+                    // let emit = i === 0 ? 0 : extrude;
+                    addOutput(preout, p, emit, speed || printSpeed, extruder);
                     lp = p;
                 });
                 return lp;

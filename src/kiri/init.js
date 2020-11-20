@@ -503,7 +503,7 @@
     }
 
     function deviceExport(exp, name) {
-        name = (name || "kiridev")
+        name = (name || "device")
             .toLowerCase()
             .replace(/ /g,'_')
             .replace(/\./g,'_');
@@ -511,7 +511,7 @@
             if (name) {
                 let blob = new Blob([exp], {type: "octet/stream"}),
                     url = WIN.URL.createObjectURL(blob);
-                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.b64">x</a>`;
+                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.km">x</a>`;
                 $('sexport').click();
             }
         });
@@ -529,14 +529,14 @@
             "  </div>",
             "</div>"
         ]};
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "km_conf", opt).then(name => {
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "profile", opt).then(name => {
             if (name) {
                 let work = $('incwork').checked,
                     json = API.conf.export({work}),
                     blob = new Blob([json], {type: "octet/stream"}),
                     url = WIN.URL.createObjectURL(blob);
                 $('mod-any').innerHTML = [
-                    `<a id="sexport" href="${url}" download="${name}.b64">x</a>`
+                    `<a id="sexport" href="${url}" download="${name}.km">x</a>`
                 ].join('');
                 $('sexport').click();
             }
