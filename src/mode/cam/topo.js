@@ -9,8 +9,10 @@
         CAM = KIRI.driver.CAM,
         PRO = CAM.process,
         POLY = BASE.polygons,
+        RAD2DEG = 180 / Math.PI,
         newSlice = KIRI.newSlice,
         newLine = BASE.newLine,
+        newSlope = BASE.newSlope,
         newPoint = BASE.newPoint,
         newPolygon = BASE.newPolygon,
         noop = function() {};
@@ -144,6 +146,17 @@
                     if (latent) {
                         newtrace.push(latent);
                         latent = null;
+                    }
+                    if (curvesOnly && lastP) {
+                        // maxangle
+                        const dz = Math.abs(lastP.z - z);
+                        const dxy = Math.max(Math.abs(lastP.x - x), Math.abs(lastP.y - y));
+                        const angle = Math.atan2(dz, dxy) * RAD2DEG;
+                        // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
+                        if (angle > maxangle) {
+                            lastP = newP;
+                            return;
+                        }
                     }
                     newtrace.push(newP);
                 }
