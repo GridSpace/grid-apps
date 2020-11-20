@@ -145,13 +145,13 @@
         thruHoles = tshadow.map(p => p.inner || []).flat();
 
         // create facing slices
-        if (procFacing || proc.camRoughFlat) {
+        if (procFacing || proc.camRoughTop) {
             let shadow = shadowTop.tops.clone();
             let inset = POLY.offset(shadow, (roughToolDiam / (procRoughIn ? 2 : 1)));
             let facing = POLY.offset(inset, -(roughToolDiam * proc.camRoughOver), { count: 999, flat: true });
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
-            if (proc.camRoughFlat && ztOff === 0) {
+            if (proc.camRoughTop && ztOff === 0) {
                 // compensate for lack of z top offset in this scenario
                 ztOff = zstep;
             }

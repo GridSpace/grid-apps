@@ -276,6 +276,8 @@ kiri.lang['en-us'] = {
     cr_lsto_l:      "horizontal offset from vertical faces\nstock to leave for finishing pass\nin workspace units",
     cr_ease_s:      "ease down",
     cr_ease_l:      "plunge cuts will\nspiral down or ease\nalong a linear path",
+    cr_clrt_s:      "clear top",
+    cr_clrt_l:      "run a clearing pass over\nthe bounding area of the part\nat z = 0",
     cr_clrp_s:      "clear voids",
     cr_clrp_l:      "mill out through pockets\ninstead of just the outline",
     cr_clrf_s:      "clear faces",
