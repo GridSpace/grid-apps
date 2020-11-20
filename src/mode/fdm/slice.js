@@ -134,9 +134,12 @@
         // } });
         // onSliceDone(slices);
 
+        const sliceMinHeight = spro.sliceAdaptive && spro.sliceMinHeight > 0 ?
+            Math.min(spro.sliceMinHeight, sliceHeight) : 0;
+
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
-            minHeight: sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
+            minHeight: sliceMinHeight,
             firstHeight: spro.firstSliceHeight,
             // debug: true,
             // xray: 3,

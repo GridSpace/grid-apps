@@ -325,6 +325,7 @@
                     outputInvertY: false,
                     detectThinWalls: false,
                     sliceMinHeight: 0,
+                    sliceAdaptive: false,
                     zHopDistance: 0.2,
                     antiBacklash: 1,
                     gcodePause: "",

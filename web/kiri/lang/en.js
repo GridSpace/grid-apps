@@ -183,6 +183,8 @@ kiri.lang['en-us'] = {
     sl_menu:        "slicing",
     sl_lahi_s:      "layer height",
     sl_lahi_l:      "height of each slice\nlayer in millimeters",
+    ad_minl_s:      "layer min",
+    ad_minl_l:      "adaptive min layer height\nin millimeters\nmust be non-zero",
     sl_shel_s:      "shell count",
     sl_shel_l:      "number of perimeter\nwalls to generate",
     sl_ltop_s:      "top layers",
@@ -191,6 +193,10 @@ kiri.lang['en-us'] = {
     sl_lsld_l:      "solid fill areas computed\nfrom layer deltas. see\nlayer pop menu",
     sl_lbot_s:      "base layers",
     sl_lbot_l:      "number of solid layers\nto enforce at the\nbottom of the print",
+    ad_thin_s:      "thin walls",
+    ad_thin_l:      "detect and fill gaps\nbetween shell walls",
+    ad_adap_s:      "adaptive",
+    ad_adap_l:      "use adaptive layer heights\nwith 'layer height' as max\nand 'layer min' as the min",
 
     // FDM FILL
     fi_menu:        "infill",
@@ -309,9 +315,6 @@ kiri.lang['en-us'] = {
 
     // CNC CONTOUR
     cu_menu:        "trace",
-
-    // CNC FINISHING
-    // cf_menu:        "finishing",
 
     // CNC DRILLING
     cd_menu:        "drill",
@@ -441,8 +444,6 @@ kiri.lang['en-us'] = {
     ad_scst_l:      "non-printing end\nof perimeter shells\nin millimeters",
     ad_msol_s:      "min solid",
     ad_msol_l:      "minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1",
-    ad_minl_s:      "min layer",
-    ad_minl_l:      "enables adaptive slicing with\nthis as the min layer height\nin millimeters\n0 to disable",
     ad_mins_s:      "min speed",
     ad_mins_l:      "minimum speed\nfor short segments",
     ad_spol_s:      "slow poly",
@@ -451,8 +452,6 @@ kiri.lang['en-us'] = {
     ad_zhop_l:      "amount to raise z\non retraction moves\nin millimeters\n0 to disable",
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      "use micro-movements to cancel\nbacklash during fills\nin millimeters",
-    ad_thin_s:      "thin walls",
-    ad_thin_l:      "detect and fill gaps\nbetween shell walls",
     ad_slrt_s:      "slice rotation",
     ad_slrt_l:      "slice object on a bias\nangle in the y axis.\nuseful for extremely\nlarge format prints",
     ad_lret_s:      "layer retract",
