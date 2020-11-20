@@ -1,9 +1,5 @@
 # Kiri:Moto todo
 
-## 2.3 remain
-* objets beyond bounds break drag/move
-* fdm shell order
-
 ## 2.4 tentative list
 * cnc
 *   tracing (chamfer, engrave)
@@ -36,6 +32,7 @@
 
 # FDM
 
+* `B` dwell / extrude engage reversed?
 * `B` fix adaptive slicing. also with multi-extruder
 * `B` fix supports with grouped parts
 * `B` sparse infill should follow polys it intersects
@@ -43,6 +40,7 @@
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
+* `F` control shell order (in/out or out/in)
 * `F` manual support addition / control
 * `F` control layer start position
 * `F` polishing and other non-planar work
