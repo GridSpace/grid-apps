@@ -45,7 +45,7 @@
         o2js = API.o2js,
         platform = API.platform,
         selection = API.selection,
-        beta = 2311;
+        beta = 0;
 
     let deviceLock = false,
         selectedTool = null,
