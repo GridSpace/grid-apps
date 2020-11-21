@@ -240,6 +240,7 @@
             }
 
             // convert short planar moves to cuts
+            // TODO delta Z cuts should only be active in contouring
             if (isMove && deltaXY <= toolDiamMove) {
                  if (absDeltaZ <= tolerance) {
                     cut = 1;
