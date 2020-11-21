@@ -121,7 +121,7 @@
         });
         let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true });
+        let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
@@ -146,7 +146,7 @@
 
         // create facing slices
         if (procFacing || proc.camRoughTop) {
-            let shadow = shadowTop.tops.clone();
+            let shadow = tshadow.clone();
             let inset = POLY.offset(shadow, (roughToolDiam / (procRoughIn ? 2 : 1)));
             let facing = POLY.offset(inset, -(roughToolDiam * proc.camRoughOver), { count: 999, flat: true });
             let zdiv = ztOff / roughDown;

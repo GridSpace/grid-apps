@@ -60,6 +60,7 @@
 
 # CAM
 
+* `B` increase tab height by z bottom
 * `B` prevent z delta cuts when not contouring
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
