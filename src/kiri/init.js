@@ -1432,13 +1432,6 @@
             laserSliceHeightMin: UC.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:UC.toFloat, modes:LASER, show:() => { return UI.laserSliceHeight.value == 0 }}),
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
-            fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM, marker:true}),
-            sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM, expert:true}),
-
             firstLayer:          UC.newGroup(LANG.fl_menu, null, {modes:FDM}),
             firstSliceHeight:    UC.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
@@ -1451,6 +1444,16 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM, expert:true}),
             firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM, expert:true}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked }),
+            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true}),
+
+            fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
+            sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
+            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM, expert:true}),
 
             fdmSupport:          UC.newGroup(LANG.sp_menu, null, {modes:FDM, marker:true}),
             sliceSupportDensity: UC.newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
@@ -1465,11 +1468,6 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
             sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
-
-            fdmRaft:            UC.newGroup(LANG.fr_menu, null, {modes:FDM, marker:true}),
-            outputRaftSpacing:  UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputRaft:         UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM}),
 
             camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),

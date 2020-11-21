@@ -213,7 +213,7 @@ kiri.lang['en-us'] = {
     fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
 
     // FDM FIRST LAYER
-    fl_menu:        "1st layer",
+    fl_menu:        "base",
     fl_lahi_s:      "layer height",
     fl_lahi_l:      "height of each slice\nin millimeters\nshould be >= slice height",
     fl_rate_s:      "shell speed",
@@ -230,6 +230,10 @@ kiri.lang['en-us'] = {
     fl_nozl_l:      "degrees in celsius\noutput setting used\nwhen this is zero",
     fl_bedd_s:      "bed temp",
     fl_bedd_l:      "degrees in celsius\noutput setting used\nwhen this is zero",
+    fr_spac_s:      "raft gap",
+    fr_spac_l:      "additional layer spacing\nbetween 1st layer and raft\nin millimeters",
+    fr_nabl_s:      "raft enable",
+    fr_nabl_l:      "create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output",
 
     // FDM SUPPORT
     sp_menu:        "support",
@@ -342,12 +346,6 @@ kiri.lang['en-us'] = {
     ct_hght_s:      "height",
     ct_hght_l:      "height in workspace units",
     ct_nabl_l:      "enable or disable tabs\ntab generation skipped when\ninside only mode enabled",
-
-    // FDM RAFT
-    fr_menu:        "raft",
-    fr_spac_s:      "spacing",
-    fr_spac_l:      "additional layer spacing\nbetween 1st layer and raft\nin millimeters",
-    fr_nabl_l:      "create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output",
 
     // OUTPUT
     ou_menu:        "output",
