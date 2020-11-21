@@ -286,7 +286,7 @@
         } else if (zIncMin) {
             // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
             // FDM adaptive slicing
-            let zPos = zMin + zIncFirst,
+            let zPos = zIncFirst,
                 zOI = 0,
                 zDelta,
                 zDivMin,

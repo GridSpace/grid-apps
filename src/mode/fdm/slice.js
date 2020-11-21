@@ -106,10 +106,13 @@
             spro.firstSliceHeight = sliceHeight;
         }
 
+        const sliceMinHeight = spro.sliceAdaptive && spro.sliceMinHeight > 0 ?
+            Math.min(spro.sliceMinHeight, sliceHeight) : 0;
+
         if (spro.firstSliceHeight < sliceHeight) {
             DBUG.log("invalid first layer height < slice height");
-            DBUG.log("reverting to slice height");
-            spro.firstSliceHeight = sliceHeight;
+            DBUG.log("reverting to min valid slice height");
+            spro.firstSliceHeight = sliceMinHeight || sliceHeight;
         }
 
         // const slicer = new KIRI.slicer2(widget.getPoints(), { });
@@ -136,7 +139,7 @@
 
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
-            minHeight: sliceHeight > spro.sliceMinHeight ? spro.sliceMinHeight : 0,
+            minHeight: sliceMinHeight,
             firstHeight: spro.firstSliceHeight,
             // debug: true,
             // xray: 3,
