@@ -180,23 +180,27 @@ kiri.lang['en-us'] = {
     se_save:        "save",
 
     // FDM SLICING
-    sl_menu:        "slicing",
-    sl_lahi_s:      "layer height",
+    sl_menu:        "layers",
+    sl_lahi_s:      "height",
     sl_lahi_l:      "height of each slice\nlayer in millimeters",
-    ad_minl_s:      "layer min",
+    ad_minl_s:      "height min",
     ad_minl_l:      "adaptive min layer height\nin millimeters\nmust be non-zero",
-    sl_shel_s:      "shell count",
-    sl_shel_l:      "number of perimeter\nwalls to generate",
     sl_ltop_s:      "top layers",
     sl_ltop_l:      "number of solid layers\nto enforce at the\ntop of the print",
     sl_lsld_s:      "solid layers",
     sl_lsld_l:      "solid fill areas computed\nfrom layer deltas. see\nlayer pop menu",
     sl_lbot_s:      "base layers",
     sl_lbot_l:      "number of solid layers\nto enforce at the\nbottom of the print",
-    ad_thin_s:      "thin walls",
-    ad_thin_l:      "detect and fill gaps\nbetween shell walls",
     ad_adap_s:      "adaptive",
     ad_adap_l:      "use adaptive layer heights\nwith 'layer height' as max\nand 'layer min' as the min",
+
+    // FDM SHELLS
+    sl_shel_s:      "shell count",
+    sl_shel_l:      "number of perimeter\nwalls to generate",
+    sl_ordr_s:      "shell order",
+    sl_ordr_l:      "output shell order\ninside to outside\nor outside to inside\naffects surface quality",
+    ad_thin_s:      "thin walls",
+    ad_thin_l:      "detect and fill gaps\nbetween shell walls",
 
     // FDM FILL
     fi_menu:        "infill",

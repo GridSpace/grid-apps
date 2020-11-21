@@ -275,6 +275,7 @@
                     processName: "default",
                     sliceHeight: 0.25,
                     sliceShells: 3,
+                    sliceShellOrder: "in-out",
                     sliceFillAngle: 45,
                     sliceFillOverlap: 0.3,
                     sliceFillSparse: 0.5,

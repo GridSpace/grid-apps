@@ -128,6 +128,10 @@
     };
 
     const lists = {
+        shell: [
+            { name: "in-out" },
+            { name: "out-in" },
+        ],
         infill: [
             { name: "vase" },
             { name: "hex" },

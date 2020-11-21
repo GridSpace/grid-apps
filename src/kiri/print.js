@@ -397,6 +397,7 @@
             retractDist = opt.retractOver || 2,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
+            shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
             sparseMult = process.outputSparseMult,
             coastDist = process.outputCoastDist || 0,
             finishSpeed = opt.speed || process.outputFinishrate,
@@ -703,21 +704,19 @@
                 // top object
                 let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
 
-                let dir = -1; // 1 == inside out, -1 == outside-in
-
                 // output inner polygons
-                if (dir === 1)
+                if (shellOrder === 1)
                 outputTraces([].appendAll(next.innerShells() || []));
 
                 // sort perimeter polygon by length to go out-to-in or in-to-out
                 (next.shells || []).sort(function(a,b) {
-                    return a.perimeter() > b.perimeter() ? dir : -dir;
+                    return a.perimeter() > b.perimeter() ? shellOrder : -shellOrder;
                 }).forEach(function(poly, index) {
                     outputTraces(poly);
                 });
 
                 // output outer polygons
-                if (dir === -1)
+                if (shellOrder === -1)
                 outputTraces([].appendAll(next.innerShells() || []));
 
                 // output thin fill
