@@ -399,6 +399,13 @@
                 array.push(opt.down ? zmax : zmin);
             }
 
+            if (opt.flats && opt.off) {
+                // add over and under all flats by 'off'
+                array.appendAll(Object.keys(this.zFlat).map(v => parseFloat(v))).sort((a,b) => {
+                    return opt.down ? b-a : a-b;
+                });
+            }
+
             return array.map(v => parseFloat(v.toFixed(2)));
         }
     }
