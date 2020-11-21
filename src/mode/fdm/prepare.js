@@ -444,6 +444,7 @@
         let lastEnd = null;
         let lastOut = null;
         let current = null;
+        let retracted = false;
 
         function color(point) {
             return FDM.rateToColor(point.speed, maxspd);
@@ -454,6 +455,7 @@
             const moves = [];
             const heads = [];
             const retracts = [];
+            const engages = [];
             const output = new KIRI.Render();
             layers.push(output);
 
@@ -471,8 +473,13 @@
             let emits = 0;
 
             level.forEach((out,oi) => {
+                if (retracted && out.emit) {
+                    retracted = false;
+                    engages.push(lastOut.point);
+                }
                 if (out.retract) {
                     retracts.push(out.point);
+                    retracted = true;
                 }
                 if (!out.point) {
                     // in cam mode, these are drilling or dwell ops
@@ -523,6 +530,13 @@
                 output
                     .setLayer('retract', { line: 0x550000, face: 0xff0000, opacity: 0.5 }, true)
                     .addAreas(retracts.map(point => {
+                        return newPolygon().centerCircle(point, 0.2, 16).setZ(point.z + 0.01);
+                    }), { outline: true });
+            }
+            if (engages.length) {
+                output
+                    .setLayer('engage', { line: 0x005500, face: 0x00ff00, opacity: 0.5 }, true)
+                    .addAreas(engages.map(point => {
                         return newPolygon().centerCircle(point, 0.2, 16).setZ(point.z + 0.01);
                     }), { outline: true });
             }

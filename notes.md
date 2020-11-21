@@ -23,24 +23,21 @@
 
 * `F` 2D image import
 * `F` detect and report slow framerates
-* `F` implement an in-app bug reporting system. add workspace to export option.
+* `F` implement an in-app bug reporting system
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization
 * `P` client/worker interface normalization and cleanup
-* `C` improve path line caps
 
 # FDM
 
-* `B` dwell / extrude engage reversed?
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
-* `B` sparse infill should follow polys it intersects
+* `B` sparse infill should follow polys between intersect points
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
-* `F` control shell order (in/out or out/in)
 * `F` manual support addition / control
 * `F` control layer start position
 * `F` polishing and other non-planar work
