@@ -33,7 +33,7 @@
 # FDM
 
 * `B` dwell / extrude engage reversed?
-* `B` fix adaptive slicing. also with multi-extruder
+* `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` sparse infill should follow polys it intersects
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
@@ -63,9 +63,11 @@
 
 # CAM
 
+* `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` top clearing operations should use linear, not offset, passes
+* `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
@@ -77,7 +79,6 @@
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` implement z line-only follows for ball/taper
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
-* `F` add endmill spiral direction to fully respect climb vs conventional
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z

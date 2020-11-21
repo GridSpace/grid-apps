@@ -286,7 +286,7 @@
         } else if (zIncMin) {
             // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
             // FDM adaptive slicing
-            let zPos = zMin + zIncFirst,
+            let zPos = zIncFirst,
                 zOI = 0,
                 zDelta,
                 zDivMin,
@@ -298,12 +298,18 @@
             // first slice is fixed
             zHeights.push(zIncFirst);
             zIndexes.push(zIncFirst / 2);
-
+            // console.log({zIncFirst, zOrdered})
             while (zPos < zMax && zOI < zOrdered.length) {
                 nextZ = zOrdered[zOI++];
-                if (zPos >= nextZ) continue;
+                if (zPos >= nextZ) {
+                    // console.log('skip',{zPos},'>=',{nextZ});
+                    continue;
+                }
                 zDelta = nextZ - zPos;
-                if (zDelta < zIncMin) continue;
+                if (zDelta < zIncMin) {
+                    // console.log('skip',{zDelta},'<',{zIncMin});
+                    continue;
+                }
 
                 zDivMin = Math.floor(zDelta / zIncMin);
                 zDivMax = Math.floor(zDelta / zInc);
