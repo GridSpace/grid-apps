@@ -1917,10 +1917,10 @@
         SPACE.mouse.downSelect((int,event) => {
             if (API.feature.hover) {
                 if (int) {
-                    API.event.emit('mouse.hover.down', int);
+                    API.event.emit('mouse.hover.down', {int, point: int.point});
                     return;
                 }
-                return API.widgets.meshes();
+                return// API.widgets.meshes().slice().append(SPACE.internals().platform);
             }
             // lay flat with meta or ctrl clicking a selected face
             if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
@@ -1955,7 +1955,9 @@
         });
 
         SPACE.mouse.onDrag(function(delta) {
-            if (API.feature.hover) return;
+            if (API.feature.hover) {
+                return;
+            }
             if (delta && UI.freeLayout.checked) {
                 let set = settings();
                 let dev = set.device;
