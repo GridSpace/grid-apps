@@ -253,6 +253,8 @@ kiri.lang['en-us'] = {
     sp_xpnd_l:      "expand support area\nbeyond part boundary\nin millimeters",
     sp_nozl_s:      "extruder",
     sp_nozl_l:      "in multi-extruder systems\nthe extruder to use for\nsupport material",
+    sp_auto_s:      "enable auto",
+    sp_auto_l:      "enable generated supports\nusing specified parameters",
 
     // LASER SLICING
     ls_offs_s:      "offset",

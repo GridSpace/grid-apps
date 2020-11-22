@@ -179,6 +179,14 @@
         // API.event.emit("boolean.click");
     }
 
+    function onButtonClick(ev) {
+        let target = ev.target;
+        while (target && target.tagName !== 'BUTTON') {
+            target = target.parentNode;
+        }
+        API.event.emit("button.click", target);
+    }
+
     function inputHasFocus() {
         let active = DOC.activeElement;
         return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
@@ -220,6 +228,8 @@
                 if (KIRI.work.isSlicing()) KIRI.work.restart();
                 // kill any poppers in compact mode
                 UC.hidePoppers();
+                // and send an event (used by FDM client)
+                API.event.emit("key.esc");
                 break;
         }
         return false;
@@ -1462,12 +1472,18 @@
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
+            sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
-            sliceSupportEnable:  UC.newBoolean(LANG.enable, onBooleanClick, {modes:FDM}),
+            sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title: LANG.sp_auto_l, modes:FDM, trigger:true}),
+
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportManual: UC.newRow([
+                (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            ], {modes:FDM, class:"ext-buttons f-row"}),
 
             camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
@@ -1787,10 +1803,10 @@
             SDB.setItem('kiri-lang', 'en-us');
             API.space.reload();
         };
-        $('lset-da').onclick = function() {
-            SDB.setItem('kiri-lang', 'da-dk');
-            API.space.reload();
-        };
+        // $('lset-da').onclick = function() {
+        //     SDB.setItem('kiri-lang', 'da-dk');
+        //     API.space.reload();
+        // };
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,

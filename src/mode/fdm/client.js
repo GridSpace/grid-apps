@@ -8,7 +8,8 @@
         BASE = self.base,
         UTIL = BASE.util,
         FDM = KIRI.driver.FDM,
-        SPACE;
+        SPACE,
+        func = {};
 
     FDM.init = function(kiri, api) {
         SPACE = api.const.SPACE;
@@ -20,8 +21,29 @@
             let proc = settings.process;
             api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
         });
-        return;
-        api.feature.hover = true;
+        api.event.on("button.click", target => {
+            switch (target) {
+                case api.ui.ssmAdd: return func.sadd();
+                case api.ui.ssmClr: return func.sclear();
+            }
+        });
+        api.event.on("fdm.supports.add", func.sadd = () => {
+            api.show.alert("&lt;esc&gt; key when done editing supports");
+            console.log("supports add");
+            api.feature.hover = true;
+        });
+        api.event.on("fdm.supports.done", func.sdone = () => {
+            delbox('intZ');
+            delbox('intW');
+            api.feature.hover = false;
+        });
+        api.event.on("fdm.supports.clear", func.sclear = () => {
+            api.uc.confirm("clear supports?").then(ok => {
+                func.sdone();
+                if (ok) console.log("supports clear");
+            });
+        });
+        api.event.on("key.esc", func.sdone);
         api.event.on("mouse.hover", (data) => {
             const { int, type, point } = data;
             if (SPACE._int1) {
