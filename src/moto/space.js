@@ -704,6 +704,7 @@
     function onMouseMove(event) {
         updateLastAction();
         let int, vis;
+
         if (viewControl.enabled) {
             event.preventDefault();
             let selection = mouseHover ? mouseHover() : null;
@@ -779,6 +780,15 @@
                 return fz;
             },
             active: updateLastAction
+        },
+
+        world: {
+            add: function(o) {
+                WORLD.add(o);
+            },
+            remove: function(o) {
+                WORLD.remove(o);
+            }
         },
 
         platform: {

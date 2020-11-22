@@ -13,8 +13,6 @@
 *   continuous printing (z belt systems)
 * laser
 *   drag knife support
-* onshape
-*   session token timeout bug
 * all
 *   2d image to 3d part
 *   circular fit/layout when no-layout to prevent collisions

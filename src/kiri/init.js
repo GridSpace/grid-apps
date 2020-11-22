@@ -1886,15 +1886,32 @@
 
         API.platform.update_size();
 
-        SPACE.mouse.downSelect(function(int,event) {
+        SPACE.mouse.onHover((int, ev) => {
+            if (!API.feature.hover) return;
+            if (!int) return API.widgets.meshes();
+            API.event.emit('mouse.hover', {int, point: int.point, type: 'widget'});
+        });
+
+        SPACE.platform.onHover((int, ev) => {
+            if (!API.feature.hover) return;
+            if (int) API.event.emit('mouse.hover', {point: int, type: 'platform'});
+        });
+
+        SPACE.mouse.downSelect((int,event) => {
             // lay flat with meta or ctrl clicking a selected face
             if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
                 let q = new THREE.Quaternion();
-                q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
+                // find intersecting point, look "up" on Z and rotate to face that
+                q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,-1,0));
                 API.selection.rotate(q);
             }
-            if (API.view.get() !== VIEWS.ARRANGE) return null;
-            return API.selection.meshes();
+            if (API.view.get() !== VIEWS.ARRANGE) {
+                // return no selection in modes other than arrange
+                return null;
+            } else {
+                // return selected meshes for further mouse processing
+                return API.selection.meshes();
+            }
         });
 
         SPACE.mouse.upSelect(function(selection, event) {

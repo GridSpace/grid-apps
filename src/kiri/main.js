@@ -71,6 +71,7 @@
         drop_group: undefined, // optional array to group multi drop
         drop_layout: true, // layout on new drop
         preview: true, // allow bypassing preview generation
+        hover: false, // when true fires mouse hover events
     };
 
     const selection = {
