@@ -239,9 +239,16 @@
                 return;
             }
 
+<<<<<<< HEAD
             // convert short planar moves to cuts
+=======
+            // convert short planar moves to cuts in some cases
+>>>>>>> cc23ec6... prevent short z delta cuts outside of contouring
             if (isMove && deltaXY <= toolDiamMove) {
-                 if (absDeltaZ <= tolerance) {
+                let iscontour = lastMode === PRO.CONTOUR_X || lastMode === PRO.CONTOUR_Y;
+                let isflat = absDeltaZ < 0.001;
+                // restrict this to contouring
+                if (isflat || (iscontour && absDeltaZ <= tolerance)) {
                     cut = 1;
                     isMove = false;
                 } else if (deltaZ <= -tolerance) {
@@ -250,7 +257,8 @@
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
-            } else {
+            } //else
+            {
                 // for longer moves, check the terrain to see if we need to go up and over
                 const bigXY = (deltaXY > toolDiam);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
