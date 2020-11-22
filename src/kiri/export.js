@@ -65,10 +65,6 @@
     }
 
     function exportLaserDialog(data) {
-        if (!isPrepared()) {
-            return API.function.prepare(exportLaser);
-        }
-
         const filename = "laser-"+(new Date().getTime().toString(36));
         const settings = API.conf.get();
         const driver = KIRI.driver.LASER;
