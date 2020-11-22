@@ -239,11 +239,7 @@
                 return;
             }
 
-<<<<<<< HEAD
-            // convert short planar moves to cuts
-=======
             // convert short planar moves to cuts in some cases
->>>>>>> cc23ec6... prevent short z delta cuts outside of contouring
             if (isMove && deltaXY <= toolDiamMove) {
                 let iscontour = lastMode === PRO.CONTOUR_X || lastMode === PRO.CONTOUR_Y;
                 let isflat = absDeltaZ < 0.001;
