@@ -23,28 +23,35 @@
         });
         api.event.on("button.click", target => {
             switch (target) {
-                case api.ui.ssmAdd: return func.sadd();
-                case api.ui.ssmClr: return func.sclear();
+                case api.ui.ssmAdd:
+                    return func.sadd();
+                case api.ui.ssmClr:
+                    api.uc.confirm("clear supports?").then(ok => {
+                        if (ok) func.sclear();
+                    });
+                    break;
             }
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
             api.show.alert("&lt;esc&gt; key when done editing supports");
-            console.log("supports add");
             api.feature.hover = true;
+            console.log("supports add");
         });
         api.event.on("fdm.supports.done", func.sdone = () => {
             delbox('intZ');
             delbox('intW');
             api.feature.hover = false;
+            console.log("supports done");
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
-            api.uc.confirm("clear supports?").then(ok => {
-                func.sdone();
-                if (ok) console.log("supports clear");
-            });
+            func.sdone();
+            console.log("supports clear");
         });
         api.event.on("key.esc", func.sdone);
-        api.event.on("mouse.hover", (data) => {
+        api.event.on("mouse.hover.up", int => {
+            // console.log({hover_up: int});
+        });
+        api.event.on("mouse.hover", data => {
             const { int, type, point } = data;
             if (SPACE._int1) {
                 SPACE.scene.remove(SPACE._int1);
@@ -56,7 +63,8 @@
             if (int && int.face && int.face.normal.z < -0.1) {
                 dir.y = -1;
             }
-            let i2 = ray.intersectObjects(api.widgets.meshes(), false);
+            let targets = api.widgets.meshes().append(SPACE.internals().platform);
+            let i2 = ray.intersectObjects(targets, false);
             if (i2 && i2.length > 0) {
                 // prevent false matches close to origin of ray
                 i2 = i2.filter(i => i.distance > 0.01);

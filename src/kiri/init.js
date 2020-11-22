@@ -1914,6 +1914,13 @@
         });
 
         SPACE.mouse.downSelect((int,event) => {
+            if (API.feature.hover) {
+                if (int) {
+                    API.event.emit('mouse.hover.down', int);
+                    return
+                }
+                return API.widgets.meshes();
+            }
             // lay flat with meta or ctrl clicking a selected face
             if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
                 let q = new THREE.Quaternion();
@@ -1931,6 +1938,10 @@
         });
 
         SPACE.mouse.upSelect(function(selection, event) {
+            if (event && API.feature.hover) {
+                API.event.emit('mouse.hover.up', selection);
+                return;
+            }
             if (event && event.target.nodeName === "CANVAS") {
                 if (selection) {
                     platform.select(selection.object.widget, event.shiftKey);
@@ -1943,6 +1954,7 @@
         });
 
         SPACE.mouse.onDrag(function(delta) {
+            if (API.feature.hover) return;
             if (delta && UI.freeLayout.checked) {
                 let set = settings();
                 let dev = set.device;

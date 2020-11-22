@@ -888,7 +888,7 @@
         },
 
         internals: function() {
-            return { renderer, camera };
+            return { renderer, camera, platform };
         },
 
         init: function(domelement, slider) {
