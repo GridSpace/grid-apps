@@ -663,7 +663,7 @@
                     d.setAttribute('class', 'col j-center');
                     d.onclick = function() {
                         API.selection.for_widgets(w => {
-                            current.widget[w.id] = {extruder: i};
+                            API.widgets.annotate(w.id).extruder = i;
                         });
                         API.platform.update_selected();
                     };
@@ -1472,11 +1472,11 @@
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
             sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title: LANG.sp_auto_l, modes:FDM, trigger:true}),
 
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
@@ -1926,7 +1926,7 @@
             if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
                 let q = new THREE.Quaternion();
                 // find intersecting point, look "up" on Z and rotate to face that
-                q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,-1,0));
+                q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
                 API.selection.rotate(q);
             }
             if (API.view.get() !== VIEWS.ARRANGE) {

@@ -407,6 +407,7 @@
     };
 
     FDM.prepareRender = function(levels, update, options) {
+        levels = levels.filter(level => level.length);
         if (levels.length === 0) {
             self.worker.print.maxSpeed = 0;
             return [];

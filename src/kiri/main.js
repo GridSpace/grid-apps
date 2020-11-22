@@ -311,7 +311,12 @@
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
             meshes: meshArray,
-            opacity: setOpacity
+            opacity: setOpacity,
+            annotate: (id) => {
+                // add per widget annotation
+                // for things like extruder and supports
+                return settings.widget[id] = ( settings.widget[id] || {} );
+            }
         },
         work: KIRI.work
     };
@@ -1158,7 +1163,7 @@
             }
             forSelectedWidgets(w => {
                 w.setColor(color.selected, settings);
-                let ext = (settings.widget[w.id] || {}).extruder || 0;
+                let ext = API.widgets.annotate(w.id).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
                 if (b) b.classList.add('pop-sel');
             }, true);

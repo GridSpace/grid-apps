@@ -8,16 +8,23 @@
         BASE = self.base,
         UTIL = BASE.util,
         FDM = KIRI.driver.FDM,
-        SPACE,
+        SPACE, API,
         p1, p2, iw,
         alert = [],
         func = {};
 
     FDM.init = function(kiri, api) {
+        API = api;
         SPACE = api.const.SPACE;
+        api.event.on("mode.set", mode => {
+            if (mode !== 'FDM') {
+                clearAllWidgetSupports();
+            }
+        });
         api.event.on("settings.load", (settings) => {
             if (settings.mode !== 'FDM') return;
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
+            restoreSupports(api.widgets.all());
         });
         api.event.on("settings.saved", (settings) => {
             let proc = settings.process;
@@ -48,32 +55,41 @@
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
             func.sdone();
+            clearAllWidgetSupports();
+            API.conf.save();
         });
         api.event.on("key.esc", () => {
             func.sdone()
         });
-        // api.event.on("mouse.hover.down", data => {
-        //     console.log({hover_down: data.point});
+        // api.event.on("selection.rotate", (x,y,z) => {
+        //     console.log('rotate', x,y,z);
         // });
         api.event.on("mouse.hover.up", int => {
-            console.log({hover_up: int, p1, p2, iw});
             delbox('supp');
+            if (!iw) return;
             let hy = (p1.y + p2.y) / 2;
-            let dy = Math.abs(p1.y - p2.y);
+            let dh = Math.abs(p1.y - p2.y);
             let dw = api.conf.get().process.sliceSupportSize / 2;
-            addbox({x:p1.x, z:hy, y:-p1.z}, 0x0000dd, 'supp', {
-                x:dw, y:dw, z:dy
-            }, iw.mesh);
+            let ip = iw.track.pos;
+            let wa = api.widgets.annotate(iw.id);
+            let ws = (wa.support = wa.support || []);
+            let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy;
+            let id = Date.now();
+            ws.push({x, y, z, dw, dh, id});
+            addWidgetSupport(iw, {x, y, z, dw, dh, id});
+            API.conf.save();
         });
         api.event.on("mouse.hover", data => {
             const { int, type, point } = data;
-            if (int) {
+            if (int && type === 'widget') {
                 iw = int.object.widget || iw;
+            } else {
+                iw = null;
             }
             // delbox('intZ');
             // delbox('intW');
-            delbox('supp');
             // addbox(point, 0xff0000, 'intZ');
+            delbox('supp');
             p1 = point;
             let dir = new THREE.Vector3(0,1,0)
             let ray = new THREE.Raycaster(point, dir);
@@ -102,6 +118,38 @@
         });
     }
 
+    function restoreSupports(widgets) {
+        widgets.forEach(widget => {
+            const supports = API.widgets.annotate(widget.id).support || [];
+            supports.forEach(pos => {
+                addWidgetSupport(widget, pos);
+            });
+        });
+    }
+
+    function addWidgetSupport(widget, pos) {
+        const { x, y, z, dw, dh, id } = pos;
+        const sups = widget.sups = (widget.sups || {});
+        // prevent duplicate restore from repeated settings load calls
+        if (!sups[id]) {
+            pos.box = addbox({x, y, z}, 0x0000dd, 'supp', { x:dw, y:dw, z:dh }, widget.mesh);
+            sups[id] = pos;
+        }
+    }
+
+    function clearAllWidgetSupports() {
+        API.widgets.all().forEach(widget => {
+            clearWidgetSupports(widget);
+        });
+    }
+
+    function clearWidgetSupports(widget) {
+        Object.values(widget.sups || {}).forEach(support => {
+            widget.mesh.remove(support.box);
+        });
+        delete API.widgets.annotate(widget.id).support;
+    }
+
     function delbox(name, group) {
         const old = SPACE[`__${name}`];
         if (old) {
@@ -124,6 +172,7 @@
         box.position.y = point.y;
         box.position.z = point.z;
         (group || SPACE.scene).add(box);
+        return box;
     }
 
 })();

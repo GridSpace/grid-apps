@@ -111,6 +111,7 @@
         if (groups.indexOf(this.group) < 0) {
             groups.push(this.group);
         }
+        // rotation stack (for undo)
         this.roto = [];
         this.mesh = null;
         this.points = null;
