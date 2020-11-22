@@ -59,11 +59,12 @@
                 },
                 newslices = [],
                 tabsOn = proc.camTabsOn,
-                tabHeight = proc.camTabsHeight,
+                tabHeight = proc.camTabsHeight + zBottom,
                 clipTab = tabsOn ? [] : null,
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
                 gridDelta = Math.floor(partOff / resolution),
+                center = opt.center,
                 debug = false,
                 debug_clips = debug && true,
                 debug_topo = debug && false,
@@ -72,7 +73,7 @@
 
             if (proc.camTabsOn) {
                 CAM.createTabLines(
-                    clipTo[0].bounds.center(),
+                    center,
                     toolDiameter,
                     proc.camTabsWidth,
                     proc.camTabsCount,
