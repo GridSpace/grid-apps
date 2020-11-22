@@ -1482,6 +1482,7 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportManual: UC.newRow([
                 (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.ssmDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
@@ -1917,7 +1918,7 @@
             if (API.feature.hover) {
                 if (int) {
                     API.event.emit('mouse.hover.down', int);
-                    return
+                    return;
                 }
                 return API.widgets.meshes();
             }

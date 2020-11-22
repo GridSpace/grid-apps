@@ -25,6 +25,8 @@
             switch (target) {
                 case api.ui.ssmAdd:
                     return func.sadd();
+                case api.ui.ssmDun:
+                    return func.sdone();
                 case api.ui.ssmClr:
                     api.uc.confirm("clear supports?").then(ok => {
                         if (ok) func.sclear();
@@ -35,17 +37,14 @@
         api.event.on("fdm.supports.add", func.sadd = () => {
             api.show.alert("&lt;esc&gt; key when done editing supports");
             api.feature.hover = true;
-            console.log("supports add");
         });
         api.event.on("fdm.supports.done", func.sdone = () => {
             delbox('intZ');
             delbox('intW');
             api.feature.hover = false;
-            console.log("supports done");
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
             func.sdone();
-            console.log("supports clear");
         });
         api.event.on("key.esc", func.sdone);
         api.event.on("mouse.hover.up", int => {
