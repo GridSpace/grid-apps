@@ -135,6 +135,7 @@
             updateOp(index, total);
         }, genso: true });
         let shadowTop = terrain[terrain.length - 1];
+        let center = tshadow[0].bounds.center();
 
         if (procDrillReg) {
             maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
@@ -275,7 +276,7 @@
                     if (outside) {
                         offset.appendAll(outside);
                         if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                            offset = addCutoutTabs(offset, slice.z, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle, slice);
+                            offset = addCutoutTabs(offset, slice.z, center, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                         }
                     }
                 }
@@ -383,7 +384,7 @@
                 }
 
                 if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                    offset = addCutoutTabs(offset, slice.z, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                    offset = addCutoutTabs(offset, slice.z, center, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
                 }
 
                 // offset.xout(`slice ${slice.z}`);
@@ -413,7 +414,8 @@
                 ondone: (slices) => {
                     sliceAll.appendAll(slices);
                 },
-                shadow: tshadow
+                shadow: tshadow,
+                center: center
             });
         }
 
@@ -534,7 +536,7 @@
     }
 
     // cut outside traces at the right points
-    function addCutoutTabs(polys, z, toolDiam, tabWidth, tabCount, tabAngle, slice) {
+    function addCutoutTabs(polys, z, center, toolDiam, tabWidth, tabCount, tabAngle, slice) {
         // skip if no tops | traces
         if (polys.length === 0) return polys;
 
@@ -546,7 +548,6 @@
             trace.setClockwise();
 
             let ints = [];
-            let center = trace.bounds.center(z);
             CAM.createTabLines(center, toolDiam, tabWidth, tabCount, tabAngle).forEach(tab => {
                 const {c1, c2, o1, o2} = tab,
                     int1 = trace.intersections(c1, o1).pop(),
