@@ -400,13 +400,21 @@
             }
 
             if (opt.flats && opt.off) {
+                let add = [];
+                Object.keys(this.zFlat).forEach(z => {
+                    z = parseFloat(z);
+                    add.push(z + opt.off);
+                    if (z > zmin) {
+                        add.push(z - opt.off);
+                    }
+                });
                 // add over and under all flats by 'off'
-                array.appendAll(Object.keys(this.zFlat).map(v => parseFloat(v))).sort((a,b) => {
+                array.appendAll(add).sort((a,b) => {
                     return opt.down ? b-a : a-b;
                 });
             }
 
-            return array.map(v => parseFloat(v.toFixed(2)));
+            return array.map(v => Math.abs(parseFloat(v.toFixed(2))));
         }
     }
 

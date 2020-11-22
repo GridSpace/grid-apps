@@ -175,7 +175,7 @@
             let flats = [];
             let shadow = [];
             let slices = [];
-            let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true });
+            let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true, boff: 0.01 });
             if (proc.camRoughFlat) {
                 let flats = Object.keys(slicer.zFlat)
                     .map(v => parseFloat(v).round(4))
@@ -206,6 +206,7 @@
                     .filter(v => v > 0 && indices.indexOf(v) < 0);
                 indices = indices.appendAll(flats).sort((a,b) => b-a);
             }
+
             // console.log('indices', ...indices, {zBottom});
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
@@ -309,7 +310,7 @@
 
             let shadow = [];
             let slices = [];
-            let indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true });
+            let indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true, boff: 0.01 });
             // add flats to shadow
             const flats = Object.keys(slicer.zFlat)
                 .map(v => (parseFloat(v) - 0.01).round(5))
