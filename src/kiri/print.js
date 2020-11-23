@@ -695,9 +695,10 @@
                 // support polygon
                 next.setZ(z);
                 outputTraces([next].appendAll(next.inner || []));
-                if (next.fills) {
-                    next.fills.forEach(function(p) { p.z = z });
-                    outputFills(next.fills, {fast: true});
+                // if poly contains fill (supports)
+                if (next.fill) {
+                    next.fill.forEach(function(p) { p.z = z });
+                    outputFills(next.fill, {fast: true});
                 }
             } else {
                 // top object
