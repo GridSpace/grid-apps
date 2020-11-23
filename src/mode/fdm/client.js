@@ -10,6 +10,7 @@
         FDM = KIRI.driver.FDM,
         SPACE, API,
         p1, p2, iw,
+        lastMode, lastView,
         alert = [],
         func = {};
 
@@ -17,9 +18,12 @@
         API = api;
         SPACE = api.const.SPACE;
         api.event.on("mode.set", mode => {
-            if (mode !== 'FDM') {
-                clearAllWidgetSupports();
-            }
+            lastMode = mode;
+            updateVisiblity();
+        });
+        api.event.on("view.set", view => {
+            lastView = view;
+            updateVisiblity();
         });
         api.event.on("settings.load", (settings) => {
             if (settings.mode !== 'FDM') return;
@@ -50,6 +54,7 @@
         api.event.on("fdm.supports.done", func.sdone = () => {
             delbox('intZ');
             delbox('intW');
+            delbox('supp');
             api.hide.alert(alert);
             api.feature.hover = false;
         });
@@ -58,12 +63,37 @@
             clearAllWidgetSupports();
             API.conf.save();
         });
+        api.event.on("slice.begin", () => {
+            func.sdone();
+            updateVisiblity();
+        });
         api.event.on("key.esc", () => {
             func.sdone()
         });
-        // api.event.on("selection.rotate", (x,y,z) => {
-        //     console.log('rotate', x,y,z);
-        // });
+        api.event.on("selection.rotate", rot => {
+            const {x, y, z} = rot;
+            if (x || y) {
+                API.selection.widgets().forEach(widget => {
+                    clearWidgetSupports(widget);
+                });
+                API.conf.save();
+            } else {
+                API.selection.widgets().forEach(widget => {
+                    let ann = API.widgets.annotate(widget.id);
+                    let sups = ann.support || [];
+                    sups.forEach(sup => {
+                        let wsup = widget.sups[sup.id];
+                        let vc = new THREE.Vector3(sup.x, sup.y, sup.z);
+                        let m4 = new THREE.Matrix4();
+                        m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                        vc.applyMatrix4(m4);
+                        wsup.box.position.x = wsup.x = sup.x = vc.x;
+                        wsup.box.position.y = wsup.y = sup.y = vc.y;
+                        wsup.box.position.z = wsup.z = sup.z = vc.z;
+                    });
+                });
+            }
+        });
         api.event.on("mouse.hover.up", int => {
             delbox('supp');
             if (!iw) return;
@@ -97,7 +127,10 @@
             if (int && int.face && int.face.normal.z < -0.1) {
                 dir.y = -1;
             }
-            let targets = api.widgets.meshes().append(SPACE.internals().platform);
+            let targets = api.widgets.meshes()
+                .append(SPACE.internals().platform)
+                .appendAll(activeSupports())
+                ;
             let i2 = ray.intersectObjects(targets, false);
             if (i2 && i2.length > 0) {
                 // prevent false matches close to origin of ray
@@ -118,6 +151,18 @@
         });
     }
 
+    function activeSupports() {
+        const active = [];
+        API.widgets.all().forEach(widget => {
+            Object.values(widget.sups || {}).forEach(support => {
+                active.push(support.box);
+                support.box.support = true;
+                // console.log({support});
+            });
+        });
+        return active;
+    }
+
     function restoreSupports(widgets) {
         widgets.forEach(widget => {
             const supports = API.widgets.annotate(widget.id).support || [];
@@ -135,6 +180,18 @@
             pos.box = addbox({x, y, z}, 0x0000dd, 'supp', { x:dw, y:dw, z:dh }, widget.mesh);
             sups[id] = pos;
         }
+    }
+
+    function updateVisiblity() {
+        API.widgets.all().forEach(w => {
+            setSupportVisiblity(w, lastMode === 'FDM' && lastView === API.const.VIEWS.ARRANGE);
+        });
+    }
+
+    function setSupportVisiblity(widget, bool) {
+        Object.values(widget.sups || {}).forEach(support => {
+            support.box.visible = bool;
+        });
     }
 
     function clearAllWidgetSupports() {

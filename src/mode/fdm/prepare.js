@@ -177,7 +177,7 @@
         }
 
         // synthesize a support widget, if needed
-        if (process.sliceSupportEnable) {
+        {
             let swidget = KIRI.newWidget();
             let sslices = swidget.slices = [];
             widgets.forEach(function(widget) {

@@ -192,9 +192,6 @@
                 slice.solids = [];
             });
 
-            let supportEnabled = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
-                supportMinArea = spro.sliceSupportArea;
-
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, function(slice) {
                 let solid = (
@@ -245,12 +242,20 @@
             }
 
             // calculations only relevant when supports are enabled
-            if (supportEnabled) {
+            // if (supportEnabled) {
+            {
+                let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
+                    minArea = spro.sliceSupportArea;
+
+                const fixed = Object.values(settings.widget[widget.id].support || {});
+
                 forSlices(0.7, 0.8, function(slice) {
-                    if (slice.index > 0) doSupport(slice, spro.sliceSupportOffset, spro.sliceSupportSpan, spro.sliceSupportExtra, supportMinArea, spro.sliceSupportSize, spro.sliceSupportOffset, spro.sliceSupportGap);
+                    if (slice.index > 0) {
+                        doSupport(slice, spro, auto, fixed);
+                    }
                 }, "support");
                 forSlices(0.8, 0.9, function(slice) {
-                    doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, supportMinArea);
+                    doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, minArea);
                 }, "support");
             }
 
@@ -794,17 +799,18 @@
     };
 
     /**
-     * calculate external overhangs requiring support
-     * this is done bottom-up
-     *
-     * @param {number} minOffset trigger for unsupported distance
-     * @param {number} maxBridge max length before mid supports added
-     * @param {number} expand outer support clip
-     * @param {number} offset inner support clip
-     * @param {number} gap layers between supports and part
+     * calculate external overhangs requiring support.
+     * this is done bottom-up except for fixed supports (manual)
      */
-    function doSupport(slice, minOffset, maxBridge, expand, minArea, pillarSize, offset, gap) {
-        let min = minArea || 0.01,
+    function doSupport(slice, proc, auto, fixed) {
+        let minOffset = proc.sliceSupportOffset,
+            maxBridge = proc.sliceSupportSpan,
+            expand = proc.sliceSupportExtra,
+            minArea = proc.supportMinArea,
+            pillarSize = proc.sliceSupportSize,
+            offset = proc.sliceSupportOffset,
+            gap = proc.sliceSupportGap,
+            min = minArea || 0.01,
             size = (pillarSize || 1),
             mergeDist = size * 3, // pillar merge dist
             tops = slice.topPolys(),
@@ -865,29 +871,47 @@
 
         let supports = [];
 
-        // add offset solids to supports (or fill depending)
-        fill.forEachPair(function(p1,p2) { checkLineSupport(p1, p2, false) });
-        // if (top.bridges) POLY.expand(top.bridges, -maxBridge/2, top.z, supports, 1);
+        // generate support polys from unsupported points
+        if (auto) (function() {
+            // add offset solids to supports (or fill depending)
+            fill.forEachPair(function(p1,p2) { checkLineSupport(p1, p2, false) });
+            // if (top.bridges) POLY.expand(top.bridges, -maxBridge/2, top.z, supports, 1);
 
-        // skip the rest if no points or supports
-        if (!(points.length || supports.length)) return;
+            // skip the rest if no points or supports
+            if (!(points.length || supports.length)) return;
 
-        let pillars = [];
+            let pillars = [];
 
-        // TODO project points down instead of unioned pillars
-        // TODO merge point/rect into hull of next nearest (up to maxBridge/2 away)
-        // TODO eliminate unions in favor of progress hulling (using previous w/nearness)
-        // TODO align pillar diamond along line (when doing line checks)
+            // TODO project points down instead of unioned pillars
+            // TODO merge point/rect into hull of next nearest (up to maxBridge/2 away)
+            // TODO eliminate unions in favor of progress hulling (using previous w/nearness)
+            // TODO align pillar diamond along line (when doing line checks)
 
-        // for each point, create a bounding rectangle
-        points.forEach(function(point) {
-            pillars.push(BASE.newPolygon().centerRectangle(point, size/2, size/2));
-        });
+            // for each point, create a bounding rectangle
+            points.forEach(function(point) {
+                pillars.push(BASE.newPolygon().centerRectangle(point, size/2, size/2));
+            });
 
-        // merge pillars and replace with convex hull of outer points (aka smoothing)
-        pillars = POLY.union(pillars).forEach(function(pillar) {
-            supports.push(BASE.newPolygon().createConvexHull(pillar.points));
-        });
+            // merge pillars and replace with convex hull of outer points (aka smoothing)
+            pillars = POLY.union(pillars).forEach(function(pillar) {
+                supports.push(BASE.newPolygon().createConvexHull(pillar.points));
+            });
+        })();
+
+        if (supports.length === 0 && !(fixed && fixed.length)) {
+            return;
+        }
+
+        if (fixed && fixed.length) {
+            fixed.forEach(sup => {
+                let zmin = sup.z - sup.dh / 2;
+                let zmax = sup.z + sup.dh / 2;
+                if (slice.z >= zmin || slice.z <= zmax) {
+                    let center = BASE.newPoint(sup.x, sup.y, slice.z);
+                    supports.push(BASE.newPolygon().centerRectangle(center, sup.dw, sup.dw));
+                }
+            });
+        }
 
         // return top.supports = supports;
         // then union supports
@@ -924,8 +948,7 @@
             down = down.down;
             depth++;
         }
-
-    };
+    }
 
     /**
      * @param {number} linewidth
