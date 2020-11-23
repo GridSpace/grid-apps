@@ -250,9 +250,7 @@
                 const fixed = Object.values(settings.widget[widget.id].support || {});
 
                 forSlices(0.7, 0.8, function(slice) {
-                    if (slice.index > 0) {
-                        doSupport(slice, spro, auto, fixed);
-                    }
+                    doSupport(slice, spro, auto, fixed);
                 }, "support");
                 forSlices(0.8, 0.9, function(slice) {
                     doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, minArea);
@@ -828,8 +826,8 @@
             fill = slice.topFill(),
             points = [],
             down = slice.down,
-            down_tops = down.topPolys(),
-            down_traces = POLY.flatten(down.topShells().clone(true));
+            down_tops = down ? down.topPolys() : null,
+            down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
 
         // check if point is supported by layer below
         function checkPointSupport(point) {
@@ -864,15 +862,15 @@
             if (poly) checkPointSupport(p2);
         }
 
-        // check trace line support needs
-        traces.forEach(function(trace) {
-            trace.forEachSegment(function(p1, p2) { checkLineSupport(p1, p2, true) });
-        });
-
         let supports = [];
 
         // generate support polys from unsupported points
-        if (auto) (function() {
+        if (auto && slice.down) (function() {
+            // check trace line support needs
+            traces.forEach(function(trace) {
+                trace.forEachSegment(function(p1, p2) { checkLineSupport(p1, p2, true) });
+            });
+
             // add offset solids to supports (or fill depending)
             fill.forEachPair(function(p1,p2) { checkLineSupport(p1, p2, false) });
             // if (top.bridges) POLY.expand(top.bridges, -maxBridge/2, top.z, supports, 1);
@@ -961,9 +959,6 @@
             nsB = [],
             nsC = [],
             min = minArea || 0.1;
-
-        // create support clip offset
-        // POLY.expand(slice.gatherTopPolys([]), offset, slice.z, slice.offsets = []);
 
         if (!supports) return;
 
