@@ -48,7 +48,7 @@
         this.depth = 0; // depth nested from top parent (density for support fill)
         this.delete = false; // for culling during tracing
         this.fillang = null; // hinted fill angle
-        this.fills = null; // fill lines (only used by supports currently)
+        this.fill = null; // fill lines (only used by supports currently)
         if (points) this.addPoints(points);
     }
 

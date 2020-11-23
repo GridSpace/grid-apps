@@ -70,27 +70,22 @@
         api.event.on("key.esc", () => {
             func.sdone()
         });
-        api.event.on("selection.rotate", rot => {
-            const {x, y, z} = rot;
+        api.event.on("widget.rotate", rot => {
+            const {widget, x, y, z} = rot;
             if (x || y) {
-                API.selection.widgets().forEach(widget => {
-                    clearWidgetSupports(widget);
-                });
-                API.conf.save();
+                clearWidgetSupports(widget);
             } else {
-                API.selection.widgets().forEach(widget => {
-                    let ann = API.widgets.annotate(widget.id);
-                    let sups = ann.support || [];
-                    sups.forEach(sup => {
-                        let wsup = widget.sups[sup.id];
-                        let vc = new THREE.Vector3(sup.x, sup.y, sup.z);
-                        let m4 = new THREE.Matrix4();
-                        m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
-                        vc.applyMatrix4(m4);
-                        wsup.box.position.x = wsup.x = sup.x = vc.x;
-                        wsup.box.position.y = wsup.y = sup.y = vc.y;
-                        wsup.box.position.z = wsup.z = sup.z = vc.z;
-                    });
+                let ann = API.widgets.annotate(widget.id);
+                let sups = ann.support || [];
+                sups.forEach(sup => {
+                    let wsup = widget.sups[sup.id];
+                    let vc = new THREE.Vector3(sup.x, sup.y, sup.z);
+                    let m4 = new THREE.Matrix4();
+                    m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                    vc.applyMatrix4(m4);
+                    wsup.box.position.x = wsup.x = sup.x = vc.x;
+                    wsup.box.position.y = wsup.y = sup.y = vc.y;
+                    wsup.box.position.z = wsup.z = sup.z = vc.z;
                 });
             }
         });

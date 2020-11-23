@@ -462,6 +462,19 @@
         }
     }
 
+    // for unbound workers
+    // if (self.WASM) {
+    //     let {exports} = wasmInstance;
+    //     let heap = new Uint8Array(exports.memory.buffer);
+    //     self.wasm = {
+    //         heap,
+    //         memory: exports.memory,
+    //         // heap: wasmMemory,
+    //         // memory: memoryBytes,
+    //         render: exports.render,
+    //         rle_encode: exports.rle_encode
+    //     };
+    // } else
     // load renderer code in worker context only
     fetch('/wasm/kiri-sla.wasm')
         .then(response => response.arrayBuffer())

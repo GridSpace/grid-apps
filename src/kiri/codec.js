@@ -203,6 +203,13 @@
                     }
                 });
             }
+            if (d.cpath) {
+                d.cpath.forEach(rec => {
+                    if (rec.count === null) {
+                        rec.count = Infinity;
+                    }
+                });
+            }
             // console.log('<--',d);
         }
         return render;

@@ -992,6 +992,7 @@
         if (viewMode !== VIEWS.ARRANGE) return;
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
+            API.event.emit('widget.rotate', {widget: w, x, y, z});
         });
         updateSelectedBounds();
         platform.compute_max_z();
