@@ -388,6 +388,11 @@
                     last = top_poly.clone(true);
                     top.shells = last;
                 } else {
+                    // heal top open polygons if the ends are close (benchy tilt test)
+                    top_poly.forEach(p => { if (p.open) {
+                        let dist = p.first().distTo2D(p.last());
+                        if (dist < 1) p.open = false;
+                    } });
                     if (opt.thin) {
                         top.thin_fill = [];
                         let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
@@ -913,7 +918,7 @@
 
         // return top.supports = supports;
         // then union supports
-        supports = POLY.union(supports);
+        supports = POLY.union(supports, null, true);
 
         // constrain support poly to top polys
         supports = POLY.trimTo(supports, trimTo);
@@ -963,7 +968,7 @@
         if (!supports) return;
 
         // union supports
-        supports = POLY.union(supports);
+        supports = POLY.union(supports, undefined, true);
 
         // trim to clip offsets
         if (slice.offsets) POLY.subtract(supports, slice.offsets, nsB, null, slice.z, min);

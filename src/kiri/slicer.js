@@ -688,8 +688,8 @@
                 }
             }
 
+            // undo temp del/used marks
             for (let i=0; i<stack.length; i++) stack[i].del = false;
-            // stack.forEach(function(p) { p.del = false });
         }
 
         // emit a polygon if it can be cleaned and still have 2 or more points
