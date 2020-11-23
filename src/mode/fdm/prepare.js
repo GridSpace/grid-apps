@@ -193,7 +193,7 @@
                         sslices[index].supports = [];
                     }
                     sslices[index].supports.appendAll(slice.supports.map(p => {
-                        if (p.fills) p.fills.forEach(p => p.move(widget.track.pos));
+                        if (p.fill) p.fill.forEach(p => p.move(widget.track.pos));
                         return p.move(widget.track.pos);
                     }));
                 });

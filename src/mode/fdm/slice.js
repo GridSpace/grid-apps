@@ -319,7 +319,7 @@
             .addPolys(slice.supports, vopt({ offset, height }));
 
         if (slice.supports) slice.supports.forEach(poly => {
-            output
+            if (poly.fill) output
                 .setLayer("support", COLOR.support)
                 .addLines(poly.fill, vopt({ offset, height }));
         })
