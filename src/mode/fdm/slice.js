@@ -918,7 +918,7 @@
 
         // return top.supports = supports;
         // then union supports
-        supports = POLY.union(supports);
+        supports = POLY.union(supports, null, true);
 
         // constrain support poly to top polys
         supports = POLY.trimTo(supports, trimTo);
