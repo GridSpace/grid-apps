@@ -6,8 +6,6 @@
 *   milling visualization
 *   auto feature detection (slicing), manual tabs
 *   add tabs to shadow and slice model (for topo)
-*   step down should interpolate top/bottom again
-*   adaptive shadow-line generation for small parts collision detection
 * fdm
 *   manual supports
 *   continuous printing (z belt systems)
@@ -25,7 +23,7 @@
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization
-* `P` client/worker interface normalization and cleanup
+* `P` client/worker interface normalization
 
 # FDM
 

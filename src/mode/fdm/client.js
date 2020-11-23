@@ -48,7 +48,7 @@
             }
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
-            alert = api.show.alert("&lt;esc&gt; key when done editing supports");
+            alert = api.show.alert("&lt;esc&gt; key cancels editing supports");
             api.feature.hover = true;
         });
         api.event.on("fdm.supports.done", func.sdone = () => {
@@ -109,6 +109,7 @@
                     }
                 });
                 sa.splice(ix,1);
+                API.conf.save();
                 return;
             }
             if (!iw) return;

@@ -44,8 +44,7 @@
         js2o = API.js2o,
         o2js = API.o2js,
         platform = API.platform,
-        selection = API.selection,
-        beta = 2401;
+        selection = API.selection;
 
     let deviceLock = false,
         selectedTool = null,
@@ -2188,9 +2187,9 @@
         // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
 
         // warn users they are running a beta release
-        if (beta && beta > 0 && SDB.kiri_beta != beta) {
+        if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
             API.show.alert("this is a beta / development release");
-            SDB.kiri_beta = beta;
+            SDB.kiri_beta = KIRI.beta;
         }
     }
 
