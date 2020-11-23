@@ -113,12 +113,15 @@
         }
         // rotation stack (for undo)
         this.roto = [];
+        // added meshes
+        this.adds = [];
+        // THREE Mesh and points
         this.mesh = null;
         this.points = null;
         // todo resolve use of this vs. mesh.bounds
         this.bounds = null;
+        // wireframe
         this.wire = null;
-        this.topo = null;
         this.slices = null;
         this.settings = null;
         this.modified = true;
@@ -564,9 +567,6 @@
                 if (reply.send_start) {
                     widget.xfer = {start: reply.send_start};
                 }
-                if (reply.topo) {
-                    widget.topo = reply.topo;
-                }
                 if (reply.stats) {
                     widget.stats = reply.stats;
                 }
@@ -575,9 +575,6 @@
                 }
                 if (reply.slice) {
                     widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
-                }
-                if (reply.polish) {
-                    widget.polish = KIRI.codec.decode(reply.polish);
                 }
                 if (reply.error) {
                     ondone(false, reply.error);

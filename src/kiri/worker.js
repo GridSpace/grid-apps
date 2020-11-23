@@ -86,9 +86,6 @@ KIRI.worker = {
                 slices.forEach(function(slice,index) {
                     send.data({index: index, slice: slice.encode(state)});
                 })
-                if (self.debug && widget.polish) {
-                    send.data({polish: KIRI.codec.encode(widget.polish)});
-                }
                 send.data({send_end: time()});
             }
             send.done({done: true});

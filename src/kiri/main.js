@@ -565,6 +565,7 @@
         let out = [];
         forAllWidgets(function(widget) {
             out.push(widget.mesh);
+            out.appendAll(widget.adds);
         });
         return out;
     }

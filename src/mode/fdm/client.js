@@ -10,7 +10,7 @@
         FDM = KIRI.driver.FDM,
         SPACE, API,
         p1, p2, iw,
-        lastMode, lastView,
+        lastMode, lastView, lastPillar,
         alert = [],
         func = {};
 
@@ -96,6 +96,21 @@
         });
         api.event.on("mouse.hover.up", int => {
             delbox('supp');
+            if (lastPillar) {
+                const {widget, box, id} = lastPillar;
+                widget.adds.remove(box);
+                widget.mesh.remove(box);
+                delete widget.sups[id];
+                let sa = API.widgets.annotate(widget.id).support;
+                let ix = 0;
+                sa.forEach((rec,i) => {
+                    if (rec.id === id) {
+                        ix = i;
+                    }
+                });
+                sa.splice(ix,1);
+                return;
+            }
             if (!iw) return;
             let hy = (p1.y + p2.y) / 2;
             let dh = Math.abs(p1.y - p2.y);
@@ -103,23 +118,33 @@
             let ip = iw.track.pos;
             let wa = api.widgets.annotate(iw.id);
             let ws = (wa.support = wa.support || []);
-            let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy;
-            let id = Date.now();
-            ws.push({x, y, z, dw, dh, id});
-            addWidgetSupport(iw, {x, y, z, dw, dh, id});
+            let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy, id = Date.now();
+            let rec = {x, y, z, dw, dh, id};
+            ws.push(Object.clone(rec));
+            addWidgetSupport(iw, rec);
             API.conf.save();
         });
         api.event.on("mouse.hover", data => {
+            // delbox('intZ');
+            // delbox('intW');
+            // addbox(point, 0xff0000, 'intZ');
+            delbox('supp');
             const { int, type, point } = data;
+            const pillar = int ? int.object.pillar : undefined;
+            if (lastPillar) {
+                lastPillar.box.material.color.r = 0;
+                lastPillar = null;
+            }
+            if (pillar) {
+                pillar.box.material.color.r = 0.5;
+                lastPillar = pillar;
+                return;
+            }
             if (int && type === 'widget') {
                 iw = int.object.widget || iw;
             } else {
                 iw = null;
             }
-            // delbox('intZ');
-            // delbox('intW');
-            // addbox(point, 0xff0000, 'intZ');
-            delbox('supp');
             p1 = point;
             let dir = new THREE.Vector3(0,1,0)
             let ray = new THREE.Raycaster(point, dir);
@@ -178,7 +203,9 @@
         // prevent duplicate restore from repeated settings load calls
         if (!sups[id]) {
             pos.box = addbox({x, y, z}, 0x0000dd, 'supp', { x:dw, y:dw, z:dh }, widget.mesh);
+            pos.box.pillar = Object.assign({widget}, pos);
             sups[id] = pos;
+            widget.adds.push(pos.box);
         }
     }
 
@@ -202,8 +229,10 @@
 
     function clearWidgetSupports(widget) {
         Object.values(widget.sups || {}).forEach(support => {
+            widget.adds.remove(support.box);
             widget.mesh.remove(support.box);
         });
+        widget.sups = {};
         delete API.widgets.annotate(widget.id).support;
     }
 
