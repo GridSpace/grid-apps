@@ -6,19 +6,23 @@ kiri.loader.push(function() {
 
     let KIRI = self.kiri,
         CAM = KIRI.driver.CAM,
-        API, WORLD,
+        API, WORLD, SPACE,
         meshes = {};
+
+    // ---( CLIENT FUNCTIONS )---
 
     if (KIRI.client)
     CAM.animate_clear = function(api) {
-        WORLD = (API = api).const.SPACE.platform.world;
+        SPACE = (API = api).const.SPACE;
+        WORLD = SPACE.platform.world;
         $('layer-animate').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
     }
 
     if (KIRI.client)
     CAM.animate = function(api) {
-        WORLD = (API = api).const.SPACE.platform.world;
+        SPACE = (API = api).const.SPACE;
+        WORLD = SPACE.platform.world;
         KIRI.client.animate_setup(API.conf.get(), data => {
             checkMeshCommands(data);
             const UC = API.uc;
@@ -26,10 +30,12 @@ kiri.loader.push(function() {
             layer.innerHTML = '';
             UC.setGroup(layer);
             UC.newRow([
-                UC.newButton(null,play,{icon:'<i class="fas fa-play-circle"></i>'}),
-                UC.newButton(null,pause,{icon:'<i class="fas fa-pause-circle"></i>'})
+                UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>'}),
+                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>'}),
+                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>'}),
+                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>'})
             ]);
-            play();
+            play({steps: 1, speed: 25});
         });
     };
 
@@ -79,6 +85,7 @@ kiri.loader.push(function() {
             mpos.array[pos] = val;
         }
         mpos.needsUpdate = true;
+        SPACE.update();
     }
 
     function deleteMesh(id) {
@@ -86,8 +93,19 @@ kiri.loader.push(function() {
         delete meshes[id];
     }
 
-    function play() {
-        KIRI.client.animate({speed: 1}, handleGridUpdate);
+    function step(opts) {
+        const { steps, speed } = opts;
+        KIRI.client.animate({speed: speed || 25, steps: 1}, handleGridUpdate);
+    }
+
+    function play(opts) {
+        const { steps, speed } = opts;
+        KIRI.client.animate({speed: speed || 25, steps: steps || Infinity}, handleGridUpdate);
+    }
+
+    function fast(opts) {
+        const { steps, speed } = opts;
+        KIRI.client.animate({speed: speed || 10, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function pause() {
@@ -96,6 +114,9 @@ kiri.loader.push(function() {
 
     function handleGridUpdate(data) {
         checkMeshCommands(data);
+        if (data && data.done) {
+            console.log('done', data);
+        }
     }
 
     if (KIRI.client)
@@ -107,6 +128,13 @@ kiri.loader.push(function() {
     KIRI.client.animate = function(data, ondone) {
         send("animate", data, ondone);
     };
+
+    if (KIRI.client)
+    KIRI.client.animate_cleanup = function(data, ondone) {
+        send("animate_cleanup", data, ondone);
+    };
+
+    // ---( WORKER FUNCTIONS )---
 
     let path, pathIndex, stock, grid, gridX, gridY, tool, tools, rez, last;
 
@@ -130,6 +158,10 @@ kiri.loader.push(function() {
         gridX = stepsX;
         gridY = stepsY;
 
+        tool = null;
+        last = null;
+        animating = false;
+        animateClear = false;
         send.done({ mesh_add: { id: 0, pos, ind } });
     };
 
@@ -140,11 +172,13 @@ kiri.loader.push(function() {
         const ox = size.x / 2;
         const oy = size.y / 2;
 
+        const b = { mx: 0, my: 0, Mx: 0, My: 0};
+
         // initialize grid points
         for (let x=0, ai=0; x<stepsX; x++) {
             for (let y=0; y<stepsY; y++) {
-                pos[ai++] = x * step - ox;
-                pos[ai++] = y * step - oy;
+                let px = pos[ai++] = x * step - ox;
+                let py = pos[ai++] = y * step - oy;
                 pos[ai++] = size.z;
                 if (y > 0) ind.appendAll([
                     (stepsY * x) + (y - 1),
@@ -154,57 +188,108 @@ kiri.loader.push(function() {
                     (stepsY * (x - 1)) + y,
                     (stepsY * (x    )) + y
                 ]);
+                b.mx = Math.min(b.mx, px);
+                b.my = Math.min(b.my, py);
+                b.Mx = Math.max(b.Mx, px);
+                b.My = Math.max(b.My, py);
             }
         }
+        // console.log({stepsX, stepsY, size, step, ox, oy, bounds: b});
 
         return { pos, ind };
     }
 
     if (KIRI.worker)
     KIRI.worker.animate = function(data, send) {
-        if (data.speed) {
-            const next = path[pathIndex++];
-            if (next.tool && (!tool || tool.getNumber() !== next.tool)) {
-                updateTool(next.tool, send);
-            }
-            const id = tool.getID();
-            if (last) {
-                const lp = last.point, np = next.point;
-                const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
-                const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-                const st = Math.ceil(md / rez);
-                const mx = dx / st, my = dy / st, mz = dz / st;
-                const moves = [];
-                for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
-                    moves.push({x,y,z});
-                    x += mx;
-                    y += my;
-                    z += mz;
-                }
-                moves.push(next.point);
-                renderMoves(id, moves, send);
-            } else {
-                tool.pos = next.point;
-                send.data({ mesh_move: { id, pos: next.point }});
-                send.done();
-            }
-            last = next;
-        } else {
-            send.done();
+        if (data.speed >= 0) {
+            renderSpeed = data.speed;
+        }
+        if (data.steps > 0) {
+            stepsRemain = data.steps;
+        }
+        if (animating) {
+            return send.done();
+        }
+        renderPath(send);
+    };
+
+    if (KIRI.worker)
+    KIRI.worker.animate_cleanup = function(data, send) {
+        if (animating) {
+            animateClear = true;
         }
     };
+
+    let animateClear = false;
+    let animating = false;
+    let renderSpeed = 25;
+    let stepsRemain = 0;
+
+    function renderPath(send) {
+        if (animateClear) {
+            animateClear = false;
+            animating = false;
+            send.done();
+            return;
+        }
+        if (stepsRemain <= 0 || renderSpeed === 0) {
+            animating = false;
+            send.done();
+            return;
+        }
+        const next = path[pathIndex++];
+        if (!next) {
+            animating = false;
+            stepsRemain = 0;
+            send.done();
+            return;
+        }
+        animating = true;
+        stepsRemain--;
+        if (next.tool && (!tool || tool.getNumber() !== next.tool)) {
+            updateTool(next.tool, send);
+        }
+        const id = tool.getID();
+        if (last) {
+            const lp = last.point, np = next.point;
+            const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
+            const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+            const st = Math.ceil(md / rez);
+            const mx = dx / st, my = dy / st, mz = dz / st;
+            const moves = [];
+            for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
+                moves.push({x,y,z});
+                x += mx;
+                y += my;
+                z += mz;
+            }
+            moves.push(next.point);
+            renderMoves(id, moves, send);
+        } else {
+            tool.pos = next.point;
+            send.data({ mesh_move: { id, pos: next.point }});
+            setTimeout(() => { renderPath(send) }, 0);
+        }
+        last = next;
+    }
 
     function renderMoves(id, moves, send) {
         let index = 0;
         function update() {
-            const pos = moves[index++];
-            updateMesh(pos, send);
-            tool.pos = pos;
-            send.data({ mesh_move: { id, pos }});
+            if (animateClear) {
+                return renderPath(send);
+            }
+            if (renderSpeed > 0 && index < moves.length) {
+                const pos = moves[index++];
+                if (!pos) throw `no pos @ ${index} of ${moves.length}`;
+                tool.pos = pos;
+                updateMesh(pos, send);
+                send.data({ mesh_move: { id, pos }});
+            }
             if (index < moves.length) {
-                setTimeout(update, 25);
+                setTimeout(update, renderSpeed);
             } else {
-                send.done();
+                setTimeout(() => { renderPath(send) }, renderSpeed);
             }
         }
         update(0);
@@ -215,8 +300,8 @@ kiri.loader.push(function() {
         const { size, pix } = tool.profileDim;
         const mid = Math.floor(pix/2);
         const mesh_update = [];
-        const rx = Math.floor((pos.x + stock.x / 2) / rez);
-        const ry = Math.floor((pos.y + stock.y / 2) / rez);
+        const rx = Math.floor((pos.x + stock.x / 2 - size / 2) / rez);
+        const ry = Math.floor((pos.y + stock.y / 2 - size / 2) / rez);
         // deform mesh to lowest point on tool profile
         for (let i=0, il=prof.length; i < il; ) {
             const dx = mid + prof[i++];
@@ -225,6 +310,9 @@ kiri.loader.push(function() {
 
             const gx = rx + dx;
             const gy = ry + dy;
+
+            if (gx < 0|| gy < 0 || gx > gridX-1 || gy > gridY-1) continue;
+
             const gi = gx * gridY + gy;
             const iz = gi * 3 + 2;
 
