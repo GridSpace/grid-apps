@@ -13,6 +13,7 @@ kiri.loader.push(function() {
 
     if (KIRI.client)
     CAM.animate_clear = function(api) {
+        KIRI.client.animate_cleanup();
         SPACE = (API = api).const.SPACE;
         WORLD = SPACE.platform.world;
         $('layer-animate').innerHTML = '';
@@ -65,7 +66,7 @@ kiri.loader.push(function() {
     function meshAdd(id, ind, pos) {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setIndex(new THREE.BufferAttribute(new Uint16Array(ind), 1));
+        geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
         const mat = new THREE.LineBasicMaterial({
             transparent: true,
             opacity: 0.75,
@@ -142,7 +143,7 @@ kiri.loader.push(function() {
     KIRI.worker.animate_setup = function(data, send) {
         const { settings } = data;
 
-        rez = 0.5;
+        rez = 0.25;
         tools = settings.tools;
         stock = settings.stock;
         path = current.print.output.flat();
@@ -162,6 +163,7 @@ kiri.loader.push(function() {
         last = null;
         animating = false;
         animateClear = false;
+
         send.done({ mesh_add: { id: 0, pos, ind } });
     };
 
@@ -194,7 +196,6 @@ kiri.loader.push(function() {
                 b.My = Math.max(b.My, py);
             }
         }
-        // console.log({stepsX, stepsY, size, step, ox, oy, bounds: b});
 
         return { pos, ind };
     }
