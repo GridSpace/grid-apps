@@ -2,7 +2,7 @@
 
 "use strict";
 
-kiri.loader.push(function() {
+self.kiri.loader.push(function() {
 
     let KIRI = self.kiri,
         CAM = KIRI.driver.CAM,

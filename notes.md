@@ -3,11 +3,9 @@
 ## 2.4 tentative list
 * cnc
 *   tracing (chamfer, engrave)
-*   milling visualization
 *   auto feature detection (slicing), manual tabs
 *   add tabs to shadow and slice model (for topo)
 * fdm
-*   manual supports
 *   continuous printing (z belt systems)
 * laser
 *   drag knife support
@@ -48,6 +46,7 @@
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
 * `P` implement infill clipping in wasm
+* `P` solid fill the tops of supports for down facing flats
 
 # SLA
 
@@ -56,6 +55,7 @@
 
 # CAM
 
+* `B` fix ball mill profile
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
@@ -76,6 +76,7 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
+* `P` control of animation mesh density
 
 # Laser
 
