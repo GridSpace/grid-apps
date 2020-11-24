@@ -25,6 +25,7 @@
 
 # FDM
 
+* `B` expand > 0 producing artifacts with manual supports
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` sparse infill should follow polys between intersect points
@@ -77,6 +78,7 @@
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` control of animation mesh density
+* `P` use zerocopy for animation stream data
 
 # Laser
 
