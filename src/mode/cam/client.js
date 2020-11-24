@@ -74,7 +74,7 @@
     function animate() {
         API.view.set(VIEWS.ARRANGE);
         API.widgets.opacity(0.75);
-        // console.log("animate", API.conf.get().stock);
+        CAM.animate(API);
     }
 
     function updateStock(args, event) {
