@@ -13,23 +13,40 @@ kiri.loader.push(function() {
 
     if (KIRI.client)
     CAM.animate = function(API) {
-        const settings = API.conf.get();
+        KIRI.client.animate(API.conf.get(), data => {
+            const { ind, pos } = data;
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setIndex(new THREE.BufferAttribute(new Uint16Array(ind), 1));
+            const mat = new THREE.LineBasicMaterial({
+                transparent: true,
+                opacity: 0.75,
+                color: 0
+            });
+            const seg = new THREE.LineSegments(geo, mat);
+
+            API.const.SPACE.platform.world.add(seg);
+        });
+    };
+
+    if (KIRI.client)
+    KIRI.client.animate = function(settings, ondone) {
+        send("animate", {settings}, reply => {
+            ondone(reply);
+        });
+    };
+
+    if (KIRI.worker)
+    KIRI.worker.animate = function(data, send) {
+        console.log({current});
+        const { settings } = data;
         const stock = settings.stock;
         const center = stock.center;
-
-        console.log("animate", settings.stock);
-
         const step = 1;
         const stepsX = Math.floor(stock.x / step) + 1;
         const stepsY = Math.floor(stock.y / step) + 1;
         const gridPoints = stepsX * stepsY;
-
-        const mat = new THREE.LineBasicMaterial({
-            transparent: true,
-            opacity: 0.75,
-            color: 0
-        });
-
         const pos = new Float32Array(gridPoints * 3);
         const ind = [];
         const ox = stock.x / 2;
@@ -52,27 +69,7 @@ kiri.loader.push(function() {
             }
         }
 
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setIndex(new THREE.BufferAttribute(new Uint16Array(ind), 1));
-        const seg = new THREE.LineSegments(geo, mat);
-
-        API.const.SPACE.platform.world.add(seg);
-
-        KIRI.client.animate(123);
-    };
-
-    if (KIRI.client)
-    KIRI.client.animate = function(abc) {
-        send("animate", {abc}, reply => {
-            console.log('client.animate.results', reply);
-        });
-    };
-
-    if (KIRI.worker)
-    KIRI.worker.animate = function(data, send) {
-        console.log('worker.animate', data);
-        send.done({def:456});
+        send.done({ pos, ind });
     };
 
 });

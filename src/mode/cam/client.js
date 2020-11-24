@@ -72,8 +72,9 @@
     };
 
     function animate() {
-        API.view.set(VIEWS.ARRANGE);
         API.widgets.opacity(0.75);
+        API.hide.slider();
+        STACKS.clear();
         CAM.animate(API);
     }
 

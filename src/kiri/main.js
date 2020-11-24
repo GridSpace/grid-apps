@@ -251,7 +251,8 @@
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
-            import: function() { }
+            import: function() { },
+            slider: hideSlider
         },
         language: KIRI.lang,
         lists,
@@ -672,13 +673,12 @@
     function showSlider() {
         UI.layers.style.display = 'flex';
         UI.slider.style.display = 'flex';
-        // UI.setMenu.style.display = 'none';
     }
 
     function hideSlider(andmenu) {
         UI.layers.style.display = 'none';
         UI.slider.style.display = 'none';
-        // UI.setMenu.style.display = andmenu ? 'none' : 'flex';
+        UI.speeds.style.display = 'none';
     }
 
     function updateSpeeds(maxSpeed) {
