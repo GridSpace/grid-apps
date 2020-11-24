@@ -10,6 +10,7 @@
         PRO = CAM.process,
         newPolygon = BASE.newPolygon,
         newPoint = BASE.newPoint,
+        isAnimate,
         isArrange,
         isCamMode,
         camStock,
@@ -34,6 +35,8 @@
 
         api.event.on("view.set", (mode) => {
             isArrange = (mode === VIEWS.ARRANGE);
+            isAnimate = false;
+            CAM.animate_clear(api);
         });
 
         api.event.on("settings.saved", (settings) => {
@@ -72,6 +75,7 @@
     };
 
     function animate() {
+        isAnimate = true;
         API.widgets.opacity(0.75);
         API.hide.slider();
         STACKS.clear();
@@ -79,6 +83,10 @@
     }
 
     function updateStock(args, event) {
+        if (isAnimate) {
+            return;
+        }
+
         STACKS.remove('bounds');
         if (isCamMode && isArrange) {
             STACKS.clear();

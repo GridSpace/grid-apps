@@ -872,6 +872,17 @@ th, tr, td, label {
     pointer-events: all;
 }
 
+#layer-animate {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    bottom: 3px;
+}
+#layer-animate svg {
+    color: #333;
+    font-size: 30px;
+}
+
 #slider {
     display: none;
     height: 30px;

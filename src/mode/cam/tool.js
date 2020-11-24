@@ -11,8 +11,16 @@
         CAM = KIRI.driver.CAM;
 
     class Tool {
-        constructor(settings, id) {
-            this.tool = settings.tools.filter(tool => tool.id === id)[0];
+        constructor(settings, id, number) {
+            if (number >= 0) {
+                this.tool = settings.tools.filter(tool => tool.number === number)[0];
+            } else {
+                this.tool = settings.tools.filter(tool => tool.id === id)[0];
+            }
+        }
+
+        getID() {
+            return this.tool.id;
         }
 
         getType() {
@@ -95,6 +103,10 @@
             }
 
             this.profile = toolOffset;
+            this.profileDim = {
+                size: shaft_pix_float,
+                pix: profile_pix_iter
+            };
             return this;
         }
     }
