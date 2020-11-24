@@ -13,10 +13,11 @@
         isArrange,
         isCamMode,
         camStock,
-        API, SPACE, MODES, VIEWS, UI, UC;
+        API, SPACE, STACKS, MODES, VIEWS, UI, UC;
 
     CAM.init = function(kiri, api) {
         // console.log({kiri,api})
+        STACKS = api.const.STACKS;
         SPACE = api.const.SPACE;
         MODES = api.const.MODES;
         VIEWS = api.const.VIEWS;
@@ -64,12 +65,19 @@
             "selection.scale",
             "selection.rotate"
         ], updateStock);
+
+        api.event.on("preview.end", () => {
+            if (camStock) STACKS.getStack("bounds").button("animate", animate);
+        });
     };
 
-    function updateStock(args, event) {
-        const SPACE = API.const.SPACE;
-        const STACKS = API.const.STACKS;
+    function animate() {
+        API.view.set(VIEWS.ARRANGE);
+        API.widgets.opacity(0.75);
+        // console.log("animate", API.conf.get().stock);
+    }
 
+    function updateStock(args, event) {
         STACKS.remove('bounds');
         if (isCamMode && isArrange) {
             STACKS.clear();

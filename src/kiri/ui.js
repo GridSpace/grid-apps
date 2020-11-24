@@ -8,10 +8,11 @@
 
     let SELF = self,
         KIRI = self.kiri,
+        DOC = SELF.document,
+        inputAction = null,
         lastGroup = null,
         lastDiv = null,
         addTo = null,
-        inputAction = null,
         groups = {},
         groupShow = {},
         groupSticky = false,
@@ -23,49 +24,52 @@
         letMode = null,
         letExpert = false,
         letHoverPop = true,
-        DOC = SELF.document,
-        state = {},
-        prefix = "tab",
-        NOMODE = "nomode",
         exitimer = undefined,
-        units = 1;
+        NOMODE = "nomode",
+        prefix = "tab",
+        state = {},
+        units = 1,
+        lastBtn = null,
+        lastTxt = null,
+        lastPop = null,
+        savePop = null;
 
     SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
 
     KIRI.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
-        refresh: refresh,
-        setMode: setMode,
-        setExpert: setExpert,
-        setHoverPop: setHoverPop,
-        bound: bound,
-        toInt: toInt,
-        toFloat: toFloat,
-        hidePop: hidePop,
-        isPopped: isPopped,
-        newText: newTextArea,
-        newGCode: newGCode,
-        newLabel: newLabel,
-        newRange: newRange,
-        newInput: newInputField,
-        newButton: newButton,
-        newBoolean: newBooleanField,
-        newSelect: newSelect,
-        newTable: newTables,
-        newTableRow: newTableRow,
-        newRow: newRow,
-        newBlank: newBlank,
-        newGroup: newGroup,
-        setGroup: setGroup,
-        setUnits: setUnits,
-        addUnits: addUnits,
-        hidePoppers: hidePoppers,
-        confirm: confirm,
-        prompt: prompt,
-        alert: alert,
         checkpoint,
-        restore
+        restore,
+        refresh,
+        setMode,
+        setExpert,
+        setHoverPop,
+        hidePoppers,
+        bound,
+        toInt,
+        toFloat,
+        hidePop,
+        isPopped,
+        newBoolean,
+        newButton,
+        newBlank,
+        newGCode,
+        newGroup,
+        newInput,
+        newLabel,
+        newRange,
+        newRow,
+        newSelect,
+        newTable,
+        newTableRow,
+        newText,
+        setGroup,
+        addUnits,
+        setUnits,
+        confirm,
+        prompt,
+        alert
     };
 
     function alert(message) {
@@ -282,6 +286,13 @@
         return row;
     }
 
+    function addCollapsableElement(parent) {
+        let row = newDiv();
+        if (parent) parent.appendChild(row);
+        if (lastGroup) lastGroup.push(row);
+        return row;
+    }
+
     function hidePoppers() {
         showGroup(undefined);
     }
@@ -408,11 +419,6 @@
         return div;
     }
 
-    let lastBtn = null;
-    let lastTxt = null;
-    let lastPop = null;
-    let savePop = null;
-
     function hidePop() {
         if (lastPop) {
             lastPop.style.display = "none";
@@ -490,7 +496,7 @@
         return txt;
     }
 
-    function newTextArea(label, options) {
+    function newText(label, options) {
         let opt = options || {},
             inline = opt.row,
             row = inline ? lastDiv : newDiv(options),
@@ -564,7 +570,7 @@
         return txt;
     }
 
-    function newInputField(label, options) {
+    function newInput(label, options) {
         let opt = options || {},
             row = newDiv(opt),
             hide = opt && opt.hide,
@@ -714,7 +720,7 @@
         return ip;
     }
 
-    function newBooleanField(label, action, options) {
+    function newBoolean(label, action, options) {
         let row = newDiv(options),
             ip = DOC.createElement('input'),
             hide = options && options.hide;
@@ -757,6 +763,7 @@
         return row;
     }
 
+    // unlike other elements, does not auto-add to a row
     function newButton(label, action, options) {
         let opt = options || {},
             b = DOC.createElement('button');
@@ -786,27 +793,6 @@
         return b;
     }
 
-    function newTableRow(arrayOfArrays, options) {
-        return newRow(newTables(arrayOfArrays), options);
-    }
-
-    function newTables(arrayOfArrays) {
-        let array = [];
-        for (let i=0; i<arrayOfArrays.length; i++) {
-            array.push(newRowTable(arrayOfArrays[i]));
-        }
-        return array;
-    }
-
-    function newRowTable(array) {
-        let div = newDiv();
-        div.setAttribute("class", "table-row");
-        array.forEach(function(c) {
-            div.appendChild(c);
-        });
-        return div;
-    }
-
     function newRow(children, options) {
         let row = addCollapsableElement((options && options.noadd) ? null : addTo);
         if (children) children.forEach(function (c) { row.appendChild(c) });
@@ -819,11 +805,25 @@
         return row;
     }
 
-    function addCollapsableElement(parent) {
-        let row = newDiv();
-        if (parent) parent.appendChild(row);
-        if (lastGroup) lastGroup.push(row);
-        return row;
+    function newRowTable(array) {
+        let div = newDiv();
+        div.setAttribute("class", "table-row");
+        array.forEach(function(c) {
+            div.appendChild(c);
+        });
+        return div;
+    }
+
+    function newTableRow(arrayOfArrays, options) {
+        return newRow(newTable(arrayOfArrays), options);
+    }
+
+    function newTable(arrayOfArrays) {
+        let array = [];
+        for (let i=0; i<arrayOfArrays.length; i++) {
+            array.push(newRowTable(arrayOfArrays[i]));
+        }
+        return array;
     }
 
 })();

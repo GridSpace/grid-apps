@@ -40,7 +40,6 @@
         // clear labels
         UC.setGroup(labels);
         labels.innerHTML = '';
-
     }
 
     function getStack(name) {
@@ -65,6 +64,9 @@
             },
             clear: function() {
                 view.remove(stack.view);
+            },
+            button: function(label, action) {
+                UC.newRow([ UC.newButton(label, action) ]);
             }
         };
         return stack;
