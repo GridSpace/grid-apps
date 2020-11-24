@@ -2,7 +2,7 @@
 
 "use strict";
 
-(function() {
+kiri.loader.push(function() {
 
     let KIRI = self.kiri,
         BASE = self.base,
@@ -11,6 +11,7 @@
         newPolygon = BASE.newPolygon,
         newPoint = BASE.newPoint;
 
+    if (KIRI.client)
     CAM.animate = function(API) {
         const settings = API.conf.get();
         const stock = settings.stock;
@@ -18,9 +19,9 @@
 
         console.log("animate", settings.stock);
 
-        const step = 2;
-        const stepsX = Math.floor(stock.x / step);
-        const stepsY = Math.floor(stock.y / step);
+        const step = 1;
+        const stepsX = Math.floor(stock.x / step) + 1;
+        const stepsY = Math.floor(stock.y / step) + 1;
         const gridPoints = stepsX * stepsY;
 
         const mat = new THREE.LineBasicMaterial({
@@ -30,9 +31,9 @@
         });
 
         const pos = new Float32Array(gridPoints * 3);
-        const ind = [];//new Array(stepsX * stepsY);
-        const ox = (stepsX * step) / 2;
-        const oy = (stepsY * step) / 2;
+        const ind = [];
+        const ox = stock.x / 2;
+        const oy = stock.y / 2;
 
         // initialize grid points
         for (let x=0, ai=0; x<stepsX; x++) {
@@ -57,6 +58,21 @@
         const seg = new THREE.LineSegments(geo, mat);
 
         API.const.SPACE.platform.world.add(seg);
+
+        KIRI.client.animate(123);
     };
 
-})();
+    if (KIRI.client)
+    KIRI.client.animate = function(abc) {
+        send("animate", {abc}, reply => {
+            console.log('client.animate.results', reply);
+        });
+    };
+
+    if (KIRI.worker)
+    KIRI.worker.animate = function(data, send) {
+        console.log('worker.animate', data);
+        send.done({def:456});
+    };
+
+});

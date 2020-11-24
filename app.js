@@ -329,6 +329,7 @@ const script = {
         "mode/cam/slice",
         "mode/cam/prepare",
         "mode/cam/export",
+        "mode/cam/animate",
         "mode/laser/driver",
         "kiri/widget",
         "kiri/print",

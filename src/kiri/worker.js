@@ -17,7 +17,7 @@ self.alert = function(o) {
     console.log(o);
 };
 
-console.log(`kiri | init work | ${KIRI.version}`);
+console.log(`kiri | init work | ${KIRI.version || "rogue"}`);
 BASE.debug.disable();
 
 // code is running in the worker / server context
