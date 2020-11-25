@@ -159,7 +159,8 @@ self.kiri.loader.push(function() {
 
     // ---( WORKER FUNCTIONS )---
 
-    let path, pathIndex, stock, grid, gridX, gridY, tool, tools, rez, last, toolID = 1;
+    let stock, center, grid, gridX, gridY, rez;
+    let path, pathIndex, tool, tools, last, toolID = 1;
 
     if (KIRI.worker)
     KIRI.worker.animate_setup = function(data, send) {
@@ -188,7 +189,7 @@ self.kiri.loader.push(function() {
         animating = false;
         animateClear = false;
 
-        const center = Object.assign({}, stock.center);
+        center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
         send.data({ mesh_add: { id: 0, pos, ind } });
@@ -336,8 +337,8 @@ self.kiri.loader.push(function() {
         const { size, pix } = tool.profileDim;
         const mid = Math.floor(pix/2);
         const update = new Float32Array(Math.round(prof.length * 0.8));
-        const rx = Math.floor((pos.x + stock.x / 2 - size / 2) / rez);
-        const ry = Math.floor((pos.y + stock.y / 2 - size / 2) / rez);
+        const rx = Math.floor((pos.x + stock.x / 2 - size / 2 - center.x) / rez);
+        const ry = Math.floor((pos.y + stock.y / 2 - size / 2 - center.y) / rez);
         let upos = 0;
         // deform mesh to lowest point on tool profile
         for (let i=0, il=prof.length; i < il; ) {
