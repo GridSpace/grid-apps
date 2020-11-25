@@ -67,6 +67,7 @@
 
     const feature = {
         seed: true,
+        meta: true, // show selected widget metadata
         controls: true, // show or not side menus
         drop_group: undefined, // optional array to group multi drop
         drop_layout: true, // layout on new drop
@@ -1154,10 +1155,27 @@
         let selcount = platform.selected_count();
         let extruders = settings.device.extruders;
         let menu_show = selcount ? 'flex': '';
+        $('winfo').style.display = 'none';
         if (selcount) {
             UI.scale.classList.add('lt-enabled');
             UI.rotate.classList.add('lt-enabled');
             UI.nozzle.classList.add('lt-enabled');
+            if (feature.meta && selcount === 1) {
+                let sel = selection.widgets()[0];
+                let name = sel.meta.file || sel.meta.url;
+                if (name) {
+                    name = name
+                        .toLowerCase()
+                        .replace(/_/g,' ')
+                        .replace(/.stl/,'');
+                    let sp = name.indexOf('/');
+                    if (sp >= 0) {
+                        name = name.substring(sp + 1);
+                    }
+                    $('winfo').style.display = 'flex';
+                    $('winfo').innerHTML = `${sel.meta.vertices}<br>${name}`;
+                }
+            }
         } else {
             UI.scale.classList.remove('lt-enabled');
             UI.rotate.classList.remove('lt-enabled');
@@ -1210,6 +1228,7 @@
             ajax(url, function(vertices) {
                 vertices = js2o(vertices).toFloat32();
                 let widget = newWidget().loadVertices(vertices);
+                widget.meta.url = url;
                 platform.add(widget);
                 if (onload) onload(vertices, widget);
             });
@@ -1220,7 +1239,7 @@
         new MOTO.STL().load(url, function(vertices, filename) {
             if (vertices) {
                 let widget = newWidget().loadVertices(vertices);
-                widget.filename = filename;
+                widget.meta.file = filename;
                 platform.add(widget);
                 if (onload) {
                     onload(vertices, widget);

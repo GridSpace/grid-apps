@@ -1142,8 +1142,15 @@ th, tr, td, label {
 }
 #fps {
     position: fixed;
-    right: 5px;
-    bottom: 5px;
     font-size: 10px;
+    bottom: 5px;
+    right: 5px;
+    color: #000;
+}
+#winfo {
+    position: fixed;
+    font-size: 10px;
+    bottom: 5px;
+    left: 5px;
     color: #000;
 }

@@ -113,7 +113,7 @@
         }
         // rotation stack (for undo)
         this.roto = [];
-        // added meshes
+        // added meshes (supports, tabs, etc)
         this.adds = [];
         // THREE Mesh and points
         this.mesh = null;
@@ -154,8 +154,13 @@
             load_time: 0,
             progress: 0
         };
-        this.saved = false;
-        this.support = false; // is synthesized support widget
+        this.meta = {
+            url: null,
+            file: null,
+            saved: false
+        };
+        // if this is a synthesized support widget
+        this.support = false;
     }
 
     /** ******************************************************************
@@ -164,7 +169,9 @@
 
     Widget.loadFromCatalog = function(filename, ondone) {
         KIRI.catalog.getFile(filename, function(data) {
-            ondone(newWidget().loadVertices(data));
+            let widget = newWidget().loadVertices(data);
+            widget.meta.file = filename;
+            ondone(widget);
         });
     };
 
@@ -175,8 +182,9 @@
                     track = data.track || undefined,
                     group = data.group || id,
                     widget = newWidget(id, Group.forid(group)),
+                    meta = data.meta || widget.meta,
                     ptr = widget.loadVertices(vertices);
-                widget.saved = time();
+                widget.meta = meta;
                 // restore widget position if specified
                 if (move && track && track.pos) {
                     widget.track = track;
@@ -200,7 +208,8 @@
     PRO.saveToCatalog = function(filename) {
         let widget = this;
         let time = UTIL.time();
-        widget.filename = filename;
+        widget.meta.file = filename;
+        widget.meta.save = time;
         KIRI.catalog.putFile(filename, this.getGeoVertices(), function(vertices) {
             if (vertices && vertices.length) {
                 console.log("saving decimated mesh ["+vertices.length+"] time ["+(UTIL.time()-time)+"]");
@@ -213,11 +222,12 @@
     PRO.saveState = function(ondone) {
         let widget = this;
         KIRI.odb.put('ws-save-'+this.id, {
-            geo:widget.getGeoVertices(),
-            track:widget.track,
-            group:this.group.id
+            geo: widget.getGeoVertices(),
+            track: widget.track,
+            group: this.group.id,
+            meta: this.meta
         }, function(result) {
-            widget.saved = time();
+            widget.meta.saved = time();
             if (ondone) ondone();
         });
     };
@@ -233,10 +243,12 @@
             this.mesh.geometry.computeFaceNormals();
             this.mesh.geometry.computeVertexNormals();
             this.points = null;
+            this.meta.vertices = vertices.length / 3;
             return this;
         } else {
             let geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            this.meta.vertices = vertices.length / 3;
             return this.loadGeometry(geometry);
         }
     };

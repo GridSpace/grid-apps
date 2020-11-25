@@ -11,13 +11,14 @@
 *   drag knife support
 * all
 *   2d image to 3d part
+*   memory optimization (worker and client proactive cleanup)
 *   circular fit/layout when no-layout to prevent collisions
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `F` 2D image import
 * `F` detect and report slow framerates
-* `F` implement an in-app bug reporting system
+* `F` right click / context menu (object deletion, etc)
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization
@@ -25,16 +26,16 @@
 
 # FDM
 
+* `B` sparse infill should follow polys between intersect points
 * `B` expand > 0 producing artifacts with manual supports
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
-* `B` sparse infill should follow polys between intersect points
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
+* `F` control layer start position
+* `F` redo auto supports to use poly faces rather than deltas
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
-* `F` manual support addition / control
-* `F` control layer start position
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` feather sharp tips by reducing extrusion in area of overlap
