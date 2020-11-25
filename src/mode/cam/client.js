@@ -13,6 +13,7 @@
         isAnimate,
         isArrange,
         isCamMode,
+        isParsed,
         camStock,
         API, SPACE, STACKS, MODES, VIEWS, UI, UC;
 
@@ -70,13 +71,21 @@
         ], updateStock);
 
         api.event.on("preview.end", () => {
+            isParsed = false;
             if (camStock) STACKS.getStack("bounds").button("animate", animate);
+        });
+
+        api.event.on("code.loaded", (info) => {
+            if (isCamMode && camStock) {
+                isParsed = true;
+                STACKS.getStack("parse", SPACE.platform.world).button("animate", animate);
+            }
         });
     };
 
     function animate() {
         isAnimate = true;
-        API.widgets.opacity(0.75);
+        API.widgets.opacity(isParsed ? 0 : 0.75);
         API.hide.slider();
         STACKS.clear();
         CAM.animate(API);

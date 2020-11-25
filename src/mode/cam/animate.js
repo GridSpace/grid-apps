@@ -28,6 +28,9 @@ self.kiri.loader.push(function() {
         WORLD = SPACE.platform.world;
         KIRI.client.animate_setup(API.conf.get(), data => {
             checkMeshCommands(data);
+            if (!(data && data.mesh_add)) {
+                return;
+            }
             const UC = API.uc;
             const layer = $('layer-animate');
             layer.innerHTML = '';
@@ -71,6 +74,7 @@ self.kiri.loader.push(function() {
                 mesh.position.x = pos.x;
                 mesh.position.y = pos.y;
                 mesh.position.z = pos.z;
+                SPACE.update();
             }
         }
         if (data.mesh_update) {
@@ -136,9 +140,6 @@ self.kiri.loader.push(function() {
 
     function handleGridUpdate(data) {
         checkMeshCommands(data);
-        if (data && data.done) {
-            console.log('done', data);
-        }
     }
 
     if (KIRI.client)
@@ -158,20 +159,21 @@ self.kiri.loader.push(function() {
 
     // ---( WORKER FUNCTIONS )---
 
-    let path, pathIndex, stock, grid, gridX, gridY, tool, tools, rez, last;
+    let path, pathIndex, stock, grid, gridX, gridY, tool, tools, rez, last, toolID = 1;
 
     if (KIRI.worker)
     KIRI.worker.animate_setup = function(data, send) {
         const { settings } = data;
+        const print = current.print;
         const density = parseInt(settings.controller.animesh) * 1000;
 
         pathIndex = 0;
+        path = print.output.flat();
         tools = settings.tools;
         stock = settings.stock;
-        path = current.print.output.flat();
+
         rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-        // const center = stock.center;
         const step = rez;
         const stepsX = Math.floor(stock.x / step);
         const stepsY = Math.floor(stock.y / step);
@@ -186,7 +188,12 @@ self.kiri.loader.push(function() {
         animating = false;
         animateClear = false;
 
-        send.done({ mesh_add: { id: 0, pos, ind } });
+        const center = Object.assign({}, stock.center);
+        center.z -= stock.z / 2;
+
+        send.data({ mesh_add: { id: 0, pos, ind } });
+        send.data({ mesh_move: { id: 0, pos: center } });
+        send.done();
     };
 
     function createGrid(stepsX, stepsY, size, step) {
@@ -269,17 +276,16 @@ self.kiri.loader.push(function() {
         }
         animating = true;
         stepsRemain--;
-        if (next.tool && (!tool || tool.getNumber() !== next.tool)) {
+        if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
             updateTool(next.tool, send);
         }
-        const id = tool.getID();
+        const id = toolID;
         if (last) {
             const lp = last.point, np = next.point;
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
-
             // skip moves that are closer than resolution
             if (Math.sqrt(dx*dx  +dy*dy + dz*dz) < rez) {
-                setTimeout(() => { renderPath(send, 0) });
+                setTimeout(() => { renderPath(send) }, 0);
                 return;
             }
 
@@ -363,7 +369,7 @@ self.kiri.loader.push(function() {
 
     function updateTool(toolnum, send) {
         if (tool) {
-            send.data({ mesh_del: tool.getID() });
+            send.data({ mesh_del: toolID });
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
         tool.generateProfile(rez);
@@ -381,7 +387,7 @@ self.kiri.loader.push(function() {
             const dz = prof[i++];
             pos[(dx * pix + dy) * 3 + 2] = -dz;
         }
-        send.data({ mesh_add: { id:tool.getID(), pos, ind }});
+        send.data({ mesh_add: { id:++toolID, pos, ind }});
     }
 
 });

@@ -23,6 +23,8 @@
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` worker state cache cleanup and organization
 * `P` client/worker interface normalization
+* `P` optimize object import to vertices + indexes to save memory
+* `P` allow selection to me decimated on demand (context menu?)
 
 # FDM
 

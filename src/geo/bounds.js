@@ -39,6 +39,7 @@
         b.miny = this.miny;
         b.maxx = this.maxx;
         b.maxy = this.maxy;
+        b.maxy = this.maxy;
         return b;
     };
 

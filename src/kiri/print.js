@@ -261,6 +261,7 @@
                     G0G1(false, line);
                     break;
                 case 'M6':
+                    tool = parseInt(line[0].substring(1));
                     break;
             }
         });

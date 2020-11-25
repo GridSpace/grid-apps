@@ -13,9 +13,14 @@
     class Tool {
         constructor(settings, id, number) {
             if (number >= 0) {
-                this.tool = settings.tools.filter(tool => tool.number === number)[0];
+                this.tool = settings.tools.filter(tool => tool.number == number)[0];
             } else {
-                this.tool = settings.tools.filter(tool => tool.id === id)[0];
+                this.tool = settings.tools.filter(tool => tool.id == id)[0];
+            }
+            if (!this.tool) {
+                this.tool = Object.assign({}, settings.tools[0]);
+                this.tool.number = number >= 0 ? number : this.tool.number;
+                this.tool.id = id >= 0 ? id : this.tool.id;
             }
         }
 
@@ -112,7 +117,7 @@
             this.profile = toolOffset;
             this.profileDim = {
                 size: flute_diameter,
-                pix: profile_pix_iter
+                pix: profile_pix_iter + 2
             };
             return this;
         }
