@@ -349,7 +349,8 @@ kiri.lang['en-us'] = {
     ct_wdth_l:      "width in workspace units",
     ct_hght_s:      "height",
     ct_hght_l:      "height in workspace units",
-    ct_nabl_l:      "enable or disable tabs\ntab generation skipped when\ninside only mode enabled",
+    ct_nabl_s:      "auto",
+    ct_nabl_l:      "auto generate radial tabs\nprojected from part center\nusing count and angle offset",
 
     // OUTPUT
     ou_menu:        "output",

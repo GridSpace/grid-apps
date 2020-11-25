@@ -11,13 +11,16 @@
         SPACE, API,
         p1, p2, iw,
         lastMode, lastView, lastPillar,
+        isFdmMode = false,
         alert = [],
+        boxes = {},
         func = {};
 
     FDM.init = function(kiri, api) {
         API = api;
         SPACE = api.const.SPACE;
         api.event.on("mode.set", mode => {
+            isFdmMode = mode === 'FDM';
             lastMode = mode;
             updateVisiblity();
         });
@@ -64,13 +67,22 @@
             API.conf.save();
         });
         api.event.on("slice.begin", () => {
+            if (!isFdmMode) {
+                return;
+            }
             func.sdone();
             updateVisiblity();
         });
         api.event.on("key.esc", () => {
+            if (!isFdmMode) {
+                return;
+            }
             func.sdone()
         });
         api.event.on("widget.rotate", rot => {
+            if (!isFdmMode) {
+                return;
+            }
             const {widget, x, y, z} = rot;
             if (x || y) {
                 clearWidgetSupports(widget);
@@ -90,6 +102,9 @@
             }
         });
         api.event.on("mouse.hover.up", int => {
+            if (!isFdmMode) {
+                return;
+            }
             delbox('supp');
             if (lastPillar) {
                 const {widget, box, id} = lastPillar;
@@ -121,6 +136,9 @@
             API.conf.save();
         });
         api.event.on("mouse.hover", data => {
+            if (!isFdmMode) {
+                return;
+            }
             // delbox('intZ');
             // delbox('intW');
             // addbox(point, 0xff0000, 'intZ');
@@ -198,7 +216,10 @@
         const sups = widget.sups = (widget.sups || {});
         // prevent duplicate restore from repeated settings load calls
         if (!sups[id]) {
-            pos.box = addbox({x, y, z}, 0x0000dd, 'supp', { x:dw, y:dw, z:dh }, widget.mesh);
+            pos.box = addbox(
+                { x, y, z }, 0x0000dd, 'supp',
+                { x:dw, y:dw, z:dh }, { group: widget.mesh }
+            );
             pos.box.pillar = Object.assign({widget}, pos);
             sups[id] = pos;
             widget.adds.push(pos.box);
@@ -232,17 +253,16 @@
         delete API.widgets.annotate(widget.id).support;
     }
 
-    function delbox(name, group) {
-        const old = SPACE[`__${name}`];
+    function delbox(name) {
+        const old = boxes[name];
         if (old) {
-            (group || SPACE.scene).remove(old);
+            old.groupTo.remove(old);
         }
     }
 
-    function addbox(point, color, name, dim = {x:1,y:1,z:1}, group) {
+    function addbox(point, color, name, dim = {x:1,y:1,z:1}, opt = {}) {
         delbox(name);
-        name = `__${name}`;
-        const box = SPACE[name] = new THREE.Mesh(
+        const box = boxes[name] = new THREE.Mesh(
             new THREE.BoxGeometry(dim.x, dim.y, dim.z),
             new THREE.MeshPhongMaterial({
                 transparent: true,
@@ -253,8 +273,21 @@
         box.position.x = point.x;
         box.position.y = point.y;
         box.position.z = point.z;
-        (group || SPACE.scene).add(box);
+
+        const group = opt.group || SPACE.scene
+        group.add(box);
+        box.groupTo = group;
+
+        if (opt.rotate) {
+            opt.matrix = new THREE.Matrix4().makeRotationFromQuaternion(opt.rotate);
+        }
+        if (opt.matrix) {
+            box.geometry.applyMatrix4(opt.matrix);
+        }
         return box;
     }
+
+    FDM.delbox = delbox;
+    FDM.addbox = addbox;
 
 })();
