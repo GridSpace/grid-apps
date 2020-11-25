@@ -15,8 +15,10 @@
         isCamMode,
         isParsed,
         camStock,
-        func = {},
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC;
+
+    let zaxis = {x: 0, y: 0, z: 1},
+        func = {};
 
     CAM.init = function(kiri, api) {
         FDM = KIRI.driver.FDM;
@@ -54,6 +56,11 @@
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
             updateStock(settings, 'settings.saved.internal');
+        });
+
+        api.event.on("settings.load", (settings) => {
+            if (!isCamMode) return;
+            restoreTabs(api.widgets.all());
         });
 
         api.event.on([
@@ -134,20 +141,22 @@
             }
             const {widget, x, y, z} = rot;
             if (x || y) {
-                // clearWidgetSupports(widget);
+                clearTabs(widget);
             } else {
-                let ann = API.widgets.annotate(widget.id);
-                let tabs = ann.support || [];
-                // tabs.forEach(sup => {
-                //     let wsup = widget.tabs[sup.id];
-                //     let vc = new THREE.Vector3(sup.x, sup.y, sup.z);
-                //     let m4 = new THREE.Matrix4();
-                //     m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
-                //     vc.applyMatrix4(m4);
-                //     wsup.box.position.x = wsup.x = sup.x = vc.x;
-                //     wsup.box.position.y = wsup.y = sup.y = vc.y;
-                //     wsup.box.position.z = wsup.z = sup.z = vc.z;
-                // });
+                let tabs = API.widgets.annotate(widget.id).tab || [];
+                tabs.forEach(rec => {
+                    let { id, pos } = rec;
+                    let tab = widget.tabs[id];
+                    let vc = new THREE.Vector3(pos.x, pos.y, pos.z);
+                    let m4 = new THREE.Matrix4();
+                    m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                    vc.applyMatrix4(m4);
+                    tab.box.geometry.applyMatrix4(m4);
+                    tab.box.position.x = pos.x = vc.x;
+                    tab.box.position.y = pos.y = vc.y;
+                    tab.box.position.z = pos.z = vc.z;
+                });
+                SPACE.update();
             }
         });
         api.event.on("mouse.hover.up", int => {
@@ -175,14 +184,19 @@
             let ip = iw.track.pos;
             let wa = api.widgets.annotate(iw.id);
             let wt = (wa.tab = wa.tab || []);
-            let x = ic.x - ip.x, y = -ic.z - ip.y, z = 0, id = Date.now();
-            let rec = {x, y, z, dw:10, dh:10, id};
+            let pos = {
+                x: showTab.pos.x - ip.x,
+                y: -showTab.pos.z - ip.y,
+                z: showTab.pos.y + ip.z,
+            }
+            let id = Date.now();
+            let { dim, rot } = showTab;
+            let rec = { pos, dim, rot, id };
             wt.push(Object.clone(rec));
             addWidgetTab(iw, rec);
             API.conf.save();
         });
-        const zaxis = {x: 0, y: 0, z: 1};
-        let lastTab, tab, iw, ic;
+        let showTab, lastTab, tab, iw, ic;
         api.event.on("mouse.hover", data => {
             if (!isCamMode) {
                 return;
@@ -211,33 +225,56 @@
             if (Math.abs(n.z) > 0.1) {
                 return;
             }
-            const { track } = iw;
-            const { stock, bounds, process } = API.conf.get();
-            const { camTabsWidth, camTabsHeight } = process;
-            const zp = stock.z - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
-            ic.x += n.x * 2.5;
-            ic.z -= n.y * 2.5;
-            ic.y = zp; // swap in world space y,z
-            const q = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
-            addbox({x:ic.x, y:ic.y, z:ic.z}, 0x0000dd, 'supp', {
-                x:5, y:camTabsWidth, z:camTabsHeight
-            }, { rotate: q });
+            showTab = createTabBox(iw, ic, n);
         });
     };
 
-    function addWidgetTab(widget, pos) {
-        const { x, y, z, dw, dh, id } = pos;
+    function createTabBox(iw, ic, n) {
+        const { track } = iw;
+        const { stock, bounds, process } = API.conf.get();
+        const { camTabsWidth, camTabsHeight } = process;
+        const zp = stock.z - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
+        ic.x += n.x * 2.5; // offset from part
+        ic.z -= n.y * 2.5; // offset swap z,y
+        ic.y = zp; // offset swap in world space y,z
+        const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
+        const pos = { x:ic.x, y:ic.y, z:ic.z };
+        const dim = { x:5, y:camTabsWidth, z:camTabsHeight };
+        const tab = addbox(pos, 0x0000dd, 'supp', dim, { rotate: rot });
+        return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
+    }
+
+    function addWidgetTab(widget, rec) {
+        const { pos, dim, rot, id } = rec;
         const tabs = widget.tabs = (widget.tabs || {});
         // prevent duplicate restore from repeated settings load calls
         if (!tabs[id]) {
             pos.box = addbox(
-                { x, y, z }, 0x0000dd, 'supp',
-                { x:dw, y:dw, z:dh }, { group: widget.mesh }
+                pos, 0x0000dd, id,
+                dim, { group: widget.mesh, rotate: rot }
             );
             pos.box.tab = Object.assign({widget}, pos);
-            tabs[id] = pos;
             widget.adds.push(pos.box);
+            tabs[id] = pos;
         }
+    }
+
+    function restoreTabs(widgets) {
+        widgets.forEach(widget => {
+            const tabs = API.widgets.annotate(widget.id).tab || [];
+            tabs.forEach(rec => {
+                addWidgetTab(widget, rec);
+            });
+        });
+    }
+
+    function clearTabs(widget) {
+        Object.values(widget.tabs || {}).forEach(rec => {
+            widget.adds.remove(rec.box);
+            widget.mesh.remove(rec.box);
+        });
+        widget.tabs = {};
+        delete API.widgets.annotate(widget.id).tab;
     }
 
     function addbox() { return FDM.addbox(...arguments)};

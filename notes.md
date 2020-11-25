@@ -1,6 +1,6 @@
-# Kiri:Moto todo
+# Kiri:Moto todo and notes
 
-## 2.4 tentative list
+## 2.4 roadmap
 * cnc
 *   tracing (chamfer, engrave)
 *   auto feature detection (slicing), manual tabs
@@ -13,6 +13,15 @@
 *   2d image to 3d part
 *   memory optimization (worker and client proactive cleanup)
 *   circular fit/layout when no-layout to prevent collisions
+
+## 2.5 roadmap
+# cnc
+#   lathe?
+#   complex process order
+# fdm
+#   redo automatic supports using faces instead of deltas
+#   bind process to z ranges or boxed regions
+#   non-planar actual
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
