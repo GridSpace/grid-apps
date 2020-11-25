@@ -51,6 +51,10 @@
             return this.unitScale() * this.tool.taper_tip;
         }
 
+        shaftLength() {
+            return this.unitScale() * this.tool.shaft_len;
+        }
+
         shaftDiameter() {
             return this.unitScale() * this.tool.shaft_diam;
         }
@@ -77,7 +81,8 @@
                 profile_pix_iter = shaft_pix_int + (1 - shaft_pix_int % 2),
                 toolCenter = (shaft_pix_int - (shaft_pix_int % 2)) / 2,
                 toolOffset = [],
-                larger_shaft = shaft_diameter - flute_diameter > 0.001;
+                larger_shaft = shaft_diameter - flute_diameter > 0.001,
+                rpixsq = flute_radius_pix_float * flute_radius_pix_float;
 
             // for each point in tool profile, check inside radius
             for (let x = 0; x < profile_pix_iter; x++) {
@@ -90,7 +95,9 @@
                         // flute offset points
                         let z_offset = 0;
                         if (ball) {
-                            z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
+                            let rd = dist_from_center * dist_from_center;
+                            z_offset = Math.sqrt(rpixsq - rd) * resolution - flute_radius;
+                            // z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
                         } else if (taper && dist_from_center >= tip_radius_pix_float) {
                             z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
                         }

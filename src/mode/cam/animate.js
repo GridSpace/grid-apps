@@ -367,11 +367,12 @@ self.kiri.loader.push(function() {
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
         tool.generateProfile(rez);
-        const flen = tool.fluteLength() || 30;
+        const flen = tool.fluteLength() || 15;
+        const slen = tool.shaftLength() || 15;
         // const frad = tool.fluteDiameter() / 2;
         const prof = tool.profile;
         const { size, pix } = tool.profileDim;
-        const { pos, ind } = createGrid(pix, pix, {x:size, y:size, z:flen}, rez);
+        const { pos, ind } = createGrid(pix, pix, {x:size, y:size, z:flen+slen}, rez);
         const mid = Math.floor(pix/2);
         // deform mesh to fit tool profile
         for (let i=0, il=prof.length; i < il; ) {
