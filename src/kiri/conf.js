@@ -609,7 +609,8 @@
                 exportGhost: false,
                 exportLocal: true,
                 decimate: true,
-                detail: "good"
+                detail: "good",
+                animesh: "200"
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

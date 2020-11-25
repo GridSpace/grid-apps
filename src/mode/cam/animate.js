@@ -163,12 +163,13 @@ self.kiri.loader.push(function() {
     if (KIRI.worker)
     KIRI.worker.animate_setup = function(data, send) {
         const { settings } = data;
+        const density = parseInt(settings.controller.animesh) * 1000;
 
         pathIndex = 0;
         tools = settings.tools;
         stock = settings.stock;
         path = current.print.output.flat();
-        rez = 1/Math.sqrt(100000/(stock.x * stock.y));
+        rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
         // const center = stock.center;
         const step = rez;

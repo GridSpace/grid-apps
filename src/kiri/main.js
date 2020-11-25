@@ -167,8 +167,14 @@
             { name: "path" },
             { name: "flat" },
             { name: "line" }
+        ],
+        animesh: [
+            { name: "100" },
+            { name: "200" },
+            { name: "300" },
+            { name: "400" },
+            { name: "500" }
         ]
-
     };
 
     const tweak = {

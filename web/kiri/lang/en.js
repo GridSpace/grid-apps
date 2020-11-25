@@ -145,6 +145,8 @@ kiri.lang['en-us'] = {
     op_line_l:      "line style for path rendering\nimpacts 3d performance\npath: 3d best\nflat: 2d good\nline = 1d fast",
     op_unit_s:      "units",
     op_unit_l:      "workspace units affects\nspeeds and distances",
+    op_anim_s:      "animate",
+    op_anim_l:      "animation mesh density\nhigher is more dense\ntakes more memory\nand is slower",
 
     lo_menu:        "layout",
 

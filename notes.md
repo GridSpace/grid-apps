@@ -77,7 +77,6 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
-* `P` control of animation mesh density
 
 # Laser
 
