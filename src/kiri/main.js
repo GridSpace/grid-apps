@@ -84,7 +84,8 @@
         widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
-        for_widgets: forSelectedWidgets
+        for_widgets: forSelectedWidgets,
+        delete: function() { platform.delete(selection.widgets()) }
     };
 
     const platform = {
@@ -1160,6 +1161,7 @@
             UI.scale.classList.add('lt-enabled');
             UI.rotate.classList.add('lt-enabled');
             UI.nozzle.classList.add('lt-enabled');
+            UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
                 let sel = selection.widgets()[0];
                 let name = sel.meta.file || sel.meta.url;
@@ -1180,6 +1182,7 @@
             UI.scale.classList.remove('lt-enabled');
             UI.rotate.classList.remove('lt-enabled');
             UI.nozzle.classList.remove('lt-enabled');
+            UI.trash.style.display = '';
         }
         UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
         if (extruders) {
@@ -1705,6 +1708,9 @@
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
             widget.saveState();
+            let ann = API.widgets.annotate(widget.id);
+            ann.file = widget.meta.file;
+            ann.url = widget.meta.url;
         });
         SDB.setItem('ws-widgets', o2js(newWidgets));
         oldWidgets.forEach(function(wid) {
@@ -1776,9 +1782,17 @@
             platform.delete(widget);
         });
 
+        // remove widget keys if they are not going to be restored
+        Object.keys(settings.widget).filter(k => toload.indexOf(k) < 0).forEach(k => {
+            delete settings.widget[k];
+        });
+
         // load any widget by name that was saved to the workspace
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
+                let ann = API.widgets.annotate(widget.id);
+                widget.meta.file = ann.file;
+                widget.meta.url = ann.url;
                 if (widget) {
                     platform.add(widget, 0, position);
                 }

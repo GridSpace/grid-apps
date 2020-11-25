@@ -356,7 +356,7 @@ th, tr, td, label {
     left: -5px;
 }
 
-#lt-back {
+#lt-back, #lt-trash {
     position: absolute;
     display: none;
     top: 0;

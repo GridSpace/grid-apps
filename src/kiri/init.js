@@ -1268,6 +1268,7 @@
 
             container:          container,
             back:               $('lt-back'),
+            trash:              $('lt-trash'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
@@ -2160,6 +2161,7 @@
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = () => { API.event.import() };
         UI.back.onclick = API.platform.layout;
+        UI.trash.onclick = API.selection.delete;
         UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         UI.func.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
         UI.func.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
