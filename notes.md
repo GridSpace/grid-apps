@@ -78,7 +78,6 @@
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` control of animation mesh density
-* `P` use zerocopy for animation stream data
 
 # Laser
 

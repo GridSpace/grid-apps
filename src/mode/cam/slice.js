@@ -177,6 +177,8 @@
             let shadow = [];
             let slices = [];
             let indices = slicer.interval(roughDown, { down: true, min: zBottom, fit: true, off: 0.01 });
+            // shift out first (top-most) slice
+            indices.shift();
             if (proc.camRoughFlat) {
                 let flats = Object.keys(slicer.zFlat)
                     .map(v => parseFloat(v).round(4))
@@ -312,6 +314,8 @@
             let shadow = [];
             let slices = [];
             let indices = slicer.interval(outlineDown, { down: true, min: zBottom, fit: true, off: 0.01 });
+            // shift out first (top-most) slice
+            indices.shift();
             // add flats to shadow
             const flats = Object.keys(slicer.zFlat)
                 .map(v => (parseFloat(v) - 0.01).round(5))

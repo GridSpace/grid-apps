@@ -7,7 +7,9 @@ self.kiri.loader.push(function() {
     let KIRI = self.kiri,
         CAM = KIRI.driver.CAM,
         API, WORLD, SPACE,
-        meshes = {};
+        meshes = {},
+        speedDef = 20,
+        speed;
 
     // ---( CLIENT FUNCTIONS )---
 
@@ -21,7 +23,7 @@ self.kiri.loader.push(function() {
     }
 
     if (KIRI.client)
-    CAM.animate = function(api) {
+    CAM.animate = function(api, delay) {
         SPACE = (API = api).const.SPACE;
         WORLD = SPACE.platform.world;
         KIRI.client.animate_setup(API.conf.get(), data => {
@@ -31,14 +33,25 @@ self.kiri.loader.push(function() {
             layer.innerHTML = '';
             UC.setGroup(layer);
             UC.newRow([
+                UC.newButton(null,replay,{icon:'<i class="fas fa-step-backward"></i>'}),
                 UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>'}),
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>'}),
                 UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>'}),
                 UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>'})
             ]);
-            play({steps: 1, speed: 25});
+            speed = speedDef;
+            setTimeout(() => {
+                play({steps: 1});
+            }, delay || 0);
         });
     };
+
+    function replay() {
+        CAM.animate_clear(API);
+        setTimeout(() => {
+            CAM.animate(API, 50);
+        }, 250);
+    }
 
     function checkMeshCommands(data) {
         if (!data) {
@@ -54,9 +67,11 @@ self.kiri.loader.push(function() {
         if (data.mesh_move) {
             const { id, pos } = data.mesh_move;
             const mesh = meshes[id];
-            mesh.position.x = pos.x;
-            mesh.position.y = pos.y;
-            mesh.position.z = pos.z;
+            if (mesh) {
+                mesh.position.x = pos.x;
+                mesh.position.y = pos.y;
+                mesh.position.z = pos.z;
+            }
         }
         if (data.mesh_update) {
             meshUpdates(data.id, data.mesh_update);
@@ -79,6 +94,9 @@ self.kiri.loader.push(function() {
 
     function meshUpdates(id, updates) {
         const mesh = meshes[id];
+        if (!mesh) {
+            return; // animate cancelled
+        }
         const mpos = mesh.geometry.attributes.position;
         for (let i=0, il=updates.length; i<il; ) {
             const pos = updates[i++];
@@ -95,18 +113,21 @@ self.kiri.loader.push(function() {
     }
 
     function step(opts) {
-        const { steps, speed } = opts;
-        KIRI.client.animate({speed: speed || 25, steps: 1}, handleGridUpdate);
+        const { steps } = opts;
+        KIRI.client.animate({speed, steps: 1}, handleGridUpdate);
     }
 
     function play(opts) {
-        const { steps, speed } = opts;
-        KIRI.client.animate({speed: speed || 25, steps: steps || Infinity}, handleGridUpdate);
+        const { steps } = opts;
+        speed = speedDef;
+        KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function fast(opts) {
-        const { steps, speed } = opts;
-        KIRI.client.animate({speed: speed || 10, steps: steps || Infinity}, handleGridUpdate);
+        const { steps } = opts;
+        speed = speed / 2;
+        if (speed < 5) speed = speedDef;
+        KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function pause() {
@@ -143,16 +164,16 @@ self.kiri.loader.push(function() {
     KIRI.worker.animate_setup = function(data, send) {
         const { settings } = data;
 
-        rez = 0.25;
+        pathIndex = 0;
         tools = settings.tools;
         stock = settings.stock;
         path = current.print.output.flat();
-        pathIndex = 0;
+        rez = 1/Math.sqrt(100000/(stock.x * stock.y));
 
         // const center = stock.center;
         const step = rez;
-        const stepsX = Math.floor(stock.x / step) + 1;
-        const stepsY = Math.floor(stock.y / step) + 1;
+        const stepsX = Math.floor(stock.x / step);
+        const stepsY = Math.floor(stock.y / step);
         const { pos, ind } = createGrid(stepsX, stepsY, stock, step);
 
         grid = pos;
@@ -179,8 +200,8 @@ self.kiri.loader.push(function() {
         // initialize grid points
         for (let x=0, ai=0; x<stepsX; x++) {
             for (let y=0; y<stepsY; y++) {
-                let px = pos[ai++] = x * step - ox;
-                let py = pos[ai++] = y * step - oy;
+                let px = pos[ai++] = x * step - ox + step / 2;
+                let py = pos[ai++] = y * step - oy + step / 2;
                 pos[ai++] = size.z;
                 if (y > 0) ind.appendAll([
                     (stepsY * x) + (y - 1),
@@ -254,6 +275,13 @@ self.kiri.loader.push(function() {
         if (last) {
             const lp = last.point, np = next.point;
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
+
+            // skip moves that are closer than resolution
+            if (Math.sqrt(dx*dx  +dy*dy + dz*dz) < rez) {
+                setTimeout(() => { renderPath(send, 0) });
+                return;
+            }
+
             const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
             const st = Math.ceil(md / rez);
             const mx = dx / st, my = dy / st, mz = dz / st;
@@ -300,9 +328,10 @@ self.kiri.loader.push(function() {
         const prof = tool.profile;
         const { size, pix } = tool.profileDim;
         const mid = Math.floor(pix/2);
-        const mesh_update = [];
+        const update = new Float32Array(Math.round(prof.length * 0.8));
         const rx = Math.floor((pos.x + stock.x / 2 - size / 2) / rez);
         const ry = Math.floor((pos.y + stock.y / 2 - size / 2) / rez);
+        let upos = 0;
         // deform mesh to lowest point on tool profile
         for (let i=0, il=prof.length; i < il; ) {
             const dx = mid + prof[i++];
@@ -320,12 +349,14 @@ self.kiri.loader.push(function() {
             const cz = grid[iz];
             const tz = tool.pos.z - dz;
             if (tz < cz) {
-                mesh_update.push(iz, tz);
+                update[upos++] = iz;
+                update[upos++] = tz;
                 grid[iz] = tz;
             }
         }
-        if (mesh_update.length) {
-            send.data({ id: 0, mesh_update });
+        if (upos > 0) {
+            const mesh_update = update.slice(0,upos);
+            send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
         }
     }
 
