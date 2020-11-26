@@ -48,7 +48,7 @@
         api.event.on("settings.saved", (settings) => {
             const proc = settings.process;
             // show/hide dots in enabled process pop buttons
-            api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
+            // api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =
                 proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
@@ -148,7 +148,7 @@
                 tabs.forEach(rec => {
                     let { id, pos, rot } = rec;
                     let tab = widget.tabs[id];
-                    let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                    let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0, 0, z || 0));
                     // update position vector
                     let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
                     // update rotation quaternion
@@ -258,7 +258,7 @@
                 pos, 0x0000dd, id,
                 dim, { group: widget.mesh, rotate: rot }
             );
-            pos.box.tab = Object.assign({widget}, pos);
+            pos.box.tab = Object.assign({widget, id}, pos);
             widget.adds.push(pos.box);
             tabs[id] = pos;
         }

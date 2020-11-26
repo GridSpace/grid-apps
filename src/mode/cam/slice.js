@@ -62,7 +62,31 @@
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown/3, outlineDown/3),
             maxToolDiam = 0,
-            thruHoles;
+            thruHoles,
+            tabs = settings.widget[widget.id].tab;
+
+        // force off for testing
+        proc.camTabsOn = false;
+
+        if (tabs) {
+            // make tab polygons
+            tabs.forEach(tab => {
+                let zero = BASE.newPoint(0,0,0);
+                let point = BASE.newPoint(tab.pos.x, tab.pos.y, tab.pos.z);
+                let poly = BASE.newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y);
+                let tslice = KIRI.newSlice(0);
+                let m4 = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion(tab.rot._x, tab.rot._y, tab.rot._z, tab.rot._w)
+                );
+                poly.points = poly.points
+                    .map(p => new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(m4))
+                    .map(v => BASE.newPoint(v.x, v.y, v.z));
+                poly.move(point);
+                tab.poly = poly;
+                // tslice.output().setLayer("tabs", 0xff0000).addPoly(poly);
+                // sliceAll.push(tslice);
+            });
+        }
 
         if (stock.x && stock.y && stock.z) {
             if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
@@ -277,8 +301,14 @@
                     const outside = POLY.offset(shadow.clone(), roughToolDiam * proc.camRoughOver, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
-                        if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                            offset = addCutoutTabs(offset, slice.z, center, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                        // if (addTabsOutline && slice.z <= zMin + tabHeight) {
+                        //     offset = addCutoutTabs(offset, slice.z, center, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                        // }
+                        if (tabs) {
+                            tabs.forEach(tab => {
+                                tab.off = POLY.expand([tab.poly], roughToolDiam / 2).flat();
+                            });
+                            offset = cutTabs(tabs, offset, slice.z);
                         }
                     }
                 }
@@ -387,8 +417,14 @@
                     }
                 }
 
-                if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                    offset = addCutoutTabs(offset, slice.z, center, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                // if (addTabsOutline && slice.z <= zMin + tabHeight) {
+                //     offset = addCutoutTabs(offset, slice.z, center, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
+                // }
+                if (tabs) {
+                    tabs.forEach(tab => {
+                        tab.off = POLY.expand([tab.poly], outlineToolDiam / 2).flat();
+                    });
+                    offset = cutTabs(tabs, offset, slice.z);
                 }
 
                 // offset.xout(`slice ${slice.z}`);
@@ -419,7 +455,8 @@
                     sliceAll.appendAll(slices);
                 },
                 shadow: tshadow,
-                center: center
+                center: center,
+                tabs
             });
         }
 
@@ -537,6 +574,13 @@
                 .addPolys(polys);
             output.append(slice);
         }
+    }
+
+    function cutTabs(tabs, offset, z) {
+        let noff = [];
+        tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
+        offset.forEach(op => noff.appendAll( op.cut(tabs) ));
+        return noff;
     }
 
     // cut outside traces at the right points

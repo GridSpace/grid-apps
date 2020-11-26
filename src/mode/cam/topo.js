@@ -58,8 +58,10 @@
                     widget: widget
                 },
                 newslices = [],
-                tabsOn = proc.camTabsOn,
-                tabHeight = proc.camTabsHeight + zBottom,
+                tabs = opt.tabs,
+                tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z)) : 0,
+                tabsOn = proc.camTabsOn || tabs,
+                tabHeight = Math.max(proc.camTabsHeight + zBottom, tabsMax),
                 clipTab = tabsOn ? [] : null,
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
@@ -70,6 +72,10 @@
                 debug_topo = debug && false,
                 debug_topo_lines = debug && false,
                 debug_topo_shells = debug && false;
+
+            if (tabs) {
+                clipTab.appendAll(tabs.map(tab => POLY.expand([tab.poly], toolDiameter/2)).flat());
+            }
 
             if (proc.camTabsOn) {
                 CAM.createTabLines(

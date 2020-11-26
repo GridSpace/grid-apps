@@ -1414,6 +1414,51 @@
         }
     };
 
+    PRO.cut = function(polys) {
+        let target = this;
+
+        if (!target.open) {
+            target = this.clone(true).setOpen();
+            target.push(target.first());
+            if (target.inner) {
+                target.inner.forEach(ip => {
+                    ip.setOpen();
+                    ip.push(ip.first());
+                });
+            }
+        }
+
+        let clib = self.ClipperLib,
+            ctyp = clib.ClipType,
+            ptyp = clib.PolyType,
+            cfil = clib.PolyFillType,
+            clip = new clib.Clipper(),
+            ctre = new clib.PolyTree(),
+            sp1 = target.toClipper(),
+            sp2 = POLY().toClipper(polys);
+
+        clip.AddPaths(sp1, ptyp.ptSubject, false);
+        clip.AddPaths(sp2, ptyp.ptClip, true);
+
+        if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+            let cuts = POLY().fromClipperTree(ctre, target.getZ(), null, null, 0);
+            cuts.forEach(no => {
+                // heal open but really closed polygons because cutting
+                // has to open the poly to perform the cut. but the result
+                // may have been no intersection leaving an open poly
+                if (no.open && no.first().distTo2D(no.last()) < 0.001) {
+                    no.open = false;
+                    no.points.pop();
+                    no.length--;
+                }
+            });
+            return cuts;
+        } else {
+            return this;
+        }
+    };
+
+
     PRO.intersect = function(poly, min) {
         if (!this.overlaps(poly)) return null;
 
