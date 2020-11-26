@@ -1066,7 +1066,7 @@
          let hasStock = stock.x && stock.y && stock.z;
          let alignTopOk = WIDGETS.length > 1 && settings.controller.alignTop;
          let camz = (MODE === MODES.CAM) && (hasStock || alignTopOk);
-         let czto = hasStock ? settings.process.camZTopOffset * unitScale() : 0;
+         let czto = hasStock ? settings.process.camZTopOffset : 0;
          let ztop = camz ? (topZ + topZD) - czto : 0;
          forAllWidgets(function(widget) {
              widget.setTopZ(ztop);

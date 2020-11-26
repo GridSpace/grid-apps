@@ -120,19 +120,20 @@
             api.feature.hover = false;
         });
         api.event.on("cam.tabs.clear", func.tclear = () => {
-            func.sdone();
-            // clearAllWidgetSupports();
-            // API.conf.save();
+            func.tdone();
+            API.widgets.all().forEach(widget => {
+                clearTabs(widget);
+            });
+            API.conf.save();
         });
         api.event.on("slice.begin", () => {
             if (isCamMode) {
-                func.sdone();
-                // updateVisiblity();
+                func.tdone();
             }
         });
         api.event.on("key.esc", () => {
             if (isCamMode) {
-                func.sdone()
+                func.tdone()
             }
         });
         api.event.on("widget.rotate", rot => {
@@ -145,12 +146,16 @@
             } else {
                 let tabs = API.widgets.annotate(widget.id).tab || [];
                 tabs.forEach(rec => {
-                    let { id, pos } = rec;
+                    let { id, pos, rot } = rec;
                     let tab = widget.tabs[id];
-                    let vc = new THREE.Vector3(pos.x, pos.y, pos.z);
-                    let m4 = new THREE.Matrix4();
-                    m4 = m4.makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
-                    vc.applyMatrix4(m4);
+                    let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                    // update position vector
+                    let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
+                    // update rotation quaternion
+                    rec.rot = new THREE.Quaternion().multiplyQuaternions(
+                        new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w),
+                        new THREE.Quaternion().setFromRotationMatrix(m4)
+                    );
                     tab.box.geometry.applyMatrix4(m4);
                     tab.box.position.x = pos.x = vc.x;
                     tab.box.position.y = pos.y = vc.y;
@@ -263,6 +268,8 @@
         widgets.forEach(widget => {
             const tabs = API.widgets.annotate(widget.id).tab || [];
             tabs.forEach(rec => {
+                rec = Object.clone(rec);
+                rec.rot = new THREE.Quaternion(rec.rot._x ,rec.rot._y, rec.rot._z, rec.rot._w);
                 addWidgetTab(widget, rec);
             });
         });

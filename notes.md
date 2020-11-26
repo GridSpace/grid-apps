@@ -72,6 +72,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` top clearing operations should use linear, not offset, passes
+* `F` switch z top offset to an z anchor (top/bottom) + offset
 * `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
