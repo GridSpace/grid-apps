@@ -17,6 +17,7 @@
 # cnc
 #   lathe?
 #   complex process order
+#   double-sided assistance
 # fdm
 #   redo automatic supports using faces instead of deltas
 #   bind process to z ranges or boxed regions
@@ -88,6 +89,7 @@
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
+* `F` A-B linked cutting profiles for double-sided milling / part flips
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` detect render message backlog and pause or warn
 

@@ -10,7 +10,8 @@
         emissive = 0x101010,
         metalness = 0,
         roughness = 0.3,
-        newMat = createPhongMaterial;
+        newMat = createPhongMaterial,
+        freeMem = true;
 
     let stacks = {},
         tallest = 0,
@@ -229,6 +230,9 @@
                 });
                 ctrl.group.appendAll(mat);
             }
+        }
+        if (freeMem) {
+            render.init();
         }
     };
 

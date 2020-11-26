@@ -29,12 +29,12 @@
         let point;
         widgets.forEach((widget, index) => {
             point = prepEach(widget, settings, print, point, progress => {
-                update((index * weight + progress * weight) * 0.5);
+                update((index * weight + progress * weight) * 0.5, "prepare");
             });
         });
 
         print.render = KIRI.driver.FDM.prepareRender(print.output, progress => {
-            update(0.5 + progress * 0.5);
+            update(0.5 + progress * 0.5, "render");
         }, {
             thin: true,
             print: 0,

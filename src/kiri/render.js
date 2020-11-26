@@ -7,6 +7,10 @@
 
     class Render {
         constructor() {
+            this.init();
+        }
+
+        init() {
             this.layers = {};
             this.profiles = {};
             this.stats = {

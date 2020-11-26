@@ -7,6 +7,8 @@
     if (self.kiri.codec) return;
 
     const BASE = self.base, KIRI = self.kiri, handlers = {};
+    const freeMem = true;
+    const zeroOut = false;
 
     const codec = KIRI.codec = {
         encode: encode,
@@ -123,12 +125,15 @@
     });
 
     KIRI.Slice.prototype.encode = function(state) {
-        return {
+        const rv = {
             type: 'slice',
             z: this.z,
             index: this.index,
             render: encode(this.render, state)
         };
+        // aggressively free memory
+        if (freeMem) this.render = undefined;
+        return rv;
     };
 
     registerDecoder('slice', function(v, state) {
@@ -152,19 +157,28 @@
                     cface: layer.cface,
                     color: layer.color,
                     paths: layer.paths.map(lp => {
-                        return {
+                        const pe = {
                             z: lp.z,
                             index: lp.index,
                             faces: codec.allocFloat32Array(lp.faces)
                         };
+                        if (zeroOut && state.zeros && pe.faces.length) {
+                            state.zeros.push(pe.faces.buffer);
+                        }
+                        return pe;
                     }),
                     cpath: layer.cpath,
                     off: layer.off
                 };
+                if (zeroOut && state.zeros && e.faces.length) {
+                    state.zeros.push(e.faces.buffer);
+                }
                 // console.log('-->',e);
                 return e;
             })
         };
+        // aggressively free memory
+        if (freeMem) this.init();
         return enc;
     };
 
@@ -252,6 +266,10 @@
             array[pos++] = point.y;
             array[pos++] = point.z;
         });
+
+        if (zeroOut && state.zeros) {
+            state.zeros.push(array.buffer);
+        }
 
         return array;
     }

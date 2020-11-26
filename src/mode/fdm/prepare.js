@@ -367,7 +367,7 @@
 
             // notify progress
             layerout.layer = layer++;
-            update((layer / maxLayers) * 0.5);
+            update((layer / maxLayers) * 0.5, "prepare");
 
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
@@ -381,7 +381,7 @@
 
         print.output = output;
         print.render = FDM.prepareRender(output, progress => {
-            update(0.5 + progress * 0.5);
+            update(0.5 + progress * 0.5, "render");
         }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
         return print.render;
     };

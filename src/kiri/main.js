@@ -740,7 +740,7 @@
             totalProgress,
             track = {},
             mode = settings.mode,
-            now = UTIL.time();
+            now = Date.now();
 
         // require topo be sent back from worker for local printing
         settings.synth.sendTopo = false;
@@ -762,12 +762,13 @@
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
-                let mark = UTIL.time();
+                let mark = Date.now();
                 // update UI info
                 if (sliced) {
                     // update segment time
-                    if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
-                    segtimes.total = UTIL.time() - now;
+                    if (lastMsg) {
+                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                    }
                     API.event.emit('slice', getMode());
                 }
                 // on done
@@ -786,6 +787,7 @@
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
                     // print stats
+                    segtimes.total = Date.now() - now;
                     DBUG.log(segtimes);
                     if (callback && typeof callback === 'function') {
                         callback();
@@ -801,8 +803,10 @@
                 }
             }, function(update, msg) {
                 if (msg !== lastMsg) {
-                    let mark = UTIL.time();
-                    if (lastMsg) segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                    let mark = Date.now();
+                    if (lastMsg) {
+                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                    }
                     lastMsg = msg;
                     startTime = mark;
                 }
@@ -847,20 +851,44 @@
             setOpacity(color.preview_opacity);
         }
 
+        let segtimes = {},
+            segNumber = 0,
+            startTime,
+            lastMsg,
+            now = Date.now();
+
         KIRI.client.prepare(settings, function(progress, message) {
+            if (message !== lastMsg) {
+                let mark = Date.now();
+                if (lastMsg) {
+                    segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                }
+                lastMsg = message;
+                startTime = mark;
+            }
             API.show.progress(progress, message);
         }, function (output, maxSpeed) {
+            if (lastMsg) {
+                segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
+            }
+
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
             output = KIRI.codec.decode(output);
             if (feature.preview && output) {
+                startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.platform.world)
                 output.forEach(layer => {
                     stack.add(layer);
                 });
+                segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
+
+            // print stats
+            segtimes.total = Date.now() - now;
+            DBUG.log(segtimes);
 
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);

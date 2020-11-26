@@ -76,7 +76,7 @@ KIRI.worker = {
                 delete cache[data.id];
                 send.data({error: error});
             } else {
-                let slices = widget.slices || [];
+                const slices = widget.slices || [];
                 send.data({send_start: time()});
                 send.data({
                     topo: settings.synth.sendTopo ? widget.topo : null,
@@ -84,7 +84,8 @@ KIRI.worker = {
                     slices: slices.length
                 });
                 slices.forEach(function(slice,index) {
-                    send.data({index: index, slice: slice.encode(state)});
+                    const state = { zeros: [] };
+                    send.data({index: index, slice: slice.encode(state)}, state.zeros);
                 })
                 send.data({send_end: time()});
             }
@@ -125,12 +126,15 @@ KIRI.worker = {
 
         const print = current.print || {};
         const maxSpeed = print.maxSpeed || undefined;
+        const state = { zeros: [] };
+
+        send.data({ progress: 1, message: "transfer" });
 
         send.done({
             done: true,
-            output: KIRI.codec.encode(layers),
+            output: KIRI.codec.encode(layers, state),
             maxSpeed
-        });
+        }, state.zeros);
     },
 
     export: function(data, send) {
@@ -238,20 +242,32 @@ self.onmessage = function(e) {
         run = dispatch[msg.task],
         send = {
             data : function(data,direct) {
+                // if (direct && direct.length) {
+                //     console.log({
+                //         zeros: direct.length,
+                //         sz:direct.map(z => z.byteLength).reduce((a,v) => a+v)
+                //     });
+                // }
                 self.postMessage({
                     seq: msg.seq,
                     task: msg.task,
                     done: false,
                     data: data
-                },direct);
+                }, direct);
             },
             done : function(data,direct) {
+                // if (direct && direct.length) {
+                //     console.log({
+                //         zeros: direct.length,
+                //         sz:direct.map(z => z.byteLength).reduce((a,v) => a+v)
+                //     });
+                // }
                 self.postMessage({
                     seq: msg.seq,
                     task: msg.task,
                     done: true,
                     data: data
-                },direct);
+                }, direct);
             }
         };
 
