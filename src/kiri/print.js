@@ -704,7 +704,7 @@
                 // top object
                 let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
 
-                let dir = -1; // 1 == inside out, -1 == outside-in
+                let dir = 1; // 1 == inside out, -1 == outside-in
 
                 // output inner polygons
                 if (dir === 1)
