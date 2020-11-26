@@ -754,7 +754,7 @@
             let segtimes = {},
                 segNumber = 0,
                 errored = false,
-                startTime,
+                startTime = Date.now(),
                 lastMsg,
                 camOrLaser = mode === 'CAM' || mode === 'LASER',
                 stack = STACKS.create(widget.id, widget.mesh);
@@ -802,7 +802,7 @@
                     alert2(error);
                 }
             }, function(update, msg) {
-                if (msg !== lastMsg) {
+                if (msg && msg !== lastMsg) {
                     let mark = Date.now();
                     if (lastMsg) {
                         segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
@@ -862,7 +862,7 @@
             if (layer) {
                 output.push(KIRI.codec.decode(layer));
             }
-            if (message !== lastMsg) {
+            if (message && message !== lastMsg) {
                 let mark = Date.now();
                 if (lastMsg) {
                     segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;

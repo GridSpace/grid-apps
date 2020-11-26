@@ -10,7 +10,6 @@
 *   drag knife support
 * all
 *   2d image to 3d part
-*   memory optimization (worker and client proactive cleanup)
 *   circular fit/layout when no-layout to prevent collisions
 
 ## 2.5 roadmap

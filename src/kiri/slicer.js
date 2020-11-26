@@ -488,8 +488,12 @@
                 if (where.under.length === 3 || where.over.length === 3) {
                     // does not intersect (all 3 above or below)
                 } else if (where.on.length === 2) {
-                    // one side of triangle is on the Z plane
-                    lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
+                    // one side of triangle is on the Z plane and 3rd is below
+                    // drop lines with 3rd above because that leads to ambiguities
+                    // with complex nested polygons on flat surface
+                    if (where.under.length === 1) {
+                        lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
+                    }
                 } else if (where.on.length === 3) {
                     // triangle is coplanar with Z
                     // we drop these because this face is attached to 3 others
