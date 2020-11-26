@@ -79,6 +79,11 @@
             }
             func.sdone()
         });
+        api.event.on("selection.scale", () => {
+            if (isFdmMode) {
+                func.sclear();
+            }
+        });
         api.event.on("widget.rotate", rot => {
             if (!isFdmMode) {
                 return;

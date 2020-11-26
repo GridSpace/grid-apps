@@ -4,7 +4,6 @@
 * cnc
 *   tracing (chamfer, engrave)
 *   auto feature detection (slicing)
-*   add tabs to shadow and slice model (for topo)
 * fdm
 *   continuous printing (z belt systems)
 * laser

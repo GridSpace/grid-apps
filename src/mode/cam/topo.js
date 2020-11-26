@@ -60,7 +60,7 @@
                 newslices = [],
                 tabs = opt.tabs,
                 tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z)) : 0,
-                tabsOn = proc.camTabsOn || tabs,
+                tabsOn = tabs,
                 tabHeight = Math.max(proc.camTabsHeight + zBottom, tabsMax),
                 clipTab = tabsOn ? [] : null,
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
@@ -75,22 +75,6 @@
 
             if (tabs) {
                 clipTab.appendAll(tabs.map(tab => POLY.expand([tab.poly], toolDiameter/2)).flat());
-            }
-
-            if (proc.camTabsOn) {
-                CAM.createTabLines(
-                    center,
-                    toolDiameter,
-                    proc.camTabsWidth,
-                    proc.camTabsCount,
-                    proc.camTabsAngle
-                ).forEach(tab => {
-                    const { o1, o2, c1, c2 } = tab;
-                    const poly = newPolygon().addPoints([
-                        o1, c1, c2, o2
-                    ]);
-                    clipTab.push(poly);
-                });
             }
 
             // debug clipTab and clipTo

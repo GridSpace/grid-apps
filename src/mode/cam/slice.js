@@ -48,9 +48,6 @@
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3),
-            addTabsOutline = (procOutlineOn || procRough) && proc.camTabsOn,
-            tabWidth = proc.camTabsWidth,
-            tabHeight = proc.camTabsHeight,
             bounds = widget.getBoundingBox(),
             mesh = widget.mesh,
             zBottom = proc.camZBottom,
@@ -64,9 +61,6 @@
             maxToolDiam = 0,
             thruHoles,
             tabs = settings.widget[widget.id].tab;
-
-        // force off for testing
-        proc.camTabsOn = false;
 
         if (tabs) {
             // make tab polygons
@@ -301,9 +295,6 @@
                     const outside = POLY.offset(shadow.clone(), roughToolDiam * proc.camRoughOver, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
-                        // if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                        //     offset = addCutoutTabs(offset, slice.z, center, roughToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
-                        // }
                         if (tabs) {
                             tabs.forEach(tab => {
                                 tab.off = POLY.expand([tab.poly], roughToolDiam / 2).flat();
@@ -417,9 +408,6 @@
                     }
                 }
 
-                // if (addTabsOutline && slice.z <= zMin + tabHeight) {
-                //     offset = addCutoutTabs(offset, slice.z, center, outlineToolDiam, tabWidth, proc.camTabsCount, proc.camTabsAngle);
-                // }
                 if (tabs) {
                     tabs.forEach(tab => {
                         tab.off = POLY.expand([tab.poly], outlineToolDiam / 2).flat();
@@ -581,93 +569,6 @@
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
         offset.forEach(op => noff.appendAll( op.cut(tabs) ));
         return noff;
-    }
-
-    // cut outside traces at the right points
-    function addCutoutTabs(polys, z, center, toolDiam, tabWidth, tabCount, tabAngle, slice) {
-        // skip if no tops | traces
-        if (polys.length === 0) return polys;
-
-        let notabs = 0;
-        let nutrace = [];
-
-        polys.forEach(function(trace, index) {
-            // required to match computed order of cutouts
-            trace.setClockwise();
-
-            let ints = [];
-            CAM.createTabLines(center, toolDiam, tabWidth, tabCount, tabAngle).forEach(tab => {
-                const {c1, c2, o1, o2} = tab,
-                    int1 = trace.intersections(c1, o1).pop(),
-                    int2 = trace.intersections(c2, o2).pop();
-                if (int1 && int2) {
-                    ints.push(int1);
-                    ints.push(int2);
-                    // slice.output().setLayer('int',0xff0000).addLine(int1, int2);
-                }
-            });
-
-            let segs = [];
-            if (ints.length) {
-                ints.push(ints.shift());
-                // let cv = 0;
-                for (let i=0; i<ints.length; i+=2) {
-                    const seg = trace.emitSegment(ints[i], ints[i+1]);
-                    // const col = [0x0000ff,0x009900,0x999900];
-                    // seg.setZ(seg.getZ()+i);
-                    // seg.points.forEach((p,i) => p.z += (i*0.01));
-                    // slice.output().setLayer(`seg${i}`,col[cv++]).addPoly(seg);
-                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(seg.first(),1,5));
-                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(seg.last(),1,4));
-                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(trace.first(),2,5));
-                    // slice.output().setLayer(`seg${i}`).addPoly(newPolygon().centerCircle(trace.last(),2,4));
-                    segs.push(seg);
-                }
-                // check for and eliminate overlaps
-                if (false)
-                for (let i=0, il=segs.length; i < il; i++) {
-                    let si = segs[i];
-                    for (let j=i+1; j<il; j++) {
-                        let sj = segs[j];
-                        if (sj.overlaps(si)) {
-                            if (sj.perimeter() > si.perimeter()) {
-                                sj._overlap = true;
-                            }
-                        }
-                    }
-                }
-                // replace intersected trace with non-overlapping segments
-                nutrace.appendAll(segs.filter(seg => !seg._overlap));
-            } else {
-                nutrace.push(trace);
-                notabs++;
-            }
-        });
-
-        if (notabs) {
-            console.log(`unable to compute tabs for ${notabs} traces @ z=${z}`);
-        }
-
-        return nutrace;
-    }
-
-    CAM.createTabLines = function(center, toolDiam, tabWidth, tabCount, tabAngle) {
-        let angle_inc = 360 / tabCount,
-            offset = (tabWidth + toolDiam) / 2,
-            lines = [];
-
-        while (tabCount-- > 0) {
-            let slope = BASE.newSlopeFromAngle(tabAngle),
-                normal = BASE.newSlopeFromAngle(tabAngle + 90),
-                c1 = center.projectOnSlope(normal, offset),
-                c2 = center.projectOnSlope(normal, -offset),
-                o1 = c1.projectOnSlope(slope, 10000),
-                o2 = c2.projectOnSlope(slope, 10000);
-            tabAngle -= angle_inc;
-            lines.push({c1, o1, c2, o2});
-        }
-
-        return lines;
     }
 
 })();

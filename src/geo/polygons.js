@@ -78,7 +78,7 @@
         tnode.m_Childs.forEach(function(child) {
             poly = fromClipperNode(child, z);
             // throw out all tiny polygons
-            if (poly.area() < min) {
+            if (!poly.open && poly.area() < min) {
                 return;
             }
             if (parent) {
@@ -99,7 +99,7 @@
 
         tnode.m_Childs.forEach(function(child) {
             poly = fromClipperNode(child, z);
-            if (minarea && poly.area() < minarea) {
+            if (!poly.open && minarea && poly.area() < minarea) {
                 return;
             }
             if (parent) {

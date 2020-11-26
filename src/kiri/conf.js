@@ -438,8 +438,6 @@
                     camDrillLift: 2,
                     camDrillingOn: false,
                     camDrillReg: "none",
-                    camTabsAngle: 0,
-                    camTabsCount: 4,
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsOn: false,

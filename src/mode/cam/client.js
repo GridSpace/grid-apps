@@ -132,7 +132,12 @@
         });
         api.event.on("key.esc", () => {
             if (isCamMode) {
-                func.tdone()
+                func.tdone();
+            }
+        });
+        api.event.on("selection.scale", () => {
+            if (isCamMode) {
+                func.tclear();
             }
         });
         api.event.on("widget.rotate", rot => {
