@@ -3,7 +3,7 @@
 ## 2.4 roadmap
 * cnc
 *   tracing (chamfer, engrave)
-*   auto feature detection (slicing), manual tabs
+*   auto feature detection (slicing)
 *   add tabs to shadow and slice model (for topo)
 * fdm
 *   continuous printing (z belt systems)
@@ -68,6 +68,7 @@
 
 # CAM
 
+* `B` fix multiple tab heights in contouring (uses highest now)
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
@@ -89,6 +90,7 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `P` crossing open space check point is outside camshell before returning max z
+* `P` detect render message backlog and pause or warn
 
 # Laser
 

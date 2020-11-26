@@ -217,7 +217,7 @@
         // prevent duplicate restore from repeated settings load calls
         if (!sups[id]) {
             pos.box = addbox(
-                { x, y, z }, 0x0000dd, 'supp',
+                { x, y, z }, 0x0000dd, id,
                 { x:dw, y:dw, z:dh }, { group: widget.mesh }
             );
             pos.box.pillar = Object.assign({widget}, pos);

@@ -37,6 +37,7 @@
             $('set-tools').style.display = isCamMode ? '' : 'none';
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
+            if (!isCamMode) func.tclear();
         });
 
         api.event.on("view.set", (mode) => {
@@ -113,9 +114,7 @@
             api.feature.hover = true;
         });
         api.event.on("cam.tabs.done", func.tdone = () => {
-            delbox('intZ');
-            delbox('intW');
-            delbox('supp');
+            delbox('tabb');
             api.hide.alert(alert);
             api.feature.hover = false;
         });
@@ -168,7 +167,7 @@
             if (!isCamMode) {
                 return;
             }
-            delbox('supp');
+            delbox('tabb');
             if (lastTab) {
                 const {widget, box, id} = lastTab;
                 widget.adds.remove(box);
@@ -206,7 +205,7 @@
             if (!isCamMode) {
                 return;
             }
-            delbox('supp');
+            delbox('tabb');
             const { int, type, point } = data;
             const object = int ? int.object : null;
             const tab = int ? object.tab : null;
@@ -245,7 +244,7 @@
         const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
         const pos = { x:ic.x, y:ic.y, z:ic.z };
         const dim = { x:5, y:camTabsWidth, z:camTabsHeight };
-        const tab = addbox(pos, 0x0000dd, 'supp', dim, { rotate: rot });
+        const tab = addbox(pos, 0x0000dd, 'tabb', dim, { rotate: rot });
         return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
     }
 
