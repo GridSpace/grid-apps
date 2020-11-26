@@ -1790,11 +1790,11 @@
         // load any widget by name that was saved to the workspace
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
-                let ann = API.widgets.annotate(widget.id);
-                widget.meta.file = ann.file;
-                widget.meta.url = ann.url;
                 if (widget) {
                     platform.add(widget, 0, position);
+                    let ann = API.widgets.annotate(widgetid);
+                    widget.meta.file = ann.file;
+                    widget.meta.url = ann.url;
                 }
                 if (++loaded === toload.length) {
                     platform.deselect();
