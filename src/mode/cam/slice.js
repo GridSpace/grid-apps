@@ -567,7 +567,7 @@
     function cutTabs(tabs, offset, z) {
         let noff = [];
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
-        offset.forEach(op => noff.appendAll( op.cut(tabs) ));
+        offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs)) ));
         return noff;
     }
 
