@@ -48,6 +48,7 @@
     function slice(points, bounds, options, ondone, onupdate) {
         let topoMode = options.topo,
             simpleMode = options.simple,
+            useFlats = options.flats,
             swap = options.swapX || options.swapY,
             isCam = options.cam,
             debug = options.debug,
@@ -237,7 +238,9 @@
             zOrdered.sort(function(a,b) { return a - b});
         }
 
-        if (options.single) {
+        if (useFlats) {
+            zIndexes.appendAll(zOrdered);
+        } else if (options.single) {
             // usually for laser single slice
             zIndexes.push(zMin + zInc);
         } else if (zInc === 0) {
@@ -352,7 +355,7 @@
             // ensure no slice through horizontal lines or planes
             if (zFlat[ik]) onFlat = true;
             if (zLines[ik]) onLine = true;
-            if (onFlat || onLine) {
+            if (!useFlats && (onFlat || onLine)) {
                 zIndexes[i] += isCam ? 0.001 : -0.001;
             }
             // slice next layer and add to slices[] array
