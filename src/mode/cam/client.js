@@ -242,7 +242,8 @@
         const { track } = iw;
         const { stock, bounds, process } = API.conf.get();
         const { camTabsWidth, camTabsHeight } = process;
-        const zp = stock.z - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
+        const sz = stock.z || bounds.max.z;
+        const zp = sz - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
         ic.x += n.x * 2.5; // offset from part
         ic.z -= n.y * 2.5; // offset swap z,y
         ic.y = zp; // offset swap in world space y,z
@@ -403,11 +404,12 @@
                 newPolygon().centerRectangle({x:csox, y:csoy, z}, x, y)
             ], { thin: true } ));
             const hx = x/2, hy = y/2;
+            const sz = stock.z || 0;
             stack.add(render.addLines([
-                newPoint(csox + hx, csoy - hy, 0), newPoint(csox + hx, csoy - hy, stock.z),
-                newPoint(csox + hx, csoy + hy, 0), newPoint(csox + hx, csoy + hy, stock.z),
-                newPoint(csox - hx, csoy - hy, 0), newPoint(csox - hx, csoy - hy, stock.z),
-                newPoint(csox - hx, csoy + hy, 0), newPoint(csox - hx, csoy + hy, stock.z),
+                newPoint(csox + hx, csoy - hy, 0), newPoint(csox + hx, csoy - hy, sz),
+                newPoint(csox + hx, csoy + hy, 0), newPoint(csox + hx, csoy + hy, sz),
+                newPoint(csox - hx, csoy - hy, 0), newPoint(csox - hx, csoy - hy, sz),
+                newPoint(csox - hx, csoy + hy, 0), newPoint(csox - hx, csoy + hy, sz),
             ], { thin: true }));
         }
 
