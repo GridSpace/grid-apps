@@ -135,7 +135,7 @@
                             merged.push(p);
                         }
                     });
-                    update(slices++ / totalSlices);
+                    update((slices++ / totalSlices) * 0.5, "prepare");
                 });
                 let start = newPoint(0,0,0);
                 let gather = [];
@@ -149,7 +149,7 @@
             } else {
                 widget.slices.forEach(function(slice) {
                     sliceEmitObjects(print, slice, output);
-                    update(slices++ / totalSlices);
+                    update((slices++ / totalSlices) * 0.5, "prepare");
                 });
             }
         });
@@ -209,7 +209,9 @@
         //     console.log({laser_it: output});
         // }
 
-        return print.render = FDM.prepareRender(output, update, { thin: true, z: 0, action: "cut" });
+        return print.render = FDM.prepareRender(output, (progress, layer) => {
+            update(0.5 + progress * 0.5, "render", layer);
+        }, { thin: true, z: 0, action: "cut" });
     };
 
     function exportLaser(print, online, ondone) {

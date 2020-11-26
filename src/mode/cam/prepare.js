@@ -33,8 +33,8 @@
             });
         });
 
-        print.render = KIRI.driver.FDM.prepareRender(print.output, progress => {
-            update(0.5 + progress * 0.5, "render");
+        print.render = KIRI.driver.FDM.prepareRender(print.output, (progress, layer) => {
+            update(0.5 + progress * 0.5, "render", layer);
         }, {
             thin: true,
             print: 0,

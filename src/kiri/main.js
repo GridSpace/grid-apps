@@ -855,9 +855,13 @@
             segNumber = 0,
             startTime,
             lastMsg,
-            now = Date.now();
+            now = Date.now(),
+            output = [];
 
-        KIRI.client.prepare(settings, function(progress, message) {
+        KIRI.client.prepare(settings, function(progress, message, layer) {
+            if (layer) {
+                output.push(KIRI.codec.decode(layer));
+            }
             if (message !== lastMsg) {
                 let mark = Date.now();
                 if (lastMsg) {
@@ -867,7 +871,7 @@
                 startTime = mark;
             }
             API.show.progress(progress, message);
-        }, function (output, maxSpeed) {
+        }, function (oldout, maxSpeed) {
             if (lastMsg) {
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }
@@ -875,8 +879,8 @@
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
-            output = KIRI.codec.decode(output);
-            if (feature.preview && output) {
+            // output = KIRI.codec.decode(output);
+            if (feature.preview && output.length) {
                 startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.platform.world)

@@ -120,8 +120,13 @@ KIRI.worker = {
             return console.log({invalid_print_driver: mode, driver});
         }
 
-        const layers = driver.prepare(widgets, settings, (progress, message) => {
-            send.data({ progress, message });
+        const layers = driver.prepare(widgets, settings, (progress, message, layer) => {
+            const state = { zeros: [] };
+            const emit = { progress, message };
+            if (layer) {
+                emit.layer = KIRI.codec.encode(layer, state)
+            }
+            send.data(emit);
         });
 
         const print = current.print || {};
@@ -132,7 +137,7 @@ KIRI.worker = {
 
         send.done({
             done: true,
-            output: KIRI.codec.encode(layers, state),
+            // output: KIRI.codec.encode(layers, state),
             maxSpeed
         }, state.zeros);
     },

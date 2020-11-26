@@ -163,7 +163,7 @@ KIRI.work = {
     prepare : function(settings, update, done) {
         send("prepare", { settings }, function(reply) {
             if (reply.progress) {
-                update(reply.progress, reply.message);
+                update(reply.progress, reply.message, reply.layer);
             }
             if (reply.done) {
                 done(reply.output, reply.maxSpeed);

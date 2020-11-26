@@ -365,14 +365,14 @@
             // if layer produced output, append to output array
             if (layerout.length) output.append(layerout);
 
-            // notify progress
-            layerout.layer = layer++;
-            update((layer / maxLayers) * 0.5, "prepare");
-
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
                 layerout.last().retract = true;
             }
+
+            // notify progress
+            layerout.layer = layer++;
+            update((layer / maxLayers) * 0.5, "prepare");
 
             slices = [];
             layerout = [];
@@ -380,8 +380,8 @@
         }
 
         print.output = output;
-        print.render = FDM.prepareRender(output, progress => {
-            update(0.5 + progress * 0.5, "render");
+        print.render = FDM.prepareRender(output, (progress, layer) => {
+            update(0.5 + progress * 0.5, "render", layer);
         }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
         return print.render;
     };
@@ -578,7 +578,7 @@
                 });
             });
 
-            update(index / levels.length);
+            update(index / levels.length, output);
         });
 
         return layers;

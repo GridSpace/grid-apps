@@ -8,7 +8,7 @@
 
     const BASE = self.base, KIRI = self.kiri, handlers = {};
     const freeMem = true;
-    const zeroOut = false;
+    const zeroOut = true;
 
     const codec = KIRI.codec = {
         encode: encode,
