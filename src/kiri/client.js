@@ -54,7 +54,7 @@ KIRI.work = {
         }
     },
 
-    isSlicing : function() {
+    isSlicing: function() {
         let current = 0;
         for (let key in slicing) {
             current++;
@@ -62,7 +62,7 @@ KIRI.work = {
         return current > 0;
     },
 
-    restart : function() {
+    restart: function() {
         if (worker) {
             worker.terminate();
         }
@@ -93,7 +93,7 @@ KIRI.work = {
         };
     },
 
-    decimate : function(vertices, options, callback) {
+    decimate: function(vertices, options, callback) {
         let alert = KIRI.api.show.alert('processing model', 1000);
         vertices = vertices.buffer.slice(0);
         send("decimate", {vertices, options}, function(output) {
@@ -102,25 +102,25 @@ KIRI.work = {
         });
     },
 
-    config : function(obj) {
+    config: function(obj) {
         send("config", obj, function(reply) {
             // console.log({config:reply});
         });
     },
 
-    clear : function(widget) {
+    clear: function(widget) {
         send("clear", widget ? {id:widget.id} : {}, function(reply) {
             // console.log({clear:reply});
         });
     },
 
-    snap : function(data) {
+    snap: function(data) {
         send("snap", data, function(reply) {
             // console.log({snap:reply})
         });
     },
 
-    slice : function(settings, widget, callback) {
+    slice: function(settings, widget, callback) {
         let rotation = (Math.PI/180) * (settings.process.sliceRotation || 0);
         let centerz;
         let movez;
@@ -160,7 +160,7 @@ KIRI.work = {
         }, [vertices]);
     },
 
-    prepare : function(settings, update, done) {
+    prepare: function(settings, update, done) {
         send("prepare", { settings }, function(reply) {
             if (reply.progress) {
                 update(reply.progress, reply.message, reply.layer);
@@ -171,7 +171,7 @@ KIRI.work = {
         });
     },
 
-    export : function(settings, online, ondone) {
+    export: function(settings, online, ondone) {
         send("export", { settings }, function(reply) {
             if (reply.line) {
                 online(reply.line);
@@ -182,13 +182,13 @@ KIRI.work = {
         });
     },
 
-    colors : function(colors, max, done) {
+    colors: function(colors, max, done) {
         send("colors", { colors, max }, function(reply) {
             done(reply);
         });
     },
 
-    parse : function(args, progress, done) {
+    parse: function(args, progress, done) {
         // have to do this client side because DOMParser is not in workers
         if (args.type === 'svg') {
             const { settings, code, type } = args;
@@ -214,6 +214,17 @@ KIRI.work = {
                 done(KIRI.codec.decode(reply.parsed), reply.maxSpeed);
             }
         });
+    },
+
+    image2mesh: function(data, progress, output) {
+        send("image2mesh", data, reply => {
+            if (reply.progress) {
+                progress(reply.progress);
+            }
+            if (reply.done) {
+                output(reply.done);
+            }
+        }, [ data.png ]);
     }
 };
 

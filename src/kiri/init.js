@@ -1125,10 +1125,6 @@
         });
     }
 
-    function deleteCatalogFile(e) {
-        CATALOG.deleteFile(e.target.getAttribute('del'));
-    }
-
     function updateCatalog(files) {
         let table = UI.catalogList,
             list = [];
@@ -1171,7 +1167,7 @@
 
             del.setAttribute('del', name);
             del.setAttribute('title', "remove '"+name+"'");
-            del.onclick = deleteCatalogFile;
+            del.onclick = () => { CATALOG.deleteFile(name) };
             del.innerHTML = '<i class="far fa-trash-alt"></i>';
 
             size.setAttribute("disabled", true);

@@ -238,6 +238,70 @@ KIRI.worker = {
             console.log({invalid:data});
         }
         send.done({config: update});
+    },
+
+    image2mesh: function(info, send) {
+        let img = new png.PNG();
+        img.parse(info.png, (err, output) => {
+            let { width, height, data } = output;
+            let { bedDepth, bedWidth } = info.settings.device;
+            let imageAspect = height / width;
+            let deviceAspect = bedDepth / bedWidth;
+            let div = 1;
+            if (imageAspect < deviceAspect) {
+                div = width / bedWidth;
+            } else {
+                div = height / bedDepth;
+            }
+            send.data({progress: { width, height }});
+            let points =
+                width * height + // grid
+                height * 2     + // left/right
+                width * 2      - // top/bottom
+                4                // base shared corners
+                ;
+            let lines =
+                ((height - 1) * (width - 1)) + // grid
+                ((height - 1) * (width    )) + // grid
+                ((height    ) * (width - 1)) + // grid
+                ((height * 3) - 2)           + // left/right
+                ((width * 3) - 2)            + // top/bottom
+                1                              // across base
+                ;
+            let verts = new Float32Array(points * 3);
+            let index = new Uint32Array(lines * 2);
+            let vi = 0;
+            let ii = 0;
+            let w2 = width / 2;
+            let h2 = height / 2;
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let di = (x + width * y) * 4;
+                    let r = data[di];
+                    let g = data[di+1];
+                    let b = data[di+2];
+                    let v = (r + g + b) / 3;
+                    verts[vi++] = (-w2 + x) / div;
+                    verts[vi++] = (h2 - y) / div;
+                    verts[vi++] = ((255 - v) / 50);
+                    if (x > 0 && y > 0) {
+                        let p1 = (x - 1) * height + (y - 0);
+                        let p2 = (x - 0) * height + (y - 1);
+                        let p3 = (x - 0) * height + (y - 0);
+                        let p4 = (x - 1) * height + (y - 1);
+                        index[ii++] = p1;
+                        index[ii++] = p2;
+                        index[ii++] = p3;
+                        index[ii++] = p1;
+                        index[ii++] = p4;
+                        index[ii++] = p2;
+                    }
+                }
+            }
+            verts = verts.slice(0, vi);
+            index = index.slice(0, ii);
+            send.done({done: {verts, index, vi, ii}});
+        });
     }
 };
 

@@ -945,6 +945,38 @@
         });
     }
 
+    function loadImage(image) {
+        KIRI.client.image2mesh({settings, png:image}, progress => {
+            console.log({i2m_progress: progress});
+        }, output => {
+            console.log({i2m_mesh: output});
+            let {verts, index, vi, ii} = output;
+
+            console.log({verts, index, vi, ii});
+
+            let mat = new THREE.MeshPhongMaterial({
+                shininess: 0x101010,
+                specular: 0x101010,
+                transparent: true,
+                opacity: 1,
+                color: 0x999999,
+                side: THREE.DoubleSide
+            });
+
+            let geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+            geo.setIndex([...index]); // doesn't like the Uint32Array
+            geo.computeFaceNormals();
+            geo.computeVertexNormals();
+
+            let mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            SPACE.platform.world.add(mesh);
+        });
+    }
+
     /** ******************************************************************
      * Selection Functions
      ******************************************************************* */
@@ -1695,6 +1727,7 @@
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
+                ispng = lower.indexOf(".png") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
                 isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0;
             reader.file = files[i];
@@ -1717,9 +1750,14 @@
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
+                if (ispng) loadImage(e.target.result);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
-            reader.readAsBinaryString(reader.file);
+            if (isstl || ispng) {
+                reader.readAsArrayBuffer(reader.file);
+            } else {
+                reader.readAsBinaryString(reader.file);
+            }
         }
     }
 
