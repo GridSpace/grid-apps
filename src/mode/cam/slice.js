@@ -140,10 +140,15 @@
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
+        let fakeTerrain = false;
+        if (tzindex.length > 100) {
+            fakeTerrain = tzindex[0];
+            tzindex = [ tzindex.pop() ];
+        }
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
-            if (false) {
+            if (true) {
                 const slice = data.slice;
                 sliceAll.push(slice);
                 slice.output()
@@ -152,6 +157,12 @@
             }
             updateOp(index, total);
         }, genso: true });
+        if (fakeTerrain) {
+            // to avoid compute for highly detailed maps, force all
+            // moves above part top by synthesizing a single terrain slice
+            terrain[0].z = fakeTerrain.z;
+        }
+
         let shadowTop = terrain[terrain.length - 1];
         let center = tshadow[0].bounds.center();
 

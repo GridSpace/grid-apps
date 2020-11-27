@@ -9,8 +9,6 @@
 * laser
 *   drag knife support
 * all
-*   2d image to 3d part
-*     cnc: abandon mapping (tshadow) when z count high (organic) and just use top z
 *   circular fit/layout when no-layout to prevent collisions
 
 ## 2.5 roadmap
@@ -25,7 +23,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` 2D image import
 * `F` detect and report slow framerates
 * `F` right click / context menu (object deletion, etc)
 * `P` improve decimation speed by avoiding in/out of Point?

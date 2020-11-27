@@ -268,13 +268,19 @@ KIRI.worker = {
             // convert png to grayscale
             let gray = new Uint8Array(width * height);
             let gi = 0;
+            let invi = info.inv_image ? true : false;
+            let inva = info.inv_alpha ? true : false;
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     let di = (x + width * y) * 4;
                     let r = data[di];
                     let g = data[di+1];
                     let b = data[di+2];
-                    let v = (r + g + b) / 3;
+                    let a = data[di+3];
+                    let v = ((r + g + b) / 3);
+                    if (invi) v = 255 - v;
+                    if (inva) a = 255 - a;
+                    v *= (a/255);
                     gray[gi++] = v;
                 }
             }
@@ -303,6 +309,7 @@ KIRI.worker = {
                 gray = blur;
             }
             // create indexed mesh output
+            let base = parseInt(info.base || 0);
             let verts = new Float32Array(points * 3);
             let faces = new Uint32Array(flats * 6);
             let w2 = width / 2;
@@ -318,7 +325,7 @@ KIRI.worker = {
                     // create vertex @ x,y
                     verts[vi++] = (-w2 + x) / div;
                     verts[vi++] = (h2 - y) / div;
-                    verts[vi++] = ((255 - v) / 50);
+                    verts[vi++] = ((255 - v) / 50) + base;
                     VI++;
                     // create two surface faces on the rect between x-1,y-1 and x,y
                     if (x > 0 && y > 0) {

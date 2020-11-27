@@ -954,14 +954,22 @@
             "  be blurred to be usable. Values from 0=off to 50=high are suggested.",
             "  Higher values incur more processing time.",
             "  </p>",
-            "  <div class='f-row'>",
-            "  <label>blur value</label>&nbsp;<input id='png-blur' value='0' size='3'>",
-            "  </div>",
+            "  <div class='f-row t-right'><table>",
+            "  <tr><th>blur value</th><td><input id='png-blur' value='0' size='3'></td>",
+            "      <th>&nbsp;invert image</th><td><input id='png-inv' type='checkbox'></td></tr>",
+            "  <tr><th>base size</th><td><input id='png-base' value='0' size='3'></td>",
+            "      <th>&nbsp;invert alpha</th><td><input id='alpha-inv' type='checkbox'></td></tr>",
+            "  </table></div>",
             "</div>"
         ]};
         UC.confirm(undefined, {convert:true, cancel:false}, undefined, opt).then((ok) => {
             if (ok) {
-                loadImage(image, {blur: parseInt($('png-blur').value) || 0});
+                loadImage(image, {
+                    blur: parseInt($('png-blur').value) || 0,
+                    base: parseInt($('png-base').value) || 0,
+                    inv_image: $('png-inv').checked,
+                    inv_alpha: $('alpha-inv').checked,
+                });
             }
         });
     }

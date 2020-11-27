@@ -50,8 +50,17 @@
      * @returns {Array}
      */
     AP.appendAll = function(arr) {
-        // if (arr && arr.length > 0) this.push.apply(this,arr);
-        if (arr && arr.length > 0) this.push(...arr);
+        if (arr && arr.length > 0) {
+            // avoid hitting stack limits
+            if (arr.length > 10000) {
+                for (let i=0, il=arr.length; i<il; i++) {
+                    this.push(arr[i]);
+                }
+            } else {
+                // this.push.apply(this,arr); (slower?)
+                this.push(...arr);
+            }
+        }
         return this;
     };
 

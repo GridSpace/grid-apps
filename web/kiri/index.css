@@ -126,9 +126,6 @@ th, tr, td, label {
 .grow {
     flex-grow: 1;
 }
-.t-just {
-    text-align: justify;
-}
 .a-start {
     align-items: flex-start;
 }
@@ -155,6 +152,12 @@ th, tr, td, label {
 }
 .center {
     text-align: center;
+}
+.t-just {
+    text-align: justify;
+}
+.t-right {
+    text-align: right;
 }
 .russo {
     font-family: 'Russo One', sans-serif;

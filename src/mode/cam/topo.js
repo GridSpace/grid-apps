@@ -69,9 +69,9 @@
                 center = opt.center,
                 debug = false,
                 debug_clips = debug && true,
-                debug_topo = debug && false,
-                debug_topo_lines = debug && false,
-                debug_topo_shells = debug && false;
+                debug_topo = debug && true,
+                debug_topo_lines = debug && true,
+                debug_topo_shells = debug && true;
 
             if (tabs) {
                 clipTab.appendAll(tabs.map(tab => POLY.expand([tab.poly], toolDiameter/2)).flat());
