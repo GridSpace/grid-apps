@@ -354,6 +354,7 @@
                 w.moveMesh(dx,dy,dz);
             });
         }
+        return this;
     };
 
     /**

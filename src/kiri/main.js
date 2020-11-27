@@ -945,7 +945,7 @@
         });
     }
 
-    function loadImageDialog(image) {
+    function loadImageDialog(image, name) {
         const opt = {pre: [
             "<div class='f-col a-center'>",
             "  <h3>Image Conversion</h3>",
@@ -967,11 +967,12 @@
         UC.confirm(undefined, {convert:true, cancel:false}, undefined, opt).then((ok) => {
             if (ok) {
                 loadImage(image, {
+                    file: name,
                     blur: parseInt($('png-blur').value) || 0,
                     base: parseInt($('png-base').value) || 0,
                     border: parseInt($('png-border').value) || 0,
                     inv_image: $('png-inv').checked,
-                    inv_alpha: $('alpha-inv').checked,
+                    inv_alpha: $('alpha-inv').checked
                 });
             }
         });
@@ -1004,7 +1005,9 @@
             // mesh.receiveShadow = true;
             //
             // SPACE.platform.world.add(mesh);
-            platform.add(newWidget().loadVertices(bigv));
+            let widget = newWidget().loadVertices(bigv)
+            widget.meta.file = opt.file;
+            platform.add(widget);
         });
     }
 
@@ -1264,13 +1267,14 @@
                     name = name
                         .toLowerCase()
                         .replace(/_/g,' ')
+                        .replace(/.png/,'')
                         .replace(/.stl/,'');
                     let sp = name.indexOf('/');
                     if (sp >= 0) {
                         name = name.substring(sp + 1);
                     }
                     $('winfo').style.display = 'flex';
-                    $('winfo').innerHTML = `${sel.meta.vertices}<br>${name}`;
+                    $('winfo').innerHTML = `${UTIL.comma(sel.meta.vertices)}<br>${name}`;
                 }
             }
         } else {
@@ -1781,7 +1785,7 @@
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
-                if (ispng) loadImageDialog(e.target.result);
+                if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
             if (isstl || ispng) {
