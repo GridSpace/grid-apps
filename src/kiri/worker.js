@@ -255,60 +255,173 @@ KIRI.worker = {
             }
             let points =
                 width * height + // grid
-                height * 2     + // left/right
-                width * 2      - // top/bottom
-                4                // base shared corners
+                height * 2 + 0 + // left/right
+                width * 2 + 0  - // top/bottom
+                0                // base shared corners
                 ;
-            let lines =
-                ((height - 1) * (width - 1)) + // grid
-                ((height - 1) * (width    )) + // grid
-                ((height    ) * (width - 1)) + // grid
-                ((height * 3) - 2)           + // left/right
-                ((width * 3) - 2)            + // top/bottom
-                1                              // across base
+            let flats =
+                ((height-1) * (width-1)) + // surface
+                ((height-1) * 2) + // left/right
+                ((width-1) * 2) + // top/bottom
+                1 // base
                 ;
-            let verts = new Float32Array(points * 3);
-            let index = new Uint32Array(lines * 2);
-            let vi = 0;
-            let ii = 0;
-            let w2 = width / 2;
-            let h2 = height / 2;
-            for (let x = 0; x < width; x++) {
-                for (let y = 0; y < height; y++) {
+            // convert png to grayscale
+            let gray = new Uint8Array(width * height);
+            let gi = 0;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
                     let di = (x + width * y) * 4;
                     let r = data[di];
                     let g = data[di+1];
                     let b = data[di+2];
                     let v = (r + g + b) / 3;
+                    gray[gi++] = v;
+                }
+            }
+            // create indexed mesh output
+            let verts = new Float32Array(points * 3);
+            let faces = new Uint32Array(flats * 6);
+            let w2 = width / 2;
+            let h2 = height / 2;
+            let vi = 0;
+            let ii = 0;
+            let VI = 0;
+            let VB = 0;
+            // create surface vertices & faces
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    let v = gray[x + width * y];
+                    // create vertex @ x,y
                     verts[vi++] = (-w2 + x) / div;
                     verts[vi++] = (h2 - y) / div;
                     verts[vi++] = ((255 - v) / 50);
+                    VI++;
+                    // create two surface faces on the rect between x-1,y-1 and x,y
                     if (x > 0 && y > 0) {
                         let p1 = (x - 1) * height + (y - 0);
                         let p2 = (x - 0) * height + (y - 1);
                         let p3 = (x - 0) * height + (y - 0);
                         let p4 = (x - 1) * height + (y - 1);
-                        index[ii++] = p1;
-                        index[ii++] = p2;
-                        index[ii++] = p3;
-                        index[ii++] = p1;
-                        index[ii++] = p4;
-                        index[ii++] = p2;
+                        faces[ii++] = p1;
+                        faces[ii++] = p2;
+                        faces[ii++] = p3;
+                        faces[ii++] = p1;
+                        faces[ii++] = p4;
+                        faces[ii++] = p2;
                     }
                 }
                 send.data({progress: x / width});
             }
-            verts = verts.slice(0, vi);
-            index = index.slice(0, ii);
+            // create top vertices & faces
+            VB = VI;
+            let TL = VI;
+            if (true) for (let x = 0; x < width; x++) {
+                let y = 0;
+                verts[vi++] = (-w2 + x) / div;
+                verts[vi++] = (h2 - y) / div;
+                verts[vi++] = 0;
+                VI++;
+                // create two top faces on the rect x-1,0, x,z
+                if (x > 0) {
+                    let p1 = VB + (x - 1);
+                    let p2 = VB + (x - 0);
+                    let p3 = (x * height);
+                    let p4 = (x - 1) * height;
+                    faces[ii++] = p1;
+                    faces[ii++] = p2;
+                    faces[ii++] = p3;
+                    faces[ii++] = p1;
+                    faces[ii++] = p3;
+                    faces[ii++] = p4;
+                }
+            }
+            // create bottom vertices & faces
+            VB = VI;
+            let BL = VI;
+            for (let x = 0; x < width; x++) {
+                let y = height - 1;
+                verts[vi++] = (-w2 + x) / div;
+                verts[vi++] = (h2 - y) / div;
+                verts[vi++] = 0;
+                VI++;
+                // create two top faces on the rect x-1,0, x,z
+                if (x > 0) {
+                    let p1 = VB + (x - 1);
+                    let p2 = VB + (x - 0);
+                    let p3 = (x * height) + y;
+                    let p4 = (x - 1) * height + y;
+                    faces[ii++] = p1;
+                    faces[ii++] = p2;
+                    faces[ii++] = p3;
+                    faces[ii++] = p1;
+                    faces[ii++] = p3;
+                    faces[ii++] = p4;
+                }
+            }
+            // create left vertices & faces
+            VB = VI;
+            for (let y=0; y < height; y++) {
+                let x = 0;
+                verts[vi++] = (-w2 + x) / div;
+                verts[vi++] = (h2 - y) / div;
+                verts[vi++] = 0;
+                VI++;
+                // create two left faces on the rect y-1,0, y,z
+                if (y > 0) {
+                    let p1 = VB + (y + 0);
+                    let p2 = VB + (y - 1);
+                    let p3 = 0 + (y - 1);
+                    let p4 = 0 + (y - 0);
+                    faces[ii++] = p1;
+                    faces[ii++] = p2;
+                    faces[ii++] = p3;
+                    faces[ii++] = p1;
+                    faces[ii++] = p3;
+                    faces[ii++] = p4;
+                }
+            }
+            // create right vertices & faces
+            VB = VI;
+            let TR = VI;
+            for (let y=0; y < height; y++) {
+                let x = width - 1;
+                verts[vi++] = (-w2 + x) / div;
+                verts[vi++] = (h2 - y) / div;
+                verts[vi++] = 0;
+                VI++;
+                // create two right faces on the rect y-1,0, y,z
+                if (y > 0) {
+                    let p1 = VB + (y + 0);
+                    let p2 = VB + (y - 1);
+                    let p3 = (x * height) + (y - 1);
+                    let p4 = (x * height) + (y - 0);
+                    faces[ii++] = p1;
+                    faces[ii++] = p2;
+                    faces[ii++] = p3;
+                    faces[ii++] = p1;
+                    faces[ii++] = p3;
+                    faces[ii++] = p4;
+                }
+            }
+            let BR = VI-1;
+            // create base two faces
+            faces[ii++] = TL;
+            faces[ii++] = TR;
+            faces[ii++] = BR;
+            faces[ii++] = TL;
+            faces[ii++] = BR;
+            faces[ii++] = BL;
+            // flatten for now until we support indexed mesh
+            // throughout KM (widget, storage, decimation)
             let bigv = new Float32Array(ii * 3);
             let bgi = 0;
             for (let i=0; i<ii; i++) {
-                let iv = index[i] * 3;
+                let iv = faces[i] * 3;
                 bigv[bgi++] = verts[iv];
                 bigv[bgi++] = verts[iv+1];
                 bigv[bgi++] = verts[iv+2];
             }
-            // send.done({done: {verts, index, bigv, vi, ii}}, [ bigv.buffer ]);
+            // send.done({done: {verts, faces, bigv, vi, ii}}, [ bigv.buffer ]);
             send.done({done: {bigv}}, [ bigv.buffer ]);
         });
     }
