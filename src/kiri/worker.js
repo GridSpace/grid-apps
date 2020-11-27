@@ -253,7 +253,6 @@ KIRI.worker = {
             } else {
                 div = height / bedDepth;
             }
-            send.data({progress: { width, height }});
             let points =
                 width * height + // grid
                 height * 2     + // left/right
@@ -297,10 +296,20 @@ KIRI.worker = {
                         index[ii++] = p2;
                     }
                 }
+                send.data({progress: x / width});
             }
             verts = verts.slice(0, vi);
             index = index.slice(0, ii);
-            send.done({done: {verts, index, vi, ii}});
+            let bigv = new Float32Array(ii * 3);
+            let bgi = 0;
+            for (let i=0; i<ii; i++) {
+                let iv = index[i] * 3;
+                bigv[bgi++] = verts[iv];
+                bigv[bgi++] = verts[iv+1];
+                bigv[bgi++] = verts[iv+2];
+            }
+            // send.done({done: {verts, index, bigv, vi, ii}}, [ bigv.buffer ]);
+            send.done({done: {bigv}}, [ bigv.buffer ]);
         });
     }
 };

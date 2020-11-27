@@ -947,33 +947,33 @@
 
     function loadImage(image) {
         KIRI.client.image2mesh({settings, png:image}, progress => {
-            console.log({i2m_progress: progress});
+            API.show.progress(progress, "converting");
         }, output => {
-            console.log({i2m_mesh: output});
-            let {verts, index, vi, ii} = output;
+            API.show.progress(0);
+            let {bigv, verts, index, vi, ii} = output;
 
-            console.log({verts, index, vi, ii});
+            // let mat = new THREE.MeshPhongMaterial({
+            //     shininess: 0x101010,
+            //     specular: 0x101010,
+            //     transparent: true,
+            //     opacity: 1,
+            //     color: 0x999999,
+            //     side: THREE.DoubleSide
+            // });
+            //
+            // let geo = new THREE.BufferGeometry();
+            // geo.setAttribute('position', new THREE.BufferAttribute(bigv, 3));
+            // // geo.setIndex([...index]); // doesn't like the Uint32Array
+            // geo.computeFaceNormals();
+            // geo.computeVertexNormals();
+            //
+            // let mesh = new THREE.Mesh(geo, mat);
+            // mesh.castShadow = true;
+            // mesh.receiveShadow = true;
+            //
+            // SPACE.platform.world.add(mesh);
 
-            let mat = new THREE.MeshPhongMaterial({
-                shininess: 0x101010,
-                specular: 0x101010,
-                transparent: true,
-                opacity: 1,
-                color: 0x999999,
-                side: THREE.DoubleSide
-            });
-
-            let geo = new THREE.BufferGeometry();
-            geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
-            geo.setIndex([...index]); // doesn't like the Uint32Array
-            geo.computeFaceNormals();
-            geo.computeVertexNormals();
-
-            let mesh = new THREE.Mesh(geo, mat);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-
-            SPACE.platform.world.add(mesh);
+            platform.add(newWidget().loadVertices(bigv));
         });
     }
 

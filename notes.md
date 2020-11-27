@@ -10,6 +10,7 @@
 *   drag knife support
 * all
 *   2d image to 3d part
+*     cnc: abandon mapping (tshadow) when z count high (organic) and just use top z
 *   circular fit/layout when no-layout to prevent collisions
 
 ## 2.5 roadmap
