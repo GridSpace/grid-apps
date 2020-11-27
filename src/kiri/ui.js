@@ -89,9 +89,11 @@
             let rnd = Date.now().toString(36);
             let any = $('mod-any');
             let html = [
-                `<div class="confirm f-col a-stretch">`,
-                `<label style="user-select:text">${message}</label>`,
+                `<div class="confirm f-col a-stretch">`
             ];
+            if (message) {
+                html.push(`<label style="user-select:text">${message}</label>`);
+            }
             if (opt.pre) {
                 html = opt.pre.appendAll(html);
             }

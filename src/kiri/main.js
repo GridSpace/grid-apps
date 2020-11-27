@@ -945,13 +945,34 @@
         });
     }
 
-    function loadImage(image) {
-        KIRI.client.image2mesh({settings, png:image}, progress => {
+    function loadImageDialog(image) {
+        const opt = {pre: [
+            "<div class='f-col a-center'>",
+            "  <h3>Image Conversion</h3>",
+            "  <p class='t-just' style='width:300px;line-height:1.5em'>",
+            "  This will create a 3D model from a 2D PNG image. Photos must",
+            "  be blurred to be usable. Values from 0=off to 50=high are suggested.",
+            "  Higher values incur more processing time.",
+            "  </p>",
+            "  <div class='f-row'>",
+            "  <label>blur value</label>&nbsp;<input id='png-blur' value='0' size='3'>",
+            "  </div>",
+            "</div>"
+        ]};
+        UC.confirm(undefined, {convert:true, cancel:false}, undefined, opt).then((ok) => {
+            if (ok) {
+                loadImage(image, {blur: parseInt($('png-blur').value) || 0});
+            }
+        });
+    }
+
+    function loadImage(image, opt = {}) {
+        let info = Object.assign({settings, png:image}, opt);
+        KIRI.client.image2mesh(info, progress => {
             API.show.progress(progress, "converting");
         }, output => {
             API.show.progress(0);
-            let {bigv, verts, index, vi, ii} = output;
-
+            let {bigv, verts, index} = output;
             // let mat = new THREE.MeshPhongMaterial({
             //     shininess: 0x101010,
             //     specular: 0x101010,
@@ -972,7 +993,6 @@
             // mesh.receiveShadow = true;
             //
             // SPACE.platform.world.add(mesh);
-
             platform.add(newWidget().loadVertices(bigv));
         });
     }
@@ -1750,7 +1770,7 @@
                 if (isgcode) loadCode(e.target.result, 'gcode');
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
-                if (ispng) loadImage(e.target.result);
+                if (ispng) loadImageDialog(e.target.result);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
             if (isstl || ispng) {

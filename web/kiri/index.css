@@ -126,6 +126,9 @@ th, tr, td, label {
 .grow {
     flex-grow: 1;
 }
+.t-just {
+    text-align: justify;
+}
 .a-start {
     align-items: flex-start;
 }

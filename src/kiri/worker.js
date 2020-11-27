@@ -278,6 +278,30 @@ KIRI.worker = {
                     gray[gi++] = v;
                 }
             }
+            let blur = parseInt(info.blur || 0);
+            while (blur-- > 0) {
+                let blur = new Uint8Array(width * height);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let xl = Math.max(x-1,0);
+                        let xr = Math.min(x+1,width-1);
+                        let yu = Math.max(y-1,0);
+                        let yd = Math.min(y+1,height-1);
+                        blur[x + width * y] = (
+                            gray[xl + (width * yu)] +
+                            gray[x  + (width * yu)] +
+                            gray[xr + (width * yu)] +
+                            gray[xl + (width *  y)] +
+                            gray[x  + (width *  y)] + // self
+                            gray[xr + (width *  y)] +
+                            gray[xl + (width * yd)] +
+                            gray[x  + (width * yd)] +
+                            gray[xr + (width * yd)]
+                        ) / 9;
+                    }
+                }
+                gray = blur;
+            }
             // create indexed mesh output
             let verts = new Float32Array(points * 3);
             let faces = new Uint32Array(flats * 6);
@@ -315,7 +339,7 @@ KIRI.worker = {
             // create top vertices & faces
             VB = VI;
             let TL = VI;
-            if (true) for (let x = 0; x < width; x++) {
+            for (let x = 0; x < width; x++) {
                 let y = 0;
                 verts[vi++] = (-w2 + x) / div;
                 verts[vi++] = (h2 - y) / div;
