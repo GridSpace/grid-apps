@@ -23,6 +23,8 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `F` image import borders
+* `F` mesh / stl export (like w/ images, rotate, scale, future cleanup ops)
 * `F` detect and report slow framerates
 * `F` right click / context menu (object deletion, etc)
 * `P` improve decimation speed by avoiding in/out of Point?

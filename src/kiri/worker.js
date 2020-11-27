@@ -256,20 +256,18 @@ KIRI.worker = {
             let points =
                 width * height + // grid
                 height * 2 + 0 + // left/right
-                width * 2 + 0  - // top/bottom
-                0                // base shared corners
-                ;
+                width * 2 + 0;   // top/bottom
             let flats =
                 ((height-1) * (width-1)) + // surface
-                ((height-1) * 2) + // left/right
-                ((width-1) * 2) + // top/bottom
-                1 // base
-                ;
+                ((height-1) * 2) +         // left/right
+                ((width-1) * 2) +          // top/bottom
+                1;                         // base
             // convert png to grayscale
             let gray = new Uint8Array(width * height);
             let gi = 0;
             let invi = info.inv_image ? true : false;
             let inva = info.inv_alpha ? true : false;
+            let border = info.border || 0;
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     let di = (x + width * y) * 4;
@@ -278,6 +276,11 @@ KIRI.worker = {
                     let b = data[di+2];
                     let a = data[di+3];
                     let v = ((r + g + b) / 3);
+                    if (border) {
+                        if (x < border || y < border || x > width-border-1 || y > height-border-1) {
+                            v = 255;
+                        }
+                    }
                     if (invi) v = 255 - v;
                     if (inva) a = 255 - a;
                     v *= (a/255);

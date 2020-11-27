@@ -959,6 +959,8 @@
             "      <th>&nbsp;invert image</th><td><input id='png-inv' type='checkbox'></td></tr>",
             "  <tr><th>base size</th><td><input id='png-base' value='0' size='3'></td>",
             "      <th>&nbsp;invert alpha</th><td><input id='alpha-inv' type='checkbox'></td></tr>",
+            "  <tr><th>border size</th><td><input id='png-border' value='0' size='3'></td>",
+            "      <th></th><td></td></tr>",
             "  </table></div>",
             "</div>"
         ]};
@@ -967,6 +969,7 @@
                 loadImage(image, {
                     blur: parseInt($('png-blur').value) || 0,
                     base: parseInt($('png-base').value) || 0,
+                    border: parseInt($('png-border').value) || 0,
                     inv_image: $('png-inv').checked,
                     inv_alpha: $('alpha-inv').checked,
                 });
