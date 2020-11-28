@@ -66,7 +66,6 @@
 
 # CAM
 
-* `B` fix multiple tab heights in contouring (uses highest now)
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used

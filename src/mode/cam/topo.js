@@ -74,7 +74,11 @@
                 debug_topo_shells = debug && true;
 
             if (tabs) {
-                clipTab.appendAll(tabs.map(tab => POLY.expand([tab.poly], toolDiameter/2)).flat());
+                clipTab.appendAll(tabs.map(tab => {
+                    let ctab = POLY.expand([tab.poly], toolDiameter/2);
+                    ctab.forEach(ct => ct.z = tab.dim.z);
+                    return ctab;
+                }).flat());
             }
 
             // debug clipTab and clipTo
@@ -257,16 +261,20 @@
                 }
 
                 const checkr = newPoint(0,0);
-                const inClip = function(polys) {
+                const inClip = function(polys, checkZ) {
                     checkr.x = x;
                     checkr.y = y;
                     for (let i=0; i<polys.length; i++) {
-                        if (checkr.isInPolygon(polys[i])) {
+                        let poly = polys[i];
+                        let zok = checkZ ? checkZ <= poly.z : true;
+                        tabZ = poly.z;
+                        if (zok && checkr.isInPolygon(poly)) {
                             return true;
                         }
                     }
                     return false;
                 };
+                let tabZ;
 
                 // x contouring
                 if (proc.camContourXOn) {
@@ -284,8 +292,8 @@
                             tv = toolAtZ(gridx, gridy);
                             // when tabs are on and this point is inside the
                             // tab polygon, ensure z is at least tabHeight
-                            if (tabsOn && tv < tabHeight && inClip(clipTab)) {
-                                tv = tabHeight;
+                            if (tabsOn && tv < tabHeight && inClip(clipTab, tv)) {
+                                tv = tabZ;//tabHeight;
                             }
                             // if the value is on the floor and inside the clip
                             // poly (usually shadow), end the segment
@@ -325,8 +333,8 @@
                         sliceout = [];
                         for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
                             tv = toolAtZ(gridx, gridy);
-                            if (tabsOn && tv < tabHeight && inClip(clipTab)) {
-                                tv = tabHeight;
+                            if (tabsOn && tv < tabHeight && inClip(clipTab, tv)) {
+                                tv = tabZ;
                             }
                             if (clipTo && !inClip(clipTo)) {
                                 end_poly();
