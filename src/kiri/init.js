@@ -46,7 +46,8 @@
         platform = API.platform,
         selection = API.selection;
 
-    let deviceImage = null,
+    let deviceURL = null,
+        deviceImage = null,
         deviceLock = false,
         selectedTool = null,
         editTools = null,
@@ -735,34 +736,15 @@
 
             API.conf.save();
 
-            if (deviceImage) {
+            if (dev.imageURL) {
+                if (dev.imageURL !== deviceURL) {
+                    deviceURL = dev.imageURL;
+                    loadDeviceImage(dev);
+                }
+            } else if (deviceImage) {
                 SPACE.world.remove(deviceImage);
                 deviceImage = null;
-            }
-            if (dev.imageURL) {
-                new THREE.TextureLoader().load(dev.imageURL, texture => {
-                    if (deviceImage) {
-                        SPACE.world.remove(deviceImage);
-                        deviceImage = null;
-                    }
-                    if (!texture) {
-                        return;
-                    }
-                    let { width, height } = texture.image;
-                    let scale = dev.imageScale || 0.75;
-                    let dev_ratio = dev.bedWidth / dev.bedDepth;
-                    let img_ratio = width / height;
-                    if (dev_ratio > img_ratio) {
-                        scale *= dev.bedDepth / height;
-                    } else {
-                        scale *= dev.bedWidth / width;
-                    }
-                    let geometry = new THREE.PlaneBufferGeometry(width * scale, height * scale, 1),
-                        material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
-                        mesh = new THREE.Mesh(geometry, material);
-                    mesh.position.z = -dev.bedHeight;
-                    SPACE.world.add(deviceImage = mesh);
-                });
+                deviceURL = null;
             }
         } catch (e) {
             console.log({error:e, device:code, devicename});
@@ -773,6 +755,32 @@
         }
         API.function.clear();
         API.event.settings();
+    }
+
+    function loadDeviceImage(dev) {
+        new THREE.TextureLoader().load(dev.imageURL, texture => {
+            if (deviceImage) {
+                SPACE.world.remove(deviceImage);
+                deviceImage = null;
+            }
+            if (!texture) {
+                return;
+            }
+            let { width, height } = texture.image;
+            let scale = dev.imageScale || 0.75;
+            let dev_ratio = dev.bedWidth / dev.bedDepth;
+            let img_ratio = width / height;
+            if (dev_ratio > img_ratio) {
+                scale *= dev.bedDepth / height;
+            } else {
+                scale *= dev.bedWidth / width;
+            }
+            let geometry = new THREE.PlaneBufferGeometry(width * scale, height * scale, 1),
+                material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
+                mesh = new THREE.Mesh(geometry, material);
+            mesh.position.z = -dev.bedHeight;
+            SPACE.world.add(deviceImage = mesh);
+        });
     }
 
     function updateDeviceName() {
