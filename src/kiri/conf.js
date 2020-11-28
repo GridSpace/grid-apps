@@ -101,6 +101,8 @@
             noclone: valueOf(code.no_clone, false),
             mode: mode || code.mode || '',
             internal: 0,
+            imageURL: valueOf(set.image_url, ""),
+            imageScale: valueOf(set.image_scale, 0.75),
             bedHeight: valueOf(set.bed_height, 2.5),
             bedWidth: valueOf(set.bed_width, 300),
             bedDepth: valueOf(set.bed_depth, 175),
@@ -247,6 +249,8 @@
                 d:{
                     new: true,
                     mode: "",
+                    deviceName: "",
+                    imageURL: "",
                     internal: 0,
                     bedWidth: 300,
                     bedDepth: 175,
@@ -337,9 +341,10 @@
                 // device defaults SLA:Device
                 d:{
                     new: true,
-                    deviceName: "",
-                    noclone: false,
                     mode: "",
+                    deviceName: "",
+                    imageURL: "",
+                    noclone: false,
                     internal: 0,
                     bedWidth: 150,
                     bedDepth: 150,
@@ -380,6 +385,8 @@
                 d:{
                     new: true,
                     mode: "",
+                    deviceName: "",
+                    imageURL: "",
                     internal: 0,
                     bedWidth: 300,
                     bedDepth: 175,
@@ -468,6 +475,8 @@
                 d:{
                     new: true,
                     mode: "",
+                    deviceName: "",
+                    imageURL: "",
                     internal: 0,
                     bedWidth: 300,
                     bedDepth: 175,

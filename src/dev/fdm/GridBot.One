@@ -32,6 +32,8 @@
         "progress": "M117 {progress}% layer {layer} / {layers}"
     },
     "settings":{
+        "image_url": "gridbot.png",
+        "image_scale": 0.7,
         "origin_center": false,
         "bed_width": 300,
         "bed_depth": 300,
