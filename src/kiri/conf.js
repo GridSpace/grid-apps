@@ -103,6 +103,7 @@
             internal: 0,
             imageURL: valueOf(set.image_url, ""),
             imageScale: valueOf(set.image_scale, 0.75),
+            imageAnchor: valueOf(set.image_anchor, 0),
             bedHeight: valueOf(set.bed_height, 2.5),
             bedWidth: valueOf(set.bed_width, 300),
             bedDepth: valueOf(set.bed_depth, 175),

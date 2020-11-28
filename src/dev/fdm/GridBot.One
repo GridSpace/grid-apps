@@ -33,7 +33,8 @@
     },
     "settings":{
         "image_url": "gridbot.png",
-        "image_scale": 0.7,
+        "image_anchor": 0,
+        "image_scale": 1,
         "origin_center": false,
         "bed_width": 300,
         "bed_depth": 300,
