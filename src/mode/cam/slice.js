@@ -306,13 +306,14 @@
                     const outside = POLY.offset(shadow.clone(), roughToolDiam * proc.camRoughOver, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
-                        if (tabs) {
-                            tabs.forEach(tab => {
-                                tab.off = POLY.expand([tab.poly], roughToolDiam / 2).flat();
-                            });
-                            offset = cutTabs(tabs, offset, slice.z);
-                        }
                     }
+                }
+
+                if (tabs) {
+                    tabs.forEach(tab => {
+                        tab.off = POLY.expand([tab.poly], roughToolDiam / 2).flat();
+                    });
+                    offset = cutTabs(tabs, offset, slice.z);
                 }
 
                 if (!offset) return;
@@ -477,6 +478,21 @@
         sliceAll.forEach((slice, index) => slice.index = index);
 
         // used in printSetup()
+        // used in CAM.prepare.getZClearPath()
+        // add tabs to terrain tops so moves avoid them
+        if (tabs) {
+            terrain.forEach(slab => {
+                tabs.forEach(tab => {
+                    if (tab.pos.z + tab.dim.z/2 >= slab.z) {
+                        let all = [...slab.tops, tab.poly];
+                        slab.tops = POLY.union(all, 0, true);
+                        // slab.slice.output()
+                        //     .setLayer("debug-tabs", {line: 0x880088, thin: true })
+                        //     .addPolys(POLY.setZ(slab.tops.clone(true), slab.z), { thin: true });
+                    }
+                });
+            });
+        }
         widget.terrain = terrain;
         widget.maxToolDiam = maxToolDiam;
 

@@ -23,7 +23,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` image import borders
 * `F` mesh / stl export (like w/ images, rotate, scale, future cleanup ops)
 * `F` detect and report slow framerates
 * `F` right click / context menu (object deletion, etc)
@@ -72,6 +71,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` clear voids has double interior pass because wrong offset shadow used
 * `B` top clearing operations should use linear, not offset, passes
+* `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `F` switch z top offset to an z anchor (top/bottom) + offset
 * `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
