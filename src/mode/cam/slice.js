@@ -266,7 +266,8 @@
                         if (proc.camRoughVoid) {
                             return undefined;
                         }
-                        let po = POLY.offset([p], -(roughToolDiam + camRoughStock));
+                        // let po = POLY.offset([p], -(roughToolDiam + camRoughStock));
+                        let po = POLY.offset([p], -(roughToolDiam / 2 + camRoughStock + 0.001));
                         return po ? po[0] : undefined;
                     } else {
                         return p;
@@ -276,7 +277,8 @@
             shadow = POLY.nest(shadow);
 
             // expand shadow by half tool diameter + stock to leave
-            const sadd = procRoughIn ? roughToolDiam / 4 : roughToolDiam / 2;
+            // const sadd = procRoughIn ? roughToolDiam / 4 : roughToolDiam / 2;
+            const sadd = procRoughIn ? roughToolDiam / 2 : roughToolDiam / 2;
             const shell = POLY.offset(shadow, sadd + camRoughStock);
 
             nextOp();
@@ -317,6 +319,20 @@
                 }
 
                 if (!offset) return;
+
+                // elimate double inset on inners
+                offset.forEach(op => {
+                    if (op.inner) {
+                        let operim = op.perimeter();
+                        let newinner = [];
+                        op.inner.forEach(oi => {
+                            if (Math.abs(oi.perimeter() - operim) > 0.01) {
+                                newinner.push(oi);
+                            }
+                        });
+                        op.inner = newinner;
+                    }
+                });
 
                 slice.camLines = offset;
                 if (true) slice.output()

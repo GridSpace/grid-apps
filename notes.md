@@ -26,17 +26,15 @@
 * `F` mesh / stl export (like w/ images, rotate, scale, future cleanup ops)
 * `F` detect and report slow framerates
 * `F` right click / context menu (object deletion, etc)
-* `P` improve decimation speed by avoiding in/out of Point?
 * `P` duplicate objects should share same slice data unless rotated or scaled
-* `P` worker state cache cleanup and organization
-* `P` client/worker interface normalization
-* `P` optimize object import to vertices + indexes to save memory
 * `P` allow selection to me decimated on demand (context menu?)
+* `P` improve decimation speed by avoiding in/out of Point?
+* `P` optimize object import to vertices + indexes to save memory
+* `P` client/worker interface normalization
 
 # FDM
 
 * `B` sparse infill should follow polys between intersect points
-* `B` expand > 0 producing artifacts with manual supports
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
@@ -51,7 +49,7 @@
 * `F` first layer segment large flat areas for better fill reliability
 * `F` enable purge blocks when quick layers are detected
 * `F` apply finish speed to exposed top and underside flat areas
-* `F` expand internal supporting flats
+* `F` expand internal supporting flats / solids before projection
 * `F` first layer support speed should be same as shell speed
 * `F` trim support offset from layer below
 * `F` option to support interior bridges when 0% infill
@@ -68,7 +66,6 @@
 
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
-* `B` clear voids has double interior pass because wrong offset shadow used
 * `B` top clearing operations should use linear, not offset, passes
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `F` switch z top offset to an z anchor (top/bottom) + offset
