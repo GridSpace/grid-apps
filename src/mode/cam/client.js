@@ -241,15 +241,15 @@
     function createTabBox(iw, ic, n) {
         const { track } = iw;
         const { stock, bounds, process } = API.conf.get();
-        const { camTabsWidth, camTabsHeight } = process;
+        const { camTabsWidth, camTabsHeight, camTabsDepth } = process;
         const sz = stock.z || bounds.max.z;
         const zp = sz - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
-        ic.x += n.x * 2.5; // offset from part
-        ic.z -= n.y * 2.5; // offset swap z,y
+        ic.x += n.x * camTabsDepth / 2; // offset from part
+        ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
         ic.y = zp; // offset swap in world space y,z
         const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
         const pos = { x:ic.x, y:ic.y, z:ic.z };
-        const dim = { x:5, y:camTabsWidth, z:camTabsHeight };
+        const dim = { x:camTabsDepth, y:camTabsWidth, z:camTabsHeight };
         const tab = addbox(pos, 0x0000dd, 'tabb', dim, { rotate: rot });
         return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
     }

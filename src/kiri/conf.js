@@ -440,6 +440,7 @@
                     camDrillReg: "none",
                     camTabsWidth: 5,
                     camTabsHeight: 5,
+                    camTabsDepth: 5,
                     camTabsOn: false,
                     camDepthFirst: false,
                     camEaseDown: false,

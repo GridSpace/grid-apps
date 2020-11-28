@@ -362,11 +362,11 @@ KIRI.worker = {
                     let p3 = (x * height);
                     let p4 = (x - 1) * height;
                     faces[ii++] = p1;
+                    faces[ii++] = p3;
                     faces[ii++] = p2;
-                    faces[ii++] = p3;
                     faces[ii++] = p1;
-                    faces[ii++] = p3;
                     faces[ii++] = p4;
+                    faces[ii++] = p3;
                 }
             }
             // create bottom vertices & faces
@@ -407,11 +407,11 @@ KIRI.worker = {
                     let p3 = 0 + (y - 1);
                     let p4 = 0 + (y - 0);
                     faces[ii++] = p1;
+                    faces[ii++] = p3;
                     faces[ii++] = p2;
-                    faces[ii++] = p3;
                     faces[ii++] = p1;
-                    faces[ii++] = p3;
                     faces[ii++] = p4;
+                    faces[ii++] = p3;
                 }
             }
             // create right vertices & faces
