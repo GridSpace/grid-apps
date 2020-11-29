@@ -8,7 +8,10 @@ self.kiri.loader.push(function() {
         CAM = KIRI.driver.CAM,
         API, WORLD, SPACE,
         meshes = {},
-        speedDef = 20,
+        speedValues = [ 25, 12, 6, 3 ],
+        speedNames = [ "1x", "2x", "4x", "8x" ],
+        speedIndex = 0,
+        speedLabel,
         speed;
 
     // ---( CLIENT FUNCTIONS )---
@@ -36,18 +39,27 @@ self.kiri.loader.push(function() {
             layer.innerHTML = '';
             UC.setGroup(layer);
             UC.newRow([
-                UC.newButton(null,replay,{icon:'<i class="fas fa-step-backward"></i>'}),
+                UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>'}),
                 UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>'}),
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>'}),
-                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>'}),
-                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>'})
+                UC.newButton(null,fast,{icon:'<i class="fas fa-fast-forward"></i>'}),
+                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>'}),
+                speedLabel = UC.newLabel("speed")
             ]);
-            speed = speedDef;
+            updateSpeed();
             setTimeout(() => {
                 play({steps: 1});
             }, delay || 0);
         });
     };
+
+    function updateSpeed(inc = 0) {
+        if (inc > 0) {
+            speedIndex = (speedIndex + inc) % speedValues.length;
+        }
+        speed = speedValues[speedIndex];
+        speedLabel.innerText = speedNames[speedIndex];
+    }
 
     function replay() {
         CAM.animate_clear(API);
@@ -118,19 +130,19 @@ self.kiri.loader.push(function() {
 
     function step(opts) {
         const { steps } = opts;
+        updateSpeed();
         KIRI.client.animate({speed, steps: 1}, handleGridUpdate);
     }
 
     function play(opts) {
         const { steps } = opts;
-        speed = speedDef;
+        updateSpeed();
         KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function fast(opts) {
         const { steps } = opts;
-        speed = speed / 2;
-        if (speed < 5) speed = speedDef;
+        updateSpeed(1);
         KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 

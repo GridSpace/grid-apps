@@ -888,6 +888,17 @@ th, tr, td, label {
     color: #333;
     font-size: 30px;
 }
+#layer-animate label {
+    display: inline-flex;
+    width: 30px;
+    border-radius: 3px;
+    border: 1px solid #aaa;
+    margin: 1px 2px 2px 4px;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    background-color: #ddd;
+}
 
 #slider {
     display: none;

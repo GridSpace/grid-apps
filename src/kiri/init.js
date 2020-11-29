@@ -1278,7 +1278,7 @@
             tracker = $('tracker'),
             controller = settings().controller;
 
-        // UC.setHoverPop(controller.hoverPop);
+        UC.setHoverPop(false);
 
         WIN.addEventListener("resize", () => {
             API.event.emit('resize');
