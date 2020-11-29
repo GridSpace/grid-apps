@@ -37,6 +37,7 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 
 ```
 git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
 npm i
 npm install -g @gridspace/app-server
 gs-app-server --debug
