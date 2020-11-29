@@ -741,10 +741,8 @@
                     deviceURL = dev.imageURL;
                     loadDeviceImage(dev);
                 }
-            } else if (deviceImage) {
-                SPACE.world.remove(deviceImage);
-                deviceImage = null;
-                deviceURL = null;
+            } else {
+                clearDeviceTexture();
             }
         } catch (e) {
             console.log({error:e, device:code, devicename});
@@ -757,53 +755,65 @@
         API.event.settings();
     }
 
-    function loadDeviceImage(dev) {
-        new THREE.TextureLoader().load(dev.imageURL, texture => {
-            if (deviceImage) {
-                SPACE.world.remove(deviceImage);
-                deviceImage = null;
-            }
-            if (!texture) {
-                return;
-            }
-            let { width, height } = texture.image;
-            let { bedWidth, bedDepth, bedHeight } = dev;
-            let scale = dev.imageScale || 0.75;
-            let img_ratio = width / height;
-            if (scale <= 1) {
-                let dev_ratio = bedWidth / bedDepth;
-                if (dev_ratio > img_ratio) {
-                    scale *= bedDepth / height;
-                } else {
-                    scale *= bedWidth / width;
-                }
-            } else if (scale > 1) {
-                scale = (scale / Math.max(width, height));
-            }
-            width *= scale;
-            height *= scale;
-            let pos = null;
-            if (true) switch (dev.imageAnchor) {
-                case 1: pos = { x: -(bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
-                case 2: pos = { x: 0,                     y:  (bedDepth - height)/2 }; break;
-                case 3: pos = { x:  (bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
-                case 4: pos = { x: -(bedWidth - width)/2, y:  0                     }; break;
-                case 5: pos = { x:  (bedWidth - width)/2, y:  0                     }; break;
-                case 6: pos = { x: -(bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
-                case 7: pos = { x: 0,                     y: -(bedDepth - height)/2 }; break;
-                case 8: pos = { x:  (bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
-            }
-            let geometry = new THREE.PlaneBufferGeometry(width, height, 1),
-                material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
-                mesh = new THREE.Mesh(geometry, material);
-            mesh.position.z = -bedHeight;
-            mesh.renderOrder = -1;
-            if (pos) {
-                mesh.position.x = pos.x;
-                mesh.position.y = pos.y;
-            }
-            SPACE.world.add(deviceImage = mesh);
+    function clearDeviceTexture() {
+        if (deviceImage) {
+            SPACE.world.remove(deviceImage);
+            deviceImage = null;
+        }
+    }
+
+    function loadDeviceImage(dev, url) {
+        new THREE.TextureLoader().load(url || dev.imageURL, texture => {
+            loadDeviceTexture(dev, texture);
+        }, inc => {
+            console.log({load_inc: inc});
+        }, error => {
+            console.log({load_error: error});
         });
+    }
+
+    function loadDeviceTexture(dev, texture) {
+        clearDeviceTexture();
+        if (!texture) {
+            return;
+        }
+        let { width, height } = texture.image;
+        let { bedWidth, bedDepth, bedHeight } = dev;
+        let scale = dev.imageScale || 0.75;
+        let img_ratio = width / height;
+        if (scale <= 1) {
+            let dev_ratio = bedWidth / bedDepth;
+            if (dev_ratio > img_ratio) {
+                scale *= bedDepth / height;
+            } else {
+                scale *= bedWidth / width;
+            }
+        } else if (scale > 1) {
+            scale = (scale / Math.max(width, height));
+        }
+        width *= scale;
+        height *= scale;
+        let pos = null;
+        if (true) switch (dev.imageAnchor) {
+            case 1: pos = { x: -(bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
+            case 2: pos = { x: 0,                     y:  (bedDepth - height)/2 }; break;
+            case 3: pos = { x:  (bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
+            case 4: pos = { x: -(bedWidth - width)/2, y:  0                     }; break;
+            case 5: pos = { x:  (bedWidth - width)/2, y:  0                     }; break;
+            case 6: pos = { x: -(bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
+            case 7: pos = { x: 0,                     y: -(bedDepth - height)/2 }; break;
+            case 8: pos = { x:  (bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
+        }
+        let geometry = new THREE.PlaneBufferGeometry(width, height, 1),
+            material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
+            mesh = new THREE.Mesh(geometry, material);
+        mesh.position.z = -bedHeight;
+        mesh.renderOrder = -1;
+        if (pos) {
+            mesh.position.x = pos.x;
+            mesh.position.y = pos.y;
+        }
+        SPACE.world.add(deviceImage = mesh);
     }
 
     function updateDeviceName() {
