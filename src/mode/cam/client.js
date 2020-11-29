@@ -398,7 +398,7 @@
         const {x, y, z} = stock;
         if (x && y && z && !STACKS.getStack('bounds')) {
             const render = new KIRI.Render().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
-            const stack = STACKS.create('bounds', SPACE.platform.world);
+            const stack = STACKS.setFreeMem(false).create('bounds', SPACE.platform.world);
             stack.add(render.addPolys([
                 newPolygon().centerRectangle({x:csox, y:csoy, z:0}, x, y),
                 newPolygon().centerRectangle({x:csox, y:csoy, z}, x, y)
@@ -411,6 +411,7 @@
                 newPoint(csox - hx, csoy - hy, 0), newPoint(csox - hx, csoy - hy, sz),
                 newPoint(csox - hx, csoy + hy, 0), newPoint(csox - hx, csoy + hy, sz),
             ], { thin: true }));
+            STACKS.setFreeMem(true);
         }
 
         API.platform.update_top_z(delta);

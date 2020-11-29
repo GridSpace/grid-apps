@@ -10,10 +10,10 @@
         emissive = 0x101010,
         metalness = 0,
         roughness = 0.3,
-        newMat = createPhongMaterial,
-        freeMem = true;
+        newMat = createPhongMaterial;
 
     let stacks = {},
+        freeMem = true,
         tallest = 0,
         min = 0,
         max = 0,
@@ -24,6 +24,11 @@
         API = KIRI.api,
         UC = API.uc,
         UI = API.ui;
+    }
+
+    function setFreeMem(bool) {
+        freeMem = bool;
+        return this;
     }
 
     function clear() {
@@ -278,7 +283,8 @@
         remove,
         getStack,
         getRange,
-        setRange
+        setRange,
+        setFreeMem
     };
 
 })();
