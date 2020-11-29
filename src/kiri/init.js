@@ -759,6 +759,7 @@
         if (deviceImage) {
             SPACE.world.remove(deviceImage);
             deviceImage = null;
+            deviceURL = null;
         }
     }
 
