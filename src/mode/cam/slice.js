@@ -35,9 +35,10 @@
             procFacing = proc.camRoughOn && proc.camZTopOffset && hasStock,
             procRough = proc.camRoughOn && proc.camRoughDown,
             procRoughIn = proc.camRoughIn,
+            procOutlineWide = proc.camOutlineWide,
+            procOutlineOut = proc.camOutlineOut,
             procOutlineIn = proc.camOutlineIn,
             procOutlineOn = proc.camOutlineOn,
-            procOutlineWide = proc.camOutlineWide,
             procOutline = procOutlineOn && proc.camOutlineDown,
             procContourX = proc.camContourXOn && proc.camOutlinePlunge,
             procContourY = proc.camContourYOn && proc.camOutlinePlunge,
@@ -404,6 +405,12 @@
 
             slices.forEach(slice => {
                 let tops = slice.shadow;
+
+                // outside only (use tshadow for entire cut)
+                if (procOutlineOut) {
+                    tops = tshadow;
+                }
+
                 let offset = POLY.expand(tops, outlineToolDiam / 2, slice.z);
                 if (!(offset && offset.length)) {
                     return;

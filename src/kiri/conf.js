@@ -424,6 +424,7 @@
                     camOutlineSpeed: 800,
                     camOutlinePlunge: 250,
                     camOutlineWide: false,
+                    camOutlineOut: false,
                     camOutlineIn: false,
                     camOutlineOn: false,
                     camContourTool: 1000,
