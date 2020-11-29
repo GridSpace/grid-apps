@@ -1,25 +1,25 @@
 # Kiri:Moto todo and notes
 
 ## 2.4 roadmap
-* cnc
-*   tracing (chamfer, engrave)
-*   auto feature detection (slicing)
-* fdm
-*   continuous printing (z belt systems)
-* laser
-*   drag knife support
-* all
-*   circular fit/layout when no-layout to prevent collisions
+* `cnc`
+* - tracing (chamfer, engrave)
+* - auto feature detection (slicing)
+* - show 1x, 2x, 4x speed in animation
+* `laser`
+* - drag knife support
+* `all`
+* - circular fit/layout when no-layout to prevent collisions
 
 ## 2.5 roadmap
-# cnc
-#   lathe?
-#   complex process order
-#   double-sided assistance
-# fdm
-#   redo automatic supports using faces instead of deltas
-#   bind process to z ranges or boxed regions
-#   non-planar actual
+# `cnc`
+# - lathe, A-axis
+# - complex process order
+# - split gcode output
+# - double-sided assistance
+# `fdm`
+# - redo automatic supports using faces instead of deltas
+# - bind process to z ranges or boxed regions
+# - non-planar actual
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -53,6 +53,7 @@
 * `F` first layer support speed should be same as shell speed
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
+* `F` continuous printing (z belt systems)
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats
 * `P` sparse infill should follow polys between intersect points
@@ -67,6 +68,7 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes
+* `F` exports separate files for each operation
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `F` switch z top offset to an z anchor (top/bottom) + offset
 * `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)

@@ -46,7 +46,9 @@
         platform = API.platform,
         selection = API.selection;
 
-    let deviceURL = null,
+    let currentDevice = null,
+        deviceURL = null,
+        deviceTexture = null,
         deviceImage = null,
         deviceLock = false,
         selectedTool = null,
@@ -129,7 +131,8 @@
         let control = settings().controller;
         let isDark = control.dark;
         control.expert = UI.expert.checked;
-        control.hoverPop = UI.hoverPop.checked;
+        control.decals = UI.decals.checked;
+        // control.hoverPop = UI.hoverPop.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
@@ -144,15 +147,19 @@
         control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
-        // platform.update_stock();
         API.conf.save();
         API.mode.set_expert(control.expert);
         API.platform.update_size();
         API.catalog.setOptions({
             maxpass: control.decimate ? 10 : 0
         });
-        UC.setHoverPop(control.hoverPop);
+        UC.setHoverPop(false);
         updateFPS();
+        if (control.decals) {
+            loadDeviceTexture(currentDevice, deviceTexture);
+        } else {
+            clearDeviceTexture();
+        }
         API.event.emit('boolean.update');
     }
 
@@ -725,7 +732,7 @@
             platform.update_size();
 
             current.filter[mode] = devicename;
-            current.cdev[mode] = dev;
+            current.cdev[mode] = currentDevice = dev;
 
             if (dproc) {
                 // restore last process associated with this device
@@ -775,7 +782,8 @@
 
     function loadDeviceTexture(dev, texture) {
         clearDeviceTexture();
-        if (!texture) {
+        deviceTexture = texture;
+        if (!(texture && API.conf.get().controller.decals)) {
             return;
         }
         let { width, height } = texture.image;
@@ -1270,7 +1278,7 @@
             tracker = $('tracker'),
             controller = settings().controller;
 
-        UC.setHoverPop(controller.hoverPop);
+        // UC.setHoverPop(controller.hoverPop);
 
         WIN.addEventListener("resize", () => {
             API.event.emit('resize');
@@ -1470,9 +1478,10 @@
             ], {modes:GCODE, class:"ext-buttons f-row"}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
-            hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
+            // hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
+            decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
             expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
 
             lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
