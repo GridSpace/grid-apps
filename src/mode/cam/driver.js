@@ -27,9 +27,14 @@
             if (KIRI.client)
             KIRI.client.traces = function(ondone) {
                 KIRI.client.sync();
-                send("traces", {
-                    settings: API.conf.get()
-                }, ondone);
+                let settings = API.conf.get();
+                let widgets = API.widgets.map();
+                send("traces", { settings }, output => {
+                    KIRI.codec.decode(output).forEach(rec => {
+                        widgets[rec.id].traces = rec.traces;
+                    });
+                    ondone(true);
+                });
             };
 
             if (KIRI.worker)
@@ -37,7 +42,10 @@
                 const { settings } = data;
                 const widgets = Object.values(cache);
                 widgets.forEach(widget => CAM.traces(settings, widget));
-                send.done(123);
+                send.done(KIRI.codec.encode(widgets.map(widget => {return {
+                    id: widget.id,
+                    traces: widget.traces
+                }})));
             };
 
         });

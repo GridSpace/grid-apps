@@ -128,9 +128,13 @@
             }
         });
 
+        let showTab, lastTab, tab, iw, ic;
         api.event.on("cam.tabs.add", func.tabAdd = () => {
+            func.traceDone();
             alert = api.show.alert("&lt;esc&gt; key cancels editing tabs");
             api.feature.hover = true;
+            func.hover = func.tabHover;
+            func.hoverUp = func.tabHoverUp;
         });
         api.event.on("cam.tabs.done", func.tabDone = () => {
             delbox('tabb');
@@ -144,15 +148,87 @@
             });
             API.conf.save();
         });
+        func.tabHover = function(data) {
+            delbox('tabb');
+            const { int, type, point } = data;
+            const object = int ? int.object : null;
+            const tab = int ? object.tab : null;
+            if (lastTab) {
+                lastTab.box.material.color.r = 0;
+                lastTab = null;
+            }
+            if (tab) {
+                tab.box.material.color.r = 0.5;
+                lastTab = tab;
+                return;
+            }
+            if (type !== 'widget') {
+                iw = null;
+                return;
+            }
+            let n = int.face.normal;
+            iw = int.object.widget;
+            ic = int.point;
+            // only near vertical faces
+            if (Math.abs(n.z) > 0.1) {
+                return;
+            }
+            showTab = createTabBox(iw, ic, n);
+        };
+        func.tabHoverUp = function(int) {
+            delbox('tabb');
+            if (lastTab) {
+                const {widget, box, id} = lastTab;
+                widget.adds.remove(box);
+                widget.mesh.remove(box);
+                delete widget.tabs[id];
+                let ta = API.widgets.annotate(widget.id).tab;
+                let ix = 0;
+                ta.forEach((rec,i) => {
+                    if (rec.id === id) {
+                        ix = i;
+                    }
+                });
+                ta.splice(ix,1);
+                API.conf.save();
+                return;
+            }
+            if (!iw) return;
+            let ip = iw.track.pos;
+            let wa = api.widgets.annotate(iw.id);
+            let wt = (wa.tab = wa.tab || []);
+            let pos = {
+                x: showTab.pos.x - ip.x,
+                y: -showTab.pos.z - ip.y,
+                z: showTab.pos.y + ip.z,
+            }
+            let id = Date.now();
+            let { dim, rot } = showTab;
+            let rec = { pos, dim, rot, id };
+            wt.push(Object.clone(rec));
+            addWidgetTab(iw, rec);
+            API.conf.save();
+        };
 
         api.event.on("cam.trace.add", func.traceAdd = () => {
+            func.tabDone();
             alert = api.show.alert("&lt;esc&gt; key cancels editing traces");
             KIRI.client.traces(done => {
                 console.log({got_traces: done});
+                KIRI.api.widgets.opacity(0.5);
+                KIRI.api.widgets.all().forEach(widget => {
+                    let stack = STACKS.create(`trace-${widget.id}`, widget.mesh);
+                    widget.traces.forEach(slice => {
+                        stack.add(slice.render);
+                    });
+                });
             });
             api.feature.hover = true;
+            func.hover = func.traceHover;
+            func.hoverUp = func.traceHoverUp;
         });
         api.event.on("cam.trace.done", func.traceDone = () => {
+            KIRI.api.widgets.opacity(1);
             api.hide.alert(alert);
             api.feature.hover = false;
         });
@@ -163,6 +239,12 @@
             });
             API.conf.save();
         });
+        func.traceHover = function(int) {
+            // console.log({traceHover: int});
+        };
+        func.traceHoverUp = function(data) {
+            // console.log({traceHoverUp: data});
+        };
 
         api.event.on("slice.begin", () => {
             if (isCamMode) {
@@ -214,69 +296,13 @@
             if (!isCamMode) {
                 return;
             }
-            delbox('tabb');
-            if (lastTab) {
-                const {widget, box, id} = lastTab;
-                widget.adds.remove(box);
-                widget.mesh.remove(box);
-                delete widget.tabs[id];
-                let ta = API.widgets.annotate(widget.id).tab;
-                let ix = 0;
-                ta.forEach((rec,i) => {
-                    if (rec.id === id) {
-                        ix = i;
-                    }
-                });
-                ta.splice(ix,1);
-                API.conf.save();
-                return;
-            }
-            if (!iw) return;
-            let ip = iw.track.pos;
-            let wa = api.widgets.annotate(iw.id);
-            let wt = (wa.tab = wa.tab || []);
-            let pos = {
-                x: showTab.pos.x - ip.x,
-                y: -showTab.pos.z - ip.y,
-                z: showTab.pos.y + ip.z,
-            }
-            let id = Date.now();
-            let { dim, rot } = showTab;
-            let rec = { pos, dim, rot, id };
-            wt.push(Object.clone(rec));
-            addWidgetTab(iw, rec);
-            API.conf.save();
+            func.hoverUp(int);
         });
-        let showTab, lastTab, tab, iw, ic;
         api.event.on("mouse.hover", data => {
             if (!isCamMode) {
                 return;
             }
-            delbox('tabb');
-            const { int, type, point } = data;
-            const object = int ? int.object : null;
-            const tab = int ? object.tab : null;
-            if (lastTab) {
-                lastTab.box.material.color.r = 0;
-                lastTab = null;
-            }
-            if (tab) {
-                tab.box.material.color.r = 0.5;
-                lastTab = tab;
-                return;
-            }
-            if (type !== 'widget') {
-                iw = null;
-                return;
-            }
-            let n = int.face.normal;
-            iw = int.object.widget;
-            ic = int.point;
-            // only near vertical faces
-            if (Math.abs(n.z) > 0.1) {
-                return;
-            }
-            showTab = createTabBox(iw, ic, n);
+            func.hover(data);
         });
     };
 

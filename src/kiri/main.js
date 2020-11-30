@@ -315,6 +315,13 @@
             unit_scale: unitScale
         },
         widgets: {
+            map: function() {
+                let map = {};
+                WIDGETS.forEach(widget => {
+                    map[widget.id] = widget;
+                });
+                return map;
+            },
             new: newWidget,
             all: function() { return WIDGETS.slice() },
             for: forAllWidgets,
