@@ -116,7 +116,7 @@
 
             this.profile = toolOffset;
             this.profileDim = {
-                size: flute_diameter,
+                size: shaft_diameter,
                 pix: profile_pix_iter + 2
             };
             return this;
