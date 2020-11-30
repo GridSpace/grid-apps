@@ -1,4 +1,4 @@
-"spindle rpm"// english. other language maps will defer to english
+// english. other language maps will defer to english
 // map for any missing key/value pairs
 kiri.lang['en'] =
 kiri.lang['en-us'] = {
@@ -21,11 +21,11 @@ kiri.lang['en-us'] = {
     dv_nozl_s:      "nozzle",
     dv_nozl_l:      "diameter in millimeters",
     dv_bedw_s:      "width",
-    dv_bedw_l:      "millimeters",
+    dv_bedw_l:      "workspace units",
     dv_bedd_s:      "depth",
-    dv_bedd_l:      "millimeters",
+    dv_bedd_l:      "workspace units",
     dv_bedh_s:      "height",
-    dv_bedh_l:      "max build height\nin millimeters",
+    dv_bedh_l:      "max build height\nin workspace units",
     dv_spmx_s:      "max spindle",
     dv_spmx_l:      "max spindle rpm speed\n0 to disable",
     dv_xtab_s:      "absolute positioning",
@@ -209,7 +209,7 @@ kiri.lang['en-us'] = {
     // FDM FILL
     fi_menu:        "infill",
     fi_type:        "type",
-    fi_pcnt_s:      "percentage",
+    fi_pcnt_s:      "fraction",
     fi_pcnt_l:      "fill density values\n0.0 - 1.0",
     fi_angl_s:      "start angle",
     fi_angl_l:      "base angle in degrees",
@@ -242,7 +242,7 @@ kiri.lang['en-us'] = {
     // FDM SUPPORT
     sp_menu:        "support",
     sp_dens_s:      "density",
-    sp_dens_l:      "percentage 0.0 - 1.0\nrecommended 0.15\n0 to disable",
+    sp_dens_l:      "fraction 0.0 - 1.0\nrecommended 0.15\n0 to disable",
     sp_size_s:      "pillar size",
     sp_size_l:      "pillar width\nin millimeters",
     sp_offs_s:      "part offset",
@@ -275,7 +275,7 @@ kiri.lang['en-us'] = {
     cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      "spindle speed in\nrevolutions / minute",
     cc_sovr_s:      "step over",
-    cc_sovr_l:      "0.1 - 1.0\npercentage of\ntool diameter",
+    cc_sovr_l:      "0.1 - 1.0\fraction of\ntool diameter",
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      "step down depth\nfor each pass\nin workspace units\n0 to disable",
     cc_feed_s:      "feed rate",

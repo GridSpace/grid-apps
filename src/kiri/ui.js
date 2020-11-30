@@ -491,7 +491,7 @@
         };
         addModeControls(btn, opt);
         if (opt.title) {
-            row.setAttribute("title", options.title);
+            btn.setAttribute("title", options.title);
         }
         txt.button = btn;
 
