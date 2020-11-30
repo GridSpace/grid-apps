@@ -275,7 +275,7 @@ kiri.lang['en-us'] = {
     cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      "spindle speed in\nrevolutions / minute",
     cc_sovr_s:      "step over",
-    cc_sovr_l:      "0.1 - 1.0\fraction of\ntool diameter",
+    cc_sovr_l:      "0.1 - 1.0\nfraction of\ntool diameter",
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      "step down depth\nfor each pass\nin workspace units\n0 to disable",
     cc_feed_s:      "feed rate",
