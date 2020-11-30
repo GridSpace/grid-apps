@@ -226,7 +226,6 @@
             //     nl.append(" ; ").append(comment);
             //     nl.append(" ; ").append(points);
             // }
-
             append(nl.join(''));
             points++;
         }

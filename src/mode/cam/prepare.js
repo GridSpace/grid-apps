@@ -223,7 +223,7 @@
             // before first point, move cutting head to point above it
             // then set that new point as the lastPoint
             if (!lastPoint) {
-                let above = point.clone().setZ(zmax + zadd);
+                let above = point.clone().setZ(zmax + zadd + ztOff);
                 lastPoint = layerPush(above, 0, 0, tool.getNumber());
             }
 
