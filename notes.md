@@ -4,7 +4,6 @@
 * `cnc`
 * - tracing (chamfer, engrave)
 * - auto feature detection (slicing)
-* - show tool x,y,z during animation
 * `laser`
 * - drag knife support
 * `all`

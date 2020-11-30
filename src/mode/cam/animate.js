@@ -8,6 +8,7 @@ self.kiri.loader.push(function() {
         CAM = KIRI.driver.CAM,
         API, WORLD, SPACE,
         meshes = {},
+        unitScale = 1,
         toolPosX, toolPosY, toolPosZ,
         speedValues = [ 25, 12, 6, 3 ],
         speedNames = [ "1x", "2x", "4x", "8x" ],
@@ -96,9 +97,9 @@ self.kiri.loader.push(function() {
                 mesh.position.z = pos.z;
                 SPACE.update();
                 if (id !== 0) {
-                    toolPosX.value = pos.x.toFixed(2);
-                    toolPosY.value = pos.y.toFixed(2);
-                    toolPosZ.value = pos.z.toFixed(2);
+                    toolPosX.value = (pos.x * unitScale).toFixed(2);
+                    toolPosY.value = (pos.y * unitScale).toFixed(2);
+                    toolPosZ.value = (pos.z * unitScale).toFixed(2);
                 }
             }
         }
@@ -169,6 +170,7 @@ self.kiri.loader.push(function() {
 
     if (KIRI.client)
     KIRI.client.animate_setup = function(settings, ondone) {
+        unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
         send("animate_setup", {settings}, ondone);
     };
 

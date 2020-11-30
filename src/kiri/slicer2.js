@@ -162,7 +162,7 @@
 
             if (bucketCount > 1) {
                 // create empty buckets
-                for (let i = 0; i < bucketCount + 1; i++) {
+                for (let i = 0; i <= bucketCount + 1; i++) {
                     buckets.push([]);
                 }
 
