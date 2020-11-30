@@ -425,6 +425,9 @@
             let octo = set.controller.exportOcto && MODE !== MODES.CAM;
             let ghost = set.controller.exportGhost;
             let local = set.controller.exportLocal;
+            let codepreview = set.controller.exportCodePreview;
+            $('code-preview-head').style.display = codepreview ? '' : 'none';
+            $('code-preview').style.display = codepreview ? '' : 'none';
             $('print-download').onclick = download;
             $('print-filament-head').style.display = fdm ? '' : 'none';
             $('print-filament-info').style.display = fdm ? '' : 'none';
@@ -485,6 +488,9 @@
                 $('print-gridlocal').onclick = sendto_gridlocal;
                 $('admin-gridlocal').onclick = admin_gridlocal;
             } catch (e) { console.log(e) }
+            
+            // preview of the generated GCODE
+            if (codepreview && gcode) $('code-preview-textarea').value = gcode;
 
             // show dialog
             API.modal.show('print');

@@ -619,6 +619,7 @@
                 exportOcto: false,
                 exportGhost: false,
                 exportLocal: true,
+                exportCodePreview: false,
                 decimate: true,
                 detail: "good",
                 animesh: "200"
