@@ -438,7 +438,7 @@
                         offset.slice().forEach(op => {
                             // clone removes inners but the real solution is
                             // to limit expanded shells to through holes
-                            POLY.expand([op.clone()], outlineToolDiam * 0.5, slice.z, offset, 1);
+                            POLY.expand([op.clone(true)], outlineToolDiam * 0.5, slice.z, offset, 1);
                         });
                     }
                 }
@@ -484,13 +484,30 @@
         }
 
         // prepare for tracing paths
-        let traceTool;
-        let traceToolProfile;
         if (procTrace) {
-            traceTool = getToolById(conf, proc.camTraceTool);
-            if (traceTool.type !== 'endmill') {
-                traceToolProfile = createToolProfile(conf, proc.camTraceTool, widget.topo);
-            }
+            let traceTool = new CAM.Tool(conf, proc.camTraceTool);
+            let traceToolDiam = traceTool.fluteDiameter();
+            maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
+            // unique merge of z flats and z line indices
+            let indices = [...new Set(Object.keys(slicer.zFlat)
+                .map(kv => parseFloat(kv).round(5))
+                .appendAll(Object.entries(slicer.zLine).map(ze => {
+                    let [ zk, zv ] = ze;
+                    return zv > 0 ? parseFloat(zk).round(5) : null;
+                })
+                .filter(v => v !== null)))]
+                .sort((a,b) => b - a);
+            let slices = [];
+            slicer.slice(indices, { each: (data, index, total) => {
+                let slice = data.slice;
+                slice.camMode = PRO.TRACE;
+                slices.push(slice);
+                sliceAll.append(slice);
+                if (true) slice.output()
+                    .setLayer("trace", {line: 0x88aa55}, false)
+                    .addPolys(slice.topPolys())
+                updateOp(index, total);
+            }, genso: true, emptyok: true, flatoff: 0, edges: true, openok: true });
         }
 
         if (procDrill) {

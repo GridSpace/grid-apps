@@ -15,7 +15,8 @@
         SQRT = Math.sqrt,
         SQR = UTIL.sqr,
         NOKEY = BASE.key.NONE,
-        newPoint = BASE.newPoint;
+        newPoint = BASE.newPoint,
+        numOrDefault = UTIL.numOrDefault;
 
     BASE.polygons = {
         rayIntersect,
@@ -45,10 +46,6 @@
     /** ******************************************************************
      * Polygon array utility functions
      ******************************************************************* */
-
-    function numOrDefault(num, def) {
-        return num !== undefined ? num : def;
-    }
 
     function setZ(polys, z) {
         polys.forEach(p => p.setZ(z));

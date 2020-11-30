@@ -49,13 +49,13 @@
         api.event.on("settings.saved", (settings) => {
             const proc = settings.process;
             // show/hide dots in enabled process pop buttons
-            // api.ui.camTabs.marker.style.display = proc.camTabsOn ? 'flex' : 'none';
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =
                 proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
             api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
+            api.ui.camTracing.marker.style.display = proc.camTraceOn ? 'flex' : 'none';
             updateStock(settings, 'settings.saved.internal');
         });
 

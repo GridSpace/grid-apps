@@ -175,7 +175,7 @@
                         zM = Math.max(p1.z, p2.z, p3.z),
                         bm = Math.floor(zm * zScale),
                         bM = Math.ceil(zM * zScale);
-                    for (let j = bm; j < bM; j++) {
+                    for (let j = bm; j <= bM; j++) {
                         buckets[j].push(p1);
                         buckets[j].push(p2);
                         buckets[j].push(p3);
@@ -203,8 +203,9 @@
             }
 
             let znorm = z.toFixed(5),
-                flatoff = opt.flatoff || 0.01,
+                flatoff = UTIL.numOrDefault(opt.flatoff, 0.01),
                 onflat = this.zFlat[znorm],
+                edges = opt.edges || false,
                 phash = {},
                 lines = [],
                 zScale = this.zScale,
@@ -236,7 +237,7 @@
                     // one side of triangle is on the Z plane and 3rd is below
                     // drop lines with 3rd above because that leads to ambiguities
                     // with complex nested polygons on flat surface
-                    if (where.under.length === 1) {
+                    if (edges || where.under.length === 1) {
                         lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
                     }
                 } else if (where.on.length === 3) {
@@ -245,7 +246,7 @@
                     // that will satisfy the if above (line) with 2 points
                 } else if (where.under.length === 0 || where.over.length === 0) {
                     // does not intersect but one point is on the slice Z plane
-                } else {
+                } else if (!edges) {
                     // compute two point intersections and construct line
                     let line = intersectPoints(where.over, where.under, z);
                     if (line.length < 2 && where.on.length === 1) {
@@ -277,7 +278,7 @@
             }
 
             const haslines = lines.length || opt.emptyok;
-            const hastops = !opt.genso || opt.notopok || (retn.tops && retn.tops.length);
+            const hastops = !opt.genso || opt.notopok || (retn.tops && retn.tops.length) || edges;
 
             if (opt.each && haslines && hastops) {
                 opt.each(retn, index, total, UTIL.time() - mark);
@@ -515,6 +516,7 @@
             search = 1,
             nextMod = 1,
             bridge = CONF.bridgeLineGapDistance,
+            minPoly = opt.openok ? 2 : 3,
             p1, p2;
 
         function cachedPoint(p) {
@@ -609,7 +611,7 @@
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly) {
             poly = poly.clean();
-            if (poly.length > 2) output.push(poly);
+            if (poly.length >= minPoly) output.push(poly);
         }
 
         // given an array of paths, emit longest to shortest
@@ -641,7 +643,7 @@
                 // emit polygons largest to smallest
                 // omit polygon if it intersects previously emitted (has del points)
                 paths.forEach(function(path) {
-                    if (path.length < 3) return;
+                    if (path.length < minPoly) return;
                     let len = path.length, i;
                     for (i = 0; i < len; i++) if (path[i].del) return;
                     for (i = 0; i < len; i++) path[i].del = true;

@@ -15,6 +15,10 @@
 
     function time() { return Date.now() }
 
+    function numOrDefault(num, def) {
+        return num !== undefined ? num : def;
+    }
+
     /**
      * call function with all combinations of a1, a2
      * and passing in the supplied arg object.
@@ -372,23 +376,24 @@
     };
 
     BASE.util = {
-        sqr : sqr,
-        time : time,
-        round : round,
-        area2: area2,
+        sqr,
+        time,
+        round,
+        area2,
         distSq : dist2,
         distSqv2 : dist2v2,
-        inRange : inRange,
-        isCloseTo : isCloseTo,
-        inCloseRange : inCloseRange,
-        isCollinear : isCollinear,
-        isClockwise : isClockwise,
-        isCounterClockwise : isCounterClockwise,
-        doCombinations : doCombinations,
-        offsetPrecision : offsetPrecision,
-        intersectRayLine : intersectRayLine,
-        intersect : intersect,
-        determinant : determinant,
+        inRange,
+        isCloseTo,
+        inCloseRange,
+        isCollinear,
+        isClockwise,
+        isCounterClockwise,
+        doCombinations,
+        offsetPrecision,
+        intersectRayLine,
+        intersect,
+        determinant,
+        numOrDefault,
         comma: (v) => {
             if (!v) return v;
             let [lt,rt] = v.toString().split('.');
