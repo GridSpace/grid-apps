@@ -1637,7 +1637,7 @@
             ], {modes:CAM, class:"ext-buttons f-row"}),
 
             camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
-            camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM}),
+            camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM, marker: true}),
             camStockX:           UC.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockY:           UC.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockZ:           UC.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),

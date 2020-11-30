@@ -899,10 +899,37 @@ th, tr, td, label {
     border-radius: 3px;
     border: 1px solid #aaa;
     margin: 1px 2px 2px 4px;
+    padding: 2px;
     justify-content: center;
     align-items: center;
     font-weight: bold;
     background-color: #ddd;
+}
+#layer-toolpos {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+}
+#layer-toolpos label, #layer-toolpos input {
+    display: inline-flex;
+    height: 30px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    background-color: #ddd;
+}
+#layer-toolpos label {
+    width: 30px;
+    padding: 1px 1px 1px 1px;
+    margin: 1px 1px 2px 6px;
+}
+#layer-toolpos input {
+    background-color: #eee;
+    font-family: monospace;
+    padding: 1px 4px 1px 4px;
+    margin: 1px 1px 2px 1px;
 }
 
 #slider {

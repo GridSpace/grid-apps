@@ -56,6 +56,7 @@
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
             api.ui.camTracing.marker.style.display = proc.camTraceOn ? 'flex' : 'none';
+            api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
             updateStock(settings, 'settings.saved.internal');
         });
 

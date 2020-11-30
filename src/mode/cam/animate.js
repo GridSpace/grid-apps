@@ -8,6 +8,7 @@ self.kiri.loader.push(function() {
         CAM = KIRI.driver.CAM,
         API, WORLD, SPACE,
         meshes = {},
+        toolPosX, toolPosY, toolPosZ,
         speedValues = [ 25, 12, 6, 3 ],
         speedNames = [ "1x", "2x", "4x", "8x" ],
         speedIndex = 0,
@@ -22,6 +23,7 @@ self.kiri.loader.push(function() {
         SPACE = (API = api).const.SPACE;
         WORLD = SPACE.platform.world;
         $('layer-animate').innerHTML = '';
+        $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
     }
 
@@ -50,6 +52,12 @@ self.kiri.loader.push(function() {
             setTimeout(() => {
                 play({steps: 1});
             }, delay || 0);
+            const toolpos = $('layer-toolpos');
+            toolpos.innerHTML = '';
+            UC.setGroup(toolpos);
+            toolPosX = UC.newInput('x', {disabled: true, size: 7});
+            toolPosY = UC.newInput('y', {disabled: true, size: 7});
+            toolPosZ = UC.newInput('z', {disabled: true, size: 7});
         });
     };
 
@@ -87,6 +95,11 @@ self.kiri.loader.push(function() {
                 mesh.position.y = pos.y;
                 mesh.position.z = pos.z;
                 SPACE.update();
+                if (id !== 0) {
+                    toolPosX.value = pos.x.toFixed(2);
+                    toolPosY.value = pos.y.toFixed(2);
+                    toolPosZ.value = pos.z.toFixed(2);
+                }
             }
         }
         if (data.mesh_update) {
