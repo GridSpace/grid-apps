@@ -363,7 +363,7 @@
             const canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
 
             for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
-                const label = ((offsetCenter ? i - (rulerYLast + rulerYFirst) / 2 :
+                const label = ((offsetCenter ? -(i - (rulerYLast + rulerYFirst) / 2) :
                     rulerYFirst + rulerYLast - i) * factor).round(1);
                 canvas.ctx.fillText('' + label, labelSize * 4, i + yPadding / 2);
             }
