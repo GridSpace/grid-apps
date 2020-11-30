@@ -340,7 +340,7 @@
 
             switch (slice.camMode) {
                 case PRO.LEVEL:
-                    setTool(process.camRoughTool, process.camRoughSpeed, 0);
+                    setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
                     spindle = Math.min(spindleMax, process.camRoughSpindle);
                     const level = [];
                     slice.camLines.forEach(function (poly) {
