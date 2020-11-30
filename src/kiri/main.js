@@ -1680,15 +1680,6 @@
             return;
         }
         function doit() {
-            if (isSettings) {
-                settings = CONF.normalize(data.settings);
-                SDB.setItem('ws-settings', JSON.stringify(settings));
-                if (LOCAL) console.log('settings',Object.clone(settings));
-                restoreSettings();
-                restoreWorkspace(() => {
-                    UI.sync();
-                }, true);
-            }
             if (isDevice) {
                 if (settings.devices[data.device]) {
                     UC.confirm(`Replace device ${data.device}?`).then(yes => {
@@ -1702,14 +1693,23 @@
                     API.show.devices();
                 }
             }
-            if (isWork) {
-                API.platform.clear();
-                KIRI.codec.decode(data.work).forEach(widget => {
-                    platform.add(widget, 0, true);
-                });
-                if (data.view) {
-                    SPACE.view.load(data.view);
+            if (isSettings) {
+                settings = CONF.normalize(data.settings);
+                SDB.setItem('ws-settings', JSON.stringify(settings));
+                if (LOCAL) console.log('settings',Object.clone(settings));
+                restoreSettings();
+                if (isWork) {
+                    API.platform.clear();
+                    KIRI.codec.decode(data.work).forEach(widget => {
+                        platform.add(widget, 0, true);
+                    });
+                    if (data.view) {
+                        SPACE.view.load(data.view);
+                    }
                 }
+                restoreWorkspace(() => {
+                    UI.sync();
+                }, true);
             }
         }
         if (ask) {
@@ -1864,7 +1864,6 @@
 
         updateFields();
         platform.update_size();
-        // platform.update_stock();
 
         let fz = SPACE.scene.freeze(true);
         SPACE.view.reset();
