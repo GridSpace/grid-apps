@@ -502,6 +502,7 @@
                         set.ver = res.ver;
                         API.conf.put(set);
                         API.event.settings();
+                        API.ui.sync();
                         LOC.hash = '';
                     }
                 }
@@ -1612,8 +1613,22 @@
             camTracing:          UC.newGroup(LANG.cu_menu, null, {modes:CAM, marker:true}),
             camTraceTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camTraceSpeed:       UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
-            camTracingSep:       UC.newBlank({class:"pop-sep"}),
-            camTraceOn:          UC.newBoolean(LANG.enable, onBooleanClick, {title:'todo', modes:CAM}),
+            camTraceSep:           UC.newBlank({class:"pop-sep"}),
+            camTraceSelect: UC.newRow([
+                (UI.traceAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.traceDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (UI.traceClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            ], {modes:CAM, class:"ext-buttons f-row"}),
+            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
+            camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabSep:           UC.newBlank({class:"pop-sep"}),
+            camTabsManual: UC.newRow([
+                (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.tabDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (UI.tabClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            ], {modes:CAM, class:"ext-buttons f-row"}),
             camDrill:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
             camDrillTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camDrillSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
@@ -1625,16 +1640,6 @@
             camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
             camDrillSep:         UC.newBlank({class:"pop-sep"}),
             camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
-            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:false}),
-            camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabSep:           UC.newBlank({class:"pop-sep"}),
-            camTabsManual: UC.newRow([
-                (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-                (UI.tabDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-                (UI.tabClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
-            ], {modes:CAM, class:"ext-buttons f-row"}),
 
             camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
             camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM, marker: true}),

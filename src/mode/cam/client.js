@@ -37,7 +37,7 @@
             $('set-tools').style.display = isCamMode ? '' : 'none';
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
-            if (!isCamMode) func.tclear();
+            if (!isCamMode) func.tabClear();
         });
 
         api.event.on("view.set", (mode) => {
@@ -48,6 +48,14 @@
 
         api.event.on("settings.saved", (settings) => {
             const proc = settings.process;
+            let hasTabs = false;
+            let hasTraces = false;
+            // for any tabs or traces to set markers
+            Object.keys(settings.widget).forEach(wid => {
+                let wannot = settings.widget[wid];
+                if (wannot.tab && wannot.tab.length) hasTabs = true;
+                if (wannot.trace && wannot.trace.length) hasTraces = true;
+            });
             // show/hide dots in enabled process pop buttons
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =
@@ -55,7 +63,8 @@
             api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
             api.ui.camContour.marker.style.display =
                 proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
-            api.ui.camTracing.marker.style.display = proc.camTraceOn ? 'flex' : 'none';
+            api.ui.camTracing.marker.style.display = hasTraces ? 'flex' : 'none';
+            api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
             api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
             updateStock(settings, 'settings.saved.internal');
         });
@@ -99,46 +108,75 @@
         api.event.on("button.click", target => {
             switch (target) {
                 case api.ui.tabAdd:
-                    return func.tadd();
+                    return func.tabAdd();
                 case api.ui.tabDun:
-                    return func.tdone();
+                    return func.tabDone();
                 case api.ui.tabClr:
                     api.uc.confirm("clear tabs?").then(ok => {
-                        if (ok) func.tclear();
+                        if (ok) func.tabClear();
+                    });
+                    break;
+                case api.ui.traceAdd:
+                    return func.traceAdd();
+                case api.ui.traceDun:
+                    return func.traceDone();
+                case api.ui.traceClr:
+                    api.uc.confirm("clear traces?").then(ok => {
+                        if (ok) func.traceClear();
                     });
                     break;
             }
         });
 
-        api.event.on("cam.tabs.add", func.tadd = () => {
+        api.event.on("cam.tabs.add", func.tabAdd = () => {
             alert = api.show.alert("&lt;esc&gt; key cancels editing tabs");
             api.feature.hover = true;
         });
-        api.event.on("cam.tabs.done", func.tdone = () => {
+        api.event.on("cam.tabs.done", func.tabDone = () => {
             delbox('tabb');
             api.hide.alert(alert);
             api.feature.hover = false;
         });
-        api.event.on("cam.tabs.clear", func.tclear = () => {
-            func.tdone();
+        api.event.on("cam.tabs.clear", func.tabClear = () => {
+            func.tabDone();
             API.widgets.all().forEach(widget => {
                 clearTabs(widget);
             });
             API.conf.save();
         });
+
+        api.event.on("cam.trace.add", func.traceAdd = () => {
+            alert = api.show.alert("&lt;esc&gt; key cancels editing traces");
+            api.feature.hover = true;
+        });
+        api.event.on("cam.trace.done", func.traceDone = () => {
+            api.hide.alert(alert);
+            api.feature.hover = false;
+        });
+        api.event.on("cam.trace.clear", func.traceClear = () => {
+            func.traceDone();
+            API.widgets.all().forEach(widget => {
+                clearTraces(widget);
+            });
+            API.conf.save();
+        });
+
         api.event.on("slice.begin", () => {
             if (isCamMode) {
-                func.tdone();
+                func.tabDone();
+                func.traceDone();
             }
         });
         api.event.on("key.esc", () => {
             if (isCamMode) {
-                func.tdone();
+                func.tabDone();
+                func.traceDone();
             }
         });
         api.event.on("selection.scale", () => {
             if (isCamMode) {
-                func.tclear();
+                func.tabClear();
+                func.traceClear();
             }
         });
         api.event.on("widget.rotate", rot => {
