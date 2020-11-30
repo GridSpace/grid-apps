@@ -144,6 +144,7 @@
         control.exportOcto = UI.exportOcto.checked;
         control.exportGhost = UI.exportGhost.checked;
         control.exportLocal = UI.exportLocal.checked;
+        control.exportCodePreview = UI.exportCodePreview.checked;
         control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
@@ -1502,6 +1503,7 @@
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
+            exportCodePreview:    UC.newBoolean(`Code Preview`, booleanSave),
 
             parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),

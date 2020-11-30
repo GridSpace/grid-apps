@@ -645,6 +645,11 @@ th, tr, td, label {
 #print-download {
     min-height: 4em !important;
 }
+#code-preview-textarea {
+    width: 100%;
+    height: 250px;
+    font-size: 10px;
+}
 .mod-end {
     height: 10px;
     border-bottom-left-radius: 10px;
