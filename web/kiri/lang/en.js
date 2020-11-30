@@ -160,24 +160,6 @@ kiri.lang['en-us'] = {
 
     xp_menu:        "exports",
 
-    // LAYERS pop-menu
-    la_menu:        "layers",
-    la_olin:        "slice",
-    la_trce:        "shells",
-    la_face:        "level",
-    la_ruff:        "rough",
-    la_fini:        "outline",
-    la_finx:        "contour x",
-    la_finy:        "contour y",
-    la_dlta:        "delta",
-    la_slds:        "solids",
-    la_fill:        "solid fill",
-    la_sprs:        "infill",
-    la_sprt:        "supports",
-    la_prnt:        "print",
-    la_move:        "moves",
-    la_part:        "parts",
-
     // SETTINGS
     se_menu:        "library",
     se_load:        "load",
@@ -324,10 +306,10 @@ kiri.lang['en-us'] = {
     cf_curv_l:      "limit linear cleanup\nto curved surfaces",
     cf_olin_s:      "inside only",
     cf_olin_l:      "limit cutting to\ninside part boundaries",
-    cf_linx_s:      "enable x pass",
-    cf_linx_l:      "linear x-axis finishing",
-    cf_liny_s:      "enable y pass",
-    cf_liny_l:      "linear y-axis finishing",
+    cf_linx_s:      "enable y pass",
+    cf_linx_l:      "linear y-axis finishing",
+    cf_liny_s:      "enable x pass",
+    cf_liny_l:      "linear x-axis finishing",
 
     // CNC CONTOUR
     cu_menu:        "trace",

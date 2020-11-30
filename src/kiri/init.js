@@ -144,7 +144,7 @@
         control.exportOcto = UI.exportOcto.checked;
         control.exportGhost = UI.exportGhost.checked;
         control.exportLocal = UI.exportLocal.checked;
-        control.exportCodePreview = UI.exportCodePreview.checked;
+        control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
@@ -1503,7 +1503,7 @@
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
-            exportCodePreview:    UC.newBoolean(`Code Preview`, booleanSave),
+            exportPreview:    UC.newBoolean(`Code Preview`, booleanSave),
 
             parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
@@ -1607,8 +1607,8 @@
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
             camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
             camContourSep:      UC.newBlank({class:"pop-sep"}),
-            camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
             camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
+            camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
             camTracing:          UC.newGroup(LANG.cu_menu, null, {modes:CAM, marker:true}),
             camTraceTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camTraceSpeed:       UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),

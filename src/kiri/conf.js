@@ -619,7 +619,7 @@
                 exportOcto: false,
                 exportGhost: false,
                 exportLocal: true,
-                exportCodePreview: false,
+                exportPreview: false,
                 decimate: true,
                 detail: "good",
                 animesh: "200"
