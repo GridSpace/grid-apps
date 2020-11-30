@@ -483,31 +483,10 @@
             });
         }
 
-        // prepare for tracing paths
+        // generate tracing offsets from chosen features
         if (procTrace) {
-            let traceTool = new CAM.Tool(conf, proc.camTraceTool);
-            let traceToolDiam = traceTool.fluteDiameter();
-            maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
-            // unique merge of z flats and z line indices
-            let indices = [...new Set(Object.keys(slicer.zFlat)
-                .map(kv => parseFloat(kv).round(5))
-                .appendAll(Object.entries(slicer.zLine).map(ze => {
-                    let [ zk, zv ] = ze;
-                    return zv > 0 ? parseFloat(zk).round(5) : null;
-                })
-                .filter(v => v !== null)))]
-                .sort((a,b) => b - a);
-            let slices = [];
-            slicer.slice(indices, { each: (data, index, total) => {
-                let slice = data.slice;
-                slice.camMode = PRO.TRACE;
-                slices.push(slice);
-                sliceAll.append(slice);
-                if (true) slice.output()
-                    .setLayer("trace", {line: 0x88aa55}, false)
-                    .addPolys(slice.topPolys())
-                updateOp(index, total);
-            }, genso: true, emptyok: true, flatoff: 0, edges: true, openok: true });
+            // todo
+            // slice.camMode = PRO.TRACE;
         }
 
         if (procDrill) {
@@ -537,6 +516,36 @@
         widget.maxToolDiam = maxToolDiam;
 
         ondone();
+    };
+
+    CAM.traces = function computeTraces(settings, widget) {
+        let slicer = new KIRI.slicer2(widget.getPoints(), {
+            zlist: true,
+            zline: true
+        });
+        let proc = settings.process;
+        let traceTool = new CAM.Tool(settings, proc.camTraceTool);
+        let traceToolDiam = traceTool.fluteDiameter();
+        // widget.maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
+        // unique merge of z flats and z line indices
+        let indices = [...new Set(Object.keys(slicer.zFlat)
+            .map(kv => parseFloat(kv).round(5))
+            .appendAll(Object.entries(slicer.zLine).map(ze => {
+                let [ zk, zv ] = ze;
+                return zv > 0 ? parseFloat(zk).round(5) : null;
+            })
+            .filter(v => v !== null)))]
+            .sort((a,b) => b - a);
+        let traces = [];
+        slicer.slice(indices, { each: (data, index, total) => {
+            let slice = data.slice;
+            traces.push(slice);
+            if (true) slice.output()
+                .setLayer("trace", {line: 0x88aa55}, false)
+                .addPolys(slice.topPolys())
+            // updateOp(index, total);
+        }, genso: true, emptyok: true, flatoff: 0, edges: true, openok: true });
+        widget.traces = traces;
     };
 
     // drilling op

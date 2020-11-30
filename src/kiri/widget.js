@@ -302,12 +302,12 @@
     PRO.clearSlices = function() {
         let slices = this.slices,
             mesh = this.mesh;
-        if (slices) {
+        if (slices && mesh) {
             slices.forEach(function(slice) {
                 mesh.remove(slice.view);
             });
-            this.slices = null;
         }
+        this.slices = null;
     };
 
     /**

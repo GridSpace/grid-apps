@@ -38,42 +38,56 @@ KIRI.worker = {
         send.done();
     },
 
-    slice: function(data, send) {
-        let settings = data.settings,
-            vertices = new Float32Array(data.vertices),
-            position = data.position,
-            tracking = data.tracking,
+    // widget sync
+    sync: function(data, send) {
+        let vertices = new Float32Array(data.vertices),
             points = BASE.verticesToPoints(vertices, { maxpass: 0 }),
-            state = data.state || {},
-            rotation = state.rotation,
-            centerz = state.centerz,
-            movez = state.movez;
-
-        if (rotation) {
-            state.rotate = new THREE.Matrix4().makeRotationY(-rotation);
-        }
-
-        send.data({update:0.05, updateStatus:"slicing"});
-
-        let widget = KIRI.newWidget(data.id).setPoints(points),
-            last = time(),
-            now;
+            widget = KIRI.newWidget(data.id).setPoints(points);
 
         // do it here so cancel can work
         cache[data.id] = widget;
 
         // fake mesh object to satisfy printing
-        widget.track = tracking;
+        widget.track = data.tracking;
         widget.mesh = {
             widget: widget,
-            position: position
+            position: data.position
         };
+
+        send.done(data.id);
+    },
+
+    slice: function(data, send) {
+        let { id, settings, rotation } = data;
+
+        // let centerz;
+        // let movez;
+        // if (rotation) {
+        //     let bbox1 = widget.getBoundingBox(true);
+        //     widget._rotate(0,rotation,0,true);
+        //     widget.center();
+        //     let bbox2 = widget.getBoundingBox(true);
+        //     centerz = (bbox2.max.z - bbox2.min.z)/2;
+        //     movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
+        // }
+        // let vertices = widget.getGeoVertices().buffer.slice(0);
+        //     // snapshot = KIRI.api.view.snapshot;
+        // if (rotation) {
+        //     widget._rotate(0,-rotation,0,true);
+        //     widget.center();
+        // }
+
+        send.data({update:0.05, updateStatus:"slicing"});
+
+        let widget = cache[data.id],
+            last = time(),
+            now;
 
         try {
 
         widget.slice(settings, function(error) {
             if (error) {
-                delete cache[data.id];
+                // delete cache[id];
                 send.data({error: error});
             } else {
                 const slices = widget.slices || [];

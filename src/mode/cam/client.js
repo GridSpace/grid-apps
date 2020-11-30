@@ -147,6 +147,9 @@
 
         api.event.on("cam.trace.add", func.traceAdd = () => {
             alert = api.show.alert("&lt;esc&gt; key cancels editing traces");
+            KIRI.client.traces(done => {
+                console.log({got_traces: done});
+            });
             api.feature.hover = true;
         });
         api.event.on("cam.trace.done", func.traceDone = () => {

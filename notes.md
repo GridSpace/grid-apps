@@ -4,6 +4,7 @@
 * `cnc`
 * - tracing (chamfer, engrave)
 * - auto feature detection (slicing)
+* - compute tolerance from animesh when set to 0
 * `laser`
 * - drag knife support
 * `all`

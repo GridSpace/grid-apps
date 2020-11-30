@@ -42,6 +42,7 @@ function send(fn, data, onreply, zerocopy) {
 }
 
 // code is running in the browser / client context
+const CLIENT =
 KIRI.client =
 KIRI.work = {
     send: send,
@@ -120,44 +121,37 @@ KIRI.work = {
         });
     },
 
+    // widget sync
+    sync: function(widget) {
+        let widgets = widget ? [ widget ] : KIRI.api.widgets.all();
+        widgets.forEach(widget => {
+            if (widget.modified) {
+                let vertices = widget.getGeoVertices().buffer.slice(0);
+                send("sync", {
+                    id: widget.id,
+                    vertices: vertices,
+                    position: widget.mesh.position,
+                    tracking: widget.track
+                }, done => {
+                    widget.modified = false;
+                }, [vertices]);
+            }
+        });
+    },
+
     slice: function(settings, widget, callback) {
-        let rotation = (Math.PI/180) * (settings.process.sliceRotation || 0);
-        let centerz;
-        let movez;
-        if (rotation) {
-            let bbox1 = widget.getBoundingBox(true);
-            widget._rotate(0,rotation,0,true);
-            widget.center();
-            let bbox2 = widget.getBoundingBox(true);
-            centerz = (bbox2.max.z - bbox2.min.z)/2;
-            movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
-        }
-        let vertices = widget.getGeoVertices().buffer.slice(0);
-            // snapshot = KIRI.api.view.snapshot;
-        if (rotation) {
-            widget._rotate(0,-rotation,0,true);
-            widget.center();
-        }
+        CLIENT.sync(widget);
         slicing[widget.id] = callback;
         send("slice", {
             id: widget.id,
             settings: settings,
-            vertices: vertices,
-            position: widget.mesh.position,
-            tracking: widget.track,
-            // snapshot: snapshot,
-            // for rotation / unrotation
-            state: {
-                rotation: rotation,
-                centerz: centerz,
-                movez: movez
-            }
+            rotation: (Math.PI/180) * (settings.process.sliceRotation || 0)
         }, function(reply) {
             if (reply.done || reply.error) {
                 delete slicing[widget.id];
             }
             callback(reply);
-        }, [vertices]);
+        });
     },
 
     prepare: function(settings, update, done) {
