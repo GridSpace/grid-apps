@@ -51,7 +51,7 @@
             }
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
-            alert = api.show.alert("&lt;esc&gt; key cancels editing supports");
+            alert = api.show.alert("[esc] key cancels support editing");
             api.feature.hover = true;
         });
         api.event.on("fdm.supports.done", func.sdone = () => {

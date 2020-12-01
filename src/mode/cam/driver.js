@@ -32,7 +32,7 @@
                 send("traces", { settings }, output => {
                     KIRI.codec.decode(output).forEach(rec => {
                         widgets[rec.id].traces = rec.traces;
-                        widgets[rec.id].sindex = rec.sindex;
+                        // widgets[rec.id].sindex = rec.sindex;
                     });
                     ondone(true);
                 });
@@ -46,7 +46,7 @@
                 send.done(KIRI.codec.encode(widgets.map(widget => {return {
                     id: widget.id,
                     traces: widget.traces,
-                    sindex: widget.sindex
+                    // sindex: widget.sindex
                 }})));
             };
 

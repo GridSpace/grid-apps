@@ -15,6 +15,7 @@
         isCamMode,
         isParsed,
         camStock,
+        current,
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC;
 
     let zaxis = {x: 0, y: 0, z: 1},
@@ -41,6 +42,8 @@
                 func.tabClear();
                 func.traceDone();
             }
+            // do not persist traces across page reloads
+            func.traceClear();
         });
 
         api.event.on("view.set", (mode) => {
@@ -52,6 +55,7 @@
         });
 
         api.event.on("settings.saved", (settings) => {
+            current = settings;
             const proc = settings.process;
             let hasTabs = false;
             let hasTraces = false;
@@ -138,7 +142,7 @@
         let showTab, lastTab, tab, iw, ic;
         api.event.on("cam.tabs.add", func.tabAdd = () => {
             func.traceDone();
-            alert = api.show.alert("&lt;esc&gt; key cancels editing tabs");
+            alert = api.show.alert("[esc] key cancels tab editing");
             api.feature.hover = true;
             func.hover = func.tabHover;
             func.hoverUp = func.tabHoverUp;
@@ -228,9 +232,11 @@
                 return;
             }
             func.tabDone();
-            alert = api.show.alert("&lt;esc&gt; key cancels editing traces");
+            alert = api.show.alert("analyzing parts...");
             traceOn = true;
             KIRI.client.traces(() => {
+                api.hide.alert(alert);
+                alert = api.show.alert("[esc] key cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
                     let stack = new KIRI.Stack(widget.mesh);
@@ -239,6 +245,12 @@
                         let layers = new KIRI.Layers();
                         layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
                         stack.addLayers(layers);
+                        stack.meshes.forEach(mesh => {
+                            mesh.trace = {widget, poly};
+                        });
+                        // reset so each mesh array is new for the layer
+                        widget.adds.appendAll(stack.meshes);
+                        stack.meshes = [];
                     });
                     // for (let [key, val] of Object.entries(widget.sindex)) {
                     //     console.log('sindex', {key, val});
@@ -246,7 +258,6 @@
                     //     layers.setLayer("sindex", {line: 0x55aa88}, false).addPolys(val);
                     //     stack.addLayers(layers);
                     // }
-                    widget.adds.appendAll(stack.meshes);
                 });
             });
             api.feature.hover = true;
@@ -264,8 +275,10 @@
             api.feature.hover = false;
             api.feature.hoverAdds = false;
             KIRI.api.widgets.for(widget => {
-                widget.adds.removeAll(widget.trace_stack.meshes);
-                widget.trace_stack.destroy();
+                if (widget.trace_stack) {
+                    widget.adds.removeAll(widget.trace_stack.meshes);
+                    widget.trace_stack.destroy();
+                }
             });
         });
         api.event.on("cam.trace.clear", func.traceClear = () => {
@@ -286,20 +299,49 @@
                 lastTrace = null;
                 return;
             }
-            // if (data.ints.length === 2) {
-            //     console.log(data.ints);
-            // }
             lastTrace = data.int.object;
             let material = lastTrace.material[0];
             let color = material.color;
             let {r, g, b} = color;
             material.colorSave = {r, g, b};
-            color.r = 255;
+            color.r = 1;
             color.g = 0;
             color.b = 0;
         };
         func.traceHoverUp = function(int) {
-            if (int) console.log({traceHoverUp: int});
+            if (!int) return;
+            console.log({traceHoverUp: int});
+            func.traceToggle(int.object);
+        };
+        func.traceToggle = function(obj) {
+            let material = obj.material[0];
+            let { color, colorSave } = material;
+            let { widget, poly } = obj.trace;
+            let wannot = API.widgets.annotate(widget.id);
+            let atrace = wannot.trace = wannot.trace || [];
+            let wtrace = widget.trace = widget.trace || [];
+            let process = current.process;
+            obj.selected = !obj.selected;
+            if (obj.selected) {
+                color.r = colorSave.r = 0.9;
+                color.g = colorSave.g = 0;
+                color.b = colorSave.b = 0.1;
+                poly.traceInfo = {
+                    tool: process.camTraceTool,
+                    speed: process.camTraceSpeed,
+                    plunge: process.camTracePlunge,
+                    path: KIRI.codec.encode(poly)
+                };
+                wtrace.push(poly);
+                atrace.push(poly.traceInfo);
+            } else {
+                color.r = colorSave.r = 0x88/255;
+                color.g = colorSave.g = 0xaa/255;
+                color.b = colorSave.b = 0x55/255;
+                wtrace.remove(poly);
+                atrace.remove(poly.traceInfo);
+            }
+            API.conf.save();
         };
 
         // COMMON TAB/TRACE EVENT HANDLERS
@@ -326,6 +368,10 @@
                 return;
             }
             const {widget, x, y, z} = rot;
+            if (traceOn) {
+                func.traceDone();
+            }
+            clearTraces(widget);
             if (x || y) {
                 clearTabs(widget);
             } else {
@@ -412,6 +458,17 @@
         });
         widget.tabs = {};
         delete API.widgets.annotate(widget.id).tab;
+    }
+
+    function clearTraces(widget) {
+        Object.values(widget.traces || {}).forEach(rec => {
+            console.log('clear',rec);
+            // widget.adds.remove(rec.box);
+            // widget.mesh.remove(rec.box);
+        });
+        widget.traces = {};
+        widget.trace_stack = null;
+        delete API.widgets.annotate(widget.id).trace;
     }
 
     function addbox() { return FDM.addbox(...arguments)};

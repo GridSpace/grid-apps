@@ -311,8 +311,10 @@ kiri.lang['en-us'] = {
     cf_liny_s:      "enable x pass",
     cf_liny_l:      "linear x-axis finishing",
 
-    // CNC CONTOUR
+    // CNC TRACE
     cu_menu:        "trace",
+    cu_type_s:      "type",
+    cu_type_l:      "follow = tool tip follows line\nright or left = tool tip\nfollows line offset by tool radius",
 
     // CNC DRILLING
     cd_menu:        "drill",

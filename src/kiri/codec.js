@@ -303,11 +303,11 @@
             type: 'poly',
             id: this.id,
             array: encodePointArray(this.points, state),
-            open: this.isOpen(),
             inner: encode(this.inner, state),
             parent: encode(this.parent, state),
             depth: this.depth,
-            color: this.color
+            color: this.color,
+            open: this.open
         };
     };
 

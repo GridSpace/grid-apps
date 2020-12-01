@@ -5,8 +5,8 @@
     "pre":[
         "G21 ; set units to MM (required)",
         "G90 ; absolute position mode (required)",
-		"G0 F6000 ; default rapid move speed",
-		"G1 F1500 ; default cutting speed"
+        "G0 F6000 ; default rapid move speed",
+        "G1 F1500 ; default cutting speed"
     ],
     "post":[
         "M30 ; program end"
@@ -14,11 +14,15 @@
     "tool-change":[
         "M6 T{tool} ; change tool to '{tool_name}'"
     ],
-	"dwell":[
-		"G4 P{time} ; dwell for {time}ms"
-	],
-	"settings": {
-		"bed_width": 760,
-		"bed_depth": 760
-	}
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "settings": {
+        "ximage_url": "https://static.grid.space/kiri/siencilabs.png",
+        "image_url": "https://static.grid.space/kiri/longmill.png",
+        "image_scale": 200,
+        "image_anchor": 8,
+        "bed_width": 760,
+        "bed_depth": 760
+    }
 }

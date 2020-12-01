@@ -432,6 +432,19 @@
                         }
                     }
                     break;
+                case PRO.TRACE:
+                    console.log({prep_trace: slice});
+                    let { tool, speed, plunge, path } = slice.camTrace;
+                    setTool(tool, speed, plunge);
+                    let traceTool = new CAM.Tool(settings, tool);
+                    let traceToolDiam = traceTool.fluteDiameter();
+                    slice.camLines.forEach(poly => {
+                        poly.forEachPoint(function(point, pidx) {
+                            camOut(point.clone(), pidx > 0);
+                        }, !poly.open);
+                    });
+                    newLayer();
+                    break;
                 case PRO.DRILL:
                     setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
                     depthData.drill.appendAll(slice.camLines);

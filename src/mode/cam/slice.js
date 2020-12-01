@@ -45,7 +45,7 @@
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
             procDrillReg = proc.camDrillReg,
-            procTrace = proc.camTraceOn,
+            // procTrace = proc.camTraceOn,
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3),
@@ -66,16 +66,16 @@
         if (tabs) {
             // make tab polygons
             tabs.forEach(tab => {
-                let zero = BASE.newPoint(0,0,0);
-                let point = BASE.newPoint(tab.pos.x, tab.pos.y, tab.pos.z);
-                let poly = BASE.newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y);
-                let tslice = KIRI.newSlice(0);
+                let zero = newPoint(0,0,0);
+                let point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z);
+                let poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y);
+                let tslice = newSlice(0);
                 let m4 = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion(tab.rot._x, tab.rot._y, tab.rot._z, tab.rot._w)
                 );
                 poly.points = poly.points
                     .map(p => new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(m4))
-                    .map(v => BASE.newPoint(v.x, v.y, v.z));
+                    .map(v => newPoint(v.x, v.y, v.z));
                 poly.move(point);
                 tab.poly = poly;
                 // tslice.output().setLayer("tabs", 0xff0000).addPoly(poly);
@@ -452,8 +452,8 @@
 
                 // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
-                if (true) slice.output()
-                    .setLayer("slice", {line: 0xaaaa00}, true)
+                if (false) slice.output()
+                    .setLayer("slice", {line: 0xaaaa00}, false)
                     .addPolys(slice.topPolys())
                 slice.output()
                     .setLayer("outline", {face: 0, line: 0})
@@ -484,13 +484,27 @@
         }
 
         // generate tracing offsets from chosen features
-        if (procTrace) {
-            // todo
-            // let proc = settings.process;
-            // let traceTool = new CAM.Tool(settings, proc.camTraceTool);
-            // let traceToolDiam = traceTool.fluteDiameter();
-            // widget.maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
-            // slice.camMode = PRO.TRACE;
+        {
+            let proc = settings.process;
+            let traces = (settings.widget[widget.id] || {}).trace || [];
+            traces.forEach(trace => {
+                console.log({trace});
+                let { tool, path } = trace;
+                let traceTool = new CAM.Tool(settings, tool);
+                let traceToolDiam = traceTool.fluteDiameter();
+                let slice = newSlice();
+                let poly = KIRI.codec.decode(path);
+                slice.addTop(poly);
+                slice.camMode = PRO.TRACE;
+                slice.camLines = [ poly ];
+                slice.camTrace = trace;
+                if (true) slice.output()
+                    .setLayer("trace", {line: 0xaa00aa}, false)
+                    .addPolys(slice.topPolys())
+                sliceAll.push(slice);
+                maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
+console.log({slice});
+            });
         }
 
         if (procDrill) {
@@ -537,55 +551,62 @@
             .sort((a,b) => b - a);
 
         // create shadow
-        let sindex = {};
-        let shadow = [];
-        let sindices = indices.map((v,i) => v > 0 ? v : v + 0.005 );
-        slicer.slice(sindices, { each: (data, index, total) => {
-            shadow = POLY.union(shadow.slice().appendAll(data.tops), 0, true);
-            POLY.setZ(shadow, data.z);
-            sindex[index] = shadow;
-        }, flatoff: 0 });
+        // let sindex = {};
+        // let shadow = [];
+        // let sindices = indices.map((v,i) => v > 0 ? v : v + 0.005);
+        // slicer.slice(sindices, { each: (data, index, total) => {
+        //     shadow = POLY.union(shadow.slice().appendAll(data.tops), 0, true);
+        //     POLY.setZ(shadow, data.z);
+        //     sindex[index] = shadow;
+        // }, flatoff: 0 });
         let traces = [];
         // find and trim polys (including open) to shadow
         let oneach = (data, index, total) => {
             BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
+                poly.inner = null;
+                poly.parent = null;
+                let z = poly.getZ();
                 for (let i=0, il=traces.length; i<il; i++) {
+                    let trace = traces[i];
+                    // only compare polys farther apart in Z
+                    if (Math.abs(z - trace.getZ()) > 0.01) {
+                        continue;
+                    }
                     // do not add duplicates
                     if (traces[i].isEquivalent(poly)) {
                         return;
                     }
                 }
                 traces.push(poly);
-                return;
                 // do trimming
-                let trimto = sindex[index];
-                if (!trimto) {
-                    traces.push(poly);
-                    return;
-                }
-                trimto = trimto.clone(true);
-                if (poly.open) {
-                    let cuts = poly.cut(trimto);
-                    if (cuts.length) {
-                        traces.appendAll(cuts);
-                    } else {
-                        traces.push(poly);
-                    }
-                } else {
-                    let limit = 1000;
-                    while (trimto.length && limit-- > 0) {
-                        let trim = trimto.shift();
-                        let mask = poly.mask(trim, true);
-                        if (mask) {
-                            trimto.appendAll(mask);
-                        } else {
-                            traces.push(poly);
-                        }
-                    }
-                    if (limit === 1000) {
-                        traces.push(poly);
-                    }
-                }
+                // let trimto = sindex[index];
+                // if (!trimto) {
+                //     traces.push(poly);
+                //     return;
+                // }
+                // trimto = trimto.clone(true);
+                // if (poly.open) {
+                //     let cuts = poly.cut(trimto);
+                //     if (cuts.length) {
+                //         traces.appendAll(cuts);
+                //     } else {
+                //         traces.push(poly);
+                //     }
+                // } else {
+                //     let limit = 1000;
+                //     while (trimto.length && limit-- > 0) {
+                //         let trim = trimto.shift();
+                //         let mask = poly.mask(trim, true);
+                //         if (mask) {
+                //             trimto.appendAll(mask);
+                //         } else {
+                //             traces.push(poly);
+                //         }
+                //     }
+                //     if (limit === 1000) {
+                //         traces.push(poly);
+                //     }
+                // }
             });
         };
         let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
@@ -593,7 +614,7 @@
         opts.over = true;
         slicer.slice(indices, opts);
         widget.traces = traces;
-        widget.sindex = sindex;
+        // widget.sindex = sindex;
     };
 
     // drilling op
