@@ -13,6 +13,7 @@ let loc = self.location,
     KIRI = self.kiri,
     BASE = self.base,
     seqid = 1,
+    syncd = {},
     running = {},
     slicing = {},
     worker = null;
@@ -112,6 +113,7 @@ KIRI.work = {
     clear: function(widget) {
         send("clear", widget ? {id:widget.id} : {}, function(reply) {
             // console.log({clear:reply});
+            syncd = {};
         });
     },
 
@@ -125,7 +127,8 @@ KIRI.work = {
     sync: function(widget) {
         let widgets = widget ? [ widget ] : KIRI.api.widgets.all();
         widgets.forEach(widget => {
-            if (widget.modified) {
+            if (widget.modified || !syncd[widget.id]) {
+                syncd[widget.id] = true;
                 let vertices = widget.getGeoVertices().buffer.slice(0);
                 send("sync", {
                     id: widget.id,

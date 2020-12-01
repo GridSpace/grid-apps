@@ -302,7 +302,7 @@
     PRO.clearSlices = function() {
         let slices = this.slices,
             mesh = this.mesh;
-        if (slices && mesh) {
+        if (slices && mesh && mesh.remove) {
             slices.forEach(function(slice) {
                 mesh.remove(slice.view);
             });
@@ -635,7 +635,9 @@
     PRO.render = function(stack) {
         const mark = Date.now();
         this.slices.forEach(slice => {
-            if (slice.render) stack.add(slice.render);
+            if (slice.layers) {
+                stack.add(slice.layers);
+            }
         });
         return Date.now() - mark;
     };

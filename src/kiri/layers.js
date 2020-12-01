@@ -3,9 +3,12 @@
 "use strict";
 
 (function() {
-    const KIRI = self.kiri, BASE = self.base, POLY = BASE.polygons, newPolygon = BASE.newPolygon;
+    let KIRI = self.kiri,
+        BASE = self.base,
+        POLY = BASE.polygons,
+        newPolygon = BASE.newPolygon;
 
-    class Render {
+    class Layers {
         constructor() {
             this.init();
         }
@@ -341,5 +344,5 @@
         return {index, faces};
     }
 
-    self.kiri.Render = Render;
+    self.kiri.Layers = Layers;
 })();

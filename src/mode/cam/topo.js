@@ -316,7 +316,7 @@
                                 .setLayer("contour x", {face: 0, line: 0})
                                 .addPolys(sliceout);
                         }
-                        onupdate(++stepsTaken, stepsTotal, "contour x");
+                        onupdate(++stepsTaken, stepsTotal, "contour y");
                     }
                 }
 
@@ -355,7 +355,7 @@
                                 .setLayer("contour y", {face: 0, line: 0})
                                 .addPolys(sliceout);
                         }
-                        onupdate(++stepsTaken, stepsTotal, "contour y");
+                        onupdate(++stepsTaken, stepsTotal, "contour x");
                     }
                 }
 

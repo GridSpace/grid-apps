@@ -35,7 +35,7 @@
         this.tops = []; // array of Top objects
         this.view = view; // for rendering this slice
         this.finger = null; // cached fingerprint
-        this.render = null; // will replace most of the layer output data
+        this.layers = null; // will replace most of the layer output data
     }
 
     /**
@@ -84,11 +84,11 @@
      ******************************************************************* */
 
     /**
-     * return Render object for this slice. creates it if necessary.
+     * return Layers object for this slice. creates it if necessary.
      */
     PRO.output = function() {
-        if (this.render) return this.render;
-        return this.render = new KIRI.Render();
+        if (this.layers) return this.layers;
+        return this.layers = new KIRI.Layers();
     };
 
     /**

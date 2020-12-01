@@ -219,7 +219,7 @@
                 KIRI.api.widgets.all().forEach(widget => {
                     let stack = STACKS.create(`trace-${widget.id}`, widget.mesh);
                     widget.traces.forEach(slice => {
-                        stack.add(slice.render);
+                        stack.add(slice.layers);
                     });
                 });
             });
@@ -465,7 +465,7 @@
 
         const {x, y, z} = stock;
         if (x && y && z && !STACKS.getStack('bounds')) {
-            const render = new KIRI.Render().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
+            const render = new KIRI.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
             const stack = STACKS.setFreeMem(false).create('bounds', SPACE.platform.world);
             stack.add(render.addPolys([
                 newPolygon().centerRectangle({x:csox, y:csoy, z:0}, x, y),

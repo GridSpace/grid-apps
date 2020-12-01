@@ -457,7 +457,7 @@
             const heads = [];
             const retracts = [];
             const engages = [];
-            const output = new KIRI.Render();
+            const output = new KIRI.Layers();
             layers.push(output);
 
             const pushPrint = (toolid, poly) => {

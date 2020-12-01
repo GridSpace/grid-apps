@@ -129,10 +129,10 @@
             type: 'slice',
             z: this.z,
             index: this.index,
-            render: encode(this.render, state)
+            layers: encode(this.layers, state)
         };
         // aggressively free memory
-        if (freeMem) this.render = undefined;
+        if (freeMem) this.layers = undefined;
         return rv;
     };
 
@@ -140,14 +140,14 @@
         let slice = KIRI.newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
 
         slice.index = v.index;
-        slice.render = decode(v.render, state)
+        slice.layers = decode(v.layers, state)
 
         return slice;
     });
 
-    KIRI.Render.prototype.encode = function(state) {
+    KIRI.Layers.prototype.encode = function(state) {
         let enc = {
-            type: 'render',
+            type: 'layers',
             layers: Object.keys(this.layers),
             data: Object.values(this.layers).map(layer => {
                 const e = {
@@ -182,8 +182,8 @@
         return enc;
     };
 
-    registerDecoder('render', function(v, state) {
-        let render = new KIRI.Render();
+    registerDecoder('layers', function(v, state) {
+        let render = new KIRI.Layers();
         for (let i=0; i<v.layers.length; i++) {
             const d = render.layers[v.layers[i]] = {
                 polys: decode(v.data[i].polys, state),
