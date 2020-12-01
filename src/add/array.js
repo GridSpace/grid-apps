@@ -116,6 +116,12 @@
         return null;
     };
 
+    AP.removeAll = function(array) {
+        for (let i=0, il=array.length; i<il; i++) {
+            this.remove(array[i]);
+        }
+    };
+
     /**
      * return last array element if array length > 0
      *

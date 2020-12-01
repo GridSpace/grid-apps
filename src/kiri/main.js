@@ -73,6 +73,7 @@
         drop_layout: true, // layout on new drop
         preview: true, // allow bypassing preview generation
         hover: false, // when true fires mouse hover events
+        hoverAdds: false, // when true only searches widget additions
     };
 
     const selection = {
@@ -580,7 +581,9 @@
     function meshArray() {
         let out = [];
         forAllWidgets(function(widget) {
-            out.push(widget.mesh);
+            if (!feature.hoverAdds) {
+                out.push(widget.mesh);
+            }
             out.appendAll(widget.adds);
         });
         return out;

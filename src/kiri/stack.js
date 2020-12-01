@@ -6,8 +6,10 @@
 
     class Stack {
         constructor(view) {
+            this._view = view;
             this.view = view.newGroup();
             this.slices = [];
+            this.meshes = [];
             this.freeMem = true;
         }
 
@@ -15,7 +17,21 @@
             return this.slices.length;
         }
 
+        hide() {
+            this.view.visible = false;
+        }
+
+        show() {
+            this.view.visible = true;
+        }
+
+        destroy() {
+            this._view.remove(this.view);
+            this.view = this.slices = this.meshes = null;
+        }
+
         setVisible(newMin, newMax) {
+            this.show();
             for (let i=0, s=this.slices, len=s.length; i<len; i++) {
                 s[i].visible = i >= newMin && i <= newMax;
             }
@@ -58,6 +74,7 @@
             }
 
             const { polys, lines, faces, cface, paths, cpath, color, off } = layer;
+            const meshes = this.meshes;
             const defstate = !off;
             const mats = [];
             mats.state = defstate;
@@ -105,6 +122,7 @@
                 }
                 geo.setFromPoints(vert);
                 const segs = new THREE.LineSegments(geo, mat);
+                meshes.push(segs);
                 group.add(segs);
                 mats.appendAll(mat);
             }
@@ -132,6 +150,7 @@
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
+                meshes.push(mesh);
                 group.add(mesh);
                 mats.appendAll(mat);
             }
@@ -160,6 +179,7 @@
                     mesh.position.z = z;
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
+                    meshes.push(mesh);
                     group.add(mesh);
                 });
                 mats.appendAll(mat);

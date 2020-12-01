@@ -105,6 +105,7 @@
             }
         });
 
+        // TAB/TRACE BUTTON HANDLERS
         api.event.on("button.click", target => {
             switch (target) {
                 case api.ui.tabAdd:
@@ -128,6 +129,7 @@
             }
         });
 
+        // TAB FUNCS
         let showTab, lastTab, tab, iw, ic;
         api.event.on("cam.tabs.add", func.tabAdd = () => {
             func.traceDone();
@@ -210,27 +212,44 @@
             API.conf.save();
         };
 
+        // TRACE FUNCS
+        let traceOn = false, lastTrace;
         api.event.on("cam.trace.add", func.traceAdd = () => {
+            if (traceOn) {
+                return;
+            }
             func.tabDone();
             alert = api.show.alert("&lt;esc&gt; key cancels editing traces");
-            KIRI.client.traces(done => {
-                console.log({got_traces: done});
+            traceOn = true;
+            KIRI.client.traces(() => {
                 KIRI.api.widgets.opacity(0.5);
-                KIRI.api.widgets.all().forEach(widget => {
-                    let stack = STACKS.create(`trace-${widget.id}`, widget.mesh);
+                KIRI.api.widgets.for(widget => {
+                    let stack = new KIRI.Stack(widget.mesh);
+                    widget.trace_stack = stack;
                     widget.traces.forEach(slice => {
-                        stack.add(slice.layers);
+                        stack.addLayers(slice.layers);
                     });
+                    widget.adds.appendAll(stack.meshes);
                 });
             });
             api.feature.hover = true;
+            api.feature.hoverAdds = true;
             func.hover = func.traceHover;
             func.hoverUp = func.traceHoverUp;
         });
         api.event.on("cam.trace.done", func.traceDone = () => {
+            if (!traceOn) {
+                return;
+            }
+            traceOn = false;
             KIRI.api.widgets.opacity(1);
             api.hide.alert(alert);
             api.feature.hover = false;
+            api.feature.hoverAdds = false;
+            KIRI.api.widgets.for(widget => {
+                widget.adds.removeAll(widget.trace_stack.meshes);
+                widget.trace_stack.destroy();
+            });
         });
         api.event.on("cam.trace.clear", func.traceClear = () => {
             func.traceDone();
@@ -239,13 +258,31 @@
             });
             API.conf.save();
         });
-        func.traceHover = function(int) {
-            // console.log({traceHover: int});
+        func.traceHover = function(data) {
+            if (lastTrace) {
+                let { color, colorSave } = lastTrace.material[0];
+                color.r = colorSave.r;
+                color.g = colorSave.g;
+                color.b = colorSave.b;
+            }
+            if (data.type === 'platform') {
+                lastTrace = null;
+                return;
+            }
+            lastTrace = data.int.object;
+            let material = lastTrace.material[0];
+            let color = material.color;
+            let {r, g, b} = color;
+            material.colorSave = {r, g, b};
+            color.r = 255;
+            color.g = 0;
+            color.b = 0;
         };
-        func.traceHoverUp = function(data) {
-            // console.log({traceHoverUp: data});
+        func.traceHoverUp = function(int) {
+            if (int) console.log({traceHoverUp: int});
         };
 
+        // COMMON TAB/TRACE EVENT HANDLERS
         api.event.on("slice.begin", () => {
             if (isCamMode) {
                 func.tabDone();

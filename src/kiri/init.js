@@ -2015,7 +2015,7 @@
                     API.event.emit('mouse.hover.down', {int, point: int.point});
                     return;
                 }
-                return// API.widgets.meshes().slice().append(SPACE.internals().platform);
+                return;
             }
             // lay flat with meta or ctrl clicking a selected face
             if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
