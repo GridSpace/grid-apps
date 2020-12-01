@@ -1998,10 +1998,10 @@
 
         API.platform.update_size();
 
-        SPACE.mouse.onHover((int, ev) => {
+        SPACE.mouse.onHover((int, ev, ints) => {
             if (!API.feature.hover) return;
             if (!int) return API.widgets.meshes();
-            API.event.emit('mouse.hover', {int, point: int.point, type: 'widget'});
+            API.event.emit('mouse.hover', {int, ints, point: int.point, type: 'widget'});
         });
 
         SPACE.platform.onHover((int, ev) => {

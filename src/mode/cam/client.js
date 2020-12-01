@@ -37,13 +37,18 @@
             $('set-tools').style.display = isCamMode ? '' : 'none';
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
-            if (!isCamMode) func.tabClear();
+            if (!isCamMode) {
+                func.tabClear();
+                func.traceDone();
+            }
         });
 
         api.event.on("view.set", (mode) => {
             isArrange = (mode === VIEWS.ARRANGE);
             isAnimate = false;
             CAM.animate_clear(api);
+            func.tabDone();
+            func.traceDone();
         });
 
         api.event.on("settings.saved", (settings) => {
@@ -142,6 +147,10 @@
             delbox('tabb');
             api.hide.alert(alert);
             api.feature.hover = false;
+            if (lastTab) {
+                lastTab.box.material.color.r = 0;
+                lastTab = null;
+            }
         });
         api.event.on("cam.tabs.clear", func.tabClear = () => {
             func.tabDone();
@@ -269,6 +278,9 @@
                 lastTrace = null;
                 return;
             }
+            // if (data.ints.length === 2) {
+            //     console.log(data.ints);
+            // }
             lastTrace = data.int.object;
             let material = lastTrace.material[0];
             let color = material.color;

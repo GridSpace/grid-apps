@@ -710,7 +710,7 @@
             let selection = mouseHover ? mouseHover() : null;
             if (selection && selection.length > 0) {
                 int = intersect(selection, selectRecurse);
-                if (int.length > 0) mouseHover(int[0], event);
+                if (int.length > 0) mouseHover(int[0], event, int);
             }
             if ((!int || int.length == 0) && platformHover) {
                 vis = platform.visible;

@@ -538,13 +538,15 @@
             .sort((a,b) => b - a);
         let traces = [];
         slicer.slice(indices, { each: (data, index, total) => {
-            let slice = data.slice;
-            traces.push(slice);
-            if (true) slice.output()
-                .setLayer("trace", {line: 0x88aa55}, false)
-                .addPolys(slice.topPolys())
-            // updateOp(index, total);
-        }, genso: true, emptyok: true, flatoff: 0, edges: true, openok: true });
+            // create separate slice for each poly (and inner)
+            BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
+                let trace = KIRI.newSlice(data.z);
+                trace.output('trace')
+                    .setLayer("trace", {line: 0x88aa55}, false)
+                    .addPoly(poly);
+                traces.push(trace);
+            });
+        }, flatoff: 0, edges: true, openok: true });
         widget.traces = traces;
     };
 

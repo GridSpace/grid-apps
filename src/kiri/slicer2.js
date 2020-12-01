@@ -611,6 +611,7 @@
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly) {
             poly = poly.clean();
+            if (poly.length === 2 && opt.openok) poly.setOpen();
             if (poly.length >= minPoly) output.push(poly);
         }
 
