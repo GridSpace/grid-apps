@@ -206,6 +206,7 @@
                 flatoff = UTIL.numOrDefault(opt.flatoff, 0.01),
                 onflat = this.zFlat[znorm],
                 edges = opt.edges || false,
+                over = opt.over || false,
                 phash = {},
                 lines = [],
                 zScale = this.zScale,
@@ -237,7 +238,7 @@
                     // one side of triangle is on the Z plane and 3rd is below
                     // drop lines with 3rd above because that leads to ambiguities
                     // with complex nested polygons on flat surface
-                    if (edges || where.under.length === 1) {
+                    if ((over && where.over.length === 1) || (!over && where.under.length === 1)) {
                         lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
                     }
                 } else if (where.on.length === 3) {

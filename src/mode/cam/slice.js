@@ -486,6 +486,10 @@
         // generate tracing offsets from chosen features
         if (procTrace) {
             // todo
+            // let proc = settings.process;
+            // let traceTool = new CAM.Tool(settings, proc.camTraceTool);
+            // let traceToolDiam = traceTool.fluteDiameter();
+            // widget.maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
             // slice.camMode = PRO.TRACE;
         }
 
@@ -523,30 +527,31 @@
             zlist: true,
             zline: true
         });
-        let proc = settings.process;
-        let traceTool = new CAM.Tool(settings, proc.camTraceTool);
-        let traceToolDiam = traceTool.fluteDiameter();
-        // widget.maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
-        // unique merge of z flats and z line indices
         let indices = [...new Set(Object.keys(slicer.zFlat)
             .map(kv => parseFloat(kv).round(5))
             .appendAll(Object.entries(slicer.zLine).map(ze => {
                 let [ zk, zv ] = ze;
-                return zv > 0 ? parseFloat(zk).round(5) : null;
+                return zv > 1 ? parseFloat(zk).round(5) : null;
             })
             .filter(v => v !== null)))]
             .sort((a,b) => b - a);
         let traces = [];
-        slicer.slice(indices, { each: (data, index, total) => {
+        let oneach = (data, index, total) => {
             // create separate slice for each poly (and inner)
             BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
-                let trace = KIRI.newSlice(data.z);
-                trace.output('trace')
-                    .setLayer("trace", {line: 0x88aa55}, false)
-                    .addPoly(poly);
-                traces.push(trace);
+                for (let i=0, il=traces.length; i<il; i++) {
+                    // do not add duplicates
+                    if (traces[i].isEquivalent(poly)) {
+                        return;
+                    }
+                }
+                traces.push(poly);
             });
-        }, flatoff: 0, edges: true, openok: true });
+        };
+        let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
+        slicer.slice(indices, opts);
+        opts.over = true;
+        slicer.slice(indices, opts);
         widget.traces = traces;
     };
 

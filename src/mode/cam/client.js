@@ -235,8 +235,10 @@
                 KIRI.api.widgets.for(widget => {
                     let stack = new KIRI.Stack(widget.mesh);
                     widget.trace_stack = stack;
-                    widget.traces.forEach(slice => {
-                        stack.addLayers(slice.layers);
+                    widget.traces.forEach(poly => {
+                        let layers = new KIRI.Layers();
+                        layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
+                        stack.addLayers(layers);
                     });
                     widget.adds.appendAll(stack.meshes);
                 });
