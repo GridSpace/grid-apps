@@ -1389,7 +1389,7 @@
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    PRO.mask = function(poly) {
+    PRO.mask = function(poly, nullOnEquiv) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
             clib = self.ClipperLib,
             ctyp = clib.ClipType,
@@ -1408,6 +1408,9 @@
             poly.forEach(function(p) {
                 p.fillang = fillang;
             })
+            if (nullOnEquiv && poly.length === 1 && poly[0].isEquivalent(this)) {
+                return null;
+            }
             return poly;
         } else {
             return null;
@@ -1454,7 +1457,7 @@
             });
             return cuts;
         } else {
-            return this;
+            return null;
         }
     };
 

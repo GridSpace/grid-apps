@@ -240,6 +240,12 @@
                         layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
                         stack.addLayers(layers);
                     });
+                    // for (let [key, val] of Object.entries(widget.sindex)) {
+                    //     console.log('sindex', {key, val});
+                    //     let layers = new KIRI.Layers();
+                    //     layers.setLayer("sindex", {line: 0x55aa88}, false).addPolys(val);
+                    //     stack.addLayers(layers);
+                    // }
                     widget.adds.appendAll(stack.meshes);
                 });
             });

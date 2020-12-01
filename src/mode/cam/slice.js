@@ -147,7 +147,7 @@
             tzindex = [ tzindex.pop() ];
         }
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-            tshadow = POLY.union(tshadow.appendAll(data.tops), 0.01, true);
+            tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
             if (false) {
                 const slice = data.slice;
@@ -242,7 +242,7 @@
 
             // console.log('indices', ...indices, {zBottom});
             slicer.slice(indices, { each: (data, index, total) => {
-                shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                shadow = POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
                 if (flats.indexOf(data.z) >= 0) {
                     // exclude flats injected to complete shadow
                     return;
@@ -373,7 +373,7 @@
             indices = indices.appendAll(flats).sort((a,b) => b-a);
             // console.log('indices', ...indices, {zBottom, slicer});
             slicer.slice(indices, { each: (data, index, total) => {
-                shadow = POLY.union(shadow.appendAll(data.tops), 0.01, true);
+                shadow = POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
                 if (flats.indexOf(data.z) >= 0) {
                     // exclude flats injected to complete shadow
                     return;
@@ -535,9 +535,19 @@
             })
             .filter(v => v !== null)))]
             .sort((a,b) => b - a);
+
+        // create shadow
+        let sindex = {};
+        let shadow = [];
+        let sindices = indices.map((v,i) => v > 0 ? v : v + 0.005 );
+        slicer.slice(sindices, { each: (data, index, total) => {
+            shadow = POLY.union(shadow.slice().appendAll(data.tops), 0, true);
+            POLY.setZ(shadow, data.z);
+            sindex[index] = shadow;
+        }, flatoff: 0 });
         let traces = [];
+        // find and trim polys (including open) to shadow
         let oneach = (data, index, total) => {
-            // create separate slice for each poly (and inner)
             BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
                 for (let i=0, il=traces.length; i<il; i++) {
                     // do not add duplicates
@@ -546,6 +556,36 @@
                     }
                 }
                 traces.push(poly);
+                return;
+                // do trimming
+                let trimto = sindex[index];
+                if (!trimto) {
+                    traces.push(poly);
+                    return;
+                }
+                trimto = trimto.clone(true);
+                if (poly.open) {
+                    let cuts = poly.cut(trimto);
+                    if (cuts.length) {
+                        traces.appendAll(cuts);
+                    } else {
+                        traces.push(poly);
+                    }
+                } else {
+                    let limit = 1000;
+                    while (trimto.length && limit-- > 0) {
+                        let trim = trimto.shift();
+                        let mask = poly.mask(trim, true);
+                        if (mask) {
+                            trimto.appendAll(mask);
+                        } else {
+                            traces.push(poly);
+                        }
+                    }
+                    if (limit === 1000) {
+                        traces.push(poly);
+                    }
+                }
             });
         };
         let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
@@ -553,6 +593,7 @@
         opts.over = true;
         slicer.slice(indices, opts);
         widget.traces = traces;
+        widget.sindex = sindex;
     };
 
     // drilling op
