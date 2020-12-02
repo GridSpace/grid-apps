@@ -488,7 +488,6 @@
             let proc = settings.process;
             let traces = (settings.widget[widget.id] || {}).trace || [];
             traces.forEach(trace => {
-                console.log({trace});
                 let { tool, path } = trace;
                 let traceTool = new CAM.Tool(settings, tool);
                 let traceToolDiam = traceTool.fluteDiameter();

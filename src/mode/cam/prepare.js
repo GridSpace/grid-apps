@@ -327,8 +327,9 @@
             outlineDiam: 0,
             contourx: [],
             contoury: [],
+            trace: [],
+            drill: [],
             layer: 0,
-            drill: []
         };
 
         // todo first move into positon
@@ -435,17 +436,12 @@
                     }
                     break;
                 case PRO.TRACE:
-                    console.log({prep_trace: slice});
-                    let { tool, speed, plunge, path } = slice.camTrace;
-                    setTool(tool, speed, plunge);
-                    let traceTool = new CAM.Tool(settings, tool);
-                    let traceToolDiam = traceTool.fluteDiameter();
-                    slice.camLines.forEach(poly => {
-                        poly.forEachPoint(function(point, pidx) {
-                            camOut(point.clone(), pidx > 0);
-                        }, !poly.open);
-                    });
-                    newLayer();
+                    if (depthFirst) {
+                        depthData.trace.push(slice);
+                        break;
+                    } else {
+                        emitTrace(slice);
+                    }
                     break;
                 case PRO.DRILL:
                     setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
@@ -454,6 +450,19 @@
             }
             update(sliceIndex / slices.length);
         });
+
+        function emitTrace(slice) {
+            let { tool, speed, plunge, path } = slice.camTrace;
+            setTool(tool, speed, plunge);
+            let traceTool = new CAM.Tool(settings, tool);
+            let traceToolDiam = traceTool.fluteDiameter();
+            slice.camLines.forEach(poly => {
+                poly.forEachPoint(function(point, pidx) {
+                    camOut(point.clone(), pidx > 0);
+                }, !poly.open);
+            });
+            newLayer();
+        }
 
         function polyEmit(poly, index, count, fromPoint) {
             let last = null;
@@ -602,6 +611,9 @@
                     });
                 }
             }
+            depthData.trace.forEach(slice => {
+                emitTrace(slice);
+            });
         }
 
         // drilling is always depth first, and always output last (change?)
