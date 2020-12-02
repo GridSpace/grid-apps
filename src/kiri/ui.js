@@ -766,9 +766,8 @@
     }
 
     // unlike other elements, does not auto-add to a row
-    function newButton(label, action, options) {
-        let opt = options || {},
-            b = DOC.createElement('button');
+    function newButton(label, action, opt = {}) {
+        let b = DOC.createElement('button');
 
         b.onclick = function() {
             hidePoppers();
@@ -785,12 +784,15 @@
             d.innerHTML = opt.icon;
             b.appendChild(d);
         }
+        if (opt.title) {
+            b.setAttribute('title', opt.title);
+        }
         if (label) {
             b.appendChild(DOC.createTextNode(label));
         }
 
-        addModeControls(b, options);
-        addId(b, options);
+        addModeControls(b, opt);
+        addId(b, opt);
 
         return b;
     }

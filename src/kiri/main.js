@@ -55,7 +55,8 @@
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
         grouping = false,
-        saveTimer = null;
+        saveTimer = null,
+        noop = () => {};
 
     DBUG.enable();
 
@@ -236,8 +237,8 @@
         },
         device: {
             get: currentDeviceName,
-            set: undefined, // set during init
-            clone: undefined // set during init
+            set: noop, // set during init
+            clone: noop // set during init
         },
         dialog: {
             show: showModal,
@@ -259,6 +260,7 @@
             slice: prepareSlices,
             print: preparePreview,
             prepare: preparePreview,
+            animate: noop,
             export: prepareExport,
             cancel: cancelWorker,
             clear: KIRI.client.clear
@@ -292,7 +294,7 @@
         selection,
         show: {
             alert: alert2,
-            devices: undefined, // set during init
+            devices: noop, // set during init
             progress: setProgress,
             controls: setControlsVisible,
             favorites: getShowFavorites,

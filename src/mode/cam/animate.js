@@ -42,11 +42,11 @@ self.kiri.loader.push(function() {
             layer.innerHTML = '';
             UC.setGroup(layer);
             UC.newRow([
-                UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>'}),
-                UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>'}),
-                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>'}),
-                UC.newButton(null,fast,{icon:'<i class="fas fa-fast-forward"></i>'}),
-                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>'}),
+                UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
+                UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>',title:"play"}),
+                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"step"}),
+                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"faster"}),
+                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
                 speedLabel = UC.newLabel("speed")
             ]);
             updateSpeed();

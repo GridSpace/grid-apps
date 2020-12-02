@@ -18,20 +18,13 @@
         noop = function() {};
 
     class Topo {
-        constructor(widget, settings, options) {
-            const opt = options || {},
-                ondone = opt.ondone || noop,
-                onupdate = opt.onupdate || noop,
-                shadow = opt.shadow,
+        constructor(widget, settings, opt = {}) {
+            const density = parseInt(settings.controller.animesh) * 2500,
                 proc = settings.process,
-                inside = proc.camContourIn,
-                resolution = proc.camTolerance,
-                tool = new CAM.Tool(settings, proc.camContourTool),
-                toolOffset = tool.generateProfile(resolution).profile,
-                toolDiameter = tool.fluteDiameter(),
-                toolStep = toolDiameter * proc.camContourOver,
-                traceJoin = toolDiameter / 2,
-                pocketOnly = proc.camOutlinePocket,
+                tolerance = proc.camTolerance,
+                onupdate = opt.onupdate || noop,
+                ondone = opt.ondone || noop,
+                shadow = opt.shadow,
                 bounds = widget.getBoundingBox().clone(),
                 minX = bounds.min.x,
                 maxX = bounds.max.x,
@@ -41,6 +34,14 @@
                 zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
                 boundsX = maxX - minX,
                 boundsY = maxY - minY,
+                inside = proc.camContourIn,
+                resolution = tolerance ? tolerance : 1/Math.sqrt(density/(boundsX * boundsY)),
+                tool = new CAM.Tool(settings, proc.camContourTool),
+                toolOffset = tool.generateProfile(resolution).profile,
+                toolDiameter = tool.fluteDiameter(),
+                toolStep = toolDiameter * proc.camContourOver,
+                traceJoin = toolDiameter / 2,
+                pocketOnly = proc.camOutlinePocket,
                 maxangle = proc.camContourAngle,
                 curvesOnly = proc.camContourCurves,
                 R2A = 180 / Math.PI,
@@ -72,6 +73,10 @@
                 debug_topo = debug && true,
                 debug_topo_lines = debug && true,
                 debug_topo_shells = debug && true;
+
+            if (tolerance == 0) {
+                console.log(`contour auto tolerance`,resolution.round(4));
+            }
 
             if (tabs) {
                 clipTab.appendAll(tabs.map(tab => {

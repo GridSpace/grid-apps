@@ -1,8 +1,6 @@
 # Kiri:Moto todo and notes
 
 ## 2.4 roadmap
-* `cnc`
-* - compute tolerance from animesh when set to 0
 * `laser`
 * - drag knife support
 * `all`
@@ -65,6 +63,8 @@
 
 # CAM
 
+* `B` crossing interior open spaces doesn't lift high enough
+*     https://forum.grid.space/t/g0-movement-hits-the-stock-using-custom-tabs-positioning/171/2
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes

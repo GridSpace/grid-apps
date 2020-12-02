@@ -1332,6 +1332,7 @@
             func: {
                 slice:          $('act-slice'),
                 preview:        $('act-preview'),
+                animate:        $('act-animate'),
                 export:         $('act-export')
             },
 
@@ -1604,7 +1605,7 @@
             camContourOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
-            camTolerance:       UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0.001,1.0), modes:CAM, units:true}),
+            camTolerance:       UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), modes:CAM, units:true}),
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
             camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
             camContourSep:      UC.newBlank({class:"pop-sep"}),
@@ -2000,15 +2001,15 @@
 
         API.platform.update_size();
 
-        SPACE.mouse.onHover((int, ev, ints) => {
+        SPACE.mouse.onHover((int, event, ints) => {
             if (!API.feature.hover) return;
             if (!int) return API.widgets.meshes();
-            API.event.emit('mouse.hover', {int, ints, point: int.point, type: 'widget'});
+            API.event.emit('mouse.hover', {int, event, point: int.point, type: 'widget'});
         });
 
-        SPACE.platform.onHover((int, ev) => {
+        SPACE.platform.onHover((int, event) => {
             if (!API.feature.hover) return;
-            if (int) API.event.emit('mouse.hover', {point: int, type: 'platform'});
+            if (int) API.event.emit('mouse.hover', {point: int, event, type: 'platform'});
         });
 
         SPACE.mouse.downSelect((int,event) => {
@@ -2255,6 +2256,7 @@
         UI.trash.onclick = API.selection.delete;
         UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         UI.func.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
+        UI.func.animate.onclick = (ev) => { ev.stopPropagation(); API.function.animate() };
         UI.func.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
         $('view-arrange').onclick = API.platform.layout;
         $('view-top').onclick = SPACE.view.top;

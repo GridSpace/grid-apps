@@ -237,7 +237,7 @@
 
             // drop points too close together
             if (deltaXY < 0.001 && point.z === lastPoint.z) {
-                console.trace(["drop dup",lastPoint,point]);
+                // console.trace(["drop dup",lastPoint,point]);
                 return;
             }
 

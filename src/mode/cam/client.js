@@ -36,6 +36,15 @@
 
         toolInfo = $('tool-info');
 
+        // wire up animate button in ui
+        api.function.animate = () => {
+            api.function.prepare(() => {
+                if (isCamMode && camStock) {
+                    animate();
+                }
+            });
+        };
+
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
             $('set-tools').style.display = isCamMode ? '' : 'none';
@@ -44,6 +53,7 @@
             if (!isCamMode) {
                 func.tabClear();
                 func.traceDone();
+                UI.func.animate.style.display = 'none';
             }
             // do not persist traces across page reloads
             func.traceClear();
@@ -243,7 +253,6 @@
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
-                        console.log('clear_traces', widget.id);
                         clearTraces(widget);
                         widget.trace_stack = null;
                     }
@@ -312,6 +321,12 @@
             }
             lastTrace = data.int.object;
             if (lastTrace.selected) {
+                let event = data.event;
+                let target = event.target;
+                let { clientX, clientY } = event;
+                let { offsetWidth, offsetHeight } = target;
+                toolInfo.style.right = `${offsetWidth - clientX + 5}px`;
+                toolInfo.style.bottom = `${offsetHeight - clientY + 5}px`;
                 let traceInfo = lastTrace.trace.poly.traceInfo;
                 let tool = new CAM.Tool(current, traceInfo.tool);
                 toolInfo.innerText = [
@@ -537,9 +552,13 @@
         let csox = 0;
         let csoy = 0;
         let stock = settings.stock = { };
+        let compute = enabled && stockSet && widgets.length;
+
+        UI.func.animate.style.display = refresh ? '' : 'none';
 
         // create/inject cam stock if stock size other than default
-        if (enabled && stockSet && widgets.length) {
+        if (compute) {
+            UI.func.animate.style.display = '';
             let csx = proc.camStockX;
             let csy = proc.camStockY;
             let csz = proc.camStockZ;

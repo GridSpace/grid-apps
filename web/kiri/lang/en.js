@@ -394,7 +394,7 @@ kiri.lang['en-us'] = {
 
     // OUTPUT CAM
     ou_toll_s:      "tolerance",
-    ou_toll_l:      "surface precision\nin workspace units\nlower is slower and\nuses more memory",
+    ou_toll_l:      "surface precision\nin workspace units\nlower is slower and\nuses more memory\n0 = automatic based\non animate preference",
     ou_ztof_s:      "z top offset",
     ou_ztof_l:      "offset from stock surface\nto top face of part\nin workspace units",
     ou_zbot_s:      "z bottom",
