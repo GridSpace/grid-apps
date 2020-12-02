@@ -28,6 +28,10 @@
             return this.tool.id;
         }
 
+        getName() {
+            return this.tool.name;
+        }
+
         getType() {
             return this.tool.type;
         }

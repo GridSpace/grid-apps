@@ -305,6 +305,15 @@ self.kiri.loader.push(function() {
         animating = true;
         stepsRemain--;
         if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
+            // on real tool change, go to safe Z first
+            if (tool) {
+                let pos = last.point = {
+                    x: last.point.x,
+                    y: last.point.y,
+                    z: stock.z
+                };
+                send.data({ mesh_move: { toolID, pos }});
+            }
             updateTool(next.tool, send);
         }
         const id = toolID;

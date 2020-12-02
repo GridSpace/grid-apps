@@ -75,6 +75,8 @@
             easeDown = process.camEaseDown,
             depthFirst = process.camDepthFirst,
             tolerance = process.camTolerance,
+            contour = process.camContourXOn || process.camContourYOn,
+            contourCurves = process.camContourCurves,
             drillDown = process.camDrillDown,
             drillLift = process.camDrillLift,
             drillDwell = process.camDrillDwell,
@@ -550,7 +552,7 @@
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
             }
             // two modes for deferred outlining: x then y or combined
-            if (process.camContourCurves) {
+            if (contour && contourCurves) {
                 lastMode = PRO.CONTOUR_X;
                 setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
                 spindle = Math.min(spindleMax, process.camContourSpindle);
@@ -567,7 +569,7 @@
                     newLayer();
                     return lastPoint;
                 });
-            } else {
+            } else if (contour) {
                 setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
                 spindle = Math.min(spindleMax, process.camContourSpindle);
                 // deferred contour x outlining

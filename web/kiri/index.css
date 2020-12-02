@@ -1196,6 +1196,15 @@ th, tr, td, label {
     right: 5px;
     color: #000;
 }
+#tool-info {
+    position: fixed;
+    white-space: pre;
+    font-family: monospace;
+    font-size: 12px;
+    bottom: 5px;
+    left: 5px;
+    color: #000;
+}
 #winfo {
     position: fixed;
     font-size: 10px;

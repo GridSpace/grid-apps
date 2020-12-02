@@ -390,7 +390,8 @@
      */
     PRO.setTopZ = function(z) {
         let mesh = this.mesh,
-            pos = this.track.pos;
+            pos = this.track.pos,
+            ltz = this.last_top_z || {};
         if (z) {
             pos.z = mesh.getBoundingBox().max.z - z;
             mesh.position.z = -pos.z - 0.01;
@@ -398,7 +399,12 @@
             pos.z = 0;
             mesh.position.z = 0;
         }
-        this.modified = true;
+        let ntz = {
+            pz: pos.z,
+            mpz: mesh.position.z
+        };
+        this.modified |= (ltz.pz !== ntz.pz || ltz.mpz !== ntz.mpz);
+        this.last_top_z = ntz;
     }
 
     PRO.move = function(x, y, z, abs) {
@@ -448,6 +454,7 @@
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
+        this.modified = true;
     };
 
     PRO.rotate = function(x, y, z) {
@@ -478,6 +485,7 @@
             rot.y += (y || 0);
             rot.z += (z || 0);
         }
+        this.modified = true;
     };
 
     PRO.unrotate = function() {
@@ -486,6 +494,7 @@
         });
         this.roto = [];
         this.center();
+        this.modified = true;
     };
 
     PRO.mirror = function() {
@@ -511,6 +520,7 @@
         geo.computeFaceNormals();
         geo.computeVertexNormals();
         o.mirror = !o.mirror;
+        this.modified = true;
     };
 
     PRO.getGeoVertices = function() {
@@ -593,7 +603,6 @@
                     ondone(false, reply.error);
                 }
                 if (reply.done) {
-                    widget.modified = false;
                     ondone(true);
                 }
             });
@@ -609,7 +618,6 @@
                 onupdate(1.0, "transfer");
 
                 widget.stats.slice_time = UTIL.time() - startTime;
-                widget.modified = false;
 
                 ondone();
             };

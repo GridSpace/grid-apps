@@ -10,6 +10,7 @@
         PRO = CAM.process,
         newPolygon = BASE.newPolygon,
         newPoint = BASE.newPoint,
+        toolInfo,
         isAnimate,
         isArrange,
         isCamMode,
@@ -32,6 +33,8 @@
         UI = api.ui;
         UC = api.uc;
         API = api;
+
+        toolInfo = $('tool-info');
 
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
@@ -239,18 +242,21 @@
                 alert = api.show.alert("[esc] key cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
+                    if (widget.trace_stack) {
+                        widget.adds.appendAll(widget.trace_stack.meshes);
+                        widget.trace_stack.show();
+                        return;
+                    }
                     let stack = new KIRI.Stack(widget.mesh);
                     widget.trace_stack = stack;
                     widget.traces.forEach(poly => {
                         let layers = new KIRI.Layers();
                         layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
                         stack.addLayers(layers);
-                        stack.meshes.forEach(mesh => {
+                        stack.new_meshes.forEach(mesh => {
                             mesh.trace = {widget, poly};
                         });
-                        // reset so each mesh array is new for the layer
-                        widget.adds.appendAll(stack.meshes);
-                        stack.meshes = [];
+                        widget.adds.appendAll(stack.new_meshes);
                     });
                     // for (let [key, val] of Object.entries(widget.sindex)) {
                     //     console.log('sindex', {key, val});
@@ -276,8 +282,8 @@
             api.feature.hoverAdds = false;
             KIRI.api.widgets.for(widget => {
                 if (widget.trace_stack) {
+                    widget.trace_stack.hide();
                     widget.adds.removeAll(widget.trace_stack.meshes);
-                    widget.trace_stack.destroy();
                 }
             });
         });
@@ -300,6 +306,18 @@
                 return;
             }
             lastTrace = data.int.object;
+            if (lastTrace.selected) {
+                let traceInfo = lastTrace.trace.poly.traceInfo;
+                let tool = new CAM.Tool(current, traceInfo.tool);
+                toolInfo.innerText = [
+                    `  tool: ${tool.getName()}`,
+                    `  feed: ${traceInfo.speed}`,
+                    `plunge: ${traceInfo.plunge}`
+                ].join('\n');
+                toolInfo.style.display = 'flex';
+            } else {
+                toolInfo.style.display = '';
+            }
             let material = lastTrace.material[0];
             let color = material.color;
             let {r, g, b} = color;
@@ -310,7 +328,6 @@
         };
         func.traceHoverUp = function(int) {
             if (!int) return;
-            console.log({traceHoverUp: int});
             func.traceToggle(int.object);
         };
         func.traceToggle = function(obj) {
@@ -461,13 +478,15 @@
     }
 
     function clearTraces(widget) {
-        Object.values(widget.traces || {}).forEach(rec => {
-            console.log('clear',rec);
-            // widget.adds.remove(rec.box);
-            // widget.mesh.remove(rec.box);
-        });
-        widget.traces = {};
-        widget.trace_stack = null;
+        let stack = widget.trace_stack;
+        if (stack) {
+            stack.meshes.forEach(mesh => {
+                if (mesh.selected) {
+                    func.traceToggle(mesh);
+                }
+            });
+        }
+        widget.trace = null;
         delete API.widgets.annotate(widget.id).trace;
     }
 

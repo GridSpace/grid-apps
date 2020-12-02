@@ -503,7 +503,6 @@
                     .addPolys(slice.topPolys())
                 sliceAll.push(slice);
                 maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
-console.log({slice});
             });
         }
 
@@ -537,6 +536,10 @@ console.log({slice});
     };
 
     CAM.traces = function computeTraces(settings, widget) {
+        if (widget.traces) {
+            // do no work if cached
+            return false;
+        }
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
             zline: true
@@ -615,6 +618,7 @@ console.log({slice});
         slicer.slice(indices, opts);
         widget.traces = traces;
         // widget.sindex = sindex;
+        return true;
     };
 
     // drilling op

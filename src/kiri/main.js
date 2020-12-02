@@ -2187,7 +2187,7 @@
                 UI.back.style.display = '';
                 UI.render.style.display = '';
                 UI.render.classList.add('lt-enabled');
-                KIRI.work.clear();
+                // KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
                 updateSpeeds();

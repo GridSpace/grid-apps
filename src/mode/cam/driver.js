@@ -42,8 +42,8 @@
             KIRI.worker.traces = function(data, send) {
                 const { settings } = data;
                 const widgets = Object.values(cache);
-                widgets.forEach(widget => CAM.traces(settings, widget));
-                send.done(KIRI.codec.encode(widgets.map(widget => {return {
+                const fresh = widgets.filter(widget => CAM.traces(settings, widget));
+                send.done(KIRI.codec.encode(fresh.map(widget => {return {
                     id: widget.id,
                     traces: widget.traces,
                     // sindex: widget.sindex

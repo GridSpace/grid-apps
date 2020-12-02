@@ -74,7 +74,7 @@
             }
 
             const { polys, lines, faces, cface, paths, cpath, color, off } = layer;
-            const meshes = this.meshes;
+            const meshes = [];
             const defstate = !off;
             const mats = [];
             mats.state = defstate;
@@ -185,6 +185,8 @@
                 mats.appendAll(mat);
             }
 
+            this.new_meshes = meshes;
+            this.meshes.appendAll(meshes);
             mats.forEach(mat => mat.visible = defstate);
             return mats;
         }
