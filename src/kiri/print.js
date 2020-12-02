@@ -833,7 +833,7 @@
                     }
                     return;
                 }
-                let area = poly.area();
+                let area = poly.open ? 1 : poly.area();
                 poly.forEachPoint(function(point, index) {
                     dist = opt.weight ?
                         startPoint.distTo3D(point) * area * area :

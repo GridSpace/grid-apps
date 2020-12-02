@@ -45,7 +45,6 @@
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
             procDrillReg = proc.camDrillReg,
-            // procTrace = proc.camTraceOn,
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3),
@@ -738,6 +737,49 @@
         let noff = [];
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
         offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs)) ));
+        if (noff.length > 1) {
+            let heal = 0;
+            // heal/rejoin open segments that share endpoints
+            outer: for(;; heal++) {
+                let ntmp = noff, tlen = ntmp.length;
+                for (let i=0; i<tlen; i++) {
+                    let s1 = ntmp[i];
+                    if (!s1) continue;
+                    for (let j=i+1; j<tlen; j++) {
+                        let s2 = ntmp[j];
+                        if (!s2) continue;
+                        if (!(s1.open && s2.open)) continue;
+                        if (s1.last().isMergable2D(s2.first())) {
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                        if (s2.last().isMergable2D(s1.first())) {
+                            s2.addPoints(s1.points.slice(1));
+                            ntmp[i] = null;
+                            continue outer;
+                        }
+                        if (s1.first().isMergable2D(s2.first())) {
+                            s1.reverse();
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                        if (s1.last().isMergable2D(s2.last())) {
+                            s2.reverse();
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                    }
+                }
+                break;
+            }
+            if (heal > 0) {
+                // cull nulls
+                noff = noff.filter(o => o);
+            }
+        }
         return noff;
     }
 

@@ -320,6 +320,9 @@
                 lastTrace = null;
                 return;
             }
+            if (!data.int.object.trace) {
+                return;
+            }
             lastTrace = data.int.object;
             if (lastTrace.selected) {
                 let event = data.event;
