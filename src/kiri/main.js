@@ -180,8 +180,8 @@
         ],
         trace: [
             { name: "follow" },
-            { name: "out" },
-            { name: "in" }
+            // { name: "out" },
+            // { name: "in" }
         ]
     };
 
