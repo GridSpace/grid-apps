@@ -237,11 +237,16 @@
             func.tabDone();
             alert = api.show.alert("analyzing parts...");
             traceOn = true;
-            KIRI.client.traces(() => {
+            KIRI.client.traces((ids) => {
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] key cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
+                    if (ids.indexOf(widget.id) >= 0) {
+                        console.log('clear_traces', widget.id);
+                        clearTraces(widget);
+                        widget.trace_stack = null;
+                    }
                     if (widget.trace_stack) {
                         widget.adds.appendAll(widget.trace_stack.meshes);
                         widget.trace_stack.show();

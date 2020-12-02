@@ -30,11 +30,13 @@
                 let settings = API.conf.get();
                 let widgets = API.widgets.map();
                 send("traces", { settings }, output => {
+                    let ids = [];
                     KIRI.codec.decode(output).forEach(rec => {
+                        ids.push(rec.id);
                         widgets[rec.id].traces = rec.traces;
                         // widgets[rec.id].sindex = rec.sindex;
                     });
-                    ondone(true);
+                    ondone(ids);
                 });
             };
 

@@ -2,8 +2,6 @@
 
 ## 2.4 roadmap
 * `cnc`
-* - tracing (chamfer, engrave)
-* - auto feature detection (slicing)
 * - compute tolerance from animesh when set to 0
 * `laser`
 * - drag knife support
