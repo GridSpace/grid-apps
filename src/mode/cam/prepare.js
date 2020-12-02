@@ -255,8 +255,7 @@
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
-            } //else
-            {
+            } else if (isMove) {
                 // for longer moves, check the terrain to see if we need to go up and over
                 const bigXY = (deltaXY > toolDiam);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
