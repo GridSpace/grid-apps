@@ -130,14 +130,36 @@
             onupdate((opSum/opsTot) + (index/total) * opTot, msg || opOn[0]);
         }
 
-        // TODO pass widget.isModified() on slice and re-use cache if false
-        // TODO pre-slice in background from client signal
-        // TODO same applies to topo map generation
-        nextOp();
+        let mark = Date.now();
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
             zline: true
         });
+
+        // xray debug
+        if (false) {
+            console.log({slicer_setup: Date.now() - mark});
+            let xlicer = new KIRI.slicer2(widget.getPoints(), {
+                zlist: true,
+                zline: true
+            });
+            let xrayind = Object.keys(xlicer.zLine)
+                .map(v => parseFloat(v).round(5))
+                .sort((a,b) => a-b);
+            let xrayopt = { each: (data, index, total) => {
+                let slice = newSlice(data.z);
+                slice.addTops(data.tops);
+                // data.tops.forEach(top => slice.addTop(top));
+                slice.lines = data.lines;
+                slice.xray();
+                sliceAll.push(slice);
+            }, over: false, flatoff: 0, edges: true, openok: true };
+            xlicer.slice(xrayind, xrayopt);
+            // xrayopt.over = true;
+            // slicer.slice(xrayind, xrayopt);
+        }
+
+        nextOp();
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });

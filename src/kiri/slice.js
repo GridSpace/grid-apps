@@ -187,7 +187,7 @@
     };
 
     PRO.xray = function(dash = 3) {
-        console.log('xray', this);
+        // console.log('xray', this);
         this.output().setLayer(`xp`, 0x888800).addPolys(this.topPolys());
         this.lines.forEach((line, i) => {
             const group = i % dash;

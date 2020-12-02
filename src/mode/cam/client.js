@@ -300,6 +300,7 @@
                     widget.adds.removeAll(widget.trace_stack.meshes);
                 }
             });
+            toolInfo.style.display = '';
         });
         api.event.on("cam.trace.clear", func.traceClear = () => {
             func.traceDone();
