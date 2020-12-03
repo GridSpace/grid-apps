@@ -551,7 +551,7 @@
                 let flatLevels = depthData.outline.map(level => {
                     return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
                 }).filter(l => l.length > 0);
-                flatLevels.xout('flat');
+                // flatLevels.xout('flat');
                 // start with the smallest polygon on the top
                 printPoint = flatLevels[0]
                     // .filter(l => l.length > 0)[0]
