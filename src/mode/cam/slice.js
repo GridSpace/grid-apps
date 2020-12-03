@@ -58,7 +58,8 @@
             camRoughStock = proc.camRoughStock,
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown/3, outlineDown/3),
-            maxToolDiam = 0,
+            minToolDiam = Infinity,
+            maxToolDiam = -Infinity,
             thruHoles,
             tabs = settings.widget[widget.id].tab;
 
@@ -129,6 +130,11 @@
             onupdate((opSum/opsTot) + (index/total) * opTot, msg || opOn[0]);
         }
 
+        function updateToolDiams(toolDiam) {
+            minToolDiam = Math.min(minToolDiam, toolDiam);
+            maxToolDiam = Math.max(maxToolDiam, toolDiam);
+        }
+
         let mark = Date.now();
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
@@ -189,7 +195,7 @@
         let center = tshadow[0].bounds.center();
 
         if (procDrillReg) {
-            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
+            updateToolDiams(drillToolDiam);
             sliceDrillReg(settings, sliceAll, zThru);
         }
 
@@ -222,7 +228,7 @@
         // create roughing slices
         if (procRough) {
             nextOp();
-            maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
+            updateToolDiams(roughToolDiam);
 
             let flats = [];
             let shadow = [];
@@ -380,7 +386,7 @@
             nextOp();
             let outlineTool = new CAM.Tool(conf, proc.camOutlineTool);
             let outlineToolDiam = outlineTool.fluteDiameter();
-            maxToolDiam = Math.max(maxToolDiam, outlineToolDiam);
+            updateToolDiams(outlineToolDiam);
 
             let shadow = [];
             let slices = [];
@@ -522,12 +528,12 @@
                     .setLayer("trace", {line: 0xaa00aa}, false)
                     .addPolys(slice.topPolys())
                 sliceAll.push(slice);
-                maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
+                updateToolDiams(traceToolDiam);
             });
         }
 
         if (procDrill) {
-            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
+            updateToolDiams(drillToolDiam);
             sliceDrill(drillTool, tslices, sliceAll);
         }
 
@@ -549,7 +555,13 @@
                 });
             });
         }
+
+        // add shadow perimeter to terrain to catch outside moves off part
+        let shadowOff = POLY.offset(shadowTop.tops, minToolDiam / 2);
+        terrain.forEach(level => level.tops.appendAll(shadowOff));
+
         widget.terrain = terrain;
+        widget.minToolDiam = minToolDiam;
         widget.maxToolDiam = maxToolDiam;
 
         ondone();

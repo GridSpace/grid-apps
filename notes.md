@@ -11,6 +11,8 @@
 # - split gcode output
 # - double-sided assistance
 # - redo path planning
+# - more tracing types (in, out, clear, pocket)
+# - trace re-ordering
 # `fdm`
 # - redo automatic supports using faces instead of deltas
 # - bind process to z ranges or boxed regions
