@@ -95,6 +95,15 @@
         return this;
     };
 
+    PRO.angleDiff = function(s2,sign) {
+        const n1 = this.angle;
+        const n2 = s2.angle;
+        let diff = n2 - n1;
+        while (diff < -180) diff += 360;
+        while (diff > 180) diff -= 360;
+        return sign ? diff : Math.abs(diff);
+    };
+
     /** ******************************************************************
      * Connect to base and Helpers
      ******************************************************************* */

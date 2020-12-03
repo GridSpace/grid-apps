@@ -220,6 +220,7 @@ KIRI.worker = {
                 out.point = BASE.newPoint(x,y,z || 0);
             });
         });
+        const print = current.print = KIRI.newPrint(null, Object.values(cache));
         const layers = KIRI.driver.FDM.prepareRender(parsed, progress => {
             send.data({ progress });
         }, { thin:  true });

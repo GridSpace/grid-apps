@@ -1,9 +1,5 @@
 # Kiri:Moto todo and notes
 
-## 2.4 roadmap
-* `laser`
-* - drag knife support
-
 ## 2.5 roadmap
 # `cnc`
 # - lathe, A-axis
@@ -64,6 +60,7 @@
 
 # CAM
 
+* `B` starting export during animation unleashes chaos
 * `B` crossing interior open spaces doesn't lift high enough
 *     https://forum.grid.space/t/g0-movement-hits-the-stock-using-custom-tabs-positioning/171/2
 * `B` climb vs conventional not fully consistent after refactor

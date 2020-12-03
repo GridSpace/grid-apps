@@ -1666,10 +1666,12 @@
             outputLaserMerged:   UC.newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:LASER}),
             outputLaserGroup:    UC.newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, modes:LASER}),
 
-            knife:               UC.newGroup(LANG.dk_menu, null, {modes:LASER, show:showLaserKnife }),
-            outputKnifeDepth:    UC.newInput(LANG.dk_dpth_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,5.0), modes:LASER, show:showLaserKnife}),
-            outputKnifePasses:   UC.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:UC.toInt, bound:UC.bound(0,5), modes:LASER, show:showLaserKnife}),
-            outputTipOffset:     UC.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:UC.toFloat, bound:UC.bound(0.0,10.0), modes:LASER, show:showLaserKnife}),
+            knife:               UC.newGroup(LANG.dk_menu, null, {modes:LASER, marker:true}),
+            outputKnifeDepth:    UC.newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:UC.toFloat, bound:UC.bound(0.0,5.0), modes:LASER}),
+            outputKnifePasses:   UC.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:UC.toInt, bound:UC.bound(0,5), modes:LASER}),
+            outputKnifeTip:      UC.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:UC.toFloat, bound:UC.bound(0.0,10.0), modes:LASER}),
+            knifeSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
+            knifeOn:            UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
 
             output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
             outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
@@ -1696,7 +1698,6 @@
             outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
-            laserKnife:          UC.newBoolean(LANG.ou_drkn_s, onBooleanClick, {title:LANG.ou_drkn_l, modes:[]}),
 
             advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM, expert:true}),
             outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1766,10 +1767,6 @@
 
             layers:        UC.setGroup($("layers")),
         });
-
-        function showLaserKnife() {
-            return UI.laserKnife.checked;
-        }
 
         function spindleShow() {
             return settings().device.spindleMax > 0;

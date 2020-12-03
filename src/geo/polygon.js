@@ -221,9 +221,10 @@
         return ret;
     };
 
+    // use Slope.angleDiff() then re-test path mitering / rendering
     function slopeDiff(s1, s2) {
-        const n1 = s1.angle;//(s1.angle + 360) % 360;
-        const n2 = s2.angle;//(s2.angle + 360) % 360;
+        const n1 = s1.angle;
+        const n2 = s2.angle;
         let diff = n2 - n1;
         while (diff < -180) diff += 360;
         while (diff > 180) diff -= 360;
@@ -781,8 +782,6 @@
      */
     PRO.isNested = function(parent) {
         if (parent.bounds.contains(this.bounds)) {
-            //let int = POLY().rayIntersect(this.bounds.leftMost, nest_test_slope, [parent], false);
-            //return int.length % 2 === 1 || this.isInside(parent, CONF.precision_nested_sq);
             return this.isInside(parent, CONF.precision_nested_sq);
         }
         return false;
@@ -1546,37 +1545,37 @@
      * rotate such that first and last points are the points
      * furthest apart and lowest when there is a tie breaker
      */
-    PRO.spread = function() {
-        let poly = this,
-            points = poly.points,
-            plen = points.length,
-            i, pp, np, p, mdelta, newmax, max, shift, maxd;
-
-        max = {d:0};
-        maxd = 0;
-        // find two most distance points
-        for (i=0; i<plen; i++) {
-            pp = points[i % plen];
-            np = points[(i+1) % plen];
-            p = ABS(pp.x - np.x) + ABS(pp.y - np.y);
-            mdelta = ABS(p - max.d);
-            newmax = p > maxd;
-            maxd = MAX(maxd,p);
-            // select lowest points (corner case = square)
-            if (newmax || (mdelta < 0.001 && max.p1 && MIN(pp.z,np.z) < MIN(max.p1.z, max.p2.z))) {
-                max = {p1:pp, p2:np, i:(i+1)%plen, d:p};
-            }
-        }
-
-        if (max.i > 0) {
-            // shift array to start at "leftmost" Point
-            shift = points.slice(max.i);
-            shift.appendAll(points.slice(0,max.i));
-            return newPolygon(shift);
-        }
-
-        return poly;
-    }
+    // PRO.spread = function() {
+    //     let poly = this,
+    //         points = poly.points,
+    //         plen = points.length,
+    //         i, pp, np, p, mdelta, newmax, max, shift, maxd;
+    //
+    //     max = {d:0};
+    //     maxd = 0;
+    //     // find two most distance points
+    //     for (i=0; i<plen; i++) {
+    //         pp = points[i % plen];
+    //         np = points[(i+1) % plen];
+    //         p = ABS(pp.x - np.x) + ABS(pp.y - np.y);
+    //         mdelta = ABS(p - max.d);
+    //         newmax = p > maxd;
+    //         maxd = MAX(maxd,p);
+    //         // select lowest points (corner case = square)
+    //         if (newmax || (mdelta < 0.001 && max.p1 && MIN(pp.z,np.z) < MIN(max.p1.z, max.p2.z))) {
+    //             max = {p1:pp, p2:np, i:(i+1)%plen, d:p};
+    //         }
+    //     }
+    //
+    //     if (max.i > 0) {
+    //         // shift array to start at "leftmost" Point
+    //         shift = points.slice(max.i);
+    //         shift.appendAll(points.slice(0,max.i));
+    //         return newPolygon(shift);
+    //     }
+    //
+    //     return poly;
+    // }
 
     /** ******************************************************************
      * Connect to base and Helpers
