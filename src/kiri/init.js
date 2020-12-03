@@ -1597,6 +1597,13 @@
             camOutlineIn:       UC.newBoolean(LANG.co_olin_s, onBooleanClick, {title:LANG.co_olin_l, modes:CAM, show:() => { return !UI.camOutlineOut.checked }}),
             camOutlineOut:      UC.newBoolean(LANG.co_olot_s, onBooleanClick, {title:LANG.co_olot_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camOutlineWide:     UC.newBoolean(LANG.co_wide_s, onBooleanClick, {title:LANG.co_wide_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
+            camOutlineSep2:     UC.newBlank({class:"pop-sep"}),
+            camOutlineOcRadius: UC.newInput(LANG.co_ocrd_s, {title:LANG.co_ocrd_l, convert:UC.toInt, modes:CAM, units:true}),
+            camOutlineOvercut:  UC.newRow([
+                (UI.overcutAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.overcutDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (UI.overcutClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))],
+                {modes:CAM, class:"ext-buttons f-row", show:() => { return UI.camOutlineOcRadius.value != 0 }}),
             camOutlineSep:      UC.newBlank({class:"pop-sep"}),
             camOutlineOn:       UC.newBoolean(LANG.co_olen_s, onBooleanClick, {title:LANG.co_olen_l, modes:CAM}),
             camContour:         UC.newGroup(LANG.cn_menu, null, {modes:CAM, marker:true}),

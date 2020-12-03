@@ -20,6 +20,7 @@
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC;
 
     let zaxis = {x: 0, y: 0, z: 1},
+        xaxis = {x: 1, y: 0, z: 0},
         func = {};
 
     CAM.init = function(kiri, api) {
@@ -53,6 +54,7 @@
             if (!isCamMode) {
                 func.tabClear();
                 func.traceDone();
+                func.overcutClear();
                 UI.func.animate.style.display = 'none';
             }
             // do not persist traces across page reloads
@@ -65,6 +67,7 @@
             CAM.animate_clear(api);
             func.tabDone();
             func.traceDone();
+            func.overcutDone();
         });
 
         api.event.on("settings.saved", (settings) => {
@@ -94,6 +97,7 @@
         api.event.on("settings.load", (settings) => {
             if (!isCamMode) return;
             restoreTabs(api.widgets.all());
+            restoreOvercuts(api.widgets.all());
         });
 
         api.event.on([
@@ -148,8 +152,104 @@
                         if (ok) func.traceClear();
                     });
                     break;
+                case api.ui.overcutAdd:
+                    return func.overcutAdd();
+                case api.ui.overcutDun:
+                    return func.overcutDone();
+                case api.ui.overcutClr:
+                    api.uc.confirm("clear overcuts?").then(ok => {
+                        if (ok) func.overcutClear();
+                    });
+                    break;
             }
         });
+
+        // OVERCUT FUNCS
+        let showOver, lastOver;
+        api.event.on("cam.overcut.add", func.overcutAdd = () => {
+            func.traceDone();
+            alert = api.show.alert("[esc] key cancels overcut editing");
+            api.feature.hover = true;
+            func.hover = func.overcutHover;
+            func.hoverUp = func.overcutHoverUp;
+        });
+        api.event.on("cam.overcut.done", func.overcutDone = () => {
+            delbox('oover');
+            api.hide.alert(alert);
+            api.feature.hover = false;
+            if (lastOver) {
+                lastOver.cyl.material.color.r = 0;
+                lastOver = null;
+            }
+        });
+        api.event.on("cam.overcut.clear", func.overcutClear = () => {
+            func.overcutDone();
+            API.widgets.all().forEach(widget => {
+                clearOvercuts(widget);
+            });
+            API.conf.save();
+        });
+        func.overcutHover = function(data) {
+            const { int, type, point } = data;
+            const object = int ? int.object : null;
+            const oc = int ? object.overcut : null;
+            if (lastOver) {
+                lastOver.cyl.material.color.r = 0;
+                lastOver = null;
+            }
+            if (oc) {
+                oc.cyl.material.color.r = 0.5;
+                lastOver = oc;
+                return;
+            }
+            if (type !== 'widget') {
+                iw = null;
+                return;
+            }
+            let n = int.face.normal;
+            iw = int.object.widget;
+            ic = int.point;
+            // only near vertical faces
+            if (Math.abs(n.z) > 0.1) {
+                return;
+            }
+            
+            if (iw) showOver = createOverCutCyl(iw, ic, n);
+        }
+        func.overcutHoverUp = function () {
+            delbox('oover');
+            if (lastOver) {
+                const {widget, box, id} = lastOver;
+                widget.adds.remove(box);
+                widget.mesh.remove(box);
+                delete widget.overcuts[id];
+                let oc = API.widgets.annotate(widget.id).overcuts;
+                let ix = 0;
+                oc.forEach((rec,i) => {
+                    if (rec.id === id) {
+                        ix = i;
+                    }
+                });
+                oc.splice(ix,1);
+                API.conf.save();
+                return;
+            }
+            if (!iw) return;
+            let ip = iw.track.pos;
+            let wa = api.widgets.annotate(iw.id);
+            let wo = (wa.overcuts = wa.overcuts || []);
+            let pos = {
+                x: showOver.pos.x - ip.x,
+                y: -showOver.pos.z - ip.y,
+                z: showOver.pos.y + ip.z,
+            }
+            let id = Date.now();
+            let { dim, rot } = showOver;
+            let rec = { pos, dim, rot, id };
+            wo.push(Object.clone(rec));
+            addWidgetOvercut(iw, rec);
+            API.conf.save();
+        }
 
         // TAB FUNCS
         let showTab, lastTab, tab, iw, ic;
@@ -178,6 +278,7 @@
         });
         func.tabHover = function(data) {
             delbox('tabb');
+            
             const { int, type, point } = data;
             const object = int ? int.object : null;
             const tab = int ? object.tab : null;
@@ -201,7 +302,7 @@
             if (Math.abs(n.z) > 0.1) {
                 return;
             }
-            showTab = createTabBox(iw, ic, n);
+            if (iw) showTab = createTabBox(iw, ic, n);
         };
         func.tabHoverUp = function(int) {
             delbox('tabb');
@@ -386,18 +487,21 @@
             if (isCamMode) {
                 func.tabDone();
                 func.traceDone();
+                func.overcutDone();
             }
         });
         api.event.on("key.esc", () => {
             if (isCamMode) {
                 func.tabDone();
                 func.traceDone();
+                func.overcutDone();
             }
         });
         api.event.on("selection.scale", () => {
             if (isCamMode) {
                 func.tabClear();
                 func.traceClear();
+                func.overcutClear();
             }
         });
         api.event.on("widget.rotate", rot => {
@@ -446,6 +550,21 @@
         });
     };
 
+    function createOverCutCyl(iw, ic, n) {
+        const { track } = iw;
+        const { stock, bounds, process } = API.conf.get();
+        const sz = stock.z || bounds.max.z;
+        const zp = sz - track.box.d + process.camZBottom - process.camZTopOffset;
+        ic.x += n.x * process.camOutlineOcRadius/2;
+        ic.z -= n.y * process.camOutlineOcRadius/2;
+        ic.y = sz/2; // offset swap in world space y,z
+        const rot = new THREE.Quaternion().setFromAxisAngle(xaxis, Math.PI/2);
+        const pos = { x:ic.x, y:ic.y, z:ic.z };
+        const dim = { radiustop: process.camOutlineOcRadius, radiusbottom: process.camOutlineOcRadius, height: sz};
+        const cyl = addcyl(pos, 0xbb0000, 'oover', dim, { rotate: rot });
+        return { pos, dim, rot, cyl, width: 3, height: sz };
+    }
+
     function createTabBox(iw, ic, n) {
         const { track } = iw;
         const { stock, bounds, process } = API.conf.get();
@@ -460,6 +579,21 @@
         const dim = { x:camTabsDepth, y:camTabsWidth, z:camTabsHeight };
         const tab = addbox(pos, 0x0000dd, 'tabb', dim, { rotate: rot });
         return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
+    }
+
+    function addWidgetOvercut(widget, rec) {
+        const { pos, dim, rot, id } = rec;
+        const overcuts = widget.overcuts = (widget.overcuts || {});
+        // prevent duplicate restore from repeated settings load calls
+        if (!overcuts[id]) {
+            pos.cyl = addcyl(
+                pos, 0xdd0000, id,
+                dim, { group: widget.mesh, rotate: rot }
+            );
+            pos.cyl.overcut = Object.assign({widget, id}, pos);
+            widget.adds.push(pos.cyl);
+            overcuts[id] = pos;
+        }
     }
 
     function addWidgetTab(widget, rec) {
@@ -477,6 +611,17 @@
         }
     }
 
+    function restoreOvercuts(widgets) {
+        widgets.forEach(widget => {
+            const ocs = API.widgets.annotate(widget.id).overcuts || [];
+            ocs.forEach(rec => {
+                rec = Object.clone(rec);
+                rec.rot = new THREE.Quaternion(rec.rot._x ,rec.rot._y, rec.rot._z, rec.rot._w);
+                addWidgetOvercut(widget, rec);
+            });
+        });
+    }
+
     function restoreTabs(widgets) {
         widgets.forEach(widget => {
             const tabs = API.widgets.annotate(widget.id).tab || [];
@@ -486,6 +631,15 @@
                 addWidgetTab(widget, rec);
             });
         });
+    }
+
+    function clearOvercuts(widget) {
+        Object.values(widget.overcuts || {}).forEach(rec => {
+            widget.adds.remove(rec.cyl);
+            widget.mesh.remove(rec.cyl);
+        });
+        widget.overcuts = {};
+        delete API.widgets.annotate(widget.id).overcuts;
     }
 
     function clearTabs(widget) {
@@ -512,6 +666,7 @@
 
     function addbox() { return FDM.addbox(...arguments)};
     function delbox() { return FDM.delbox(...arguments)};
+    function addcyl() { return FDM.addcyl(...arguments)};
 
     function animate() {
         isAnimate = true;

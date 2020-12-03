@@ -22,6 +22,7 @@
      * @param {Function} output
      */
     CAM.slice = function(settings, widget, onupdate, ondone) {
+        
         let conf = settings,
             proc = conf.process,
             stock = settings.stock || {},
@@ -61,7 +62,8 @@
             minStepDown = Math.min(1, roughDown/3, outlineDown/3),
             maxToolDiam = 0,
             thruHoles,
-            tabs = settings.widget[widget.id].tab;
+            tabs = settings.widget[widget.id].tab,
+            overcuts = settings.widget[widget.id].overcuts;
 
         if (tabs) {
             // make tab polygons
@@ -448,6 +450,23 @@
                         tab.off = POLY.expand([tab.poly], outlineToolDiam / 2).flat();
                     });
                     offset = cutTabs(tabs, offset, slice.z);
+                }
+
+                if (overcuts) {
+                    // make overcut polygons and add it
+                    // actually is not a circle but a 32 lines polygon
+                    overcuts.forEach( oc => {
+                        let polyRadius = oc.dim.radiusbottom - outlineToolDiam/2; 
+                        if (polyRadius > 0.01) {
+                            let zero = newPoint(0,0,0);
+                            let point = newPoint(oc.pos.x, oc.pos.y, slice.z);
+                            let poly = newPolygon().centerCircle(zero, polyRadius, 32);
+                            poly.points = poly.points.map(v => newPoint(v.x, v.y, v.z));
+                            poly.move(point);
+                            offset.push(poly);
+                        }
+                    });
+        
                 }
 
                 // offset.xout(`slice ${slice.z}`);

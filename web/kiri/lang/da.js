@@ -240,6 +240,8 @@ kiri.lang['da-dk'] = {
     cf_liny_l:      "linær y-axis afslutning",
     cf_curv_s:      "kun kurver",
     cf_curv_l:      "Begrænds linær oprydning\npå kurvede overflader",
+    co_ocrd_s:      "overcut radius",
+    co_ocrd_l:      "radius of the overcut cylinder (in mm)",
 
     // CNC DRILLING
     cd_menu:        "bording",

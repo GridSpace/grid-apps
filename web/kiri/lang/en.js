@@ -297,6 +297,8 @@ kiri.lang['en-us'] = {
     co_olot_l:      "limit cutting to\exterior part boundaries\nwhich can be thought of\nas the shadow outline",
     co_olen_s:      "enable",
     co_olen_l:      "enabled outline cutting",
+    co_ocrd_s:      "overcut radius",
+    co_ocrd_l:      "radius of the overcut cylinder (in mm)",
 
     // CNC CONTOUR
     cn_menu:        "contour",

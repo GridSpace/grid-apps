@@ -454,6 +454,7 @@
                     camDepthFirst: false,
                     camEaseDown: false,
                     camOriginTop: true,
+                    camOutlineOcRadius: 0,
                     camZTopOffset: 0,
                     camZBottom: 0,
                     camZClearance: 1,

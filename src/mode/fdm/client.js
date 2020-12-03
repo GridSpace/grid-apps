@@ -292,7 +292,35 @@
         return box;
     }
 
+    function addcyl(point, color, name, dim = { radiustop: 3, radiusbottom: 3, height: 20}, opt = {}){
+        delbox(name);
+        const cyl = boxes[name] = new THREE.Mesh(
+            new THREE.CylinderGeometry(dim.radiustop, dim.radiusbottom, dim.height),
+            new THREE.MeshPhongMaterial({
+                transparent: true,
+                opacity: 0.5,
+                color
+            })
+        );
+        cyl.position.x = point.x;
+        cyl.position.y = point.y;
+        cyl.position.z = point.z;
+
+        const group = opt.group || SPACE.scene
+        group.add(cyl);
+        cyl.groupTo = group;
+
+        if (opt.rotate) {
+            opt.matrix = new THREE.Matrix4().makeRotationFromQuaternion(opt.rotate);
+        }
+        if (opt.matrix) {
+            cyl.geometry.applyMatrix4(opt.matrix);
+        }
+        return cyl;
+    }
+
     FDM.delbox = delbox;
     FDM.addbox = addbox;
+    FDM.addcyl = addcyl;
 
 })();
