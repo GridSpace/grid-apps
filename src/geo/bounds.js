@@ -15,7 +15,6 @@
         this.miny = 10e7;
         this.maxx = -10e7;
         this.maxy = -10e7;
-        this.leftMost = null;
     }
 
     const BASE = self.base,
@@ -29,6 +28,14 @@
     /** ******************************************************************
      * Bounds Prototype Functions
      ******************************************************************* */
+
+     PRO.set = function(minx, maxx, miny, maxy) {
+         this.minx = minx;
+         this.miny = miny;
+         this.maxx = maxx;
+         this.maxy = maxy;
+         return this;
+     };
 
     /**
      * @returns {Bounds}
@@ -59,6 +66,7 @@
         this.maxx = Math.max(this.maxx, b.maxx);
         this.miny = Math.min(this.miny, b.miny);
         this.maxy = Math.max(this.maxy, b.maxy);
+        return this;
     };
 
     /**
@@ -69,7 +77,7 @@
         this.maxx = Math.max(this.maxx, p.x);
         this.miny = Math.min(this.miny, p.y);
         this.maxy = Math.max(this.maxy, p.y);
-        if (this.minx === p.x) this.leftMost = p;
+        return this;
     };
 
     PRO.contains = function(bounds) {

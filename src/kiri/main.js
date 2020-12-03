@@ -1401,8 +1401,45 @@
         }
         if (!grouping) {
             platformGroupDone();
+            if (!settings.controller.autoLayout) {
+                positionNewWidget(widget);
+            }
         } else if (feature.drop_layout) {
             platform.layout();
+        }
+    }
+
+    function positionNewWidget(widget) {
+        if (WIDGETS.length <= 1) return;
+        let DEG2RAD = Math.PI / 180;
+        let { bedWidth, bedDepth } = settings.device;
+        let devOff = bedWidth / 2;
+        let wbb = widget.getBoundingBox();
+        let dim = { x: wbb.max.x - wbb.min.x, y: wbb.max.y - wbb.min.y };
+        let hdim = { x: dim.x / 2, y: dim.y / 2 };
+        let bounds = BASE.newBounds(), target = BASE.newBounds();
+        // look for best position for new widget that doesn't collide
+        outer: for (let rad=10; rad<200; rad += 10) {
+            inner: for (let d=0; d<360; d += 1) {
+                let dx = Math.cos(d * DEG2RAD) * rad;
+                let dy = Math.sin(d * DEG2RAD) * rad;
+                bounds.set(dx - hdim.x, dx + hdim.x, dy - hdim.y, dy + hdim.y);
+                for (let w=0, wl=WIDGETS.length; w<wl; w++) {
+                    let wt = WIDGETS[w];
+                    if (wt === widget) {
+                        continue;
+                    }
+                    let tpo = wt.track.pos;
+                    let tbb = wt.getBoundingBox();
+                    let dim = { x: (tbb.max.x - tbb.min.x) / 2, y : (tbb.max.y - tbb.min.y) / 2 };
+                    target.set(tpo.x - dim.x, tpo.x + dim.x, tpo.y - dim.y, tpo.y + dim.y);
+                    if (target.overlaps(bounds, 5)) {
+                        continue inner;
+                    }
+                }
+                widget._move(dx, dy, widget.track.pos.z, true);
+                break outer;
+            }
         }
     }
 

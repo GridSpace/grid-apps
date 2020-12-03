@@ -3,8 +3,6 @@
 ## 2.4 roadmap
 * `laser`
 * - drag knife support
-* `all`
-* - circular fit/layout when no-layout to prevent collisions
 
 ## 2.5 roadmap
 # `cnc`
@@ -12,6 +10,7 @@
 # - complex process order
 # - split gcode output
 # - double-sided assistance
+# - redo path planning
 # `fdm`
 # - redo automatic supports using faces instead of deltas
 # - bind process to z ranges or boxed regions
@@ -89,6 +88,7 @@
 * `F` A-B linked cutting profiles for double-sided milling / part flips
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` detect render message backlog and pause or warn
+* `P` redo all path route / planning in prepare to account for terrain before camOut
 
 # Laser
 
