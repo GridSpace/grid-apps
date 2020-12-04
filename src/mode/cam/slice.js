@@ -478,7 +478,7 @@
                 }
 
                 if (proc.camOutlineDogbone && !procOutlineWide) {
-                    CAM.addDogbones(offset, outlineToolDiam / 4);
+                    CAM.addDogbones(offset, outlineToolDiam / 5);
                 }
 
                 // offset.xout(`slice ${slice.z}`);
@@ -590,9 +590,7 @@
                 let newa = BASE.newSlopeFromAngle(lastsl.angle + bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
-                console.log('CW dogbone', lastsl.angle.round(2), adiff.round(2));
             } else if (!isCW && adiff < -45) {
-                console.log('CCW dogbone', lastsl.angle.round(2), ':', nextsl.angle.round(2), '=', adiff.round(2));
                 let newa = BASE.newSlopeFromAngle(lastsl.angle - bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
