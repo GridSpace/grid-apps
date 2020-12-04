@@ -173,11 +173,14 @@
             for (let i=1; i<oldpts.length + 1; i++) {
                 let nextpt = oldpts[i % oldpts.length];
                 let nextsl = lastpt.slopeTo(nextpt).toUnit();
-                if (lastsl.angleDiff(nextsl) >= 10 && lastpt.distTo2D(nextpt) >= knifeTipOff) {
-                    arc(lastpt, lastsl, nextsl, newpts);
-                    // let tmp;
-                    // newpts.push( tmp = lastpt.projectOnSlope(lastsl, knifeTipOff) );
-                    // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
+                if (lastsl.angleDiff(nextsl) >= 10) {
+                    if (lastpt.distTo2D(nextpt) >= knifeTipOff) {
+                        arc(lastpt, lastsl, nextsl, newpts);
+                    } else {
+                        // todo handle short segments
+                        // newpts.push(lastpt.projectOnSlope(lastsl, knifeTipOff) );
+                        // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
+                    }
                 }
                 newpts.push(nextpt);
                 lastsl = nextsl;

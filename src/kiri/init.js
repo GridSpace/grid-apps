@@ -1594,6 +1594,7 @@
             camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
             camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camOutlinePlunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
+            camOutlineDogbone:  UC.newBoolean(LANG.co_dogb_s, onBooleanClick, {title:LANG.co_dogb_l, modes:CAM}),
             camOutlineIn:       UC.newBoolean(LANG.co_olin_s, onBooleanClick, {title:LANG.co_olin_l, modes:CAM, show:() => { return !UI.camOutlineOut.checked }}),
             camOutlineOut:      UC.newBoolean(LANG.co_olot_s, onBooleanClick, {title:LANG.co_olot_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camOutlineWide:     UC.newBoolean(LANG.co_wide_s, onBooleanClick, {title:LANG.co_wide_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),

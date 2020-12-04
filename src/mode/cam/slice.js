@@ -477,6 +477,10 @@
                     offset = cutTabs(tabs, offset, slice.z);
                 }
 
+                if (proc.camOutlineDogbone) {
+                    CAM.addDogbones(offset, outlineToolDiam / 4);
+                }
+
                 // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
                 if (false) slice.output()
@@ -567,7 +571,41 @@
         ondone();
     };
 
-    CAM.traces = function computeTraces(settings, widget) {
+    CAM.addDogbones = function(poly, dist) {
+        if (Array.isArray(poly)) {
+            return poly.forEach(p => CAM.addDogbones(p, dist));
+        }
+        let isCW = poly.isClockwise();
+        let oldpts = poly.points.slice();
+        let lastpt = oldpts[oldpts.length - 1];
+        let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+        let newpts = [ ];
+        for (let i=0; i<oldpts.length + 1; i++) {
+            let nextpt = oldpts[i % oldpts.length];
+            let nextsl = lastpt.slopeTo(nextpt).toUnit();
+            let adiff = lastsl.angleDiff(nextsl, true);
+            if (isCW && adiff > 0) {
+                let newa = BASE.newSlopeFromAngle(lastsl.angle - adiff / 2);
+                newpts.push(lastpt.projectOnSlope(newa, dist));
+                newpts.push(lastpt.clone());
+                console.log('CW dogbone at', lastpt);
+            } else if (!isCW && adiff < 0) {
+                console.log('CCW dogbone at', lastpt);
+                let newa = BASE.newSlopeFromAngle(lastsl.angle - adiff / 2);
+                newpts.push(lastpt.projectOnSlope(newa, dist));
+                newpts.push(lastpt.clone());
+            }
+            lastsl = nextsl;
+            lastpt = nextpt;
+            if (i < oldpts.length) {
+                newpts.push(nextpt);
+            }
+        }
+        poly.points = newpts;
+        poly.length = newpts.length;
+    };
+
+    CAM.traces = function(settings, widget) {
         if (widget.traces) {
             // do no work if cached
             return false;

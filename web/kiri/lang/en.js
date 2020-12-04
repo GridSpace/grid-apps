@@ -289,6 +289,8 @@ kiri.lang['en-us'] = {
 
     // CNC OUTLINE
     co_menu:        "outline",
+    co_dogb_s:      "dogbones",
+    co_dogb_l:      "insert dogbone cuts\ninto inside corners",
     co_wide_s:      "wide cutout",
     co_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
     co_olin_s:      "inside only",
