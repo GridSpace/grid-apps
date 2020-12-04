@@ -477,7 +477,7 @@
                     offset = cutTabs(tabs, offset, slice.z);
                 }
 
-                if (proc.camOutlineDogbone) {
+                if (proc.camOutlineDogbone && !procOutlineWide) {
                     CAM.addDogbones(offset, outlineToolDiam / 4);
                 }
 
@@ -571,11 +571,12 @@
         ondone();
     };
 
-    CAM.addDogbones = function(poly, dist) {
+    CAM.addDogbones = function(poly, dist, reverse) {
         if (Array.isArray(poly)) {
             return poly.forEach(p => CAM.addDogbones(p, dist));
         }
         let isCW = poly.isClockwise();
+        if (reverse || poly.parent) isCW = !isCW;
         let oldpts = poly.points.slice();
         let lastpt = oldpts[oldpts.length - 1];
         let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
@@ -584,14 +585,15 @@
             let nextpt = oldpts[i % oldpts.length];
             let nextsl = lastpt.slopeTo(nextpt).toUnit();
             let adiff = lastsl.angleDiff(nextsl, true);
-            if (isCW && adiff > 0) {
-                let newa = BASE.newSlopeFromAngle(lastsl.angle - adiff / 2);
+            let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
+            if (isCW && adiff > 45) {
+                let newa = BASE.newSlopeFromAngle(lastsl.angle + bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
-                console.log('CW dogbone at', lastpt);
-            } else if (!isCW && adiff < 0) {
-                console.log('CCW dogbone at', lastpt);
-                let newa = BASE.newSlopeFromAngle(lastsl.angle - adiff / 2);
+                console.log('CW dogbone', lastsl.angle.round(2), adiff.round(2));
+            } else if (!isCW && adiff < -45) {
+                console.log('CCW dogbone', lastsl.angle.round(2), ':', nextsl.angle.round(2), '=', adiff.round(2));
+                let newa = BASE.newSlopeFromAngle(lastsl.angle - bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
             }
@@ -603,6 +605,9 @@
         }
         poly.points = newpts;
         poly.length = newpts.length;
+        if (poly.inner) {
+            CAM.addDogbones(poly.inner, dist, true);
+        }
     };
 
     CAM.traces = function(settings, widget) {
