@@ -1383,7 +1383,9 @@
     function platformGroupDone(skipLayout) {
         grouping = false;
         Widget.Groups.loadDone();
-        if (feature.drop_layout && !skipLayout) platform.layout();
+        if (feature.drop_layout && !skipLayout) {
+            platform.layout();
+        }
     }
 
     function platformAdd(widget, shift, nolayout) {
@@ -1404,8 +1406,6 @@
             if (!settings.controller.autoLayout) {
                 positionNewWidget(widget);
             }
-        } else if (feature.drop_layout) {
-            platform.layout();
         }
     }
 
