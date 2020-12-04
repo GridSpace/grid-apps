@@ -561,8 +561,14 @@
         }
 
         // add shadow perimeter to terrain to catch outside moves off part
-        let shadowOff = POLY.offset(shadowTop.tops, minToolDiam / 2);
+        let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
+        let allpoly = POLY.union([...shadowTop.tops, ...tabpoly], 0, true);
+        let shadowOff = POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
         terrain.forEach(level => level.tops.appendAll(shadowOff));
+
+        // let dslice = KIRI.newSlice(-1);
+        // dslice.output().setLayer("shadowOff", { line: 0xff0000 }).addPolys(shadowOff);
+        // sliceAll.push(dslice);
 
         widget.terrain = terrain;
         widget.minToolDiam = minToolDiam;
