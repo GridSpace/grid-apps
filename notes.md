@@ -83,7 +83,7 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
-* `P` crossing open space check point is outside camshell before returning max z
+* `F` show render progress bar or %
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 * `P` fast forward animation with "chunking" or "skip animation"
