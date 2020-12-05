@@ -462,7 +462,7 @@
                     camZThru: 0,
                     camFastFeed: 6000,
                     camFastFeedZ: 300,
-                    camTolerance: 0.15,
+                    camTolerance: 0,
                     camStockX: 0,
                     camStockY: 0,
                     camStockZ: 0,
