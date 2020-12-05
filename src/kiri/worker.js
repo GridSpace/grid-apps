@@ -142,8 +142,9 @@ KIRI.worker = {
             send.data(emit);
         });
 
+        const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
         const print = current.print || {};
-        const maxSpeed = print.maxSpeed || undefined;
+        const maxSpeed = (print.maxSpeed || 0) * unitScale;
         const state = { zeros: [] };
 
         send.data({ progress: 1, message: "transfer" });

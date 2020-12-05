@@ -522,7 +522,7 @@
          */
         function findPathsMinRecurse(point, path, paths, from) {
             let stack = [ ];
-            if (paths.length > 10000) {
+            if (paths.length > 100000) {
                 console.log("excessive path options @ "+paths.length+" #"+input.length);
                 return;
             }
