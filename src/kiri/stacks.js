@@ -41,6 +41,12 @@
         labels.innerHTML = '';
     }
 
+    function rotate(set) {
+        Object.values(stacks).forEach(stack => {
+            stack.obj.rotate(set);
+        });
+    }
+
     function getStack(name) {
         return stacks[name];
     }
@@ -107,6 +113,7 @@
     KIRI.stacks = {
         clear,
         create,
+        rotate,
         remove,
         getStack,
         getRange,

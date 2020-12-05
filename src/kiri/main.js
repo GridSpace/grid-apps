@@ -759,9 +759,6 @@
             mode = settings.mode,
             now = Date.now();
 
-        // require topo be sent back from worker for local printing
-        settings.synth.sendTopo = false;
-
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
@@ -790,6 +787,10 @@
                 }
                 // on done
                 segtimes[`${segNumber}_draw`] = widget.render(stack);
+                // rotate stack for belt beds
+                if (settings.device.bedBelt && widget.rotinfo) {
+                    STACKS.rotate(widget.rotinfo);
+                }
                 updateSliderMax(true);
                 setVisibleLayer(-1, 0);
                 // clear wireframe
@@ -904,6 +905,10 @@
                 output.forEach(layer => {
                     stack.add(layer);
                 });
+                // rotate stack for belt beds
+                if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
+                    STACKS.rotate(WIDGETS[0].rotinfo);
+                }
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
 
@@ -1708,6 +1713,7 @@
         }
         const mode = settings.mode;
         settings.sproc[mode].default = settings.process;
+        settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));

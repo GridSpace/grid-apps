@@ -461,6 +461,7 @@ th, tr, td, label {
     text-align: center;
     flex-grow: 1;
     margin-top: 3px;
+    height: 75%;
 }
 .txt-sel {
     background-color: #eee;
@@ -1092,7 +1093,7 @@ th, tr, td, label {
     justify-content: center;
     border-radius: 2px;
     padding: 1px 0 2px 0;
-    margin: 5px 0 5px 0;
+    margin: 2px 0 3px 0;
 }
 .set-group {
     align-items: center;

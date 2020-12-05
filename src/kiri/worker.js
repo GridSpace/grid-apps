@@ -46,6 +46,8 @@ KIRI.worker = {
 
         // do it here so cancel can work
         cache[data.id] = widget;
+        // stored for possible future rotations
+        widget.vertices = vertices;
 
         // fake mesh object to satisfy printing
         widget.track = data.tracking;
@@ -58,24 +60,7 @@ KIRI.worker = {
     },
 
     slice: function(data, send) {
-        let { id, settings, rotation } = data;
-
-        // let centerz;
-        // let movez;
-        // if (rotation) {
-        //     let bbox1 = widget.getBoundingBox(true);
-        //     widget._rotate(0,rotation,0,true);
-        //     widget.center();
-        //     let bbox2 = widget.getBoundingBox(true);
-        //     centerz = (bbox2.max.z - bbox2.min.z)/2;
-        //     movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
-        // }
-        // let vertices = widget.getGeoVertices().buffer.slice(0);
-        //     // snapshot = KIRI.api.view.snapshot;
-        // if (rotation) {
-        //     widget._rotate(0,-rotation,0,true);
-        //     widget.center();
-        // }
+        let { id, settings } = data;
 
         send.data({update:0.05, updateStatus:"slicing"});
 
@@ -85,17 +70,31 @@ KIRI.worker = {
 
         try {
 
+        let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
+        if (rotation && !widget.rotated) {
+            widget.mesh = null;
+            widget.points = null;
+            widget.loadVertices(widget.vertices);
+            let bbox1 = widget.getBoundingBox(true);
+            widget._rotate(0,rotation,0,true);
+            widget.center();
+            widget.rotated = true;
+            let bbox2 = widget.getBoundingBox(true);
+            let centerz = (bbox2.max.z - bbox2.min.z) / 2;
+            let movez = centerz - (bbox1.max.z - bbox1.min.z) / 2;
+            widget.rotinfo = { centerz, movez, angle: 45 };
+        }
+
         widget.slice(settings, function(error) {
             if (error) {
-                // delete cache[id];
                 send.data({error: error});
             } else {
                 const slices = widget.slices || [];
                 send.data({send_start: time()});
                 send.data({
-                    topo: settings.synth.sendTopo ? widget.topo : null,
                     stats: widget.stats,
-                    slices: slices.length
+                    slices: slices.length,
+                    rotinfo: widget.rotinfo
                 });
                 slices.forEach(function(slice,index) {
                     const state = { zeros: [] };

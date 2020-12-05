@@ -662,6 +662,7 @@
             dev.deviceName = devicename;
 
             UI.deviceName.value = devicename;
+            UI.deviceBelt.checked = dev.bedBelt;
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
@@ -699,6 +700,7 @@
                 UI.extrudeAbs,
                 UI.deviceOrigin,
                 UI.deviceRound,
+                UI.deviceBelt,
                 UI.gcodeFan,
                 UI.gcodeTrack,
                 UI.gcodeLayer,
@@ -1435,6 +1437,7 @@
             spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
+            deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
@@ -1714,7 +1717,6 @@
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceRotation:       LOCAL ? UC.newInput(LANG.ad_slrt_s, {title:LANG.ad_slrt_l, bound:UC.bound(-45,45), convert:UC.toFloat, modes:FDM, expert:true}) : null,
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
 

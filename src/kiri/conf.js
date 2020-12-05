@@ -108,6 +108,7 @@
             bedWidth: valueOf(set.bed_width, 300),
             bedDepth: valueOf(set.bed_depth, 175),
             bedRound: valueOf(set.bed_circle, false),
+            bedBelt: valueOf(set.bed_belt, false),
             maxHeight: valueOf(set.build_height, 150),
             originCenter: valueOf(set.origin_center, false),
             extrudeAbs: valueOf(set.extrude_abs, false),
@@ -257,6 +258,7 @@
                     bedDepth: 175,
                     bedHeight: 2.5,
                     bedRound: false,
+                    bedBelt: false,
                     originCenter: false,
                     maxHeight: 150,
                     gcodePre: [],
@@ -334,8 +336,7 @@
                     sliceAdaptive: false,
                     zHopDistance: 0.2,
                     antiBacklash: 1,
-                    gcodePause: "",
-                    sliceRotation: 0
+                    gcodePause: ""
                 }
             },
             sla:{

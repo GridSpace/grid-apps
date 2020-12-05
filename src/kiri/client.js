@@ -145,10 +145,10 @@ KIRI.work = {
     slice: function(settings, widget, callback) {
         CLIENT.sync(widget);
         slicing[widget.id] = callback;
+
         send("slice", {
             id: widget.id,
-            settings: settings,
-            rotation: (Math.PI/180) * (settings.process.sliceRotation || 0)
+            settings: settings
         }, function(reply) {
             if (reply.done || reply.error) {
                 delete slicing[widget.id];

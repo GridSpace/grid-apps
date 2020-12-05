@@ -25,6 +25,11 @@
             this.view.visible = true;
         }
 
+        rotate(set) {
+            this.view.rotation.y = -set.angle * (Math.PI/180);
+            this.view.position.x = +set.centerz - set.movez;
+        }
+
         destroy() {
             this._view.remove(this.view);
             this.view = this.slices = this.meshes = null;
