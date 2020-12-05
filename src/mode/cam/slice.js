@@ -317,6 +317,7 @@
 
                 // inset offset array by 1/2 diameter then by tool overlap %
                 offset = POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
+                    minArea: 0,
                     z: slice.z,
                     count: 999,
                     flat: true,
