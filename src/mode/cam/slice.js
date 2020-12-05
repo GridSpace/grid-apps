@@ -169,10 +169,11 @@
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
         let fakeTerrain = false;
-        if (tzindex.length > 100) {
-            fakeTerrain = tzindex[0];
-            tzindex = [ tzindex.pop() ];
-        }
+        // if (tzindex.length > 200) {
+        //     fakeTerrain = tzindex[0];
+        //     tzindex = [ tzindex.pop() ];
+        // }
+
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
@@ -180,7 +181,7 @@
                 const slice = data.slice;
                 sliceAll.push(slice);
                 slice.output()
-                    .setLayer("debug", {line: 0x888800, thin: true })
+                    .setLayer("terrain", {line: 0x888800, thin: true })
                     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
             }
             updateOp(index, total);

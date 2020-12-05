@@ -86,6 +86,7 @@
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
+* `P` fast forward animation with "chunking" or "skip animation"
 
 # Laser
 
