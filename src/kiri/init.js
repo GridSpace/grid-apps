@@ -364,26 +364,38 @@
                     if (id) loadSettingsFromServer(id);
                 });
                 break;
-            case cca('s'): // complete slice
+            case cca('S'): // slice
+            case cca('s'): // slice
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
                 API.function.slice();
                 break;
-            case cca('p'): // prepare print
+            case cca('P'): // prepare
+            case cca('p'): // prepare
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
                 if (API.mode.get() !== 'SLA') {
                     // hidden in SLA mode
                     API.function.print();
                 }
                 break;
-            case cca('P'): // position widget
+            case cca('X'): // export
+            case cca('x'): // export
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
+                API.function.export();
+                break;
+            case cca('o'): // position widget
                 positionSelection();
+                break;
+            case cca('O'): // position widget
+                rotateInputSelection();
                 break;
             case cca('r'): // recent files
                 API.modal.show('files');
-                break;
-            case cca('R'): // position widget
-                rotateInputSelection();
-                break;
-            case cca('x'): // export print
-                API.function.export();
                 break;
             case cca('q'): // preferences
                 API.modal.show('prefs');
