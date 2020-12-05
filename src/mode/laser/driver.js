@@ -431,7 +431,7 @@
                 if (knifeOn) {
                     lines.push(`; start new poly id=${poly.id} len=${poly.length}`);
                 }
-                for (let i=0; i<passes; i++) {
+                for (let i=1; i<passes + 1; i++) {
                     poly.forEach(function(point, index) {
                         if (index === 0) {
                             if (knifeOn) {
@@ -441,7 +441,7 @@
                             lines.push(`G0${space}${point}`);
                             if (knifeOn) {
                                 // drop
-                                lines.appendAll(['; drag-knife down', `G0${space}Z${-i*knifeDepth}`]);
+                                lines.appendAll(['; drag-knife down', `G0${space}Z${-i * knifeDepth}`]);
                             }
                         } else if (index === 1) {
                             laser_on.forEach(line => {
