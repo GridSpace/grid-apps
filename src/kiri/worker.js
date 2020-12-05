@@ -76,7 +76,7 @@ KIRI.worker = {
             widget.points = null;
             widget.loadVertices(widget.vertices);
             let bbox1 = widget.getBoundingBox(true);
-            widget._rotate(0,rotation,0,true);
+            widget._rotate(rotation,0,0,true);
             widget.center();
             widget.rotated = true;
             let bbox2 = widget.getBoundingBox(true);
