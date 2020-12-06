@@ -388,10 +388,7 @@
                 }
                 API.function.export();
                 break;
-            case cca('o'): // position widget
-                positionSelection();
-                break;
-            case cca('O'): // position widget
+            case cca('o'): // manual rotation
                 rotateInputSelection();
                 break;
             case cca('r'): // recent files
