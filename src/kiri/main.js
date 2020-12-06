@@ -841,6 +841,7 @@
 
     function preparePreview(callback) {
         if (complete.preview) {
+            if (callback) callback();
             return;
         }
         if (!complete.slice) {
