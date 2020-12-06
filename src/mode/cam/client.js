@@ -54,7 +54,11 @@
                 func.tabClear();
                 func.traceDone();
                 UI.func.animate.style.display = 'none';
+                UI.label.slice.innerText = 'slice';
+                UI.label.preview.innerText = 'preview';
+                UI.label.export.innerText = 'export';
             } else {
+                UI.label.slice.innerText = 'scan';
                 checkOutlineSettings(api.conf.get());
             }
             // do not persist traces across page reloads

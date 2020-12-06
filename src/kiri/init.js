@@ -1350,6 +1350,13 @@
                 export:         $('act-export')
             },
 
+            label: {
+                slice:          $('label-slice'),
+                preview:        $('label-preview'),
+                animate:        $('label-animate'),
+                export:         $('label-export')
+            },
+
             acct: {
                 help:           $('acct-help'),
                 export:         $('acct-export')
