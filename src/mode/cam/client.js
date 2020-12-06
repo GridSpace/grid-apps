@@ -58,7 +58,7 @@
                 UI.label.preview.innerText = 'preview';
                 UI.label.export.innerText = 'export';
             } else {
-                UI.label.slice.innerText = 'scan';
+                UI.label.slice.innerText = 'start';
                 checkOutlineSettings(api.conf.get());
             }
             // do not persist traces across page reloads
