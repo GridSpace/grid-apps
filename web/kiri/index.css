@@ -1184,6 +1184,9 @@ th, tr, td, label {
     border: 1px solid black;
     background-color: white;
 }
+#gdpr a {
+    text-decoration: underline;
+}
 #gotit {
     font-weight: bold;
     font-size: larger;
