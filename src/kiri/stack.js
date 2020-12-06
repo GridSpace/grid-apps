@@ -5,12 +5,12 @@
 (function() {
 
     class Stack {
-        constructor(view) {
+        constructor(view, freeMem) {
             this._view = view;
             this.view = view.newGroup();
             this.slices = [];
             this.meshes = [];
-            this.freeMem = true;
+            this.freeMem = freeMem;
         }
 
         size() {
@@ -34,6 +34,10 @@
         destroy() {
             this._view.remove(this.view);
             this.view = this.slices = this.meshes = null;
+        }
+
+        setFreeMem(bool) {
+            this.freeMem = bool;
         }
 
         setVisible(newMin, newMax) {
