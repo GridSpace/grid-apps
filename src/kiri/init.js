@@ -388,6 +388,9 @@
                 }
                 API.function.export();
                 break;
+            case cca('g'): // CAM animate
+                API.function.animate();
+                break;
             case cca('o'): // manual rotation
                 rotateInputSelection();
                 break;
