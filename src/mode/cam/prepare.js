@@ -99,12 +99,12 @@
             tip2tipEmit = print.tip2tipEmit,
             poly2polyEmit = print.poly2polyEmit,
             maxToolDiam = widget.maxToolDiam,
-            terrain = widget.terrain.map(data => {
+            terrain = widget.terrain ? widget.terrain.map(data => {
                 return {
                     z: data.z,
                     tops: data.tops,
                 };
-            });
+            }) : zmax;
 
         function newLayer() {
             if (layerOut.length < 2) {
@@ -637,6 +637,9 @@
      * return tool Z clearance height for a line segment movement path
      */
     function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
+        if (terrain > 0) {
+            return terrain + zadd + over;
+        }
         let maxz = z;
         let check = [];
         for (let i=0; i<terrain.length; i++) {

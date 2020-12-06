@@ -168,11 +168,12 @@
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-        let fakeTerrain = false;
-        // if (tzindex.length > 200) {
-        //     fakeTerrain = tzindex[0];
-        //     tzindex = [ tzindex.pop() ];
-        // }
+        let skipTerrain = !(procRough || procOutline) && tzindex.length > 50;
+
+        if (skipTerrain) {
+            console.log("skipping terrain generation for speed");
+            tzindex = [ tzindex.pop() ];
+        }
 
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
@@ -186,11 +187,6 @@
             }
             updateOp(index, total);
         }, genso: true });
-        if (fakeTerrain) {
-            // to avoid compute for highly detailed maps, force all
-            // moves above part top by synthesizing a single terrain slice
-            terrain[0].z = fakeTerrain.z;
-        }
 
         let shadowTop = terrain[terrain.length - 1];
         let center = tshadow[0].bounds.center();
@@ -572,7 +568,7 @@
         // dslice.output().setLayer("shadowOff", { line: 0xff0000 }).addPolys(shadowOff);
         // sliceAll.push(dslice);
 
-        widget.terrain = terrain;
+        widget.terrain = skipTerrain ? null : terrain;
         widget.minToolDiam = minToolDiam;
         widget.maxToolDiam = maxToolDiam;
 

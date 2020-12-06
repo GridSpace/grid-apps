@@ -279,6 +279,7 @@ KIRI.worker = {
                 1;                         // base
             // convert png to grayscale
             let gray = new Uint8Array(width * height);
+            let alpha = new Uint8Array(width * height);
             let gi = 0;
             let invi = info.inv_image ? true : false;
             let inva = info.inv_alpha ? true : false;
@@ -291,15 +292,15 @@ KIRI.worker = {
                     let b = data[di+2];
                     let a = data[di+3];
                     let v = ((r + g + b) / 3);
+                    if (inva) a = 255 - a;
+                    if (invi) v = 255 - v;
                     if (border) {
                         if (x < border || y < border || x > width-border-1 || y > height-border-1) {
                             v = 255;
                         }
                     }
-                    if (invi) v = 255 - v;
-                    if (inva) a = 255 - a;
-                    v *= (a/255);
-                    gray[gi++] = v;
+                    alpha[gi] = a;
+                    gray[gi++] = v * (a / 255);
                 }
             }
             let blur = parseInt(info.blur || 0);
@@ -311,7 +312,8 @@ KIRI.worker = {
                         let xr = Math.min(x+1,width-1);
                         let yu = Math.max(y-1,0);
                         let yd = Math.min(y+1,height-1);
-                        blur[x + width * y] = (
+                        let id = x + width * y;
+                        blur[id] = ((
                             gray[xl + (width * yu)] +
                             gray[x  + (width * yu)] +
                             gray[xr + (width * yu)] +
@@ -321,7 +323,7 @@ KIRI.worker = {
                             gray[xl + (width * yd)] +
                             gray[x  + (width * yd)] +
                             gray[xr + (width * yd)]
-                        ) / 9;
+                        ) / 9);
                     }
                 }
                 gray = blur;
@@ -339,11 +341,12 @@ KIRI.worker = {
             // create surface vertices & faces
             for (let x = 0; x < width; x++) {
                 for (let y = 0; y < height; y++) {
-                    let v = gray[x + width * y];
+                    let id = x + width * y;
+                    let v = gray[id];
                     // create vertex @ x,y
                     verts[vi++] = (-w2 + x) / div;
                     verts[vi++] = (h2 - y) / div;
-                    verts[vi++] = ((255 - v) / 50) + base;
+                    verts[vi++] = (v / 50) + (base * alpha[id] / 255);
                     VI++;
                     // create two surface faces on the rect between x-1,y-1 and x,y
                     if (x > 0 && y > 0) {
