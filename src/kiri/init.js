@@ -2168,4 +2168,9 @@
         }
     }
 
+    // upgrade message once a week
+    if (Date.now() - parseFloat(SDB.kiri_230_upgrade || 0) > 604800000) {
+        API.show.alert("<a href='/choose'>A newer version of Kiri:Moto is available!</a>", 60);
+        SDB.kiri_230_upgrade = Date.now();
+    }
 })();
