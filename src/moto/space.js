@@ -42,6 +42,8 @@
         mouseDragStart = null,
         mouseDownSelect,
         mouseUpSelect,
+        mouseUp,
+        mouseDown,
         mouseHover,
         mouseDrag,
         gridOrigin,
@@ -648,7 +650,11 @@
                     if (selectInt) {
                         mouseDownSelect(selectInt, event);
                     }
+                    if (mouseDown) mouseDown(event, int);
                 }
+            } else if (mouseDown) {
+                let int = intersect(selection.slice().append(platform), false);
+                if (int && int.length) mouseDown(event, int);
             }
             if (platformClick) {
                 let vis = platform.visible;
@@ -682,6 +688,16 @@
             if (mouseUpSelect) selection = mouseUpSelect();
             if (selection && selection.length > 0) {
                 let int = intersect(selection, selectRecurse);
+                if (mouseUp) {
+                    if (int.length) {
+                        mouseUp(event, int);
+                    } else {
+                        mouseUp(event, intersect([platform], selectRecurse));
+                    }
+                    if (event.button === 2) {
+                        return;
+                    }
+                }
                 if (int.length > 0) {
                     mouseUpSelect(int[0], event);
                     refresh = true;
@@ -865,6 +881,8 @@
         },
 
         mouse: {
+            up:         function(f) { mouseUp = f },
+            down:       function(f) { mouseDown = f },
             downSelect: function(f) { mouseDownSelect = f },
             upSelect:   function(f) { mouseUpSelect = f },
             onDrag:     function(f) { mouseDrag = f },

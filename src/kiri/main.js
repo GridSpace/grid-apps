@@ -87,7 +87,8 @@
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
-        delete: function() { platform.delete(selection.widgets()) }
+        delete: function() { platform.delete(selection.widgets()) },
+        export: exportSelection
     };
 
     const platform = {
@@ -320,7 +321,8 @@
             update_fields: updateFields,
             wireframe: setWireframe,
             snapshot: null,
-            unit_scale: unitScale
+            unit_scale: unitScale,
+            isArrange: function() { return viewMode === VIEWS.ARRANGE }
         },
         widgets: {
             map: function() {
@@ -1129,6 +1131,52 @@
         updateSelectedInfo();
         SPACE.update();
         auto_save();
+    }
+
+    function exportSelection() {
+        let widgets = API.selection.widgets();
+        if (widgets.length === 0) {
+            widgets = API.widgets.all();
+        }
+        let facets = 0;
+        let outs = [];
+        widgets.forEach(widget => {
+            let mesh = widget.mesh;
+            let geo = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+            outs.push({geo, widget});
+            facets += geo.faces.length;
+        });
+        let stl = new Uint8Array(80 + 4 + facets * 50);
+        let dat = new DataView(stl.buffer);
+        let pos = 84;
+        dat.setInt32(80, facets, true);
+        outs.forEach(out => {
+            let { faces, vertices } = out.geo;
+            for (let i=0, il=faces.length; i<il; i++) {
+                let {a, b, c, normal} = faces[i];
+                let xo = 0, yo = 0, zo = 0;
+                if (outs.length > 1) {
+                    let {x, y, z} = out.widget.track.pos;
+                    xo = x;
+                    yo = y;
+                    zo = z;
+                }
+                dat.setFloat32(pos +  0, normal.x, true);
+                dat.setFloat32(pos +  4, normal.y, true);
+                dat.setFloat32(pos +  8, normal.z, true);
+                dat.setFloat32(pos + 12, vertices[a].x + xo, true);
+                dat.setFloat32(pos + 16, vertices[a].y + yo, true);
+                dat.setFloat32(pos + 20, vertices[a].z + zo, true);
+                dat.setFloat32(pos + 24, vertices[b].x + xo, true);
+                dat.setFloat32(pos + 28, vertices[b].y + yo, true);
+                dat.setFloat32(pos + 32, vertices[b].z + zo, true);
+                dat.setFloat32(pos + 36, vertices[c].x + xo, true);
+                dat.setFloat32(pos + 40, vertices[c].y + yo, true);
+                dat.setFloat32(pos + 44, vertices[c].z + zo, true);
+                pos += 50;
+            }
+        });
+        return stl;
     }
 
     /** ******************************************************************
