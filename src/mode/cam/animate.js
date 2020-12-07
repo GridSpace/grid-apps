@@ -64,6 +64,7 @@ self.kiri.loader.push(function() {
             toolPosZ = UC.newInput('z', {disabled: true, size: 7});
             playButton.style.display = '';
             pauseButton.style.display = 'none';
+            API.event.emit('animate', 'CAM');
         });
     };
 
