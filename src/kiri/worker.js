@@ -321,7 +321,7 @@ KIRI.worker = {
                             gray[xl + (width * yd)] +
                             gray[x  + (width * yd)] +
                             gray[xr + (width * yd)]
-                        ) / 16);
+                        ) / 16;
                     }
                 }
                 gray = blur;
