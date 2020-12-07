@@ -554,19 +554,38 @@
         });
     }
 
-    function profileExport() {
+    function objectsExport() {
+        // return API.selection.export();
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "selected.stl").then(name => {
+            if (!name) return;
+            if (name.toLowerCase().indexOf(".stl") < 0) {
+                name = `${name}.stl`;
+            }
+            let xprt = API.selection.export(),
+                blob = new Blob([xprt], {type: "octet/stream"}),
+                url = WIN.URL.createObjectURL(blob);
+            $('mod-any').innerHTML = [
+                `<a id="sexport" href="${url}" download="${name}">x</a>`
+            ].join('');
+            $('sexport').click();
+        });
+    }
+
+    function profileExport(workspace) {
+        let checked = workspace ? ' checked' : '';
         const opt = {pre: [
             "<div class='f-col a-center'>",
-            "  <h3>Profile Export</h3>",
+            `  <h3>${workspace ? "Workspace" : "Profile"} Export</h3>`,
             "  <label>This will create a backup of</label>",
-            "  <label>your device profiles and settings</label>",
-            "  <br>",
-            "  <div class='f-row'>",
-            "  <input id='incwork' type='checkbox'>&nbsp;include workspace",
+            workspace ?
+            "  <label>your workspace and settings</label>" :
+            "  <label>your device profiles and settings</label><br>",
+            `  <div class='f-row' style="display:${workspace ? 'none' : ''}">`,
+            `  <input id='incwork' type='checkbox'${checked}>&nbsp;include workspace`,
             "  </div>",
             "</div>"
         ]};
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "profile", opt).then(name => {
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
             if (name) {
                 let work = $('incwork').checked,
                     json = API.conf.export({work}),
@@ -1354,7 +1373,7 @@
                 slice:          $('label-slice'),
                 preview:        $('label-preview'),
                 animate:        $('label-animate'),
-                export:         $('label-export')
+                export:         $('label-export'),
             },
 
             acct: {
@@ -1366,6 +1385,7 @@
             load:               $('load-file'),
             speeds:             $('speeds'),
             speedbar:           $('speedbar'),
+            context:            $('context-menu'),
 
             container:          container,
             back:               $('lt-back'),
@@ -2031,6 +2051,18 @@
             if (int) API.event.emit('mouse.hover', {point: int, event, type: 'platform'});
         });
 
+        SPACE.mouse.up((event, int) => {
+            if (event.button === 2 && API.view.isArrange()) {
+                let style = UI.context.style;
+                style.display = 'flex';
+                style.left = `${event.clientX-3}px`;
+                style.top = `${event.clientY-3}px`;
+                UI.context.onmouseleave = () => {
+                    style.display = '';
+                };
+            }
+        });
+
         SPACE.mouse.downSelect((int,event) => {
             if (API.feature.hover) {
                 if (int) {
@@ -2299,6 +2331,10 @@
         $('render-ghost').onclick = () => { API.view.wireframe(false, 0, 0.5); };
         $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
+        // context menu
+        $('context-export-stl').onclick = () => { objectsExport() };
+        $('context-export-workspace').onclick = () => { profileExport(true) };
+        $('context-clear-workspace').onclick = () => { API.platform.clear(); UI.context.onmouseleave() };
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };
