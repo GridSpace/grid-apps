@@ -1222,8 +1222,20 @@ th, tr, td, label {
     display: none;
     position: absolute;
     flex-direction: column;
-    padding: 4px !important;
-    border: 1px solid #999;
+    padding: 4px 1px 4px 1px;
+    border: 1px solid #bbb;
     border-radius: 3px;
-    background-color: rgba(255,255,255,0.75);
+    background-color: rgba(255,255,255,0.85);
+}
+#context-menu button {
+    margin: 0;
+    padding: 10px;
+    border-radius: 0;
+    border: 1px solid rgba(255,255,255,0);
+    background-color: rgba(255,255,255,0);
+}
+#context-menu button:hover {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    background-color: #eee;
 }

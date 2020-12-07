@@ -18,7 +18,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` mesh / stl export (like w/ images, rotate, scale, future cleanup ops)
 * `F` right click / context menu (object deletion, etc)
 * `F` detect and report slow framerates
 * `P` duplicate objects should share same slice data unless rotated or scaled
