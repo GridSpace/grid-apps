@@ -74,25 +74,10 @@ KIRI.worker = {
         if (rotation && !widget.rotated) {
             widget.mesh = null;
             widget.points = null;
+            widget.rotated = true;
             widget.loadVertices(widget.vertices);
-            let bb1 = widget.getBoundingBox(true);
-            let zd = bb1.max.z - bb1.min.z; // z dim
-            // let cy1 = (bb1.max.y + bb1.min.y) / 2;
-            // let cz1 = (bb1.max.z + bb1.min.z) / 2;
-            widget.setPoints(null);
             widget._rotate(rotation,0,0,true);
             widget.center(false, true);
-            let bb2 = widget.getBoundingBox(true);
-            // let cy2 = (bb2.max.y + bb2.min.y) / 2;
-            // let cz2 = (bb2.max.z + bb2.min.z) / 2;
-            // let angle = Math.atan2(cy1-cy2, cz1-cz2) * (180 / Math.PI);
-            widget.rotated = true;
-            let rc = Math.sin(Math.PI/4);
-            let cz = (bb2.max.z - bb2.min.z) / 2; // center z post rotate
-            let dy = cz * rc; // dy = cz rotated 45
-            let dz = dy - zd / 2;
-            // console.log({cy1,cz1,cy2,cz2,angle,cy});
-            widget.rotinfo = { angle: 45, dy, dz };
             widget.getBoundingBox(true);
         }
 
@@ -105,14 +90,24 @@ KIRI.worker = {
                 send.data({
                     stats: widget.stats,
                     slices: slices.length,
-                    rotinfo: widget.rotinfo
                 });
                 slices.forEach(function(slice,index) {
                     const state = { zeros: [] };
                     send.data({index: index, slice: slice.encode(state)}, state.zeros);
                 })
                 send.data({send_end: time()});
+                // unrotate and send delta coordinates
+                if (rotation) {
+                    widget.setPoints(null);
+                    widget._rotate(-rotation,0,0,true);
+                    let wbb = widget.getBoundingBox(true);
+                    let dy = (wbb.max.y + wbb.min.y)/2;
+                    let dz = wbb.min.z;
+                    widget.rotinfo = { angle: 45, dy, dz };
+                    send.data({ rotinfo: widget.rotinfo });
+                }
             }
+
             send.done({done: true});
         }, function(update, msg) {
             now = time();
