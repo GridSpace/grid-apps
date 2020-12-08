@@ -1616,7 +1616,7 @@
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true, top:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),

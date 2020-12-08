@@ -212,6 +212,7 @@
         if (popper) {
             let pop = DOC.createElement('div');
             pop.classList.add('set-pop');
+            if (opt.top) pop.classList.add('top');
             row.appendChild(pop);
             row.setAttribute("class", "set-group noselect");
             addTo = pop;

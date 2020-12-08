@@ -1124,6 +1124,9 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
+.set-pop.top {
+    transform: translateY(-20%) !important;
+}
 .marker {
     position:absolute;
     border-radius: 2px;
