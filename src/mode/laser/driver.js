@@ -205,7 +205,7 @@
                 let merged = [];
                 widget.slices.forEach(function(slice) {
                     let polys = [];
-                    slice.offsets.clone(true).forEach(p => p.flattenTo(polys));
+                    slice.offset.clone(true).forEach(p => p.flattenTo(polys));
                     polys.forEach(p => {
                         let match = false;
                         for (let i=0; i<merged.length; i++) {
