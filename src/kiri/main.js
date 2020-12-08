@@ -87,7 +87,8 @@
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
-        delete: function() { platform.delete(selection.widgets()) }
+        delete: function() { platform.delete(selection.widgets()) },
+        export: exportSelection
     };
 
     const platform = {
@@ -320,7 +321,8 @@
             update_fields: updateFields,
             wireframe: setWireframe,
             snapshot: null,
-            unit_scale: unitScale
+            unit_scale: unitScale,
+            isArrange: function() { return viewMode === VIEWS.ARRANGE }
         },
         widgets: {
             map: function() {
@@ -759,9 +761,6 @@
             mode = settings.mode,
             now = Date.now();
 
-        // require topo be sent back from worker for local printing
-        settings.synth.sendTopo = false;
-
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
@@ -790,6 +789,10 @@
                 }
                 // on done
                 segtimes[`${segNumber}_draw`] = widget.render(stack);
+                // rotate stack for belt beds
+                if (settings.device.bedBelt && widget.rotinfo) {
+                    STACKS.rotate(widget.rotinfo);
+                }
                 updateSliderMax(true);
                 setVisibleLayer(-1, 0);
                 // clear wireframe
@@ -840,6 +843,7 @@
 
     function preparePreview(callback) {
         if (complete.preview) {
+            if (callback) callback();
             return;
         }
         if (!complete.slice) {
@@ -904,6 +908,10 @@
                 output.forEach(layer => {
                     stack.add(layer);
                 });
+                // rotate stack for belt beds
+                if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
+                    STACKS.rotate(WIDGETS[0].rotinfo);
+                }
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
 
@@ -1123,6 +1131,52 @@
         updateSelectedInfo();
         SPACE.update();
         auto_save();
+    }
+
+    function exportSelection() {
+        let widgets = API.selection.widgets();
+        if (widgets.length === 0) {
+            widgets = API.widgets.all();
+        }
+        let facets = 0;
+        let outs = [];
+        widgets.forEach(widget => {
+            let mesh = widget.mesh;
+            let geo = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+            outs.push({geo, widget});
+            facets += geo.faces.length;
+        });
+        let stl = new Uint8Array(80 + 4 + facets * 50);
+        let dat = new DataView(stl.buffer);
+        let pos = 84;
+        dat.setInt32(80, facets, true);
+        outs.forEach(out => {
+            let { faces, vertices } = out.geo;
+            for (let i=0, il=faces.length; i<il; i++) {
+                let {a, b, c, normal} = faces[i];
+                let xo = 0, yo = 0, zo = 0;
+                if (outs.length > 1) {
+                    let {x, y, z} = out.widget.track.pos;
+                    xo = x;
+                    yo = y;
+                    zo = z;
+                }
+                dat.setFloat32(pos +  0, normal.x, true);
+                dat.setFloat32(pos +  4, normal.y, true);
+                dat.setFloat32(pos +  8, normal.z, true);
+                dat.setFloat32(pos + 12, vertices[a].x + xo, true);
+                dat.setFloat32(pos + 16, vertices[a].y + yo, true);
+                dat.setFloat32(pos + 20, vertices[a].z + zo, true);
+                dat.setFloat32(pos + 24, vertices[b].x + xo, true);
+                dat.setFloat32(pos + 28, vertices[b].y + yo, true);
+                dat.setFloat32(pos + 32, vertices[b].z + zo, true);
+                dat.setFloat32(pos + 36, vertices[c].x + xo, true);
+                dat.setFloat32(pos + 40, vertices[c].y + yo, true);
+                dat.setFloat32(pos + 44, vertices[c].z + zo, true);
+                pos += 50;
+            }
+        });
+        return stl;
     }
 
     /** ******************************************************************
@@ -1383,7 +1437,9 @@
     function platformGroupDone(skipLayout) {
         grouping = false;
         Widget.Groups.loadDone();
-        if (feature.drop_layout && !skipLayout) platform.layout();
+        if (feature.drop_layout && !skipLayout) {
+            platform.layout();
+        }
     }
 
     function platformAdd(widget, shift, nolayout) {
@@ -1404,8 +1460,6 @@
             if (!settings.controller.autoLayout) {
                 positionNewWidget(widget);
             }
-        } else if (feature.drop_layout) {
-            platform.layout();
         }
     }
 
@@ -1708,6 +1762,7 @@
         }
         const mode = settings.mode;
         settings.sproc[mode].default = settings.process;
+        settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));

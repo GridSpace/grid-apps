@@ -36,6 +36,8 @@ kiri.lang['en-us'] = {
     dv_orgt_l:      "part z origin top",
     dv_bedc_s:      "circular bed",
     dv_bedc_l:      "device bed is circular",
+    dv_belt_s:      "belt bed",
+    dv_belt_l:      "continuous printing bed",
     dv_fanp_s:      "fan power",
     dv_fanp_l:      "set cooling fan power",
     dv_prog_s:      "progress",
@@ -289,6 +291,8 @@ kiri.lang['en-us'] = {
 
     // CNC OUTLINE
     co_menu:        "outline",
+    co_dogb_s:      "dogbones",
+    co_dogb_l:      "insert dogbone cuts\ninto inside corners",
     co_wide_s:      "wide cutout",
     co_wide_l:      "widen outside cutout paths\nfor deep cuts in hard material",
     co_olin_s:      "inside only",
@@ -451,8 +455,6 @@ kiri.lang['en-us'] = {
     ad_zhop_l:      "amount to raise z\non retraction moves\nin millimeters\n0 to disable",
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      "use micro-movements to cancel\nbacklash during fills\nin millimeters",
-    ad_slrt_s:      "slice rotation",
-    ad_slrt_l:      "slice object on a bias\nangle in the y axis.\nuseful for extremely\nlarge format prints",
     ad_lret_s:      "layer retract",
     ad_lret_l:      "force filament retraction\nbetween layers",
     ad_play_s:      "polish layers",

@@ -62,8 +62,7 @@
             minToolDiam = Infinity,
             maxToolDiam = -Infinity,
             thruHoles,
-            tabs = settings.widget[widget.id].tab,
-            overcuts = settings.widget[widget.id].overcuts;
+            tabs = settings.widget[widget.id].tab;
 
         if (tabs) {
             // make tab polygons
@@ -170,11 +169,13 @@
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-        let fakeTerrain = false;
-        if (tzindex.length > 100) {
-            fakeTerrain = tzindex[0];
+        let skipTerrain = !(procRough || procOutline) && tzindex.length > 50;
+
+        if (skipTerrain) {
+            console.log("skipping terrain generation for speed");
             tzindex = [ tzindex.pop() ];
         }
+
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
             tslices.push(data.slice);
@@ -182,16 +183,11 @@
                 const slice = data.slice;
                 sliceAll.push(slice);
                 slice.output()
-                    .setLayer("debug", {line: 0x888800, thin: true })
+                    .setLayer("terrain", {line: 0x888800, thin: true })
                     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
             }
             updateOp(index, total);
         }, genso: true });
-        if (fakeTerrain) {
-            // to avoid compute for highly detailed maps, force all
-            // moves above part top by synthesizing a single terrain slice
-            terrain[0].z = fakeTerrain.z;
-        }
 
         let shadowTop = terrain[terrain.length - 1];
         let center = tshadow[0].bounds.center();
@@ -319,6 +315,7 @@
 
                 // inset offset array by 1/2 diameter then by tool overlap %
                 offset = POLY.offset(nest, [-(roughToolDiam / 2 + camRoughStock), -roughToolDiam * proc.camRoughOver], {
+                    minArea: 0,
                     z: slice.z,
                     count: 999,
                     flat: true,
@@ -479,21 +476,8 @@
                     offset = cutTabs(tabs, offset, slice.z);
                 }
 
-                if (overcuts) {
-                    // make overcut polygons and add it
-                    // actually is not a circle but a 32 lines polygon
-                    overcuts.forEach( oc => {
-                        let polyRadius = oc.dim.radiusbottom - outlineToolDiam/2; 
-                        if (polyRadius > 0.01) {
-                            let zero = newPoint(0,0,0);
-                            let point = newPoint(oc.pos.x, oc.pos.y, slice.z);
-                            let poly = newPolygon().centerCircle(zero, polyRadius, 32);
-                            poly.points = poly.points.map(v => newPoint(v.x, v.y, v.z));
-                            poly.move(point);
-                            offset.push(poly);
-                        }
-                    });
-        
+                if (proc.camOutlineDogbone && !procOutlineWide) {
+                    CAM.addDogbones(offset, outlineToolDiam / 5);
                 }
 
                 // offset.xout(`slice ${slice.z}`);
@@ -576,17 +560,60 @@
         }
 
         // add shadow perimeter to terrain to catch outside moves off part
-        let shadowOff = POLY.offset(shadowTop.tops, minToolDiam / 2);
+        let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
+        let allpoly = POLY.union([...shadowTop.tops, ...tabpoly], 0, true);
+        let shadowOff = POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
         terrain.forEach(level => level.tops.appendAll(shadowOff));
 
-        widget.terrain = terrain;
+        // let dslice = KIRI.newSlice(-1);
+        // dslice.output().setLayer("shadowOff", { line: 0xff0000 }).addPolys(shadowOff);
+        // sliceAll.push(dslice);
+
+        widget.terrain = skipTerrain ? null : terrain;
         widget.minToolDiam = minToolDiam;
         widget.maxToolDiam = maxToolDiam;
 
         ondone();
     };
 
-    CAM.traces = function computeTraces(settings, widget) {
+    CAM.addDogbones = function(poly, dist, reverse) {
+        if (Array.isArray(poly)) {
+            return poly.forEach(p => CAM.addDogbones(p, dist));
+        }
+        let isCW = poly.isClockwise();
+        if (reverse || poly.parent) isCW = !isCW;
+        let oldpts = poly.points.slice();
+        let lastpt = oldpts[oldpts.length - 1];
+        let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+        let newpts = [ ];
+        for (let i=0; i<oldpts.length + 1; i++) {
+            let nextpt = oldpts[i % oldpts.length];
+            let nextsl = lastpt.slopeTo(nextpt).toUnit();
+            let adiff = lastsl.angleDiff(nextsl, true);
+            let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
+            if (isCW && adiff > 45) {
+                let newa = BASE.newSlopeFromAngle(lastsl.angle + bdiff);
+                newpts.push(lastpt.projectOnSlope(newa, dist));
+                newpts.push(lastpt.clone());
+            } else if (!isCW && adiff < -45) {
+                let newa = BASE.newSlopeFromAngle(lastsl.angle - bdiff);
+                newpts.push(lastpt.projectOnSlope(newa, dist));
+                newpts.push(lastpt.clone());
+            }
+            lastsl = nextsl;
+            lastpt = nextpt;
+            if (i < oldpts.length) {
+                newpts.push(nextpt);
+            }
+        }
+        poly.points = newpts;
+        poly.length = newpts.length;
+        if (poly.inner) {
+            CAM.addDogbones(poly.inner, dist, true);
+        }
+    };
+
+    CAM.traces = function(settings, widget) {
         if (widget.traces) {
             // do no work if cached
             return false;

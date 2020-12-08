@@ -599,11 +599,14 @@
                 if (reply.slice) {
                     widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
                 }
-                if (reply.error) {
-                    ondone(false, reply.error);
+                if (reply.rotinfo) {
+                    widget.rotinfo = reply.rotinfo;
                 }
                 if (reply.done) {
                     ondone(true);
+                }
+                if (reply.error) {
+                    ondone(false, reply.error);
                 }
             });
         }

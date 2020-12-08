@@ -46,6 +46,8 @@ KIRI.worker = {
 
         // do it here so cancel can work
         cache[data.id] = widget;
+        // stored for possible future rotations
+        widget.vertices = vertices;
 
         // fake mesh object to satisfy printing
         widget.track = data.tracking;
@@ -58,24 +60,7 @@ KIRI.worker = {
     },
 
     slice: function(data, send) {
-        let { id, settings, rotation } = data;
-
-        // let centerz;
-        // let movez;
-        // if (rotation) {
-        //     let bbox1 = widget.getBoundingBox(true);
-        //     widget._rotate(0,rotation,0,true);
-        //     widget.center();
-        //     let bbox2 = widget.getBoundingBox(true);
-        //     centerz = (bbox2.max.z - bbox2.min.z)/2;
-        //     movez = centerz - (bbox1.max.z - bbox1.min.z)/2;
-        // }
-        // let vertices = widget.getGeoVertices().buffer.slice(0);
-        //     // snapshot = KIRI.api.view.snapshot;
-        // if (rotation) {
-        //     widget._rotate(0,-rotation,0,true);
-        //     widget.center();
-        // }
+        let { id, settings } = data;
 
         send.data({update:0.05, updateStatus:"slicing"});
 
@@ -85,24 +70,43 @@ KIRI.worker = {
 
         try {
 
+        let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
+        if (rotation) {
+            widget.mesh = null;
+            widget.points = null;
+            widget.loadVertices(widget.vertices);
+            widget._rotate(rotation,0,0,true);
+            widget.center(false, true);
+            widget.getBoundingBox(true);
+        }
+
         widget.slice(settings, function(error) {
             if (error) {
-                // delete cache[id];
                 send.data({error: error});
             } else {
                 const slices = widget.slices || [];
                 send.data({send_start: time()});
                 send.data({
-                    topo: settings.synth.sendTopo ? widget.topo : null,
                     stats: widget.stats,
-                    slices: slices.length
+                    slices: slices.length,
                 });
                 slices.forEach(function(slice,index) {
                     const state = { zeros: [] };
                     send.data({index: index, slice: slice.encode(state)}, state.zeros);
                 })
                 send.data({send_end: time()});
+                // unrotate and send delta coordinates
+                if (rotation) {
+                    widget.setPoints(null);
+                    widget._rotate(-rotation,0,0,true);
+                    let wbb = widget.getBoundingBox(true);
+                    let dy = (wbb.max.y + wbb.min.y)/2;
+                    let dz = wbb.min.z;
+                    widget.rotinfo = { angle: 45, dy, dz };
+                    send.data({ rotinfo: widget.rotinfo });
+                }
             }
+
             send.done({done: true});
         }, function(update, msg) {
             now = time();
@@ -143,8 +147,9 @@ KIRI.worker = {
             send.data(emit);
         });
 
+        const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
         const print = current.print || {};
-        const maxSpeed = print.maxSpeed || undefined;
+        const maxSpeed = (print.maxSpeed || 0) * unitScale;
         const state = { zeros: [] };
 
         send.data({ progress: 1, message: "transfer" });
@@ -279,6 +284,7 @@ KIRI.worker = {
                 1;                         // base
             // convert png to grayscale
             let gray = new Uint8Array(width * height);
+            let alpha = new Uint8Array(width * height);
             let gi = 0;
             let invi = info.inv_image ? true : false;
             let inva = info.inv_alpha ? true : false;
@@ -291,15 +297,15 @@ KIRI.worker = {
                     let b = data[di+2];
                     let a = data[di+3];
                     let v = ((r + g + b) / 3);
+                    if (inva) a = 255 - a;
+                    if (invi) v = 255 - v;
                     if (border) {
                         if (x < border || y < border || x > width-border-1 || y > height-border-1) {
                             v = 255;
                         }
                     }
-                    if (invi) v = 255 - v;
-                    if (inva) a = 255 - a;
-                    v *= (a/255);
-                    gray[gi++] = v;
+                    alpha[gi] = a;
+                    gray[gi++] = v * (a / 255);
                 }
             }
             let blur = parseInt(info.blur || 0);
@@ -311,17 +317,18 @@ KIRI.worker = {
                         let xr = Math.min(x+1,width-1);
                         let yu = Math.max(y-1,0);
                         let yd = Math.min(y+1,height-1);
-                        blur[x + width * y] = (
+                        let id = x + width * y;
+                        blur[id] = ((
                             gray[xl + (width * yu)] +
                             gray[x  + (width * yu)] +
                             gray[xr + (width * yu)] +
                             gray[xl + (width *  y)] +
-                            gray[x  + (width *  y)] + // self
+                            gray[x  + (width *  y)] * 8 + // self
                             gray[xr + (width *  y)] +
                             gray[xl + (width * yd)] +
                             gray[x  + (width * yd)] +
                             gray[xr + (width * yd)]
-                        ) / 9;
+                        ) / 16);
                     }
                 }
                 gray = blur;
@@ -339,11 +346,12 @@ KIRI.worker = {
             // create surface vertices & faces
             for (let x = 0; x < width; x++) {
                 for (let y = 0; y < height; y++) {
-                    let v = gray[x + width * y];
+                    let id = x + width * y;
+                    let v = gray[id];
                     // create vertex @ x,y
                     verts[vi++] = (-w2 + x) / div;
                     verts[vi++] = (h2 - y) / div;
-                    verts[vi++] = ((255 - v) / 50) + base;
+                    verts[vi++] = (v / 50) + (base * alpha[id] / 255);
                     VI++;
                     // create two surface faces on the rect between x-1,y-1 and x,y
                     if (x > 0 && y > 0) {

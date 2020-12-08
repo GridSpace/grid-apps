@@ -3,11 +3,11 @@
 <head lang="en">
     <meta charset="UTF-8">
     <meta name="author" content="Stewart Allen">
-    <meta name="keywords" content="3d slicer,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode" />
+    <meta name="keywords" content="3d slicer,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla" />
     <meta name="copyright" content="stewart allen [sa@grid.space]">
-    <meta name="description" content="3d slice modeler, gcode and CNC toolpath generator">
-    <meta property="og:description" content="Kiri:Moto is a unique multi-modal 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
-    <meta property="og:title" content="Free 3D Tools for Makers">
+    <meta name="description" content="Browser-based 3D slicer, gcode and CNC toolpath generator">
+    <meta property="og:description" content="Kiri:Moto is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
+    <meta property="og:title" content="Browser-based 3D Slicer">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://grid.space/kiri/">
     <meta property="og:image" content="https://static.grid.space/img/logo_km_og.png">
@@ -129,19 +129,19 @@
             </div>
             <div id="act-slice" class="lt-menu lt-enabled">
                 <i class="fas fa-bars"></i>
-                <label>slice</label>
+                <label id="label-slice" title="analyze parts">slice</label>
                 <div id="pop-slice" class="pop-lcol f-row">
-                    <div id="act-preview" xclass="lt-menu">
+                    <div id="act-preview">
                         <i class="fas fa-cubes"></i>
-                        <label>preview</label>
+                        <label id="label-preview" title="show routing and paths">preview</label>
                     </div>
-                    <div id="act-animate" xclass="lt-menu">
+                    <div id="act-animate">
                         <i class="fas fa-running"></i>
-                        <label>animate</label>
+                        <label id="label-animate" title="render routing on a mesh">animate</label>
                     </div>
-                    <div id="act-export" xclass="lt-menu">
+                    <div id="act-export">
                         <i class="fas fa-file-download"></i>
-                        <label>export</label>
+                        <label id="label-export" title="generate downloadable files">export</label>
                     </div>
                 </div>
             </div>
@@ -391,10 +391,15 @@
         </div>
     </div>
     <div id="gdpr" class="noshow">
-        <p>this site uses cookies to preserve application preferences</p>
+        <p>this site uses <A href="/privacy.html" target="privacy">cookies</a> to preserve application preferences</p>
         <button id="gotit" class="f-col j-center">got it</button>
     </div>
     <div id="tool-info" class="noshow"></div>
+    <div id="context-menu">
+        <button id="context-export-stl">export selection as STL</button>
+        <button id="context-export-workspace">export workspace</button>
+        <button id="context-clear-workspace">clear workspace</button>
+    </div>
     <div id="fps" class="noshow"></div>
     <div id="layer-animate" class="f-col a-center"></div>
     <div id="layer-toolpos" class="f-row a-center"></div>

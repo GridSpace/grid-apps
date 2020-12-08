@@ -18,7 +18,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` mesh / stl export (like w/ images, rotate, scale, future cleanup ops)
+* `B` normals possibly inverted on faces in 2D to 3D conversion
 * `F` right click / context menu (object deletion, etc)
 * `F` detect and report slow framerates
 * `P` duplicate objects should share same slice data unless rotated or scaled
@@ -60,21 +60,25 @@
 
 # CAM
 
+* `B` failure to go *up* when moving between parts
 * `B` starting export during animation unleashes chaos
-* `B` crossing interior open spaces doesn't lift high enough
-*     https://forum.grid.space/t/g0-movement-hits-the-stock-using-custom-tabs-positioning/171/2
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes
-* `F` exports separate files for each operation
-* `F` animation should clear the mesh in areas where the cuts go through the stock?
-* `F` switch z top offset to an z anchor (top/bottom) + offset
+* `B` on rotation, tabs dissociate from parts whose center changes with rotation
+* `F` duplicating a part should duplicate added features like tabs
+* `F` validate muti-part layout and spacing exceeds largest outside tool diameter
+* `F` skip "thru" holes checkbox for roughing and outlining
+* `F` polygon simplification option in tracing (for image derived maps)
 * `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)
+* `F` exports separate files for each operation
+* `F` switch z top offset to a z anchor (top/bottom) + offset
+* `F` A-B linked cutting profiles for double-sided milling / part flips
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
-* `F` use arcs to connect acute angles
+* `F` convert acute angles to arcs
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` lead-in milling
 * `F` adaptive clearing in roughing mode
@@ -84,10 +88,11 @@
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
-* `F` A-B linked cutting profiles for double-sided milling / part flips
-* `P` crossing open space check point is outside camshell before returning max z
+* `F` animation should clear the mesh in areas where the cuts go through the stock?
+* `F` show render progress bar or %
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
+* `P` fast forward animation with "chunking" or "skip animation"
 
 # Laser
 

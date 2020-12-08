@@ -9,12 +9,14 @@ self.kiri.loader.push(function() {
         API, WORLD, SPACE,
         meshes = {},
         unitScale = 1,
-        toolPosX, toolPosY, toolPosZ,
+        progress, toolPosX, toolPosY, toolPosZ,
         speedValues = [ 25, 12, 6, 3 ],
         speedNames = [ "1x", "2x", "4x", "8x" ],
         speedIndex = 0,
         speedLabel,
-        speed;
+        speed,
+        pauseButton,
+        playButton;
 
     // ---( CLIENT FUNCTIONS )---
 
@@ -43,10 +45,10 @@ self.kiri.loader.push(function() {
             UC.setGroup(layer);
             UC.newRow([
                 UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
-                UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>',title:"play"}),
+                playButton = UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>',title:"play"}),
+                pauseButton = UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"step"}),
-                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"faster"}),
-                UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
+                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"speed"}),
                 speedLabel = UC.newLabel("speed")
             ]);
             updateSpeed();
@@ -56,9 +58,13 @@ self.kiri.loader.push(function() {
             const toolpos = $('layer-toolpos');
             toolpos.innerHTML = '';
             UC.setGroup(toolpos);
+            progress = UC.newInput('%', {disabled: true, size: 5});
             toolPosX = UC.newInput('x', {disabled: true, size: 7});
             toolPosY = UC.newInput('y', {disabled: true, size: 7});
             toolPosZ = UC.newInput('z', {disabled: true, size: 7});
+            playButton.style.display = '';
+            pauseButton.style.display = 'none';
+            API.event.emit('animate', 'CAM');
         });
     };
 
@@ -151,21 +157,32 @@ self.kiri.loader.push(function() {
     function play(opts) {
         const { steps } = opts;
         updateSpeed();
+        if (steps !== 1) {
+            playButton.style.display = 'none';
+            pauseButton.style.display = '';
+        }
         KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function fast(opts) {
         const { steps } = opts;
         updateSpeed(1);
+        playButton.style.display = 'none';
+        pauseButton.style.display = '';
         KIRI.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
     }
 
     function pause() {
+        playButton.style.display = '';
+        pauseButton.style.display = 'none';
         KIRI.client.animate({speed: 0}, handleGridUpdate);
     }
 
     function handleGridUpdate(data) {
         checkMeshCommands(data);
+        if (data && data.progress) {
+            progress.value = (data.progress * 100).toFixed(1)
+        }
     }
 
     if (KIRI.client)
@@ -338,6 +355,7 @@ self.kiri.loader.push(function() {
             }
             moves.push(next.point);
             renderMoves(id, moves, send);
+            send.data({ progress: pathIndex / path.length });
         } else {
             tool.pos = next.point;
             send.data({ mesh_move: { id, pos: next.point }});

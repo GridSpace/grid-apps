@@ -364,26 +364,38 @@
                     if (id) loadSettingsFromServer(id);
                 });
                 break;
-            case cca('s'): // complete slice
+            case cca('S'): // slice
+            case cca('s'): // slice
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
                 API.function.slice();
                 break;
-            case cca('p'): // prepare print
+            case cca('P'): // prepare
+            case cca('p'): // prepare
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
                 if (API.mode.get() !== 'SLA') {
                     // hidden in SLA mode
                     API.function.print();
                 }
                 break;
-            case cca('P'): // position widget
-                positionSelection();
+            case cca('X'): // export
+            case cca('x'): // export
+                if (evt.shiftKey) {
+                    API.show.alert('CAPS lock on?');
+                }
+                API.function.export();
+                break;
+            case cca('g'): // CAM animate
+                API.function.animate();
+                break;
+            case cca('o'): // manual rotation
+                rotateInputSelection();
                 break;
             case cca('r'): // recent files
                 API.modal.show('files');
-                break;
-            case cca('R'): // position widget
-                rotateInputSelection();
-                break;
-            case cca('x'): // export print
-                API.function.export();
                 break;
             case cca('q'): // preferences
                 API.modal.show('prefs');
@@ -542,19 +554,38 @@
         });
     }
 
-    function profileExport() {
+    function objectsExport() {
+        // return API.selection.export();
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "selected.stl").then(name => {
+            if (!name) return;
+            if (name.toLowerCase().indexOf(".stl") < 0) {
+                name = `${name}.stl`;
+            }
+            let xprt = API.selection.export(),
+                blob = new Blob([xprt], {type: "octet/stream"}),
+                url = WIN.URL.createObjectURL(blob);
+            $('mod-any').innerHTML = [
+                `<a id="sexport" href="${url}" download="${name}">x</a>`
+            ].join('');
+            $('sexport').click();
+        });
+    }
+
+    function profileExport(workspace) {
+        let checked = workspace ? ' checked' : '';
         const opt = {pre: [
             "<div class='f-col a-center'>",
-            "  <h3>Profile Export</h3>",
+            `  <h3>${workspace ? "Workspace" : "Profile"} Export</h3>`,
             "  <label>This will create a backup of</label>",
-            "  <label>your device profiles and settings</label>",
-            "  <br>",
-            "  <div class='f-row'>",
-            "  <input id='incwork' type='checkbox'>&nbsp;include workspace",
+            workspace ?
+            "  <label>your workspace and settings</label>" :
+            "  <label>your device profiles and settings</label><br>",
+            `  <div class='f-row' style="display:${workspace ? 'none' : ''}">`,
+            `  <input id='incwork' type='checkbox'${checked}>&nbsp;include workspace`,
             "  </div>",
             "</div>"
         ]};
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "profile", opt).then(name => {
+        UC.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
             if (name) {
                 let work = $('incwork').checked,
                     json = API.conf.export({work}),
@@ -662,6 +693,7 @@
             dev.deviceName = devicename;
 
             UI.deviceName.value = devicename;
+            UI.deviceBelt.checked = dev.bedBelt;
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
@@ -699,6 +731,7 @@
                 UI.extrudeAbs,
                 UI.deviceOrigin,
                 UI.deviceRound,
+                UI.deviceBelt,
                 UI.gcodeFan,
                 UI.gcodeTrack,
                 UI.gcodeLayer,
@@ -1336,6 +1369,13 @@
                 export:         $('act-export')
             },
 
+            label: {
+                slice:          $('label-slice'),
+                preview:        $('label-preview'),
+                animate:        $('label-animate'),
+                export:         $('label-export'),
+            },
+
             acct: {
                 help:           $('acct-help'),
                 export:         $('acct-export')
@@ -1345,6 +1385,7 @@
             load:               $('load-file'),
             speeds:             $('speeds'),
             speedbar:           $('speedbar'),
+            context:            $('context-menu'),
 
             container:          container,
             back:               $('lt-back'),
@@ -1435,6 +1476,7 @@
             spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
+            deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
@@ -1574,7 +1616,7 @@
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true, top:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),
@@ -1594,6 +1636,7 @@
             camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
             camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camOutlinePlunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
+            camOutlineDogbone:  UC.newBoolean(LANG.co_dogb_s, onBooleanClick, {title:LANG.co_dogb_l, modes:CAM, show:() => { return !UI.camOutlineWide.checked }}),
             camOutlineIn:       UC.newBoolean(LANG.co_olin_s, onBooleanClick, {title:LANG.co_olin_l, modes:CAM, show:() => { return !UI.camOutlineOut.checked }}),
             camOutlineOut:      UC.newBoolean(LANG.co_olot_s, onBooleanClick, {title:LANG.co_olot_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camOutlineWide:     UC.newBoolean(LANG.co_wide_s, onBooleanClick, {title:LANG.co_wide_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
@@ -1720,7 +1763,6 @@
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceRotation:       LOCAL ? UC.newInput(LANG.ad_slrt_s, {title:LANG.ad_slrt_l, bound:UC.bound(-45,45), convert:UC.toFloat, modes:FDM, expert:true}) : null,
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
 
@@ -2016,6 +2058,18 @@
             if (int) API.event.emit('mouse.hover', {point: int, event, type: 'platform'});
         });
 
+        SPACE.mouse.up((event, int) => {
+            if (event.button === 2 && API.view.isArrange()) {
+                let style = UI.context.style;
+                style.display = 'flex';
+                style.left = `${event.clientX-3}px`;
+                style.top = `${event.clientY-3}px`;
+                UI.context.onmouseleave = () => {
+                    style.display = '';
+                };
+            }
+        });
+
         SPACE.mouse.downSelect((int,event) => {
             if (API.feature.hover) {
                 if (int) {
@@ -2284,6 +2338,10 @@
         $('render-ghost').onclick = () => { API.view.wireframe(false, 0, 0.5); };
         $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
+        // context menu
+        $('context-export-stl').onclick = () => { objectsExport() };
+        $('context-export-workspace').onclick = () => { profileExport(true) };
+        $('context-clear-workspace').onclick = () => { API.platform.clear(); UI.context.onmouseleave() };
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };

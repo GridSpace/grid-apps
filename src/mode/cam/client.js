@@ -56,6 +56,12 @@
                 func.traceDone();
                 func.overcutClear();
                 UI.func.animate.style.display = 'none';
+                UI.label.slice.innerText = 'slice';
+                UI.label.preview.innerText = 'preview';
+                UI.label.export.innerText = 'export';
+            } else {
+                UI.label.slice.innerText = 'start';
+                checkOutlineSettings(api.conf.get());
             }
             // do not persist traces across page reloads
             func.traceClear();
@@ -70,6 +76,16 @@
             func.overcutDone();
         });
 
+        function checkOutlineSettings(settings) {
+            let ui = api.ui, proc = settings.process;
+            // fix invalid in/out enabled condition
+            if (ui.camOutlineIn.checked && ui.camOutlineOut.checked) {
+                proc.camOutlineIn = proc.camOutlineOut = false;
+                ui.camOutlineIn.checked = ui.camOutlineOut.checked = false;
+                api.uc.refresh();
+            }
+        }
+
         api.event.on("settings.saved", (settings) => {
             current = settings;
             const proc = settings.process;
@@ -81,6 +97,7 @@
                 if (wannot.tab && wannot.tab.length) hasTabs = true;
                 if (wannot.trace && wannot.trace.length) hasTraces = true;
             });
+            checkOutlineSettings(settings);
             // show/hide dots in enabled process pop buttons
             api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
             api.ui.camDrill.marker.style.display =

@@ -173,11 +173,14 @@
             for (let i=1; i<oldpts.length + 1; i++) {
                 let nextpt = oldpts[i % oldpts.length];
                 let nextsl = lastpt.slopeTo(nextpt).toUnit();
-                if (lastsl.angleDiff(nextsl) >= 10 && lastpt.distTo2D(nextpt) >= knifeTipOff) {
-                    arc(lastpt, lastsl, nextsl, newpts);
-                    // let tmp;
-                    // newpts.push( tmp = lastpt.projectOnSlope(lastsl, knifeTipOff) );
-                    // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
+                if (lastsl.angleDiff(nextsl) >= 10) {
+                    if (lastpt.distTo2D(nextpt) >= knifeTipOff) {
+                        arc(lastpt, lastsl, nextsl, newpts);
+                    } else {
+                        // todo handle short segments
+                        // newpts.push(lastpt.projectOnSlope(lastsl, knifeTipOff) );
+                        // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
+                    }
                 }
                 newpts.push(nextpt);
                 lastsl = nextsl;
@@ -202,7 +205,7 @@
                 let merged = [];
                 widget.slices.forEach(function(slice) {
                     let polys = [];
-                    slice.offsets.clone(true).forEach(p => p.flattenTo(polys));
+                    slice.offset.clone(true).forEach(p => p.flattenTo(polys));
                     polys.forEach(p => {
                         let match = false;
                         for (let i=0; i<merged.length; i++) {
@@ -428,7 +431,7 @@
                 if (knifeOn) {
                     lines.push(`; start new poly id=${poly.id} len=${poly.length}`);
                 }
-                for (let i=0; i<passes; i++) {
+                for (let i=1; i<passes + 1; i++) {
                     poly.forEach(function(point, index) {
                         if (index === 0) {
                             if (knifeOn) {
@@ -438,7 +441,7 @@
                             lines.push(`G0${space}${point}`);
                             if (knifeOn) {
                                 // drop
-                                lines.appendAll(['; drag-knife down', `G0${space}Z${-i*knifeDepth}`]);
+                                lines.appendAll(['; drag-knife down', `G0${space}Z${-i * knifeDepth}`]);
                             }
                         } else if (index === 1) {
                             laser_on.forEach(line => {

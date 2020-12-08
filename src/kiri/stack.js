@@ -5,12 +5,12 @@
 (function() {
 
     class Stack {
-        constructor(view) {
+        constructor(view, freeMem) {
             this._view = view;
             this.view = view.newGroup();
             this.slices = [];
             this.meshes = [];
-            this.freeMem = true;
+            this.freeMem = freeMem;
         }
 
         size() {
@@ -25,9 +25,19 @@
             this.view.visible = true;
         }
 
+        rotate(set) {
+            this.view.rotation.x = -set.angle * (Math.PI/180);
+            this.view.position.y += -set.dy;
+            this.view.position.z += -set.dz;
+        }
+
         destroy() {
             this._view.remove(this.view);
             this.view = this.slices = this.meshes = null;
+        }
+
+        setFreeMem(bool) {
+            this.freeMem = bool;
         }
 
         setVisible(newMin, newMax) {

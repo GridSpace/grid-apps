@@ -5,8 +5,8 @@
 (function() {
 
     let KIRI = self.kiri,
-        stacks = {},
         freeMem = true,
+        stacks = {},
         tallest = 0,
         min = 0,
         max = 0,
@@ -20,6 +20,7 @@
     }
 
     function setFreeMem(bool) {
+        Object.values(stacks).forEach(stack => stack.obj.setFreeMem(bool));
         freeMem = bool;
         return this;
     }
@@ -41,6 +42,12 @@
         labels.innerHTML = '';
     }
 
+    function rotate(set) {
+        Object.values(stacks).forEach(stack => {
+            stack.obj.rotate(set);
+        });
+    }
+
     function getStack(name) {
         return stacks[name];
     }
@@ -51,7 +58,7 @@
         }
         const stack = stacks[name] = {
             layers: [ ],
-            obj: new KIRI.Stack(view),
+            obj: new KIRI.Stack(view, freeMem),
             add: function(layers) {
                 let map = stack.obj.addLayers(layers);
                 for (const [label, mats] of Object.entries(map)) {
@@ -107,6 +114,7 @@
     KIRI.stacks = {
         clear,
         create,
+        rotate,
         remove,
         getStack,
         getRange,
