@@ -350,9 +350,9 @@ kiri.lang['en-us'] = {
     // LASER KNIFE
     dk_menu:        "knife",
     dk_dpth_s:      "cut depth",
-    dk_dpth_l:      "cut depth per pass\nin millimeters",
+    dk_dpth_l:      "final cut depth\nin millimeters",
     dk_pass_s:      "cut passes",
-    dk_pass_l:      "number of passes\neach pass is deeper",
+    dk_pass_l:      "number of passes\ndown to cut depth",
     dk_offs_s:      "tip offset",
     dk_offs_l:      "distance from blade tip\nto center of tool\nin millimeters",
 
@@ -374,7 +374,7 @@ kiri.lang['en-us'] = {
     ou_layo_s:      "layer color",
     ou_layo_l:      "output layer colors\nfor each z index\noverridden by merged",
     ou_drkn_s:      "drag knife",
-    ou_drkn_l:      "enable drag knife\noutput menu",
+    ou_drkn_l:      "enable drag knife\noutput in gcode\ncut radii are added\nto corners with\ncut down passes",
 
     // OUTPUT FDM
     ou_nozl_s:      "nozzle temp",

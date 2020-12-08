@@ -1,17 +1,14 @@
 # Kiri:Moto todo and notes
 
-## 2.4 roadmap
-* `laser`
-* - drag knife support
-* `all`
-* - circular fit/layout when no-layout to prevent collisions
-
 ## 2.5 roadmap
 # `cnc`
 # - lathe, A-axis
 # - complex process order
 # - split gcode output
 # - double-sided assistance
+# - redo path planning
+# - more tracing types (in, out, clear, pocket)
+# - trace re-ordering
 # `fdm`
 # - redo automatic supports using faces instead of deltas
 # - bind process to z ranges or boxed regions
@@ -63,6 +60,7 @@
 
 # CAM
 
+* `B` starting export during animation unleashes chaos
 * `B` crossing interior open spaces doesn't lift high enough
 *     https://forum.grid.space/t/g0-movement-hits-the-stock-using-custom-tabs-positioning/171/2
 * `B` climb vs conventional not fully consistent after refactor
@@ -89,6 +87,7 @@
 * `F` A-B linked cutting profiles for double-sided milling / part flips
 * `P` crossing open space check point is outside camshell before returning max z
 * `P` detect render message backlog and pause or warn
+* `P` redo all path route / planning in prepare to account for terrain before camOut
 
 # Laser
 

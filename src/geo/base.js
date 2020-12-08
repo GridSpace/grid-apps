@@ -333,7 +333,7 @@
         // isCloseTo() default for dist
         // sliceIntersects point merge dist for non-fill
         precision_merge : 0.005,
-        precision_slice_z : 0.005,
+        precision_slice_z : 0.0001,
         // Point.isInPolygon nearPolygon value
         // Point.isInPolygonNotNear nearPolygon value
         // Point.isMergable2D distToSq2D value

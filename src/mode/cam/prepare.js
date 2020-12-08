@@ -255,8 +255,7 @@
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
-            } //else
-            {
+            } else if (isMove) {
                 // for longer moves, check the terrain to see if we need to go up and over
                 const bigXY = (deltaXY > toolDiam);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
@@ -551,10 +550,11 @@
                 spindle = Math.min(spindleMax, process.camOutlineSpindle);
                 let flatLevels = depthData.outline.map(level => {
                     return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
-                });
+                }).filter(l => l.length > 0);
                 // flatLevels.xout('flat');
                 // start with the smallest polygon on the top
                 printPoint = flatLevels[0]
+                    // .filter(l => l.length > 0)[0]
                     .sort((a,b) => { return a.area() - b.area() })[0]
                     .average();
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);

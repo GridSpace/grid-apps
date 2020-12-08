@@ -69,7 +69,7 @@
             const zList = this.zList;
 
             function countZ(z) {
-                z = UTIL.round(z,5);
+                z = z.round(5);
                 zList[z] = (zList[z] || 0) + 1;
             }
 
@@ -116,35 +116,6 @@
                 }
             }
 
-            if (opt.trace) {
-                this.findTraceLines();
-            }
-
-            return this;
-        }
-
-        // find slice candidates to trace for CNC ballmills and tapermills
-        findTraceLines() {
-            let zl = {};
-            let le;
-            let zs = Object.entries(this.zLine).map(oe => {
-                return oe.map(v => parseFloat(v));
-            }).sort((a,b) => {
-                return b[0] - a[0];
-            }).forEach((e,i) => {
-                if (i > 0) {
-                    let zd = le[0]-e[0];
-                    if (zd > 0.1 && e[1] > 100) {
-                        // zl.push(e)
-                        zl[e[0].toFixed(5)] = e[1];
-                        zFlat[e[0].toFixed(5)] = e[1];
-                    }
-                }
-                if (e[1] > 10) {
-                    le = e;
-                }
-            });
-            this.zLine = zl;
             return this;
         }
 
@@ -264,8 +235,9 @@
             let retn = { z };
 
             if (lines.length) {
-                retn.lines = removeDuplicateLines(lines);
-                retn.tops = POLY.nest(connectLines(retn.lines, opt));
+                const debug = false;
+                retn.lines = removeDuplicateLines(lines, debug);
+                retn.tops = POLY.nest(connectLines(retn.lines, opt, debug));
 
                 if (opt.swapX || opt.swapY) {
                     this.unswap(opt.swapX, opt.swapY, retn.lines, retn.tops);
@@ -420,7 +392,7 @@
                 });
             }
 
-            return array.map(v => Math.abs(parseFloat(v.toFixed(2))));
+            return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
         }
     }
 
@@ -506,10 +478,9 @@
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input, opt = {}) {
+    function connectLines(input, opt = {}, debug) {
         // map points to all other points they're connected to
-        let DBUG = BASE.debug,
-            CONF = BASE.config,
+        let CONF = BASE.config,
             pmap = {},
             points = [],
             output = [],
@@ -552,7 +523,7 @@
         function findPathsMinRecurse(point, path, paths, from) {
             let stack = [ ];
             if (paths.length > 10000) {
-                DBUG.log("excessive path options @ "+paths.length+" #"+input.length);
+                console.log("excessive path options @ "+paths.length+" #"+input.length);
                 return;
             }
             for (;;) {
@@ -661,10 +632,12 @@
             }
         }
 
+        if (debug) console.log('map', input);
+
         // create point map, unique point list and point group arrays
         input.forEach(function(line) {
-            p1 = cachedPoint(line.p1.round(4));
-            p2 = cachedPoint(line.p2.round(4));
+            p1 = cachedPoint(line.p1.round(5));
+            p2 = cachedPoint(line.p2.round(5));
             addConnected(p1,p2);
             addConnected(p2,p1);
         });
@@ -676,6 +649,7 @@
                 let path = [],
                     paths = [];
                 findPathsMinRecurse(point, path, paths);
+                if (debug) console.log('dangle', {point, path, paths});
                 if (paths.length > 0) emitLongestAsPolygon(paths);
             }
         });
@@ -767,7 +741,7 @@
      * @param {Line[]} lines
      * @returns {Line[]}
      */
-    function removeDuplicateLines(lines) {
+    function removeDuplicateLines(lines, debug) {
         let output = [],
             tmplines = [],
             points = [],
@@ -792,6 +766,9 @@
             if (l1.key === l2.key) {
                 l1.del = !l1.edge;
                 l2.del = !l2.edge;
+                if (debug && (l1.del || l2.del)) {
+                    console.log('dup', l1, l2);
+                }
                 return 0;
             }
             return l1.key < l2.key ? -1 : 1;

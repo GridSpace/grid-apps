@@ -462,7 +462,7 @@
      * and return resulting gaps from offsets for thin wall detection in
      * in FDM mode and uncleared areas in CAM mode.
      */
-    function offset(polys, dist, options) {
+    function offset(polys, dist, opts = {}) {
         // do not offset open lines
         polys = polys.filter(p => !p.open);
 
@@ -475,7 +475,6 @@
         });
 
         let orig = polys,
-            opts = options || {},
             count = numOrDefault(opts.count, 1),
             depth = numOrDefault(opts.depth, 0),
             clean = opts.clean !== false,
@@ -483,7 +482,7 @@
             fill = numOrDefault(opts.fill, ClipperLib.PolyFillType.pftNonZero),
             join = numOrDefault(opts.join, ClipperLib.JoinType.jtMiter),
             type = numOrDefault(opts.type, ClipperLib.EndType.etClosedPolygon),
-            coff = new ClipperLib.ClipperOffset(),
+            coff = new ClipperLib.ClipperOffset(opts.miter, opts.arc),
             ctre = new ClipperLib.PolyTree(),
             // if dist is array with values, shift out next offset
             offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,

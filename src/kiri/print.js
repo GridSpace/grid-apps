@@ -321,11 +321,10 @@
      * @param {Function} [onfirst] optional fn to call on first point
      * @return {Point} last output point
      */
-    PRO.polyPrintPath = function(poly, startPoint, output, opt) {
+    PRO.polyPrintPath = function(poly, startPoint, output, options = {}) {
         poly.setClockwise();
 
-        let options = opt || {},
-            process = this.settings.process,
+        let process = this.settings.process,
             shortDist = process.outputShortDistance,
             shellMult = pref(options.extrude, process.outputShellMult),
             printSpeed = options.rate || process.outputFeedrate,
@@ -833,7 +832,7 @@
                     }
                     return;
                 }
-                let area = poly.area();
+                let area = poly.open ? 1 : poly.area();
                 poly.forEachPoint(function(point, index) {
                     dist = opt.weight ?
                         startPoint.distTo3D(point) * area * area :

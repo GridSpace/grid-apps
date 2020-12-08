@@ -46,7 +46,6 @@
             procContour = procContourX || procContourY,
             procDrill = proc.camDrillingOn && proc.camDrillDown && proc.camDrillDownSpeed,
             procDrillReg = proc.camDrillReg,
-            // procTrace = proc.camTraceOn,
             roughDown = procRough ? proc.camRoughDown : Infinity,
             outlineDown = procOutline ? proc.camOutlineDown : Infinity,
             sliceDepth = Math.max(0.1, Math.min(roughDown, outlineDown) / 3),
@@ -60,7 +59,8 @@
             camRoughStock = proc.camRoughStock,
             camRoughDown = proc.camRoughDown,
             minStepDown = Math.min(1, roughDown/3, outlineDown/3),
-            maxToolDiam = 0,
+            minToolDiam = Infinity,
+            maxToolDiam = -Infinity,
             thruHoles,
             tabs = settings.widget[widget.id].tab,
             overcuts = settings.widget[widget.id].overcuts;
@@ -132,14 +132,41 @@
             onupdate((opSum/opsTot) + (index/total) * opTot, msg || opOn[0]);
         }
 
-        // TODO pass widget.isModified() on slice and re-use cache if false
-        // TODO pre-slice in background from client signal
-        // TODO same applies to topo map generation
-        nextOp();
+        function updateToolDiams(toolDiam) {
+            minToolDiam = Math.min(minToolDiam, toolDiam);
+            maxToolDiam = Math.max(maxToolDiam, toolDiam);
+        }
+
+        let mark = Date.now();
         let slicer = new KIRI.slicer2(widget.getPoints(), {
             zlist: true,
             zline: true
         });
+
+        // xray debug
+        if (false) {
+            console.log({slicer_setup: Date.now() - mark});
+            let xlicer = new KIRI.slicer2(widget.getPoints(), {
+                zlist: true,
+                zline: true
+            });
+            let xrayind = Object.keys(xlicer.zLine)
+                .map(v => parseFloat(v).round(5))
+                .sort((a,b) => a-b);
+            let xrayopt = { each: (data, index, total) => {
+                let slice = newSlice(data.z);
+                slice.addTops(data.tops);
+                // data.tops.forEach(top => slice.addTop(top));
+                slice.lines = data.lines;
+                slice.xray();
+                sliceAll.push(slice);
+            }, over: false, flatoff: 0, edges: true, openok: true };
+            xlicer.slice(xrayind, xrayopt);
+            // xrayopt.over = true;
+            // slicer.slice(xrayind, xrayopt);
+        }
+
+        nextOp();
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
@@ -170,7 +197,7 @@
         let center = tshadow[0].bounds.center();
 
         if (procDrillReg) {
-            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
+            updateToolDiams(drillToolDiam);
             sliceDrillReg(settings, sliceAll, zThru);
         }
 
@@ -203,7 +230,7 @@
         // create roughing slices
         if (procRough) {
             nextOp();
-            maxToolDiam = Math.max(maxToolDiam, roughToolDiam);
+            updateToolDiams(roughToolDiam);
 
             let flats = [];
             let shadow = [];
@@ -361,7 +388,7 @@
             nextOp();
             let outlineTool = new CAM.Tool(conf, proc.camOutlineTool);
             let outlineToolDiam = outlineTool.fluteDiameter();
-            maxToolDiam = Math.max(maxToolDiam, outlineToolDiam);
+            updateToolDiams(outlineToolDiam);
 
             let shadow = [];
             let slices = [];
@@ -520,12 +547,12 @@
                     .setLayer("trace", {line: 0xaa00aa}, false)
                     .addPolys(slice.topPolys())
                 sliceAll.push(slice);
-                maxToolDiam = Math.max(maxToolDiam, traceToolDiam);
+                updateToolDiams(traceToolDiam);
             });
         }
 
         if (procDrill) {
-            maxToolDiam = Math.max(maxToolDiam, drillToolDiam);
+            updateToolDiams(drillToolDiam);
             sliceDrill(drillTool, tslices, sliceAll);
         }
 
@@ -547,7 +574,13 @@
                 });
             });
         }
+
+        // add shadow perimeter to terrain to catch outside moves off part
+        let shadowOff = POLY.offset(shadowTop.tops, minToolDiam / 2);
+        terrain.forEach(level => level.tops.appendAll(shadowOff));
+
         widget.terrain = terrain;
+        widget.minToolDiam = minToolDiam;
         widget.maxToolDiam = maxToolDiam;
 
         ondone();
@@ -735,6 +768,49 @@
         let noff = [];
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
         offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs)) ));
+        if (noff.length > 1) {
+            let heal = 0;
+            // heal/rejoin open segments that share endpoints
+            outer: for(;; heal++) {
+                let ntmp = noff, tlen = ntmp.length;
+                for (let i=0; i<tlen; i++) {
+                    let s1 = ntmp[i];
+                    if (!s1) continue;
+                    for (let j=i+1; j<tlen; j++) {
+                        let s2 = ntmp[j];
+                        if (!s2) continue;
+                        if (!(s1.open && s2.open)) continue;
+                        if (s1.last().isMergable2D(s2.first())) {
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                        if (s2.last().isMergable2D(s1.first())) {
+                            s2.addPoints(s1.points.slice(1));
+                            ntmp[i] = null;
+                            continue outer;
+                        }
+                        if (s1.first().isMergable2D(s2.first())) {
+                            s1.reverse();
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                        if (s1.last().isMergable2D(s2.last())) {
+                            s2.reverse();
+                            s1.addPoints(s2.points.slice(1));
+                            ntmp[j] = null;
+                            continue outer;
+                        }
+                    }
+                }
+                break;
+            }
+            if (heal > 0) {
+                // cull nulls
+                noff = noff.filter(o => o);
+            }
+        }
         return noff;
     }
 

@@ -14,6 +14,7 @@
         FDM = KIRI.driver.FDM,
         CAM = KIRI.driver.CAM,
         LASER = KIRI.driver.LASER = {
+            init,
             slice,
             prepare,
             export: exportLaser,
@@ -23,6 +24,13 @@
         },
         SLICER = KIRI.slicer,
         newPoint = BASE.newPoint;
+
+    function init(kiri, api) {
+        api.event.on("settings.saved", (settings) => {
+            let UI = kiri.api.ui;
+            UI.knife.marker.style.display = UI.knifeOn.checked ? '' : 'none';
+        });
+    }
 
     /**
      * DRIVER SLICE CONTRACT
@@ -34,6 +42,7 @@
      */
     function slice(settings, widget, onupdate, ondone) {
         let proc = settings.process;
+        let offset = proc.laserOffset;
 
         if (proc.laserSliceHeight < 0) {
             return ondone("invalid slice height");
@@ -46,8 +55,11 @@
         }, function(slices) {
             widget.slices = slices;
             slices.forEach(function(slice, index) {
-                FDM.share.doShells(slice, 1, -proc.laserOffset);
-                slice.output().setLayer("slice").addPolys(slice.topPolys());
+                let tops = slice.tops.map(t => t.poly);
+                let offsets = slice.offset = offset ?
+                    POLY.offset(tops, offset, {z: slice.z, miter: 2 / offset}) : tops;
+                slice.output().setLayer("layer", { line: 0x888800 }).addPolys(tops);
+                slice.output().setLayer("cut").addPolys(offsets);
                 onupdate(0.80 + (index/slices.length) * 0.20);
             });
             ondone();
@@ -56,7 +68,7 @@
         });
     };
 
-    function sliceEmitObjects(print, slice, groups) {
+    function sliceEmitObjects(print, slice, groups, simple) {
         let start = newPoint(0,0,0);
         let process = print.settings.process;
         let grouped = process.outputLaserGroup;
@@ -74,14 +86,19 @@
                     laserOut(pi, group);
                 });
             } else {
-                print.polyPrintPath(poly, start, group,
-                    zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1}
-                );
+                let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1};
+                if (simple) pathOpt.simple = true;
+                if (poly.open) pathOpt.open = true;
+                print.polyPrintPath(poly, start, group, pathOpt);
             }
         }
 
-        laserOut(slice.topPolyInners(), group);
-        laserOut(slice.topShells(), group);
+        let offset = slice.offset;
+        let inner = offset.map(poly => poly.inner || []).flat();
+
+        laserOut(offset, group);
+        laserOut(inner, group);
+
         if (!grouped) {
             groups.push(group);
             group = [];
@@ -103,9 +120,75 @@
         let device = settings.device,
             process = settings.process,
             print = self.worker.print = KIRI.newPrint(settings, widgets),
+            knifeOn = process.knifeOn,
+            knifeDepth = process.outputKnifeDepth,
+            knifePasses = process.outputKnifePasses,
+            knifeTipOff = process.outputKnifeTip,
             output = print.output = [],
             totalSlices = 0,
             slices = 0;
+
+        function arc(center, s1, s2, out) {
+            let a1 = s1.angle;
+            let a2 = s2.angle;
+            let diff = s1.angleDiff(s2,true);
+            let step = 5;
+            let ticks = Math.abs(Math.floor(diff / step));
+            let dir = Math.sign(diff);
+            let off = (diff % step) / 2;
+            if (off == 0) {
+                ticks++;
+            } else {
+                out.push( center.projectOnSlope(s1, knifeTipOff) );
+            }
+            while (ticks-- > 0) {
+                out.push( center.projectOnSlope(BASE.newSlopeFromAngle(a1 + off), knifeTipOff) );
+                a1 += step * dir;
+            }
+            out.push( center.projectOnSlope(s2, knifeTipOff) );
+        }
+
+        // start to the "left" of the first point
+        function addKnifeRadii(poly) {
+            poly.setClockwise();
+            let oldpts = poly.points.slice();
+            // find leftpoint and make that the first point
+            let start = oldpts[0];
+            let startI = 0;
+            for (let i=1; i<oldpts.length; i++) {
+                let pt = oldpts[i];
+                if (pt.x < start.x || pt.y > start.y) {
+                    start = pt;
+                    startI = i;
+                }
+            }
+            if (startI > 0) {
+                oldpts = oldpts.slice(startI,oldpts.length).appendAll(oldpts.slice(0,startI));
+            }
+
+            let lastpt = oldpts[0].clone().move({x:-knifeTipOff,y:0,z:0});
+            let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+            let newpts = [ lastpt, lastpt = oldpts[0] ];
+            let tmp;
+            for (let i=1; i<oldpts.length + 1; i++) {
+                let nextpt = oldpts[i % oldpts.length];
+                let nextsl = lastpt.slopeTo(nextpt).toUnit();
+                if (lastsl.angleDiff(nextsl) >= 10 && lastpt.distTo2D(nextpt) >= knifeTipOff) {
+                    arc(lastpt, lastsl, nextsl, newpts);
+                    // let tmp;
+                    // newpts.push( tmp = lastpt.projectOnSlope(lastsl, knifeTipOff) );
+                    // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
+                }
+                newpts.push(nextpt);
+                lastsl = nextsl;
+                lastpt = nextpt;
+            }
+            newpts.push( tmp = lastpt.projectOnSlope(lastsl, knifeTipOff) );
+            newpts.push( tmp.clone().move({x:knifeTipOff, y:0, z: 0}) );
+            poly.open = true;
+            poly.points = newpts;
+            poly.length = newpts.length;
+        }
 
         // find max layers (for updates)
         widgets.forEach(function(widget) {
@@ -119,7 +202,7 @@
                 let merged = [];
                 widget.slices.forEach(function(slice) {
                     let polys = [];
-                    slice.topPolys().clone(true).forEach(p => p.flattenTo(polys));
+                    slice.offsets.clone(true).forEach(p => p.flattenTo(polys));
                     polys.forEach(p => {
                         let match = false;
                         for (let i=0; i<merged.length; i++) {
@@ -147,8 +230,18 @@
                 });
                 output.push(gather);
             } else {
+                if (knifeOn) {
+                    widget.slices.forEach(slice => {
+                        slice.offset.forEach(poly => {
+                            addKnifeRadii(poly);
+                            if (poly.inner) poly.inner.forEach(ip => {
+                                addKnifeRadii(ip);
+                            });
+                        });
+                    });
+                }
                 widget.slices.forEach(function(slice) {
-                    sliceEmitObjects(print, slice, output);
+                    sliceEmitObjects(print, slice, output, knifeOn);
                     update((slices++ / totalSlices) * 0.5, "prepare");
                 });
             }
@@ -205,13 +298,9 @@
             });
         }
 
-        // if (process.laserKnife) {
-        //     console.log({laser_it: output});
-        // }
-
         return print.render = FDM.prepareRender(output, (progress, layer) => {
             update(0.5 + progress * 0.5, "render", layer);
-        }, { thin: true, z: 0, action: "cut" });
+        }, { thin: true, z: 0, action: "cut", moves: process.knifeOn });
     };
 
     function exportLaser(print, online, ondone) {
@@ -310,10 +399,14 @@
     function exportGCode(settings, data) {
         let lines = [], dx = 0, dy = 0, z = 0, feedrate;
         let dev = settings.device;
+        let proc = settings.process;
         let space = dev.gcodeSpace ? ' ' : '';
         let power = 255;
         let laser_on = dev.gcodeLaserOn || [];
         let laser_off = dev.gcodeLaserOff || [];
+        let knifeOn = proc.knifeOn;
+        let knifeDepth = proc.outputKnifeDepth;
+        let passes = knifeOn ? proc.outputKnifePasses : 1;
 
         exportElements(
             settings,
@@ -332,25 +425,41 @@
                 });
             },
             function(poly, color, thick) {
-                poly.forEach(function(point, index) {
-                    if (index === 0) {
-                        lines.push(`G0${space}${point}`);
-                    } else if (index === 1) {
-                        laser_on.forEach(line => {
-                            line = line.replace('{power}', power);
-                            line = line.replace('{color}', color);
-                            line = line.replace('{thick}', thick);
-                            line = line.replace('{z}', z);
-                            lines.push(line);
-                        });
-                        lines.push(`G1${space}${point}${feedrate}`);
-                    } else {
-                        lines.push(`G1${space}${point}`);
-                    }
-                });
-                laser_off.forEach(line => {
-                    lines.push(line);
-                });
+                if (knifeOn) {
+                    lines.push(`; start new poly id=${poly.id} len=${poly.length}`);
+                }
+                for (let i=0; i<passes; i++) {
+                    poly.forEach(function(point, index) {
+                        if (index === 0) {
+                            if (knifeOn) {
+                                // lift
+                                lines.appendAll(['; drag-knife lift', `G0${space}Z5`]);
+                            }
+                            lines.push(`G0${space}${point}`);
+                            if (knifeOn) {
+                                // drop
+                                lines.appendAll(['; drag-knife down', `G0${space}Z${-i*knifeDepth}`]);
+                            }
+                        } else if (index === 1) {
+                            laser_on.forEach(line => {
+                                line = line.replace('{power}', power);
+                                line = line.replace('{color}', color);
+                                line = line.replace('{thick}', thick);
+                                line = line.replace('{z}', z);
+                                lines.push(line);
+                            });
+                            lines.push(`G1${space}${point}${feedrate}`);
+                        } else {
+                            lines.push(`G1${space}${point}`);
+                        }
+                    });
+                    laser_off.forEach(line => {
+                        lines.push(line);
+                    });
+                }
+                if (knifeOn) {
+                    lines.appendAll([`G0${space}Z5`]);
+                }
             },
             function() {
                 (dev.gcodePost || []).forEach(line => {
