@@ -75,14 +75,25 @@ KIRI.worker = {
             widget.mesh = null;
             widget.points = null;
             widget.loadVertices(widget.vertices);
-            let bbox1 = widget.getBoundingBox(true);
+            let bb1 = widget.getBoundingBox(true);
+            let zd = bb1.max.z - bb1.min.z; // z dim
+            // let cy1 = (bb1.max.y + bb1.min.y) / 2;
+            // let cz1 = (bb1.max.z + bb1.min.z) / 2;
+            widget.setPoints(null);
             widget._rotate(rotation,0,0,true);
-            widget.center();
+            widget.center(false, true);
+            let bb2 = widget.getBoundingBox(true);
+            // let cy2 = (bb2.max.y + bb2.min.y) / 2;
+            // let cz2 = (bb2.max.z + bb2.min.z) / 2;
+            // let angle = Math.atan2(cy1-cy2, cz1-cz2) * (180 / Math.PI);
             widget.rotated = true;
-            let bbox2 = widget.getBoundingBox(true);
-            let centerz = (bbox2.max.z - bbox2.min.z) / 2;
-            let movez = centerz - (bbox1.max.z - bbox1.min.z) / 2;
-            widget.rotinfo = { centerz, movez, angle: 45 };
+            let rc = Math.sin(Math.PI/4);
+            let cz = (bb2.max.z - bb2.min.z) / 2; // center z post rotate
+            let dy = cz * rc; // dy = cz rotated 45
+            let dz = dy - zd / 2;
+            // console.log({cy1,cz1,cy2,cz2,angle,cy});
+            widget.rotinfo = { angle: 45, dy, dz };
+            widget.getBoundingBox(true);
         }
 
         widget.slice(settings, function(error) {
