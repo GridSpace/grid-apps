@@ -71,10 +71,9 @@ KIRI.worker = {
         try {
 
         let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
-        if (rotation && !widget.rotated) {
+        if (rotation) {
             widget.mesh = null;
             widget.points = null;
-            widget.rotated = true;
             widget.loadVertices(widget.vertices);
             widget._rotate(rotation,0,0,true);
             widget.center(false, true);
