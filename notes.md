@@ -60,10 +60,15 @@
 
 # CAM
 
+* `B` failure to go *up* when moving between parts
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes
+* `B` on rotation, tabs dissociate from parts whose center changes with rotation
+* `F` duplicating a part should duplicate added features like tabs
+* `F` validate muti-part layout and spacing exceeds largest outside tool diameter
+* `F` skip "thru" holes checkbox for roughing and outlining
 * `F` polygon simplification option in tracing (for image derived maps)
 * `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)
 * `F` exports separate files for each operation
