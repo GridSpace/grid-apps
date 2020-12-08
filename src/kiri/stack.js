@@ -27,8 +27,8 @@
 
         rotate(set) {
             this.view.rotation.x = -set.angle * (Math.PI/180);
-            this.view.position.y = -set.centerz + set.movez;
-            this.view.position.z = -set.movez/2;
+            this.view.position.y += -set.dy;
+            this.view.position.z += -set.dz;
         }
 
         destroy() {

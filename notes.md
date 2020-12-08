@@ -18,6 +18,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `B` normals possibly inverted on faces in 2D to 3D conversion
 * `F` right click / context menu (object deletion, etc)
 * `F` detect and report slow framerates
 * `P` duplicate objects should share same slice data unless rotated or scaled
