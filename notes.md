@@ -19,7 +19,6 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
-* `F` right click / context menu (object deletion, etc)
 * `F` detect and report slow framerates
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` optimize object import to vertices + indexes to save memory
@@ -66,7 +65,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
-* `F` duplicating a part should duplicate added features like tabs
+* `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
 * `F` skip "thru" holes checkbox for roughing and outlining
 * `F` polygon simplification option in tracing (for image derived maps)
@@ -89,10 +88,8 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
-* `F` show render progress bar or %
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
-* `P` fast forward animation with "chunking" or "skip animation"
 
 # Laser
 

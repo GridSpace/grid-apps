@@ -999,7 +999,7 @@ th, tr, td, label {
     justify-content: center;
     align-items: center;
     position: absolute;
-    bottom: 40px;
+    bottom: 45px;
     left: 0;
     right: 0;
 }
@@ -1248,4 +1248,8 @@ th, tr, td, label {
     border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
     background-color: #eee;
+}
+#context-menu .sep {
+    border-top: 1px solid #ddd;
+    margin: 5px 0 5px 0;
 }

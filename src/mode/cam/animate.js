@@ -47,8 +47,9 @@ self.kiri.loader.push(function() {
                 UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
                 playButton = UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>',title:"play"}),
                 pauseButton = UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
-                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"step"}),
-                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"speed"}),
+                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
+                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
+                UC.newButton(null,skip,{icon:'<i class="fas fa-fast-forward"></i>',title:"skip forward without animation"}),
                 speedLabel = UC.newLabel("speed")
             ]);
             updateSpeed();
@@ -178,6 +179,13 @@ self.kiri.loader.push(function() {
         KIRI.client.animate({speed: 0}, handleGridUpdate);
     }
 
+    function skip() {
+        API.show.alert('fast fowarding without animation');
+        playButton.style.display = 'none';
+        pauseButton.style.display = '';
+        KIRI.client.animate({speed, steps: Infinity, toend: true}, handleGridUpdate);
+    }
+
     function handleGridUpdate(data) {
         checkMeshCommands(data);
         if (data && data.progress) {
@@ -282,6 +290,12 @@ self.kiri.loader.push(function() {
         if (data.steps > 0) {
             stepsRemain = data.steps;
         }
+        if (data.toend) {
+            skipMode = !skipMode;
+        } else {
+            skipMode = false;
+        }
+        checkStash(send);
         if (animating) {
             return send.done();
         }
@@ -299,6 +313,19 @@ self.kiri.loader.push(function() {
     let animating = false;
     let renderSpeed = 25;
     let stepsRemain = 0;
+    let skipMode = false;
+    let skipMove = null;
+    let skipStash = [];
+
+    function checkStash(send) {
+        if (!skipMode && skipStash.length) {
+            skipStash.forEach(mesh_update => {
+                send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
+            });
+            skipStash = [];
+            send.data({ mesh_move: skipMove });
+        }
+    }
 
     function renderPath(send) {
         if (animateClear) {
@@ -308,12 +335,16 @@ self.kiri.loader.push(function() {
             return;
         }
         if (stepsRemain <= 0 || renderSpeed === 0) {
+            skipMode = false;
+            checkStash(send);
             animating = false;
             send.done();
             return;
         }
         const next = path[pathIndex++];
         if (!next) {
+            skipMode = false;
+            checkStash(send);
             animating = false;
             stepsRemain = 0;
             send.done();
@@ -375,12 +406,17 @@ self.kiri.loader.push(function() {
                 if (!pos) throw `no pos @ ${index} of ${moves.length}`;
                 tool.pos = pos;
                 updateMesh(pos, send);
-                send.data({ mesh_move: { id, pos }});
+                if (skipMode) {
+                    skipMove = { id, pos };
+                } else {
+                    send.data({ mesh_move: { id, pos } });
+                }
             }
+            let pauseTime = skipMode ? 0 : renderSpeed;
             if (index < moves.length) {
-                setTimeout(update, renderSpeed);
+                setTimeout(update, pauseTime);
             } else {
-                setTimeout(() => { renderPath(send) }, renderSpeed);
+                setTimeout(() => { renderPath(send) }, pauseTime);
             }
         }
         update(0);
@@ -418,7 +454,11 @@ self.kiri.loader.push(function() {
         }
         if (upos > 0) {
             const mesh_update = update.slice(0,upos);
-            send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
+            if (skipMode) {
+                skipStash.push(mesh_update);
+            } else {
+                send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
+            }
         }
     }
 

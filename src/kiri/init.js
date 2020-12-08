@@ -424,13 +424,25 @@
                 sel = API.selection.meshes();
                 platform.deselect();
                 for (i=0; i<sel.length; i++) {
-                    m = sel[i].clone();
-                    m.geometry = m.geometry.clone();
-                    m.material = m.material.clone();
-                    bb = m.getBoundingBox();
-                    let nw = API.widgets.new().loadGeometry(m.geometry);
+                    let mesh = sel[i].clone();
+                    mesh.geometry = mesh.geometry.clone();
+                    mesh.material = mesh.material.clone();
+                    bb = mesh.getBoundingBox();
+                    let ow = sel[i].widget;
+                    let nw = API.widgets.new().loadGeometry(mesh.geometry);
+                    nw.meta.file = ow.meta.file;
+                    nw.meta.vertices = ow.meta.vertices;
                     nw.move(bb.max.x - bb.min.x + 1, 0, 0);
                     platform.add(nw,true);
+                    let owa = API.widgets.annotate(ow.id);
+                    let nwa = API.widgets.annotate(nw.id);
+                    if (owa.tab) {
+                        nwa.tab = Object.clone(owa.tab);
+                        nwa.tab.forEach((tab,i) => {
+                            tab.id = Date.now() + i
+                        });
+                    }
+                    KIRI.driver.CAM.restoreTabs([nw]);
                 }
                 break;
             case cca('m'): // mirror object

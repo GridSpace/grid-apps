@@ -22,6 +22,8 @@
     let zaxis = {x: 0, y: 0, z: 1},
         func = {};
 
+    CAM.restoreTabs = restoreTabs;
+
     CAM.init = function(kiri, api) {
         FDM = KIRI.driver.FDM;
 
