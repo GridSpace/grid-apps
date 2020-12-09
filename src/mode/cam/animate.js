@@ -319,6 +319,7 @@ self.kiri.loader.push(function() {
 
     function checkStash(send) {
         if (!skipMode && skipStash.length) {
+            // merge & compress stash stack
             skipStash.forEach(mesh_update => {
                 send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
             });

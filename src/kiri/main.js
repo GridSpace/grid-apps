@@ -178,7 +178,11 @@
             { name: "200" },
             { name: "300" },
             { name: "400" },
-            { name: "500" }
+            { name: "500" },
+            { name: "600" },
+            { name: "700" },
+            { name: "800" },
+            { name: "900" }
         ],
         trace: [
             { name: "follow" },

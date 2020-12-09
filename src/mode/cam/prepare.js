@@ -85,6 +85,7 @@
             printPoint,
             isNewMode,
             tool,
+            toolType,
             toolDiam,
             toolDiamMove,
             feedRate,
@@ -118,8 +119,9 @@
         function setTool(toolID, feed, plunge) {
             if (toolID !== lastTool) {
                 tool = new CAM.Tool(settings, toolID);
+                toolType = tool.getType();
                 toolDiam = tool.fluteDiameter();
-                toolDiamMove = toolDiam; // TODO validate w/ multiple models
+                toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance;
                 lastTool = toolID;
             }
             feedRate = feed;
