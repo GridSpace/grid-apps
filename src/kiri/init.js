@@ -391,7 +391,7 @@
             case cca('g'): // CAM animate
                 API.function.animate();
                 break;
-            case cca('o'): // manual rotation
+            case cca('O'): // manual rotation
                 rotateInputSelection();
                 break;
             case cca('r'): // recent files
