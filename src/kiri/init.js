@@ -1057,16 +1057,18 @@
             let flute_fill = "#dddddd";
             let stroke = "#777777";
             let stroke_width = 3;
+            let stroke_thin = stroke_width / 2;
             let shaft = tool.shaft_len || 1;
             let flute = tool.flute_len || 1;
             let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
             let total_len = shaft + flute + tip_len;
+            let units = dim.h / total_len;
             let shaft_len = (shaft / total_len) * max.h;
             let flute_len = (flute / total_len) * max.h;
-            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam, total_len/4);
-            let shaft_off = (max.w * (1 - (tool.shaft_diam / total_wid))) / 2;
-            let flute_off = (max.w * (1 - (tool.flute_diam / total_wid))) / 2;
-            let taper_off = (max.w * (1 - ((tool.taper_tip || 0) / total_wid))) / 2;
+            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam);
+            let shaft_off = (max.w - tool.shaft_diam * units) / 2;
+            let flute_off = (max.w - tool.flute_diam * units) / 2;
+            let taper_off = (max.w - (tool.taper_tip || 0) * units) / 2;
             let parts = [
                 { rect: {
                     x:off.x + shaft_off, y:off.y,
@@ -1085,10 +1087,23 @@
                     `z`
                 ].join('\n')}});
             } else {
+                let x1 = off.x + flute_off;
+                let y1 = off.y + shaft_len;
+                let x2 = x1 + max.w - flute_off * 2;
+                let y2 = y1 + flute_len;
                 parts.push({ rect: {
                     x:off.x + flute_off, y:off.y + shaft_len,
                     width:max.w - flute_off * 2, height:flute_len,
                     stroke, fill: flute_fill, stroke_width
+                } });
+                parts.push({ line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin } });
+                parts.push({ line: {
+                    x1: (x1 + x2) / 2, y1, x2, y2: (y1 + y2) / 2,
+                    stroke, stroke_width: stroke_thin
+                } });
+                parts.push({ line: {
+                    x1, y1: (y1 + y2) / 2, x2: (x1 + x2) / 2, y2,
+                    stroke, stroke_width: stroke_thin
                 } });
             }
             if (type === "ballmill") {
