@@ -121,7 +121,7 @@
                 tool = new CAM.Tool(settings, toolID);
                 toolType = tool.getType();
                 toolDiam = tool.fluteDiameter();
-                toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance;
+                toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance * 2;
                 lastTool = toolID;
             }
             feedRate = feed;
@@ -259,7 +259,7 @@
                 }
             } else if (isMove) {
                 // for longer moves, check the terrain to see if we need to go up and over
-                const bigXY = (deltaXY > toolDiam);
+                const bigXY = (deltaXY > toolDiamMove);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
                 const midZ = (absDeltaZ >= tolerance);
                 if ((bigXY || bigZ) && (isMove || midZ)) {
