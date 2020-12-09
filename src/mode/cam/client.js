@@ -264,7 +264,7 @@
                 return;
             }
             func.tabDone();
-            alert = api.show.alert("analyzing parts...");
+            alert = api.show.alert("analyzing parts...", 1000);
             traceOn = true;
             KIRI.client.traces((ids) => {
                 api.hide.alert(alert);
