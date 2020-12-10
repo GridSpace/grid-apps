@@ -94,6 +94,7 @@
             lastMode,
             lastPoint,
             nextIsMove = true,
+            synthPlunge = false,
             spindle = 0,
             spindleMax = device.spindleMax,
             addOutput = print.addOutput,
@@ -293,7 +294,7 @@
             }
 
             // synth new plunge rate
-            if (deltaZ <= -tolerance) {
+            if (synthPlunge && deltaZ <= -tolerance) {
                 let threshold = Math.min(deltaXY / 2, absDeltaZ),
                     modifier = threshold / absDeltaZ;
                 if (threshold && modifier && deltaXY > tolerance) {

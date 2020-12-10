@@ -168,7 +168,7 @@
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-        let skipTerrain = !(procRough || procOutline) && tzindex.length > 50;
+        let skipTerrain = !(procRough || procOutlineIn) && tzindex.length > 50;
 
         if (skipTerrain) {
             console.log("skipping terrain generation for speed");
@@ -397,6 +397,20 @@
                 .filter(v => v > 0 && indices.indexOf(v) < 0);
             indices = indices.appendAll(flats).sort((a,b) => b-a);
             // console.log('indices', ...indices, {zBottom, slicer});
+            if (procOutlineOut && !procOutlineIn) {
+                console.log({outline_bypass: indices, outlineDown});
+                indices.forEach((ind,i) => {
+                    if (flats.indexOf(ind) >= 0) {
+                        // exclude flats
+                        return;
+                    }
+                    let slice = newSlice(ind);
+                    slice.camMode = PRO.OUTLINE;
+                    slice.shadow = shadow.clone(true);
+                    slices.push(slice);
+                    updateOp(i, indices.length);
+                });
+            } else
             slicer.slice(indices, { each: (data, index, total) => {
                 shadow = POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
                 if (flats.indexOf(data.z) >= 0) {
