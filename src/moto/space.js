@@ -281,12 +281,12 @@
         if (options.scale) fontScale = options.scale;
         if (options.axisColor) axisColor = options.axisColor;
         if (options.rulerColor) rulerColor = options.rulerColor;
-        try { setRulers() } catch (error) { console.log('setFont', {options, error})};
+        setRulers();
     }
 
     function setAxes(bool) {
         axesOn = bool;
-        try { setRulers() } catch (error) { console.log('setAxes', {options, error})};
+        setRulers();
     }
 
     function setVolume(bool) {
