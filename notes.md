@@ -19,9 +19,7 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
-* `F` detect and report slow framerates
 * `P` duplicate objects should share same slice data unless rotated or scaled
-* `P` optimize object import to vertices + indexes to save memory
 * `P` allow selection to me decimated on demand (context menu?)
 * `P` improve decimation speed by avoiding in/out of Point?
 * `P` client/worker interface normalization
@@ -59,7 +57,7 @@
 
 # CAM
 
-* `B` failure to go *up* when moving between parts
+* `B` failure to go *up* when moving between parts?
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
@@ -90,10 +88,10 @@
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
+* `P` allow faster z movements when contouring (not plunging)
 
 # Laser
 
-* `F` overcuts, radii for drag knives
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
 
 # References

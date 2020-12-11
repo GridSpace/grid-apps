@@ -597,14 +597,14 @@ function handleCode(req, res, next) {
     if (!js) {
         return http.reply404(req, res);
     }
-
     if (ck) {
-        let mod = lastmod(ck.path);
+        let mpath = `${dir}/${ck.path}`;
+        let mod = lastmod(mpath);
         if (mod > ck.mod) {
             if (debug) {
-                js = code[ck.endpoint] = fs.readFileSync(ck.path);
+                js = code[ck.endpoint] = fs.readFileSync(mpath);
             } else {
-                js = code[ck.endpoint] = minify(ck.path);
+                js = code[ck.endpoint] = minify(mpath);
             }
             ck.mod = mod;
         }
