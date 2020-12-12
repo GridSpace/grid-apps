@@ -12,6 +12,7 @@ self.kiri.loader.push(function() {
         progress, toolPosX, toolPosY, toolPosZ,
         speedValues = [ 25, 12, 6, 3 ],
         speedNames = [ "1x", "2x", "4x", "8x" ],
+        speedMax = speedValues.length - 1,
         speedIndex = 0,
         speedLabel,
         speed,
@@ -70,7 +71,9 @@ self.kiri.loader.push(function() {
     };
 
     function updateSpeed(inc = 0) {
-        if (inc > 0) {
+        if (inc === Infinity) {
+            speedIndex = speedMax;
+        } else if (inc > 0) {
             speedIndex = (speedIndex + inc) % speedValues.length;
         }
         speed = speedValues[speedIndex];
@@ -183,6 +186,7 @@ self.kiri.loader.push(function() {
         API.show.alert('fast fowarding without animation');
         playButton.style.display = 'none';
         pauseButton.style.display = '';
+        updateSpeed(Infinity);
         KIRI.client.animate({speed, steps: Infinity, toend: true}, handleGridUpdate);
     }
 
