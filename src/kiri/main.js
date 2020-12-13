@@ -1413,6 +1413,7 @@
     }
 
     function platformLoadSTL(url, onload, formdata) {
+        let scale = 1 / unitScale();
         new MOTO.STL().load(url, function(vertices, filename) {
             if (vertices) {
                 let widget = newWidget().loadVertices(vertices);
@@ -1422,7 +1423,7 @@
                     onload(vertices, widget);
                 }
             }
-        }, formdata);
+        }, formdata, scale);
     }
 
     function platformComputeMaxZ() {
@@ -1888,9 +1889,10 @@
                     if (API.feature.on_add_stl) {
                         API.feature.on_add_stl(e.target.result, file);
                     } else {
+                        let scale = unitScale();
                         platform.add(
                             newWidget(undefined,group)
-                            .loadVertices(new MOTO.STL().parse(e.target.result))
+                            .loadVertices(new MOTO.STL().parse(e.target.result,scale))
                             .saveToCatalog(e.target.file.name)
                         );
                     }

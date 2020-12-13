@@ -26,13 +26,13 @@
     }
 
 
-    SP.load = function(url, callback, formdata) {
+    SP.load = function(url, callback, formdata, scale) {
         let stl = this,
             xhr = new XMLHttpRequest();
 
         function onloaded (event)  {
             if (event.target.status === 200 || event.target.status === 0)  {
-                stl.parse(event.target.response || event.target.responseText);
+                stl.parse(event.target.response || event.target.responseText, scale);
                 let cd = undefined;
                 if (xhr.getAllResponseHeaders().indexOf(CDH) > 0) {
                     cd = xhr.getResponseHeader(CDH)
@@ -107,7 +107,7 @@
         return bin;
     };
 
-    SP.parse = function(data) {
+    SP.parse = function(data, scale) {
         let binData = this.convertToBinary(data);
 
         let isBinary = function () {
@@ -120,11 +120,11 @@
         };
 
         return isBinary()
-            ? this.parseBinary(binData)
-            : this.parseASCII(this.convertToString(data));
+            ? this.parseBinary(binData, scale)
+            : this.parseASCII(this.convertToString(data), scale);
     };
 
-    SP.parseBinary = function(data)  {
+    SP.parseBinary = function(data, scale = 1)  {
         let reader = new DataView(data),
             faces = reader.getUint32 (80, true),
             r, g, b, hasColors = false, colors,
@@ -176,9 +176,9 @@
 
             while (i <= 3)  {
                 vertexstart = start + (i++) * 12;
-                vertices[offset    ] = reader.getFloat32 (vertexstart, true);
-                vertices[offset + 1] = reader.getFloat32 (vertexstart + 4, true);
-                vertices[offset + 2] = reader.getFloat32 (vertexstart + 8, true);
+                vertices[offset    ] = reader.getFloat32 (vertexstart, true) * scale;
+                vertices[offset + 1] = reader.getFloat32 (vertexstart + 4, true) * scale;
+                vertices[offset + 2] = reader.getFloat32 (vertexstart + 8, true) * scale;
                  normals[offset    ] = normalX;
                  normals[offset + 1] = normalY;
                  normals[offset + 2] = normalZ;
@@ -198,7 +198,7 @@
         return vertices;
     };
 
-    SP.parseASCII = function(data) {
+    SP.parseASCII = function(data, scale = 1) {
         let result,
             resultText,
             patternNormal,
@@ -217,9 +217,9 @@
                 normals.push(parseFloat(result[5]));
             }
             while ((result = patternVertex.exec(resultText)) !== null) {
-                vertices.push(parseFloat(result[1]));
-                vertices.push(parseFloat(result[3]));
-                vertices.push(parseFloat(result[5]));
+                vertices.push(parseFloat(result[1]) * scale);
+                vertices.push(parseFloat(result[3]) * scale);
+                vertices.push(parseFloat(result[5]) * scale);
             }
         }
 

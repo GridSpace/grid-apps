@@ -44,7 +44,10 @@
         js2o = API.js2o,
         o2js = API.o2js,
         platform = API.platform,
-        selection = API.selection;
+        selection = API.selection,
+        proto = location.protocol,
+        root = "grid.space",
+        ver = Date.now().toString(36);
 
     let currentDevice = null,
         deviceURL = null,
@@ -1330,6 +1333,8 @@
 
     function init_one() {
         API.event.emit('init.one');
+
+        $('gsbox').src = `${proto}//${root}/kiri/gsbox.png?ver=${ver}`;
 
         // ensure we have settings from last session
         API.conf.restore();

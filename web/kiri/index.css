@@ -27,6 +27,13 @@ a, a:hover, a:visited {
     border: 0px;
     margin: 0px;
 }
+#gsbox {
+    width: 40px;
+    height: 40px;
+    padding-right: 15px;
+    position: fixed;
+    display: none;
+}
 div {
     position: relative;
 }

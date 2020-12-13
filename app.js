@@ -22,6 +22,7 @@ const synth = {};
 const api = {};
 
 let level;
+let setupFn;
 let cacheDir;
 let startTime;
 let lastmod;
@@ -73,6 +74,7 @@ function init(mod) {
         return vmatch.indexOf(cookie) >= 0;
     });
 
+    mod.add(handleSetup);
     mod.add(handleOptions);
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
@@ -212,7 +214,8 @@ function initModule(mod, file, dir) {
                 };
             },
             redir: redir,
-            remap: remap
+            remap: remap,
+            setup: fn => { setupFn = fn }
         },
         handler: {
             addCORS: addCorsHeaders,
@@ -426,6 +429,10 @@ function obj2string(o) {
 
 function string2obj(s) {
     return JSON.parse(s);
+}
+
+function handleSetup(req, res, next) {
+    if (setupFn) setupFn(req, res, next);
 }
 
 function handleVersion(req, res, next) {
