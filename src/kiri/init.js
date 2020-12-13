@@ -964,7 +964,7 @@
                 first = device;
             }
             let opt = DOC.createElement('option');
-            opt.appendChild(DOC.createTextNode(device));
+            opt.appendChild(DOC.createTextNode(device.replace(/\./g,' ')));
             opt.onclick = function() {
                 selectDevice(device);
             };
