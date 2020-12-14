@@ -295,6 +295,7 @@
                     sliceSupportArea: 1,
                     sliceSupportExtra: 0,
                     sliceSupportSpan: 5,
+                    sliceSupportAngle: 50,
                     sliceSupportNozzle: 0,
                     sliceSolidMinArea: 1,
                     sliceSolidLayers: 3,

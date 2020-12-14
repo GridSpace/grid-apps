@@ -1619,6 +1619,7 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
             sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title: LANG.sp_auto_l, modes:FDM, trigger:true}),
+            sliceSupportAngle:   LOCAL ? UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM}) : null,
 
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportGen:     LOCAL ? UC.newRow([

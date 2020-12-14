@@ -42,7 +42,7 @@
             KIRI.client.sync();
             let settings = API.conf.get();
             let widgets = API.widgets.map();
-            send('fdm_support_generate', {}, (gen) => {
+            send('fdm_support_generate', { settings }, (gen) => {
                 for (let g of gen) g.widget = widgets[g.id];
                 ondone(gen);
             });

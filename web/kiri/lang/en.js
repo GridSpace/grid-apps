@@ -235,6 +235,8 @@ kiri.lang['en-us'] = {
     sp_gaps_l:      "number of layers\noffset from part",
     sp_span_s:      "max span",
     sp_span_l:      "unsupported span that causes\na new support to be generated\nin millimeters",
+    sp_angl_s:      "max angle",
+    sp_angl_l:      "max overhang angle before\nsupporting pillar is generated",
     sp_area_s:      "min area",
     sp_area_l:      "minimum area for\na support column\nin millimeters",
     sp_xpnd_s:      "expand",
