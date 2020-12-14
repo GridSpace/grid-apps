@@ -13,7 +13,7 @@
         "G4 P{time} ; dwell for {time}ms"
     ],
     "spindle": [
-        "M3 {speed}"
+        "M3 S{speed}"
     ],
     "settings": {
         "bed_width": 300,
