@@ -11,7 +11,7 @@ kiri.lang['en-us'] = {
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",
     dv_gr_out:      "output",
-    dv_gr_gco:      "gcode",
+    dv_gr_gco:      "gcode macros",
 
     // DEVICE dialog (_s = label, _l = hover help)
     dv_name_s:      "name",

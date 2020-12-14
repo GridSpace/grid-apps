@@ -663,17 +663,15 @@
         return settings().devices[devicename] ? true : false;
     }
 
-    function isFavoriteDevice(devicename) {
-        return settings().favorites[devicename] ? true : false;
-    }
-
     function getSelectedDevice() {
-        return UI.deviceList.options[UI.deviceList.selectedIndex].text;
+        return API.device.get();
     }
 
     function selectDevice(devicename, lock) {
         deviceLock = lock;
-        if (lock) UI.setupDevices.style.display = 'none';
+        if (lock) {
+            UI.setupDevices.style.display = 'none';
+        }
         if (isLocalDevice(devicename)) {
             setDeviceCode(settings().devices[devicename], devicename);
         } else {
@@ -684,7 +682,7 @@
 
     // only for local filters
     function cloneDevice() {
-        let name = `${getSelectedDevice()}.copy`;
+        let name = `${getSelectedDevice().replace(/\./g,' ')} Copy`;
         let code = API.clone(settings().device);
         code.mode = API.mode.get();
         putLocalDevice(name, code);
@@ -775,8 +773,17 @@
             UI.extrudeAbs.style.display = mode === 'CAM' ? 'none' : 'flex';
             UI.deviceSave.disabled = !local;
             UI.deviceDelete.disabled = !local;
-            UI.deviceAdd.disabled = dev.noclone;
             UI.deviceExport.disabled = !local;
+            if (local) {
+                UI.deviceAdd.innerText = "copy";
+                UI.deviceDelete.style.display = '';
+                UI.deviceExport.style.display = '';
+            } else {
+                UI.deviceAdd.innerText = "customize";
+                UI.deviceDelete.style.display = 'none';
+                UI.deviceExport.style.display = 'none';
+            }
+            UI.deviceAdd.disabled = dev.noclone;
 
             API.view.update_fields();
             platform.update_size();
@@ -933,66 +940,49 @@
             deviceExport(exp, selected);
         };
 
-        UI.deviceAll.onclick = function() {
-            API.show.favorites(false);
-            showDevices();
-        };
-        UI.deviceFavorites.onclick = function() {
-            API.show.favorites(true);
-            showDevices();
-        };
-
         UI.deviceList.innerHTML = '';
+        UI.deviceMy.innerHTML = '';
         let incr = 0;
-        let faves = API.show.favorites();
-        let found = false;
+        let found = null;
         let first = devices[0];
-        // run through the list up to twice forcing faves off
-        // the second time if incr === 0 (no devices shown)
-        // if incr > 0, second loop is avoided
-        for (let rep=0; rep<2; rep++)
-        if (incr === 0)
+        let dedup = {};
         devices.forEach(function(device, index) {
-            // force faves off for second try
-            if (rep === 1) faves = false;
-            let fav = isFavoriteDevice(device),
-                loc = isLocalDevice(device);
-            if (faves && !(fav || loc)) {
+            // prevent device from appearing twice
+            // such as local name = standard device name
+            if (dedup[device]) {
                 return;
             }
+            dedup[device] = device;
+            let loc = isLocalDevice(device);
             if (incr === 0) {
                 first = device;
             }
-            let opt = DOC.createElement('option');
+            let opt = DOC.createElement('button');
             opt.appendChild(DOC.createTextNode(device.replace(/\./g,' ')));
             opt.onclick = function() {
                 selectDevice(device);
-            };
-            opt.ondblclick = function() {
-                if (settings().favorites[device]) {
-                    delete settings().favorites[device];
-                    API.show.alert(`removed "${device}" from favorites`, 3);
-                } else {
-                    settings().favorites[device] = true;
-                    API.show.alert(`added "${device}" to favorites`, 3);
+                opt.classList.add("selected");
+                if (found) {
+                    found.classList.remove("selected");
                 }
-                showDevices();
+                found = opt;
             };
-            if (loc) opt.setAttribute("local", 1);
-            if (loc || fav) opt.setAttribute("favorite", 1);
-            UI.deviceList.appendChild(opt);
+            if (loc) {
+                UI.deviceMy.appendChild(opt);
+            } else {
+                UI.deviceList.appendChild(opt);
+            }
             if (device === selected) {
+                opt.classList.add("selected");
                 selectedIndex = incr;
-                found = true;
+                found = opt;
             }
             incr++;
         });
 
         if (selectedIndex >= 0) {
-            UI.deviceList.selectedIndex = selectedIndex;
             selectDevice(selected);
         } else {
-            UI.deviceList.selectedIndex = 0;
             selectDevice(first);
         }
     }
@@ -1444,12 +1434,11 @@
 
             devices:            $('devices'),
             deviceList:         $('device-list'),
+            deviceMy:           $('device-my'),
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
             deviceExport:       $('device-exp'),
             deviceSave:         $('device-save'),
-            deviceFavorites:    $('device-favorites'),
-            deviceAll:          $('device-all'),
 
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
@@ -1500,7 +1489,7 @@
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:           UC.newGroup(LANG.dv_gr_dev, $('device'), {group:"ddev", inline:true}),
+            device:           UC.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true}),
             deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true, action:updateDeviceName}),
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6, units:true}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6, units:true}),
@@ -1510,7 +1499,7 @@
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
             deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM}),
 
-            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device'), {group:"dext", inline:true, modes:FDM}),
+            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
             extNozzle:        UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
             extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
@@ -1522,37 +1511,27 @@
                 UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
                 UI.extDel = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 UI.extNext = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
-            ], {modes:FDM, expert:true, class:"ext-buttons"}),
+            ], {modes:FDM, expert:true, class:"dev-buttons ext-buttons"}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_out, $('device'), {group:"dgco", inline:true, modes:CAM_LASER}),
+            gcode:            UC.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LASER}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
 
             gcodeEd:          UC.newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline:true, modes:GCODE}),
             gcodeFanTrack: UC.newRow([
+                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
+                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button,
                 (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
-                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button
-            ], {modes:FDM, class:"ext-buttons f-row"}),
-            gcodeLayerPause: UC.newRow([
+                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
-                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button
-            ], {modes:FDM, class:"ext-buttons f-row"}),
-            gcodeLaserOnOff: UC.newRow([
+                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
                 (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
-            ], {modes:LASER, class:"ext-buttons f-row"}),
-            gcodeCam1: UC.newRow([
-                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button
-            ], {modes:CAM, class:"ext-buttons f-row"}),
-            gcodeCam2: UC.newRow([
+                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,
                 (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
                 (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
-            ], {modes:CAM, class:"ext-buttons f-row"}),
-            gcodeHeadFoot: UC.newRow([
-                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
-                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button
-            ], {modes:GCODE, class:"ext-buttons f-row"}),
+            ], {class:"ext-buttons f-row"}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
             // hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
@@ -2052,6 +2031,8 @@
 
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
+        // default show gcode pre
+        UI.gcodePre.button.click();
 
         function mksvg(src) {
             let svg = DOC.createElement('svg');

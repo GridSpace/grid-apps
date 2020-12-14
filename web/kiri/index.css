@@ -100,12 +100,6 @@ select {
     background-color: rgba(255,255,255,0.5);
     border-radius: 3px;
 }
-select option[local="1"] {
-    color: #55d;
-}
-select option[favorite="1"] {
-    font-weight: bold;
-}
 th, tr, td, span, div, label, button {
     user-select: none;
 }
@@ -161,6 +155,9 @@ th, tr, td, label {
 .j-end {
     justify-content: flex-end;
 }
+.space-around {
+    justify-content: space-around;
+}
 .space-between {
     justify-content: space-between;
 }
@@ -181,6 +178,9 @@ th, tr, td, label {
 }
 .mh0 {
     min-height: 0;
+}
+.mh35 {
+    max-height: 35%;
 }
 .mh85 {
     max-height: 85%;
@@ -469,6 +469,13 @@ th, tr, td, label {
     }
 }
 
+.dev-buttons {
+    margin: 5px 15px 0 15px;
+}
+.dev-buttons button {
+    margin-left: 2px;
+    margin-right: 2px;
+}
 .ext-buttons button {
     justify-content: center;
     align-items: center;
@@ -587,6 +594,46 @@ th, tr, td, label {
 }
 #mod-setup {
     height: 500px;
+    width: 700px;
+    padding-bottom: 5px;
+}
+#mod-setup .header {
+    text-align: center;
+    border-bottom: 1px solid rgba(150,130,200,0.5);
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+#mod-setup .header.sub {
+    padding-top: 10px;
+}
+#mod-setup .left {
+    width: 180px;
+    padding-right: 10px;
+    margin-right: 10px;
+    border-right: 1px solid #ddd;
+}
+#mod-setup .footer {
+    padding-top: 5px;
+    margin-top: 5px;
+    border-top: 1px solid rgba(150,130,200,0.5);
+}
+.devlist button {
+    margin: 1px;
+    padding: 2px;
+    border: 1px solid rgba(0,0,0,0);
+    border-radius: 0;
+    font-size: 11px;
+    font-family: sans-serif;
+    background-color: rgba(255,255,255,0.9);
+    text-align: left;
+    min-height: 1.5em;
+}
+.devlist button:hover {
+    background-color: rgba(200,200,200,0.9);
+}
+.devlist button.selected {
+    background-color: rgba(200,220,220,0.9);
+    border: 1px splid rgba(200,220,200,1);
 }
 #mod-print {
     background-color: rgba(255,255,255,0.85);
@@ -809,8 +856,11 @@ th, tr, td, label {
     align-items: center;
     background-color: rgba(255,255,255,0.75);
     border-radius: 5px;
-    width: 100px;
     margin: 5px;
+}
+.dev-type svg {
+    width: 60px;
+    height: 30px;
 }
 .dev-sel {
     color: #033;
@@ -845,28 +895,23 @@ th, tr, td, label {
 }
 .t-pad {
     width: 5px;
+    height: 5px;
 }
 .t-pad2 {
     width: 10px;
 }
 
 #devices {
-    width: 200px;
+    width: 225px;
 }
-#device {
-    width: 200px;
-}
-#gcode-edit {
-    width: 200px;
+#device1, #device2 {
+    width: 225px;
 }
 #dev-gcode textarea {
     font-family: monospace;
+    overflow: auto;
+    padding: 5px;
     width: 100%;
-}
-#device-exp {
-    position: absolute;
-    left: 0;
-    z-index: 10;
 }
 #device-action, #tool-action {
     margin-top: 5px;
