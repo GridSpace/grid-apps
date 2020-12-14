@@ -1074,4 +1074,36 @@
         return good.length > 2 ? good : [];
     }
 
+    FDM.supports = function(settings, widget) {
+        let buf = new THREE.BufferGeometry();
+        buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        let geo = new THREE.Geometry().fromBufferGeometry(buf);
+        // console.log('geo',
+        //     geo,
+        //     {
+        //         "<": geo.faces.filter(f => f.normal.z < 0),
+        //         ">": geo.faces.filter(f => f.normal.z > 0),
+        //         "=": geo.faces.filter(f => f.normal.z == 0)
+        //     }
+        // );
+        let mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial());
+        let dir = new THREE.Vector3(0,0,-1)
+        let add = [];
+        geo.faces.filter(f => f.normal.z < 0).forEach(face => {
+            let a = geo.vertices[face.a];
+            let b = geo.vertices[face.b];
+            let c = geo.vertices[face.c];
+            let point = a.add(b).add(c).divideScalar(3);
+            let ray = new THREE.Raycaster(point, dir);
+            let int = ray.intersectObjects([ mesh ], false);
+            if (int && int.length) {
+                console.log(int);
+                let mid = new THREE.Vector3().add(point).add(int[0].point).divideScalar(2);
+                add.push({from: point, to: int[0].point, mid});
+            }
+        });
+        widget.supports = add;
+        return add.length > 0;
+    };
+
 })();

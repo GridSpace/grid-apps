@@ -34,7 +34,6 @@
                     KIRI.codec.decode(output).forEach(rec => {
                         ids.push(rec.id);
                         widgets[rec.id].traces = rec.traces;
-                        // widgets[rec.id].sindex = rec.sindex;
                     });
                     ondone(ids);
                 });
@@ -45,11 +44,10 @@
                 const { settings } = data;
                 const widgets = Object.values(cache);
                 const fresh = widgets.filter(widget => CAM.traces(settings, widget));
-                send.done(KIRI.codec.encode(fresh.map(widget => {return {
+                send.done(KIRI.codec.encode(fresh.map(widget => { return {
                     id: widget.id,
                     traces: widget.traces,
-                    // sindex: widget.sindex
-                }})));
+                } } )));
             };
 
         });

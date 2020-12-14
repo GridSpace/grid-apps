@@ -39,12 +39,24 @@
         if (KIRI.client)
         // FDM.support_generate = KIRI.client.fdm_support_generate = function(ondone) {
         FDM.support_generate = function(ondone) {
-            send('fdm_support_generate', {}, ondone);
+            KIRI.client.sync();
+            let settings = API.conf.get();
+            let widgets = API.widgets.map();
+            send('fdm_support_generate', {}, (gen) => {
+                for (let g of gen) g.widget = widgets[g.id];
+                ondone(gen);
+            });
         };
 
         if (KIRI.worker)
         KIRI.worker.fdm_support_generate = function(data, send) {
-            send.done();
+            const { settings } = data;
+            const widgets = Object.values(cache);
+            const fresh = widgets.filter(widget => FDM.supports(settings, widget));
+            send.done(KIRI.codec.encode(fresh.map(widget => { return {
+                id: widget.id,
+                supports: widget.supports,
+            } } )));
         };
 
     });

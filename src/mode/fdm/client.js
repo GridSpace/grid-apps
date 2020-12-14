@@ -50,8 +50,30 @@
         });
         api.event.on("fdm.supports.gen", func.sgen = () => {
             alert = api.show.alert("analyzing part...", 1000);
-            FDM.support_generate(done => {
+            FDM.support_generate(array => {
+                console.log({generated_supports: array});
                 api.hide.alert(alert);
+                for (let rec of array) {
+                    let { widget, supports } = rec;
+                    let wa = API.widgets.annotate(widget.id);
+                    let ws = wa.support || [];
+                    for (let support of supports) {
+                        let { from, to, mid } = support;
+                        let dw = api.conf.get().process.sliceSupportSize / 2;
+                        let dh = from.z - to.z;
+                        let rec = {
+                            x: mid.x,
+                            y: mid.y,
+                            z: mid.z,
+                            dw,
+                            dh,
+                            id: Math.random() * 0xffffffffff
+                        };
+                        addWidgetSupport(widget, rec);
+                        ws.push(Object.clone(rec));
+                    }
+                    wa.support = ws;
+                }
             });
         });
         api.event.on("fdm.supports.add", func.sadd = () => {

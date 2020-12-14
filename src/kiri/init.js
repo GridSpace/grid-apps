@@ -1619,11 +1619,11 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
             sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title: LANG.sp_auto_l, modes:FDM, trigger:true}),
-            // sliceSupportGen:     UC.newRow([
-            //     UI.ssaGen = UC.newButton('detect', onButtonClick)
-            // ], { modes: FDM }),
 
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportGen:     LOCAL ? UC.newRow([
+                UI.ssaGen = UC.newButton('detect', onButtonClick, {class: "f-col grow a-center"})
+            ], { modes: FDM, class: "ext-buttons f-row grow" }) : null,
             sliceSupportManual: UC.newRow([
                 (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
                 (UI.ssmDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
