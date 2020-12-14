@@ -432,7 +432,11 @@ function string2obj(s) {
 }
 
 function handleSetup(req, res, next) {
-    if (setupFn) setupFn(req, res, next);
+    if (setupFn) {
+      setupFn(req, res, next);
+    } else {
+      next();
+    }
 }
 
 function handleVersion(req, res, next) {
