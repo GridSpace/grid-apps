@@ -242,7 +242,6 @@
             }
 
             // calculations only relevant when supports are enabled
-            // if (supportEnabled) {
             {
                 let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                     minArea = spro.sliceSupportArea;
@@ -807,7 +806,7 @@
      */
     function doSupport(slice, proc, auto, fixed) {
         let minOffset = proc.sliceSupportOffset,
-            maxBridge = proc.sliceSupportSpan,
+            maxBridge = proc.sliceSupportSpan || 5,
             expand = proc.sliceSupportExtra,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,

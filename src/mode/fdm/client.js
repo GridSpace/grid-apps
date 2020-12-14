@@ -35,7 +35,7 @@
         });
         api.event.on("settings.saved", (settings) => {
             let proc = settings.process;
-            api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
+            // api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
         });
         api.event.on("button.click", target => {
             switch (target) {
@@ -48,8 +48,8 @@
                     });
             }
         });
-        api.event.on("fdm.supports.gen", func.sgen = () => {
-            alert = api.show.alert("analyzing part...", 1000);
+        api.event.on("fdm.supports.detect", func.sgen = () => {
+            alert = api.show.alert("analyzing part(s)...", 1000);
             FDM.support_generate(array => {
                 console.log({generated_supports: array});
                 api.hide.alert(alert);
