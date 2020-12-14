@@ -135,7 +135,6 @@
         let isDark = control.dark;
         control.expert = UI.expert.checked;
         control.decals = UI.decals.checked;
-        // control.hoverPop = UI.hoverPop.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
@@ -962,7 +961,7 @@
             opt.onclick = function() {
                 selectDevice(device);
                 opt.classList.add("selected");
-                if (found) {
+                if (found && found !== opt) {
                     found.classList.remove("selected");
                 }
                 found = opt;
@@ -973,6 +972,8 @@
                 UI.deviceList.appendChild(opt);
             }
             if (device === selected) {
+                // scroll to highlighted selection
+                setTimeout(() => UI.deviceList.scrollTop = opt.offsetTop, 0);
                 opt.classList.add("selected");
                 selectedIndex = incr;
                 found = opt;
@@ -1534,7 +1535,6 @@
             ], {class:"ext-buttons f-row"}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
-            // hoverPop:         UC.newBoolean(LANG.op_hopo_s, booleanSave, {title:LANG.op_hopo_l}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),

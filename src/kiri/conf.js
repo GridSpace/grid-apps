@@ -606,7 +606,6 @@
                 dark: false,
                 expert: true,
                 decals: true,
-                // hoverPop: false,
                 zoomSpeed: 1.0,
                 lineType: "path",
                 autoSave: true,

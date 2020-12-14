@@ -470,7 +470,6 @@
                     cols = Math.max(cols, row.length);
                 });
                 txt.setAttribute("cols", Math.max(30, cols + 1));
-                // txt.setAttribute("rows", Math.max(10, rows.length + 1));
 
                 let showing = btn === lastBtn;
                 hidePop();
@@ -535,7 +534,6 @@
                     cols = Math.max(cols, row.length);
                 });
                 txt.setAttribute("cols", Math.max(30, cols + 1));
-                // txt.setAttribute("rows", Math.max(10, rows.length + 1));
 
                 let showing = pop === lastPop;
                 hidePop();
