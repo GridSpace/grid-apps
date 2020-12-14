@@ -1489,8 +1489,8 @@
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:           UC.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true}),
-            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"60%", text:true, action:updateDeviceName}),
+            device:           UC.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true, class:"noshow"}),
+            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"65%", text:true, action:updateDeviceName}),
             bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6, units:true}),
             bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6, units:true}),
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
