@@ -33,4 +33,20 @@
         return btoa("; filename = kirimoto.gcode\n; machine = dv1MW0A000\n" + gcode);
     };
 
+    // defer loading until KIRI.client and KIRI.worker exist
+    KIRI.loader.push(function(API) {
+
+        if (KIRI.client)
+        // FDM.support_generate = KIRI.client.fdm_support_generate = function(ondone) {
+        FDM.support_generate = function(ondone) {
+            send('fdm_support_generate', {}, ondone);
+        };
+
+        if (KIRI.worker)
+        KIRI.worker.fdm_support_generate = function(data, send) {
+            send.done();
+        };
+
+    });
+
 })();

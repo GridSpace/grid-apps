@@ -13,8 +13,6 @@
 # - redo automatic supports using faces instead of deltas
 # - bind process to z ranges or boxed regions
 # - non-planar actual
-# `all`
-# - improve device list, selection, management, customization
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 

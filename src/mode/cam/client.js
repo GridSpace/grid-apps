@@ -266,7 +266,7 @@
             func.tabDone();
             alert = api.show.alert("analyzing parts...", 1000);
             traceOn = true;
-            KIRI.client.traces((ids) => {
+            CAM.traces((ids) => {
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] key cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);

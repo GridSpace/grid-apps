@@ -39,16 +39,20 @@
         });
         api.event.on("button.click", target => {
             switch (target) {
-                case api.ui.ssmAdd:
-                    return func.sadd();
-                case api.ui.ssmDun:
-                    return func.sdone();
+                case api.ui.ssaGen: return func.sgen();
+                case api.ui.ssmAdd: return func.sadd();
+                case api.ui.ssmDun: return func.sdone();
                 case api.ui.ssmClr:
-                    api.uc.confirm("clear supports?").then(ok => {
+                    return api.uc.confirm("clear supports?").then(ok => {
                         if (ok) func.sclear();
                     });
-                    break;
             }
+        });
+        api.event.on("fdm.supports.gen", func.sgen = () => {
+            alert = api.show.alert("analyzing part...", 1000);
+            FDM.support_generate(done => {
+                api.hide.alert(alert);
+            });
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
             alert = api.show.alert("[esc] key cancels support editing");
