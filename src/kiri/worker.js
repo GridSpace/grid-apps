@@ -71,18 +71,13 @@ KIRI.worker = {
         try {
 
         let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
-        if (rotation && !widget.rotated) {
+        if (rotation) {
             widget.mesh = null;
             widget.points = null;
             widget.loadVertices(widget.vertices);
-            let bbox1 = widget.getBoundingBox(true);
             widget._rotate(rotation,0,0,true);
-            widget.center();
-            widget.rotated = true;
-            let bbox2 = widget.getBoundingBox(true);
-            let centerz = (bbox2.max.z - bbox2.min.z) / 2;
-            let movez = centerz - (bbox1.max.z - bbox1.min.z) / 2;
-            widget.rotinfo = { centerz, movez, angle: 45 };
+            widget.center(false, true);
+            widget.getBoundingBox(true);
         }
 
         widget.slice(settings, function(error) {
@@ -94,14 +89,24 @@ KIRI.worker = {
                 send.data({
                     stats: widget.stats,
                     slices: slices.length,
-                    rotinfo: widget.rotinfo
                 });
                 slices.forEach(function(slice,index) {
                     const state = { zeros: [] };
                     send.data({index: index, slice: slice.encode(state)}, state.zeros);
                 })
                 send.data({send_end: time()});
+                // unrotate and send delta coordinates
+                if (rotation) {
+                    widget.setPoints(null);
+                    widget._rotate(-rotation,0,0,true);
+                    let wbb = widget.getBoundingBox(true);
+                    let dy = (wbb.max.y + wbb.min.y)/2;
+                    let dz = wbb.min.z;
+                    widget.rotinfo = { angle: 45, dy, dz };
+                    send.data({ rotinfo: widget.rotinfo });
+                }
             }
+
             send.done({done: true});
         }, function(update, msg) {
             now = time();

@@ -391,7 +391,7 @@
             case cca('g'): // CAM animate
                 API.function.animate();
                 break;
-            case cca('o'): // manual rotation
+            case cca('O'): // manual rotation
                 rotateInputSelection();
                 break;
             case cca('r'): // recent files
@@ -949,7 +949,7 @@
                 first = device;
             }
             let opt = DOC.createElement('option');
-            opt.appendChild(DOC.createTextNode(device));
+            opt.appendChild(DOC.createTextNode(device.replace(/\./g,' ')));
             opt.onclick = function() {
                 selectDevice(device);
             };
@@ -1045,16 +1045,18 @@
             let flute_fill = "#dddddd";
             let stroke = "#777777";
             let stroke_width = 3;
+            let stroke_thin = stroke_width / 2;
             let shaft = tool.shaft_len || 1;
             let flute = tool.flute_len || 1;
             let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
             let total_len = shaft + flute + tip_len;
+            let units = dim.h / total_len;
             let shaft_len = (shaft / total_len) * max.h;
             let flute_len = (flute / total_len) * max.h;
-            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam, total_len/4);
-            let shaft_off = (max.w * (1 - (tool.shaft_diam / total_wid))) / 2;
-            let flute_off = (max.w * (1 - (tool.flute_diam / total_wid))) / 2;
-            let taper_off = (max.w * (1 - ((tool.taper_tip || 0) / total_wid))) / 2;
+            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam);
+            let shaft_off = (max.w - tool.shaft_diam * units) / 2;
+            let flute_off = (max.w - tool.flute_diam * units) / 2;
+            let taper_off = (max.w - (tool.taper_tip || 0) * units) / 2;
             let parts = [
                 { rect: {
                     x:off.x + shaft_off, y:off.y,
@@ -1073,10 +1075,23 @@
                     `z`
                 ].join('\n')}});
             } else {
+                let x1 = off.x + flute_off;
+                let y1 = off.y + shaft_len;
+                let x2 = x1 + max.w - flute_off * 2;
+                let y2 = y1 + flute_len;
                 parts.push({ rect: {
                     x:off.x + flute_off, y:off.y + shaft_len,
                     width:max.w - flute_off * 2, height:flute_len,
                     stroke, fill: flute_fill, stroke_width
+                } });
+                parts.push({ line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin } });
+                parts.push({ line: {
+                    x1: (x1 + x2) / 2, y1, x2, y2: (y1 + y2) / 2,
+                    stroke, stroke_width: stroke_thin
+                } });
+                parts.push({ line: {
+                    x1, y1: (y1 + y2) / 2, x2: (x1 + x2) / 2, y2,
+                    stroke, stroke_width: stroke_thin
                 } });
             }
             if (type === "ballmill") {
@@ -1616,7 +1631,7 @@
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true}),
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true, top:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),

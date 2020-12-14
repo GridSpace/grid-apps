@@ -30,6 +30,13 @@ a, a:hover, a:visited {
 div {
     position: relative;
 }
+button.yellow {
+    background-color: #eda;
+    border: 1px solid rgba(0,0,255,0.5);
+}
+button.yellow:hover {
+    background-color: #eea;
+}
 button {
     display: flex;
     border: 1px solid #ccc;
@@ -1123,6 +1130,9 @@ th, tr, td, label {
     border-radius: 5px;
     margin-right: 5px;
     padding: 5px;
+}
+.set-pop.top {
+    transform: translateY(-20%) !important;
 }
 .marker {
     position:absolute;
