@@ -1,0 +1,24 @@
+{
+    "file-ext": "nc",
+    "token-space": " ",
+    "strip-comments": true,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "post":[
+        "M5  ; spindle off",
+        "M30 ; program end"
+    ],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "spindle": [
+        "M3 S{speed}"
+    ],
+    "settings": {
+        "bed_width": 400,
+        "bed_depth": 300,
+        "spindle_max": 1000
+    }
+}
