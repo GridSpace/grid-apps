@@ -15,13 +15,14 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 ### Live Versions
 
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)](https://grid.space/kiri/)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.0)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.1)
-![GitHub package.json version](https://img.shields.io/github/package-json/v/GridSpace/grid-apps)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.2)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.3)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.4)
 
 ### Development Activity
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/y/GridSpace/grid-apps)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
 ![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
 
