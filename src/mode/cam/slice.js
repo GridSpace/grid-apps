@@ -193,7 +193,7 @@
 
         if (procDrillReg) {
             updateToolDiams(drillToolDiam);
-            sliceDrillReg(settings, sliceAll, zThru);
+            sliceDrillReg(settings, drillTool, sliceAll, zThru);
         }
 
         // identify through holes
@@ -765,10 +765,11 @@
     }
 
     // drill registration holes
-    function sliceDrillReg(settings, output, zThru) {
+    function sliceDrillReg(settings, tool, output, zThru) {
         let proc = settings.process,
             stock = settings.stock,
             bounds = settings.bounds,
+            r3 = tool.fluteDiameter() * 2,
             mx = (bounds.max.x + bounds.min.x) / 2,
             my = (bounds.max.y + bounds.min.y) / 2,
             mz = zThru || 0,
@@ -782,9 +783,19 @@
                 points.push(newPoint(bounds.min.x - dx, my, 0));
                 points.push(newPoint(bounds.max.x + dx, my, 0));
                 break;
+            case "x axis 3":
+                points.push(newPoint(bounds.min.x - dx, my, 0));
+                points.push(newPoint(bounds.max.x + dx, my - r3, 0));
+                points.push(newPoint(bounds.max.x + dx, my + r3, 0));
+                break;
             case "y axis":
                 points.push(newPoint(mx, bounds.min.y - dy, 0));
                 points.push(newPoint(mx, bounds.max.y + dy, 0));
+                break;
+            case "y axis 3":
+                points.push(newPoint(mx, bounds.min.y - dy, 0));
+                points.push(newPoint(mx - r3, bounds.max.y + dy, 0));
+                points.push(newPoint(mx + r3, bounds.max.y + dy, 0));
                 break;
         }
 

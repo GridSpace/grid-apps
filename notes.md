@@ -1,8 +1,7 @@
 # Kiri:Moto todo and notes
 
-## 2.5 roadmap
+## 2.5 plan
 # `cnc`
-# - lathe, A-axis
 # - complex process order
 # - split gcode output
 # - double-sided assistance
@@ -10,9 +9,10 @@
 # - more tracing types (in, out, clear, pocket)
 # - trace re-ordering
 # `fdm`
-# - redo automatic supports using faces instead of deltas
 # - bind process to z ranges or boxed regions
 # - non-planar actual
+# `sla`
+# - common support area detection from new fdm code
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -65,7 +65,6 @@
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
 * `F` skip "thru" holes checkbox for roughing and outlining
 * `F` polygon simplification option in tracing (for image derived maps)
-* `F` use 3 registration holes to prevent rotation accidents (midline offset one axis)
 * `F` exports separate files for each operation
 * `F` switch z top offset to a z anchor (top/bottom) + offset
 * `F` A-B linked cutting profiles for double-sided milling / part flips
@@ -84,6 +83,7 @@
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
+* `F` support lathe mode / A-axis / rotary
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 * `P` allow faster z movements when contouring (not plunging)

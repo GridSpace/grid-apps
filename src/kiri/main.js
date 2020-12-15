@@ -160,7 +160,9 @@
         drillreg: [
             { name: "none" },
             { name: "x axis" },
-            { name: "y axis" }
+            { name: "y axis" },
+            { name: "x axis 3" },
+            { name: "y axis 3" }
         ],
         detail: [
             { name: "best" },
