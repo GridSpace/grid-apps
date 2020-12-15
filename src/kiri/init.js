@@ -53,7 +53,6 @@
         deviceURL = null,
         deviceTexture = null,
         deviceImage = null,
-        deviceLock = false,
         selectedTool = null,
         editTools = null,
         maxTool = 0,
@@ -666,16 +665,14 @@
         return API.device.get();
     }
 
-    function selectDevice(devicename, lock) {
-        deviceLock = lock;
-        if (lock) {
-            UI.setupDevices.style.display = 'none';
-        }
+    function selectDevice(devicename) {
         if (isLocalDevice(devicename)) {
             setDeviceCode(settings().devices[devicename], devicename);
         } else {
             let code = devices[API.mode.get_lower()][devicename];
-            setDeviceCode(code, devicename);
+            if (code) {
+                setDeviceCode(code, devicename);
+            }
         }
     }
 
@@ -1203,7 +1200,6 @@
     }
 
     function showDevices() {
-        if (deviceLock) return;
         updateDeviceList();
         API.modal.show('setup');
         UI.deviceList.focus();
@@ -2247,7 +2243,7 @@
             updateDeviceList();
 
             // ensure settings has gcode
-            selectDevice(DEVNAME || API.device.get(), DEVNAME);
+            selectDevice(DEVNAME || API.device.get());
 
             // update ui fields from settings
             API.view.update_fields();
