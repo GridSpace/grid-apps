@@ -36,9 +36,9 @@
             gcode.push(line);
         }, (output) => {
             if (callback) {
-                callback(gcode.join('\n'), output);
+                callback(gcode.join('\r\n'), output);
             } else {
-                exportGCodeDialog(gcode.join('\n'), output);
+                exportGCodeDialog(gcode.join('\r\n'), output);
             }
         });
     }
