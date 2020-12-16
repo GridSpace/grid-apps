@@ -672,6 +672,9 @@ th, tr, td, label {
 #settingsList button.selected:hover {
     background-color: #aaa;
 }
+#settingsList svg {
+    pointer-events: none;
+}
 
 #help p {
     margin: 2px;
