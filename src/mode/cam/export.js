@@ -89,7 +89,7 @@
                 output.append(line);
             }
             if (!line || output.length > 1000) {
-                online(output.join("\n"));
+                online(output.join("\r\n"));
                 output = [];
             }
         };
