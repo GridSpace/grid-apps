@@ -699,7 +699,7 @@
             let { setTool, setDrill, emitDrills } = ops;
 
             setTool(op.tool, op.down, op.rate);
-            setDrill(op.down, op.rate, op.dwell);
+            setDrill(op.down, op.lift, op.dwell);
             emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
         }
     }
@@ -774,7 +774,7 @@
             let { setTool, setDrill, emitDrills } = ops;
 
             setTool(op.tool, op.down, op.rate);
-            setDrill(op.down, op.rate, op.dwell);
+            setDrill(op.down, op.lift, op.dwell);
             emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
         }
     }
