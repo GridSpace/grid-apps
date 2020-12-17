@@ -79,6 +79,8 @@
                 console.log(`contour auto tolerance`,resolution.round(4));
             }
 
+            this.tolerance = resolution;
+
             if (tabs) {
                 clipTab.appendAll(tabs.map(tab => {
                     let ctab = POLY.expand([tab.poly], toolDiameter/2);

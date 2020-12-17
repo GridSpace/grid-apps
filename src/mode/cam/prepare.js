@@ -357,16 +357,21 @@
             setTool,
             setDrill,
             setSpindle,
+            setTolerance,
             setPrintPoint,
             printPoint,
             newLayer,
             camOut,
             polyEmit,
             poly2polyEmit,
+            tip2tipEmit,
             depthRoughPath,
             depthOutlinePath,
             emitDrills,
-            emitTrace
+            emitTrace,
+            bounds,
+            zmax,
+            lastPoint: () => { return lastPoint }
         };
 
         let opSum = 0;

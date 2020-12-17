@@ -513,7 +513,7 @@
             // we need topo for safe travel moves when roughing and outlining
             // not generated when drilling-only. then all z moves use bounds max.
             // also generates x and y contouring when selected
-            new CAM.Topo({
+            let topo = new CAM.Topo({
                 // onupdate: (update, msg) => {
                 onupdate: (index, total, msg) => {
                     progress(index / total, msg);
@@ -525,13 +525,16 @@
                 contour: op,
                 state: state
             });
+            // computed if set to 0
+            this.tolerance = topo.tolerance;
         }
 
         prepare(ops, progress) {
             let { op, state, sliceOut } = this;
-            let { setTool, setSpindle, setPrintPoint } = ops;
-            let { polyEmit, poly2polyEmit } = ops;
-            let { camOut, newLayer, printPoint } = ops;
+            let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
+            let { polyEmit, poly2polyEmit, tip2tipEmit } = ops;
+            let { camOut, newLayer, printPoint, lastPoint } = ops;
+            let { bounds, zmax } = ops;
             let { settings, widget } = state;
             let { process } = settings;
 
@@ -542,10 +545,12 @@
 
             setTool(op.tool, op.rate, op.plunge);
             setSpindle(op.spindle);
+            setTolerance(this.tolerance);
 
             printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
 
             for (let slice of sliceOut) {
+                if (!slice.camLines) continue;
                 let polys = [], poly, emit;
                 slice.camLines.forEach(function (poly) {
                     if (depthFirst) poly = poly.clone(true);
@@ -577,7 +582,7 @@
                         camOut(point.clone(), pidx > 0);
                     }, false);
                     newLayer();
-                    return lastPoint;
+                    return lastPoint();
                 });
             }
 
