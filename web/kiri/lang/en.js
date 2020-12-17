@@ -4,6 +4,7 @@ kiri.lang['en'] =
 kiri.lang['en-us'] = {
     version:        "version",
     enable:         "enable",
+    settings:       "settings",
 
     acct_xpo:       "make a backup of your device\nand device profiles with the\noption to include workspace\nobjects and positions",
 
@@ -164,7 +165,7 @@ kiri.lang['en-us'] = {
 
     // SETTINGS
     se_menu:        "library",
-    se_load:        "load",
+    se_load:        "open",
     se_save:        "save",
 
     // FDM SLICING
@@ -225,6 +226,7 @@ kiri.lang['en-us'] = {
 
     // FDM SUPPORT
     sp_menu:        "support",
+    sp_detect:      "detect",
     sp_dens_s:      "density",
     sp_dens_l:      "fraction 0.0 - 1.0\nrecommended 0.15\n0 to disable",
     sp_size_s:      "pillar size",

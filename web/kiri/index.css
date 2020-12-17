@@ -4,6 +4,7 @@
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
+    --highlight: rgba(200,220,220,0.9);
 }
 a, a:hover, a:visited {
     border: none;
@@ -485,6 +486,10 @@ th, tr, td, label {
     margin-top: 3px;
     height: 75%;
 }
+.ext-buttons label {
+    font-size: smaller;
+    margin: 3px 0 3px 0;
+}
 .txt-sel {
     background-color: #eee;
 }
@@ -522,7 +527,71 @@ th, tr, td, label {
     position: fixed;
     text-align: center;
     font-size: smaller;
-    height: 25px;
+}
+#camops {
+    display: none;
+    padding: 0;
+    height: 38px;
+    margin: 0 0 4px 0;
+}
+#camops .left {
+    width: 12px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    background-color: var(--bg-gray);
+    margin-right: 1px;
+}
+#camops .right {
+    width: 12px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: var(--bg-gray);
+    margin-left: 1px;
+}
+#oplist div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 4px;
+    margin: 0 2px 0 2px;
+    padding: 2px 10px 2px 10px;
+    background-color: rgba(255,255,255,0.75);
+}
+#oplist .drag {
+    background-color: var(--highlight) !important;
+}
+#oplist div .label {
+    pointer-events: none;
+}
+#oplist div .del {
+    position: absolute;
+    top: -1px;
+    right: 2px;
+    font-size: 12px;
+    color: rgba(0,0,0,0);
+}
+#oplist div:hover .del {
+    color: #aaa;
+    z-index: 10000;
+}
+#oplist div .del:hover {
+    color: #000;
+}
+#oplist div .opop {
+    position: absolute;
+    bottom: 100%;
+    white-space: pre;
+    font-family: monospace;
+    font-size: smaller;
+    text-align: left;
+    margin: 2px;
+    padding: 5px;
+    display: none;
+}
+#oplist div:hover .opop {
+    display: flex;
 }
 
 #progress {
@@ -633,8 +702,8 @@ th, tr, td, label {
     background-color: rgba(200,200,200,0.9);
 }
 .devlist button.selected {
-    background-color: rgba(200,220,220,0.9);
-    border: 1px splid rgba(200,220,200,1);
+    background-color: var(--highlight);
+    border: 1px solid var(--highlight);
 }
 #mod-print {
     background-color: rgba(255,255,255,0.85);
@@ -725,6 +794,9 @@ th, tr, td, label {
 }
 #settingsList button.selected:hover {
     background-color: #aaa;
+}
+#settingsList svg {
+    pointer-events: none;
 }
 
 #help p {
@@ -935,15 +1007,6 @@ th, tr, td, label {
     color: #335;
 }
 
-#layer-slider {
-    position: absolute;
-    font-size: smaller;
-    left: 15px;
-    right: 15px;
-    bottom: 3px;
-    pointer-events: all;
-}
-
 #layer-animate {
     position: absolute;
     left: 15px;
@@ -966,6 +1029,7 @@ th, tr, td, label {
     font-weight: bold;
     background-color: #ddd;
 }
+
 #layer-toolpos {
     position: absolute;
     right: 3px;
@@ -993,6 +1057,14 @@ th, tr, td, label {
     margin: 1px 1px 2px 1px;
 }
 
+#layer-slider {
+    position: absolute;
+    font-size: smaller;
+    left: 15px;
+    right: 15px;
+    bottom: 3px;
+    pointer-events: all;
+}
 #slider {
     display: none;
     height: 30px;
@@ -1092,7 +1164,6 @@ th, tr, td, label {
     margin: 0;
     padding: 0;
 }
-
 #speedbar {
     position: absolute;
     top: 3px;
@@ -1102,7 +1173,6 @@ th, tr, td, label {
     border: 3px solid rgba(200,200,200,0.5);
     background-color: #888;
 }
-
 #speedbar label {
     flex-grow: 1;
     text-align: center;
@@ -1125,6 +1195,7 @@ th, tr, td, label {
     border-top-left-radius: 10px;
     border-bottom-left-radius: 0;
     background-color: var(--bg-gray);
+    min-height: 10px;
 }
 #set-end {
     color: black;

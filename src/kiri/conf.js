@@ -450,7 +450,7 @@
                     camDrillDwell: 250,
                     camDrillLift: 2,
                     camDrillingOn: false,
-                    camDrillReg: "none",
+                    // camDrillReg: "none",
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsDepth: 5,
@@ -472,7 +472,8 @@
                     camConventional: false, // outputClockwise
                     outputOriginCenter: false,
                     outputInvertX: false,
-                    outputInvertY: false
+                    outputInvertY: false,
+                    ops: []
                 }
             },
             laser: {

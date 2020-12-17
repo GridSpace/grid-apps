@@ -157,13 +157,13 @@
             { name: "4", id: 4 },
             { name: "8", id: 8 }
         ],
-        drillreg: [
-            { name: "none" },
-            { name: "x axis" },
-            { name: "y axis" },
-            { name: "x axis 3" },
-            { name: "y axis 3" }
-        ],
+        // drillreg: [
+        //     { name: "none" },
+        //     { name: "x axis" },
+        //     { name: "y axis" },
+        //     { name: "x axis 3" },
+        //     { name: "y axis 3" }
+        // ],
         detail: [
             { name: "best" },
             { name: "good" },
@@ -2105,7 +2105,6 @@
             name = e.target.getAttribute("name"),
             load = settings.sproc[mode][name],
             edit = prompt(`settings for "${name}"`, JSON.stringify(load));
-
         if (edit) {
             try {
                 settings.sproc[mode][name] = JSON.parse(edit);

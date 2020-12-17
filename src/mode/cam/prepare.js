@@ -49,6 +49,7 @@
     };
 
     function prepEach(widget, settings, print, firstPoint, update) {
+
         let device = settings.device,
             process = settings.process,
             stock = settings.stock,
@@ -74,12 +75,10 @@
             output = print.output,
             easeDown = process.camEaseDown,
             depthFirst = process.camDepthFirst,
-            tolerance = process.camTolerance,
-            contour = process.camContourXOn || process.camContourYOn,
-            contourCurves = process.camContourCurves,
-            drillDown = process.camDrillDown,
-            drillLift = process.camDrillLift,
-            drillDwell = process.camDrillDwell,
+            tolerance = 0,
+            drillDown = 0,
+            drillLift = 0,
+            drillDwell = 0,
             newOutput = print.output || [],
             layerOut = [],
             printPoint,
@@ -117,6 +116,19 @@
             layerOut.spindle = spindle;
         }
 
+        // non-zero means contouring
+        function setTolerance(dist) {
+            tolerance = dist;
+        }
+
+        function setPrintPoint(point) {
+            printPoint = point;
+        }
+
+        function setSpindle(speed) {
+            spindle = Math.min(speed, spindleMax);
+        }
+
         function setTool(toolID, feed, plunge) {
             if (toolID !== lastTool) {
                 tool = new CAM.Tool(settings, toolID);
@@ -127,6 +139,12 @@
             }
             feedRate = feed;
             plungeRate = plunge;
+        }
+
+        function setDrill(down, lift, dwell) {
+            drillDown = down;
+            drillLift = lift;
+            drillDwell = dwell;
         }
 
         function emitDrills(polys) {
@@ -180,6 +198,7 @@
                     break;
                 }
             }
+            camOut(point.clone().setZ(zmax));
             points.forEach(function(point, index) {
                 camOut(point, 1);
                 if (index > 0 && index < points.length - 1) {
@@ -246,7 +265,7 @@
 
             // convert short planar moves to cuts in some cases
             if (isMove && deltaXY <= toolDiamMove) {
-                let iscontour = lastMode === PRO.CONTOUR_X || lastMode === PRO.CONTOUR_Y;
+                let iscontour = tolerance > 0;
                 let isflat = absDeltaZ < 0.001;
                 // restrict this to contouring
                 if (isflat || (iscontour && absDeltaZ <= tolerance)) {
@@ -334,8 +353,37 @@
             layer: 0,
         };
 
+        let ops = {
+            setTool,
+            setDrill,
+            setSpindle,
+            setPrintPoint,
+            printPoint,
+            newLayer,
+            camOut,
+            polyEmit,
+            poly2polyEmit,
+            depthRoughPath,
+            depthOutlinePath,
+            emitDrills,
+            emitTrace
+        };
+
+        let opSum = 0;
+        let opTot = widget.camops.map(op => op.weight()).reduce((a,v) => a + v);
+
+        for (let op of widget.camops) {
+            setTolerance(0);
+            nextIsMove = true;
+            let weight = op.weight();
+            op.prepare(ops, (progress, message) => {
+                onupdate((opSum + (progress * weight)) / opTot, message || op.type());
+            });
+            opSum += weight;
+        }
+
         // todo first move into positon
-        slices.forEach(function(slice, sliceIndex) {
+        if (false) slices.forEach(function(slice, sliceIndex) {
             depthData.layer++;
             isNewMode = slice.camMode != lastMode;
             lastMode = slice.camMode;
@@ -534,7 +582,7 @@
         }
 
         // act on accumulated layer data
-        if (depthFirst) {
+        if (false && depthFirst) {
             // roughing depth first
             if (depthData.rough.length > 0) {
                 lastMode = PRO.ROUGH;
@@ -620,7 +668,7 @@
         }
 
         // drilling is always depth first, and always output last (change?)
-        if (depthData.drill.length > 0) {
+        if (false && depthData.drill.length > 0) {
             lastMode = PRO.DRILL;
             setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
             emitDrills(depthData.drill);

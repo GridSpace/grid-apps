@@ -363,10 +363,13 @@
         }
     }
 
-    function newLabel(text) {
+    function newLabel(text, opt = {}) {
         let label = DOC.createElement('label');
         label.appendChild(DOC.createTextNode(text));
         label.setAttribute("class", "noselect");
+        if (opt.class) opt.class.split(' ').forEach(cl => {
+            label.classList.add(cl);
+        })
         return label;
     }
 

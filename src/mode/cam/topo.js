@@ -18,14 +18,16 @@
         noop = function() {};
 
     class Topo {
-        constructor(widget, settings, opt = {}) {
-            const density = parseInt(settings.controller.animesh) * 2500,
-                proc = settings.process,
-                tolerance = proc.camTolerance,
-                onupdate = opt.onupdate || noop,
-                ondone = opt.ondone || noop,
-                shadow = opt.shadow,
+        constructor(opt = {}) {
+            let { state, contour, onupdate, ondone } = opt;
+            let { widget, settings, tshadow, center, tabs } = opt.state;
+            let density = parseInt(settings.controller.animesh) * 2500,
+                contourX = contour.type === "contour x",
+                contourY = contour.type === "contour y",
                 bounds = widget.getBoundingBox().clone(),
+                tolerance = contour.tolerace,
+                proc = settings.process,
+                shadow = tshadow,
                 minX = bounds.min.x,
                 maxX = bounds.max.x,
                 minY = bounds.min.y,
@@ -34,32 +36,32 @@
                 zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
                 boundsX = maxX - minX,
                 boundsY = maxY - minY,
-                inside = proc.camContourIn,
+                inside = contour.inside,
                 resolution = tolerance ? tolerance : 1/Math.sqrt(density/(boundsX * boundsY)),
-                tool = new CAM.Tool(settings, proc.camContourTool),
+                tool = new CAM.Tool(settings, contour.tool),
                 toolOffset = tool.generateProfile(resolution).profile,
                 toolDiameter = tool.fluteDiameter(),
-                toolStep = toolDiameter * proc.camContourOver,
+                toolStep = toolDiameter * contour.step,
                 traceJoin = toolDiameter / 2,
-                pocketOnly = proc.camOutlinePocket,
-                maxangle = proc.camContourAngle,
-                curvesOnly = proc.camContourCurves,
+                maxangle = contour.angle,
+                curvesOnly = contour.curves,
                 R2A = 180 / Math.PI,
                 stepsx = Math.ceil(boundsX / resolution),
                 stepsy = Math.ceil(boundsY / resolution),
-                data = new Float32Array(stepsx * stepsy),
-                topo = this.topo = widget.topo = {
-                    data: data,
+                topo = widget.topo = widget.topo || {
+                    data: new Float32Array(stepsx * stepsy),
                     stepsx: stepsx,
                     stepsy: stepsy,
                     bounds: bounds,
                     diameter: toolDiameter,
                     resolution: resolution,
                     profile: toolOffset,
-                    widget: widget
+                    widget: widget,
+                    raster: true,
+                    slices: null
                 },
+                data = topo.data,
                 newslices = [],
-                tabs = opt.tabs,
                 tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z)) : 0,
                 tabsOn = tabs,
                 tabHeight = Math.max(proc.camTabsHeight + zBottom, tabsMax),
@@ -67,7 +69,6 @@
                 clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
                 partOff = inside ? 0 : toolDiameter / 2 + resolution,
                 gridDelta = Math.floor(partOff / resolution),
-                center = opt.center,
                 debug = false,
                 debug_clips = debug && true,
                 debug_topo = debug && true,
@@ -178,7 +179,13 @@
                 lastP = undefined;
             }
 
-            function processSlices(slices) {
+            function raster(slices) {
+                if (!topo.raster) {
+                    // console.log({skipping_raster: widget.id});
+                    return;
+                }
+                topo.raster = false;
+
                 let gridx = 0,
                     gridy,
                     gridi, // index
@@ -264,6 +271,16 @@
                     gridx++;
                     onupdate(++stepsTaken, stepsTotal, "raster surface");
                 }
+            }
+
+            function processSlices(slices) {
+                let gridx = 0,
+                    gridy,
+                    gridi, // index
+                    gridv, // value
+                    i, il, j, jl, x, y, tv, ltv;
+
+                raster(slices);
 
                 const checkr = newPoint(0,0);
                 const inClip = function(polys, checkZ) {
@@ -281,8 +298,7 @@
                 };
                 let tabZ;
 
-                // x contouring
-                if (proc.camContourXOn) {
+                if (contourY) {
                     startTime = time();
                     // emit slice per X
                     for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
@@ -318,15 +334,14 @@
                             newslices.push(slice);
                             slice.camLines = sliceout;
                             slice.output()
-                                .setLayer("contour x", {face: 0, line: 0})
+                                .setLayer("contour y", {face: 0, line: 0})
                                 .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour y");
                     }
                 }
 
-                // y contouring
-                if (proc.camContourYOn) {
+                if (contourX) {
                     startTime = time();
                     // emit slice per Y
                     for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
@@ -357,7 +372,7 @@
                             newslices.push(slice);
                             slice.camLines = sliceout;
                             slice.output()
-                                .setLayer("contour y", {face: 0, line: 0})
+                                .setLayer("contour x", {face: 0, line: 0})
                                 .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour x");
@@ -371,11 +386,11 @@
                 swapX: true, emptyok: true, notopok: true
             });
             let sindex = slicer.interval(resolution);
-            stepsTotal += sindex.length * 2;
-            if (proc.camContourXOn) stepsTotal += (maxX-minX) / toolStep;
-            if (proc.camContourYOn) stepsTotal += (maxY-minY) / toolStep;
+            if (!topo.slices) stepsTotal += sindex.length * 2;
+            if (contourX) stepsTotal += Math.round((maxY-minY) / toolStep);
+            if (contourY) stepsTotal += Math.round((maxX-minX) / toolStep);
 
-            let slices = slicer.slice(sindex, { each: (data, index, total) => {
+            let slices = topo.slices = topo.slices || slicer.slice(sindex, { each: (data, index, total) => {
                 onupdate(++stepsTaken, stepsTotal, "topo slice");
             }, genso: true });
 

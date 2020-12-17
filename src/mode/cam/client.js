@@ -17,9 +17,10 @@
         isParsed,
         camStock,
         current,
-        API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC;
+        API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG;
 
-    let zaxis = {x: 0, y: 0, z: 1},
+    let traceOp = { type: "trace" },
+        zaxis = { x: 0, y: 0, z: 1 },
         func = {};
 
     CAM.restoreTabs = restoreTabs;
@@ -32,6 +33,7 @@
         SPACE = api.const.SPACE;
         MODES = api.const.MODES;
         VIEWS = api.const.VIEWS;
+        LANG = api.const.LANG;
         UI = api.ui;
         UC = api.uc;
         API = api;
@@ -50,6 +52,7 @@
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
             $('set-tools').style.display = isCamMode ? '' : 'none';
+            $('set-label').innerText = isCamMode ? "" : LANG.settings;
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
             if (!isCamMode) {
@@ -65,6 +68,7 @@
             }
             // do not persist traces across page reloads
             func.traceClear();
+            func.opRender();
         });
 
         api.event.on("view.set", (mode) => {
@@ -73,6 +77,7 @@
             CAM.animate_clear(api);
             func.tabDone();
             func.traceDone();
+            func.opRender();
         });
 
         function checkOutlineSettings(settings) {
@@ -87,9 +92,15 @@
 
         api.event.on("settings.saved", (settings) => {
             current = settings;
-            const proc = settings.process;
+            let proc = settings.process;
             let hasTabs = false;
             let hasTraces = false;
+            // ensure trace op is a singleton for now
+            for (let i=0; i<proc.ops.length; i++) {
+                if (proc.ops[i].type === "trace") {
+                    proc.ops[i] = traceOp;
+                }
+            }
             // for any tabs or traces to set markers
             Object.keys(settings.widget).forEach(wid => {
                 let wannot = settings.widget[wid];
@@ -98,19 +109,13 @@
             });
             checkOutlineSettings(settings);
             // show/hide dots in enabled process pop buttons
-            api.ui.camRough.marker.style.display = proc.camRoughOn ? 'flex' : 'none';
-            api.ui.camDrill.marker.style.display =
-                proc.camDrillingOn || proc.camDrillReg !== 'none' ? 'flex' : 'none';
-            api.ui.camOutline.marker.style.display = proc.camOutlineOn ? 'flex' : 'none';
-            api.ui.camContour.marker.style.display =
-                proc.camContourXOn || proc.camContourYOn ? 'flex' : 'none';
-            api.ui.camTracing.marker.style.display = hasTraces ? 'flex' : 'none';
             api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
             api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
             updateStock(settings, 'settings.saved.internal');
         });
 
         api.event.on("settings.load", (settings) => {
+            func.opRender();
             if (!isCamMode) return;
             restoreTabs(api.widgets.all());
         });
@@ -148,6 +153,9 @@
 
         // TAB/TRACE BUTTON HANDLERS
         api.event.on("button.click", target => {
+            let settings = API.conf.get();
+            let { process, device } = settings;
+            let drill;
             switch (target) {
                 case api.ui.tabAdd:
                     return func.tabAdd();
@@ -167,6 +175,200 @@
                         if (ok) func.traceClear();
                     });
                     break;
+                case api.ui.crAdd:
+                    func.opAdd({
+                        type: "rough",
+                        tool: process.camRoughTool,
+                        spindle: process.camRoughSpindle,
+                        step: process.camRoughOver,
+                        down: process.camRoughDown,
+                        rate: process.camRoughSpeed,
+                        plunge: process.camRoughPlunge,
+                        leave: process.camRoughStock,
+                        voids: process.camRoughVoid,
+                        flats: process.camRoughFlat,
+                        inside: process.camRoughIn,
+                        top: process.camRoughTop
+                    });
+                    break;
+                case api.ui.coAdd:
+                    func.opAdd({
+                        type: "outline",
+                        tool: process.camOutlineTool,
+                        spindle: process.camOutlineSpindle,
+                        down: process.camOutlineDown,
+                        rate: process.camOutlineSpeed,
+                        plunge: process.camOutlinePlunge,
+                        dogbones: process.camOutlineDogbone,
+                        outside: process.camOutlineOut,
+                        inside: process.camOutlineIn,
+                        wide: process.camOutlineWide
+                    });
+                    break;
+                case api.ui.ccxAdd:
+                    func.opAdd({
+                        type: "contour x",
+                        tool: process.camContourTool,
+                        spindle: process.camContourSpindle,
+                        step: process.camContourOver,
+                        rate: process.camContourSpeed,
+                        angle: process.camContourAngle,
+                        tolerance: process.camTolerance,
+                        curves: process.camContourCurves,
+                        inside: process.camContourIn
+                    });
+                    break;
+                case api.ui.ccyAdd:
+                    func.opAdd({
+                        type: "contour y",
+                        tool: process.camContourTool,
+                        spindle: process.camContourSpindle,
+                        step: process.camContourOver,
+                        rate: process.camContourSpeed,
+                        angle: process.camContourAngle,
+                        tolerance: process.camTolerance,
+                        curves: process.camContourCurves,
+                        inside: process.camContourIn
+                    });
+                    break;
+                case api.ui.drAdd:
+                    func.opAdd({
+                        type: "drill",
+                        tool: process.camDrillTool,
+                        spindle: process.camDrillSpindle,
+                        down: process.camDrillDown,
+                        rate: process.camDrillDownSpeed,
+                        dwell: process.camDrillDwell,
+                        lift: process.camDrillLift
+                    });
+                    break;
+                case api.ui.drX2Add:
+                    drill = { axis: "x", points: 2 };
+                    break;
+                case api.ui.drX3Add:
+                    drill = { axis: "x", points: 3 };
+                    break;
+                case api.ui.drY2Add:
+                    drill = { axis: "y", points: 2 };
+                    break;
+                case api.ui.drY3Add:
+                    drill = { axis: "y", points: 3 };
+                    break;
+            }
+            if (drill) {
+                func.opAdd({
+                    type: "register",
+                    tool: process.camDrillTool,
+                    spindle: process.camDrillSpindle,
+                    down: process.camDrillDown,
+                    rate: process.camDrillDownSpeed,
+                    dwell: process.camDrillDwell,
+                    lift: process.camDrillLift,
+                    points: drill.points,
+                    axis: drill.axis
+                });
+            }
+        });
+
+        // OPS FUNCS
+        api.event.on("cam.op.add", func.opAdd = (rec) => {
+            let oplist = current.process.ops;
+            if (oplist.indexOf(rec) < 0) {
+                oplist.push(rec);
+                API.conf.save();
+                func.opRender();
+            }
+        });
+
+        api.event.on("cam.op.del", func.opDel = (rec) => {
+            let oplist = current.process.ops;
+            let pos = oplist.indexOf(rec);
+            if (pos >= 0) {
+                oplist.splice(pos,1);
+                API.conf.save();
+                func.opRender();
+            }
+        });
+
+        api.event.on("cam.op.render", func.opRender = () => {
+            $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
+            if (!isCamMode) return;
+            let mark = Date.now();
+            let html = [];
+            let ops = current.process.ops;
+            let oplist = ops.length > 0 ? ops : [{
+                type: "use right menu to add milling operations ... drag & drop to re-order"
+            }];
+            let bind = {};
+            oplist.forEach((rec,i) => {
+                let title = Object.entries(rec).filter((v,i) => {
+                    return v[0] !== 'type'
+                }).map(v => v.join(": ")).join("\n");
+                html.appendAll([
+                    `<div id="${mark+i}">`,
+                    title.length ? `<div class="opop">${title}</div>` : '',
+                    `<label class="label">${rec.type}</label>`,
+                    `<label id="${mark+i}-x" class="del"><i class="fas fa-times"></i></label>`,
+                    `</div>`
+                ]);
+                bind[mark+i] = rec;
+            });
+            let listel = $('oplist');
+            listel.innerHTML = html.join('');
+            let bounds = [];
+            for (let [id, rec] of Object.entries(bind)) {
+                $(`${id}-x`).onmousedown = (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                };
+                $(`${id}-x`).onclick = (ev) => {
+                    oplist.splice(oplist.indexOf(rec), 1);
+                    API.conf.save();
+                    func.opRender();
+                };
+                let el = $(id);
+                bounds.push(el);
+                el.rec = rec;
+                el.onmousedown = (ev) => {
+                    let target = ev.target;
+                    target.classList.add("drag");
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    let tracker = UI.tracker;
+                    tracker.style.display = 'block';
+                    let cancel = tracker.onmouseup = (ev) => {
+                        target.classList.remove("drag");
+                        tracker.style.display = 'none';
+                        if (ev) {
+                            ev.stopPropagation();
+                            ev.preventDefault();
+                        }
+                        ops.length = 0;
+                        for (let child of listel.childNodes) {
+                            ops.push(child.rec);
+                        }
+                        API.conf.save();
+                        func.opRender();
+                    };
+                    tracker.onmousemove = (ev) => {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        if (ev.buttons === 0) {
+                            return cancel();
+                        }
+                        for (let el of bounds) {
+                            if (el === target) continue;
+                            let rect = el.getBoundingClientRect();
+                            let left = rect.left;
+                            let right = rect.left + rect.width;
+                            if (ev.pageX >= left && ev.pageX <= right) {
+                                let mid = (left + right) / 2;
+                                try { listel.removeChild(target); } catch (e) { }
+                                el.insertAdjacentElement(ev.pageX < mid ? "beforebegin" : "afterend", target);
+                            }
+                        }
+                    };
+                };
             }
         });
 
@@ -400,6 +602,11 @@
                 color.b = colorSave.b = 0x55/255;
                 wtrace.remove(poly);
                 atrace.remove(poly.traceInfo);
+            }
+            if (atrace.length) {
+                func.opAdd(traceOp);
+            } else {
+                func.opDel(traceOp);
             }
             API.conf.save();
         };

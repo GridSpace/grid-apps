@@ -2,15 +2,15 @@
 
 ## 2.5 plan
 # `cnc`
-# - complex process order
 # - split gcode output
-# - double-sided assistance
 # - redo path planning
+# - double-sided assistance
 # - more tracing types (in, out, clear, pocket)
 # - trace re-ordering
 # `fdm`
 # - bind process to z ranges or boxed regions
 # - non-planar actual
+# - layer start point control
 # `sla`
 # - common support area detection from new fdm code
 

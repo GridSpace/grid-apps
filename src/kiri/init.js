@@ -1376,25 +1376,25 @@
         SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
 
         Object.assign(UI, {
+            tracker:            tracker,
+            container:          container,
+
             alert: {
                 dialog:         $('alert-area'),
                 text:           $('alert-text')
             },
-
             func: {
                 slice:          $('act-slice'),
                 preview:        $('act-preview'),
                 animate:        $('act-animate'),
                 export:         $('act-export')
             },
-
             label: {
                 slice:          $('label-slice'),
                 preview:        $('label-preview'),
                 animate:        $('label-animate'),
                 export:         $('label-export'),
             },
-
             acct: {
                 help:           $('acct-help'),
                 export:         $('acct-export')
@@ -1406,7 +1406,6 @@
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
-            container:          container,
             back:               $('lt-back'),
             trash:              $('lt-trash'),
             rotate:             $('lt-rotate'),
@@ -1618,7 +1617,7 @@
             sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM}),
 
             sliceSupportGen:     UC.newRow([
-                UI.ssaGen = UC.newButton('detect', onButtonClick, {class: "f-col grow a-center"})
+                UI.ssaGen = UC.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
             ], { modes: FDM, class: "ext-buttons f-row grow" }),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportManual: UC.newRow([
@@ -1627,84 +1626,123 @@
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, marker:true, top:true}),
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, top:true}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),
             camRoughDown:       UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
             camRoughSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camRoughPlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
             camRoughStock:      UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, modes:CAM, units:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camRoughVoid:       UC.newBoolean(LANG.cr_clrp_s, onBooleanClick, {title:LANG.cr_clrp_l, modes:CAM}),
             camRoughFlat:       UC.newBoolean(LANG.cr_clrf_s, onBooleanClick, {title:LANG.cr_clrf_l, modes:CAM}),
             camRoughTop:        UC.newBoolean(LANG.cr_clrt_s, onBooleanClick, {title:LANG.cr_clrt_l, modes:CAM}),
             camRoughIn:         UC.newBoolean(LANG.cr_olin_s, onBooleanClick, {title:LANG.cr_olin_l, modes:CAM}),
-            camRoughSep:        UC.newBlank({class:"pop-sep"}),
-            camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
-            camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM, marker:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
+            // camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
+            camRoughAdd:        UC.newRow([
+                UI.crAdd = UC.newButton('add', onButtonClick, {class: "f-col grow a-center"})
+            ], { modes: CAM, class: "ext-buttons f-row grow" }),
+
+            camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM}),
             camOutlineTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
             camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camOutlinePlunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camOutlineDogbone:  UC.newBoolean(LANG.co_dogb_s, onBooleanClick, {title:LANG.co_dogb_l, modes:CAM, show:() => { return !UI.camOutlineWide.checked }}),
             camOutlineIn:       UC.newBoolean(LANG.co_olin_s, onBooleanClick, {title:LANG.co_olin_l, modes:CAM, show:() => { return !UI.camOutlineOut.checked }}),
             camOutlineOut:      UC.newBoolean(LANG.co_olot_s, onBooleanClick, {title:LANG.co_olot_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camOutlineWide:     UC.newBoolean(LANG.co_wide_s, onBooleanClick, {title:LANG.co_wide_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
-            camOutlineSep:      UC.newBlank({class:"pop-sep"}),
-            camOutlineOn:       UC.newBoolean(LANG.co_olen_s, onBooleanClick, {title:LANG.co_olen_l, modes:CAM}),
-            camContour:         UC.newGroup(LANG.cn_menu, null, {modes:CAM, marker:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
+            // camOutlineOn:       UC.newBoolean(LANG.co_olen_s, onBooleanClick, {title:LANG.co_olen_l, modes:CAM}),
+            camOutlineAdd:      UC.newRow([
+                UI.coAdd = UC.newButton('add', onButtonClick, {class: "f-col grow a-center"})
+            ], { modes: CAM, class: "ext-buttons f-row grow" }),
+
+            camContour:         UC.newGroup(LANG.cn_menu, null, {modes:CAM}),
             camContourTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camContourSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camContourOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             camTolerance:       UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), modes:CAM, units:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
             camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
-            camContourSep:      UC.newBlank({class:"pop-sep"}),
-            camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
-            camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
-            camTracing:         UC.newGroup(LANG.cu_menu, null, {modes:CAM, marker:true}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
+            // camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
+            // camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
+            camOutlineAdd:      UC.newRow([
+                UI.ccxAdd = UC.newButton('add x', onButtonClick, {class: "f-col grow a-center"}),
+                UI.ccyAdd = UC.newButton('add y', onButtonClick, {class: "f-col grow a-center"})
+            ], { modes: CAM, class: "ext-buttons f-row grow" }),
+
+            camTracing:         UC.newGroup(LANG.cu_menu, null, {modes:CAM}),
             camTraceTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camTraceType:       UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l, modes:CAM}, "trace"),
             camTraceSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM}),
             camTracePlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, modes:CAM, units:true}),
-            camTraceSep:        UC.newBlank({class:"pop-sep"}),
+            camSep:             UC.newBlank({class:"pop-sep"}),
             camTraceSelect: UC.newRow([
                 (UI.traceAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
                 (UI.traceDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
                 (UI.traceClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:CAM, class:"ext-buttons f-row"}),
-            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
-            camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabSep:           UC.newBlank({class:"pop-sep"}),
-            camTabsManual: UC.newRow([
-                (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-                (UI.tabDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-                (UI.tabClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
-            ], {modes:CAM, class:"ext-buttons f-row"}),
-            camDrill:            UC.newGroup(LANG.cd_menu, null, {modes:CAM, marker:true}),
+
+            camDrill:            UC.newGroup(LANG.cd_menu, null, {modes:CAM}),
             camDrillTool:        UC.newSelect(LANG.cc_tool, {modes:CAM}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
             camDrillSpindle:     UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camDrillDown:        UC.newInput(LANG.cd_plpr_s, {title:LANG.cd_plpr_l, convert:UC.toFloat, modes:CAM, units:true}),
             camDrillDownSpeed:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, modes:CAM, units:true}),
             camDrillDwell:       UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, modes:CAM}),
             camDrillLift:        UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, modes:CAM, units:true}),
-            camDrillSep:         UC.newBlank({class:"pop-sep"}),
-            camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
-            camDrillSep:         UC.newBlank({class:"pop-sep"}),
-            camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
+            camSep:              UC.newBlank({class:"pop-sep"}),
+            // camDrillingOn:       UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
+            camDrillAdd:         UC.newRow([
+                UI.drAdd = UC.newButton('add', onButtonClick, {class: "f-col grow a-center"})
+            ], { modes: CAM, class: "ext-buttons f-row grow" }),
+            camSep:              UC.newBlank({class:"pop-sep"}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
+            camDrillAdd:         UC.newRow([
+                UC.newLabel('registrations', {class: "f-col grow center"})
+            ], { modes: CAM, class: "ext-buttons f-row" }),
+            // camDrillReg:         UC.newSelect(LANG.cd_regi_s, {modes:CAM, title:LANG.cd_regi_l}, "drillreg"),
+            camDrillAdd:         UC.newRow([
+                UI.drX2Add = UC.newButton('x axis 2', onButtonClick, {class: "f-col grow a-center"}),
+                UI.drX3Add = UC.newButton('x axis 3', onButtonClick, {class: "f-col grow a-center"}),
+            ], { modes: CAM, xclass: "ext-buttons f-row grow" }),
+            camDrillAdd:         UC.newRow([
+                UI.drY2Add = UC.newButton('y axis 2', onButtonClick, {class: "f-col grow a-center"}),
+                UI.drY3Add = UC.newButton('y axis 3', onButtonClick, {class: "f-col grow a-center"}),
+            ], { modes: CAM, xclass: "ext-buttons f-row grow" }),
 
             camSep1:             UC.newGroup(null, null, {modes:CAM, class:"set-sep"}),
+
+            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
+            camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
+            camTabsManual: UC.newRow([
+                (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (UI.tabDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (UI.tabClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            ], {modes:CAM, class:"ext-buttons f-row"}),
+
             camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM, marker: true}),
             camStockX:           UC.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockY:           UC.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockZ:           UC.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
             camStockOffset:      UC.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
-            camStockSep:         UC.newBlank({class:"pop-sep"}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
             camStockOn:          UC.newBoolean(LANG.cs_offe_s, onBooleanClick, {title:LANG.cs_offe_l, modes:CAM}),
 
             camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
@@ -1725,7 +1763,7 @@
             outputKnifePasses:   UC.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:UC.toInt, bound:UC.bound(0,5), modes:LASER}),
             outputKnifeTip:      UC.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:UC.toFloat, bound:UC.bound(0.0,10.0), modes:LASER}),
             knifeSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
-            knifeOn:            UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
+            knifeOn:             UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
 
             output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
             outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
@@ -1809,14 +1847,8 @@
             slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
 
             settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
-            settingsTable: UC.newTableRow([
-                [
-                    UI.settingsLoad =
-                    UC.newButton(LANG.se_load, settingsLoad),
-                    UI.settingsSave =
-                    UC.newButton(LANG.se_save, settingsSave)
-                ]
-            ]),
+            settingsTable: UC.newRow([ UI.settingsLoad = UC.newButton(LANG.se_load, settingsLoad) ]),
+            settingsTable: UC.newRow([ UI.settingsSave = UC.newButton(LANG.se_save, settingsSave) ]),
 
             layers:        UC.setGroup($("layers")),
         });
