@@ -96,6 +96,7 @@
             let hasTabs = false;
             let hasTraces = false;
             // ensure trace op is a singleton for now
+            if (proc.ops)
             for (let i=0; i<proc.ops.length; i++) {
                 if (proc.ops[i].type === "trace") {
                     proc.ops[i] = traceOp;
@@ -273,6 +274,7 @@
         // OPS FUNCS
         api.event.on("cam.op.add", func.opAdd = (rec) => {
             let oplist = current.process.ops;
+            if (!oplist) return;
             if (oplist.indexOf(rec) < 0) {
                 oplist.push(rec);
                 API.conf.save();
@@ -282,6 +284,7 @@
 
         api.event.on("cam.op.del", func.opDel = (rec) => {
             let oplist = current.process.ops;
+            if (!oplist) return;
             let pos = oplist.indexOf(rec);
             if (pos >= 0) {
                 oplist.splice(pos,1);
@@ -296,7 +299,7 @@
             let mark = Date.now();
             let html = [];
             let ops = current.process.ops;
-            let oplist = ops.length > 0 ? ops : [{
+            let oplist = ops && ops.length > 0 ? ops : [{
                 type: "use right menu to add milling operations ... drag & drop to re-order"
             }];
             let bind = {};
