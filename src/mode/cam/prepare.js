@@ -50,6 +50,8 @@
 
     function prepEach(widget, settings, print, firstPoint, update) {
 
+        if (widget.camops.length === 0) return;
+
         let device = settings.device,
             process = settings.process,
             stock = settings.stock,
@@ -87,8 +89,8 @@
             toolType,
             toolDiam,
             toolDiamMove,
-            feedRate,
             plungeRate,
+            feedRate,
             lastTool,
             lastMode,
             lastPoint,
@@ -169,10 +171,6 @@
                 printPoint = closest.first();
                 emitDrill(closest, drillDown, drillLift, drillDwell);
             }
-            // TODO emit in next-closest-order
-            // polys.forEach(function(poly) {
-            //     emitDrill(poly, drillDown, drillLift, drillDwell);
-            // });
         }
 
         function emitDrill(poly, down, lift, dwell) {
@@ -387,125 +385,6 @@
             opSum += weight;
         }
 
-        // todo first move into positon
-        if (false) slices.forEach(function(slice, sliceIndex) {
-            depthData.layer++;
-            isNewMode = slice.camMode != lastMode;
-            lastMode = slice.camMode;
-            // force move at start of each slice
-            nextIsMove = true;
-            if (isNewMode) depthData.layer = 0;
-
-            switch (slice.camMode) {
-                case PRO.LEVEL:
-                    setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
-                    spindle = Math.min(spindleMax, process.camRoughSpindle);
-                    const level = [];
-                    slice.camLines.forEach(function (poly) {
-                        level.push(poly);
-                        if (poly.inner) {
-                            poly.inner.forEach(function(inner) {
-                                level.push(inner);
-                            })
-                        }
-                    });
-                    // set winding specified in output
-                    POLY.setWinding(level, process.camConventional, false);
-                    printPoint = poly2polyEmit(level, printPoint, function(poly, index, count) {
-                        poly.forEachPoint(function(point, pidx, points, offset) {
-                            camOut(point.clone(), offset !== 0);
-                        }, true, index);
-                    });
-                    newLayer();
-                    break;
-                case PRO.ROUGH:
-                case PRO.OUTLINE:
-                    let dir = process.camConventional;
-                    if (slice.camMode === PRO.ROUGH) {
-                        setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
-                        spindle = Math.min(spindleMax, process.camRoughSpindle);
-                        depthData.roughDiam = toolDiam;
-                    } else {
-                        setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                        spindle = Math.min(spindleMax, process.camOutlineSpindle);
-                        depthData.outlineDiam = toolDiam;
-                        if (!process.camOutlinePocket) {
-                            dir = !dir;
-                        }
-                    }
-                    let polys = [], t = [], c = [];
-                    POLY.flatten(slice.camLines).forEach(function (poly) {
-                        let child = poly.parent;
-                        if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
-                        if (child) c.push(poly); else t.push(poly);
-                        poly.layer = depthData.layer;
-                        polys.push(poly);
-                    });
-                    // set cut direction on outer polys
-                    POLY.setWinding(t, dir);
-                    // set cut direction on inner polys
-                    POLY.setWinding(c, !dir);
-                    if (depthFirst) {
-                        (slice.camMode === PRO.ROUGH ? depthData.rough : depthData.outline).append(polys);
-                        // polys.xout(`prep ${slice.z}`);
-                    } else {
-                        printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                            poly.forEachPoint(function(point, pidx, points, offset) {
-                                camOut(point.clone(), offset !== 0);
-                            }, poly.isClosed(), index);
-                        });
-                        newLayer();
-                    }
-                    break;
-                case PRO.CONTOUR_X:
-                case PRO.CONTOUR_Y:
-                    if (isNewMode || !printPoint) {
-                        // force start at lower left corner
-                        printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
-                    }
-                    setTool(process.camContourTool, process.camContourSpeed, process.camFastFeedZ);
-                    spindle = Math.min(spindleMax, process.camContourSpindle);
-                    depthData.outlineDiam = toolDiam;
-                    // todo find closest next trace/trace-point
-                    {
-                        let polys = [], poly, emit;
-                        slice.camLines.forEach(function (poly) {
-                            if (depthFirst) poly = poly.clone(true);
-                            polys.push({first:poly.first(), last:poly.last(), poly:poly});
-                        });
-                        if (depthFirst) {
-                            (slice.camMode === PRO.CONTOUR_X ? depthData.contourx : depthData.contoury).appendAll(polys);
-                        } else {
-                            printPoint = tip2tipEmit(polys, printPoint, function(el, point, count) {
-                                poly = el.poly;
-                                if (poly.last() === point) {
-                                    poly.reverse();
-                                }
-                                poly.forEachPoint(function(point, pidx) {
-                                    camOut(point.clone(), pidx > 0);
-                                }, false);
-                                // return lastPoint;
-                            });
-                            newLayer();
-                        }
-                    }
-                    break;
-                case PRO.TRACE:
-                    if (depthFirst) {
-                        depthData.trace.push(slice);
-                        break;
-                    } else {
-                        emitTrace(slice);
-                    }
-                    break;
-                case PRO.DRILL:
-                    setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
-                    depthData.drill.appendAll(slice.camLines);
-                    break;
-            }
-            update(sliceIndex / slices.length);
-        });
-
         function emitTrace(slice) {
             let { tool, speed, plunge, path } = slice.camTrace;
             setTool(tool, speed, plunge);
@@ -584,99 +463,6 @@
                 return fromPoint;
             }, {weight: true});
             return start;
-        }
-
-        // act on accumulated layer data
-        if (false && depthFirst) {
-            // roughing depth first
-            if (depthData.rough.length > 0) {
-                lastMode = PRO.ROUGH;
-                setTool(process.camRoughTool, process.camRoughSpeed, process.camRoughPlunge);
-                spindle = Math.min(spindleMax, process.camRoughSpindle);
-                let tops = depthData.rough.map(level => {
-                    return POLY.nest(level.filter(poly => poly.depth === 0).clone());
-                });
-                printPoint = depthRoughPath(printPoint, 0, depthData.rough, tops, polyEmit);
-            }
-            // outline depth first
-            if (depthData.outline.length > 0) {
-                // depthData.outline.xout('depth');
-                lastMode = PRO.OUTLINE;
-                setTool(process.camOutlineTool, process.camOutlineSpeed, process.camOutlinePlunge);
-                spindle = Math.min(spindleMax, process.camOutlineSpindle);
-                let flatLevels = depthData.outline.map(level => {
-                    return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
-                }).filter(l => l.length > 0);
-                // flatLevels.xout('flat');
-                // start with the smallest polygon on the top
-                printPoint = flatLevels[0]
-                    // .filter(l => l.length > 0)[0]
-                    .sort((a,b) => { return a.area() - b.area() })[0]
-                    .average();
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
-            }
-            // two modes for deferred outlining: x then y or combined
-            if (contour && contourCurves) {
-                lastMode = PRO.CONTOUR_X;
-                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
-                spindle = Math.min(spindleMax, process.camContourSpindle);
-                // combined deferred contour x and y outlining
-                let contourxy = [].appendAll(depthData.contourx).appendAll(depthData.contoury);
-                printPoint = tip2tipEmit(contourxy, printPoint, function(el, point, count) {
-                    let poly = el.poly;
-                    if (poly.last() === point) {
-                        poly.reverse();
-                    }
-                    poly.forEachPoint(function(point, pidx) {
-                        camOut(point.clone(), pidx > 0);
-                    }, false);
-                    newLayer();
-                    return lastPoint;
-                });
-            } else if (contour) {
-                setTool(process.camContourTool, process.camContourSpeed, process.camContourPlunge);
-                spindle = Math.min(spindleMax, process.camContourSpindle);
-                // deferred contour x outlining
-                if (depthData.contourx.length > 0) {
-                    lastMode = PRO.CONTOUR_X;
-                    // force start at lower left corner
-                    // printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
-                    printPoint = tip2tipEmit(depthData.contourx, printPoint, function(el, point, count) {
-                        let poly = el.poly;
-                        if (poly.last() === point) poly.reverse();
-                        poly.forEachPoint(function(point, pidx) {
-                            camOut(point.clone(), pidx > 0);
-                        }, false);
-                        newLayer();
-                        return lastPoint;
-                    });
-                }
-                // deferred contour y outlining
-                if (depthData.contoury.length > 0) {
-                    lastMode = PRO.CONTOUR_Y;
-                    // force start at lower left corner
-                    printPoint = tip2tipEmit(depthData.contoury, printPoint, function(el, point, count) {
-                        let poly = el.poly;
-                        if (poly.last() === point) poly.reverse();
-                        poly.forEachPoint(function(point, pidx) {
-                            camOut(point.clone(), pidx > 0);
-                        }, false);
-                        newLayer();
-                        return lastPoint;
-                    });
-                }
-            }
-            depthData.trace.forEach(slice => {
-                emitTrace(slice);
-            });
-        }
-
-        // drilling is always depth first, and always output last (change?)
-        if (false && depthData.drill.length > 0) {
-            lastMode = PRO.DRILL;
-            setTool(process.camDrillTool, process.camDrillDownSpeed, process.camDrillDownSpeed);
-            emitDrills(depthData.drill);
         }
 
         // last layer/move is to zmax

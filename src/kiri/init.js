@@ -1630,8 +1630,8 @@
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
-            camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),
             camRoughDown:       UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
+            camRoughOver:       UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),
             camRoughSpeed:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camRoughPlunge:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
             camRoughStock:      UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, modes:CAM, units:true}),
@@ -1651,6 +1651,7 @@
             camSep:             UC.newBlank({class:"pop-sep"}),
             camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
             camOutlineDown:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, modes:CAM, units:true}),
+            camOutlineOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, modes:CAM, bound:UC.bound(0.01,1.0), units:true, show:() => { return UI.camOutlineWide.checked }}),
             camOutlineSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camOutlinePlunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, modes:CAM, units:true}),
             camSep:             UC.newBlank({class:"pop-sep"}),
@@ -1668,7 +1669,7 @@
             camContourTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
             camContourSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
-            camContourOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:CAM}),
+            camContourOver:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), modes:CAM}),
             camContourSpeed:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, modes:CAM, units:true}),
             camContourAngle:    UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), modes:CAM}),
             camTolerance:       UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), modes:CAM, units:true}),
@@ -2347,7 +2348,7 @@
         UI.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         UI.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { API.modal.show('files') };
-        $('file-import').onclick = () => { API.event.import() };
+        $('file-import').onclick = (ev) => { API.event.import(ev) };
         UI.back.onclick = API.platform.layout;
         UI.trash.onclick = API.selection.delete;
         UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };

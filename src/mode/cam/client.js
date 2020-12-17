@@ -197,6 +197,7 @@
                         type: "outline",
                         tool: process.camOutlineTool,
                         spindle: process.camOutlineSpindle,
+                        step: process.camOutlineOver,
                         down: process.camOutlineDown,
                         rate: process.camOutlineSpeed,
                         plunge: process.camOutlinePlunge,
@@ -303,13 +304,32 @@
                 type: "use right menu to add milling operations ... drag & drop to re-order"
             }];
             let bind = {};
+            let scale = API.view.unit_scale();
             oplist.forEach((rec,i) => {
+                let entries = 0;
                 let title = Object.entries(rec).filter((v,i) => {
                     return v[0] !== 'type'
-                }).map(v => v.join(": ")).join("\n");
+                }).map(v => {
+                    entries++;
+                    let [ key, value ] = v;
+                    switch (key) {
+                        case 'tool':
+                            value = new CAM.Tool(current, v[1]).getName();
+                            break;
+                        case 'down':
+                        case 'rate':
+                        case 'plunge':
+                        case 'leave':
+                        case 'lift':
+                            value = (parseFloat(v[1]) / scale).round(2);
+                            break;
+                    }
+                    return `<tr><th>${key}</th><td>${value}</td></tr>`;
+                }).join("\n");
+                title = `<table>${title}</table>`;
                 html.appendAll([
                     `<div id="${mark+i}">`,
-                    title.length ? `<div class="opop">${title}</div>` : '',
+                    entries ? `<div class="opop">${title}</div>` : '',
                     `<label class="label">${rec.type}</label>`,
                     `<label id="${mark+i}-x" class="del"><i class="fas fa-times"></i></label>`,
                     `</div>`

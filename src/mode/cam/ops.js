@@ -406,10 +406,11 @@
                     });
                 } else {
                     if (op.wide) {
+                        let stepover = outlineToolDiam * op.step;
                         offset.slice().forEach(op => {
                             // clone removes inners but the real solution is
                             // to limit expanded shells to through holes
-                            POLY.expand([op.clone(true)], outlineToolDiam * 0.5, slice.z, offset, 1);
+                            POLY.expand([op.clone(true)], stepover, slice.z, offset, 1);
                         });
                     }
                 }
