@@ -415,25 +415,32 @@
      * @returns {Point} center of a polygon assuming it's a circle
      */
     PRO.circleCenter = function() {
-        let points = this.points,
-            length = points.length,
-            incr = Math.floor(length / 3),
-            A = points[0],
-            B = points[incr],
-            C = points[incr * 2],
-            yDelta_a = B.y - A.y,
-            xDelta_a = B.x - A.x,
-            yDelta_b = C.y - B.y,
-            xDelta_b = C.x - B.x,
-            aSlope = yDelta_a / xDelta_a,
-            bSlope = yDelta_b / xDelta_b,
-            center = newPoint(0, 0, 0, null);
-
-        center.x = (aSlope * bSlope * (A.y - C.y) + bSlope * (A.x + B.x) - aSlope * (B.x+C.x) )/(2* (bSlope-aSlope) );
-        center.y = -1 * (center.x - (A.x+B.x) / 2) / aSlope +  (A.y + B.y) / 2;
-        center.z = A.z;
-
-        return center;
+        let x=0, y=0, l=this.points.length;
+        for (let point of this.points) {
+            x += point.x;
+            y += point.y;
+        }
+        x /= l;
+        y /= l;
+        return newPoint(x, y, this.points[0].z, null);
+        // let points = this.points,
+        //     length = points.length,
+        //     incr = Math.floor(length / 3),
+        //     A = points[0],
+        //     B = points[incr],
+        //     C = points[incr * 2],
+        //     yDelta_a = B.y - A.y,
+        //     xDelta_a = B.x - A.x,
+        //     yDelta_b = C.y - B.y,
+        //     xDelta_b = C.x - B.x,
+        //     aSlope = yDelta_a / xDelta_a,
+        //     bSlope = yDelta_b / xDelta_b,
+        //     center = newPoint(0, 0, 0, null);
+        //
+        // center.x = (aSlope * bSlope * (A.y - C.y) + bSlope * (A.x + B.x) - aSlope * (B.x+C.x) )/(2* (bSlope-aSlope) );
+        // center.y = -1 * (center.x - (A.x+B.x) / 2) / aSlope +  (A.y + B.y) / 2;
+        // center.z = A.z;
+        // return center;
     };
 
     /**
