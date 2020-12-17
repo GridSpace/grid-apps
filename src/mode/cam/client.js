@@ -96,7 +96,7 @@
             let hasTabs = false;
             let hasTraces = false;
             // ensure trace op is a singleton for now
-            if (proc.ops)
+            if (isCamMode && proc.ops)
             for (let i=0; i<proc.ops.length; i++) {
                 if (proc.ops[i].type === "trace") {
                     proc.ops[i] = traceOp;
@@ -273,8 +273,8 @@
 
         // OPS FUNCS
         api.event.on("cam.op.add", func.opAdd = (rec) => {
+            if (!isCamMode) return;
             let oplist = current.process.ops;
-            if (!oplist) return;
             if (oplist.indexOf(rec) < 0) {
                 oplist.push(rec);
                 API.conf.save();
@@ -283,8 +283,8 @@
         });
 
         api.event.on("cam.op.del", func.opDel = (rec) => {
+            if (!isCamMode) return;
             let oplist = current.process.ops;
-            if (!oplist) return;
             let pos = oplist.indexOf(rec);
             if (pos >= 0) {
                 oplist.splice(pos,1);
