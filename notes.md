@@ -17,6 +17,7 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
+
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
 * `P` improve decimation speed by avoiding in/out of Point?
@@ -28,6 +29,7 @@
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
+
 * `F` redo auto supports to use poly faces rather than deltas
 * `F` control for size of purge block (with 0=disabled)
 * `F` control layer start position
@@ -44,6 +46,7 @@
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 * `F` continuous printing (z belt systems)
+
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats
 * `P` sparse infill should follow polys between intersect points
@@ -92,7 +95,6 @@
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 * `P` allow faster z movements when contouring (not plunging)
-* `P` CSS align right menu tops
 
 # Laser
 

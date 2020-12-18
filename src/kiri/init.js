@@ -1612,8 +1612,6 @@
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            // sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceSupportEnable.checked}),
-            // sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title: LANG.sp_auto_l, modes:FDM, trigger:true}),
             sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM}),
 
             sliceSupportGen:     UC.newRow([
@@ -1626,7 +1624,7 @@
                 (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, top:true}),
+            camRough:           UC.newGroup(LANG.cr_menu, null, {modes:CAM, class:"rough"}),
             camRoughTool:       UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
             camRoughSpindle:    UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
@@ -1641,12 +1639,11 @@
             camRoughTop:        UC.newBoolean(LANG.cr_clrt_s, onBooleanClick, {title:LANG.cr_clrt_l, modes:CAM}),
             camRoughIn:         UC.newBoolean(LANG.cr_olin_s, onBooleanClick, {title:LANG.cr_olin_l, modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
-            // camRoughOn:         UC.newBoolean(LANG.enable, onBooleanClick, {modes:CAM}),
             camRoughAdd:        UC.newRow([
                 UI.crAdd = UC.newButton('add', onButtonClick, {class: "f-col grow a-center"})
             ], { modes: CAM, class: "ext-buttons f-row grow" }),
 
-            camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM}),
+            camOutline:         UC.newGroup(LANG.co_menu, null, {modes:CAM, class:"outline"}),
             camOutlineTool:     UC.newSelect(LANG.cc_tool, {modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
             camOutlineSpindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, modes:CAM, visible:spindleShow}),
@@ -1660,7 +1657,6 @@
             camOutlineOut:      UC.newBoolean(LANG.co_olot_s, onBooleanClick, {title:LANG.co_olot_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camOutlineWide:     UC.newBoolean(LANG.co_wide_s, onBooleanClick, {title:LANG.co_wide_l, modes:CAM, show:() => { return !UI.camOutlineIn.checked }}),
             camSep:             UC.newBlank({class:"pop-sep"}),
-            // camOutlineOn:       UC.newBoolean(LANG.co_olen_s, onBooleanClick, {title:LANG.co_olen_l, modes:CAM}),
             camOutlineAdd:      UC.newRow([
                 UI.coAdd = UC.newButton('add', onButtonClick, {class: "f-col grow a-center"})
             ], { modes: CAM, class: "ext-buttons f-row grow" }),
@@ -1677,8 +1673,6 @@
             camContourCurves:   UC.newBoolean(LANG.cf_curv_s, onBooleanClick, {title:LANG.cf_curv_l, modes:CAM}),
             camContourIn:       UC.newBoolean(LANG.cf_olin_s, onBooleanClick, {title:LANG.cf_olin_l, modes:CAM}),
             camSep:             UC.newBlank({class:"pop-sep"}),
-            // camContourYOn:      UC.newBoolean(LANG.cf_liny_s, onBooleanClick, {title:LANG.cf_liny_l, modes:CAM}),
-            // camContourXOn:      UC.newBoolean(LANG.cf_linx_s, onBooleanClick, {title:LANG.cf_linx_l, modes:CAM}),
             camOutlineAdd:      UC.newRow([
                 UI.ccxAdd = UC.newButton('add x', onButtonClick, {class: "f-col grow a-center"}),
                 UI.ccyAdd = UC.newButton('add y', onButtonClick, {class: "f-col grow a-center"})
