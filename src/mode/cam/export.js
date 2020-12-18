@@ -237,7 +237,9 @@
             append(`; Target: ${settings.filter[settings.mode]}`);
             append("; --- process ---");
             for (let pk in spro) {
-                append("; " + pk + " = " + spro[pk]);
+                if (pk !== "ops") {
+                    append("; " + pk + " = " + spro[pk]);
+                }
             }
         }
 
