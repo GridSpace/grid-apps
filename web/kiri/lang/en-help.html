@@ -73,38 +73,36 @@
         <div id="help-tab-laser" class="help-tab f-col">about laser cutting</div>
 
         <div id="help-tab-controls" class="help-tab f-col a-center"><div class="content">
-            <b class="header">Keyboard & Mouse Controls</b><br>
             <div class="f-row">
                 <table>
-                    <tr><td colspan=2 class="header">Mode</td></tr>
-                    <tr><td><label>a</label></td><td>Arrange</td></tr>
-                    <tr><td><label>s</label></td><td>Slice</td></tr>
-                    <tr><td><label>p</label></td><td>Preview</td></tr>
-                    <tr><td><label>x</label></td><td>Export</td></tr>
+                    <tr><td colspan="2" class="header">Keyboard Controls</td><tr>
                     <tr><td></td></tr>
-                    <tr><td colspan=2 class="header">View</td></tr>
-                    <tr><td><label>t</label></td><td>Top</td></tr>
-                    <tr><td><label>h</label></td><td>Home</td></tr>
-                    <tr><td><label>v</label></td><td>Layer</td></tr>
-                    <tr><td><label>shift</label> wheel</td><td>Change Layer</td></tr>
-                    <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
-                    <tr><td><label>right-drag</label></td><td>Pan</td></tr>
-                    <tr><td><label>left-drag</label></td><td>Rotate</td></tr>
-                    <tr><td><label>mouse-wheel</label></td><td>Zoom</td></tr>
-                    <tr><td><label>middle-drag</label></td><td>Zoom</td></tr>
-                    <tr><td><label>z</label></td><td>Reset View</td></tr>
-                    <tr><td></td></tr>
-                    <tr><td colspan=2 class="header">Help</td></tr>
-                    <tr><td><label>?</label></td><td>This Window</td></tr>
-                </table>
-                <table>
-                    <tr><td colspan=2 class="header">Config</td></tr>
+                    <tr><th>Key</th><th>Action</th></tr>
+                    <tr><td colspan=2 class="header2">Configuration</td></tr>
                     <tr><td><label>e</label></td><td>Device Selection</td></tr>
                     <tr><td><label>o</label></td><td>CAM Tool Selection</td></tr>
                     <tr><td><label>c</label></td><td>Grid Local Devices</td></tr>
                     <tr><td><label>q</label></td><td>Preference panel</td></tr>
                     <tr><td></td></tr>
-                    <tr><td colspan=2 class="header">Object</td></tr>
+                    <tr><td colspan=2 class="header2">Mode</td></tr>
+                    <tr><td><label>a</label></td><td>Arrange</td></tr>
+                    <tr><td><label>s</label></td><td>Slice</td></tr>
+                    <tr><td><label>p</label></td><td>Preview</td></tr>
+                    <tr><td><label>g</label></td><td>Animate</td></tr>
+                    <tr><td><label>x</label></td><td>Export</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">File</td></tr>
+                    <tr><td><label>i</label></td><td>Import</td></tr>
+                    <tr><td><label>r</label></td><td>Recent</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">View</td></tr>
+                    <tr><td><label>t</label></td><td>Top</td></tr>
+                    <tr><td><label>h</label></td><td>Home</td></tr>
+                    <tr><td><label>v</label></td><td>Layer</td></tr>
+                    <tr><td><label>z</label></td><td>Reset View</td></tr>
+                    <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Objects</td></tr>
                     <tr><td><label>d</label></td><td>Duplicate</td></tr>
                     <tr><td><label>m</label></td><td>Mirror</td></tr>
                     <tr><td><label>o</label></td><td>Rotate Dialog</td></tr>
@@ -112,13 +110,29 @@
                     <tr><td><label>arrow</label></td><td>Rotate 90&deg;</td></tr>
                     <tr><td><label>shift-arrow</label></td><td>Rotate 5&deg;</td></tr>
                     <tr><td><label>option-arrow</label></td><td>Move 5mm</td></tr>
-                    <tr><td><label>ctrl-click</label></td><td>Align face to bed</td></tr>
-                    <tr><td><label>meta-click</label></td><td>Align face to bed</td></tr>
                     <tr><td><label>ctrl-a</label></td><td>Select all</td></tr>
                     <tr><td></td></tr>
-                    <tr><td colspan=2 class="header">File</td></tr>
-                    <tr><td><label>i</label></td><td>Import</td></tr>
-                    <tr><td><label>r</label></td><td>Recent</td></tr>
+                    <tr><td colspan=2 class="header2">Help</td></tr>
+                    <tr><td><label>?</label></td><td>This Window</td></tr>
+                    <tr><td></td></tr>
+                </table>
+                <div class="t-pad"></div>
+                <table>
+                    <tr><td colspan="2" class="header">Mouse Controls</td><tr>
+                    <tr><td></td></tr>
+                    <tr><th>Combo</th><th>Action</th></tr>
+                    <tr><td colspan=2 class="header2">View</td></tr>
+                    <tr><td><label>shift</label> wheel</td><td>Change Layer</td></tr>
+                    <tr><td><label>meta</label> drag</td><td>Pan</td></tr>
+                    <tr><td><label>right-drag</label></td><td>Pan</td></tr>
+                    <tr><td><label>left-drag</label></td><td>Rotate</td></tr>
+                    <tr><td><label>mouse-wheel</label></td><td>Zoom</td></tr>
+                    <tr><td><label>middle-drag</label></td><td>Zoom</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Objects</td></tr>
+                    <tr><td><label>ctrl-click</label></td><td>Align face to bed</td></tr>
+                    <tr><td><label>meta-click</label></td><td>Align face to bed</td></tr>
+                    <tr><td></td></tr>
                 </table>
             </div>
         </div></div>
