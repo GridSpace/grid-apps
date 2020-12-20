@@ -201,7 +201,9 @@
                     ) && !vaseMode;
                 doShells(slice, spro.sliceShells, firstOffset, shellOffset, fillOffset, {
                     vase: vaseMode,
-                    thin: spro.detectThinWalls
+                    thin: spro.detectThinWalls,
+                    belt0: sdev.bedBelt && slice.index === 0,
+                    widget: widget
                 });
                 if (solid) {
                     doSolidLayerFill(slice, fillSpacing, sliceFillAngle);
@@ -358,8 +360,7 @@
      * @param {number} fillOffset
      * @param {Obejct} options
      */
-    function doShells(slice, count, offset1, offsetN, fillOffset, options) {
-        const opt = options || {};
+    function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
         slice.tops.forEach(function(top) {
             let top_poly = [ top.poly ];
 
@@ -464,6 +465,14 @@
 
             // for diffing
             top.last = last;
+
+            if (opt.belt0 && top.shells.length === 0) {
+                let bounds = opt.widget.bounds;
+                top.shells.push(BASE.newPolygon()
+                    .setOpen()
+                    .add(bounds.min.x - 5,0,slice.z)
+                    .add(bounds.max.x + 5,0,slice.z));
+            }
         });
     };
 

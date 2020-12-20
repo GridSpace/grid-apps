@@ -916,6 +916,7 @@
             API.function.clear();
             API.conf.save();
             showDevices();
+            API.modal.hide();
         };
         UI.deviceAdd.onclick = function() {
             API.function.clear();

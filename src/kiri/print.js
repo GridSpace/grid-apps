@@ -124,6 +124,7 @@
         let dz = 0,
             abs = true,
             absE = true,
+            belt = false,
             defh = 0,
             height = 0,
             factor = 1,
@@ -216,6 +217,9 @@
                 defh = parseFloat(hd[4]);
                 if (fdm) dz = -defh / 2;
             }
+            if (line.indexOf("BED TYPE: BELT") > 0) {
+                belt = true;
+            }
             line = line.split(";")[0].split(" ").filter(v => v);
             let cmd = line.shift();
             if (!cmd) return;
@@ -270,6 +274,7 @@
         scope.lines = lines.length;
         scope.bytes = gcode.length;
         scope.maxSpeed = Math.floor(maxf / 60);
+        scope.belt = belt;
 
         done({ output: scope.output });
     };
