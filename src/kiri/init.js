@@ -52,6 +52,7 @@
     let currentDevice = null,
         deviceURL = null,
         deviceTexture = null,
+        deviceFilter = null,
         deviceImage = null,
         selectedTool = null,
         editTools = null,
@@ -950,6 +951,10 @@
             }
             dedup[device] = device;
             let loc = isLocalDevice(device);
+            // if filter set, use
+            if (!loc && deviceFilter && device.toLowerCase().indexOf(deviceFilter) < 0) {
+                return;
+            }
             if (incr === 0) {
                 first = device;
             }
@@ -1398,6 +1403,10 @@
             acct: {
                 help:           $('acct-help'),
                 export:         $('acct-export')
+            },
+            dev: {
+                search:         $('dev-search'),
+                filter:         $('dev-filter')
             },
 
             fps:                $('fps'),
@@ -1948,6 +1957,30 @@
 
         UI.slider.onmouseleave = (ev) => {
             if (!ev.buttons) API.event.emit('slider.unlabel');
+        };
+
+        UI.dev.search.onclick = () => {
+            let style = UI.dev.filter.style;
+            if (style.display === 'flex') {
+                style.display = '';
+                deviceFilter = null;
+                updateDeviceList();
+            } else {
+                style.display = 'flex';
+                UI.dev.filter.focus();
+                deviceFilter = UI.dev.filter.value;
+                updateDeviceList();
+            }
+        };
+
+        UI.dev.filter.onkeyup = (ev) => {
+            deviceFilter = UI.dev.filter.value;
+            updateDeviceList();
+        };
+
+        UI.dev.filter.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
         };
 
         API.event.on('slider.unlabel', (values) => {
