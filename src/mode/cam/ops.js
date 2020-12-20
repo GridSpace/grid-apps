@@ -491,12 +491,14 @@
                 let flatLevels = depthData.map(level => {
                     return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
                 }).filter(l => l.length > 0);
-                // start with the smallest polygon on the top
-                printPoint = flatLevels[0]
-                    .sort((a,b) => { return a.area() - b.area() })[0]
-                    .average();
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                if (flatLevels.length && flatLevels[0].length) {
+                    // start with the smallest polygon on the top
+                    printPoint = flatLevels[0]
+                        .sort((a,b) => { return a.area() - b.area() })[0]
+                        .average();
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                }
             }
 
             setPrintPoint(printPoint);
