@@ -44,6 +44,10 @@
         return [this.dx, this.dy, this.angle].join(',');
     };
 
+    PRO.clone = function() {
+        return new Slope(null, null, this.dx, this.dy);
+    };
+
     /**
      * @param {Slope} s
      * @returns {boolean}
@@ -69,6 +73,13 @@
         this.angle = Math.atan2(this.dy, this.dx) * RAD2DEG;
         return this;
     };
+
+    PRO.invert = function() {
+        this.dx = -this.dx;
+        this.dy = -this.dy;
+        this.angle = Math.atan2(this.dy, this.dx) * RAD2DEG;
+        return this;
+    }
 
     PRO.toUnit = function() {
         let max = Math.max(ABS(this.dx), ABS(this.dy));

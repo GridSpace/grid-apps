@@ -287,7 +287,13 @@
             for (let i=0; i<pln; i++) {
                 const p = pa[(i+pln) % pln];
                 const d = ang[(i+pln) % pln];
-                if (d > 90) {
+                if (d > 179) {
+                    const s = slo[(i+pln) % pln];
+                    const pp = pa[(i+pln-1) % pln];
+                    const ps = slo[(i+pln-1) % pln];
+                    newp.push(p.follow(p.slopeTo(pp).normal(), 0.001));
+                    newp.push(p.follow(s.clone().normal().invert(), 0.001));
+                } else if (d > 90) {
                     const s = slo[(i+pln) % pln];
                     const pp = pa[(i+pln-1) % pln];
                     const ps = slo[(i+pln-1) % pln];
