@@ -552,14 +552,16 @@
                 let flatLevels = depthData.outline.map(level => {
                     return POLY.flatten(level.clone(true), [], true).filter(p => !(p.depth = 0));
                 }).filter(l => l.length > 0);
-                // flatLevels.xout('flat');
-                // start with the smallest polygon on the top
-                printPoint = flatLevels[0]
-                    // .filter(l => l.length > 0)[0]
-                    .sort((a,b) => { return a.area() - b.area() })[0]
-                    .average();
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
-                printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                if (flatLevels.length && flatLevels[0].length) {
+                    // flatLevels.xout('flat');
+                    // start with the smallest polygon on the top
+                    printPoint = flatLevels[0]
+                        // .filter(l => l.length > 0)[0]
+                        .sort((a,b) => { return a.area() - b.area() })[0]
+                        .average();
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                }
             }
             // two modes for deferred outlining: x then y or combined
             if (contour && contourCurves) {
