@@ -491,8 +491,12 @@
                     if (lastOut.emit !== out.emit) {
                         heads.push({p1: lastOut.point, p2: out.point});
                     }
-                    const op = out.point, lp = lastOut.point,
-                        moved = (op.x !== lp.x) || (op.y !== lp.y) || (op.z !== lp.z);;
+                    const op = out.point, lp = lastOut.point;
+                    // const moved = Math.max(
+                    //     Math.abs(op.x - lp.x),
+                    //     Math.abs(op.y - lp.y),
+                    //     Math.abs(op.z - lp.z));
+                    // if (moved < 0.0001) return;
                     if (out.emit) {
                         if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                             current = newPolygon().setOpen();
