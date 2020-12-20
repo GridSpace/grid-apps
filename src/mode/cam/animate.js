@@ -336,6 +336,11 @@ self.kiri.loader.push(function() {
         const id = toolID;
         if (last) {
             const lp = last.point, np = next.point;
+            // dwell ops have no point
+            if (!np) {
+                setTimeout(() => { renderPath(send) }, 0);
+                return;
+            }
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
             // skip moves that are closer than resolution
             if (Math.sqrt(dx*dx  +dy*dy + dz*dz) < rez) {

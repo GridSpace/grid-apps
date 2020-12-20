@@ -177,6 +177,7 @@
                     break;
                 }
             }
+            camOut(point.clone().setZ(zmax));
             points.forEach(function(point, index) {
                 camOut(point, 1);
                 if (index > 0 && index < points.length - 1) {
