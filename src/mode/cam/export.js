@@ -58,7 +58,7 @@
             points = 0,
             stock = settings.stock,
             hasStock = spro.camStockOn && stock.x && stock.y && stock.z,
-            ztOff = hasStock ? spro.camZTopOffset : 0,
+            ztOff = hasStock ? stock.z - widget.track.top : 0,
             bounds = widget.getBoundingBox(),
             zmax = hasStock ? stock.z : bounds.max.z,
             runbox = {

@@ -58,12 +58,14 @@
                 let facing = POLY.offset(inset, -(roughToolDiam * op.step), { count: 999, flat: true });
                 let zdiv = ztOff / roughDown;
                 let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
-                if (roughTop && ztOff === 0) {
+                if (ztOff === 0) {
                     // compensate for lack of z top offset in this scenario
                     ztOff = zstep;
                 }
+                let zsteps = Math.round(ztOff / zstep);
                 let camFaces = this.camFaces = [];
-                for (let z = zMax + ztOff - zstep; z >= zMax; z -= zstep) {
+                let zstart = zMax + ztOff - zstep;
+                for (let z = zstart; zsteps > 0; zsteps--) {
                     let slice = shadowTop.slice.clone(false);
                     slice.z = z;
                     slice.camMode = PRO.LEVEL;
@@ -73,6 +75,7 @@
                         .addPolys(slice.camLines);
                     sliceAll.push(slice);
                     camFaces.push(slice);
+                    z -= zstep;
                 }
             }
 

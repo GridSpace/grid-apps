@@ -130,6 +130,11 @@
         API.platform.update_speeds();
     }
 
+    function zAnchorSave() {
+        API.conf.update();
+        API.platform.update_top_z();
+    }
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
@@ -139,7 +144,6 @@
         control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
-        control.alignTop = UI.alignTop.checked;
         control.autoSave = UI.autoSave.checked;
         control.reverseZoom = UI.reverseZoom.checked;
         control.dark = UI.dark.checked;
@@ -1554,7 +1558,6 @@
             units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave, modes:CAM, trace:true}, "units"),
 
             layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
-            alignTop:         UC.newBoolean(LANG.op_alig_s, booleanSave, {title:LANG.op_alig_l}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
             autoSave:         UC.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
@@ -1751,10 +1754,13 @@
             camStockOn:          UC.newBoolean(LANG.cs_offe_s, onBooleanClick, {title:LANG.cs_offe_l, modes:CAM}),
 
             camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
-            camZTopOffset:       UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM, units:true}),
+            camZAnchor:          UC.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true}, "zanchor"),
+            camZOffset:          UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM, units:true}),
             camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM, units:true, trigger: true}),
-            camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM, units:true}),
             camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM, units:true, show:() => { return UI.camZBottom.value == 0 }}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
+            camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM, units:true}),
+            camSep:              UC.newBlank({class:"pop-sep"}),
             camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toFloat, modes:CAM, units:true}),
             camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toFloat, modes:CAM, units:true}),
 
@@ -2280,7 +2286,6 @@
             UI.showSpeeds.checked = control.showSpeeds;
             UI.freeLayout.checked = control.freeLayout;
             UI.autoLayout.checked = control.autoLayout;
-            UI.alignTop.checked = control.alignTop;
             UI.reverseZoom.checked = control.reverseZoom;
             UI.autoSave.checked = control.autoSave;
             UI.decimate.checked = control.decimate;

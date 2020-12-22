@@ -147,6 +147,7 @@
                 y: 0,
                 z: 0
             },
+            top: 0, // z top
             mirror: false
         },
         this.stats = {
@@ -391,13 +392,16 @@
     PRO.setTopZ = function(z) {
         let mesh = this.mesh,
             pos = this.track.pos,
-            ltz = this.last_top_z || {};
+            ltz = this.last_top_z || {},
+            mbz = mesh.getBoundingBox().max.z;
         if (z) {
-            pos.z = mesh.getBoundingBox().max.z - z;
+            pos.z = mbz - z;
             mesh.position.z = -pos.z - 0.01;
+            this.track.top = z;
         } else {
             pos.z = 0;
             mesh.position.z = 0;
+            this.track.top = mbz;
         }
         let ntz = {
             pz: pos.z,

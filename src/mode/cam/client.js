@@ -704,7 +704,8 @@
         const { stock, bounds, process } = API.conf.get();
         const { camTabsWidth, camTabsHeight, camTabsDepth } = process;
         const sz = stock.z || bounds.max.z;
-        const zp = sz - track.box.d + process.camZBottom - process.camZTopOffset + camTabsHeight / 2;
+        const zto = sz - iw.track.top;
+        const zp = sz - track.box.d + process.camZBottom - zto + camTabsHeight / 2;
         ic.x += n.x * camTabsDepth / 2; // offset from part
         ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
         ic.y = zp; // offset swap in world space y,z

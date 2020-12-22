@@ -190,6 +190,11 @@
             { name: "follow" },
             // { name: "out" },
             // { name: "in" }
+        ],
+        zanchor: [
+            { name: "top" },
+            { name: "middle" },
+            { name: "bottom" }
         ]
     };
 
@@ -1206,7 +1211,7 @@
          let y = 0;
          let z = 0;
          if (MODE === MODES.CAM && proc.camOriginTop) {
-             z = (topZ + topZD) + 0.01;
+             z = (hasStock ? stock.z : topZ) + 0.01;
          }
          if (!center) {
              if (hasStock) {
@@ -1236,15 +1241,30 @@
      }
 
      function platformUpdateTopZ(zdelta) {
+         // preserve topZD and re-use when not supplied as argument
          topZD = zdelta !== undefined ? zdelta : topZD;
          let stock = settings.stock;
          let hasStock = stock.x && stock.y && stock.z;
-         let alignTopOk = WIDGETS.length > 1 && settings.controller.alignTop;
-         let camz = (MODE === MODES.CAM) && (hasStock || alignTopOk);
-         let czto = hasStock ? settings.process.camZTopOffset : 0;
-         let ztop = camz ? (topZ + topZD) - czto : 0;
          forAllWidgets(function(widget) {
-             widget.setTopZ(ztop);
+             if (MODE === MODES.CAM) {
+                 let bounds = widget.getBoundingBox();
+                 let wzmax = bounds.max.z;
+                 let topz = hasStock ? stock.z : topZ;
+                 let zdelta = settings.process.camZOffset || 0;
+                 switch (settings.process.camZAnchor) {
+                    case 'top':
+                        widget.setTopZ(stock.z - zdelta);
+                        break;
+                    case 'middle':
+                        widget.setTopZ(stock.z - (stock.z - wzmax) / 2);
+                        break;
+                    case 'bottom':
+                        widget.setTopZ(wzmax + zdelta);
+                        break;
+                 }
+             } else {
+                 widget.setTopZ(0);
+             }
          });
      }
 
