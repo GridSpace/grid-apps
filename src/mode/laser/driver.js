@@ -96,8 +96,10 @@
         let offset = slice.offset;
         let inner = offset.map(poly => poly.inner || []).flat();
 
-        laserOut(offset, group);
+        // Cut inner parts first so they can fall out without disturbing other parts.
+        // Important when cutting warped plywood.
         laserOut(inner, group);
+        laserOut(offset, group);
 
         if (!grouped) {
             groups.push(group);
