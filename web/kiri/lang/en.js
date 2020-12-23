@@ -324,6 +324,8 @@ kiri.lang['en-us'] = {
 
     // CNC DRILLING
     cd_menu:        "drill",
+    cd_axis:        "axis",
+    cd_points:      "points",
     cd_plpr_s:      "plunge per",
     cd_plpr_l:      "max plunge between\ndwell periods\nin workspace units\n0 to disable",
     cd_dwll_s:      "dwell time",

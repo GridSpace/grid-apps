@@ -734,8 +734,9 @@
                 points = [];
 
             switch (op.axis) {
+                case "X":
                 case "x":
-                    if (op.points === 3) {
+                    if (op.points == 3) {
                         points.push(newPoint(bounds.min.x - dx, my, 0));
                         points.push(newPoint(bounds.max.x + dx, my - o3, 0));
                         points.push(newPoint(bounds.max.x + dx, my + o3, 0));
@@ -744,8 +745,9 @@
                         points.push(newPoint(bounds.max.x + dx, my, 0));
                     }
                     break;
+                case "Y":
                 case "y":
-                    if (op.points === 3) {
+                    if (op.points == 3) {
                         points.push(newPoint(mx, bounds.min.y - dy, 0));
                         points.push(newPoint(mx - o3, bounds.max.y + dy, 0));
                         points.push(newPoint(mx + o3, bounds.max.y + dy, 0));

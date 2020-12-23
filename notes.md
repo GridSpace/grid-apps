@@ -60,6 +60,7 @@
 
 # CAM
 
+* `B` z thru doesn't respect step down
 * `B` failure to go *up* when moving between parts?
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor

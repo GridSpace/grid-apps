@@ -195,7 +195,15 @@
             { name: "top" },
             { name: "middle" },
             { name: "bottom" }
-        ]
+        ],
+        regaxis: [
+            { name: "X" },
+            { name: "Y" }
+        ],
+        regpoints: [
+            { name: "2" },
+            { name: "3" }
+        ],
     };
 
     const tweak = {
