@@ -96,8 +96,9 @@
         let offset = slice.offset;
         let inner = offset.map(poly => poly.inner || []).flat();
 
-        laserOut(offset, group);
+        // cut inside before outside
         laserOut(inner, group);
+        laserOut(offset, group);
 
         if (!grouped) {
             groups.push(group);
