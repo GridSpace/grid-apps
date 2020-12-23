@@ -323,7 +323,9 @@
         },
         tweak,
         util: {
-            isSecure
+            isSecure,
+            ui2rec: updateSettingsFromFields,
+            rec2ui: updateFieldsFromSettings
         },
         view: {
             get: function() { return viewMode },
@@ -1633,46 +1635,51 @@
      ******************************************************************* */
 
     // given a settings region, update values of matching bound UI fields
-    function updateFieldsFromSettings(scope) {
-        if (!scope) return console.trace("missing scope");
-        for (let key in scope) {
-            if (!scope.hasOwnProperty(key)) continue;
-            let val = scope[key];
-            if (UI.hasOwnProperty(key)) {
-                let uie = UI[key], typ = uie ? uie.type : null;
-                if (typ === 'text') {
-                    if (uie.setv) {
-                        uie.setv(val);
-                    } else {
-                        uie.value = val;
+    function updateFieldsFromSettings(setrec, uirec = UI) {
+        if (!setrec) {
+            return console.trace("missing scope");
+        }
+        for (let key in setrec) {
+            if (!setrec.hasOwnProperty(key)) {
+                continue;
+            }
+            let val = setrec[key];
+            if (!uirec.hasOwnProperty(key)) {
+                continue;
+            }
+            let uie = uirec[key], typ = uie ? uie.type : null;
+            if (typ === 'text') {
+                if (uie.setv) {
+                    uie.setv(val);
+                } else {
+                    uie.value = val;
+                }
+            } else if (typ === 'checkbox') {
+                uie.checked = val;
+            } else if (typ === 'select-one') {
+                uie.innerHTML = '';
+                let source = uie.parentNode.getAttribute('source'),
+                    list = settings[source] || lists[source],
+                    chosen = null;
+                if (list) list.forEach(function(el, index) {
+                    let id = el.id || el.name;
+                    let ev = el.value || id;
+                    if (val == id) {
+                        chosen = index;
                     }
-                } else if (typ === 'checkbox') {
-                    uie.checked = val;
-                } else if (typ === 'select-one') {
-                    uie.innerHTML = '';
-                    let source = uie.parentNode.getAttribute('source'),
-                        list = settings[source] || lists[source],
-                        chosen = null;
-                    if (list) list.forEach(function(el, index) {
-                        let id = el.id || el.name;
-                        let ev = el.value || id;
-                        if (val == id) {
-                            chosen = index;
-                        }
-                        let opt = DOC.createElement('option');
-                        opt.appendChild(DOC.createTextNode(el.name));
-                        opt.setAttribute('value', ev);
-                        uie.appendChild(opt);
-                    });
-                    if (chosen) {
-                        uie.selectedIndex = chosen;
-                    }
-                } else if (typ === 'textarea') {
-                    if (Array.isArray(val)) {
-                        uie.value = val.join('\n');
-                    } else {
-                        uie.value = '';
-                    }
+                    let opt = DOC.createElement('option');
+                    opt.appendChild(DOC.createTextNode(el.name));
+                    opt.setAttribute('value', ev);
+                    uie.appendChild(opt);
+                });
+                if (chosen) {
+                    uie.selectedIndex = chosen;
+                }
+            } else if (typ === 'textarea') {
+                if (Array.isArray(val)) {
+                    uie.value = val.join('\n');
+                } else {
+                    uie.value = '';
                 }
             }
         }
@@ -1681,44 +1688,47 @@
     /**
      * @returns {Object}
      */
-    function updateSettingsFromFields(scope) {
-        if (!scope) return console.trace("missing scope");
+    function updateSettingsFromFields(setrec, uirec = UI) {
+        if (!setrec) {
+            return console.trace("missing scope");
+        }
 
         let key, changed = false;
 
-        // for each key in scope object
-        for (key in scope) {
-            if (!scope.hasOwnProperty(key)) {
+        // for each key in setrec object
+        for (key in setrec) {
+            if (!setrec.hasOwnProperty(key)) {
                 continue;
             }
-            if (UI.hasOwnProperty(key)) {
-                let nval = null, uie = UI[key];
-                // skip empty UI values
-                if (!uie || uie === '') {
-                    continue;
-                }
-                if (uie.type === 'text') {
-                    nval = UI[key].convert();
-                } else if (uie.type === 'checkbox') {
-                    nval = UI[key].checked;
-                } else if (uie.type === 'select-one') {
-                    if (uie.selectedIndex >= 0) {
-                        nval = uie.options[uie.selectedIndex].value;
-                        let src = uie.parentNode.getAttribute('source');
-                        if (src === 'tools') {
-                            nval = parseInt(nval);
-                        }
-                    } else {
-                        nval = scope[key];
+            if (!uirec.hasOwnProperty(key)) {
+                continue;
+            }
+            let nval = null, uie = uirec[key];
+            // skip empty UI values
+            if (!uie || uie === '') {
+                continue;
+            }
+            if (uie.type === 'text') {
+                nval = uirec[key].convert();
+            } else if (uie.type === 'checkbox') {
+                nval = uirec[key].checked;
+            } else if (uie.type === 'select-one') {
+                if (uie.selectedIndex >= 0) {
+                    nval = uie.options[uie.selectedIndex].value;
+                    let src = uie.parentNode.getAttribute('source');
+                    if (src === 'tools') {
+                        nval = parseInt(nval);
                     }
-                } else if (uie.type === 'textarea') {
-                    nval = uie.value.trim().split('\n').filter(v => v !== '');
                 } else {
-                    continue;
+                    nval = setrec[key];
                 }
-                if (scope[key] != nval) {
-                    scope[key] = nval;
-                }
+            } else if (uie.type === 'textarea') {
+                nval = uie.value.trim().split('\n').filter(v => v !== '');
+            } else {
+                continue;
+            }
+            if (setrec[key] != nval) {
+                setrec[key] = nval;
             }
         }
 

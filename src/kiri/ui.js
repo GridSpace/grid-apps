@@ -13,6 +13,7 @@
         lastGroup = null,
         lastDiv = null,
         addTo = null,
+        bindTo = null,
         groups = {},
         groupShow = {},
         groupSticky = false,
@@ -51,6 +52,9 @@
         toFloat,
         hidePop,
         isPopped,
+        isSticky,
+        setSticky,
+        newElement,
         newBoolean,
         newButton,
         newBlank,
@@ -177,13 +181,12 @@
         return { addTo: at || addTo, lastDiv: at || lastDiv, lastGroup, groupName };
     }
 
-    function restore(opt) {
-        if (opt) {
-            addTo = opt.addTo;
-            lastDiv = opt.lastDiv;
-            lastGroup = opt.lastGroup;
-            groupName = opt.groupName;
-        }
+    function restore(opt = {}) {
+        addTo = opt.addTo || addTo;
+        bindTo = opt.bindTo || null;
+        lastDiv = opt.lastDiv || lastDiv;
+        lastGroup = opt.lastGroup || lastGroup;
+        groupName = opt.groupName || groupName;
     }
 
     // at present only used by the layers popup menu
@@ -194,13 +197,31 @@
         return div;
     }
 
+    function newElement(type, opt = {}) {
+        let el = DOC.createElement(type);
+        if (opt.id) {
+            el.setAttribute("id", opt.id);
+        }
+        if (opt.class) {
+            for (let cl of opt.class.split(' ')) {
+                el.classList.add(cl);
+            }
+        }
+        if (opt.attr) {
+            for (let [key, val] of Object.entries(opt.attr)) {
+                el.setAttribute(key, val);
+            }
+        }
+        return el;
+    }
+
     function newGroup(label, div, options) {
         lastDiv = div || lastDiv;
         return addCollapsableGroup(label, lastDiv, options);
     }
 
-    function addCollapsableGroup(label, div, options) {
-        let opt = options || {};
+    function addCollapsableGroup(label, div, opt = {}) {
+
         let group = opt.group || label;
         poppable[group] = opt.inline === true ? false : true;
 
@@ -383,8 +404,8 @@
         }
     }
 
-    function addModeControls(el, options) {
-        let opt = options || {};
+    function addModeControls(el, opt = {}) {
+        el.__opt = opt;
         el.__show = true;
         el.__modeSave = null;
         el.showMe = function() {
@@ -444,6 +465,14 @@
         return lastPop !== null;
     }
 
+    function isSticky() {
+        return groupSticky;
+    }
+
+    function setSticky(bool) {
+        groupSticky = bool;
+    }
+
     function newGCode(label, options) {
         let opt = options || {},
             row = lastDiv,
@@ -454,7 +483,7 @@
         txt.setAttribute("wrap", "off");
         txt.setAttribute("spellcheck", "false");
         txt.setAttribute("style", "resize: none");
-        txt.onblur = inputAction;
+        txt.onblur = bindTo || inputAction;
 
         btn.setAttribute("class", "basis-50");
         btn.appendChild(DOC.createTextNode(label));
@@ -585,7 +614,7 @@
             size = opt ? opt.size || 5 : 5,
             height = opt ? opt.height : 0,
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
-            action = opt.action || inputAction;
+            action = opt.action || bindTo || inputAction;
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
@@ -674,7 +703,7 @@
         let row = newDiv(options),
             ip = DOC.createElement('input'),
             hide = options && options.hide,
-            action = inputAction;
+            action = bindTo || inputAction;
 
         if (label) row.appendChild(newLabel(label));
         row.appendChild(ip);
@@ -700,7 +729,7 @@
         let row = newDiv(options),
             ip = DOC.createElement('select'),
             hide = options && options.hide,
-            action = inputAction;
+            action = bindTo || inputAction;
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
@@ -714,7 +743,7 @@
             if (options.action) action = options.action;
         }
         ip.setVisible = row.setVisible;
-        ip.onchange = function() {
+        ip.onchange = function(ev) {
             action();
         };
         ip.onclick = (ev) => {
@@ -728,7 +757,7 @@
         return ip;
     }
 
-    function newBoolean(label, action, options) {
+    function newBoolean(label, action = bindTo, options) {
         let row = newDiv(options),
             ip = DOC.createElement('input'),
             hide = options && options.hide;
@@ -748,7 +777,7 @@
                 row.setAttribute("title", options.title);
             }
         }
-        if (action) ip.onclick = function() { action() };
+        if (action) ip.onclick = function(ev) { action(ip) };
         ip.setVisible = row.setVisible;
 
         return ip;

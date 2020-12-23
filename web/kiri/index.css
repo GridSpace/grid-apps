@@ -548,7 +548,19 @@ th, tr, td, label {
     background-color: var(--bg-gray);
     margin-left: 1px;
 }
-#oplist div {
+.cam-pop-op {
+    text-align: left;
+    position: absolute;
+    white-space: nowrap;
+    flex-direction: column;
+    bottom: 40px;
+    background-color: rgba(255,255,255,0.8);
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    margin-right: 5px;
+    padding: 5px;
+}
+#oplist > div {
     display: flex;
     flex-direction: column;
     align-items: center;

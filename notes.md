@@ -1,6 +1,6 @@
 # Kiri:Moto todo and notes
 
-## 2.5 plan
+## short list
 # `cnc`
 # - split gcode output
 # - redo path planning
@@ -8,11 +8,8 @@
 # - more tracing types (in, out, clear, pocket)
 # - trace re-ordering
 # `fdm`
-# - bind process to z ranges or boxed regions
-# - non-planar actual
 # - layer start point control
-# `sla`
-# - common support area detection from new fdm code
+# - bind process to z ranges or boxed regions
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -51,10 +48,15 @@
 * `P` solid fill the tops of supports for down facing flats
 * `P` sparse infill should follow polys between intersect points
 
-# SLA
+# FDM - SLA
 
+# `P` common support area detection (fork new fdm code)
 * `P` prioritize supports by length of unsupported span. mandatory when circularity > X
 *     or % area of inner to outer poly is high (making it a thin shell)
+
+# FDM - BELT
+
+# `B` z hop = y hop
 
 # CAM
 
@@ -68,6 +70,7 @@
 
 * `F` split out facing. make it use linear passes
 * `F` add linear clearing strategy option for roughing / pocket
+* `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
 * `F` skip "thru" holes checkbox for roughing and outlining
@@ -80,12 +83,10 @@
 * `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` convert acute angles to arcs
-* `F` extend acute roughing on inside polys to clear small voids
 * `F` lead-in milling
 * `F` adaptive clearing in roughing mode
 * `F` trapezoidal tabs (in the Z axis)
 * `F` ease-in and ease-out especially on tab cut-out start/stop
-* `F` implement z line-only follows for ball/taper
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed

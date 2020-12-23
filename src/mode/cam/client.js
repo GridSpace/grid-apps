@@ -21,6 +21,7 @@
 
     let traceOp = { type: "trace" },
         zaxis = { x: 0, y: 0, z: 1 },
+        popOp = {},
         func = {};
 
     CAM.restoreTabs = restoreTabs;
@@ -96,11 +97,12 @@
             let hasTabs = false;
             let hasTraces = false;
             // ensure trace op is a singleton for now
-            if (isCamMode && proc.ops)
-            for (let i=0; i<proc.ops.length; i++) {
-                if (proc.ops[i].type === "trace") {
-                    proc.ops[i] = traceOp;
-                }
+            if (isCamMode && proc.ops) {
+                proc.ops = proc.ops
+                    .filter(v => v)
+                    .map(op => {
+                        return op.type === 'trace' ? traceOp : op
+                    });
             }
             // for any tabs or traces to set markers
             Object.keys(settings.widget).forEach(wid => {
@@ -306,30 +308,8 @@
             let bind = {};
             let scale = API.view.unit_scale();
             oplist.forEach((rec,i) => {
-                let entries = 0;
-                let title = Object.entries(rec).filter((v,i) => {
-                    return v[0] !== 'type'
-                }).map(v => {
-                    entries++;
-                    let [ key, value ] = v;
-                    switch (key) {
-                        case 'tool':
-                            value = new CAM.Tool(current, v[1]).getName();
-                            break;
-                        case 'down':
-                        case 'rate':
-                        case 'plunge':
-                        case 'leave':
-                        case 'lift':
-                            value = (parseFloat(v[1]) / scale).round(2);
-                            break;
-                    }
-                    return `<tr><th>${key}</th><td>${value}</td></tr>`;
-                }).join("\n");
-                title = `<table>${title}</table>`;
                 html.appendAll([
-                    `<div id="${mark+i}">`,
-                    entries ? `<div class="opop">${title}</div>` : '',
+                    `<div id="${mark+i}" class="draggable">`,
                     `<label class="label">${rec.type}</label>`,
                     `<label id="${mark+i}-x" class="del"><i class="fas fa-times"></i></label>`,
                     `</div>`
@@ -339,6 +319,7 @@
             let listel = $('oplist');
             listel.innerHTML = html.join('');
             let bounds = [];
+            let unpop = null;
             for (let [id, rec] of Object.entries(bind)) {
                 $(`${id}-x`).onmousedown = (ev) => {
                     ev.stopPropagation();
@@ -351,16 +332,49 @@
                 };
                 let el = $(id);
                 bounds.push(el);
+                let timer = null;
+                let inside = true;
+                let poprec = popOp[rec.type];
+                el.unpop = () => {
+                    let pos = [...el.childNodes].indexOf(poprec.div);
+                    if (pos >= 0) {
+                        el.removeChild(poprec.div);
+                    }
+                };
+                el.onmouseenter = (ev) => {
+                    if (unpop) unpop();
+                    unpop = el.unpop;
+                    inside = true;
+                    poprec.use(rec);
+                    el.appendChild(poprec.div);
+                    // option click event appears latent
+                    // and overides the sticky settings
+                    setTimeout(() => {
+                        UC.setSticky(false);
+                    }, 0);
+                };
+                el.onmouseleave = () => {
+                    inside = false;
+                    clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        if (!inside && poprec.using(rec) && !UC.isSticky()) {
+                            el.unpop();
+                        }
+                    }, 250);
+                };
                 el.rec = rec;
                 el.onmousedown = (ev) => {
-                    let target = ev.target;
-                    target.classList.add("drag");
+                    let target = ev.target, clist = target.classList;
+                    if (!clist.contains("draggable")) {
+                        return;
+                    }
+                    clist.add("drag");
                     ev.stopPropagation();
                     ev.preventDefault();
                     let tracker = UI.tracker;
                     tracker.style.display = 'block';
                     let cancel = tracker.onmouseup = (ev) => {
-                        target.classList.remove("drag");
+                        clist.remove("drag");
                         tracker.style.display = 'none';
                         if (ev) {
                             ev.stopPropagation();
@@ -697,7 +711,77 @@
             }
             func.hover(data);
         });
+
+        function hasSpindle() {
+            return current.device.spindleMax > 0;
+        }
+
+        createPopOp('rough').inputs = {
+            tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
+            sep:     UC.newBlank({class:"pop-sep"}),
+            spindle: UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+            down:    UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
+            step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
+            rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+            plunge:  UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+            leave:   UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, units:true}),
+            sep:     UC.newBlank({class:"pop-sep"}),
+            voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
+            flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
+            top:     UC.newBoolean(LANG.cr_clrt_s, undefined, {title:LANG.cr_clrt_l}),
+            inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l}),
+        };
+
+        createPopOp('outline').inputs = {
+            tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
+            sep:     UC.newBlank({class:"pop-sep"}),
+            spindle: UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+            down:    UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
+            step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
+            rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+            plunge:  UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+            sep:     UC.newBlank({class:"pop-sep"}),
+            dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
+            inside:   UC.newBoolean(LANG.co_olin_s, undefined, {title:LANG.co_olin_l, show:(op) => { return !op.inputs.outside.checked }}),
+            outside:  UC.newBoolean(LANG.co_olot_s, undefined, {title:LANG.co_olot_l, show:(op) => { return !op.inputs.inside.checked }}),
+            wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }}),
+        };
     };
+
+    function createPopOp(type) {
+        let op = popOp[type] = {
+            div: UC.newElement('div', { id:`${type}-op`, class:"cam-pop-op" }),
+            use: (rec) => {
+                op.rec = rec;
+                API.util.rec2ui(rec, op.inputs);
+                op.hideshow();
+            },
+            using: (rec) => {
+                return op.rec === rec;
+            },
+            bind: (ev) => {
+                API.util.ui2rec(op.rec, op.inputs);
+                API.conf.save();
+                op.hideshow();
+            },
+            hideshow: () => {
+                for (let inp of Object.values(op.inputs)) {
+                    let parent = inp.parentElement;
+                    if (parent.setVisible && parent.__opt.show) {
+                        parent.setVisible(parent.__opt.show(op));
+                    }
+                }
+            },
+            group: []
+        };
+        UC.restore({
+            addTo: op.div,
+            bindTo: op.bind,
+            lastDiv: op.div,
+            lastGroup: op.group
+        });
+        return op;
+    }
 
     function createTabBox(iw, ic, n) {
         const { track } = iw;
