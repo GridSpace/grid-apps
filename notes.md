@@ -6,7 +6,6 @@
 # - redo path planning
 # - double-sided assistance
 # - more tracing types (in, out, clear, pocket)
-# - trace re-ordering
 # `fdm`
 # - layer start point control
 # - bind process to z ranges or boxed regions
