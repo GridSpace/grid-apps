@@ -104,6 +104,10 @@
         }();
     };
 
+    Polygon.fromArray = function(array) {
+        return newPolygon().fromArray(array);
+    };
+
     /** ******************************************************************
      * Polygon Prototype Functions
      ******************************************************************* */
@@ -120,6 +124,31 @@
         } else {
             return `P[${this.points.length,this.area().toFixed(2)}${l}]`;
         }
+    };
+
+    PRO.toArray = function() {
+        let ov = this.open ? 1 : 0;
+        return this.points.map((p,i) => i === 0 ? [ov,p.x,p.y,p.z] : [p.x,p.y,p.z]).flat();
+    };
+
+    PRO.fromArray = function(array) {
+        this.open = array[0] === 1;
+        for (let i=1; i<array.length; ) {
+            this.add(array[i++], array[i++], array[i++]);
+        }
+        return this;
+    };
+
+    PRO.matches = function(poly) {
+        let tarr = Array.isArray(poly) ? poly : poly.toArray();
+        let parr = this.toArray();
+        if (tarr.length === parr.length) {
+            for (let i=0; i<tarr.length; i++) {
+                if (Math.abs(tarr[i] - parr[i]) > 0.0001) return false;
+            }
+            return true;
+        }
+        return false;
     };
 
     PRO.xray = function(deep) {
@@ -429,24 +458,6 @@
         x /= l;
         y /= l;
         return newPoint(x, y, this.points[0].z, null);
-        // let points = this.points,
-        //     length = points.length,
-        //     incr = Math.floor(length / 3),
-        //     A = points[0],
-        //     B = points[incr],
-        //     C = points[incr * 2],
-        //     yDelta_a = B.y - A.y,
-        //     xDelta_a = B.x - A.x,
-        //     yDelta_b = C.y - B.y,
-        //     xDelta_b = C.x - B.x,
-        //     aSlope = yDelta_a / xDelta_a,
-        //     bSlope = yDelta_b / xDelta_b,
-        //     center = newPoint(0, 0, 0, null);
-        //
-        // center.x = (aSlope * bSlope * (A.y - C.y) + bSlope * (A.x + B.x) - aSlope * (B.x+C.x) )/(2* (bSlope-aSlope) );
-        // center.y = -1 * (center.x - (A.x+B.x) / 2) / aSlope +  (A.y + B.y) / 2;
-        // center.z = A.z;
-        // return center;
     };
 
     /**
@@ -1553,42 +1564,6 @@
 
         return null;
      };
-
-    /**
-     * rotate such that first and last points are the points
-     * furthest apart and lowest when there is a tie breaker
-     */
-    // PRO.spread = function() {
-    //     let poly = this,
-    //         points = poly.points,
-    //         plen = points.length,
-    //         i, pp, np, p, mdelta, newmax, max, shift, maxd;
-    //
-    //     max = {d:0};
-    //     maxd = 0;
-    //     // find two most distance points
-    //     for (i=0; i<plen; i++) {
-    //         pp = points[i % plen];
-    //         np = points[(i+1) % plen];
-    //         p = ABS(pp.x - np.x) + ABS(pp.y - np.y);
-    //         mdelta = ABS(p - max.d);
-    //         newmax = p > maxd;
-    //         maxd = MAX(maxd,p);
-    //         // select lowest points (corner case = square)
-    //         if (newmax || (mdelta < 0.001 && max.p1 && MIN(pp.z,np.z) < MIN(max.p1.z, max.p2.z))) {
-    //             max = {p1:pp, p2:np, i:(i+1)%plen, d:p};
-    //         }
-    //     }
-    //
-    //     if (max.i > 0) {
-    //         // shift array to start at "leftmost" Point
-    //         shift = points.slice(max.i);
-    //         shift.appendAll(points.slice(0,max.i));
-    //         return newPolygon(shift);
-    //     }
-    //
-    //     return poly;
-    // }
 
     /** ******************************************************************
      * Connect to base and Helpers

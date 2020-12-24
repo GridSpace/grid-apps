@@ -255,7 +255,6 @@
         opts.over = true;
         slicer.slice(indices, opts);
         widget.traces = traces;
-        // widget.sindex = sindex;
         return true;
     };
 

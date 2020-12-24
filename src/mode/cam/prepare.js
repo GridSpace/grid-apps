@@ -387,8 +387,8 @@
         }
 
         function emitTrace(slice) {
-            let { tool, speed, plunge, path } = slice.camTrace;
-            setTool(tool, speed, plunge);
+            let { tool, rate, plunge } = slice.camTrace;
+            setTool(tool, rate, plunge);
             let traceTool = new CAM.Tool(settings, tool);
             let traceToolDiam = traceTool.fluteDiameter();
             slice.camLines.forEach(poly => {

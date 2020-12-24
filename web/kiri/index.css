@@ -1199,9 +1199,9 @@ th, tr, td, label {
     justify-content: center;
     align-items: center;
     position: absolute;
-    bottom: 45px;
-    left: 0;
+    top: 57px;
     right: 0;
+    left: 0;
 }
 #alert-border {
     display: flex;
@@ -1218,7 +1218,7 @@ th, tr, td, label {
 #alert-text {
     display: flex;
     text-align: left;
-    font-weight: bold;
+    font-weight: normal;
     flex-direction: column;
     margin: 3px 5px 3px 5px;
     color: black;

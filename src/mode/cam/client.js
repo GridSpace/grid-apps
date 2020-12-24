@@ -10,17 +10,16 @@
         PRO = CAM.process,
         newPolygon = BASE.newPolygon,
         newPoint = BASE.newPoint,
-        toolInfo,
         isAnimate,
         isArrange,
         isCamMode,
         isParsed,
         camStock,
         current,
+        poppedRec,
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG;
 
-    let traceOp = { type: "trace", mode:"follow", tool: 1000, rate: 1000, plunge: 200 },
-        zaxis = { x: 0, y: 0, z: 1 },
+    let zaxis = { x: 0, y: 0, z: 1 },
         popOp = {},
         func = {};
 
@@ -38,8 +37,6 @@
         UI = api.ui;
         UC = api.uc;
         API = api;
-
-        toolInfo = $('tool-info');
 
         // wire up animate button in ui
         api.function.animate = () => {
@@ -65,7 +62,6 @@
                 UI.label.export.innerText = 'export';
             } else {
                 UI.label.slice.innerText = 'start';
-                // checkOutlineSettings(api.conf.get());
             }
             // do not persist traces across page reloads
             func.traceClear();
@@ -81,28 +77,13 @@
             func.opRender();
         });
 
-        // function checkOutlineSettings(settings) {
-        //     let ui = api.ui, proc = settings.process;
-        //     // fix invalid in/out enabled condition
-        //     if (ui.camOutlineIn.checked && ui.camOutlineOut.checked) {
-        //         proc.camOutlineIn = proc.camOutlineOut = false;
-        //         ui.camOutlineIn.checked = ui.camOutlineOut.checked = false;
-        //         api.uc.refresh();
-        //     }
-        // }
-
         api.event.on("settings.saved", (settings) => {
             current = settings;
             let proc = settings.process;
             let hasTabs = false;
             let hasTraces = false;
-            // ensure trace op is a singleton for now
             if (isCamMode && proc.ops) {
-                proc.ops = proc.ops
-                    .filter(v => v)
-                    .map(op => {
-                        return op.type === 'trace' ? traceOp : op
-                    });
+                proc.ops = proc.ops.filter(v => v);
             }
             // for any tabs or traces to set markers
             Object.keys(settings.widget).forEach(wid => {
@@ -110,7 +91,6 @@
                 if (wannot.tab && wannot.tab.length) hasTabs = true;
                 if (wannot.trace && wannot.trace.length) hasTraces = true;
             });
-            // checkOutlineSettings(settings);
             // show/hide dots in enabled process pop buttons
             api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
             api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
@@ -184,7 +164,7 @@
                     func.opAddDrill();
                     break;
                 case "trace":
-                    func.opAdd(traceOp);
+                    func.opAddTrace();
                     break;
             }
         };
@@ -240,6 +220,18 @@
             });
         };
 
+        func.opAddTrace = () => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "trace",
+                mode: "follow",
+                tool: 1000,
+                rate: 1000,
+                plunge: 200,
+                areas: { /* widget.id: [ polygons... ] */ }
+            })
+        };
+
         func.opAddDrill = () => {
             let process = API.conf.get().process;
             func.opAdd({
@@ -280,45 +272,6 @@
                     api.uc.confirm("clear tabs?").then(ok => {
                         if (ok) func.tabClear();
                     });
-                    break;
-                case api.ui.traceAdd:
-                case api.ui.traceAdd2:
-                    return func.traceAdd();
-                case api.ui.traceDun:
-                case api.ui.traceDun2:
-                    return func.traceDone();
-                case api.ui.traceClr:
-                case api.ui.traceClr2:
-                    api.uc.confirm("clear traces?").then(ok => {
-                        if (ok) func.traceClear();
-                    });
-                    break;
-                case api.ui.crAdd:
-                    func.opAddRough();
-                    break;
-                case api.ui.coAdd:
-                    func.opAddOutline();
-                    break;
-                case api.ui.ccxAdd:
-                    func.opAddContour('x');
-                    break;
-                case api.ui.ccyAdd:
-                    func.opAddContour('y');
-                    break;
-                case api.ui.drAdd:
-                    func.opAddDrill();
-                    break;
-                case api.ui.drX2Add:
-                    func.opAddRegister("X", 2);
-                    break;
-                case api.ui.drX3Add:
-                    func.opAddRegister("X", 3);
-                    break;
-                case api.ui.drY2Add:
-                    func.opAddRegister("Y", 2);
-                    break;
-                case api.ui.drY3Add:
-                    func.opAddRegister("Y", 3);
                     break;
             }
         });
@@ -393,6 +346,8 @@
                     unpop = func.unpop = el.unpop;
                     inside = true;
                     poprec.use(rec);
+                    // pointer to current rec for trace editing
+                    poppedRec = rec;
                     el.appendChild(poprec.div);
                     // option click event appears latent
                     // and overides the sticky settings
@@ -545,7 +500,7 @@
 
         // TRACE FUNCS
         let traceOn = false, lastTrace;
-        api.event.on("cam.trace.add", func.traceAdd = () => {
+        func.traceAdd = () => {
             if (traceOn) {
                 return;
             }
@@ -566,31 +521,33 @@
                         widget.trace_stack.show();
                         return;
                     }
+                    let areas = (poppedRec.areas[widget.id] || []);
                     let stack = new KIRI.Stack(widget.mesh);
                     widget.trace_stack = stack;
                     widget.traces.forEach(poly => {
+                        let match = areas.filter(arr => poly.matches(arr));
                         let layers = new KIRI.Layers();
                         layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
                         stack.addLayers(layers);
                         stack.new_meshes.forEach(mesh => {
                             mesh.trace = {widget, poly};
+                            if (match.length > 0) {
+                                poly._trace = match[0];
+                                func.traceToggle(mesh, true);
+                            } else {
+                                poly._trace = poly.toArray();
+                            }
                         });
                         widget.adds.appendAll(stack.new_meshes);
                     });
-                    // for (let [key, val] of Object.entries(widget.sindex)) {
-                    //     console.log('sindex', {key, val});
-                    //     let layers = new KIRI.Layers();
-                    //     layers.setLayer("sindex", {line: 0x55aa88}, false).addPolys(val);
-                    //     stack.addLayers(layers);
-                    // }
                 });
             });
             api.feature.hover = true;
             api.feature.hoverAdds = true;
             func.hover = func.traceHover;
             func.hoverUp = func.traceHoverUp;
-        });
-        api.event.on("cam.trace.done", func.traceDone = () => {
+        };
+        func.traceDone = () => {
             if (!traceOn) {
                 return;
             }
@@ -605,8 +562,7 @@
                     widget.adds.removeAll(widget.trace_stack.meshes);
                 }
             });
-            toolInfo.style.display = '';
-        });
+        };
         api.event.on("cam.trace.clear", func.traceClear = () => {
             func.traceDone();
             API.widgets.all().forEach(widget => {
@@ -634,18 +590,6 @@
                 let target = event.target;
                 let { clientX, clientY } = event;
                 let { offsetWidth, offsetHeight } = target;
-                toolInfo.style.right = `${offsetWidth - clientX + 5}px`;
-                toolInfo.style.bottom = `${offsetHeight - clientY + 5}px`;
-                let traceInfo = lastTrace.trace.poly.traceInfo;
-                let tool = new CAM.Tool(current, traceInfo.tool);
-                toolInfo.innerText = [
-                    `  tool: ${tool.getName()}`,
-                    `  feed: ${traceInfo.speed}`,
-                    `plunge: ${traceInfo.plunge}`
-                ].join('\n');
-                toolInfo.style.display = 'flex';
-            } else {
-                toolInfo.style.display = '';
             }
             let material = lastTrace.material[0];
             let color = material.color;
@@ -659,38 +603,31 @@
             if (!int) return;
             func.traceToggle(int.object);
         };
-        func.traceToggle = function(obj) {
+        func.traceToggle = function(obj, skip) {
             let material = obj.material[0];
             let { color, colorSave } = material;
             let { widget, poly } = obj.trace;
-            let wannot = API.widgets.annotate(widget.id);
-            let atrace = wannot.trace = wannot.trace || [];
-            let wtrace = widget.trace = widget.trace || [];
             let process = current.process;
+            let areas = poppedRec.areas;
+            let wlist = areas[widget.id] = areas[widget.id] || [];
             obj.selected = !obj.selected;
+            if (!colorSave) {
+                colorSave = material.colorSave = {
+                    r: color.r,
+                    g: color.g,
+                    b: color.b
+                };
+            }
             if (obj.selected) {
                 color.r = colorSave.r = 0.9;
                 color.g = colorSave.g = 0;
                 color.b = colorSave.b = 0.1;
-                poly.traceInfo = {
-                    tool: process.camTraceTool,
-                    speed: process.camTraceSpeed,
-                    plunge: process.camTracePlunge,
-                    path: KIRI.codec.encode(poly)
-                };
-                wtrace.push(poly);
-                atrace.push(poly.traceInfo);
+                if (!skip) wlist.push(poly._trace);
             } else {
                 color.r = colorSave.r = 0x88/255;
                 color.g = colorSave.g = 0xaa/255;
                 color.b = colorSave.b = 0x55/255;
-                wtrace.remove(poly);
-                atrace.remove(poly.traceInfo);
-            }
-            if (atrace.length) {
-                func.opAdd(traceOp);
-            } else {
-                func.opDel(traceOp);
+                if (!skip) wlist.remove(poly._trace);
             }
             API.conf.save();
         };
@@ -818,7 +755,6 @@
             select: UC.newRow([
                 UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
                 UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
-                UC.newButton(undefined, func.traceClear, {icon:'<i class="fas fa-trash-alt"></i>'})
             ], {class:"ext-buttons f-row"}),
         };
 
@@ -941,8 +877,6 @@
                 }
             });
         }
-        widget.trace = null;
-        delete API.widgets.annotate(widget.id).trace;
     }
 
     function addbox() { return FDM.addbox(...arguments)};

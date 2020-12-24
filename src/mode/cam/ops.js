@@ -604,26 +604,25 @@
         slice(progress) {
             let { op, state } = this;
             let { settings, widget, sliceAll, updateToolDiams } = state;
-
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
-            let traces = (settings.widget[widget.id] || {}).trace || [];
-            traces.forEach(trace => {
-                let { tool, path } = trace;
-                let traceTool = new CAM.Tool(settings, tool);
-                let traceToolDiam = traceTool.fluteDiameter();
+            let areas = op.areas[widget.id] || [];
+            let { tool, rate, plunge } = op;
+            let traceTool = new CAM.Tool(settings, tool);
+            let traceToolDiam = traceTool.fluteDiameter();
+            updateToolDiams(traceToolDiam);
+            areas.forEach(arr => {
                 let slice = newSlice();
-                let poly = KIRI.codec.decode(path);
+                let poly = newPolygon().fromArray(arr);
                 slice.addTop(poly);
                 slice.camMode = PRO.TRACE;
                 slice.camLines = [ poly ];
-                slice.camTrace = trace;
+                slice.camTrace = { tool, rate, plunge };
                 if (true) slice.output()
                     .setLayer("trace", {line: 0xaa00aa}, false)
-                    .addPolys(slice.topPolys())
+                    .addPolys(slice.camLines)
                 sliceAll.push(slice);
                 sliceOut.push(slice);
-                updateToolDiams(traceToolDiam);
             });
         }
 

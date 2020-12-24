@@ -319,6 +319,11 @@
         let poly = BASE.newPolygon(),
             vid = 0;
 
+        // if passed a normal array, convert to float32
+        if (v.array.toFloat32) {
+            v.array = v.array.toFloat32();
+        }
+
         while (vid < v.array.length) {
             poly.push(BASE.newPoint(v.array[vid++], v.array[vid++], v.array[vid++]));
         }
