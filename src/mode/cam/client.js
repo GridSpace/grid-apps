@@ -19,7 +19,7 @@
         current,
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG;
 
-    let traceOp = { type: "trace" },
+    let traceOp = { type: "trace", mode:"follow", tool: 1000, rate: 1000, plunge: 200 },
         zaxis = { x: 0, y: 0, z: 1 },
         popOp = {},
         func = {};
@@ -65,7 +65,7 @@
                 UI.label.export.innerText = 'export';
             } else {
                 UI.label.slice.innerText = 'start';
-                checkOutlineSettings(api.conf.get());
+                // checkOutlineSettings(api.conf.get());
             }
             // do not persist traces across page reloads
             func.traceClear();
@@ -81,15 +81,15 @@
             func.opRender();
         });
 
-        function checkOutlineSettings(settings) {
-            let ui = api.ui, proc = settings.process;
-            // fix invalid in/out enabled condition
-            if (ui.camOutlineIn.checked && ui.camOutlineOut.checked) {
-                proc.camOutlineIn = proc.camOutlineOut = false;
-                ui.camOutlineIn.checked = ui.camOutlineOut.checked = false;
-                api.uc.refresh();
-            }
-        }
+        // function checkOutlineSettings(settings) {
+        //     let ui = api.ui, proc = settings.process;
+        //     // fix invalid in/out enabled condition
+        //     if (ui.camOutlineIn.checked && ui.camOutlineOut.checked) {
+        //         proc.camOutlineIn = proc.camOutlineOut = false;
+        //         ui.camOutlineIn.checked = ui.camOutlineOut.checked = false;
+        //         api.uc.refresh();
+        //     }
+        // }
 
         api.event.on("settings.saved", (settings) => {
             current = settings;
@@ -110,7 +110,7 @@
                 if (wannot.tab && wannot.tab.length) hasTabs = true;
                 if (wannot.trace && wannot.trace.length) hasTraces = true;
             });
-            checkOutlineSettings(settings);
+            // checkOutlineSettings(settings);
             // show/hide dots in enabled process pop buttons
             api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
             api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
@@ -154,11 +154,123 @@
             }
         });
 
-        // TAB/TRACE BUTTON HANDLERS
-        api.event.on("button.click", target => {
+        $('op-add').onmouseenter = () => {
+            if (func.unpop) func.unpop();
+        };
+
+        $('op-add-list').onclick = (ev) => {
             let settings = API.conf.get();
             let { process, device } = settings;
-            let drill;
+            switch (ev.target.innerText) {
+                case "rough":
+                    func.opAddRough();
+                    break;
+                case "outline":
+                    func.opAddOutline();
+                    break;
+                case "contour x":
+                    func.opAddContour('x');
+                    break;
+                case "contour y":
+                    func.opAddContour('y');
+                    break;
+                case "register x":
+                    func.opAddRegister('X', 2);
+                    break;
+                case "register y":
+                    func.opAddRegister('Y', 2);
+                    break;
+                case "drill":
+                    func.opAddDrill();
+                    break;
+                case "trace":
+                    func.opAdd(traceOp);
+                    break;
+            }
+        };
+
+        func.opAddRough = () => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "rough",
+                tool: process.camRoughTool,
+                spindle: process.camRoughSpindle,
+                step: process.camRoughOver,
+                down: process.camRoughDown,
+                rate: process.camRoughSpeed,
+                plunge: process.camRoughPlunge,
+                leave: process.camRoughStock,
+                voids: process.camRoughVoid,
+                flats: process.camRoughFlat,
+                inside: process.camRoughIn,
+                top: process.camRoughTop
+            });
+        };
+
+        func.opAddOutline = () => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "outline",
+                tool: process.camOutlineTool,
+                spindle: process.camOutlineSpindle,
+                step: process.camOutlineOver,
+                down: process.camOutlineDown,
+                rate: process.camOutlineSpeed,
+                plunge: process.camOutlinePlunge,
+                dogbones: process.camOutlineDogbone,
+                outside: process.camOutlineOut,
+                inside: process.camOutlineIn,
+                wide: process.camOutlineWide
+            });
+        };
+
+        func.opAddContour = (axis) => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "contour",
+                tool: process.camContourTool,
+                spindle: process.camContourSpindle,
+                step: process.camContourOver,
+                rate: process.camContourSpeed,
+                angle: process.camContourAngle,
+                tolerance: process.camTolerance,
+                curves: process.camContourCurves,
+                inside: process.camContourIn,
+                axis: axis.toUpperCase()
+            });
+        };
+
+        func.opAddDrill = () => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "drill",
+                tool: process.camDrillTool,
+                spindle: process.camDrillSpindle,
+                down: process.camDrillDown,
+                rate: process.camDrillDownSpeed,
+                dwell: process.camDrillDwell,
+                lift: process.camDrillLift
+            });
+        };
+
+        func.opAddRegister = (axis, points) => {
+            let process = API.conf.get().process;
+            func.opAdd({
+                type: "register",
+                tool: process.camDrillTool,
+                spindle: process.camDrillSpindle,
+                down: process.camDrillDown,
+                rate: process.camDrillDownSpeed,
+                dwell: process.camDrillDwell,
+                lift: process.camDrillLift,
+                points: points,
+                axis: axis.toUpperCase()
+            });
+        };
+
+        // TAB/TRACE BUTTON HANDLERS
+        api.event.on("button.click", target => {
+            let process = API.conf.get().process;
             switch (target) {
                 case api.ui.tabAdd:
                     return func.tabAdd();
@@ -170,107 +282,44 @@
                     });
                     break;
                 case api.ui.traceAdd:
+                case api.ui.traceAdd2:
                     return func.traceAdd();
                 case api.ui.traceDun:
+                case api.ui.traceDun2:
                     return func.traceDone();
                 case api.ui.traceClr:
+                case api.ui.traceClr2:
                     api.uc.confirm("clear traces?").then(ok => {
                         if (ok) func.traceClear();
                     });
                     break;
                 case api.ui.crAdd:
-                    func.opAdd({
-                        type: "rough",
-                        tool: process.camRoughTool,
-                        spindle: process.camRoughSpindle,
-                        step: process.camRoughOver,
-                        down: process.camRoughDown,
-                        rate: process.camRoughSpeed,
-                        plunge: process.camRoughPlunge,
-                        leave: process.camRoughStock,
-                        voids: process.camRoughVoid,
-                        flats: process.camRoughFlat,
-                        inside: process.camRoughIn,
-                        top: process.camRoughTop
-                    });
+                    func.opAddRough();
                     break;
                 case api.ui.coAdd:
-                    func.opAdd({
-                        type: "outline",
-                        tool: process.camOutlineTool,
-                        spindle: process.camOutlineSpindle,
-                        step: process.camOutlineOver,
-                        down: process.camOutlineDown,
-                        rate: process.camOutlineSpeed,
-                        plunge: process.camOutlinePlunge,
-                        dogbones: process.camOutlineDogbone,
-                        outside: process.camOutlineOut,
-                        inside: process.camOutlineIn,
-                        wide: process.camOutlineWide
-                    });
+                    func.opAddOutline();
                     break;
                 case api.ui.ccxAdd:
-                    func.opAdd({
-                        type: "contour x",
-                        tool: process.camContourTool,
-                        spindle: process.camContourSpindle,
-                        step: process.camContourOver,
-                        rate: process.camContourSpeed,
-                        angle: process.camContourAngle,
-                        tolerance: process.camTolerance,
-                        curves: process.camContourCurves,
-                        inside: process.camContourIn
-                    });
+                    func.opAddContour('x');
                     break;
                 case api.ui.ccyAdd:
-                    func.opAdd({
-                        type: "contour y",
-                        tool: process.camContourTool,
-                        spindle: process.camContourSpindle,
-                        step: process.camContourOver,
-                        rate: process.camContourSpeed,
-                        angle: process.camContourAngle,
-                        tolerance: process.camTolerance,
-                        curves: process.camContourCurves,
-                        inside: process.camContourIn
-                    });
+                    func.opAddContour('y');
                     break;
                 case api.ui.drAdd:
-                    func.opAdd({
-                        type: "drill",
-                        tool: process.camDrillTool,
-                        spindle: process.camDrillSpindle,
-                        down: process.camDrillDown,
-                        rate: process.camDrillDownSpeed,
-                        dwell: process.camDrillDwell,
-                        lift: process.camDrillLift
-                    });
+                    func.opAddDrill();
                     break;
                 case api.ui.drX2Add:
-                    drill = { axis: "X", points: 2 };
+                    func.opAddRegister("X", 2);
                     break;
                 case api.ui.drX3Add:
-                    drill = { axis: "X", points: 3 };
+                    func.opAddRegister("X", 3);
                     break;
                 case api.ui.drY2Add:
-                    drill = { axis: "Y", points: 2 };
+                    func.opAddRegister("Y", 2);
                     break;
                 case api.ui.drY3Add:
-                    drill = { axis: "Y", points: 3 };
+                    func.opAddRegister("Y", 3);
                     break;
-            }
-            if (drill) {
-                func.opAdd({
-                    type: "register",
-                    tool: process.camDrillTool,
-                    spindle: process.camDrillSpindle,
-                    down: process.camDrillDown,
-                    rate: process.camDrillDownSpeed,
-                    dwell: process.camDrillDwell,
-                    lift: process.camDrillLift,
-                    points: drill.points,
-                    axis: drill.axis
-                });
             }
         });
 
@@ -301,10 +350,8 @@
             if (!isCamMode) return;
             let mark = Date.now();
             let html = [];
-            let ops = current.process.ops;
-            let oplist = ops && ops.length > 0 ? ops : [{
-                type: "use right menu to add milling operations ... drag & drop to re-order"
-            }];
+            let oplist = current.process.ops;
+            $('ophint').style.display = oplist.length === 0 ? 'flex' : 'none';
             let bind = {};
             let scale = API.view.unit_scale();
             oplist.forEach((rec,i) => {
@@ -343,7 +390,7 @@
                 };
                 el.onmouseenter = (ev) => {
                     if (unpop) unpop();
-                    unpop = el.unpop;
+                    unpop = func.unpop = el.unpop;
                     inside = true;
                     poprec.use(rec);
                     el.appendChild(poprec.div);
@@ -380,9 +427,9 @@
                             ev.stopPropagation();
                             ev.preventDefault();
                         }
-                        ops.length = 0;
+                        oplist.length = 0;
                         for (let child of listel.childNodes) {
-                            ops.push(child.rec);
+                            oplist.push(child.rec);
                         }
                         API.conf.save();
                         func.opRender();
@@ -747,8 +794,9 @@
             wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }})
         };
 
-        createPopOp('contour x').inputs = {
+        createPopOp('contour').inputs = {
             tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
+            axis:      UC.newSelect(LANG.cd_axis, {}, "regaxis"),
             sep:       UC.newBlank({class:"pop-sep"}),
             spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
             step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
@@ -760,20 +808,19 @@
             inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l})
         };
 
-        createPopOp('contour y').inputs = {
-            tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
-            sep:       UC.newBlank({class:"pop-sep"}),
-            spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-            step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
-            rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-            angle:     UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90)}),
-            tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true}),
-            sep:       UC.newBlank({class:"pop-sep"}),
-            curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
-            inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l})
+        createPopOp('trace').inputs = {
+            tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
+            sep:      UC.newBlank({class:"pop-sep"}),
+            mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
+            rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+            plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+            sep:      UC.newBlank({class:"pop-sep"}),
+            select: UC.newRow([
+                UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
+                UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
+                UC.newButton(undefined, func.traceClear, {icon:'<i class="fas fa-trash-alt"></i>'})
+            ], {class:"ext-buttons f-row"}),
         };
-
-        createPopOp('trace').inputs = { };
 
         createPopOp('drill').inputs = {
             tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),

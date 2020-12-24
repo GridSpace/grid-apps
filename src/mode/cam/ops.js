@@ -871,8 +871,7 @@
         "shadow": OpShadow,
         "rough": OpRough,
         "outline": OpOutline,
-        "contour x": OpContour,
-        "contour y": OpContour,
+        "contour": OpContour,
         "trace": OpTrace,
         "drill": OpDrill,
         "register": OpRegister

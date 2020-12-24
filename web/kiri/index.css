@@ -560,7 +560,7 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
-#oplist > div {
+#oplist > div, .opdiv {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -570,6 +570,7 @@ th, tr, td, label {
     margin: 0 2px 0 2px;
     padding: 2px 10px 2px 10px;
     background-color: rgba(255,255,255,0.75);
+    white-space: nowrap;
 }
 #oplist .drag {
     background-color: var(--highlight) !important;
@@ -604,6 +605,38 @@ th, tr, td, label {
 }
 #oplist div:hover .opop {
     display: flex;
+}
+#op-add-pop {
+    position: absolute;
+    display: none;
+    padding: 5px;
+    bottom: 35px;
+}
+#op-add:hover #op-add-pop {
+    display: flex;
+}
+#op-add-list {
+    padding: 4px;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column-reverse;
+}
+#op-add-list > div {
+    padding: 3px 5px 3px 5px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 3px;
+}
+#op-add-list > div:hover {
+    background-color: rgba(0,0,0,0.2);
+    border-bottom: 1px rgba(0,0,0,0.5);
+}
+#op-add-contour-menu, #op-add-register-menu {
+    position: absolute;
+    right: 0;
+    top: 0;
+    xtransform: translateX(-100%);
+    xtransform: translateY(-50%);
 }
 
 #progress {

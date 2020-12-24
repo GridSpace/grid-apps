@@ -22,8 +22,9 @@
             let { state, contour, onupdate, ondone } = opt;
             let { widget, settings, tshadow, center, tabs } = opt.state;
             let density = parseInt(settings.controller.animesh) * 2500,
-                contourX = contour.type === "contour x",
-                contourY = contour.type === "contour y",
+                axis = contour.axis.toLowerCase(),
+                contourX = axis === "x",
+                contourY = axis === "y",
                 bounds = widget.getBoundingBox().clone(),
                 tolerance = contour.tolerace,
                 proc = settings.process,
