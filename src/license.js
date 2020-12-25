@@ -3,7 +3,7 @@
     let terms = {
         COPYRIGHT: "Copyright (C) Stewart Allen <sa@grid.space> - All Rights Reserved",
         LICENSE: "See the license.md file included with the source distribution",
-        VERSION: "2.5.D7"
+        VERSION: "2.5.D8"
     };
 
     if (typeof(module) === 'object') {
