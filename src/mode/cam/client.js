@@ -17,6 +17,7 @@
         camStock,
         current,
         poppedRec,
+        hoveredOp,
         API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG;
 
     let zaxis = { x: 0, y: 0, z: 1 },
@@ -278,6 +279,7 @@
                     poprec.use(rec);
                     // pointer to current rec for trace editing
                     poppedRec = rec;
+                    hoveredOp = el;
                     el.appendChild(poprec.div);
                     // option click event appears latent
                     // and overides the sticky settings
@@ -296,6 +298,7 @@
                 };
                 el.rec = rec;
                 el.onmousedown = (ev) => {
+                    func.traceDone();
                     let target = ev.target, clist = target.classList;
                     if (!clist.contains("draggable")) {
                         return;
@@ -430,20 +433,19 @@
 
         // TRACE FUNCS
         let traceOn = false, lastTrace;
-        func.traceAdd = () => {
-            if (traceOn) {
-                return;
-            }
+        func.traceAdd = (ev) => {
             func.tabDone();
+            func.traceDone();
             alert = api.show.alert("analyzing parts...", 1000);
-            traceOn = true;
+            traceOn = hoveredOp;
+            traceOn.classList.add("editing");
             CAM.traces((ids) => {
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] key cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
-                        clearTraces(widget);
+                        unselectTraces(widget);
                         widget.trace_stack = null;
                     }
                     if (widget.trace_stack) {
@@ -461,14 +463,30 @@
                         stack.addLayers(layers);
                         stack.new_meshes.forEach(mesh => {
                             mesh.trace = {widget, poly};
+                            // ensure trace poly singleton from matches
                             if (match.length > 0) {
                                 poly._trace = match[0];
-                                func.traceToggle(mesh, true);
                             } else {
                                 poly._trace = poly.toArray();
                             }
                         });
                         widget.adds.appendAll(stack.new_meshes);
+                    });
+                });
+                // ensure appropriate traces are toggled matching current record
+                KIRI.api.widgets.for(widget => {
+                    let areas = (poppedRec.areas[widget.id] || []);
+                    let stack = widget.trace_stack;
+                    stack.meshes.forEach(mesh => {
+                        let { poly } = mesh.trace;
+                        let match = areas.filter(arr => poly.matches(arr));
+                        if (match.length > 0) {
+                            if (!mesh.selected) {
+                                func.traceToggle(mesh, true);
+                            }
+                        } else if (mesh.selected) {
+                            func.traceToggle(mesh, true);
+                        }
                     });
                 });
             });
@@ -481,6 +499,7 @@
             if (!traceOn) {
                 return;
             }
+            traceOn.classList.remove("editing");
             traceOn = false;
             KIRI.api.widgets.opacity(1);
             api.hide.alert(alert);
@@ -496,7 +515,7 @@
         api.event.on("cam.trace.clear", func.traceClear = () => {
             func.traceDone();
             API.widgets.all().forEach(widget => {
-                clearTraces(widget);
+                unselectTraces(widget);
             });
             API.conf.save();
         });
@@ -589,7 +608,7 @@
             if (traceOn) {
                 func.traceDone();
             }
-            clearTraces(widget);
+            unselectTraces(widget);
             if (x || y) {
                 clearTabs(widget);
             } else {
@@ -876,10 +895,9 @@
         delete API.widgets.annotate(widget.id).tab;
     }
 
-    function clearTraces(widget) {
-        let stack = widget.trace_stack;
-        if (stack) {
-            stack.meshes.forEach(mesh => {
+    function unselectTraces(widget) {
+        if (widget.trace_stack) {
+            widget.trace_stack.meshes.forEach(mesh => {
                 if (mesh.selected) {
                     func.traceToggle(mesh);
                 }
