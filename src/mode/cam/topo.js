@@ -308,7 +308,6 @@
                         gridx = Math.round(((x - minX) / boundsX) * stepsx);
                         ly = gridy = -gridDelta;
                         slice = newSlice(gridx);
-                        slice.camMode = PRO.CONTOUR_X;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (y = minY - partOff; y < maxY + partOff; y += resolution) {
@@ -351,7 +350,6 @@
                         gridy = Math.round(((y - minY) / boundsY) * stepsy);
                         lx = gridx = -gridDelta;
                         slice = newSlice(gridy);
-                        slice.camMode = PRO.CONTOUR_Y;
                         newtrace = newPolygon().setOpen();
                         sliceout = [];
                         for (x = minX - partOff; x <= maxX + partOff; x += resolution) {

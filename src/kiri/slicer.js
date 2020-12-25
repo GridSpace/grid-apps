@@ -550,7 +550,6 @@
             // fixup un-rotates polygons for CAM
             if (options.swapX || options.swapY) {
                 let move = {x:ox, y:oy, z:0};
-                slice.camMode = options.swapX ? CPRO.FINISH_X : CPRO.FINISH_Y;
                 if (topoMode) {
                     let lines = slice.lines, llen = lines.length, idx, line;
                     // shared points causing problems

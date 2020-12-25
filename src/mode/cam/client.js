@@ -142,12 +142,9 @@
             let settings = API.conf.get();
             let { process, device } = settings;
             switch (ev.target.innerText) {
-                case "rough":
-                    func.opAddRough();
-                    break;
-                case "outline":
-                    func.opAddOutline();
-                    break;
+                case "level": return func.opAddLevel();
+                case "rough": return func.opAddRough();
+                case "outline": return func.opAddOutline();
                 case "contour":
                     let oplist = current.process.ops, axis = "X";
                     for (let op of oplist) {
@@ -155,18 +152,15 @@
                             axis = "Y";
                         }
                     }
-                    func.opAddContour(axis);
-                    break;
-                case "register":
-                    func.opAddRegister('X', 2);
-                    break;
-                case "drill":
-                    func.opAddDrill();
-                    break;
-                case "trace":
-                    func.opAddTrace();
-                    break;
+                    return func.opAddContour(axis);
+                case "register": return func.opAddRegister('X', 2);
+                case "drill": return func.opAddDrill();
+                case "trace": return func.opAddTrace();
             }
+        };
+
+        func.opAddLevel = () => {
+            func.opAdd(popOp.level.new());
         };
 
         func.opAddRough = () => {
@@ -635,6 +629,19 @@
         function hasSpindle() {
             return current.device.spindleMax > 0;
         }
+
+        createPopOp('level', {
+            tool:    'camLevelTool',
+            spindle: 'camLevelSpindle',
+            step:    'camLevelOver',
+            rate:    'camLevelSpeed'
+        }).inputs = {
+            tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
+            sep:     UC.newBlank({class:"pop-sep"}),
+            spindle: UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+            step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
+            rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true})
+        };
 
         createPopOp('rough', {
             tool:    'camRoughTool',

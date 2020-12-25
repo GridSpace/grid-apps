@@ -33,6 +33,70 @@
         prepare() { }
     }
 
+    class OpLevel extends CamOp {
+        constructor(state, op) {
+            super(state, op);
+        }
+
+        slice(progress) {
+            let { op, state } = this;
+            let { settings, widget, sliceAll } = state;
+            let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
+            let { bounds, zMax, ztOff } = state;
+            let { stock } = settings;
+
+            let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+            let stepOver = toolDiam * op.step;
+            updateToolDiams(toolDiam);
+
+            let path = newPolygon().setOpen(),
+                center = {x:0, y:0, z:0},
+                x1 = bounds.min.x,
+                y1 = bounds.min.y,
+                x2 = bounds.max.x,
+                y2 = bounds.max.y,
+                z = bounds.max.z;
+
+            if (stock.x && stock.y && stock.z) {
+                x1 = -stock.x / 2;
+                y1 = -stock.y / 2;
+                x2 = -x1;
+                y2 = -y1;
+                z = zMax + ztOff;
+            }
+
+            let ei = 0,
+                xd = x2 - x1,
+                xi = xd / Math.floor(xd / stepOver);
+
+            for (let x = x1, lx = x, ei = 0; x <= x2; x += xi, ei++, lx = x) {
+                if (ei % 2 === 0) {
+                    path.add(x,y1,z).add(x,y2,z);
+                } else {
+                    path.add(x,y2,z).add(x,y1,z);
+                }
+            }
+
+            let slice = newSlice(z);
+            this.lines = slice.camLines = [ path ];
+            slice.output()
+                .setLayer("level", {face: 0, line: 0})
+                .addPolys(this.lines);
+            sliceAll.push(slice);
+        }
+
+        prepare(ops, progress) {
+            let { op, state, lines } = this;
+            let { setTool, setSpindle } = ops;
+            let { polyEmit, newLayer } = ops;
+
+            setTool(op.tool, op.rate);
+            setSpindle(op.spindle);
+            polyEmit(lines[0]);
+            newLayer();
+        }
+    }
+
     class OpRough extends CamOp {
         constructor(state, op) {
             super(state, op);
@@ -47,15 +111,14 @@
             let roughIn = op.inside;
             let roughTop = op.top;
             let roughDown = op.down;
-            let roughTool = new CAM.Tool(settings, op.tool);
-            let roughToolDiam = roughTool.fluteDiameter();
             let roughLeave = op.leave;
+            let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
 
             // create facing slices
             if (roughTop) {
                 let shadow = tshadow.clone();
-                let inset = POLY.offset(shadow, (roughToolDiam / (roughIn ? 2 : 1)));
-                let facing = POLY.offset(inset, -(roughToolDiam * op.step), { count: 999, flat: true });
+                let inset = POLY.offset(shadow, (toolDiam / (roughIn ? 2 : 1)));
+                let facing = POLY.offset(inset, -(toolDiam * op.step), { count: 999, flat: true });
                 let zdiv = ztOff / roughDown;
                 let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
                 if (ztOff === 0) {
@@ -68,10 +131,9 @@
                 for (let z = zstart; zsteps > 0; zsteps--) {
                     let slice = shadowTop.slice.clone(false);
                     slice.z = z;
-                    slice.camMode = PRO.LEVEL;
                     slice.camLines = POLY.setZ(facing.clone(true), slice.z);
                     slice.output()
-                        .setLayer("facing", {face: 0, line: 0})
+                        .setLayer("face", {face: 0, line: 0})
                         .addPolys(slice.camLines);
                     sliceAll.push(slice);
                     camFaces.push(slice);
@@ -80,7 +142,7 @@
             }
 
             // create roughing slices
-            updateToolDiams(roughToolDiam);
+            updateToolDiams(toolDiam);
 
             let flats = [];
             let shadow = [];
@@ -129,7 +191,6 @@
                     return;
                 }
                 data.shadow = shadow.clone(true);
-                data.slice.camMode = PRO.ROUGH;
                 data.slice.shadow = data.shadow;
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -148,7 +209,7 @@
                         if (op.voids) {
                             return undefined;
                         }
-                        let po = POLY.offset([p], -(roughToolDiam / 2 + roughLeave + 0.01));
+                        let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
                         return po ? po[0] : undefined;
                     } else {
                         return p;
@@ -158,8 +219,7 @@
             shadow = POLY.nest(shadow);
 
             // expand shadow by half tool diameter + stock to leave
-            // const sadd = roughIn ? roughToolDiam / 4 : roughToolDiam / 2;
-            const sadd = roughIn ? roughToolDiam / 2 : roughToolDiam / 2;
+            const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
             const shell = POLY.offset(shadow, sadd + roughLeave);
 
             slices.forEach((slice, index) => {
@@ -168,7 +228,7 @@
                 let nest = POLY.setZ(POLY.nest(flat), slice.z);
 
                 // inset offset array by 1/2 diameter then by tool overlap %
-                offset = POLY.offset(nest, [-(roughToolDiam / 2 + roughLeave), -roughToolDiam * op.step], {
+                offset = POLY.offset(nest, [-(toolDiam / 2 + roughLeave), -toolDiam * op.step], {
                     minArea: 0,
                     z: slice.z,
                     count: 999,
@@ -186,7 +246,7 @@
 
                 // add outside pass if not inside only
                 if (!roughIn) {
-                    const outside = POLY.offset(shadow.clone(), roughToolDiam * op.step, {z: slice.z});
+                    const outside = POLY.offset(shadow.clone(), toolDiam * op.step, {z: slice.z});
                     if (outside) {
                         offset.appendAll(outside);
                     }
@@ -194,7 +254,7 @@
 
                 if (tabs) {
                     tabs.forEach(tab => {
-                        tab.off = POLY.expand([tab.poly], roughToolDiam / 2).flat();
+                        tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                     });
                     offset = cutTabs(tabs, offset, slice.z);
                 }
@@ -318,9 +378,8 @@
             let { settings, widget, slicer, sliceAll, tshadow } = state;
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs } = state;
 
-            let outlineTool = new CAM.Tool(settings, op.tool);
-            let outlineToolDiam = this.toolDiam = outlineTool.fluteDiameter();
-            updateToolDiams(outlineToolDiam);
+            let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+            updateToolDiams(toolDiam);
 
             let shadow = [];
             let slices = [];
@@ -341,7 +400,6 @@
                         return;
                     }
                     let slice = newSlice(ind);
-                    slice.camMode = PRO.OUTLINE;
                     slice.shadow = shadow.clone(true);
                     slices.push(slice);
                 });
@@ -353,7 +411,6 @@
                     return;
                 }
                 data.shadow = shadow.clone(true);
-                data.slice.camMode = PRO.OUTLINE;
                 data.slice.shadow = data.shadow;
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -368,7 +425,6 @@
             if (zThru) {
                 let last = slices[slices.length-1];
                 let add = last.clone(true);
-                add.camMode = last.camMode;
                 add.tops.forEach(top => {
                     top.poly.setZ(add.z);
                 });
@@ -385,7 +441,7 @@
                     tops = tshadow;
                 }
 
-                let offset = POLY.expand(tops, outlineToolDiam / 2, slice.z);
+                let offset = POLY.expand(tops, toolDiam / 2, slice.z);
                 if (!(offset && offset.length)) {
                     return;
                 }
@@ -393,7 +449,7 @@
                 // when pocket only, drop first outer poly
                 // if it matches the shell and promote inner polys
                 if (op.inside) {
-                    let shell = POLY.expand(tops.clone(), outlineToolDiam / 2);
+                    let shell = POLY.expand(tops.clone(), toolDiam / 2);
                     offset = POLY.filter(offset, [], function(poly) {
                         if (poly.area() < 1) {
                             return null;
@@ -409,7 +465,7 @@
                     });
                 } else {
                     if (op.wide) {
-                        let stepover = outlineToolDiam * op.step;
+                        let stepover = toolDiam * op.step;
                         offset.slice().forEach(op => {
                             // clone removes inners but the real solution is
                             // to limit expanded shells to through holes
@@ -420,13 +476,13 @@
 
                 if (tabs) {
                     tabs.forEach(tab => {
-                        tab.off = POLY.expand([tab.poly], outlineToolDiam / 2).flat();
+                        tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                     });
                     offset = cutTabs(tabs, offset, slice.z);
                 }
 
                 if (op.dogbones && !op.wide) {
-                    CAM.addDogbones(offset, outlineToolDiam / 5);
+                    CAM.addDogbones(offset, toolDiam / 5);
                 }
 
                 // offset.xout(`slice ${slice.z}`);
@@ -615,7 +671,6 @@
                 let slice = newSlice();
                 let poly = newPolygon().fromArray(arr);
                 slice.addTop(poly);
-                slice.camMode = PRO.TRACE;
                 slice.camLines = [ poly ];
                 slice.camTrace = { tool, rate, plunge };
                 if (true) slice.output()
@@ -687,7 +742,6 @@
                     point.x = center.x;
                     point.y = center.y;
                 });
-                slice.camMode = PRO.DRILL;
                 slice.camLines = [ drill ];
                 slice.output()
                     .setLayer("drill", {face: 0, line: 0})
@@ -764,7 +818,6 @@
                         .append(point.clone().setZ(bounds.max.z))
                         .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
                 });
-                slice.camMode = PRO.DRILL;
                 slice.camLines = polys;
                 slice.output()
                     .setLayer("register", {face: 0, line: 0})
@@ -868,6 +921,7 @@
     CAM.OPS = CamOp.MAP = {
         "xray": OpXRay,
         "shadow": OpShadow,
+        "level": OpLevel,
         "rough": OpRough,
         "outline": OpOutline,
         "contour": OpContour,
