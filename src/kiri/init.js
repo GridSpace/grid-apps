@@ -1210,7 +1210,8 @@
     }
 
     function showDevices() {
-        updateDeviceList();
+        // disable device filter and show devices
+        UI.dev.search.onclick(true);
         API.modal.show('setup');
         UI.deviceList.focus();
     }
@@ -1869,9 +1870,9 @@
             if (!ev.buttons) API.event.emit('slider.unlabel');
         };
 
-        UI.dev.search.onclick = () => {
+        UI.dev.search.onclick = (hide) => {
             let style = UI.dev.filter.style;
-            if (style.display === 'flex') {
+            if (style.display === 'flex' || hide === true) {
                 style.display = '';
                 deviceFilter = null;
                 updateDeviceList();
