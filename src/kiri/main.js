@@ -1272,7 +1272,6 @@
      }
 
     function platformUpdateSize() {
-        let frozen = SPACE.scene.freeze(true);
         let dev = settings.device,
             width, depth,
             height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
@@ -1303,7 +1302,6 @@
         SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter, 1/unitScale());
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
-        SPACE.scene.freeze(frozen);
     }
 
     function platformUpdateBounds() {
@@ -2013,14 +2011,12 @@
         updateFields();
         platform.update_size();
 
-        let fz = SPACE.scene.freeze(true);
         SPACE.view.reset();
         if (camera) {
             SPACE.view.load(camera);
         } else {
             SPACE.view.home();
         }
-        SPACE.scene.freeze(fz);
 
         if (skip_widget_load) {
             if (ondone) {

@@ -84,7 +84,8 @@
         camera,
         renderer,
         container,
-        freeze = false,
+        freezeTo,
+        freeze,
         isRound = false,
         platformMaterial = new THREE.MeshPhongMaterial({
             color: 0xeeeeee,
@@ -265,8 +266,11 @@
     }
 
     function setPlatformSizeUpdateGrid(width, depth, height, maxz) {
+        freeze = { width, depth, height, maxz };
         setPlatformSize(width, depth, height, maxz);
         setGrid(gridUnitMajor, gridUnitMinor);
+        clearTimeout(freezeTo);
+        freezeTo = setTimeout(() => { freeze = undefined }, 10);
     }
 
     function setPlatformColor(color) {
@@ -789,11 +793,6 @@
             },
             remove: function (o) {
                 return SCENE.remove(o);
-            },
-            freeze: function (b) {
-                let fz = freeze;
-                freeze = b;
-                return fz;
             },
             active: updateLastAction
         },
