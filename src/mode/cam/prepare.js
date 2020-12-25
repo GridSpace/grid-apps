@@ -392,9 +392,10 @@
             let traceTool = new CAM.Tool(settings, tool);
             let traceToolDiam = traceTool.fluteDiameter();
             slice.camLines.forEach(poly => {
-                poly.forEachPoint(function(point, pidx) {
-                    camOut(point.clone(), pidx > 0);
-                }, !poly.open);
+                let idx = 0, close = !poly.open;
+                poly.forEachPoint(point => {
+                    camOut(point.clone(), idx++ > 0);
+                }, close);
             });
             newLayer();
         }
