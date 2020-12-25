@@ -741,14 +741,18 @@
         };
 
         createPopOp('trace', {
-            mode:   'camTraceType',
-            tool:   'camTraceTool',
-            rate:   'camTraceSpeed',
-            plunge: 'camTracePlunge'
+            mode:    'camTraceType',
+            spindle: 'camTraceSpindle',
+            tool:    'camTraceTool',
+            step:    'camTraceOver',
+            rate:    'camTraceSpeed',
+            plunge:  'camTracePlunge'
         }).inputs = {
             tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
             sep:      UC.newBlank({class:"pop-sep"}),
             mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
+            spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+            step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:(op) => popOp.trace.rec.mode === "clear"}),
             rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
             plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
             sep:      UC.newBlank({class:"pop-sep"}),

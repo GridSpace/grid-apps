@@ -665,26 +665,40 @@
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
-            let traceTool = new CAM.Tool(settings, tool);
-            let traceToolDiam = traceTool.fluteDiameter();
+            let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
+            let toolOver = toolDiam * op.step;
             let cutdir = process.camConventional;
-            updateToolDiams(traceToolDiam);
+            updateToolDiams(toolDiam);
             areas.forEach(arr => {
                 let slice = newSlice();
                 let poly = newPolygon().fromArray(arr);
                 POLY.setWinding([ poly ], cutdir, false);
-                slice.addTop(poly);
-                slice.camLines = [ poly ];
                 slice.camTrace = { tool, rate, plunge };
+                slice.camLines = [ poly ];
+                switch (op.mode) {
+                    case "follow":
+                        break;
+                    case "clear":
+                        POLY.offset([poly], -toolOver, {
+                            count:999, outs: slice.camLines, flat:true, z: poly.getZ()
+                        });
+                        break;
+                }
+                sliceAll.push(slice);
+                sliceOut.push(slice);
                 if (true) slice.output()
                     .setLayer("trace", {line: 0xaa00aa}, false)
                     .addPolys(slice.camLines)
-                sliceAll.push(slice);
-                sliceOut.push(slice);
             });
         }
 
         prepare(ops, progress) {
+            let { op, state } = this;
+            let { settings } = state;
+            let { setTool, setSpindle } = ops;
+
+            setTool(op.tool, op.rate);
+            setSpindle(op.spindle);
             for (let slice of this.sliceOut) {
                 ops.emitTrace(slice);
             }
@@ -757,10 +771,11 @@
         prepare(ops, progress) {
             let { op, state } = this;
             let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
-            let { setTool, setDrill, emitDrills } = ops;
+            let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
-            setTool(op.tool, op.down, op.rate);
+            setTool(op.tool, op.rate, op.down);
             setDrill(op.down, op.lift, op.dwell);
+            setSpindle(op.spindle);
             emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
         }
     }
@@ -833,10 +848,11 @@
         prepare(ops, progress) {
             let { op, state } = this;
             let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
-            let { setTool, setDrill, emitDrills } = ops;
+            let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
-            setTool(op.tool, op.down, op.rate);
+            setTool(op.tool, op.rate, op.down);
             setDrill(op.down, op.lift, op.dwell);
+            setSpindle(op.spindle);
             emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
         }
     }

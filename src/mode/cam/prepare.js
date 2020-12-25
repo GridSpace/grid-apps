@@ -116,6 +116,7 @@
             }
             newOutput.push(layerOut);
             layerOut = [];
+            layerOut.mode = lastMode;
             layerOut.spindle = spindle;
         }
 
@@ -140,8 +141,8 @@
                 toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance * 2;
                 lastTool = toolID;
             }
-            feedRate = feed;
-            plungeRate = plunge;
+            feedRate = feed || feedRate;
+            plungeRate = plunge || plungeRate;
         }
 
         function setDrill(down, lift, dwell) {
@@ -324,6 +325,7 @@
             }
 
             // todo synthesize move speed from feed / plunge accordingly
+            layerOut.mode = lastMode;
             layerOut.spindle = spindle;
             lastPoint = layerPush(
                 point,
@@ -379,6 +381,7 @@
         for (let op of widget.camops) {
             setTolerance(0);
             nextIsMove = true;
+            lastMode = op.op.type;
             let weight = op.weight();
             op.prepare(ops, (progress, message) => {
                 onupdate((opSum + (progress * weight)) / opTot, message || op.type());

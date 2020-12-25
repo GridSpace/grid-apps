@@ -9,17 +9,7 @@
         POLY = BASE.polygons,
         UTIL = BASE.util,
         CAM = KIRI.driver.CAM,
-        PRO = CAM.process,
-        MODES = [
-            "unset",
-            "level",
-            "rough",
-            "outline",
-            "contour-x",
-            "contour-y",
-            "trace",
-            "drill"
-        ];
+        PRO = CAM.process;
 
     /**
      * @returns {Array} gcode lines
@@ -53,7 +43,7 @@
             pos = { x:null, y:null, z:null, f:null, t:null },
             line,
             cidx,
-            mode = 0,
+            mode,
             point,
             points = 0,
             stock = settings.stock,
@@ -282,9 +272,9 @@
         // emit all points in layer/point order
         print.output.forEach(function (layerout) {
             if (mode !== layerout.mode) {
-                if (mode && !stripComments) append("; ending " + MODES[mode] + " pass after " + Math.round(time/60) + " seconds");
+                if (mode && !stripComments) append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
                 mode = layerout.mode;
-                if (!stripComments) append("; starting " + MODES[mode] + " pass");
+                if (!stripComments) append("; starting " + mode + " op");
             }
             if (layerout.spindle && layerout.spindle !== spindle) {
                 spindle = layerout.spindle;
@@ -299,7 +289,7 @@
                 moveTo(out);
             });
         });
-        if (mode && !stripComments) append("; ending " + MODES[mode] + " pass after " + Math.round(time/60) + " seconds");
+        if (mode && !stripComments) append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
 
         // emit gcode post
         filterEmit(gcodes.gcodePost, consts);

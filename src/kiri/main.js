@@ -181,6 +181,7 @@
         ],
         trace: [
             { name: "follow" },
+            { name: "clear" }
             // { name: "out" },
             // { name: "in" }
         ],
