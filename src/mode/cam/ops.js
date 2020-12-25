@@ -660,16 +660,19 @@
         slice(progress) {
             let { op, state } = this;
             let { settings, widget, sliceAll, updateToolDiams } = state;
+            let { process } = settings;
+            let { tool, rate, plunge } = op;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
-            let { tool, rate, plunge } = op;
             let traceTool = new CAM.Tool(settings, tool);
             let traceToolDiam = traceTool.fluteDiameter();
+            let cutdir = process.camConventional;
             updateToolDiams(traceToolDiam);
             areas.forEach(arr => {
                 let slice = newSlice();
                 let poly = newPolygon().fromArray(arr);
+                POLY.setWinding([ poly ], cutdir, false);
                 slice.addTop(poly);
                 slice.camLines = [ poly ];
                 slice.camTrace = { tool, rate, plunge };

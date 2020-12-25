@@ -348,7 +348,7 @@
         let showTab, lastTab, tab, iw, ic;
         api.event.on("cam.tabs.add", func.tabAdd = () => {
             func.traceDone();
-            alert = api.show.alert("[esc] key cancels tab editing");
+            alert = api.show.alert("[esc] cancels tab editing");
             api.feature.hover = true;
             func.hover = func.tabHover;
             func.hoverUp = func.tabHoverUp;
@@ -441,7 +441,7 @@
             traceOn.classList.add("editing");
             CAM.traces((ids) => {
                 api.hide.alert(alert);
-                alert = api.show.alert("[esc] key cancels trace editing");
+                alert = api.show.alert("[esc] cancels trace editing");
                 KIRI.api.widgets.opacity(0.5);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
@@ -459,7 +459,7 @@
                     widget.traces.forEach(poly => {
                         let match = areas.filter(arr => poly.matches(arr));
                         let layers = new KIRI.Layers();
-                        layers.setLayer("trace", {line: 0x88aa55}, false).addPoly(poly);
+                        layers.setLayer("trace", {line: 0xaaaa55}, false).addPoly(poly);
                         stack.addLayers(layers);
                         stack.new_meshes.forEach(mesh => {
                             mesh.trace = {widget, poly};
@@ -573,7 +573,7 @@
                 color.b = colorSave.b = 0.1;
                 if (!skip) wlist.push(poly._trace);
             } else {
-                color.r = colorSave.r = 0x88/255;
+                color.r = colorSave.r = 0xaa/255;
                 color.g = colorSave.g = 0xaa/255;
                 color.b = colorSave.b = 0x55/255;
                 if (!skip) wlist.remove(poly._trace);

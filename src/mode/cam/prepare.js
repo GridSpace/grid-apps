@@ -391,12 +391,7 @@
             setTool(tool, rate, plunge);
             let traceTool = new CAM.Tool(settings, tool);
             let traceToolDiam = traceTool.fluteDiameter();
-            slice.camLines.forEach(poly => {
-                let idx = 0, close = !poly.open;
-                poly.forEachPoint(point => {
-                    camOut(point.clone(), idx++ > 0);
-                }, close);
-            });
+            printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit);
             newLayer();
         }
 
