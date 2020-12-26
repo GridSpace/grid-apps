@@ -434,6 +434,7 @@
         // TRACE FUNCS
         let traceOn = false, lastTrace;
         func.traceAdd = (ev) => {
+            func.unpop();
             func.tabDone();
             func.traceDone();
             alert = api.show.alert("analyzing parts...", 1000);
@@ -442,7 +443,7 @@
             CAM.traces((ids) => {
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] cancels trace editing");
-                KIRI.api.widgets.opacity(0.5);
+                KIRI.api.widgets.opacity(0.8);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
                         unselectTraces(widget);
@@ -499,6 +500,7 @@
             if (!traceOn) {
                 return;
             }
+            func.unpop();
             traceOn.classList.remove("editing");
             traceOn = false;
             KIRI.api.widgets.opacity(1);
@@ -525,6 +527,7 @@
                 color.r = colorSave.r;
                 color.g = colorSave.g;
                 color.b = colorSave.b;
+                lastTrace.position.z -= 0.05;
             }
             if (data.type === 'platform') {
                 lastTrace = null;
@@ -534,6 +537,7 @@
                 return;
             }
             lastTrace = data.int.object;
+            lastTrace.position.z += 0.05;
             if (lastTrace.selected) {
                 let event = data.event;
                 let target = event.target;
@@ -568,11 +572,13 @@
                 };
             }
             if (obj.selected) {
+                obj.position.z += 0.05;
                 color.r = colorSave.r = 0.9;
                 color.g = colorSave.g = 0;
                 color.b = colorSave.b = 0.1;
                 if (!skip) wlist.push(poly._trace);
             } else {
+                obj.position.z -= 0.05;
                 color.r = colorSave.r = 0xaa/255;
                 color.g = colorSave.g = 0xaa/255;
                 color.b = colorSave.b = 0x55/255;
