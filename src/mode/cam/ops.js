@@ -668,28 +668,49 @@
             let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
             let toolOver = toolDiam * op.step;
             let cutdir = process.camConventional;
+            let polys = [];
             updateToolDiams(toolDiam);
-            areas.forEach(arr => {
-                let slice = newSlice();
+            for (let arr of areas) {
                 let poly = newPolygon().fromArray(arr);
                 POLY.setWinding([ poly ], cutdir, false);
-                slice.camTrace = { tool, rate, plunge };
-                slice.camLines = [ poly ];
-                switch (op.mode) {
-                    case "follow":
-                        break;
-                    case "clear":
-                        POLY.offset([poly], -toolOver, {
-                            count:999, outs: slice.camLines, flat:true, z: poly.getZ()
-                        });
-                        break;
-                }
+                polys.push(poly);
+            }
+            function newSliceOut(z) {
+                let slice = newSlice(z);
                 sliceAll.push(slice);
                 sliceOut.push(slice);
-                if (true) slice.output()
-                    .setLayer("trace", {line: 0xaa00aa}, false)
-                    .addPolys(slice.camLines)
-            });
+                return slice;
+            }
+            switch (op.mode) {
+                case "follow":
+                    for (let poly of polys) {
+                        let slice = newSliceOut(poly.getZ());
+                        slice.camTrace = { tool, rate, plunge };
+                        slice.camLines = [ poly ];
+                        slice.output()
+                            .setLayer("follow", {line: 0xaa00aa}, false)
+                            .addPolys(slice.camLines)
+                    }
+                    break;
+                case "clear":
+                    let zmap = {};
+                    for (let poly of polys) {
+                        let z = poly.getZ();
+                        (zmap[z] = zmap[z] || []).push(poly);
+                    }
+                    for (let [z, polys] of Object.entries(zmap)) {
+                        let slice = newSliceOut(z = parseFloat(z));
+                        slice.camTrace = { tool, rate, plunge };
+                        POLY.offset(POLY.nest(polys), -toolOver, {
+                            count:999, outs: slice.camLines = [], flat:true, z
+                        });
+                        slice.camLines = POLY.flatten(slice.camLines, null, true);
+                        POLY.setWinding(slice.camLines, cutdir, false);
+                        slice.output()
+                            .setLayer("clear", {line: 0xaa00aa}, false)
+                            .addPolys(slice.camLines)
+                    }
+            }
         }
 
         prepare(ops, progress) {
