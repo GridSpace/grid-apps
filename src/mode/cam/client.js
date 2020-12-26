@@ -548,9 +548,9 @@
             let color = material.color;
             let {r, g, b} = color;
             material.colorSave = {r, g, b};
-            color.r = 1;
+            color.r = 0;
             color.g = 0;
-            color.b = 0;
+            color.b = 1;
         };
         func.traceHoverUp = function(int) {
             if (!int) return;
@@ -562,6 +562,9 @@
             let { widget, poly } = obj.trace;
             let process = current.process;
             let areas = poppedRec.areas;
+            if (!areas) {
+                return;
+            }
             let wlist = areas[widget.id] = areas[widget.id] || [];
             obj.selected = !obj.selected;
             if (!colorSave) {
