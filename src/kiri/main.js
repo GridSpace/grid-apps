@@ -297,7 +297,7 @@
             get: getMode,
             set: setMode,
             switch: switchMode,
-            set_expert: setExpert
+            set_expert: noop
         },
         probe: {
             live : "https://live.grid.space",
@@ -2344,9 +2344,9 @@
         DOC.activeElement.blur();
     }
 
-    function setExpert(bool) {
-        UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
-    }
+    // function setExpert(bool) {
+    //     UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
+    // }
 
     function getMode() {
         return settings.mode;

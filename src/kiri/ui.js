@@ -23,7 +23,7 @@
         isExpert = [],
         setters = [],
         letMode = null,
-        letExpert = false,
+        letExpert = true,
         letHoverPop = true,
         exitimer = undefined,
         NOMODE = "nomode",
@@ -169,8 +169,8 @@
     }
 
     function setExpert(bool) {
-        letExpert = bool;
-        setMode(letMode);
+        // letExpert = bool;
+        // setMode(letMode);
     }
 
     function setHoverPop(bool) {

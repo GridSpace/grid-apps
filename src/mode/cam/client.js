@@ -51,7 +51,6 @@
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
             $('set-tools').style.display = isCamMode ? '' : 'none';
-            $('set-label').innerText = isCamMode ? "" : LANG.settings;
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
             if (!isCamMode) {
@@ -259,6 +258,8 @@
                 $(`${id}-x`).onmousedown = (ev) => {
                     ev.stopPropagation();
                     ev.preventDefault();
+                    func.traceDone();
+                    func.tabDone();
                     func.opDel(rec);
                 };
                 let el = $(id);
@@ -552,15 +553,24 @@
             color.g = 0;
             color.b = 1;
         };
-        func.traceHoverUp = function(int) {
+        func.traceHoverUp = function(int, ev) {
             if (!int) return;
-            func.traceToggle(int.object);
+            let { object } = int;
+            func.traceToggle(object);
+            if (ev.metaKey || ev.ctrlKey) {
+                let { selected } = object;
+                let { widget, poly } = object.trace;
+                for (let add of widget.adds) {
+                    if (add.selected !== selected && add.trace.poly.getZ() === poly.getZ()) {
+                        func.traceToggle(add);
+                    }
+                }
+            }
         };
         func.traceToggle = function(obj, skip) {
             let material = obj.material[0];
             let { color, colorSave } = material;
             let { widget, poly } = obj.trace;
-            let process = current.process;
             let areas = poppedRec.areas;
             if (!areas) {
                 return;
@@ -641,11 +651,12 @@
                 SPACE.update();
             }
         });
-        api.event.on("mouse.hover.up", int => {
+        api.event.on("mouse.hover.up", rec => {
             if (!isCamMode) {
                 return;
             }
-            func.hoverUp(int);
+            let { object, event } = rec;
+            func.hoverUp(object, event);
         });
         api.event.on("mouse.hover", data => {
             if (!isCamMode) {

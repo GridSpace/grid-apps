@@ -138,7 +138,6 @@
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
-        control.expert = UI.expert.checked;
         control.decals = UI.decals.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.showRulers = UI.showRulers.checked;
@@ -155,7 +154,6 @@
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         platform.layout();
         API.conf.save();
-        API.mode.set_expert(control.expert);
         API.platform.update_size();
         API.catalog.setOptions({
             maxpass: control.decimate ? 10 : 0
@@ -172,16 +170,13 @@
 
     function updateFPS() {
         clearTimeout(fpsTimer);
-        const on = UI.expert.checked;
-        UI.fps.style.display = on ? 'block' : '';
-        if (on) {
-            setInterval(() => {
-                const nv = SPACE.view.getFPS().toFixed(2);
-                if (nv !== UI.fps.innerText) {
-                    UI.fps.innerText = nv;
-                }
-            }, 100);
-        }
+        UI.fps.style.display = 'block';
+        setInterval(() => {
+            const nv = SPACE.view.getFPS().toFixed(2);
+            if (nv !== UI.fps.innerText) {
+                UI.fps.innerText = nv;
+            }
+        }, 100);
     }
 
     function onLayerToggle() {
@@ -1513,16 +1508,16 @@
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
             extNozzle:        UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
-            extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, expert:true, area:gcode}),
+            extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM}),
+            extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM}),
+            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
             extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
             extActions:       UC.newRow([
                 UI.extPrev = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
                 UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
                 UI.extDel = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 UI.extNext = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
-            ], {modes:FDM, expert:true, class:"dev-buttons ext-buttons"}),
+            ], {modes:FDM, class:"dev-buttons ext-buttons"}),
 
             gcode:            UC.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LASER}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
@@ -1548,7 +1543,6 @@
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
-            expert:           UC.newBoolean(LANG.op_xprt_s, booleanSave, {title:LANG.op_xprt_l}),
 
             lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
@@ -1577,15 +1571,15 @@
 
             process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
             sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),
-            sliceMinHeight:      UC.newInput(LANG.ad_minl_s, {title:LANG.ad_minl_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true, show: () => UI.sliceAdaptive.checked}),
+            sliceMinHeight:      UC.newInput(LANG.ad_minl_s, {title:LANG.ad_minl_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceAdaptive.checked}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceShells:         UC.newInput(LANG.sl_shel_s, {title:LANG.sl_shel_l, convert:UC.toInt, modes:FDM}),
             sliceTopLayers:      UC.newInput(LANG.sl_ltop_s, {title:LANG.sl_ltop_l, convert:UC.toInt, modes:FDM}),
             sliceSolidLayers:    UC.newInput(LANG.sl_lsld_s, {title:LANG.sl_lsld_l, convert:UC.toInt, modes:FDM}),
             sliceBottomLayers:   UC.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceAdaptive:       UC.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, expert:true, trigger: true}),
-            detectThinWalls:     UC.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM, expert:true}),
+            sliceAdaptive:       UC.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, trigger: true}),
+            detectThinWalls:     UC.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM}),
 
             laserOffset:         UC.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:UC.toFloat, modes:LASER}),
             laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER, trigger: true}),
@@ -1595,12 +1589,12 @@
             firstLayer:          UC.newGroup(LANG.fl_menu, null, {modes:FDM}),
             firstSliceHeight:    UC.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM, expert:true}),
-            firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM, expert:true}),
+            firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM}),
+            firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             firstLayerRate:      UC.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:UC.toFloat, modes:FDM}),
             firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM}),
-            firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM, expert:true}),
+            firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM}),
             outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM}),
@@ -1612,19 +1606,19 @@
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM, expert:true}),
+            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM}),
+            sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
 
             fdmSupport:          UC.newGroup(LANG.sp_menu, null, {modes:FDM, marker:false}),
-            sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM, expert:true}, "extruders"),
+            sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM}, "extruders"),
             sliceSupportDensity: UC.newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:UC.toFloat, bound:UC.bound(0.05,1.0), modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportSize:    UC.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, expert:true}),
+            sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, expert:true}),
+            sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM}),
 
@@ -1697,7 +1691,7 @@
             outputFillMult:      UC.newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             outputSparseMult:    UC.newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputFanLayer:      UC.newInput(LANG.ou_fanl_s, {title:LANG.ou_fanl_l, convert:UC.toInt, bound:UC.bound(0,100), modes:FDM, expert:true}),
+            outputFanLayer:      UC.newInput(LANG.ou_fanl_s, {title:LANG.ou_fanl_l, convert:UC.toInt, bound:UC.bound(0,100), modes:FDM}),
             sliceShellOrder:     UC.newSelect(LANG.sl_ordr_s, {title:LANG.sl_ordr_l, modes:FDM}, "shell"),
             camConventional:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         UC.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
@@ -1706,22 +1700,22 @@
             outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
             camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
 
-            advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM, expert:true}),
-            outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            outputRetractSpeed:  UC.newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:UC.toInt, modes:FDM, expert:true}),
-            outputRetractDwell:  UC.newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:UC.toInt, modes:FDM, expert:true}),
+            advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM}),
+            outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM}),
+            outputRetractSpeed:  UC.newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:UC.toInt, modes:FDM}),
+            outputRetractDwell:  UC.newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            // outputWipeDistance: UC.newInput("wipe", {title:"non-printing move at\close of polygon\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM, expert:true}),
-            sliceSolidMinArea:   UC.newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:UC.toFloat, modes:FDM, expert:true}),
-            outputMinSpeed:      UC.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:UC.bound(5,200), convert:UC.toFloat, modes:FDM, expert:true}),
-            outputCoastDist:     UC.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM, expert:true}),
-            outputShortPoly:     UC.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:UC.bound(0,10000), convert:UC.toFloat, modes:FDM, expert:true}),
+            // outputWipeDistance: UC.newInput("wipe", {title:"non-printing move at\close of polygon\nin millimeters", bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
+            sliceSolidMinArea:   UC.newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:UC.toFloat, modes:FDM}),
+            outputMinSpeed:      UC.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:UC.bound(5,200), convert:UC.toFloat, modes:FDM}),
+            outputCoastDist:     UC.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
+            outputShortPoly:     UC.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:UC.bound(0,10000), convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, expert:true}),
-            antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM, expert:true}),
+            zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
+            antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, expert:true, comma:true}),
-            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM, expert:true}),
+            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true}),
+            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
 
             // SLA
             slaProc:             UC.newGroup(LANG.sa_menu, null, {modes:SLA, group:"sla-slice"}),
@@ -1733,17 +1727,17 @@
             // SLA
             slaOutput:           UC.newGroup(LANG.sa_layr_m, null, {modes:SLA, group:"sla-layers"}),
             slaLayerOn:          UC.newInput(LANG.sa_lton_s, {title:LANG.sa_lton_l, convert:UC.toFloat, modes:SLA}),
-            slaLayerOff:         UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_ltof_l, convert:UC.toFloat, modes:SLA, expert:true}),
+            slaLayerOff:         UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_ltof_l, convert:UC.toFloat, modes:SLA}),
             slaPeelDist:         UC.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:UC.toFloat, modes:SLA}),
-            slaPeelLiftRate:     UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA, expert:true}),
-            slaPeelDropRate:     UC.newInput(LANG.sa_pldr_s, {title:LANG.sa_pldr_l, convert:UC.toFloat, modes:SLA, expert:true}),
+            slaPeelLiftRate:     UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA}),
+            slaPeelDropRate:     UC.newInput(LANG.sa_pldr_s, {title:LANG.sa_pldr_l, convert:UC.toFloat, modes:SLA}),
 
             slaOutput:           UC.newGroup(LANG.sa_base_m, null, {modes:SLA, group:"sla-base"}),
             slaBaseLayers:       UC.newInput(LANG.sa_balc_s, {title:LANG.sa_balc_l, convert:UC.toInt, modes:SLA}),
             slaBaseOn:           UC.newInput(LANG.sa_lton_s, {title:LANG.sa_bltn_l, convert:UC.toFloat, modes:SLA}),
-            slaBaseOff:          UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:UC.toFloat, modes:SLA, expert:true}),
+            slaBaseOff:          UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:UC.toFloat, modes:SLA}),
             slaBasePeelDist:     UC.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:UC.toFloat, modes:SLA}),
-            slaBasePeelLiftRate: UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA, expert:true}),
+            slaBasePeelLiftRate: UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA}),
 
             slaFill:             UC.newGroup(LANG.sa_infl_m, null, {modes:SLA, group:"sla-infill"}),
             slaFillDensity:      UC.newInput(LANG.sa_ifdn_s, {title:LANG.sa_ifdn_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
@@ -1751,14 +1745,14 @@
 
             slaSupport:          UC.newGroup(LANG.sa_supp_m, null, {modes:SLA, group:"sla-support"}),
             slaSupportLayers:    UC.newInput(LANG.sa_slyr_s, {title:LANG.sa_slyr_l, convert:UC.toInt, bound:UC.bound(5,100), modes:SLA}),
-            slaSupportGap:       UC.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:UC.toInt, bound:UC.bound(3,30), modes:SLA, expert:true}),
+            slaSupportGap:       UC.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:UC.toInt, bound:UC.bound(3,30), modes:SLA}),
             slaSupportDensity:   UC.newInput(LANG.sa_sldn_s, {title:LANG.sa_sldn_l, convert:UC.toFloat, bound:UC.bound(0.01,0.9), modes:SLA}),
             slaSupportSize:      UC.newInput(LANG.sa_slsz_s, {title:LANG.sa_slsz_l, convert:UC.toFloat, bound:UC.bound(0.1,1), modes:SLA}),
-            slaSupportPoints:    UC.newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:UC.toInt, bound:UC.bound(3,10), modes:SLA, expert:true}),
+            slaSupportPoints:    UC.newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:UC.toInt, bound:UC.bound(3,10), modes:SLA}),
             slaSupportEnable:    UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.sl_slen_l, modes:SLA}),
 
             slaOutput:           UC.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
-            slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA, expert:true}),
+            slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
 
             settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
@@ -2071,13 +2065,13 @@
             }
         });
 
-        SPACE.mouse.upSelect(function(selection, event) {
+        SPACE.mouse.upSelect(function(object, event) {
             if (event && API.feature.hover) {
-                API.event.emit('mouse.hover.up', selection);
+                API.event.emit('mouse.hover.up', { object, event });
                 return;
             }
             if (event && event.target.nodeName === "CANVAS") {
-                if (selection) {
+                if (selection && selection.object) {
                     if (selection.object.widget) {
                         platform.select(selection.object.widget, event.shiftKey);
                     }
@@ -2205,9 +2199,6 @@
 
             // setup default mode and enable mode locking, if set
             API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
-
-            // restore expert setting preference
-            API.mode.set_expert(control.expert);
 
             // fill device list
             updateDeviceList();

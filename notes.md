@@ -68,8 +68,6 @@
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 * `B` strip "ops" from gcode comments
 
-* `F` trace ctrl-click to select all z co-planar traces
-* `F` split out facing. make it use linear passes
 * `F` add linear clearing strategy option for roughing / pocket
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin

@@ -612,7 +612,6 @@
             controller:{
                 view: null,
                 dark: false,
-                expert: true,
                 decals: true,
                 zoomSpeed: 1.0,
                 lineType: "path",

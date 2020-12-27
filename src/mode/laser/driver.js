@@ -227,6 +227,9 @@
                 let start = newPoint(0,0,0);
                 let gather = [];
                 merged.forEach(poly => {
+                    if (knifeOn) {
+                        addKnifeRadii(poly);
+                    }
                     print.polyPrintPath(poly, start, gather, {
                         extrude: poly.depth,
                         rate: poly.depth * 10

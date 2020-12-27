@@ -162,7 +162,7 @@ kiri.lang['en-us'] = {
     xp_menu:        "exports",
 
     // SETTINGS
-    se_menu:        "library",
+    se_menu:        "profile",
     se_load:        "open",
     se_save:        "save",
 
