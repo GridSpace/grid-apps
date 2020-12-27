@@ -292,7 +292,7 @@
             }
 
             // synth new plunge rate
-            if (deltaZ <= -tolerance) {
+            if (deltaZ < -tolerance) {
                 let threshold = Math.min(deltaXY / 2, absDeltaZ),
                     modifier = threshold / absDeltaZ;
                 if (threshold && modifier && deltaXY > tolerance) {
