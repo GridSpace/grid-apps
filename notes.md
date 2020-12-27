@@ -2,10 +2,10 @@
 
 ## short list
 # `cnc`
+# - revisit ease down
 # - split gcode output
 # - redo path planning
 # - double-sided assistance
-# - more tracing types (in, out, clear, pocket)
 # `fdm`
 # - layer start point control
 # - bind process to z ranges or boxed regions
@@ -68,6 +68,7 @@
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 * `B` strip "ops" from gcode comments
 
+* `F` trace ctrl-click to select all z co-planar traces
 * `F` split out facing. make it use linear passes
 * `F` add linear clearing strategy option for roughing / pocket
 * `F` extend acute roughing on inside polys to clear small voids
