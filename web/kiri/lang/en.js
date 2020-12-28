@@ -273,6 +273,7 @@ kiri.lang['en-us'] = {
 
     // CNC COMMON
     cc_menu:        "limits",
+    cc_flip:        "flip",
     cc_rapd_s:      "xy feed",
     cc_rapd_l:      "max xy moves feedrate\nin workspace units / minute",
     cc_rzpd_s:      "z feed",

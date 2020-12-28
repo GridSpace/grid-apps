@@ -456,6 +456,8 @@
                     camDrillDwell: 250,
                     camDrillLift: 2,
                     camDrillingOn: false,
+                    camFlipAxis: "X",
+                    camFlipOther: "",
                     // camDrillReg: "none",
                     camTabsWidth: 5,
                     camTabsHeight: 5,
@@ -480,7 +482,8 @@
                     outputOriginCenter: false,
                     outputInvertX: false,
                     outputInvertY: false,
-                    ops: []
+                    ops: [], // current ops
+                    op2: []  // flip ops
                 }
             },
             laser: {

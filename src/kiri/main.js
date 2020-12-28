@@ -1640,7 +1640,7 @@
      ******************************************************************* */
 
     // given a settings region, update values of matching bound UI fields
-    function updateFieldsFromSettings(setrec, uirec = UI) {
+    function updateFieldsFromSettings(setrec, uirec = UI, trace) {
         if (!setrec) {
             return console.trace("missing scope");
         }
@@ -1664,7 +1664,7 @@
             } else if (typ === 'select-one') {
                 uie.innerHTML = '';
                 let source = uie.parentNode.getAttribute('source'),
-                    list = settings[source] || lists[source],
+                    list = uie._source || settings[source] || lists[source],
                     chosen = null;
                 if (list) list.forEach(function(el, index) {
                     let id = el.id || el.name;

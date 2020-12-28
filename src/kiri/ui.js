@@ -733,7 +733,11 @@
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
-        row.setAttribute("source", source || "tools");
+        if (Array.isArray(source)) {
+            ip._source = source;
+        } else {
+            row.setAttribute("source", source || "tools");
+        }
         row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
         if (options) {

@@ -5,7 +5,6 @@
 # - revisit ease down
 # - split gcode output
 # - redo path planning
-# - double-sided assistance
 # `fdm`
 # - bind process to z ranges or boxed regions
 

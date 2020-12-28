@@ -22,7 +22,8 @@
 
     let zaxis = { x: 0, y: 0, z: 1 },
         popOp = {},
-        func = {};
+        func = {},
+        flipping;
 
     CAM.restoreTabs = restoreTabs;
 
@@ -156,6 +157,14 @@
                 case "register": return func.opAddRegister('X', 2);
                 case "drill": return func.opAddDrill();
                 case "trace": return func.opAddTrace();
+                case "flip":
+                    // only one flip op permitted
+                    for (let op of current.process.ops) {
+                        if (op.type === 'flip') {
+                            return;
+                        }
+                    }
+                    return func.opAddFlip();
             }
         };
 
@@ -192,6 +201,10 @@
             rec.axis = axis.toUpperCase();
             rec.points = points;
             func.opAdd(rec);
+        };
+
+        func.opAddFlip = () => {
+            func.opAdd(popOp.flip.new());
         };
 
         // TAB/TRACE BUTTON HANDLERS
@@ -344,6 +357,41 @@
                 };
             }
         });
+
+        func.opFlip = () => {
+            let { process } = current;
+            let { ops, op2 } = process;
+            let add2 = op2.length === 0; // add flip singleton to b-side
+            let axis = poppedRec.axis;
+            flipping = true;
+            switch (axis) {
+                case 'X':
+                    API.selection.rotate(Math.PI, 0, 0);
+                    // API.widgets.all().forEach(widget => {
+                    //     widget.rotate(Math.PI, 0, 0);
+                    // });
+                    break;
+                case 'Y':
+                API.selection.rotate(0, Math.PI, 0);
+                    // API.widgets.all().forEach(widget => {
+                    //     widget.rotate(0, Math.PI, 0);
+                    // });
+                    break;
+            }
+            flipping = false;
+            process.ops = op2;
+            process.op2 = ops;
+            for (let op of op2) {
+                if (op.type === 'flip') {
+                    op.axis = poppedRec.axis;
+                }
+            }
+            if (add2) {
+                func.opAdd(poppedRec);
+            } else {
+                func.opRender();
+            }
+        };
 
         // TAB FUNCS
         let showTab, lastTab, tab, iw, ic;
@@ -628,6 +676,9 @@
                 func.traceDone();
             }
             unselectTraces(widget);
+            if (flipping) {
+                return;
+            }
             if (x || y) {
                 clearTabs(widget);
             } else {
@@ -816,6 +867,16 @@
             rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
             dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
             lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true})
+        };
+
+        createPopOp('flip', {
+            axis:     'camFlipAxis'
+        }).inputs = {
+            axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
+            sep:      UC.newBlank({class:"pop-sep"}),
+            action:   UC.newRow([
+                UC.newButton(LANG.cc_flip, func.opFlip)
+            ], {class:"ext-buttons f-row"})
         };
     };
 

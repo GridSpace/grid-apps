@@ -967,7 +967,8 @@
         "contour": OpContour,
         "trace": OpTrace,
         "drill": OpDrill,
-        "register": OpRegister
+        "register": OpRegister,
+        "flip": CamOp
     };
 
 })();
