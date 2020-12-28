@@ -375,7 +375,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, slicer, sliceAll, tshadow } = state;
+            let { settings, widget, slicer, sliceAll, tshadow, thruHoles } = state;
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs } = state;
 
             let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
@@ -439,6 +439,18 @@
                 // outside only (use tshadow for entire cut)
                 if (op.outside) {
                     tops = tshadow;
+                }
+
+                if (op.omitthru) {
+                    // eliminate thru holes from shadow
+                    for (let hole of thruHoles) {
+                        for (let top of tops) {
+                            if (!top.inner) continue;
+                            top.inner = top.inner.filter(innr => {
+                                return !innr.isEquivalent(hole);
+                            });
+                        }
+                    }
                 }
 
                 let offset = POLY.expand(tops, toolDiam / 2, slice.z);

@@ -431,6 +431,7 @@
                     camOutlinePlunge: 250,
                     camOutlineWide: false,
                     camOutlineDogbone: false,
+                    camOutlineOmitThru: false,
                     camOutlineOut: true,
                     camOutlineIn: false,
                     camOutlineOn: true,
