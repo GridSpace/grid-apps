@@ -373,19 +373,31 @@
             // flip tabs
             API.widgets.all().forEach(widget => {
                 let anno = API.widgets.annotate(widget.id).tab || [];
+                let wbm = widget.bounds.max.z;
                 for (let tab of anno) {
-                    let wtp = widget.tabs[tab.id].box.position;
+                    let box = widget.tabs[tab.id].box;
+                    let bpo = box.position;
+                    let xr = 0, yr = 0;
+                    let flz = wbm - bpo.z;
                     if (axis === 'X') {
                         tab.pos.y = -tab.pos.y;
-                        wtp.y = -wtp.y;
+                        bpo.y = -bpo.y;
+                        xr = Math.PI / 2;
                     }
                     if (axis === 'Y') {
                         tab.pos.x = -tab.pos.x;
-                        wtp.x = -wtp.x;
+                        bpo.x = -bpo.x;
+                        yr = Math.PI / 2;
                     }
-                    tab.pos.z = widget.bounds.max.z - tab.pos.z;
-                    wtp.z = widget.bounds.max.z - wtp.z;
+                    tab.pos.z = bpo.z = flz;
+                    let { rot } = tab;
+                    let qat = new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w);
+                    let eul = new THREE.Euler().setFromQuaternion(qat);
+                    eul._z = -eul._z;
+                    tab.rot = new THREE.Quaternion().setFromEuler(eul);
                 }
+                clearTabs(widget, true);
+                restoreTabs([widget]);
             });
             // flip widget
             if (axis === 'X') {
@@ -698,24 +710,7 @@
             if (x || y) {
                 clearTabs(widget);
             } else {
-                let tabs = API.widgets.annotate(widget.id).tab || [];
-                tabs.forEach(rec => {
-                    let { id, pos, rot } = rec;
-                    let tab = widget.tabs[id];
-                    let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0, 0, z || 0));
-                    // update position vector
-                    let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
-                    // update rotation quaternion
-                    rec.rot = new THREE.Quaternion().multiplyQuaternions(
-                        new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w),
-                        new THREE.Quaternion().setFromRotationMatrix(m4)
-                    );
-                    tab.box.geometry.applyMatrix4(m4);
-                    tab.box.position.x = pos.x = vc.x;
-                    tab.box.position.y = pos.y = vc.y;
-                    tab.box.position.z = pos.z = vc.z;
-                });
-                SPACE.update();
+                rotateTabs(widget, x, y, z);
             }
         });
         api.event.on("mouse.hover.up", rec => {
@@ -731,6 +726,27 @@
             }
             func.hover(data);
         });
+
+        function rotateTabs(widget, x, y, z) {
+            let tabs = API.widgets.annotate(widget.id).tab || [];
+            tabs.forEach(rec => {
+                let { id, pos, rot } = rec;
+                let tab = widget.tabs[id];
+                let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+                // update position vector
+                let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
+                // update rotation quaternion
+                rec.rot = new THREE.Quaternion().multiplyQuaternions(
+                    new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w),
+                    new THREE.Quaternion().setFromRotationMatrix(m4)
+                );
+                tab.box.geometry.applyMatrix4(m4);
+                tab.box.position.x = pos.x = vc.x;
+                tab.box.position.y = pos.y = vc.y;
+                tab.box.position.z = pos.z = vc.z;
+            });
+            SPACE.update();
+        }
 
         function hasSpindle() {
             return current.device.spindleMax > 0;
@@ -949,10 +965,10 @@
     function createTabBox(iw, ic, n) {
         const { track } = iw;
         const { stock, bounds, process } = API.conf.get();
-        const { camTabsWidth, camTabsHeight, camTabsDepth } = process;
+        const { camTabsWidth, camTabsHeight, camTabsDepth, camTabsMidline } = process;
         const sz = stock.z || bounds.max.z;
         const zto = sz - iw.track.top;
-        const zp = sz - track.box.d + process.camZBottom - zto + camTabsHeight / 2;
+        const zp = sz - track.box.d + process.camZBottom - zto + (camTabsMidline ? 0 : camTabsHeight / 2);
         ic.x += n.x * camTabsDepth / 2; // offset from part
         ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
         ic.y = zp; // offset swap in world space y,z
@@ -989,13 +1005,15 @@
         });
     }
 
-    function clearTabs(widget) {
+    function clearTabs(widget, skiprec) {
         Object.values(widget.tabs || {}).forEach(rec => {
             widget.adds.remove(rec.box);
             widget.mesh.remove(rec.box);
         });
         widget.tabs = {};
-        delete API.widgets.annotate(widget.id).tab;
+        if (!skiprec) {
+            delete API.widgets.annotate(widget.id).tab;
+        }
     }
 
     function unselectTraces(widget) {

@@ -463,6 +463,7 @@
                     camTabsWidth: 5,
                     camTabsHeight: 5,
                     camTabsDepth: 5,
+                    camTabsMidline: false,
                     camDepthFirst: false,
                     camEaseDown: false,
                     camOriginTop: true,

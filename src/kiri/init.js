@@ -1636,6 +1636,7 @@
             camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
             camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
             camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
+            camTabsMidline:      UC.newBoolean(LANG.ct_midl_s, onBooleanClick, {title:LANG.ct_midl_l, modes:CAM}),
             camSep:              UC.newBlank({class:"pop-sep"}),
             camTabsManual: UC.newRow([
                 (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
