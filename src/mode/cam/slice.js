@@ -164,7 +164,8 @@
         // add shadow perimeter to terrain to catch outside moves off part
         let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
         let allpoly = POLY.union([...state.shadowTop.tops, ...tabpoly], 0, true);
-        let shadowOff = POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
+        let shadowOff = maxToolDiam < 0 ? allpoly :
+            POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
         state.terrain.forEach(level => level.tops.appendAll(shadowOff));
 
         widget.terrain = state.skipTerrain ? null : state.terrain;
