@@ -1693,6 +1693,7 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             outputFanLayer:      UC.newInput(LANG.ou_fanl_s, {title:LANG.ou_fanl_l, convert:UC.toInt, bound:UC.bound(0,100), modes:FDM}),
             sliceShellOrder:     UC.newSelect(LANG.sl_ordr_s, {title:LANG.sl_ordr_l, modes:FDM}, "shell"),
+            sliceLayerStart:     UC.newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l, modes:FDM}, "start"),
             camConventional:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         UC.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
             camDepthFirst:       UC.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),

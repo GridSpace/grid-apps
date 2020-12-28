@@ -186,6 +186,8 @@ kiri.lang['en-us'] = {
     sl_shel_l:      "number of perimeter\nwalls to generate",
     sl_ordr_s:      "shell order",
     sl_ordr_l:      "output shell order\ninside to outside\nor outside to inside\naffects surface quality",
+    sl_strt_s:      "layer start",
+    sl_strt_l:      "layer starting point\nlast = last layer end\ncenter = part center\norigin = device origin",
     ad_thin_s:      "thin walls",
     ad_thin_l:      "detect and fill gaps\nbetween shell walls",
 

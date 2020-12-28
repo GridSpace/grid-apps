@@ -7,7 +7,6 @@
 # - redo path planning
 # - double-sided assistance
 # `fdm`
-# - layer start point control
 # - bind process to z ranges or boxed regions
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix

@@ -706,6 +706,16 @@
                     outputFills(next.fill, {fast: true});
                 }
             } else {
+                // control of layer start point
+                switch (process.sliceLayerStart) {
+                    case "center":
+                        startPoint = newPoint(0,0,startPoint.z);
+                        break;
+                    case "origin":
+                        startPoint = origin.clone();
+                        break;
+                }
+
                 // top object
                 let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
 

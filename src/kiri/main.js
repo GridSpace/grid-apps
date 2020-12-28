@@ -138,6 +138,11 @@
             { name: "in-out" },
             { name: "out-in" },
         ],
+        start: [
+            { name: "last" },
+            { name: "center" },
+            { name: "origin" },
+        ],
         infill: [
             { name: "vase" },
             { name: "hex" },
