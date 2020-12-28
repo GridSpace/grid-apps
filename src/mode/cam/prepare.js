@@ -312,11 +312,11 @@
                 }
             }
 
-            // synth new plunge rate
-            if (synthPlunge && deltaZ <= -tolerance) {
+            // set new plunge rate
+            if (deltaZ < -tolerance) {
                 let threshold = Math.min(deltaXY / 2, absDeltaZ),
                     modifier = threshold / absDeltaZ;
-                if (threshold && modifier && deltaXY > tolerance) {
+                if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                     // use modifier to speed up long XY move plunge rates
                     rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
                 } else {
