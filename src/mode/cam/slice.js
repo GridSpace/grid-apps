@@ -262,7 +262,7 @@
     function cutTabs(tabs, offset, z) {
         let noff = [];
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
-        offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs)) ));
+        offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs, 0, true)) ));
         if (noff.length > 1) {
             let heal = 0;
             // heal/rejoin open segments that share endpoints

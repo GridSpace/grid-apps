@@ -359,6 +359,7 @@
         });
 
         func.opFlip = () => {
+            let widgets = API.widgets.all();
             let { process } = current;
             let { ops, op2 } = process;
             // add flip singleton to b-side
@@ -371,7 +372,7 @@
                 middle: "middle"
             }[process.camZAnchor];
             // flip tabs
-            API.widgets.all().forEach(widget => {
+            for (let widget of widgets) {
                 let anno = API.widgets.annotate(widget.id).tab || [];
                 let wbm = widget.bounds.max.z;
                 for (let tab of anno) {
@@ -398,7 +399,7 @@
                 }
                 clearTabs(widget, true);
                 restoreTabs([widget]);
-            });
+            }
             // flip widget
             if (axis === 'X') {
                 API.selection.rotate(Math.PI, 0, 0);
@@ -409,6 +410,11 @@
             flipping = false;
             process.ops = op2;
             process.op2 = ops;
+            // special case, auto-adjust camZBottom
+            if (process.camZBottom && widgets.length === 1) {
+                process.camZBottom = widgets[0].bounds.max.z - process.camZBottom;
+                API.util.rec2ui(process);
+            }
             for (let op of op2) {
                 if (op.type === 'flip') {
                     op.axis = poppedRec.axis;
