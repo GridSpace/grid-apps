@@ -361,7 +361,8 @@
         func.opFlip = () => {
             let { process } = current;
             let { ops, op2 } = process;
-            let add2 = op2.length === 0; // add flip singleton to b-side
+            // add flip singleton to b-side
+            let add2 = op2.length === 0;
             let axis = poppedRec.axis;
             flipping = true;
             process.camZAnchor = {
@@ -369,13 +370,29 @@
                 bottom: "top",
                 middle: "middle"
             }[process.camZAnchor];
-            switch (axis) {
-                case 'X':
-                    API.selection.rotate(Math.PI, 0, 0);
-                    break;
-                case 'Y':
-                    API.selection.rotate(0, Math.PI, 0);
-                    break;
+            // flip tabs
+            API.widgets.all().forEach(widget => {
+                let anno = API.widgets.annotate(widget.id).tab || [];
+                for (let tab of anno) {
+                    let wtp = widget.tabs[tab.id].box.position;
+                    if (axis === 'X') {
+                        tab.pos.y = -tab.pos.y;
+                        wtp.y = -wtp.y;
+                    }
+                    if (axis === 'Y') {
+                        tab.pos.x = -tab.pos.x;
+                        wtp.x = -wtp.x;
+                    }
+                    tab.pos.z = widget.bounds.max.z - tab.pos.z;
+                    wtp.z = widget.bounds.max.z - wtp.z;
+                }
+            });
+            // flip widget
+            if (axis === 'X') {
+                API.selection.rotate(Math.PI, 0, 0);
+            }
+            if (axis === 'Y') {
+                API.selection.rotate(0, Math.PI, 0);
             }
             flipping = false;
             process.ops = op2;
