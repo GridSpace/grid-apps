@@ -2,11 +2,7 @@
 
 ## short list
 # `cnc`
-# - revisit ease down
-# - redo path planning
 # - detect overhangs with updated analyzer
-# `fdm`
-# - bind process to z ranges or boxed regions
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -24,9 +20,8 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` redo auto supports to use poly faces rather than deltas
+* `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
-* `F` control layer start position
 * `F` add separate fill speed control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
@@ -89,6 +84,7 @@
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops
+* `F` ease-down should be engaged in all descending cutting operations
 
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut

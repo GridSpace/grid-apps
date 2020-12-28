@@ -886,17 +886,11 @@
 
             // add offset solids to supports (or fill depending)
             fill.forEachPair(function(p1,p2) { checkLineSupport(p1, p2, false) });
-            // if (top.bridges) POLY.expand(top.bridges, -maxBridge/2, top.z, supports, 1);
 
             // skip the rest if no points or supports
             if (!(points.length || supports.length)) return;
 
             let pillars = [];
-
-            // TODO project points down instead of unioned pillars
-            // TODO merge point/rect into hull of next nearest (up to maxBridge/2 away)
-            // TODO eliminate unions in favor of progress hulling (using previous w/nearness)
-            // TODO align pillar diamond along line (when doing line checks)
 
             // for each point, create a bounding rectangle
             points.forEach(function(point) {
@@ -914,29 +908,24 @@
         }
 
         if (fixed && fixed.length) {
-            fixed.forEach(sup => {
+            for (let sup of fixed) {
                 let zmin = sup.z - sup.dh / 2;
                 let zmax = sup.z + sup.dh / 2;
-                if (slice.z >= zmin || slice.z <= zmax) {
+                if (slice.z >= zmin && slice.z <= zmax) {
                     let center = BASE.newPoint(sup.x, sup.y, slice.z);
                     supports.push(BASE.newPolygon().centerRectangle(center, sup.dw, sup.dw));
                 }
-            });
+            }
         }
 
-        // return top.supports = supports;
         // then union supports
         supports = POLY.union(supports, null, true);
-
-        // constrain support poly to top polys
-        supports = POLY.trimTo(supports, trimTo);
 
         let depth = 0;
         while (down && supports.length > 0) {
             down.supports = down.supports || [];
 
-            let trimmed = [],
-                culled = [];
+            let trimmed = [], culled = [];
 
             // clip supports to shell offsets
             POLY.subtract(supports, down.topPolys(), trimmed, null, slice.z, min);
