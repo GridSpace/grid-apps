@@ -1,9 +1,5 @@
 # Kiri:Moto todo and notes
 
-## short list
-# `cnc`
-# - detect overhangs with updated analyzer
-
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
@@ -57,37 +53,33 @@
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
-* `B` top clearing operations should use linear, not offset, passes
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
+* `F` update analyzer to detect overhangs
 * `F` add linear clearing strategy option for roughing / pocket
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
-* `F` skip "thru" holes checkbox for roughing and outlining
 * `F` polygon simplification option in tracing (for image derived maps)
-* `F` exports separate files for each operation
-* `F` switch z top offset to a z anchor (top/bottom) + offset
-* `F` A-B linked cutting profiles for double-sided milling / part flips
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
-* `F` z bounded slices (extension of z bottom offset feature)
 * `F` z planar settings visualizations
 * `F` convert acute angles to arcs
 * `F` lead-in milling
 * `F` adaptive clearing in roughing mode
-* `F` trapezoidal tabs (in the Z axis)
+* `F` trapezoidal tabs in Z
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add support for tapered ball mills
 * `F` warn when part > stock or cuts go outside bed
-* `F` animation should clear the mesh in areas where the cuts go through the stock?
+* `F` can animation clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops
 * `F` ease-down should be engaged in all descending cutting operations
 
-* `P` detect render message backlog and pause or warn
+* `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
+* `P` detect render message backlog and pause or warn
 * `P` allow faster z movements when contouring (not plunging)
 
 # Laser
