@@ -2071,9 +2071,9 @@
                 return;
             }
             if (event && event.target.nodeName === "CANVAS") {
-                if (selection && selection.object) {
-                    if (selection.object.widget) {
-                        platform.select(selection.object.widget, event.shiftKey);
+                if (object && object.object) {
+                    if (object.object.widget) {
+                        platform.select(object.object.widget, event.shiftKey);
                     }
                 } else {
                     platform.deselect();
