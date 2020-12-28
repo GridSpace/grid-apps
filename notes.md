@@ -3,8 +3,8 @@
 ## short list
 # `cnc`
 # - revisit ease down
-# - split gcode output
 # - redo path planning
+# - detect overhangs with updated analyzer
 # `fdm`
 # - bind process to z ranges or boxed regions
 
@@ -64,7 +64,6 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` top clearing operations should use linear, not offset, passes
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
-* `B` strip "ops" from gcode comments
 
 * `F` add linear clearing strategy option for roughing / pocket
 * `F` extend acute roughing on inside polys to clear small voids
@@ -89,6 +88,7 @@
 * `F` warn when part > stock or cuts go outside bed
 * `F` animation should clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
+* `F` gcode output option as zip for multiple or flip ops
 
 * `P` detect render message backlog and pause or warn
 * `P` redo all path route / planning in prepare to account for terrain before camOut

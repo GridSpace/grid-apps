@@ -372,15 +372,9 @@
             switch (axis) {
                 case 'X':
                     API.selection.rotate(Math.PI, 0, 0);
-                    // API.widgets.all().forEach(widget => {
-                    //     widget.rotate(Math.PI, 0, 0);
-                    // });
                     break;
                 case 'Y':
-                API.selection.rotate(0, Math.PI, 0);
-                    // API.widgets.all().forEach(widget => {
-                    //     widget.rotate(0, Math.PI, 0);
-                    // });
+                    API.selection.rotate(0, Math.PI, 0);
                     break;
             }
             flipping = false;
