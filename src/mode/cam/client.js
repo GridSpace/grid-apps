@@ -364,6 +364,11 @@
             let add2 = op2.length === 0; // add flip singleton to b-side
             let axis = poppedRec.axis;
             flipping = true;
+            process.camZAnchor = {
+                top: "bottom",
+                bottom: "top",
+                middle: "middle"
+            }[process.camZAnchor];
             switch (axis) {
                 case 'X':
                     API.selection.rotate(Math.PI, 0, 0);
