@@ -60,10 +60,11 @@
             layers: [ ],
             obj: new KIRI.Stack(view, freeMem),
             add: function(layers) {
+                let lmap = layers.layers;
                 let map = stack.obj.addLayers(layers);
                 for (const [label, mats] of Object.entries(map)) {
                     if (!DYN[label]) {
-                        DYN[label] = {
+                        let check = DYN[label] = {
                             group: [],
                             toggle: UC.newBoolean(label, (abc) => {
                                 ctrl.group.forEach(mat => {
@@ -71,6 +72,11 @@
                                 });
                             })
                         };
+                        // let color = lmap[label].color.check;
+                        // if (color !== undefined) {
+                        //     console.log({check, color});
+                        //     check.toggle.style.color = "#f00";
+                        // }
                     }
                     const ctrl = DYN[label];
                     ctrl.group.appendAll(mats);

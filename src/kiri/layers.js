@@ -47,6 +47,7 @@
                 paths: [],
                 cpath: undefined, // path colors indices
                 color: colors || {
+                    check: 0,
                     line: 0,
                     face: 0,
                     opacity: 1

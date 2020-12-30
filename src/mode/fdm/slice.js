@@ -279,7 +279,7 @@
         slice.tops.forEach(top => {
             if (isThin) {
                 output
-                    .setLayer('slice', { line: 0x000066 })
+                    .setLayer('slice', { line: 0x000066, check: 0xff0000 })
                     .addPolys(top.poly);
             }
 
