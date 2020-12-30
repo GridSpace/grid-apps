@@ -18,10 +18,10 @@
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
         COLOR = {
-            shell: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
-            fill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
-            infill: { face: 0x0077bb, line: 0x0077bb, opacity: 1 },
-            support: { face: 0x006699, line: 0x006699, opacity: 1 }
+            shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity: 1 },
+            fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity: 1 },
+            infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
+            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 }
         },
         PROTO = Object.clone(COLOR);
 
@@ -279,7 +279,7 @@
         slice.tops.forEach(top => {
             if (isThin) {
                 output
-                    .setLayer('slice', { line: 0x000066, check: 0xff0000 })
+                    .setLayer('slice', { line: 0x000066, check: 0x000066 })
                     .addPolys(top.poly);
             }
 

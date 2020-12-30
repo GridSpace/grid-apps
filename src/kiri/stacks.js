@@ -72,11 +72,14 @@
                                 });
                             })
                         };
-                        // let color = lmap[label].color.check;
-                        // if (color !== undefined) {
-                        //     console.log({check, color});
-                        //     check.toggle.style.color = "#f00";
-                        // }
+                        let color = lmap[label].color.check;
+                        if (color !== undefined) {
+                            let div = document.createElement('div');
+                            div.setAttribute('class', 'color');
+                            div.style.backgroundColor = `#${color.toString(16).padStart(6,0)}`;
+                            check.toggle.parentNode.appendChild(div);
+                            check.toggle.classList.add("color");
+                        }
                     }
                     const ctrl = DYN[label];
                     ctrl.group.appendAll(mats);
