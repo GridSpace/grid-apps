@@ -266,7 +266,7 @@
             layerBytes = width * height,
             coded;
 
-        if (legacy) {
+        if (SLA.legacy) {
             let converted = conf.lines.map((line, index) => {
                 let count = line.length / 4;
                 let bits = new Uint8Array(line.length / 4);

@@ -695,7 +695,11 @@
      * @param {Polygon[]} polys
      */
     function addSolidFills(slice, polys) {
-        slice.solids.appendAll(polys);
+        if (slice.solids) {
+            slice.solids.appendAll(polys);
+        } else if (polys && polys.length) {
+            console.log({no_solids_in: slice, for: polys})
+        }
     };
 
     /**

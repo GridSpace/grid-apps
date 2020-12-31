@@ -584,7 +584,7 @@
         }
 
         fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
-        fill = POLY.union(slice.unioned.appendAll(fill));
+        fill = POLY.union(slice.unioned.appendAll(fill),0,true);
 
         slice.unioned = fill;
     }
