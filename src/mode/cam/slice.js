@@ -62,25 +62,25 @@
         }
 
         if (!proc.ops || proc.ops.length === 0) {
-            return ondone('no processes specified');
+            throw 'no processes specified';
         }
 
         if (stock.x && stock.y && stock.z) {
             if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
-                return ondone('stock X too small for part. disable stock or use offset stock');
+                throw 'stock X too small for part. disable stock or use offset stock';
             }
 
             if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
-                return ondone('stock Y too small for part. disable stock or use offset stock');
+                throw 'stock Y too small for part. disable stock or use offset stock';
             }
 
             if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
-                return ondone('stock Z too small for part. disable stock or use offset stock');
+                throw 'stock Z too small for part. disable stock or use offset stock';
             }
         }
 
         if (zMin >= bounds.max.z) {
-            return ondone(`invalid z bottom >= bounds z max ${bounds.max.z}`);
+            throw `invalid z bottom ${zMin.round(3)} >= bounds z max ${zMax.round(3)}`;
         }
 
         let mark = Date.now();
