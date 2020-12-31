@@ -903,6 +903,10 @@ th, tr, td, label {
         margin: 10px;
     }
 }
+#help li {
+    list-style-type: circle;
+    margin-left: 10px;
+}
 #help .header {
     border: 1px solid rgba(0,0,0,0.75);
     background-color: rgba(0,0,0,0.05);
@@ -991,9 +995,18 @@ th, tr, td, label {
     height: 450px;
     transform: translateX(-1px);
 }
-#help-tab-support a:hover {
-    background-color: #aee;
+#help-tabs p, #help-tabs li, #help-tabs table {
+    color: #035;
+}
+#help-tab-support a:hover, #help-tab-start a:hover {
+    background-color: rgba(61,133,198,0.25);
     border-radius: 5px;
+}
+#help-start {
+    margin: 5px 0 5px 0;
+}
+#help-start a {
+    padding: 5px;
 }
 .help-tab {
     flex-grow: 1;
