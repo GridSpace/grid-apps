@@ -21,7 +21,8 @@
     FDM.prepare = function(widgets, settings, update) {
         settings = FDM.fixExtruders(settings);
 
-        let device = settings.device,
+        let render = settings.render !== false,
+            device = settings.device,
             nozzle = device.extruders[0].extNozzle,
             process = settings.process,
             bounds = settings.bounds,
@@ -396,8 +397,8 @@
 
         print.output = output;
 
-        // render when not internal (engine api)
-        if (!settings.internal) {
+        // render if not explicitly disabled
+        if (render) {
             print.render = FDM.prepareRender(output, (progress, layer) => {
                 update(0.5 + progress * 0.5, "render", layer);
             }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });

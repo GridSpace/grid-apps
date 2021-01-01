@@ -13,7 +13,7 @@ class Engine {
         this.settings = {
             mode: "FDM",
             controller: {},
-            internal: true,
+            render: false,
             filter: { FDM: "internal" },
             device: KIRI.conf.defaults.fdm.d, // device profile
             process: KIRI.conf.defaults.fdm.p, // slicing settings
@@ -50,6 +50,11 @@ class Engine {
 
     setListener(listener) {
         this.listener = listener;
+    }
+
+    setRender(bool) {
+        this.settings.render = bool;
+        return this;
     }
 
     setMode(mode) {
