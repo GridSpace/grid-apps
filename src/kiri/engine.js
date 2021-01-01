@@ -13,6 +13,7 @@ class Engine {
         this.settings = {
             mode: "FDM",
             controller: {},
+            internal: true,
             filter: { FDM: "internal" },
             device: KIRI.conf.defaults.fdm.d, // device profile
             process: KIRI.conf.defaults.fdm.p, // slicing settings

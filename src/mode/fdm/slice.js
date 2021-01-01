@@ -56,7 +56,8 @@
      */
     FDM.slice = function(settings, widget, onupdate, ondone) {
         FDM.fixExtruders(settings);
-        let spro = settings.process,
+        let render = !settings.internal,
+            spro = settings.process,
             sdev = settings.device,
             update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
@@ -258,9 +259,12 @@
                 }, "support");
             }
 
-            forSlices(0.9, 1.0, function(slice) {
-                doRender(slice);
-            }, "render");
+            // skip rendering in api-only mode
+            if (render) {
+                forSlices(0.9, 1.0, function(slice) {
+                    doRender(slice);
+                }, "render");
+            }
 
             // report slicing complete
             ondone();
@@ -323,7 +327,7 @@
             if (poly.fill) output
                 .setLayer("support", COLOR.support)
                 .addLines(poly.fill, vopt({ offset, height }));
-        })
+        });
 
         // if (isThin && debug) {
         //     output

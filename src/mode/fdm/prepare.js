@@ -395,10 +395,14 @@
         }
 
         print.output = output;
-        print.render = FDM.prepareRender(output, (progress, layer) => {
-            update(0.5 + progress * 0.5, "render", layer);
-        }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
-        return print.render;
+
+        // render when not internal (engine api)
+        if (!settings.internal) {
+            print.render = FDM.prepareRender(output, (progress, layer) => {
+                update(0.5 + progress * 0.5, "render", layer);
+            }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
+            return print.render;
+        }
     };
 
     class Counter {
