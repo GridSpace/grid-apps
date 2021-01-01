@@ -29,7 +29,7 @@
                 KIRI.client.sync();
                 let settings = API.conf.get();
                 let widgets = API.widgets.map();
-                send("cam_traces", { settings }, output => {
+                KIRI.client.send("cam_traces", { settings }, output => {
                     let ids = [];
                     KIRI.codec.decode(output).forEach(rec => {
                         ids.push(rec.id);

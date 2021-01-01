@@ -2,6 +2,8 @@
 
 "use strict";
 
+(function() {
+
 // this code runs in kiri's main loop
 let KIRI = self.kiri = self.kiri || {},
     loc = self.location,
@@ -224,3 +226,5 @@ KIRI.work = {
 
 // start worker
 KIRI.work.restart();
+
+})();
