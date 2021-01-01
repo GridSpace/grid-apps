@@ -200,17 +200,17 @@ self.kiri.loader.push(function() {
     if (KIRI.client)
     KIRI.client.animate_setup = function(settings, ondone) {
         unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
-        send("animate_setup", {settings}, ondone);
+        KIRI.client.send("animate_setup", {settings}, ondone);
     };
 
     if (KIRI.client)
     KIRI.client.animate = function(data, ondone) {
-        send("animate", data, ondone);
+        KIRI.client.send("animate", data, ondone);
     };
 
     if (KIRI.client)
     KIRI.client.animate_cleanup = function(data, ondone) {
-        send("animate_cleanup", data, ondone);
+        KIRI.client.send("animate_cleanup", data, ondone);
     };
 
     // ---( WORKER FUNCTIONS )---
