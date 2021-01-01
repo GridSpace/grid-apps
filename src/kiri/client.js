@@ -3,15 +3,12 @@
 "use strict";
 
 // this code runs in kiri's main loop
-if (!self.kiri) self.kiri = {};
-
-let loc = self.location,
+let KIRI = self.kiri = self.kiri || {},
+    loc = self.location,
     host = loc.hostname,
     port = loc.port,
     proto = loc.protocol,
     time = function() { return new Date().getTime() },
-    KIRI = self.kiri,
-    BASE = self.base,
     seqid = 1,
     syncd = {},
     running = {},

@@ -60,9 +60,6 @@
 
     DBUG.enable();
 
-    // remove version, preserve other settings
-    WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);
-
     // add show() to catalog for API
     CATALOG.show = showCatalog;
 
@@ -445,6 +442,9 @@
 
     STATS.set('init', inits);
     STATS.set('kiri', kiri.version);
+
+    // remove version from url, preserve other settings
+    WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);
 
     /** ******************************************************************
      * Utility Functions

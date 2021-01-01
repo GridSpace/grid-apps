@@ -45,6 +45,21 @@
             isThin = settings.controller.lineType === "line",
             isFlat = settings.controller.lineType === "flat";
 
+        // compute bounds if missing
+        if (!bounds) {
+            bounds = new THREE.Box3();
+            for (let widget of widgets) {
+                let wp = widget.track.pos;
+                let wb = widget.bounds.clone();
+                wb.min.x += wp.x;
+                wb.max.x += wp.x;
+                wb.min.y += wp.y;
+                wb.max.y += wp.y;
+                bounds.union(wb);
+            }
+            settings.bounds = bounds;
+        }
+
         // TODO pick a widget with a slice on the first layer and use that nozzle
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
         if (process.outputBrimCount || process.outputRaft) {
