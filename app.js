@@ -341,6 +341,32 @@ const script = {
         "kiri/codec",
         "kiri/worker"
     ].map(p => `src/${p}.js`),
+    engine : [
+        "kiri",
+        "license",
+        "ext/three",
+        "add/array",
+        "add/three",
+        "geo/base",
+        "geo/debug",
+        "geo/render",
+        "geo/point",
+        "geo/points",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "moto/kv",
+        // "moto/ajax",
+        "moto/load-stl",
+        "kiri/conf",
+        "kiri/client",
+        "kiri/slice",
+        "kiri/layers",
+        "kiri/widget",
+        "kiri/codec",
+    ].map(p => `src/${p}.js`),
     meta : [
         "ext/three",
         "license",
@@ -681,6 +707,7 @@ function prepareScripts() {
     code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
     code.worker = concatCode(script.worker);
+    code.engine = concatCode(script.engine);
 }
 
 function concatCode(array) {

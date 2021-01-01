@@ -3,6 +3,7 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
+* `B` normalize left, bottom, right pop menu time/click and value persistence
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
@@ -97,3 +98,9 @@
 # More CNC
 
 * https://www.researchgate.net/publication/250328721_Toolpath_Optimization_on_Automatic_Removal_Uncut_and_Application
+
+# Zip output
+
+* https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
+* https://en.wikipedia.org/wiki/ZIP_(file_format)
+* https://stuk.github.io/jszip/
