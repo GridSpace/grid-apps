@@ -366,6 +366,7 @@ const script = {
         "kiri/layers",
         "kiri/widget",
         "kiri/codec",
+        "kiri/engine"
     ].map(p => `src/${p}.js`),
     meta : [
         "ext/three",
