@@ -26,6 +26,7 @@ class Engine {
         return new Promise((accept, reject) => {
             try {
                 new moto.STL().load(url, vertices => {
+                    this.listener({loaded: url, vertices});
                     this.widget.loadVertices(vertices)
                     accept(this);
                 });
@@ -39,6 +40,7 @@ class Engine {
         return new Promise((accept, reject) => {
             try {
                 new moto.STL().parse(data, vertices => {
+                    this.listener({parsed: data, vertices});
                     this.widget.loadVertices(vertices)
                     accept(this);
                 });
@@ -50,6 +52,7 @@ class Engine {
 
     setListener(listener) {
         this.listener = listener;
+        return this;
     }
 
     setRender(bool) {

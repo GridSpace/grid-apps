@@ -1,0 +1,149 @@
+<html>
+<head lang="en">
+    <title>Kiri:Moto Javascript Engine API</title>
+    <meta charset="UTF-8" />
+    <meta name="keywords" content="browser,slicer,3d print,free,3d slicer,3d slicing,fdm,sla,cnc,cam,machining,toolpaths,toolpath generation,construction systems,kirimoto,metamoto,kiri:moto,kiri,gridbot" />
+    <meta name="description" content="Kiri:Moto Javascript Engine API" />
+    <meta property="og:description" content="Browser-Based Maker Tools for 3D Printing, CNC, Laser, Device Control and more">
+    <meta property="og:title" content="Kiri:Moto Javascript Engine API">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grid.space/engine.html">
+    <meta property="og:image" content="//static.grid.space/img/logo_gs_og.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="//static.grid.space/img/favicon.ico">
+    <link rel="apple-touch-icon" href="//static.grid.space/img/favicon-mobile.png">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+        }
+        #demo {
+            display: flex;
+            flex-direction: row;
+        }
+        #jcode, #gcode {
+            width: 400px;
+            height: 400px;
+            margin: 5px;
+            border-radius: 3px;
+            border: 1px solid #aaa;
+        }
+        #jcode, #gcode {
+            display: flex;
+            flex-direction: column;
+        }
+        #jhead, #ghead {
+            padding: 3px;
+            text-align: center;
+            background-color: rgba(61,133,198,0.25);
+            border-bottom: 1px solid #aaa;
+        }
+        #jbody, #gbody {
+            flex-grow: 1;
+        }
+        #jfoot {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        #jfoot button {
+            width: 100%;
+        }
+        #gbody {
+            font-family: monospace;
+            font-size: smaller;
+            white-space: pre;
+            overflow: auto;
+        }
+        #gfoot {
+            background-color: rgba(61,133,198,0.25);
+            border-top: 1px solid #aaa;
+            padding: 3px;
+            text-align: center;
+        }
+        #api {
+            width: 812px;
+        }
+        li {
+            list-style: circle;
+        }
+        li label {
+            white-space: pre;
+            font-family: monospace;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="/code/engine.js"></script>
+    <script>
+        let edit;
+        function $(id) { return document.getElementById(id) }
+        function onload() {
+            let fnstr = demo.toString().split("\n");
+            edit = ace.edit($("jbody"), {
+                mode: "ace/mode/javascript",
+                theme: "ace/theme/chrome",
+                selectionStyle: "text"
+            });
+            edit.session.setTabSize(4);
+            edit.session.setUseSoftTabs(true);
+            edit.session.setValue(fnstr
+                .slice(1,fnstr.length - 1)
+                .map(l => l.replace("            ",""))
+                .join('\n'));
+        }
+        function display_message(msg) {
+            $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
+        }
+        function display_gcode(gcode) {
+            $('gbody').innerText = gcode;
+            display_message();
+        }
+        function run_code() {
+            let code = edit.session.getValue();
+            eval(`(function(){${code}})()`);
+        }
+        function demo() {
+            kiri.newEngine()
+                .setListener(display_message)
+                .load("/obj/cube.stl")
+                .then(eng => eng.slice())
+                .then(eng => eng.prepare())
+                .then(eng => eng.export())
+                .then(display_gcode)
+        }
+    </script>
+</head>
+<body onload="onload()">
+    <h2 id="title">Kiri:Moto Javascript Engine API</h2>
+    <div id="demo">
+        <div id="jcode">
+            <div id="jhead">javascript</div>
+            <div id="jbody">123</div>
+            <div id="jfoot"><button onclick="run_code()">run code</button></div>
+        </div>
+        <div id="gcode">
+            <div id="ghead">gcode output</div>
+            <div id="gbody"></div>
+            <div id="gfoot"></div>
+        </div>
+    </div>
+    <div id="api">
+        <h2>Engine Methods</h2>
+        <li><label>load(url)</label> - where URL points to an STL</li>
+        <li><label>parse(data)</label> - where data is a string or binary STL</li>
+        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
+        <li><label>setListener(fn)</label> - function to receive engine progress messages</li>
+        <li><label>setDevice(options)</label> - change default object parameters</li>
+        <li><label>setProcess(options)</label> - change default process parameters</li>
+        <li><label>moveTo(x,y,z)</label> - absolute move origin of loaded object</li>
+        <li><label>move(x,y,z)</label> - relative move origin of loaded object</li>
+        <li><label>scale(x,y,z)</label> - scale axes of loaded object</li>
+        <li><label>rotate(x,y,z)</label> - rotate axes of loaded object in radians</li>
+        <li><label>slice()</label> - async slice loaded object</li>
+        <li><label>prepare()</label> - async path routing of slice data</li>
+        <li><label>export()</label> - async gcode generation from path routing</li>
+    </div>
+</body>
+</html>
