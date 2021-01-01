@@ -56,7 +56,7 @@
      */
     FDM.slice = function(settings, widget, onupdate, ondone) {
         FDM.fixExtruders(settings);
-        let render = !settings.internal,
+        let render = settings.render !== false,
             spro = settings.process,
             sdev = settings.device,
             update_start = Date.now(),
@@ -259,7 +259,7 @@
                 }, "support");
             }
 
-            // skip rendering in api-only mode
+            // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, function(slice) {
                     doRender(slice);
