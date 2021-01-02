@@ -49,6 +49,8 @@
 
 # CAM
 
+* `B` need to force cut line at synthetic z bottom (midlines, etc)
+* `B` non-clear-voids duplicates thru-holes
 * `B` z thru doesn't respect step down
 * `B` failure to go *up* when moving between parts?
 * `B` starting export during animation unleashes chaos
@@ -56,6 +58,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
+* `F` z thru should apply to any thru hole
 * `F` update analyzer to detect overhangs
 * `F` add linear clearing strategy option for roughing / pocket
 * `F` extend acute roughing on inside polys to clear small voids
@@ -75,8 +78,9 @@
 * `F` warn when part > stock or cuts go outside bed
 * `F` can animation clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
-* `F` gcode output option as zip for multiple or flip ops
+* `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` ease-down should be engaged in all descending cutting operations
+* `F` new reg type based on https://youtu.be/BLD4dFoXC7o?t=360
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
