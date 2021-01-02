@@ -44,6 +44,12 @@ npm install -g @gridspace/app-server
 gs-app-server --debug
 ```
 
+if installing the app-server fails or gives you permissions errors, then your node installation (on linux/mac) is installed as another user (like root). try instead:
+
+```
+sudo npm install -g @gridspace/app-server
+```
+
 to start a local instance of the apps. then open
 [Kiri:Moto](http://localhost:8080/kiri) or
 [Meta:Moto](http://localhost:8080/meta) on your local host
@@ -61,3 +67,9 @@ serves code as obfuscated, compressed bundles. this is the mode used to run on a
 web site.
 
 requires node.js 12+
+
+### Javascript Slicing API
+
+A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions.
+
+https://grid.space/kiri/engine.html
