@@ -883,7 +883,7 @@
             let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
             let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
-            setTool(op.tool, op.rate, op.down);
+            setTool(op.tool, undefined, op.rate);
             setDrill(op.down, op.lift, op.dwell);
             setSpindle(op.spindle);
             emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
