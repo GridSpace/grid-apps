@@ -705,7 +705,7 @@
             if (!isCamMode) {
                 return;
             }
-            const {widget, x, y, z} = rot;
+            let {widget, x, y, z} = rot;
             if (traceOn) {
                 func.traceDone();
             }
