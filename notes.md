@@ -49,6 +49,7 @@
 
 # CAM
 
+* `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` non-clear-voids duplicates thru-holes
 * `B` z thru doesn't respect step down
