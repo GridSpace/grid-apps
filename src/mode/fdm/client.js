@@ -113,7 +113,7 @@
             if (!isFdmMode) {
                 return;
             }
-            const {widget, x, y, z} = rot;
+            let {widget, x, y, z} = rot;
             if (x || y) {
                 clearWidgetSupports(widget);
             } else {
