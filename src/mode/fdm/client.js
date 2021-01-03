@@ -51,6 +51,7 @@
         api.event.on("fdm.supports.detect", func.sgen = () => {
             alert = api.show.alert("analyzing part(s)...", 1000);
             FDM.support_generate(array => {
+                func.sclear();
                 api.hide.alert(alert);
                 for (let rec of array) {
                     let { widget, supports } = rec;

@@ -1080,29 +1080,61 @@
     }
 
     FDM.supports = function(settings, widget) {
+        let size = settings.process.sliceSupportSize;
         let buf = new THREE.BufferGeometry();
         buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
         let geo = new THREE.Geometry().fromBufferGeometry(buf);
         let angle = (Math.PI / 180) * settings.process.sliceSupportAngle;
         let thresh = -Math.sin(angle);
-        let mesh = new THREE.Mesh(geo, mat);
         let dir = new THREE.Vector3(0,0,-1)
         let add = [];
+        let mesh = new THREE.Mesh(geo, mat);
         let platform = new THREE.Mesh(
             new THREE.PlaneGeometry(1000,1000,1), mat
         );
-        geo.faces.filter(f => f.normal.z < thresh).forEach(face => {
-            let a = geo.vertices[face.a];
-            let b = geo.vertices[face.b];
-            let c = geo.vertices[face.c];
-            let point = a.add(b).add(c).divideScalar(3);
+        function tl(p1, p2) {
+            let dist = p1.distanceTo(p2);
+            let mp = new THREE.Vector3().add(p1).add(p2).divideScalar(2);
+            if (dist >= size * 3) {
+                tp(p1);
+                tp(p2);
+                let itr = Math.floor(dist / size);
+                let seg = p2.clone().sub(p1).divideScalar(itr);
+                let pnt = p1.clone();
+                while (itr-- > 0) {
+                    pnt.add(seg);
+                    tp(pnt.clone());
+                }
+            } else if (dist >= size * 2) {
+                tp(p1);
+                tp(p2);
+                tp(mp);
+            } else if (dist >= size) {
+                tp(p1);
+                tp(p2);
+            }
+        }
+        function tp(point) {
+            if (point.added) {
+                return;
+            }
             let ray = new THREE.Raycaster(point, dir);
             let int = ray.intersectObjects([ mesh, platform ], false);
             if (int && int.length && int[0].distance > 0.01) {
                 let mid = new THREE.Vector3().add(point).add(int[0].point).divideScalar(2);
                 add.push({from: point, to: int[0].point, mid});
+                point.added = true;
             }
+        }
+        geo.faces.filter(f => f.normal.z < thresh).forEach(face => {
+            let a = geo.vertices[face.a];
+            let b = geo.vertices[face.b];
+            let c = geo.vertices[face.c];
+            tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
+            tl(a,b);
+            tl(b,c);
+            tl(a,c);
         });
         widget.supports = add;
         return add.length > 0;
