@@ -59,6 +59,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
+* `F` new registration style: offset cutout
 * `F` z thru should apply to any thru hole
 * `F` update analyzer to detect overhangs
 * `F` add linear clearing strategy option for roughing / pocket
