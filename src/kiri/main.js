@@ -391,6 +391,43 @@
         }, 1000);
     }
 
+    // frame message api
+    WIN.addEventListener('message', msg => {
+        let { origin, source, target, data } = msg;
+        if (source.window === target.window) return;
+        let send = source.window.postMessage;
+        if (data.mode) { API.mode.set(data.mode.toUpperCase()) }
+        if (data.view) { API.view.set(VIEWS[data.view.toUpperCase()]) }
+        if (data.function) { API.function[data.function.toLowerCase()]() }
+        if (data.event) {
+            API.event.on(data.event, (evd) => {
+                send({event: data.event, data: evd});
+            });
+        }
+        if (data.emit) API.event.emit(data.emit, data.message)
+        switch (data.get) {
+            case "all": send({all: settings}); break;
+            case "mode": send({mode: settings.mode}); break;
+            case "device": send({device: settings.device}); break;
+            case "process": send({process: settings.process}); break;
+        }
+        switch (data.set) {
+            case "features":
+                Object.assign(feature, data.features);
+                break;
+            case "device":
+                Object.assign(settings.device, data.options);
+                saveSettings();
+                break;
+            case "process":
+                Object.assign(settings.process, data.options);
+                saveSettings();
+                break;
+        }
+        if (data.alert) alert2(data.alert, data.time);
+        if (data.progress >= 0) setProgress(data.progress, data.message);
+    });
+
     /** ******************************************************************
      * Stats accumulator
      ******************************************************************* */
