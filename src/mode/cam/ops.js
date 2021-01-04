@@ -104,7 +104,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, slicer, sliceAll } = state;
+            let { settings, widget, slicer, sliceAll, unsafe } = state;
             let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
             let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
 
@@ -185,7 +185,7 @@
 
             // console.log('indices', ...indices, {zBottom});
             slicer.slice(indices, { each: (data, index, total) => {
-                shadow = POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
+                shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
                 if (flats.indexOf(data.z) >= 0) {
                     // exclude flats injected to complete shadow
                     return;
@@ -375,7 +375,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, slicer, sliceAll, tshadow, thruHoles } = state;
+            let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe } = state;
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs } = state;
 
             let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
@@ -405,7 +405,7 @@
                 });
             } else
             slicer.slice(indices, { each: (data, index, total) => {
-                shadow = POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
+                shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
                 if (flats.indexOf(data.z) >= 0) {
                     // exclude flats injected to complete shadow
                     return;
@@ -925,11 +925,11 @@
 
         slice(progress) {
             let state = this.state;
-            let { ops, slicer, widget } = state;
+            let { ops, slicer, widget, unsafe } = state;
 
             let real = ops.map(rec => rec.op).filter(op => op);
             let rough = real.filter(op => op.type === 'rough').length > 0;
-            let outlineIn = real.filter(op => op.type === 'outline' && op.inside).length > 0;
+            let outlineOut = real.filter(op => op.type === 'outline' && op.outside).length > 0;
 
             let minStepDown = real
                 .map(op => (op.down || 3) / 3)
@@ -938,7 +938,8 @@
             let tslices = [];
             let tshadow = [];
             let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-            let skipTerrain = !(rough || outlineIn) && (tzindex.length > 50 || widget.vertices.length > 1000000);
+            let complex = tzindex.length > 50 || widget.vertices.length > 1000000;
+            let skipTerrain = unsafe || (!rough && !outlineOut && complex);
 
             if (skipTerrain) {
                 console.log("skipping terrain generation");

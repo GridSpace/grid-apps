@@ -39,7 +39,8 @@
             minToolDiam = Infinity,
             maxToolDiam = -Infinity,
             thruHoles,
-            tabs = settings.widget[widget.id].tab;
+            tabs = settings.widget[widget.id].tab,
+            unsafe = proc.camExpertFast;
 
         if (tabs) {
             // make tab polygons
@@ -59,6 +60,10 @@
                 // tslice.output().setLayer("tabs", 0xff0000).addPoly(poly);
                 // sliceAll.push(tslice);
             });
+        }
+
+        if (unsafe) {
+            console.log("disabling overhang safeties");
         }
 
         if (!proc.ops || proc.ops.length === 0) {
@@ -106,7 +111,8 @@
             zBottom,
             zThru,
             ztOff,
-            zMax
+            zMax,
+            unsafe
         };
 
         let opList = [

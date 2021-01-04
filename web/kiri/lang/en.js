@@ -473,6 +473,10 @@ kiri.lang['en-us'] = {
     ad_pspd_s:      "polish speed",
     ad_pspd_l:      "polishing speed\nin millimeters / minute",
 
+    // CAM EXPERT
+    cx_fast_s:      "skip shadow",
+    cx_fast_l:      "disable overhang detection\ncan be faster and use less\nmemory with complex models\nbut fails with overhangs\ntry enabling if slicing\nhangs during shadowing",
+
     // FDM GCODE
     ag_menu:        "gcode",
     ag_nozl_s:      "nozzle",

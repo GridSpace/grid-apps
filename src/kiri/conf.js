@@ -484,6 +484,7 @@
                     outputOriginCenter: false,
                     outputInvertX: false,
                     outputInvertY: false,
+                    camExpertFast: false,
                     ops: [], // current ops
                     op2: []  // flip ops
                 }
