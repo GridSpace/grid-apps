@@ -925,11 +925,11 @@
 
         slice(progress) {
             let state = this.state;
-            let { ops, slicer } = state;
+            let { ops, slicer, widget } = state;
 
             let real = ops.map(rec => rec.op).filter(op => op);
-            let rough = real.map(op => op.type === 'rough').length > 0;
-            let outlineIn = real.map(op => op.type === 'outline' && op.inside).length > 0;
+            let rough = real.filter(op => op.type === 'rough').length > 0;
+            let outlineIn = real.filter(op => op.type === 'outline' && op.inside).length > 0;
 
             let minStepDown = real
                 .map(op => (op.down || 3) / 3)
@@ -938,10 +938,10 @@
             let tslices = [];
             let tshadow = [];
             let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-            let skipTerrain = !(rough || outlineIn) && tzindex.length > 50;
+            let skipTerrain = !(rough || outlineIn) && (tzindex.length > 50 || widget.vertices.length > 1000000);
 
             if (skipTerrain) {
-                console.log("skipping terrain generation for speed");
+                console.log("skipping terrain generation");
                 tzindex = [ tzindex.pop() ];
             }
 

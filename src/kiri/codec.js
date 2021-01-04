@@ -116,7 +116,7 @@
              track = v.track || undefined,
              widget = KIRI.newWidget(id, KIRI.Widget.Groups.forid(group));
          widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
-         widget.saved = time();
+         widget.saved = Date.now();
          if (track && track.pos) {
              widget.track = track;
              widget.move(track.pos.x, track.pos.y, track.pos.z, true);
