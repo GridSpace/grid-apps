@@ -82,8 +82,13 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-    <script xsrc="/code/engine.js"></script>
+    <script src="/code/frame.js"></script>
     <script>
+        let defc = [
+            "let api = kiri.frame;",
+            "api.setMode('FDM');",
+            "api.slice();"
+        ].join('\n');
         let msgs = [];
         let edit;
         function $(id) { return document.getElementById(id) }
@@ -96,18 +101,19 @@
             });
             edit.session.setTabSize(4);
             edit.session.setUseSoftTabs(true);
-            edit.session.setValue("{}");
-            window.addEventListener('message', receive_message);
+            edit.session.setValue(localStorage.kiri_frame_code || defc);
+            kiri.frame.setFrame('fbody');
+            kiri.frame.onmessage = receive_message;
         }
-        function receive_message(msg) {
-            let { origin, source, target, data } = msg;
+        function receive_message(data, msg) {
             msgs.push(JSON.stringify(data));
             $('rbody').innerText = msgs.join("\n-----\n");
             $('rbody').scrollTop = 1000000;
         }
-        function send_message() {
+        function run_code() {
             let code = edit.session.getValue();
-            $('fbody').contentWindow.postMessage(eval(`(${code})`));
+            eval(`(function(){${code}})()`);
+            localStorage.kiri_frame_code = code;
         }
     </script>
 </head>
@@ -115,9 +121,9 @@
     <h2 id="title">Kiri:Moto Frame Message API</h2>
     <div id="demo">
         <div id="mcode">
-            <div id="mhead">message</div>
+            <div id="mhead">code</div>
             <div id="mbody"></div>
-            <div id="mfoot"><button onclick="send_message()">send message</button></div>
+            <div id="mfoot"><button onclick="run_code()">send message</button></div>
             <div id="rhead">output</div>
             <div id="rbody"></div>
         </div>
@@ -127,20 +133,21 @@
         </div>
     </div>
     <div id="api">
-        <h2>Message API</h2>
+        <h2>Frame Message API</h2>
         <li><label>load(url)</label> - where URL points to an STL</li>
         <li><label>parse(data)</label> - where data is a string or binary STL</li>
+        <li><label>setFrame(id_obj)</label> - id or object of iframe with Kiri:Moto loaded</li>
         <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
-        <li><label>setListener(fn)</label> - function to receive engine progress messages</li>
         <li><label>setDevice(options)</label> - change default object parameters</li>
         <li><label>setProcess(options)</label> - change default process parameters</li>
-        <li><label>moveTo(x,y,z)</label> - absolute move origin of loaded object</li>
-        <li><label>move(x,y,z)</label> - relative move origin of loaded object</li>
-        <li><label>scale(x,y,z)</label> - scale axes of loaded object</li>
-        <li><label>rotate(x,y,z)</label> - rotate axes of loaded object in radians</li>
         <li><label>slice()</label> - async slice loaded object</li>
         <li><label>prepare()</label> - async path routing of slice data</li>
         <li><label>export()</label> - async gcode generation from path routing</li>
+        <li><label>onmessage(fn)</label> - function to receive all messages</li>
+        <li><label>onevent(event, fn)</label> - function to receive named messages</li>
+        <li><label>emit(event, data)</label> - send named event with data</li>
+        <li><label>alert(msg, time)</label> - show alert message with optional time in seconds</li>
+        <li><label>progress(pct, msg)</label> - set progress bar (0-1) with optional message</li>
     </div>
 </body>
 </html>
