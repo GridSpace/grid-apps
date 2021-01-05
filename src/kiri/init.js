@@ -1979,8 +1979,6 @@
         }
 
         SPACE.onEnterKey([
-            // UI.layerSpan,     function() { API.show.slices() },
-            // UI.layerID,       function() { API.show.layer(UI.layerID.value) },
             UI.scaleX,        selectionScale,
             UI.scaleY,        selectionScale,
             UI.scaleZ,        selectionScale,
@@ -1998,6 +1996,16 @@
             $('rot_y'),       selectionRotate,
             $('rot_z'),       selectionRotate
         ]);
+
+        UC.onBlur([
+            UI.toolName,
+            UI.toolNum,
+            UI.toolFluteDiam,
+            UI.toolFluteLen,
+            UI.toolShaftDiam,
+            UI.toolShaftLen,
+            UI.toolTaperTip,
+        ], updateTool);
 
         UI.toolMetric.onclick = updateTool;
         UI.toolType.onchange = updateTool;
