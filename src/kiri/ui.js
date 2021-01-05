@@ -73,8 +73,17 @@
         setUnits,
         confirm,
         prompt,
-        alert
+        alert,
+        onBlur
     };
+
+    function onBlur(obj, fn) {
+        if (Array.isArray(obj)) {
+            for (let o of obj) onBlur(o, fn);
+            return;
+        }
+        obj.addEventListener('blur', fn);
+    }
 
     function alert(message) {
         return confirm(message, {ok:true});
