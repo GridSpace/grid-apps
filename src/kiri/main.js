@@ -405,13 +405,14 @@
             });
         }
         if (data.emit) API.event.emit(data.emit, data.message)
-        switch (data.get) {
-            case "all": send({all: settings}); break;
+        if (data.get) switch (data.get) {
             case "mode": send({mode: settings.mode}); break;
             case "device": send({device: settings.device}); break;
             case "process": send({process: settings.process}); break;
+            default: send({all: settings}); break;
+
         }
-        switch (data.set) {
+        if (data.set) switch (data.set) {
             case "features":
                 Object.assign(feature, data.features);
                 break;
@@ -424,6 +425,14 @@
                 saveSettings();
                 break;
         }
+        if (data.parse) {
+            new moto.STL().parse(data.parse, vertices => {
+                let widget = newWidget().loadVertices(vertices);
+                platform.add(widget);
+            });
+        }
+        if (data.load) platformLoad(data.load);
+        if (data.clear) platform.clear();
         if (data.alert) alert2(data.alert, data.time);
         if (data.progress >= 0) setProgress(data.progress, data.message);
     });

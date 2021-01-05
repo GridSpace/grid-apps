@@ -368,6 +368,9 @@ const script = {
         "kiri/codec",
         "kiri/engine"
     ].map(p => `src/${p}.js`),
+    frame : [
+        "kiri/frame"
+    ].map(p => `src/${p}.js`),
     meta : [
         "ext/three",
         "license",
@@ -709,6 +712,7 @@ function prepareScripts() {
     code.kiri = concatCode(script.kiri);
     code.worker = concatCode(script.worker);
     code.engine = concatCode(script.engine);
+    code.frame = concatCode(script.frame);
 }
 
 function concatCode(array) {
