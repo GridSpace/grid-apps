@@ -419,6 +419,9 @@ th, tr, td, label {
     background-color: var(--bg-gray);
     left: -5px;
 }
+#act-animate.disabled {
+    color: #aaa !important;
+}
 
 .pop-lcol {
     position: absolute;

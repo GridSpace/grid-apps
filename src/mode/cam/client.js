@@ -42,6 +42,9 @@
 
         // wire up animate button in ui
         api.function.animate = () => {
+            if (isCamMode && !camStock) {
+                return api.show.alert("animation requires stock to be enabled");
+            }
             api.function.prepare(() => {
                 if (isCamMode && camStock) {
                     animate();
@@ -54,10 +57,10 @@
             $('set-tools').style.display = isCamMode ? '' : 'none';
             kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
             updateStock(undefined, 'internal');
+            UI.func.animate.style.display = isCamMode ? '' : 'none';
             if (!isCamMode) {
                 func.tabClear();
                 func.traceDone();
-                UI.func.animate.style.display = 'none';
                 UI.label.slice.innerText = 'slice';
                 UI.label.preview.innerText = 'preview';
                 UI.label.export.innerText = 'export';
@@ -1076,11 +1079,11 @@
         let stock = settings.stock = { };
         let compute = enabled && stockSet && widgets.length;
 
-        UI.func.animate.style.display = refresh ? '' : 'none';
+        UI.func.animate.classList.add('disabled');
 
         // create/inject cam stock if stock size other than default
         if (compute) {
-            UI.func.animate.style.display = '';
+            UI.func.animate.classList.remove('disabled');
             let csx = proc.camStockX;
             let csy = proc.camStockY;
             let csz = proc.camStockZ;
