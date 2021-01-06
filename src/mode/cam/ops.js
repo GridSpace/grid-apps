@@ -105,8 +105,9 @@
         slice(progress) {
             let { op, state } = this;
             let { settings, widget, slicer, sliceAll, unsafe } = state;
-            let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
+            let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
             let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
+            let { process, stock } = settings;
 
             let roughIn = op.inside;
             let roughTop = op.top;
@@ -261,6 +262,11 @@
 
                 if (!offset) return;
 
+                if (process.camStockClipTo) {
+                    let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
+                    offset = cutPolys([rect], offset, slice.z, true);
+                }
+
                 // elimate double inset on inners
                 offset.forEach(op => {
                     if (op.inner) {
@@ -376,7 +382,8 @@
         slice(progress) {
             let { op, state } = this;
             let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe } = state;
-            let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs } = state;
+            let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
+            let { process, stock } = settings;
 
             let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
             updateToolDiams(toolDiam);
@@ -495,6 +502,11 @@
 
                 if (op.dogbones && !op.wide) {
                     CAM.addDogbones(offset, toolDiam / 5);
+                }
+
+                if (process.camStockClipTo) {
+                    let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
+                    offset = cutPolys([rect], offset, slice.z, true);
                 }
 
                 // offset.xout(`slice ${slice.z}`);

@@ -1440,7 +1440,7 @@
         }
     };
 
-    PRO.cut = function(polys) {
+    PRO.cut = function(polys, inter) {
         let target = this;
 
         if (!target.open) {
@@ -1460,13 +1460,14 @@
             cfil = clib.PolyFillType,
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
+            type = inter ? ctyp.ctIntersection : ctyp.ctDifference,
             sp1 = target.toClipper(),
             sp2 = POLY().toClipper(polys);
 
         clip.AddPaths(sp1, ptyp.ptSubject, false);
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
-        if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+        if (clip.Execute(type, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
             let cuts = POLY().fromClipperTree(ctre, target.getZ(), null, null, 0);
             cuts.forEach(no => {
                 // heal open but really closed polygons because cutting

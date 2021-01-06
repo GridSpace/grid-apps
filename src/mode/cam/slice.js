@@ -105,6 +105,7 @@
             bounds,
             tabs,
             cutTabs,
+            cutPolys,
             slicer,
             sliceAll,
             updateToolDiams,
@@ -265,10 +266,15 @@
         return true;
     };
 
-    function cutTabs(tabs, offset, z) {
-        let noff = [];
+    function cutTabs(tabs, offset, z, inter) {
         tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
-        offset.forEach(op => noff.appendAll( op.cut(POLY.union(tabs, 0, true)) ));
+        return cutPolys(tabs, offset, z, false);
+    }
+
+    function cutPolys(polys, offset, z, inter) {
+        let noff = [];
+        // tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
+        offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), inter) ));
         if (noff.length > 1) {
             let heal = 0;
             // heal/rejoin open segments that share endpoints
