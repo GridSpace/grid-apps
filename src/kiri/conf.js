@@ -479,6 +479,7 @@
                     camStockY: 5,
                     camStockZ: 0,
                     camStockOffset: true,
+                    camStockClipTo: false,
                     camStockOn: true,
                     camConventional: false, // outputClockwise
                     outputOriginCenter: false,
