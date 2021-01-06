@@ -359,7 +359,7 @@ th, tr, td, label {
     white-space: nowrap;
 }
 #ver-pop {
-    transform: translateY(-52%);
+    transform: translateY(-78%);
 }
 #lang-pop > div, #ver-pop > div {
     padding: 5px 7px 5px 7px;
