@@ -457,7 +457,7 @@
                 if (API.const.OCTO) {
                     $('ophost').style.display = 'none';
                     $('opapik').style.display = 'none';
-                    $('ophint').style.display = 'none';
+                    $('oph1nt').style.display = 'none';
                     $('send-to-gridhost').style.display = 'none';
                 }
                 octo_host.value = SDB['octo-host'] || '';

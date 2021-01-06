@@ -254,7 +254,7 @@
             if (!(isCamMode && oplist)) return;
             let mark = Date.now();
             let html = [];
-            $('ophint').style.display = oplist.length === 0 ? 'flex' : 'none';
+            $('ophint').style.display = oplist.length === 0 ? '' : 'none';
             let bind = {};
             let scale = API.view.unit_scale();
             oplist.forEach((rec,i) => {
