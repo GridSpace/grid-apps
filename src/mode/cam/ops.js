@@ -55,7 +55,7 @@
                 y1 = bounds.min.y,
                 x2 = bounds.max.x,
                 y2 = bounds.max.y,
-                z = bounds.max.z;
+                z = bounds.max.z - (op.down || 0);
 
             if (stock.x && stock.y && stock.z) {
                 x1 = -stock.x / 2;
