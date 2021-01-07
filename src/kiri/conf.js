@@ -411,6 +411,7 @@
                     camLevelSpindle: 1000,
                     camLevelOver: 0.75,
                     camLevelSpeed: 1000,
+                    camLevelDown: 0,
                     camRoughTool: 1000,
                     camRoughSpindle: 1000,
                     camRoughDown: 2,
