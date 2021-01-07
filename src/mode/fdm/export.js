@@ -22,7 +22,8 @@
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
             tool = 0,
-            bedType = device.bedBelt ? "belt" : "fixed",
+            isBelt = device.bedBelt || false,
+            bedType = isBelt ? "belt" : "fixed",
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,
             offset_y = extruder.extOffsetY,
@@ -73,7 +74,9 @@
             pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
             append,
             lines = 0,
-            bytes = 0;
+            bytes = 0,
+            bcos = Math.cos(Math.PI/4),
+            icos = 1/bcos;
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
@@ -170,23 +173,39 @@
             time += (retDist / retSpeed) * 60 * 2; // retraction time
         }
 
+        let taxis = new THREE.Vector3( 1, 0, 0 );
+        let tcent = new THREE.Vector2( 0, 0 );
+        let angle = -Math.PI / 4;
+
         function moveTo(newpos, rate, comment) {
             if (comment) {
                 append(";; " + comment);
             }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
+            let emit = { x: isBelt, y: isBelt, z: isBelt };
             if (typeof newpos.x === 'number') {
                 pos.x = newpos.x;
-                o.append(" X").append(pos.x.toFixed(decimals));
+                emit.x = true;
             }
             if (typeof newpos.y === 'number') {
                 pos.y = newpos.y;
-                o.append(" Y").append(pos.y.toFixed(decimals));
+                emit.y = true;
             }
             if (typeof newpos.z === 'number') {
                 pos.z = newpos.z;
-                o.append(" Z").append(pos.z.toFixed(decimals));
+                emit.z = true;
             }
+            let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
+            if (isBelt) {
+                let rpos = new THREE.Vector3(pos.x, pos.y, pos.z);
+                rpos.applyAxisAngle( taxis, angle );
+                epos.x = rpos.x;
+                epos.y = rpos.z * icos;
+                epos.z = rpos.y + (bcos * rpos.z);
+            }
+            if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
+            if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
+            if (emit.z) o.append(" Z").append(epos.z.toFixed(decimals));
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
                 if (extrudeAbs) {
