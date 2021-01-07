@@ -757,7 +757,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
+            let { settings, widget, sliceAll, tslices, updateToolDiams, zBottom } = state;
 
             let drills = [],
                 drillTool = new CAM.Tool(settings, op.tool),
@@ -772,6 +772,7 @@
             // for each slice, look for polygons with 98.5% circularity whose
             // area is within the tolerance of a circle matching the tool diameter
             tslices.forEach(function(slice) {
+                if (slice.z < zBottom) return;
                 let inner = slice.topPolyInners([]);
                 inner.forEach(function(poly) {
                     if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
