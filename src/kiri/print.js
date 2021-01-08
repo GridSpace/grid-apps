@@ -130,37 +130,51 @@
             factor = 1,
             tool = 0,
             maxf = 0,
-            seq = [];
+            seq = [],
+            newlayer = false;
 
         const output = scope.output = [ seq ];
+        const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
+        const beltfact = Math.cos(Math.PI/4);
 
         function G0G1(g0, line) {
             const mov = {};
+
             line.forEach(function(tok) {
+                let axis = tok.charAt(0);
+                if (belt) {
+                    axis = beltaxis[axis];
+                }
                 if (abs) {
-                    pos[tok.charAt(0)] = parseFloat(tok.substring(1));
+                    pos[axis] = parseFloat(tok.substring(1));
                 } else {
-                    mov[tok.charAt(0)] = parseFloat(tok.substring(1));
+                    mov[axis] = parseFloat(tok.substring(1));
                 }
             });
+
             if (!abs) {
                 for (let [k,v] of Object.entries(mov)) {
                     pos[k] += v;
                 }
             }
 
-            if (pos.X) bounds.min.x = Math.min(bounds.min.x, pos.X * factor);
-            if (pos.X) bounds.max.x = Math.max(bounds.max.x, pos.X * factor);
-            if (pos.Y) bounds.min.y = Math.min(bounds.min.y, pos.Y * factor);
-            if (pos.Y) bounds.max.y = Math.max(bounds.max.y, pos.Y * factor);
-            if (pos.Z) bounds.min.z = Math.min(bounds.min.z, pos.Z * factor);
-            if (pos.Z) bounds.max.z = Math.max(bounds.max.z, pos.Z * factor);
-
             const point = newPoint(
                 factor * pos.X + off.X + xoff.X,
                 factor * pos.Y + off.Y + xoff.Y,
                 factor * pos.Z + off.Z + xoff.Z + dz
             );
+
+            if (belt) {
+                point.z *= beltfact;
+                point.y -= point.z * beltfact;
+            }
+
+            bounds.min.x = Math.min(bounds.min.x, point.x);
+            bounds.max.x = Math.max(bounds.max.x, point.x);
+            bounds.min.y = Math.min(bounds.min.y, point.y);
+            bounds.max.y = Math.max(bounds.max.y, point.y);
+            bounds.min.z = Math.min(bounds.min.z, point.z);
+            bounds.max.z = Math.max(bounds.max.z, point.z);
 
             const retract = (fdm && pos.E < 0) || undefined;
             const moving = g0 || (fdm && pos.E <= 0);
@@ -185,8 +199,9 @@
 
             // non-move in a new plane means burp out
             // the old sequence and start a new one
-            if (seq.Z != pos.Z) {
-                const nh = (defh || pos.Z - seq.Z);
+            if (newlayer || (!belt && seq.Z != pos.Z)) {
+                newlayer = false;
+                let nh = (defh || pos.Z - seq.Z);
                 seq = [];
                 seq.height = height = nh;
                 if (fdm) dz = -height / 2;
@@ -216,6 +231,7 @@
                 const hd = line.replace('(','').replace(')','').split(' ');
                 defh = parseFloat(hd[4]);
                 if (fdm) dz = -defh / 2;
+                newlayer = true;
             }
             if (line.indexOf("BED TYPE: BELT") > 0) {
                 belt = true;
@@ -269,6 +285,17 @@
                     break;
             }
         });
+
+        // recenter for visualization
+        if (belt) {
+            for (let layer of output) {
+                for (let rec of layer) {
+                    let point = rec.point;
+                    point.y += bounds.min.z;
+                    point.z -= bounds.min.z;
+                }
+            }
+        }
 
         scope.imported = gcode;
         scope.lines = lines.length;

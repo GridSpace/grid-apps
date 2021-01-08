@@ -17,6 +17,10 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` belt: first layer settings apply to z=0 lines
+* `F` belt: add z=0 brim controls
+* `F` belt: gcode parsing layer detection, rotation, unskew
+
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
@@ -59,9 +63,8 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
-* `F` clip-to option under "stock"
-* `F` add climb/conventional into each operation
 * `F` new registration style: offset cutout
+* `F` add climb/conventional into each operation
 * `F` z thru should apply to any thru hole
 * `F` update analyzer to detect overhangs
 * `F` add linear clearing strategy option for roughing / pocket

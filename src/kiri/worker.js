@@ -213,7 +213,7 @@ KIRI.worker = {
             const maxSpeed = print.maxSpeed;
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
-            }, { thin, flat, tools });
+            }, { thin: thin || print.belt, flat, tools });
             send.done({parsed: KIRI.codec.encode(layers), maxSpeed});
         }, { fdm : mode === 'FDM' });
     },
