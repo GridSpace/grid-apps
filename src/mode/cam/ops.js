@@ -62,7 +62,7 @@
                 y1 = -stock.y / 2;
                 x2 = -x1;
                 y2 = -y1;
-                z = zMax + ztOff;
+                z = zMax + ztOff - (op.down || 0);
             }
 
             let ei = 0,
