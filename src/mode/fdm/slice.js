@@ -74,7 +74,8 @@
             fillSpacing = nozzleSize,
             fillOffset = nozzleSize * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
-            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
+            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null,
+            isBelt = sdev.bedBelt;
 
         isFlat = settings.controller.lineType === "flat";
         isThin = !isFlat && settings.controller.lineType === "line";
@@ -141,7 +142,7 @@
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
             minHeight: sliceMinHeight,
-            firstHeight: spro.firstSliceHeight,
+            firstHeight: isBelt ? 0 : spro.firstSliceHeight,
             // debug: true,
             // xray: 3,
             // view: view
@@ -203,7 +204,7 @@
                 doShells(slice, spro.sliceShells, firstOffset, shellOffset, fillOffset, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls,
-                    belt0: sdev.bedBelt && slice.index === 0,
+                    belt0: isBelt && slice.index === 0,
                     widget: widget
                 });
                 if (solid) {
@@ -365,6 +366,8 @@
      * @param {Obejct} options
      */
     function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
+        let shellout = 0;
+
         slice.tops.forEach(function(top) {
             let top_poly = [ top.poly ];
 
@@ -470,12 +473,20 @@
             // for diffing
             top.last = last;
 
-            if (opt.belt0 && top.shells.length === 0) {
-                let bounds = opt.widget.bounds;
-                top.shells.push(BASE.newPolygon()
-                    .setOpen()
-                    .add(bounds.min.x - 5,0,slice.z)
-                    .add(bounds.max.x + 5,0,slice.z));
+            shellout += top.shells.length;
+
+            // add anchor extrusion if missing on the first belt layer
+            if (opt.belt0 && top.shells.length === 0 && slice.up && slice.up.tops.length) {
+                for (let up of slice.up.tops) {
+                    let bounds = up.poly.bounds,
+                        midy = (bounds.miny + bounds.maxy) / 2;
+                    if (top.poly.isInside(up.poly, 1)) {
+                        top.shells.push(BASE.newPolygon()
+                            .setOpen()
+                            .add(bounds.minx,midy,slice.z)
+                            .add(bounds.maxx,midy,slice.z));
+                    }
+                }
             }
         });
     };
@@ -495,7 +506,7 @@
         }
 
         slice.tops.forEach(function(top) {
-            const lines = fillArea(top.fill_off, angle, spacing, null);
+            let lines = fillArea(top.fill_off, angle, spacing, null);
             top.fill_lines.appendAll(lines);
         });
 

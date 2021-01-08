@@ -44,7 +44,8 @@
             sliceEntry,
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             isThin = settings.controller.lineType === "line",
-            isFlat = settings.controller.lineType === "flat";
+            isFlat = settings.controller.lineType === "flat",
+            isBelt = device.bedBelt;
 
         // compute bounds if missing
         if (!bounds) {
@@ -63,7 +64,7 @@
 
         // TODO pick a widget with a slice on the first layer and use that nozzle
         // create brim, skirt, raft if specificed in FDM mode (code shared by laser)
-        if (process.outputBrimCount || process.outputRaft) {
+        if (!isBelt && (process.outputBrimCount || process.outputRaft)) {
             let brims = [],
                 offset = process.outputBrimOffset || (process.outputRaft ? 4 : 0);
 

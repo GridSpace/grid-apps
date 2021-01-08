@@ -186,9 +186,9 @@
 
     function onBooleanClick() {
         // prevent hiding elements in device editor on clicks
-        if (!API.modal.visible()) {
+        // if (!API.modal.visible()) {
             UC.refresh();
-        }
+        // }
         API.conf.update();
         DOC.activeElement.blur();
         // API.event.emit("boolean.click");
@@ -795,6 +795,7 @@
             }
 
             API.conf.save();
+            UC.refresh();
 
             if (dev.imageURL) {
                 if (dev.imageURL !== deviceURL) {
@@ -1502,8 +1503,8 @@
             maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
             spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
-            deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM}),
-            deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM}),
+            deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
@@ -1587,20 +1588,20 @@
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
             firstLayer:          UC.newGroup(LANG.fl_menu, null, {modes:FDM}),
-            firstSliceHeight:    UC.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM}),
-            firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            firstSliceHeight:    UC.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:UC.toFloat, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:() => !UI.deviceBelt.checked}),
+            firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:() => !UI.deviceBelt.checked}),
             firstLayerRate:      UC.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:UC.toFloat, modes:FDM}),
-            firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM}),
+            firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM, show:() => !UI.deviceBelt.checked}),
             firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM}),
-            outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked }),
-            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:() => !UI.deviceBelt.checked}),
+            outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:() => !UI.deviceBelt.checked}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:() => !UI.deviceBelt.checked}),
+            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked && !UI.deviceBelt.checked }),
+            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show: () => !UI.deviceBelt.checked }),
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
