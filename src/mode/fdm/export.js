@@ -51,7 +51,7 @@
             timeDwell = retDwell / 1000,
             offset = process.outputOriginCenter ? null : {
                 x: device.bedWidth/2,
-                y: device.bedDepth/2
+                y: isBelt ? 0 : device.bedDepth/2
             },
             subst = {
                 travel_speed: seekMMM,
@@ -182,7 +182,9 @@
                 append(";; " + comment);
             }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
-            let emit = { x: isBelt, y: isBelt, z: isBelt };
+            // put out x,y,z in belt mode if not engage/retract
+            let xyz = newpos.x || newpos.y || newpos.z;
+            let emit = { x: xyz && isBelt, y: xyz && isBelt, z: xyz && isBelt };
             if (typeof newpos.x === 'number') {
                 pos.x = newpos.x;
                 emit.x = true;
@@ -289,7 +291,9 @@
 
             // move Z to layer height
             zpos += path.height;
-            moveTo({z:zpos}, seekMMM);
+            if (layer > 0 || !isBelt) {
+                moveTo({z:zpos}, seekMMM);
+            }
 
             // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {
@@ -321,7 +325,7 @@
                     y = out.point.y + offset_y,
                     z = out.point.z;
 
-                // adjust for inversions and offsets
+                // adjust for inversions and origin offsets
                 if (process.outputInvertX) x = -x;
                 if (process.outputInvertY) y = -y;
                 if (offset) {

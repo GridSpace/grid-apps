@@ -398,6 +398,24 @@
 
         print.output = output;
 
+        // if belt, adjust z and y to baselines
+        if (false && isBelt) {
+            let miny = Infinity, minz = Infinity;
+            for (let layer of output) {
+                for (let rec of layer) {
+                    miny = Math.min(miny, rec.point.y);
+                    minz = Math.min(minz, rec.point.y);
+                }
+            }
+            console.log({miny, minz});
+            for (let layer of output) {
+                for (let rec of layer) {
+                    // rec.point.y -= minz;
+                    // rec.point.z -= miny;
+                }
+            }
+        }
+
         // render if not explicitly disabled
         if (render) {
             print.render = FDM.prepareRender(output, (progress, layer) => {

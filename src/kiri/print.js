@@ -99,6 +99,7 @@
             .split("\n");
 
         const scope = this,
+            morph = false,
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
@@ -142,7 +143,7 @@
 
             line.forEach(function(tok) {
                 let axis = tok.charAt(0);
-                if (belt) {
+                if (morph && belt) {
                     axis = beltaxis[axis];
                 }
                 if (abs) {
@@ -164,20 +165,20 @@
                 factor * pos.Z + off.Z + xoff.Z + dz
             );
 
-            if (belt) {
+            if (morph && belt) {
                 point.z *= beltfact;
                 point.y -= point.z * beltfact;
             }
 
-            bounds.min.x = Math.min(bounds.min.x, point.x);
-            bounds.max.x = Math.max(bounds.max.x, point.x);
-            bounds.min.y = Math.min(bounds.min.y, point.y);
-            bounds.max.y = Math.max(bounds.max.y, point.y);
-            bounds.min.z = Math.min(bounds.min.z, point.z);
-            bounds.max.z = Math.max(bounds.max.z, point.z);
-
             const retract = (fdm && pos.E < 0) || undefined;
             const moving = g0 || (fdm && pos.E <= 0);
+
+            if (!moving && point.x) bounds.min.x = Math.min(bounds.min.x, point.x);
+            if (!moving && point.x) bounds.max.x = Math.max(bounds.max.x, point.x);
+            if (!moving && point.y) bounds.min.y = Math.min(bounds.min.y, point.y);
+            if (!moving && point.y) bounds.max.y = Math.max(bounds.max.y, point.y);
+            if (!moving && point.z) bounds.min.z = Math.min(bounds.min.z, point.z);
+            if (!moving && point.z) bounds.max.z = Math.max(bounds.max.z, point.z);
 
             // update max speed
             maxf = Math.max(maxf, pos.F);
@@ -287,12 +288,12 @@
         });
 
         // recenter for visualization
-        if (belt) {
+        if (morph && belt) {
             for (let layer of output) {
                 for (let rec of layer) {
                     let point = rec.point;
-                    point.y += bounds.min.z;
-                    point.z -= bounds.min.z;
+                    point.y -= bounds.min.z;
+                    point.z += bounds.min.y;
                 }
             }
         }

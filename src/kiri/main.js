@@ -1258,6 +1258,7 @@
          let stock = settings.stock;
          let stockCenter = stock.center || {};
          let hasStock = stock.x && stock.y && stock.z;
+         let isBelt = dev.bedBelt;
          let center = MODE === MODES.FDM ? dev.originCenter :
             MODE === MODES.SLA ? false :
             MODE === MODES.CAM ? proc.outputOriginCenter :
@@ -1279,7 +1280,7 @@
                      y = -b.min.y
                  } else {
                      x = -dev.bedWidth / 2;
-                     y = dev.bedDepth / 2;
+                     y = isBelt ? 0 : dev.bedDepth / 2;
                  }
              }
          } else if (hasStock) {
