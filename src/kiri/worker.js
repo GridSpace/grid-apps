@@ -66,6 +66,7 @@ KIRI.worker = {
 
         let widget = cache[data.id],
             last = time(),
+            xpos,
             ypos,
             now;
 
@@ -74,6 +75,7 @@ KIRI.worker = {
         let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
         if (rotation) {
             let track = widget.track;
+            xpos = track.pos.x;
             ypos = track.pos.y + settings.device.bedDepth / 2 - track.box.h / 2;
             widget.mesh = null;
             widget.points = null;
@@ -106,7 +108,7 @@ KIRI.worker = {
                     let wbb = widget.getBoundingBox(true);
                     let dy = (wbb.max.y + wbb.min.y)/2;
                     let dz = wbb.min.z;
-                    widget.rotinfo = { angle: 45, dy, dz, ypos };
+                    widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
                     send.data({ rotinfo: widget.rotinfo });
                 }
             }

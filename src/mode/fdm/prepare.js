@@ -301,6 +301,7 @@
                     let offset = Object.clone(mesh.position || center);
                     if (isBelt) {
                         offset = center;
+                        offset.x = widget.rotinfo.xpos;
                         offset.y = widget.rotinfo.dz;
                         offset.z = widget.rotinfo.ypos;
                     } else {
@@ -363,7 +364,6 @@
                 }
                 layerout.height = layerout.height || closest.slice.height;
                 slices[minidx] = null;
-                // if (!isBelt) closest.offset.z = zoff;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== closest.slice.extruder) {
                     printPoint = purge(closest.slice.extruder, track, layerout, printPoint, closest.slice.z);
