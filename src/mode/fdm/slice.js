@@ -59,6 +59,7 @@
         let render = settings.render !== false,
             spro = settings.process,
             sdev = settings.device,
+            isBelt = sdev.bedBelt,
             update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
@@ -67,6 +68,7 @@
             metadata = settings.widget[widget.id] || {},
             extruder = metadata.extruder || 0,
             sliceHeight = spro.sliceHeight,
+            firstSliceHeight = isBelt ? sliceHeight : spro.firstSliceHeight,
             nozzleSize = sdev.extruders[extruder].extNozzle,
             firstOffset = nozzleSize / 2,
             shellOffset = nozzleSize,
@@ -74,8 +76,7 @@
             fillSpacing = nozzleSize,
             fillOffset = nozzleSize * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
-            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null,
-            isBelt = sdev.bedBelt;
+            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
         isFlat = settings.controller.lineType === "flat";
         isThin = !isFlat && settings.controller.lineType === "line";
@@ -104,17 +105,17 @@
             return ondone("invalid nozzle size");
         }
 
-        if (spro.firstSliceHeight === 0) {
-            spro.firstSliceHeight = sliceHeight;
+        if (firstSliceHeight === 0) {
+            firstSliceHeight = sliceHeight;
         }
 
         const sliceMinHeight = spro.sliceAdaptive && spro.sliceMinHeight > 0 ?
             Math.min(spro.sliceMinHeight, sliceHeight) : 0;
 
-        if (spro.firstSliceHeight < sliceHeight) {
+        if (firstSliceHeight < sliceHeight) {
             DBUG.log("invalid first layer height < slice height");
             DBUG.log("reverting to min valid slice height");
-            spro.firstSliceHeight = sliceMinHeight || sliceHeight;
+            firstSliceHeight = sliceMinHeight || sliceHeight;
         }
 
         // const slicer = new KIRI.slicer2(widget.getPoints(), { });
@@ -142,7 +143,7 @@
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
             minHeight: sliceMinHeight,
-            firstHeight: isBelt ? 0 : spro.firstSliceHeight,
+            firstHeight: firstSliceHeight,
             // debug: true,
             // xray: 3,
             // view: view

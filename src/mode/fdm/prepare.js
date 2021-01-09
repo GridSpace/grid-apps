@@ -298,13 +298,14 @@
                 let widget = mesh.widget;
                 let mslices = widget.slices;
                 if (mslices && mslices[layer]) {
-                    let offset = mesh.position || center;
+                    let offset = Object.clone(mesh.position || center);
                     if (isBelt) {
-                        offset = Object.clone(center); // widget.track.pos
-                        // offset = Object.clone(offset);
-                        let ycomp = widget.track.pos.y - beltYoff;
+                        offset = center;
                         offset.y = widget.rotinfo.dz;
-                        // offset.z = widget.rotinfo.dy;
+                        offset.z = widget.rotinfo.ypos;
+                    } else {
+                        // when rafts used this is non-zero
+                        offset.z = zoff;
                     }
                     slices.push({
                         slice: mslices[layer],
@@ -362,7 +363,7 @@
                 }
                 layerout.height = layerout.height || closest.slice.height;
                 slices[minidx] = null;
-                closest.offset.z = zoff;
+                // if (!isBelt) closest.offset.z = zoff;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== closest.slice.extruder) {
                     printPoint = purge(closest.slice.extruder, track, layerout, printPoint, closest.slice.z);
@@ -411,7 +412,7 @@
         print.output = output;
 
         // if belt, adjust z and y to baselines
-        if (isBelt) {
+        function beltSkew() {
             let bcos = Math.cos(Math.PI/4);
             let icos = 1/bcos;
             let miny = Infinity, minz = Infinity;
@@ -423,10 +424,13 @@
                     minz = Math.min(minz, rec.point.y);
                 }
             }
-            for (let layer of output) {
-                for (let rec of layer) {
-                    rec.point.y -= minz;
-                    rec.point.z -= miny;
+            if (miny || minz) {
+                console.log({miny, minz})
+                for (let layer of output) {
+                    for (let rec of layer) {
+                        rec.point.y -= minz;
+                        rec.point.z -= miny;
+                    }
                 }
             }
         }
@@ -436,6 +440,10 @@
             print.render = FDM.prepareRender(output, (progress, layer) => {
                 update(0.5 + progress * 0.5, "render", layer);
             }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
+        }
+
+        if (isBelt) {
+            beltSkew();
         }
 
         return print.render;
