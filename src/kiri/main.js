@@ -976,6 +976,9 @@
                 });
                 // rotate stack for belt beds
                 if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
+                    let ri = WIDGETS[0].rotinfo;
+                    console.log({ri})
+                    ri.dy = ri.dz = 0;
                     STACKS.rotate(WIDGETS[0].rotinfo);
                 }
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
@@ -1280,15 +1283,17 @@
                      y = -b.min.y
                  } else {
                      x = -dev.bedWidth / 2;
-                     y = isBelt ? 0 : dev.bedDepth / 2;
+                     y = dev.bedDepth / 2;
                  }
              }
          } else if (hasStock) {
              x = stockCenter.x;
              y = -stockCenter.y;
+         } else if (isBelt) {
+             y = dev.bedDepth / 2;
          }
          settings.origin = {x, y, z};
-         SPACE.platform.setRulers(ruler, ruler, center, 1/unitScale());
+         SPACE.platform.setRulers(ruler, ruler, 1/unitScale(), 'X', isBelt ? 'Z' : 'Y');
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
              SPACE.platform.setOrigin(x,y,z);
          } else {
@@ -1326,6 +1331,7 @@
 
     function platformUpdateSize() {
         let dev = settings.device,
+            isBelt = dev.bedBelt,
             width, depth,
             height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
         SPACE.platform.setRound(dev.bedRound);
@@ -1352,7 +1358,7 @@
             SPACE.setSkyColor(0xffffff);
             DOC.body.classList.remove('dark');
         }
-        SPACE.platform.setRulers(ruler, ruler, proc.outputOriginCenter, 1/unitScale());
+        SPACE.platform.setRulers(ruler, ruler, 1 / unitScale(), 'X', isBelt ? 'Z' : 'Y');
         SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
     }
@@ -1614,6 +1620,8 @@
     function platformLayout(event, space) {
         let auto = UI.autoLayout.checked,
             proc = settings.process,
+            dev = settings.device,
+            isBelt = dev.bedBelt,
             oldmode = viewMode,
             layout = (viewMode === VIEWS.ARRANGE && auto);
 
@@ -1674,6 +1682,11 @@
             m.fit.y += m.h / 2 + p.pad;
             m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
             // m.material.visible = true;
+        }
+
+        if (isBelt) {
+            let bounds = platformUpdateBounds(), movey = -(dev.bedDepth / 2 + bounds.min.y);
+            forAllWidgets(widget => widget.move(0, movey + 10, 0));
         }
 
         platform.update_origin();

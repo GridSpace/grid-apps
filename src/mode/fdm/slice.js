@@ -267,13 +267,13 @@
                 }, "render");
             }
 
-            // if (isBelt) {
-            //     let bounds = BASE.newBounds();
-            //     for (let top of slices[0].tops) {
-            //         bounds.merge(top.poly.bounds);
-            //     }
-            //     console.log({z_anchor_bounds: bounds});
-            // }
+            if (isBelt) {
+                let bounds = BASE.newBounds();
+                for (let top of slices[0].tops) {
+                    bounds.merge(top.poly.bounds);
+                }
+                widget.belt_offset = bounds.miny;
+            }
 
             // report slicing complete
             ondone();

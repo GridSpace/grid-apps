@@ -194,7 +194,7 @@
         }
 
         // synthesize a support widget, if needed
-        {
+        if (!isBelt) {
             let swidget = KIRI.newWidget();
             let sslices = swidget.slices = [];
             widgets.forEach(function(widget) {
@@ -284,6 +284,8 @@
             }
         }
 
+        const center = {x:0, y:0, z:0};
+
         // increment layer count until no widget has remaining slices
         for (;;) {
             // create list of mesh slice arrays with their platform offsets
@@ -292,12 +294,18 @@
                 if (!mesh.widget) {
                     continue;
                 }
-                let mslices = mesh.widget.slices;
+                let widget = mesh.widget;
+                let mslices = widget.slices;
                 if (mslices && mslices[layer]) {
+                    let offset = mesh.position || center;
+                    if (isBelt) {
+                        offset = Object.clone(offset);
+                        offset.y -= widget.belt_offset || 0;
+                    }
                     slices.push({
                         slice: mslices[layer],
-                        offset: mesh.position || {x:0, y:0, z:0},
-                        widget: mesh.widget
+                        offset: offset,
+                        widget: widget
                     });
                 }
             }

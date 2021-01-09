@@ -34,6 +34,7 @@
         showSkyGrid = false,
         showPlatform = true,
         hidePlatformBelow = true,
+        origin = {x:0, y:0, z: 0},
         trackcam = addLight(0, 0, 0, lightIntensity/3),
         trackDelta = {x:0, y:0, z:0},
         mouse = {x: 0, y: 0},
@@ -46,21 +47,28 @@
         mouseDown,
         mouseHover,
         mouseDrag,
-        gridOrigin,
-        gridUnitMinor,
-        gridUnitMajor,
-        gridColorMajor,
-        gridColorMinor,
-        gridView,
-        rulersView,
-        rulerXFirst = null,
-        rulerXLast = null,
-        rulerYFirst = null,
-        rulerYLast = null,
-        rulerX = true,
-        rulerY = true,
-        rulerCenter = true,
-        rulerFactor = 1,
+        grid = {
+            origin: undefined,
+            unitMinor: 0,
+            unitMajor: 0,
+            colorMinor: 0,
+            colorMajor: 0,
+            zoff: 0,
+            view: undefined
+        },
+        ruler = {
+            x1: 0,
+            x2: 0,
+            y1: 0,
+            y2: 0,
+            xlabel: 'X',
+            ylabel: 'Y',
+            xon: undefined,
+            yon: undefined,
+            factor: undefined,
+            view: undefined
+        },
+        timers = {},
         fontColor = '#333333',
         fontScale = 1.4, // computed relative to grid size
         rulerColor,
@@ -120,6 +128,11 @@
         lastAction = Date.now();
     }
 
+    function delayed(key, time, fn) {
+        clearTimeout(timers[key]);
+        timers[key] = setTimeout(fn, time);
+    }
+
     /** ******************************************************************
      * TWEENing Functions
      ******************************************************************* */
@@ -155,10 +168,8 @@
     function tweenPlatform(w,h,d) {
         let from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
             to = {x:w, y:h, z:d},
-            gridMajor = gridUnitMajor,
-            gridMinor = gridUnitMinor,
             start = function() {
-                setGrid(0);
+                setGrid();
             },
             update = function() {
                 setPlatformSize(this.x, this.y, this.z);
@@ -166,7 +177,7 @@
                 refresh();
             },
             complete = function() {
-                setGrid(gridMajor, gridMinor, gridColorMajor, gridColorMinor);
+                setGrid();
             };
         new TWEEN.Tween(from).
             to(to, 500).
@@ -268,7 +279,7 @@
     function setPlatformSizeUpdateGrid(width, depth, height, maxz) {
         freeze = { width, depth, height, maxz };
         setPlatformSize(width, depth, height, maxz);
-        setGrid(gridUnitMajor, gridUnitMinor);
+        setGrid(grid.unitMajor, grid.unitMinor);
         clearTimeout(freezeTo);
         freezeTo = setTimeout(() => { freeze = undefined }, 10);
     }
@@ -285,12 +296,12 @@
         if (options.scale) fontScale = options.scale;
         if (options.axisColor) axisColor = options.axisColor;
         if (options.rulerColor) rulerColor = options.rulerColor;
-        setRulers();
+        updateRulers();
     }
 
     function setAxes(bool) {
         axesOn = bool;
-        setRulers();
+        updateRulers();
     }
 
     function setVolume(bool) {
@@ -299,163 +310,188 @@
         requestRefresh();
     }
 
-    function setRulers(drawX = rulerX, drawY = rulerY, offsetCenter = rulerCenter, factor = rulerFactor) {
-        rulerX = drawX;
-        rulerY = drawY;
-        rulerCenter = offsetCenter;
-        rulerFactor = factor;
+    function canvasInMesh(w, h, textAlign, textBaseline, color, size) {
+        let canvas = document.createElement('canvas'),
+            canvasTexture = new THREE.CanvasTexture(canvas),
+            plane = new THREE.PlaneGeometry(w, h),
+            context = canvas.getContext('2d'),
+            scale = 8;
 
-        let x = platform.scale.x,
-            y = isRound ? platform.scale.z : platform.scale.y,
-            z = isRound ? platform.scale.y : platform.scale.z,
-            w = x / 2,
-            h = y / 2,
-            d = z / 2,
-            zp = -d - platformZOff + gridZOff,
-            oldRulersView = rulersView,
-            labelSize = gridUnitMinor * fontScale;
+        canvas.width = w * scale;
+        canvas.height = h * scale;
 
-        let canvasInMesh = function(w, h, textAlign, textBaseline, color) {
-            let canvas = document.createElement('canvas'),
-                ctx = canvas.getContext('2d'),
-                scale = 8,
-                plane,
-                canvasTexture,
-                material,
-                mesh;
+        context.scale(scale, scale);
+        context.fillStyle = color || fontColor;
+        context.font = `${size}px sans-serif`;
+        context.textAlign = textAlign;
+        context.textBaseline = textBaseline;
+        canvasTexture.minFilter = THREE.LinearFilter;
 
-            canvas.width = w * scale;
-            canvas.height = h * scale;
-            ctx.scale(scale, scale);
-            ctx.fillStyle = color || fontColor;
-            ctx.font = labelSize + 'px sans-serif';
-            ctx.textAlign = textAlign;
-            ctx.textBaseline = textBaseline;
-            plane = new THREE.PlaneGeometry(w, h);
-            canvasTexture = new THREE.CanvasTexture(canvas);
-            canvasTexture.minFilter = THREE.LinearFilter;
-            // set 'transparent' to false to debug mesh bounds
-            material = new THREE.MeshBasicMaterial({transparent: true, map: canvasTexture});
-            mesh = new THREE.Mesh(plane, material);
-            return {ctx: ctx, mesh: mesh};
-        }
+        // set 'transparent' to false to debug mesh bounds
+        let material = new THREE.MeshBasicMaterial({transparent: true, map: canvasTexture});
+        let mesh = new THREE.Mesh(plane, material);
 
-        if (drawX || drawY) {
-            rulersView = new THREE.Group();
-        } else {
-            rulersView = null;
-        }
-
-        if (drawX) {
-            const xPadding = labelSize * 4;
-            const canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor);
-
-            for (let i = rulerXFirst; i <= rulerXLast; i += gridUnitMajor) {
-                const label = ((offsetCenter ? i - (rulerXLast + rulerXFirst) / 2 : i) * factor).round(1);
-                canvas.ctx.fillText('' + label, i + xPadding / 2, 0);
-            }
-            canvas.mesh.position.set(0, - h - labelSize * 2, zp);
-            rulersView.add(canvas.mesh);
-
-            if (axesOn) {
-                canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
-                canvas.ctx.fillText('X', (x + xPadding)/2, labelSize * 1.5);
-                canvas.ctx.font = labelSize + 'px sans-serif';
-            }
-        }
-
-        if (drawY) {
-            const yPadding = labelSize;
-            const canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor);
-
-            for (let i = rulerYFirst; i <= rulerYLast; i += gridUnitMajor) {
-                const label = ((offsetCenter ? -(i - (rulerYLast + rulerYFirst) / 2) :
-                    rulerYFirst + rulerYLast - i) * factor).round(1);
-                canvas.ctx.fillText('' + label, labelSize * 4, i + yPadding / 2);
-            }
-            canvas.mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
-            rulersView.add(canvas.mesh);
-
-            if (axesOn) {
-                canvas.ctx.font = (labelSize * 0.75) + 'px sans-serif';
-                canvas.ctx.fillText('Y', labelSize*1.25, (y + yPadding)/2);
-                canvas.ctx.font = labelSize + 'px sans-serif';
-            }
-        }
-
-        if (oldRulersView) Space.scene.remove(oldRulersView);
-        if (rulersView) Space.scene.add(rulersView);
-        Space.refresh();
+        return { context, mesh };
     }
 
-    function setGrid(unitMajor, unitMinor, colorMajor, colorMinor) {
-        if (!unitMajor) return;
-        let oldGridView = gridView;
-        gridView = new THREE.Group();
-        gridUnitMajor = unitMajor;
-        gridUnitMinor = unitMinor;
-        gridColorMajor = colorMajor || gridColorMajor;
-        gridColorMinor = colorMinor || gridColorMinor;
+
+    function setRulers(xon = ruler.xon, yon = ruler.yon, factor = ruler.factor, xl = ruler.xlabel, yl = ruler.ylabel) {
+        if (xon !== ruler.xon || yon !== ruler.yon || factor !== ruler.factor || xl !== ruler.xlabel || yl !== ruler.ylabel) {
+            ruler.factor = factor;
+            ruler.xon = xon;
+            ruler.yon = yon;
+            ruler.xlabel = xl;
+            ruler.ylabel = yl;
+            updateRulers();
+        }
+    }
+
+    function updateRulers() {
+        let { xon, yon, factor, xlabel, ylabel } = ruler;
         let x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
-            xr = Math.ceil(x/2 / unitMinor) * unitMinor,
-            yr = Math.ceil(y/2 / unitMinor) * unitMinor,
-            xo = isRound ? x/2 : xr,
-            yo = isRound ? y/2 : yr,
             w = x / 2,
             h = y / 2,
             d = z / 2,
             zp = -d - platformZOff + gridZOff,
-            majors = [], minors = unitMinor ? [] : null, i;
+            labelSize = grid.unitMinor * fontScale,
+            oldView = ruler.view,
+            view = ruler.view = new THREE.Group();
 
-        rulerXFirst = null;
-        rulerXLast = null;
-        rulerYFirst = null;
-        rulerYLast = null;
+        if (xon && axesOn) {
+            let xPadding = labelSize * 4,
+                canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor, labelSize),
+                context = canvas.context,
+                mesh = canvas.mesh;
 
-        for (i = -xo; i <= xo; i += unitMinor) {
-            let oh = isRound ? Math.sqrt(1-(i/xo)*(i/xo)) * h : h,
-                dM = Math.abs(i % unitMajor);
-            if (i < -w || i > w) continue;
-            if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
-                majors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
-                if (rulerXFirst === null) rulerXFirst = i + w;
-                rulerXLast = i + w;
-            } else {
-                minors.append({x:i, y:-oh, z:zp}).append({x:i, y:oh, z:zp});
+            for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
+                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
             }
-        }
-        for (i = -yo; i <= yo; i += unitMinor) {
-            let ow = isRound ? Math.sqrt(1-(i/yo)*(i/yo)) * w : w,
-                dM = Math.abs(i % unitMajor);
-            if (i < -h || i > h) continue;
-            if (dM < 1 || Math.abs(unitMajor - dM) < 0.1) {
-                majors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
-                if (rulerYFirst === null) rulerYFirst = i + h;
-                rulerYLast = i + h;
-            } else {
-                minors.append({x:-ow, y:i, z:zp}).append({x:ow, y:i, z:zp});
+            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
+                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
             }
+
+            context.font = (labelSize * 0.75) + 'px sans-serif';
+            context.fillText(xlabel, (x + xPadding) / 2, labelSize * 1.5);
+            mesh.position.set(0, - h - labelSize * 2, zp);
+            view.add(mesh);
         }
-        gridView.add(makeLinesFromPoints(majors, gridColorMajor || 0x999999, 1));
-        if (minors) gridView.add(makeLinesFromPoints(minors, gridColorMinor || 0xcccccc, 1));
-        if (oldGridView) Space.scene.remove(oldGridView);
-        Space.scene.add(gridView);
+
+        if (yon && axesOn) {
+            let yPadding = labelSize,
+                canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor, labelSize),
+                context = canvas.context,
+                mesh = canvas.mesh;
+
+            for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
+                context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            }
+            for (let i = 0; i <= ruler.y2; i += grid.unitMajor) {
+                context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            }
+
+            context.font = (labelSize * 0.75) + 'px sans-serif';
+            context.fillText(ylabel, labelSize * 1.25, (y + yPadding) / 2);
+            mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
+            view.add(mesh);
+        }
+
+        Space.scene.remove(oldView);
+        Space.scene.add(view);
+        requestRefresh();
+    }
+
+    function setGrid(unitMajor = grid.unitMajor, unitMinor = grid.unitMinor, colorMajor = grid.colorMajor, colorMinor = grid.colorMinor) {
+        if (!unitMajor) {
+            return;
+        }
+        if (unitMajor !== grid.unitMajor || unitMinor !== grid.unitMinor) {
+            grid.unitMajor = unitMajor;
+            grid.unitMinor = unitMinor;
+            grid.colorMajor = colorMajor || grid.colorMajor;
+            grid.colorMinor = colorMinor || grid.colorMinor;
+            updateGrid();
+        }
+    }
+
+    function updateGrid() {
+        let { view, unitMinor, unitMajor, colorMajor, colorMinor } = grid;
+        let oldView = view;
+        view = grid.view = new THREE.Group();
+
+        let majors = [],
+            minors = [],
+            x = platform.scale.x,
+            y = isRound ? platform.scale.z : platform.scale.y,
+            z = isRound ? platform.scale.y : platform.scale.z,
+            zp = -(z / 2) - platformZOff + gridZOff,
+            xh = x / 2,
+            yh = y / 2,
+            x1 = -xh - origin.x,
+            x2 = xh - origin.x,
+            y1 = -yh + origin.y,
+            y2 = yh + origin.y,
+            xo = x1 + xh,
+            yo = y1 + yh;
+
+        ruler.x1 = x1;
+        ruler.x2 = x2;
+        ruler.y1 = y1;
+        ruler.y2 = y2;
+        ruler.xo = xh - xo;
+        ruler.yo = yh - yo;
+
+        for (let x=0; x>x1; x -= unitMinor) {
+            let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
+            let arr = Math.abs(x % unitMajor) < 0.1 ? majors : minors;
+            arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
+        }
+        for (let x=0; x<x2; x += unitMinor) {
+            let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
+            let arr = Math.abs(x % unitMajor) < 0.1 ? majors : minors;
+            arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
+        }
+        for (let y=0; y>y1; y -= unitMinor) {
+            let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
+            let arr = Math.abs(y % unitMajor) < 0.1 ? majors : minors;
+            arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
+        }
+        for (let y=0; y<y2; y += unitMinor) {
+            let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
+            let arr = Math.abs(y % unitMajor) < 0.1 ? majors : minors;
+            arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
+        }
+
+        view.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
+        view.add(makeLinesFromPoints(minors, colorMinor || 0xcccccc, 1));
+
+        Space.scene.remove(oldView);
+        Space.scene.add(grid.view);
+        requestRefresh();
+    }
+
+    function updateDraws() {
+        updateGrid();
+        updateRulers();
+        requestRefresh();
     }
 
     function setOrigin(x, y, z) {
-        if (gridOrigin) {
-            if (x === gridOrigin.x && y === gridOrigin.y && z === gridOrigin.z) {
+        if (grid.origin) {
+            if (x === grid.origin.x && y === grid.origin.y && z === grid.origin.z) {
+                updateDraws();
                 return;
             }
-            Space.scene.remove(gridOrigin.group);
+            Space.scene.remove(grid.origin.group);
         }
         if (x === undefined) {
-            gridOrigin = null;
-            Space.update();
+            origin = {x:0, y:0, z:0};
+            grid.origin = null;
+            updateDraws();
             return;
         }
+        origin = {x, y, z};
         let cmat = new THREE.MeshPhongMaterial({
             color: 0xcceeff,
             specular: 0xcceeff,
@@ -473,7 +509,7 @@
         let PIP = Math.PI/2;
         let pi1, pi2, pi3, pi4;
         let group = new THREE.Group();
-        gridOrigin = {x, y, z, group};
+        grid.origin = {x, y, z, group};
         group.add(pi1 = new THREE.Mesh(
             new THREE.CircleGeometry(4.6, 50, PIP*0, PIP*1),
             cmat
@@ -519,11 +555,12 @@
             m.renderOrder = 3;
         });
         Space.scene.add(group);
-        Space.update();
+        updateDraws();
     }
 
     function refresh() {
         refreshRequested = false;
+        clearTimeout(refreshTimeout);
         updateLastAction();
         viewControl.update();
     }
@@ -830,7 +867,7 @@
             onClick:   function(f) { platformClick = f},
             size:      function()  { return platform.scale },
             isVisible: function()  { return platform.visible },
-            showGrid:  function(b) { gridView.visible = b },
+            showGrid:  function(b) { grid.view.visible = b },
             setRound:  function(bool) {
                 let current = platform;
                 isRound = bool;

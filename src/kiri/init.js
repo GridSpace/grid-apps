@@ -968,6 +968,7 @@
                     found.classList.remove("selected");
                 }
                 found = opt;
+                API.platform.layout();
             };
             if (loc) {
                 UI.deviceMy.appendChild(opt);
