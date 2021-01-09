@@ -45,7 +45,8 @@
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             isThin = settings.controller.lineType === "line",
             isFlat = settings.controller.lineType === "flat",
-            isBelt = device.bedBelt;
+            isBelt = device.bedBelt,
+            beltYoff = device.bedDepth / 2;
 
         // compute bounds if missing
         if (!bounds) {
@@ -297,11 +298,13 @@
                 let widget = mesh.widget;
                 let mslices = widget.slices;
                 if (mslices && mslices[layer]) {
-                    let offset = widget.track.pos || mesh.position || center;
+                    let offset = mesh.position || center;
                     if (isBelt) {
-                        offset = Object.clone(offset);
+                        offset = Object.clone(center); // widget.track.pos
+                        // offset = Object.clone(offset);
+                        let ycomp = widget.track.pos.y - beltYoff;
                         offset.y = widget.rotinfo.dz;
-                        offset.z = widget.rotinfo.dy;
+                        // offset.z = widget.rotinfo.dy;
                     }
                     slices.push({
                         slice: mslices[layer],
@@ -407,29 +410,32 @@
 
         print.output = output;
 
+        // if belt, adjust z and y to baselines
+        if (isBelt) {
+            let bcos = Math.cos(Math.PI/4);
+            let icos = 1/bcos;
+            let miny = Infinity, minz = Infinity;
+            for (let layer of output) {
+                for (let rec of layer) {
+                    rec.point.z = rec.point.z * icos;
+                    rec.point.y = rec.point.y + rec.point.z * bcos;
+                    miny = Math.min(miny, rec.point.y);
+                    minz = Math.min(minz, rec.point.y);
+                }
+            }
+            for (let layer of output) {
+                for (let rec of layer) {
+                    rec.point.y -= minz;
+                    rec.point.z -= miny;
+                }
+            }
+        }
+
         // render if not explicitly disabled
         if (render) {
             print.render = FDM.prepareRender(output, (progress, layer) => {
                 update(0.5 + progress * 0.5, "render", layer);
             }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
-        }
-
-        // if belt, adjust z and y to baselines
-        if (isBelt) {
-            let miny = Infinity, minz = Infinity;
-            for (let layer of output) {
-                for (let rec of layer) {
-                    miny = Math.min(miny, rec.point.y);
-                    minz = Math.min(minz, rec.point.y);
-                }
-            }
-            console.log({miny, minz});
-            // for (let layer of output) {
-            //     for (let rec of layer) {
-            //         rec.point.y -= minz;
-            //         rec.point.z -= miny;
-            //     }
-            // }
         }
 
         return print.render;

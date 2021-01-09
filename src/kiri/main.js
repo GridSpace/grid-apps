@@ -978,8 +978,8 @@
                 if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
                     let ri = WIDGETS[0].rotinfo;
                     ri.dy = ri.dz = 0;
-                    ri.dy = settings.device.bedDepth / 2 - ri.ypos;
-                    stack.obj.rotate(WIDGETS[0].rotinfo);
+                    // ri.dy = settings.device.bedDepth / 2 - ri.ypos;
+                    // stack.obj.rotate(WIDGETS[0].rotinfo);
                 }
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }

@@ -22,7 +22,7 @@
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
             tool = 0,
-            isBelt = device.bedBelt,
+            isBelt = false && device.bedBelt,
             bedType = isBelt ? "belt" : "fixed",
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,
@@ -199,11 +199,14 @@
             }
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
-                let rpos = new THREE.Vector3(pos.x, pos.y, pos.z);
-                rpos.applyAxisAngle( taxis, angle );
-                epos.x = rpos.x;
-                epos.y = rpos.z * icos;
-                epos.z = rpos.y + (bcos * rpos.z);
+                // let rpos = new THREE.Vector3(pos.x, pos.y, pos.z);
+                // rpos.applyAxisAngle( taxis, angle );
+                // epos.x = rpos.x;
+                // epos.y = rpos.z * icos;
+                // epos.z = rpos.y + (bcos * rpos.z);
+                epos.x = pos.x;
+                epos.z = pos.z * icos;
+                epos.y = pos.y + epos.z * bcos;
             }
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
             if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
