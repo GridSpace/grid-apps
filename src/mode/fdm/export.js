@@ -22,7 +22,7 @@
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
             tool = 0,
-            isBelt = device.bedBelt || false,
+            isBelt = device.bedBelt,
             bedType = isBelt ? "belt" : "fixed",
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,

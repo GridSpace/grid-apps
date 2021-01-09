@@ -288,15 +288,15 @@
         });
 
         // recenter for visualization
-        if (morph && belt) {
-            for (let layer of output) {
-                for (let rec of layer) {
-                    let point = rec.point;
-                    point.y -= bounds.min.z;
-                    point.z += bounds.min.y;
-                }
-            }
-        }
+        // if (false && morph && belt) {
+        //     for (let layer of output) {
+        //         for (let rec of layer) {
+        //             let point = rec.point;
+        //             point.y -= bounds.min.z;
+        //             point.z += bounds.min.y;
+        //         }
+        //     }
+        // }
 
         scope.imported = gcode;
         scope.lines = lines.length;

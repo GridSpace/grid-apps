@@ -297,10 +297,11 @@
                 let widget = mesh.widget;
                 let mslices = widget.slices;
                 if (mslices && mslices[layer]) {
-                    let offset = mesh.position || center;
+                    let offset = widget.track.pos || mesh.position || center;
                     if (isBelt) {
                         offset = Object.clone(offset);
-                        offset.y -= widget.belt_offset || 0;
+                        offset.y = widget.rotinfo.dz;
+                        offset.z = widget.rotinfo.dy;
                     }
                     slices.push({
                         slice: mslices[layer],
@@ -406,8 +407,15 @@
 
         print.output = output;
 
+        // render if not explicitly disabled
+        if (render) {
+            print.render = FDM.prepareRender(output, (progress, layer) => {
+                update(0.5 + progress * 0.5, "render", layer);
+            }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
+        }
+
         // if belt, adjust z and y to baselines
-        if (false && isBelt) {
+        if (isBelt) {
             let miny = Infinity, minz = Infinity;
             for (let layer of output) {
                 for (let rec of layer) {
@@ -416,21 +424,15 @@
                 }
             }
             console.log({miny, minz});
-            for (let layer of output) {
-                for (let rec of layer) {
-                    // rec.point.y -= minz;
-                    // rec.point.z -= miny;
-                }
-            }
+            // for (let layer of output) {
+            //     for (let rec of layer) {
+            //         rec.point.y -= minz;
+            //         rec.point.z -= miny;
+            //     }
+            // }
         }
 
-        // render if not explicitly disabled
-        if (render) {
-            print.render = FDM.prepareRender(output, (progress, layer) => {
-                update(0.5 + progress * 0.5, "render", layer);
-            }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
-            return print.render;
-        }
+        return print.render;
     };
 
     class Counter {
