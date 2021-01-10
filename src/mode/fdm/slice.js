@@ -273,11 +273,13 @@
                 for (let top of slices[0].tops) {
                     bounds.merge(top.poly.bounds);
                 }
-                widget.belt = {
-                    offset_y: bounds.miny,
-                    pos_y: sdev.bedDepth / 2 + widget.track.pos.y,
-                    ypos: widget.belt.ypos
-                };
+                widget.belt.miny = -bounds.miny;
+                // widget.belt.yy2 = sdev.bedDepth / 2 + widget.track.pos.y;
+                // widget.belt = {
+                //     offset_y: bounds.miny,
+                //     pos_y: sdev.bedDepth / 2 + widget.track.pos.y,
+                //     ypos: widget.belt.ypos
+                // };
             }
 
             // report slicing complete

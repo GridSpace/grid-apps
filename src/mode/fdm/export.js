@@ -22,7 +22,7 @@
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
             tool = 0,
-            isBelt = false && device.bedBelt,
+            isBelt = device.bedBelt,
             bedType = isBelt ? "belt" : "fixed",
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,
@@ -76,8 +76,8 @@
             lines = 0,
             bytes = 0,
             bcos = Math.cos(Math.PI/4),
-            icos = 1/bcos;
-
+            icos = 1 / bcos;
+console.log({isBelt, offset});
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
             if (v >= 0) pause.push(v);
@@ -199,14 +199,11 @@
             }
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
-                // let rpos = new THREE.Vector3(pos.x, pos.y, pos.z);
-                // rpos.applyAxisAngle( taxis, angle );
-                // epos.x = rpos.x;
-                // epos.y = rpos.z * icos;
-                // epos.z = rpos.y + (bcos * rpos.z);
                 epos.x = pos.x;
                 epos.z = pos.z * icos;
                 epos.y = pos.y + epos.z * bcos;
+                // epos.z = pos.y * icos;
+                // epos.y = pos.z + (pos.y * icos) * bcos;
             }
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
             if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
@@ -253,7 +250,8 @@
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
-            subst.z = (zpos + path.height).toFixed(3);
+            subst.z = zpos = path.z;
+            // subst.z = (zpos + path.height).toFixed(3);
             subst.Z = subst.z;
             subst.layer = layer;
             subst.height = path.height.toFixed(3);
@@ -293,7 +291,6 @@
             }
 
             // move Z to layer height
-            zpos += path.height;
             if (layer > 0 || !isBelt) {
                 moveTo({z:zpos}, seekMMM);
             }

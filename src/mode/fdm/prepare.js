@@ -46,7 +46,9 @@
             isThin = settings.controller.lineType === "line",
             isFlat = settings.controller.lineType === "flat",
             isBelt = device.bedBelt,
-            beltYoff = device.bedDepth / 2;
+            beltYoff = device.bedDepth / 2,
+            bcos = Math.cos(Math.PI/4),
+            icos = 1 / bcos;
 
         // compute bounds if missing
         if (!bounds) {
@@ -285,42 +287,45 @@
             }
         }
 
-        const center = {x:0, y:0, z:0};
-
-        // increment layer count until no widget has remaining slices
-        for (;;) {
-            // create list of mesh slice arrays with their platform offsets
-            for (meshIndex = 0; meshIndex < widgets.length; meshIndex++) {
-                let mesh = widgets[meshIndex].mesh;
-                if (!mesh.widget) {
-                    continue;
-                }
-                let widget = mesh.widget;
-                let mslices = widget.slices;
-                if (mslices && mslices[layer]) {
-                    let offset = Object.clone(mesh.position || center);
-                    if (isBelt) {
-                        offset = center;
-                        offset.x = widget.rotinfo.xpos;
-                        offset.y = widget.rotinfo.dz;
-                        offset.z = widget.rotinfo.ypos;
-                    } else {
-                        // when rafts used this is non-zero
-                        offset.z = zoff;
-                    }
-                    slices.push({
-                        slice: mslices[layer],
-                        offset: offset,
-                        widget: widget
-                    });
-                }
+        // establish offsets
+        for (let widget of widgets) {
+            let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
+            if (isBelt) {
+                offset.x = widget.rotinfo.xpos;
+                offset.y = widget.belt.miny;
+                offset.y += widget.rotinfo.ypos * bcos;
+                offset.z = widget.rotinfo.ypos * bcos;
+            } else {
+                // when rafts used this is non-zero
+                offset.z = zoff;
             }
+            widget.offset = offset;
+        }
 
-            // exit if no slices
-            if (slices.length === 0) {
-                break;
+        // create shuffled slice cake by z offset (slice.z + offset.z)
+        let cake = [];
+        let zrec = {};
+        for (let widget of widgets) {
+            // skip synthesized support widget(s)
+            if (!widget.mesh) {
+                continue;
             }
+            for (let slice of widget.slices) {
+                slice.widget = widget;
+                let z = slice.z + widget.offset.z;
+                let rec = zrec[z] = zrec[z] || {z, slices:[]};
+                if (rec.slices.length === 0) {
+                    cake.push(rec);
+                }
+                rec.slices.push(slice);
+            }
+        }
+        cake.sort((a, b) => {
+            return a.z - b.z;
+        });
 
+        // walk cake layers bottom up
+        for (let layer of cake) {
             // track purge blocks generated for each layer
             let track = extruders.slice();
             let lastOut;
@@ -328,58 +333,55 @@
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
-                closest = null;
-                mindist = Infinity;
                 let order = [];
                 // select slices of the same extruder type first then distance
-                for (meshIndex = 0; meshIndex < slices.length; meshIndex++) {
-                    sliceEntry = slices[meshIndex];
-                    if (sliceEntry) {
-                        find = sliceEntry.slice.findClosestPointTo(printPoint.sub(sliceEntry.offset));
-                        if (find) {
-                            let ext = sliceEntry.slice.extruder;
-                            let lex = lastOut ? lastOut.extruder : ext;
-                            let dst = Math.abs(find.distance);
-                            if (ext !== lex) dst *= 10000;
-                            order.push({dst,sliceEntry,meshIndex});
-                        }
+                for (let slice of layer.slices) {
+                    if (slice.prep) {
+                        continue;
                     }
+                    let offset = slice.widget.offset;
+                    let find = slice.findClosestPointTo(printPoint.sub(offset));
+                    if (find) {
+                        let ext = slice.extruder;
+                        let lex = lastOut ? lastOut.extruder : ext;
+                        let dst = Math.abs(find.distance);
+                        // penalize extruder swaps
+                        if (ext !== lex) {
+                            dst *= 10000;
+                        }
+                        order.push({dst, slice, offset, z: layer.z});
+                    }
+                }
+                if (order.length === 0) {
+                    break;
                 }
                 order.sort((a,b) => {
                     return a.dst - b.dst;
                 });
-                if (order.length) {
-                    let find = order.shift();
-                    closest = find.sliceEntry;
-                    minidx = find.meshIndex;
-                }
-
-                if (!closest) {
-                    if (sliceEntry) lastOut = sliceEntry.slice;
-                    break;
-                }
+                let { z, slice, offset } = order[0];
+                slice.prep = true;
                 // retract between widgets
                 if (layerout.length && minidx !== lastIndex) {
                     layerout.last().retract = true;
                 }
-                layerout.height = layerout.height || closest.slice.height;
-                slices[minidx] = null;
+                layerout.z = z;
+                layerout.height = layerout.height || slice.height;
                 // detect extruder change and print purge block
-                if (!lastOut || lastOut.extruder !== closest.slice.extruder) {
-                    printPoint = purge(closest.slice.extruder, track, layerout, printPoint, closest.slice.z);
+                if (!lastOut || lastOut.extruder !== slice.extruder) {
+                    printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z);
                 }
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
-                    closest.slice,
-                    printPoint.sub(closest.offset),
-                    closest.offset,
+                    slice,
+                    printPoint.sub(offset),
+                    offset,
                     layerout,
                     {
-                        first: closest.slice.index === 0,
-                        support: closest.widget.support
+                        first: slice.index === 0,
+                        support: slice.widget.support
                     }
                 );
-                lastOut = closest.slice;
+                lastOut = slice;
                 lastExt = lastOut.ext
                 lastIndex = minidx;
             }
@@ -393,7 +395,9 @@
             });
 
             // if layer produced output, append to output array
-            if (layerout.length) output.append(layerout);
+            if (layerout.length) {
+                output.append(layerout);
+            }
 
             // retract after last layer
             if (layer === maxLayers && layerout.length) {
@@ -411,39 +415,11 @@
 
         print.output = output;
 
-        // if belt, adjust z and y to baselines
-        function beltSkew() {
-            let bcos = Math.cos(Math.PI/4);
-            let icos = 1/bcos;
-            let miny = Infinity, minz = Infinity;
-            for (let layer of output) {
-                for (let rec of layer) {
-                    rec.point.z = rec.point.z * icos;
-                    rec.point.y = rec.point.y + rec.point.z * bcos;
-                    miny = Math.min(miny, rec.point.y);
-                    minz = Math.min(minz, rec.point.y);
-                }
-            }
-            if (miny || minz) {
-                console.log({miny, minz})
-                for (let layer of output) {
-                    for (let rec of layer) {
-                        rec.point.y -= minz;
-                        rec.point.z -= miny;
-                    }
-                }
-            }
-        }
-
         // render if not explicitly disabled
         if (render) {
             print.render = FDM.prepareRender(output, (progress, layer) => {
                 update(0.5 + progress * 0.5, "render", layer);
             }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
-        }
-
-        if (isBelt) {
-            beltSkew();
         }
 
         return print.render;

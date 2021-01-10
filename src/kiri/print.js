@@ -100,6 +100,7 @@
 
         const scope = this,
             morph = false,
+            // morph = true,
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
@@ -166,8 +167,8 @@
             );
 
             if (morph && belt) {
-                point.z *= beltfact;
                 point.y -= point.z * beltfact;
+                point.z *= beltfact;
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
@@ -226,16 +227,23 @@
             lastPos = Object.assign({}, pos);
         }
 
-        lines.forEach(function(line) {
+        lines.forEach(function(line, idx) {
+if (idx < 10) console.log({line})
+            if (line.indexOf(';LAYER:') === 0) {
+                newlayer = true;
+if (idx < 100) console.log({newlayer});
+            }
             if (line.indexOf('- LAYER ') > 0) {
                 seq.height = defh;
                 const hd = line.replace('(','').replace(')','').split(' ');
                 defh = parseFloat(hd[4]);
                 if (fdm) dz = -defh / 2;
                 newlayer = true;
+if (idx < 100) console.log({layer: defh});
             }
             if (line.indexOf("BED TYPE: BELT") > 0) {
                 belt = true;
+if (idx < 100) console.log({isbelt: belt});
             }
             line = line.split(";")[0].split(" ").filter(v => v);
             let cmd = line.shift();

@@ -978,9 +978,9 @@
                 if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
                     let ri = WIDGETS[0].rotinfo;
                     // console.log(ri)
-                    ri.dy = ri.dz = 0;
-                    ri.dy = settings.device.bedDepth / 2 - ri.ypos;
-                    stack.obj.rotate(WIDGETS[0].rotinfo);
+                    // ri.dy = ri.dz = 0;
+                    // ri.dy = settings.device.bedDepth / 2 - ri.ypos;
+                    // stack.obj.rotate(WIDGETS[0].rotinfo);
                 }
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
@@ -1688,7 +1688,7 @@
         if (isBelt) {
             let bounds = platformUpdateBounds(),
                 movey = -(dev.bedDepth / 2 + bounds.min.y);
-            forAllWidgets(widget => widget.move(0, movey + 10, 0));
+            forAllWidgets(widget => widget.move(0, movey + 0, 0));
         }
 
         platform.update_origin();
