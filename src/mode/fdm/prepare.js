@@ -405,8 +405,8 @@
                         let b = Math.max(firstLayerBrim, 1);
                         print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
                         print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);
-                        print.addOutput(tmpout, newPoint(maxx + 0, y, z), 0,    firstLayerSeek, tool);
-                        print.addOutput(tmpout, newPoint(maxx + b, y, z), emit, firstLayerRate, tool);
+                        print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
+                        print.addOutput(tmpout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool);
                     }
                 }
                 layerout.appendAll(tmpout);
