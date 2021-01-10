@@ -34,8 +34,7 @@
             restoreSupports(api.widgets.all());
         });
         api.event.on("settings.saved", (settings) => {
-            let proc = settings.process;
-            // api.ui.fdmSupport.marker.style.display = proc.sliceSupportEnable ? 'flex' : 'none';
+            api.ui.fdmSupport.style.display = settings.device.bedBelt ? 'none' : 'flex';
         });
         api.event.on("button.click", target => {
             switch (target) {

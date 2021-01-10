@@ -248,7 +248,7 @@
             }
 
             // calculations only relevant when supports are enabled
-            {
+            if (!isBelt) {
                 let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                     minArea = spro.sliceSupportArea;
 
