@@ -1597,6 +1597,7 @@
             firstLayerRate:      UC.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:UC.toFloat, modes:FDM}),
             firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM, show:() => !UI.deviceBelt.checked}),
             firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM}),
+            firstLayerBrim:      UC.newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:UC.toFloat, modes:FDM, show:() => UI.deviceBelt.checked}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:() => !UI.deviceBelt.checked}),
             outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:() => !UI.deviceBelt.checked}),
             outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:() => !UI.deviceBelt.checked}),

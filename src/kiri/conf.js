@@ -306,6 +306,7 @@
                     firstLayerPrintMult: 1.0,
                     firstLayerNozzleTemp: 0,
                     firstLayerBedTemp: 0,
+                    firstLayerBrim: 0,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,
                     outputTemp: 200,

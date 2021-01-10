@@ -191,6 +191,7 @@
             // reset for solids, support projections
             // and other annotations
             slices.forEach(function(slice) {
+                slice.widget = widget;
                 slice.extruder = extruder;
                 slice.solids = [];
             });
@@ -490,6 +491,8 @@
                     let bounds = up.poly.bounds,
                         midy = (bounds.miny + bounds.maxy) / 2;
                     if (top.poly.isInside(up.poly, 1)) {
+                        slice.widget.belt.ymid = midy;
+                        slice.widget.belt.zmid = slice.z;
                         top.shells.push(BASE.newPolygon()
                             .setOpen()
                             .add(bounds.minx,midy,slice.z)

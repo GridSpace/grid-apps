@@ -211,6 +211,8 @@ kiri.lang['en-us'] = {
     fl_frat_l:      "fill printing max speed\nin millimeters / minute",
     fl_mult_s:      "print factor",
     fl_mult_l:      "extrusion multiplier\n0.0 - 2.0",
+    fl_brim_s:      "brim size",
+    fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
     fl_skrt_s:      "skirt count",
     fl_skrt_l:      "number of first-layer offset\nbrims to generate",
     fl_skro_s:      "skirt offset",

@@ -30,6 +30,10 @@
             output = [],
             printPoint = newPoint(0,0,0),
             firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
+            firstLayerSeek = process.outputSeekrate,
+            firstLayerRate = process.firstLayerRate,
+            firstLayerMult = process.firstLayerPrintMult,
+            firstLayerBrim = process.firstLayerBrim,
             maxLayers = 0,
             layer = 0,
             zoff = 0,
@@ -47,7 +51,9 @@
             isFlat = settings.controller.lineType === "flat",
             isBelt = device.bedBelt,
             beltYoff = device.bedDepth / 2,
-            beltfact = Math.cos(Math.PI/4);
+            beltfact = Math.cos(Math.PI/4),
+            invbfact = 1 / beltfact,
+            bfactor = invbfact * beltfact;
 
         // compute bounds if missing
         if (!bounds) {
@@ -135,8 +141,8 @@
                     zoff += height;
                 };
 
-                raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 6.0, process.firstLayerRate / 3, 4);
-                raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 6.0, process.firstLayerRate / 2, 4);
+                raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 6.0, firstLayerRate / 3, 4);
+                raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 6.0, firstLayerRate / 2, 4);
                 raft(nozzle/2, process.sliceFillAngle + 90, nozzle * 3.0, process.outputFeedrate, 2.5);
                 raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.5);
                 raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.0);
@@ -167,7 +173,7 @@
                 // output brim points
                 printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
                     return print.polyPrintPath(poly, startPoint, preout, {
-                        rate: process.firstLayerRate,
+                        rate: firstLayerRate,
                         onfirst: function(point) {
                             if (preout.length && point.distTo2D(startPoint) > 2) {
                                 // retract between brims
@@ -364,17 +370,46 @@
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
                     printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z);
                 }
+                let tmpout = [];
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
                     printPoint.sub(offset),
                     offset,
-                    layerout,
+                    tmpout, //layerout,
                     {
                         first: slice.index === 0,
                         support: slice.widget.support
                     }
                 );
+                // alter settings for base extrusions (touching the bed)
+                if (isBelt) {
+                    let widget = slice.widget;
+                    let lastout, minx = Infinity, maxx = -Infinity, first = false;
+                    for (let out of tmpout) {
+                        let point = out.point;
+                        let belty = out.belty = -point.y + point.z * bfactor;
+                        if (out.emit && belty < firstLayerHeight && lastout && lastout.belty < firstLayerHeight) {
+                            out.speed = firstLayerRate;
+                            out.emit *= firstLayerMult;
+                            minx = Math.min(minx, point.x, lastout.point.x);
+                            maxx = Math.max(maxx, point.x, lastout.point.x);
+                            first = out;
+                        }
+                        lastout = out;
+                    }
+                    // add brim, if specified
+                    if (first && firstLayerBrim) {
+                        let {emit, tool, point} = first;
+                        let {x, y, z} = point;
+                        let b = Math.max(firstLayerBrim, 1);
+                        print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
+                        print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);
+                        print.addOutput(tmpout, newPoint(maxx + 0, y, z), 0,    firstLayerSeek, tool);
+                        print.addOutput(tmpout, newPoint(maxx + b, y, z), emit, firstLayerRate, tool);
+                    }
+                }
+                layerout.appendAll(tmpout);
                 lastOut = slice;
                 lastExt = lastOut.ext
                 lastIndex = minidx;
