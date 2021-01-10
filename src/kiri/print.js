@@ -85,9 +85,9 @@
         return scope.output;
     };
 
-    PRO.parseGCode = function(gcode, offset, progress, done, options) {
-        const opts = options || {};
+    PRO.parseGCode = function(gcode, offset, progress, done, opts = {}) {
         const fdm = opts.fdm;
+        const belt = opts.belt;
         const lines = gcode
             .toUpperCase()
             .replace("X", " X")
@@ -126,13 +126,13 @@
         let dz = 0,
             abs = true,
             absE = true,
-            belt = false,
             defh = 0,
             height = 0,
             factor = 1,
             tool = 0,
             maxf = 0,
             seq = [],
+            autolayer = true,
             newlayer = false;
 
         const output = scope.output = [ seq ];
@@ -201,7 +201,7 @@
 
             // non-move in a new plane means burp out
             // the old sequence and start a new one
-            if (newlayer || (!belt && seq.Z != pos.Z)) {
+            if (newlayer || (autolayer && seq.Z != pos.Z)) {
                 newlayer = false;
                 let nh = (defh || pos.Z - seq.Z);
                 seq = [];
@@ -228,10 +228,9 @@
         }
 
         lines.forEach(function(line, idx) {
-if (idx < 10) console.log({line})
             if (line.indexOf(';LAYER:') === 0) {
                 newlayer = true;
-if (idx < 100) console.log({newlayer});
+                autolayer = false;
             }
             if (line.indexOf('- LAYER ') > 0) {
                 seq.height = defh;
@@ -239,11 +238,7 @@ if (idx < 100) console.log({newlayer});
                 defh = parseFloat(hd[4]);
                 if (fdm) dz = -defh / 2;
                 newlayer = true;
-if (idx < 100) console.log({layer: defh});
-            }
-            if (line.indexOf("BED TYPE: BELT") > 0) {
-                belt = true;
-if (idx < 100) console.log({isbelt: belt});
+                autolayer = false;
             }
             line = line.split(";")[0].split(" ").filter(v => v);
             let cmd = line.shift();

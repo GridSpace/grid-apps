@@ -77,7 +77,7 @@
             bytes = 0,
             bcos = Math.cos(Math.PI/4),
             icos = 1 / bcos;
-console.log({isBelt, offset});
+
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
             if (v >= 0) pause.push(v);

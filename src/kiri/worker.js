@@ -212,8 +212,9 @@ KIRI.worker = {
             y: -origin.y,
             z: origin.z
         };
+        const device = settings.device;
         const print = current.print = KIRI.newPrint(settings, Object.values(cache));
-        const tools = settings.device.extruders;
+        const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
         const flat = settings.controller.lineType === 'flat' && mode === 'FDM';
@@ -225,7 +226,10 @@ KIRI.worker = {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools });
             send.done({parsed: KIRI.codec.encode(layers), maxSpeed});
-        }, { fdm : mode === 'FDM' });
+        }, {
+            fdm: mode === 'FDM',
+            belt: device.bedBelt
+        });
     },
 
     parse_svg: function(parsed, send) {

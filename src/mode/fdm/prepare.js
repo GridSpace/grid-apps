@@ -47,8 +47,7 @@
             isFlat = settings.controller.lineType === "flat",
             isBelt = device.bedBelt,
             beltYoff = device.bedDepth / 2,
-            bcos = Math.cos(Math.PI/4),
-            icos = 1 / bcos;
+            beltfact = Math.cos(Math.PI/4);
 
         // compute bounds if missing
         if (!bounds) {
@@ -196,32 +195,27 @@
             bounds.max.y = Math.max(bounds.max.y, bbounds.maxy);
         }
 
-        // synthesize a support widget, if needed
-        if (!isBelt) {
-            let swidget = KIRI.newWidget();
-            let sslices = swidget.slices = [];
-            widgets.forEach(function(widget) {
-                let slices = widget.slices;
-                while (sslices.length < slices.length) {
-                    let sslice = KIRI.newSlice(slices[sslices.length].z);
-                    sslice.extruder = process.sliceSupportNozzle;
-                    sslices.push(sslice);
+        // synthesize support widgets when needed
+        // so that they can use a separate extruder
+        for (let widget of widgets.slice()) {
+            let sslices = [];
+            for (let slice of widget.slices) {
+                if (!slice.supports) {
+                    continue;
                 }
-                slices.forEach((slice,index) => {
-                    if (!slice.supports) return;
-                    if (!sslices[index].supports) {
-                        sslices[index].supports = [];
-                    }
-                    sslices[index].supports.appendAll(slice.supports.map(p => {
-                        if (p.fill) p.fill.forEach(p => p.move(widget.track.pos));
-                        return p.move(widget.track.pos);
-                    }));
-                });
-            });
-            swidget.support = true;
-            swidget.mesh = { widget: swidget }; // fake for lookup
-            settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
-            widgets.push(swidget);
+                let sslice = KIRI.newSlice(slice.z);
+                sslice.extruder = process.sliceSupportNozzle;
+                sslice.supports = slice.supports.slice();
+                sslices.push(sslice);
+            }
+            if (sslices.length) {
+                let swidget = KIRI.newWidget();
+                swidget.slices = sslices;
+                swidget.support = true;
+                swidget.mesh = { widget: swidget, position: widget.mesh.position };
+                settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
+                widgets.push(swidget);
+            }
         }
 
         let extruders = [];
@@ -229,14 +223,14 @@
 
         // find max layers (for updates)
         // generate list of used extruders for purge blocks
-        widgets.forEach(function(widget) {
+        for (let widget of widgets) {
             maxLayers = Math.max(maxLayers, widget.slices.length);
             let extruder = (settings.widget[widget.id] || {}).extruder || 0;
             if (!extruders[extruder]) {
                 extruders[extruder] = {};
                 extcount++;
             }
-        });
+        }
 
         let blokpos, walkpos, blok;
         if (bounds.min.x < bounds.min.y) {
@@ -293,8 +287,8 @@
             if (isBelt) {
                 offset.x = widget.rotinfo.xpos;
                 offset.y = widget.belt.miny;
-                offset.y += widget.rotinfo.ypos * bcos;
-                offset.z = widget.rotinfo.ypos * bcos;
+                offset.y += widget.rotinfo.ypos * beltfact;
+                offset.z = widget.rotinfo.ypos * beltfact;
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
