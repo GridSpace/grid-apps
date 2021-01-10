@@ -201,9 +201,7 @@ console.log({isBelt, offset});
             if (isBelt) {
                 epos.x = pos.x;
                 epos.z = pos.z * icos;
-                epos.y = pos.y + epos.z * bcos;
-                // epos.z = pos.y * icos;
-                // epos.y = pos.z + (pos.y * icos) * bcos;
+                epos.y = -pos.y + epos.z * bcos;
             }
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
             if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));

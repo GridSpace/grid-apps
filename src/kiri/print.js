@@ -99,8 +99,8 @@
             .split("\n");
 
         const scope = this,
-            morph = false,
-            // morph = true,
+            // morph = false,
+            morph = true,
             bounds = scope.bounds = {
                 max: { x:-Infinity, y:-Infinity, z:-Infinity},
                 min: { x:Infinity, y:Infinity, z:Infinity}
