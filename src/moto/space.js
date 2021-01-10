@@ -48,7 +48,7 @@
         mouseHover,
         mouseDrag,
         grid = {
-            origin: undefined,
+            origin: origin,
             unitMinor: 0,
             unitMajor: 0,
             colorMinor: 0,
@@ -477,21 +477,22 @@
         requestRefresh();
     }
 
-    function setOrigin(x, y, z) {
+    function setOrigin(x, y, z, show) {
         if (grid.origin) {
-            if (x === grid.origin.x && y === grid.origin.y && z === grid.origin.z) {
+            let or = origin;
+            let unchanged = x === or.x && y === or.y && z === or.z && show === or.show;
+            if (!unchanged) {
+                Space.scene.remove(grid.origin.group);
+            }
+            if (unchanged) {
                 updateDraws();
                 return;
             }
-            Space.scene.remove(grid.origin.group);
         }
-        if (x === undefined) {
-            origin = {x:0, y:0, z:0};
-            grid.origin = null;
-            updateDraws();
+        origin = {x, y, z, show};
+        if (!show) {
             return;
         }
-        origin = {x, y, z};
         let cmat = new THREE.MeshPhongMaterial({
             color: 0xcceeff,
             specular: 0xcceeff,

@@ -1294,9 +1294,9 @@
          settings.origin = {x, y, z};
          SPACE.platform.setRulers(ruler, ruler, 1/unitScale(), 'X', isBelt ? 'Z' : 'Y');
          if (settings.controller.showOrigin && MODE !== MODES.SLA) {
-             SPACE.platform.setOrigin(x,y,z);
+             SPACE.platform.setOrigin(x,y,z,true);
          } else {
-             SPACE.platform.setOrigin();
+             SPACE.platform.setOrigin(x,y,z,false);
          }
      }
 
