@@ -1,0 +1,56 @@
+{
+    "pre":[
+        "M140 S{bed_temp}   ; set bed temp",
+        "M105               ; report temps",
+        "M190 S{bed_temp}   ; wait for bed",
+        "M104 S{temp}       ; set hot end temp",
+        "M105               ; report temps",
+        "M109 S{temp}       ; wait for hot end",
+        "M82                ; absolute extrusion mode",
+        "G90                ; absolute positioning mode",
+        "G21                ; use metric values",
+        "G28                ; home axes",
+        "G92 E0             ; reset filament position",
+        "G1 Y0.2            ; move to bed",
+        "G1 X200 E20 F500   ; purge nozzle",
+        "G1 Z0.3            ; move bed 0.3mm",
+        "G1 X0 E40          ; purge nozzle",
+        "G1 Z2              ; move bed 2mm",
+        "G92 Z0             ; reset bed position",
+        "M117 CR-30 Printing..."
+    ],
+    "post":[
+        "M107               ; disable cooling fan",
+        "M106 P0 S0         ; disable cooling fan",
+        "M104 S0            ; shut down hot end",
+        "M140 S0            ; shut down bed",
+        "G92 E1             ; set filament position",
+        "G1 E-1 F300        ; retract filament",
+        "G28                ; home axes",
+        "G1 Y50 F1000       ; lift y axis",
+        "M84                ; disable stepper motors"
+    ],
+    "extruders":[
+        {
+            "nozzle": 0.4,
+            "filament": 1.75,
+            "offset_x": 0,
+            "offset_y": 0,
+            "select": [ "T0" ]
+        }
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "image_url": "/decal/3dprintmill.png",
+        "image_anchor": 0,
+        "image_scale": 1,
+        "origin_center": false,
+        "extrude_abs": true,
+        "bed_belt": true,
+        "bed_width": 200,
+        "bed_depth": 300,
+        "build_height": 170
+    }
+}
