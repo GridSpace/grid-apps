@@ -1093,7 +1093,7 @@
         let csox = 0;
         let csoy = 0;
         let stock = settings.stock = { };
-        let compute = enabled && stockSet && widgets.length;
+        let compute = enabled && stockSet && (!offset || widgets.length);
 
         UI.func.animate.classList.add('disabled');
 

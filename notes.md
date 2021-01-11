@@ -60,7 +60,6 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
-* `F` add "step down" to tracing and add "inside" / "outside" modes
 * `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
 * `F` z thru should apply to any thru hole
@@ -80,7 +79,6 @@
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` add support for tapered ball mills
-* `F` warn when part > stock or cuts go outside bed
 * `F` can animation clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops or tool change
