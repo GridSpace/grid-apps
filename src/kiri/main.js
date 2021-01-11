@@ -804,7 +804,7 @@
         }
     }
 
-    function prepareSlices(callback) {
+    function prepareSlices(callback, scale = 1, offset = 0) {
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
             API.view.snapshot = snap.substring(snap.indexOf(",")+1);
@@ -872,7 +872,9 @@
                 if (--countdown === 0 || error || errored) {
                     // mark slicing complete for prep/preview
                     complete.slice = true;
-                    API.show.progress(0);
+                    if (scale === 1) {
+                        API.show.progress(0);
+                    }
                     SPACE.scene.active();
                     API.event.emit('slice.end', getMode());
                     // print stats
@@ -905,20 +907,22 @@
                 forAllWidgets(function(w) {
                     totalProgress += (track[w.id] || 0);
                 });
-                API.show.progress((totalProgress / WIDGETS.length), msg);
+                API.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
             });
         });
     }
 
-    function preparePreview(callback) {
+    function preparePreview(callback, scale = 1, offset = 0) {
         if (complete.preview) {
             if (callback) callback();
             return;
         }
         if (!complete.slice) {
+            settings.render = false;
             prepareSlices(() => {
-                preparePreview(callback);
-            });
+                settings.render = true;
+                preparePreview(callback, 0.25, 0.75);
+            }, 0.75);
             return;
         }
 
@@ -960,7 +964,7 @@
                 lastMsg = message;
                 startTime = mark;
             }
-            API.show.progress(progress, message);
+            API.show.progress(offset + progress * scale, message);
         }, function (oldout, maxSpeed) {
             if (lastMsg) {
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
