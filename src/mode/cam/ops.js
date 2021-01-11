@@ -683,9 +683,9 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, updateToolDiams } = state;
+            let { settings, widget, sliceAll, updateToolDiams, zMax } = state;
             let { process } = settings;
-            let { tool, rate, plunge } = op;
+            let { tool, rate, down, plunge, offset } = op;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
@@ -705,15 +705,49 @@
                 sliceOut.push(slice);
                 return slice;
             }
+            function followZ(poly) {
+                let slice = newSliceOut(poly.getZ());
+                slice.camTrace = { tool, rate, plunge };
+                slice.camLines = [ poly ];
+                slice.output()
+                    .setLayer("follow", {line: 0xaa00aa}, false)
+                    .addPolys(slice.camLines)
+            }
+            function clearZ(polys, z) {
+                let slice = newSliceOut(z = parseFloat(z));
+                slice.camTrace = { tool, rate, plunge };
+                POLY.offset(POLY.nest(polys), -toolOver, {
+                    count:999, outs: slice.camLines = [], flat:true, z
+                });
+                slice.camLines = POLY.flatten(slice.camLines, null, true);
+                POLY.setWinding(slice.camLines, cutdir, false);
+                slice.output()
+                    .setLayer("clear", {line: 0xaa00aa}, false)
+                    .addPolys(slice.camLines)
+            }
             switch (op.mode) {
                 case "follow":
                     for (let poly of polys) {
-                        let slice = newSliceOut(poly.getZ());
-                        slice.camTrace = { tool, rate, plunge };
-                        slice.camLines = [ poly ];
-                        slice.output()
-                            .setLayer("follow", {line: 0xaa00aa}, false)
-                            .addPolys(slice.camLines)
+                        let offdist = 0;
+                        switch (offset) {
+                            case "outside": offdist = toolDiam / 2; break;
+                            case "inside": offdist = -toolDiam / 2; break;
+                        }
+                        if (offdist) {
+                            let pnew = POLY.offset([poly], offdist)[0];
+                            if (pnew) {
+                                poly = pnew.setZ(poly.getZ());
+                            } else {
+                                continue;
+                            }
+                        }
+                        if (down) {
+                            for (let z of BASE.util.lerp(zMax, poly.getZ(), down)) {
+                                followZ(poly.clone().setZ(z));
+                            }
+                        } else {
+                            followZ(poly);
+                        }
                     }
                     break;
                 case "clear":
@@ -722,17 +756,14 @@
                         let z = poly.getZ();
                         (zmap[z] = zmap[z] || []).push(poly);
                     }
-                    for (let [z, polys] of Object.entries(zmap)) {
-                        let slice = newSliceOut(z = parseFloat(z));
-                        slice.camTrace = { tool, rate, plunge };
-                        POLY.offset(POLY.nest(polys), -toolOver, {
-                            count:999, outs: slice.camLines = [], flat:true, z
-                        });
-                        slice.camLines = POLY.flatten(slice.camLines, null, true);
-                        POLY.setWinding(slice.camLines, cutdir, false);
-                        slice.output()
-                            .setLayer("clear", {line: 0xaa00aa}, false)
-                            .addPolys(slice.camLines)
+                    for (let [zv, polys] of Object.entries(zmap)) {
+                        if (down) {
+                            for (let z of BASE.util.lerp(zMax, zv, down)) {
+                                clearZ(polys, z);
+                            }
+                        } else {
+                            clearZ(polys, z);
+                        }
                     }
             }
         }

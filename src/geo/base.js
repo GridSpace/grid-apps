@@ -15,6 +15,24 @@
 
     function time() { return Date.now() }
 
+    function lerp(from, to, maxInc) {
+        let dir = Math.sign(to - from);
+        let delta = Math.abs(to - from);
+        let steps = Math.floor(delta / maxInc);
+        let rem = delta % maxInc;
+        let per = delta / steps;
+        if (rem) {
+            steps++;
+            per = delta / steps;
+        }
+        let out = [];
+        while (steps-- > 0) {
+            from += per * dir;
+            out.push(from);
+        }
+        return out;
+    };
+
     function numOrDefault(num, def) {
         return num !== undefined ? num : def;
     }
@@ -377,6 +395,7 @@
 
     BASE.util = {
         sqr,
+        lerp,
         time,
         round,
         area2,

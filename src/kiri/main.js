@@ -184,8 +184,11 @@
         trace: [
             { name: "follow" },
             { name: "clear" }
-            // { name: "out" },
-            // { name: "in" }
+        ],
+        traceoff: [
+            { name: "center" },
+            { name: "inside" },
+            { name: "outside" }
         ],
         zanchor: [
             { name: "top" },

@@ -450,6 +450,7 @@
                     camTraceSpindle: 1000,
                     camTraceType: "follow",
                     camTraceOver: 0.5,
+                    camTraceDown: 0,
                     camTraceSpeed: 250,
                     camTracePlunge: 200,
                     camDrillTool: 1000,

@@ -270,6 +270,7 @@
             listel.innerHTML = html.join('');
             let bounds = [];
             let unpop = null;
+            // drag and drop re-ordering
             for (let [id, rec] of Object.entries(bind)) {
                 $(`${id}-x`).onmousedown = (ev) => {
                     ev.stopPropagation();
@@ -293,9 +294,9 @@
                     if (unpop) unpop();
                     unpop = func.unpop = el.unpop;
                     inside = true;
-                    poprec.use(rec);
                     // pointer to current rec for trace editing
                     poppedRec = rec;
+                    poprec.use(rec);
                     hoveredOp = el;
                     el.appendChild(poprec.div);
                     // option click event appears latent
@@ -326,6 +327,7 @@
                     let tracker = UI.tracker;
                     tracker.style.display = 'block';
                     let cancel = tracker.onmouseup = (ev) => {
+                        oplist = current.process.ops;
                         clist.remove("drag");
                         tracker.style.display = 'none';
                         if (ev) {
@@ -858,17 +860,21 @@
 
         createPopOp('trace', {
             mode:    'camTraceType',
+            offset:  'camTraceOffset',
             spindle: 'camTraceSpindle',
             tool:    'camTraceTool',
             step:    'camTraceOver',
+            down:    'camTraceDown',
             rate:    'camTraceSpeed',
             plunge:  'camTracePlunge'
         }).inputs = {
             tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
             sep:      UC.newBlank({class:"pop-sep"}),
             mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
+            offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l, show:() => (poppedRec.mode === 'follow')}, "traceoff"),
             spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
             step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:(op) => popOp.trace.rec.mode === "clear"}),
+            down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
             rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
             plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
             sep:      UC.newBlank({class:"pop-sep"}),
@@ -930,6 +936,14 @@
             div: UC.newElement('div', { id:`${type}-op`, class:"cam-pop-op" }),
             use: (rec) => {
                 op.rec = rec;
+                for (let [key, val] of Object.entries(op.inputs)) {
+                    let type = val.type;
+                    let from = map[key];
+                    if (!rec[key] && type && from) {
+                        let newval = current.process[from];
+                        rec[key] = current.process[from];
+                    }
+                }
                 API.util.rec2ui(rec, op.inputs);
                 op.hideshow();
             },

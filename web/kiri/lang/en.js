@@ -262,6 +262,8 @@ kiri.lang['en-us'] = {
 
     // CNC COMMON terms
     cc_tool:        "tool",
+    cc_offs_s:      "offset",
+    cc_offs_l:      "offset tool center\nfrom chosen path",
     cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      "spindle speed in\nrevolutions / minute",
     cc_sovr_s:      "step over",
