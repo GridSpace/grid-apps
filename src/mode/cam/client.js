@@ -742,6 +742,7 @@
             let tabs = API.widgets.annotate(widget.id).tab || [];
             tabs.forEach(rec => {
                 let { id, pos, rot } = rec;
+                let coff = widget.track.center;
                 let tab = widget.tabs[id];
                 let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
                 // update position vector
@@ -752,8 +753,8 @@
                     new THREE.Quaternion().setFromRotationMatrix(m4)
                 );
                 tab.box.geometry.applyMatrix4(m4);
-                tab.box.position.x = pos.x = vc.x;
-                tab.box.position.y = pos.y = vc.y;
+                tab.box.position.x = pos.x = vc.x - coff.dx;
+                tab.box.position.y = pos.y = vc.y - coff.dy;
                 tab.box.position.z = pos.z = vc.z;
             });
             SPACE.update();

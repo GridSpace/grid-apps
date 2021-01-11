@@ -349,6 +349,7 @@
             dx = bm.x + bd.x,
             dy = bm.y + bd.y,
             dz = bm.z;
+        this.track.center = { dx, dy, dz };
         // move mesh for each widget in group
         if (!init) {
             this.group.forEach(w => {

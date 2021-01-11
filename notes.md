@@ -58,7 +58,6 @@
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
-* `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
 * `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
