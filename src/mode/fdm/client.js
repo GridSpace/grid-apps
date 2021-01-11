@@ -34,7 +34,7 @@
             restoreSupports(api.widgets.all());
         });
         api.event.on("settings.saved", (settings) => {
-            api.ui.fdmSupport.style.display = settings.device.bedBelt ? 'none' : 'flex';
+            api.ui.fdmSupport.style.display = lastMode === 'CAM' || settings.device.bedBelt ? 'none' : 'flex';
         });
         api.event.on("button.click", target => {
             switch (target) {

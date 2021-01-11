@@ -415,6 +415,11 @@
         }
     }
 
+    function modMatch(val, mod) {
+        let mv = Math.abs(val) % mod;
+        return (mv < 1) || ((mod - mv) < 1);
+    }
+
     function updateGrid() {
         let { view, unitMinor, unitMajor, colorMajor, colorMinor } = grid;
         let oldView = view;
@@ -444,22 +449,22 @@
 
         for (let x=0; x>x1; x -= unitMinor) {
             let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
-            let arr = Math.abs(x % unitMajor) < 0.1 ? majors : minors;
+            let arr = modMatch(x, unitMajor) ? majors : minors;
             arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
         }
         for (let x=0; x<x2; x += unitMinor) {
             let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
-            let arr = Math.abs(x % unitMajor) < 0.1 ? majors : minors;
+            let arr = modMatch(x, unitMajor) ? majors : minors;
             arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
         }
         for (let y=0; y>y1; y -= unitMinor) {
             let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
-            let arr = Math.abs(y % unitMajor) < 0.1 ? majors : minors;
+            let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
         }
         for (let y=0; y<y2; y += unitMinor) {
             let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
-            let arr = Math.abs(y % unitMajor) < 0.1 ? majors : minors;
+            let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
         }
 

@@ -7,19 +7,16 @@
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
-* `P` improve decimation speed by avoiding in/out of Point?
+* `P` improve decimation speed: omit point conversion or use wasm
 * `P` client/worker interface normalization
 
 # FDM
 
+* `B` first rough step too far down in certain circumstances
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
-
-* `F` belt: first layer settings apply to z=0 lines
-* `F` belt: add z=0 brim controls
-* `F` belt: gcode parsing layer detection, rotation, unskew
 
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
@@ -35,7 +32,6 @@
 * `F` first layer support speed should be same as shell speed
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
-* `F` continuous printing (z belt systems)
 
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats
@@ -49,7 +45,8 @@
 
 # FDM - BELT
 
-# `B` z hop = y hop
+* `B` fix supports for belt printing
+* `F` hide layer lines under print
 
 # CAM
 
@@ -63,6 +60,7 @@
 * `B` outside cutting direction in roughing mode inverted
 * `B` on rotation, tabs dissociate from parts whose center changes with rotation
 
+* `F` add "step down" to tracing and add "inside" / "outside" modes
 * `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
 * `F` z thru should apply to any thru hole

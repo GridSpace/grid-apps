@@ -379,10 +379,13 @@
     function toFloat() {
         let nv = this.value !== '' ? parseFloat(this.value) : null;
         if (nv !== null && this.bound) nv = this.bound(nv);
-        this.value = nv;
+        // this.value = nv;
         if (this.setv) {
-            return this.real = nv * units;
-        };
+            return this.setv(nv * units);
+            // return this.real = (nv * units);
+        } else {
+            this.value = nv;
+        }
         return nv;
     }
 
@@ -686,7 +689,7 @@
                 }
             });
             if (opt.units) {
-                addUnits(ip);
+                addUnits(ip, opt.round || 3);
             }
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
@@ -695,15 +698,16 @@
         return ip;
     }
 
-    function addUnits(input) {
+    function addUnits(input, round) {
         setters.push(input);
         input.setv = function(value) {
             if (typeof(value) === 'number') {
                 input.real = value;
-                input.value = value / units;
+                input.value = (value / units).round(round);
             } else {
                 input.value = value;
             }
+            return input.real;
         };
         return input;
     }
