@@ -275,6 +275,7 @@
                     bounds.merge(top.poly.bounds);
                 }
                 widget.belt.miny = -bounds.miny;
+                widget.belt.midy = (bounds.miny + bounds.maxy) / 2;
             }
 
             // report slicing complete

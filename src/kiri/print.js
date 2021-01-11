@@ -808,7 +808,9 @@
      */
     function addPrintPoints(input, output, startPoint, tool) {
         if (startPoint && input.length > 0) {
-            addOutput(output, startPoint, 0, undefined, tool);
+            lastPoint = startPoint;
+            // TODO: revisit seek to origin as the first move
+            // addOutput(output, startPoint, 0, undefined, tool);
         }
         output.appendAll(input);
     }

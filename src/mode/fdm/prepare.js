@@ -292,9 +292,9 @@
             let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
                 offset.x = widget.rotinfo.xpos;
-                offset.y = widget.belt.miny;
+                offset.y = -widget.belt.midy;
                 offset.y += widget.rotinfo.ypos * beltfact;
-                offset.z = widget.rotinfo.ypos * beltfact;
+                offset.z  = widget.rotinfo.ypos * beltfact;
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
@@ -385,23 +385,28 @@
                 // alter settings for base extrusions (touching the bed)
                 if (isBelt) {
                     let widget = slice.widget;
-                    let lastout, minx = Infinity, maxx = -Infinity, first = false;
+                    let lastout, first = false;
+                    let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
+                    let thresh = firstLayerHeight * 1.1;
                     for (let out of tmpout) {
                         let point = out.point;
                         let belty = out.belty = -point.y + point.z * bfactor;
-                        if (out.emit && belty < firstLayerHeight && lastout && lastout.belty < firstLayerHeight) {
+                        if (out.emit && belty < thresh && lastout && lastout.belty < thresh) {
                             out.speed = firstLayerRate;
                             out.emit *= firstLayerMult;
                             minx = Math.min(minx, point.x, lastout.point.x);
                             maxx = Math.max(maxx, point.x, lastout.point.x);
+                            maxy = Math.max(maxy, point.y);
+                            minz = Math.min(minz, point.z);
                             first = out;
                         }
                         lastout = out;
                     }
                     // add brim, if specified
                     if (first && firstLayerBrim) {
-                        let {emit, tool, point} = first;
-                        let {x, y, z} = point;
+                        let {emit, tool } = first;
+                        let y = maxy;
+                        let z = minz;
                         let b = Math.max(firstLayerBrim, 1);
                         print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
                         print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);

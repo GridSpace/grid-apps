@@ -74,11 +74,21 @@ KIRI.worker = {
 
         let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
         if (rotation) {
-            let bounds = widget.getBoundingBox(true);
+            // need min y for post-rotation offset in prepare
+            let vert = widget.vertices;
+            let miny = Infinity;
+            for (let i=0, l=vert.length; i<l; ) {
+                let x = vert[i++];
+                let y = vert[i++];
+                let z = vert[i++];
+                if (z < 0.01) miny = Math.min(miny, y);
+            }
+
+            widget.getBoundingBox(true);
             let track = widget.track;
-            // console.log(widget.id, '\n', track.pos, '\n', track.box, '\n', '\n---\n')
             xpos = track.pos.x;
-            ypos = track.pos.y + settings.device.bedDepth / 2 - track.box.h / 2;
+            ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
+
             widget.mesh = null;
             widget.points = null;
             widget.loadVertices(widget.vertices);
@@ -112,7 +122,6 @@ KIRI.worker = {
                     let dy = (wbb.max.y + wbb.min.y)/2;
                     let dz = wbb.min.z;
                     widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
-                    // console.log(widget.id, '\n', widget.belt, '\n', widget.rotinfo, '\n===\n')
                     send.data({ rotinfo: widget.rotinfo });
                 }
             }

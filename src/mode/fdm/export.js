@@ -182,20 +182,20 @@
                 append(";; " + comment);
             }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
-            // put out x,y,z in belt mode if not engage/retract
-            let xyz = newpos.x || newpos.y || newpos.z;
-            let emit = { x: xyz && isBelt, y: xyz && isBelt, z: xyz && isBelt };
-            if (typeof newpos.x === 'number') {
+            let emit = { x: false, y: false, z: false };
+            if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
                 pos.x = newpos.x;
                 emit.x = true;
             }
-            if (typeof newpos.y === 'number') {
+            if (typeof newpos.y === 'number' && newpos.y !== pos.y) {
                 pos.y = newpos.y;
                 emit.y = true;
+                if (isBelt) emit.z = true;
             }
-            if (typeof newpos.z === 'number') {
+            if (typeof newpos.z === 'number' && newpos.z !== pos.z) {
                 pos.z = newpos.z;
                 emit.z = true;
+                if (isBelt) emit.y = true;
             }
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
@@ -249,10 +249,13 @@
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
             subst.z = zpos = path.z;
-            // subst.z = (zpos + path.height).toFixed(3);
             subst.Z = subst.z;
             subst.layer = layer;
             subst.height = path.height.toFixed(3);
+
+            if (isBelt) {
+                pos.z = zpos;
+            }
 
             if (pauseCmd && pause.indexOf(layer) >= 0) {
                 appendAllSub(pauseCmd)
