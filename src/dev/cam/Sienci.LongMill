@@ -18,8 +18,7 @@
         "G4 P{time} ; dwell for {time}ms"
     ],
     "settings": {
-        "ximage_url": "https://static.grid.space/kiri/siencilabs.png",
-        "image_url": "https://static.grid.space/kiri/longmill.png",
+        "image_url": "/decal/longmill.png",
         "image_scale": 200,
         "image_anchor": 8,
         "bed_width": 760,

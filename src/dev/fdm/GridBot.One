@@ -32,7 +32,7 @@
         "progress": "M117 {progress}% layer {layer} / {layers}"
     },
     "settings":{
-        "image_url": "gridbot.png",
+        "image_url": "/decal/gridbot.png",
         "image_anchor": 0,
         "image_scale": 1,
         "origin_center": false,
