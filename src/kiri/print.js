@@ -424,9 +424,10 @@
             preout = [],
             scope = this,
             settings = this.settings,
+            device = settings.device,
             process = settings.process,
             extruder = slice.extruder || 0,
-            nozzleSize = settings.device.extruders[extruder].extNozzle,
+            nozzleSize = device.extruders[extruder].extNozzle,
             firstLayer = opt.first || false,
             minSeek = nozzleSize * (opt.minSeek || 1.5),
             thinWall = nozzleSize * (opt.thinWall || 1.75),
@@ -447,6 +448,8 @@
             zhop = process.zHopDistance || 0,
             antiBacklash = process.antiBacklash,
             doSupport = opt.support,
+            isBelt = device.bedBelt,
+            startClone = startPoint.clone(),
             z = slice.z;
 
         // apply first layer extrusion multipliers
@@ -745,6 +748,11 @@
                     case "origin":
                         startPoint = origin.clone();
                         break;
+                }
+
+                // optimize start point on belt for all tops
+                if (isBelt) {
+                    startPoint = startClone;
                 }
 
                 // top object
