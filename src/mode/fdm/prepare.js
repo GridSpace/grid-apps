@@ -439,16 +439,16 @@
                     point.y += minby - miny;
                 }
             }
+            let thresh = firstLayerHeight * 1.05;
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
-                let thresh = miny * 1.1;
                 for (let out of layer) {
                     let point = out.point;
                     let belty = out.belty = -point.y + point.z * bfactor;
-                    if (out.emit && belty < firstLayerHeight && lastout && lastout.belty < firstLayerHeight) {
+                    if (out.emit && belty <= thresh && lastout && lastout.belty <= thresh) {
                         out.speed = firstLayerRate;
                         out.emit *= firstLayerMult;
                         minx = Math.min(minx, point.x, lastout.point.x);
