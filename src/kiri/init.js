@@ -831,6 +831,7 @@
             console.log({load_inc: inc});
         }, error => {
             console.log({load_error: error});
+            clearDeviceTexture();
         });
     }
 
