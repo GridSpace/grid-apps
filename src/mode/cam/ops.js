@@ -729,7 +729,11 @@
                 POLY.offset(POLY.nest(polys), -toolOver, {
                     count:999, outs: slice.camLines = [], flat:true, z
                 });
-                slice.camLines = POLY.flatten(slice.camLines, null, true);
+                if (tabs) {
+                    slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
+                } else {
+                    slice.camLines = POLY.flatten(slice.camLines, null, true);
+                }
                 POLY.setWinding(slice.camLines, cutdir, false);
                 slice.output()
                     .setLayer("clear", {line: 0xaa00aa}, false)
