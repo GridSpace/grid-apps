@@ -683,9 +683,10 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, updateToolDiams, zMax } = state;
-            let { process } = settings;
             let { tool, rate, down, plunge, offset } = op;
+            let { settings, widget, sliceAll, zMax, tabs } = state;
+            let { updateToolDiams, cutTabs } = state;
+            let { process } = settings;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
@@ -694,6 +695,11 @@
             let cutdir = process.camConventional;
             let polys = [];
             updateToolDiams(toolDiam);
+            if (tabs) {
+                tabs.forEach(tab => {
+                    tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+                });
+            }
             for (let arr of areas) {
                 let poly = newPolygon().fromArray(arr);
                 POLY.setWinding([ poly ], cutdir, false);
@@ -708,7 +714,11 @@
             function followZ(poly) {
                 let slice = newSliceOut(poly.getZ());
                 slice.camTrace = { tool, rate, plunge };
-                slice.camLines = [ poly ];
+                if (tabs) {
+                    slice.camLines = cutTabs(tabs, [poly], poly.getZ());
+                } else {
+                    slice.camLines = [ poly ];
+                }
                 slice.output()
                     .setLayer("follow", {line: 0xaa00aa}, false)
                     .addPolys(slice.camLines)

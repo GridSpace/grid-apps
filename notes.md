@@ -50,6 +50,7 @@
 
 # CAM
 
+* `B` path routing with tabs sometimes makes no sense
 * `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` non-clear-voids duplicates thru-holes
