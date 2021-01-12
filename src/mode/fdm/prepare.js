@@ -293,8 +293,8 @@
             if (isBelt) {
                 offset.x = widget.rotinfo.xpos;
                 offset.y = -widget.belt.midy;
-                offset.y += widget.rotinfo.ypos * beltfact;
-                offset.z  = widget.rotinfo.ypos * beltfact;
+                offset.y += widget.rotinfo.ypos * beltfact - 0.5;
+                offset.z = widget.rotinfo.ypos * beltfact;
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
