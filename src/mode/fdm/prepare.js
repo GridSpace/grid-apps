@@ -22,14 +22,14 @@
         settings = FDM.fixExtruders(settings);
 
         let render = settings.render !== false,
-            device = settings.device,
-            nozzle = device.extruders[0].extNozzle,
-            process = settings.process,
-            bounds = settings.bounds,
-            mode = settings.mode,
+            { device, process, controller, bounds, mode } = settings,
             output = [],
             printPoint = newPoint(0,0,0),
-            firstLayerHeight = process.firstSliceHeight || process.sliceHeight,
+            nozzle = device.extruders[0].extNozzle,
+            isBelt = device.bedBelt,
+            isThin = controller.lineType === "line",
+            isFlat = controller.lineType === "flat",
+            firstLayerHeight = isBelt ? process.sliceHeight : process.firstSliceHeight || process.sliceHeight,
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,
             firstLayerMult = process.firstLayerPrintMult,
@@ -47,9 +47,6 @@
             slices = [],
             sliceEntry,
             print = self.worker.print = KIRI.newPrint(settings, widgets),
-            isThin = settings.controller.lineType === "line",
-            isFlat = settings.controller.lineType === "flat",
-            isBelt = device.bedBelt,
             beltYoff = device.bedDepth / 2,
             beltfact = Math.cos(Math.PI/4),
             invbfact = 1 / beltfact,
@@ -289,12 +286,14 @@
 
         // establish offsets
         for (let widget of widgets) {
+            let { rotinfo, belt } = widget;
+            // console.log({rotinfo, belt});
             let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
-                offset.x = widget.rotinfo.xpos;
-                offset.y = -widget.belt.midy;
-                offset.y += widget.rotinfo.ypos * beltfact - 0.5;
-                offset.z = widget.rotinfo.ypos * beltfact;
+                offset.x = rotinfo.xpos;
+                offset.y = -belt.midy;
+                offset.y += rotinfo.ypos * beltfact;// - 0.5;
+                offset.z = rotinfo.ypos * beltfact;
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
@@ -372,6 +371,9 @@
                 }
                 let tmpout = [];
                 let wtb = slice.widget.track.box;
+                // Belt TODO: pre-flight the slice-top-outer-shells here
+                //            and determine a) brim and b) if no shell touches bed
+                //            and if so, revert to starting near the center or user select
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
@@ -383,39 +385,6 @@
                         support: slice.widget.support
                     }
                 );
-                // alter settings for base extrusions (touching the bed)
-                if (isBelt) {
-                    let widget = slice.widget;
-                    let lastout, first = false;
-                    let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
-                    let thresh = firstLayerHeight * 1.1;
-                    for (let out of tmpout) {
-                        let point = out.point;
-                        let belty = out.belty = -point.y + point.z * bfactor;
-                        if (out.emit && belty < thresh && lastout && lastout.belty < thresh) {
-                            out.speed = firstLayerRate;
-                            out.emit *= firstLayerMult;
-                            minx = Math.min(minx, point.x, lastout.point.x);
-                            maxx = Math.max(maxx, point.x, lastout.point.x);
-                            maxy = Math.max(maxy, point.y);
-                            minz = Math.min(minz, point.z);
-                            first = out;
-                        }
-                        lastout = out;
-                    }
-                    // add brim, if specified
-                    if (first && firstLayerBrim) {
-                        let {emit, tool } = first;
-                        let y = maxy;
-                        let z = minz;
-                        let b = Math.max(firstLayerBrim, 1);
-                        print.addOutput(layerout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
-                        print.addOutput(layerout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool);
-                        print.addOutput(layerout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
-                        print.addOutput(layerout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);
-                        // print.addOutput(layerout, newPoint(minx - 0, y, z + 5), 0, firstLayerRate, tool);
-                    }
-                }
                 layerout.appendAll(tmpout);
                 lastOut = slice;
                 lastExt = lastOut.ext
@@ -450,6 +419,62 @@
         }
 
         print.output = output;
+
+        // post-process for base extrusions (touching the bed)
+        if (isBelt) {
+            // find belt min y
+            let minby = Infinity;
+            for (let layer of output) {
+                for (let rec of layer) {
+                    let point = rec.point;
+                    minby = Math.min(minby, -point.y + point.z * bfactor);
+                }
+            }
+            // correct y offset to desired layer offset
+            let miny = firstLayerHeight / 2;
+            // console.log({minby, miny, firstLayerHeight});
+            for (let layer of output) {
+                for (let rec of layer) {
+                    let point = rec.point;
+                    point.y += minby - miny;
+                }
+            }
+            // iterate over layers, find extrusion on belt and
+            // apply corrections and add brim when specified
+            for (let layer of output) {
+                let lastout, first = false;
+                let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
+                let thresh = miny * 1.1;
+                for (let out of layer) {
+                    let point = out.point;
+                    let belty = out.belty = -point.y + point.z * bfactor;
+                    if (out.emit && belty < firstLayerHeight && lastout && lastout.belty < firstLayerHeight) {
+                        out.speed = firstLayerRate;
+                        out.emit *= firstLayerMult;
+                        minx = Math.min(minx, point.x, lastout.point.x);
+                        maxx = Math.max(maxx, point.x, lastout.point.x);
+                        maxy = Math.max(maxy, point.y);
+                        minz = Math.min(minz, point.z);
+                        first = out;
+                    }
+                    lastout = out;
+                }
+                // add brim, if specified
+                if (first && firstLayerBrim) {
+                    let {emit, tool } = first;
+                    let y = maxy;
+                    let z = minz;
+                    let b = Math.max(firstLayerBrim, 1);
+                    let tmpout = [];
+                    print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
+                    print.addOutput(tmpout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool);
+                    print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
+                    print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);
+                    // print.addOutput(layerout, newPoint(minx - 0, y, z + 5), 0, firstLayerRate, tool);
+                    layer.splice(0,0,...tmpout);
+                }
+            }
+        }
 
         // render if not explicitly disabled
         if (render) {
