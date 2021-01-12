@@ -685,8 +685,8 @@
             let { op, state } = this;
             let { tool, rate, down, plunge, offset } = op;
             let { settings, widget, sliceAll, zMax, tabs } = state;
-            let { updateToolDiams, cutTabs } = state;
-            let { process } = settings;
+            let { updateToolDiams, cutTabs, cutPolys } = state;
+            let { process, stock } = settings;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
@@ -694,6 +694,7 @@
             let toolOver = toolDiam * op.step;
             let cutdir = process.camConventional;
             let polys = [];
+            let stockRect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
             updateToolDiams(toolDiam);
             if (tabs) {
                 tabs.forEach(tab => {
@@ -712,12 +713,16 @@
                 return slice;
             }
             function followZ(poly) {
-                let slice = newSliceOut(poly.getZ());
+                let z = poly.getZ();
+                let slice = newSliceOut(z);
                 slice.camTrace = { tool, rate, plunge };
                 if (tabs) {
-                    slice.camLines = cutTabs(tabs, [poly], poly.getZ());
+                    slice.camLines = cutTabs(tabs, [poly], z);
                 } else {
                     slice.camLines = [ poly ];
+                }
+                if (process.camStockClipTo) {
+                    slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
                 }
                 slice.output()
                     .setLayer("follow", {line: 0xaa00aa}, false)
