@@ -938,13 +938,13 @@
                         x1 = hx + dx,
                         y0 = ly - dy - o2,
                         y1 = hy + dy + o2,
-                        x4 = (x1 - x0 - o2 * 2) / 4,
-                        y4 = (y1 - y0 - o2 * 2) / 4,
+                        x4 = (x1 - x0 - o2) / 4,
+                        y4 = (y1 - y0 - o2 * 3) / 4,
                         poly, cp, cz;
                     function start(z) {
                         cz = z;
-                        cp = {x:x0 + o2, y:y0 + o2};
-                        poly = newPolygon().add(cp.x, cp.y, z).setOpen();
+                        cp = {x:x0 + o2 * 0.5, y:y0 + o2 * 1.5};
+                        poly = newPolygon().add(cp.x, cp.y, z);
                     }
                     function move(dx, dy) {
                         cp.x += dx;
@@ -962,27 +962,24 @@
                         sliceAll.push(slice);
                         sliceOut.push(slice);
                         start(z);
-
-                        rept(4, o2, (oy, last) => {
+                        rept(4, o2, oy => {
                             move(0, -oy);
                             move(x4, 0);
                         });
-
-                        rept(4, o2, (ox, last) => {
+                        rept(4, o2, ox => {
                             move(ox, 0);
                             move(0, y4);
                         });
-
-                        rept(4, o2, (oy, last) => {
+                        rept(4, o2, oy => {
                             move(0, oy);
                             move(-x4, 0);
                         });
-
-                        rept(4, o2, (ox, last) => {
+                        rept(4, o2, ox => {
                             move(-ox, 0);
                             move(0, -y4);
                         });
-
+                        poly.points.pop();
+                        poly.length--;
                         slice.camTrace = { tool, rate: op.feed, plunge: op.rate };
                         slice.camLines = [ poly ];
                         slice.output()
@@ -1013,10 +1010,14 @@
             let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
             let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
-            setTool(op.tool, undefined, op.rate);
-            setDrill(op.down, op.lift, op.dwell);
-            setSpindle(op.spindle);
-            emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
+            if (op.axis === '-') {
+                setTool(op.tool, undefined, op.rate);
+            } else {
+                setTool(op.tool, undefined, op.rate);
+                setDrill(op.down, op.lift, op.dwell);
+                setSpindle(op.spindle);
+                emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
+            }
         }
     }
 
