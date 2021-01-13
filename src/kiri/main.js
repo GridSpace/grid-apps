@@ -2442,7 +2442,7 @@
         MODE = MODES[mode];
         DRIVER = KIRI.driver[mode];
         // update mode display
-        $('app-mode-name').innerHTML = mode;
+        $('app-mode-name').innerHTML = mode === 'CAM' ? 'CNC' : mode;
         // highlight relevant device mode button
         ["fdm","sla","cam","laser"].forEach(dev => {
             let cl = $(`mode-${dev}`).classList;
