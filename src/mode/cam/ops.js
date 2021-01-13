@@ -1012,6 +1012,10 @@
 
             if (op.axis === '-') {
                 setTool(op.tool, undefined, op.rate);
+                setSpindle(op.spindle);
+                for (let slice of this.sliceOut) {
+                    ops.emitTrace(slice);
+                }
             } else {
                 setTool(op.tool, undefined, op.rate);
                 setDrill(op.down, op.lift, op.dwell);

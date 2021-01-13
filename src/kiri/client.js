@@ -112,7 +112,6 @@ KIRI.work = {
 
     clear: function(widget) {
         send("clear", widget ? {id:widget.id} : {}, function(reply) {
-            console.log({clear_said:reply});
             syncd = {};
         });
     },
