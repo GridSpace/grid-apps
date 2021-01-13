@@ -865,10 +865,12 @@
                 }
                 updateSliderMax(true);
                 setVisibleLayer(-1, 0);
-                // clear wireframe
-                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
-                widget.setColor(color.deselected);
+                if (scale === 1) {
+                    // clear wireframe
+                    widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
+                    widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
+                    widget.setColor(color.deselected);
+                }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
                     // mark slicing complete for prep/preview
@@ -942,7 +944,7 @@
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else if (feature.preview) {
+        } else if (feature.preview && offset === 0) {
             setOpacity(color.preview_opacity);
         }
 
