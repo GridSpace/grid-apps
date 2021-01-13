@@ -980,7 +980,7 @@
                         });
                         poly.points.pop();
                         poly.length--;
-                        slice.camTrace = { tool, rate: op.feed, plunge: op.rate };
+                        slice.camTrace = { tool: tool.getID(), rate: op.feed, plunge: op.rate };
                         slice.camLines = [ poly ];
                         slice.output()
                             .setLayer("register", {line: 0xaa00aa}, false)
@@ -1011,7 +1011,7 @@
             let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
             if (op.axis === '-') {
-                setTool(op.tool, undefined, op.rate);
+                setTool(op.tool, op.feed, op.rate);
                 setSpindle(op.spindle);
                 for (let slice of this.sliceOut) {
                     ops.emitTrace(slice);

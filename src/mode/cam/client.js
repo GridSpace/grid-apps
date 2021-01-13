@@ -942,7 +942,7 @@
                 for (let [key, val] of Object.entries(op.inputs)) {
                     let type = val.type;
                     let from = map[key];
-                    if (!rec[key] && type && from) {
+                    if (rec[key] === undefined && type && from) {
                         let newval = current.process[from];
                         rec[key] = current.process[from];
                     }
