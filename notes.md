@@ -9,6 +9,7 @@
 * `P` allow selection to me decimated on demand (context menu?)
 * `P` improve decimation speed: omit point conversion or use wasm
 * `P` client/worker interface normalization
+* `P` explore widget vertex reloading / replacing
 
 # FDM
 
@@ -50,6 +51,8 @@
 
 # CAM
 
+* `B` trace follow open polys should "heal" if ends touch
+* `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
 * `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
@@ -60,6 +63,7 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
+* `F` trace follow hole that matches endmill should turn into a drill op
 * `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
 * `F` z thru should apply to any thru hole

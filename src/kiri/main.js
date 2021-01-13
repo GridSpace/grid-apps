@@ -197,7 +197,8 @@
         ],
         regaxis: [
             { name: "X" },
-            { name: "Y" }
+            { name: "Y" },
+            { name: "-" }
         ],
         regpoints: [
             { name: "2" },

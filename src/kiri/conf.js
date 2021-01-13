@@ -460,6 +460,7 @@
                     camDrillDwell: 250,
                     camDrillLift: 2,
                     camDrillingOn: false,
+                    camRegisterSpeed: 1000,
                     camFlipAxis: "X",
                     camFlipOther: "",
                     // camDrillReg: "none",

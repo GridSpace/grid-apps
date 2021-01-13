@@ -883,7 +883,8 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, bounds, sliceAll, tslices, updateToolDiams, zThru } = state;
+            let { settings, widget, bounds, sliceAll, tslices, zMax, zThru } = state;
+            let { updateToolDiams } = state;
 
             let tool = new CAM.Tool(settings, op.tool);
             let sliceOut = this.sliceOut = [];
@@ -891,36 +892,102 @@
             updateToolDiams(tool.fluteDiameter());
 
             let { stock } = settings,
+                lx = bounds.min.x,
+                hx = bounds.max.x,
+                ly = bounds.min.y,
+                hy = bounds.max.y,
                 o3 = tool.fluteDiameter() * 2,
-                mx = (bounds.max.x + bounds.min.x) / 2,
-                my = (bounds.max.y + bounds.min.y) / 2,
+                mx = (lx + hx) / 2,
+                my = (ly + hy) / 2,
                 mz = zThru || 0,
-                dx = (stock.x - (bounds.max.x - bounds.min.x)) / 4,
-                dy = (stock.y - (bounds.max.y - bounds.min.y)) / 4,
+                dx = (stock.x - (hx - lx)) / 4,
+                dy = (stock.y - (hy - ly)) / 4,
                 dz = stock.z,
                 points = [];
+
+            if (!(stock.x && stock.y && stock.z)) {
+                return;
+            }
 
             switch (op.axis) {
                 case "X":
                 case "x":
                     if (op.points == 3) {
-                        points.push(newPoint(bounds.min.x - dx, my, 0));
-                        points.push(newPoint(bounds.max.x + dx, my - o3, 0));
-                        points.push(newPoint(bounds.max.x + dx, my + o3, 0));
+                        points.push(newPoint(lx - dx, my, 0));
+                        points.push(newPoint(hx + dx, my - o3, 0));
+                        points.push(newPoint(hx + dx, my + o3, 0));
                     } else {
-                        points.push(newPoint(bounds.min.x - dx, my, 0));
-                        points.push(newPoint(bounds.max.x + dx, my, 0));
+                        points.push(newPoint(lx - dx, my, 0));
+                        points.push(newPoint(hx + dx, my, 0));
                     }
                     break;
                 case "Y":
                 case "y":
                     if (op.points == 3) {
-                        points.push(newPoint(mx, bounds.min.y - dy, 0));
-                        points.push(newPoint(mx - o3, bounds.max.y + dy, 0));
-                        points.push(newPoint(mx + o3, bounds.max.y + dy, 0));
+                        points.push(newPoint(mx, ly - dy, 0));
+                        points.push(newPoint(mx - o3, hy + dy, 0));
+                        points.push(newPoint(mx + o3, hy + dy, 0));
                     } else {
-                        points.push(newPoint(mx, bounds.min.y - dy, 0));
-                        points.push(newPoint(mx, bounds.max.y + dy, 0));
+                        points.push(newPoint(mx, ly - dy, 0));
+                        points.push(newPoint(mx, hy + dy, 0));
+                    }
+                    break;
+                case "-":
+                    let o2 = o3 / 2,
+                        x0 = lx - dx,
+                        x1 = hx + dx,
+                        y0 = ly - dy - o2,
+                        y1 = hy + dy + o2,
+                        x4 = (x1 - x0 - o2 * 2) / 4,
+                        y4 = (y1 - y0 - o2 * 2) / 4,
+                        poly, cp, cz;
+                    function start(z) {
+                        cz = z;
+                        cp = {x:x0 + o2, y:y0 + o2};
+                        poly = newPolygon().add(cp.x, cp.y, z).setOpen();
+                    }
+                    function move(dx, dy) {
+                        cp.x += dx;
+                        cp.y += dy;
+                        poly.add(cp.x, cp.y, cz);
+                    }
+                    function rept(count, tv, fn) {
+                        while (count-- > 0) {
+                            fn(tv, count === 0);
+                            tv = -tv;
+                        }
+                    }
+                    for (let z of BASE.util.lerp(zMax, -zThru, op.down)) {
+                        let slice = newSlice(z);
+                        sliceAll.push(slice);
+                        sliceOut.push(slice);
+                        start(z);
+
+                        rept(4, o2, (oy, last) => {
+                            move(0, -oy);
+                            move(x4, 0);
+                        });
+
+                        rept(4, o2, (ox, last) => {
+                            move(ox, 0);
+                            move(0, y4);
+                        });
+
+                        rept(4, o2, (oy, last) => {
+                            move(0, oy);
+                            move(-x4, 0);
+                        });
+
+                        rept(4, o2, (ox, last) => {
+                            move(-ox, 0);
+                            move(0, -y4);
+                        });
+
+                        slice.camTrace = { tool, rate: op.feed, plunge: op.rate };
+                        slice.camLines = [ poly ];
+                        slice.output()
+                            .setLayer("register", {line: 0xaa00aa}, false)
+                            .addPolys(slice.camLines)
                     }
                     break;
             }
