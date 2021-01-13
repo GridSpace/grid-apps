@@ -72,6 +72,7 @@ KIRI.work = {
             slicing[key]({error: "cancelled slicing"});
         }
 
+        syncd = {};
         slicing = {};
         running = {};
         worker = KIRI.work.newWorker();
@@ -111,7 +112,7 @@ KIRI.work = {
 
     clear: function(widget) {
         send("clear", widget ? {id:widget.id} : {}, function(reply) {
-            // console.log({clear:reply});
+            console.log({clear_said:reply});
             syncd = {};
         });
     },

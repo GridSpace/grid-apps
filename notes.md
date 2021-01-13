@@ -13,6 +13,7 @@
 
 # FDM
 
+* `B` auto support needs a min poly area / perimeter policy
 * `B` first rough step too far down in certain circumstances
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
