@@ -706,6 +706,19 @@
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
+            // warn to use 2.6 or later
+            if (dev.bedBelt) {
+                API.ui.any.innerHTML = [
+                 `<div class="t-pad2"></div>`,
+                 `<div style="padding:20px;font-size:larger;font-weight:bold">Belt Printing Warning</div>`,
+                 `<div style="padding:5px 0 5px 0;justify-content:center">Belt support in 2.5 is incomplete</div>`,
+                 `<div style="padding:5px 0 20px 0;justify-content:center">Please use 2.6 or newer</div>`,
+                 `<div style="padding:5px 0 20px 0;justify-content:center"><button><a href="https://grid.space/choose">Switch to 2.6</a></button></div>`,
+                 `<div class="t-pad2"></div>`,
+                ].join('');
+                API.modal.show('any');
+            }
+
             // add extruder selection buttons
             if (dev.extruders) {
                 let ext = API.lists.extruders = [];
