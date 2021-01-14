@@ -273,7 +273,6 @@
         // fix invalid normals
         geometry.computeFaceNormals();
         geometry.computeVertexNormals();
-        // to fix mirroring of normals not working as expected
         mesh.material.side = THREE.DoubleSide;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -512,18 +511,12 @@
     PRO._mirror = function() {
         this.setWireframe(false);
         this.clearSlices();
-        let i,
-            o = this.track,
-            geo = this.mesh.geometry,
-            at = geo.attributes,
-            pa = at.position.array,
-            nm = at.normal.array;
-        for (i = 0 ; i < pa.length; i += 3) {
-            pa[i] = -pa[i];
-            nm[i] = -nm[i];
-        }
+        this.mesh.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+        let geo = this.mesh.geometry,
+            o = this.track;
         geo.computeFaceNormals();
         geo.computeVertexNormals();
+        this.mesh.position.x = -this.mesh.position.x;
         o.mirror = !o.mirror;
         this.modified = true;
     };
