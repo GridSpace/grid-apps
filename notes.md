@@ -54,7 +54,6 @@
 # CAM
 
 * `B` trace clear and follow need depth-first support
-* `B` trace follow open polys should "heal" if ends touch
 * `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
 * `B` clicking on a pop-op should pin it until clicked or [esc]

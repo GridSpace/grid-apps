@@ -106,6 +106,7 @@
             tabs,
             cutTabs,
             cutPolys,
+            healPolys,
             slicer,
             sliceAll,
             updateToolDiams,
@@ -273,8 +274,11 @@
 
     function cutPolys(polys, offset, z, inter) {
         let noff = [];
-        // tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
         offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), inter) ));
+        return healPolys(noff);
+    }
+
+    function healPolys(noff) {
         if (noff.length > 1) {
             let heal = 0;
             // heal/rejoin open segments that share endpoints
@@ -316,6 +320,14 @@
             if (heal > 0) {
                 // cull nulls
                 noff = noff.filter(o => o);
+            }
+            // close poly if head meets tail
+            for (let poly of noff) {
+                if (poly.open && poly.first().isMergable2D(poly.last())) {
+                    poly.points.pop();
+                    poly.length--;
+                    poly.open = false;
+                }
             }
         }
         return noff;

@@ -685,7 +685,7 @@
             let { op, state } = this;
             let { tool, rate, down, plunge, offset } = op;
             let { settings, widget, sliceAll, zMax, tabs } = state;
-            let { updateToolDiams, cutTabs, cutPolys } = state;
+            let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
             let { process, stock } = settings;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
@@ -744,6 +744,8 @@
                     .setLayer("clear", {line: 0xaa00aa}, false)
                     .addPolys(slice.camLines)
             }
+            // connect selected segments if open and touching
+            polys = healPolys(polys);
             switch (op.mode) {
                 case "follow":
                     for (let poly of polys) {
