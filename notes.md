@@ -3,6 +3,7 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
+* `B` some normals inverted on mirrored parts
 * `B` normalize left, bottom, right pop menu time/click and value persistence
 * `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
 
@@ -15,7 +16,7 @@
 # FDM
 
 * `B` auto support needs a min poly area / perimeter policy
-* `B` first rough step too far down in certain circumstances
+* `B` need to re-clip supports to top poly
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
@@ -53,13 +54,12 @@
 
 # CAM
 
-* `B` trace clear and follow need depth-first support
+* `B` first rough step too far down in certain circumstances?
 * `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
 * `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` non-clear-voids duplicates thru-holes
-* `B` z thru doesn't respect step down
 * `B` failure to go *up* when moving between parts?
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
@@ -67,11 +67,10 @@
 
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
-* `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
-* `F` z thru should apply to any thru hole
 * `F` update analyzer to detect overhangs
 * `F` add linear clearing strategy option for roughing / pocket
+* `F` adaptive clearing in roughing mode
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
@@ -81,7 +80,6 @@
 * `F` z planar settings visualizations
 * `F` convert acute angles to arcs
 * `F` lead-in milling
-* `F` adaptive clearing in roughing mode
 * `F` trapezoidal tabs in Z
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)

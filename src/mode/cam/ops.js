@@ -431,13 +431,13 @@
             // extend cut thru (only when z bottom is 0)
             if (zThru) {
                 let last = slices[slices.length-1];
-                let add = last.clone(true);
-                add.tops.forEach(top => {
-                    top.poly.setZ(add.z);
-                });
-                add.shadow = last.shadow.clone(true);
-                add.z -= zThru;
-                slices.push(add);
+                for (let zneg of BASE.util.lerp(0, zThru, op.down)) {
+                    let add = last.clone(true);
+                    add.tops.forEach(top => top.poly.setZ(add.z));
+                    add.shadow = last.shadow.clone(true);
+                    add.z -= zneg;
+                    slices.push(add);
+                }
             }
 
             slices.forEach(slice => {
