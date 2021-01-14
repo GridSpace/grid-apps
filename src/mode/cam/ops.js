@@ -728,21 +728,27 @@
                     .setLayer("follow", {line: 0xaa00aa}, false)
                     .addPolys(slice.camLines)
             }
-            function clearZ(polys, z) {
-                let slice = newSliceOut(z = parseFloat(z));
-                slice.camTrace = { tool, rate, plunge };
-                POLY.offset(POLY.nest(polys), -toolOver, {
-                    count:999, outs: slice.camLines = [], flat:true, z
-                });
-                if (tabs) {
-                    slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
-                } else {
-                    slice.camLines = POLY.flatten(slice.camLines, null, true);
+            function clearZ(polys, z, down) {
+                let zs = down ? BASE.util.lerp(zMax, z, down) : [ z ];
+                let nested = POLY.nest(polys);
+                for (let poly of nested) {
+                    for (let z of zs) {
+                        let slice = newSliceOut(z);
+                        slice.camTrace = { tool, rate, plunge };
+                        POLY.offset([ poly ], -toolOver, {
+                            count:999, outs: slice.camLines = [], flat:true, z
+                        });
+                        if (tabs) {
+                            slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
+                        } else {
+                            slice.camLines = POLY.flatten(slice.camLines, null, true);
+                        }
+                        POLY.setWinding(slice.camLines, cutdir, false);
+                        slice.output()
+                            .setLayer("clear", {line: 0xaa00aa}, false)
+                            .addPolys(slice.camLines)
+                    }
                 }
-                POLY.setWinding(slice.camLines, cutdir, false);
-                slice.output()
-                    .setLayer("clear", {line: 0xaa00aa}, false)
-                    .addPolys(slice.camLines)
             }
             // connect selected segments if open and touching
             polys = healPolys(polys);
@@ -778,13 +784,7 @@
                         (zmap[z] = zmap[z] || []).push(poly);
                     }
                     for (let [zv, polys] of Object.entries(zmap)) {
-                        if (down) {
-                            for (let z of BASE.util.lerp(zMax, zv, down)) {
-                                clearZ(polys, z);
-                            }
-                        } else {
-                            clearZ(polys, z);
-                        }
+                        clearZ(polys, parseFloat(zv), down);
                     }
             }
         }
