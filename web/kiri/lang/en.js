@@ -283,6 +283,9 @@ kiri.lang['en-us'] = {
     cc_rzpd_s:      "z feed",
     cc_rzpd_l:      "max z moves feedrate\nin workspace units / minute",
 
+    cc_loff_s:      "offset",
+    cc_loff_l:      "distance from stock face\nfor leveling pass\nin workspace units",
+
     // CNC ROUGHING
     cr_menu:        "rough",
     cr_lsto_s:      "leave stock",

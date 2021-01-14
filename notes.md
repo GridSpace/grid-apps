@@ -4,6 +4,7 @@
 
 * `B` normals possibly inverted on faces in 2D to 3D conversion
 * `B` normalize left, bottom, right pop menu time/click and value persistence
+* `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
@@ -52,6 +53,7 @@
 
 # CAM
 
+* `B` trace clear and follow need depth-first support
 * `B` trace follow open polys should "heal" if ends touch
 * `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
@@ -64,6 +66,7 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
+* `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
 * `F` new registration style: offset cutout
 * `F` add climb/conventional into each operation
@@ -88,7 +91,8 @@
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` ease-down should be engaged in all descending cutting operations
-* `F` new reg type based on https://youtu.be/BLD4dFoXC7o?t=360
+* `F` entirely user-selectable origin
+
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
