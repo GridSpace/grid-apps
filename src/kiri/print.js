@@ -416,11 +416,10 @@
      * @param {Object} [options] object
      * @return {Point} last output point
      */
-    PRO.slicePrintPath = function(slice, startPoint, offset, output, options) {
+    PRO.slicePrintPath = function(slice, startPoint, offset, output, opt = {}) {
         // console.log({slicePrintPath: slice.index, ext:slice.extruder});
 
         let i,
-            opt = options || {},
             preout = [],
             scope = this,
             settings = this.settings,

@@ -435,7 +435,7 @@ self.kiri.loader.push(function() {
     function updateMesh(pos, send) {
         const prof = tool.profile;
         const { size, pix } = tool.profileDim;
-        const mid = Math.floor(pix/2);
+        const mid = Math.floor(pix / 2);
         const update = new Float32Array(Math.round(prof.length * 0.8));
         const rx = Math.floor((pos.x + stock.x / 2 - size / 2 - center.x) / rez);
         const ry = Math.floor((pos.y + stock.y / 2 - size / 2 - center.y) / rez);
@@ -445,15 +445,15 @@ self.kiri.loader.push(function() {
             const dx = mid + prof[i++];
             const dy = mid + prof[i++];
             const dz = prof[i++];
-
             const gx = rx + dx;
             const gy = ry + dy;
 
-            if (gx < 0|| gy < 0 || gx > gridX-1 || gy > gridY-1) continue;
+            if (gx < 0|| gy < 0 || gx > gridX-1 || gy > gridY-1) {
+                continue;
+            }
 
             const gi = gx * gridY + gy;
             const iz = gi * 3 + 2;
-
             const cz = grid[iz];
             const tz = tool.pos.z - dz;
             if (tz < cz) {
@@ -494,5 +494,30 @@ self.kiri.loader.push(function() {
         }
         send.data({ mesh_add: { id:++toolID, pos, ind }});
     }
+
+    // load renderer code in worker context only
+    if (KIRI.worker)
+    fetch('/wasm/kiri-ani.wasm')
+        .then(response => response.arrayBuffer())
+        .then(bytes => WebAssembly.instantiate(bytes, {
+            env: {
+                reportf: (a,b) => { console.log('[f]',a,b) },
+                reporti: (a,b) => { console.log('[i]',a,b) }
+            }
+        }))
+        .then(results => {
+            let {module, instance} = results;
+            let {exports} = instance;
+            let heap = new Uint8Array(exports.memory.buffer);
+            let wasm = self.wasm = {
+                heap,
+                memory: exports.memory,
+                updateMesh: exports.updateMesh
+            };
+            // heap[0] = 5;
+            // heap[100] = 6;
+            // heap[200] = 8;
+            // let rv = self.wasm.updateMesh(0, 0, 100, 200);
+        });
 
 });
