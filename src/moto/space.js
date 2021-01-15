@@ -159,9 +159,24 @@
             updateLastAction();
             refresh();
         };
-        new TWEEN.Tween(viewControl.getPosition()).
-            to(pos, 500).
+        let from = Object.clone(viewControl.getPosition());
+        let to = Object.clone(pos);
+        let dist = Math.abs(from.left - to.left);
+        if (dist > Math.PI) {
+            if (from.left < to.left) {
+                from.left += Math.PI * 2;
+            } else {
+                from.left -= Math.PI * 2;
+            }
+        }
+        new TWEEN.Tween(from).
+            to(to, 500).
             onUpdate(tf).
+            onComplete(() => {
+                viewControl.setPosition(pos);
+                updateLastAction();
+                refresh();
+            }).
             start();
     }
 
