@@ -688,8 +688,9 @@
         return layers;
     }
 
-    const colorFunctions = {
+    const colorFunctions = FDM.colorFunctions = {
         default: hsv2rgb.bind({ seg: 5, fn: color5 }),
+        simple: hsv2rgb.bind({ seg: 3, fn: color4 }),
         dark: hsv2rgb.bind({ seg: 3, fn: color3 })
     };
 
@@ -738,6 +739,32 @@
                 rgb.r = dec;
                 rgb.g = 0;
                 rgb.b = dec;
+                break;
+        }
+    }
+
+    function color4(rgb, inc, seg) {
+        const dec = 1 - inc;
+        switch (seg) {
+            case 0:
+                rgb.r = 0;
+                rgb.g = inc;
+                rgb.b = 1;
+                break;
+            case 1:
+                rgb.r = inc;
+                rgb.g = 1;
+                rgb.b = 0;
+                break;
+            case 2:
+                rgb.r = 1;
+                rgb.g = dec;
+                rgb.b = 0;
+                break;
+            case 3:
+                rgb.r = dec;
+                rgb.g = 0;
+                rgb.b = 0;
                 break;
         }
     }
