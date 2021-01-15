@@ -196,6 +196,21 @@
                 slice.solids = [];
             });
 
+            // fixed supports (generated ahead of time)
+            const fixed = Object.values(settings.widget[widget.id].support || {});
+            let shadow;
+            if (fixed.length) {
+                // create shadow. TODO test if any supports set
+                let alltops = slices.map(slice => slice.topPolys()).flat();
+                shadow = POLY.union(alltops,null,0.1);
+                if (spro.sliceSupportExtra) {
+                    shadow = POLY.offset(shadow, spro.sliceSupportExtra);
+                }
+                // slices[0].output()
+                //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
+                //     .addPolys(shadow);
+            }
+
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, function(slice) {
                 let solid = (
@@ -252,10 +267,8 @@
                 let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                     minArea = spro.sliceSupportArea;
 
-                const fixed = Object.values(settings.widget[widget.id].support || {});
-
                 forSlices(0.7, 0.8, function(slice) {
-                    doSupport(slice, spro, auto, fixed);
+                    doSupport(slice, spro, auto, fixed, shadow);
                 }, "support");
                 forSlices(0.8, 0.9, function(slice) {
                     doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, minArea);
@@ -845,10 +858,9 @@
      * calculate external overhangs requiring support.
      * this is done bottom-up except for fixed supports (manual)
      */
-    function doSupport(slice, proc, auto, fixed) {
+    function doSupport(slice, proc, auto, fixed, shadow) {
         let minOffset = proc.sliceSupportOffset,
             maxBridge = proc.sliceSupportSpan || 5,
-            expand = proc.sliceSupportExtra,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,
             offset = proc.sliceSupportOffset,
@@ -858,11 +870,6 @@
             mergeDist = size * 3, // pillar merge dist
             tops = slice.topPolys(),
             trimTo = tops;
-
-        // creates outer clip offset from tops
-        if (expand) {
-            POLY.expand(tops, expand, slice.z, trimTo = []);
-        }
 
         // create inner clip offset from tops
         POLY.expand(tops, offset, slice.z, slice.offsets = []);
@@ -953,6 +960,9 @@
         // then union supports
         supports = POLY.union(supports, null, true);
 
+        // clip to top polys
+        supports = POLY.trimTo(supports, shadow);
+
         let depth = 0;
         while (down && supports.length > 0) {
             down.supports = down.supports || [];
@@ -1000,7 +1010,9 @@
         supports = POLY.union(supports, undefined, true);
 
         // trim to clip offsets
-        if (slice.offsets) POLY.subtract(supports, slice.offsets, nsB, null, slice.z, min);
+        if (slice.offsets) {
+            POLY.subtract(supports, slice.offsets, nsB, null, slice.z, min);
+        }
         supports = nsB;
 
         // also trim to lower offsets, if they exist
@@ -1104,7 +1116,9 @@
     }
 
     FDM.supports = function(settings, widget) {
-        let size = settings.process.sliceSupportSize;
+        let process = settings.process;
+        let size = process.sliceSupportSize;
+        let min = process.sliceSupportArea || 0.1;
         let buf = new THREE.BufferGeometry();
         buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
@@ -1155,6 +1169,11 @@
             let a = geo.vertices[face.a];
             let b = geo.vertices[face.b];
             let c = geo.vertices[face.c];
+            // skip tiny faces
+            if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
+                skip++;
+                return;
+            }
             tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
             tl(a,b);
             tl(b,c);

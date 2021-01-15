@@ -14,8 +14,6 @@
 
 # FDM
 
-* `B` auto support needs a min poly area / perimeter policy
-* `B` need to re-clip supports to top poly
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
