@@ -626,6 +626,21 @@
             case cca('t'):
                 Space.view.top();
                 break;
+            case cca('f'):
+                Space.view.front();
+                cycleInd = 0;
+                break;
+            case cca('>'):
+                cycleInd = (++cycleInd % cycle.length);
+                cycle[cycleInd]();
+                break;
+            case cca('<'):
+                cycleInd--;
+                if (cycleInd < 0) {
+                    cycleInd += cycle.length;
+                }
+                cycle[cycleInd]();
+                break;
             default:
                 handled = false;
                 break;
@@ -1084,5 +1099,12 @@
             initialized = true;
         }
     };
+    let cycle = [
+        Space.view.front,
+        Space.view.right,
+        Space.view.back,
+        Space.view.left,
+    ];
+    let cycleInd = 0;
 
 })();
