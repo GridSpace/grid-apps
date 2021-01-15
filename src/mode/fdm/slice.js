@@ -70,17 +70,18 @@
             sliceHeight = spro.sliceHeight,
             firstSliceHeight = isBelt ? sliceHeight : spro.firstSliceHeight,
             nozzleSize = sdev.extruders[extruder].extNozzle,
-            firstOffset = nozzleSize / 2,
-            shellOffset = nozzleSize,
+            lineWidth = nozzleSize,
             fillOffsetMult = 1.0 - bound(spro.sliceFillOverlap, 0, 0.8),
-            fillSpacing = nozzleSize,
-            fillOffset = nozzleSize * fillOffsetMult,
+            firstWidthMult = spro.firstLayerShellMult || 1,
+            shellOffset = lineWidth,
+            fillSpacing = lineWidth,
+            fillOffset = lineWidth * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
 
         isFlat = settings.controller.lineType === "flat";
         isThin = !isFlat && settings.controller.lineType === "line";
-        offset = nozzleSize / 2;
+        offset = lineWidth / 2;
 
         if (isFlat) {
             Object.values(COLOR).forEach(color => {
@@ -179,7 +180,7 @@
 
             // for each slice, performe a function and call doupdate()
             function forSlices(from, to, fn, msg) {
-                slices.forEach(function(slice) {
+                slices.forEach(slice => {
                     fn(slice);
                     doupdate(slice.index, from, to, msg)
                 });
@@ -190,7 +191,7 @@
 
             // reset for solids, support projections
             // and other annotations
-            slices.forEach(function(slice) {
+            slices.forEach(slice => {
                 slice.widget = widget;
                 slice.extruder = extruder;
                 slice.solids = [];
@@ -212,47 +213,55 @@
             }
 
             // create shells and diff inner fillable areas
-            forSlices(0.0, 0.2, function(slice) {
+            forSlices(0.0, 0.2, slice => {
+                let first = slice.index === 0;
                 let solid = (
-                        slice.index < spro.sliceBottomLayers ||
-                        slice.index > slices.length - spro.sliceTopLayers-1 ||
-                        spro.sliceFillSparse > 0.95
-                    ) && !vaseMode;
-                doShells(slice, spro.sliceShells, firstOffset, shellOffset, fillOffset, {
+                    slice.index < spro.sliceBottomLayers ||
+                    slice.index > slices.length - spro.sliceTopLayers-1 ||
+                    spro.sliceFillSparse > 0.95
+                ) && !vaseMode;
+                let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
+                let offset = shellOffset * spaceMult;
+                let fillOff = fillOffset * spaceMult;
+                doShells(slice, spro.sliceShells, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls,
-                    belt0: isBelt && slice.index === 0,
+                    belt0: isBelt && first,
                     widget: widget
                 });
                 if (solid) {
-                    doSolidLayerFill(slice, fillSpacing, sliceFillAngle);
+                    let fillSpace = fillSpacing * spaceMult;
+                    doSolidLayerFill(slice, fillSpace, sliceFillAngle);
                 }
                 sliceFillAngle += 90.0;
             }, "offsets");
 
             // calculations only relevant when solid layers are used
             if (doSolidLayers) {
-                forSlices(0.2, 0.34, function(slice) {
+                forSlices(0.2, 0.34, slice => {
                     if (slice.index > 0) doDiff(slice, minSolid);
                 }, "diff");
-                forSlices(0.34, 0.35, function(slice) {
+                forSlices(0.34, 0.35, slice => {
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
                 }, "solids");
-                forSlices(0.35, 0.5, function(slice) {
-                    doSolidsFill(slice, fillSpacing, sliceFillAngle, minSolid);
+                forSlices(0.35, 0.5, slice => {
+                    let first = slice.index === 0;
+                    let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
+                    let fillSpace = fillSpacing * spaceMult;
+                    doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid);
                     sliceFillAngle += 90.0;
                 }, "solids");
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!vaseMode && spro.sliceFillSparse > 0.0) {
-                forSlices(0.5, 0.7, function(slice) {
+                forSlices(0.5, 0.7, slice => {
                     doSparseLayerFill(slice, {
                         settings: settings,
                         process: spro,
                         device: sdev,
-                        lineWidth: nozzleSize,
+                        lineWidth: lineWidth,
                         spacing: fillOffset,
                         density: spro.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
@@ -267,17 +276,17 @@
                 let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                     minArea = spro.sliceSupportArea;
 
-                forSlices(0.7, 0.8, function(slice) {
+                forSlices(0.7, 0.8, slice => {
                     doSupport(slice, spro, auto, fixed, shadow);
                 }, "support");
-                forSlices(0.8, 0.9, function(slice) {
-                    doSupportFill(slice, nozzleSize, spro.sliceSupportDensity, minArea);
+                forSlices(0.8, 0.9, slice => {
+                    doSupportFill(slice, lineWidth, spro.sliceSupportDensity, minArea);
                 }, "support");
             }
 
             // render if not explicitly disabled
             if (render) {
-                forSlices(0.9, 1.0, function(slice) {
+                forSlices(0.9, 1.0, slice => {
                     doRender(slice);
                 }, "render");
             }
@@ -384,12 +393,12 @@
      * this polygon.  Adjusting fillOffset controls bonding of infill to the shells.
      *
      * @param {number} count
-     * @param {number} offset1 first offset
-     * @param {number} offsetN all subsequent offsets
+     * @param {number} offsetN
      * @param {number} fillOffset
      * @param {Obejct} options
      */
-    function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
+    function doShells(slice, count, offsetN, fillOffset, opt = {}) {
+        let offset1 = offsetN / 2;
         let shellout = 0;
 
         slice.tops.forEach(function(top) {
