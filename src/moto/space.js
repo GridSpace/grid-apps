@@ -645,6 +645,10 @@
                 Space.view.front();
                 cycleInd = 0;
                 break;
+            case cca('b'):
+                Space.view.back();
+                cycleInd = 2;
+                break;
             case cca('>'):
                 cycleInd = (++cycleInd % cycle.length);
                 cycle[cycleInd]();

@@ -749,9 +749,11 @@
                         break;
                 }
 
-                // optimize start point on belt for all tops
-                if (isBelt) {
+                // optimize start point on belt for tops touching belt
+                // and enforce optimal shell order (outer first)
+                if (isBelt && opt.onBelt) {
                     startPoint = startClone;
+                    shellOrder = 1;
                 }
 
                 // top object

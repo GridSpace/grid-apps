@@ -292,8 +292,25 @@
             if (isBelt) {
                 offset.x = rotinfo.xpos;
                 offset.y = -belt.midy;
-                offset.y += rotinfo.ypos * beltfact;// - 0.5;
+                offset.y += rotinfo.ypos * beltfact;
                 offset.z = rotinfo.ypos * beltfact;
+                // locate the lowest point in slices and widget overall
+                let minby = Infinity;
+                for (let slice of widget.slices) {
+                    slice.minby = Infinity;
+                    for (let top of slice.tops) {
+                        let poly = top.poly;
+                        for (let point of poly.points) {
+                            let ypos = -point.y + point.z * bfactor;
+                            slice.minby = Math.min(slice.minby, ypos);
+                            minby = Math.min(minby, ypos);
+                        }
+                    }
+                }
+                // flag slices as being on or off the bed / belt
+                for (let slice of widget.slices) {
+                    slice.onbelt = Math.abs(minby - slice.minby) < 0.01;
+                }
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
@@ -382,7 +399,8 @@
                     tmpout, //layerout,
                     {
                         first: slice.index === 0,
-                        support: slice.widget.support
+                        support: slice.widget.support,
+                        onBelt: slice.onbelt
                     }
                 );
                 layerout.appendAll(tmpout);
@@ -431,8 +449,7 @@
                 }
             }
             // correct y offset to desired layer offset
-            let miny = process.firstLayerYOffset;
-            // console.log({minby, miny, firstLayerHeight});
+            let miny = process.firstLayerYOffset || 0;
             for (let layer of output) {
                 for (let rec of layer) {
                     let point = rec.point;

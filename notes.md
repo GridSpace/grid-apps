@@ -51,7 +51,6 @@
 # FDM - BELT
 
 * `B` fix supports for belt printing
-* `F` hide layer lines under print
 
 # CAM
 
