@@ -1139,12 +1139,12 @@
             dy = bounds.max.y - bounds.min.y,
             dz = bounds.max.z - bounds.min.z,
             scale = unitScale();
-        UI.sizeX.value = UI.sizeX.was = UTIL.round(dx/scale,2);
-        UI.sizeY.value = UI.sizeY.was = UTIL.round(dy/scale,2);
-        UI.sizeZ.value = UI.sizeZ.was = UTIL.round(dz/scale,2);
-        UI.scaleX.value = UI.scaleX.was = track.scale.x;
-        UI.scaleY.value = UI.scaleY.was = track.scale.y;
-        UI.scaleZ.value = UI.scaleZ.was = track.scale.z;
+        UI.sizeX.value = UI.sizeX.was = (dx / scale).round(2)
+        UI.sizeY.value = UI.sizeY.was = (dy / scale).round(2)
+        UI.sizeZ.value = UI.sizeZ.was = (dz / scale).round(2)
+        UI.scaleX.value = UI.scaleX.was = track.scale.x.round(2);
+        UI.scaleY.value = UI.scaleY.was = track.scale.y.round(2);
+        UI.scaleZ.value = UI.scaleZ.was = track.scale.z.round(2);
         updateSelectedBounds();
     }
 
@@ -1383,6 +1383,20 @@
             wb.max.y += wp.y;
             bounds.union(wb);
         });
+        if (settings.device.bedBelt) {
+            let dev = settings.device,
+                isBelt = dev.bedBelt,
+                maxy = bounds.max.y - bounds.min.y;
+            // if (maxy > dev.bedDepth) {
+            //     console.log({maxy}, settings.device.bedDepth)
+            //     SPACE.platform.setSize(
+            //         parseInt(dev.bedWidth),
+            //         parseInt(maxy),
+            //         parseFloat(dev.bedHeight),
+            //         parseFloat(dev.maxHeight)
+            //     );
+            // }
+        }
         return settings.bounds = bounds;
     }
 
@@ -1696,7 +1710,7 @@
         if (isBelt) {
             let bounds = platformUpdateBounds(),
                 movey = -(dev.bedDepth / 2 + bounds.min.y);
-            forAllWidgets(widget => widget.move(0, movey + 10, 0));
+            forAllWidgets(widget => widget.move(0, movey + 5, 0));
         }
 
         platform.update_origin();

@@ -1929,10 +1929,10 @@
             SDB.setItem('kiri-lang', 'en-us');
             API.space.reload();
         };
-        // $('lset-da').onclick = function() {
-        //     SDB.setItem('kiri-lang', 'da-dk');
-        //     API.space.reload();
-        // };
+        $('lset-da').onclick = function() {
+            SDB.setItem('kiri-lang', 'da-dk');
+            API.space.reload();
+        };
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
