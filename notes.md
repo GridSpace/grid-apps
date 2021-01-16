@@ -12,6 +12,8 @@
 * `P` client/worker interface normalization
 * `P` explore widget vertex reloading / replacing
 
+* `F` SVG import to 3D part like images
+
 # FDM
 
 * `B` fix adaptive slicing with multi-extruder
@@ -19,6 +21,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` optional seed profile for a first-time-used device
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
@@ -34,6 +37,7 @@
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 
+* `P` revisit path routing / optimization
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats
 * `P` sparse infill should follow polys between intersect points

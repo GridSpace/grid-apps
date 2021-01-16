@@ -431,7 +431,7 @@
                 }
             }
             // correct y offset to desired layer offset
-            let miny = firstLayerHeight / 2;
+            let miny = process.firstLayerYOffset;
             // console.log({minby, miny, firstLayerHeight});
             for (let layer of output) {
                 for (let rec of layer) {

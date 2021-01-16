@@ -213,6 +213,8 @@ kiri.lang['en-us'] = {
     fl_mult_l:      "extrusion multiplier\n0.0 - 2.0",
     fl_sfac_s:      "width factor",
     fl_sfac_l:      "multiplier on nozzle size\nchanges line spacing",
+    fl_zoff_s:      "layer offset",
+    fl_zoff_l:      "height offset from belt\nof lowest extrusion\nin millimeters",
     fl_brim_s:      "brim size",
     fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
     fl_skrt_s:      "skirt count",

@@ -305,6 +305,7 @@
                     firstLayerFillRate: 35,
                     firstLayerPrintMult: 1.0,
                     firstLayerLineMult: 1.0,
+                    firstLayerYOffset: 0,
                     firstLayerNozzleTemp: 0,
                     firstLayerBedTemp: 0,
                     firstLayerBrim: 0,
