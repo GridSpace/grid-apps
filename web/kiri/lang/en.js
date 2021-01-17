@@ -163,7 +163,7 @@ kiri.lang['en-us'] = {
 
     // SETTINGS
     se_menu:        "profile",
-    se_load:        "open",
+    se_load:        "load",
     se_save:        "save",
 
     // FDM SLICING

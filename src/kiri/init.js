@@ -698,6 +698,24 @@
                 dev = current.device = CONF.device_from_code(code,mode),
                 proc = current.process;
 
+            // first time device use, add any print profiles and set to default if present
+            if (dproc === undefined) {
+                console.log('new device', code);
+                if (code.profiles) {
+                    for (let profile of code.profiles) {
+                        let profname = profile.processName;
+                        if (!current.sproc[mode][profname]) {
+                            console.log('adding profile', profname, 'to', mode);
+                            current.sproc[mode][profname] = profile;
+                        }
+                        if (!current.devproc[devicename]) {
+                            console.log('setting default profile for new device', devicename, 'to', profname);
+                            current.devproc[devicename] = dproc = profname;
+                        }
+                    }
+                }
+            }
+
             dev.new = false;
             dev.deviceName = devicename;
 
