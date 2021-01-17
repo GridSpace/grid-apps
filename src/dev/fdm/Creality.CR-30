@@ -1,9 +1,9 @@
 {
     "pre":[
         "M140 S{bed_temp}   ; set bed temp",
+        "M104 S{temp}       ; set hot end temp",
         "M105               ; report temps",
         "M190 S{bed_temp}   ; wait for bed",
-        "M104 S{temp}       ; set hot end temp",
         "M105               ; report temps",
         "M109 S{temp}       ; wait for hot end",
         "M82                ; absolute extrusion mode",
@@ -12,9 +12,9 @@
         "G28                ; home axes",
         "G92 E0             ; reset filament position",
         "G1 Y0.2            ; move to bed",
-        "G1 X200 E20 F500   ; purge nozzle",
+        "G1 X200 E50 F500   ; purge nozzle",
         "G1 Z0.3            ; move bed 0.3mm",
-        "G1 X0 E40          ; purge nozzle",
+        "G1 X0 E50          ; purge nozzle",
         "G1 Z2              ; move bed 2mm",
         "G92 Z0             ; reset bed position",
         "M117 CR-30 Printing..."
@@ -40,7 +40,12 @@
         }
     ],
     "cmd":{
-        "fan_power": "M106 S{fan_speed}"
+        "fan_power": "M106 S{fan_speed}",
+        "progress": "M117 {progress}% layer {layer} / {layers}",
+        "layer": [
+            ";; --- layer {layer} {height} @ {z} ---",
+            "M117 {progress}% layer {layer} / {layers}"
+        ]
     },
     "settings":{
         "image_url": "/decal/3dprintmill.png",
