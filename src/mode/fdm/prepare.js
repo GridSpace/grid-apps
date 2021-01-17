@@ -388,9 +388,6 @@
                 }
                 let tmpout = [];
                 let wtb = slice.widget.track.box;
-                // Belt TODO: pre-flight the slice-top-outer-shells here
-                //            and determine a) brim and b) if no shell touches bed
-                //            and if so, revert to starting near the center or user select
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
@@ -483,11 +480,11 @@
                     let z = minz;
                     let b = Math.max(firstLayerBrim, 1);
                     let tmpout = [];
+                    layer.last().retract = true;
                     print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
-                    print.addOutput(tmpout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool);
+                    print.addOutput(tmpout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool).retract = true;
                     print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
-                    print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool);
-                    // print.addOutput(layerout, newPoint(minx - 0, y, z + 5), 0, firstLayerRate, tool);
+                    print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool).retract = false;
                     layer.splice(0,0,...tmpout);
                 }
             }

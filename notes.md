@@ -2,6 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `B` saved profile should be restored / defaulted when switching devices?
 * `B` normals possibly inverted on faces in 2D to 3D conversion
 * `B` normalize left, bottom, right pop menu time/click and value persistence
 * `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
@@ -16,6 +17,7 @@
 
 # FDM
 
+* `B` large # linear points with linear infill (belt only?)
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix supports with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print

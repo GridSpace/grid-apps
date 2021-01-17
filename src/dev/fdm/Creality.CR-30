@@ -11,12 +11,12 @@
         "G21                ; use metric values",
         "G28                ; home axes",
         "G92 E0             ; reset filament position",
-        "G1 Y0.2            ; move to bed",
-        "G1 X200 E50 F500   ; purge nozzle",
-        "G1 Z0.3            ; move bed 0.3mm",
-        "G1 X0 E50          ; purge nozzle",
-        "G1 Z2              ; move bed 2mm",
-        "G92 Z0             ; reset bed position",
+        "G1 Y0.15           ; move head to belt",
+        "G1 X200 E50 F800   ; extruder purge line",
+        "G1 Z0.3            ; shift belt away 0.3mm",
+        "G1 X0 E100         ; extruder purge line",
+        "G1 Z2 E98          ; shift belt away 2mm, retract extruder",
+        "G92 Z0 E-2         ; reset bed + extruder position",
         "M117 CR-30 Printing..."
     ],
     "post":[
@@ -26,7 +26,7 @@
         "M140 S0            ; shut down bed",
         "G92 E1             ; set filament position",
         "G1 E-1 F300        ; retract filament",
-        "G28                ; home axes",
+        "G28 X              ; home X axis",
         "G1 Y50 F1000       ; lift y axis",
         "M84                ; disable stepper motors"
     ],
@@ -80,13 +80,13 @@
         "sliceSolidLayers": 3,
         "sliceBottomLayers": 3,
         "sliceTopLayers": 3,
-        "firstLayerRate": 20,
+        "firstLayerRate": 15,
         "firstLayerPrintMult": 1.1,
         "firstLayerYOffset": 0,
         "firstLayerBrim": 0,
         "outputTemp": 210,
         "outputFanMax": 255,
-        "outputBedTemp": 60,
+        "outputBedTemp": 70,
         "outputFeedrate": 50,
         "outputFinishrate": 50,
         "outputSeekrate": 80,
@@ -105,7 +105,7 @@
         "detectThinWalls": true,
         "sliceMinHeight": 0,
         "sliceAdaptive": false,
-        "zHopDistance": 0.2,
+        "zHopDistance": 0,
         "antiBacklash": 0
     }]
 }
