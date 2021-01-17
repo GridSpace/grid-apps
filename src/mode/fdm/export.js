@@ -49,7 +49,8 @@
             retSpeed = process.outputRetractSpeed * 60,
             retDwell = process.outputRetractDwell || 0,
             timeDwell = retDwell / 1000,
-            offset = process.outputOriginCenter ? null : {
+            originCenter = process.outputOriginCenter,
+            offset = originCenter ? null : {
                 x: device.bedWidth/2,
                 y: isBelt ? 0 : device.bedDepth/2
             },
@@ -199,7 +200,7 @@
             }
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
-                epos.x = pos.x;
+                epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
                 epos.z = pos.z * icos;
                 epos.y = -pos.y + epos.z * bcos;
             }
