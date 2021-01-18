@@ -86,7 +86,11 @@
             loops = loops.split(',').map(range => {
                 return range.split('-').map(v => parseInt(v));
             }).filter(a => a.length > 1).map(a => {
-                return { start:a[0], end:a[1], iter:a[2] >= 0 ? a[2] : 1}
+                return {
+                    start: a[0],
+                    end: a[1] ? a[1] + 1 : Infinity,
+                    iter: a[2] >= 0 ? a[2] : 1
+                }
             });
         }
         if (!isBelt || (loops && loops.length < 1)) {
@@ -418,6 +422,10 @@
                 laste = out.emit;
             }
             layer++;
+        }
+
+        if (inLoop) {
+            append(`M808`);
         }
 
         subst.time = UTIL.round(time,2);
