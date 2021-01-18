@@ -365,9 +365,14 @@
 
             if (depthFirst) {
                 let tops = depthData.map(level => {
+                    // return POLY.nest(level.filter(poly => poly.depth === 0));
                     return POLY.nest(level.filter(poly => poly.depth === 0).clone());
                 });
                 printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit);
+                // printPoint = depthRoughPath(printPoint, 0, depthData, tops, (poly, index, count, start) => {
+                //     console.log({z: poly.getZ(), i: poly.id, index, poly});
+                //     return polyEmit(poly, index, count, start);
+                // });
             }
 
             setPrintPoint(printPoint);

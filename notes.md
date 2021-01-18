@@ -53,6 +53,7 @@
 # FDM - BELT
 
 * `B` fix supports for belt printing
+* `F` in slice mode, allow marking of repeat loop areas. add "loop" expert parameter
 
 # CAM
 

@@ -864,22 +864,21 @@
      * to be more like outputOrderClosest() and have the option to account for
      * depth in determining distance
      */
-    function poly2polyEmit(array, startPoint, emitter, options) {
-        let opt = options || {};
+    function poly2polyEmit(array, startPoint, emitter, opt = {}) {
         let marker = opt.mark || 'delete';
         let mindist, dist, found, count = 0;
         for (;;) {
             found = null;
             mindist = Infinity;
-            array.forEach(function(poly) {
+            for (let poly of array) {
                 if (poly[marker]) {
-                    return;
+                    continue;
                 }
                 if (poly.isOpen()) {
                     const d2f = startPoint.distTo2D(poly.first());
                     const d2l = startPoint.distTo2D(poly.last());
                     if (d2f > mindist && d2l > mindist) {
-                        return;
+                        continue;
                     }
                     if (d2l < mindist && d2l < d2f) {
                         poly.reverse();
@@ -887,7 +886,7 @@
                     } else if (d2f < mindist) {
                         found = {poly:poly, index:0, point:poly.first()};
                     }
-                    return;
+                    continue;
                 }
                 let area = poly.open ? 1 : poly.area();
                 poly.forEachPoint(function(point, index) {
@@ -899,7 +898,7 @@
                         mindist = dist;
                     }
                 });
-            });
+            }
             if (!found || opt.term) {
                 break;
             }
@@ -908,7 +907,9 @@
         }
 
         // undo delete marks
-        array.forEach(function(poly) { poly[marker] = false });
+        if (opt.perm !== true) {
+            array.forEach(function(poly) { poly[marker] = false });
+        }
 
         return startPoint;
     }
