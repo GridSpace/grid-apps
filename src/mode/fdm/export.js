@@ -41,6 +41,7 @@
             emitted = 0,
             retracted = 0,
             pos = {x:0, y:0, z:0, f:0},
+            lout = null,
             last = null,
             zpos = 0,
             zhop = process.zHopDistance || 0,
@@ -77,12 +78,27 @@
             lines = 0,
             bytes = 0,
             bcos = Math.cos(Math.PI/4),
-            icos = 1 / bcos;
+            icos = 1 / bcos,
+            loops = process.outputLoopLayers,
+            inLoop;
+
+        if (isBelt && loops) {
+            loops = loops.split(',').map(range => {
+                return range.split('-').map(v => parseInt(v));
+            }).filter(a => a.length > 1).map(a => {
+                return { start:a[0], end:a[1], iter:a[2] >= 0 ? a[2] : 1}
+            });
+        }
+        if (!isBelt || (loops && loops.length < 1)) {
+            loops = undefined;
+        }
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
             if (v >= 0) pause.push(v);
         });
+
+        // console.log(loops)
 
         append = function(line) {
             if (line) {
@@ -203,6 +219,7 @@
                 epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
                 epos.z = pos.z * icos;
                 epos.y = -pos.y + epos.z * bcos;
+                lout = epos;
             }
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
             if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
@@ -251,6 +268,7 @@
 
             subst.z = zpos = path.z;
             subst.Z = subst.z;
+            subst.e = subst.E = outputLength;
             subst.layer = layer;
             subst.height = path.height.toFixed(3);
 
@@ -260,6 +278,24 @@
 
             if (pauseCmd && pause.indexOf(layer) >= 0) {
                 appendAllSub(pauseCmd)
+            }
+
+            if (loops) {
+                if (inLoop) {
+                    if (layer === inLoop.end) {
+                        append(`M808`);
+                        inLoop = undefined;
+                    }
+                } else {
+                    for (let loop of loops) {
+                        if (layer === loop.start) {
+                            append(`M808 L${loop.iter}`);
+                            append(`G92 Z${lout.z.round(decimals)} E${outputLength.round(decimals)}`);
+                            inLoop = loop;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (gcodeLayer && gcodeLayer.length) {

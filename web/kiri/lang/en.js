@@ -496,6 +496,8 @@ kiri.lang['en-us'] = {
     ag_nozl_l:      "select output nozzle or head",
     ag_paws_s:      "pause layers",
     ag_paws_l:      "comma-separated list of layers\nto inject pause commands before",
+    ag_loop_s:      "loop layers",
+    ag_loop_l:      "layer ranges to repeat in the format\nfirst-last-count,first-last-count,...\nomitted count = 1",
 
     // SLA MENU
     sa_menu:        "slicing",

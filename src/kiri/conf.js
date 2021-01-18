@@ -332,6 +332,7 @@
                     outputWipeDistance: 0,
                     outputLayerRetract: false,
                     outputOriginCenter: true,
+                    outputLoopLayers: "",
                     outputInvertX: false,
                     outputInvertY: false,
                     detectThinWalls: false,
