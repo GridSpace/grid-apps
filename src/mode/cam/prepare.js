@@ -424,7 +424,7 @@
             fitted.filter(top => !top.level_emit).forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
-                start = poly2polyEmit(inside, start, emitter, { mark: "emark" });
+                start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true });
                 start = depthRoughPath(start, depth + 1, levels, tops, emitter, top);
             });
             return start;

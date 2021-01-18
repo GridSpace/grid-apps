@@ -822,8 +822,7 @@
      * to be more like outputOrderClosest() and have the option to account for
      * depth in determining distance
      */
-    function poly2polyEmit(array, startPoint, emitter, options) {
-        let opt = options || {};
+    function poly2polyEmit(array, startPoint, emitter, opt = {}) {
         let marker = opt.mark || 'delete';
         let mindist, dist, found, count = 0;
         for (;;) {
@@ -866,7 +865,9 @@
         }
 
         // undo delete marks
-        array.forEach(function(poly) { poly[marker] = false });
+        if (opt.perm !== true) {
+            array.forEach(function(poly) { poly[marker] = false });
+        }
 
         return startPoint;
     }
