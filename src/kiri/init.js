@@ -2067,8 +2067,8 @@
 
         SPACE.mouse.onHover((int, event, ints) => {
             if (!API.feature.hover) return;
-            if (!int) return API.widgets.meshes();
-            API.event.emit('mouse.hover', {int, event, point: int.point, type: 'widget'});
+            if (!int) return API.feature.hovers || API.widgets.meshes();
+            API.event.emit('mouse.hover', {int, ints, event, point: int.point, type: 'widget'});
         });
 
         SPACE.platform.onHover((int, event) => {
@@ -2108,7 +2108,7 @@
                 return null;
             } else {
                 // return selected meshes for further mouse processing
-                return API.selection.meshes();
+                return API.feature.hovers || API.selection.meshes();
             }
         });
 
@@ -2126,7 +2126,7 @@
                     platform.deselect();
                 }
             } else {
-                return API.widgets.meshes();
+                return API.feature.hovers || API.widgets.meshes();
             }
         });
 

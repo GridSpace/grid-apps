@@ -12,6 +12,7 @@
         p1, p2, iw,
         lastMode, lastView, lastPillar,
         isFdmMode = false,
+        addingSupports = false,
         alert = [],
         boxes = {},
         func = {};
@@ -77,14 +78,14 @@
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
             alert = api.show.alert("[esc] key cancels support editing");
-            api.feature.hover = true;
+            api.feature.hover = addingSupports = true;
         });
         api.event.on("fdm.supports.done", func.sdone = () => {
             delbox('intZ');
             delbox('intW');
             delbox('supp');
             api.hide.alert(alert);
-            api.feature.hover = false;
+            api.feature.hover = addingSupports = false;
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
             func.sdone();
@@ -136,6 +137,9 @@
             if (!isFdmMode) {
                 return;
             }
+            if (!addingSupports) {
+                return;
+            }
             delbox('supp');
             if (lastPillar) {
                 const {widget, box, id} = lastPillar;
@@ -168,6 +172,9 @@
         });
         api.event.on("mouse.hover", data => {
             if (!isFdmMode) {
+                return;
+            }
+            if (!addingSupports) {
                 return;
             }
             // delbox('intZ');
