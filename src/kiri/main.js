@@ -1048,7 +1048,14 @@
         });
     }
 
-    function loadImageDialog(image, name) {
+    function loadImageDialog(image, name, force) {
+        if (!force && image.byteLength > 2500000) {
+            return UC.confirm("Large images may fail to import<br>Consider resizing under 1000 x 1000<br>Proceed with import?").then(ok => {
+                if (ok) {
+                    loadImageDialog(image, name, true);
+                }
+            });
+        }
         const opt = {pre: [
             "<div class='f-col a-center'>",
             "  <h3>Image Conversion</h3>",
