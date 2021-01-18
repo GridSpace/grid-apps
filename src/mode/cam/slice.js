@@ -40,7 +40,8 @@
             maxToolDiam = -Infinity,
             thruHoles,
             tabs = settings.widget[widget.id].tab,
-            unsafe = proc.camExpertFast;
+            unsafe = proc.camExpertFast,
+            units = settings.controller.units === 'in' ? 25.4 : 1;
 
         if (tabs) {
             // make tab polygons
@@ -85,7 +86,7 @@
         }
 
         if (zMin >= bounds.max.z) {
-            throw `invalid z bottom ${zMin.round(3)} >= bounds z max ${zMax.round(3)}`;
+            throw `invalid z bottom ${(zMin/units).round(3)} >= bounds z max ${(zMax/units).round(3)}`;
         }
 
         let mark = Date.now();
