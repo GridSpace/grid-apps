@@ -520,14 +520,13 @@
         return currentColorFunction(rate/max, 1, 0.85);
     };
 
-    FDM.prepareRender = function(levels, update, options) {
+    FDM.prepareRender = function(levels, update, opts = {}) {
         levels = levels.filter(level => level.length);
         if (levels.length === 0) {
             self.worker.print.maxSpeed = 0;
             return [];
         }
 
-        const opts = options || {};
         const tools = opts.tools || {};
         const flat = opts.flat;
         const thin = opts.thin && !flat;
@@ -675,6 +674,10 @@
             output
                 .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });
+            // force level when present
+            if (level.z) {
+                opts.z = level.z;
+            }
             Object.values(prints).forEach(array => {
                 array.forEach(poly => {
                     if (flat && poly.appearsClosed()) {

@@ -232,7 +232,7 @@
                         }
                     }
                 } else {
-                    cur.paths.push({ index, faces, z: poly.getZ() });
+                    cur.paths.push({ index, faces, z: opts.z || poly.getZ() });
                     if (opts.color) {
                         cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
                     }
