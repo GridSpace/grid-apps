@@ -294,7 +294,11 @@
                     for (let loop of loops) {
                         if (layer === loop.start) {
                             append(`M808 L${loop.iter}`);
-                            append(`G92 Z${lout.z.round(decimals)} E${outputLength.round(decimals)}`);
+                            if (extrudeAbs) {
+                                append(`G92 Z${lout.z.round(decimals)} E${outputLength.round(decimals)}`);
+                            } else {
+                                append(`G92 Z${lout.z.round(decimals)}`);
+                            }
                             inLoop = loop;
                             break;
                         }
