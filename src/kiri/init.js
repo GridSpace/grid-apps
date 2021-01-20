@@ -696,11 +696,12 @@
                 local = isLocalDevice(devicename),
                 dproc = current.devproc[devicename],
                 dev = current.device = CONF.device_from_code(code,mode),
-                proc = current.process;
+                proc = current.process,
+                newdev = dproc === undefined;
 
             // first time device use, add any print profiles and set to default if present
-            if (dproc === undefined) {
-                console.log('new device', code);
+            // if (newdev) {
+            //     console.log('new device', code);
                 if (code.profiles) {
                     for (let profile of code.profiles) {
                         let profname = profile.processName;
@@ -708,13 +709,13 @@
                             console.log('adding profile', profname, 'to', mode);
                             current.sproc[mode][profname] = profile;
                         }
-                        if (!current.devproc[devicename]) {
+                        if (newdev && !current.devproc[devicename]) {
                             console.log('setting default profile for new device', devicename, 'to', profname);
                             current.devproc[devicename] = dproc = profname;
                         }
                     }
                 }
-            }
+            // }
 
             dev.new = false;
             dev.deviceName = devicename;

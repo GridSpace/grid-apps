@@ -23,7 +23,6 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` optional seed profile for a first-time-used device
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control
@@ -53,7 +52,6 @@
 # FDM - BELT
 
 * `B` fix supports for belt printing
-* `F` in slice mode, allow marking of repeat loop areas. add "loop" expert parameter
 
 # CAM
 
