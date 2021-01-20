@@ -199,8 +199,8 @@
 
             // fixed supports (generated ahead of time)
             const fixed = Object.values(settings.widget[widget.id].support || {});
-            let shadow;
-            if (fixed.length) {
+            let shadow = null;
+            if (fixed.length || spro.sliceSupportEnable) {
                 // create shadow. TODO test if any supports set
                 let alltops = slices.map(slice => slice.topPolys()).flat();
                 shadow = POLY.union(alltops,null,0.1);
@@ -946,7 +946,7 @@
             });
 
             // merge pillars and replace with convex hull of outer points (aka smoothing)
-            pillars = POLY.union(pillars).forEach(function(pillar) {
+            pillars = POLY.union(pillars, null, true).forEach(function(pillar) {
                 supports.push(BASE.newPolygon().createConvexHull(pillar.points));
             });
         })();
