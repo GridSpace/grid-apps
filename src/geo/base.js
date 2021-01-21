@@ -334,7 +334,7 @@
         // default # of decimal places in generated gcode
         gcode_decimals : 4,
         // heal disjoint polygons in slicing (experimental)
-        bridgeLineGapDistance : 0,
+        bridgeLineGapDistance : 0.0001,
         // Bounds default margin nearTo
         // Polygon.offset mindist2 offset precision
         precision_offset : 0.05,

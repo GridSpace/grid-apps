@@ -237,7 +237,8 @@
             if (lines.length) {
                 const debug = false;
                 retn.lines = removeDuplicateLines(lines, debug);
-                retn.tops = POLY.nest(connectLines(retn.lines, opt, debug));
+                let polys = connectLines(retn.lines, opt, debug);
+                retn.tops = POLY.nest(polys);
 
                 if (opt.swapX || opt.swapY) {
                     this.unswap(opt.swapX, opt.swapY, retn.lines, retn.tops);

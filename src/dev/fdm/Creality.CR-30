@@ -54,7 +54,7 @@
         "origin_center": false,
         "extrude_abs": true,
         "bed_belt": true,
-        "bed_width": 210,
+        "bed_width": 215,
         "bed_depth": 300,
         "build_height": 170
     },

@@ -1067,7 +1067,7 @@
 
         slice(progress) {
             let state = this.state;
-            let { ops, slicer, widget, unsafe } = state;
+            let { ops, slicer, widget, unsafe, sliceAll } = state;
 
             let real = ops.map(rec => rec.op).filter(op => op);
             let rough = real.filter(op => op.type === 'rough').length > 0;
@@ -1091,12 +1091,27 @@
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
                 tslices.push(data.slice);
-                if (false) {
+                if (true) {
                     const slice = data.slice;
                     sliceAll.push(slice);
                     slice.output()
-                        .setLayer("terrain", {line: 0x888800, thin: true })
+                        .setLayer("shadow", {line: 0x888800, thin: true })
                         .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
+                    // slice.output()
+                    //     .setLayer("slice", {line: 0x886622, thin: true })
+                    //     .addPolys(POLY.setZ(data.tops.clone(true), data.z), { thin: true });
+                    // let p1 = [], p2 = [], cp = p1;
+                    // for (let line of data.lines) {
+                    //     cp.push(line.p1);
+                    //     cp.push(line.p2);
+                    //     cp = (cp === p1 ? p2 : p1);
+                    // }
+                    // slice.output()
+                    //     .setLayer("lines1", {line: 0x884444, thin: true })
+                    //     .addLines(p1, { thin: true });
+                    // slice.output()
+                    //     .setLayer("lines2", {line: 0x444488, thin: true })
+                    //     .addLines(p2, { thin: true });
                 }
                 progress(index / total);
             }, genso: true });
