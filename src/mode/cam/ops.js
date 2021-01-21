@@ -692,6 +692,7 @@
             let { settings, widget, sliceAll, zMax, tabs } = state;
             let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
             let { process, stock } = settings;
+            let poly2polyEmit = BASE.util.poly2polyEmit;
             // generate tracing offsets from chosen features
             let sliceOut = this.sliceOut = [];
             let areas = op.areas[widget.id] || [];
@@ -759,7 +760,11 @@
             polys = healPolys(polys);
             switch (op.mode) {
                 case "follow":
-                    for (let poly of polys) {
+                    let routed = [];
+                    poly2polyEmit(polys, newPoint(0,0,0), (poly, index, count, spoint) => {
+                        routed.push(poly);
+                    });
+                    for (let poly of routed) {
                         let offdist = 0;
                         switch (offset) {
                             case "outside": offdist = toolDiam / 2; break;

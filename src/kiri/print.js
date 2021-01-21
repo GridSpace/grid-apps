@@ -858,6 +858,8 @@
         return startPoint;
     }
 
+    BASE.util.poly2polyEmit = poly2polyEmit;
+
     /**
      * like tip2tipEmit but accepts an array of polygons and the next closest
      * point can be anywhere in the adjacent polygon. should be re-written
