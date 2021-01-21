@@ -318,7 +318,7 @@ kiri.lang['en-us'] = {
     co_olin_s:      "inside only",
     co_olin_l:      "limit cutting to\ninside part boundaries",
     co_olot_s:      "outside only",
-    co_olot_l:      "limit cutting to\exterior part boundaries\nwhich can be thought of\nas the shadow outline",
+    co_olot_l:      "limit cutting to\nexterior part boundaries\nwhich can be thought of\nas the shadow outline",
     co_omit_s:      "omit through",
     co_omit_l:      "eliminate thru holes",
     co_olen_s:      "enable",
