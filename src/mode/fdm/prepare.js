@@ -34,6 +34,7 @@
             firstLayerRate = process.firstLayerRate,
             firstLayerMult = process.firstLayerPrintMult,
             firstLayerBrim = process.firstLayerBrim,
+            firstLayerBrimTrig = process.firstLayerBrimTrig,
             maxLayers = 0,
             layer = 0,
             zoff = 0,
@@ -447,10 +448,10 @@
             }
             // correct y offset to desired layer offset
             let miny = process.firstLayerYOffset || 0;
+            let poff = minby - miny;
             for (let layer of output) {
                 for (let rec of layer) {
-                    let point = rec.point;
-                    point.y += minby - miny;
+                    rec.point.y += poff;
                 }
             }
             let thresh = firstLayerHeight * 1.05;
@@ -459,19 +460,28 @@
             for (let layer of output) {
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
-                for (let out of layer) {
-                    let point = out.point;
-                    let belty = out.belty = -point.y + point.z * bfactor;
-                    if (out.emit && belty <= thresh && lastout && lastout.belty <= thresh) {
-                        out.speed = firstLayerRate;
-                        out.emit *= firstLayerMult;
+                let mins = Infinity;
+                let miny = Infinity;
+                for (let rec of layer) {
+                    let point = rec.point;
+                    let belty = rec.belty = -point.y + point.z * bfactor;
+                    miny = Math.min(miny, belty);
+                    if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
+                        rec.speed = firstLayerRate;
+                        rec.emit *= firstLayerMult;
                         minx = Math.min(minx, point.x, lastout.point.x);
                         maxx = Math.max(maxx, point.x, lastout.point.x);
                         maxy = Math.max(maxy, point.y);
                         minz = Math.min(minz, point.z);
-                        first = out;
+                        first = rec;
+                        // find length of shortest bed-facing segment
+                        mins = Math.min(mins, lastout.point.distTo2D(rec.point));
                     }
-                    lastout = out;
+                    lastout = rec;
+                }
+                // skip if brig trigger not met
+                if (firstLayerBrimTrig && mins > firstLayerBrimTrig) {
+                    continue;
                 }
                 // add brim, if specified
                 if (first && firstLayerBrim) {

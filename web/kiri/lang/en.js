@@ -213,10 +213,6 @@ kiri.lang['en-us'] = {
     fl_mult_l:      "extrusion multiplier\n0.0 - 2.0",
     fl_sfac_s:      "width factor",
     fl_sfac_l:      "multiplier on nozzle size\nchanges line spacing",
-    fl_zoff_s:      "layer offset",
-    fl_zoff_l:      "height offset from belt\nof lowest extrusion\nin millimeters",
-    fl_brim_s:      "brim size",
-    fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
     fl_skrt_s:      "skirt count",
     fl_skrt_l:      "number of first-layer offset\nbrims to generate",
     fl_skro_s:      "skirt offset",
@@ -229,6 +225,14 @@ kiri.lang['en-us'] = {
     fr_spac_l:      "additional layer spacing\nbetween 1st layer and raft\nin millimeters",
     fr_nabl_s:      "raft enable",
     fr_nabl_l:      "create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output",
+
+    // FDM BELT ONLY
+    fl_zoff_s:      "layer offset",
+    fl_zoff_l:      "height offset from belt\nof lowest extrusion\nin millimeters",
+    fl_brim_s:      "brim size",
+    fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
+    fl_brmn_s:      "brim trigger",
+    fl_brmn_l:      "add brims only when segment\nfacing belt is shorter than this\nvalue in millimeters\n0 = Infinity",
 
     // FDM SUPPORT
     sp_menu:        "support",

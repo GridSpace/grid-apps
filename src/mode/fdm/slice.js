@@ -509,7 +509,8 @@
             shellout += top.shells.length;
 
             // add anchor extrusion if missing on the first belt layer
-            if (opt.belt0 && top.shells.length === 0 && slice.up && slice.up.tops.length) {
+            // todo: fix. disabled because throws off layer min y calculations in some cases
+            if (false && opt.belt0 && top.shells.length === 0 && slice.up && slice.up.tops.length) {
                 for (let up of slice.up.tops) {
                     let bounds = up.poly.bounds,
                         midy = (bounds.miny + bounds.maxy) / 2;
