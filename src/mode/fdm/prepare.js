@@ -216,6 +216,8 @@
                 let swidget = KIRI.newWidget();
                 swidget.slices = sslices;
                 swidget.support = true;
+                swidget.rotinfo = widget.rotinfo;
+                swidget.belt = widget.belt;
                 swidget.mesh = { widget: swidget, position: widget.mesh.position };
                 settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
                 widgets.push(swidget);
@@ -288,7 +290,7 @@
         // establish offsets
         for (let widget of widgets) {
             let { rotinfo, belt } = widget;
-            // console.log({rotinfo, belt});
+            console.log({rotinfo, belt, widget});
             let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
                 offset.x = rotinfo.xpos;

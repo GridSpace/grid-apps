@@ -35,7 +35,7 @@
             restoreSupports(api.widgets.all());
         });
         api.event.on("settings.saved", (settings) => {
-            api.ui.fdmSupport.style.display = lastMode !== 'FDM' || settings.device.bedBelt ? 'none' : 'flex';
+            // api.ui.fdmSupport.style.display = lastMode !== 'FDM' || settings.device.bedBelt ? 'none' : 'flex';
         });
         api.event.on("button.click", target => {
             switch (target) {

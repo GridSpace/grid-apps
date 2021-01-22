@@ -296,7 +296,7 @@
                     sliceSupportExtra: 0,
                     sliceSupportAngle: 50,
                     sliceSupportNozzle: 0,
-                    sliceSupportEnable: false,
+                    // sliceSupportEnable: false,
                     sliceSolidMinArea: 1,
                     sliceSolidLayers: 3,
                     sliceBottomLayers: 3,

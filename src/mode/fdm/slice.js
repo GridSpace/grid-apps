@@ -23,7 +23,8 @@
             infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
             support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 }
         },
-        PROTO = Object.clone(COLOR);
+        PROTO = Object.clone(COLOR),
+        bwcomp = (1 / Math.cos(Math.PI/4));
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -210,6 +211,11 @@
                 // slices[0].output()
                 //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
                 //     .addPolys(shadow);
+                if (isBelt) {
+                    for (let col of fixed) {
+                        col.z += widget.belt.zmov;
+                    }
+                }
             }
 
             // create shells and diff inner fillable areas
@@ -271,7 +277,7 @@
                 }, "infill");
             }
 
-            // calculations only relevant when supports are enabled
+            // belt supports are their own thing
             if (!isBelt) {
                 let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
                     minArea = spro.sliceSupportArea;
@@ -282,6 +288,8 @@
                 forSlices(0.8, 0.9, slice => {
                     doSupportFill(slice, lineWidth, spro.sliceSupportDensity, minArea);
                 }, "support");
+            } else if (false) {
+                doSupportBelt(slices, spro, fixed, shadow, doupdate);
             }
 
             // render if not explicitly disabled
@@ -864,6 +872,77 @@
         return true;
     };
 
+    function doSupportBelt(slices, proc, fixed, shadow, doupdate) {
+        if (!fixed || fixed.length === 0) {
+            return;
+        }
+
+        let minArea = proc.supportMinArea,
+            offset = proc.sliceSupportOffset,
+            min = minArea || 0.01;
+
+        // find slice closest to z
+        function findSlice(z) {
+            let mind = Infinity,
+                mins = null;
+            for (let slice of slices) {
+                let d = Math.abs(slice.z - z);
+                if (d < mind) {
+                    mind = d;
+                    mins = slice;
+                }
+            }
+            return mins;
+        }
+
+        // add support pillar to a slice
+        function addPillar(slice, sup) {
+            // ensure slice has offsets
+            if (!slice.offsets) {
+                // create inner clip offset from tops
+                POLY.expand(slice.topPolys(), offset, slice.z, slice.offsets = []);
+            }
+            // ensure slice has supports array
+            if (!slice.supports) {
+                slice.supports = [];
+            }
+            // calculate support rect
+            let dz = sup.z - slice.z;
+            let dy = dz;
+            let dw = bwcomp;
+            let center = BASE.newPoint(sup.x, sup.y + dy, slice.z);
+            let poly = [ BASE.newPolygon().centerRectangle(center, sup.dw, sup.dw * dw) ];
+            let trim = [];
+            // poly = POLY.trimTo(poly, shadow);
+            POLY.subtract(poly, slice.offsets, trim, null, slice.z, min);
+            // if support is entirely culled, terminate projection
+            if (trim.length === 0) {
+                return false;
+            }
+            slice.supports.appendAll(trim);
+            return true;
+        }
+
+        for (let sup of fixed) {
+            let slice = findSlice(sup.z);
+            let rem = addPillar(slice, sup);
+            let zmin = sup.z - sup.dh / 2;
+            let zmax = sup.z + sup.dh / 2;
+            while (slice.up && slice.up.z <= zmax) {
+                slice = slice.up;
+                if (!addPillar(slice, sup)) {
+                    break;
+                }
+            }
+            while (slice.down && slice.down.z >= zmin) {
+                slice = slice.down;
+                if (!addPillar(slice, sup)) {
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      * calculate external overhangs requiring support.
      * this is done bottom-up except for fixed supports (manual)
@@ -961,6 +1040,7 @@
                 let zmin = sup.z - sup.dh / 2;
                 let zmax = sup.z + sup.dh / 2;
                 if (slice.z >= zmin && slice.z <= zmax) {
+                    let dz = sup.z - slice.z;
                     let center = BASE.newPoint(sup.x, sup.y, slice.z);
                     supports.push(BASE.newPolygon().centerRectangle(center, sup.dw, sup.dw));
                 }
@@ -984,7 +1064,7 @@
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
-                if (trim.area() < 0.1) return;
+                // if (trim.area() < 0.1) return;
                 culled.push(trim.setZ(down.z));
             });
 

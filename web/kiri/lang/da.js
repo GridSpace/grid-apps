@@ -135,7 +135,7 @@ kiri.lang['da'] =
         op_sped_s: "vis hastigheder",
         op_sped_l: "vis hastighed til farve bar\ni forhåndsvisning",
         op_auto_s: "auto fordel",
-        op_auto_l: "automatisk layoutplatform,\nnår nye dele tilføjes,
+        op_auto_l: "automatisk layoutplatform,\nnår nye dele tilføjes",
         op_free_s: "free layout",
         op_free_l: "permit dragable layout\nno effect in laser mode",
         op_invr_s: "vend zoom om",
@@ -346,7 +346,7 @@ kiri.lang['da'] =
         cd_lift_s: "løft bor",
         cd_lift_l: "løft mellem dyk\nefter opholdsperiode\ni arbejdsområdets enheder\n0 for at deaktivere",
         cd_regi_s: "registrer",
-        cd_regi_l: "bore registreringshuller\ntil dobbeltsidede dele\uafhængigt af aktivering af\nboring, men bruger samme værktøj og indstillinger",
+        cd_regi_l: "bore registreringshuller\ntil dobbeltsidede dele\nuafhængigt af aktivering af\nboring, men bruger samme værktøj og indstillinger",
 
         // CNC CUTOUT TABS
         ct_menu: "tapper",

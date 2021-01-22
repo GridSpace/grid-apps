@@ -84,7 +84,7 @@ KIRI.worker = {
                 if (z < 0.01) miny = Math.min(miny, y);
             }
 
-            widget.getBoundingBox(true);
+            let bb1 = widget.getBoundingBox(true);
             let track = widget.track;
             xpos = track.pos.x;
             ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
@@ -94,8 +94,8 @@ KIRI.worker = {
             widget.loadVertices(widget.vertices);
             widget._rotate(rotation,0,0,true);
             widget.center(false, true);
-            widget.getBoundingBox(true);
-            widget.belt = { xpos, ypos };
+            let bb2 = widget.getBoundingBox(true);
+            widget.belt = { xpos, ypos, zmov: (bb2.max.z - bb1.max.z)/2 };
         }
 
         widget.slice(settings, function(error) {

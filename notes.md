@@ -55,6 +55,7 @@
 
 # CAM
 
+* `B` tabs are not cut to exact height
 * `B` first rough step too far down in certain circumstances?
 * `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
