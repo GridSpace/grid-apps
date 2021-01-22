@@ -19,6 +19,7 @@
         panX = 0,
         panY = 0,
         panZ = 0,
+        home = 0,
         gridZOff = 0,
         platformZOff = 0,
         perspective = 35,
@@ -938,9 +939,9 @@
         },
 
         view: {
-            top:   function()  { tweenCam({left: 0,    up: 0,   panX, panY, panZ}) },
+            top:   function()  { tweenCam({left: home, up: 0,   panX, panY, panZ}) },
             back:  function()  { tweenCam({left: PI,   up: PI2, panX, panY, panZ}) },
-            home:  function()  { tweenCam({left: 0,    up: PI4, panX, panY, panZ}) },
+            home:  function()  { tweenCam({left: home, up: PI4, panX, panY, panZ}) },
             front: function()  { tweenCam({left: 0,    up: PI2, panX, panY, panZ}) },
             right: function()  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ}) },
             left:  function()  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ}) },
@@ -962,6 +963,9 @@
                 viewControl.setTarget(v);
                 refresh();
             },
+            setHome: function(r) {
+                home = r || 0;
+            }
         },
 
         mouse: {

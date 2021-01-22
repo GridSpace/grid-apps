@@ -729,6 +729,9 @@
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
 
+            // change home default in belt mode
+            API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0);
+
             // add extruder selection buttons
             if (dev.extruders) {
                 let ext = API.lists.extruders = [];
