@@ -327,7 +327,8 @@
             reload: reload,
             restore: restoreWorkspace,
             clear: clearWorkspace,
-            save: saveWorkspace
+            save: saveWorkspace,
+            set_focus: setFocus
         },
         tweak,
         util: {
@@ -367,6 +368,25 @@
         },
         work: KIRI.work
     };
+
+    function setFocus(widgets) {
+        if (widgets === undefined) {
+            widgets = WIDGETS;
+        } else if (!Array.isArray) {
+            widgets = [ widgets ];
+        }
+        let pos = { x:0, y:0, z:0 };
+        for (let widget of widgets) {
+            pos.x += widget.track.pos.x;
+            pos.y += widget.track.pos.y;
+            pos.z += widget.track.pos.z;
+        }
+        pos.x /= widgets.length;
+        pos.y /= widgets.length;
+        pos.z /= widgets.length;
+        SPACE.platform.setCenter(pos.x, -pos.y, pos.z);
+        SPACE.view.setFocus(new THREE.Vector3(pos.x, pos.z, -pos.y));
+    }
 
     function reload() {
         API.event.emit('reload');

@@ -181,6 +181,15 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
         }
     };
 
+    this.getTarget = function() {
+        return this.target;
+    };
+
+    this.setTarget = function(t) {
+        this.target = t;
+        this.target0 = this.target.clone();
+    }
+
     function isValue(v) {
         return v !== null && v !== undefined;
     }

@@ -16,7 +16,9 @@
         PI2 = PI / 2,
         PI4 = PI / 4,
         ROUND = Math.round,
+        panX = 0,
         panY = 0,
+        panZ = 0,
         gridZOff = 0,
         platformZOff = 0,
         perspective = 35,
@@ -896,6 +898,7 @@
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },
+            setCenter: function(x,y,z) { panX = x; panY = z, panZ = y },
             isHidden:  function()  { return !showPlatform },
             setHidden: function(b) { showPlatform = !b; platform.visible = !b },
             setHiding: function(b) { hidePlatformBelow = b },
@@ -935,12 +938,12 @@
         },
 
         view: {
-            top:   function()  { tweenCam({left: 0,    up: 0,   panX: 0, panY: panY, panZ: 0}) },
-            back:  function()  { tweenCam({left: PI,   up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            home:  function()  { tweenCam({left: 0,    up: PI4, panX: 0, panY: panY, panZ: 0}) },
-            front: function()  { tweenCam({left: 0,    up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            right: function()  { tweenCam({left: PI2,  up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            left:  function()  { tweenCam({left: -PI2, up: PI2, panX: 0, panY: panY, panZ: 0}) },
+            top:   function()  { tweenCam({left: 0,    up: 0,   panX, panY, panZ}) },
+            back:  function()  { tweenCam({left: PI,   up: PI2, panX, panY, panZ}) },
+            home:  function()  { tweenCam({left: 0,    up: PI4, panX, panY, panZ}) },
+            front: function()  { tweenCam({left: 0,    up: PI2, panX, panY, panZ}) },
+            right: function()  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ}) },
+            left:  function()  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ}) },
             reset: function()    { viewControl.reset(); requestRefresh() },
             load:  function(cam) { viewControl.setPosition(cam) },
             save:  function()    { return viewControl.getPosition(true) },
@@ -953,7 +956,12 @@
                     viewControl.setMouse(viewControl.mouseDefault);
                 }
             },
-            getFPS: function() { return fps }
+            getFPS: function() { return fps },
+            getFocus: function() { return viewControl.getTarget() },
+            setFocus: function(v) {
+                viewControl.setTarget(v);
+                refresh();
+            },
         },
 
         mouse: {
