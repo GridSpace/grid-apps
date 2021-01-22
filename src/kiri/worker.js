@@ -91,11 +91,43 @@ KIRI.worker = {
 
             widget.mesh = null;
             widget.points = null;
-            widget.loadVertices(widget.vertices);
+
+            // this super ugly hack injects fake support faces
+            // into the widget mesh so they can be rotated and extracted
+            let fv = Array.from(widget.vertices);
+            let fvl = fv.length;
+            let fixed = Object.values(settings.widget[widget.id].support || {});
+            for (let col of fixed) {
+                fv.push(col.x);
+                fv.push(col.y);
+                fv.push(col.z);
+                fv.push(col.x);
+                fv.push(col.y);
+                fv.push(col.z);
+                fv.push(col.x);
+                fv.push(col.y);
+                fv.push(col.z);
+            }
+            let f2l = fv.length;
+            let f32 = fv.toFloat32();
+            // use falsified vertices
+            widget.loadVertices(f32);
+
+            // widget.loadVertices(widget.vertices);
             widget._rotate(rotation,0,0,true);
             widget.center(false, true);
             let bb2 = widget.getBoundingBox(true);
-            widget.belt = { xpos, ypos, zmov: (bb2.max.z - bb1.max.z)/2 };
+
+            // hack part 2: recover rotated support column mid-points
+            for (let i=0; i<fixed.length; i++) {
+                let x = f32[fvl + i*9 + 0];
+                let y = f32[fvl + i*9 + 1];
+                let z = f32[fvl + i*9 + 2];
+                fixed[i].y = y;
+                fixed[i].z = z;
+            }
+
+            widget.belt = { xpos, ypos };
         }
 
         widget.slice(settings, function(error) {

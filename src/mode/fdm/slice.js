@@ -211,11 +211,6 @@
                 // slices[0].output()
                 //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
                 //     .addPolys(shadow);
-                if (isBelt) {
-                    for (let col of fixed) {
-                        col.z += widget.belt.zmov;
-                    }
-                }
             }
 
             // create shells and diff inner fillable areas
@@ -288,7 +283,7 @@
                 forSlices(0.8, 0.9, slice => {
                     doSupportFill(slice, lineWidth, spro.sliceSupportDensity, minArea);
                 }, "support");
-            } else if (false) {
+            } else if (true) {
                 doSupportBelt(slices, spro, fixed, shadow, doupdate);
             }
 
