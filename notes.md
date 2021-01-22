@@ -51,7 +51,7 @@
 
 # FDM - BELT
 
-* `B` fix supports for belt printing
+* `B` finish supports for belt printing. clip below belt. add progress.
 
 # CAM
 

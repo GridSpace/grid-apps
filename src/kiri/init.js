@@ -461,6 +461,7 @@
                 break;
             case cca('a'): // auto arrange items on platform
                 platform.layout();
+                API.space.set_focus(API.selection.widgets());
                 break;
             default:
                 API.event.emit('keypress', evt);
