@@ -374,6 +374,8 @@
             widgets = WIDGETS;
         } else if (!Array.isArray) {
             widgets = [ widgets ];
+        } else if (widgets.length === 0) {
+            widgets = WIDGETS;
         }
         let pos = { x:0, y:0, z:0 };
         for (let widget of widgets) {

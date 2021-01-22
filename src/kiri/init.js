@@ -415,7 +415,7 @@
                 break;
             case cca('v'): // toggle single slice view mode
                 if (API.view.get() === VIEWS.ARRANGE) {
-                    API.space.set_focus();
+                    API.space.set_focus(API.selection.widgets());
                 }
                 if (API.var.layer_hi == API.var.layer_lo) {
                     API.var.layer_lo = 0;
