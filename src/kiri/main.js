@@ -383,9 +383,11 @@
             pos.y += widget.track.pos.y;
             pos.z += widget.track.pos.z;
         }
-        pos.x /= widgets.length;
-        pos.y /= widgets.length;
-        pos.z /= widgets.length;
+        if (widgets.length) {
+            pos.x /= widgets.length;
+            pos.y /= widgets.length;
+            pos.z /= widgets.length;
+        }
         SPACE.platform.setCenter(pos.x, -pos.y, pos.z);
         SPACE.view.setFocus(new THREE.Vector3(pos.x, topZ / 2, -pos.y));
     }
