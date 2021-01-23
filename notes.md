@@ -51,6 +51,7 @@
 
 # FDM - BELT
 
+* `B` layer retract broken
 * `B` finish supports for belt printing. clip below belt. add progress.
 
 # CAM
@@ -91,7 +92,7 @@
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` ease-down should be engaged in all descending cutting operations
 * `F` entirely user-selectable origin
-
+* `F` maintain several part orientations + op chains in a single profile
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
