@@ -387,7 +387,7 @@
         pos.y /= widgets.length;
         pos.z /= widgets.length;
         SPACE.platform.setCenter(pos.x, -pos.y, pos.z);
-        SPACE.view.setFocus(new THREE.Vector3(pos.x, pos.z, -pos.y));
+        SPACE.view.setFocus(new THREE.Vector3(pos.x, topZ / 2, -pos.y));
     }
 
     function reload() {

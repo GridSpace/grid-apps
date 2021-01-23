@@ -290,7 +290,6 @@
         // establish offsets
         for (let widget of widgets) {
             let { rotinfo, belt } = widget;
-            console.log({rotinfo, belt, widget});
             let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
                 offset.x = rotinfo.xpos;
@@ -482,7 +481,7 @@
                     lastout = rec;
                 }
                 // skip if brig trigger not met
-                if (firstLayerBrimTrig && mins > firstLayerBrimTrig) {
+                if (firstLayerBrimTrig > 0 && mins > firstLayerBrimTrig) {
                     continue;
                 }
                 // add brim, if specified

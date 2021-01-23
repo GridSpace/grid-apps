@@ -921,8 +921,8 @@
         for (let sup of fixed) {
             let slice = findSlice(sup.z);
             let rem = addPillar(slice, sup);
-            let zmin = sup.z - sup.dh / 2;
-            let zmax = sup.z + sup.dh / 2;
+            let zmin = sup.z - (sup.dh * 0.75) / 2;
+            let zmax = sup.z + (sup.dh * 0.75) / 2;
             while (slice.up && slice.up.z <= zmax) {
                 slice = slice.up;
                 if (!addPillar(slice, sup)) {
