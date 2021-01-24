@@ -189,6 +189,7 @@
                             slice.addTop(u);
                         }
                     }
+                    let gap = sliceHeight * spro.sliceSupportGap
                     // clip tops to other widgets in group
                     tops = slice.topPolys();
                     for (let peer of widget.group) {
@@ -196,9 +197,10 @@
                             continue;
                         }
                         for (let pslice of peer.slices) {
-                            if (Math.abs(pslice.z - slice.z) > sliceHeight * 2) {
+                            if (Math.abs(pslice.z - slice.z) > gap) {
                                 continue;
                             }
+                            // TODO: offset pslice tops by spro.sliceSupportOffset
                             let ptops = pslice.topPolys();
                             let ntops = [];
                             POLY.subtract(tops, ptops, ntops, null, slice.z, 0);

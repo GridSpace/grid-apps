@@ -290,7 +290,7 @@
                     sliceFillType: "hex",
                     sliceSupportDensity: 0.25,
                     sliceSupportOffset: 1.0,
-                    sliceSupportGap: 0.75,
+                    sliceSupportGap: 1,
                     sliceSupportSize: 5,
                     sliceSupportArea: 0.1,
                     sliceSupportExtra: 0,
