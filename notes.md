@@ -51,6 +51,8 @@
 
 # FDM - BELT
 
+* `B` when resize causes a part to move off-bed, move it back on
+* `B` grouped widgets get placed off in space
 * `B` layer retract broken?
 * `B` infill / thin-fill is generating tons of small linear segments
 * `B` finish supports for belt printing. add progress.

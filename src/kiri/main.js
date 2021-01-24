@@ -892,7 +892,7 @@
                     KIRI.client.unrotate(settings, () => {
                         forAllWidgets(widget => {
                             // on done
-                            segtimes[`${segNumber}_draw`] = widget.render(widget.stack);
+                            segtimes[`${segNumber++}_draw`] = widget.render(widget.stack);
                             // rotate stack for belt beds
                             if (widget.rotinfo) {
                                 widget.stack.obj.rotate(widget.rotinfo);

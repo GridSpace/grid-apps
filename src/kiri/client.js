@@ -168,7 +168,6 @@ KIRI.work = {
 
     slice: function(settings, widget, callback) {
         slicing[widget.id] = callback;
-
         send("slice", {
             id: widget.id,
             settings: settings

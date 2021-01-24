@@ -221,6 +221,7 @@
                     zM = Math.max(p1.z, p2.z, p3.z),
                     bm = Math.floor(zm * zScale),
                     bM = Math.ceil(zM * zScale);
+                if (bm < 0) bm = 0;
                 for (j = bm; j < bM; j++) {
                     buckets[j].push(p1);
                     buckets[j].push(p2);

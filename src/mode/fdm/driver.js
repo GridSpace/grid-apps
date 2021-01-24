@@ -39,6 +39,7 @@
         if (KIRI.client)
         // FDM.support_generate = KIRI.client.fdm_support_generate = function(ondone) {
         FDM.support_generate = function(ondone) {
+            KIRI.client.clear();
             KIRI.client.sync();
             let settings = API.conf.get();
             let widgets = API.widgets.map();
@@ -51,7 +52,7 @@
         if (KIRI.worker)
         KIRI.worker.fdm_support_generate = function(data, send) {
             const { settings } = data;
-            const widgets = Object.values(cache);
+            const widgets = Object.values(wcache);
             const fresh = widgets.filter(widget => FDM.supports(settings, widget));
             send.done(KIRI.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
