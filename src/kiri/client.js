@@ -123,17 +123,18 @@ KIRI.work = {
     },
 
     // widget sync
-    sync: function(widget) {
-        let widgets = widget ? [ widget ] : KIRI.api.widgets.all();
+    sync: function() {
+        let widgets = KIRI.api.widgets.all();
         widgets.forEach(widget => {
             if (widget.modified || !syncd[widget.id]) {
                 syncd[widget.id] = true;
                 let vertices = widget.getGeoVertices().buffer.slice(0);
                 send("sync", {
                     id: widget.id,
+                    group: widget.group.id,
+                    track: widget.track,
                     vertices: vertices,
                     position: widget.mesh.position,
-                    tracking: widget.track
                 }, done => {
                     widget.modified = false;
                 }, [vertices]);
@@ -141,8 +142,31 @@ KIRI.work = {
         });
     },
 
+    rotate: function(settings, callback) {
+        send("rotate", { settings }, reply => {
+            if (reply.group) {
+                for (let widget of KIRI.Widget.Groups.forid(reply.group)) {
+                    widget.belt = reply.belt;
+                }
+            } else if (callback) {
+                callback();
+            }
+        });
+    },
+
+    unrotate: function(settings, callback) {
+        send("unrotate", { settings }, reply => {
+            if (reply.group) {
+                for (let widget of KIRI.Widget.Groups.forid(reply.group)) {
+                    widget.rotinfo = reply.rotinfo;
+                }
+            } else if (callback) {
+                callback();
+            }
+        });
+    },
+
     slice: function(settings, widget, callback) {
-        CLIENT.sync(widget);
         slicing[widget.id] = callback;
 
         send("slice", {

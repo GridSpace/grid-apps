@@ -20,6 +20,18 @@
     FDM.init = function(kiri, api) {
         API = api;
         SPACE = api.const.SPACE;
+
+        function filterSynth() {
+            // remove synth widgets
+            api.widgets.filter((widget) => {
+                if (widget.track.synth) {
+                    api.const.SPACE.platform.remove(widget.mesh);
+                    kiri.Widget.Groups.remove(widget);
+                }
+                return !widget.track.synth
+            });
+        }
+
         api.event.on("mode.set", mode => {
             isFdmMode = mode === 'FDM';
             lastMode = mode;
@@ -28,6 +40,7 @@
         api.event.on("view.set", view => {
             lastView = view;
             updateVisiblity();
+            filterSynth();
         });
         api.event.on("settings.load", (settings) => {
             if (settings.mode !== 'FDM') return;
@@ -98,6 +111,37 @@
             }
             func.sdone();
             updateVisiblity();
+
+            // synth support widget for each widget group
+            let synth = [];
+            for (let group of kiri.Widget.Groups.list()) {
+                let count = 0;
+                let merged = new THREE.Geometry();
+                for (let widget of group) {
+                    if (widget.sups) {
+                        for (let sup of Object.values(widget.sups)) {
+                            merged.merge(sup.box.geometry, sup.box.matrix);
+                            count++;
+                        }
+                    }
+                }
+                if (!count) {
+                    continue;
+                }
+                let bbg = new THREE.BufferGeometry().fromGeometry(merged);
+                let sw = kiri.newWidget(null, group);
+                let fwp = group[0].track.pos;
+                sw.loadGeometry(bbg);
+                sw._move(fwp.x, fwp.y, fwp.z);
+                api.widgets.add(sw);
+                sw.track.synth = true;
+                api.const.SPACE.platform.add(sw.mesh);
+            }
+        });
+        api.event.on("slice.end", () => {
+            if (!isFdmMode) {
+                return;
+            }
         });
         api.event.on("key.esc", () => {
             if (!isFdmMode) {

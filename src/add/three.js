@@ -70,7 +70,10 @@
 
     // return cached or refreshed (when update = true) bounding box
     GP.getBoundingBox = function(update) {
-        if (update || !this.boundingBox) this.computeBoundingBox();
+        if (update || !this.boundingBox) {
+            this.boundingBox = null;
+            this.computeBoundingBox();
+        }
         this.boundingBox.dim = this.boundingBox.max.clone().sub(this.boundingBox.min);
         return this.boundingBox;
     };

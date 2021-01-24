@@ -199,8 +199,9 @@
             });
 
             // fixed supports (generated ahead of time)
-            const fixed = Object.values(settings.widget[widget.id].support || {});
-            let shadow = null;
+            let wannot = settings.widget[widget.id] || {},
+                fixed = Object.values(wannot.support || {}),
+                shadow = null;
             if (fixed.length || spro.sliceSupportEnable) {
                 // create shadow. TODO test if any supports set
                 let alltops = slices.map(slice => slice.topPolys()).flat();
@@ -284,7 +285,7 @@
                     doSupportFill(slice, lineWidth, spro.sliceSupportDensity, minArea);
                 }, "support");
             } else if (true) {
-                doSupportBelt(slices, spro, fixed, shadow, doupdate);
+                // doSupportBelt(slices, spro, fixed, shadow, doupdate);
             }
 
             // render if not explicitly disabled

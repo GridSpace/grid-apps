@@ -51,8 +51,9 @@
 
 # FDM - BELT
 
-* `B` layer retract broken
-* `B` finish supports for belt printing. clip below belt. add progress.
+* `B` layer retract broken?
+* `B` infill / thin-fill is generating tons of small linear segments
+* `B` finish supports for belt printing. add progress.
 
 # CAM
 

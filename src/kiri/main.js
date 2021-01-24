@@ -355,7 +355,9 @@
                 return map;
             },
             new: newWidget,
-            all: function() { return WIDGETS.slice() },
+            all: () => { return WIDGETS.slice() },
+            add: (widget) => { WIDGETS.push(widget) },
+            filter: (fn) => { WIDGETS = WIDGETS.filter(fn) },
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
             meshes: meshArray,
@@ -858,6 +860,9 @@
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
+        KIRI.client.clear();
+        KIRI.client.sync();
+        KIRI.client.rotate(settings);
 
         // for each widget, slice
         forAllWidgets(function(widget) {
@@ -867,11 +872,12 @@
                 startTime = Date.now(),
                 lastMsg,
                 camOrLaser = mode === 'CAM' || mode === 'LASER',
-                stack = STACKS.create(widget.id, widget.mesh);
+                stack = widget.stack = STACKS.create(widget.id, widget.mesh);
 
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
+                widget.rotinfo = null;
                 let mark = Date.now();
                 // update UI info
                 if (sliced) {
@@ -881,22 +887,26 @@
                     }
                     API.event.emit('slice', getMode());
                 }
-                // on done
-                segtimes[`${segNumber}_draw`] = widget.render(stack);
-                // rotate stack for belt beds
-                if (settings.device.bedBelt && widget.rotinfo) {
-                    stack.obj.rotate(widget.rotinfo);
-                }
-                updateSliderMax(true);
-                setVisibleLayer(-1, 0);
-                if (scale === 1) {
-                    // clear wireframe
-                    widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                    widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
-                    widget.setColor(color.deselected);
-                }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
+                    KIRI.client.unrotate(settings, () => {
+                        forAllWidgets(widget => {
+                            // on done
+                            segtimes[`${segNumber}_draw`] = widget.render(stack);
+                            // rotate stack for belt beds
+                            if (widget.rotinfo) {
+                                widget.stack.obj.rotate(widget.rotinfo);
+                            }
+                            if (scale === 1) {
+                                // clear wireframe
+                                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
+                                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
+                                widget.setColor(color.deselected);
+                            }
+                        });
+                        updateSliderMax(true);
+                        setVisibleLayer(-1, 0);
+                    });
                     // mark slicing complete for prep/preview
                     complete.slice = true;
                     if (scale === 1) {
@@ -2077,6 +2087,7 @@
         let newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
+            if (widget.synth) return;
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
             widget.saveState();

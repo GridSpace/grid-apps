@@ -32,6 +32,10 @@
 
     let Group = Widget.Groups = {
 
+        list: () => {
+            return groups.slice()
+        },
+
         forid: function(id) {
             for (let i=0; i<groups.length; i++) {
                 if (groups[i].id === id) return groups[i];
@@ -101,7 +105,7 @@
      * @params {String} [id]
      * @constructor
      */
-    function Widget(id,group) {
+    function Widget(id, group) {
         this.id = id || new Date().getTime().toString(36)+(nextId++);
         this.group = group || [];
         this.group.push(this);
@@ -461,11 +465,11 @@
         this.modified = true;
     };
 
-    PRO.rotate = function(x, y, z) {
+    PRO.rotate = function(x, y, z, temp) {
         this.group.forEach(w => {
-            w._rotate(x, y, z, false);
+            w._rotate(x, y, z, temp);
         });
-        this.center();
+        this.center(false);
     };
 
     PRO._rotate = function(x, y, z, temp) {

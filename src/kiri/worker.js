@@ -10,7 +10,8 @@ let BASE = self.base,
         print: null,
         snap: null
     },
-    cache = {};
+    wgroup = {},
+    wcache = {};
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -24,7 +25,9 @@ BASE.debug.disable();
 const dispatch =
 KIRI.server =
 KIRI.worker = {
-    cache: cache,
+    group: wgroup,
+
+    cache: wcache,
 
     decimate: function(data, send) {
         let { vertices, options } = data;
@@ -38,135 +41,152 @@ KIRI.worker = {
         send.done();
     },
 
+    clear: function(data, send) {
+        current.snap = null;
+        current.print = null;
+        if (!data.id) {
+            dispatch.group = wgroup = {};
+            dispatch.cache = wcache = {};
+            send.done({ clear: true });
+            return;
+        }
+        let had = wcache[data.id] !== undefined;
+        delete wcache[data.id];
+        send.done({
+            id: data.id,
+            had: had,
+            has: wcache[data.id] !== undefined
+        });
+    },
+
     // widget sync
     sync: function(data, send) {
+        let group = wgroup[data.group];
+        if (!group) {
+            group = [];
+            group.id = data.group;
+            wgroup[data.group] = group;
+        }
         let vertices = new Float32Array(data.vertices),
-            points = BASE.verticesToPoints(vertices, { maxpass: 0 }),
-            widget = KIRI.newWidget(data.id).setPoints(points);
+            widget = KIRI.newWidget(data.id, group).loadVertices(vertices);
 
         // do it here so cancel can work
-        cache[data.id] = widget;
+        wcache[data.id] = widget;
         // stored for possible future rotations
         widget.vertices = vertices;
-
-        // fake mesh object to satisfy printing
-        widget.track = data.tracking;
-        widget.mesh = {
-            widget: widget,
-            position: data.position
-        };
-
+        // restore tracking object
+        widget.track = data.track;
         send.done(data.id);
     },
 
-    slice: function(data, send) {
-        let { id, settings } = data;
+    rotate: function(data, send) {
+        let { settings } = data;
+        if (!settings.device.bedBelt) {
+            return send.done({});
+        }
 
-        send.data({update:0.05, updateStatus:"slicing"});
-
-        let widget = cache[data.id],
-            last = time(),
-            xpos,
-            ypos,
-            now;
-
-        try {
-
-        let rotation = (Math.PI/180) * (settings.device.bedBelt ? 45 : 0);
-        if (rotation) {
-            // need min y for post-rotation offset in prepare
-            let vert = widget.vertices;
-            let miny = Infinity;
+        function mins(vert) {
+            let miny = Infinity, minz = Infinity;
             for (let i=0, l=vert.length; i<l; ) {
                 let x = vert[i++];
                 let y = vert[i++];
                 let z = vert[i++];
-                if (z < 0.01) miny = Math.min(miny, y);
+                miny = Math.min(miny, y);
+                minz = Math.min(minz, z);
             }
-
-            let bb1 = widget.getBoundingBox(true);
-            let track = widget.track;
-            xpos = track.pos.x;
-            ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
-
-            widget.mesh = null;
-            widget.points = null;
-
-            // this super ugly hack injects fake support faces
-            // into the widget mesh so they can be rotated and extracted
-            let fv = Array.from(widget.vertices);
-            let fvl = fv.length;
-            let fixed = Object.values(settings.widget[widget.id].support || {});
-            for (let col of fixed) {
-                fv.push(col.x);
-                fv.push(col.y);
-                fv.push(col.z);
-                fv.push(col.x);
-                fv.push(col.y);
-                fv.push(col.z);
-                fv.push(col.x);
-                fv.push(col.y);
-                fv.push(col.z);
-            }
-            let f2l = fv.length;
-            let f32 = fv.toFloat32();
-            // use falsified vertices
-            widget.loadVertices(f32);
-
-            // widget.loadVertices(widget.vertices);
-            widget._rotate(rotation,0,0,true);
-            widget.center(false, true);
-            let bb2 = widget.getBoundingBox(true);
-
-            // hack part 2: recover rotated support column mid-points
-            for (let i=0; i<fixed.length; i++) {
-                let x = f32[fvl + i*9 + 0];
-                let y = f32[fvl + i*9 + 1];
-                let z = f32[fvl + i*9 + 2];
-                fixed[i].y = y;
-                fixed[i].z = z;
-            }
-
-            widget.belt = { xpos, ypos };
+            return {miny, minz};
         }
 
-        widget.slice(settings, function(error) {
-            if (error) {
-                send.data({error: error});
-            } else {
-                const slices = widget.slices || [];
-                send.data({send_start: time()});
-                send.data({
-                    stats: widget.stats,
-                    slices: slices.length,
-                });
-                slices.forEach(function(slice,index) {
-                    const state = { zeros: [] };
-                    send.data({index: index, slice: slice.encode(state)}, state.zeros);
-                })
-                send.data({send_end: time()});
-                // unrotate and send delta coordinates
-                if (rotation) {
-                    widget.setPoints(null);
-                    widget._rotate(-rotation,0,0,true);
-                    let wbb = widget.getBoundingBox(true);
-                    widget.center(false, true);
-                    let dy = (wbb.max.y + wbb.min.y)/2;
-                    let dz = wbb.min.z;
-                    widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
-                    send.data({ rotinfo: widget.rotinfo });
-                }
+        for (let group of Object.values(wgroup)) {
+            let widget = group[0];
+            let rotation = (Math.PI / 180) * 45;
+
+            // need min y for post-rotation offset in prepare
+            // let vert = widget.vertices;
+            // let miny = Infinity;
+            // for (let i=0, l=vert.length; i<l; ) {
+            //     let x = vert[i++];
+            //     let y = vert[i++];
+            //     let z = vert[i++];
+            //     if (z < 0.01) miny = Math.min(miny, y);
+            // }
+
+            let min1 = mins(widget.vertices);
+            let miny = min1.miny;
+
+            widget.groupBounds();
+            let track = widget.track;
+            let xpos = track.pos.x;
+            let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
+
+            widget.rotate(rotation,0,0,true);
+            widget.groupBounds();
+
+            widget.belt = { xpos, ypos };
+            for (let others of group.slice(1)) {
+                others.belt = widget.belt;
             }
 
-            send.done({done: true});
-        }, function(update, msg) {
-            now = time();
-            if (now - last < 10 && update < 0.99) return;
-            // on update
-            send.data({update: (0.05 + update * 0.95), updateStatus: msg});
-            last = now;
-        });
+            send.data({group: group.id, belt: widget.belt});
+        }
+        send.done({});
+    },
 
+    unrotate: function(data, send) {
+        let { settings } = data;
+        if (!settings.device.bedBelt) {
+            return send.done({});
+        }
+        let rotation = (Math.PI / 180) * 45;
+        for (let group of Object.values(wgroup)) {
+            let widget = group[0];
+            widget.groupBounds();
+            widget.rotate(-rotation,0,0,true);
+            let { dy, dz } = widget.track.center;
+            widget.groupBounds();
+            let { xpos, ypos } = widget.belt;
+            widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
+            for (let others of group.slice(1)) {
+                others.rotinfo = widget.rotinfo;
+            }
+            send.data({group: group.id, rotinfo: widget.rotinfo});
+        }
+        send.done({});
+    },
+
+    slice: function(data, send) {
+        send.data({update:0.001, updateStatus:"slicing"});
+
+        let settings = data.settings,
+            widget = wcache[data.id],
+            last = time(),
+            now;
+
+        try {
+            widget.slice(settings, function(error) {
+                if (error) {
+                    send.data({error: error});
+                } else {
+                    const slices = widget.slices || [];
+                    send.data({send_start: time()});
+                    send.data({
+                        stats: widget.stats,
+                        slices: slices.length,
+                    });
+                    slices.forEach(function(slice,index) {
+                        const state = { zeros: [] };
+                        send.data({index: index, slice: slice.encode(state)}, state.zeros);
+                    })
+                    send.data({send_end: time()});
+                }
+                send.done({done: true});
+            }, function(update, msg) {
+                now = time();
+                if (now - last < 10 && update < 0.99) return;
+                // on update
+                send.data({update: (0.05 + update * 0.95), updateStatus: msg});
+                last = now;
+            });
         } catch (error) {
             send.data({error: error.toString()});
             console.log(error);
@@ -175,7 +195,7 @@ KIRI.worker = {
 
     prepare: function(data, send) {
         // create widget array from id:widget cache
-        const widgets = Object.values(cache);
+        const widgets = Object.values(wcache);
 
         // let client know we've started
         send.data({update:0.05, updateStatus:"preview"});
@@ -254,7 +274,7 @@ KIRI.worker = {
             z: origin.z
         };
         const device = settings.device;
-        const print = current.print = KIRI.newPrint(settings, Object.values(cache));
+        const print = current.print = KIRI.newPrint(settings, Object.values(wcache));
         const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
@@ -280,28 +300,11 @@ KIRI.worker = {
                 out.point = BASE.newPoint(x,y,z || 0);
             });
         });
-        const print = current.print = KIRI.newPrint(null, Object.values(cache));
+        const print = current.print = KIRI.newPrint(null, Object.values(wcache));
         const layers = KIRI.driver.FDM.prepareRender(parsed, progress => {
             send.data({ progress });
         }, { thin:  true });
         send.done({parsed: KIRI.codec.encode(layers)});
-    },
-
-    clear: function(data, send) {
-        current.snap = null;
-        current.print = null;
-        if (!data.id) {
-            cache = {};
-            send.done({ clear: true });
-            return;
-        }
-        let had = cache[data.id] !== undefined;
-        delete cache[data.id];
-        send.done({
-            id: data.id,
-            had: had,
-            has: cache[data.id] !== undefined
-        });
     },
 
     config: function(data, send) {

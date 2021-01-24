@@ -89,7 +89,7 @@
                 // nest and offset tops
                 POLY.nest(tops).forEach(function(poly) {
                     poly.offset(-offset + nozzle / 2).forEach(function(brim) {
-                        brim.move(widget.mesh.position);
+                        brim.move(widget.track.pos);
                         brims.push(brim);
                     });
                 });
@@ -290,7 +290,8 @@
         // establish offsets
         for (let widget of widgets) {
             let { rotinfo, belt } = widget;
-            let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
+            let offset = Object.clone(widget.track.pos);
+            // let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
                 offset.x = rotinfo.xpos;
                 offset.y = -belt.midy;
