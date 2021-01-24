@@ -187,7 +187,7 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
 
     this.setTarget = function(t) {
         this.target = t;
-        this.target0 = this.target.clone();
+        this.target0 = t.clone();
     }
 
     function isValue(v) {

@@ -390,7 +390,7 @@
             pos.y /= widgets.length;
             pos.z /= widgets.length;
         }
-        SPACE.platform.setCenter(pos.x, -pos.y, pos.z);
+        SPACE.platform.setCenter(pos.x, -pos.y, topZ / 2);
         SPACE.view.setFocus(new THREE.Vector3(pos.x, topZ / 2, -pos.y));
     }
 
