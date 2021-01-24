@@ -200,8 +200,11 @@
                             if (Math.abs(pslice.z - slice.z) > gap) {
                                 continue;
                             }
-                            // TODO: offset pslice tops by spro.sliceSupportOffset
-                            let ptops = pslice.topPolys();
+                            // offset pslice tops by spro.sliceSupportOffset
+                            if (!pslice.synth_off) {
+                                pslice.synth_off = POLY.offset(pslice.topPolys(), nozzleSize/2 + spro.sliceSupportOffset);
+                            }
+                            let ptops = pslice.synth_off;
                             let ntops = [];
                             POLY.subtract(tops, ptops, ntops, null, slice.z, 0);
                             tops = ntops;

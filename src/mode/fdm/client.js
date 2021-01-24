@@ -202,6 +202,8 @@
                 return;
             }
             if (!iw) return;
+            p1.y = Math.max(0, p1.y);
+            p2.y = Math.max(0, p2.y);
             let hy = (p1.y + p2.y) / 2;
             let dh = Math.abs(p1.y - p2.y);
             let dw = api.conf.get().process.sliceSupportSize / 2;
