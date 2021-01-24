@@ -188,6 +188,11 @@
         }
 
         function retract(zhop) {
+            if (retracted) {
+                // console.log({double_retract: zhop});
+                return;
+            }
+            // console.log({retract:zhop});
             retracted = retDist;
             moveTo({e:-retracted}, retSpeed, `e-retract ${retDist}`);
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "z-hop start");
@@ -383,6 +388,7 @@
 
                 // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
+                    // console.log({engage:zhop});
                     // when enabled, resume previous Z
                     if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
                     // re-engage retracted filament
@@ -407,7 +413,7 @@
                 }
 
                 // retract filament if point retract flag set
-                if (!retracted && out.retract) {
+                if (out.retract) {
                     retract(zhop);
                 }
 
