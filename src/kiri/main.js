@@ -1191,9 +1191,33 @@
 
     function updateSelectedBounds() {
         // update bounds on selection for drag limiting
+        let dvy = settings.device.bedDepth;
+        let dvx = settings.device.bedWidth;
         let bounds_sel = new THREE.Box3();
         forSelectedWidgets(function(widget) {
             let wp = widget.track.pos;
+            let bx = widget.track.box;
+            let miny = wp.y - bx.h/2 + dvy/2;
+            let maxy = wp.y + bx.h/2 + dvy/2;
+            let minx = wp.x - bx.w/2 + dvx/2;
+            let maxx = wp.x + bx.w/2 + dvx/2;
+
+            // keep widget in bounds when rotated or scaled
+            let ylo = miny < 0;
+            let yhi = maxy > dvy
+            if (ylo && !yhi) {
+                widget.move(0, -miny, 0);
+            } else if (yhi && !ylo) {
+                widget.move(0, dvy - maxy, 0);
+            }
+            let xlo = minx < 0;
+            let xhi = maxx > dvx;
+            if (xlo && !xhi) {
+                widget.move(-minx, 0, 0);
+            } else if (xhi && !xlo) {
+                widget.move(dvx - maxx, 0, 0);
+            }
+
             let wb = widget.mesh.getBoundingBox().clone();
             wb.min.x += wp.x;
             wb.max.x += wp.x;
