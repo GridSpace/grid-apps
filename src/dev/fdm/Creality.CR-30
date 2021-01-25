@@ -87,7 +87,7 @@
         "firstLayerBrim": 0,
         "outputTemp": 210,
         "outputFanMax": 255,
-        "outputBedTemp": 70,
+        "outputBedTemp": 60,
         "outputFeedrate": 50,
         "outputFinishrate": 50,
         "outputSeekrate": 80,
