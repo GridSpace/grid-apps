@@ -85,44 +85,36 @@ KIRI.worker = {
             return send.done({});
         }
 
-        function mins(vert) {
-            let miny = Infinity, minz = Infinity;
+        function mins(vert, last = {}) {
+            let miny = last.miny || Infinity,
+                maxy = last.maxy || -Infinity;
             for (let i=0, l=vert.length; i<l; ) {
                 let x = vert[i++];
                 let y = vert[i++];
                 let z = vert[i++];
-                miny = Math.min(miny, y);
-                minz = Math.min(minz, z);
+                if (z < 0.01) {
+                    miny = Math.min(miny, y);
+                    maxy = Math.max(maxy, y);
+                }
             }
-            return {miny, minz};
+            return { miny, maxy };
         }
 
         for (let group of Object.values(wgroup)) {
+            let minv = {};
+            for (let w of group) {
+                minv = mins(w.vertices, minv);
+            }
+            let { miny, maxy } = minv;
+
             let widget = group[0];
-            let rotation = (Math.PI / 180) * 45;
-
-            // need min y for post-rotation offset in prepare
-            // let vert = widget.vertices;
-            // let miny = Infinity;
-            // for (let i=0, l=vert.length; i<l; ) {
-            //     let x = vert[i++];
-            //     let y = vert[i++];
-            //     let z = vert[i++];
-            //     if (z < 0.01) miny = Math.min(miny, y);
-            // }
-
-            let min1 = mins(widget.vertices);
-            let miny = min1.miny;
-
-            widget.groupBounds();
             let track = widget.track;
             let xpos = track.pos.x;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
-
-            widget.rotate(rotation,0,0,true);
-            widget.groupBounds();
+            let rotation = (Math.PI / 180) * 45;
 
             widget.belt = { xpos, ypos };
+            widget.rotate(rotation,0,0,true);
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
             }

@@ -2182,7 +2182,7 @@
     function init_two() {
         API.event.emit('init.two');
 
-        API.space.set_focus();
+        // API.space.set_focus();
 
         // call driver initializations, if present
         Object.values(KIRI.driver).forEach(driver => {

@@ -291,12 +291,14 @@
         for (let widget of widgets) {
             let { rotinfo, belt } = widget;
             let offset = Object.clone(widget.track.pos);
-            // let offset = widget.mesh ? Object.clone(widget.mesh.position) : {x:0, y:0, z:0};
             if (isBelt) {
-                offset.x = rotinfo.xpos;
-                offset.y = -belt.midy;
-                offset.y += rotinfo.ypos * beltfact;
-                offset.z = rotinfo.ypos * beltfact;
+                let o = rotinfo.ypos * beltfact;
+                offset = {
+                    x: rotinfo.xpos,
+                    y: o - belt.midy,// - belt.miny,
+                    z: o,
+                };
+                // offset = { x:0, y:0, z:0 };
                 // locate the lowest point in slices and widget overall
                 let minby = Infinity;
                 for (let slice of widget.slices) {
@@ -412,7 +414,7 @@
             // if a declared extruder isn't used in a layer, use selected
             // extruder to fill the relevant purge blocks for later support
             track.forEach(ext => {
-                if (ext) {
+                if (ext && lastOut) {
                     printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt);
                 }
             });
