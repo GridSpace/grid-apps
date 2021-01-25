@@ -965,6 +965,7 @@
 
         hideSlider(true);
 
+        let alert = API.show.alert("Preparing Preview");
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
         if (feature.preview) {
@@ -1007,6 +1008,7 @@
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }
 
+            API.hide.alert(alert);
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 

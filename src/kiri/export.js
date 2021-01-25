@@ -31,10 +31,12 @@
     }
 
     function callExport(callback, mode) {
+        let alert = API.show.alert("Exporting");
         const gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
         }, (output) => {
+            API.hide.alert(alert);
             if (callback) {
                 callback(gcode.join('\r\n'), output);
             } else {

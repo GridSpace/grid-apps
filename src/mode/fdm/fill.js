@@ -159,6 +159,8 @@
         let span_y = bounds.max.y - bounds.min.y;
         let density = target.density();
         let offset = target.offset() / 2;
+        let line = target.lineWidth();
+        let mf = Math.max(span_x, span_y) / line;
         let tile = 1 + (1 - density);
         let tile_xc = Math.ceil(span_x / tile);
         let tile_yc = Math.ceil(span_y / tile);
