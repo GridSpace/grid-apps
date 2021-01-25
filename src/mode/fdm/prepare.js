@@ -295,7 +295,7 @@
                 let o = rotinfo.ypos * beltfact;
                 offset = {
                     x: rotinfo.xpos,
-                    y: o - belt.midy,// - belt.miny,
+                    y: o - belt.midy - belt.yadd/2,
                     z: o,
                 };
                 // offset = { x:0, y:0, z:0 };

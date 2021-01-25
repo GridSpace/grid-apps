@@ -2,6 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `B` client/worker cache invalidated by latest rotation work
 * `B` saved profile should be restored / defaulted when switching devices?
 * `B` normals possibly inverted on faces in 2D to 3D conversion
 * `B` normalize left, bottom, right pop menu time/click and value persistence
@@ -11,13 +12,12 @@
 * `P` allow selection to me decimated on demand (context menu?)
 * `P` improve decimation speed: omit point conversion or use wasm
 * `P` client/worker interface normalization
-* `P` explore widget vertex reloading / replacing
+* `P` explore widget vertex reloading / replacing (Onshape primarily)
 
 * `F` SVG import to 3D part like images
 
 # FDM
 
-* `B` client/worker cache invalidated by latest rotation work
 * `B` fix adaptive slicing with multi-extruder
 * `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
@@ -51,10 +51,7 @@
 
 # FDM - BELT
 
-* `B` when resize causes a part to move off-bed, move it back on
-* `B` grouped widgets get placed off in space
-* `B` layer retract broken?
-* `B` infill / thin-fill is generating tons of small linear segments
+* `B` multiple parts with one angled against origin "floats" in preview
 * `B` finish supports for belt printing. add progress.
 
 # CAM

@@ -100,12 +100,16 @@ KIRI.worker = {
             return { miny, maxy };
         }
 
-        for (let group of Object.values(wgroup)) {
+        function gmin(group) {
             let minv = {};
             for (let w of group) {
                 minv = mins(w.vertices, minv);
             }
-            let { miny, maxy } = minv;
+            return minv;
+        }
+
+        for (let group of Object.values(wgroup)) {
+            let { miny, maxy } = gmin(group);
 
             let widget = group[0];
             let track = widget.track;
@@ -113,8 +117,9 @@ KIRI.worker = {
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
             let rotation = (Math.PI / 180) * 45;
 
-            widget.belt = { xpos, ypos };
             widget.rotate(rotation,0,0,true);
+            let minr = gmin(group);
+            widget.belt = { xpos, ypos, yadd: minr.maxy - minr.miny };
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
             }
