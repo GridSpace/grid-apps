@@ -167,6 +167,9 @@
         }
 
         function retract(zhop) {
+            if (retracted) {
+                return;
+            }
             retracted = retDist;
             moveTo({e:-retracted}, retSpeed, `e-retract ${retDist}`);
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "z-hop start");
