@@ -1751,7 +1751,12 @@
         if (isBelt) {
             let bounds = platformUpdateBounds(),
                 movey = -(dev.bedDepth / 2 + bounds.min.y);
-            forAllWidgets(widget => widget.move(0, movey + 5, 0));
+            forAllWidgets(widget => {
+                // only move the master widget in the group
+                if (widget.id === widget.group.id) {
+                    widget.move(0, movey + 5, 0)
+                }
+            });
         }
 
         platform.update_origin();

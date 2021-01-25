@@ -17,9 +17,9 @@
 
 # FDM
 
-* `B` large # linear points with linear infill (belt only?)
+* `B` client/worker cache invalidated by latest rotation work
 * `B` fix adaptive slicing with multi-extruder
-* `B` fix supports with grouped parts
+* `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
