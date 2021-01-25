@@ -385,7 +385,7 @@
                 if (layerout.length && minidx !== lastIndex) {
                     layerout.last().retract = true;
                 }
-                layerout.z = z;
+                layerout.z = z + slice.height / 2;
                 layerout.height = layerout.height || slice.height;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
@@ -690,7 +690,7 @@
                 .addPolys(moves, { thin: true, z: opts.z });
             // force level when present
             if (level.z) {
-                opts.z = level.z;
+                opts.z = level.z - height;
             }
             Object.values(prints).forEach(array => {
                 array.forEach(poly => {

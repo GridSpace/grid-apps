@@ -314,7 +314,7 @@
             if (gcodeLayer && gcodeLayer.length) {
                 appendAllSub(gcodeLayer);
             } else {
-                append(`;; --- layer ${layer} (${subst.height} @ ${subst.z}) ---`);
+                append(`;; --- layer ${layer} (${subst.height} @ ${subst.z.round(3)}) ---`);
             }
 
             if (layer > 0 && process.outputLayerRetract) {
