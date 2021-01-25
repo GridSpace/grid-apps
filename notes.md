@@ -15,6 +15,7 @@
 * `P` explore widget vertex reloading / replacing (Onshape primarily)
 
 * `F` SVG import to 3D part like images
+* `F` bundle current profile into exported device
 
 # FDM
 
@@ -23,6 +24,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` test outlining solid projected areas
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` add separate fill speed control

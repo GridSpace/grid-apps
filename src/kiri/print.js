@@ -442,6 +442,7 @@
             firstPrintMult = process.firstLayerPrintMult,
             printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
             fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
+            infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
             zhop = process.zHopDistance || 0,
@@ -779,7 +780,7 @@
 
                 // then output solid and sparse fill
                 outputFills(next.fill_lines);
-                outputSparse(next.fill_sparse, sparseMult);
+                outputSparse(next.fill_sparse, sparseMult, infillSpeed);
 
                 lastTop = next;
             }

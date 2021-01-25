@@ -287,6 +287,7 @@
                     sliceFillAngle: 45,
                     sliceFillOverlap: 0.3,
                     sliceFillSparse: 0.5,
+                    sliceFillRate: 0,
                     sliceFillType: "hex",
                     sliceSupportDensity: 0.25,
                     sliceSupportOffset: 1.0,

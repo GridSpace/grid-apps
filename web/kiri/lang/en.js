@@ -200,6 +200,8 @@ kiri.lang['en-us'] = {
     fi_angl_l:      "base angle in degrees",
     fi_over_s:      "overlap",
     fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
+    // fi_rate_s:      "print speed",
+    fi_rate_l:      "extrusion speed for infill\nset to 0 to use default\noutput print speeds",
 
     // FDM FIRST LAYER
     fl_menu:        "base",
