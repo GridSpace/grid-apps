@@ -46,7 +46,6 @@
             find,
             layerout = [],
             slices = [],
-            sliceEntry,
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             beltYoff = device.bedDepth / 2,
             beltfact = Math.cos(Math.PI/4),
@@ -210,6 +209,7 @@
                 let sslice = KIRI.newSlice(slice.z);
                 sslice.extruder = process.sliceSupportNozzle;
                 sslice.supports = slice.supports.slice();
+                sslice.height = slice.height;
                 sslices.push(sslice);
             }
             if (sslices.length) {
