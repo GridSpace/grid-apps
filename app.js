@@ -25,6 +25,7 @@ let level;
 let setupFn;
 let cacheDir;
 let startTime;
+let oversion;
 let lastmod;
 let logger;
 let debug;
@@ -144,7 +145,8 @@ function initModule(mod, file, dir) {
     require_fresh(file)({
         api: api,
         adm: {
-            reload: prepareScripts
+            reload: prepareScripts,
+            setver: (ver) => { oversion = ver }
         },
         const: {
             args: {},
@@ -471,11 +473,12 @@ function handleSetup(req, res, next) {
 }
 
 function handleVersion(req, res, next) {
-    if (req.app.path === "/kiri/" && req.url.indexOf(version) < 0) {
+    let vstr = oversion || version;
+    if (req.app.path === "/kiri/" && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
-            return http.redirect(res, `${req.url},ver:${version}`);
+            return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
-            return http.redirect(res, `${req.url}?ver:${version}`);
+            return http.redirect(res, `${req.url}?ver:${vstr}`);
         }
     } else {
         next();
