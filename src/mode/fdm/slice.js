@@ -1231,7 +1231,6 @@
             let c = geo.vertices[face.c];
             // skip tiny faces
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
-                skip++;
                 return;
             }
             tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));

@@ -213,12 +213,13 @@
                 sslices.push(sslice);
             }
             if (sslices.length) {
-                let swidget = KIRI.newWidget();
+                let swidget = KIRI.newWidget(null,widget.group);
                 swidget.slices = sslices;
                 swidget.support = true;
                 swidget.rotinfo = widget.rotinfo;
                 swidget.belt = widget.belt;
-                swidget.mesh = { widget: swidget, position: widget.mesh.position };
+                swidget.track = Object.clone(widget.track);
+                swidget.mesh = { widget: swidget, position: swidget.track.pos };
                 settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
                 widgets.push(swidget);
             }
