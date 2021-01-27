@@ -123,3 +123,7 @@
 * https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
 * https://en.wikipedia.org/wiki/ZIP_(file_format)
 * https://stuk.github.io/jszip/
+
+# Meta
+
+* free-space tetrahedron modeler with vertex mating

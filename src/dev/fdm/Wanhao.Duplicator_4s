@@ -11,7 +11,6 @@
         "G1 Z0.25 F180       ; move z to 0.25mm over bed",
         "G92 E0              ; zero the extruded",
         "M109 S{temp} T{tool}     ; wait for extruder to reach target temp",
-        "G1 E15 F200         ; purge 15mm from extruder",
         "G92 E0              ; zero the extruded",
         "G1 F225             ; set feed speed"
     ],
