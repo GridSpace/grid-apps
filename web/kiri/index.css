@@ -1500,3 +1500,11 @@ th, tr, td, label {
     border-top: 1px solid #ddd;
     margin: 5px 0 5px 0;
 }
+
+#lab-axis, #lab-scale {
+    padding: 0 6px 0 6px;
+    border-radius: 3px;
+}
+#lab-axis:hover, #lab-scale:hover {
+    background-color: rgba(0,0,0,0.2);
+}

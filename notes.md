@@ -99,8 +99,9 @@
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
-* `P` detect render message backlog and pause or warn
+* `P` detect render message backlog and pause or warn?
 * `P` allow faster z movements when contouring (not plunging)
+* `P` common / faster shadow generator using vertices shared with ledges
 
 # Laser
 

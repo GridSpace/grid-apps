@@ -1999,9 +1999,17 @@
                 xv = parseFloat(UI.sizeX.was),
                 yv = parseFloat(UI.sizeY.was),
                 zv = parseFloat(UI.sizeZ.was),
-                xr = (UI.lockX.checked ? ra : 1),
-                yr = (UI.lockY.checked ? ra : 1),
-                zr = (UI.lockZ.checked ? ra : 1);
+                ta = e.target,
+                xc = UI.lockX.checked,
+                yc = UI.lockY.checked,
+                zc = UI.lockZ.checked,
+                xt = ta === UI.sizeX,
+                yt = ta === UI.sizeY,
+                zt = ta === UI.sizeZ,
+                tl = (xt && xc) || (yt && yc) || (zt && zc),
+                xr = ((tl && xc) || (!tl && xt) ? ra : 1),
+                yr = ((tl && yc) || (!tl && yt) ? ra : 1),
+                zr = ((tl && zc) || (!tl && zt) ? ra : 1);
             API.selection.scale(xr,yr,zr);
             UI.sizeX.was = UI.sizeX.value = xv * xr;
             UI.sizeY.was = UI.sizeY.value = yv * yr;
@@ -2015,9 +2023,17 @@
                 xv = parseFloat(UI.scaleX.was),
                 yv = parseFloat(UI.scaleY.was),
                 zv = parseFloat(UI.scaleZ.was),
-                xr = (UI.lockX.checked ? ra : 1),
-                yr = (UI.lockY.checked ? ra : 1),
-                zr = (UI.lockZ.checked ? ra : 1);
+                ta = e.target,
+                xc = UI.lockX.checked,
+                yc = UI.lockY.checked,
+                zc = UI.lockZ.checked,
+                xt = ta === UI.scaleX,
+                yt = ta === UI.scaleY,
+                zt = ta === UI.scaleZ,
+                tl = (xt && xc) || (yt && yc) || (zt && zc),
+                xr = ((tl && xc) || (!tl && xt) ? ra : 1),
+                yr = ((tl && yc) || (!tl && yt) ? ra : 1),
+                zr = ((tl && zc) || (!tl && zt) ? ra : 1);
             API.selection.scale(xr,yr,zr);
             UI.scaleX.was = UI.scaleX.value = xv * xr;
             UI.scaleY.was = UI.scaleY.value = yv * yr;
@@ -2052,6 +2068,22 @@
             $('rot_y'),       selectionRotate,
             $('rot_z'),       selectionRotate
         ]);
+
+        $('lab-axis').onclick = () => {
+            UI.lockX.checked =
+            UI.lockY.checked =
+            UI.lockZ.checked = !(
+                UI.lockX.checked ||
+                UI.lockY.checked ||
+                UI.lockZ.checked
+            );
+        };
+
+        $('lab-scale').onclick = () => {
+            API.selection.scale(1 / UI.scaleX.was, 1 / UI.scaleY.was, 1 / UI.scaleZ.was);
+            UI.scaleX.value = UI.scaleY.value = UI.scaleZ.value =
+            UI.scaleX.was = UI.scaleY.was = UI.scaleZ.was = 1;
+        };
 
         UC.onBlur([
             UI.toolName,
