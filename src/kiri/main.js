@@ -84,6 +84,7 @@
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
+        update_bounds: updateSelectedBounds,
         delete: function() { platform.delete(selection.widgets()) },
         export: exportSelection
     };
@@ -1202,13 +1203,16 @@
         updateSelectedBounds();
     }
 
-    function updateSelectedBounds() {
+    function updateSelectedBounds(widgets) {
         // update bounds on selection for drag limiting
         let isBelt = settings.device.bedBelt;
         let dvy = settings.device.bedDepth;
         let dvx = settings.device.bedWidth;
         let bounds_sel = new THREE.Box3();
-        forSelectedWidgets(function(widget) {
+        if (!widgets) {
+            widgets = selectedMeshes.map(m => m.widget);
+        }
+        for (let widget of widgets) {
             let wp = widget.track.pos;
             let bx = widget.track.box;
             let miny = wp.y - bx.h/2 + dvy/2;
@@ -1238,7 +1242,7 @@
             wb.min.y += wp.y;
             wb.max.y += wp.y;
             bounds_sel.union(wb);
-        });
+        }
         settings.bounds_sel = bounds_sel;
     }
 
@@ -2489,7 +2493,6 @@
                 complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
-                // UI.render.classList.add('lt-enabled');
                 // KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
@@ -2570,6 +2573,7 @@
         // other housekeeping
         triggerSettingsEvent();
         platformUpdateSelected();
+        updateSelectedBounds(WIDGETS);
         updateFields();
         // because device dialog, if showing, needs to be updated
         if (modalShowing()) {
