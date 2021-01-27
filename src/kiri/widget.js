@@ -258,6 +258,10 @@
         }
     };
 
+    PRO.getVertices = function() {
+        return this.mesh.geometry.attributes.position;
+    };
+
     /**
      * @param {THREE.Geometry} geometry
      * @returns {Widget}

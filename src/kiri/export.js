@@ -491,8 +491,8 @@
                 $('admin-gridlocal').onclick = admin_gridlocal;
             } catch (e) { console.log(e) }
 
-            // preview of the generated GCODE
-            if (preview && gcode) $('code-preview-textarea').value = gcode;
+            // preview of the generated GCODE (first 64k max)
+            if (preview && gcode) $('code-preview-textarea').value = gcode.substring(0,65535);
 
             // show dialog
             API.modal.show('print');

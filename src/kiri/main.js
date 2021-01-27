@@ -855,7 +855,15 @@
             totalProgress,
             track = {},
             mode = settings.mode,
-            now = Date.now();
+            now = Date.now(),
+            totvert = 0,
+            defvert;
+
+        // determing this widgets % of processing time estimated by vertex count
+        for (let widget of WIDGETS) {
+            totvert += widget.getVertices().count;
+        }
+        defvert = totvert / WIDGETS.length;
 
         setOpacity(color.slicing_opacity);
 
@@ -872,7 +880,8 @@
                 startTime = Date.now(),
                 lastMsg,
                 camOrLaser = mode === 'CAM' || mode === 'LASER',
-                stack = widget.stack = STACKS.create(widget.id, widget.mesh);
+                stack = widget.stack = STACKS.create(widget.id, widget.mesh),
+                factor = (widget.getVertices().count / defvert);
 
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
@@ -889,6 +898,7 @@
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
+                    let alert = scale === 1 ? API.show.alert("Rendering") : null;
                     KIRI.client.unrotate(settings, () => {
                         forAllWidgets(widget => {
                             // on done
@@ -902,6 +912,7 @@
                                 widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
                                 widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
                                 widget.setColor(color.deselected);
+                                API.hide.alert(alert);
                             }
                         });
                         updateSliderMax(true);
@@ -939,7 +950,7 @@
                     startTime = mark;
                 }
                 // on update
-                track[widget.id] = update;
+                track[widget.id] = (update || 0) * factor;
                 totalProgress = 0;
                 forAllWidgets(function(w) {
                     totalProgress += (track[w.id] || 0);
@@ -965,7 +976,6 @@
 
         hideSlider(true);
 
-        let alert = API.show.alert("Preparing Preview");
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
         if (feature.preview) {
@@ -1008,11 +1018,11 @@
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }
 
-            API.hide.alert(alert);
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
             if (feature.preview && output.length) {
+                let alert = API.show.alert("Rendering")
                 startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.platform.world)
@@ -1026,6 +1036,7 @@
                     ri.dy = settings.device.bedDepth / 2;
                     stack.obj.rotate(WIDGETS[0].rotinfo);
                 }
+                API.hide.alert(alert);
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
 
@@ -1193,6 +1204,7 @@
 
     function updateSelectedBounds() {
         // update bounds on selection for drag limiting
+        let isBelt = settings.device.bedBelt;
         let dvy = settings.device.bedDepth;
         let dvx = settings.device.bedWidth;
         let bounds_sel = new THREE.Box3();
@@ -1206,7 +1218,7 @@
 
             // keep widget in bounds when rotated or scaled
             let ylo = miny < 0;
-            let yhi = maxy > dvy
+            let yhi = !isBelt && maxy > dvy
             if (ylo && !yhi) {
                 widget.move(0, -miny, 0);
             } else if (yhi && !ylo) {

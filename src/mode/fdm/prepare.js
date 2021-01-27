@@ -35,8 +35,7 @@
             firstLayerMult = process.firstLayerPrintMult,
             firstLayerBrim = process.firstLayerBrim,
             firstLayerBrimTrig = process.firstLayerBrimTrig,
-            maxLayers = 0,
-            layer = 0,
+            layerno = 0,
             zoff = 0,
             meshIndex,
             lastIndex,
@@ -231,7 +230,6 @@
         // find max layers (for updates)
         // generate list of used extruders for purge blocks
         for (let widget of widgets) {
-            maxLayers = Math.max(maxLayers, widget.slices.length);
             let extruder = (settings.widget[widget.id] || {}).extruder || 0;
             if (!extruders[extruder]) {
                 extruders[extruder] = {};
@@ -426,13 +424,13 @@
             }
 
             // retract after last layer
-            if (layer === maxLayers && layerout.length) {
+            if (layerno === cake.length - 1 && layerout.length) {
                 layerout.last().retract = true;
             }
 
             // notify progress
-            layerout.layer = layer++;
-            update((layer / maxLayers) * 0.5, "prepare");
+            layerout.layer = layerno++;
+            update((layerno / cake.length) * 0.5, "prepare");
 
             slices = [];
             layerout = [];
