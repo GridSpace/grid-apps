@@ -18,7 +18,6 @@
         "M107                ; turn off filament cooling fan",
         "M104 S0 T{tool}     ; turn off right extruder",
         "M140 S0 T{tool}     ; turn off bed",
-        "G1 Z{z_max} F1200   ; drop bed",
         "G28 X0 Y0           ; home XY axes",
         "M84                 ; disable stepper motors"
     ],
