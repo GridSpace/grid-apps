@@ -471,15 +471,18 @@ th, tr, td, label {
 .lt-menu label {
     font-size: smaller;
 }
-.lt-enabled {
+.lt-enabled, .lt-active {
     color: var(--fg-gray);
 }
-.lt-enabled:hover {
+.lt-enabled:hover, .lt-active:hover {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
 }
 .lt-enabled:hover .pop-lcol {
+    display: flex;
+}
+.lt-active .hoverpop {
     display: flex;
 }
 @media only screen and (max-height : 800px) {

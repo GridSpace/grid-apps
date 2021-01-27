@@ -1464,6 +1464,10 @@
 
             back:               $('lt-back'),
             trash:              $('lt-trash'),
+            ltsetup:            $('lt-setup'),
+            ltfile:             $('lt-file'),
+            ltview:             $('lt-view'),
+            ltact:              $('act-slice'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
@@ -2084,6 +2088,16 @@
             UI.scaleX.value = UI.scaleY.value = UI.scaleZ.value =
             UI.scaleX.was = UI.scaleY.was = UI.scaleZ.was = 1;
         };
+
+        let ltpops = [];
+        UC.hoverPop(UI.ltsetup, { group: ltpops, target: $('set-pop') });
+        UC.hoverPop(UI.ltfile,  { group: ltpops, target: $('file-pop') });
+        UC.hoverPop(UI.ltview,  { group: ltpops, target: $('pop-view') });
+        UC.hoverPop(UI.ltact,   { group: ltpops, target: $('pop-slice') });
+        UC.hoverPop(UI.render,  { group: ltpops, target: $('pop-render') });
+        UC.hoverPop(UI.rotate,  { group: ltpops, target: $('pop-rotate') });
+        UC.hoverPop(UI.scale,   { group: ltpops, target: $('pop-scale') });
+        UC.hoverPop(UI.nozzle,  { group: ltpops, target: $('pop-nozzle') });
 
         UC.onBlur([
             UI.toolName,

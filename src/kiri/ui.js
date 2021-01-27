@@ -47,6 +47,7 @@
         setExpert,
         setHoverPop,
         hidePoppers,
+        hoverPop,
         bound,
         toInt,
         toFloat,
@@ -880,6 +881,38 @@
             array.push(newRowTable(arrayOfArrays[i]));
         }
         return array;
+    }
+
+    function hoverPop(el, opt = {}) {
+        if (Array.isArray(el)) {
+            opt.group = [];
+            return el.forEach(ev => hoverPop(ev, opt));
+        }
+        let group = opt.group || [];
+        let closes = opt.closes || group;
+        let target = opt.target || el;
+        group.push(target);
+        if (closes !== group) {
+            closes.push(target);
+        }
+        el.addEventListener("mouseenter", (ev) => {
+            clearTimeout(closes.timer);
+            for (let close of closes) {
+                close.classList.remove("hoverpop");
+            }
+            target.classList.add("hoverpop");
+        });
+        el.addEventListener("mouseleave", (ev) => {
+            closes.timer = setTimeout(() => {
+                target.classList.remove("hoverpop");
+            }, 750);
+        });
+        document.addEventListener("keydown", (ev) => {
+            if (ev.keyCode === 27 || ev.code === 'Escape') {
+                target.classList.remove("hoverpop");
+                clearTimeout(closes.timer);
+            }
+        });
     }
 
 })();

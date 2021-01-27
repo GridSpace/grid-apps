@@ -1515,9 +1515,9 @@
         let menu_show = selcount ? 'flex': '';
         $('winfo').style.display = 'none';
         if (selcount) {
-            UI.scale.classList.add('lt-enabled');
-            UI.rotate.classList.add('lt-enabled');
-            UI.nozzle.classList.add('lt-enabled');
+            UI.scale.classList.add('lt-active');
+            UI.rotate.classList.add('lt-active');
+            UI.nozzle.classList.add('lt-active');
             UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
                 let sel = selection.widgets()[0];
@@ -1537,9 +1537,9 @@
                 }
             }
         } else {
-            UI.scale.classList.remove('lt-enabled');
-            UI.rotate.classList.remove('lt-enabled');
-            UI.nozzle.classList.remove('lt-enabled');
+            UI.scale.classList.remove('lt-active');
+            UI.rotate.classList.remove('lt-active');
+            UI.nozzle.classList.remove('lt-active');
             UI.trash.style.display = '';
         }
         UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
@@ -2489,7 +2489,7 @@
                 complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
-                UI.render.classList.add('lt-enabled');
+                // UI.render.classList.add('lt-enabled');
                 // KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
