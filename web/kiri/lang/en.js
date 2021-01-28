@@ -235,6 +235,8 @@ kiri.lang['en-us'] = {
     fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
     fl_brmn_s:      "brim trigger",
     fl_brmn_l:      "add brims only when segment\nfacing belt is shorter than this\nvalue in millimeters\n0 = Infinity",
+    fl_bled_s:      "part anchor",
+    fl_bled_l:      "belt part anchor\nat start of print\nin millimeters",
 
     // FDM SUPPORT
     sp_menu:        "support",

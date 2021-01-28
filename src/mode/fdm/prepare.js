@@ -457,6 +457,13 @@
                     rec.point.y += poff;
                 }
             }
+
+            // add lead in, when specified
+            if (process.firstLayerBeltLead) {
+                // add belt lead in
+                console.log({process, output});
+            }
+
             let thresh = firstLayerHeight * 1.05;
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
@@ -482,7 +489,7 @@
                     }
                     lastout = rec;
                 }
-                // skip if brig trigger not met
+                // skip if brim trigger not met
                 if (firstLayerBrimTrig > 0 && mins > firstLayerBrimTrig) {
                     continue;
                 }

@@ -312,6 +312,7 @@
                     firstLayerBedTemp: 0,
                     firstLayerBrim: 0,
                     firstLayerBrimTrig: 0,
+                    firstLayerBeltLead: 3,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,
                     outputTemp: 200,
