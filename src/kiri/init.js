@@ -860,12 +860,14 @@
     }
 
     function loadDeviceImage(dev, url) {
-        new THREE.TextureLoader().load(url || dev.imageURL, texture => {
+        let turl = url || dev.imageURL;
+        if (!turl) return;
+        new THREE.TextureLoader().load(turl, texture => {
             loadDeviceTexture(dev, texture);
         }, inc => {
             console.log({load_inc: inc});
         }, error => {
-            console.log({load_error: error});
+            console.log({load_error: error, turl});
             clearDeviceTexture();
         });
     }

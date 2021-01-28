@@ -193,6 +193,7 @@
                     // clip tops to other widgets in group
                     tops = slice.topPolys();
                     for (let peer of widget.group) {
+                        // skip self
                         if (peer === widget) {
                             continue;
                         }
@@ -202,12 +203,26 @@
                             }
                             // offset pslice tops by spro.sliceSupportOffset
                             if (!pslice.synth_off) {
-                                pslice.synth_off = POLY.offset(pslice.topPolys(), nozzleSize/2 + spro.sliceSupportOffset);
+                                pslice.synth_off = POLY.offset(pslice.topPolys(), spro.sliceSupportOffset);
                             }
                             let ptops = pslice.synth_off;
                             let ntops = [];
                             POLY.subtract(tops, ptops, ntops, null, slice.z, 0);
                             tops = ntops;
+                        }
+                        // trim to group's shadow if not in belt mode
+                        if (!isBelt) {
+                            let group = widget.group[0];
+                            if (!group.shadow) {
+                                let gs = [];
+                                for (let w of group) {
+                                    if (w.shadow) {
+                                        gs = POLY.union([w.shadow,...gs],null,0.1);
+                                    }
+                                }
+                                group.shadow = gs;
+                            }
+                            tops = POLY.setZ(POLY.trimTo(tops, group.shadow), slice.z);
                         }
                     }
                     slice.tops = [];
@@ -249,6 +264,7 @@
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
                 }
+                widget.shadow = shadow;
                 // slices[0].output()
                 //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
                 //     .addPolys(shadow);
@@ -917,8 +933,7 @@
      * calculate external overhangs requiring support
      */
     function doSupport(slice, proc, shadow) {
-        let minOffset = proc.sliceSupportOffset,
-            maxBridge = proc.sliceSupportSpan || 5,
+        let maxBridge = proc.sliceSupportSpan || 5,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,
             offset = proc.sliceSupportOffset,
@@ -948,7 +963,7 @@
             let supported = point.isInPolygonOnly(down_tops);
             if (!supported) down_traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) {
-                    if (point.distToLine(p1, p2) <= minOffset) {
+                    if (point.distToLine(p1, p2) <= offset) {
                         return supported = true;
                     }
                 });
