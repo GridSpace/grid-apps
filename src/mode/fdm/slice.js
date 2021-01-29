@@ -322,6 +322,10 @@
                 }
                 // console.log({smin: smin.round(4)});
                 let offset = spro.firstLayerBeltLead * beltfact;
+                // ensure we start against a layer with shells
+                while (start.up && start.topShells().length === 0) {
+                    start = start.up;
+                }
                 while (start && offset >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {
@@ -332,7 +336,7 @@
                         slices.splice(0,0,addto);
                     }
                     let z = addto.z;
-                    let y = z - smin - sliceHeight * beltfact;
+                    let y = z - smin - (nozzleSize / 2);
                     let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
                     addto.addTop(splat).fill_sparse = [ splat ];
                     start = addto;
