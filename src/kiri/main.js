@@ -1950,23 +1950,37 @@
     }
 
     function updateSettings(opt = {}) {
-        updateSettingsFromFields(settings.controller);
-        switch (settings.controller.units) {
+        let { controller, device, process, mode, sproc, cproc } = settings;
+        updateSettingsFromFields(controller);
+        switch (controller.units) {
             case 'mm': UC.setUnits(1); break;
             case 'in': UC.setUnits(25.4); break;
         }
         if (opt.controller) {
             return;
         }
-        updateSettingsFromFields(settings.device);
-        updateSettingsFromFields(settings.process);
-        let device = settings.device;
+        updateSettingsFromFields(device);
+        updateSettingsFromFields(process);
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);
         }
         API.conf.save();
-        $('mode-device').innerText = settings.device.deviceName;
-        $('mode-profile').innerText = settings.cproc[settings.mode];
+        let current = process;
+        let compare = sproc[mode][cproc[mode]];
+        let same = true;
+        for (let [key, val] of Object.entries(compare).filter(v => v[0] !== 'processName')) {
+            let tval = current[key];
+            // outputLoopLayers misbehaving and setting null on empty
+            if (val === '' && tval == null) {
+                continue;
+            }
+            if (tval != val) {
+                // console.log(key, 'expected', val, 'got', tval);
+                same = false;
+            }
+        }
+        $('mode-device').innerText = device.deviceName;
+        $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
     }
 
     function saveSettings() {

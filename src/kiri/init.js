@@ -640,10 +640,12 @@
             if (name) {
                 let np = pl[name] = {};
                 cp.processName = name;
+                pl[name] = Object.clone(cp);
                 for (let k in cp) {
                     if (!cp.hasOwnProperty(k)) continue;
                     np[k] = cp[k];
                 }
+                s.cproc[mode] = name;
                 s.devproc[s.device.deviceName] = name;
                 API.conf.save();
                 API.conf.update();
