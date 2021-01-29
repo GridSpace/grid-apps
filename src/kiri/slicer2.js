@@ -722,7 +722,11 @@
                     }
                 } else {
                     // no more closest polys (open set)
-                    emit(BASE.newPolygon().addPoints(array));
+                    if (opt.openok) {
+                        emit(BASE.newPolygon().addPoints(array).setOpen());
+                    } else {
+                        emit(BASE.newPolygon().addPoints(array));
+                    }
                     break loop;
                 }
             }
