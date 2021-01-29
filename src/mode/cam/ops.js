@@ -1096,7 +1096,7 @@
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
                 tslices.push(data.slice);
-                if (true) {
+                if (false) {
                     const slice = data.slice;
                     sliceAll.push(slice);
                     slice.output()

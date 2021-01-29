@@ -42,7 +42,7 @@
             if (KIRI.worker)
             KIRI.worker.cam_traces = function(data, send) {
                 const { settings } = data;
-                const widgets = Object.values(cache);
+                const widgets = Object.values(wcache);
                 const fresh = widgets.filter(widget => CAM.traces(settings, widget));
                 send.done(KIRI.codec.encode(fresh.map(widget => { return {
                     id: widget.id,

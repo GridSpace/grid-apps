@@ -105,21 +105,16 @@ KIRI.work = {
     },
 
     config: function(obj) {
-        send("config", obj, function(reply) {
-            // console.log({config:reply});
-        });
+        send("config", obj, function(reply) { });
     },
 
     clear: function(widget) {
-        send("clear", widget ? {id:widget.id} : {}, function(reply) {
-            syncd = {};
-        });
+        syncd = {};
+        send("clear", widget ? {id:widget.id} : {}, function(reply) { });
     },
 
     snap: function(data) {
-        send("snap", data, function(reply) {
-            // console.log({snap:reply})
-        });
+        send("snap", data, function(reply) { });
     },
 
     // widget sync
