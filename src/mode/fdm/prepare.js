@@ -386,6 +386,8 @@
                 }
                 layerout.z = z + slice.height / 2;
                 layerout.height = layerout.height || slice.height;
+                // mark layer as anchor if slice is belt and flag set
+                layerout.anchor = slice.belt && slice.belt.anchor;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
                     printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z);
@@ -491,6 +493,10 @@
                 }
                 // skip if brim trigger not met
                 if (firstLayerBrimTrig > 0 && mins > firstLayerBrimTrig) {
+                    continue;
+                }
+                // do not add brims to anchor layers
+                if (layer.anchor) {
                     continue;
                 }
                 // add brim, if specified

@@ -330,11 +330,13 @@
                     let addto = start.down;
                     if (!addto) {
                         addto = newSlice(start.z - sliceHeight);
+                        addto.belt = { };
                         addto.height = start.height;
                         addto.up = start;
                         start.down = addto;
                         slices.splice(0,0,addto);
                     }
+                    addto.belt.anchor = true;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
                     let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
