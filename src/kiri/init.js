@@ -2104,6 +2104,8 @@
         UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
         UC.hoverPop(UI.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
         UC.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
+        UC.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
+        UC.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
 
         UC.onBlur([
             UI.toolName,

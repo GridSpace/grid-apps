@@ -269,7 +269,7 @@ th, tr, td, label {
 #app-mode, #app-acct {
     width: 125px;
 }
-#app-mode:hover #mode-info {
+#mode-info.hoverpop {
     display: flex;
 }
 #mode-info {
@@ -295,7 +295,7 @@ th, tr, td, label {
     padding-right: 5px;
 }
 
-#app-name:hover #app-info {
+#app-info.hoverpop {
     display: flex;
 }
 #app-info {

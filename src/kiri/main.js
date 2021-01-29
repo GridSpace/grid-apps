@@ -1966,7 +1966,7 @@
         }
         API.conf.save();
         $('mode-device').innerText = settings.device.deviceName;
-        $('mode-profile').innerText = settings.process.processName;
+        $('mode-profile').innerText = settings.cproc[settings.mode];
     }
 
     function saveSettings() {
