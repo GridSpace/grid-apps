@@ -909,7 +909,9 @@
             clearTimeout(closes.timer);
             popped = false;
         };
-        el.addEventListener("mouseenter", openit);
+        if (opt.auto !== false) {
+            el.addEventListener("mouseenter", openit);
+        }
         el.addEventListener("mouseleave", (ev) => {
             closes.timer = setTimeout(() => {
                 target.classList.remove("hoverpop");

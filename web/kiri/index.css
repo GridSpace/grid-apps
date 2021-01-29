@@ -317,8 +317,8 @@ th, tr, td, label {
     align-items: center;
     justify-content: flex-end;
 }
-#app-acct:hover #acct-pop {
-    display: flex;
+#acct-pop.hoverpop {
+    display: flex !important;
 }
 #acct-pop {
     display: none;
