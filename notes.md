@@ -3,9 +3,7 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` client/worker cache invalidated by latest rotation work
-* `B` saved profile should be restored / defaulted when switching devices?
 * `B` normals possibly inverted on faces in 2D to 3D conversion
-* `B` normalize left, bottom, right pop menu time/click and value persistence
 * `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
@@ -24,20 +22,18 @@
 * `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
+* `B` first layer support speed should be same as shell speed
 
 * `F` test outlining solid projected areas
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
-* `F` add separate fill speed control
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
-* `F` first layer segment large flat areas for better fill reliability
 * `F` feather sharp tips by reducing extrusion in area of overlap
+* `F` first layer segment large flat areas for better fill reliability
 * `F` enable purge blocks when quick layers are detected
 * `F` option to support interior bridges when 0% infill
-* `F` trim support offset from layer below
 * `F` calculate filament use per extruder per print
-* `F` first layer support speed should be same as shell speed
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 
@@ -55,7 +51,7 @@
 # FDM - BELT
 
 * `B` multiple parts with one angled against origin "floats" in preview
-* `B` finish supports for belt printing. add progress.
+* `B` re-add progress calls for all work units
 
 # CAM
 
