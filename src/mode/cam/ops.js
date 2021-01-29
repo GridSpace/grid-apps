@@ -771,19 +771,22 @@
                             case "inside": offdist = -toolDiam / 2; break;
                         }
                         if (offdist) {
-                            let pnew = POLY.offset([poly], offdist)[0];
+                            let pnew = POLY.offset([poly], offdist);
                             if (pnew) {
-                                poly = pnew.setZ(poly.getZ());
+                                poly = POLY.setZ(pnew, poly.getZ());
                             } else {
                                 continue;
                             }
+                        } else {
+                            poly = [ poly ];
                         }
+                        for (let pi of poly)
                         if (down) {
-                            for (let z of BASE.util.lerp(zMax, poly.getZ(), down)) {
-                                followZ(poly.clone().setZ(z));
+                            for (let z of BASE.util.lerp(zMax, pi.getZ(), down)) {
+                                followZ(pi.clone().setZ(z));
                             }
                         } else {
-                            followZ(poly);
+                            followZ(pi);
                         }
                     }
                     break;
