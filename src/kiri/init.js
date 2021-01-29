@@ -2099,10 +2099,10 @@
         UC.hoverPop(UI.ltfile,  { group: ltpops, target: $('file-pop') });
         UC.hoverPop(UI.ltview,  { group: ltpops, target: $('pop-view') });
         UC.hoverPop(UI.ltact,   { group: ltpops, target: $('pop-slice') });
-        UC.hoverPop(UI.render,  { group: ltpops, target: $('pop-render') });
-        UC.hoverPop(UI.rotate,  { group: ltpops, target: $('pop-rotate') });
-        UC.hoverPop(UI.scale,   { group: ltpops, target: $('pop-scale') });
-        UC.hoverPop(UI.nozzle,  { group: ltpops, target: $('pop-nozzle') });
+        UC.hoverPop(UI.render,  { group: ltpops, target: $('pop-render'), sticky: true });
+        UC.hoverPop(UI.rotate,  { group: ltpops, target: $('pop-rotate'), sticky: true });
+        UC.hoverPop(UI.scale,   { group: ltpops, target: $('pop-scale'), sticky: true });
+        UC.hoverPop(UI.nozzle,  { group: ltpops, target: $('pop-nozzle'), sticky: true });
 
         UC.onBlur([
             UI.toolName,

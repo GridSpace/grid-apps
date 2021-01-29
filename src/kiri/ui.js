@@ -891,26 +891,42 @@
         let group = opt.group || [];
         let closes = opt.closes || group;
         let target = opt.target || el;
+        let popped = false;
         group.push(target);
         if (closes !== group) {
             closes.push(target);
         }
-        el.addEventListener("mouseenter", (ev) => {
+        let openit = () => {
             clearTimeout(closes.timer);
             for (let close of closes) {
                 close.classList.remove("hoverpop");
             }
             target.classList.add("hoverpop");
-        });
+            popped = true;
+        };
+        let closeit = () => {
+            target.classList.remove("hoverpop");
+            clearTimeout(closes.timer);
+            popped = false;
+        };
+        el.addEventListener("mouseenter", openit);
         el.addEventListener("mouseleave", (ev) => {
             closes.timer = setTimeout(() => {
                 target.classList.remove("hoverpop");
             }, 750);
         });
+        if (!opt.sticky) {
+            el.addEventListener("mouseup", (ev) => {
+                if (popped) {
+                    closeit();
+                } else {
+                    openit();
+                }
+            });
+        }
         document.addEventListener("keydown", (ev) => {
             if (ev.keyCode === 27 || ev.code === 'Escape') {
-                target.classList.remove("hoverpop");
-                clearTimeout(closes.timer);
+                closeit();
             }
         });
     }

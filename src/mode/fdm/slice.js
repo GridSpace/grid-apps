@@ -81,7 +81,9 @@
             fillOffset = lineWidth * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             supportDensity = spro.sliceSupportDensity,
-            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
+            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null,
+            beltfact = Math.cos(Math.PI/4),
+            invbfact = 1 / beltfact;
 
         isFlat = settings.controller.lineType === "flat";
         isThin = !isFlat && settings.controller.lineType === "line";
@@ -285,7 +287,6 @@
                 doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls && !isSynth,
-                    belt0: isBelt && first,
                     widget: widget
                 });
                 if (solid) {
@@ -294,6 +295,50 @@
                 }
                 sliceFillAngle += 90.0;
             }, "offsets");
+
+            // add lead in when specified in belt mode
+            if (!isSynth && isBelt && spro.firstLayerBeltLead) {
+                let wb = widget.bounds;
+                // find adjusted zero point from slices
+                let smin = Infinity;
+                for (let slice of slices) {
+                    let miny = Infinity;
+                    for (let poly of slice.topPolys()) {
+                        let y = poly.bounds.maxy;
+                        let z = slice.z;
+                        let by = -y + z;
+                        if (by < miny) miny = by;
+                        if (by < smin) smin = by;
+                    }
+                    slice.belt = { miny, touch: false };
+                }
+                // mark slices with tops touching belt
+                let start;
+                for (let slice of slices) {
+                    if (Math.abs(slice.belt.miny - smin) < 0.001) {
+                        slice.belt.touch = true;
+                        if (!start) start = slice;
+                    }
+                }
+                // console.log({smin: smin.round(4)});
+                let offset = spro.firstLayerBeltLead * beltfact;
+                while (start && offset >= sliceHeight) {
+                    let addto = start.down;
+                    if (!addto) {
+                        addto = newSlice(start.z - sliceHeight);
+                        addto.height = start.height;
+                        addto.up = start;
+                        start.down = addto;
+                        slices.splice(0,0,addto);
+                    }
+                    let z = addto.z;
+                    let y = z - smin - sliceHeight * beltfact;
+                    let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
+                    addto.addTop(splat).fill_sparse = [ splat ];
+                    start = addto;
+                    offset -= sliceHeight;
+                }
+            }
 
             // calculations only relevant when solid layers are used
             if (doSolidLayers) {
@@ -380,13 +425,11 @@
         const height = slice.height / 2;
 
         slice.tops.forEach(top => {
-            if (isThin) {
-                output
-                    .setLayer('slice', { line: 0x000066, check: 0x000066 })
-                    .addPolys(top.poly);
-            }
+            if (isThin) output
+                .setLayer('slice', { line: 0x000066, check: 0x000066 })
+                .addPolys(top.poly);
 
-            output
+            if (top.shells) output
                 .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
                 .addPolys(top.shells, vopt({ offset, height }));
 
@@ -572,23 +615,6 @@
             top.last = last;
 
             shellout += top.shells.length;
-
-            // add anchor extrusion if missing on the first belt layer
-            // todo: fix. disabled because throws off layer min y calculations in some cases
-            if (false && opt.belt0 && top.shells.length === 0 && slice.up && slice.up.tops.length) {
-                for (let up of slice.up.tops) {
-                    let bounds = up.poly.bounds,
-                        midy = (bounds.miny + bounds.maxy) / 2;
-                    if (top.poly.isInside(up.poly, 1)) {
-                        slice.widget.belt.ymid = midy;
-                        slice.widget.belt.zmid = slice.z;
-                        top.shells.push(BASE.newPolygon()
-                            .setOpen()
-                            .add(bounds.minx,midy,slice.z)
-                            .add(bounds.maxx,midy,slice.z));
-                    }
-                }
-            }
         });
     };
 
@@ -687,7 +713,7 @@
 
         // prepare top infill structure
         tops.forEach(function(top) {
-            top.fill_sparse = [];
+            top.fill_sparse = top.fill_sparse || [];
             polys.appendAll(top.fill_off);
             polys.appendAll(top.solids);
         });
@@ -844,8 +870,13 @@
 
         let minarea = minArea || 1,
             tops = slice.tops,
-            solids = slice.solids,
-            unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
+            solids = slice.solids;
+
+        if (!(tops && solids)) {
+            return;
+        }
+
+        let unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
             isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;

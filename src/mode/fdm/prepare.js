@@ -459,10 +459,10 @@
             }
 
             // add lead in, when specified
-            if (process.firstLayerBeltLead) {
-                // add belt lead in
-                console.log({process, output});
-            }
+            // if (process.firstLayerBeltLead) {
+            //     // add belt lead in
+            //     console.log({process, output});
+            // }
 
             let thresh = firstLayerHeight * 1.05;
             // iterate over layers, find extrusion on belt and
