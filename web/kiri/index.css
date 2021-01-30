@@ -873,8 +873,8 @@ th, tr, td, label {
     min-height: 4em !important;
 }
 #code-preview-textarea {
-    width: 100%;
-    height: 250px;
+    width: 40em;
+    height: 12em;
     font-size: 10px;
 }
 .mod-end {

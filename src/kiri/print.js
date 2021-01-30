@@ -980,7 +980,7 @@
         }
     }
 
-    function constReplace(str, consts, start) {
+    function constReplace(str, consts, start, pad) {
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
@@ -992,6 +992,9 @@
                 constOp(tok, consts, "/", function(v1,v2) { return v1/v2 }) ||
                 constOp(tok, consts, "*", function(v1,v2) { return v1*v2 }) ||
                 consts[tok] || 0;
+            if (pad) {
+                nutok = nutok.toString().padEnd(ce-cs+1, ' ');
+            }
             nustr = str.replace("{"+tok+"}",nutok);
             return constReplace(nustr, consts, ce+1+(nustr.length-str.length));
         } else {
