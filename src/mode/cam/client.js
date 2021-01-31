@@ -544,6 +544,7 @@
                     }
                     let areas = (poppedRec.areas[widget.id] || []);
                     let stack = new KIRI.Stack(widget.mesh);
+                    // console.log({match: areas, for: widget.id});
                     widget.trace_stack = stack;
                     widget.traces.forEach(poly => {
                         let match = areas.filter(arr => poly.matches(arr));

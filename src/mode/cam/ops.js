@@ -907,6 +907,7 @@
             updateToolDiams(tool.fluteDiameter());
 
             let { stock } = settings,
+                tz = widget.track.pos.z,
                 lx = bounds.min.x,
                 hx = bounds.max.x,
                 ly = bounds.min.y,
@@ -918,7 +919,10 @@
                 dx = (stock.x - (hx - lx)) / 4,
                 dy = (stock.y - (hy - ly)) / 4,
                 dz = stock.z,
-                points = [];
+                points = [],
+                wo = stock.z - bounds.max.z,
+                z1 = bounds.max.z + wo + tz,
+                z2 = tz - mz;
 
             if (!(stock.x && stock.y && stock.z)) {
                 return;
@@ -972,7 +976,7 @@
                             tv = -tv;
                         }
                     }
-                    for (let z of BASE.util.lerp(zMax, -zThru, op.down)) {
+                    for (let z of BASE.util.lerp(z1, z2, op.down)) {
                         let slice = newSlice(z);
                         sliceAll.push(slice);
                         sliceOut.push(slice);
@@ -1008,8 +1012,8 @@
                 let slice = newSlice(0,null), polys = [];
                 points.forEach(point => {
                     polys.push(newPolygon()
-                        .append(point.clone().setZ(bounds.max.z))
-                        .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
+                        .append(point.clone().setZ(z1))
+                        .append(point.clone().setZ(z2)));
                 });
                 slice.camLines = polys;
                 slice.output()
