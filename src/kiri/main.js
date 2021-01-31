@@ -869,7 +869,6 @@
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
-        KIRI.client.clear();
         KIRI.client.sync();
         KIRI.client.rotate(settings);
 

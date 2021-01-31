@@ -534,7 +534,7 @@
                 KIRI.api.widgets.opacity(0.8);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
-                        unselectTraces(widget);
+                        unselectTraces(widget, true);
                         widget.trace_stack = null;
                     }
                     if (widget.trace_stack) {
@@ -544,7 +544,6 @@
                     }
                     let areas = (poppedRec.areas[widget.id] || []);
                     let stack = new KIRI.Stack(widget.mesh);
-                    // console.log({match: areas, for: widget.id});
                     widget.trace_stack = stack;
                     widget.traces.forEach(poly => {
                         let match = areas.filter(arr => poly.matches(arr));
@@ -1045,11 +1044,11 @@
         }
     }
 
-    function unselectTraces(widget) {
+    function unselectTraces(widget, skip) {
         if (widget.trace_stack) {
             widget.trace_stack.meshes.forEach(mesh => {
                 if (mesh.selected) {
-                    func.traceToggle(mesh);
+                    func.traceToggle(mesh, skip);
                 }
             });
         }

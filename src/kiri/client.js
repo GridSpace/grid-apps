@@ -167,10 +167,14 @@ KIRI.work = {
             id: widget.id,
             settings: settings
         }, function(reply) {
+            callback(reply);
             if (reply.done || reply.error) {
                 delete slicing[widget.id];
+                // in belt mode, slicing modifies a widget and requires re-sync
+                if (settings.device.bedBelt) {
+                    widget.modified = true;
+                }
             }
-            callback(reply);
         });
     },
 
