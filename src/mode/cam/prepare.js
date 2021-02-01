@@ -69,7 +69,7 @@
             boundsz = bounds.max.z + ztOff,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
-            wmpos = widget.mesh.position,
+            wmpos = widget.track.pos,
             wmx = wmpos.x,
             wmy = wmpos.y,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
