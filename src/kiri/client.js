@@ -247,9 +247,13 @@ KIRI.work = {
         }, [ data.png ]);
     },
 
-    zip: function(files) {
+    zip: function(files, progress, output) {
         send("zip", {files}, reply => {
-            console.log({zip_said: reply});
+            if (reply.percent) {
+                progress(reply);
+            } else {
+                output(reply);
+            }
         });
     }
 };
