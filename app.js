@@ -299,6 +299,7 @@ const script = {
         "kiri",
         "ext/three",
         "ext/pngjs",
+        "ext/jszip",
         "license",
         "ext/clip2",
         "ext/earcut",

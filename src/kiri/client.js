@@ -15,7 +15,9 @@ let KIRI = self.kiri = self.kiri || {},
     syncd = {},
     running = {},
     slicing = {},
-    worker = null;
+    worker = null
+    // occ = new Worker("/kiri/ext/occ-worker.js", {type:"module"}),
+    ;
 
 /**
  * @param {Function} fn name of function in KIRI.worker
@@ -243,6 +245,12 @@ KIRI.work = {
                 output(reply.done);
             }
         }, [ data.png ]);
+    },
+
+    zip: function(files) {
+        send("zip", {files}, reply => {
+            console.log({zip_said: reply});
+        });
     }
 };
 

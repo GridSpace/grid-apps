@@ -536,6 +536,24 @@ KIRI.worker = {
             // send.done({done: {verts, faces, bigv, vi, ii}}, [ bigv.buffer ]);
             send.done({done: {bigv}}, [ bigv.buffer ]);
         });
+    },
+
+    zip: function(data, send) {
+        let { files } = data;
+        let zip = new JSZip();
+        for (let file of files) {
+            zip.file(file.name, file.data);
+        }
+        zip.generateAsync({
+            type: "uint8array",
+            compression: "DEFLATE",
+            compressionOptions: { level: 3 },
+            streamFiles: true
+        }, progress => {
+            send.data(progress);
+        }).then(output => {
+            send.done(output);
+        });
     }
 };
 
