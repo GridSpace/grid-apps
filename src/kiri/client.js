@@ -249,7 +249,7 @@ KIRI.work = {
 
     zip: function(files, progress, output) {
         send("zip", {files}, reply => {
-            if (reply.percent) {
+            if (reply.percent !== undefined) {
                 progress(reply);
             } else {
                 output(reply);
