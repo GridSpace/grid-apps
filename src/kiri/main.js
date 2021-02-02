@@ -69,7 +69,7 @@
         controls: true, // show or not side menus
         drop_group: undefined, // optional array to group multi drop
         drop_layout: true, // layout on new drop
-        preview: true, // allow bypassing preview generation
+        work_alerts: true, // allow disabling work progress alerts
         hover: false, // when true fires mouse hover events
         hoverAdds: false, // when true only searches widget additions
     };
@@ -533,7 +533,7 @@
      }
 
      function alert2(message, time) {
-         if (message === undefined) {
+         if (message === undefined || message === null) {
              return updateAlerts(true);
          }
          let rec = [message, Date.now(), time, true];
@@ -543,8 +543,10 @@
      }
 
      function alert2cancel(rec) {
-         rec[3] = false;
-         updateAlerts();
+         if (Array.isArray(rec)) {
+             rec[3] = false;
+             updateAlerts();
+         }
      }
 
      function updateAlerts(clear) {
@@ -898,7 +900,7 @@
                 }
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    let alert = scale === 1 ? API.show.alert("Rendering") : null;
+                    let alert = scale === 1 && feature.work_alerts ? API.show.alert("Rendering") : null;
                     KIRI.client.unrotate(settings, () => {
                         forAllWidgets(widget => {
                             // on done
@@ -978,9 +980,7 @@
 
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
-        if (feature.preview) {
-            setViewMode(VIEWS.PREVIEW);
-        }
+        setViewMode(VIEWS.PREVIEW);
         API.conf.save();
         API.event.emit('preview.begin', pMode);
 
@@ -989,7 +989,7 @@
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else if (feature.preview && offset === 0) {
+        } else if (offset === 0) {
             setOpacity(color.preview_opacity);
         }
 
@@ -1021,8 +1021,8 @@
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
-            if (feature.preview && output.length) {
-                let alert = API.show.alert("Rendering")
+            if (output.length) {
+                let alert = feature.work_alerts ? API.show.alert("Rendering") : null;
                 startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.platform.world)
@@ -1047,12 +1047,10 @@
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);
 
-            if (feature.preview) {
-                SPACE.update();
-                updateSliderMax(true);
-                setVisibleLayer(-1, 0);
-                updateSpeeds(maxSpeed);
-            }
+            SPACE.update();
+            updateSliderMax(true);
+            setVisibleLayer(-1, 0);
+            updateSpeeds(maxSpeed);
 
             // mark preview complete for export
             complete.preview = true;
