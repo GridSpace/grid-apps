@@ -31,7 +31,7 @@
     }
 
     function callExport(callback, mode) {
-        let alert = API.show.alert("Exporting");
+        let alert = API.feature.work_alerts ? API.show.alert("Exporting") : null;
         const gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
