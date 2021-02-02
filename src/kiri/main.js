@@ -898,9 +898,12 @@
                     }
                     API.event.emit('slice', getMode());
                 }
+                let alert = null;
                 // on the last exit, update ui and call the callback
                 if (--countdown === 0 || error || errored) {
-                    let alert = scale === 1 && feature.work_alerts ? API.show.alert("Rendering") : null;
+                    if (scale === 1 && feature.work_alerts) {
+                        alert = API.show.alert("Rendering");
+                    };
                     KIRI.client.unrotate(settings, () => {
                         forAllWidgets(widget => {
                             // on done
@@ -936,11 +939,13 @@
                 }
                 // handle slicing errors
                 if (error && !errored) {
+                    API.show.progress(0);
+                    API.hide.alert(alert);
                     errored = true;
                     setViewMode(VIEWS.ARRANGE);
                     setOpacity(color.model_opacity);
                     platform.deselect();
-                    alert2(error);
+                    alert2(error, 1);
                 }
             }, function(update, msg) {
                 if (msg && msg !== lastMsg) {
