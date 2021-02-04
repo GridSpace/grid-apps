@@ -898,9 +898,22 @@
                     }
                     API.event.emit('slice', getMode());
                 }
+                // handle slicing errors
+                if (error && !errored) {
+                    errored = true;
+                    setViewMode(VIEWS.ARRANGE);
+                    alert2(error, 5);
+                    API.show.progress(0);
+                    KIRI.client.restart();
+                    API.event.emit('slice.error', error);
+                }
+                // discard remaining errors
+                if (errored) {
+                    return;
+                }
                 let alert = null;
                 // on the last exit, update ui and call the callback
-                if (--countdown === 0 || error || errored) {
+                if (--countdown === 0) {
                     if (scale === 1 && feature.work_alerts) {
                         alert = API.show.alert("Rendering");
                     };
@@ -923,12 +936,13 @@
                         updateSliderMax(true);
                         setVisibleLayer(-1, 0);
                     });
-                    // mark slicing complete for prep/preview
-                    complete.slice = true;
                     if (scale === 1) {
                         API.show.progress(0);
                     }
+                    // cause visuals to update
                     SPACE.scene.active();
+                    // mark slicing complete for prep/preview
+                    complete.slice = true;
                     API.event.emit('slice.end', getMode());
                     // print stats
                     segtimes.total = Date.now() - now;
@@ -936,16 +950,6 @@
                     if (callback && typeof callback === 'function') {
                         callback();
                     }
-                }
-                // handle slicing errors
-                if (error && !errored) {
-                    API.show.progress(0);
-                    API.hide.alert(alert);
-                    errored = true;
-                    setViewMode(VIEWS.ARRANGE);
-                    setOpacity(color.model_opacity);
-                    platform.deselect();
-                    alert2(error, 1);
                 }
             }, function(update, msg) {
                 if (msg && msg !== lastMsg) {
@@ -1018,7 +1022,17 @@
                 startTime = mark;
             }
             API.show.progress(offset + progress * scale, message);
-        }, function (oldout, maxSpeed) {
+        }, function (reply, maxSpeed) {
+            // handle worker errors
+            if (reply && reply.error) {
+                alert2(reply.error, 5);
+                setViewMode(VIEWS.ARRANGE);
+                API.event.emit('preview.error', reply.error);
+                API.show.progress(0);
+                SPACE.update();
+                return;
+            }
+
             if (lastMsg) {
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }

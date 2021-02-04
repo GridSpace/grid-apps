@@ -62,11 +62,11 @@
 * `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` non-clear-voids duplicates thru-holes
-* `B` failure to go *up* when moving between parts?
 * `B` starting export during animation unleashes chaos
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
+* `F` import SVG into a path that can be overlaid onto a 3D mesh (laser?)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
 * `F` add climb/conventional into each operation

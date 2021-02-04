@@ -159,35 +159,30 @@ KIRI.worker = {
             last = time(),
             now;
 
-        try {
-            widget.slice(settings, function(error) {
-                if (error) {
-                    send.data({error: error});
-                } else {
-                    const slices = widget.slices || [];
-                    send.data({send_start: time()});
-                    send.data({
-                        stats: widget.stats,
-                        slices: slices.length,
-                    });
-                    slices.forEach(function(slice,index) {
-                        const state = { zeros: [] };
-                        send.data({index: index, slice: slice.encode(state)}, state.zeros);
-                    })
-                    send.data({send_end: time()});
-                }
-                send.done({done: true});
-            }, function(update, msg) {
-                now = time();
-                if (now - last < 10 && update < 0.99) return;
-                // on update
-                send.data({update: (0.05 + update * 0.95), updateStatus: msg});
-                last = now;
-            });
-        } catch (error) {
-            send.data({error: error.toString()});
-            console.log(error);
-        }
+        widget.slice(settings, function(error) {
+            if (error) {
+                send.data({error: error});
+            } else {
+                const slices = widget.slices || [];
+                send.data({send_start: time()});
+                send.data({
+                    stats: widget.stats,
+                    slices: slices.length,
+                });
+                slices.forEach(function(slice,index) {
+                    const state = { zeros: [] };
+                    send.data({index: index, slice: slice.encode(state)}, state.zeros);
+                })
+                send.data({send_end: time()});
+            }
+            send.done({done: true});
+        }, function(update, msg) {
+            now = time();
+            if (now - last < 10 && update < 0.99) return;
+            // on update
+            send.data({update: (0.05 + update * 0.95), updateStatus: msg});
+            last = now;
+        });
     },
 
     prepare: function(data, send) {
@@ -593,20 +588,25 @@ self.onmessage = function(e) {
         };
 
     if (run) {
-        let time_xfer = (time_recv - msg.time),
-            output = run(msg.data, send),
-            time_send = time(),
-            time_proc = time_send - time_recv;
+        try {
+            let time_xfer = (time_recv - msg.time),
+                output = run(msg.data, send),
+                time_send = time(),
+                time_proc = time_send - time_recv;
 
-        if (output) self.postMessage({
-            seq: msg.seq,
-            task: msg.task,
-            time_send: time_xfer,
-            time_proc: time_proc,
-            // replaced on reply side
-            time_recv: time(),
-            data: output
-        });
+            if (output) self.postMessage({
+                seq: msg.seq,
+                task: msg.task,
+                time_send: time_xfer,
+                time_proc: time_proc,
+                // replaced on reply side
+                time_recv: time(),
+                data: output
+            });
+        } catch (wrkerr) {
+            console.log({wrkerr});
+            send.done({error: wrkerr.toString()});
+        }
     } else {
         console.log({kiri_msg:e});
     }

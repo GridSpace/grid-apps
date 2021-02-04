@@ -20,7 +20,6 @@
      */
     FDM.prepare = function(widgets, settings, update) {
         settings = FDM.fixExtruders(settings);
-
         let render = settings.render !== false,
             { device, process, controller, bounds, mode } = settings,
             output = [],

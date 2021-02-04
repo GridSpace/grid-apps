@@ -35,9 +35,11 @@
         const gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
-        }, (output) => {
+        }, (output, error) => {
             API.hide.alert(alert);
-            if (callback) {
+            if (error) {
+                API.show.alert(error, 5);
+            } else if (callback) {
                 callback(gcode.join('\r\n'), output);
             } else {
                 exportGCodeDialog(gcode.join('\r\n'), output);
@@ -48,8 +50,12 @@
     function callExportLaser(options) {
         KIRI.client.export(API.conf.get(), (line) => {
             console.log({unexpected_line: line});
-        }, (output) => {
-            exportLaserDialog(output);
+        }, (output, error) => {
+            if (error) {
+                API.show.alert(error, 5);
+            } else {
+                exportLaserDialog(output);
+            }
         });
     }
 
@@ -60,9 +66,13 @@
             if (line.data) {
                 preview.push(line.data);
             }
-        }, (output) => {
+        }, (output, error) => {
             API.show.progress(0);
-            KIRI.driver.SLA.printDownload(preview, output, API);
+            if (error) {
+                API.show.alert(error, 5);
+            } else {
+                KIRI.driver.SLA.printDownload(preview, output, API);
+            }
         });
     }
 

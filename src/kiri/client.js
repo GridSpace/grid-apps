@@ -70,9 +70,9 @@ KIRI.work = {
             worker.terminate();
         }
 
-        for (let key in slicing) {
-            slicing[key]({error: "cancelled slicing"});
-        }
+        // for (let key in slicing) {
+        //     slicing[key]({error: "cancelled slicing"});
+        // }
 
         syncd = {};
         slicing = {};
@@ -188,6 +188,9 @@ KIRI.work = {
             if (reply.done) {
                 done(reply.output, reply.maxSpeed);
             }
+            if (reply.error) {
+                done(reply);
+            }
         });
     },
 
@@ -198,6 +201,9 @@ KIRI.work = {
             }
             if (reply.done) {
                 ondone(reply.output);
+            }
+            if (reply.error) {
+                ondone(null, reply.error);
             }
         });
     },
