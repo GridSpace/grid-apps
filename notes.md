@@ -12,6 +12,7 @@
 * `P` client/worker interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape primarily)
 
+* `F` G2/G3 arc output / input
 * `F` expose grouping feature
 * `F` SVG import to 3D part like images
 * `F` bundle current profile into exported device

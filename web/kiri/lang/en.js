@@ -481,7 +481,7 @@ kiri.lang['en-us'] = {
     ad_msol_l:      "minimum area (mm^2)\nrequired to keep solid\nmust be > 0.1",
     ad_mins_s:      "min speed",
     ad_mins_l:      "minimum speed\nfor short segments",
-    ad_spol_s:      "slow poly",
+    ad_spol_s:      "short path",
     ad_spol_l:      "polygons shorter than this\nwill have their print speed\nscaled down to min speed\nin millimeters",
     ad_zhop_s:      "z hop dist",
     ad_zhop_l:      "amount to raise z\non retraction moves\nin millimeters\n0 to disable",
