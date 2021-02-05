@@ -146,11 +146,61 @@
                 rec[tok.charAt(0)] = parseFloat(tok.substring(1));
             });
 
-            console.log({g2, arc: line, pos});
+            let center = { x:0, y:0 };
+
+            if (rec.I !== undefined && rec.J !== undefined) {
+                center.x = pos.X + rec.I;
+                center.y = pos.Y + rec.J;
+            } else if (rec.R !== undefined) {
+                let mid = {
+                    x: (pos.X + rec.X) / 2,
+                    y: (pos.Y + rec.Y) / 2,
+                    dx: rec.X - pos.X,
+                    dy: rec.Y - pos.Y
+                };
+                let hml = Math.sqrt(mid.dx * mid.dx + mid.dy * mid.dy) / 2;
+                let s2 = BASE.newSlope({
+                    x: pos.X,
+                    y: pos.Y
+                }, {
+                    x: rec.X,
+                    y: rec.Y
+                }).normal().toUnit();
+                let ln = Math.sqrt(rec.R*rec.R - hml*hml);
+                center.x = pos.X + ln * mid.dx;
+                center.y = pos.Y + ln * mid.dy;
+            } else {
+                console.log({malfomed_arc: line});
+            }
+
+            // line angles
+            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X);
+            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X);
+            let ad = a2 - a1;
+            let steps = 20;
+            let step = (Math.abs(ad) > 0.001? ad : Math.PI * 2) / steps;
+            let rot = step;
+
+            console.log({pos, rec, center, a1, a2, step, rot});
+
+            // rotate p around o
+            // p'x = cos(theta) * (px-ox) - sin(theta) * (py-oy) + ox
+            // p'y = sin(theta) * (px-ox) + cos(theta) * (py-oy) + oy
+
+            let pc = { X: pos.X, Y: pos.Y };
+            for (let i=0; i<steps; i++) {
+                let np = {
+                    X: Math.cos(rot) * (pc.X - center.x) - Math.sin(rot) * (pc.Y - center.y) + center.x,
+                    Y: Math.sin(rot) * (pc.X - center.x) - Math.cos(rot) * (pc.Y - center.y) + center.y
+                };
+                rot += step;
+                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
+            }
+
+            console.log({g2, arc: line, pos, center});
 
             pos.X = rec.X;
             pos.Y = rec.Y;
-            pos.Z = rec.Z;
         }
 
         function G0G1(g0, line) {
