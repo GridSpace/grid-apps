@@ -666,6 +666,16 @@
         return this;
     };
 
+    PRO.addObj = function(obj) {
+        if (Array.isArray(obj)) {
+            for (let o of obj) {
+                this.addObj(o);
+            }
+            return this;
+        }
+        return this.add(obj.x, obj.y, obj.z);
+    }
+
     /**
      * append array of points to polygon and return polygon
      *

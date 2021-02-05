@@ -139,6 +139,20 @@
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
         const beltfact = Math.cos(Math.PI/4);
 
+        function G2G3(g2, line) {
+            const rec = {};
+
+            line.forEach(function(tok) {
+                rec[tok.charAt(0)] = parseFloat(tok.substring(1));
+            });
+
+            console.log({g2, arc: line, pos});
+
+            pos.X = rec.X;
+            pos.Y = rec.Y;
+            pos.Z = rec.Z;
+        }
+
         function G0G1(g0, line) {
             const mov = {};
 
@@ -283,6 +297,14 @@
                     break;
                 case 'G1':
                     G0G1(false, line);
+                    break;
+                case 'G2':
+                    // turn arc into a series of points
+                    G2G3(true, line)
+                    break;
+                case 'G3':
+                    // turn arc into a series of points
+                    G2G3(false, line);
                     break;
                 case 'M6':
                     tool = parseInt(line[0].substring(1));

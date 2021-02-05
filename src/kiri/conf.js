@@ -343,6 +343,7 @@
                     sliceMinHeight: 0,
                     sliceAdaptive: false,
                     zHopDistance: 0.2,
+                    arcTolerance: 0,
                     antiBacklash: 1,
                     gcodePause: ""
                 }

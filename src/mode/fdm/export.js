@@ -33,7 +33,7 @@
             pause = [],
             pauseCmd = device.gcodePause,
             output = [],
-            outputLength = 0,
+            outputLength = 0, // absolute extruder position
             lastProgress = 0,
             decimals = BASE.config.gcode_decimals || 4,
             progress = 0,
@@ -50,6 +50,7 @@
             retSpeed = process.outputRetractSpeed * 60,
             retDwell = process.outputRetractDwell || 0,
             timeDwell = retDwell / 1000,
+            arcDist = isBelt ? 0 : (process.arcTolerance || 0),
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -80,7 +81,9 @@
             bcos = Math.cos(Math.PI/4),
             icos = 1 / bcos,
             loops = process.outputLoopLayers,
-            inLoop;
+            inLoop,
+            arcAt,
+            arcQ = [];
 
         if (isBelt && loops) {
             loops = loops.split(',').map(range => {
@@ -392,6 +395,7 @@
 
                 // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
+                    drainQ();
                     // console.log({engage:zhop});
                     // when enabled, resume previous Z
                     if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
@@ -404,10 +408,58 @@
                 }
 
                 if (lastp && out.emit) {
-                    emitMM = emitPerMM * out.emit * dist;
-                    moveTo({x:x, y:y, e:emitMM}, speedMMM);
-                    emitted += emitMM;
+                    if (arcDist) {
+                        let rec = {e:out.emit, x, y, z, dist, emitPerMM, speedMMM};
+                        arcQ.push(rec);
+                        let deem = false;
+                        let depm = false;
+                        let desp = false;
+                        if (arcQ.length > 1) {
+                            deem = arcQ[0].e !== rec.e;
+                            depm = arcQ[0].emitPerMM !== rec.emitPerMM;
+                            desp = arcQ[0].speedMMM !== rec.speedMMM;
+                        }
+                        if (arcQ.length > 2) {
+                            let el = arcQ.length;
+                            let e1 = arcQ[el-3];
+                            let e2 = arcQ[el-2];
+                            let e3 = arcQ[el-1];
+                            let cc = BASE.util.center2d(e1, e2, e3, 1);
+                            let dc = 0;
+                            if (arcQ.length === 3) {
+                                arcQ.center = [ cc ];
+                            } else {
+                                // check center point delta
+                                let dx = cc.x - arcQ.center[0].x;
+                                let dy = cc.y - arcQ.center[0].y;
+                                dc = Math.sqrt(dx * dx + dy * dy);
+                            }
+                            // if new point is off the arc
+                            if (deem || depm || desp || dc > arcDist) {
+                                // console.log({dc, depm, desp});
+                                if (arcQ.length === 4) {
+                                    // not enough points for an arc, drop first point and recalc center
+                                    emitQrec(arcQ.shift());
+                                    arcQ.center = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                                } else {
+                                    // enough to consider an arc, emit and start new arc
+                                    let defer = arcQ.pop();
+                                    drainQ();
+                                    // re-add point that was off the last arc
+                                    arcQ.push(defer);
+                                }
+                            } else {
+                                // new point is on the arc
+                                arcQ.center.push(cc);
+                            }
+                        }
+                    } else {
+                        emitMM = emitPerMM * out.emit * dist;
+                        moveTo({x:x, y:y, e:emitMM}, speedMMM);
+                        emitted += emitMM;
+                    }
                 } else {
+                    drainQ();
                     moveTo({x:x, y:y}, seekMMM);
                     // TODO disabling out of plane z moves until a better mechanism
                     // can be built that doesn't rely on computed zpos from layer heights...
@@ -418,6 +470,7 @@
 
                 // retract filament if point retract flag set
                 if (out.retract) {
+                    drainQ();
                     retract(zhop);
                 }
 
@@ -436,6 +489,61 @@
                 laste = out.emit;
             }
             layer++;
+        }
+        drainQ();
+
+        function emitQrec(rec) {
+            let {e, x, y, dist, emitPerMM, speedMMM} = rec;
+            emitMM = emitPerMM * e * dist;
+            moveTo({x:x, y:y, e:emitMM}, speedMMM);
+            emitted += emitMM;
+        }
+
+        function drainQ() {
+            if (!arcDist) {
+                return;
+            }
+            if (arcQ.length > 4) {
+                let area = BASE.newPolygon().addObj(arcQ).area();
+                let from = arcQ[0];
+                let to = arcQ.peek();
+                let cc = {x:0, y:0, z:0, r:0};
+                let cl = arcQ.length;
+                for (let center of arcQ.center) {
+                    cc.x += center.x;
+                    cc.y += center.y;
+                    cc.z += center.z;
+                    cc.r += center.r;
+                }
+                cc.x /= cl;
+                cc.y /= cl;
+                cc.z /= cl;
+                cc.r /= cl;
+                // first arc point
+                emitQrec(from);
+                // rest of arc to final point
+                let dist = arcQ.slice(1).map(v => v.dist).reduce((a,v) => a+v);
+                let emit = from.e;//arcQ.slice(1).map(v => v.e).reduce((a,v) => a+v);
+                emit = (from.emitPerMM * emit * dist);
+                outputLength += emit;
+                emitted += emit;
+                if (extrudeAbs) {
+                    emit = outputLength;
+                }
+                let gc = area > 0 ? 'G2' : 'G3';
+                let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
+                let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
+                append(`${pre}${add} ; merged=${cl-1} dist=${dist.toFixed(decimals)}`);
+                pos.x = to.x;
+                pos.y = to.y;
+                pos.z = to.z;
+            } else {
+                for (let rec of arcQ) {
+                    emitQrec(rec);
+                }
+            }
+            arcQ.length = 0;
+            arcQ.center = undefined;
         }
 
         if (inLoop) {
