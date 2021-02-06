@@ -157,24 +157,15 @@
                 center.y = pos.Y + rec.J;
                 //center.r = TODO
             } else if (rec.R !== undefined) {
-                let mid = {
-                    x: (pos.X + rec.X) / 2,
-                    y: (pos.Y + rec.Y) / 2,
-                    dx: rec.X - pos.X,
-                    dy: rec.Y - pos.Y
-                };
-                let hml = Math.sqrt(mid.dx * mid.dx + mid.dy * mid.dy);
-                let s2 = BASE.newSlope({
+                let pr2 = BASE.util.center2pr({
                     x: pos.X,
                     y: pos.Y
                 }, {
                     x: rec.X,
                     y: rec.Y
-                }).normal().toUnit();
-                let ln = Math.sqrt(Math.abs(rec.R*rec.R - hml*hml));
-                LOG({hml,s2,ln,mid});
-                center.x = mid.x - ln * s2.dx;
-                center.y = mid.y - ln * s2.dy;
+                }, rec.R)[g2 ? 1 : 0];
+                center.x = pr2.x;
+                center.y = pr2.y;
                 center.r = rec.R;
             } else {
                 console.log({malfomed_arc: line});
@@ -186,34 +177,24 @@
             // let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X);
             // let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X);
             let ad = BASE.util.thetaDiff(a1, a2);
-            let steps = 5;
+            let steps = 20;
             let step = (ad > 0.001 ? ad : Math.PI * 2) / steps;
             let rot = a1;
-            let d1 = a1 * 180/Math.PI;
-            let d2 = a2 * 180/Math.PI;
 
-            LOG({pos, rec, center, a1, a2, ad, d1, d2, step, rot});
+            LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
             G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
 
-            // rotate p around o
-            // p'x = cos(theta) * (px-ox) - sin(theta) * (py-oy) + ox
-            // p'y = sin(theta) * (px-ox) + cos(theta) * (py-oy) + oy
-
             let pc = { X: pos.X, Y: pos.Y };
-            // let zc = { x: pc.X - center.x, y: pc.Y - center.y };
             for (let i=0; i<=steps; i++) {
                 let np = {
                     X: center.x + Math.sin(rot) * center.r,
                     Y: center.y + Math.cos(rot) * center.r
-                    // X: Math.cos(rot) * (pc.X - center.x) - Math.sin(rot) * (pc.Y - center.y) + center.x,
-                    // Y: Math.sin(rot) * (pc.X - center.x) - Math.cos(rot) * (pc.Y - center.y) + center.y
                 };
                 rot += step;
                 G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
             }
 
             G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
-            LOG({g2, arc: line, pos, center});
 
             pos.X = rec.X;
             pos.Y = rec.Y;

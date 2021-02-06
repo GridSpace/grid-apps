@@ -376,6 +376,27 @@
         return center;
     }
 
+    /**
+     * return two possible circle centers given two points and a radius
+     * https://stackoverflow.com/questions/36211171/finding-center-of-a-circle-given-two-points-and-radius
+     */
+    function center2pr(p1, p2, r) {
+        let x1 = p1.x,
+            x2 = p2.x,
+            y1 = p1.y,
+            y2 = p2.y,
+            q = Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2)),
+            y3 = (y1+y2)/2,
+            x3 = (x1+x2)/2,
+            basex = Math.sqrt(Math.pow(r,2)-Math.pow((q/2),2))*(y1-y2)/q, //calculate once
+            basey = Math.sqrt(Math.pow(r,2)-Math.pow((q/2),2))*(x2-x1)/q, //calculate once
+            centerx1 = x3 + basex, //center x of circle 1
+            centery1 = y3 + basey, //center y of circle 1
+            centerx2 = x3 - basex, //center x of circle 2
+            centery2 = y3 - basey; //center y of circle 2
+        return [{x:centerx1, y:centery1}, {x:centerx2, y:centery2}];
+    }
+
     function thetaDiff(n1, n2, sign) {
         let diff = n2 - n1;
         while (diff < -Math.PI) diff += Math.PI * 2;
@@ -468,6 +489,7 @@
         area2,
         center2d,
         center3d,
+        center2pr,
         thetaDiff,
         distSq : dist2,
         distSqv2 : dist2v2,

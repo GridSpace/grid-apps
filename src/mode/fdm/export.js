@@ -508,7 +508,7 @@
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 let cc = {x:0, y:0, z:0, r:0};
-                let cl = arcQ.length;
+                let cl = arcQ.center.length;
                 for (let center of arcQ.center) {
                     cc.x += center.x;
                     cc.y += center.y;
@@ -521,6 +521,7 @@
                 cc.r /= cl;
                 // first arc point
                 emitQrec(from);
+                console.log({first: from, last: arcQ.peek(), center: cc});
                 // rest of arc to final point
                 let dist = arcQ.slice(1).map(v => v.dist).reduce((a,v) => a+v);
                 let emit = from.e;//arcQ.slice(1).map(v => v.e).reduce((a,v) => a+v);
@@ -533,7 +534,7 @@
                 let gc = area > 0 ? 'G2' : 'G3';
                 let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
                 let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
-                append(`${pre}${add} ; merged=${cl-1} dist=${dist.toFixed(decimals)}`);
+                append(`${pre}${add} ; merged=${cl-1} len=${dist.toFixed(decimals)} cp=${cc.x.round(2)},${cc.y.round(2)}`);
                 pos.x = to.x;
                 pos.y = to.y;
                 pos.z = to.z;
