@@ -150,11 +150,12 @@
                 rec[tok.charAt(0)] = parseFloat(tok.substring(1));
             });
 
-            let center = { x:0, y:0 };
+            let center = { x:0, y:0, r:0 };
 
             if (rec.I !== undefined && rec.J !== undefined) {
                 center.x = pos.X + rec.I;
                 center.y = pos.Y + rec.J;
+                //center.r = TODO
             } else if (rec.R !== undefined) {
                 let mid = {
                     x: (pos.X + rec.X) / 2,
@@ -174,6 +175,7 @@
                 LOG({hml,s2,ln,mid});
                 center.x = mid.x - ln * s2.dx;
                 center.y = mid.y - ln * s2.dy;
+                center.r = rec.R;
             } else {
                 console.log({malfomed_arc: line});
             }
@@ -192,22 +194,25 @@
 
             LOG({pos, rec, center, a1, a2, ad, d1, d2, step, rot});
             G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
-            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
 
             // rotate p around o
             // p'x = cos(theta) * (px-ox) - sin(theta) * (py-oy) + ox
             // p'y = sin(theta) * (px-ox) + cos(theta) * (py-oy) + oy
 
             let pc = { X: pos.X, Y: pos.Y };
+            // let zc = { x: pc.X - center.x, y: pc.Y - center.y };
             for (let i=0; i<=steps; i++) {
                 let np = {
-                    X: Math.cos(rot) * (pc.X - center.x) - Math.sin(rot) * (pc.Y - center.y) + center.x,
-                    Y: Math.sin(rot) * (pc.X - center.x) - Math.cos(rot) * (pc.Y - center.y) + center.y
+                    X: center.x + Math.sin(rot) * center.r,
+                    Y: center.y + Math.cos(rot) * center.r
+                    // X: Math.cos(rot) * (pc.X - center.x) - Math.sin(rot) * (pc.Y - center.y) + center.x,
+                    // Y: Math.sin(rot) * (pc.X - center.x) - Math.cos(rot) * (pc.Y - center.y) + center.y
                 };
                 rot += step;
-                // G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
+                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
             }
 
+            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
             LOG({g2, arc: line, pos, center});
 
             pos.X = rec.X;
