@@ -357,21 +357,30 @@
      * from https://stackoverflow.com/questions/4103405/what-is-the-algorithm-for-finding-the-center-of-a-circle-from-three-points
      */
     function center2d(A,B,C,rad) {
-        let yDelta_a = B.y - A.y,
-            xDelta_a = B.x - A.x,
-            yDelta_b = C.y - B.y,
-            xDelta_b = C.x - B.x,
-            aSlope = yDelta_a/xDelta_a,
-            bSlope = yDelta_b/xDelta_b,
-            center = {x:0, y:0, z:0};
-        center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
-        center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
+        // let yDelta_a = B.y - A.y,
+        //     xDelta_a = B.x - A.x,
+        //     yDelta_b = C.y - B.y,
+        //     xDelta_b = C.x - B.x,
+        //     aSlope = yDelta_a/xDelta_a,
+        //     bSlope = yDelta_b/xDelta_b,
+        //     center = {x:0, y:0, z:0};
+        // center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
+        // center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
+        let center = center3d(A,B,C);
         if (rad) {
             let dx = center.x - A.x;
             let dy = center.y - A.y;
             center.r = Math.sqrt(dx*dx + dy*dy)
+            // if (isNaN(center.r)) console.log('NaN',{dx,dy,A,B,C,center,xDelta_a,xDelta_b,yDelta_a,yDelta_b,aSlope,bSlope});
         }
         return center;
+    }
+
+    function thetaDiff(n1, n2, sign) {
+        let diff = n2 - n1;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        return sign ? diff : Math.abs(diff);
     }
 
     /** ******************************************************************
@@ -459,6 +468,7 @@
         area2,
         center2d,
         center3d,
+        thetaDiff,
         distSq : dist2,
         distSqv2 : dist2v2,
         inRange,

@@ -139,6 +139,10 @@
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
         const beltfact = Math.cos(Math.PI/4);
 
+        function LOG() {
+            console.log(...[...arguments].map(o => Object.clone(o)));
+        }
+
         function G2G3(g2, line) {
             const rec = {};
 
@@ -158,7 +162,7 @@
                     dx: rec.X - pos.X,
                     dy: rec.Y - pos.Y
                 };
-                let hml = Math.sqrt(mid.dx * mid.dx + mid.dy * mid.dy) / 2;
+                let hml = Math.sqrt(mid.dx * mid.dx + mid.dy * mid.dy);
                 let s2 = BASE.newSlope({
                     x: pos.X,
                     y: pos.Y
@@ -166,38 +170,45 @@
                     x: rec.X,
                     y: rec.Y
                 }).normal().toUnit();
-                let ln = Math.sqrt(rec.R*rec.R - hml*hml);
-                center.x = pos.X + ln * mid.dx;
-                center.y = pos.Y + ln * mid.dy;
+                let ln = Math.sqrt(Math.abs(rec.R*rec.R - hml*hml));
+                LOG({hml,s2,ln,mid});
+                center.x = mid.x - ln * s2.dx;
+                center.y = mid.y - ln * s2.dy;
             } else {
                 console.log({malfomed_arc: line});
             }
 
             // line angles
-            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X);
-            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X);
-            let ad = a2 - a1;
-            let steps = 20;
-            let step = (Math.abs(ad) > 0.001? ad : Math.PI * 2) / steps;
-            let rot = step;
+            let a1 = Math.atan2(pos.Y - center.y, pos.X - center.x);
+            let a2 = Math.atan2(rec.Y - center.y, rec.X - center.x);
+            // let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X);
+            // let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X);
+            let ad = BASE.util.thetaDiff(a1, a2);
+            let steps = 5;
+            let step = (ad > 0.001 ? ad : Math.PI * 2) / steps;
+            let rot = a1;
+            let d1 = a1 * 180/Math.PI;
+            let d2 = a2 * 180/Math.PI;
 
-            console.log({pos, rec, center, a1, a2, step, rot});
+            LOG({pos, rec, center, a1, a2, ad, d1, d2, step, rot});
+            G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
+            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
 
             // rotate p around o
             // p'x = cos(theta) * (px-ox) - sin(theta) * (py-oy) + ox
             // p'y = sin(theta) * (px-ox) + cos(theta) * (py-oy) + oy
 
             let pc = { X: pos.X, Y: pos.Y };
-            for (let i=0; i<steps; i++) {
+            for (let i=0; i<=steps; i++) {
                 let np = {
                     X: Math.cos(rot) * (pc.X - center.x) - Math.sin(rot) * (pc.Y - center.y) + center.x,
                     Y: Math.sin(rot) * (pc.X - center.x) - Math.cos(rot) * (pc.Y - center.y) + center.y
                 };
                 rot += step;
-                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
+                // G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
             }
 
-            console.log({g2, arc: line, pos, center});
+            LOG({g2, arc: line, pos, center});
 
             pos.X = rec.X;
             pos.Y = rec.Y;
