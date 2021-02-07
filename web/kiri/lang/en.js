@@ -124,6 +124,8 @@ kiri.lang['en-us'] = {
     op_xprt_l:      "show more settings options",
     op_decl_s:      "decals",
     op_decl_l:      "show device decals and logos",
+    op_dang_s:      "experimental",
+    op_dang_l:      "show experimental parameters",
     op_hopo_s:      "hover pop",
     op_hopo_l:      "enable menu hover\nto activate",
     op_dark_s:      "dark mode",

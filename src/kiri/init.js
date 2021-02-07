@@ -139,6 +139,7 @@
         let control = settings().controller;
         let isDark = control.dark;
         control.decals = UI.decals.checked;
+        control.danger = UI.danger.checked;
         control.showOrigin = UI.showOrigin.checked;
         control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
@@ -152,7 +153,7 @@
         control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
-        platform.layout();
+        // platform.layout();
         API.conf.save();
         API.platform.update_size();
         API.catalog.setOptions({
@@ -1372,6 +1373,10 @@
         return !isBelt();
     }
 
+    function isDanger() {
+        return UI.danger.checked;
+    }
+
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
@@ -1597,6 +1602,7 @@
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
+            danger:           UC.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
 
             lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
@@ -1783,7 +1789,7 @@
             outputCoastDist:     UC.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
-            arcTolerance:        UC.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:UC.bound(0,1.0), convert:UC.toFloat, modes:FDM, show:isNotBelt}),
+            arcTolerance:        UC.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:UC.bound(0,1.0), convert:UC.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true}),

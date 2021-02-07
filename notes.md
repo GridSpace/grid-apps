@@ -53,6 +53,8 @@
 
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
+* `B` disable support layer (top/bottom) offsets in belt mode
+* `F` arrange should just align down Z. no side to side.
 
 # CAM
 

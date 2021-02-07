@@ -172,17 +172,17 @@
             }
 
             // line angles
-            let a1 = Math.atan2(pos.Y - center.y, pos.X - center.x);
-            let a2 = Math.atan2(rec.Y - center.y, rec.X - center.x);
-            // let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X);
-            // let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X);
-            let ad = BASE.util.thetaDiff(a1, a2);
+            // let a1 = Math.PI - Math.atan2(pos.Y - center.y, pos.X - center.x);
+            // let a2 = Math.PI - Math.atan2(rec.Y - center.y, rec.X - center.x);
+            let a1 = Math.PI - Math.atan2(center.y - pos.Y, center.x - pos.X);
+            let a2 = Math.PI - Math.atan2(center.y - rec.Y, center.x - rec.X);
+            let ad = BASE.util.thetaDiff(a1, a2, true);
             let steps = 20;
-            let step = (ad > 0.001 ? ad : Math.PI * 2) / steps;
-            let rot = a1;
+            let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
+            let rot = a2;
 
             LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
-            G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
+            // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
 
             let pc = { X: pos.X, Y: pos.Y };
             for (let i=0; i<=steps; i++) {
