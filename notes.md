@@ -2,7 +2,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` client/worker cache invalidated by latest rotation work. revisit sync.
 * `B` normals possibly inverted on faces in 2D to 3D conversion
 * `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
 

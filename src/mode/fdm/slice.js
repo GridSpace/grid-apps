@@ -191,7 +191,7 @@
                             slice.addTop(u);
                         }
                     }
-                    let gap = sliceHeight * spro.sliceSupportGap
+                    let gap = sliceHeight * (isBelt ? 0 : spro.sliceSupportGap);
                     // clip tops to other widgets in group
                     tops = slice.topPolys();
                     for (let peer of widget.group) {

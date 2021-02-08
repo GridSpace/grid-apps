@@ -121,6 +121,9 @@ KIRI.work = {
 
     // widget sync
     sync: function() {
+        // send list of currently valid widgets
+        send("sync", { valid: KIRI.api.widgets.all().map(w => w.id) }, () =>  {});
+        // sync any widget that has changed
         let widgets = KIRI.api.widgets.all();
         widgets.forEach(widget => {
             if (widget.modified || !syncd[widget.id]) {

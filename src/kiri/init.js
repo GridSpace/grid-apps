@@ -1685,7 +1685,7 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportSize:    UC.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM}),
+            sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, show:isNotBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),

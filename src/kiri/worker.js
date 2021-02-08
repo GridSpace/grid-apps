@@ -51,6 +51,20 @@ KIRI.worker = {
 
     // widget sync
     sync: function(data, send) {
+        if (data.valid) {
+            // remove widgets not present in valid list
+            for (let key in wcache) {
+                if (data.valid.indexOf(key) < 0) {
+                    delete wcache[key];
+                    for (let [id,group] of Object.entries(wgroup)) {
+                        wgroup[id] = group = group.filter(v => v.id !== key);
+                        group.id = id;
+                    }
+                }
+            }
+            return;
+        }
+
         let group = wgroup[data.group];
         if (!group) {
             group = [];

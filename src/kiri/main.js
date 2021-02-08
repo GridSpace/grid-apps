@@ -871,7 +871,7 @@
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
-        if (mode === 'FDM') {
+        if (settings.device.bedBelt) {
             KIRI.client.clear();
         }
         KIRI.client.sync();
