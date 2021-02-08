@@ -52,6 +52,20 @@
         return stacks[name];
     }
 
+    function getLabels() {
+        return Object.keys(DYN);
+    }
+
+    function setVisible(label, bool) {
+        let ctrl = DYN[label];
+        if (ctrl) {
+            ctrl.toggle.checked = bool;
+            ctrl.group.forEach(mat => {
+                mat.visible = bool;
+            });
+        }
+    }
+
     function create(name, view) {
         if (stacks[name]) {
             return stacks[name];
@@ -70,6 +84,11 @@
                                 ctrl.group.forEach(mat => {
                                     mat.visible = ctrl.toggle.checked;
                                 });
+                                if (ctrl.toggle.checked) {
+                                    KIRI.api.event.emit("stack.show", label);
+                                } else {
+                                    KIRI.api.event.emit("stack.hide", label)
+                                }
                             })
                         };
                         let color = lmap[label].color.check;
@@ -128,6 +147,8 @@
         getStack,
         getRange,
         setRange,
+        getLabels,
+        setVisible,
         setFreeMem
     };
 

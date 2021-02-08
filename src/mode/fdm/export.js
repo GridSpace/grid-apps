@@ -51,7 +51,7 @@
             retSpeed = process.outputRetractSpeed * 60,
             retDwell = process.outputRetractDwell || 0,
             timeDwell = retDwell / 1000,
-            arcDist = isBelt || isDanger ? 0 : (process.arcTolerance || 0),
+            arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,

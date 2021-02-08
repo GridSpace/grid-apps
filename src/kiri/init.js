@@ -1991,6 +1991,19 @@
             UI.sliderHold.style.marginRight = `${hival}px`;
         });
 
+        // store layer preferences
+        API.event.on('stack.show', label => {
+            let mode = API.mode.get();
+            let view = API.view.get();
+            API.conf.get().labels[`${mode}-${view}-${label}`] = true;
+        });
+
+        API.event.on('stack.hide', label => {
+            let mode = API.mode.get();
+            let view = API.view.get();
+            API.conf.get().labels[`${mode}-${view}-${label}`] = false;
+        });
+
         // bind language choices
         $('lset-en').onclick = function() {
             SDB.setItem('kiri-lang', 'en-us');

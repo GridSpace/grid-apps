@@ -935,6 +935,12 @@
                         });
                         updateSliderMax(true);
                         setVisibleLayer(-1, 0);
+                        if (scale === 1) {
+                            for (let label of STACKS.getLabels()) {
+                                let check = `${mode}-${viewMode}-${label}`;
+                                STACKS.setVisible(label, settings.labels[check] !== false);
+                            }
+                        }
                     });
                     if (scale === 1) {
                         API.show.progress(0);
@@ -1070,6 +1076,12 @@
             updateSliderMax(true);
             setVisibleLayer(-1, 0);
             updateSpeeds(maxSpeed);
+
+            // maatch label checkboxes to preference
+            for (let label of STACKS.getLabels()) {
+                let check = `${settings.mode}-${viewMode}-${label}`;
+                STACKS.setVisible(label, settings.labels[check] !== false);
+            }
 
             // mark preview complete for export
             complete.preview = true;

@@ -633,6 +633,7 @@
                 view: null,
                 dark: false,
                 decals: true,
+                danger: false,
                 zoomSpeed: 1.0,
                 lineType: "path",
                 autoSave: true,
@@ -651,6 +652,8 @@
                 detail: "good",
                 animesh: "200"
             },
+            // label state preferences
+            labels: {},
             // for passing temporary slice hints (topo currently)
             synth: {},
             // widget extra info for slicing (extruder mapping)
