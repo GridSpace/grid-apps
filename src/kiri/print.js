@@ -133,7 +133,8 @@
             maxf = 0,
             seq = [],
             autolayer = true,
-            newlayer = false;
+            newlayer = false,
+            arcdivs = Math.PI / 12;
 
         const output = scope.output = [ seq ];
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
@@ -156,14 +157,24 @@
                 center.x = pos.X + rec.I;
                 center.y = pos.Y + rec.J;
                 //center.r = TODO
+                console.log("G[2,3] IJ not supported");
             } else if (rec.R !== undefined) {
-                let pr2 = BASE.util.center2pr({
-                    x: pos.X,
-                    y: pos.Y
-                }, {
-                    x: rec.X,
-                    y: rec.Y
-                }, rec.R)[g2 ? 1 : 0];
+                let pd = { x: rec.X - pos.X, y: rec.Y - pos.Y };
+                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2;
+                let pr2;
+                if (Math.abs(dst - rec.R) < 0.001) {
+                    // center point radius
+                    pr2 = { x: (rec.X + pos.X) / 2, y: (rec.Y + pos.Y) / 2};
+                } else {
+                    // triangulate
+                    pr2 = BASE.util.center2pr({
+                        x: pos.X,
+                        y: pos.Y
+                    }, {
+                        x: rec.X,
+                        y: rec.Y
+                    }, rec.R)[g2 ? 1 : 0];
+                }
                 center.x = pr2.x;
                 center.y = pr2.y;
                 center.r = rec.R;
@@ -172,23 +183,21 @@
             }
 
             // line angles
-            // let a1 = Math.PI - Math.atan2(pos.Y - center.y, pos.X - center.x);
-            // let a2 = Math.PI - Math.atan2(rec.Y - center.y, rec.X - center.x);
-            let a1 = Math.PI - Math.atan2(center.y - pos.Y, center.x - pos.X);
-            let a2 = Math.PI - Math.atan2(center.y - rec.Y, center.x - rec.X);
+            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X) + Math.PI;
+            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X) + Math.PI;
             let ad = BASE.util.thetaDiff(a1, a2, true);
-            let steps = 20;
+            let steps = Math.floor(Math.abs(ad) / arcdivs);
             let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
-            let rot = a2;
+            let rot = a1 + step;
 
             LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
             // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
 
             let pc = { X: pos.X, Y: pos.Y };
-            for (let i=0; i<=steps; i++) {
+            for (let i=0; i<=steps-2; i++) {
                 let np = {
-                    X: center.x + Math.sin(rot) * center.r,
-                    Y: center.y + Math.cos(rot) * center.r
+                    X: center.x + Math.cos(rot) * center.r,
+                    Y: center.y + Math.sin(rot) * center.r
                 };
                 rot += step;
                 G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);

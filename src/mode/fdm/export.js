@@ -505,12 +505,13 @@
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 let cc = {x:0, y:0, z:0, r:0};
-                let cl = arcQ.center.length;
-                for (let center of arcQ.center) {
+                let cl = 0;
+                for (let center of arcQ.center.filter(rec => !isNaN(rec.r))) {
                     cc.x += center.x;
                     cc.y += center.y;
                     cc.z += center.z;
                     cc.r += center.r;
+                    cl++;
                 }
                 cc.x /= cl;
                 cc.y /= cl;
@@ -518,7 +519,8 @@
                 cc.r /= cl;
                 // first arc point
                 emitQrec(from);
-                console.log({first: from, last: arcQ.peek(), center: cc});
+                // console.log(arcQ.slice(), arcQ.center);
+                // console.log({first: from, last: arcQ.peek(), center: cc});
                 // rest of arc to final point
                 let dist = arcQ.slice(1).map(v => v.dist).reduce((a,v) => a+v);
                 let emit = from.e;//arcQ.slice(1).map(v => v.e).reduce((a,v) => a+v);

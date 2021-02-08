@@ -936,10 +936,7 @@
                         updateSliderMax(true);
                         setVisibleLayer(-1, 0);
                         if (scale === 1) {
-                            for (let label of STACKS.getLabels()) {
-                                let check = `${mode}-${viewMode}-${label}`;
-                                STACKS.setVisible(label, settings.labels[check] !== false);
-                            }
+                            updateStackLabelState();
                         }
                     });
                     if (scale === 1) {
@@ -1076,12 +1073,7 @@
             updateSliderMax(true);
             setVisibleLayer(-1, 0);
             updateSpeeds(maxSpeed);
-
-            // maatch label checkboxes to preference
-            for (let label of STACKS.getLabels()) {
-                let check = `${settings.mode}-${viewMode}-${label}`;
-                STACKS.setVisible(label, settings.labels[check] !== false);
-            }
+            updateStackLabelState();
 
             // mark preview complete for export
             complete.preview = true;
@@ -1104,6 +1096,14 @@
         KIRI.export(...argsave);
     }
 
+    function updateStackLabelState() {
+        // match label checkboxes to preference
+        for (let label of STACKS.getLabels()) {
+            let check = `${settings.mode}-${viewMode}-${label}`;
+            STACKS.setVisible(label, settings.labels[check] !== false);
+        }
+    }
+
     function loadCode(code, type) {
         setViewMode(VIEWS.PREVIEW);
         setOpacity(0);
@@ -1119,6 +1119,7 @@
             updateSliderMax(true);
             updateSpeeds(maxSpeed);
             showSlices();
+            updateStackLabelState();
             SPACE.update();
             API.event.emit("code.loaded", {code, type});
         });
