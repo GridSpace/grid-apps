@@ -85,6 +85,7 @@
         "firstLayerPrintMult": 1.15,
         "firstLayerYOffset": 0,
         "firstLayerBrim": 0,
+        "firstLayerBeltLead": 3,
         "outputTemp": 210,
         "outputFanMax": 255,
         "outputBedTemp": 60,

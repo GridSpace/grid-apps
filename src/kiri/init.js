@@ -2388,7 +2388,7 @@
         API.event.emit('init-done', STATS);
 
         // show gdpr if it's never been seen and we're not iframed
-        if (!SDB.gdpr && WIN.self === WIN.top) {
+        if (!SDB.gdpr && WIN.self === WIN.top && !SETUP.debug) {
             $('gdpr').style.display = 'flex';
         }
 
