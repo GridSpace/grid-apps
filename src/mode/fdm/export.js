@@ -208,9 +208,6 @@
         let angle = -Math.PI / 4;
 
         function moveTo(newpos, rate, comment) {
-            if (comment) {
-                append(";; " + comment);
-            }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
             let emit = { x: false, y: false, z: false };
             if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
@@ -249,6 +246,9 @@
             if (rate && rate != pos.f) {
                 o.append(" F").append(Math.round(rate));
                 pos.f = rate
+            }
+            if (comment) {
+                o.append(` ; ${comment}`);
             }
             let line = o.join('');
             if (last == line) {
@@ -319,10 +319,6 @@
                 appendAllSub(gcodeLayer);
             } else {
                 append(`;; --- layer ${layer} (${subst.height} @ ${subst.z.round(3)}) ---`);
-            }
-
-            if (layer > 0 && process.outputLayerRetract) {
-                retract();
             }
 
             // enable fan at fan layer

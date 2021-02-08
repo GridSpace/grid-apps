@@ -35,14 +35,9 @@
             firstLayerMult = process.firstLayerPrintMult,
             firstLayerBrim = process.firstLayerBrim,
             firstLayerBrimTrig = process.firstLayerBrimTrig,
+            layerRetract = process.outputLayerRetract,
             layerno = 0,
             zoff = 0,
-            meshIndex,
-            lastIndex,
-            closest,
-            mindist,
-            minidx,
-            find,
             layerout = [],
             slices = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
@@ -272,7 +267,9 @@
             let rec = track[nozzle];
             if (rec) {
                 track[nozzle] = null;
-                if (layer.last()) layer.last().retract = true;
+                if (layer.last()) {
+                    layer.last().retract = true;
+                }
                 start = print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
                     tool: using || nozzle,
                     open: true,
@@ -344,6 +341,8 @@
             return a.z - b.z;
         });
 
+        let lastWidget;
+
         // walk cake layers bottom up
         for (let layer of cake) {
             // track purge blocks generated for each layer
@@ -380,10 +379,11 @@
                 });
                 let { z, slice, offset } = order[0];
                 slice.prep = true;
-                // retract between widgets
-                if (layerout.length && minidx !== lastIndex) {
+                // retract between widgets or layers (when set)
+                if (layerout.length && slice.widget !== lastWidget) {
                     layerout.last().retract = true;
                 }
+                lastWidget = slice.widget;
                 layerout.z = z + slice.height / 2;
                 layerout.height = layerout.height || slice.height;
                 // mark layer as anchor if slice is belt and flag set
@@ -409,7 +409,9 @@
                 layerout.appendAll(tmpout);
                 lastOut = slice;
                 lastExt = lastOut.ext
-                lastIndex = minidx;
+                if (layerRetract) {
+                    layerout.last().retract = true;
+                }
             }
 
             // if a declared extruder isn't used in a layer, use selected
@@ -701,9 +703,7 @@
                 .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
                 .addPolys(moves, { thin: true, z: opts.z });
             // force level when present
-            if (level.z) {
-                opts.z = level.z - height;
-            }
+            let pz = level.z ? level.z - height : opts.z;
             Object.values(prints).forEach(array => {
                 array.forEach(poly => {
                     if (flat && poly.appearsClosed()) {
@@ -716,10 +716,10 @@
                     .addPolys([ poly ],
                         thin ? { thin, z: opts.z, color: poly.color } :
                         flat ? {
-                            flat, z: opts.z, color: poly.color,
+                            flat, z: pz, color: poly.color,
                             outline: true, offset: array.width, open: poly.open  } :
                         {
-                            offset: array.width, height, z: opts.z,
+                            offset: array.width, height, z: pz,
                             color: { face: poly.color, line: poly.color }
                         })
                 });
