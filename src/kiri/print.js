@@ -1009,7 +1009,6 @@
                 if (si > 0) {
                     str = str.replace(';', ';'.padStart(short,' '));
                 }
-                console.log({return: str, short});
             }
             return str;
         }
