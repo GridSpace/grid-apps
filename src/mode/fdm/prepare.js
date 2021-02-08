@@ -408,7 +408,7 @@
                 layerout.appendAll(tmpout);
                 lastOut = slice;
                 lastExt = lastOut.ext
-                if (layerRetract) {
+                if (layerRetract && layerout.length) {
                     layerout.last().retract = true;
                 }
             }
