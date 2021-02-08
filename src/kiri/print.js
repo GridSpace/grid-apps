@@ -190,7 +190,7 @@
             let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
             let rot = a1 + step;
 
-            LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
+            // LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
             // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
 
             let pc = { X: pos.X, Y: pos.Y };
