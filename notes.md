@@ -2,7 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` client/worker cache invalidated by latest rotation work
+* `B` client/worker cache invalidated by latest rotation work. revisit sync.
 * `B` normals possibly inverted on faces in 2D to 3D conversion
 * `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
 
@@ -19,13 +19,12 @@
 
 # FDM
 
-* `B` fix adaptive slicing with multi-extruder
+* `B` infill densities are inaccurate
 * `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
-* `B` first layer support speed should be same as shell speed
 
-* `F` test outlining solid projected areas
+* `F` test outlining solid projected areas (internally)
 * `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` polishing and other non-planar work

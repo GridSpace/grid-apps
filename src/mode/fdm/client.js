@@ -23,13 +23,18 @@
 
         function filterSynth() {
             // remove synth widgets
+            let clear = false;
             api.widgets.filter((widget) => {
                 if (widget.track.synth) {
                     api.const.SPACE.platform.remove(widget.mesh);
                     kiri.Widget.Groups.remove(widget);
+                    clear = true;
                 }
                 return !widget.track.synth
             });
+            if (clear) {
+                kiri.client.clear();
+            }
         }
 
         api.event.on("mode.set", mode => {

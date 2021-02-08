@@ -44,19 +44,9 @@ KIRI.worker = {
     clear: function(data, send) {
         current.snap = null;
         current.print = null;
-        if (!data.id) {
-            dispatch.group = wgroup = {};
-            dispatch.cache = wcache = {};
-            send.done({ clear: true });
-            return;
-        }
-        let had = wcache[data.id] !== undefined;
-        delete wcache[data.id];
-        send.done({
-            id: data.id,
-            had: had,
-            has: wcache[data.id] !== undefined
-        });
+        dispatch.group = wgroup = {};
+        dispatch.cache = wcache = {};
+        send.done({ clear: true });
     },
 
     // widget sync

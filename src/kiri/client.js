@@ -110,9 +110,9 @@ KIRI.work = {
         send("config", obj, function(reply) { });
     },
 
-    clear: function(widget) {
+    clear: function() {
         syncd = {};
-        send("clear", widget ? {id:widget.id} : {}, function(reply) { });
+        send("clear", {}, function(reply) { });
     },
 
     snap: function(data) {

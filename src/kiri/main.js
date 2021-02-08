@@ -871,9 +871,6 @@
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
-        if (mode === 'FDM') {
-            KIRI.client.clear();
-        }
         KIRI.client.sync();
         KIRI.client.rotate(settings);
 
