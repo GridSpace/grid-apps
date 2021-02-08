@@ -980,7 +980,7 @@
         }
     }
 
-    function constReplace(str, consts, start, pad) {
+    function constReplace(str, consts, start, pad, short) {
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
@@ -993,11 +993,24 @@
                 constOp(tok, consts, "*", function(v1,v2) { return v1*v2 }) ||
                 consts[tok] || 0;
             if (pad) {
-                nutok = nutok.toString().padEnd(ce-cs+1, ' ');
+                nutok = nutok.toString();
+                let oldln = ce-cs+1;
+                let tokln = nutok.length;
+                if (tokln < oldln) {
+                    short = (short || 1) + (oldln - tokln);
+                }
             }
             nustr = str.replace("{"+tok+"}",nutok);
-            return constReplace(nustr, consts, ce+1+(nustr.length-str.length));
+            return constReplace(nustr, consts, ce+1+(nustr.length-str.length), pad, short);
         } else {
+            // insert compensating spaces for accumulated replace string shortages
+            if (short) {
+                let si = str.indexOf(';');
+                if (si > 0) {
+                    str = str.replace(';', ';'.padStart(short,' '));
+                }
+                console.log({return: str, short});
+            }
             return str;
         }
     }
