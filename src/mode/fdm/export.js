@@ -28,7 +28,8 @@
             extruder = extruders[tool],
             offset_x = extruder.extOffsetX,
             offset_y = extruder.extOffsetY,
-            extrudeAbs = device.extrudeAbs,
+            extrudeAbs = device.extrudeAbs || false,
+            extrudeSet = false,
             time = 0,
             layer = 0,
             pause = [],
@@ -135,7 +136,7 @@
         }
 
         function appendAllSub(arr, pad) {
-            if (!arr) return;
+            if (!arr || arr.length === 0) return;
             if (!Array.isArray(arr)) arr = [ arr ];
             arr.forEach(function(line) { appendSub(line, pad) });
         }
@@ -156,10 +157,16 @@
             let line = device.gcodePre[i];
             if (line.indexOf('T0') >= 0) t0 = true; else
             if (line.indexOf('T1') >= 0) t1 = true; else
-            if (line.indexOf('M82') >= 0) extrudeAbs = true; else
-            if (line.indexOf('M83') >= 0) extrudeAbs = false; else
-            if (line.indexOf('G90') >= 0) extrudeAbs = true; else
-            if (line.indexOf('G91') >= 0) extrudeAbs = false; else
+            if (line.indexOf('M82') >= 0) {
+                extrudeAbs = true;
+                extrudeSet = true;
+            } else
+            if (line.indexOf('M83') >= 0) {
+                extrudeAbs = false;
+                extrudeSet = true;
+            } else
+            if (line.indexOf('G90') >= 0 && !extrudeSet) extrudeAbs = true; else
+            if (line.indexOf('G91') >= 0 && !extrudeSet) extrudeAbs = false; else
             if (line.indexOf('G92') === 0) {
                 line.split(";")[0].split(' ').forEach(function (tok) {
                     let val = parseFloat(tok.substring(1) || 0) || 0;
@@ -355,8 +362,9 @@
                 out = path[pidx];
                 speedMMM = (out.speed || process.outputFeedrate) * 60;
 
-                // look for extruder change and recalc emit factor
+                // look for extruder change, run scripts, recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {
+                    appendAllSub(extruder.extDeselect);
                     tool = out.tool;
                     subst.nozzle = subst.tool = tool;
                     extruder = extruders[tool];

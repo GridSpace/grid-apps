@@ -739,6 +739,12 @@
 
             // add extruder selection buttons
             if (dev.extruders) {
+                for (let ext of dev.extruders) {
+                    // add missing deselect field from legacy configs
+                    if (!ext.extDeselect) {
+                        ext.extDeselect = [];
+                    }
+                }
                 let ext = API.lists.extruders = [];
                 dev.internal = 0;
                 let selext = $('pop-nozzle');
@@ -768,7 +774,6 @@
                 UI.bedDepth,
                 UI.bedWidth,
                 UI.maxHeight,
-                UI.extrudeAbs,
                 UI.deviceOrigin,
                 UI.deviceRound,
                 UI.deviceBelt,
@@ -792,12 +797,12 @@
                 UI.extDel,
                 UI.extOffsetX,
                 UI.extOffsetY,
-                UI.extSelect
+                UI.extSelect,
+                UI.extDeselect
             ].forEach(function(e) {
                 e.disabled = !local;
             });
 
-            UI.extrudeAbs.style.display = mode === 'CAM' ? 'none' : 'flex';
             UI.deviceSave.disabled = !local;
             UI.deviceDelete.disabled = !local;
             UI.deviceExport.disabled = !local;
@@ -1570,7 +1575,7 @@
             extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM}),
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM}),
             extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
-            extrudeAbs:       UC.newBoolean(LANG.dv_xtab_s, onBooleanClick, {title:LANG.dv_xtab_l, modes:FDM}),
+            extDeselect:      UC.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
             extActions:       UC.newRow([
                 UI.extPrev = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
                 UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),

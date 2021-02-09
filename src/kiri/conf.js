@@ -77,6 +77,7 @@
                 extFilament: device.filamentSize,
                 extNozzle: device.nozzleSize,
                 extSelect: ["T0"],
+                extDeselect: [],
                 extOffsetX: 0,
                 extOffsetY: 0
             }];
@@ -143,6 +144,7 @@
                 if (rec.offset_x) e.extOffsetX = rec.offset_x;
                 if (rec.offset_y) e.extOffsetY = rec.offset_y;
                 if (rec.select) e.extSelect = rec.select;
+                if (rec.deselect) e.extDeselect = rec.deselect;
                 device.extruders.push(e);
             });
         } else {
@@ -273,6 +275,7 @@
                         extFilament: 1.75,
                         extNozzle: 0.4,
                         extSelect: ["T0"],
+                        extDeselect: [],
                         extOffsetX: 0,
                         extOffsetY: 0
                     }]

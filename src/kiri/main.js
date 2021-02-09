@@ -1974,6 +1974,7 @@
             UI.extAdd.onclick = function() {
                 let copy = clone(device.extruders[device.internal]);
                 copy.extSelect = [`T${device.extruders.length}`];
+                copy.extDeselect = [];
                 device.extruders.push(copy);
                 device.internal = device.extruders.length - 1;
                 updateExtruderFields(device);

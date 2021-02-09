@@ -11,10 +11,12 @@
 * `P` client/worker interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape primarily)
 
-* `F` G2/G3 arc output / input
+* `F` add % field type with conversion (like units)
+* `F` complete G2/G3 arc output / input (85% now)
 * `F` expose grouping feature
 * `F` SVG import to 3D part like images
 * `F` bundle current profile into exported device
+* `F` integrate svg nest arrange algorithm
 
 # FDM
 
@@ -67,6 +69,7 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
+* `F` add layout spacing preference
 * `F` import SVG into a path that can be overlaid onto a 3D mesh (laser?)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
@@ -111,6 +114,7 @@
 * http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
 * http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
 * http://photon.chrisgraf.de/
+* https://github.com/Jack000/SVGnest
 
 # More CNC
 
