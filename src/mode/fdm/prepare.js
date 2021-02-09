@@ -403,9 +403,13 @@
                         first: slice.index === 0,
                         support: slice.widget.support,
                         onBelt: slice.onbelt,
-                        pretract: () => {
+                        pretract: (wipeDist) => {
                             if (lastLayer && lastLayer.length) {
-                                lastLayer.last().retract = true;
+                                let lastOut = lastLayer.last();
+                                lastOut.retract = true;
+                                if (wipeDist && lastLayer.lastPoly && lastOut.point) {
+                                    print.addOutput(lastLayer, lastOut.point.followTo(lastLayer.lastPoly.center(true), wipeDist));
+                                }
                             }
                         }
                     }

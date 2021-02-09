@@ -207,7 +207,6 @@
                 // console.log({double_retract: zhop});
                 return;
             }
-            // console.log({retract:zhop});
             retracted = retDist;
             moveTo({e:-retracted}, retSpeed, `e-retract ${retDist}`);
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "z-hop start");

@@ -480,6 +480,8 @@ kiri.lang['en-us'] = {
     ad_rrat_s:      "retract rate",
     ad_rrat_l:      "speed of filament\nretraction in mm/s",
     ad_rdwl_s:      "engage dwell",
+    ad_wpln_s:      "retract wipe",
+    ad_wpln_l:      "non-printing move\nafter retraction\nin millimeters",
     ad_rdwl_l:      "time between re-engaging\nfilament and movement\nin milliseconds",
     ad_scst_s:      "shell coast",
     ad_scst_l:      "non-printing end\nof perimeter shells\nin millimeters",

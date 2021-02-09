@@ -449,7 +449,6 @@
             first = true,
             close = !options.open,
             last = startPoint,
-            wipeDist = options.wipe || 0,
             coastDist = options.coast || 0,
             tool = options.tool;
 
@@ -525,10 +524,12 @@
             origin = startPoint.add(offset),
             zhop = process.zHopDistance || 0,
             antiBacklash = process.antiBacklash,
+            wipeDist = process.outputRetractWipe || 0,
             doSupport = opt.support,
             isBelt = device.bedBelt,
             startClone = startPoint.clone(),
-            z = slice.z;
+            z = slice.z,
+            lastPoly;
 
         // apply first layer extrusion multipliers
         if (firstLayer) {
@@ -538,12 +539,15 @@
         }
 
         function retract() {
-            if (preout.length) {
-                preout.last().retract = true;
-            } else if (output.length) {
-                output.last().retract = true;
+            let array = preout.length ? preout : output;
+            if (array.length) {
+                let last = array.last();
+                last.retract = true;
+                if (wipeDist && lastPoly && last.point) {
+                    addOutput(array, last.point.followTo(lastPoly.center(true), wipeDist));
+                }
             } else if (opt.pretract) {
-                opt.pretract();
+                opt.pretract(wipeDist);
             } else {
                 console.log('unable to retract. no preout or output');
             }
@@ -583,6 +587,7 @@
                         }
                     }
                 });
+                lastPoly = output.lastPoly = poly;
             }
         }
 
