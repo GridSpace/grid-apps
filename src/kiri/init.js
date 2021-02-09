@@ -1615,12 +1615,13 @@
             showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
             lineType:         UC.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          UC.newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
-            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action:unitsSave, modes:CAM, trace:true}, "units"),
+            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
 
             layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            autoSave:         UC.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-            autoSave:         UC.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
+            spaceLayout:      UC.newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:UC.toFloat, size:3, units:true}),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),

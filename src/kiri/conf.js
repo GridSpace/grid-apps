@@ -646,6 +646,7 @@
                 showSpeeds: true,
                 freeLayout: true,
                 autoLayout: true,
+                spaceLayout: 1,
                 units: "mm",
                 exportOcto: false,
                 exportGhost: false,

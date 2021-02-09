@@ -1755,7 +1755,7 @@
         forAllWidgets(function(w) { platform.select(w, true) })
     }
 
-    function platformLayout(event, space) {
+    function platformLayout(event, space = settings.controller.spaceLayout) {
         let auto = UI.autoLayout.checked,
             proc = settings.process,
             dev = settings.device,
