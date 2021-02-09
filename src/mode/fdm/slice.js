@@ -313,8 +313,16 @@
                     slice.belt = { miny, touch: false };
                 }
                 // mark slices with tops touching belt
+                // also find max width of first 5 layers
                 let start;
+                let minx = Infinity, maxx = -Infinity;
                 for (let slice of slices) {
+                    if (slice.index < 5) {
+                        for (let poly of slice.topPolys()) {
+                            minx = Math.min(minx, poly.bounds.minx);
+                            maxx = Math.max(maxx, poly.bounds.maxx);
+                        }
+                    }
                     if (Math.abs(slice.belt.miny - smin) < 0.001) {
                         slice.belt.touch = true;
                         if (!start) start = slice;
@@ -339,7 +347,8 @@
                     addto.belt.anchor = true;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
-                    let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
+                    // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
+                    let splat = BASE.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                     addto.addTop(splat).fill_sparse = [ splat ];
                     start = addto;
                     offset -= sliceHeight;
