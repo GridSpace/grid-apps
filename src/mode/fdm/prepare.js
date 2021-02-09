@@ -219,6 +219,7 @@
             }
         }
 
+        let lastLayer;
         let extruders = [];
         let extcount = 0;
 
@@ -392,21 +393,24 @@
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
                     printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z);
                 }
-                let tmpout = [];
                 let wtb = slice.widget.track.box;
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
                     isBelt ? newPoint(-wtb.w, wtb.d * 2, 0) : printPoint.sub(offset),
                     offset,
-                    tmpout, //layerout,
+                    layerout,
                     {
                         first: slice.index === 0,
                         support: slice.widget.support,
-                        onBelt: slice.onbelt
+                        onBelt: slice.onbelt,
+                        pretract: () => {
+                            if (lastLayer && lastLayer.length) {
+                                lastLayer.last().retract = true;
+                            }
+                        }
                     }
                 );
-                layerout.appendAll(tmpout);
                 lastOut = slice;
                 lastExt = lastOut.ext
                 if (layerRetract && layerout.length) {
@@ -436,6 +440,7 @@
             layerout.layer = layerno++;
             update((layerno / cake.length) * 0.5, "prepare");
 
+            lastLayer = layerout;
             slices = [];
             layerout = [];
             lastOut = undefined;

@@ -460,7 +460,15 @@
         }
 
         function retract() {
-            if (preout.length) preout.last().retract = true;
+            if (preout.length) {
+                preout.last().retract = true;
+            } else if (output.length) {
+                output.last().retract = true;
+            } else if (opt.pretract) {
+                opt.pretract();
+            } else {
+                console.log('unable to retract. no preout or output');
+            }
         }
 
         function intersectsTop(p1, p2) {
