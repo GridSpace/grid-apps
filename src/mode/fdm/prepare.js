@@ -218,6 +218,7 @@
             }
         }
 
+        let lastPoly;
         let lastLayer;
         let extruders = [];
         let extcount = 0;
@@ -407,8 +408,8 @@
                             if (lastLayer && lastLayer.length) {
                                 let lastOut = lastLayer.last();
                                 lastOut.retract = true;
-                                if (wipeDist && lastLayer.lastPoly && lastOut.point) {
-                                    print.addOutput(lastLayer, lastOut.point.followTo(lastLayer.lastPoly.center(true), wipeDist));
+                                if (wipeDist && lastPoly && lastOut.point) {
+                                    print.addOutput(lastLayer, lastOut.point.followTo(lastPoly.center(true).add(offset), wipeDist));
                                 }
                             }
                         }
@@ -416,6 +417,8 @@
                 );
                 lastOut = slice;
                 lastExt = lastOut.ext
+                lastPoly = slice.lastPoly;
+                lastLayer = layerout;
                 if (layerRetract && layerout.length) {
                     layerout.last().retract = true;
                 }
@@ -443,7 +446,6 @@
             layerout.layer = layerno++;
             update((layerno / cake.length) * 0.5, "prepare");
 
-            lastLayer = layerout;
             slices = [];
             layerout = [];
             lastOut = undefined;

@@ -587,7 +587,7 @@
                         }
                     }
                 });
-                lastPoly = output.lastPoly = poly;
+                lastPoly = slice.lastPoly = poly;
             }
         }
 
