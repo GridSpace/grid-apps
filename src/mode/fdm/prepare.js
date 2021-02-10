@@ -409,7 +409,10 @@
                                 let lastOut = lastLayer.last();
                                 lastOut.retract = true;
                                 if (wipeDist && lastPoly && lastOut.point) {
-                                    print.addOutput(lastLayer, lastOut.point.followTo(lastPoly.center(true).add(offset), wipeDist));
+                                    let endpoint = lastOut.point.followTo(lastPoly.center(true).add(offset), wipeDist);
+                                    if (endpoint.inPolygon(lastPoly)) {
+                                        print.addOutput(lastLayer, endpoint);
+                                    }
                                 }
                             }
                         }

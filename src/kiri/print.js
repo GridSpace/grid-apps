@@ -544,7 +544,10 @@
                 let last = array.last();
                 last.retract = true;
                 if (wipeDist && lastPoly && last.point) {
-                    addOutput(array, last.point.followTo(lastPoly.center(true), wipeDist));
+                    let endpoint = last.point.followTo(lastPoly.center(true), wipeDist);
+                    if (endpoint.inPolygon(lastPoly)) {
+                        addOutput(array, endpoint);
+                    }
                 }
             } else if (opt.pretract) {
                 opt.pretract(wipeDist);

@@ -608,7 +608,8 @@ self.onmessage = function(e) {
                 data: output
             });
         } catch (wrkerr) {
-            console.log({wrkerr});
+            // console.log(wrkerr);
+            console.trace(wrkerr.stack);
             send.done({error: wrkerr.toString()});
         }
     } else {

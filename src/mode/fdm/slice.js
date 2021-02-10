@@ -943,6 +943,10 @@
 
         // create empty filled line array for each top
         tops.forEach(function(top) {
+            // synth belt anchor tops don't want fill
+            if (!top.fill_lines) {
+                return;
+            }
             const tofill = [];
             const angfill = [];
             const newfill = [];
@@ -968,7 +972,6 @@
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }
-
             top.fill_lines.appendAll(newfill);
         });
 
