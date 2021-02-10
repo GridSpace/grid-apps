@@ -934,6 +934,10 @@
 
         // create empty filled line array for each top
         tops.forEach(function(top) {
+            // synth belt anchor tops don't want fill
+            if (!top.fill_lines) {
+                return;
+            }
             const tofill = [];
             const angfill = [];
             const newfill = [];
