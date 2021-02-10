@@ -30,6 +30,7 @@
         prefix = "tab",
         state = {},
         units = 1,
+        lastChange = null,
         lastBtn = null,
         lastTxt = null,
         lastPop = null,
@@ -40,6 +41,7 @@
     KIRI.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
+        lastChange: function() { return lastChange },
         checkpoint,
         restore,
         refresh,
@@ -684,6 +686,7 @@
                 }
             });
             ip.addEventListener('blur', function(event) {
+                lastChange = ip;
                 action(event);
                 if (opt.trigger) {
                     refresh();
@@ -762,6 +765,7 @@
         }
         ip.setVisible = row.setVisible;
         ip.onchange = function(ev) {
+            lastChange = ip;
             action();
         };
         ip.onclick = (ev) => {

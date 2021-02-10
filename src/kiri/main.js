@@ -682,44 +682,67 @@
     }
 
     // set process override values for a range
-    function updateRange(lo, hi, values, noadd) {
-        let exact;
-        let empty = [];
-        // remove matching values from overlapping ranges
-        for (let range of getOverlappingRanges(lo, hi)) {
-            if (range.lo === lo && range.hi === hi) {
-                exact = range;
-            }
-            for (let key of Object.keys(values)) {
-                delete range.fields[key];
-            }
-            if (Object.keys(range.fields).length === 0) {
-                empty.push(range);
-            }
-        }
+    function updateRange(lo, hi, values, add) {
         let ranges = settings.process.ranges;
-        // clear out empty ranges
-        if (empty.length) {
-            for (let range of empty) {
-                let pos = ranges.indexOf(range);
-                if (pos >= 0) {
-                    ranges.splice(pos,1);
+        let slices = {};
+        let min = lo;
+        let max = hi;
+
+        // just remove values from matching ranges
+        if (!add) {
+            for (let range of getOverlappingRanges(lo, hi)) {
+                for (let key of Object.keys(values)) {
+                    delete range.fields[key];
+                }
+                if (Object.keys(range.fields).length === 0) {
+                    let pos = ranges.indexOf(range);
+                    if (pos >= 0) {
+                        ranges.splice(pos,1);
+                    }
                 }
             }
-        }
-        // noadd flag present when range is 0-max
-        if (noadd) {
             API.event.emit("range.updates", ranges);
             return;
         }
-        // add values to matched range or new range
-        if (!exact) {
-            exact = { lo, hi, fields: {} };
-            ranges.push(exact);
+
+        // flatten ranges
+        ranges.push({lo, hi, fields: values});
+        for (let range of ranges) {
+            min = Math.min(range.lo, min);
+            max = Math.max(range.hi, max);
+            for (let i=range.lo; i<=range.hi; i++) {
+                let slice = slices[i];
+                if (!slice) {
+                    slice = slices[i] = {};
+                }
+                for (let [key,val] of Object.entries(range.fields)) {
+                    slice[key] = val;
+                }
+            }
         }
-        for (let key of Object.keys(values)) {
-            exact.fields[key] = values[key];
+
+        // merge contiguous matching ranges
+        ranges.length = 0;
+        let range;
+        for (let i=min; i<=max; i++) {
+            let slice = slices[i];
+            if (slice && !range) {
+                range = {lo: i, hi: i, fields: slice};
+            } else if (slice && range && isEquals(range.fields, slice)) {
+                range.hi = i;
+            } else if (range) {
+                ranges.push(range);
+                if (slice) {
+                    range = {lo: i, hi: i, fields: slice};
+                } else {
+                    range = undefined;
+                }
+            }
         }
+
+        ranges.push(range);
+        updateFieldsFromSettings(settings.process);
+        API.show.alert("update ranges", 2);
         API.event.emit("range.updates", ranges);
     }
 
@@ -727,6 +750,7 @@
 
     // updates editable fields that are range dependent
     function updateFieldsFromRange() {
+        return;
         if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.process.ranges) {
             let okeys = Object.keys(overrides);
             if (okeys.length) {
@@ -1997,6 +2021,14 @@
                 }
                 return true;
             }
+        } else if (typeof(o1) === 'object' && typeof(o2) === 'object') {
+            let keys = Object.keys(Object.assign({}, o1, o2));
+            for (let key of keys) {
+                if (o1[key] !== o2[key]) {
+                    return false;
+                }
+            }
+            return true;
         }
         return false;
     }
@@ -2008,6 +2040,8 @@
         if (!setrec) {
             return console.trace("missing scope");
         }
+
+        let lastChange = UC.lastChange();
 
         // for each key in setrec object
         for (let key in setrec) {
@@ -2040,6 +2074,9 @@
                 nval = uie.value.trim().split('\n').filter(v => v !== '');
             } else {
                 continue;
+            }
+            if (lastChange === uie) {
+                if (changes) changes[key] = nval;
             }
             if (!isEquals(setrec[key], nval)) {
                 setrec[key] = nval;
@@ -2114,7 +2151,7 @@
             }
             updateSettingsFromFields(values, undefined, changes);
             if (range) {
-                updateRange(range.lo, range.hi, changes, !add);
+                updateRange(range.lo, range.hi, changes, add);
             }
         } else {
             updateSettingsFromFields(process);
