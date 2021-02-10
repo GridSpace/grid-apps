@@ -118,8 +118,11 @@ KIRI.work = {
     },
 
     // widget sync
-    sync: function() {
-        let widgets = KIRI.api.widgets.all();
+    sync: function(widgets) {
+        if (!widgets) {
+            widgets = KIRI.api.widgets.all();
+        }
+        // sync any widget that has changed
         widgets.forEach(widget => {
             if (widget.modified || !syncd[widget.id]) {
                 syncd[widget.id] = true;

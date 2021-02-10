@@ -97,6 +97,8 @@ class Engine {
 
     slice() {
         return new Promise((accept, reject) => {
+            KIRI.client.clear();
+            KIRI.client.sync([ this.widget ]);
             KIRI.client.slice(this.settings, this.widget, msg => {
                 this.listener({slice:msg});
                 if (msg.error) {
