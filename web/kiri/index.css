@@ -1511,3 +1511,35 @@ th, tr, td, label {
 #lab-axis:hover, #lab-scale:hover {
     background-color: rgba(0,0,0,0.2);
 }
+
+.range-info {
+    position: relative;
+}
+.range-info:hover .range-detail {
+    display: flex;
+}
+.range-detail {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    bottom: 50%;
+    right: 100%;
+    padding: 5px;
+    margin: 0 10px 0 10px;
+    font-size: smaller;
+    font-family: monospace;
+    transform: translateY(50%);
+    background-color: rgba(255,255,255,0.8);
+    border: 1px solid #aaa;
+    border-radius: 5px;
+}
+.range-detail label.pad {
+    padding-right: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.range-detail label.val {
+    font-weight: bold;
+}
+.range-detail span {
+    flex-grow: 1;
+}

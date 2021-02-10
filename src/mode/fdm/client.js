@@ -45,14 +45,32 @@
         }
 
         function updateRanges(ranges = []) {
-            console.log({ranges});
             UI.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
             let html = [];
-            for (let range of ranges) {
-                html.push(`<div>${range.lo}-${range.hi}<button>x<button></div>`);
+            let bind = [];
+            let now = Date.now();
+            let sorted = ranges.sort((a,b) => b.lo - a.lo);
+            for (let range of sorted) {
+                let id = (now++).toString(36);
+                let rows = Object.entries(range.fields).map(a => `<div><label class="pad">${rangeVars[a[0]]}</label><span></span><label class="val">${a[1]}</label></div>`).join('');
+                let hover = `<div id="hov_${id}" class="range-detail">${rows}</div>`;
+                let info = `<button id="sel_${id}" class="j-center grow">${range.lo} - ${range.hi}</button><button id="del_${id}"><i class="far fa-trash-alt"></i></button>`;
+                html.appendAll([
+                    `<div id="rng_${id}" class="range-info">${hover}${info}</div>`
+                ]);
+                bind.push({id, range});
             }
-            // console.log(UI.rangeGroup.innerHTML);
-            // UI.rangeGroup.innerHTML = html.join('');
+            UI.rangeGroup.firstElementChild.innerHTML = html.join('');
+            for (let rec of bind) {
+                $(`sel_${rec.id}`).onclick = () => {
+                  api.show.layer(rec.range.hi, rec.range.lo);
+                };
+                $(`del_${rec.id}`).onclick = () => {
+                    let io = ranges.indexOf(rec.range);
+                    ranges.splice(io,1);
+                    updateRanges(ranges);
+                };
+              }
         }
 
         api.event.on("mode.set", mode => {
