@@ -669,11 +669,76 @@
         return Math.max(min,Math.min(max,v));
     }
 
+    function getOverlappingRanges(lo, hi) {
+        let ranges = [];
+        for (let range of settings.process.ranges) {
+            let in_lo = range.lo >= lo && range.lo <= hi;
+            let in_hi = range.hi >= lo && range.hi <= hi;
+            if (in_lo || in_hi) {
+                ranges.push(range);
+            }
+        }
+        return ranges;
+    }
+
+    function updateRange(lo, hi, values) {
+        let exact;
+        // remove matching values from overlapping ranges
+        for (let range of getOverlappingRanges(lo, hi)) {
+            if (range.lo === lo && range.hi === hi) {
+                exact = range;
+            }
+            for (let key of Object.keys(values)) {
+                delete range.fields[key];
+            }
+        }
+        // add values to matched range or new range
+        if (!exact) {
+            exact = { lo, hi, fields: {} };
+            settings.process.ranges.push(exact);
+        }
+        for (let key of Object.keys(values)) {
+            exact.fields[key] = values[key];
+        }
+    }
+
+    let overrides = {};
+
+    // updates that are region (slice range) dependent
+    function updateFieldsFromRange() {
+        if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.process.ranges) {
+            return;
+        }
+        let match = 0;
+        let values = {};
+        let restores = Object.clone(overrides);
+        let { layer_lo, layer_hi } = API.var;
+        for (let range of getOverlappingRanges(API.var.layer_lo, API.var.layer_hi)) {
+            for (let key of Object.keys(range.fields)) {
+                values[key] = range.fields[key];
+                overrides[key] = settings.process[key];
+                delete restores[key];
+                match++;
+            }
+        }
+        if (match) {
+            updateFieldsFromSettings(values);
+        }
+        let rkeys = Object.keys(restores);
+        if (rkeys.length) {
+            updateFieldsFromSettings(restores);
+            for (let key of rkeys) {
+                delete overrides[key];
+            }
+        }
+    }
+
     function updateSlider() {
         API.event.emit("slider.set", {
             start: (API.var.layer_lo / API.var.layer_max),
             end: (API.var.layer_hi / API.var.layer_max)
         });
+        updateFieldsFromRange();
     }
 
     function setVisibleLayer(h, l) {
@@ -1894,18 +1959,31 @@
         }
     }
 
+    function isEquals(o1, o2) {
+        if (o1 == o2) return true;
+        if (Array.isArray(o1) && Array.isArray(o2)) {
+            if (o1.length === o2.length) {
+                for (let i=0; i<o1.length; i++) {
+                    if (o1[i] !== o2[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * @returns {Object}
      */
-    function updateSettingsFromFields(setrec, uirec = UI) {
+    function updateSettingsFromFields(setrec, uirec = UI, changes) {
         if (!setrec) {
             return console.trace("missing scope");
         }
 
-        let key, changed = false;
-
         // for each key in setrec object
-        for (key in setrec) {
+        for (let key in setrec) {
             if (!setrec.hasOwnProperty(key)) {
                 continue;
             }
@@ -1936,8 +2014,11 @@
             } else {
                 continue;
             }
-            if (setrec[key] != nval) {
+            if (!isEquals(setrec[key], nval)) {
                 setrec[key] = nval;
+                if (changes) {
+                    changes[key] = nval;
+                }
             }
         }
 
@@ -1993,16 +2074,30 @@
             return;
         }
         updateSettingsFromFields(device);
-        updateSettingsFromFields(process);
+        if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
+            let changes = {};
+            let values = process;
+            let { layer_lo, layer_hi, layer_max } = API.var;
+            let range;
+            if (layer_lo > 0 || layer_hi < layer_max) {
+                values = Object.clone(process);
+                range = { lo: layer_lo, hi: layer_hi };
+            }
+            updateSettingsFromFields(values, undefined, changes);
+            if (range) {
+                updateRange(range.lo, range.hi, changes);
+            }
+        } else {
+            updateSettingsFromFields(process);
+        }
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);
         }
         API.conf.save();
-        let current = process;
         let compare = sproc[mode][cproc[mode]];
         let same = true;
         for (let [key, val] of Object.entries(compare).filter(v => v[0] !== 'processName')) {
-            let tval = current[key];
+            let tval = process[key];
             // outputLoopLayers misbehaving and setting null on empty
             if (val === '' && tval == null) {
                 continue;

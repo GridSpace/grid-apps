@@ -1851,6 +1851,9 @@
             return settings().device.spindleMax > 0;
         }
 
+        // FDM region override setup
+        UI.sliceFillSparse.region = true;
+
         // slider setup
         const slbar = 30;
         const slbar2 = slbar * 2;
