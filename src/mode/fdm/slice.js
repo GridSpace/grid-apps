@@ -42,6 +42,23 @@
         return opt;
     }
 
+    function getRangeParameters(settings, index) {
+        let ranges = settings.process.ranges;
+        if (!(ranges && ranges.length)) {
+            return settings.process;
+        }
+        let params = Object.clone(settings.process);
+        for (let range of ranges) {
+            if (index >= range.lo && index <= range.hi) {
+                for (let [key,value] of Object.entries(range.fields)) {
+                    params[key] = value;
+                    params._range = true;
+                }
+            }
+        }
+        return params;
+    }
+
     /**
      * DRIVER SLICE CONTRACT
      *
@@ -274,6 +291,7 @@
 
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, slice => {
+                let params = getRangeParameters(settings, slice.index);
                 let first = slice.index === 0;
                 let solid = (
                     slice.index < spro.sliceBottomLayers ||
@@ -283,7 +301,7 @@
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let offset = shellOffset * spaceMult;
                 let fillOff = fillOffset * spaceMult;
-                let count = isSynth ? 1 : spro.sliceShells;
+                let count = isSynth ? 1 : params.sliceShells;
                 doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls && !isSynth,
@@ -376,16 +394,18 @@
             // sparse layers only present when non-vase mose and sparse % > 0
             if (doSparseFill && !isSynth) {
                 forSlices(0.5, 0.7, slice => {
+                    let params = getRangeParameters(settings, slice.index);
                     doSparseLayerFill(slice, {
                         settings: settings,
                         process: spro,
                         device: sdev,
                         lineWidth: lineWidth,
                         spacing: fillOffset,
-                        density: spro.sliceFillSparse,
+                        density: params.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
-                        type: spro.sliceFillType
+                        type: params.sliceFillType,
+                        cache: params._range !== true
                     });
                 }, "infill");
             } else if (isSynth && supportDensity) {
@@ -665,6 +685,7 @@
             density = options.density,  // density of infill 0.0 - 1.0
             bounds = options.bounds,    // bounding box of widget
             height = options.height,    // z layer height
+            cache = !(options.cache === false),
             type = options.type || 'hex';
 
         if (slice.tops.length === 0 || density === 0.0 || slice.isSolidLayer) {
@@ -736,7 +757,7 @@
         // update fill fingerprint for this slice
         slice._fill_finger = POLY.fingerprint(polys);
 
-        let skippable = FILLFIXED[type] ? true : false;
+        let skippable = cache && FILLFIXED[type] ? true : false;
         let miss = false;
         // if the layer below has the same fingerprint,
         // we may be able to clone the infill instead of regenerating it

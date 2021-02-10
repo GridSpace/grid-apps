@@ -681,8 +681,10 @@
         return ranges;
     }
 
-    function updateRange(lo, hi, values) {
+    // set process override values for a range
+    function updateRange(lo, hi, values, noadd) {
         let exact;
+        let empty = [];
         // remove matching values from overlapping ranges
         for (let range of getOverlappingRanges(lo, hi)) {
             if (range.lo === lo && range.hi === hi) {
@@ -691,22 +693,46 @@
             for (let key of Object.keys(values)) {
                 delete range.fields[key];
             }
+            if (Object.keys(range.fields).length === 0) {
+                empty.push(range);
+            }
+        }
+        let ranges = settings.process.ranges;
+        // clear out empty ranges
+        if (empty.length) {
+            for (let range of empty) {
+                let pos = ranges.indexOf(range);
+                if (pos >= 0) {
+                    ranges.splice(pos,1);
+                }
+            }
+        }
+        // noadd flag present when range is 0-max
+        if (noadd) {
+            API.event.emit("range.updates", ranges);
+            return;
         }
         // add values to matched range or new range
         if (!exact) {
             exact = { lo, hi, fields: {} };
-            settings.process.ranges.push(exact);
+            ranges.push(exact);
         }
         for (let key of Object.keys(values)) {
             exact.fields[key] = values[key];
         }
+        API.event.emit("range.updates", ranges);
     }
 
     let overrides = {};
 
-    // updates that are region (slice range) dependent
+    // updates editable fields that are range dependent
     function updateFieldsFromRange() {
         if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.process.ranges) {
+            let okeys = Object.keys(overrides);
+            if (okeys.length) {
+                updateFieldsFromSettings(overrides);
+                overrides = {};
+            }
             return;
         }
         let match = 0;
@@ -731,6 +757,7 @@
                 delete overrides[key];
             }
         }
+        UC.refresh();
     }
 
     function updateSlider() {
@@ -2074,18 +2101,20 @@
             return;
         }
         updateSettingsFromFields(device);
+        // range-specific values
         if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
             let changes = {};
             let values = process;
             let { layer_lo, layer_hi, layer_max } = API.var;
-            let range;
+            let range = { lo: layer_lo, hi: layer_hi };
+            let add = false;
             if (layer_lo > 0 || layer_hi < layer_max) {
                 values = Object.clone(process);
-                range = { lo: layer_lo, hi: layer_hi };
+                add = true;
             }
             updateSettingsFromFields(values, undefined, changes);
             if (range) {
-                updateRange(range.lo, range.hi, changes);
+                updateRange(range.lo, range.hi, changes, !add);
             }
         } else {
             updateSettingsFromFields(process);

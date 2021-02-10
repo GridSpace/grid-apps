@@ -1840,6 +1840,9 @@
             slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
             slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
 
+            rangeGroup:    UC.newGroup("ranges", null, {modes:FDM, group:"ranges"}),
+            rangeList:     UC.newRow([], {}),
+
             settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
             settingsTable: UC.newRow([ UI.settingsLoad = UC.newButton(LANG.se_load, settingsLoad) ]),
             settingsTable: UC.newRow([ UI.settingsSave = UC.newButton(LANG.se_save, settingsSave) ]),
@@ -1850,9 +1853,6 @@
         function spindleShow() {
             return settings().device.spindleMax > 0;
         }
-
-        // FDM region override setup
-        UI.sliceFillSparse.region = true;
 
         // slider setup
         const slbar = 30;

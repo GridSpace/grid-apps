@@ -8,18 +8,31 @@
         BASE = self.base,
         UTIL = BASE.util,
         FDM = KIRI.driver.FDM,
-        SPACE, API,
+        SPACE, API, VIEWS, PROC, UI, UC,
         p1, p2, iw,
         lastMode, lastView, lastPillar,
         isFdmMode = false,
         addingSupports = false,
         alert = [],
         boxes = {},
-        func = {};
+        func = {},
+        rangeVars = {
+            "sliceShells": "shell count",
+            "sliceFillType": "fill type",
+            "sliceFillSparse": "fill fraction"
+        };
 
     FDM.init = function(kiri, api) {
+        UI = api.ui;
+        UC = api.uc;
         API = api;
         SPACE = api.const.SPACE;
+        VIEWS = api.const.VIEWS;
+        PROC = Object.keys(kiri.conf.defaults.fdm.p);
+
+        for (let key of Object.keys(rangeVars)) {
+            UI[key].range = true;
+        }
 
         function filterSynth() {
             api.widgets.filter((widget) => {
@@ -31,6 +44,17 @@
             });
         }
 
+        function updateRanges(ranges = []) {
+            console.log({ranges});
+            UI.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
+            let html = [];
+            for (let range of ranges) {
+                html.push(`<div>${range.lo}-${range.hi}<button>x<button></div>`);
+            }
+            // console.log(UI.rangeGroup.innerHTML);
+            // UI.rangeGroup.innerHTML = html.join('');
+        }
+
         api.event.on("mode.set", mode => {
             isFdmMode = mode === 'FDM';
             lastMode = mode;
@@ -40,14 +64,33 @@
             lastView = view;
             updateVisiblity();
             filterSynth();
+            // let ranges = API.conf.get().process.ranges;
+            if (isFdmMode) {
+                if (lastView === VIEWS.SLICE) {
+                    for (let key of PROC) {
+                        if (UI[key] && !UI[key].range) {
+                            UI[key].disabled = true;
+                        }
+                    }
+                } else {
+                    for (let key of PROC) {
+                        if (UI[key]) UI[key].disabled = false;
+                    }
+                }
+            }
+            // UI.rangeGroup.style.display = ranges && ranges.length ? 'flex' : 'none';
         });
+        api.event.on("range.updates", updateRanges);
         api.event.on("settings.load", (settings) => {
             if (settings.mode !== 'FDM') return;
             settings.process.outputOriginCenter = (settings.device.originCenter || false);
             restoreSupports(api.widgets.all());
+            updateRanges(settings.process.ranges);
         });
         api.event.on("settings.saved", (settings) => {
-            // api.ui.fdmSupport.style.display = lastMode !== 'FDM' || settings.device.bedBelt ? 'none' : 'flex';
+            updateRanges(settings.process.ranges);
+            // let ranges = settings.process.ranges;
+            // UI.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
         });
         api.event.on("button.click", target => {
             switch (target) {
@@ -311,7 +354,7 @@
 
     function updateVisiblity() {
         API.widgets.all().forEach(w => {
-            setSupportVisiblity(w, lastMode === 'FDM' && lastView === API.const.VIEWS.ARRANGE);
+            setSupportVisiblity(w, lastMode === 'FDM' && lastView === VIEWS.ARRANGE);
         });
     }
 
