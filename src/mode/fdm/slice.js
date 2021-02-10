@@ -296,7 +296,7 @@
                 let solid = (
                     slice.index < spro.sliceBottomLayers ||
                     slice.index > slices.length - spro.sliceTopLayers-1 ||
-                    spro.sliceFillSparse > 0.95
+                    params.sliceFillSparse > 0.95
                 ) && !vaseMode && !isSynth;
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let offset = shellOffset * spaceMult;

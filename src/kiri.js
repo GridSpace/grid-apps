@@ -6,7 +6,7 @@
 
     if (!self.kiri) {
         self.kiri = {
-            beta: 2703,
+            beta: 2704,
             driver: {}, // driver modules
             loader: []  // module loading: array of functions
         };
