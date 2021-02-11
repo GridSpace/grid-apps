@@ -495,13 +495,12 @@
      */
     PRO.slicePrintPath = function(slice, startPoint, offset, output, opt = {}) {
         // console.log({slicePrintPath: slice.index, ext:slice.extruder});
-
         let i,
             preout = [],
             scope = this,
             settings = this.settings,
             device = settings.device,
-            process = settings.process,
+            process = opt.params || settings.process,
             extruder = slice.extruder || 0,
             nozzleSize = device.extruders[extruder].extNozzle,
             firstLayer = opt.first || false,

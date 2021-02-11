@@ -10,7 +10,8 @@
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM,
         newPoint = BASE.newPoint,
-        newPolygon = BASE.newPolygon;
+        newPolygon = BASE.newPolygon,
+        getRangeParameters = FDM.getRangeParameters;
 
     /**
      * DRIVER PRINT CONTRACT
@@ -379,6 +380,7 @@
                     return a.dst - b.dst;
                 });
                 let { z, slice, offset } = order[0];
+                let params = getRangeParameters(settings, slice.index);
                 slice.prep = true;
                 // retract between widgets or layers (when set)
                 if (layerout.length && slice.widget !== lastWidget) {
@@ -401,6 +403,7 @@
                     offset,
                     layerout,
                     {
+                        params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,
                         onBelt: slice.onbelt,

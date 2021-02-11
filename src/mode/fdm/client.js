@@ -8,19 +8,14 @@
         BASE = self.base,
         UTIL = BASE.util,
         FDM = KIRI.driver.FDM,
-        SPACE, API, VIEWS, PROC, UI, UC,
+        SPACE, API, VIEWS, LANG, PROC, UI, UC,
         p1, p2, iw,
         lastMode, lastView, lastPillar,
         isFdmMode = false,
         addingSupports = false,
         alert = [],
         boxes = {},
-        func = {},
-        rangeVars = {
-            "sliceShells": "shell count",
-            "sliceFillType": "fill type",
-            "sliceFillSparse": "fill fraction"
-        };
+        func = {};
 
     FDM.init = function(kiri, api) {
         UI = api.ui;
@@ -28,7 +23,34 @@
         API = api;
         SPACE = api.const.SPACE;
         VIEWS = api.const.VIEWS;
+        LANG = KIRI.lang.current;
         PROC = Object.keys(kiri.conf.defaults.fdm.p);
+
+        let rangeVars = {
+            "sliceShells": LANG.sl_shel_s,
+            "sliceFillType": LANG.fi_type,
+            "sliceFillSparse": LANG.fi_pcnt_s,
+            "sliceShellOrder": LANG.sl_ordr_s,
+            "outputTemp": LANG.ou_nozl_s,
+            "outputBedTemp": LANG.ou_bedd_s,
+            "outputFeedrate": LANG.ou_feed_s,
+            "outputFinishrate": LANG.ou_fini_s,
+            "outputShellMult": LANG.ou_shml_s,
+            "outputFillMult": LANG.ou_flml_s,
+            "outputSparseMult": LANG.ou_spml_s,
+            "outputRetractDist": LANG.ad_rdst_s,
+            "outputRetractSpeed": LANG.outputRetractSpeed,
+            "outputRetractWipe": LANG.ad_wpln_s,
+            "outputRetractDwell": LANG.ad_rdwl_s,
+            "outputShortPoly": LANG.ad_spol_s,
+            "outputMinSpeed": LANG.ad_mins_s,
+            "outputCoastDist": LANG.ad_scst_s,
+            "sliceSupportDensity": LANG.sp_dens_s,
+            "sliceSupportOffset": LANG.sp_offs_s,
+            "sliceSolidMinArea": LANG.ad_msol_s,
+            "sliceLayerStart": LANG.sl_strt_s,
+            "zHopDistance": LANG.ad_zhop_s
+        };
 
         for (let key of Object.keys(rangeVars)) {
             UI[key].range = true;

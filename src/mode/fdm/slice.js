@@ -24,7 +24,8 @@
             support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 }
         },
         PROTO = Object.clone(COLOR),
-        bwcomp = (1 / Math.cos(Math.PI/4));
+        bwcomp = (1 / Math.cos(Math.PI/4)),
+        getRangeParameters = FDM.getRangeParameters;
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -40,23 +41,6 @@
             if (isThin) return null;
         }
         return opt;
-    }
-
-    function getRangeParameters(settings, index) {
-        let ranges = settings.process.ranges;
-        if (!(ranges && ranges.length)) {
-            return settings.process;
-        }
-        let params = Object.clone(settings.process);
-        for (let range of ranges) {
-            if (index >= range.lo && index <= range.hi) {
-                for (let [key,value] of Object.entries(range.fields)) {
-                    params[key] = value;
-                    params._range = true;
-                }
-            }
-        }
-        return params;
     }
 
     /**

@@ -14,6 +14,7 @@
             // slice,          // src/mode/fdm/slice.js
             // prepare,        // src/mode/fdm/prepare.js
             // export,         // src/mode/fdm/export.js
+            getRangeParameters,
             fixExtruders
         };
 
@@ -26,6 +27,23 @@
             }
         });
         return settings;
+    }
+
+    function getRangeParameters(settings, index) {
+        let ranges = settings.process.ranges;
+        if (!(ranges && ranges.length)) {
+            return settings.process;
+        }
+        let params = Object.clone(settings.process);
+        for (let range of ranges) {
+            if (index >= range.lo && index <= range.hi) {
+                for (let [key,value] of Object.entries(range.fields)) {
+                    params[key] = value;
+                    params._range = true;
+                }
+            }
+        }
+        return params;
     }
 
     // customer gcode post function for XYZ daVinci Mini W
