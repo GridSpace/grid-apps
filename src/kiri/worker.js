@@ -414,11 +414,11 @@ KIRI.worker = {
                         let p3 = (x - 0) * height + (y - 0);
                         let p4 = (x - 1) * height + (y - 1);
                         faces[ii++] = p1;
-                        faces[ii++] = p2;
                         faces[ii++] = p3;
-                        faces[ii++] = p1;
-                        faces[ii++] = p4;
                         faces[ii++] = p2;
+                        faces[ii++] = p1;
+                        faces[ii++] = p2;
+                        faces[ii++] = p4;
                     }
                 }
                 send.data({progress: x / width});
