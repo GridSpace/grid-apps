@@ -246,6 +246,7 @@ const script = {
         "ext/tween",
         "ext/fsave",
         "ext/earcut", // work.test
+        "ext/base64",
         "add/array",
         "add/three",
         "geo/base",

@@ -2194,7 +2194,7 @@
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
-                data = JSON.parse(atob(data));
+                data = JSON.parse(new TextDecoder().decode(base64js.toByteArray(data)));
             } catch (e) {
                 UC.alert('invalid settings format');
                 console.log('data',data);
@@ -2269,7 +2269,7 @@
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
-        return btoa(JSON.stringify({
+        return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify({
             settings: settings,
             version: KIRI.version,
             screen: shot,
@@ -2280,7 +2280,7 @@
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
-        }));
+        })));
     }
 
     function platformLoadFiles(files,group) {
