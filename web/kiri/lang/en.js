@@ -496,7 +496,7 @@ kiri.lang['en-us'] = {
     ad_zhop_s:      "z hop dist",
     ad_zhop_l:      "amount to raise z\non retraction moves\nin millimeters\n0 to disable",
     ad_abkl_s:      "anti-backlash",
-    ad_abkl_l:      "for better flat surface finish\nuse micro-movements to cancel\nbacklash in solid layer output\nin millimeters\n0 to disable",
+    ad_abkl_l:      "for better flat surface finish\nuse micro-movements to cancel\nbacklash in solid layer output\nin millimeters\n0 to disable\nif your firmware has M425\nput that in the gcode header\nand leave this as 0",
     ad_lret_s:      "layer retract",
     ad_lret_l:      "force filament retraction\nbetween layers",
     ad_play_s:      "polish layers",

@@ -58,7 +58,8 @@
         editTools = null,
         maxTool = 0,
         fpsTimer = null,
-        platformColor;
+        platformColor,
+        contextInt;
 
     // extend KIRI API with local functions
     API.show.devices = showDevices;
@@ -322,10 +323,7 @@
     }
 
     function keyHandler(evt) {
-        let handled = true,
-            current = settings(),
-            style, sel, i, m, bb,
-            ncc = evt.charCode - 48;
+        let handled = true;
         if (API.modal.visible() || inputHasFocus()) {
             return false;
         }
@@ -426,35 +424,10 @@
                 API.show.slices();
                 break;
             case cca('d'): // duplicate object
-                sel = API.selection.meshes();
-                platform.deselect();
-                for (i=0; i<sel.length; i++) {
-                    let mesh = sel[i].clone();
-                    mesh.geometry = mesh.geometry.clone();
-                    mesh.material = mesh.material.clone();
-                    bb = mesh.getBoundingBox();
-                    let ow = sel[i].widget;
-                    let nw = API.widgets.new().loadGeometry(mesh.geometry);
-                    nw.meta.file = ow.meta.file;
-                    nw.meta.vertices = ow.meta.vertices;
-                    nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-                    platform.add(nw,true);
-                    let owa = API.widgets.annotate(ow.id);
-                    let nwa = API.widgets.annotate(nw.id);
-                    if (owa.tab) {
-                        nwa.tab = Object.clone(owa.tab);
-                        nwa.tab.forEach((tab,i) => {
-                            tab.id = Date.now() + i
-                        });
-                    }
-                    KIRI.driver.CAM.restoreTabs([nw]);
-                }
+                duplicateSelection();
                 break;
             case cca('m'): // mirror object
-                API.selection.for_widgets(function(widget) {
-                    widget.mirror();
-                });
-                SPACE.update();
+                mirrorSelection();
                 break;
             case cca('R'): // toggle slice render mode
                 renderMode++;
@@ -475,8 +448,51 @@
                 handled = false;
                 break;
         }
-        if (handled) evt.preventDefault();
+        if (handled) {
+            evt.preventDefault();
+            evt.stopPropagation();
+        }
         return false;
+    }
+
+    function layFlat() {
+        let int = contextInt[0];
+        if (int && int.object && int.object.widget) {
+            let q = new THREE.Quaternion();
+            q.setFromUnitVectors(contextInt[0].face.normal, new THREE.Vector3(0,0,-1));
+            API.selection.rotate(q);
+        }
+    }
+
+    function duplicateSelection() {
+        API.selection.for_widgets(function(widget) {
+            let mesh = widget.mesh;
+            mesh.geometry = mesh.geometry.clone();
+            mesh.material = mesh.material.clone();
+            let bb = mesh.getBoundingBox();
+            let ow = widget;
+            let nw = API.widgets.new().loadGeometry(mesh.geometry);
+            nw.meta.file = ow.meta.file;
+            nw.meta.vertices = ow.meta.vertices;
+            nw.move(bb.max.x - bb.min.x + 1, 0, 0);
+            platform.add(nw,true);
+            let owa = API.widgets.annotate(ow.id);
+            let nwa = API.widgets.annotate(nw.id);
+            if (owa.tab) {
+                nwa.tab = Object.clone(owa.tab);
+                nwa.tab.forEach((tab,i) => {
+                    tab.id = Date.now() + i
+                });
+            }
+            KIRI.driver.CAM.restoreTabs([nw]);
+        });
+    }
+
+    function mirrorSelection() {
+        API.selection.for_widgets(function(widget) {
+            widget.mirror();
+        });
+        SPACE.update();
     }
 
     function keys(o) {
@@ -2183,8 +2199,15 @@
             if (int) API.event.emit('mouse.hover', {point: int, event, type: 'platform'});
         });
 
+        // block standard browser context menu
+        DOC.oncontextmenu = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
         SPACE.mouse.up((event, int) => {
             if (event.button === 2 && API.view.isArrange()) {
+                console.log({up: event, int});
                 let style = UI.context.style;
                 style.display = 'flex';
                 style.left = `${event.clientX-3}px`;
@@ -2192,6 +2215,9 @@
                 UI.context.onmouseleave = () => {
                     style.display = '';
                 };
+                event.preventDefault();
+                event.stopPropagation();
+                contextInt = int;
             }
         });
 
@@ -2216,6 +2242,10 @@
             } else {
                 // return selected meshes for further mouse processing
                 return API.feature.hovers || API.selection.meshes();
+            }
+            if (event.button === 2 && API.view.isArrange()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
         });
 
@@ -2465,6 +2495,9 @@
         $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
         $('context-clear-workspace').onclick = () => { API.platform.clear(); UI.context.onmouseleave() };
+        $('context-duplicate').onclick = duplicateSelection;
+        $('context-mirror').onclick = mirrorSelection;
+        $('context-layflat').onclick = layFlat;
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };
