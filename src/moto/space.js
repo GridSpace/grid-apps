@@ -21,6 +21,8 @@
         panZ = 0,
         home = 0,
         gridZOff = 0,
+        tweenTime = 500,
+        tweenDelay = 20,
         platformZOff = 0,
         perspective = 35,
         refreshTimeout = null,
@@ -142,7 +144,7 @@
 
     function tweenit() {
         TWEEN.update();
-        setTimeout(tweenit, 20);
+        setTimeout(tweenit, tweenDelay);
     }
 
     tweenit();
@@ -173,12 +175,13 @@
             }
         }
         new TWEEN.Tween(from).
-            to(to, 500).
+            to(to, tweenTime).
             onUpdate(tf).
             onComplete(() => {
                 viewControl.setPosition(pos);
                 updateLastAction();
                 refresh();
+                if (pos.then) pos.then();
             }).
             start();
     }
@@ -198,7 +201,7 @@
                 setGrid();
             };
         new TWEEN.Tween(from).
-            to(to, 500).
+            to(to, tweenTime).
             onStart(start).
             onUpdate(update).
             onComplete(complete).
@@ -939,12 +942,12 @@
         },
 
         view: {
-            top:   function()  { tweenCam({left: home, up: 0,   panX, panY, panZ}) },
-            back:  function()  { tweenCam({left: PI,   up: PI2, panX, panY, panZ}) },
-            home:  function()  { tweenCam({left: home, up: PI4, panX, panY, panZ}) },
-            front: function()  { tweenCam({left: 0,    up: PI2, panX, panY, panZ}) },
-            right: function()  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ}) },
-            left:  function()  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ}) },
+            top:   function(then)  { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+            back:  function(then)  { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
+            home:  function(then)  { tweenCam({left: home, up: PI4, panX, panY, panZ, then}) },
+            front: function(then)  { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
+            right: function(then)  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
+            left:  function(then)  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
             reset: function()    { viewControl.reset(); requestRefresh() },
             load:  function(cam) { viewControl.setPosition(cam) },
             save:  function()    { return viewControl.getPosition(true) },
@@ -965,6 +968,21 @@
             },
             setHome: function(r) {
                 home = r || 0;
+            },
+            spin: function(then, count) {
+                Space.view.front(() => {
+                    Space.view.right(() => {
+                        Space.view.back(() => {
+                            Space.view.left(() => {
+                                if (--count > 0) {
+                                    Space.view.spin(then, count);
+                                } else {
+                                    Space.view.front(then);
+                                }
+                            });
+                        });
+                    });
+                });
             }
         },
 
@@ -983,6 +1001,14 @@
 
         selectRecurse: function(b) {
             selectRecurse = b;
+        },
+
+        setTweenTime: function(t) {
+            tweenTime = t || 500;
+        },
+
+        setTweenDelay: function(d) {
+            tweenDelay = d || 20;
         },
 
         objects: function() {

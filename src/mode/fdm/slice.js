@@ -393,8 +393,10 @@
 
             // sparse layers only present when non-vase mose and sparse % > 0
             if (doSparseFill && !isSynth) {
+                let lastType;
                 forSlices(0.5, 0.7, slice => {
                     let params = getRangeParameters(settings, slice.index);
+                    let newType = params.sliceFillType;
                     doSparseLayerFill(slice, {
                         settings: settings,
                         process: spro,
@@ -404,9 +406,10 @@
                         density: params.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
-                        type: params.sliceFillType,
-                        cache: params._range !== true
+                        type: newType,
+                        cache: params._range !== true && lastType === newType
                     });
+                    lastType = newType;
                 }, "infill");
             } else if (isSynth && supportDensity) {
                 forSlices(0.5, 0.7, slice => {
