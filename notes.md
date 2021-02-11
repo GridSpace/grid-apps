@@ -40,6 +40,7 @@
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 
+* `P` extruder + filament max flow rate cap in planner
 * `P` revisit path routing / optimization
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats

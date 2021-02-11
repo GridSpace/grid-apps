@@ -15,9 +15,9 @@
     FDM.export = function(print, online) {
         let layers = print.output,
             settings = FDM.fixExtruders(print.settings),
+            getRangeParameters = FDM.getRangeParameters,
             device = settings.device,
             extruders = device.extruders,
-            process = settings.process,
             gcodeFan = device.gcodeFan,
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
@@ -46,11 +46,13 @@
             lout = null,
             last = null,
             zpos = 0,
-            zhop = process.zHopDistance || 0,
+            process = settings.process,
+            loops = process.outputLoopLayers,
+            zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,
-            retDist = process.outputRetractDist,
-            retSpeed = process.outputRetractSpeed * 60,
-            retDwell = process.outputRetractDwell || 0,
+            retDist = process.outputRetractDist, // range
+            retSpeed = process.outputRetractSpeed * 60, // range
+            retDwell = process.outputRetractDwell || 0, // range
             timeDwell = retDwell / 1000,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             originCenter = process.outputOriginCenter,
@@ -62,9 +64,9 @@
                 travel_speed: seekMMM,
                 retract_speed: retSpeed,
                 retract_distance: retDist,
-                temp: process.firstLayerNozzleTemp || process.outputTemp,
-                temp_bed: process.firstLayerBedTemp || process.outputBedTemp,
-                bed_temp: process.firstLayerBedTemp || process.outputBedTemp,
+                temp: process.firstLayerNozzleTemp || process.outputTemp, // range
+                temp_bed: process.firstLayerBedTemp || process.outputBedTemp, // range
+                bed_temp: process.firstLayerBedTemp || process.outputBedTemp, // range
                 fan_speed: process.outputFanMax,
                 speed: process.outputFanMax, // legacy
                 top: offset ? device.bedDepth : device.bedDepth/2,
@@ -82,9 +84,8 @@
             bytes = 0,
             bcos = Math.cos(Math.PI/4),
             icos = 1 / bcos,
-            loops = process.outputLoopLayers,
             inLoop,
-            arcAt,
+            params,
             arcQ = [];
 
         if (isBelt && loops) {
@@ -283,6 +284,10 @@
 
         while (layer < layers.length) {
             path = layers[layer];
+            params = getRangeParameters(settings, path.layer);
+            // TODO update process settings from params override
+            // console.log(path.layer, params)
+
             emitPerMM = print.extrudePerMM(
                 extruder.extNozzle,
                 extruder.extFilament,
@@ -340,13 +345,13 @@
             if (layer === 1) {
                 // update temps when first layer overrides are present
                 if (process.firstLayerNozzleTemp) {
-                    subst.temp = process.outputTemp;
+                    subst.temp = process.outputTemp; // range
                     if (t0) appendSub("M104 S{temp} T0");
                     if (t1) appendSub("M104 S{temp} T1");
                     if (!(t0 || t1)) appendSub("M104 S{temp} T{tool}");
                 }
                 if (process.firstLayerBedTemp) {
-                    subst.bed_temp = subst.temp_bed = process.outputBedTemp;
+                    subst.bed_temp = subst.temp_bed = process.outputBedTemp; // range
                     appendSub("M140 S{temp_bed} T0");
                 }
             }
@@ -359,7 +364,7 @@
             // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
-                speedMMM = (out.speed || process.outputFeedrate) * 60;
+                speedMMM = (out.speed || process.outputFeedrate) * 60; // range
 
                 // look for extruder change, run scripts, recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {

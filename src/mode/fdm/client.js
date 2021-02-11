@@ -27,29 +27,32 @@
         PROC = Object.keys(kiri.conf.defaults.fdm.p);
 
         let rangeVars = {
+            // slice
             "sliceShells": LANG.sl_shel_s,
             "sliceFillType": LANG.fi_type,
             "sliceFillSparse": LANG.fi_pcnt_s,
+            "sliceSolidMinArea": LANG.ad_msol_s,
+            // prepare
             "sliceShellOrder": LANG.sl_ordr_s,
-            "outputTemp": LANG.ou_nozl_s,
-            "outputBedTemp": LANG.ou_bedd_s,
             "outputFeedrate": LANG.ou_feed_s,
             "outputFinishrate": LANG.ou_fini_s,
             "outputShellMult": LANG.ou_shml_s,
             "outputFillMult": LANG.ou_flml_s,
             "outputSparseMult": LANG.ou_spml_s,
-            "outputRetractDist": LANG.ad_rdst_s,
-            "outputRetractSpeed": LANG.outputRetractSpeed,
             "outputRetractWipe": LANG.ad_wpln_s,
-            "outputRetractDwell": LANG.ad_rdwl_s,
             "outputShortPoly": LANG.ad_spol_s,
             "outputMinSpeed": LANG.ad_mins_s,
             "outputCoastDist": LANG.ad_scst_s,
             "sliceSupportDensity": LANG.sp_dens_s,
             "sliceSupportOffset": LANG.sp_offs_s,
-            "sliceSolidMinArea": LANG.ad_msol_s,
             "sliceLayerStart": LANG.sl_strt_s,
-            "zHopDistance": LANG.ad_zhop_s
+            "zHopDistance": LANG.ad_zhop_s,
+            // export
+            "outputTemp": LANG.ou_nozl_s,
+            "outputBedTemp": LANG.ou_bedd_s,
+            "outputRetractDist": LANG.ad_rdst_s,
+            "outputRetractSpeed": LANG.outputRetractSpeed,
+            "outputRetractDwell": LANG.ad_rdwl_s,
         };
 
         for (let key of Object.keys(rangeVars)) {
