@@ -7,6 +7,14 @@
 let KIRI = self.kiri = self.kiri || {};
 KIRI.newEngine = ()=> { return new Engine ()};
 
+if (!KIRI.api) {
+    KIRI.api = {
+        event: {
+            emit: () => {}
+        }
+    };
+}
+
 class Engine {
     constructor() {
         this.widget = KIRI.newWidget();

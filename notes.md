@@ -26,8 +26,8 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
-* `F` slicing controls per user-defined z-region
 * `F` control for size of purge block (with 0=disabled)
 * `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo

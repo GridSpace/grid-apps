@@ -43,12 +43,12 @@
         #jbody, #gbody {
             flex-grow: 1;
         }
-        #jfoot {
+        #jfoot, #dfoot {
             display: flex;
             flex-direction: row;
             justify-content: center;
         }
-        #jfoot button {
+        #jfoot button, #dfoot button {
             width: 100%;
         }
         #gbody {
@@ -58,6 +58,7 @@
             overflow: auto;
         }
         #gfoot {
+            display: none;
             background-color: rgba(61,133,198,0.25);
             border-top: 1px solid #aaa;
             padding: 3px;
@@ -65,6 +66,9 @@
         }
         #api {
             width: 812px;
+        }
+        #download {
+            display: none;
         }
         li {
             list-style: circle;
@@ -77,7 +81,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
     <script src="/code/engine.js"></script>
     <script>
-        let edit;
+        let edit, saveit = "";
         function $(id) { return document.getElementById(id) }
         function onload() {
             let fnstr = demo.toString().split("\n");
@@ -97,10 +101,14 @@
             $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
         }
         function display_gcode(gcode) {
-            $('gbody').innerText = gcode;
+            $('gbody').innerText = saveit = gcode;
             display_message();
+            $('dfoot').style.display = 'block';
+            $('gfoot').style.display = '';
         }
         function run_code() {
+            $('dfoot').style.display = 'none';
+            $('gfoot').style.display = 'block';
             let code = edit.session.getValue();
             eval(`(function(){${code}})()`);
         }
@@ -108,10 +116,27 @@
             kiri.newEngine()
                 .setListener(display_message)
                 .load("/obj/cube.stl")
+                .then(eng => eng.setProcess({
+                    sliceShells: 1,
+                    sliceFillSparse: 0.25,
+                    sliceTopLayers: 2,
+                    sliceSolidLayers: 2,
+                    sliceBottomLayers: 2
+                }))
+                .then(eng => eng.setDevice({
+                    gcodePre: [ "M82", "M104 S220" ],
+                    gcodePost: [ "M107" ]
+                }))
                 .then(eng => eng.slice())
                 .then(eng => eng.prepare())
                 .then(eng => eng.export())
                 .then(display_gcode);
+        }
+        function download() {
+            let blob = new Blob([saveit], {type: "octet/stream"});
+            let url  = window.URL.createObjectURL(blob);
+            $('download').innerHTML = `<a id="xo" href="${url}" download="sample.gcode"></a>`;
+            $('xo').click();
         }
     </script>
 </head>
@@ -127,6 +152,7 @@
             <div id="ghead">gcode output</div>
             <div id="gbody"></div>
             <div id="gfoot"></div>
+            <div id="dfoot"><button onclick="download()">download</button></div>
         </div>
     </div>
     <div id="api">
@@ -145,5 +171,6 @@
         <li><label>prepare()</label> - async path routing of slice data</li>
         <li><label>export()</label> - async gcode generation from path routing</li>
     </div>
+    <a id="download"></a>
 </body>
 </html>
