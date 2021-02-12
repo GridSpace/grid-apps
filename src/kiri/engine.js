@@ -27,7 +27,7 @@ class Engine {
             try {
                 new moto.STL().load(url, vertices => {
                     this.listener({loaded: url, vertices});
-                    this.widget.loadVertices(vertices)
+                    this.widget.loadVertices(vertices).center();
                     accept(this);
                 });
             } catch (error) {
@@ -41,7 +41,7 @@ class Engine {
             try {
                 new moto.STL().parse(data, vertices => {
                     this.listener({parsed: data, vertices});
-                    this.widget.loadVertices(vertices)
+                    this.widget.loadVertices(vertices).center();
                     accept(this);
                 });
             } catch (error) {
