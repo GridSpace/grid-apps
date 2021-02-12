@@ -235,7 +235,7 @@ kiri.lang['en-us'] = {
     fr_nabl_l:      "create a raft under the\nmodel for better adhesion\nuses skirt offset and\ndisables skirt output",
 
     // FDM BELT ONLY
-    fl_zoff_s:      "layer offset",
+    fl_zoff_s:      "belt offset",
     fl_zoff_l:      "height offset from belt\nof lowest extrusion\nin millimeters",
     fl_brim_s:      "brim size",
     fl_brim_l:      "add brim to part bottom\nsize is width in millimeters\n0 to disable",
