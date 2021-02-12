@@ -68,7 +68,6 @@
             solidLayers = spro.sliceSolidLayers,
             vaseMode = spro.sliceFillType === 'vase' && !isSynth,
             doSolidLayers = solidLayers && !vaseMode && !isSynth,
-            doSparseFill = !vaseMode && spro.sliceFillSparse > 0.0,
             metadata = settings.widget[widget.id] || {},
             extruder = metadata.extruder || 0,
             sliceHeight = spro.sliceHeight,
@@ -376,10 +375,13 @@
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
-            if (doSparseFill && !isSynth) {
+            if (!isSynth) {
                 let lastType;
                 forSlices(0.5, 0.7, slice => {
                     let params = getRangeParameters(settings, slice.index);
+                    if (vaseMode || !params.sliceFillSparse) {
+                        return;
+                    }
                     let newType = params.sliceFillType;
                     doSparseLayerFill(slice, {
                         settings: settings,

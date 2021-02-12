@@ -200,12 +200,12 @@ kiri.lang['en-us'] = {
     // FDM FILL
     fi_menu:        "infill",
     fi_type:        "type",
-    fi_pcnt_s:      "fraction",
+    fi_pcnt_s:      "fill fraction",
     fi_pcnt_l:      "fill density values\n0.0 - 1.0",
-    fi_angl_s:      "start angle",
-    fi_angl_l:      "base angle in degrees",
+    fi_angl_s:      "solid start",
+    fi_angl_l:      "starting angle in degrees\n90 degrees added to \neach following layer\napplies only to solid layers",
     fi_over_s:      "overlap",
-    fi_over_l:      "overlap with shell and fill\nas % of nozzle width\nhigher bonds better\n0.0 - 1.0",
+    fi_over_l:      "overlap with shell and other fill\nas fraction of nozzle diameter\n0.0 - 1.0",
     // fi_rate_s:      "print speed",
     fi_rate_l:      "extrusion speed for infill\nset to 0 to use default\noutput print speeds",
 
@@ -429,8 +429,8 @@ kiri.lang['en-us'] = {
     ou_flml_s:      "solid factor",
     ou_spml_s:      "infill factor",
     ou_exml_l:      "extrusion multiplier\n0.0 - 2.0",
-    ou_fanl_s:      "fan layer",
-    ou_fanl_l:      "layer to enable fan",
+    ou_fans_s:      "fan speed",
+    ou_fans_l:      "0 - 255",
 
     // OUTPUT CAM
     ou_toll_s:      "tolerance",

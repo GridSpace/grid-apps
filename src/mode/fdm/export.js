@@ -50,7 +50,7 @@
             loops = process.outputLoopLayers,
             zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,
-            retDist = process.outputRetractDist, // range
+            retDist = process.outputRetractDist || 0, // range
             retSpeed = process.outputRetractSpeed * 60, // range
             retDwell = process.outputRetractDwell || 0, // range
             timeDwell = retDwell / 1000,
@@ -60,15 +60,21 @@
                 x: device.bedWidth/2,
                 y: isBelt ? 0 : device.bedDepth/2
             },
+            nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
+            bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
+            fanSpeed = process.firstLayerFanSpeed,
+            lastNozzleTemp = nozzleTemp,
+            lastBedTemp = bedTemp,
+            lastFanSpeed = fanSpeed,
             subst = {
                 travel_speed: seekMMM,
                 retract_speed: retSpeed,
                 retract_distance: retDist,
-                temp: process.firstLayerNozzleTemp || process.outputTemp, // range
-                temp_bed: process.firstLayerBedTemp || process.outputBedTemp, // range
-                bed_temp: process.firstLayerBedTemp || process.outputBedTemp, // range
-                fan_speed: process.outputFanMax,
-                speed: process.outputFanMax, // legacy
+                temp: nozzleTemp,
+                temp_bed: bedTemp,
+                bed_temp: bedTemp,
+                fan_speed: fanSpeed,
+                speed: fanSpeed, // legacy
                 top: offset ? device.bedDepth : device.bedDepth/2,
                 left: offset ? 0 : -device.bedWidth/2,
                 right: offset ? device.bedWidth : device.bedWidth/2,
@@ -85,8 +91,31 @@
             bcos = Math.cos(Math.PI/4),
             icos = 1 / bcos,
             inLoop,
-            params,
             arcQ = [];
+
+        // smallish band-aid. refactor above to remove redundancy
+        function updateParams(layer) {
+            let process = getRangeParameters(settings, layer);
+            zhop = process.zHopDistance || 0; // range
+            retDist = process.outputRetractDist || 0; // range
+            retSpeed = process.outputRetractSpeed * 60; // range
+            retDwell = process.outputRetractDwell || 0; // range
+            timeDwell = retDwell / 1000;
+            nozzleTemp = process.outputTemp;
+            bedTemp = process.outputBedTemp;
+            fanSpeed = process.outputFanSpeed;
+            Object.assign(subst, {
+                temp_bed: bedTemp,
+                bed_temp: bedTemp,
+                fan_speed: fanSpeed,
+                speed: fanSpeed, // legacy
+                retract_speed: retSpeed,
+                retract_distance: retDist,
+                temp: process.outputTemp, // range
+                temp_bed: process.outputBedTemp, // range
+                bed_temp: process.outputBedTemp, // range
+            });
+        }
 
         if (isBelt && loops) {
             loops = loops.split(',').map(range => {
@@ -261,6 +290,10 @@
             if (comment) {
                 o.append(` ; ${comment}`);
             }
+            if (o.length === 1) {
+                // console.trace({no_move: o, out, newpos, pos, lastp, emit});
+                return;
+            }
             let line = o.join('');
             if (last == line) {
                 // console.log({dup:line});
@@ -284,9 +317,11 @@
 
         while (layer < layers.length) {
             path = layers[layer];
-            params = getRangeParameters(settings, path.layer);
-            // TODO update process settings from params override
-            // console.log(path.layer, params)
+
+            // allow range overrides past base
+            if (path.layer > 0) {
+                updateParams(path.layer);
+            }
 
             emitPerMM = print.extrudePerMM(
                 extruder.extNozzle,
@@ -336,24 +371,20 @@
                 append(`;; --- layer ${layer} (${subst.height} @ ${subst.z.round(3)}) ---`);
             }
 
-            // enable fan at fan layer
-            if (gcodeFan && layer === process.outputFanLayer) {
+            // layer temp and fan overrides at layer changes
+            if (fanSpeed !== lastFanSpeed) {
                 appendAllSub(gcodeFan);
+                lastFanSpeed = fanSpeed;
             }
-
-            // second layer transitions
-            if (layer === 1) {
-                // update temps when first layer overrides are present
-                if (process.firstLayerNozzleTemp) {
-                    subst.temp = process.outputTemp; // range
-                    if (t0) appendSub("M104 S{temp} T0");
-                    if (t1) appendSub("M104 S{temp} T1");
-                    if (!(t0 || t1)) appendSub("M104 S{temp} T{tool}");
-                }
-                if (process.firstLayerBedTemp) {
-                    subst.bed_temp = subst.temp_bed = process.outputBedTemp; // range
-                    appendSub("M140 S{temp_bed} T0");
-                }
+            if (bedTemp !== lastBedTemp) {
+                append(`M140 S${bedTemp} T0`);
+                lastBedTemp = bedTemp;
+            }
+            if (nozzleTemp !== lastNozzleTemp) {
+                if (t0) append(`M104 S${nozzleTemp} T0`);
+                if (t1) append(`M104 S${nozzleTemp} T1`);
+                if (!(t0 || t1)) append(`M104 S{nozzleTemp} T${tool}`);
+                lastNozzleTemp = nozzleTemp;
             }
 
             // move Z to layer height

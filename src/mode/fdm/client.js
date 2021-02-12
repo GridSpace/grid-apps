@@ -46,10 +46,11 @@
             "sliceSupportDensity": LANG.sp_dens_s,
             "sliceSupportOffset": LANG.sp_offs_s,
             "sliceLayerStart": LANG.sl_strt_s,
-            "zHopDistance": LANG.ad_zhop_s,
             // export
+            "zHopDistance": LANG.ad_zhop_s,
             "outputTemp": LANG.ou_nozl_s,
             "outputBedTemp": LANG.ou_bedd_s,
+            "outputFanSpeed": LANG.ou_fans_s,
             "outputRetractDist": LANG.ad_rdst_s,
             "outputRetractSpeed": LANG.outputRetractSpeed,
             "outputRetractDwell": LANG.ad_rdwl_s,
