@@ -55,7 +55,6 @@
 
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
-* `B` disable support layer (top/bottom) offsets in belt mode
 * `F` arrange should just align down Z. no side to side.
 
 # CAM
@@ -71,7 +70,6 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
-* `F` add layout spacing preference
 * `F` import SVG into a path that can be overlaid onto a 3D mesh (laser?)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
