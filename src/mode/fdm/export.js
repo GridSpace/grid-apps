@@ -101,8 +101,8 @@
             retSpeed = process.outputRetractSpeed * 60; // range
             retDwell = process.outputRetractDwell || 0; // range
             timeDwell = retDwell / 1000;
-            nozzleTemp = process.outputTemp;
-            bedTemp = process.outputBedTemp;
+            nozzleTemp = process.outputTemp || process.firstLayerNozzleTemp;
+            bedTemp = process.outputBedTemp || process.firstLayerBedTemp;
             fanSpeed = process.outputFanSpeed;
             Object.assign(subst, {
                 temp_bed: bedTemp,
