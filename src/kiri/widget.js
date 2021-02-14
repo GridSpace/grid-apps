@@ -519,12 +519,14 @@
     PRO._mirror = function() {
         this.setWireframe(false);
         this.clearSlices();
-        this.mesh.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+        let vert = this.getGeoVertices();
+        for (let i=0; i<vert.length; i += 3) {
+            vert[i] = -vert[i];
+        }
         let geo = this.mesh.geometry,
             o = this.track;
         geo.computeFaceNormals();
         geo.computeVertexNormals();
-        this.mesh.position.x = -this.mesh.position.x;
         o.mirror = !o.mirror;
         this.modified = true;
     };

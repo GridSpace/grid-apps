@@ -780,10 +780,14 @@ function getCachedFile(file, fn) {
             let smod = lastmod(filePath),
                 cmod = cached.mtime;
 
-            if (!smod) throw "missing source file";
-            if (smod > cmod) cached = null;
-
-            cached.lastcheck = now;
+            if (!smod) {
+                throw "missing source file";
+            }
+            if (smod > cmod) {
+                cached = null;
+            } else {
+                cached.lastcheck = now;
+            }
         }
     }
 
