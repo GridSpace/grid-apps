@@ -142,9 +142,10 @@
                 case api.ui.ssmAdd: return func.sadd();
                 case api.ui.ssmDun: return func.sdone();
                 case api.ui.ssmClr:
-                    return api.uc.confirm("clear supports?").then(ok => {
-                        if (ok) func.sclear();
-                    });
+                    // return api.uc.confirm("clear supports?").then(ok => {
+                    //     if (ok) func.sclear();
+                    // });
+                    func.sclear();
             }
         });
         api.event.on("fdm.supports.detect", func.sgen = () => {

@@ -1243,6 +1243,7 @@
     }
 
     FDM.supports = function(settings, widget) {
+        let isBelt = settings.device.bedBelt;
         let process = settings.process;
         let size = process.sliceSupportSize;
         let min = process.sliceSupportArea || 1;
@@ -1250,7 +1251,9 @@
         buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
         let geo = new THREE.Geometry().fromBufferGeometry(buf);
-        let angle = (Math.PI / 180) * settings.process.sliceSupportAngle;
+        let rad = (Math.PI / 180);
+        let deg = (180 / Math.PI);
+        let angle = rad * settings.process.sliceSupportAngle;
         let thresh = -Math.sin(angle);
         let dir = new THREE.Vector3(0,0,-1)
         let add = [];
@@ -1299,7 +1302,12 @@
                 point.added = true;
             }
         }
-        geo.faces.filter(f => f.normal.z < thresh).forEach(face => {
+        let filter = isBelt ? (f) => {
+            return f.normal.z < thresh && f.normal.y < -0.001;
+        } : (f) => {
+            return f.normal.z < thresh;
+        };
+        geo.faces.filter(filter).forEach(face => {
             let a = geo.vertices[face.a];
             let b = geo.vertices[face.b];
             let c = geo.vertices[face.c];

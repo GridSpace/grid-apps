@@ -1715,12 +1715,12 @@
             sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM, show:isNotBelt}),
+            sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM, xshow:isNotBelt}),
             sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, modes:FDM, show:isNotBelt}),
 
             sliceSupportGen:     UC.newRow([
                 UI.ssaGen = UC.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-            ], { modes: FDM, class: "ext-buttons f-row grow", show:isNotBelt }),
+            ], { modes: FDM, class: "ext-buttons f-row grow", xshow:isNotBelt }),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
             sliceSupportManual: UC.newRow([
                 (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),

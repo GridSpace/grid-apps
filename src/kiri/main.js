@@ -2162,6 +2162,7 @@
         API.conf.save();
         let compare = sproc[mode][cproc[mode]];
         let same = true;
+        if (compare)
         for (let [key, val] of Object.entries(compare).filter(v => v[0] !== 'processName')) {
             let tval = process[key];
             // outputLoopLayers misbehaving and setting null on empty
