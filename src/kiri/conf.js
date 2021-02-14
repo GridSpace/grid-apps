@@ -658,7 +658,12 @@
                 animesh: "200"
             },
             // label state preferences
-            labels: {},
+            labels: {
+                'FDM-3-engage': false,
+                'FDM-3-retract': false,
+                'FDM-3-arrows': false,
+                'FDM-3-move': false
+            },
             // for passing temporary slice hints (topo currently)
             synth: {},
             // widget extra info for slicing (extruder mapping)

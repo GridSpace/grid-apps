@@ -196,6 +196,10 @@
         // so that they can use a separate extruder
         for (let widget of widgets.slice()) {
             let sslices = [];
+            if (!widget.slices) {
+                console.log('invalid widget', widget);
+                continue;
+            }
             for (let slice of widget.slices) {
                 if (!slice.supports) {
                     continue;
