@@ -257,6 +257,7 @@
             layer_max: 0
         },
         device: {
+            code: currentDeviceCode,
             get: currentDeviceName,
             set: noop, // set during init
             clone: noop // set during init
@@ -310,6 +311,10 @@
             live : "https://live.grid.space",
             grid : function() { return false },
             local : function() { return false }
+        },
+        process: {
+            code: currentProcessCode,
+            get: currentProcessName
         },
         platform,
         selection,
@@ -2185,6 +2190,11 @@
             if (val === '' && tval == null) {
                 continue;
             }
+            if (Array.isArray(tval) && Array.isArray(val)) {
+                if (JSON.stringify(tval) == JSON.stringify(val)) {
+                    continue;
+                }
+            }
             if (tval != val) {
                 // console.log(key, 'expected', val, 'got', tval);
                 same = false;
@@ -2551,13 +2561,14 @@
 
     function loadSettings(e, named) {
         let mode = getMode(),
-            name = e ? e.target.getAttribute("load") : named || "default",
+            name = e ? e.target.getAttribute("load") : named || currentProcessName() || "default",
             load = settings.sproc[mode][name];
 
         if (!load) return;
 
-        // clone loaded process into settings
-        settings.process = clone(load);
+        // cloning loaded process into settings requires user to save
+        // process before switching devices or risk losing any changes
+        settings.process = load;//clone(load);
         // update process name
         settings.process.processName = name;
         // save named process with the current device
@@ -2813,6 +2824,18 @@
 
     function currentDeviceName() {
         return settings.filter[getMode()];
+    }
+
+    function currentDeviceCode() {
+        return settings.devices[currentDeviceName()];
+    }
+
+    function currentProcessName() {
+        return settings.cproc[getMode()];
+    }
+
+    function currentProcessCode() {
+        return settings.sproc[getMode()][currentProcessName()];
     }
 
     function setControlsVisible(show) {

@@ -723,9 +723,8 @@
             let mode = API.mode.get(),
                 current = settings(),
                 local = isLocalDevice(devicename),
-                dproc = current.devproc[devicename],
                 dev = current.device = CONF.device_from_code(code,mode),
-                proc = current.process,
+                dproc = current.devproc[devicename], // last process name for this device
                 newdev = dproc === undefined,   // first time device is selected
                 predev = current.filter[mode],  // previous device selection
                 chgdev = predev !== devicename; // device is changing
@@ -734,10 +733,12 @@
             if (code.profiles) {
                 for (let profile of code.profiles) {
                     let profname = profile.processName;
+                    // if no saved profile by that name for this mode...
                     if (!current.sproc[mode][profname]) {
                         console.log('adding profile', profname, 'to', mode);
                         current.sproc[mode][profname] = profile;
                     }
+                    // if it's a new device, seed the new profile name as last profile
                     if (newdev && !current.devproc[devicename]) {
                         console.log('setting default profile for new device', devicename, 'to', profname);
                         current.devproc[devicename] = dproc = profname;
@@ -836,7 +837,9 @@
             API.view.update_fields();
             platform.update_size();
 
+            // store current device name for this mode
             current.filter[mode] = devicename;
+            // cache device record for this mode (restored in setMode)
             current.cdev[mode] = currentDevice = dev;
 
             if (dproc) {
@@ -994,6 +997,7 @@
             let exp = btoa(JSON.stringify({
                 version: KIRI.version,
                 device: selected,
+                process: API.process.code(),
                 code: devs[selected],
                 time: Date.now()
             }));
