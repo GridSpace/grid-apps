@@ -10,13 +10,14 @@
 * `P` client/worker interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape primarily)
 
+* `F` add profile only download / restore like devices
+* `F` bundle current profile into exported device
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)
 * `F` complete G2/G3 arc output / input (85% now)
 * `F` expose grouping feature
 * `F` SVG import to 3D part like images
-* `F` bundle current profile into exported device
 * `F` integrate svg nest arrange algorithm
 
 # FDM
@@ -27,6 +28,7 @@
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
 * `F` support pillar should conform to part
+* `F` support pillar should have solid top/bottom
 * `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
 * `F` control for size of purge block (with 0=disabled)
