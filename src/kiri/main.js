@@ -1375,6 +1375,7 @@
                 parseFloat(dev.bedHeight),
                 parseFloat(dev.maxHeight)
             );
+            SPACE.platform.update();
             return true;
         }
     }

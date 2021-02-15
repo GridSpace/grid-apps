@@ -890,6 +890,7 @@
         },
 
         platform: {
+            update:    updateDraws,
             tweenTo:   tweenPlatform,
             setSize:   setPlatformSizeUpdateGrid,
             setColor:  setPlatformColor,
