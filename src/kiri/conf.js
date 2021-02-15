@@ -655,7 +655,8 @@
                 exportPreview: false,
                 decimate: true,
                 detail: "good",
-                animesh: "200"
+                animesh: "200",
+                healMesh: false
             },
             // label state preferences
             labels: {

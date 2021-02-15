@@ -164,6 +164,8 @@ kiri.lang['en-us'] = {
     pt_deci_l:      "enable or disable point decimation\nduring port import. for faster slicing\nand lower memory usage",
     pt_qual_s:      "quality",
     pt_qual_l:      "level of detail to retain\nduring slicing operations\nlower is faster",
+    pt_heal_s:      "heal mesh",
+    pt_heal_l:      "attempt to heal\nnon-manifild meshes",
 
     xp_menu:        "exports",
 

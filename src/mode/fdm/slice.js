@@ -151,6 +151,7 @@
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: firstSliceHeight,
+            union: settings.controller.healMesh,
             // debug: true,
             // xray: 3,
             // view: view

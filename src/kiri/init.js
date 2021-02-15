@@ -152,6 +152,7 @@
         control.exportLocal = UI.exportLocal.checked;
         control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
+        control.healMesh = UI.healMesh.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         // platform.layout();
         API.conf.save();
@@ -1645,6 +1646,7 @@
             parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             decimate:         UC.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
+            healMesh:         UC.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
 
             prefadd:          UC.checkpoint($('prefs-add')),
 
@@ -2373,6 +2375,7 @@
             UI.reverseZoom.checked = control.reverseZoom;
             UI.autoSave.checked = control.autoSave;
             UI.decimate.checked = control.decimate;
+            UI.healMesh.checked = control.healMesh;
             lineTypeSave();
             detailSave();
             updateFPS();

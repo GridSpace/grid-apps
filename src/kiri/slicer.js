@@ -530,6 +530,9 @@
             // for topo slices, we just need the raw lines
             if (!topoMode && !simpleMode) {
                 slice.groups = connectLines(slice.lines, slice.z);
+                if (options.union) {
+                    slice.groups = POLY.flatten(POLY.union(POLY.nest(slice.groups), null, true), null, true);
+                }
                 if ((debug && slice.lines.excessive) || xray) {
                     const dash = xray || 3;
                     slice.lines.forEach((line, i) => {
