@@ -340,7 +340,10 @@
         util: {
             isSecure,
             ui2rec: updateSettingsFromFields,
-            rec2ui: updateFieldsFromSettings
+            rec2ui: updateFieldsFromSettings,
+            download: downloadBlob,
+            b64enc: obj => { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
+            b64dec: obj => { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
         },
         view: {
             get: function() { return viewMode },
@@ -2221,18 +2224,19 @@
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
-                data = JSON.parse(new TextDecoder().decode(base64js.toByteArray(data)));
+                data = API.util.b64dec(data);
             } catch (e) {
-                UC.alert('invalid settings format');
+                UC.alert('invalid import format');
                 console.log('data',data);
                 return;
             }
         }
         if (LOCAL) console.log('import',data);
         let isSettings = (data.settings && data.version && data.time);
+        let isProcess = (data.process && data.version && data.time && data.mode && data.name);
         let isDevice = (data.device && data.version && data.time);
         let isWork = (data.work);
-        if (!isSettings && !isDevice) {
+        if (!isSettings && !isDevice && !isProcess) {
             UC.alert('invalid settings or device format');
             console.log('data',data);
             return;
@@ -2249,6 +2253,19 @@
                 } else {
                     settings.devices[data.device] = data.code;
                     API.show.devices();
+                }
+            }
+            if (isProcess) {
+                if (settings.sproc[data.mode][data.name]) {
+                    UC.confirm(`Replace process ${data.name}?`).then(yes => {
+                        if (yes) {
+                            settings.sproc[data.mode][data.name] = data.process;
+                            API.conf.show();
+                        }
+                    });
+                } else {
+                    settings.sproc[data.mode][data.name] = data.process;
+                    API.conf.show();
                 }
             }
             if (isSettings) {
@@ -2273,7 +2290,8 @@
         if (ask) {
             let opt = {};
             let prompt = isDevice ?
-                `Import device "${data.device}"?` :
+                `Import device "${data.device}"?` : isProcess ?
+                `Import process "${data.name}"?` :
                 `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
             if (data.screen) {
                 opt.pre = [
@@ -2296,7 +2314,7 @@
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
-        return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify({
+        return API.util.b64enc({
             settings: settings,
             version: KIRI.version,
             screen: shot,
@@ -2307,7 +2325,7 @@
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
-        })));
+        });
     }
 
     function platformLoadFiles(files,group) {
@@ -2559,6 +2577,24 @@
         }
     }
 
+    function exportSettings(e) {
+        let mode = getMode(),
+            name = e.target.getAttribute("name"),
+            data = API.util.b64enc({
+                process: settings.sproc[mode][name],
+                version: KIRI.version,
+                moto: MOTO.id,
+                time: Date.now(),
+                mode,
+                name
+            });
+        UC.prompt("Export Process Filename", name).then(name => {
+            if (name) {
+                API.util.download(data, `${name}.km`);
+            }
+        });
+    }
+
     function loadSettings(e, named) {
         let mode = getMode(),
             name = e ? e.target.getAttribute("load") : named || currentProcessName() || "default",
@@ -2605,6 +2641,7 @@
             let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
                 edit = DOC.createElement('button'),
+                xprt = DOC.createElement('button'),
                 del = DOC.createElement('button'),
                 name = sk;
 
@@ -2629,9 +2666,15 @@
             edit.innerHTML = '<i class="far fa-edit"></i>';
             edit.onclick = editSettings;
 
+            xprt.setAttribute('name', sk);
+            xprt.setAttribute('title', 'export');
+            xprt.innerHTML = '<i class="fas fa-download"></i>';
+            xprt.onclick = exportSettings;
+
             row.setAttribute("class", "flow-row");
             row.appendChild(edit);
             row.appendChild(load);
+            row.appendChild(xprt);
             row.appendChild(del);
             table.appendChild(row);
         });
@@ -2841,6 +2884,12 @@
     function setControlsVisible(show) {
         $('mid-lcol').style.display = show ? 'flex' : 'none';
         $('mid-rcol').style.display = show ? 'flex' : 'none';
+    }
+
+    function downloadBlob(data, filename) {
+        let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
+        $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
+        $('_dexport_').click();
     }
 
     // prevent safari from exiting full screen mode

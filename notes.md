@@ -10,7 +10,6 @@
 * `P` client/worker interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape primarily)
 
-* `F` add profile only download / restore like devices
 * `F` bundle current profile into exported device
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units

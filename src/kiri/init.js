@@ -549,7 +549,7 @@
                 if (reply) {
                     let res = JSON.parse(reply);
                     if (res && res.ver && res.rec) {
-                        let set = JSON.parse(atob(res.rec));
+                        let set = API.util.b64dec(res.rec);
                         set.id = res.space;
                         set.ver = res.ver;
                         API.conf.put(set);
@@ -563,7 +563,7 @@
     }
 
     function storeSettingsToServer(display) {
-        let set = btoa(JSON.stringify(settings()));
+        let set = API.util.b64enc(settings());
         new moto.Ajax(function(reply) {
             if (reply) {
                 let res = JSON.parse(reply);
@@ -586,10 +586,7 @@
             .replace(/\./g,'_');
         UC.prompt("Export Device Filename", name).then(name => {
             if (name) {
-                let blob = new Blob([exp], {type: "octet/stream"}),
-                    url = WIN.URL.createObjectURL(blob);
-                $('mod-any').innerHTML = `<a id="sexport" href="${url}" download="${name}.km">x</a>`;
-                $('sexport').click();
+                API.util.download(exp, `${name}.km`);
             }
         });
     }
@@ -601,13 +598,7 @@
             if (name.toLowerCase().indexOf(".stl") < 0) {
                 name = `${name}.stl`;
             }
-            let xprt = API.selection.export(),
-                blob = new Blob([xprt], {type: "octet/stream"}),
-                url = WIN.URL.createObjectURL(blob);
-            $('mod-any').innerHTML = [
-                `<a id="sexport" href="${url}" download="${name}">x</a>`
-            ].join('');
-            $('sexport').click();
+            API.util.download(API.selection.export(), name);
         });
     }
 
@@ -628,13 +619,8 @@
         UC.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
             if (name) {
                 let work = $('incwork').checked,
-                    json = API.conf.export({work}),
-                    blob = new Blob([json], {type: "octet/stream"}),
-                    url = WIN.URL.createObjectURL(blob);
-                $('mod-any').innerHTML = [
-                    `<a id="sexport" href="${url}" download="${name}.km">x</a>`
-                ].join('');
-                $('sexport').click();
+                    json = API.conf.export({work});
+                API.util.download(json, `${name}.km`);
             }
         });
     }
@@ -994,13 +980,13 @@
             showDevices();
         };
         UI.deviceExport.onclick = function() {
-            let exp = btoa(JSON.stringify({
+            let exp = API.util.b64enc({
                 version: KIRI.version,
                 device: selected,
                 process: API.process.code(),
                 code: devs[selected],
                 time: Date.now()
-            }));
+            });
             deviceExport(exp, selected);
         };
 
