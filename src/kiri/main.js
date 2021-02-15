@@ -1351,9 +1351,35 @@
         updateSelectedBounds();
     }
 
+    function fitDeviceToWidgets() {
+        let maxy = 0;
+        forAllWidgets(function(widget) {
+            let wb = widget.mesh.getBoundingBox().clone();
+            maxy = Math.max(maxy, wb.max.y - wb.min.y);
+        });
+        let dev = settings.device;
+        if (maxy > dev.bedDepth) {
+            dev.bedDepthSave = dev.bedDepth;
+            dev.bedDepth = maxy + 10;
+            SPACE.platform.setSize(
+                parseInt(dev.bedWidth),
+                parseInt(dev.bedDepth),
+                parseFloat(dev.bedHeight),
+                parseFloat(dev.maxHeight)
+            );
+            return true;
+        }
+    }
+
     function updateSelectedBounds(widgets) {
         // update bounds on selection for drag limiting
         let isBelt = settings.device.bedBelt;
+        if (isBelt) {
+            if (fitDeviceToWidgets()) {
+                platform.update_origin();
+                SPACE.update();
+            }
+        }
         let dvy = settings.device.bedDepth;
         let dvx = settings.device.bedWidth;
         let bounds_sel = new THREE.Box3();
@@ -1614,20 +1640,6 @@
             wb.max.y += wp.y;
             bounds.union(wb);
         });
-        if (settings.device.bedBelt) {
-            let dev = settings.device,
-                isBelt = dev.bedBelt,
-                maxy = bounds.max.y - bounds.min.y;
-            // if (maxy > dev.bedDepth) {
-            //     console.log({maxy}, settings.device.bedDepth)
-            //     SPACE.platform.setSize(
-            //         parseInt(dev.bedWidth),
-            //         parseInt(maxy),
-            //         parseFloat(dev.bedHeight),
-            //         parseFloat(dev.maxHeight)
-            //     );
-            // }
-        }
         return settings.bounds = bounds;
     }
 
@@ -1889,6 +1901,10 @@
                 break;
             case MODES.FDM:
                 space = space || ((proc.sliceSupportExtra || 0) * 2) + 1;
+                // auto resize device to support a larger object
+                if (isBelt) {
+                    fitDeviceToWidgets();
+                }
                 break;
         }
 
@@ -1942,7 +1958,7 @@
             let bounds = platformUpdateBounds(),
                 movey = -(dev.bedDepth / 2 + bounds.min.y);
             forAllWidgets(widget => {
-                // only move the master widget in the group
+                // only move the root widget in the group
                 if (widget.id === widget.group.id) {
                     widget.move(0, movey + 5, 0)
                 }
