@@ -822,6 +822,8 @@
 
             API.view.update_fields();
             platform.update_size();
+            platform.update_origin();
+            platform.update();
 
             // store current device name for this mode
             current.filter[mode] = devicename;

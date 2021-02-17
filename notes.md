@@ -54,6 +54,7 @@
 
 # FDM - BELT
 
+* `B` ranges don't work with anchors
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
 * `F` arrange should just align down Z. no side to side.

@@ -109,6 +109,7 @@
         load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone,
+        update: SPACE.platform.update,
         set_font: SPACE.platform.setFont,
         set_axes: SPACE.platform.setAxes,
         set_volume: SPACE.platform.setVolume,
