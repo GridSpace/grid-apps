@@ -411,7 +411,7 @@
                         params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,
-                        onBelt: slice.belt.touch,
+                        onBelt: slice.belt && slice.belt.touch,
                         pretract: (wipeDist) => {
                             if (lastLayer && lastLayer.length) {
                                 let lastOut = lastLayer.last();
