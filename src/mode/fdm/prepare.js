@@ -314,10 +314,11 @@
                         }
                     }
                 }
+                // todo remove b/c this is now calculated at slice time
                 // flag slices as being on or off the bed / belt
-                for (let slice of widget.slices) {
-                    slice.onbelt = Math.abs(minby - slice.minby) < 0.01;
-                }
+                // for (let slice of widget.slices) {
+                //     slice.onbelt = Math.abs(minby - slice.minby) < 0.01;
+                // }
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
@@ -410,7 +411,7 @@
                         params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,
-                        onBelt: slice.onbelt,
+                        onBelt: slice.belt.touch,
                         pretract: (wipeDist) => {
                             if (lastLayer && lastLayer.length) {
                                 let lastOut = lastLayer.last();

@@ -845,7 +845,7 @@
                 // and enforce optimal shell order (outer first)
                 if (isBelt && opt.onBelt) {
                     startPoint = startClone;
-                    shellOrder = 1;
+                    shellOrder = -1;
                 }
 
                 // top object

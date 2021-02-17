@@ -299,7 +299,7 @@
             }, "offsets");
 
             // add lead in when specified in belt mode
-            if (!isSynth && isBelt && spro.firstLayerBeltLead) {
+            if (!isSynth && isBelt) {
                 let wb = widget.bounds;
                 // find adjusted zero point from slices
                 let smin = Infinity;
@@ -336,7 +336,7 @@
                 while (start.up && start.topShells().length === 0) {
                     start = start.up;
                 }
-                while (start && offset >= sliceHeight) {
+                while (offset && start && offset >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {
                         addto = newSlice(start.z - sliceHeight);
