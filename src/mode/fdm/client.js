@@ -313,18 +313,18 @@
                 let lerp = UTIL.lerp(0,dist,dw).map(v => v/dist);
                 lerp.pop();
                 for (let pct of lerp) {
-                    let point = new THREE.Vector3(from.x + d.x * pct, from.z + d.z * pct - ip.y, from.y + d.y * pct);
-                    addSupportAtPoint(targets, point);
+                    let point = new THREE.Vector3(from.x + d.x * pct, from.z + d.z * pct, from.y + d.y * pct);
+                    addSupportAtPoint(targets, point, ip);
                 }
             }
             ws.push(Object.clone(rec));
             fromPillar = addWidgetSupport(iw, rec);
             API.conf.save();
         });
-        function addSupportAtPoint(targets, point) {
+        function addSupportAtPoint(targets, point, ip) {
             let up = new THREE.Vector3(0,1,0)
             let dn = new THREE.Vector3(0,-1,0)
-            let rp = new THREE.Vector3(point.x, point.y, -point.z);
+            let rp = new THREE.Vector3(point.x + ip.x, point.y, -point.z - ip.y);
             let iup = new THREE.Raycaster(rp, up)
                 .intersectObjects(targets, false)
                 .filter(t => !t.object.pillar);
@@ -338,7 +338,7 @@
                     let ws = (wa.support = wa.support || []);
                     let phi = iup[0].point;
                     let plo = idn[0].point;
-                    let mp = (phi.y - plo.y) / 2;
+                    let mp = (phi.y + plo.y) / 2;
                     let dy = Math.abs(phi.y - plo.y);
                     let dw = api.conf.get().process.sliceSupportSize / 2;
                     let rec = { x:point.x, y:point.z, z:mp, dw, dh:dy, id: Math.random() * 0xffffffffff };
