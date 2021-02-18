@@ -10,7 +10,7 @@
         FDM = KIRI.driver.FDM,
         SPACE, API, VIEWS, LANG, PROC, UI, UC,
         p1, p2, iw,
-        lastMode, lastView, lastPillar,
+        lastMode, lastView, lastPillar, fromPillar,
         isFdmMode = false,
         addingSupports = false,
         alert = [],
@@ -186,6 +186,7 @@
             delbox('supp');
             api.hide.alert(alert);
             api.feature.hover = addingSupports = false;
+            fromPillar = undefined;
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
             func.sdone();
@@ -263,8 +264,8 @@
                 });
             }
         });
-        api.event.on("mouse.hover.up", on => {
-            let { object, event } = on;
+        api.event.on("mouse.hover.up", func.hoverup = (on = {}) => {
+            let { event } = on;
             if (!isFdmMode) {
                 return;
             }
@@ -286,6 +287,7 @@
                 });
                 sa.splice(ix,1);
                 API.conf.save();
+                fromPillar = undefined;
                 return;
             }
             if (!iw) return;
@@ -299,8 +301,11 @@
             let ws = (wa.support = wa.support || []);
             let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy, id = Date.now();
             let rec = {x, y, z, dw, dh, id};
+            if (fromPillar && event && event.shiftKey) {
+                // console.log("lerp pillars from", fromPillar, 'to', rec);
+            }
             ws.push(Object.clone(rec));
-            addWidgetSupport(iw, rec);
+            fromPillar = addWidgetSupport(iw, rec);
             API.conf.save();
         });
         api.event.on("mouse.hover", data => {
@@ -310,11 +315,8 @@
             if (!addingSupports) {
                 return;
             }
-            // delbox('intZ');
-            // delbox('intW');
-            // addbox(point, 0xff0000, 'intZ');
             delbox('supp');
-            const { int, type, point } = data;
+            const { int, type, point, event } = data;
             const pillar = int ? int.object.pillar : undefined;
             if (lastPillar) {
                 lastPillar.box.material.color.r = 0;
@@ -323,6 +325,9 @@
             if (pillar) {
                 pillar.box.material.color.r = 0.5;
                 lastPillar = pillar;
+                if (event && (event.metaKey || event.ctrlKey)) {
+                    return func.hoverup();
+                }
                 return;
             }
             if (int && type === 'widget') {
@@ -341,10 +346,10 @@
                 .append(SPACE.internals().platform)
                 .appendAll(activeSupports())
                 ;
-            let i2 = ray.intersectObjects(targets, false);
+            let i2 = ray.intersectObjects(targets, false).filter(t => t.object.widget);
             if (i2 && i2.length > 0) {
                 // prevent false matches close to origin of ray
-                i2 = i2.filter(i => i.distance > 0.01);
+                i2 = i2.filter(i => i.distance > 0.1);
                 // prevent single point base to top matches
                 if (i2.length > 1) {
                     p2 = i2[0].point;
@@ -352,11 +357,13 @@
                     let hy = (p1.y + p2.y) / 2;
                     let dy = Math.abs(p1.y - p2.y);
                     let dw = api.conf.get().process.sliceSupportSize / 2;
-                    // addbox(p2, 0x00ff00, 'intW');
                     addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
                         x:dw, y:dw, z:dy
                     });
                 }
+            }
+            if (event && event.altKey) {
+                return func.hoverup();
             }
         });
     }
@@ -383,18 +390,19 @@
     }
 
     function addWidgetSupport(widget, pos) {
-        const { x, y, z, dw, dh, id } = pos;
+        const { x, y, z, rz, dw, dh, id } = pos;
         const sups = widget.sups = (widget.sups || {});
         // prevent duplicate restore from repeated settings load calls
         if (!sups[id]) {
             pos.box = addbox(
-                { x, y, z }, 0x0000dd, id,
+                { x, y, z, rz }, 0x0000dd, id,
                 { x:dw, y:dw, z:dh }, { group: widget.mesh }
             );
             pos.box.pillar = Object.assign({widget}, pos);
             sups[id] = pos;
             widget.adds.push(pos.box);
         }
+        return sups[id];
     }
 
     function updateVisiblity() {
@@ -431,7 +439,7 @@
         }
     }
 
-    function addbox(point, color, name, dim = {x:1,y:1,z:1}, opt = {}) {
+    function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
         delbox(name);
         const box = boxes[name] = new THREE.Mesh(
             new THREE.BoxGeometry(dim.x, dim.y, dim.z),
@@ -449,6 +457,9 @@
         group.add(box);
         box.groupTo = group;
 
+        if (dim.rz) {
+            opt.rotate = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), dim.rz);
+        }
         if (opt.rotate) {
             opt.matrix = new THREE.Matrix4().makeRotationFromQuaternion(opt.rotate);
         }

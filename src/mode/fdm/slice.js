@@ -201,7 +201,7 @@
                             continue;
                         }
                         for (let pslice of peer.slices) {
-                            if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.05) {
+                            if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.1) {
                                 continue;
                             }
                             // offset pslice tops by spro.sliceSupportOffset
