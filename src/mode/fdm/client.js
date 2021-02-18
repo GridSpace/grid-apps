@@ -302,12 +302,51 @@
             let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy, id = Date.now();
             let rec = {x, y, z, dw, dh, id};
             if (fromPillar && event && event.shiftKey) {
-                // console.log("lerp pillars from", fromPillar, 'to', rec);
+                let targets = api.widgets.meshes().append(SPACE.internals().platform);
+                let from = fromPillar,
+                    d = {
+                        x: rec.x - from.x,
+                        y: rec.y - from.y,
+                        z: rec.z - from.z
+                    };
+                let dist = Math.sqrt(d.x*d.x + d.y*d.y + d.z*d.z);
+                let lerp = UTIL.lerp(0,dist,dw).map(v => v/dist);
+                lerp.pop();
+                for (let pct of lerp) {
+                    let point = new THREE.Vector3(from.x + d.x * pct, from.z + d.z * pct - ip.y, from.y + d.y * pct);
+                    addSupportAtPoint(targets, point);
+                }
             }
             ws.push(Object.clone(rec));
             fromPillar = addWidgetSupport(iw, rec);
             API.conf.save();
         });
+        function addSupportAtPoint(targets, point) {
+            let up = new THREE.Vector3(0,1,0)
+            let dn = new THREE.Vector3(0,-1,0)
+            let rp = new THREE.Vector3(point.x, point.y, -point.z);
+            let iup = new THREE.Raycaster(rp, up)
+                .intersectObjects(targets, false)
+                .filter(t => !t.object.pillar);
+            if (iup.length && iup.length % 2 === 0) {
+                let idn = new THREE.Raycaster(rp, dn)
+                    .intersectObjects(targets, false)
+                    .filter(t => !t.object.pillar);
+                if (idn.length && idn.length % 2 === 0) {
+                    iw = iup[0].object.widget || iw;
+                    let wa = api.widgets.annotate(iw.id);
+                    let ws = (wa.support = wa.support || []);
+                    let phi = iup[0].point;
+                    let plo = idn[0].point;
+                    let mp = (phi.y - plo.y) / 2;
+                    let dy = Math.abs(phi.y - plo.y);
+                    let dw = api.conf.get().process.sliceSupportSize / 2;
+                    let rec = { x:point.x, y:point.z, z:mp, dw, dh:dy, id: Math.random() * 0xffffffffff };
+                    ws.push(Object.clone(rec));
+                    fromPillar = addWidgetSupport(iw, rec);
+                }
+            }
+        }
         api.event.on("mouse.hover", data => {
             if (!isFdmMode) {
                 return;
@@ -342,25 +381,19 @@
             if (int && int.face && int.face.normal.z < -0.1) {
                 dir.y = -1;
             }
-            let targets = api.widgets.meshes()
-                .append(SPACE.internals().platform)
-                .appendAll(activeSupports())
-                ;
-            let i2 = ray.intersectObjects(targets, false).filter(t => !t.object.pillar);
-            if (i2 && i2.length > 0) {
-                // prevent false matches close to origin of ray
-                i2 = i2.filter(i => i.distance > 0.1);
-                // prevent single point base to top matches
-                if (i2.length > 1) {
-                    p2 = i2[0].point;
-                    iw = i2[0].object.widget || iw;
-                    let hy = (p1.y + p2.y) / 2;
-                    let dy = Math.abs(p1.y - p2.y);
-                    let dw = api.conf.get().process.sliceSupportSize / 2;
-                    addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
-                        x:dw, y:dw, z:dy
-                    });
-                }
+            let targets = api.widgets.meshes().append(SPACE.internals().platform);
+            let i2 = ray.intersectObjects(targets, false)
+                .filter(t => !t.object.pillar)  // eliminate other pillars
+                .filter(i => i.distance > 0.1); // false matches close to origin of ray
+            if (i2.length && i2.length % 2 === 0) {
+                p2 = i2[0].point;
+                iw = i2[0].object.widget || iw;
+                let hy = (p1.y + p2.y) / 2;
+                let dy = Math.abs(p1.y - p2.y);
+                let dw = api.conf.get().process.sliceSupportSize / 2;
+                addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
+                    x:dw, y:dw, z:dy
+                });
             }
             if (event && event.altKey) {
                 return func.hoverup();
