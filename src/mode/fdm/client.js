@@ -346,7 +346,7 @@
                 .append(SPACE.internals().platform)
                 .appendAll(activeSupports())
                 ;
-            let i2 = ray.intersectObjects(targets, false).filter(t => t.object.widget);
+            let i2 = ray.intersectObjects(targets, false).filter(t => !t.object.pillar);
             if (i2 && i2.length > 0) {
                 // prevent false matches close to origin of ray
                 i2 = i2.filter(i => i.distance > 0.1);
