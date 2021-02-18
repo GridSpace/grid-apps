@@ -311,17 +311,26 @@
                     };
                 let dist = Math.sqrt(d.x*d.x + d.y*d.y + d.z*d.z);
                 let lerp = UTIL.lerp(0,dist,dw).map(v => v/dist);
+                let angle = rec.rz = Math.atan2(d.y,d.x);
+                let fromrec = ws.filter(r => r.id === from.id)[0];
+                if (fromrec) {
+                    from.rz = fromrec.rz = angle;
+                    let q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), angle);
+                    let m = new THREE.Matrix4().makeRotationFromQuaternion(q);
+                    from.box.geometry.applyMatrix4(m);
+                }
                 lerp.pop();
+                let seed = Math.random();
                 for (let pct of lerp) {
                     let point = new THREE.Vector3(from.x + d.x * pct, from.z + d.z * pct, from.y + d.y * pct);
-                    addSupportAtPoint(targets, point, ip);
+                    addSupportAtPoint(targets, point, ip, angle, seed++);
                 }
             }
             ws.push(Object.clone(rec));
             fromPillar = addWidgetSupport(iw, rec);
             API.conf.save();
         });
-        function addSupportAtPoint(targets, point, ip) {
+        function addSupportAtPoint(targets, point, ip, angle, id) {
             let up = new THREE.Vector3(0,1,0)
             let dn = new THREE.Vector3(0,-1,0)
             let rp = new THREE.Vector3(point.x + ip.x, point.y, -point.z - ip.y);
@@ -341,7 +350,7 @@
                     let mp = (phi.y + plo.y) / 2;
                     let dy = Math.abs(phi.y - plo.y);
                     let dw = api.conf.get().process.sliceSupportSize / 2;
-                    let rec = { x:point.x, y:point.z, z:mp, dw, dh:dy, id: Math.random() * 0xffffffffff };
+                    let rec = { rz:angle, x:point.x, y:point.z, z:mp, dw, dh:dy, id: id * 0xffffffffff };
                     ws.push(Object.clone(rec));
                     fromPillar = addWidgetSupport(iw, rec);
                 }
@@ -428,8 +437,8 @@
         // prevent duplicate restore from repeated settings load calls
         if (!sups[id]) {
             pos.box = addbox(
-                { x, y, z, rz }, 0x0000dd, id,
-                { x:dw, y:dw, z:dh }, { group: widget.mesh }
+                { x, y, z }, 0x0000dd, id,
+                { x:dw, y:dw, z:dh, rz }, { group: widget.mesh }
             );
             pos.box.pillar = Object.assign({widget}, pos);
             sups[id] = pos;
