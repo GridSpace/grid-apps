@@ -524,7 +524,7 @@
                 }
                 // add brim, if specified
                 if (first && firstLayerBrim) {
-                    let {emit, tool } = first;
+                    let { emit, tool } = first;
                     let y = maxy;
                     let z = minz;
                     let b = Math.max(firstLayerBrim, 1);

@@ -398,18 +398,21 @@
                     });
                     lastType = newType;
                 }, "infill");
-            } else if (isSynth && supportDensity) {
+            } else if (isSynth) {
                 forSlices(0.5, 0.7, slice => {
+                    let params = getRangeParameters(settings, slice.index);
+                    let density = params.sliceSupportDensity;
+                    if (density)
                     for (let top of slice.tops) {
                         let offset = [];
                         POLY.expand(top.shells, -nozzleSize/4, slice.z, offset);
-                        fillSupportPolys(offset, lineWidth, supportDensity, slice.z);
+                        fillSupportPolys(offset, lineWidth, density, slice.z);
                         top.fill_lines = offset.map(o => o.fill).flat().filter(v => v);
                     }
                 }, "infill");
             }
 
-            // belt supports are their own thing
+            // auto support generation
             if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
                 forSlices(0.7, 0.8, slice => {
                     doSupport(slice, spro, shadow);
