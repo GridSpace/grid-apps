@@ -9,8 +9,11 @@
         UTIL = BASE.util,
         FDM = KIRI.driver.FDM,
         SPACE, API, VIEWS, LANG, PROC, UI, UC,
+        nextID = Date.now(),
         p1, p2, iw,
-        lastMode, lastView, lastPillar, fromPillar,
+        lastBox,
+        lastMode, lastView,
+        lastPillar, fromPillar,
         isFdmMode = false,
         addingSupports = false,
         alert = [],
@@ -291,16 +294,16 @@
                 return;
             }
             if (!iw) return;
+            let { point, dim } = lastBox;
             p1.y = Math.max(0, p1.y);
             p2.y = Math.max(0, p2.y);
-            let hy = (p1.y + p2.y) / 2;
-            let dh = Math.abs(p1.y - p2.y);
+            let dh = dim.z;
             let dw = api.conf.get().process.sliceSupportSize / 2;
             let ip = iw.track.pos;
             let wa = api.widgets.annotate(iw.id);
             let ws = (wa.support = wa.support || []);
-            let x = p1.x - ip.x, y = -p1.z - ip.y, z = hy, id = Date.now();
-            let rec = {x, y, z, dw, dh, id};
+            let id = ++nextID;
+            let rec = {x: point.x - ip.x, y: -point.z - ip.y, z: point.y, dw, dh, id};
             if (fromPillar && event && event.shiftKey) {
                 let targets = api.widgets.meshes().append(SPACE.internals().platform);
                 let from = fromPillar,
@@ -350,7 +353,7 @@
                     let mp = (phi.y + plo.y) / 2;
                     let dy = Math.abs(phi.y - plo.y);
                     let dw = api.conf.get().process.sliceSupportSize / 2;
-                    let rec = { rz:angle, x:point.x, y:point.z, z:mp, dw, dh:dy, id: id * 0xffffffffff };
+                    let rec = { rz:angle, x:point.x, y:point.z, z:mp, dw, dh:dy, id };
                     ws.push(Object.clone(rec));
                     fromPillar = addWidgetSupport(iw, rec);
                 }
@@ -416,7 +419,6 @@
             Object.values(widget.sups || {}).forEach(support => {
                 active.push(support.box);
                 support.box.support = true;
-                // console.log({support});
             });
         });
         return active;
@@ -494,6 +496,8 @@
         box.position.x = point.x;
         box.position.y = point.y;
         box.position.z = point.z;
+
+        lastBox = {point, dim};
 
         const group = opt.group || SPACE.scene
         group.add(box);

@@ -2271,10 +2271,11 @@
                 }
             }
             if (isSettings) {
+                clearWorkspace();
                 settings = CONF.normalize(data.settings);
                 SDB.setItem('ws-settings', JSON.stringify(settings));
-                if (LOCAL) console.log('settings',Object.clone(settings));
                 restoreSettings();
+                if (LOCAL) console.log('settings',Object.clone(settings));
                 if (isWork) {
                     API.platform.clear();
                     KIRI.codec.decode(data.work).forEach(widget => {
@@ -2416,7 +2417,6 @@
 
     function restoreSettings(save) {
         let newset = ls2o('ws-settings') || settings;
-
         settings = CONF.normalize(newset);
         // override camera from settings
         if (settings.controller.view) {

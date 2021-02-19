@@ -566,12 +566,48 @@
             return int;
         }
 
-        function outputTraces(poly, extrude) {
+        function outputTraces(poly, opt = {}) {
             if (!poly) return;
             if (Array.isArray(poly)) {
-                outputOrderClosest(poly, function(next) {
-                    outputTraces(next, extrude);
-                }, null);
+                if (opt.sort) {
+                    let polys = poly.slice().sort(function(a,b) {
+                        return (a.perimeter() - b.perimeter()) * opt.sort;
+                    });
+                    let debug = polys.length > 3;
+                    let last;
+                    while (polys.length) {
+                        let next;
+                        for (let p of polys) {
+                            if (!last) {
+                                next = p;
+                                break;
+                            }
+                            if (opt.sort > 0) {
+                                // in-out
+                                if (last.isInside(p)) {
+                                    next = p;
+                                    break;
+                                }
+                            } else {
+                                // out-in
+                                if (p.isInside(last)) {
+                                    next = p;
+                                    break;
+                                }
+                            }
+                        }
+                        if (next) {
+                            last = next;
+                            polys.remove(next);
+                            outputTraces(next, opt);
+                        } else {
+                            last = null;
+                        }
+                    }
+                }
+                // outputOrderClosest(poly, function(next) {
+                //     outputTraces(next, opt);
+                // }, null);
             } else {
                 let finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
@@ -580,7 +616,7 @@
                     accel: finishShell,
                     wipe: process.outputWipeDistance || 0,
                     coast: firstLayer ? 0 : coastDist,
-                    extrude: pref(extrude, shellMult),
+                    extrude: pref(opt.extrude, shellMult),
                     onfirst: function(firstPoint) {
                         if (startPoint.distTo2D(firstPoint) > retractDist) {
                             retract();
@@ -776,11 +812,11 @@
          * the special exception that depth is considered into distance
          * so that inner polygons are emitted first.
          *
-         * @param {Array} array of Polygon or Polygon wrappers
-         * @param {Function} fn
-         * @param {Function} fnp convert 'next' object into a Polygon
+         * @param {Array} array of Polygons or Polygon wrappers (tops)
+         * @param {Function} fn call to emit next candidate
+         * @param {Function} fnp convert 'next' object into a Polygon for closeness
          */
-        function outputOrderClosest(array, fn, fnp, newTop) {
+        function outputOrderClosest(array, fn, fnp) {
             if (array.length === 1) {
                 return fn(array[0]);
             }
@@ -800,7 +836,6 @@
                         d: find.distance - (poly.depth * thinWall),
                     });
                 }
-                newTop = false;
                 if (order.length === 0) {
                     return;
                 }
@@ -848,23 +883,24 @@
                     shellOrder = -1;
                 }
 
-                // top object
-                let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
+                // innermost shells
+                let inner = next.innerShells() || [];
 
                 // output inner polygons
-                if (shellOrder === 1)
-                outputTraces([].appendAll(next.innerShells() || []));
+                if (shellOrder === 1) outputTraces(inner);
+
+                outputTraces(next.shells, { sort: shellOrder });
 
                 // sort perimeter polygon by length to go out-to-in or in-to-out
-                (next.shells || []).sort(function(a,b) {
-                    return a.perimeter() > b.perimeter() ? shellOrder : -shellOrder;
-                }).forEach(function(poly, index) {
-                    outputTraces(poly);
-                });
+                // this causes too much seeking when nesting splits into disconnected areas
+                // (next.shells || []).sort(function(a,b) {
+                //     return a.perimeter() > b.perimeter() ? shellOrder : -shellOrder;
+                // }).forEach(function(poly, index) {
+                //     outputTraces(poly);
+                // });
 
                 // output outer polygons
-                if (shellOrder === -1)
-                outputTraces([].appendAll(next.innerShells() || []));
+                if (shellOrder === -1) outputTraces(inner);
 
                 // output thin fill
                 outputFills(next.thin_fill, {near: true});
@@ -876,6 +912,7 @@
                 lastTop = next;
             }
         }, function(obj) {
+            // for tops
             return obj instanceof Polygon ? obj : obj.poly;
         });
 
