@@ -571,7 +571,6 @@
                         let dist = p.first().distTo2D(p.last());
                         if (dist < 1) p.open = false;
                     } });
-
                     if (opt.danger && opt.thin) {
                         top.thin_fill = [];
                         let layers = POLY.inset(top_poly, offsetN, count, z);
@@ -582,8 +581,8 @@
                             polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
                             if (polys.length) {
                                 top.thin_fill.appendAll(cullIntersections(
-                                    fillArea(polys, 45, off/2, []),//, 0.01, off*2),
-                                    fillArea(polys, 135, off/2, [])//, 0.01, off*2),
+                                    fillArea(polys, 45, off, [], off/4, off*4),
+                                    fillArea(polys, 135, off, [], off/4, off*4),
                                 ));
                             }
                         });
@@ -607,7 +606,6 @@
                         oso.gaps.forEach((polys, i) => {
                             let off = (i == 0 ? offset1 : offsetN);
                             polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
-                            // polys.forEach(p => { slice.solids.trimmed.push(p); });
                             top.thin_fill.appendAll(cullIntersections(
                                 fillArea(polys, 45, off/2, [], 0.01, off*2),
                                 fillArea(polys, 135, off/2, [], 0.01, off*2),
