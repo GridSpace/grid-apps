@@ -59,6 +59,7 @@
     FDM.slice = function(settings, widget, onupdate, ondone) {
         FDM.fixExtruders(settings);
         let render = settings.render !== false,
+            ctrl = settings.controller,
             spro = settings.process,
             sdev = settings.device,
             isBelt = sdev.bedBelt,
@@ -85,8 +86,8 @@
             beltfact = Math.cos(Math.PI/4),
             invbfact = 1 / beltfact;
 
-        isFlat = settings.controller.lineType === "flat";
-        isThin = !isFlat && settings.controller.lineType === "line";
+        isFlat = ctrl.lineType === "flat";
+        isThin = !isFlat && ctrl.lineType === "line";
         offset = lineWidth / 2;
 
         if (isFlat) {
@@ -151,7 +152,7 @@
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: firstSliceHeight,
-            union: settings.controller.healMesh,
+            union: ctrl.healMesh,
             // debug: true,
             // xray: 3,
             // view: view
@@ -289,7 +290,8 @@
                 doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls && !isSynth,
-                    widget: widget
+                    widget: widget,
+                    danger: ctrl.danger
                 });
                 if (solid) {
                     let fillSpace = fillSpacing * spaceMult;
@@ -569,7 +571,23 @@
                         let dist = p.first().distTo2D(p.last());
                         if (dist < 1) p.open = false;
                     } });
-                    if (opt.thin) {
+
+                    if (opt.danger && opt.thin) {
+                        top.thin_fill = [];
+                        let layers = POLY.inset(top_poly, offsetN, count, z);
+                        last = layers.last().mid;
+                        top.shells = layers.map(r => r.mid).flat();
+                        layers.map(r => r.gap).forEach((polys, i) => {
+                            let off = offset1;
+                            polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
+                            if (polys.length) {
+                                top.thin_fill.appendAll(cullIntersections(
+                                    fillArea(polys, 45, off/2, []),//, 0.01, off*2),
+                                    fillArea(polys, 135, off/2, [])//, 0.01, off*2),
+                                ));
+                            }
+                        });
+                    } else if (opt.thin) {
                         top.thin_fill = [];
                         let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
                         POLY.offset(top_poly, [-offset1, -offsetN], oso);
@@ -593,8 +611,6 @@
                             top.thin_fill.appendAll(cullIntersections(
                                 fillArea(polys, 45, off/2, [], 0.01, off*2),
                                 fillArea(polys, 135, off/2, [], 0.01, off*2),
-                                // fillArea(polys, 90, off, [], 0.05, off*4),
-                                // fillArea(polys, 180, off, [], 0.05, off*4),
                             ));
                             gaps = polys;
                         });

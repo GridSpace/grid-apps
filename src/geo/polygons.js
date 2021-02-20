@@ -30,6 +30,7 @@
         expand,
         expand_lines,
         union,
+        inset,
         nest,
         diff,
         setZ,
@@ -538,6 +539,22 @@
         }
 
         return opts.flat ? opts.outs : polys;
+    }
+
+    function inset(polys, dist, count, z) {
+        let total = count;
+        let layers = [];
+        let ref = polys;
+        while (count-- > 0 && ref && ref.length) {
+            let off = offset(ref, -dist, {z});
+            let mid = offset(off, dist / 2, {z});
+            let cmp = offset(off, dist, {z});
+            let gap = [];
+            subtract(ref, cmp, gap, null, z);
+            layers.push({idx: total-count, off, mid, gap});
+            ref = off;
+        }
+        return layers;
     }
 
     /**
