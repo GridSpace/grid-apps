@@ -555,7 +555,13 @@
             let mid = offset(off, dist / 2, {z});
             let cmp = offset(off, dist, {z});
             let gap = [];
-            subtract(ref, cmp, gap, null, z);
+            let aref = ref.map(p => p.areaDeep()).reduce((a,p) => a +p);
+            let cref = cmp.length ? cmp.map(p => p.areaDeep()).reduce((a,p) => a + p) : 0;
+            // threshold subtraction to area deltas > 0.1 % to filter out false
+            // positives where inset/outset are identical floating point error
+            if (Math.abs(aref - cref) >  1 - (Math.abs(aref / cref) / 1000)) {
+                subtract(ref, cmp, gap, null, z);
+            }
             layers.push({idx: total-count, off, mid, gap});
             ref = off;
         }
