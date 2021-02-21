@@ -264,19 +264,28 @@
     PRO.centers = function(step, z, min, max, opt = {}) {
         let cloud = [],
             bounds = this.bounds,
-            points = this.points,
-            length = points.length,
-            lines = opt.lines || false;
+            lines = opt.lines || false,
+            stepoff = step / 2,
+            set = [this.points];
 
-        for (let y of UTIL.lerp(bounds.miny + 0.01, bounds.maxy - 0.01, step, true)) {
+        if (this.inner) {
+            for (let inner of this.inner) {
+                set.push(inner.points);
+            }
+        }
+
+        for (let y of UTIL.lerp(bounds.miny + stepoff, bounds.maxy - stepoff, step, true)) {
             let ints = [];
-            for (let i=0; i<length; i++) {
-                let p1 = points[i % length];
-                let p2 = points[(i+1) % length];
-                if (
-                    (p1.y <= y && p2.y > y) ||
-                    (p1.y > y && p2.y <= y)
-                ) ints.push([p1,p2]);
+            for (let points of set) {
+                let length = points.length;
+                for (let i=0; i<length; i++) {
+                    let p1 = points[i % length];
+                    let p2 = points[(i+1) % length];
+                    if (
+                        (p1.y <= y && p2.y > y) ||
+                        (p1.y > y && p2.y <= y)
+                    ) ints.push([p1,p2]);
+                }
             }
             let cntr = [];
             if (ints.length && ints.length % 2 === 0) {
@@ -322,15 +331,18 @@
             }
         }
 
-        for (let x of UTIL.lerp(bounds.minx + 0.01, bounds.maxx - 0.01, step, true)) {
+        for (let x of UTIL.lerp(bounds.minx + stepoff, bounds.maxx - stepoff, step, true)) {
             let ints = [];
-            for (let i=0; i<length; i++) {
-                let p1 = points[i % length];
-                let p2 = points[(i+1) % length];
-                if (
-                    (p1.x <= x && p2.x > x) ||
-                    (p1.x > x && p2.x <= x)
-                ) ints.push([p1,p2]);
+            for (let points of set) {
+                let length = points.length;
+                for (let i=0; i<length; i++) {
+                    let p1 = points[i % length];
+                    let p2 = points[(i+1) % length];
+                    if (
+                        (p1.x <= x && p2.x > x) ||
+                        (p1.x > x && p2.x <= x)
+                    ) ints.push([p1,p2]);
+                }
             }
             let cntr = [];
             if (ints.length && ints.length % 2 === 0) {
