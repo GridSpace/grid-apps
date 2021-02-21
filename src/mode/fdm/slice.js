@@ -21,7 +21,8 @@
             shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity: 1 },
             infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
-            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 }
+            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 },
+            gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity: 1 }
         },
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
@@ -463,6 +464,10 @@
                 .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
                 .addPolys(top.shells, vopt({ offset, height }));
 
+            if (top.gaps) output
+                .setLayer("gaps", COLOR.gaps)
+                .addPolys(top.gaps, vopt({ offset, height, thin: true }));
+
             // if (isThin && debug) {
             //     slice.output()
             //         .setLayer('offset', { face: 0, line: 0x888888 })
@@ -573,19 +578,19 @@
                     } });
                     if (opt.danger && opt.thin) {
                         top.thin_fill = [];
+                        top.fill_sparse = [];
                         let layers = POLY.inset(top_poly, offsetN, count, z);
                         last = layers.last().mid;
                         top.shells = layers.map(r => r.mid).flat();
-                        layers.map(r => r.gap).forEach((polys, i) => {
-                            let off = offset1;
-                            polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
-                            if (polys.length) {
-                                top.thin_fill.appendAll(cullIntersections(
-                                    fillArea(polys, 45, off, [], off/4, off*4),
-                                    fillArea(polys, 135, off, [], off/4, off*4),
-                                ));
-                            }
-                        });
+                        top.gaps = layers.map(r => r.gap).flat();
+                        let off = offsetN;
+                        let min = off * 0.9;
+                        let max = off * 4;
+                        for (let poly of layers.map(r => r.gap).flat()) {
+                            let centers = poly.centers(off/2, z, min, max, {lines:false});
+                            top.fill_sparse.appendAll(centers);
+                            // top.thin_fill.appendAll(centers);
+                        }
                     } else if (opt.thin) {
                         top.thin_fill = [];
                         let oso = {z, count, gaps: [], outs: [], minArea: 0.05};

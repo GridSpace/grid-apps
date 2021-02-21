@@ -2201,7 +2201,6 @@
 
         SPACE.mouse.up((event, int) => {
             if (event.button === 2 && API.view.isArrange()) {
-                console.log({up: event, int});
                 let style = UI.context.style;
                 style.display = 'flex';
                 style.left = `${event.clientX-3}px`;

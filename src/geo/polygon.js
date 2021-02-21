@@ -260,6 +260,182 @@
         return Math.abs(diff);
     }
 
+    // generate center crossing point cloud
+    PRO.centers = function(step, z, min, max, opt = {}) {
+        let cloud = [],
+            bounds = this.bounds,
+            points = this.points,
+            length = points.length,
+            lines = opt.lines || false;
+
+        for (let y of UTIL.lerp(bounds.miny + 0.01, bounds.maxy - 0.01, step, true)) {
+            let ints = [];
+            for (let i=0; i<length; i++) {
+                let p1 = points[i % length];
+                let p2 = points[(i+1) % length];
+                if (
+                    (p1.y <= y && p2.y > y) ||
+                    (p1.y > y && p2.y <= y)
+                ) ints.push([p1,p2]);
+            }
+            let cntr = [];
+            if (ints.length && ints.length % 2 === 0) {
+                for (let int of ints) {
+                    let [p1, p2]  = int;
+                    if (p2.y < p1.y) {
+                        let tp = p1;
+                        p1 = p2;
+                        p2 = tp;
+                    }
+                    let minx = Math.min(p1.x, p2.x);
+                    let maxx = Math.max(p1.x, p2.x);
+                    let miny = Math.min(p1.y, p2.y);
+                    let maxy = Math.max(p1.y, p2.y);
+                    let dx = p2.x - p1.x;
+                    let dy = maxy - miny;
+                    let pct = (y - miny) / dy;
+                    let xpo = p1.x + pct * dx;
+                    cntr.push(xpo);
+                }
+            }
+            cntr.sort((a, b) => {
+                return b - a;
+            });
+            let lp, eo = 0;
+            for (let x of cntr) {
+                let p = BASE.newPoint(x, y, z);
+                if (eo++ % 2) {
+                    let d = lp.distTo2D(p);
+                    if (d >= min && d <= max) {
+                        if (lines) {
+                            cloud.push(lp);
+                            cloud.push(p);
+                        } else {
+                            cloud.push(BASE.newPoint(
+                                (lp.x + p.x) / 2, y, z
+                            ));
+                        }
+                    }
+                } else {
+                    lp = p;
+                }
+            }
+        }
+
+        for (let x of UTIL.lerp(bounds.minx + 0.01, bounds.maxx - 0.01, step, true)) {
+            let ints = [];
+            for (let i=0; i<length; i++) {
+                let p1 = points[i % length];
+                let p2 = points[(i+1) % length];
+                if (
+                    (p1.x <= x && p2.x > x) ||
+                    (p1.x > x && p2.x <= x)
+                ) ints.push([p1,p2]);
+            }
+            let cntr = [];
+            if (ints.length && ints.length % 2 === 0) {
+                for (let int of ints) {
+                    let [p1, p2]  = int;
+                    if (p2.x < p1.x) {
+                        let tp = p1;
+                        p1 = p2;
+                        p2 = tp;
+                    }
+                    let minx = Math.min(p1.x, p2.x);
+                    let maxx = Math.max(p1.x, p2.x);
+                    let miny = Math.min(p1.y, p2.y);
+                    let maxy = Math.max(p1.y, p2.y);
+                    let dx = maxx - minx;
+                    let dy = p2.y - p1.y;
+                    let pct = (x - minx) / dx;
+                    let ypo = p1.y + pct * dy;
+                    cntr.push(ypo);
+                }
+            }
+            cntr.sort((a, b) => {
+                return b - a;
+            });
+            let lp, eo = 0;
+            for (let y of cntr) {
+                let p = BASE.newPoint(x, y, z);
+                if (eo++ % 2) {
+                    let d = lp.distTo2D(p);
+                    if (d >= min && d <= max) {
+                        if (lines) {
+                            cloud.push(lp);
+                            cloud.push(p);
+                        } else {
+                            cloud.push(BASE.newPoint(
+                                x, (lp.y + p.y) / 2, z
+                            ));
+                        }
+                    }
+                } else {
+                    lp = p;
+                }
+            }
+        }
+
+        if (lines) {
+            return cloud;
+        }
+
+        let mindist = opt.mindist || step * 1.5;
+
+        function build(poly) {
+            let lastp = poly.last();
+            let minp;
+            let mind = Infinity;
+            for (let point of cloud) {
+                let dist = point.distTo2D(lastp);
+                if (dist < mindist && dist < mind) {
+                    mind = dist;
+                    minp = point;
+                }
+            }
+            if (minp) {
+                cloud = cloud.filter(p => p !== minp);
+                poly.push(minp);
+                return true;
+            }
+            return false;
+        }
+
+        // join points into polys
+        let polys = [];
+        let poly = [];
+        while (cloud.length) {
+            if (poly.length === 0) {
+                poly = [ cloud.shift() ];
+                polys.push(poly);
+                continue;
+            }
+            if (build(poly)) {
+                continue;
+            }
+            if (!poly.flip) {
+                poly.reverse();
+                poly.flip = true;
+                continue;
+            }
+            if (poly.length) {
+                poly = [];
+            } else {
+                throw "whoop there it is";
+            }
+        }
+
+        return polys
+            .filter(poly => poly.length > 1)
+            .map(poly => {
+                let np = BASE.newPolygon().setOpen();
+                for (let p of poly) {
+                    np.push(p);
+                }
+                return np;
+            });
+    };
+
     PRO.debur = function(dist) {
         if (this.len < 2) {
             return null;

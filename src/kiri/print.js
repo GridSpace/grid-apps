@@ -604,10 +604,11 @@
                             last = null;
                         }
                     }
+                } else {
+                    outputOrderClosest(poly, function(next) {
+                        outputTraces(next, opt);
+                    }, null);
                 }
-                // outputOrderClosest(poly, function(next) {
-                //     outputTraces(next, opt);
-                // }, null);
             } else {
                 let finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
@@ -887,20 +888,12 @@
                 let inner = next.innerShells() || [];
 
                 // output inner polygons
-                if (shellOrder === 1) outputTraces(inner);
+                if (shellOrder === 1) outputTraces(inner, { sort: shellOrder });
 
                 outputTraces(next.shells, { sort: shellOrder });
 
-                // sort perimeter polygon by length to go out-to-in or in-to-out
-                // this causes too much seeking when nesting splits into disconnected areas
-                // (next.shells || []).sort(function(a,b) {
-                //     return a.perimeter() > b.perimeter() ? shellOrder : -shellOrder;
-                // }).forEach(function(poly, index) {
-                //     outputTraces(poly);
-                // });
-
                 // output outer polygons
-                if (shellOrder === -1) outputTraces(inner);
+                if (shellOrder === -1) outputTraces(inner, { sort: shellOrder });
 
                 // output thin fill
                 outputFills(next.thin_fill, {near: true});

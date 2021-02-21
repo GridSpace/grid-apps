@@ -1002,14 +1002,15 @@
         KIRI.client.sync();
         KIRI.client.rotate(settings);
 
+        let segtimes = {},
+            segNumber = 0,
+            errored = false,
+            startTime = Date.now(),
+            lastMsg;
+
         // for each widget, slice
         forAllWidgets(function(widget) {
-            let segtimes = {},
-                segNumber = 0,
-                errored = false,
-                startTime = Date.now(),
-                lastMsg,
-                camOrLaser = mode === 'CAM' || mode === 'LASER',
+            let camOrLaser = mode === 'CAM' || mode === 'LASER',
                 stack = widget.stack = STACKS.create(widget.id, widget.mesh),
                 factor = (widget.getVertices().count / defvert);
 
@@ -1022,7 +1023,7 @@
                 if (sliced) {
                     // update segment time
                     if (lastMsg) {
-                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
                     }
                     API.event.emit('slice', getMode());
                 }
@@ -1048,7 +1049,7 @@
                     KIRI.client.unrotate(settings, () => {
                         forAllWidgets(widget => {
                             // on done
-                            segtimes[`${segNumber++}_draw`] = widget.render(widget.stack);
+                            segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
                             // rotate stack for belt beds
                             if (widget.rotinfo) {
                                 widget.stack.obj.rotate(widget.rotinfo);
@@ -1086,7 +1087,7 @@
                 if (msg && msg !== lastMsg) {
                     let mark = Date.now();
                     if (lastMsg) {
-                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
                     }
                     lastMsg = msg;
                     startTime = mark;

@@ -15,7 +15,7 @@
 
     function time() { return Date.now() }
 
-    function lerp(from, to, maxInc) {
+    function lerp(from, to, maxInc, incFrom) {
         let dir = Math.sign(to - from);
         let delta = Math.abs(to - from);
         let steps = Math.floor(delta / maxInc);
@@ -25,7 +25,7 @@
             steps++;
             per = delta / steps;
         }
-        let out = [];
+        let out = incFrom ? [from]  : [];
         while (steps-- > 0) {
             from += per * dir;
             out.push(from);

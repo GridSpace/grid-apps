@@ -541,6 +541,11 @@
         return opts.flat ? opts.outs : polys;
     }
 
+    /**
+     * progressive insetting that does inset + outset to debur as well
+     * as performing subtractive analysis between initial layer shell (ref)
+     * and last offset (cmp) to produce gap candidates (for thinfill)
+     */
     function inset(polys, dist, count, z) {
         let total = count;
         let layers = [];
