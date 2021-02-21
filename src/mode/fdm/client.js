@@ -111,6 +111,7 @@
             lastView = view;
             updateVisiblity();
             filterSynth();
+            func.sdone();
             // let ranges = API.conf.get().process.ranges;
             if (isFdmMode) {
                 if (lastView === VIEWS.SLICE) {
@@ -277,33 +278,21 @@
             }
             delbox('supp');
             if (lastPillar) {
-                const {widget, box, id} = lastPillar;
-                widget.adds.remove(box);
-                widget.mesh.remove(box);
-                delete widget.sups[id];
-                let sa = API.widgets.annotate(widget.id).support;
-                let ix = 0;
-                sa.forEach((rec,i) => {
-                    if (rec.id === id) {
-                        ix = i;
-                    }
-                });
-                sa.splice(ix,1);
-                API.conf.save();
-                fromPillar = undefined;
+                removeWidgetSupport(lastPillar.widget, lastPillar);
                 return;
             }
             if (!iw) return;
             let { point, dim } = lastBox;
             p1.y = Math.max(0, p1.y);
             p2.y = Math.max(0, p2.y);
+            let rz = dim.rz;
             let dh = dim.z;
             let dw = api.conf.get().process.sliceSupportSize / 2;
             let ip = iw.track.pos;
             let wa = api.widgets.annotate(iw.id);
             let ws = (wa.support = wa.support || []);
             let id = ++nextID;
-            let rec = {x: point.x - ip.x, y: -point.z - ip.y, z: point.y, dw, dh, id};
+            let rec = {x: point.x - ip.x, y: -point.z - ip.y, z: point.y, rz, dw, dh, id};
             if (fromPillar && event && event.shiftKey) {
                 let targets = api.widgets.meshes().append(SPACE.internals().platform);
                 let from = fromPillar,
@@ -318,9 +307,9 @@
                 let fromrec = ws.filter(r => r.id === from.id)[0];
                 if (fromrec) {
                     from.rz = fromrec.rz = angle;
-                    let q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), angle);
-                    let m = new THREE.Matrix4().makeRotationFromQuaternion(q);
-                    from.box.geometry.applyMatrix4(m);
+                    removeWidgetSupport(iw, fromPillar);
+                    ws.push(Object.clone(fromrec));
+                    addWidgetSupport(iw, fromrec);
                 }
                 lerp.pop();
                 let seed = Math.random();
@@ -389,6 +378,7 @@
             p1 = point;
             let dir = new THREE.Vector3(0,1,0)
             let ray = new THREE.Raycaster(point, dir);
+            let rz = int && int.face ? Math.atan2(int.face.normal.y, int.face.normal.x) : 0;
             // when on object, project down on downward faces
             if (int && int.face && int.face.normal.z < -0.1) {
                 dir.y = -1;
@@ -404,7 +394,7 @@
                 let dy = Math.abs(p1.y - p2.y);
                 let dw = api.conf.get().process.sliceSupportSize / 2;
                 addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
-                    x:dw, y:dw, z:dy
+                    x:dw, y:dw, z:dy, rz
                 });
             }
             if (event && event.altKey) {
@@ -447,6 +437,23 @@
             widget.adds.push(pos.box);
         }
         return sups[id];
+    }
+
+    function removeWidgetSupport(widget, rec) {
+        const {box, id} = rec;
+        widget.adds.remove(box);
+        widget.mesh.remove(box);
+        delete widget.sups[id];
+        let sa = API.widgets.annotate(widget.id).support;
+        let ix = 0;
+        sa.forEach((rec,i) => {
+            if (rec.id === id) {
+                ix = i;
+            }
+        });
+        sa.splice(ix,1);
+        API.conf.save();
+        fromPillar = undefined;
     }
 
     function updateVisiblity() {
