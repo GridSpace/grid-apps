@@ -383,7 +383,7 @@
             if (nozzleTemp !== lastNozzleTemp) {
                 if (t0) append(`M104 S${nozzleTemp} T0`);
                 if (t1) append(`M104 S${nozzleTemp} T1`);
-                if (!(t0 || t1)) append(`M104 S{nozzleTemp} T${tool}`);
+                if (!(t0 || t1)) append(`M104 S${nozzleTemp} T${tool}`);
                 lastNozzleTemp = nozzleTemp;
             }
 
