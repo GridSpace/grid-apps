@@ -2217,6 +2217,7 @@
         }
         const mode = settings.mode;
         settings.sproc[mode].default = settings.process;
+        settings.sproc[mode][settings.process.processName] = settings.process;
         settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
