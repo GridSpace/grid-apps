@@ -123,8 +123,15 @@
         SDB['kiri-print-seq'] = printSeq++;
 
         let settings = API.conf.get(),
+            names = API.widgets.all()
+                .map(w => w.meta ? w.meta.file : undefined)
+                .filter(v => v)
+                .map(v => v.replace(/ /g,'-'))
+                .map(v => v.substring(0,20))
+                .map(v => v.split('.')[0]),
+            name = names[0] || (MODE === MODES.CAM ? "cnc" : "print"),
             MODE = API.mode.get_id(),
-            pre = (MODE === MODES.CAM ? "cnc-" : "print-") + (printSeq.toString().padStart(3,"0")),
+            pre = `${name}-${(printSeq.toString().padStart(3,"0"))}`,
             filename = pre,// + (new Date().getTime().toString(36)),
             fileext = settings.device.gcodeFExt || "gcode",
             codeproc = settings.device.gcodeProc,
