@@ -2,7 +2,7 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` origin bug (Onshape?) when switching modes in 2.5 and 2.6
+* `B` origin (and bed size) bug (Onshape?) when switching modes in 2.5 and 2.6
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)

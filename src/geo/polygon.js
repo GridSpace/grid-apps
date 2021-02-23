@@ -444,6 +444,10 @@
                 for (let p of poly) {
                     np.push(p);
                 }
+                np = np.clean();
+                if (np.last().distTo2D(np.first()) <= max) {
+                    np.push(np.first());
+                }
                 return np;
             });
     };
