@@ -444,10 +444,10 @@
                 for (let p of poly) {
                     np.push(p);
                 }
-                np = np.clean();
                 if (np.last().distTo2D(np.first()) <= max) {
-                    np.push(np.first());
+                    np.setClosed();
                 }
+                np = np.clean();
                 return np;
             });
     };
@@ -1403,9 +1403,11 @@
         return this;
     };
 
-    function fromClipperPath(path,z) {
+    function fromClipperPath(path, z) {
         let poly = newPolygon(), i = 0, l = path.length;
-        while (i < l) poly.push(newPoint(null,null,z,null,path[i++]));
+        while (i < l) {
+            poly.push(newPoint(null,null,z,null,path[i++]));
+        }
         return poly;
     };
 
@@ -1425,6 +1427,31 @@
         poly.parent = parent || this.parent;
         poly.area2 = this.area2;
         poly.open = this.open;
+        if (this.open) {
+            // when open, ensure first point on new poly matches old
+            let start = this.points[0];
+            let points = poly.points;
+            let length = points.length;
+            let mi, min = Infinity;
+            for (let i=0; i<length; i++) {
+                let d = points[i].distTo2D(start);
+                if (d < min) {
+                    min = d;
+                    mi = i;
+                }
+            }
+            // mi > 0 means first point didn't match
+            if (mi) {
+                let nupoints = [];
+                for (let i=mi; i<length; i++) {
+                    nupoints.push(points[i]);
+                }
+                for (let i=0; i<mi; i++) {
+                    nupoints.push(points[i]);
+                }
+                poly.points = nupoints;
+            }
+        }
         return poly;
     };
 

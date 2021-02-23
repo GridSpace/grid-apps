@@ -659,7 +659,7 @@
                     // let emit = i === 0 ? 0 : extrude;
                     addOutput(preout, p, emit, speed || printSpeed, extruder);
                     lp = p;
-                });
+                }, !poly.open);
                 return lp;
             });
         }
