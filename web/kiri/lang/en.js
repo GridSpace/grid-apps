@@ -2,11 +2,74 @@
 // map for any missing key/value pairs
 kiri.lang['en'] =
 kiri.lang['en-us'] = {
-    version:        "version",
+    // common keys and menus
+    animate:        "animate",      // CAM animate button
+    arrange:        "arrange",      // layout workspace objects
+    axis:           "axis",         // left object scale pop menu
+    clear:          "clear",        // clear workspace (remove all objects)
+    copy:           "copy",
+    delete:         "delete",
+    detail:         "detail",
+    done:           "done",
     enable:         "enable",
+    export:         "export",
+    files:          "files",
+    help:           "help",
+    ghost:          "ghost",        // left render pop menu (wireframe)
+    hide:           "hide",         // left render pop menu (invisible)
+    home:           "home",
+    import:         "import",
+    language:       "language",
+    machine:        "machine",      // device or machine
+    metric:         "metric",
+    name:           "name",
+    prefs:          "prefs",        // left menu "preferences"
+    preview:        "preview",
+    recent:         "recent",
+    render:         "render",       // left render pop menu
+    reset:          "reset",
+    rotate:         "rotate",       // left rotate pop menu
+    save:           "save",
+    scale:          "scale",        // left object scale pop menu
+    setup:          "setup",
     settings:       "settings",
+    size:           "size",
+    solid:          "solid",        // view type pop menu
+    tool:           "tool",
+    tools:          "tools",        // CAM tool menu button
+    top:            "top",
+    type:           "type",         // CAM tool type
+    version:        "version",
+    view:           "view",         // left view pop menu
+    wire:           "wire",         // left render pop menu
 
     acct_xpo:       ["make a backup of your device","and device profiles with the","option to include workspace","objects and positions"],
+
+    // RIGHT-CLICK CONTEXT MENU
+    rc_clws:        "clear workspace",
+    rc_xpws:        "export workspace",
+    rc_lafl:        "lay flat",
+    rc_mirr:        "mirror",
+    rc_dupl:        "duplicate",
+    rc_xstl:        "export as STL",
+
+    // DEVICE MENU and related dialogs
+    dm_sldt:        "select a device type",
+    dm_stdd:        "standard devices",
+    dm_mydd:        "my devices",
+    dm_seld:        "selected device",
+    dm_rcnt:        "recent files",
+    dm_savs:        "saved settings",
+    dm_appp:        "Application Preferences",
+
+    // CAM Tool Dialog
+    td_tyem:        "end",          // end mill
+    td_tybm:        "ball",         // ball mill
+    td_tytm:        "taper",        // taper mill
+    td_tonm:        "tool #",
+    td_shft:        "shaft",        // endmill shaft specs
+    td_flut:        "flute",        // endmill flute specs
+    td_tapr:        "taper",        // endmill taper specs
 
     // DEVICE dialog groups
     dv_gr_dev:      "device",

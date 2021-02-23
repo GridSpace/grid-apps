@@ -2535,6 +2535,17 @@
     // by any future script loads (above)
     KIRI.lang.set();
 
+    // update static html elements with language overrides
+    for (let el of [...DOC.querySelectorAll("[lk]")]) {
+        let key = el.getAttribute('lk');
+        let val = LANG[key];
+        if (val) {
+            el.innerText = val;
+        } else {
+            console.log({missing_ln: key});
+        }
+    }
+
     // schedule init_one to run after all page content is loaded
     // unless a languge script is loading first, in which case it
     // will call init once it's done (or failed)

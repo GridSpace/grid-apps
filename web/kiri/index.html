@@ -45,17 +45,17 @@
             <div id="acct-pop" class="f-col">
                 <div id="acct-menu" class="f-col">
                     <div id="acct-lang">
-                        <label><i class="fas fa-caret-left"></i>&nbsp;language</label>
+                        <label><i class="fas fa-caret-left"></i>&nbsp;<span lk="language">language</span></label>
                         <div id="lang-pop" class="f-col">
                             <div id="lset-en">english</div>
                             <div id="lset-da">danish</div>
                         </div>
                     </div>
                     <div id="acct-export" class="f-col a-end">
-                        <label>export</label>
+                        <label lk="export">export</label>
                     </div>
                     <div id="acct-help" class="f-col a-end">
-                        <label>help</label>
+                        <label lk="help">help</label>
                     </div>
                 </div>
             </div>
@@ -74,56 +74,56 @@
             <div id="lt-top"></div>
             <div id="lt-setup" class="lt-menu lt-active">
                 <i class="fas fa-cogs"></i>
-                <label>setup</label>
+                <label lk="setup">setup</label>
                 <div id="set-pop" class="pop-lcol f-row">
                     <div id="set-device">
                         <i class="fas fa-cube"></i>
-                        <label>machine</label>
+                        <label lk="machine">machine</label>
                     </div>
                     <div id="set-tools">
                         <i class="fas fa-tools"></i>
-                        <label>tools<label>
+                        <label lk="tools">tools<label>
                     </div>
                     <div id="set-prefs">
                         <i class="fas fa-sliders-h"></i>
-                        <label>prefs<label>
+                        <label lk="prefs">prefs<label>
                     </div>
                 </div>
             </div>
             <div id="lt-file" class="lt-menu lt-active">
                 <i class="fas fa-folder"></i>
-                <label>files</label>
+                <label lk="files">files</label>
                 <div id="file-pop" class="pop-lcol f-row">
                     <div id="file-recent">
                         <i class="fas fa-list"></i>
-                        <label>recent</label>
+                        <label lk="recent">recent</label>
                     </div>
                     <div id="file-import">
                         <i class="fas fa-file-upload"></i>
-                        <label>import<label>
+                        <label lk="import">import<label>
                     </div>
                 </div>
             </div>
             <div id="act-sep"></div>
             <div id="lt-view" class="lt-menu lt-active">
                 <i class="fas fa-eye"></i>
-                <label>view</label>
+                <label lk="view">view</label>
                 <div id="pop-view" class="pop-lcol f-row">
                     <div id="view-arrange">
                         <i class="fas fa-th"></i>
-                        <label>arrange</label>
+                        <label lk="arrange">arrange</label>
                     </div>
                     <div id="view-top">
                         <i class="fas fa-square"></i>
-                        <label>top</label>
+                        <label lk="top">top</label>
                     </div>
                     <div id="view-home">
                         <i class="fas fa-home"></i>
-                        <label>home</label>
+                        <label lk="home">home</label>
                     </div>
                     <div id="view-clear">
                         <i class="far fa-square"></i>
-                        <label>clear</label>
+                        <label lk="clear">clear</label>
                     </div>
                 </div>
             </div>
@@ -133,43 +133,43 @@
                 <div id="pop-slice" class="pop-lcol f-row">
                     <div id="act-preview">
                         <i class="fas fa-cubes"></i>
-                        <label id="label-preview" title="show routing and paths">preview</label>
+                        <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
                     </div>
                     <div id="act-animate">
                         <i class="fas fa-running"></i>
-                        <label id="label-animate" title="render routing on a mesh">animate</label>
+                        <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
                     </div>
                     <div id="act-export">
                         <i class="fas fa-file-download"></i>
-                        <label id="label-export" title="generate downloadable files">export</label>
+                        <label id="label-export" title="generate downloadable files" lk="export">export</label>
                     </div>
                 </div>
             </div>
             <div id="lt-sep"></div>
             <div id="lt-render" class="lt-menu lt-active">
                 <i class="fas fa-border-style"></i>
-                <label>render</label>
+                <label lk="render">render</label>
                 <div id="pop-render" class="pop-lcol f-row">
                     <div id="render-solid" class="grow a-center">
                         <i class="fas fa-th-large"></i>
-                        <label>solid</label>
+                        <label lk="solid">solid</label>
                     </div>
                     <div id="render-wire" class="grow a-center">
                         <i class="fas fa-border-all"></i>
-                        <label>wire</label>
+                        <label lk="wire">wire</label>
                     </div>
                     <div id="render-ghost" class="grow a-center">
                         <i class="fas fa-border-none"></i>
-                        <label>ghost</label>
+                        <label lk="ghost">ghost</label>
                     </div>
                     <div id="render-hide" class="grow a-center">
-                        <label>hide</label>
+                        <label lk="hide">hide</label>
                     </div>
                 </div>
             </div>
             <div id="lt-rotate" class="lt-menu">
                 <i class="fas fa-sync-alt"></i>
-                <label>rotate</label>
+                <label lk="rotate">rotate</label>
                 <div id="pop-rotate" class="pop-lcol f-row russo">
                     <div>
                         <div class="grow a-center">
@@ -196,12 +196,12 @@
                         <input id="rot_z" class="value center" size="5"/ value="0">
                     </div>
                     <!-- <div id="lay-flat" class="f-col j-center center">lay flat</div> -->
-                    <div id="unrotate" class="f-col j-center">reset</div>
+                    <div id="unrotate" class="f-col j-center" lk="reset">reset</div>
                 </div>
             </div>
             <div id="lt-scale" class="lt-menu">
                 <i class="fas fa-expand"></i>
-                <label>scale</label>
+                <label lk="scale">scale</label>
                 <div id="pop-scale" class="pop-lcol f-row russo">
                     <div>
                         <input id="lock_x" type="checkbox" checked/>
@@ -222,9 +222,9 @@
                         <div><input id="scale_z" xsize="8" class="value" value="1"/></div>
                     </div>
                     <div class="f-col j-center">
-                        <div><label id="lab-axis">axis</label></div>
-                        <div><label id="lab-size">size</label></div>
-                        <div><label id="lab-scale">scale</label></div>
+                        <div><label id="lab-axis" lk="axis">axis</label></div>
+                        <div><label id="lab-size" lk="size">size</label></div>
+                        <div><label id="lab-scale" lk="scale">scale</label></div>
                     </div>
                 </div>
             </div>
@@ -249,7 +249,7 @@
                 </div>
                 <div id="mod-setup" class="mdialog f-row">
                     <div class="f-col left a-stretch">
-                        <label class="header">select a device type</label>
+                        <label class="header" lk="dm_sldt">select a device type</label>
                         <div class="f-col">
                             <table><tr>
                                 <th><button id="mode-fdm" class="dev-type"><label>FDM</label></button></th>
@@ -260,7 +260,7 @@
                             </tr></table>
                         </div>
                         <div class="header sub f-col j-center">
-                            <label>standard devices</label>
+                            <label lk="dm_stdd">standard devices</label>
                             <div id="dev-search">
                                 <i class="fas fa-search"></i>
                                 <input id="dev-filter" />
@@ -269,20 +269,20 @@
                         <div class="f-col mh0 mh35 j-center a-stretch">
                             <div id="device-list" class="devlist f-col overy"></div>
                         </div>
-                        <label class="header sub">my devices</label>
+                        <label class="header sub" lk="dm_mydd">my devices</label>
                         <div class="f-col grow">
                             <div id="device-my" class="devlist f-col grow overy"></div>
                             <div class="f-row footer">
                                 <div class="grow"></div>
-                                <button id="device-add">copy</button>
-                                <button id="device-del">delete</button>
-                                <button id="device-exp">export</button>
+                                <button id="device-add" lk="copy">copy</button>
+                                <button id="device-del" lk="delete">delete</button>
+                                <button id="device-exp" lk="export">export</button>
                                 <div class="grow"></div>
                             </div>
                         </div>
                     </div>
                     <div class="f-col grow a-stretch">
-                        <label class="header">selected device</label>
+                        <label class="header" lk="dm_seld">selected device</label>
                         <div class="f-row">
                             <div id="device1" class="f-col t-body t-inset overy grow"></div>
                             <div class="t-pad"></div>
@@ -296,27 +296,27 @@
                         </div>
                         <div id="device-action" class="f-row footer">
                             <div class="grow"></div>
-                            <button id="device-save">save</button>
+                            <button id="device-save" lk="save">save</button>
                             <div class="grow"></div>
                         </div>
                     </div>
                 </div>
                 <div id="mod-files" class="mdialog f-col">
-                    <label class="set-header">recent files</label>
+                    <label class="set-header" lk="dm_rcnt">recent files</label>
                     <div id="catalogList" class="f-col"></div>
                 </div>
                 <div id="mod-saves" class="mdialog f-col">
-                    <label class="set-header">saved settings</label>
+                    <label class="set-header" lk="dm_savs">saved settings</label>
                     <div id="settingsList" class="f-col"></div>
                 </div>
                 <div id="mod-tools" class="mdialog">
                     <div class="f-col">
                         <div class="f-row t-head">
-                            <label class="t-33">tool</label>
+                            <label class="t-33" lk="tool">tool</label>
                             <div class="t-pad"></div>
-                            <label class="t-33">detail</label>
+                            <label class="t-33" lk="detail">detail</label>
                             <div class="t-pad"></div>
-                            <label class="t-33">view</label>
+                            <label class="t-33" lk="view">view</label>
                         </div>
                         <div class="f-row">
                             <div class="f-col t-33">
@@ -324,23 +324,23 @@
                             </div>
                             <div class="t-pad"></div>
                             <div class="f-col t-33 t-body t-inset">
-                                <div class="f-row var-row"><label>name</label><input id="tool-name" size="15"></input></div>
-                                <div class="f-row var-row"><label>type</label>
+                                <div class="f-row var-row"><label lk="name">name</label><input id="tool-name" size="15"></input></div>
+                                <div class="f-row var-row"><label lk="type">type</label>
                                     <select id="tool-type">
-                                        <option value="endmill" selected>end</option>
-                                        <option value="ballmill">ball</option>
-                                        <option value="tapermill">taper</option>
+                                        <option value="endmill" lk="td_tyem" selected>end</option>
+                                        <option value="ballmill" lk="td_tybm">ball</option>
+                                        <option value="tapermill" lk="td_tytm">taper</option>
                                     </select>
                                 </div>
-                                <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label>tool #</label><input id="tool-num" size="7"></input></div>
-                                <div class="f-row var-row"><label>metric</label><input id="tool-metric" type="checkbox"></input></div>
-                                <div class="set-header f-col">shaft</div>
+                                <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label lk="td_tonm">tool #</label><input id="tool-num" size="7"></input></div>
+                                <div class="f-row var-row"><label lk="metric">metric</label><input id="tool-metric" type="checkbox"></input></div>
+                                <div class="set-header f-col" lk="td_shft">shaft</div>
                                 <div class="f-row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
                                 <div class="f-row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
-                                <div class="set-header f-col">flute</div>
+                                <div class="set-header f-col" lk="td_flut">flute</div>
                                 <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
                                 <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
-                                <div class="set-header f-col">taper</div>
+                                <div class="set-header f-col" ln="td_tapr">taper</div>
                                 <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
                                 <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
                             </div>
@@ -351,13 +351,13 @@
                             <button id="tool-add"><i class="fas fa-plus"></i></button>
                             <button id="tool-del"><i class="fas fa-minus"></i></button>
                             <div class="t-pad2"></div>
-                            <button id="tools-save">save</button>
-                            <button id="tools-close">done</button>
+                            <button id="tools-save" lk="save">save</button>
+                            <button id="tools-close" lk="done">done</button>
                         </div>
                     </div>
                 </div>
                 <div id="mod-prefs" class="mdialog f-col a-center">
-                    <b>Application Preferences</b>
+                    <b lk="dm_appp">Application Preferences</b>
                     <hr width="80%">
                     <div class="f-row">
                         <div id="prefs-gen1" class="f-col"></div>
@@ -440,14 +440,14 @@
     </div>
     <div id="tool-info" class="noshow"></div>
     <div id="context-menu">
-        <button id="context-clear-workspace">clear workspace</button>
-        <button id="context-export-workspace">export workspace</button>
+        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
+        <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
         <div class="sep"></div>
-        <button id="context-layflat">lay flat</button>
-        <button id="context-mirror">mirror</button>
-        <button id="context-duplicate">duplicate</button>
+        <button id="context-layflat" lk="rc_lafl">lay flat</button>
+        <button id="context-mirror" lk="rc_mirr">mirror</button>
+        <button id="context-duplicate" lk="rc_dupl">duplicate</button>
         <div class="sep"></div>
-        <button id="context-export-stl">export as STL</button>
+        <button id="context-export-stl" lk="rc_xstl">export as STL</button>
     </div>
     <div id="fps" class="noshow"></div>
     <div id="layer-animate" class="f-col a-center"></div>
