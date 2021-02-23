@@ -39,7 +39,12 @@
             // update current map from chosen map
             Object.keys(map).forEach(key => {
                 if (LANG.en[key]) {
-                    LANG.current[key] = map[key];
+                    let val = map[key];
+                    // turn arrays into newline separated strings
+                    if (Array.isArray(val)) {
+                        val = val.join('\n');
+                    }
+                    LANG.current[key] = val;
                 } else {
                     invalid.push(key);
                 }
