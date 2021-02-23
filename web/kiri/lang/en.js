@@ -357,6 +357,8 @@ kiri.lang['en-us'] = {
     cc_feed_l:      ["max cutting speed in","workspace units / minute"],
     cc_plng_s:      "plunge rate",
     cc_plng_l:      ["max z axis speed in","workspace units / minute"],
+    cc_sngl_s:      "select lines only",
+    cc_sngl_l:      ["select only single edges","instead of connected polylines"],
 
     // CNC COMMON
     cc_menu:        "limits",

@@ -465,6 +465,7 @@
                     camTraceDown: 0,
                     camTraceSpeed: 250,
                     camTracePlunge: 200,
+                    camTraceLines: false,
                     camDrillTool: 1000,
                     camDrillSpindle: 1000,
                     camDrillDownSpeed: 250,

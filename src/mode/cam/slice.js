@@ -221,8 +221,8 @@
         }
     };
 
-    CAM.traces = function(settings, widget) {
-        if (widget.traces) {
+    CAM.traces = function(settings, widget, single) {
+        if (widget.traces && widget.trace_single === single) {
             // do no work if cached
             return false;
         }
@@ -257,7 +257,13 @@
                         return;
                     }
                 }
-                traces.push(poly);
+                if (single) {
+                    poly.forEachSegment((p1, p2) => {
+                        traces.push(newPolygon().append(p1).append(p2).setOpen());
+                    }, poly.open);
+                } else {
+                    traces.push(poly);
+                }
             });
         };
         let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
@@ -265,6 +271,7 @@
         opts.over = true;
         slicer.slice(indices, opts);
         widget.traces = traces;
+        widget.trace_single = single;
         return true;
     };
 
