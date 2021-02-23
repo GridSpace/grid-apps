@@ -2344,6 +2344,7 @@
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 ispng = lower.indexOf(".png") > 0,
+                isjpg = lower.indexOf(".jpg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
                 isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0;
             reader.file = files[i];
@@ -2368,14 +2369,34 @@
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
                 if (ispng) loadImageDialog(e.target.result, e.target.file.name);
+                if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
-            if (isstl || ispng) {
+            if (isstl || ispng || isjpg) {
                 reader.readAsArrayBuffer(reader.file);
             } else {
                 reader.readAsBinaryString(reader.file);
             }
         }
+    }
+
+    function loadImageConvert(res, name) {
+        let url = URL.createObjectURL(new Blob([res]));
+
+        $('mod-any').innerHTML = `<img id="xsrc" src="${url}"><canvas id="xdst"></canvas>`;
+
+        let img = $('xsrc');
+        let can = $('xdst');
+
+        img.onload = () => {
+            can.width = img.width;
+            can.height = img.height;
+            let ctx = can.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            fetch(can.toDataURL()).then(r => r.arrayBuffer()).then(data => {
+                loadImageDialog(data, name);
+            });
+        };
     }
 
     function loadFile() {
