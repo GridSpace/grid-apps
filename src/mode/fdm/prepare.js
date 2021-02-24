@@ -68,7 +68,7 @@
                 offset = process.outputBrimOffset || (process.outputRaft ? 4 : 0);
 
             // compute first brim
-            widgets.forEach(function(widget) {
+            widgets.filter(w => w.slices.length).forEach(function(widget) {
                 let tops = [];
                 // collect top outer polygons
                 widget.slices[0].tops.forEach(function(top) {
@@ -267,7 +267,7 @@
 
         // generate purge block for given nozzle
         function purge(nozzle, track, layer, start, z, using) {
-            if (extcount < 2) {
+            if (extcount < 2 || isBelt) {
                 return start;
             }
             let rec = track[nozzle];

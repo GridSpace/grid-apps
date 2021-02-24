@@ -14,8 +14,8 @@ let KIRI = self.kiri = self.kiri || {},
     seqid = 1,
     syncd = {},
     running = {},
-    slicing = {},
-    worker = null
+    worker = null,
+    restarting = false
     // occ = new Worker("/kiri/ext/occ-worker.js", {type:"module"}),
     ;
 
@@ -57,25 +57,34 @@ KIRI.work = {
         }
     },
 
-    isSlicing: function() {
+    isBusy: function() {
         let current = 0;
-        for (let key in slicing) {
-            current++;
+        for (let rec of Object.values(running)) {
+            if (rec.fn) current++;
         }
         return current > 0;
     },
 
     restart: function() {
+        // prevent re-entry from cancel callback
+        if (restarting) {
+            return;
+        }
+
         if (worker) {
             worker.terminate();
         }
 
-        // for (let key in slicing) {
-        //     slicing[key]({error: "cancelled slicing"});
-        // }
+        restarting = true;
+
+        for (let key in running) {
+            let rec = running[key];
+            if (rec.fn) {
+                rec.fn({error: "cancelled operation"});
+            }
+        }
 
         syncd = {};
-        slicing = {};
         running = {};
         worker = KIRI.work.newWorker();
 
@@ -95,6 +104,8 @@ KIRI.work = {
 
             onreply(reply.data, reply);
         };
+
+        restarting = false;
     },
 
     decimate: function(vertices, options, callback) {
@@ -169,14 +180,12 @@ KIRI.work = {
     },
 
     slice: function(settings, widget, callback) {
-        slicing[widget.id] = callback;
         send("slice", {
             id: widget.id,
             settings: settings
         }, function(reply) {
             callback(reply);
             if (reply.done || reply.error) {
-                delete slicing[widget.id];
                 // in belt mode, slicing modifies a widget and requires re-sync
                 if (settings.device.bedBelt) {
                     widget.modified = true;

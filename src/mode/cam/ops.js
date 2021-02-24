@@ -109,6 +109,10 @@
             let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
             let { process, stock } = settings;
 
+            if (op.down <= 0) {
+                throw `invalid step down "${op.down}"`;
+            }
+
             let roughIn = op.inside;
             let roughTop = op.top;
             let roughDown = op.down;
@@ -390,6 +394,10 @@
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
             let { process, stock } = settings;
 
+            if (op.down <= 0) {
+                throw `invalid step down "${op.down}"`;
+            }
+
             let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
             updateToolDiams(toolDiam);
 
@@ -453,7 +461,7 @@
                     tops = tshadow;
                 }
 
-                if (op.omitthru) {
+                if (op.outside && op.omitthru) {
                     // eliminate thru holes from shadow
                     for (let hole of thruHoles) {
                         for (let top of tops) {
