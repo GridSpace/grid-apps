@@ -267,7 +267,7 @@
 
         // generate purge block for given nozzle
         function purge(nozzle, track, layer, start, z, using) {
-            if (extcount < 2) {
+            if (extcount < 2 || isBelt) {
                 return start;
             }
             let rec = track[nozzle];
