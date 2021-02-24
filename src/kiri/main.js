@@ -918,7 +918,9 @@
     }
 
     function cancelWorker() {
-        if (KIRI.work.isSlicing()) KIRI.work.restart();
+        if (KIRI.work.isBusy()) {
+            KIRI.work.restart();
+        }
     }
 
     function showSlider() {
