@@ -311,8 +311,10 @@
             let { polyEmit, poly2polyEmit, depthRoughPath } = ops;
             let { camOut, newLayer, printPoint } = ops;
             let { settings, widget } = state;
-            let { process } = settings;
+            let { process, controller } = settings;
 
+            let danger = controller.danger;
+            let easeDown = process.camEaseDown;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
             let depthData = [];
@@ -372,7 +374,9 @@
                     // return POLY.nest(level.filter(poly => poly.depth === 0));
                     return POLY.nest(level.filter(poly => poly.depth === 0).clone());
                 });
-                printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit);
+                // experimental start of ease down
+                let ease = danger && op.down && easeDown ? op.down : 0;
+                printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit, false, ease);
                 // printPoint = depthRoughPath(printPoint, 0, depthData, tops, (poly, index, count, start) => {
                 //     console.log({z: poly.getZ(), i: poly.id, index, poly});
                 //     return polyEmit(poly, index, count, start);
@@ -542,8 +546,10 @@
             let { polyEmit, poly2polyEmit, depthOutlinePath } = ops;
             let { camOut, newLayer, printPoint } = ops;
             let { settings, widget } = state;
-            let { process } = settings;
+            let { process, controller } = settings;
 
+            let danger = controller.danger;
+            let easeDown = process.camEaseDown;
             let toolDiam = this.toolDiam;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
@@ -592,8 +598,10 @@
                     printPoint = flatLevels[0]
                         .sort((a,b) => { return a.area() - b.area() })[0]
                         .average();
-                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
-                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                    // experimental start of ease down
+                    let ease = danger && op.down && easeDown ? op.down : 0;
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false, ease);
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true, ease);
                 }
             }
 

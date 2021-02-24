@@ -414,7 +414,7 @@
             return last;
         }
 
-        function depthRoughPath(start, depth, levels, tops, emitter, fit) {
+        function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
             let level = levels[depth];
             if (!level) {
                 return start;
@@ -424,13 +424,19 @@
             fitted.filter(top => !top.level_emit).forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
+                if (ease) {
+                    start.z += ease;
+                }
                 start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true });
-                start = depthRoughPath(start, depth + 1, levels, tops, emitter, top);
+                if (ease) {
+                    start.z += ease;
+                }
+                start = depthRoughPath(start, depth + 1, levels, tops, emitter, top, ease);
             });
             return start;
         }
 
-        function depthOutlinePath(start, depth, levels, radius, emitter, clr) {
+        function depthOutlinePath(start, depth, levels, radius, emitter, clr, ease) {
             let bottm = depth < levels.length - 1 ? levels[levels.length - 1] : null;
             let above = levels[depth-1];
             let level = levels[depth];
@@ -458,8 +464,14 @@
             // omit polys that match bottom level polys unless level above is cleared
             start = poly2polyEmit(level, start, (poly, index, count, fromPoint) => {
                 poly.level_emit = true;
+                if (ease) {
+                    fromPoint.z += ease;
+                }
                 fromPoint = polyEmit(poly, index, count, fromPoint);
-                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr);
+                if (ease) {
+                    fromPoint.z += ease;
+                }
+                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr, ease);
                 return fromPoint;
             }, {weight: true});
             return start;
