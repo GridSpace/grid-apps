@@ -1256,6 +1256,12 @@
     function dragOverHandler(evt) {
         evt.stopPropagation();
         evt.preventDefault();
+
+        // prevent drop actions when a dialog is open
+        if (API.modal.visible()) {
+            return;
+        }
+
         evt.dataTransfer.dropEffect = 'copy';
         let oldcolor = SPACE.platform.setColor(0x00ff00);
         if (oldcolor !== 0x00ff00) platformColor = oldcolor;
@@ -1268,6 +1274,11 @@
     function dropHandler(evt) {
         evt.stopPropagation();
         evt.preventDefault();
+
+        // prevent drop actions when a dialog is open
+        if (API.modal.visible()) {
+            return;
+        }
 
         SPACE.platform.setColor(platformColor);
 
