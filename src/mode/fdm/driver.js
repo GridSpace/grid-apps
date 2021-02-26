@@ -46,11 +46,6 @@
         return params;
     }
 
-    // customer gcode post function for XYZ daVinci Mini W
-    self.kiri_fdm_xyz_mini_w = function(gcode, options) {
-        return btoa("; filename = kirimoto.gcode\n; machine = dv1MW0A000\n" + gcode);
-    };
-
     // defer loading until KIRI.client and KIRI.worker exist
     KIRI.loader.push(function(API) {
 
