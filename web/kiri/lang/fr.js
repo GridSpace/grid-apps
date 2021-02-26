@@ -63,18 +63,18 @@ kiri.lang['fr-fr'] = {
     dm_appp:        "Préférences d'Application",
 
     // CAM Tool Dialog
-    td_tyem:        "end",          // end mill
-    td_tybm:        "ball",         // ball mill
-    td_tytm:        "taper",        // taper mill
-    td_tonm:        "tool #",
-    td_shft:        "shaft",        // endmill shaft specs
-    td_flut:        "flute",        // endmill flute specs
-    td_tapr:        "taper",        // endmill taper specs
+    td_tyem:        "plat",          // end mill
+    td_tybm:        "boule",         // ball mill
+    td_tytm:        "v forme",       // taper mill
+    td_tonm:        "outil #",
+    td_shft:        "tige",        // endmill shaft specs
+    td_flut:        "flûte",        // endmill flute specs
+    td_tapr:        "cône",        // endmill taper specs
 
     // DEVICE dialog groups
-    dv_gr_dev:      "device",
-    dv_gr_ext:      "extruder",
-    dv_gr_out:      "output",
+    dv_gr_dev:      "machine",
+    dv_gr_ext:      "extrudeuse",
+    dv_gr_out:      "sortie",
     dv_gr_gco:      "gcode macros",
 
     // DEVICE dialog (_s = label, _l = hover help)
