@@ -229,7 +229,7 @@ KIRI.work = {
         }
         send("parse", args, function(reply) {
             if (reply.progress) {
-                progress(reply);
+                progress(reply.progress);
             }
             if (reply.parsed) {
                 done(KIRI.codec.decode(reply.parsed), reply.maxSpeed);
