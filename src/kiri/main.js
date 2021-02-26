@@ -284,7 +284,8 @@
             animate: noop,
             export: prepareExport,
             cancel: cancelWorker,
-            clear: KIRI.client.clear
+            clear: KIRI.client.clear,
+            parse: loadCode
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
