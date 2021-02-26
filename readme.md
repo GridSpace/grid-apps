@@ -1,6 +1,6 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
-Contributions in all forms (code, bug reports, community engagement, cash money, etc) are warmly welcomed. They all go to the bottom line of making better apps.
+Contributions in all forms (code, bug reports, community engagement, localization, etc) are warmly welcomed.
 
 [![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
@@ -19,6 +19,8 @@ Contributions in all forms (code, bug reports, community engagement, cash money,
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.2)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.3)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.4)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.5)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.6)
 
 ### Development Activity
 
