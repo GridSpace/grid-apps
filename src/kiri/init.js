@@ -2520,6 +2520,19 @@
         }
     }
 
+    // update static html elements with language overrides
+    UI.lang = function() {
+        for (let el of [...DOC.querySelectorAll("[lk]")]) {
+            let key = el.getAttribute('lk');
+            let val = LANG[key];
+            if (val) {
+                el.innerText = val;
+            } else {
+                console.log({missing_ln: key});
+            }
+        }
+    };
+
     // if a language needs to load, the script is injected and loaded
     // first.  once this loads, or doesn't, the initialization begins
     let lang_set = undefined;
@@ -2535,6 +2548,7 @@
         STATS.set('ll',lang);
         scr.onload = function() {
             KIRI.lang.set(lang);
+            UI.lang();
             init_one();
         };
         scr.onerror = function(err) {
@@ -2546,17 +2560,7 @@
     // set to browser default which will be overridden
     // by any future script loads (above)
     KIRI.lang.set();
-
-    // update static html elements with language overrides
-    for (let el of [...DOC.querySelectorAll("[lk]")]) {
-        let key = el.getAttribute('lk');
-        let val = LANG[key];
-        if (val) {
-            el.innerText = val;
-        } else {
-            console.log({missing_ln: key});
-        }
-    }
+    UI.lang();
 
     // schedule init_one to run after all page content is loaded
     // unless a languge script is loading first, in which case it
