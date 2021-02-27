@@ -965,6 +965,8 @@ th, tr, td, label {
 }
 #help .content li {
     line-height: 1.75em;
+    padding-left: 22px ;
+    text-indent: -22px ;
 }
 #help .footer {
     font-family: monospace;
@@ -997,7 +999,7 @@ th, tr, td, label {
     border-right: 0;
 }
 #help-tabs {
-    width: 600px;
+    width: 550px;
     height: 450px;
     transform: translateX(-1px);
 }
