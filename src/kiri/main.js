@@ -230,6 +230,7 @@
             dec: () => { kiri.api.event.emit("busy", --busy) }
         },
         conf: {
+            dbo: () => { return ls2o('ws-settings') },
             get: getSettings,
             put: putSettings,
             load: loadSettings,
@@ -2929,4 +2930,6 @@
     // new module loading
     kiri.loader.forEach(mod => { mod(kiri.api)} );
 
+    // upon restore, seed presets
+    API.event.emit('preset', API.conf.dbo());
 })();
