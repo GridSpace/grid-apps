@@ -2044,6 +2044,14 @@
             SDB.setItem('kiri-lang', 'da-dk');
             API.space.reload();
         };
+        $('lset-de').onclick = function() {
+            SDB.setItem('kiri-lang', 'de-de');
+            API.space.reload();
+        };
+        $('lset-fr').onclick = function() {
+            SDB.setItem('kiri-lang', 'fr-fr');
+            API.space.reload();
+        };
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
@@ -2207,8 +2215,11 @@
 
         // block standard browser context menu
         DOC.oncontextmenu = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
+            if (event.target.tagName === 'CANVAS') {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
         };
 
         SPACE.mouse.up((event, int) => {

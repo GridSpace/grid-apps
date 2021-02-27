@@ -3,10 +3,10 @@
 kiri.lang['de'] =
 kiri.lang['de-de'] = {
     // common keys and menus
-    animate:        "Animieren",      // CAM animate button
-    arrange:        "Anordnen",      // layout workspace objects
-    axis:           "Achse",         // left object scale pop menu
-    clear:          "alles entfernen",        // clear workspace (remove all objects)
+    animate:        "Animieren",        // CAM animate button
+    arrange:        "Anordnen",         // layout workspace objects
+    axis:           "Achse",            // left object scale pop menu
+    clear:          "alles entfernen",  // clear workspace (remove all objects)
     copy:           "Kopieren",
     delete:         "Löschen",
     detail:         "Details",
@@ -15,33 +15,33 @@ kiri.lang['de-de'] = {
     export:         "Export",
     files:          "Dateien",
     help:           "Hilfe",
-    ghost:          "Geist",        // left render pop menu (wireframe)
-    hide:           "Verbergen",         // left render pop menu (invisible)
+    ghost:          "Geist",            // left render pop menu (wireframe)
+    hide:           "Verbergen",        // left render pop menu (invisible)
     home:           "home",
     import:         "Import",
     language:       "Sprache",
-    machine:        "Maschine",      // device or machine
+    machine:        "Maschine",         // device or machine
     metric:         "Metrisch",
     name:           "Name",
-    prefs:          "Einstellungen",        // left menu "preferences"
+    prefs:          "Einstellungen",    // left menu "preferences"
     preview:        "Vorschau",
     recent:         "Letzte Objekte",
-    render:         "Rendern",       // left render pop menu
+    render:         "Rendern",          // left render pop menu
     reset:          "Zurücksetzen",
-    rotate:         "Rotieren",       // left rotate pop menu
+    rotate:         "Rotieren",         // left rotate pop menu
     save:           "Speichern",
     scale:          "Skalieren",        // left object scale pop menu
     setup:          "Einrichtung",
     settings:       "Einstellungen",
     size:           "Größe",
-    solid:          "Undurchsichtig",        // view type pop menu
+    solid:          "Undurchsichtig",   // view type pop menu
     tool:           "Werkzeug",
     tools:          "Werkzeuge",        // CAM tool menu button
     top:            "Oben",
-    type:           "Typ",         // CAM tool type
+    type:           "Typ",              // CAM tool type
     version:        "Version",
-    view:           "Ansicht",         // left view pop menu
-    wire:           "Drahtansicht",         // left render pop menu
+    view:           "Ansicht",          // left view pop menu
+    wire:           "Drahtansicht",     // left render pop menu
 
     acct_xpo:       ["make a backup of your device","and device profiles with the","option to include workspace","objects and positions"],
     acct_xpo:       ["Lege ein Backup Deiner Geräte","und Geräte-Profile an, mit der","Option, den Arbeitsbereich und","mit Objekten und Anordnung zu speichern"],
@@ -543,9 +543,9 @@ kiri.lang['de-de'] = {
 
     // FDM ADVANCED
     ad_menu:        "Fortgeschritten",
-    ad_rdst_s:      "Einzugslänge,
+    ad_rdst_s:      "Einzugslänge",
     ad_rdst_l:      ["Wie weit das Filament eingezogen werden soll","bei langen Bewegungen (in mm)"],
-    ad_rrat_s:      "Einzugsgeschwindigkeit,
+    ad_rrat_s:      "Einzugsgeschwindigkeit",
     ad_rrat_l:      ["Geschwindigkeit des Filamenteinzugs","in mm/s"],
     ad_rdwl_s:      "Vorschub-Pause",
     ad_wpln_s:      "Einzugs-Bewegung",
