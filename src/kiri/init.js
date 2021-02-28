@@ -2223,7 +2223,11 @@
         };
 
         SPACE.mouse.up((event, int) => {
-            if (event.button === 2 && API.view.isArrange()) {
+            if (event.button === 2) {
+                let full = API.view.isArrange();
+                for (let key of ["layflat","mirror","duplicate"]) {
+                    $(`context-${key}`).disabled = !full;
+                }
                 let style = UI.context.style;
                 style.display = 'flex';
                 style.left = `${event.clientX-3}px`;
