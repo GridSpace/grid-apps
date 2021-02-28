@@ -7,8 +7,27 @@
     if (self.kiri.lang) return;
 
     const KIRI = self.kiri, LANG = self.kiri.lang = { current: {} };
+    const KDFL = 'en-us';
 
     let lset = navigator.language.toLocaleLowerCase();
+
+    LANG.map = function(key) {
+        if (!key) {
+            return KDFL;
+        }
+        let tok = key.split('-');
+        switch (tok[0]) {
+            case 'en':
+                return 'en-us';
+            case 'da':
+                return 'da-dk';
+            case 'de':
+                return 'de-de';
+            case 'fr':
+                return 'fr-fr';
+        }
+        return KDFL;
+    };
 
     LANG.get = function() {
         return lset;

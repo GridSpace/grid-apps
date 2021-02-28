@@ -2552,13 +2552,14 @@
     // inject language script if not english
     if (lang && lang !== 'en' && lang !== 'en-us') {
         lang_set = lang;
+        let map = KIRI.lang.map(lang);
         let scr = DOC.createElement('script');
         // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+        scr.setAttribute('src',`/kiri/lang/${map}.js`);
         (DOC.body || DOC.head).appendChild(scr);
         STATS.set('ll',lang);
         scr.onload = function() {
-            KIRI.lang.set(lang);
+            KIRI.lang.set(map);
             UI.lang();
             init_one();
         };
