@@ -1269,10 +1269,9 @@
         let process = settings.process;
         let size = process.sliceSupportSize;
         let min = process.sliceSupportArea || 1;
-        let buf = new THREE.BufferGeometry();
-        buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        let geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
-        let geo = new THREE.Geometry().fromBufferGeometry(buf);
         let rad = (Math.PI / 180);
         let deg = (180 / Math.PI);
         let angle = rad * settings.process.sliceSupportAngle;
@@ -1329,19 +1328,22 @@
         } : (f) => {
             return f.normal.z < thresh;
         };
-        geo.faces.filter(filter).forEach(face => {
-            let a = geo.vertices[face.a];
-            let b = geo.vertices[face.b];
-            let c = geo.vertices[face.c];
+        let position = geo.attributes.position;
+        let { itemSize, count, array } = position;
+        for (let i = 0; i<count; i += 3) {
+            let ip = i * itemSize;
+            let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
             // skip tiny faces
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
-                return;
+                continue;
             }
             tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
             tl(a,b);
             tl(b,c);
             tl(a,c);
-        });
+        }
         widget.supports = add;
         return add.length > 0;
     };
