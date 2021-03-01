@@ -2473,7 +2473,7 @@
         lang_set = lang;
         let scr = DOC.createElement('script');
         // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+        scr.setAttribute('src',`/kiri/lang/${lang}.js?${KIRI.version}`);
         (DOC.body || DOC.head).appendChild(scr);
         STATS.set('ll',lang);
         scr.onload = function() {
