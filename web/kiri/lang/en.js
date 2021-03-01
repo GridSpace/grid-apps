@@ -34,7 +34,9 @@ kiri.lang['en-us'] = {
     setup:          "setup",
     settings:       "settings",
     size:           "size",
+    slice:          "slice",
     solid:          "solid",        // view type pop menu
+    start:          "start",
     tool:           "tool",
     tools:          "tools",        // CAM tool menu button
     top:            "top",

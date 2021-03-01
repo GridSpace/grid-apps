@@ -43,7 +43,6 @@ kiri.lang['de-de'] = {
     view:           "Ansicht",          // left view pop menu
     wire:           "Drahtansicht",     // left render pop menu
 
-    acct_xpo:       ["make a backup of your device","and device profiles with the","option to include workspace","objects and positions"],
     acct_xpo:       ["Lege ein Backup Deiner Geräte","und Geräte-Profile an, mit der","Option, den Arbeitsbereich und","mit Objekten und Anordnung zu speichern"],
 
     // RIGHT-CLICK CONTEXT MENU
