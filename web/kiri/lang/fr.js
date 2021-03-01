@@ -218,7 +218,7 @@ kiri.lang['fr-fr'] = {
     op_line_s:      "type de ligne",
     op_line_l:      ["style de ligne pour le rendu","impacte les performances 3d","chemin: 3d meilleur","plat: 2d bon","ligne = 1d rapide"],
     op_unit_s:      "unités",
-    op_unit_l:      ["les unités d'espace de travail affectent".,"vitesses et distances"],
+    op_unit_l:      ["les unités d'espace de travail affectent","vitesses et distances"],
     op_anim_s:      "animer",
     op_anim_l:      ["densité du maillage de l'animation","plus haut = plus dense","nécessite plus de mémoire","et est plus lent"],
 
