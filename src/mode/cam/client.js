@@ -6,7 +6,6 @@
 
     let KIRI = self.kiri,
         BASE = self.base,
-        LANG = KIRI.lang.current,
         CAM = KIRI.driver.CAM,
         PRO = CAM.process,
         newPolygon = BASE.newPolygon,
