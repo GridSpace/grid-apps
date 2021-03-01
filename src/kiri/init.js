@@ -740,6 +740,7 @@
             UI.deviceBelt.checked = dev.bedBelt;
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
+            UI.fwRetract.checked = dev.fwRetract;
 
             // add extruder selection buttons
             if (dev.extruders) {
@@ -781,6 +782,7 @@
                 UI.deviceOrigin,
                 UI.deviceRound,
                 UI.deviceBelt,
+                UI.fwRetract,
                 UI.gcodeFan,
                 UI.gcodeTrack,
                 UI.gcodeLayer,
@@ -1586,6 +1588,7 @@
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
             deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !UI.deviceRound.checked}),
+            fwRetract:        UC.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),

@@ -2224,6 +2224,7 @@
         settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
+        settings.device.fwRetract = UI.fwRetract.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
         API.event.emit('settings.saved', settings);
     }

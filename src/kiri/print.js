@@ -348,6 +348,13 @@
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
                     break;
+                case 'G10':
+                    console.log('retract');
+                    seq.last().retract = true;
+                    break;
+                case 'G11':
+                    console.log('unretract');
+                    break;
                 case 'G0':
                     G0G1(true, line);
                     break;
