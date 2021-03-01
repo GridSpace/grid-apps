@@ -30,9 +30,10 @@
      */
     function wireframe(group, points, color) {
         if (points.length % 3 != 0) throw "invalid line : "+points.length;
-        let lines = new THREE.Geometry(),
+        let lines = new THREE.BufferGeometry(),
             hash = {},
-            added = 0;
+            added = 0,
+            vertices = [];
         for (let i = 0; i < points.length; i += 3) {
             let p1 = points[i],
                 p2 = points[i + 1],
@@ -41,22 +42,28 @@
                 l2 = newOrderedLine(p2, p3),
                 l3 = newOrderedLine(p3, p1);
             if (!hash[l1.key]) {
-                lines.vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-                lines.vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+                vertices.appendAll([
+                    p1.x, p1.y, p1.z,
+                    p2.x, p2.y, p2.z
+                ]);
                 hash[l1.key] = ++added;
             }
             if (!hash[l2.key]) {
-                lines.vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
-                lines.vertices.push(new THREE.Vector3(p3.x, p3.y, p3.z));
+                vertices.appendAll([
+                    p2.x, p2.y, p2.z,
+                    p3.x, p3.y, p3.z
+                ]);
                 hash[l2.key] = ++added;
             }
             if (!hash[l3.key]) {
-                lines.vertices.push(new THREE.Vector3(p3.x, p3.y, p3.z));
-                lines.vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
+                vertices.appendAll([
+                    p3.x, p3.y, p3.z,
+                    p1.x, p1.y, p1.z
+                ]);
                 hash[l3.key] = ++added;
             }
         }
-        lines.verticesNeedUpdate = true;
+        lines.setAttribute('position', new THREE.BufferAttribute( vertices.toFloat32(), 3 ) );
         let mesh = new THREE.LineSegments(lines, getMaterial(color));
         group.add(mesh);
         return mesh;
