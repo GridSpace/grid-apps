@@ -80,7 +80,10 @@
         scale: scaleSelection,
         rotate: rotateSelection,
         meshes: function() { return selectedMeshes.slice() },
-        widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
+        widgets: function(orall) {
+            let sel = selectedMeshes.slice().map(m => m.widget);
+            return sel.length ? sel : orall ? WIDGETS.slice() : []
+        },
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
@@ -289,6 +292,10 @@
             cancel: cancelWorker,
             clear: KIRI.client.clear,
             parse: loadCode
+        },
+        group: {
+            merge: groupMerge,
+            split: groupSplit,
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
@@ -831,13 +838,10 @@
     }
 
     function forSelectedGroups(f) {
-        let m = selectedMeshes;
-        if (m.length === 0 && WIDGETS.length === 1) m = [ WIDGETS[0].mesh ];
-        let v = [];
-        m.slice().forEach(function (mesh) {
-            if (v.indexOf(mesh.widget.group) < 0) f(mesh.widget);
-            v.push(mesh.widget.group);
-        });
+        let groups = API.selection.widgets(true).map(w => w.group).uniq();
+        for (let group of groups) {
+            f(group[0]);
+        }
     }
 
     function forSelectedWidgets(f,noauto) {
@@ -1334,6 +1338,14 @@
      * Selection Functions
      ******************************************************************* */
 
+    function groupMerge() {
+        Widget.Groups.merge(API.selection.widgets(true));
+    }
+
+    function groupSplit() {
+        Widget.Groups.split(API.selection.widgets(false));
+    }
+
     function updateSelectedInfo() {
         let bounds = new THREE.Box3(), track;
         forSelectedMeshes(mesh => {
@@ -1657,8 +1669,15 @@
         return settings.bounds = bounds;
     }
 
-    function platformSelect(widget, shift) {
+    function platformSelect(widget, shift, recurse = true) {
         if (viewMode !== VIEWS.ARRANGE) {
+            return;
+        }
+        // apply deselect to entire group
+        if (recurse && widget && widget.group.length > 1) {
+            for (let w of widget.group) {
+                platformSelect(w, true, false);
+            }
             return;
         }
         let mesh = widget.mesh,
@@ -1735,10 +1754,17 @@
         }
     }
 
-    function platformDeselect(widget) {
+    function platformDeselect(widget, recurse = true) {
         if (viewMode !== VIEWS.ARRANGE) {
             // don't de-select and re-color widgets in,
             // for example, sliced or preview modes
+            return;
+        }
+        // apply deselect to entire group
+        if (recurse && widget && widget.group.length > 1) {
+            for (let w of widget.group) {
+                platformDeselect(w, false);
+            }
             return;
         }
         if (!widget) {

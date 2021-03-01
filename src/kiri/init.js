@@ -331,6 +331,12 @@
         if (API.feature.on_key) {
             if (API.feature.on_key({key:evt})) return;
         }
+        if (evt.ctrlKey) {
+            switch (evt.key) {
+                case 'g': return API.group.merge();
+                case 'u': return API.group.split();
+            }
+        }
         switch (evt.charCode) {
             case cca('`'): API.show.slices(0); break;
             case cca('0'): API.show.slices(API.var.layer_max); break;
@@ -468,11 +474,9 @@
     function duplicateSelection() {
         API.selection.for_widgets(function(widget) {
             let mesh = widget.mesh;
-            mesh.geometry = mesh.geometry.clone();
-            mesh.material = mesh.material.clone();
             let bb = mesh.getBoundingBox();
             let ow = widget;
-            let nw = API.widgets.new().loadGeometry(mesh.geometry);
+            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
             nw.meta.file = ow.meta.file;
             nw.meta.vertices = ow.meta.vertices;
             nw.move(bb.max.x - bb.min.x + 1, 0, 0);
