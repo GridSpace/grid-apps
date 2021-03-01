@@ -23,10 +23,10 @@ kiri.lang['fr-fr'] = {
     machine:        "machine",      // device or machine
     metric:         "métrique",
     name:           "nom",
-    prefs:          "prefs",        // left menu "preferences"
+    prefs:          "préfs",        // left menu "preferences"
     preview:        "prévisualiser",
     recent:         "récent",
-    render:         "rendre",       // left render pop menu
+    render:         "rendu",        // left render pop menu
     reset:          "remettre",
     rotate:         "tourner",      // left rotate pop menu
     save:           "sauvegarder",
@@ -72,10 +72,10 @@ kiri.lang['fr-fr'] = {
     td_tapr:        "cône",        // endmill taper specs
 
     // DEVICE dialog groups
-    dv_gr_dev:      "machine",
-    dv_gr_ext:      "extrudeuse",
+    dv_gr_dev:      "périphérique",
+    dv_gr_ext:      "extrudeur",
     dv_gr_out:      "sortie",
-    dv_gr_gco:      "gcode macros",
+    dv_gr_gco:      "macros gcode",
 
     // DEVICE dialog (_s = label, _l = hover help)
     dv_name_s:      "nom",
@@ -102,6 +102,8 @@ kiri.lang['fr-fr'] = {
     dv_bedc_l:      "le plateau du matériel est circulaire",
     dv_belt_s:      "plateau tapis-roulant",
     dv_belt_l:      "plateau à impression continue",
+    dv_retr_s:      "rétraction firmware",
+    dv_retr_l:      ["le firmware supporte G10/G11"],
     dv_fanp_s:      "refroidissement",
     dv_fanp_l:      "régler la puissance du ventilateur de refroidissement",
     dv_prog_s:      "progression",
@@ -111,8 +113,8 @@ kiri.lang['fr-fr'] = {
     dv_tksp_s:      "délimiteur d'instruction",
     dv_tksp_l:      ["ajouter un espace","entre les paramètres des axes","G0X0Y0X0","vs","G0 X0 Y0 Z0"],
     dv_strc_s:      "éliminer les commentaires",
-    dv_strc_l:      ["éliminer les commentaires du gcode","commentaires débutent par ;"],
-    dv_fext_s:      "extension de fichier",
+    dv_strc_l:      ["éliminer les commentaires du gcode","les commentaires débutent par ;"],
+    dv_fext_s:      "extension du fichier",
     dv_fext_l:      "extension du nom de fichier",
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "script gcode dwell",
@@ -158,7 +160,7 @@ kiri.lang['fr-fr'] = {
 
     // LOAD
     fe_menu:        "fichier",
-    fn_recn:        "Récent",
+    fn_recn:        "Récents",
     fn_impo:        "Importer",
 
     // FUNCTION
@@ -196,7 +198,7 @@ kiri.lang['fr-fr'] = {
     op_dark_s:      "mode sombre",
     op_dark_l:      "interface en mode sombre",
     op_comp_s:      "ui compacte",
-    op_comp_l:      ["interface utilisateur compacte", "meilleure pour les petits écrans", "et tablettes"],
+    op_comp_l:      ["interface utilisateur compacte", "plus adapté aux petits écrans", "et tablettes"],
     op_shor_s:      "montrer l'origine",
     op_shor_l:      "indiquer l'origine du dispositif ou du processus",
     op_shru_s:      "afficher les règles",
@@ -216,17 +218,17 @@ kiri.lang['fr-fr'] = {
     op_line_s:      "type de ligne",
     op_line_l:      ["style de ligne pour le rendu","impacte les performances 3d","chemin: 3d meilleur","plat: 2d bon","ligne = 1d rapide"],
     op_unit_s:      "unités",
-    op_unit_l:      ["les unités d'espace de travail affectent","vitesses et distances"],
+    op_unit_l:      ["les unités d'espace de travail affectent".,"vitesses et distances"],
     op_anim_s:      "animer",
-    op_anim_l:      ["densité du maillage de l'animation","plus haut est plus dense","nécessite plus de mémoire","et est plus lent"],
+    op_anim_l:      ["densité du maillage de l'animation","plus haut = plus dense","nécessite plus de mémoire","et est plus lent"],
 
     lo_menu:        "disposition",
 
     pt_menu:        "pièces",
-    pt_deci_s:      "decimate",
-    pt_deci_l:      ["enable or disable point decimation","during port import. for faster slicing","and lower memory usage"],
+    pt_deci_s:      "compression",
+    pt_deci_l:      ["activer / désactiver la compression","durant l'importation. Tranchage plus rapide","et usage réduit de la mémoire"],
     pt_qual_s:      "qualité",
-    pt_qual_l:      ["niveau de détail à retenir", "lors des opérations de tranchage", "plus bas, est plus rapide"],
+    pt_qual_l:      ["niveau de détail à garder", "lors des opérations de tranchage", "plus bas = plus rapide"],
     pt_heal_s:      "correction de maillage",
     pt_heal_l:      ["tentative de correction", "des mailles non-fermées", "accroit le temps de tranchage"],
 
@@ -303,7 +305,7 @@ kiri.lang['fr-fr'] = {
     fl_zoff_s:      "décalage bande",
     fl_zoff_l:      ["décalage de hauteur par rapport à la bande", "de l'extrusion la plus basse", "en millimètres"],
     fl_brim_s:      "taille de bordure",
-    fl_brim_l:      ["add brim to part bottom","size is width in millimeters","0 to disable"],
+    fl_brim_l:      ["ajoute une bordure à la partie inférieure","la taille est la largeur en millimètres","0 désactive"],
     fl_brmn_s:      "seuil de bordure",
     fl_brmn_l:      ["ajout de bordures uniquement quand le segment", "face à la bande est plus court que cela", "valeur en millimètres", "0 = infini"],
     fl_bled_s:      "ancrage de pièce",
@@ -318,14 +320,14 @@ kiri.lang['fr-fr'] = {
     sp_size_l:      ["largeur du pilier","en millimètres"],
     sp_offs_s:      "décalage du pilier",
     sp_offs_l:      ["décalage par rapport à la pièce","en millimètres"],
-    sp_gaps_s:      "gap layers",
+    sp_gaps_s:      "écart des couches",
     sp_gaps_l:      ["nombre de couches","de décalage de la pièce"],
     sp_span_s:      "portée maximale",
     sp_span_l:      ["portée non soutenue nécessitant", "un nouveau soutien à générer","en millimètres"],
     sp_angl_s:      "angle max",
     sp_angl_l:      ["angle de surplomb maximum avant", "de générer un pilier de soutien"],
     sp_area_s:      "surface min",
-    sp_area_l:      ["surface minimum de","la colonne support","en millimètres"],
+    sp_area_l:      ["surface minimale de","la colonne support","en millimètres"],
     sp_xpnd_s:      "étendre",
     sp_xpnd_l:      ["étendre la zone de soutien", "au-delà des limites d'une pièce","en millimètres"],
     sp_nozl_s:      "extrudeur",
@@ -450,7 +452,7 @@ kiri.lang['fr-fr'] = {
     ct_nabl_l:      ["auto generate radial tabs","projected from part center","using count and angle offset"],
 
     // OUTPUT
-    ou_menu:        "output",
+    ou_menu:        "sortie",
 
     // LASER KNIFE
     dk_menu:        "knife",
@@ -492,9 +494,9 @@ kiri.lang['fr-fr'] = {
     ou_fini_l:      ["vitesse de la coque extérieure","millimètres / minute"],
     ou_move_s:      "vitesse déplacement",
     ou_move_l:      ["vitesse de déplacement sans impression","millimètres / minute","0 = active déplacements G0"],
-    ou_shml_s:      "facteur de coque",
-    ou_flml_s:      "facteur de solidité",
-    ou_spml_s:      "facteur de remplissage",
+    ou_shml_s:      "débit de coque",
+    ou_flml_s:      "débit de solidité",
+    ou_spml_s:      "débit de remplissage",
     ou_exml_l:      ["multiplicateur d'extrusion","0.0 - 2.0"],
     ou_fans_s:      "vitesse ventilateur",
     ou_fans_l:      "0 - 255",
@@ -542,29 +544,29 @@ kiri.lang['fr-fr'] = {
 
     // FDM ADVANCED
     ad_menu:        "expert",
-    ad_rdst_s:      "dist retraction",
-    ad_rdst_l:      ["montant pour rétracter le filament", "pour les longs mouvements. en millimètres"],
-    ad_rrat_s:      "vit rétraction",
+    ad_rdst_s:      "distance de rétraction",
+    ad_rdst_l:      ["longueur de filament à rétracter", "pour les longs mouvements. en millimètres"],
+    ad_rrat_s:      "vitesse de rétraction",
     ad_rrat_l:      ["vitesse de rétraction","du filament en mm/s"],
     ad_rdwl_s:      "réenclencher",
     ad_wpln_s:      "essuyage rétractation",
-    ad_wpln_l:      ["mouvement sans impression", "après rétractation", "en millimètres"],
+    ad_wpln_l:      ["mouvement sans impression", "après rétraction", "en millimètres"],
     ad_rdwl_l:      ["durée de réenclenchement", "filament et mouvement", "en millisecondes"],
-    ad_scst_s:      "shell coast",
+    ad_scst_s:      "cabotage",
     ad_scst_l:      ["extrémité non imprimée", "des coques du périmètre", "en millimètres"],
     ad_msol_s:      "min solide",
     ad_msol_l:      ["aire minimale (mm^2)","requise pour rester solide","doit être > 0.1"],
-    ad_mins_s:      "vitesse min",
+    ad_mins_s:      "vitesse minimale",
     ad_mins_l:      ["vitesse minimale","des segments courts"],
-    ad_spol_s:      "short path",
+    ad_spol_s:      "chemin court",
     ad_spol_l:      ["les polygones plus courts", "auront la vitesse réduite et", "seront ramenés à la vitesse minimale", "en millimètres"],
     ad_arct_s:      "tolérance arc",
-    ad_arct_l:      ["convertir les lignes à facettes en arcs", "tolérance de dérive du point central", "lors de la correspondance des points d'arc", "considérer les valeurs autour de 0,15", "en millimètres", "0 pour désactiver"],
-    ad_zhop_s:      "dist levée Z",
-    ad_zhop_l:      ["levée du z","sur les mouvements de rétraction", "en millimètres", "0 pour désactiver"],
+    ad_arct_l:      ["convertir les lignes des facettes en arcs", "tolérance de dérive du point central", "lors de la correspondance des points d'arc", "considérer les valeurs autour de 0,15", "en millimètres", "0 désactive"],
+    ad_zhop_s:      "décalage en Z",
+    ad_zhop_l:      ["levée du z","sur les mouvements de rétraction", "en millimètres", "0 désactive"],
     ad_abkl_s:      "anti-backlash",
-    ad_abkl_l:      ["pour une meilleure finition de la surface plane", "utiliser des micro-mouvements pour annuler", "le jeu dans la sortie de la couche solide", "en millimètres", "0 pour désactiver", "si le firmware reconnait le M425", "l'utiliser dans l'en-tête du gcode", "et mettre à 0"],
-    ad_lret_s:      "rétr chngt couche",
+    ad_abkl_l:      ["pour une meilleure finition de la surface plane", "utiliser des micro-mouvements pour annuler", "le jeu dans la sortie de la couche solide", "en millimètres", "0 désactive", "si le firmware reconnait le M425", "l'utiliser dans l'en-tête du gcode", "et mettre à 0"],
+    ad_lret_s:      "rétraction au changement de couche",
     ad_lret_l:      ["forcer la rétraction du filament", "entre les couches"],
     ad_play_s:      "couches de polissage",
     ad_play_l:      ["polir jusqu'au nombre spécifié", "# de couches à la fois"],
@@ -585,9 +587,9 @@ kiri.lang['fr-fr'] = {
     ag_loop_l:      ["des plages de couches à répéter dans le format ", "premier-compte dernier,premier-compte dernier,...", "compte omis = 1"],
 
     // SLA MENU
-    sa_menu:        "slicing",
-    sa_lahe_s:      "layer height",
-    sa_lahe_l:      ["layer height","in millimeters"],
+    sa_menu:        "tranchage",
+    sa_lahe_s:      "hauteur de couche",
+    sa_lahe_l:      ["hauteur de couche","en millimètres"],
     sa_shel_s:      "hollow shell",
     sa_shel_l:      ["shell thickness in mm","use multiple of layer height","use 0 for solid (disabled)"],
     sa_otop_s:      "open top",
