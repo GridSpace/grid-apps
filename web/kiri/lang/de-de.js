@@ -103,6 +103,8 @@ kiri.lang['de-de'] = {
     dv_bedc_l:      "Der Druckbereich des Gerätes ist rund",
     dv_belt_s:      "Riemen-Druckbett",
     dv_belt_l:      "Für bewegliche Druckbetten",
+    dv_retr_s:      "Firmware-Einzug",
+    dv_retr_l:      ["Fimware unterstützt G10/G11 für Firmware Einzug"],
     dv_fanp_s:      "Lüfter-Einstellung",
     dv_fanp_l:      "Wie stark der Lüfter eingestellt sein soll",
     dv_prog_s:      "Fortschrittsanzeige",
