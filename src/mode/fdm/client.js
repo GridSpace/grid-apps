@@ -339,8 +339,9 @@
                     let ws = (wa.support = wa.support || []);
                     let phi = iup[0].point;
                     let plo = idn[0].point;
-                    let mp = (phi.y + plo.y) / 2;
-                    let dy = Math.abs(phi.y - plo.y);
+                    let ply = Math.max(0, plo.y);
+                    let mp = (phi.y + ply) / 2;
+                    let dy = Math.abs(phi.y - ply);
                     let dw = api.conf.get().process.sliceSupportSize / 2;
                     let rec = { rz:angle, x:point.x, y:point.z, z:mp, dw, dh:dy, id };
                     ws.push(Object.clone(rec));
@@ -390,8 +391,10 @@
             if (i2.length && i2.length % 2 === 0) {
                 p2 = i2[0].point;
                 iw = i2[0].object.widget || iw;
-                let hy = (p1.y + p2.y) / 2;
-                let dy = Math.abs(p1.y - p2.y);
+                let p1y = Math.max(0, p1.y);
+                let p2y = Math.max(0, p2.y);
+                let hy = (p1y + p2y) / 2;
+                let dy = Math.abs(p1y - p2y);
                 let dw = api.conf.get().process.sliceSupportSize / 2;
                 addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
                     x:dw, y:dw, z:dy, rz
