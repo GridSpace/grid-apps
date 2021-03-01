@@ -279,11 +279,10 @@
             forSlices(0.0, 0.2, slice => {
                 let params = getRangeParameters(settings, slice.index);
                 let first = slice.index === 0;
-                let solid = (
-                    slice.index < spro.sliceBottomLayers ||
-                    slice.index > slices.length - spro.sliceTopLayers-1 ||
-                    params.sliceFillSparse > 0.95
-                ) && !vaseMode && !isSynth;
+                let isBottom = slice.index < spro.sliceBottomLayers;
+                let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
+                let isDense = params.sliceFillSparse > 0.98;
+                let solid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let offset = shellOffset * spaceMult;
                 let fillOff = fillOffset * spaceMult;

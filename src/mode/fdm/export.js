@@ -22,6 +22,7 @@
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
             tool = 0,
+            fwRetract = device.fwRetract,
             isDanger = settings.controller.danger,
             isBelt = device.bedBelt,
             bedType = isBelt ? "belt" : "fixed",
@@ -238,7 +239,11 @@
                 return;
             }
             retracted = retDist;
-            moveTo({e:-retracted}, retSpeed, `e-retract ${retDist}`);
+            if (fwRetract) {
+                append('G10');
+            } else {
+                moveTo({e:-retracted}, retSpeed, `e-retract ${retDist}`);
+            }
             if (zhop) moveTo({z:zpos + zhop}, seekMMM, "z-hop start");
             time += (retDist / retSpeed) * 60 * 2; // retraction time
         }
@@ -440,7 +445,11 @@
                     // when enabled, resume previous Z
                     if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
                     // re-engage retracted filament
-                    moveTo({e:retracted}, retSpeed, `e-engage ${retracted}`);
+                    if (fwRetract) {
+                        append('G11');
+                    } else {
+                        moveTo({e:retracted}, retSpeed, `e-engage ${retracted}`);
+                    }
                     retracted = 0;
                     // optional dwell after re-engaging filament to allow pressure to build
                     if (retDwell) dwell(retDwell);
@@ -593,8 +602,9 @@
             append(`M808`);
         }
 
-        subst.time = UTIL.round(time,2);
         subst.material = UTIL.round(emitted,2);
+        subst.time = UTIL.round(time,2);
+        subst['print-time'] = subst.time;
 
         append("; --- shutdown ---");
         appendAllSub(device.gcodePost);

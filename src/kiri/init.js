@@ -331,6 +331,12 @@
         if (API.feature.on_key) {
             if (API.feature.on_key({key:evt})) return;
         }
+        if (evt.ctrlKey) {
+            switch (evt.key) {
+                case 'g': return API.group.merge();
+                case 'u': return API.group.split();
+            }
+        }
         switch (evt.charCode) {
             case cca('`'): API.show.slices(0); break;
             case cca('0'): API.show.slices(API.var.layer_max); break;
@@ -468,11 +474,9 @@
     function duplicateSelection() {
         API.selection.for_widgets(function(widget) {
             let mesh = widget.mesh;
-            mesh.geometry = mesh.geometry.clone();
-            mesh.material = mesh.material.clone();
             let bb = mesh.getBoundingBox();
             let ow = widget;
-            let nw = API.widgets.new().loadGeometry(mesh.geometry);
+            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
             nw.meta.file = ow.meta.file;
             nw.meta.vertices = ow.meta.vertices;
             nw.move(bb.max.x - bb.min.x + 1, 0, 0);
@@ -740,6 +744,7 @@
             UI.deviceBelt.checked = dev.bedBelt;
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
+            UI.fwRetract.checked = dev.fwRetract;
 
             // add extruder selection buttons
             if (dev.extruders) {
@@ -781,6 +786,7 @@
                 UI.deviceOrigin,
                 UI.deviceRound,
                 UI.deviceBelt,
+                UI.fwRetract,
                 UI.gcodeFan,
                 UI.gcodeTrack,
                 UI.gcodeLayer,
@@ -1586,6 +1592,7 @@
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
             deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !UI.deviceRound.checked}),
+            fwRetract:        UC.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
 
             extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
@@ -2044,6 +2051,14 @@
             SDB.setItem('kiri-lang', 'da-dk');
             API.space.reload();
         };
+        $('lset-de').onclick = function() {
+            SDB.setItem('kiri-lang', 'de-de');
+            API.space.reload();
+        };
+        $('lset-fr').onclick = function() {
+            SDB.setItem('kiri-lang', 'fr-fr');
+            API.space.reload();
+        };
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
@@ -2207,12 +2222,19 @@
 
         // block standard browser context menu
         DOC.oncontextmenu = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
+            if (event.target.tagName === 'CANVAS') {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
         };
 
         SPACE.mouse.up((event, int) => {
-            if (event.button === 2 && API.view.isArrange()) {
+            if (event.button === 2) {
+                let full = API.view.isArrange();
+                for (let key of ["layflat","mirror","duplicate"]) {
+                    $(`context-${key}`).disabled = !full;
+                }
                 let style = UI.context.style;
                 style.display = 'flex';
                 style.left = `${event.clientX-3}px`;
@@ -2500,7 +2522,11 @@
         // context menu
         $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
-        $('context-clear-workspace').onclick = () => { API.platform.clear(); UI.context.onmouseleave() };
+        $('context-clear-workspace').onclick = () => {
+            API.view.set(VIEWS.ARRANGE);
+            API.platform.clear();
+            UI.context.onmouseleave();
+        };
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = layFlat;
@@ -2541,13 +2567,14 @@
     // inject language script if not english
     if (lang && lang !== 'en' && lang !== 'en-us') {
         lang_set = lang;
+        let map = KIRI.lang.map(lang);
         let scr = DOC.createElement('script');
         // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${lang}.js`);
+        scr.setAttribute('src',`/kiri/lang/${map}.js`);
         (DOC.body || DOC.head).appendChild(scr);
         STATS.set('ll',lang);
         scr.onload = function() {
-            KIRI.lang.set(lang);
+            KIRI.lang.set(map);
             UI.lang();
             init_one();
         };

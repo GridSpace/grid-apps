@@ -36,6 +36,31 @@
             return groups.slice()
         },
 
+        merge: (widgets) => {
+            let grps = widgets.map(w => w.group).uniq();
+            if (grps.length > 1) {
+                let root = grps.shift();
+                for (let grp of grps) {
+                    for (let w of grp) {
+                        w.group = root;
+                        root.push(w);
+                    }
+                    groups.splice(groups.indexOf(grp),1);
+                }
+            }
+        },
+
+        split: (widgets) => {
+            for (let group of widgets.map(w => w.group).uniq()) {
+                groups.splice(groups.indexOf(group),1);
+                for (let widget of group) {
+                    let nugroup = Group.forid(widget.id);
+                    nugroup.push(widget);
+                    widget.group = nugroup;
+                }
+            }
+        },
+
         forid: function(id) {
             for (let i=0; i<groups.length; i++) {
                 if (groups[i].id === id) return groups[i];

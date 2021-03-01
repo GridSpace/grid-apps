@@ -261,6 +261,7 @@
                     bedHeight: 2.5,
                     bedRound: false,
                     bedBelt: false,
+                    fwRetract: false,
                     originCenter: false,
                     maxHeight: 150,
                     gcodePre: [],

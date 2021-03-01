@@ -102,6 +102,8 @@ kiri.lang['en-us'] = {
     dv_bedc_l:      "device bed is circular",
     dv_belt_s:      "belt bed",
     dv_belt_l:      "continuous printing bed",
+    dv_retr_s:      "firmware retract",
+    dv_retr_l:      ["device fimware supports G10/G11"],
     dv_fanp_s:      "fan power",
     dv_fanp_l:      "set cooling fan power",
     dv_prog_s:      "progress",

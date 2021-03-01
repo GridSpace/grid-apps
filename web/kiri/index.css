@@ -441,7 +441,7 @@ th, tr, td, label {
     background-color: rgba(255,255,255,0.85);
     border: 1px solid rgba(0,0,0,0.1);
     border-radius: 3px;
-    width: 60px;
+    min-width: 60px;
     color: var(--fg-gray);
 }
 .pop-lcol > div:hover {
@@ -527,7 +527,7 @@ th, tr, td, label {
 .txt-sel button, .btn-sel {
     background-color: #ccc;
 }
-#pop-rotate .value, #pop-scale .value {
+#pop-rotate input.value, #pop-scale input.value {
     width: 90%;
 }
 #pop-rotate label {
@@ -965,6 +965,8 @@ th, tr, td, label {
 }
 #help .content li {
     line-height: 1.75em;
+    padding-left: 22px ;
+    text-indent: -22px ;
 }
 #help .footer {
     font-family: monospace;
