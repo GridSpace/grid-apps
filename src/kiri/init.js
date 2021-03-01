@@ -2518,7 +2518,11 @@
         // context menu
         $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
-        $('context-clear-workspace').onclick = () => { API.platform.clear(); UI.context.onmouseleave() };
+        $('context-clear-workspace').onclick = () => {
+            API.view.set(VIEWS.ARRANGE);
+            API.platform.clear();
+            UI.context.onmouseleave();
+        };
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = layFlat;
