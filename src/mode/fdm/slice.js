@@ -1323,19 +1323,25 @@
                 point.added = true;
             }
         }
-        let filter = isBelt ? (f) => {
-            return f.normal.z < thresh && f.normal.y < -0.001;
-        } : (f) => {
-            return f.normal.z < thresh;
+        let filter = isBelt ? (norm) => {
+            return norm.z < thresh && norm.y < -0.001;
+        } : (norm) => {
+            return norm.z < thresh;
         };
-        let position = geo.attributes.position;
+        let { position } = geo.attributes;
         let { itemSize, count, array } = position;
         for (let i = 0; i<count; i += 3) {
             let ip = i * itemSize;
             let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
             let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
             let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let norm = THREE.computeFaceNormal(a,b,c);
+            // limit to downward faces
+            if (!filter(norm)) {
+                continue;
+            }
             // skip tiny faces
+            let area = BASE.newPolygon().addPoints([a,b,c]).area();
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
                 continue;
             }

@@ -207,20 +207,12 @@
             // synth support widget for each widget group
             let synth = [];
             for (let group of kiri.Widget.Groups.list()) {
-                let count = 0;
-                let merged = new THREE.Geometry();
-                for (let widget of group) {
-                    if (widget.sups) {
-                        for (let sup of Object.values(widget.sups)) {
-                            merged.merge(sup.box.geometry, sup.box.matrix);
-                            count++;
-                        }
-                    }
-                }
-                if (!count) {
+                let merge = group.filter(w => w.sups).map(w => Object.values(w.sups)).flat();
+                if (!merge.length) {
                     continue;
                 }
-                let bbg = new THREE.BufferGeometry().fromGeometry(merged);
+                let boxen = merge.map(m => m.box.geometry.clone().translate(m.x, m.y, m.z));
+                let bbg = THREE.BufferGeometryUtils.mergeBufferGeometries(boxen);
                 let sw = kiri.newWidget(null, group);
                 let fwp = group[0].track.pos;
                 sw.loadGeometry(bbg);

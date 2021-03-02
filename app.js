@@ -241,6 +241,7 @@ const script = {
     kiri : [
         "kiri",
         "ext/three",
+        "ext/three-bgu",
         "license",
         "ext/clip2", // work.test
         "ext/tween",

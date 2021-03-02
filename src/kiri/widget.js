@@ -557,7 +557,24 @@
     };
 
     PRO.getGeoVertices = function() {
-        return this.mesh.geometry.getAttribute('position').array;
+        let geo = this.mesh.geometry;
+        let pos = geo.getAttribute('position').array;
+        if (geo.index) {
+            let idx = geo.index.array;
+            let len = idx.length;
+            let p2 = new Float32Array(len * 3);
+            let inc = 0;
+            for (let i=0; i<len; i++) {
+                let iv = idx[i];
+                let ip = iv * 3;
+                p2[inc++] = pos[ip++];
+                p2[inc++] = pos[ip++];
+                p2[inc++] = pos[ip];
+            }
+            return p2;
+        } else {
+            return pos;
+        }
     };
 
     PRO.getPoints = function() {

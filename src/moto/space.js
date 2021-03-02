@@ -682,14 +682,15 @@
         if (points.length % 2 != 0) {
             throw "invalid line : "+points.length;
         }
-        const geo = new THREE.Geometry();
-        for (let i=0; i < points.length; ) {
-            const p1 = points[i++];
-            const p2 = points[i++];
-            geo.vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-            geo.vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+        const geo = new THREE.BufferGeometry();
+        const vrt = new Float32Array(points.length * 3);
+        let vi = 0;
+        for (let p of points) {
+            vrt[vi++] = p.x;
+            vrt[vi++] = p.y;
+            vrt[vi++] = p.z;
         }
-        geo.verticesNeedUpdate = true;
+        geo.setAttribute('position', new THREE.BufferAttribute(vrt, 3));
         return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
             color: color,
             opacity: opacity || 1,
