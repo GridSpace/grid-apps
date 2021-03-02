@@ -541,7 +541,7 @@
                         LOC.hash = '';
                     }
                 }
-            }).request("/data/"+ hash[0] + "/" + hash[1]);
+            }).request(API.probe.data + hash[0] + "/" + hash[1]);
         }
     }
 
@@ -559,7 +559,7 @@
             } else {
                 updateSpaceState();
             }
-        }).request("/data/"+ settings().id + "/" + settings().ver, set);
+        }).request(API.probe.data + settings().id + "/0", set);
     }
 
     function deviceExport(exp, name) {

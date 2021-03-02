@@ -308,6 +308,7 @@
             set_expert: noop
         },
         probe: {
+            data : "/data/",
             live : "https://live.grid.space",
             grid : function() { return false },
             local : function() { return false }
