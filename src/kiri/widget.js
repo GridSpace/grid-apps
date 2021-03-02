@@ -40,9 +40,13 @@
             let grps = widgets.map(w => w.group).uniq();
             if (grps.length > 1) {
                 let root = grps.shift();
+                let rpos = root[0].track.pos;
                 for (let grp of grps) {
                     for (let w of grp) {
+                        let wpos = w.track.pos;
                         w.group = root;
+                        w.moveMesh(rpos.x - wpos.x, rpos.y - wpos.y, rpos.z - wpos.z);
+                        w._move(rpos.x, rpos.y, rpos.z, true);
                         root.push(w);
                     }
                     groups.splice(groups.indexOf(grp),1);
