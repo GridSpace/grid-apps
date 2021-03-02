@@ -86,7 +86,6 @@ function init(mod) {
     mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
-        [ "/data/", handleData ],
         [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
@@ -499,118 +498,6 @@ function handleOptions(req, res, next) {
         res.end();
     } else {
         next();
-    }
-}
-
-function handleData(req, res, next) {
-    addCorsHeaders(req, res);
-    res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
-
-    let tok = req.app.path.split('/'),
-        muid = req.headers['x-moto-ajax'],
-        space = tok[2] || null,
-        version = tok[3],
-        valid = space && space.length >= 4 && space.length <= 8;
-
-    function genKey() {
-        while (true) {
-            let k = Math.round(Math.random() * 9999999999).toString(36);
-            if (k.length >= 4 && k.length <= 8) return k;
-        }
-    }
-
-    function countKey(space) {
-        return db.key(['meta/counter',space]);
-    }
-
-    function ownerKey(space) {
-        return db.key(['meta/owner',muid,'space',space]);
-    }
-
-    function recordKey(space, version) {
-        return db.key(["meta/space",space,version]);
-    }
-
-    // retrieve latest space data
-    if (valid && req.method === 'GET' && valid) {
-        function send(rec, version) {
-            if (rec) {
-                res.write(obj2string({space:space,ver:version,rec:rec}));
-                res.end();
-            } else {
-                res.end();
-            }
-        }
-
-        function retrieve(version) {
-            return db.get(recordKey(space,version))
-                .then(record => {
-                    send(record || null, version);
-                })
-        }
-
-        if (version) {
-            retrieve(version)
-        } else {
-            db.get(countKey(space)).then(version => retrieve(version));
-        }
-    } else if (valid && req.method === 'POST') {
-        let dbOwner = null,
-            dbVersion = null,
-            postBody = null,
-            spacein = space,
-            version = 0,
-            body = '';
-
-        function checkDone() {
-            if (!(dbVersion && postBody)) return;
-            // if not owner, assign new space id
-            if (dbVersion > 1) {
-                if (!dbOwner) {
-                    space = genKey();
-                    version = 1;
-                    logger.log({forked:space,from:spacein,by:muid});
-                }
-            }
-            // log what we have
-            logger.log({
-                space: space,
-                ver: dbVersion,
-                uid: muid,
-                size: postBody.length
-            });
-            if (muid && muid.length > 0) {
-                level.put(recordKey(space, dbVersion), body);
-                level.put(ownerKey(space), {time: time(), ver: dbVersion});
-                level.put(countKey(space), dbVersion);
-            }
-            res.end(obj2string({space: space, ver: dbVersion}));
-        }
-
-        // accumulate post body
-        req.on('data', data => { body += data });
-        req.on('end', () => {
-            postBody = body;
-            checkDone();
-        });
-
-        // fetch owner and version information
-        db.get(ownerKey(space))
-            .then(owner => {
-                dbOwner = owner;
-                return db.get(countKey(space));
-             })
-            .then(version => {
-                dbVersion = parseInt(version || "0") + 1;
-                checkDone();
-            });
-
-        return;
-
-    }  else {
-
-        next();
-
     }
 }
 

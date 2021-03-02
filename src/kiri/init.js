@@ -363,14 +363,6 @@
             case cca('i'): // file import
                 API.event.import();
                 break;
-            case cca('U'): // full settings url
-                storeSettingsToServer(true);
-                break;
-            case cca('u'): // full settings url
-                UC.prompt("settings id to load", "").then(id => {
-                    if (id) loadSettingsFromServer(id);
-                });
-                break;
             case cca('S'): // slice
             case cca('s'): // slice
                 if (evt.shiftKey) {
@@ -545,43 +537,6 @@
         }
 
         moveSelection(x, y, z, true);
-    }
-
-    function loadSettingsFromServer(tok) {
-        let hash = (tok || LOC.hash.substring(1)).split("/");
-        if (hash.length === 2) {
-            new moto.Ajax(function(reply) {
-                if (reply) {
-                    let res = JSON.parse(reply);
-                    if (res && res.ver && res.rec) {
-                        let set = API.util.b64dec(res.rec);
-                        set.id = res.space;
-                        set.ver = res.ver;
-                        API.conf.put(set);
-                        API.event.settings();
-                        API.ui.sync();
-                        LOC.hash = '';
-                    }
-                }
-            }).request("/data/"+ hash[0] + "/" + hash[1]);
-        }
-    }
-
-    function storeSettingsToServer(display) {
-        let set = API.util.b64enc(settings());
-        new moto.Ajax(function(reply) {
-            if (reply) {
-                let res = JSON.parse(reply);
-                if (res && res.ver) {
-                    LOC.hash = res.space + "/" + res.ver;
-                    if (display)  {
-                        UC.alert(`unique settings id is: <b>${res.space}/${res.ver}</b>`);
-                    }
-                }
-            } else {
-                updateSpaceState();
-            }
-        }).request("/data/"+ settings().id + "/" + settings().ver, set);
     }
 
     function deviceExport(exp, name) {
@@ -2434,9 +2389,6 @@
         };
 
         UI.sync();
-
-        // load settings provided in url hash
-        loadSettingsFromServer();
 
         // clear alerts as they build up
         setInterval(API.event.alerts, 1000);
