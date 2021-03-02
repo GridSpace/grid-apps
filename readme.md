@@ -85,8 +85,9 @@ web site.
 
 requires node.js 12+
 
-### Javascript Slicing API
+### Javascript Slicing APIs
 
-A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions.
+A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions. And a frame messaging API for controlling Kiri:Moto inside an IFrame.
 
-https://grid.space/kiri/engine.html
+* https://grid.space/kiri/engine.html
+* https://grid.space/kiri/frame.html
