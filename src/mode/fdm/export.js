@@ -334,7 +334,7 @@
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
-            zpos = path.z;
+            zpos = path.z || zpos;
             subst.z = subst.Z = zpos.round(3);
             subst.e = subst.E = outputLength;
             subst.layer = layer;
