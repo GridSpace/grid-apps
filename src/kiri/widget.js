@@ -546,18 +546,34 @@
     };
 
     PRO._mirror = function() {
-        this.setWireframe(false);
         this.clearSlices();
-        let vert = this.getGeoVertices();
-        for (let i=0; i<vert.length; i += 3) {
-            vert[i] = -vert[i];
+        this.setWireframe(false);
+        let geo = this.mesh.geometry, ot = this.track;
+        let pos = geo.attributes.position;
+        let arr = pos.array;
+        let count = pos.count;
+        // invert x
+        for (let i=0; i<count; i++) {
+            arr[i*3] = -arr[i*3];
         }
-        let geo = this.mesh.geometry,
-            o = this.track;
+        // invert face vertices
+        for (let i=0; i<count; i+=3) {
+            let x = arr[i*3+0];
+            let y = arr[i*3+1];
+            let z = arr[i*3+2];
+            arr[i*3+0] = arr[i*3+6];
+            arr[i*3+1] = arr[i*3+7];
+            arr[i*3+2] = arr[i*3+8];
+            arr[i*3+6] = x;
+            arr[i*3+7] = y;
+            arr[i*3+8] = z;
+        }
+        pos.needsUpdate = true;
         geo.computeFaceNormals();
         geo.computeVertexNormals();
-        o.mirror = !o.mirror;
+        ot.mirror = !ot.mirror;
         this.modified = true;
+        this.points = null;
     };
 
     PRO.getGeoVertices = function() {
