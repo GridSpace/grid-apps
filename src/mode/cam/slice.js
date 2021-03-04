@@ -242,6 +242,13 @@
         let traces = [];
         // find and trim polys (including open) to shadow
         let oneach = (data, index, total) => {
+            if (single) {
+                for (let line of data.lines) {
+                    if (line.p1.distTo2D(line.p2) > 1) {
+                        traces.push(newPolygon().append(line.p1).append(line.p2).setOpen());
+                    }
+                }
+            } else
             BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
                 poly.inner = null;
                 poly.parent = null;
@@ -257,13 +264,9 @@
                         return;
                     }
                 }
-                if (single) {
-                    poly.forEachSegment((p1, p2) => {
-                        traces.push(newPolygon().append(p1).append(p2).setOpen());
-                    }, poly.open);
-                } else {
-                    traces.push(poly);
-                }
+                poly.forEachSegment((p1, p2) => {
+                    traces.push(newPolygon().append(p1).append(p2).setOpen());
+                }, poly.open);
             });
         };
         let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
