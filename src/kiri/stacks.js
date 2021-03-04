@@ -52,6 +52,10 @@
         return stacks[name];
     }
 
+    function getStacks() {
+        return Object.entries(stacks);
+    }
+
     function getLabels() {
         return Object.keys(DYN);
     }
@@ -139,16 +143,24 @@
         max = newMax;
     }
 
+    function setFraction(frac) {
+        Object.values(stacks).forEach(stack => {
+            stack.obj.setLastFraction(frac);
+        });
+    }
+
     KIRI.stacks = {
         clear,
         create,
         rotate,
         remove,
         getStack,
+        getStacks,
         getRange,
         setRange,
         getLabels,
         setVisible,
+        setFraction,
         setFreeMem
     };
 
