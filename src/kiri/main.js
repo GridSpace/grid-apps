@@ -287,7 +287,7 @@
             slice: prepareSlices,
             print: preparePreview,
             prepare: preparePreview,
-            animate: noop,
+            animate: prepareAnimation,
             export: prepareExport,
             cancel: cancelWorker,
             clear: KIRI.client.clear,
@@ -1219,6 +1219,10 @@
                 callback();
             }
         });
+    }
+
+    function prepareAnimation() {
+        API.event.emit("function.animate", {mode: settings.mode});
     }
 
     function prepareExport() {

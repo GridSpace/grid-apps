@@ -102,6 +102,24 @@
               }
         }
 
+        api.event.on("function.animate", (mode) => {
+            if (!isFdmMode) {
+                return;
+            }
+            if (!API.conf.get().controller.danger) {
+                return;
+            }
+            let pct = 0;
+            let int = setInterval(function() {
+                if (pct <= 1) {
+                    api.const.STACKS.setFraction(pct);
+                    pct += 0.05;
+                } else {
+                    api.const.STACKS.setFraction(1);
+                    clearTimeout(int);
+                }
+            }, 50);
+        });
         api.event.on("mode.set", mode => {
             isFdmMode = mode === 'FDM';
             lastMode = mode;

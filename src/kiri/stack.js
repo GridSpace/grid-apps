@@ -49,6 +49,7 @@
         }
 
         setLastFraction(frac = 1) {
+            if (this.lastVis)
             for (let mesh of this.lastVis.children) {
                 let geo = mesh.geometry;
                 let pos = geo.attributes.position;
