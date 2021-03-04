@@ -279,7 +279,10 @@
             if (layerout.spindle && layerout.spindle !== spindle) {
                 spindle = layerout.spindle;
                 if (spindle > 0) {
-                    filterEmit(cmdSpindle, {speed: Math.abs(spindle)});
+                    let speed = Math.abs(spindle);
+                    filterEmit(cmdSpindle, {
+                        speed, spindle: speed, rpm: speed
+                    });
                 } else {
                     append("M4");
                 }
