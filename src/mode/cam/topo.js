@@ -154,8 +154,8 @@
                     if (curvesOnly && lastP) {
                         // maxangle
                         const dz = Math.abs(lastP.z - z);
-                        const dxy = Math.max(Math.abs(lastP.x - x), Math.abs(lastP.y - y));
-                        const angle = Math.atan2(dz, dxy) * RAD2DEG;
+                        const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                        const angle = Math.atan2(dz, dv) * RAD2DEG;
                         // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
                         if (angle > maxangle) {
                             lastP = newP;
