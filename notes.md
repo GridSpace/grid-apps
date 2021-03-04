@@ -7,8 +7,8 @@
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
 * `P` improve decimation speed: omit point conversion or use wasm
-* `P` client/worker interface normalization
-* `P` explore widget vertex reloading / replacing (Onshape primarily)
+* `P` client/worker message interface normalization
+* `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
@@ -73,6 +73,7 @@
 * `B` climb vs conventional not fully consistent after refactor
 * `B` outside cutting direction in roughing mode inverted
 
+* `F` user-selectable origin (issue #28)
 * `F` import SVG into a path that can be overlaid onto a 3D mesh (laser?)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
@@ -97,7 +98,6 @@
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` ease-down should be engaged in all descending cutting operations
-* `F` entirely user-selectable origin
 * `F` maintain several part orientations + op chains in a single profile
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)

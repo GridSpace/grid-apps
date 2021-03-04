@@ -658,7 +658,8 @@
                 decimate: true,
                 detail: "good",
                 animesh: "200",
-                healMesh: false
+                healMesh: false,
+                ortho: false
             },
             // label state preferences
             labels: {

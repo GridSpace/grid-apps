@@ -97,6 +97,7 @@
         camera,
         renderer,
         container,
+        raycaster,
         freezeTo,
         freeze,
         isRound = false,
@@ -699,9 +700,7 @@
     }
 
     function intersect(objects, recurse) {
-        let lookAt = new THREE.Vector3(mouse.x, mouse.y, 0.0).unproject(camera);
-        let ray = new THREE.Raycaster(camera.position, lookAt.sub(camera.position).normalize());
-        return ray.intersectObjects(objects, recurse);
+        return raycaster.intersectObjects(objects, recurse);
     }
 
     /** ******************************************************************
@@ -809,6 +808,11 @@
         updateLastAction();
         let int, vis;
 
+        const mv = new THREE.Vector2();
+        mv.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mv.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera( mv, camera );
+
         if (viewControl.enabled) {
             event.preventDefault();
             let selection = mouseHover ? mouseHover() : null;
@@ -854,6 +858,7 @@
         onEnterKey: onEnterKey,
         onResize: onResize,
         update: requestRefresh,
+        raycast: intersect,
         refresh: refresh,
 
         showSkyGrid: function(b) {
@@ -1025,7 +1030,7 @@
             return { renderer, camera, platform };
         },
 
-        init: function(domelement, slider) {
+        init: function(domelement, slider, ortho) {
             container = domelement;
 
             WORLD.rotation.x = -PI2;
@@ -1038,13 +1043,15 @@
                 antialias: true,
                 preserveDrawingBuffer: true
             });
-            camera = perspective ?
-                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000) :
-                new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000);
+            camera = ortho ?
+                new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
+                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000);
 
             camera.position.set(0, 200, 340);
             renderer.setSize(width(), height());
             domelement.appendChild(renderer.domElement);
+
+            raycaster = new THREE.Raycaster();
 
             viewControl = new MOTO.CTRL(camera, domelement, function (position, moved) {
                 if (platform) {

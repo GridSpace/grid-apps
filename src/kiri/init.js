@@ -138,6 +138,7 @@
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
+        let doAlert = UI.ortho.checked !== control.ortho;
         control.decals = UI.decals.checked;
         control.danger = UI.danger.checked;
         control.showOrigin = UI.showOrigin.checked;
@@ -153,6 +154,7 @@
         control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
         control.healMesh = UI.healMesh.checked;
+        control.ortho = UI.ortho.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         // platform.layout();
         API.conf.save();
@@ -168,6 +170,9 @@
             clearDeviceTexture();
         }
         API.event.emit('boolean.update');
+        if (doAlert) {
+            API.show.alert("change requires page refresh");
+        }
     }
 
     function updateFPS() {
@@ -1396,7 +1401,7 @@
         SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
             if (API.var.layer_max === 0 || !delta) return;
-            if (settings().controller.reverseZoom) delta = -delta;
+            if (controller.reverseZoom) delta = -delta;
             let same = API.var.layer_hi === API.var.layer_lo;
             let track = API.var.layer_lo > 0;
             if (delta > 0) {
@@ -1415,7 +1420,7 @@
             }
             API.view.update_slider();
             API.show.slices();
-        });
+        }, controller.ortho);
         SPACE.platform.onMove(API.conf.save);
         SPACE.platform.setRound(true);
         SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
@@ -1585,6 +1590,7 @@
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
+            ortho:            UC.newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
             danger:           UC.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
@@ -2356,6 +2362,7 @@
             UI.autoSave.checked = control.autoSave;
             UI.decimate.checked = control.decimate;
             UI.healMesh.checked = control.healMesh;
+            UI.ortho.checked = control.ortho;
             lineTypeSave();
             detailSave();
             updateFPS();
