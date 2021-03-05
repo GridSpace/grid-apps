@@ -10,12 +10,12 @@
 * `P` client/worker message interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
+* `F` SVG import to 3D part like images
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)
 * `F` complete G2/G3 arc output / input (85% now)
 * `F` expose grouping feature
-* `F` SVG import to 3D part like images
 * `F` integrate svg nest arrange algorithm
 
 # FDM
@@ -68,19 +68,16 @@
 * `B` path routing with tabs sometimes makes no sense
 * `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
-* `B` non-clear-voids duplicates thru-holes
 * `B` starting export during animation unleashes chaos
-* `B` climb vs conventional not fully consistent after refactor
-* `B` outside cutting direction in roughing mode inverted
 
+* `F` add ease-down support to trace op
+* `F` add linear clearing strategy
+* `F` add adaptive clearing strategy
 * `F` user-selectable origin (issue #28)
-* `F` import SVG into a path that can be overlaid onto a 3D mesh (laser?)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
 * `F` add climb/conventional into each operation
 * `F` update analyzer to detect overhangs
-* `F` add linear clearing strategy option for roughing / pocket
-* `F` adaptive clearing in roughing mode
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
@@ -97,7 +94,6 @@
 * `F` can animation clear the mesh in areas where the cuts go through the stock?
 * `F` support lathe mode / A-axis / rotary
 * `F` gcode output option as zip for multiple or flip ops or tool change
-* `F` ease-down should be engaged in all descending cutting operations
 * `F` maintain several part orientations + op chains in a single profile
 
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)

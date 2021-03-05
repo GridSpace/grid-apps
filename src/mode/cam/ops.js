@@ -223,7 +223,7 @@
             });
             shadow = POLY.nest(shadow);
 
-            // expand shadow by half tool diameter + stock to leave
+            // shell = shadow expanded by half tool diameter + leave stock
             const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
             const shell = POLY.offset(shadow, sadd + roughLeave);
 
@@ -274,10 +274,12 @@
                 // elimate double inset on inners
                 offset.forEach(op => {
                     if (op.inner) {
-                        let operim = op.perimeter();
+                        let pv1 = op.perimeter();
                         let newinner = [];
                         op.inner.forEach(oi => {
-                            if (Math.abs(oi.perimeter() - operim) > 0.01) {
+                            let pv2 = oi.perimeter();
+                            let pct = pv1 > pv2 ? pv2/pv1 : pv1/pv2;
+                            if (pct < 0.98) {
                                 newinner.push(oi);
                             }
                         });

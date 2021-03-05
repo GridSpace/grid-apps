@@ -580,6 +580,7 @@
         const flat = opts.flat;
         const thin = opts.thin && !flat;
         const ckspeed = opts.speed !== false;
+        const headColor = 0x888888;
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
         const layers = [];
@@ -709,14 +710,14 @@
             }
             if (heads.length) {
                 output
-                    .setLayer('arrows', { face: moveColor, line: 0x555555, opacity: 0.5 }, true)
+                    .setLayer('arrows', { face: headColor, line: 0x112233, opacity: 0.5 }, true)
                     .addAreas(heads.map(points => {
                         const {p1, p2} = points;
                         const slope = p2.slopeTo(p1);
                         const s1 = BASE.newSlopeFromAngle(slope.angle + 20);
                         const s2 = BASE.newSlopeFromAngle(slope.angle - 20);
-                        const p3 = points.p2.projectOnSlope(s1, 0.4);
-                        const p4 = points.p2.projectOnSlope(s2, 0.4);
+                        const p3 = points.p2.projectOnSlope(s1, 0.8);
+                        const p4 = points.p2.projectOnSlope(s2, 0.8);
                         return newPolygon().addPoints([p2,p3,p4]).setZ(p2.z + 0.01);
                     }), { thin: true, outline: true });
             }
