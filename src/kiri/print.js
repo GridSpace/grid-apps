@@ -134,7 +134,8 @@
             seq = [],
             autolayer = true,
             newlayer = false,
-            arcdivs = Math.PI / 12;
+            arcdivs = Math.PI / 12,
+            hasmoved = false;
 
         const output = scope.output = [ seq ];
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
@@ -211,24 +212,22 @@
 
         function G0G1(g0, line) {
             const mov = {};
+            const axes = {};
 
             line.forEach(function(tok) {
                 let axis = tok.charAt(0);
                 if (morph && belt) {
                     axis = beltaxis[axis];
                 }
+                let val = parseFloat(tok.substring(1));
+                axes[axis] = val;
                 if (abs) {
-                    pos[axis] = parseFloat(tok.substring(1));
+                    pos[axis] = val;
                 } else {
-                    mov[axis] = parseFloat(tok.substring(1));
+                    mov[axis] = val;
+                    pos[axis] += val;
                 }
             });
-
-            if (!abs) {
-                for (let [k,v] of Object.entries(mov)) {
-                    pos[k] += v;
-                }
-            }
 
             const point = newPoint(
                 factor * pos.X + off.X + xoff.X,
@@ -242,7 +241,7 @@
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
-            const moving = g0 || (fdm && pos.E <= 0);
+            const moving = g0 || (fdm && (pos.E <= 0 || !(axes.X || axes.Y || axes.Z)));
 
             if (!moving && point.x) bounds.min.x = Math.min(bounds.min.x, point.x);
             if (!moving && point.x) bounds.max.x = Math.max(bounds.max.x, point.x);
@@ -278,6 +277,11 @@
                 seq.height = height = nh;
                 if (fdm) dz = -height / 2;
                 output.push(seq);
+            }
+
+            if (!hasmoved && !moving) {
+                seq.height = seq.Z = pos.Z;
+                hasmoved = true;
             }
 
             // debug extrusion rate

@@ -70,6 +70,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` starting export during animation unleashes chaos
 
+* `F` limit cut depth to flute length of selected tool
 * `F` add ease-down support to trace op
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
