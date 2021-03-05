@@ -888,18 +888,15 @@
         if (solids.length === 0) return false;
         if (unioned.length === 0) return false;
 
-        let masks,
-            trims = [],
+        let trims = [],
             inner = isSLA ? slice.topPolys() : slice.topFillOff();
 
         // trim each solid to the inner bounds
         unioned.forEach(function(p) {
             p.setZ(slice.z);
             inner.forEach(function(i) {
-                if (p.del) return;
-                masks = p.mask(i);
+                let masks = p.mask(i);
                 if (masks && masks.length > 0) {
-                    p.del = true;
                     trims.appendAll(masks);
                 }
             });
