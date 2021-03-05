@@ -26,7 +26,8 @@
         },
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
-        getRangeParameters = FDM.getRangeParameters;
+        getRangeParameters = FDM.getRangeParameters,
+        debug = false;
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -477,13 +478,13 @@
                 .setLayer("gaps", COLOR.gaps)
                 .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-            // if (isThin && debug) {
-            //     slice.output()
-            //         .setLayer('offset', { face: 0, line: 0x888888 })
-            //         .addPolys(top.fill_off)
-            //         .setLayer('last', { face: 0, line: 0x008888 })
-            //         .addPolys(top.last);
-            // }
+            if (isThin && debug) {
+                slice.output()
+                    .setLayer('offset', { face: 0, line: 0x888888 })
+                    .addPolys(top.fill_off)
+                    .setLayer('last', { face: 0, line: 0x008888 })
+                    .addPolys(top.last);
+            }
 
             if (top.fill_lines && top.fill_lines.length) output
                 .setLayer("fill", isSynth ? COLOR.support : COLOR.fill)
@@ -496,14 +497,21 @@
             if (top.thin_fill) output
                 .setLayer("fill", COLOR.fill)
                 .addLines(top.thin_fill, vopt({ offset, height }));
-
-            // emit solid areas
-            // if (isThin && debug) {
-            //     output
-            //         .setLayer("solids", { face: 0x00dd00 })
-            //         .addAreas(slice.solids);
-            // }
         });
+
+        if (isThin && debug) {
+            if (slice.solids) output
+                .setLayer("solids", { face: 0x00dd00 })
+                .addAreas(slice.solids);
+
+            if (slice.bridges) output
+                .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
+                .addAreas(slice.bridges);
+
+            if (slice.flats) output
+                .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
+                .addAreas(slice.flats);
+        }
 
         if (slice.supports) output
             .setLayer("support", COLOR.support)
@@ -514,16 +522,6 @@
                 .setLayer("support", COLOR.support)
                 .addLines(poly.fill, vopt({ offset, height }));
         });
-
-        // if (isThin && debug) {
-        //     output
-        //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
-        //         .addAreas(top.bridges);
-        //
-        //     output
-        //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
-        //         .addAreas(top.flats);
-        // }
 
         // console.log(slice.index, slice.render.stats);
     }
@@ -939,18 +937,15 @@
         if (solids.length === 0) return false;
         if (unioned.length === 0) return false;
 
-        let masks,
-            trims = [],
+        let trims = [],
             inner = isSLA ? slice.topPolys() : slice.topFillOff();
 
         // trim each solid to the inner bounds
         unioned.forEach(function(p) {
             p.setZ(slice.z);
             inner.forEach(function(i) {
-                if (p.del) return;
-                masks = p.mask(i);
+                let masks = p.mask(i);
                 if (masks && masks.length > 0) {
-                    p.del = true;
                     trims.appendAll(masks);
                 }
             });
