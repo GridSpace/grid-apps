@@ -647,7 +647,8 @@
             let { settings, widget } = state;
             let { process } = settings;
 
-            let toolDiam = this.toolDiam;
+            let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+            let stepover = toolDiam * op.step * 2;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
             let depthData = [];
@@ -674,7 +675,7 @@
                             poly.reverse();
                         }
                         poly.forEachPoint(function(point, pidx) {
-                            camOut(point.clone(), pidx > 0);
+                            camOut(point.clone(), pidx > 0, stepover);
                         }, false);
                     });
                     newLayer();
@@ -688,7 +689,7 @@
                         poly.reverse();
                     }
                     poly.forEachPoint(function(point, pidx) {
-                        camOut(point.clone(), pidx > 0);
+                        camOut(point.clone(), pidx > 0, stepover);
                     }, false);
                     newLayer();
                     return lastPoint();

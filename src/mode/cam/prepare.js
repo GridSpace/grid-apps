@@ -231,7 +231,7 @@
             );
         }
 
-        function camOut(point, cut) {
+        function camOut(point, cut, moveLen = toolDiamMove) {
             point = point.clone();
             point.x += wmx;
             point.y += wmy;
@@ -264,7 +264,7 @@
             }
 
             // convert short planar moves to cuts in some cases
-            if (isMove && deltaXY <= toolDiamMove) {
+            if (isMove && deltaXY <= moveLen) {
                 let iscontour = tolerance > 0;
                 let isflat = absDeltaZ < 0.001;
                 // restrict this to contouring
@@ -279,7 +279,7 @@
                 }
             } else if (isMove) {
                 // for longer moves, check the terrain to see if we need to go up and over
-                const bigXY = (deltaXY > toolDiamMove);
+                const bigXY = (deltaXY > moveLen);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
                 const midZ = (absDeltaZ >= tolerance);
                 if ((bigXY || bigZ) && (isMove || midZ)) {
