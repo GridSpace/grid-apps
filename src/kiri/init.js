@@ -2020,6 +2020,10 @@
             SDB.setItem('kiri-lang', 'fr-fr');
             API.space.reload();
         };
+        $('lset-pl').onclick = function() {
+            SDB.setItem('kiri-lang', 'pl-pl');
+            API.space.reload();
+        };
 
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,

@@ -20,6 +20,7 @@
 
 # FDM
 
+* `B` re-calibrate slicing progress weighting
 * `B` infill densities are inaccurate
 * `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
@@ -58,7 +59,9 @@
 * `B` ranges don't work with anchors
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
-* `F` arrange should just align down Z. no side to side.
+
+* `F` slightly angle supports to lean into the Z of the part
+* `F` arrange should just align down Z, not side to side.
 
 # CAM
 

@@ -17,14 +17,11 @@
         }
         let tok = key.split('-');
         switch (tok[0]) {
-            case 'en':
-                return 'en-us';
-            case 'da':
-                return 'da-dk';
-            case 'de':
-                return 'de-de';
-            case 'fr':
-                return 'fr-fr';
+            case 'da': return 'da-dk';
+            case 'de': return 'de-de';
+            case 'en': return 'en-us';
+            case 'fr': return 'fr-fr';
+            case 'pl': return 'pl-pl';
         }
         return KDFL;
     };
