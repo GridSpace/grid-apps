@@ -264,9 +264,7 @@
                         return;
                     }
                 }
-                poly.forEachSegment((p1, p2) => {
-                    traces.push(newPolygon().append(p1).append(p2).setOpen());
-                }, poly.open);
+                traces.push(poly);
             });
         };
         let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
