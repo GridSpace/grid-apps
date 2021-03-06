@@ -77,7 +77,7 @@
         "sliceSupportExtra": 0,
         "sliceSupportAngle": 1,
         "sliceSupportNozzle": 0,
-        "sliceSolidMinArea": 10,
+        "sliceSolidMinArea": 1,
         "sliceSolidLayers": 3,
         "sliceBottomLayers": 3,
         "sliceTopLayers": 3,
