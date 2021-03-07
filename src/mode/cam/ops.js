@@ -467,7 +467,7 @@
                     tops = tshadow;
                 }
 
-                if (op.outside && op.omitthru) {
+                if (op.omitthru) {
                     // eliminate thru holes from shadow
                     for (let hole of thruHoles) {
                         for (let top of tops) {
