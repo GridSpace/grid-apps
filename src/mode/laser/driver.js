@@ -301,7 +301,7 @@
                 e = o.point;
                 e.x += p.max.w / 2 - m.fit.x;
                 e.y += p.max.h / 2 - m.fit.y;
-                // e.z = 0;
+                e.z = 0;
             });
         }
 
