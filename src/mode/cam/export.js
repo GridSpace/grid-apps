@@ -31,6 +31,7 @@
             gcodes = settings.device || {},
             tools = settings.tools,
             space = gcodes.gcodeSpace ? ' ' : '',
+            isRML = device.gcodeFExt.toLowerCase() === 'rml',
             stripComments = gcodes.gcodeStrip || false,
             cmdToolChange = gcodes.gcodeChange || [ "M6 T{tool}" ],
             cmdSpindle = gcodes.gcodeSpindle || [ "M3 S{speed}" ],
@@ -88,7 +89,7 @@
             if (!array) return;
             for (i=0; i<array.length; i++) {
                 line = print.constReplace(array[i], consts);
-                if (stripComments && (cidx = line.indexOf(";")) >= 0) {
+                if (!isRML && stripComments && (cidx = line.indexOf(";")) >= 0) {
                     line = line.substring(0, cidx).trim();
                     if (line.length === 0) continue;
                 }
@@ -179,7 +180,8 @@
                 dz = newpos.z - pos.z,
                 maxf = dz ? maxZd : maxXYd,
                 feed = Math.min(speed || maxf, maxf),
-                dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
+                newFeed = feed && feed !== pos.f;
 
             // drop dup points (all deltas are 0)
             if (!(dx || dy || dz)) {
@@ -204,9 +206,21 @@
                 runbox.max.z = Math.max(runbox.max.z, pos.z);
                 nl.append(space).append("Z").append(add0(pos.z * factor));
             }
-            if (feed && feed !== pos.f) {
+            if (newFeed) {
                 pos.f = feed;
                 nl.append(space).append("F").append(add0(feed * factor, true));
+            }
+
+            // temp hack to support RML1 dialect from a file extensions trigger
+            if (isRML) {
+                if (speed) {
+                    if (newFeed) {
+                        append(`VS${feed};`);
+                    }
+                    nl = [ "Z", add0(pos.x * factor), ",", add0(pos.y * factor), ",", add0(pos.z * factor), ";" ];
+                } else {
+                    nl = [ "PU", add0(pos.x * factor), ",", add0(pos.y * factor), ";" ];
+                }
             }
 
             // update time calculation
