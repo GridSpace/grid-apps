@@ -47,6 +47,9 @@
             lout = null,
             last = null,
             zpos = 0,
+            bmax = 0,
+            blast = 0,
+            blastz = 0,
             process = settings.process,
             loops = process.outputLoopLayers,
             zhop = process.zHopDistance || 0, // range
@@ -55,6 +58,7 @@
             retSpeed = process.outputRetractSpeed * 60, // range
             retDwell = process.outputRetractDwell || 0, // range
             timeDwell = retDwell / 1000,
+            peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
@@ -272,7 +276,7 @@
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
                 epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
-                epos.z = pos.z * icos;
+                epos.z = blastz = pos.z * icos;
                 epos.y = -pos.y + epos.z * bcos;
                 lout = epos;
             }
@@ -335,6 +339,7 @@
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
 
             zpos = path.z || zpos;
+            bmax = Math.max(bmax, pos.z * icos);
             subst.z = subst.Z = zpos.round(3);
             subst.e = subst.E = outputLength;
             subst.layer = layer;
@@ -342,6 +347,12 @@
 
             if (isBelt) {
                 pos.z = zpos;
+                if (peelGuard && bmax > peelGuard && blast < peelGuard) {
+                    peelGuard += 50;
+                    append(`G0 Z${(blast + 55).round(decimals)} F200 ; peel guard`);
+                    append(`G0 Z${blastz.round(decimals)} F200 ; unpeel`);
+                }
+                blast = bmax;
             }
 
             if (pauseCmd && pause.indexOf(layer) >= 0) {
