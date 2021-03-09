@@ -296,7 +296,7 @@
                         ) + ztOff,
                         mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                         clearz = maxz;
-                    // up if any point between higher than start/outline, go up
+                    // up if any point between higher than start/outline, go up first
                     if (mustGoUp) {
                         layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
                     }
@@ -488,8 +488,9 @@
      * return tool Z clearance height for a line segment movement path
      */
     function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
+        // when terrain skipped, top + pass used
         if (terrain > 0) {
-            return terrain + zadd + over;
+            return terrain;
         }
         let maxz = z;
         let check = [];
