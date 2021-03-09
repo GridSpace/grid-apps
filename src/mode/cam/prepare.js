@@ -298,9 +298,6 @@
                         clearz = maxz;
                     // up if any point between higher than start/outline, go up
                     if (mustGoUp) {
-                        if (bigXY) {
-                            clearz += zclear;
-                        }
                         layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
                     }
                     // move to point above target point
