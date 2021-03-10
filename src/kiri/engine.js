@@ -47,11 +47,10 @@ class Engine {
     parse(data) {
         return new Promise((accept, reject) => {
             try {
-                new moto.STL().parse(data, vertices => {
-                    this.listener({parsed: data, vertices});
-                    this.widget.loadVertices(vertices).center();
-                    accept(this);
-                });
+                let vertices = new moto.STL().parse(data);
+                this.listener({parsed: data, vertices});
+                this.widget.loadVertices(vertices).center();
+                accept(this);
             } catch (error) {
                 reject(error);
             }
