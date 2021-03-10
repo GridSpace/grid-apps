@@ -229,7 +229,15 @@
                 if (!merge.length) {
                     continue;
                 }
-                let boxen = merge.map(m => m.box.geometry.clone().translate(m.x, m.y, m.z));
+                let boxen = merge.map(m => {
+                    let geo = m.box.geometry.clone();
+                    if (geo.index) geo = geo.toNonIndexed();
+                    return geo.translate(m.x, m.y, m.z);
+                });
+                for (let box of boxen) {
+                    // eliminate / normalize uv to allow other widget merge
+                    box.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(0), 3));
+                }
                 let bbg = THREE.BufferGeometryUtils.mergeBufferGeometries(boxen);
                 let sw = kiri.newWidget(null, group);
                 let fwp = group[0].track.pos;

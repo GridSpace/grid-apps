@@ -987,7 +987,8 @@
         API.conf.save();
         API.event.emit('slice.begin', getMode());
 
-        let countdown = WIDGETS.length,
+        let slicing = WIDGETS.slice().filter(w => !w.track.ignore),
+            countdown = slicing.length,
             totalProgress,
             track = {},
             mode = settings.mode,
@@ -996,10 +997,10 @@
             defvert;
 
         // determing this widgets % of processing time estimated by vertex count
-        for (let widget of WIDGETS) {
+        for (let widget of slicing) {
             totvert += widget.getVertices().count;
         }
-        defvert = totvert / WIDGETS.length;
+        defvert = totvert / slicing.length;
 
         setOpacity(color.slicing_opacity);
 
@@ -1017,7 +1018,7 @@
             lastMsg;
 
         // for each widget, slice
-        forAllWidgets(function(widget) {
+        for (let widget of slicing) {
             let camOrLaser = mode === 'CAM' || mode === 'LASER',
                 stack = widget.stack = STACKS.create(widget.id, widget.mesh),
                 factor = (widget.getVertices().count / defvert);
@@ -1055,7 +1056,7 @@
                         alert = API.show.alert("Rendering");
                     };
                     KIRI.client.unrotate(settings, () => {
-                        forAllWidgets(widget => {
+                        for (let widget of slicing) {
                             // on done
                             segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
                             // rotate stack for belt beds
@@ -1069,7 +1070,7 @@
                                 widget.setColor(color.deselected);
                                 API.hide.alert(alert);
                             }
-                        });
+                        }
                         updateSliderMax(true);
                         setVisibleLayer(-1, 0);
                         if (scale === 1) {
@@ -1103,12 +1104,12 @@
                 // on update
                 track[widget.id] = (update || 0) * factor;
                 totalProgress = 0;
-                forAllWidgets(function(w) {
+                for (let w of slicing) {
                     totalProgress += (track[w.id] || 0);
-                });
+                }
                 API.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
             });
-        });
+        }
     }
 
     function preparePreview(callback, scale = 1, offset = 0) {
