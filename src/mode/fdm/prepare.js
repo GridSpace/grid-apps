@@ -20,6 +20,9 @@
      * @returns {Object[]} returns array of render objects
      */
     FDM.prepare = function(widgets, settings, update) {
+        // filter ignored widgets
+        widgets = widgets.filter(w => !w.track.ignore);
+
         settings = FDM.fixExtruders(settings);
         let render = settings.render !== false,
             { device, process, controller, bounds, mode } = settings,
