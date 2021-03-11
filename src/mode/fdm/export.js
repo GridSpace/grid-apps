@@ -192,11 +192,11 @@
             let line = device.gcodePre[i];
             if (line.indexOf('T0') >= 0) t0 = true; else
             if (line.indexOf('T1') >= 0) t1 = true; else
-            if (line.indexOf('M82') >= 0) {
+            if (line.indexOf('M82') === 0) {
                 extrudeAbs = true;
                 extrudeSet = true;
             } else
-            if (line.indexOf('M83') >= 0) {
+            if (line.indexOf('M83') === 0) {
                 extrudeAbs = false;
                 extrudeSet = true;
             } else
