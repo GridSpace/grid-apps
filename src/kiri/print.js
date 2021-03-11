@@ -628,7 +628,8 @@
                     coast: firstLayer ? 0 : coastDist,
                     extrude: pref(opt.extrude, shellMult),
                     onfirst: function(firstPoint) {
-                        if (startPoint.distTo2D(firstPoint) > retractDist) {
+                        let from = lastOut ? lastOut.point.sub(offset) : startPoint;
+                        if (from.distTo2D(firstPoint) > retractDist) {
                             retract();
                         }
                     }
