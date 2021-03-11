@@ -411,6 +411,7 @@
                     offset,
                     layerout,
                     {
+                        seedPoint: printPoint.sub(offset),
                         params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,

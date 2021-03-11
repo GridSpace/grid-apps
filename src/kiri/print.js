@@ -534,6 +534,7 @@
             wipeDist = process.outputRetractWipe || 0,
             isBelt = device.bedBelt,
             startClone = startPoint.clone(),
+            seedPoint = opt.seedPoint || startPoint,
             z = slice.z,
             lastPoly;
 
@@ -628,10 +629,11 @@
                     coast: firstLayer ? 0 : coastDist,
                     extrude: pref(opt.extrude, shellMult),
                     onfirst: function(firstPoint) {
-                        let from = lastOut ? lastOut.point.sub(offset) : startPoint;
+                        let from = seedPoint || startPoint;
                         if (from.distTo2D(firstPoint) > retractDist) {
                             retract();
                         }
+                        seedPoint = null;
                     }
                 });
                 lastPoly = slice.lastPoly = poly;
