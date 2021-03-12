@@ -102,6 +102,23 @@
               }
         }
 
+        api.event.on("boolean.click", func.updateSupportButtons = () => {
+            if (!isFdmMode) {
+                return;
+            }
+            for (let btn of [
+                UI.ssaGen,
+                UI.ssmAdd,
+                UI.ssmDun,
+                UI.ssmClr
+            ]) {
+                btn.disabled = UI.sliceSupportEnable.checked;
+            }
+            if (UI.sliceSupportEnable.checked) {
+                func.sclear();
+            }
+        });
+
         api.event.on("function.animate", (mode) => {
             if (!isFdmMode) {
                 return;
@@ -160,6 +177,7 @@
         });
         api.event.on("settings.saved", (settings) => {
             updateRanges(settings.process.ranges);
+            func.updateSupportButtons();
             // let ranges = settings.process.ranges;
             // UI.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
         });
@@ -217,8 +235,9 @@
         });
         api.event.on("fdm.supports.clear", func.sclear = () => {
             func.sdone();
-            clearAllWidgetSupports();
-            API.conf.save();
+            if (clearAllWidgetSupports()) {
+                API.conf.save();
+            }
         });
         api.event.on("slice.begin", () => {
             if (!isFdmMode) {
@@ -495,18 +514,23 @@
     }
 
     function clearAllWidgetSupports() {
+        let cleared = 0;
         API.widgets.all().forEach(widget => {
-            clearWidgetSupports(widget);
+            cleared += clearWidgetSupports(widget);
         });
+        return cleared;
     }
 
     function clearWidgetSupports(widget) {
+        let cleared = 0;
         Object.values(widget.sups || {}).forEach(support => {
             widget.adds.remove(support.box);
             widget.mesh.remove(support.box);
+            cleared++;
         });
         widget.sups = {};
         delete API.widgets.annotate(widget.id).support;
+        return cleared;
     }
 
     function delbox(name) {

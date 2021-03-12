@@ -564,7 +564,9 @@
         }
 
         function intersectsTop(p1, p2) {
-            return retractRequired(p1, p2);
+            if (opt.danger) {
+                return retractRequired(p1, p2);
+            }
             let int = false;
             POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {

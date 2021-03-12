@@ -32,6 +32,7 @@
             isBelt = device.bedBelt,
             isThin = controller.lineType === "line",
             isFlat = controller.lineType === "flat",
+            isDanger = controller.danger || false,
             firstLayerHeight = isBelt ? process.sliceHeight : process.firstSliceHeight || process.sliceHeight,
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,
@@ -84,7 +85,8 @@
                 });
                 // nest and offset tops
                 POLY.nest(tops).forEach(function(poly) {
-                    poly.offset(-offset + nozzle / 2).forEach(function(brim) {
+                    let off = poly.offset(-offset + nozzle / 2);
+                    if (off) off.forEach(function(brim) {
                         brim.move(widget.track.pos);
                         brims.push(brim);
                     });
@@ -92,7 +94,7 @@
             });
 
             // merge brims
-            brims = POLY.union(brims);
+            brims = POLY.union(brims, undefined, true);
 
             // if brim is offset, over-expand then shrink to induce brims to merge
             if (offset && brims.length) {
@@ -412,6 +414,7 @@
                     layerout,
                     {
                         seedPoint: printPoint.sub(offset),
+                        danger: isDanger,
                         params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,

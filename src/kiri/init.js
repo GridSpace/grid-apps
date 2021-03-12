@@ -198,7 +198,7 @@
         // }
         API.conf.update();
         DOC.activeElement.blur();
-        // API.event.emit("boolean.click");
+        API.event.emit("boolean.click");
     }
 
     function onButtonClick(ev) {
@@ -1691,7 +1691,7 @@
 
             sliceSupportGen:     UC.newRow([
                 UI.ssaGen = UC.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-            ], { modes: FDM, class: "ext-buttons f-row grow", xshow:isNotBelt }),
+            ], { modes: FDM, class: "ext-buttons f-row grow" }),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
             sliceSupportManual: UC.newRow([
                 (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
