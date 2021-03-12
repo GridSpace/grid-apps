@@ -594,6 +594,11 @@
                 });
             }
 
+            // no intersections
+            if (ints.length === 0) {
+                return false;
+            }
+
             // odd # of intersections ?!? do retraction
             if (ints.length && ints.length % 2 !== 0) {
                 if (dbug === slice.index) console.log(slice.index, {odd_intersects: ints});
