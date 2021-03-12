@@ -609,6 +609,11 @@
                                 if (p.fill_off) {
                                     p.fill_off.forEach(pi => pi.depth = i);
                                 }
+                                if (p.inner) {
+                                    for (let pi of p.inner) {
+                                        pi.depth = p.depth;
+                                    }
+                                }
                                 top.shells.push(p);
                             });
                             last = polys;
@@ -643,6 +648,11 @@
                                         // use negative offset for inners
                                         pi.depth = -(count - countNow);
                                     });
+                                    if (p.inner) {
+                                        for (let pi of p.inner) {
+                                            pi.depth = p.depth;
+                                        }
+                                    }
                                 });
                             });
                     }
