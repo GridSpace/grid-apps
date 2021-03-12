@@ -550,6 +550,7 @@
         let total = count;
         let layers = [];
         let ref = polys;
+        let depth = 0;
         while (count-- > 0 && ref && ref.length) {
             let off = offset(ref, -dist, {z});
             let mid = offset(off, dist / 2, {z});
@@ -563,6 +564,15 @@
                 subtract(ref, cmp, gap, null, z);
             }
             layers.push({idx: total-count, off, mid, gap});
+            // fixup depth cues
+            for (let m of mid) {
+                m.depth = depth++;
+                if (m.inner) {
+                    for (let mi of m.inner) {
+                        mi.depth = m.depth;
+                    }
+                }
+            }
             ref = off;
         }
         return layers;
