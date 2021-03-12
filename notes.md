@@ -16,7 +16,7 @@
 * `F` add % field type with conversion (like units)
 * `F` complete G2/G3 arc output / input (85% now)
 * `F` expose grouping feature
-* `F` integrate svg nest arrange algorithm
+* `F` add svgnest-like arrange algorithm
 
 # FDM
 
@@ -45,7 +45,6 @@
 * `P` revisit path routing / optimization
 * `P` implement infill clipping in wasm
 * `P` solid fill the tops of supports for down facing flats
-* `P` sparse infill should follow polys between intersect points
 
 # FDM - SLA
 
