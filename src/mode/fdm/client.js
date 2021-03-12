@@ -51,6 +51,8 @@
             "sliceLayerStart": LANG.sl_strt_s,
             // export
             "zHopDistance": LANG.ad_zhop_s,
+            "arcTolerance": LANG.ad_zhop_s,
+            "antiBacklash": LANG.ad_abkl_s,
             "outputTemp": LANG.ou_nozl_s,
             "outputBedTemp": LANG.ou_bedd_s,
             "outputFanSpeed": LANG.ou_fans_s,
