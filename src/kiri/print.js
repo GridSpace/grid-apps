@@ -471,7 +471,7 @@
                 if (options.onfirst) {
                     options.onfirst(point);
                 }
-                // move from startPoint to point
+                // move to first output point on poly
                 addOutput(output, point, 0, moveSpeed, tool);
                 first = false;
             } else {
@@ -564,16 +564,132 @@
         }
 
         function intersectsTop(p1, p2) {
+            return retractRequired(p1, p2);
             let int = false;
             POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
-                        int = true;
-                        return int;
+                        return int = true;
                     }
                 });
             });
             return int;
+        }
+
+        // returns true if no path around and retract required
+        // returns false if routed around or no retract
+        function retractRequired(p1, p2) {
+            const dbug = false;
+
+            let ints = [];
+            let tops = POLY.flatten(slice.topPolys().clone(true));
+            for (let poly of tops) {
+                poly.forEachSegment(function(s1, s2) {
+                    let ip = UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT);
+                    if (ip) {
+                        ints.push({ip, poly});
+                    }
+                });
+            }
+
+            // odd # of intersections ?!? do retraction
+            if (ints.length && ints.length % 2 !== 0) {
+                if (dbug === slice.index) console.log(slice.index, {odd_intersects: ints});
+                return true;
+            }
+
+            // sort by distance
+            ints.sort((a, b) => {
+                return a.ip.dist - b.ip.dist;
+            });
+
+            let valid = ints.length;
+
+            // check pairs. eliminate too close points.
+            // pairs must intersect same poly or retract.
+            for (let i=0; i<ints.length; i += 2) {
+                let i1 = ints[0];
+                let i2 = ints[1];
+                // different poly. force retract
+                if (i1.poly !== i2.poly) {
+                    if (dbug === slice.index) console.log(slice.index, {int_diff_poly: ints, i});
+                    return true;
+                }
+                if (i1.ip.distTo2D(i2.ip) < retractDist) {
+                    if (dbug === slice.index) console.log(slice.index, {int_dist_too_small: i1.ip.distTo2D(i2.ip), retractDist});
+                    valid -= 2;
+                }
+            }
+
+            if (valid > 2) {
+                if (dbug === slice.index) console.log(slice.index, {complex_route: valid});
+                return true;
+            }
+
+            if (valid) {
+                // can route around intersected top polys
+                for (let i=0; i<ints.length; i += 2) {
+                    let i1 = ints[0];
+                    let i2 = ints[1];
+
+                    // output first point
+                    addOutput(preout, i1.ip, 0, moveSpeed, extruder);
+
+                    // create two loops around poly
+                    // find shortest of two paths and emit poly points
+                    let poly = i1.poly;
+                    let isCW = poly.isClockwise();
+                    let points = poly.points;
+
+                    let p1p = isCW ? points : points.slice().reverse(); // CW
+                    let p2p = isCW ? points.slice().reverse() : points; // CCW
+
+                    let r1s = p1p.indexOf(isCW ? i1.ip.p2 : i1.ip.p1);
+                    let r1e = p1p.indexOf(isCW ? i2.ip.p1 : i2.ip.p2);
+
+                    let r1 = r1s === r1e ?
+                        [ p1p[r1s] ] : r1s < r1e ?
+                        [ ...p1p.slice(r1s,r1e+1) ] :
+                        [ ...p1p.slice(r1s), ...p1p.slice(0,r1e+1) ];
+
+                    let r1d = 0;
+                    for (let i=1; i<r1.length; i++) {
+                        r1d += r1[i-1].distTo2D(r1[i]);
+                    }
+
+                    let r2s = p2p.indexOf(isCW ? i1.ip.p1 : i1.ip.p2);
+                    let r2e = p2p.indexOf(isCW ? i2.ip.p2 : i2.ip.p1);
+
+                    let r2 = r2s === r2e ?
+                        [ p2p[r2s] ] : r2s < r2e ?
+                        [ ...p2p.slice(r2s,r2e+1) ] :
+                        [ ...p2p.slice(r2s), ...p2p.slice(0,r2e+1) ];
+
+                    let r2d = 0;
+                    for (let i=1; i<r2.length; i++) {
+                        r2d += r2[i-1].distTo2D(r2[i]);
+                    }
+
+                    let route = r1d <= r2d ? r1 : r2;
+
+                    if (dbug === slice.index) console.log(slice.index, {
+                        ints: ints.map(i=>i.ip.dist),
+                        i1, i2, same: i1.poly === i2.poly,
+                        route,
+                        r1, r1d, r1s, r1e,
+                        r2, r2d, r2s, r2e,
+                        isCW});
+
+                    for (let p of route) {
+                        addOutput(preout, p, 0, moveSpeed, extruder);
+                    }
+
+                    // output last point
+                    addOutput(preout, i2.ip, 0, moveSpeed, extruder);
+                }
+            }
+
+            return false;
         }
 
         function outputTraces(poly, opt = {}) {
@@ -631,7 +747,9 @@
                     onfirst: function(firstPoint) {
                         let from = seedPoint || startPoint;
                         if (from.distTo2D(firstPoint) > retractDist) {
-                            retract();
+                            if (intersectsTop(from, firstPoint)) {
+                                retract();
+                            }
                         }
                         seedPoint = null;
                     }

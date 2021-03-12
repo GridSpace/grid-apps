@@ -587,6 +587,8 @@
         const headColor = 0x888888;
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
+        const arrowAll = false;
+        const arrowSize = arrowAll ? 0.2 : 0.4;
         const layers = [];
 
         const moveOpt = {
@@ -613,6 +615,7 @@
         let lastOut = null;
         let current = null;
         let retracted = false;
+        let retractz = 0;
 
         function color(point) {
             return FDM.rateToColor(point.speed, maxspd);
@@ -648,6 +651,7 @@
                 if (out.retract) {
                     retracts.push(out.point);
                     retracted = true;
+                    retractz++;
                 }
                 if (!out.point) {
                     // in cam mode, these are drilling or dwell ops
@@ -655,7 +659,7 @@
                 }
 
                 if (lastOut) {
-                    if (lastOut.emit !== out.emit) {
+                    if (arrowAll || lastOut.emit !== out.emit) {
                         heads.push({p1: lastOut.point, p2: out.point});
                     }
                     const op = out.point, lp = lastOut.point;
@@ -720,8 +724,8 @@
                         const slope = p2.slopeTo(p1);
                         const s1 = BASE.newSlopeFromAngle(slope.angle + 20);
                         const s2 = BASE.newSlopeFromAngle(slope.angle - 20);
-                        const p3 = points.p2.projectOnSlope(s1, 0.8);
-                        const p4 = points.p2.projectOnSlope(s2, 0.8);
+                        const p3 = points.p2.projectOnSlope(s1, arrowSize);
+                        const p4 = points.p2.projectOnSlope(s2, arrowSize);
                         return newPolygon().addPoints([p2,p3,p4]).setZ(p2.z + 0.01);
                     }), { thin: true, outline: true });
             }
@@ -753,7 +757,7 @@
 
             update(index / levels.length, output);
         });
-
+        console.log({retractz});
         return layers;
     }
 

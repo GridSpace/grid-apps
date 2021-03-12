@@ -119,6 +119,11 @@
                     clearTimeout(int);
                 }
             }, 50);
+            // let slider = $('top-slider');
+            // slider.style.display = 'flex';
+            // slider.oninput = slider.onchange = (ev) => {
+            //     api.const.STACKS.setFraction(parseInt(ev.target.value)/100);
+            // };
         });
         api.event.on("mode.set", mode => {
             isFdmMode = mode === 'FDM';

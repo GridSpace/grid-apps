@@ -1244,6 +1244,17 @@ th, tr, td, label {
     width: 20px;
 }
 
+#top-slider {
+    position: absolute;
+    display: none;
+    top: 60px;
+    left: 50px;
+    right: 50px;
+}
+#anim-slider {
+    width: 100%;
+}
+
 #alert-area {
     display: none;
     justify-content: center;
