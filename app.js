@@ -167,6 +167,8 @@ function initModule(mod, file, dir) {
             time: time,
             guid: guid,
             mkdirs: util.mkdir,
+            isfile: util.isfile,
+            confdir: util.confdir,
             datadir: util.datadir,
             lastmod: lastmod,
             obj2string: obj2string,
