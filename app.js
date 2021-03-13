@@ -21,7 +21,6 @@ const load = [];
 const synth = {};
 const api = {};
 
-let level;
 let setupFn;
 let cacheDir;
 let startTime;
@@ -44,25 +43,8 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
-    if (mod.util.globdir) {
-        // when globdir available, look for shared kvstore
-        // and if not present, create and share in through env
-        if (mod.env._level) {
-            level = mod.env._level;
-            logger.log("using shared kvstore");
-        } else {
-            level = require('level')(mod.util.globdir("kvstore"), {valueEncoding:"json"});
-            mod.env._level = level;
-            logger.log("creating shared kvstore");
-        }
-    } else {
-        logger.log("fallback to local kvstore");
-        level = require('level')(mod.util.datadir("kvstore"), {valueEncoding:"json"});
-    }
-
     cacheDir = mod.util.datadir("cache");
 
-    mod.on.reload(() => level.close());
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
         let vmatch = mod.meta.version || "*";
@@ -175,10 +157,6 @@ function initModule(mod, file, dir) {
             string2obj: string2obj,
             getCookieValue: cookieValue,
             logger: log.new
-        },
-        db: {
-            api: db,
-            level: level
         },
         inject: (code, file, options) => {
             if (!script[code]) {
@@ -409,40 +387,6 @@ const script = {
 
 // prevent caching of specified modules
 const cachever = {};
-
-const db = {
-    // --------
-    key: arr => arr.join("/"),
-    // --------
-    get: key => {
-        if (Array.isArray(key)) key = db.key(key);
-            return promise((resolve,reject) => {
-                level.get(key,(err,record) => {
-                resolve(record,err);
-            });
-        });
-    },
-
-    // --------
-    put: (key, value) => {
-    if (Array.isArray(key)) key = db.key(key);
-        return promise((resolve,reject) => {
-            level.put(key,value,(err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    },
-    // --------
-    del: key => {
-    return promise((resolve,reject) => {
-        level.del(key, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    }
-};
 
 function promise(resolve, reject) {
     return new Promise(resolve, reject);
