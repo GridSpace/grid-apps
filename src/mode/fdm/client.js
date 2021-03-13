@@ -37,6 +37,7 @@
             "sliceSolidMinArea": LANG.ad_msol_s,
             // prepare
             "sliceShellOrder": LANG.sl_ordr_s,
+            "sliceFillOverlap": LANG.fi_over_s,
             "outputFeedrate": LANG.ou_feed_s,
             "outputFinishrate": LANG.ou_fini_s,
             "outputShellMult": LANG.ou_shml_s,
