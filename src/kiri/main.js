@@ -4,9 +4,7 @@
 
 (function () {
 
-    let iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
-        // ---------------
-        MOTO    = moto,
+    let MOTO    = moto,
         KIRI    = self.kiri,
         BASE    = self.base,
         UTIL    = BASE.util,
