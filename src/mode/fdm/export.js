@@ -67,7 +67,7 @@
             },
             nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
             bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
-            fanSpeed = process.firstLayerFanSpeed,
+            fanSpeed = undefined,
             lastNozzleTemp = nozzleTemp,
             lastBedTemp = bedTemp,
             lastFanSpeed = fanSpeed,
@@ -106,9 +106,15 @@
             retSpeed = process.outputRetractSpeed * 60; // range
             retDwell = process.outputRetractDwell || 0; // range
             timeDwell = retDwell / 1000;
-            nozzleTemp = process.outputTemp || process.firstLayerNozzleTemp;
-            bedTemp = process.outputBedTemp || process.firstLayerBedTemp;
-            fanSpeed = process.outputFanSpeed;
+            nozzleTemp = layer === 0 ?
+                process.firstLayerNozzleTemp || process.outputTemp :
+                process.outputTemp || process.firstLayerNozzleTemp;
+            bedTemp = layer === 0 ?
+                process.firstLayerBedTemp || process.outputBedTemp :
+                process.outputBedTemp || process.firstLayerBedTemp;
+            fanSpeed = layer === 0 ?
+                process.firstLayerFanSpeed || 0 :
+                process.outputFanSpeed || 0;
             Object.assign(subst, {
                 temp_bed: bedTemp,
                 bed_temp: bedTemp,
@@ -327,8 +333,8 @@
         while (layer < layers.length) {
             path = layers[layer];
 
-            // allow range overrides past base
-            if (path.layer > 0) {
+            // range overrides
+            if (path.layer >= 0) {
                 updateParams(path.layer);
             }
 

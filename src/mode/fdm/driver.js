@@ -30,6 +30,9 @@
     }
 
     function getRangeParameters(settings, index) {
+        if (index === undefined || index === null || index < 0) {
+            return settings.process;
+        }
         let ranges = settings.process.ranges;
         if (!(ranges && ranges.length)) {
             return settings.process;

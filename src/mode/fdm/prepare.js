@@ -403,6 +403,7 @@
                 lastWidget = slice.widget;
                 layerout.z = z + slice.height / 2;
                 layerout.height = layerout.height || slice.height;
+                layerout.slice = slice;
                 // mark layer as anchor if slice is belt and flag set
                 layerout.anchor = slice.belt && slice.belt.anchor;
                 // detect extruder change and print purge block
@@ -764,7 +765,7 @@
 
             update(index / levels.length, output);
         });
-        console.log({retractz});
+        // console.log({retractz});
         return layers;
     }
 
