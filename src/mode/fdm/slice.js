@@ -359,6 +359,7 @@
                         start.down = addto;
                         slices.splice(0,0,addto);
                     }
+                    addto.index = -1;
                     addto.belt.anchor = true;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
