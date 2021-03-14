@@ -42,6 +42,9 @@
 
         // wire up animate button in ui
         api.event.on("function.animate", (mode) => {
+            if (isAnimate) {
+                return;
+            }
             if (isCamMode && !camStock) {
                 return api.show.alert("animation requires stock to be enabled");
             }
