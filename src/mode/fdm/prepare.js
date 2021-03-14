@@ -141,6 +141,7 @@
 
                 // raise first layer off raft slightly to lessen adhesion
                 firstLayerHeight += process.outputRaftSpacing || 0;
+                zoff += process.outputRaftSpacing || 0;
 
                 // retract after last raft layer
                 output.last().last().retract = true;
