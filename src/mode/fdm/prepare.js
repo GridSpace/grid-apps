@@ -26,6 +26,7 @@
         settings = FDM.fixExtruders(settings);
         let render = settings.render !== false,
             { device, process, controller, bounds, mode } = settings,
+            { bedWidth, bedDepth } = device,
             output = [],
             printPoint = newPoint(0,0,0),
             nozzle = device.extruders[0].extNozzle,
@@ -167,7 +168,8 @@
                 });
 
                 // output brim points
-                printPoint = print.poly2polyEmit(polys, printPoint, function(poly, index, count, startPoint) {
+                let brimStart = offset < nozzle * 2 ? newPoint(-bedWidth, -bedDepth, 0) : printPoint;
+                printPoint = print.poly2polyEmit(polys, brimStart, (poly, index, count, startPoint) => {
                     return print.polyPrintPath(poly, startPoint, preout, {
                         rate: firstLayerRate,
                         onfirst: function(point) {
