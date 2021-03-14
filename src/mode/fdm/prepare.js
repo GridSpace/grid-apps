@@ -125,6 +125,7 @@
                         speed: speed,
                         mult: extrude,
                     });
+                    layerout.z = zoff + height;
                     layerout.height = height;
                     output.append(layerout);
 
