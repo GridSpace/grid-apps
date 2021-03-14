@@ -1230,9 +1230,9 @@
     function constOp(tok, consts, opch, op) {
         let pos, v1, v2;
         if ((pos = tok.indexOf(opch)) > 0) {
-            v1 = consts[tok.substring(0,pos)] || 0;
-            v2 = parseInt(tok.substring(pos+1)) || 0;
-            return op(v1,v2);
+            v1 = parseFloat(consts[tok.substring(0,pos)] || 0);
+            v2 = parseFloat(tok.substring(pos+1)) || 0;
+            return op(v1,v2).round(4);
         } else {
             return null;
         }
