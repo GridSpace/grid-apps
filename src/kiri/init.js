@@ -248,7 +248,6 @@
                 API.dialog.hide();
                 // cancel slicing
                 API.function.cancel();
-                // if (KIRI.work.isSlicing()) KIRI.work.restart();
                 // kill any poppers in compact mode
                 UC.hidePoppers();
                 // and send an event (used by FDM client)

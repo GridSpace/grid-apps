@@ -266,7 +266,7 @@
 
                 if (!offset) return;
 
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stock.x && stock.y && stock.center) {
                     let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
                     offset = cutPolys([rect], offset, slice.z, true);
                 }
@@ -523,7 +523,7 @@
                     CAM.addDogbones(offset, toolDiam / 5);
                 }
 
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stock.x && stock.y && stock.center) {
                     let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
                     offset = cutPolys([rect], offset, slice.z, true);
                 }
@@ -718,7 +718,8 @@
             let toolOver = toolDiam * op.step;
             let cutdir = process.camConventional;
             let polys = [];
-            let stockRect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
+            let stockRect = stock.center && stock.x && stock.y ?
+                newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
             updateToolDiams(toolDiam);
             if (tabs) {
                 tabs.forEach(tab => {
@@ -745,7 +746,7 @@
                 } else {
                     slice.camLines = [ poly ];
                 }
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stockRect) {
                     slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
                 }
                 slice.output()

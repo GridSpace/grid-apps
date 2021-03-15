@@ -28,8 +28,11 @@ let KIRI = self.kiri = self.kiri || {},
 function send(fn, data, onreply, zerocopy) {
     let seq = seqid++;
 
-    running[seq] = { fn:onreply };
-    // console.log('send', data);
+    if (onreply) {
+        // track it only when we expect and can handle a reply
+        running[seq] = { fn:onreply };
+    }
+    // console.log('send', {fn, data, onreply});
 
     try {
         worker.postMessage({
@@ -59,6 +62,7 @@ KIRI.work = {
 
     isBusy: function() {
         let current = 0;
+
         for (let rec of Object.values(running)) {
             if (rec.fn) current++;
         }
@@ -92,7 +96,7 @@ KIRI.work = {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],
-                onreply = record.fn;
+                onreply = record ? record.fn : undefined;
 
             // console.log('recv', reply.data)
             if (reply.done) {
@@ -102,7 +106,11 @@ KIRI.work = {
             // calculate and replace recv time
             reply.time_recv = now - reply.time_recv;
 
-            onreply(reply.data, reply);
+            if (onreply) {
+                onreply(reply.data, reply);
+            } else {
+                console.log({unexpected_reply: reply});
+            }
         };
 
         restarting = false;
