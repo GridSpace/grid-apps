@@ -77,6 +77,7 @@
                 extFilament: device.filamentSize,
                 extNozzle: device.nozzleSize,
                 extSelect: ["T0"],
+                extDeselect: [],
                 extOffsetX: 0,
                 extOffsetY: 0
             }];
@@ -143,6 +144,7 @@
                 if (rec.offset_x) e.extOffsetX = rec.offset_x;
                 if (rec.offset_y) e.extOffsetY = rec.offset_y;
                 if (rec.select) e.extSelect = rec.select;
+                if (rec.deselect) e.extDeselect = rec.deselect;
                 device.extruders.push(e);
             });
         } else {
@@ -259,6 +261,7 @@
                     bedHeight: 2.5,
                     bedRound: false,
                     bedBelt: false,
+                    fwRetract: false,
                     originCenter: false,
                     maxHeight: 150,
                     gcodePre: [],
@@ -273,6 +276,7 @@
                         extFilament: 1.75,
                         extNozzle: 0.4,
                         extSelect: ["T0"],
+                        extDeselect: [],
                         extOffsetX: 0,
                         extOffsetY: 0
                     }]
@@ -285,12 +289,14 @@
                     sliceShellOrder: "in-out",
                     sliceLayerStart: "last",
                     sliceFillAngle: 45,
+                    sliceFillWidth: 1,
                     sliceFillOverlap: 0.3,
                     sliceFillSparse: 0.5,
+                    sliceFillRate: 0,
                     sliceFillType: "hex",
                     sliceSupportDensity: 0.25,
                     sliceSupportOffset: 1.0,
-                    sliceSupportGap: 0.75,
+                    sliceSupportGap: 1,
                     sliceSupportSize: 5,
                     sliceSupportArea: 0.1,
                     sliceSupportExtra: 0,
@@ -311,10 +317,11 @@
                     firstLayerBedTemp: 0,
                     firstLayerBrim: 0,
                     firstLayerBrimTrig: 0,
+                    firstLayerBeltLead: 3,
+                    firstLayerFanSpeed: 0,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,
                     outputTemp: 200,
-                    outputFanMax: 255,
                     outputBedTemp: 60,
                     outputFeedrate: 50,
                     outputFinishrate: 50,
@@ -322,27 +329,30 @@
                     outputShellMult: 1.25,
                     outputFillMult: 1.25,
                     outputSparseMult: 1.25,
-                    outputFanLayer: 1,
+                    outputFanSpeed: 255,
                     outputRetractDist: 1.5,
                     outputRetractSpeed: 40,
+                    outputRetractWipe: 0,
                     outputRetractDwell: 20,
                     outputBrimCount: 2,
                     outputBrimOffset: 2,
                     outputShortPoly: 100.0,
                     outputMinSpeed: 10.0,
                     outputCoastDist: 0,
-                    outputWipeDistance: 0,
                     outputLayerRetract: false,
                     outputOriginCenter: true,
                     outputLoopLayers: "",
+                    outputPeelGuard: 0,
                     outputInvertX: false,
                     outputInvertY: false,
                     detectThinWalls: false,
                     sliceMinHeight: 0,
                     sliceAdaptive: false,
                     zHopDistance: 0.2,
+                    arcTolerance: 0,
                     antiBacklash: 1,
-                    gcodePause: ""
+                    gcodePause: "",
+                    ranges: []
                 }
             },
             sla:{
@@ -458,6 +468,7 @@
                     camTraceDown: 0,
                     camTraceSpeed: 250,
                     camTracePlunge: 200,
+                    camTraceLines: false,
                     camDrillTool: 1000,
                     camDrillSpindle: 1000,
                     camDrillDownSpeed: 250,
@@ -630,6 +641,7 @@
                 view: null,
                 dark: false,
                 decals: true,
+                danger: false,
                 zoomSpeed: 1.0,
                 lineType: "path",
                 autoSave: true,
@@ -639,6 +651,7 @@
                 showSpeeds: true,
                 freeLayout: true,
                 autoLayout: true,
+                spaceLayout: 1,
                 units: "mm",
                 exportOcto: false,
                 exportGhost: false,
@@ -646,7 +659,16 @@
                 exportPreview: false,
                 decimate: true,
                 detail: "good",
-                animesh: "200"
+                animesh: "200",
+                healMesh: false,
+                ortho: false
+            },
+            // label state preferences
+            labels: {
+                'FDM-3-engage': false,
+                'FDM-3-retract': false,
+                'FDM-3-arrows': false,
+                'FDM-3-move': false
             },
             // for passing temporary slice hints (topo currently)
             synth: {},

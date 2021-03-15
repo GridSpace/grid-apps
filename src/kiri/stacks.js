@@ -52,6 +52,24 @@
         return stacks[name];
     }
 
+    function getStacks() {
+        return Object.entries(stacks);
+    }
+
+    function getLabels() {
+        return Object.keys(DYN);
+    }
+
+    function setVisible(label, bool) {
+        let ctrl = DYN[label];
+        if (ctrl) {
+            ctrl.toggle.checked = bool;
+            ctrl.group.forEach(mat => {
+                mat.visible = bool;
+            });
+        }
+    }
+
     function create(name, view) {
         if (stacks[name]) {
             return stacks[name];
@@ -70,6 +88,11 @@
                                 ctrl.group.forEach(mat => {
                                     mat.visible = ctrl.toggle.checked;
                                 });
+                                if (ctrl.toggle.checked) {
+                                    KIRI.api.event.emit("stack.show", label);
+                                } else {
+                                    KIRI.api.event.emit("stack.hide", label)
+                                }
                             })
                         };
                         let color = lmap[label].color.check;
@@ -120,14 +143,24 @@
         max = newMax;
     }
 
+    function setFraction(frac) {
+        Object.values(stacks).forEach(stack => {
+            stack.obj.setLastFraction(frac);
+        });
+    }
+
     KIRI.stacks = {
         clear,
         create,
         rotate,
         remove,
         getStack,
+        getStacks,
         getRange,
         setRange,
+        getLabels,
+        setVisible,
+        setFraction,
         setFreeMem
     };
 

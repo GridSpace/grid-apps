@@ -15,7 +15,7 @@
 
     function time() { return Date.now() }
 
-    function lerp(from, to, maxInc) {
+    function lerp(from, to, maxInc, incFrom) {
         let dir = Math.sign(to - from);
         let delta = Math.abs(to - from);
         let steps = Math.floor(delta / maxInc);
@@ -25,7 +25,7 @@
             steps++;
             per = delta / steps;
         }
-        let out = [];
+        let out = incFrom ? [from]  : [];
         while (steps-- > 0) {
             from += per * dir;
             out.push(from);
@@ -316,6 +316,94 @@
         return (d2y * d1x) - (d2x * d1y);
     }
 
+    /**
+     * return circle center given three points
+     * from https://math.stackexchange.com/questions/1076177/3d-coordinates-of-circle-center-given-three-point-on-the-circle
+     */
+    function center3d(a,b,c) {
+        let ax = a.x,
+            ay = a.y,
+            az = a.z || 0,
+            bx = b.x,
+            by = b.y,
+            bz = b.z || 0,
+            cx = c.x,
+            cy = c.y,
+            cz = c.z || 0,
+            Cx = bx-ax,
+            Cy = by-ay,
+            Cz = bz-az,
+            Bx = cx-ax,
+            By = cy-ay,
+            Bz = cz-az,
+            B2 = (ax*ax)-(cx*cx)+(ay*ay)-(cy*cy)+(az*az)-(cz*cz),
+            C2 = (ax*ax)-(bx*bx)+(ay*ay)-(by*by)+(az*az)-(bz*bz),
+            CByz = Cy*Bz-Cz*By,
+            CBxz = Cx*Bz-Cz*Bx,
+            CBxy = Cx*By-Cy*Bx,
+            ZZ1 = -(Bz-Cz*Bx/Cx)/(By-Cy*Bx/Cx),
+            Z01 = -(B2-Bx/Cx*C2)/(2*(By-Cy*Bx/Cx)),
+            ZZ2 = -(ZZ1*Cy+Cz)/Cx,
+            Z02 = -(2*Z01*Cy+C2)/(2*Cx),
+            dz = -((Z02-ax)*CByz-(Z01-ay)*CBxz-az*CBxy)/(ZZ2*CByz-ZZ1*CBxz+CBxy),
+            dx = ZZ2*dz + Z02,
+            dy = ZZ1*dz + Z01;
+
+        return {x:dx, y:dy, z:dz};
+    }
+
+    /**
+     * return circle center given three points
+     * from https://stackoverflow.com/questions/4103405/what-is-the-algorithm-for-finding-the-center-of-a-circle-from-three-points
+     */
+    function center2d(A,B,C,rad) {
+        // let yDelta_a = B.y - A.y,
+        //     xDelta_a = B.x - A.x,
+        //     yDelta_b = C.y - B.y,
+        //     xDelta_b = C.x - B.x,
+        //     aSlope = yDelta_a/xDelta_a,
+        //     bSlope = yDelta_b/xDelta_b,
+        //     center = {x:0, y:0, z:0};
+        // center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
+        // center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
+        let center = center3d(A,B,C);
+        if (rad) {
+            let dx = center.x - A.x;
+            let dy = center.y - A.y;
+            center.r = Math.sqrt(dx*dx + dy*dy)
+            // if (isNaN(center.r)) console.log('NaN',{dx,dy,A,B,C,center,xDelta_a,xDelta_b,yDelta_a,yDelta_b,aSlope,bSlope});
+        }
+        return center;
+    }
+
+    /**
+     * return two possible circle centers given two points and a radius
+     * https://stackoverflow.com/questions/36211171/finding-center-of-a-circle-given-two-points-and-radius
+     */
+    function center2pr(p1, p2, r) {
+        let x1 = p1.x,
+            x2 = p2.x,
+            y1 = p1.y,
+            y2 = p2.y,
+            q = Math.sqrt(Math.pow((x2-x1),2) + Math.pow((y2-y1),2)),
+            y3 = (y1+y2)/2,
+            x3 = (x1+x2)/2,
+            basex = Math.sqrt(Math.pow(r,2)-Math.pow((q/2),2))*(y1-y2)/q, //calculate once
+            basey = Math.sqrt(Math.pow(r,2)-Math.pow((q/2),2))*(x2-x1)/q, //calculate once
+            centerx1 = x3 + basex, //center x of circle 1
+            centery1 = y3 + basey, //center y of circle 1
+            centerx2 = x3 - basex, //center x of circle 2
+            centery2 = y3 - basey; //center y of circle 2
+        return [{x:centerx1, y:centery1}, {x:centerx2, y:centery2}];
+    }
+
+    function thetaDiff(n1, n2, sign) {
+        let diff = n2 - n1;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        return sign ? diff : Math.abs(diff);
+    }
+
     /** ******************************************************************
      * Connect to base
      ******************************************************************* */
@@ -399,6 +487,10 @@
         time,
         round,
         area2,
+        center2d,
+        center3d,
+        center2pr,
+        thetaDiff,
         distSq : dist2,
         distSqv2 : dist2v2,
         inRange,

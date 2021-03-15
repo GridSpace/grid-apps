@@ -7,8 +7,24 @@
     if (self.kiri.lang) return;
 
     const KIRI = self.kiri, LANG = self.kiri.lang = { current: {} };
+    const KDFL = 'en-us';
 
     let lset = navigator.language.toLocaleLowerCase();
+
+    LANG.map = function(key) {
+        if (!key) {
+            return KDFL;
+        }
+        let tok = key.split('-');
+        switch (tok[0]) {
+            case 'da': return 'da-dk';
+            case 'de': return 'de-de';
+            case 'en': return 'en-us';
+            case 'fr': return 'fr-fr';
+            case 'pl': return 'pl-pl';
+        }
+        return KDFL;
+    };
 
     LANG.get = function() {
         return lset;
@@ -39,7 +55,12 @@
             // update current map from chosen map
             Object.keys(map).forEach(key => {
                 if (LANG.en[key]) {
-                    LANG.current[key] = map[key];
+                    let val = map[key];
+                    // turn arrays into newline separated strings
+                    if (Array.isArray(val)) {
+                        val = val.join('\n');
+                    }
+                    LANG.current[key] = val;
                 } else {
                     invalid.push(key);
                 }

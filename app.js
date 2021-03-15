@@ -21,10 +21,10 @@ const load = [];
 const synth = {};
 const api = {};
 
-let level;
 let setupFn;
 let cacheDir;
 let startTime;
+let oversion;
 let lastmod;
 let logger;
 let debug;
@@ -43,25 +43,8 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
-    if (mod.util.globdir) {
-        // when globdir available, look for shared kvstore
-        // and if not present, create and share in through env
-        if (mod.env._level) {
-            level = mod.env._level;
-            logger.log("using shared kvstore");
-        } else {
-            level = require('level')(mod.util.globdir("kvstore"), {valueEncoding:"json"});
-            mod.env._level = level;
-            logger.log("creating shared kvstore");
-        }
-    } else {
-        logger.log("fallback to local kvstore");
-        level = require('level')(mod.util.datadir("kvstore"), {valueEncoding:"json"});
-    }
-
     cacheDir = mod.util.datadir("cache");
 
-    mod.on.reload(() => level.close());
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
         let vmatch = mod.meta.version || "*";
@@ -85,7 +68,6 @@ function init(mod) {
     mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
-        [ "/data/", handleData ],
         [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
@@ -144,7 +126,8 @@ function initModule(mod, file, dir) {
     require_fresh(file)({
         api: api,
         adm: {
-            reload: prepareScripts
+            reload: prepareScripts,
+            setver: (ver) => { oversion = ver }
         },
         const: {
             args: {},
@@ -166,16 +149,14 @@ function initModule(mod, file, dir) {
             time: time,
             guid: guid,
             mkdirs: util.mkdir,
+            isfile: util.isfile,
+            confdir: util.confdir,
             datadir: util.datadir,
             lastmod: lastmod,
             obj2string: obj2string,
             string2obj: string2obj,
             getCookieValue: cookieValue,
             logger: log.new
-        },
-        db: {
-            api: db,
-            level: level
         },
         inject: (code, file, options) => {
             if (!script[code]) {
@@ -239,11 +220,13 @@ const script = {
     kiri : [
         "kiri",
         "ext/three",
+        "ext/three-bgu",
         "license",
         "ext/clip2", // work.test
         "ext/tween",
         "ext/fsave",
         "ext/earcut", // work.test
+        "ext/base64",
         "add/array",
         "add/three",
         "geo/base",
@@ -267,11 +250,11 @@ const script = {
         "kiri/ui",
         "kiri/lang",
         "kiri/lang-en",
-        "kiri/fill",
         "kiri/db",
         "kiri/slice",
         "kiri/layers",
         "kiri/client",
+        "mode/fdm/fill",
         "mode/fdm/driver",
         "mode/fdm/client",
         "mode/sla/driver",
@@ -297,6 +280,7 @@ const script = {
         "kiri",
         "ext/three",
         "ext/pngjs",
+        "ext/jszip",
         "license",
         "ext/clip2",
         "ext/earcut",
@@ -315,11 +299,11 @@ const script = {
         "geo/polygons",
         "geo/gyroid",
         "moto/pack",
-        "kiri/fill",
         "kiri/slice",
         "kiri/slicer",
         "kiri/slicer2",
         "kiri/layers",
+        "mode/fdm/fill",
         "mode/fdm/driver",
         "mode/fdm/slice",
         "mode/fdm/prepare",
@@ -404,40 +388,6 @@ const script = {
 // prevent caching of specified modules
 const cachever = {};
 
-const db = {
-    // --------
-    key: arr => arr.join("/"),
-    // --------
-    get: key => {
-        if (Array.isArray(key)) key = db.key(key);
-            return promise((resolve,reject) => {
-                level.get(key,(err,record) => {
-                resolve(record,err);
-            });
-        });
-    },
-
-    // --------
-    put: (key, value) => {
-    if (Array.isArray(key)) key = db.key(key);
-        return promise((resolve,reject) => {
-            level.put(key,value,(err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    },
-    // --------
-    del: key => {
-    return promise((resolve,reject) => {
-        level.del(key, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    }
-};
-
 function promise(resolve, reject) {
     return new Promise(resolve, reject);
 }
@@ -471,11 +421,12 @@ function handleSetup(req, res, next) {
 }
 
 function handleVersion(req, res, next) {
-    if (req.app.path === "/kiri/" && req.url.indexOf(version) < 0) {
+    let vstr = oversion || version;
+    if (req.app.path === "/kiri/" && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
-            return http.redirect(res, `${req.url},ver:${version}`);
+            return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
-            return http.redirect(res, `${req.url}?ver:${version}`);
+            return http.redirect(res, `${req.url}?ver:${vstr}`);
         }
     } else {
         next();
@@ -493,118 +444,6 @@ function handleOptions(req, res, next) {
         res.end();
     } else {
         next();
-    }
-}
-
-function handleData(req, res, next) {
-    addCorsHeaders(req, res);
-    res.setHeader('Cache-Control', 'private, no-cache, max-age=0');
-
-    let tok = req.app.path.split('/'),
-        muid = req.headers['x-moto-ajax'],
-        space = tok[2] || null,
-        version = tok[3],
-        valid = space && space.length >= 4 && space.length <= 8;
-
-    function genKey() {
-        while (true) {
-            let k = Math.round(Math.random() * 9999999999).toString(36);
-            if (k.length >= 4 && k.length <= 8) return k;
-        }
-    }
-
-    function countKey(space) {
-        return db.key(['meta/counter',space]);
-    }
-
-    function ownerKey(space) {
-        return db.key(['meta/owner',muid,'space',space]);
-    }
-
-    function recordKey(space, version) {
-        return db.key(["meta/space",space,version]);
-    }
-
-    // retrieve latest space data
-    if (valid && req.method === 'GET' && valid) {
-        function send(rec, version) {
-            if (rec) {
-                res.write(obj2string({space:space,ver:version,rec:rec}));
-                res.end();
-            } else {
-                res.end();
-            }
-        }
-
-        function retrieve(version) {
-            return db.get(recordKey(space,version))
-                .then(record => {
-                    send(record || null, version);
-                })
-        }
-
-        if (version) {
-            retrieve(version)
-        } else {
-            db.get(countKey(space)).then(version => retrieve(version));
-        }
-    } else if (valid && req.method === 'POST') {
-        let dbOwner = null,
-            dbVersion = null,
-            postBody = null,
-            spacein = space,
-            version = 0,
-            body = '';
-
-        function checkDone() {
-            if (!(dbVersion && postBody)) return;
-            // if not owner, assign new space id
-            if (dbVersion > 1) {
-                if (!dbOwner) {
-                    space = genKey();
-                    version = 1;
-                    logger.log({forked:space,from:spacein,by:muid});
-                }
-            }
-            // log what we have
-            logger.log({
-                space: space,
-                ver: dbVersion,
-                uid: muid,
-                size: postBody.length
-            });
-            if (muid && muid.length > 0) {
-                level.put(recordKey(space, dbVersion), body);
-                level.put(ownerKey(space), {time: time(), ver: dbVersion});
-                level.put(countKey(space), dbVersion);
-            }
-            res.end(obj2string({space: space, ver: dbVersion}));
-        }
-
-        // accumulate post body
-        req.on('data', data => { body += data });
-        req.on('end', () => {
-            postBody = body;
-            checkDone();
-        });
-
-        // fetch owner and version information
-        db.get(ownerKey(space))
-            .then(owner => {
-                dbOwner = owner;
-                return db.get(countKey(space));
-             })
-            .then(version => {
-                dbVersion = parseInt(version || "0") + 1;
-                checkDone();
-            });
-
-        return;
-
-    }  else {
-
-        next();
-
     }
 }
 
@@ -775,10 +614,14 @@ function getCachedFile(file, fn) {
             let smod = lastmod(filePath),
                 cmod = cached.mtime;
 
-            if (!smod) throw "missing source file";
-            if (smod > cmod) cached = null;
-
-            cached.lastcheck = now;
+            if (!smod) {
+                throw "missing source file";
+            }
+            if (smod > cmod) {
+                cached = null;
+            } else {
+                cached.lastcheck = now;
+            }
         }
     }
 

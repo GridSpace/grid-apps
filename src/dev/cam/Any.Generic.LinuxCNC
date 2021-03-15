@@ -8,7 +8,7 @@
         "M03 S20000 ; spindle on"
     ],
     "post":[
-    "M05 ; spindle off",
+        "M05 ; spindle off",
         "M30 ; program end"
     ],
     "tool-change":[

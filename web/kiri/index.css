@@ -269,7 +269,7 @@ th, tr, td, label {
 #app-mode, #app-acct {
     width: 125px;
 }
-#app-mode:hover #mode-info {
+#mode-info.hoverpop {
     display: flex;
 }
 #mode-info {
@@ -295,7 +295,7 @@ th, tr, td, label {
     padding-right: 5px;
 }
 
-#app-name:hover #app-info {
+#app-info.hoverpop {
     display: flex;
 }
 #app-info {
@@ -317,8 +317,8 @@ th, tr, td, label {
     align-items: center;
     justify-content: flex-end;
 }
-#app-acct:hover #acct-pop {
-    display: flex;
+#acct-pop.hoverpop {
+    display: flex !important;
 }
 #acct-pop {
     display: none;
@@ -441,7 +441,7 @@ th, tr, td, label {
     background-color: rgba(255,255,255,0.85);
     border: 1px solid rgba(0,0,0,0.1);
     border-radius: 3px;
-    width: 60px;
+    min-width: 60px;
     color: var(--fg-gray);
 }
 .pop-lcol > div:hover {
@@ -471,15 +471,18 @@ th, tr, td, label {
 .lt-menu label {
     font-size: smaller;
 }
-.lt-enabled {
+.lt-enabled, .lt-active {
     color: var(--fg-gray);
 }
-.lt-enabled:hover {
+.lt-enabled:hover, .lt-active:hover {
     background-color: #eee;
     border: 1px solid #aaa;
     color: #000;
 }
 .lt-enabled:hover .pop-lcol {
+    display: flex;
+}
+.lt-active .hoverpop {
     display: flex;
 }
 @media only screen and (max-height : 800px) {
@@ -524,7 +527,7 @@ th, tr, td, label {
 .txt-sel button, .btn-sel {
     background-color: #ccc;
 }
-#pop-rotate .value, #pop-scale .value {
+#pop-rotate input.value, #pop-scale input.value {
     width: 90%;
 }
 #pop-rotate label {
@@ -870,8 +873,8 @@ th, tr, td, label {
     min-height: 4em !important;
 }
 #code-preview-textarea {
-    width: 100%;
-    height: 250px;
+    width: 40em;
+    height: 12em;
     font-size: 10px;
 }
 .mod-end {
@@ -962,6 +965,8 @@ th, tr, td, label {
 }
 #help .content li {
     line-height: 1.75em;
+    padding-left: 22px ;
+    text-indent: -22px ;
 }
 #help .footer {
     font-family: monospace;
@@ -1239,6 +1244,17 @@ th, tr, td, label {
     width: 20px;
 }
 
+#top-slider {
+    position: absolute;
+    display: none;
+    top: 60px;
+    left: 50px;
+    right: 50px;
+}
+#anim-slider {
+    width: 100%;
+}
+
 #alert-area {
     display: none;
     justify-content: center;
@@ -1499,4 +1515,44 @@ th, tr, td, label {
 #context-menu .sep {
     border-top: 1px solid #ddd;
     margin: 5px 0 5px 0;
+}
+
+#lab-axis, #lab-scale {
+    padding: 0 6px 0 6px;
+    border-radius: 3px;
+}
+#lab-axis:hover, #lab-scale:hover {
+    background-color: rgba(0,0,0,0.2);
+}
+
+.range-info {
+    position: relative;
+}
+.range-info:hover .range-detail {
+    display: flex;
+}
+.range-detail {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    bottom: 50%;
+    right: 100%;
+    padding: 5px;
+    margin: 0 10px 0 10px;
+    font-size: smaller;
+    font-family: monospace;
+    transform: translateY(50%);
+    background-color: rgba(255,255,255,0.8);
+    border: 1px solid #aaa;
+    border-radius: 5px;
+}
+.range-detail label.pad {
+    padding-right: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.range-detail label.val {
+    font-weight: bold;
+}
+.range-detail span {
+    flex-grow: 1;
 }

@@ -11,6 +11,7 @@
     const zeroOut = true;
 
     const codec = KIRI.codec = {
+        undef: undefined,
         encode: encode,
         decode: decode,
         registerDecoder: registerDecoder,
@@ -154,7 +155,7 @@
                     polys: encode(layer.polys, state),
                     lines: encodePointArray(layer.lines, state),
                     faces: codec.allocFloat32Array(layer.faces),
-                    cface: layer.cface,
+                    cface: layer.cface || codec.undef,
                     color: layer.color,
                     paths: layer.paths.map(lp => {
                         const pe = {
@@ -167,13 +168,13 @@
                         }
                         return pe;
                     }),
-                    cpath: layer.cpath,
+                    cpath: layer.cpath || codec.undef,
                     off: layer.off
                 };
                 if (zeroOut && state.zeros && e.faces.length) {
                     state.zeros.push(e.faces.buffer);
                 }
-                // console.log('-->',e);
+                // console.log('-->',layer,e);
                 return e;
             })
         };

@@ -4,9 +4,7 @@
 
 (function () {
 
-    let iOS = /(iPad|iPhone|iPod)/g.test(navigator.userAgent),
-        // ---------------
-        MOTO    = moto,
+    let MOTO    = moto,
         KIRI    = self.kiri,
         BASE    = self.base,
         UTIL    = BASE.util,
@@ -69,7 +67,7 @@
         controls: true, // show or not side menus
         drop_group: undefined, // optional array to group multi drop
         drop_layout: true, // layout on new drop
-        preview: true, // allow bypassing preview generation
+        work_alerts: true, // allow disabling work progress alerts
         hover: false, // when true fires mouse hover events
         hoverAdds: false, // when true only searches widget additions
     };
@@ -80,10 +78,14 @@
         scale: scaleSelection,
         rotate: rotateSelection,
         meshes: function() { return selectedMeshes.slice() },
-        widgets: function() { return selectedMeshes.slice().map(m => m.widget) },
+        widgets: function(orall) {
+            let sel = selectedMeshes.slice().map(m => m.widget);
+            return sel.length ? sel : orall ? WIDGETS.slice() : []
+        },
         for_groups: forSelectedGroups,
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
+        update_bounds: updateSelectedBounds,
         delete: function() { platform.delete(selection.widgets()) },
         export: exportSelection
     };
@@ -108,6 +110,7 @@
         load_files: platformLoadFiles,
         group: platformGroup,
         group_done: platformGroupDone,
+        update: SPACE.platform.update,
         set_font: SPACE.platform.setFont,
         set_axes: SPACE.platform.setAxes,
         set_volume: SPACE.platform.setVolume,
@@ -228,6 +231,7 @@
             dec: () => { kiri.api.event.emit("busy", --busy) }
         },
         conf: {
+            dbo: () => { return ls2o('ws-settings') },
             get: getSettings,
             put: putSettings,
             load: loadSettings,
@@ -256,6 +260,7 @@
             layer_max: 0
         },
         device: {
+            code: currentDeviceCode,
             get: currentDeviceName,
             set: noop, // set during init
             clone: noop // set during init
@@ -280,10 +285,15 @@
             slice: prepareSlices,
             print: preparePreview,
             prepare: preparePreview,
-            animate: noop,
+            animate: prepareAnimation,
             export: prepareExport,
             cancel: cancelWorker,
-            clear: KIRI.client.clear
+            clear: KIRI.client.clear,
+            parse: loadCode
+        },
+        group: {
+            merge: groupMerge,
+            split: groupSplit,
         },
         hide: {
             alert: function(rec) { alert2cancel(rec) },
@@ -310,6 +320,10 @@
             grid : function() { return false },
             local : function() { return false }
         },
+        process: {
+            code: currentProcessCode,
+            get: currentProcessName
+        },
         platform,
         selection,
         show: {
@@ -327,13 +341,17 @@
             reload: reload,
             restore: restoreWorkspace,
             clear: clearWorkspace,
-            save: saveWorkspace
+            save: saveWorkspace,
+            set_focus: setFocus
         },
         tweak,
         util: {
             isSecure,
             ui2rec: updateSettingsFromFields,
-            rec2ui: updateFieldsFromSettings
+            rec2ui: updateFieldsFromSettings,
+            download: downloadBlob,
+            b64enc: obj => { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
+            b64dec: obj => { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
         },
         view: {
             get: function() { return viewMode },
@@ -354,7 +372,9 @@
                 return map;
             },
             new: newWidget,
-            all: function() { return WIDGETS.slice() },
+            all: () => { return WIDGETS.slice() },
+            add: (widget) => { WIDGETS.push(widget) },
+            filter: (fn) => { WIDGETS = WIDGETS.filter(fn) },
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
             meshes: meshArray,
@@ -367,6 +387,29 @@
         },
         work: KIRI.work
     };
+
+    function setFocus(widgets) {
+        if (widgets === undefined) {
+            widgets = WIDGETS;
+        } else if (!Array.isArray) {
+            widgets = [ widgets ];
+        } else if (widgets.length === 0) {
+            widgets = WIDGETS;
+        }
+        let pos = { x:0, y:0, z:0 };
+        for (let widget of widgets) {
+            pos.x += widget.track.pos.x;
+            pos.y += widget.track.pos.y;
+            pos.z += widget.track.pos.z;
+        }
+        if (widgets.length) {
+            pos.x /= widgets.length;
+            pos.y /= widgets.length;
+            pos.z /= widgets.length;
+        }
+        SPACE.platform.setCenter(pos.x, -pos.y, topZ / 2);
+        SPACE.view.setFocus(new THREE.Vector3(pos.x, topZ / 2, -pos.y));
+    }
 
     function reload() {
         API.event.emit('reload');
@@ -506,7 +549,7 @@
      }
 
      function alert2(message, time) {
-         if (message === undefined) {
+         if (message === undefined || message === null) {
              return updateAlerts(true);
          }
          let rec = [message, Date.now(), time, true];
@@ -516,8 +559,10 @@
      }
 
      function alert2cancel(rec) {
-         rec[3] = false;
-         updateAlerts();
+         if (Array.isArray(rec)) {
+             rec[3] = false;
+             updateAlerts();
+         }
      }
 
      function updateAlerts(clear) {
@@ -640,11 +685,127 @@
         return Math.max(min,Math.min(max,v));
     }
 
+    function getOverlappingRanges(lo, hi) {
+        let ranges = [];
+        for (let range of settings.process.ranges) {
+            let in_lo = range.lo >= lo && range.lo <= hi;
+            let in_hi = range.hi >= lo && range.hi <= hi;
+            if (in_lo || in_hi) {
+                ranges.push(range);
+            }
+        }
+        return ranges;
+    }
+
+    // set process override values for a range
+    function updateRange(lo, hi, values, add) {
+        let ranges = settings.process.ranges;
+        let slices = {};
+        let min = lo;
+        let max = hi;
+
+        // just remove values from matching ranges
+        if (!add) {
+            for (let range of getOverlappingRanges(lo, hi)) {
+                for (let key of Object.keys(values)) {
+                    delete range.fields[key];
+                }
+                if (Object.keys(range.fields).length === 0) {
+                    let pos = ranges.indexOf(range);
+                    if (pos >= 0) {
+                        ranges.splice(pos,1);
+                    }
+                }
+            }
+            API.event.emit("range.updates", ranges);
+            return;
+        }
+
+        // flatten ranges
+        ranges.push({lo, hi, fields: values});
+        for (let range of ranges) {
+            min = Math.min(range.lo, min);
+            max = Math.max(range.hi, max);
+            for (let i=range.lo; i<=range.hi; i++) {
+                let slice = slices[i];
+                if (!slice) {
+                    slice = slices[i] = {};
+                }
+                for (let [key,val] of Object.entries(range.fields)) {
+                    slice[key] = val;
+                }
+            }
+        }
+
+        // merge contiguous matching ranges
+        ranges.length = 0;
+        let range;
+        for (let i=min; i<=max; i++) {
+            let slice = slices[i];
+            if (slice && !range) {
+                range = {lo: i, hi: i, fields: slice};
+            } else if (slice && range && isEquals(range.fields, slice)) {
+                range.hi = i;
+            } else if (range) {
+                ranges.push(range);
+                if (slice) {
+                    range = {lo: i, hi: i, fields: slice};
+                } else {
+                    range = undefined;
+                }
+            }
+        }
+
+        ranges.push(range);
+        updateFieldsFromSettings(settings.process);
+        API.show.alert("update ranges", 2);
+        API.event.emit("range.updates", ranges);
+    }
+
+    let overrides = {};
+
+    // updates editable fields that are range dependent
+    function updateFieldsFromRange() {
+        return;
+        if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.process.ranges) {
+            let okeys = Object.keys(overrides);
+            if (okeys.length) {
+                updateFieldsFromSettings(overrides);
+                overrides = {};
+            }
+            return;
+        }
+        let match = 0;
+        let values = {};
+        let restores = Object.clone(overrides);
+        let { layer_lo, layer_hi } = API.var;
+        for (let range of getOverlappingRanges(API.var.layer_lo, API.var.layer_hi)) {
+            for (let key of Object.keys(range.fields)) {
+                values[key] = range.fields[key];
+                overrides[key] = settings.process[key];
+                delete restores[key];
+                match++;
+            }
+        }
+        if (match) {
+            updateFieldsFromSettings(values);
+        }
+        let rkeys = Object.keys(restores);
+        if (rkeys.length) {
+            updateFieldsFromSettings(restores);
+            for (let key of rkeys) {
+                delete overrides[key];
+            }
+        }
+        UC.refresh();
+    }
+
     function updateSlider() {
         API.event.emit("slider.set", {
             start: (API.var.layer_lo / API.var.layer_max),
             end: (API.var.layer_hi / API.var.layer_max)
         });
+        updateFieldsFromRange();
     }
 
     function setVisibleLayer(h, l) {
@@ -675,13 +836,10 @@
     }
 
     function forSelectedGroups(f) {
-        let m = selectedMeshes;
-        if (m.length === 0 && WIDGETS.length === 1) m = [ WIDGETS[0].mesh ];
-        let v = [];
-        m.slice().forEach(function (mesh) {
-            if (v.indexOf(mesh.widget.group) < 0) f(mesh.widget);
-            v.push(mesh.widget.group);
-        });
+        let groups = API.selection.widgets(true).map(w => w.group).uniq();
+        for (let group of groups) {
+            f(group[0]);
+        }
     }
 
     function forSelectedWidgets(f,noauto) {
@@ -764,7 +922,9 @@
     }
 
     function cancelWorker() {
-        if (KIRI.work.isSlicing()) KIRI.work.restart();
+        if (KIRI.work.isBusy()) {
+            KIRI.work.restart();
+        }
     }
 
     function showSlider() {
@@ -825,60 +985,103 @@
         API.conf.save();
         API.event.emit('slice.begin', getMode());
 
-        let countdown = WIDGETS.length,
+        let slicing = WIDGETS.slice().filter(w => !w.track.ignore),
+            countdown = slicing.length,
             totalProgress,
             track = {},
             mode = settings.mode,
-            now = Date.now();
+            now = Date.now(),
+            totvert = 0,
+            defvert;
+
+        // determing this widgets % of processing time estimated by vertex count
+        for (let widget of slicing) {
+            totvert += widget.getVertices().count;
+        }
+        defvert = totvert / slicing.length;
 
         setOpacity(color.slicing_opacity);
 
         STACKS.clear();
+        if (settings.device.bedBelt) {
+            KIRI.client.clear();
+        }
+        KIRI.client.sync();
+        KIRI.client.rotate(settings);
+
+        let segtimes = {},
+            segNumber = 0,
+            errored = false,
+            startTime = Date.now(),
+            lastMsg;
 
         // for each widget, slice
-        forAllWidgets(function(widget) {
-            let segtimes = {},
-                segNumber = 0,
-                errored = false,
-                startTime = Date.now(),
-                lastMsg,
-                camOrLaser = mode === 'CAM' || mode === 'LASER',
-                stack = STACKS.create(widget.id, widget.mesh);
+        for (let widget of slicing) {
+            let camOrLaser = mode === 'CAM' || mode === 'LASER',
+                stack = widget.stack = STACKS.create(widget.id, widget.mesh),
+                factor = (widget.getVertices().count / defvert);
 
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
             widget.slice(settings, function(sliced, error) {
+                widget.rotinfo = null;
                 let mark = Date.now();
                 // update UI info
                 if (sliced) {
                     // update segment time
                     if (lastMsg) {
-                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
                     }
                     API.event.emit('slice', getMode());
                 }
-                // on done
-                segtimes[`${segNumber}_draw`] = widget.render(stack);
-                // rotate stack for belt beds
-                if (settings.device.bedBelt && widget.rotinfo) {
-                    stack.obj.rotate(widget.rotinfo);
+                // handle slicing errors
+                if (error && !errored) {
+                    errored = true;
+                    setViewMode(VIEWS.ARRANGE);
+                    alert2(error, 5);
+                    API.show.progress(0);
+                    KIRI.client.restart();
+                    API.event.emit('slice.error', error);
                 }
-                updateSliderMax(true);
-                setVisibleLayer(-1, 0);
-                if (scale === 1) {
-                    // clear wireframe
-                    widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                    widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
-                    widget.setColor(color.deselected);
+                // discard remaining errors
+                if (errored) {
+                    return;
                 }
+                let alert = null;
                 // on the last exit, update ui and call the callback
-                if (--countdown === 0 || error || errored) {
-                    // mark slicing complete for prep/preview
-                    complete.slice = true;
+                if (--countdown === 0) {
+                    if (scale === 1 && feature.work_alerts) {
+                        alert = API.show.alert("Rendering");
+                    };
+                    KIRI.client.unrotate(settings, () => {
+                        for (let widget of slicing) {
+                            // on done
+                            segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
+                            // rotate stack for belt beds
+                            if (widget.rotinfo) {
+                                widget.stack.obj.rotate(widget.rotinfo);
+                            }
+                            if (scale === 1) {
+                                // clear wireframe
+                                widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
+                                widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
+                                widget.setColor(color.deselected);
+                                API.hide.alert(alert);
+                            }
+                        }
+                        updateSliderMax(true);
+                        setVisibleLayer(-1, 0);
+                        if (scale === 1) {
+                            updateStackLabelState();
+                        }
+                    });
                     if (scale === 1) {
                         API.show.progress(0);
                     }
+                    // cause visuals to update
                     SPACE.scene.active();
+                    // mark slicing complete for prep/preview
+                    complete.slice = true;
                     API.event.emit('slice.end', getMode());
                     // print stats
                     segtimes.total = Date.now() - now;
@@ -887,32 +1090,24 @@
                         callback();
                     }
                 }
-                // handle slicing errors
-                if (error && !errored) {
-                    errored = true;
-                    setViewMode(VIEWS.ARRANGE);
-                    setOpacity(color.model_opacity);
-                    platform.deselect();
-                    alert2(error);
-                }
             }, function(update, msg) {
                 if (msg && msg !== lastMsg) {
                     let mark = Date.now();
                     if (lastMsg) {
-                        segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
                     }
                     lastMsg = msg;
                     startTime = mark;
                 }
                 // on update
-                track[widget.id] = update;
+                track[widget.id] = (update || 0) * factor;
                 totalProgress = 0;
-                forAllWidgets(function(w) {
+                for (let w of slicing) {
                     totalProgress += (track[w.id] || 0);
-                });
+                }
                 API.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
             });
-        });
+        }
     }
 
     function preparePreview(callback, scale = 1, offset = 0) {
@@ -933,9 +1128,7 @@
 
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
-        if (feature.preview) {
-            setViewMode(VIEWS.PREVIEW);
-        }
+        setViewMode(VIEWS.PREVIEW);
         API.conf.save();
         API.event.emit('preview.begin', pMode);
 
@@ -944,7 +1137,7 @@
             forAllWidgets(function(widget) {
                 widget.setColor(color.cam_preview);
             });
-        } else if (feature.preview && offset === 0) {
+        } else if (offset === 0) {
             setOpacity(color.preview_opacity);
         }
 
@@ -968,7 +1161,17 @@
                 startTime = mark;
             }
             API.show.progress(offset + progress * scale, message);
-        }, function (oldout, maxSpeed) {
+        }, function (reply, maxSpeed) {
+            // handle worker errors
+            if (reply && reply.error) {
+                alert2(reply.error, 5);
+                setViewMode(VIEWS.ARRANGE);
+                API.event.emit('preview.error', reply.error);
+                API.show.progress(0);
+                SPACE.update();
+                return;
+            }
+
             if (lastMsg) {
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }
@@ -976,7 +1179,8 @@
             API.show.progress(0);
             if (!isCam) setOpacity(0);
 
-            if (feature.preview && output.length) {
+            if (output.length) {
+                let alert = feature.work_alerts ? API.show.alert("Rendering") : null;
                 startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.platform.world)
@@ -990,6 +1194,7 @@
                     ri.dy = settings.device.bedDepth / 2;
                     stack.obj.rotate(WIDGETS[0].rotinfo);
                 }
+                API.hide.alert(alert);
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
 
@@ -1000,12 +1205,11 @@
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);
 
-            if (feature.preview) {
-                SPACE.update();
-                updateSliderMax(true);
-                setVisibleLayer(-1, 0);
-                updateSpeeds(maxSpeed);
-            }
+            SPACE.update();
+            updateSliderMax(true);
+            setVisibleLayer(-1, 0);
+            updateSpeeds(maxSpeed);
+            updateStackLabelState();
 
             // mark preview complete for export
             complete.preview = true;
@@ -1014,6 +1218,10 @@
                 callback();
             }
         });
+    }
+
+    function prepareAnimation() {
+        API.event.emit("function.animate", {mode: settings.mode});
     }
 
     function prepareExport() {
@@ -1028,11 +1236,18 @@
         KIRI.export(...argsave);
     }
 
+    function updateStackLabelState() {
+        // match label checkboxes to preference
+        for (let label of STACKS.getLabels()) {
+            let check = `${settings.mode}-${viewMode}-${label}`;
+            STACKS.setVisible(label, settings.labels[check] !== false);
+        }
+    }
+
     function loadCode(code, type) {
+        API.event.emit("code.load", {code, type});
         setViewMode(VIEWS.PREVIEW);
         setOpacity(0);
-
-        API.event.emit("code.load", {code, type});
         KIRI.client.parse({code, type, settings}, progress => {
             API.show.progress(progress, "parsing");
         }, (layers, maxSpeed) => {
@@ -1043,6 +1258,7 @@
             updateSliderMax(true);
             updateSpeeds(maxSpeed);
             showSlices();
+            updateStackLabelState();
             SPACE.update();
             API.event.emit("code.loaded", {code, type});
         });
@@ -1125,6 +1341,14 @@
      * Selection Functions
      ******************************************************************* */
 
+    function groupMerge() {
+        Widget.Groups.merge(API.selection.widgets(true));
+    }
+
+    function groupSplit() {
+        Widget.Groups.split(API.selection.widgets(false));
+    }
+
     function updateSelectedInfo() {
         let bounds = new THREE.Box3(), track;
         forSelectedMeshes(mesh => {
@@ -1155,18 +1379,73 @@
         updateSelectedBounds();
     }
 
-    function updateSelectedBounds() {
+    function fitDeviceToWidgets() {
+        let maxy = 0;
+        forAllWidgets(function(widget) {
+            let wb = widget.mesh.getBoundingBox().clone();
+            maxy = Math.max(maxy, wb.max.y - wb.min.y);
+        });
+        let dev = settings.device;
+        if (maxy > dev.bedDepth) {
+            dev.bedDepthSave = dev.bedDepth;
+            dev.bedDepth = maxy + 10;
+            SPACE.platform.setSize(
+                parseInt(dev.bedWidth),
+                parseInt(dev.bedDepth),
+                parseFloat(dev.bedHeight),
+                parseFloat(dev.maxHeight)
+            );
+            SPACE.platform.update();
+            return true;
+        }
+    }
+
+    function updateSelectedBounds(widgets) {
         // update bounds on selection for drag limiting
+        let isBelt = settings.device.bedBelt;
+        if (isBelt) {
+            if (fitDeviceToWidgets()) {
+                platform.update_origin();
+                SPACE.update();
+            }
+        }
+        let dvy = settings.device.bedDepth;
+        let dvx = settings.device.bedWidth;
         let bounds_sel = new THREE.Box3();
-        forSelectedWidgets(function(widget) {
+        if (!widgets) {
+            widgets = selectedMeshes.map(m => m.widget);
+        }
+        for (let widget of widgets) {
             let wp = widget.track.pos;
+            let bx = widget.track.box;
+            let miny = wp.y - bx.h/2 + dvy/2;
+            let maxy = wp.y + bx.h/2 + dvy/2;
+            let minx = wp.x - bx.w/2 + dvx/2;
+            let maxx = wp.x + bx.w/2 + dvx/2;
+
+            // keep widget in bounds when rotated or scaled
+            let ylo = miny < 0;
+            let yhi = !isBelt && maxy > dvy
+            if (ylo && !yhi) {
+                widget.move(0, -miny, 0);
+            } else if (yhi && !ylo) {
+                widget.move(0, dvy - maxy, 0);
+            }
+            let xlo = minx < 0;
+            let xhi = maxx > dvx;
+            if (xlo && !xhi) {
+                widget.move(-minx, 0, 0);
+            } else if (xhi && !xlo) {
+                widget.move(dvx - maxx, 0, 0);
+            }
+
             let wb = widget.mesh.getBoundingBox().clone();
             wb.min.x += wp.x;
             wb.max.x += wp.x;
             wb.min.y += wp.y;
             wb.max.y += wp.y;
             bounds_sel.union(wb);
-        });
+        }
         settings.bounds_sel = bounds_sel;
     }
 
@@ -1227,18 +1506,23 @@
         let outs = [];
         widgets.forEach(widget => {
             let mesh = widget.mesh;
-            let geo = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+            let geo = mesh.geometry;
             outs.push({geo, widget});
-            facets += geo.faces.length;
+            facets += geo.attributes.position.count;
         });
         let stl = new Uint8Array(80 + 4 + facets * 50);
         let dat = new DataView(stl.buffer);
         let pos = 84;
         dat.setInt32(80, facets, true);
-        outs.forEach(out => {
-            let { faces, vertices } = out.geo;
-            for (let i=0, il=faces.length; i<il; i++) {
-                let {a, b, c, normal} = faces[i];
+        for (let out of outs) {
+            let { position } = out.geo.attributes;
+            let pvals = position.array;
+            for (let i=0, il=position.count; i<il; i += 3) {
+                let pi = i * position.itemSize;
+                let p0 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
+                let p1 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
+                let p2 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
+                let norm = THREE.computeFaceNormal(p0, p1, p2);
                 let xo = 0, yo = 0, zo = 0;
                 if (outs.length > 1) {
                     let {x, y, z} = out.widget.track.pos;
@@ -1246,21 +1530,21 @@
                     yo = y;
                     zo = z;
                 }
-                dat.setFloat32(pos +  0, normal.x, true);
-                dat.setFloat32(pos +  4, normal.y, true);
-                dat.setFloat32(pos +  8, normal.z, true);
-                dat.setFloat32(pos + 12, vertices[a].x + xo, true);
-                dat.setFloat32(pos + 16, vertices[a].y + yo, true);
-                dat.setFloat32(pos + 20, vertices[a].z + zo, true);
-                dat.setFloat32(pos + 24, vertices[b].x + xo, true);
-                dat.setFloat32(pos + 28, vertices[b].y + yo, true);
-                dat.setFloat32(pos + 32, vertices[b].z + zo, true);
-                dat.setFloat32(pos + 36, vertices[c].x + xo, true);
-                dat.setFloat32(pos + 40, vertices[c].y + yo, true);
-                dat.setFloat32(pos + 44, vertices[c].z + zo, true);
+                dat.setFloat32(pos +  0, norm.x, true);
+                dat.setFloat32(pos +  4, norm.y, true);
+                dat.setFloat32(pos +  8, norm.z, true);
+                dat.setFloat32(pos + 12, p0.x + xo, true);
+                dat.setFloat32(pos + 16, p0.y + yo, true);
+                dat.setFloat32(pos + 20, p0.z + zo, true);
+                dat.setFloat32(pos + 24, p1.x + xo, true);
+                dat.setFloat32(pos + 28, p1.y + yo, true);
+                dat.setFloat32(pos + 32, p1.z + zo, true);
+                dat.setFloat32(pos + 36, p2.x + xo, true);
+                dat.setFloat32(pos + 40, p2.y + yo, true);
+                dat.setFloat32(pos + 44, p2.z + zo, true);
                 pos += 50;
             }
-        });
+        }
         return stl;
     }
 
@@ -1390,25 +1674,18 @@
             wb.max.y += wp.y;
             bounds.union(wb);
         });
-        if (settings.device.bedBelt) {
-            let dev = settings.device,
-                isBelt = dev.bedBelt,
-                maxy = bounds.max.y - bounds.min.y;
-            // if (maxy > dev.bedDepth) {
-            //     console.log({maxy}, settings.device.bedDepth)
-            //     SPACE.platform.setSize(
-            //         parseInt(dev.bedWidth),
-            //         parseInt(maxy),
-            //         parseFloat(dev.bedHeight),
-            //         parseFloat(dev.maxHeight)
-            //     );
-            // }
-        }
         return settings.bounds = bounds;
     }
 
-    function platformSelect(widget, shift) {
+    function platformSelect(widget, shift, recurse = true) {
         if (viewMode !== VIEWS.ARRANGE) {
+            return;
+        }
+        // apply deselect to entire group
+        if (recurse && widget && widget.group.length > 1) {
+            for (let w of widget.group) {
+                platformSelect(w, true, false);
+            }
             return;
         }
         let mesh = widget.mesh,
@@ -1443,9 +1720,9 @@
         let menu_show = selcount ? 'flex': '';
         $('winfo').style.display = 'none';
         if (selcount) {
-            UI.scale.classList.add('lt-enabled');
-            UI.rotate.classList.add('lt-enabled');
-            UI.nozzle.classList.add('lt-enabled');
+            UI.scale.classList.add('lt-active');
+            UI.rotate.classList.add('lt-active');
+            UI.nozzle.classList.add('lt-active');
             UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
                 let sel = selection.widgets()[0];
@@ -1465,9 +1742,9 @@
                 }
             }
         } else {
-            UI.scale.classList.remove('lt-enabled');
-            UI.rotate.classList.remove('lt-enabled');
-            UI.nozzle.classList.remove('lt-enabled');
+            UI.scale.classList.remove('lt-active');
+            UI.rotate.classList.remove('lt-active');
+            UI.nozzle.classList.remove('lt-active');
             UI.trash.style.display = '';
         }
         UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
@@ -1485,10 +1762,17 @@
         }
     }
 
-    function platformDeselect(widget) {
+    function platformDeselect(widget, recurse = true) {
         if (viewMode !== VIEWS.ARRANGE) {
             // don't de-select and re-color widgets in,
             // for example, sliced or preview modes
+            return;
+        }
+        // apply deselect to entire group
+        if (recurse && widget && widget.group.length > 1) {
+            for (let w of widget.group) {
+                platformDeselect(w, false);
+            }
             return;
         }
         if (!widget) {
@@ -1647,7 +1931,7 @@
         forAllWidgets(function(w) { platform.select(w, true) })
     }
 
-    function platformLayout(event, space) {
+    function platformLayout(event, space = settings.controller.spaceLayout) {
         let auto = UI.autoLayout.checked,
             proc = settings.process,
             dev = settings.device,
@@ -1665,6 +1949,10 @@
                 break;
             case MODES.FDM:
                 space = space || ((proc.sliceSupportExtra || 0) * 2) + 1;
+                // auto resize device to support a larger object
+                if (isBelt) {
+                    fitDeviceToWidgets();
+                }
                 break;
         }
 
@@ -1717,7 +2005,12 @@
         if (isBelt) {
             let bounds = platformUpdateBounds(),
                 movey = -(dev.bedDepth / 2 + bounds.min.y);
-            forAllWidgets(widget => widget.move(0, movey + 5, 0));
+            forAllWidgets(widget => {
+                // only move the root widget in the group
+                if (widget.id === widget.group.id) {
+                    widget.move(0, movey + 5, 0)
+                }
+            });
         }
 
         platform.update_origin();
@@ -1781,18 +2074,41 @@
         }
     }
 
+    function isEquals(o1, o2) {
+        if (o1 == o2) return true;
+        if (Array.isArray(o1) && Array.isArray(o2)) {
+            if (o1.length === o2.length) {
+                for (let i=0; i<o1.length; i++) {
+                    if (o1[i] !== o2[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } else if (typeof(o1) === 'object' && typeof(o2) === 'object') {
+            let keys = Object.keys(Object.assign({}, o1, o2));
+            for (let key of keys) {
+                if (o1[key] !== o2[key]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     /**
      * @returns {Object}
      */
-    function updateSettingsFromFields(setrec, uirec = UI) {
+    function updateSettingsFromFields(setrec, uirec = UI, changes) {
         if (!setrec) {
             return console.trace("missing scope");
         }
 
-        let key, changed = false;
+        let lastChange = UC.lastChange();
 
         // for each key in setrec object
-        for (key in setrec) {
+        for (let key in setrec) {
             if (!setrec.hasOwnProperty(key)) {
                 continue;
             }
@@ -1823,8 +2139,14 @@
             } else {
                 continue;
             }
-            if (setrec[key] != nval) {
+            if (lastChange === uie) {
+                if (changes) changes[key] = nval;
+            }
+            if (!isEquals(setrec[key], nval)) {
                 setrec[key] = nval;
+                if (changes) {
+                    changes[key] = nval;
+                }
             }
         }
 
@@ -1852,7 +2174,7 @@
                 device.internal++;
                 updateExtruderFields(device);
             };
-            UI.extDel.disabled = device.extruders.length < 2;
+            UI.extDel.disabled = UI.extDel.disabled || device.extruders.length < 2;
             UI.extDel.onclick = function() {
                 device.extruders.splice(device.internal,1);
                 device.internal = Math.min(device.internal, device.extruders.length-1);
@@ -1861,6 +2183,7 @@
             UI.extAdd.onclick = function() {
                 let copy = clone(device.extruders[device.internal]);
                 copy.extSelect = [`T${device.extruders.length}`];
+                copy.extDeselect = [];
                 device.extruders.push(copy);
                 device.internal = device.extruders.length - 1;
                 updateExtruderFields(device);
@@ -1869,23 +2192,59 @@
     }
 
     function updateSettings(opt = {}) {
-        updateSettingsFromFields(settings.controller);
-        switch (settings.controller.units) {
+        let { controller, device, process, mode, sproc, cproc } = settings;
+        updateSettingsFromFields(controller);
+        switch (controller.units) {
             case 'mm': UC.setUnits(1); break;
             case 'in': UC.setUnits(25.4); break;
         }
         if (opt.controller) {
             return;
         }
-        updateSettingsFromFields(settings.device);
-        updateSettingsFromFields(settings.process);
-        let device = settings.device;
+        updateSettingsFromFields(device);
+        // range-specific values
+        if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
+            let changes = {};
+            let values = process;
+            let { layer_lo, layer_hi, layer_max } = API.var;
+            let range = { lo: layer_lo, hi: layer_hi };
+            let add = false;
+            if (layer_lo > 0 || layer_hi < layer_max) {
+                values = Object.clone(process);
+                add = true;
+            }
+            updateSettingsFromFields(values, undefined, changes);
+            if (range) {
+                updateRange(range.lo, range.hi, changes, add);
+            }
+        } else {
+            updateSettingsFromFields(process);
+        }
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);
         }
         API.conf.save();
-        $('mode-device').innerText = settings.device.deviceName;
-        $('mode-profile').innerText = settings.process.processName;
+        let compare = sproc[mode][cproc[mode]];
+        let same = true;
+        if (compare)
+        for (let [key, val] of Object.entries(compare).filter(v => v[0] !== 'processName')) {
+            let tval = process[key];
+            // outputLoopLayers misbehaving and setting null on empty
+            if (val === '' && tval == null) {
+                continue;
+            }
+            if (Array.isArray(tval) && Array.isArray(val)) {
+                if (JSON.stringify(tval) == JSON.stringify(val)) {
+                    continue;
+                }
+            }
+            if (tval != val) {
+                // console.log(key, 'expected', val, 'got', tval);
+                same = false;
+            }
+        }
+        $('mode-device').innerText = device.deviceName;
+        $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
     }
 
     function saveSettings() {
@@ -1895,9 +2254,11 @@
         }
         const mode = settings.mode;
         settings.sproc[mode].default = settings.process;
+        settings.sproc[mode][settings.process.processName] = settings.process;
         settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
         settings.device.originCenter = UI.deviceOrigin.checked;
+        settings.device.fwRetract = UI.fwRetract.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
         API.event.emit('settings.saved', settings);
     }
@@ -1905,18 +2266,19 @@
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
-                data = JSON.parse(atob(data));
+                data = API.util.b64dec(data);
             } catch (e) {
-                UC.alert('invalid settings format');
+                UC.alert('invalid import format');
                 console.log('data',data);
                 return;
             }
         }
         if (LOCAL) console.log('import',data);
         let isSettings = (data.settings && data.version && data.time);
+        let isProcess = (data.process && data.version && data.time && data.mode && data.name);
         let isDevice = (data.device && data.version && data.time);
         let isWork = (data.work);
-        if (!isSettings && !isDevice) {
+        if (!isSettings && !isDevice && !isProcess) {
             UC.alert('invalid settings or device format');
             console.log('data',data);
             return;
@@ -1935,11 +2297,25 @@
                     API.show.devices();
                 }
             }
+            if (isProcess) {
+                if (settings.sproc[data.mode][data.name]) {
+                    UC.confirm(`Replace process ${data.name}?`).then(yes => {
+                        if (yes) {
+                            settings.sproc[data.mode][data.name] = data.process;
+                            API.conf.show();
+                        }
+                    });
+                } else {
+                    settings.sproc[data.mode][data.name] = data.process;
+                    API.conf.show();
+                }
+            }
             if (isSettings) {
+                clearWorkspace();
                 settings = CONF.normalize(data.settings);
                 SDB.setItem('ws-settings', JSON.stringify(settings));
-                if (LOCAL) console.log('settings',Object.clone(settings));
                 restoreSettings();
+                if (LOCAL) console.log('settings',Object.clone(settings));
                 if (isWork) {
                     API.platform.clear();
                     KIRI.codec.decode(data.work).forEach(widget => {
@@ -1957,7 +2333,8 @@
         if (ask) {
             let opt = {};
             let prompt = isDevice ?
-                `Import device "${data.device}"?` :
+                `Import device "${data.device}"?` : isProcess ?
+                `Import process "${data.name}"?` :
                 `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
             if (data.screen) {
                 opt.pre = [
@@ -1980,7 +2357,7 @@
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
-        return btoa(JSON.stringify({
+        return API.util.b64enc({
             settings: settings,
             version: KIRI.version,
             screen: shot,
@@ -1991,7 +2368,7 @@
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
-        }));
+        });
     }
 
     function platformLoadFiles(files,group) {
@@ -2005,6 +2382,7 @@
                 isstl = lower.indexOf(".stl") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 ispng = lower.indexOf(".png") > 0,
+                isjpg = lower.indexOf(".jpg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
                 isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0;
             reader.file = files[i];
@@ -2029,14 +2407,34 @@
                 if (issvg) loadCode(e.target.result, 'svg');
                 if (isset) settingsImport(e.target.result, true);
                 if (ispng) loadImageDialog(e.target.result, e.target.file.name);
+                if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
-            if (isstl || ispng) {
+            if (isstl || ispng || isjpg) {
                 reader.readAsArrayBuffer(reader.file);
             } else {
                 reader.readAsBinaryString(reader.file);
             }
         }
+    }
+
+    function loadImageConvert(res, name) {
+        let url = URL.createObjectURL(new Blob([res]));
+
+        $('mod-any').innerHTML = `<img id="xsrc" src="${url}"><canvas id="xdst"></canvas>`;
+
+        let img = $('xsrc');
+        let can = $('xdst');
+
+        img.onload = () => {
+            can.width = img.width;
+            can.height = img.height;
+            let ctx = can.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            fetch(can.toDataURL()).then(r => r.arrayBuffer()).then(data => {
+                loadImageDialog(data, name);
+            });
+        };
     }
 
     function loadFile() {
@@ -2053,6 +2451,7 @@
         let newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
+            if (widget.synth) return;
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
             widget.saveState();
@@ -2079,7 +2478,6 @@
 
     function restoreSettings(save) {
         let newset = ls2o('ws-settings') || settings;
-
         settings = CONF.normalize(newset);
         // override camera from settings
         if (settings.controller.view) {
@@ -2242,15 +2640,34 @@
         }
     }
 
+    function exportSettings(e) {
+        let mode = getMode(),
+            name = e.target.getAttribute("name"),
+            data = API.util.b64enc({
+                process: settings.sproc[mode][name],
+                version: KIRI.version,
+                moto: MOTO.id,
+                time: Date.now(),
+                mode,
+                name
+            });
+        UC.prompt("Export Process Filename", name).then(name => {
+            if (name) {
+                API.util.download(data, `${name}.km`);
+            }
+        });
+    }
+
     function loadSettings(e, named) {
         let mode = getMode(),
-            name = e ? e.target.getAttribute("load") : named || "default",
+            name = e ? e.target.getAttribute("load") : named || currentProcessName() || "default",
             load = settings.sproc[mode][name];
 
         if (!load) return;
 
-        // clone loaded process into settings
-        settings.process = clone(load);
+        // cloning loaded process into settings requires user to save
+        // process before switching devices or risk losing any changes
+        settings.process = load;//clone(load);
         // update process name
         settings.process.processName = name;
         // save named process with the current device
@@ -2287,6 +2704,7 @@
             let row = DOC.createElement('div'),
                 load = DOC.createElement('button'),
                 edit = DOC.createElement('button'),
+                xprt = DOC.createElement('button'),
                 del = DOC.createElement('button'),
                 name = sk;
 
@@ -2311,9 +2729,15 @@
             edit.innerHTML = '<i class="far fa-edit"></i>';
             edit.onclick = editSettings;
 
+            xprt.setAttribute('name', sk);
+            xprt.setAttribute('title', 'export');
+            xprt.innerHTML = '<i class="fas fa-download"></i>';
+            xprt.onclick = exportSettings;
+
             row.setAttribute("class", "flow-row");
             row.appendChild(edit);
             row.appendChild(load);
+            row.appendChild(xprt);
             row.appendChild(del);
             table.appendChild(row);
         });
@@ -2411,7 +2835,6 @@
                 complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
-                UI.render.classList.add('lt-enabled');
                 // KIRI.work.clear();
                 STACKS.clear();
                 hideSlider();
@@ -2492,6 +2915,7 @@
         // other housekeeping
         triggerSettingsEvent();
         platformUpdateSelected();
+        updateSelectedBounds(WIDGETS);
         updateFields();
         // because device dialog, if showing, needs to be updated
         if (modalShowing()) {
@@ -2508,9 +2932,27 @@
         return settings.filter[getMode()];
     }
 
+    function currentDeviceCode() {
+        return settings.devices[currentDeviceName()];
+    }
+
+    function currentProcessName() {
+        return settings.cproc[getMode()];
+    }
+
+    function currentProcessCode() {
+        return settings.sproc[getMode()][currentProcessName()];
+    }
+
     function setControlsVisible(show) {
         $('mid-lcol').style.display = show ? 'flex' : 'none';
         $('mid-rcol').style.display = show ? 'flex' : 'none';
+    }
+
+    function downloadBlob(data, filename) {
+        let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
+        $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
+        $('_dexport_').click();
     }
 
     // prevent safari from exiting full screen mode
@@ -2523,4 +2965,6 @@
     // new module loading
     kiri.loader.forEach(mod => { mod(kiri.api)} );
 
+    // upon restore, seed presets
+    API.event.emit('preset', API.conf.dbo());
 })();

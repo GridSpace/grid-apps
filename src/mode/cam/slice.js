@@ -221,8 +221,8 @@
         }
     };
 
-    CAM.traces = function(settings, widget) {
-        if (widget.traces) {
+    CAM.traces = function(settings, widget, single) {
+        if (widget.traces && widget.trace_single === single) {
             // do no work if cached
             return false;
         }
@@ -242,6 +242,13 @@
         let traces = [];
         // find and trim polys (including open) to shadow
         let oneach = (data, index, total) => {
+            if (single) {
+                for (let line of data.lines) {
+                    if (line.p1.distTo2D(line.p2) > 1) {
+                        traces.push(newPolygon().append(line.p1).append(line.p2).setOpen());
+                    }
+                }
+            } else
             BASE.polygons.flatten(data.tops,null,true).forEach(poly => {
                 poly.inner = null;
                 poly.parent = null;
@@ -265,6 +272,7 @@
         opts.over = true;
         slicer.slice(indices, opts);
         widget.traces = traces;
+        widget.trace_single = single;
         return true;
     };
 

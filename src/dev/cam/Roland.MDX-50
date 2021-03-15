@@ -1,0 +1,21 @@
+{
+    "file-ext": "rml",
+    "token-space": "",
+    "strip-comments": true,
+    "pre":[
+        "PA;PA;VS4;!VZ4;!PZ0,80;!MC1;"
+    ],
+    "post":[
+        "PA;PA;!PZ0,2420;PU0,6096;!MC0;"
+    ],
+    "dwell":[
+        "W{time};"
+    ],
+    "spindle": [
+        "!RC{speed};"
+    ],
+    "settings": {
+        "bed_width": 400,
+        "bed_depth": 305
+    }
+}

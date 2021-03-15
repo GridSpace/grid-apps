@@ -7,6 +7,14 @@
 let KIRI = self.kiri = self.kiri || {};
 KIRI.newEngine = ()=> { return new Engine ()};
 
+if (!KIRI.api) {
+    KIRI.api = {
+        event: {
+            emit: () => {}
+        }
+    };
+}
+
 class Engine {
     constructor() {
         this.widget = KIRI.newWidget();
@@ -27,7 +35,7 @@ class Engine {
             try {
                 new moto.STL().load(url, vertices => {
                     this.listener({loaded: url, vertices});
-                    this.widget.loadVertices(vertices)
+                    this.widget.loadVertices(vertices).center();
                     accept(this);
                 });
             } catch (error) {
@@ -39,11 +47,10 @@ class Engine {
     parse(data) {
         return new Promise((accept, reject) => {
             try {
-                new moto.STL().parse(data, vertices => {
-                    this.listener({parsed: data, vertices});
-                    this.widget.loadVertices(vertices)
-                    accept(this);
-                });
+                let vertices = new moto.STL().parse(data);
+                this.listener({parsed: data, vertices});
+                this.widget.loadVertices(vertices).center();
+                accept(this);
             } catch (error) {
                 reject(error);
             }
@@ -97,6 +104,8 @@ class Engine {
 
     slice() {
         return new Promise((accept, reject) => {
+            KIRI.client.clear();
+            KIRI.client.sync([ this.widget ]);
             KIRI.client.slice(this.settings, this.widget, msg => {
                 this.listener({slice:msg});
                 if (msg.error) {

@@ -5,8 +5,17 @@
 (function() {
 
     var MP = THREE.Mesh.prototype,
-        GP = THREE.Geometry.prototype,
         BP = THREE.BufferGeometry.prototype;
+
+    THREE.computeFaceNormal = function(vA,vB,vC) {
+        const ab = new THREE.Vector3();
+        const cb = new THREE.Vector3();
+        cb.subVectors( vC, vB );
+        ab.subVectors( vA, vB );
+        cb.cross( ab );
+        cb.normalize();
+        return cb;
+    };
 
     MP.getBoundingBox = function(update) {
         return this.geometry.getBoundingBox(update);
@@ -46,7 +55,7 @@
     };
 
     // center geometry on x,y,z coordinates (defaults to 0,0,0)
-    GP.center = function(x,y,z) {
+    BP.center = function(x,y,z) {
         var box = this.getBoundingBox(),
             mid = box.dim.clone().multiplyScalar(0.5),
             dif = mid.clone().add(box.min),
@@ -69,14 +78,17 @@
     };
 
     // return cached or refreshed (when update = true) bounding box
-    GP.getBoundingBox = function(update) {
-        if (update || !this.boundingBox) this.computeBoundingBox();
+    BP.getBoundingBox = function(update) {
+        if (update || !this.boundingBox) {
+            this.boundingBox = null;
+            this.computeBoundingBox();
+        }
         this.boundingBox.dim = this.boundingBox.max.clone().sub(this.boundingBox.min);
         return this.boundingBox;
     };
 
     // uniformly scale any mesh to a max x/y/z dim of 'unit' (defaults to 1)
-    GP.unitScale = function(unit) {
+    BP.unitScale = function(unit) {
         var bbox = this.getBoundingBox().clone(),
             scale = (unit || 1) / Math.max(
                 bbox.max.x - bbox.min.x,
@@ -89,20 +101,21 @@
         return this;
     };
 
-    BP.center = GP.center;
-    BP.getBoundingBox = GP.getBoundingBox;
-    BP.unitScale = GP.unitScale;
-
     BP.fixNormals = function() {
         this.computeVertexNormals();
         return this;
     };
 
-    THREE.Geometry.fromVertices = function(vertices) {
-        var geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        return geometry;
-    };
+    // may be faster than the equivalent matrix transform. to be tested
+//     BP.translate = function(x,y,z) {
+//         let off = [x,y,z],
+//             arr = this.attributes.position.array,
+//             len = arr.length;
+//         for (let i=0; i<len; i++) {
+//             arr[i] += off[i%3];
+//         }
+//         return this;
+//     }
 
     THREE.Object3D.prototype.newGroup = function() {
         var group = new THREE.Group();

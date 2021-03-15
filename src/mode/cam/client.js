@@ -41,7 +41,10 @@
         API = api;
 
         // wire up animate button in ui
-        api.function.animate = () => {
+        api.event.on("function.animate", (mode) => {
+            if (isAnimate) {
+                return;
+            }
             if (isCamMode && !camStock) {
                 return api.show.alert("animation requires stock to be enabled");
             }
@@ -50,7 +53,7 @@
                     animate();
                 }
             });
-        };
+        });
 
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
@@ -61,11 +64,11 @@
             if (!isCamMode) {
                 func.tabClear();
                 func.traceDone();
-                UI.label.slice.innerText = 'slice';
-                UI.label.preview.innerText = 'preview';
-                UI.label.export.innerText = 'export';
+                UI.label.slice.innerText = LANG.slice;
+                UI.label.preview.innerText = LANG.preview;
+                UI.label.export.innerText = LANG.export;
             } else {
-                UI.label.slice.innerText = 'start';
+                UI.label.slice.innerText = LANG.start;
             }
             // do not persist traces across page reloads
             func.traceClear();
@@ -534,7 +537,7 @@
                 KIRI.api.widgets.opacity(0.8);
                 KIRI.api.widgets.for(widget => {
                     if (ids.indexOf(widget.id) >= 0) {
-                        unselectTraces(widget);
+                        unselectTraces(widget, true);
                         widget.trace_stack = null;
                     }
                     if (widget.trace_stack) {
@@ -578,7 +581,7 @@
                         }
                     });
                 });
-            });
+            }, poppedRec.single);
             api.feature.hover = true;
             api.feature.hoverAdds = true;
             func.hover = func.traceHover;
@@ -831,7 +834,7 @@
             dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
             inside:   UC.newBoolean(LANG.co_olin_s, undefined, {title:LANG.co_olin_l, show:(op) => { return !op.inputs.outside.checked }}),
             outside:  UC.newBoolean(LANG.co_olot_s, undefined, {title:LANG.co_olot_l, show:(op) => { return !op.inputs.inside.checked }}),
-            omitthru: UC.newBoolean(LANG.co_omit_s, undefined, {title:LANG.co_omit_l, show:(op) => { return op.inputs.outside.checked }}),
+            omitthru: UC.newBoolean(LANG.co_omit_s, undefined, {title:LANG.co_omit_l, xshow:(op) => { return op.inputs.outside.checked }}),
             wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }})
         };
 
@@ -867,7 +870,8 @@
             step:    'camTraceOver',
             down:    'camTraceDown',
             rate:    'camTraceSpeed',
-            plunge:  'camTracePlunge'
+            plunge:  'camTracePlunge',
+            single:  'camTraceLines',
         }).inputs = {
             tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
             sep:      UC.newBlank({class:"pop-sep"}),
@@ -879,6 +883,7 @@
             rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
             plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
             sep:      UC.newBlank({class:"pop-sep"}),
+            single:   UC.newBoolean(LANG.cc_sngl_s, undefined, {title:LANG.cc_sngl_l}),
             select: UC.newRow([
                 UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
                 UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
@@ -1044,11 +1049,11 @@
         }
     }
 
-    function unselectTraces(widget) {
+    function unselectTraces(widget, skip) {
         if (widget.trace_stack) {
             widget.trace_stack.meshes.forEach(mesh => {
                 if (mesh.selected) {
-                    func.traceToggle(mesh);
+                    func.traceToggle(mesh, skip);
                 }
             });
         }

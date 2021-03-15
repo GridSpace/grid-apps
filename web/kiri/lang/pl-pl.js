@@ -1,142 +1,141 @@
-// english. other language maps will defer to english
-// map for any missing key/value pairs
-kiri.lang['en'] =
-kiri.lang['en-us'] = {
-    // common keys and menus
-    animate:        "animate",      // CAM animate button
-    arrange:        "arrange",      // layout workspace objects
-    axis:           "axis",         // left object scale pop menu
-    clear:          "clear",        // clear workspace (remove all objects)
-    copy:           "copy",
-    delete:         "delete",
-    detail:         "detail",
-    done:           "done",
-    enable:         "enable",
-    export:         "export",
-    files:          "files",
-    help:           "help",
-    ghost:          "ghost",        // left render pop menu (wireframe)
-    hide:           "hide",         // left render pop menu (invisible)
-    home:           "home",
+// Polish. Język polski tłumaczony na zasadach własności publicznej
+kiri.lang['pl'] =
+kiri.lang['pl-pl'] = {
+    // hasło i tłumaczenie
+    animate:        "animacja",     // CAM animate button
+    arrange:        "rozmieść",     // layout workspace objects
+    axis:           "osie",         // left object scale pop menu
+    clear:          "wyczyść", //"czyszczenie z obiektów", // clear workspace (remove all objects)
+    copy:           "kopiowanie",
+    delete:         "kasowanie",
+    detail:         "szczegóły",
+    done:           "wykonaj",
+    enable:         "włącz",
+    export:         "eksport",
+    files:          "pliki",
+    help:           "pomoc",
+    ghost:          "druciak",        // left render pop menu (wireframe)
+    hide:           "ukryj",         // left render pop menu (invisible)
+    home:           "początek",
     import:         "import",
-    language:       "language",
-    machine:        "machine",      // device or machine
-    metric:         "metric",
-    name:           "name",
-    prefs:          "prefs",        // left menu "preferences"
-    preview:        "preview",
+    language:       "język",
+    machine:        "maszyna",      // device or machine
+    metric:         "metryka",
+    name:           "nazwa",
+    prefs:          "ustawienia",        // left menu "preferences"
+    preview:        "podgląd",
     recent:         "recent",
     render:         "render",       // left render pop menu
     reset:          "reset",
-    rotate:         "rotate",       // left rotate pop menu
-    save:           "save",
-    scale:          "scale",        // left object scale pop menu
-    setup:          "setup",
-    settings:       "settings",
-    size:           "size",
-    slice:          "slice",
-    solid:          "solid",        // view type pop menu
+    rotate:         "obróć",       // left rotate pop menu
+    save:           "zapisz",
+    scale:          "skala",        // left object scale pop menu
+    setup:          "ustaw",
+    settings:       "ustawienia",
+    size:           "wielkość",
+    slice:          "plaserki",
+    solid:          "wypełniony",        // view type pop menu
     start:          "start",
-    tool:           "tool",
-    tools:          "tools",        // CAM tool menu button
-    top:            "top",
-    type:           "type",         // CAM tool type
-    version:        "version",
-    view:           "view",         // left view pop menu
-    wire:           "wire",         // left render pop menu
+    tool:           "narzędzie",
+    tools:          "narzędzia",        // CAM tool menu button
+    top:            "góra",
+    type:           "typ",         // CAM tool type
+    version:        "wersja",
+    view:           "widok",         // left view pop menu
+    wire:           "druciak",         // left render pop menu "wire"
 
-    acct_xpo:       ["make a backup of your device","and device profiles with the","option to include workspace","objects and positions"],
+    acct_xpo:       ["zrób backup swojego urządzenia","i profil urządzenia z","opcja by zapisać przestrzeń roboczą","obiekty i pozycje"],
 
     // RIGHT-CLICK CONTEXT MENU
-    rc_clws:        "clear workspace",
-    rc_xpws:        "export workspace",
-    rc_lafl:        "lay flat",
-    rc_mirr:        "mirror",
-    rc_dupl:        "duplicate",
-    rc_xstl:        "export as STL",
+    rc_clws:        "wyczyść przestrzeń roboczą",
+    rc_xpws:        "wyeksportuj przestrzeń roboczą",
+    rc_lafl:        "ułóż płasko",
+    rc_mirr:        "odbicie", // lustro
+    rc_dupl:        "skopiuj",
+    rc_xstl:        "zapisz w formacie STL",
 
     // DEVICE MENU and related dialogs
-    dm_sldt:        "select a device type",
-    dm_stdd:        "standard devices",
-    dm_mydd:        "my devices",
-    dm_seld:        "selected device",
-    dm_rcnt:        "recent files",
-    dm_savs:        "saved settings",
-    dm_appp:        "Application Preferences",
+    dm_sldt:        "wybierz rodzaj swojego urządzenia",
+    dm_stdd:        "zwykłe urządzenia",
+    dm_mydd:        "moje urządzenia",
+    dm_seld:        "wybierz urządzenie",
+    dm_rcnt:        "ostatnio uzywane pliki",
+    dm_savs:        "zachowane ustawienia",
+    dm_appp:        "Ustawienia programu",
 
     // CAM Tool Dialog
-    td_tyem:        "end",          // end mill
-    td_tybm:        "ball",         // ball mill
-    td_tytm:        "taper",        // taper mill
-    td_tonm:        "tool #",
-    td_shft:        "shaft",        // endmill shaft specs
-    td_flut:        "flute",        // endmill flute specs
-    td_tapr:        "taper",        // endmill taper specs
+    td_tyem:        "tępo zakończone",  // end mill
+    td_tybm:        "kula na końcu",    // ball mill
+    td_tytm:        "zwężający się",    // taper mill
+    td_tonm:        "narzędzie #",
+    td_shft:        "wał (pionowy)",    // endmill shaft specs
+    td_flut:        "czołowy",          // endmill flute specs
+    td_tapr:        "zwężający się",    // endmill taper specs
 
     // DEVICE dialog groups
-    dv_gr_dev:      "device",
-    dv_gr_ext:      "extruder",
-    dv_gr_out:      "output",
-    dv_gr_gco:      "gcode macros",
+    dv_gr_dev:      "urządzenie",
+    dv_gr_ext:      "ekstruder",
+    dv_gr_out:      "wynik",
+    dv_gr_gco:      "makra gkodu",
 
     // DEVICE dialog (_s = label, _l = hover help)
-    dv_name_s:      "name",
-    dv_name_l:      "device name",
+    dv_name_s:      "nazwa",
+    dv_name_l:      "nazwa urządzenia",
     dv_fila_s:      "filament",
-    dv_fila_l:      "diameter in millimeters",
-    dv_nozl_s:      "nozzle",
-    dv_nozl_l:      "diameter in millimeters",
-    dv_bedw_s:      "width",
-    dv_bedw_l:      "workspace units",
-    dv_bedd_s:      "depth",
-    dv_bedd_l:      "workspace units",
-    dv_bedh_s:      "height",
-    dv_bedh_l:      ["max build height","in workspace units"],
-    dv_spmx_s:      "max spindle",
-    dv_spmx_l:      ["max spindle rpm speed","0 to disable"],
-    dv_xtab_s:      "absolute positioning",
-    dv_xtab_l:      "extrusion moves absolute",
-    dv_orgc_s:      "origin center",
-    dv_orgc_l:      "bed origin center",
-    // dv_orgt_s:      "origin top",
-    // dv_orgt_l:      "part z origin top",
-    dv_bedc_s:      "circular bed",
-    dv_bedc_l:      "device bed is circular",
-    dv_belt_s:      "belt bed",
-    dv_belt_l:      "continuous printing bed",
-    dv_retr_s:      "firmware retract",
-    dv_retr_l:      ["device fimware supports G10/G11"],
-    dv_fanp_s:      "fan power",
-    dv_fanp_l:      "set cooling fan power",
-    dv_prog_s:      "progress",
-    dv_prog_l:      "output on each % progress",
-    dv_layr_s:      "layer",
+    dv_fila_l:      "średnica w milimetrach",
+    dv_nozl_s:      "dysza",
+    dv_nozl_l:      "średnica w milimetrach",
+    dv_bedw_s:      "szerokość",
+    dv_bedw_l:      "pole robocze w jednostkach",
+    dv_bedd_s:      "głębokość",
+    dv_bedd_l:      "pole robocze w jednostkach",
+    dv_bedh_s:      "wysokość",
+    dv_bedh_l:      ["maksymalna wysokość budowania","w jednostkach pola roboczego"],
+    dv_spmx_s:      "maksymalna prędkość wrzeciona",
+    dv_spmx_l:      ["maksymalna prędkość wrzeciona w obrotach na minutę","0 wyłączone"],
+    dv_xtab_s:      "ustawienie pozycji absolutnie",
+    dv_xtab_l:      "absolutna wartość wypchnięcia",
+    dv_orgc_s:      "środek odniesienia",
+    dv_orgc_l:      "środek odniesienia na platformie",
+    // dv_orgt_s:      "odniesienie u góry",
+    // dv_orgt_l:      "oś z odniesienie u góry",
+    dv_bedc_s:      "okrądła platforma drukowania",
+    dv_bedc_l:      "platforma druku jest okrągła",
+    dv_belt_s:      "pas na platformie",
+    dv_belt_l:      "kontynuacja drukowania platformy",
+    dv_retr_s:      "domyślne cofnięcie (retrakcja)",
+    dv_retr_l:      ["firmware urządzenia wspiera kody G10/G11"],
+    dv_fanp_s:      "zasilanie wiatraczków",
+    dv_fanp_l:      "ustawienia zasilania wiatraczków",
+    dv_prog_s:      "postęp",
+    dv_prog_l:      "wynik w czasie każdego % postępu",
+    dv_layr_s:      "warstwa",
     dv_layr_l:      ["output at each","layer change"],
     dv_tksp_s:      "token spacer",
     dv_tksp_l:      ["add a space between","gcode axis parameters","G0X0Y0X0","vs","G0 X0 Y0 Z0"],
     dv_strc_s:      "strip comments",
     dv_strc_l:      ["strip gcode comments","comments begin with ;"],
-    dv_fext_s:      "file extension",
-    dv_fext_l:      "file name extension",
+    dv_fext_s:      "rozszerzenie pliku",
+    dv_fext_l:      "rozszerzenie pliku",
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",
-    dv_tool_s:      "tool change",
-    dv_tool_l:      "tool change script",
-    dv_sspd_s:      "spindle speed",
-    dv_sspd_l:      "set spindle speed",
-    dv_paus_s:      "pause",
-    dv_paus_l:      "gcode pause script",
-    dv_head_s:      "header",
-    dv_head_l:      "gcode header script",
-    dv_foot_s:      "footer",
-    dv_foot_l:      "gcode footer script",
-    dv_lzon_s:      "laser on",
+    dv_tool_s:      "zmiana narzędzia",
+    dv_tool_l:      "skrypt zmiany narzędzia",
+    dv_sspd_s:      "prędkość wrzeciona",
+    dv_sspd_l:      "ustaw prędkość wrzeciona",
+    dv_paus_s:      "pauza",
+    dv_paus_l:      "gkod skryptu pauzy",
+    dv_head_s:      "nagłówek (początek)",
+    dv_head_l:      "skrypt gkod nagłówka",
+    dv_foot_s:      "stopka (zakończenie)",
+    dv_foot_l:      "skrypt gkod stopki",
+    dv_lzon_s:      "laser włączony",
     dv_lzon_l:      "gcode laser on script",
-    dv_lzof_s:      "laser off",
+    dv_lzof_s:      "laser wyłączony",
     dv_lzof_l:      "gcode laser off script",
-    dv_exts_s:      "select",
+    dv_exts_s:      "zaznacz",
     dv_exts_l:      "gcode run to enable this extruder",
-    dv_dext_s:      "deselect",
+    dv_dext_s:      "odznacz",
     dv_dext_l:      "gcode run before enabling another extruder",
     dv_extd_s:      "deselect",
     dv_extd_l:      "gcode to deselect this extruder",
@@ -146,24 +145,24 @@ kiri.lang['en-us'] = {
     dv_exoy_l:      "nozzle offset y",
 
     // MODE
-    mo_menu:        "mode",
-    mo_fdmp:        "FDM Print",
-    mo_slap:        "SLA Print",
-    mo_lazr:        "Laser Cut",
-    mo_cncm:        "CNC Mill",
+    mo_menu:        "tryb",
+    mo_fdmp:        "FDM Druk przyrostowy",
+    mo_slap:        "SLA Druk przyrostowy",
+    mo_lazr:        "Ciecie laserem",
+    mo_cncm:        "Frezowanie CNC",
 
     // SETUP
-    su_menu:        "setup",
-    su_devi:        "Devices",
-    su_tool:        "Tools",
-    su_locl:        "Local",
-    su_xprt:        "Export",
-    su_help:        "Help",
+    su_menu:        "ustawienia",
+    su_devi:        "Urządzenia",
+    su_tool:        "Narzędzia",
+    su_locl:        "Lokalnie",
+    su_xprt:        "Eksport",
+    su_help:        "Pomoc",
 
     // LOAD
-    fe_menu:        "file",
-    fn_recn:        "Recent",
-    fn_impo:        "Import",
+    fe_menu:        "plik",
+    fn_recn:        "ostatnie pliki",
+    fn_impo:        "Importowanie",
 
     // FUNCTION
     fn_menu:        "action",
@@ -270,15 +269,13 @@ kiri.lang['en-us'] = {
 
     // FDM FILL
     fi_menu:        "infill",
-    fi_type:        "fill type",
+    fi_type:        "type",
     fi_pcnt_s:      "fill fraction",
     fi_pcnt_l:      ["fill density values","0.0 - 1.0"],
     fi_angl_s:      "solid start",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
-    fi_wdth_s:      "solid width",
-    fi_wdth_l:      ["line width for solid fill","as a fraction of nozzle width","values < 1 are more dense","good for surface finishes","0.0 - 1.0"],
-    fi_over_s:      "shell overlap",
-    fi_over_l:      ["overlap with shell and other fill","as fraction of nozzle diameter","0.0 - 2.0"],
+    fi_over_s:      "overlap",
+    fi_over_l:      ["overlap with shell and other fill","as fraction of nozzle diameter","0.0 - 1.0"],
     // fi_rate_s:      "print speed",
     fi_rate_l:      ["extrusion speed for infill","set to 0 to use default","output print speeds"],
 
@@ -587,8 +584,6 @@ kiri.lang['en-us'] = {
     ag_menu:        "gcode",
     ag_nozl_s:      "nozzle",
     ag_nozl_l:      "select output nozzle or head",
-    ag_peel_s:      "peel guard",
-    ag_peel_l:      ["starting at this belt z positoin","periodically roll the print off and","back on to the belt to unstick it","and prevent rolling deflection"],
     ag_paws_s:      "pause layers",
     ag_paws_l:      ["comma-separated list of layers","to inject pause commands before"],
     ag_loop_s:      "loop layers",
@@ -643,8 +638,8 @@ kiri.lang['en-us'] = {
     sl_slen_l:      "enable supports",
 
     sa_outp_m:      "output",
-    sa_opzo_s:      "z offset",
+    sa_opzo_s:      "przesunięcie osi Z",
     sa_opzo_l:      ["z layer offset","almost always 0.0","0.0-1.0 in millimeters"],
-    sa_opaa_s:      "anti alias",
-    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"]
+    sa_opaa_s:      "antyaliasing",
+    sa_opaa_l:      ["włączenie tej opcji","tworzy większe pliki","ale pokazuje przejścia tonalne"]
 };

@@ -21,9 +21,13 @@
             shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity: 1 },
             infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
-            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 }
+            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 },
+            gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity: 1 }
         },
-        PROTO = Object.clone(COLOR);
+        PROTO = Object.clone(COLOR),
+        bwcomp = (1 / Math.cos(Math.PI/4)),
+        getRangeParameters = FDM.getRangeParameters,
+        debug = false;
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -57,14 +61,16 @@
     FDM.slice = function(settings, widget, onupdate, ondone) {
         FDM.fixExtruders(settings);
         let render = settings.render !== false,
+            ctrl = settings.controller,
             spro = settings.process,
             sdev = settings.device,
             isBelt = sdev.bedBelt,
+            isSynth = widget.track.synth,
             update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
-            vaseMode = spro.sliceFillType === 'vase',
-            doSolidLayers = solidLayers && !vaseMode,
+            vaseMode = spro.sliceFillType === 'vase' && !isSynth,
+            doSolidLayers = solidLayers && !vaseMode && !isSynth,
             metadata = settings.widget[widget.id] || {},
             extruder = metadata.extruder || 0,
             sliceHeight = spro.sliceHeight,
@@ -77,10 +83,13 @@
             fillSpacing = lineWidth,
             fillOffset = lineWidth * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
-            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null;
+            supportDensity = spro.sliceSupportDensity,
+            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null,
+            beltfact = Math.cos(Math.PI/4),
+            invbfact = 1 / beltfact;
 
-        isFlat = settings.controller.lineType === "flat";
-        isThin = !isFlat && settings.controller.lineType === "line";
+        isFlat = ctrl.lineType === "flat";
+        isThin = !isFlat && ctrl.lineType === "line";
         offset = lineWidth / 2;
 
         if (isFlat) {
@@ -145,6 +154,7 @@
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: firstSliceHeight,
+            union: ctrl.healMesh,
             // debug: true,
             // xray: 3,
             // view: view
@@ -155,9 +165,9 @@
         }
 
         function onSliceDone(slices) {
-            // slices = slices.filter(slice => slice.tops.length);
             // remove all empty slices above part but leave below
             // for multi-part (multi-extruder) setups where the void is ok
+            // also reverse because slicing occurs bottom-up
             let found = false;
             slices = slices.reverse().filter(slice => {
                 if (slice.tops.length) {
@@ -171,6 +181,61 @@
 
             if (!slices) {
                 return;
+            }
+
+            // for synth support widgets, merge tops
+            if (isSynth) {
+                for (let slice of slices) {
+                    // union top support polys
+                    let tops = slice.topPolys();
+                    let union = POLY.union(tops, null, true);
+                    if (union.length < tops.length) {
+                        slice.tops = [];
+                        for (let u of union) {
+                            slice.addTop(u);
+                        }
+                    }
+                    let gap = sliceHeight * (isBelt ? 0 : spro.sliceSupportGap);
+                    // clip tops to other widgets in group
+                    tops = slice.topPolys();
+                    for (let peer of widget.group) {
+                        // skip self
+                        if (peer === widget) {
+                            continue;
+                        }
+                        for (let pslice of peer.slices) {
+                            if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.1) {
+                                continue;
+                            }
+                            // offset pslice tops by spro.sliceSupportOffset
+                            if (!pslice.synth_off) {
+                                pslice.synth_off = POLY.offset(pslice.topPolys(), spro.sliceSupportOffset);
+                            }
+                            let ptops = pslice.synth_off;
+                            let ntops = [];
+                            POLY.subtract(tops, ptops, ntops, null, slice.z, 0);
+                            tops = ntops;
+                        }
+                        // trim to group's shadow if not in belt mode
+                        if (!isBelt) {
+                            let group = widget.group[0];
+                            if (!group.shadow) {
+                                let gs = [];
+                                for (let w of group) {
+                                    if (w.shadow) {
+                                        gs = POLY.union([w.shadow,...gs],null,0.1);
+                                    }
+                                }
+                                group.shadow = gs;
+                            }
+                            tops = POLY.setZ(POLY.trimTo(tops, group.shadow), slice.z);
+                        }
+                    }
+                    slice.tops = [];
+                    for (let t of tops) {
+                        slice.addTop(t);
+                    }
+                }
             }
 
             // calculate % complete and call onupdate()
@@ -197,16 +262,15 @@
                 slice.solids = [];
             });
 
-            // fixed supports (generated ahead of time)
-            const fixed = Object.values(settings.widget[widget.id].support || {});
+            // create shadow for clipping supports
             let shadow = null;
-            if (fixed.length || spro.sliceSupportEnable) {
-                // create shadow. TODO test if any supports set
+            if (true || spro.sliceSupportEnable) {
                 let alltops = slices.map(slice => slice.topPolys()).flat();
                 shadow = POLY.union(alltops,null,0.1);
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
                 }
+                widget.shadow = shadow;
                 // slices[0].output()
                 //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
                 //     .addPolys(shadow);
@@ -214,27 +278,99 @@
 
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, slice => {
+                let params = getRangeParameters(settings, slice.index);
+                let shellFrac = (params.sliceShells - (params.sliceShells | 0));
+                let sliceShells = params.sliceShells | 0;
+                if (ctrl.danger && shellFrac) {
+                    let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
+                    let v2 = 1 - v1;
+                    let parts = Math.round(v2/v1) + 1;
+                    let rem = slice.index % parts;
+                    let trg = shellFrac > 0.5 ? 1 : parts - 1;
+                    sliceShells += rem >= trg ? 1 : 0;
+                }
                 let first = slice.index === 0;
-                let solid = (
-                    slice.index < spro.sliceBottomLayers ||
-                    slice.index > slices.length - spro.sliceTopLayers-1 ||
-                    spro.sliceFillSparse > 0.95
-                ) && !vaseMode;
+                let isBottom = slice.index < spro.sliceBottomLayers;
+                let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
+                let isDense = params.sliceFillSparse > 0.98;
+                let solid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
+                let solidWidth = params.sliceFillWidth || 1;
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let offset = shellOffset * spaceMult;
                 let fillOff = fillOffset * spaceMult;
-                doShells(slice, spro.sliceShells, offset, fillOff, {
+                let count = isSynth ? 1 : sliceShells;
+                doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
-                    thin: spro.detectThinWalls,
-                    belt0: isBelt && first,
-                    widget: widget
+                    thin: spro.detectThinWalls && !isSynth,
+                    widget: widget,
+                    danger: ctrl.danger
                 });
                 if (solid) {
-                    let fillSpace = fillSpacing * spaceMult;
+                    let fillSpace = fillSpacing * spaceMult * solidWidth;
                     doSolidLayerFill(slice, fillSpace, sliceFillAngle);
                 }
                 sliceFillAngle += 90.0;
             }, "offsets");
+
+            // add lead in when specified in belt mode
+            if (!isSynth && isBelt) {
+                let wb = widget.bounds;
+                // find adjusted zero point from slices
+                let smin = Infinity;
+                for (let slice of slices) {
+                    let miny = Infinity;
+                    for (let poly of slice.topPolys()) {
+                        let y = poly.bounds.maxy;
+                        let z = slice.z;
+                        let by = -y + z;
+                        if (by < miny) miny = by;
+                        if (by < smin) smin = by;
+                    }
+                    slice.belt = { miny, touch: false };
+                }
+                // mark slices with tops touching belt
+                // also find max width of first 5 layers
+                let start;
+                let minx = Infinity, maxx = -Infinity;
+                for (let slice of slices) {
+                    if (slice.index < 5) {
+                        for (let poly of slice.topPolys()) {
+                            minx = Math.min(minx, poly.bounds.minx);
+                            maxx = Math.max(maxx, poly.bounds.maxx);
+                        }
+                    }
+                    if (Math.abs(slice.belt.miny - smin) < 0.001) {
+                        slice.belt.touch = true;
+                        if (!start) start = slice;
+                    }
+                }
+                // console.log({smin: smin.round(4)});
+                let offset = spro.firstLayerBeltLead * beltfact;
+                // ensure we start against a layer with shells
+                while (start.up && start.topShells().length === 0) {
+                    start = start.up;
+                }
+                while (offset && start && offset >= sliceHeight) {
+                    let addto = start.down;
+                    if (!addto) {
+                        addto = newSlice(start.z - sliceHeight);
+                        addto.belt = { };
+                        addto.height = start.height;
+                        addto.up = start;
+                        start.down = addto;
+                        slices.splice(0,0,addto);
+                    }
+                    addto.index = -1;
+                    addto.belt.anchor = true;
+                    let z = addto.z;
+                    let y = z - smin - (nozzleSize / 2);
+                    // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
+                    let splat = BASE.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
+                    addto.addTop(splat).fill_sparse = [ splat ];
+                    start = addto;
+                    offset -= sliceHeight;
+                }
+            }
 
             // calculations only relevant when solid layers are used
             if (doSolidLayers) {
@@ -246,48 +382,68 @@
                     projectBridges(slice, solidLayers);
                 }, "solids");
                 forSlices(0.35, 0.5, slice => {
+                    let params = getRangeParameters(settings, slice.index);
                     let first = slice.index === 0;
-                    let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
-                    let fillSpace = fillSpacing * spaceMult;
+                    let solidWidth = params.sliceFillWidth || 1;
+                    let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
+                    let fillSpace = fillSpacing * spaceMult * solidWidth;
                     doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid);
                     sliceFillAngle += 90.0;
                 }, "solids");
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
-            if (!vaseMode && spro.sliceFillSparse > 0.0) {
+            if (!isSynth) {
+                let lastType;
                 forSlices(0.5, 0.7, slice => {
+                    let params = getRangeParameters(settings, slice.index);
+                    if (vaseMode || !params.sliceFillSparse) {
+                        return;
+                    }
+                    let newType = params.sliceFillType;
                     doSparseLayerFill(slice, {
                         settings: settings,
                         process: spro,
                         device: sdev,
                         lineWidth: lineWidth,
                         spacing: fillOffset,
-                        density: spro.sliceFillSparse,
+                        density: params.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
-                        type: spro.sliceFillType
+                        type: newType,
+                        cache: params._range !== true && lastType === newType
                     });
+                    lastType = newType;
+                }, "infill");
+            } else if (isSynth) {
+                forSlices(0.5, 0.7, slice => {
+                    let params = getRangeParameters(settings, slice.index);
+                    let density = params.sliceSupportDensity;
+                    if (density)
+                    for (let top of slice.tops) {
+                        let offset = [];
+                        POLY.expand(top.shells, -nozzleSize/4, slice.z, offset);
+                        fillSupportPolys(offset, lineWidth, density, slice.z);
+                        top.fill_lines = offset.map(o => o.fill).flat().filter(v => v);
+                    }
                 }, "infill");
             }
 
-            // calculations only relevant when supports are enabled
-            if (!isBelt) {
-                let auto = spro.sliceSupportEnable && spro.sliceSupportDensity > 0.0,
-                    minArea = spro.sliceSupportArea;
-
+            // auto support generation
+            if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
                 forSlices(0.7, 0.8, slice => {
-                    doSupport(slice, spro, auto, fixed, shadow);
+                    doSupport(slice, spro, shadow);
                 }, "support");
                 forSlices(0.8, 0.9, slice => {
-                    doSupportFill(slice, lineWidth, spro.sliceSupportDensity, minArea);
+                    doSupportFill(slice, lineWidth, supportDensity, spro.sliceSupportArea);
                 }, "support");
             }
 
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    doRender(slice);
+                    let params = getRangeParameters(settings, slice.index);
+                    doRender(slice, isSynth, params);
                 }, "render");
             }
 
@@ -310,32 +466,35 @@
         return Math.max(min,Math.min(max,v));
     }
 
-    function doRender(slice) {
+    function doRender(slice, isSynth, params) {
         const output = slice.output();
         const height = slice.height / 2;
+        const solidWidth = params.sliceFillWidth || 1;
 
         slice.tops.forEach(top => {
-            if (isThin) {
-                output
-                    .setLayer('slice', { line: 0x000066, check: 0x000066 })
-                    .addPolys(top.poly);
-            }
+            if (isThin) output
+                .setLayer('slice', { line: 0x000066, check: 0x000066 })
+                .addPolys(top.poly);
 
-            output
-                .setLayer("shells", COLOR.shell)
+            if (top.shells) output
+                .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
                 .addPolys(top.shells, vopt({ offset, height }));
 
-            // if (isThin && debug) {
-            //     slice.output()
-            //         .setLayer('offset', { face: 0, line: 0x888888 })
-            //         .addPolys(top.fill_off)
-            //         .setLayer('last', { face: 0, line: 0x008888 })
-            //         .addPolys(top.last);
-            // }
+            if (top.gaps) output
+                .setLayer("gaps", COLOR.gaps)
+                .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-            if (top.fill_lines) output
-                .setLayer("fill", COLOR.fill)
-                .addLines(top.fill_lines, vopt({ offset, height }));
+            if (isThin && debug) {
+                slice.output()
+                    .setLayer('offset', { face: 0, line: 0x888888 })
+                    .addPolys(top.fill_off)
+                    .setLayer('last', { face: 0, line: 0x008888 })
+                    .addPolys(top.last);
+            }
+
+            if (top.fill_lines && top.fill_lines.length) output
+                .setLayer("fill", isSynth ? COLOR.support : COLOR.fill)
+                .addLines(top.fill_lines, vopt({ offset: offset * solidWidth, height }));
 
             if (top.fill_sparse) output
                 .setLayer("infill", COLOR.infill)
@@ -344,14 +503,21 @@
             if (top.thin_fill) output
                 .setLayer("fill", COLOR.fill)
                 .addLines(top.thin_fill, vopt({ offset, height }));
-
-            // emit solid areas
-            // if (isThin && debug) {
-            //     output
-            //         .setLayer("solids", { face: 0x00dd00 })
-            //         .addAreas(slice.solids);
-            // }
         });
+
+        if (isThin && debug) {
+            if (slice.solids) output
+                .setLayer("solids", { face: 0x00dd00 })
+                .addAreas(slice.solids);
+
+            if (slice.bridges) output
+                .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
+                .addAreas(slice.bridges);
+
+            if (slice.flats) output
+                .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
+                .addAreas(slice.flats);
+        }
 
         if (slice.supports) output
             .setLayer("support", COLOR.support)
@@ -362,16 +528,6 @@
                 .setLayer("support", COLOR.support)
                 .addLines(poly.fill, vopt({ offset, height }));
         });
-
-        // if (isThin && debug) {
-        //     output
-        //         .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
-        //         .addAreas(top.bridges);
-        //
-        //     output
-        //         .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
-        //         .addAreas(top.flats);
-        // }
 
         // console.log(slice.index, slice.render.stats);
     }
@@ -433,7 +589,22 @@
                         let dist = p.first().distTo2D(p.last());
                         if (dist < 1) p.open = false;
                     } });
-                    if (opt.thin) {
+                    if (opt.danger && opt.thin) {
+                        top.thin_fill = [];
+                        top.fill_sparse = [];
+                        let layers = POLY.inset(top_poly, offsetN, count, z);
+                        last = layers.last().mid;
+                        top.shells = layers.map(r => r.mid).flat();
+                        top.gaps = layers.map(r => r.gap).flat();
+                        let off = offsetN;
+                        let min = off * 0.75;
+                        let max = off * 4;
+                        for (let poly of layers.map(r => r.gap).flat()) {
+                            let centers = poly.centers(off/2, z, min, max, {lines:false});
+                            top.fill_sparse.appendAll(centers);
+                            // top.fill_lines.appendAll(centers);
+                        }
+                    } else if (opt.thin) {
                         top.thin_fill = [];
                         let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
                         POLY.offset(top_poly, [-offset1, -offsetN], oso);
@@ -444,6 +615,11 @@
                                 if (p.fill_off) {
                                     p.fill_off.forEach(pi => pi.depth = i);
                                 }
+                                if (p.inner) {
+                                    for (let pi of p.inner) {
+                                        pi.depth = p.depth;
+                                    }
+                                }
                                 top.shells.push(p);
                             });
                             last = polys;
@@ -453,12 +629,9 @@
                         oso.gaps.forEach((polys, i) => {
                             let off = (i == 0 ? offset1 : offsetN);
                             polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
-                            // polys.forEach(p => { slice.solids.trimmed.push(p); });
                             top.thin_fill.appendAll(cullIntersections(
                                 fillArea(polys, 45, off/2, [], 0.01, off*2),
                                 fillArea(polys, 135, off/2, [], 0.01, off*2),
-                                // fillArea(polys, 90, off, [], 0.05, off*4),
-                                // fillArea(polys, 180, off, [], 0.05, off*4),
                             ));
                             gaps = polys;
                         });
@@ -481,6 +654,11 @@
                                         // use negative offset for inners
                                         pi.depth = -(count - countNow);
                                     });
+                                    if (p.inner) {
+                                        for (let pi of p.inner) {
+                                            pi.depth = p.depth;
+                                        }
+                                    }
                                 });
                             });
                     }
@@ -507,23 +685,6 @@
             top.last = last;
 
             shellout += top.shells.length;
-
-            // add anchor extrusion if missing on the first belt layer
-            // todo: fix. disabled because throws off layer min y calculations in some cases
-            if (false && opt.belt0 && top.shells.length === 0 && slice.up && slice.up.tops.length) {
-                for (let up of slice.up.tops) {
-                    let bounds = up.poly.bounds,
-                        midy = (bounds.miny + bounds.maxy) / 2;
-                    if (top.poly.isInside(up.poly, 1)) {
-                        slice.widget.belt.ymid = midy;
-                        slice.widget.belt.zmid = slice.z;
-                        top.shells.push(BASE.newPolygon()
-                            .setOpen()
-                            .add(bounds.minx,midy,slice.z)
-                            .add(bounds.maxx,midy,slice.z));
-                    }
-                }
-            }
         });
     };
 
@@ -559,6 +720,7 @@
             density = options.density,  // density of infill 0.0 - 1.0
             bounds = options.bounds,    // bounding box of widget
             height = options.height,    // z layer height
+            cache = !(options.cache === false),
             type = options.type || 'hex';
 
         if (slice.tops.length === 0 || density === 0.0 || slice.isSolidLayer) {
@@ -622,7 +784,7 @@
 
         // prepare top infill structure
         tops.forEach(function(top) {
-            top.fill_sparse = [];
+            top.fill_sparse = top.fill_sparse || [];
             polys.appendAll(top.fill_off);
             polys.appendAll(top.solids);
         });
@@ -630,7 +792,7 @@
         // update fill fingerprint for this slice
         slice._fill_finger = POLY.fingerprint(polys);
 
-        let skippable = FILLFIXED[type] ? true : false;
+        let skippable = cache && FILLFIXED[type] ? true : false;
         let miss = false;
         // if the layer below has the same fingerprint,
         // we may be able to clone the infill instead of regenerating it
@@ -779,25 +941,27 @@
 
         let minarea = minArea || 1,
             tops = slice.tops,
-            solids = slice.solids,
-            unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
+            solids = slice.solids;
+
+        if (!(tops && solids)) {
+            return;
+        }
+
+        let unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
             isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;
         if (unioned.length === 0) return false;
 
-        let masks,
-            trims = [],
+        let trims = [],
             inner = isSLA ? slice.topPolys() : slice.topFillOff();
 
         // trim each solid to the inner bounds
         unioned.forEach(function(p) {
             p.setZ(slice.z);
             inner.forEach(function(i) {
-                if (p.del) return;
-                masks = p.mask(i);
+                let masks = p.mask(i);
                 if (masks && masks.length > 0) {
-                    p.del = true;
                     trims.appendAll(masks);
                 }
             });
@@ -832,6 +996,10 @@
 
         // create empty filled line array for each top
         tops.forEach(function(top) {
+            // synth belt anchor tops don't want fill
+            if (!top.fill_lines) {
+                return;
+            }
             const tofill = [];
             const angfill = [];
             const newfill = [];
@@ -857,7 +1025,6 @@
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }
-
             top.fill_lines.appendAll(newfill);
         });
 
@@ -865,12 +1032,10 @@
     };
 
     /**
-     * calculate external overhangs requiring support.
-     * this is done bottom-up except for fixed supports (manual)
+     * calculate external overhangs requiring support
      */
-    function doSupport(slice, proc, auto, fixed, shadow) {
-        let minOffset = proc.sliceSupportOffset,
-            maxBridge = proc.sliceSupportSpan || 5,
+    function doSupport(slice, proc, shadow) {
+        let maxBridge = proc.sliceSupportSpan || 5,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,
             offset = proc.sliceSupportOffset,
@@ -900,7 +1065,7 @@
             let supported = point.isInPolygonOnly(down_tops);
             if (!supported) down_traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) {
-                    if (point.distToLine(p1, p2) <= minOffset) {
+                    if (point.distToLine(p1, p2) <= offset) {
                         return supported = true;
                     }
                 });
@@ -927,7 +1092,7 @@
         let supports = [];
 
         // generate support polys from unsupported points
-        if (auto && slice.down) (function() {
+        if (slice.down) (function() {
             // check trace line support needs
             traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) { checkLineSupport(p1, p2, true) });
@@ -952,19 +1117,8 @@
             });
         })();
 
-        if (supports.length === 0 && !(fixed && fixed.length)) {
+        if (supports.length === 0) {
             return;
-        }
-
-        if (fixed && fixed.length) {
-            for (let sup of fixed) {
-                let zmin = sup.z - sup.dh / 2;
-                let zmax = sup.z + sup.dh / 2;
-                if (slice.z >= zmin && slice.z <= zmax) {
-                    let center = BASE.newPoint(sup.x, sup.y, slice.z);
-                    supports.push(BASE.newPolygon().centerRectangle(center, sup.dw, sup.dw));
-                }
-            }
         }
 
         // then union supports
@@ -984,7 +1138,7 @@
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
-                if (trim.area() < 0.1) return;
+                // if (trim.area() < 0.1) return;
                 culled.push(trim.setZ(down.z));
             });
 
@@ -1031,23 +1185,29 @@
             supports = nsC;
         }
 
-        if (supports) supports.forEach(function (poly) {
+        if (supports) {
+            fillSupportPolys(supports, linewidth, density, slice.z);
+        }
+
+        // re-assign new supports back to slice
+        slice.supports = supports;
+    };
+
+    function fillSupportPolys(polys, linewidth, density, z) {
+        // calculate fill density
+        let spacing = linewidth * (1 / density);
+        polys.forEach(function (poly) {
             // angle based on width/height ratio
             let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
-            // calculate fill density
-            let spacing = linewidth * (1 / density);
             // inset support poly for fill lines 33% of nozzle width
-            let inset = POLY.offset([poly], -linewidth/3, {flat: true, z: slice.z});
+            let inset = POLY.offset([poly], -linewidth/3, {flat: true, z});
             // do the fill
             if (inset && inset.length > 0) {
                 fillArea(inset, angle, spacing, poly.fill = []);
             }
             return true;
         });
-
-        // re-assign new supports back to slice
-        slice.supports = supports;
-    };
+    }
 
     /**
      *
@@ -1126,14 +1286,16 @@
     }
 
     FDM.supports = function(settings, widget) {
+        let isBelt = settings.device.bedBelt;
         let process = settings.process;
         let size = process.sliceSupportSize;
-        let min = process.sliceSupportArea || 0.1;
-        let buf = new THREE.BufferGeometry();
-        buf.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        let min = process.sliceSupportArea || 1;
+        let geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
-        let geo = new THREE.Geometry().fromBufferGeometry(buf);
-        let angle = (Math.PI / 180) * settings.process.sliceSupportAngle;
+        let rad = (Math.PI / 180);
+        let deg = (180 / Math.PI);
+        let angle = rad * settings.process.sliceSupportAngle;
         let thresh = -Math.sin(angle);
         let dir = new THREE.Vector3(0,0,-1)
         let add = [];
@@ -1167,6 +1329,13 @@
             if (point.added) {
                 return;
             }
+            for (let added of add) {
+                let p2 = new THREE.Vector2(point.x, point.y);
+                let pm = new THREE.Vector2(added.mid.x, added.mid.y);
+                if (p2.distanceTo(pm) < 1) {
+                    return;
+                }
+            }
             let ray = new THREE.Raycaster(point, dir);
             let int = ray.intersectObjects([ mesh, platform ], false);
             if (int && int.length && int[0].distance > 0.01) {
@@ -1175,20 +1344,33 @@
                 point.added = true;
             }
         }
-        geo.faces.filter(f => f.normal.z < thresh).forEach(face => {
-            let a = geo.vertices[face.a];
-            let b = geo.vertices[face.b];
-            let c = geo.vertices[face.c];
+        let filter = isBelt ? (norm) => {
+            return norm.z < thresh && norm.y < -0.001;
+        } : (norm) => {
+            return norm.z < thresh;
+        };
+        let { position } = geo.attributes;
+        let { itemSize, count, array } = position;
+        for (let i = 0; i<count; i += 3) {
+            let ip = i * itemSize;
+            let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let norm = THREE.computeFaceNormal(a,b,c);
+            // limit to downward faces
+            if (!filter(norm)) {
+                continue;
+            }
             // skip tiny faces
+            let area = BASE.newPolygon().addPoints([a,b,c]).area();
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
-                skip++;
-                return;
+                continue;
             }
             tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
             tl(a,b);
             tl(b,c);
             tl(a,c);
-        });
+        }
         widget.supports = add;
         return add.length > 0;
     };

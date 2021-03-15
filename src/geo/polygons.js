@@ -30,6 +30,7 @@
         expand,
         expand_lines,
         union,
+        inset,
         nest,
         diff,
         setZ,
@@ -538,6 +539,43 @@
         }
 
         return opts.flat ? opts.outs : polys;
+    }
+
+    /**
+     * progressive insetting that does inset + outset to debur as well
+     * as performing subtractive analysis between initial layer shell (ref)
+     * and last offset (cmp) to produce gap candidates (for thinfill)
+     */
+    function inset(polys, dist, count, z) {
+        let total = count;
+        let layers = [];
+        let ref = polys;
+        let depth = 0;
+        while (count-- > 0 && ref && ref.length) {
+            let off = offset(ref, -dist, {z});
+            let mid = offset(off, dist / 2, {z});
+            let cmp = offset(off, dist, {z});
+            let gap = [];
+            let aref = ref.map(p => p.areaDeep()).reduce((a,p) => a +p);
+            let cref = cmp.length ? cmp.map(p => p.areaDeep()).reduce((a,p) => a + p) : 0;
+            // threshold subtraction to area deltas > 0.1 % to filter out false
+            // positives where inset/outset are identical floating point error
+            if (Math.abs(aref - cref) >  1 - (Math.abs(aref / cref) / 1000)) {
+                subtract(ref, cmp, gap, null, z);
+            }
+            layers.push({idx: total-count, off, mid, gap});
+            // fixup depth cues
+            for (let m of mid) {
+                m.depth = depth++;
+                if (m.inner) {
+                    for (let mi of m.inner) {
+                        mi.depth = m.depth;
+                    }
+                }
+            }
+            ref = off;
+        }
+        return layers;
     }
 
     /**

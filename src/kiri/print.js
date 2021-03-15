@@ -133,32 +133,101 @@
             maxf = 0,
             seq = [],
             autolayer = true,
-            newlayer = false;
+            newlayer = false,
+            arcdivs = Math.PI / 12,
+            hasmoved = false;
 
         const output = scope.output = [ seq ];
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
         const beltfact = Math.cos(Math.PI/4);
 
+        function LOG() {
+            console.log(...[...arguments].map(o => Object.clone(o)));
+        }
+
+        function G2G3(g2, line) {
+            const rec = {};
+
+            line.forEach(function(tok) {
+                rec[tok.charAt(0)] = parseFloat(tok.substring(1));
+            });
+
+            let center = { x:0, y:0, r:0 };
+
+            if (rec.I !== undefined && rec.J !== undefined) {
+                center.x = pos.X + rec.I;
+                center.y = pos.Y + rec.J;
+                //center.r = TODO
+                console.log("G[2,3] IJ not supported");
+            } else if (rec.R !== undefined) {
+                let pd = { x: rec.X - pos.X, y: rec.Y - pos.Y };
+                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2;
+                let pr2;
+                if (Math.abs(dst - rec.R) < 0.001) {
+                    // center point radius
+                    pr2 = { x: (rec.X + pos.X) / 2, y: (rec.Y + pos.Y) / 2};
+                } else {
+                    // triangulate
+                    pr2 = BASE.util.center2pr({
+                        x: pos.X,
+                        y: pos.Y
+                    }, {
+                        x: rec.X,
+                        y: rec.Y
+                    }, rec.R)[g2 ? 1 : 0];
+                }
+                center.x = pr2.x;
+                center.y = pr2.y;
+                center.r = rec.R;
+            } else {
+                console.log({malfomed_arc: line});
+            }
+
+            // line angles
+            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X) + Math.PI;
+            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X) + Math.PI;
+            let ad = BASE.util.thetaDiff(a1, a2, true);
+            let steps = Math.floor(Math.abs(ad) / arcdivs);
+            let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
+            let rot = a1 + step;
+
+            // LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
+            // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
+
+            let pc = { X: pos.X, Y: pos.Y };
+            for (let i=0; i<=steps-2; i++) {
+                let np = {
+                    X: center.x + Math.cos(rot) * center.r,
+                    Y: center.y + Math.sin(rot) * center.r
+                };
+                rot += step;
+                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
+            }
+
+            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
+
+            pos.X = rec.X;
+            pos.Y = rec.Y;
+        }
+
         function G0G1(g0, line) {
             const mov = {};
+            const axes = {};
 
             line.forEach(function(tok) {
                 let axis = tok.charAt(0);
                 if (morph && belt) {
                     axis = beltaxis[axis];
                 }
+                let val = parseFloat(tok.substring(1));
+                axes[axis] = val;
                 if (abs) {
-                    pos[axis] = parseFloat(tok.substring(1));
+                    pos[axis] = val;
                 } else {
-                    mov[axis] = parseFloat(tok.substring(1));
+                    mov[axis] = val;
+                    pos[axis] += val;
                 }
             });
-
-            if (!abs) {
-                for (let [k,v] of Object.entries(mov)) {
-                    pos[k] += v;
-                }
-            }
 
             const point = newPoint(
                 factor * pos.X + off.X + xoff.X,
@@ -172,7 +241,7 @@
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
-            const moving = g0 || (fdm && pos.E <= 0);
+            const moving = g0 || (fdm && (pos.E <= 0 || !(axes.X || axes.Y || axes.Z)));
 
             if (!moving && point.x) bounds.min.x = Math.min(bounds.min.x, point.x);
             if (!moving && point.x) bounds.max.x = Math.max(bounds.max.x, point.x);
@@ -208,6 +277,11 @@
                 seq.height = height = nh;
                 if (fdm) dz = -height / 2;
                 output.push(seq);
+            }
+
+            if (!hasmoved && !moving) {
+                seq.height = seq.Z = pos.Z;
+                hasmoved = true;
             }
 
             // debug extrusion rate
@@ -278,11 +352,24 @@
                         pos[tok.charAt(0)] = parseFloat(tok.substring(1));
                     });
                     break;
+                case 'G10':
+                    seq.last().retract = true;
+                    break;
+                case 'G11':
+                    break;
                 case 'G0':
                     G0G1(true, line);
                     break;
                 case 'G1':
                     G0G1(false, line);
+                    break;
+                case 'G2':
+                    // turn arc into a series of points
+                    G2G3(true, line)
+                    break;
+                case 'G3':
+                    // turn arc into a series of points
+                    G2G3(false, line);
                     break;
                 case 'M6':
                     tool = parseInt(line[0].substring(1));
@@ -371,7 +458,6 @@
             first = true,
             close = !options.open,
             last = startPoint,
-            wipeDist = options.wipe || 0,
             coastDist = options.coast || 0,
             tool = options.tool;
 
@@ -385,7 +471,7 @@
                 if (options.onfirst) {
                     options.onfirst(point);
                 }
-                // move from startPoint to point
+                // move to first output point on poly
                 addOutput(output, point, 0, moveSpeed, tool);
                 first = false;
             } else {
@@ -418,19 +504,18 @@
      */
     PRO.slicePrintPath = function(slice, startPoint, offset, output, opt = {}) {
         // console.log({slicePrintPath: slice.index, ext:slice.extruder});
-
         let i,
             preout = [],
             scope = this,
             settings = this.settings,
             device = settings.device,
-            process = settings.process,
+            process = opt.params || settings.process,
             extruder = slice.extruder || 0,
             nozzleSize = device.extruders[extruder].extNozzle,
             firstLayer = opt.first || false,
-            minSeek = nozzleSize * (opt.minSeek || 1.5),
             thinWall = nozzleSize * (opt.thinWall || 1.75),
             retractDist = opt.retractOver || 2,
+            solidWidth = process.sliceFillWidth || 1,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
@@ -442,14 +527,17 @@
             firstPrintMult = process.firstLayerPrintMult,
             printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
             fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
+            infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
             moveSpeed = process.outputSeekrate,
             origin = startPoint.add(offset),
             zhop = process.zHopDistance || 0,
             antiBacklash = process.antiBacklash,
-            doSupport = opt.support,
+            wipeDist = process.outputRetractWipe || 0,
             isBelt = device.bedBelt,
             startClone = startPoint.clone(),
-            z = slice.z;
+            seedPoint = opt.seedPoint || startPoint,
+            z = slice.z,
+            lastPoly;
 
         // apply first layer extrusion multipliers
         if (firstLayer) {
@@ -459,28 +547,202 @@
         }
 
         function retract() {
-            if (preout.length) preout.last().retract = true;
+            let array = preout.length ? preout : output;
+            if (array.length) {
+                let last = array.last();
+                last.retract = true;
+                if (wipeDist && lastPoly && last.point) {
+                    let endpoint = last.point.followTo(lastPoly.center(true), wipeDist);
+                    if (endpoint.inPolygon(lastPoly)) {
+                        addOutput(array, endpoint);
+                    }
+                }
+            } else if (opt.pretract) {
+                opt.pretract(wipeDist);
+            } else {
+                console.log('unable to retract. no preout or output');
+            }
         }
 
         function intersectsTop(p1, p2) {
+            if (opt.danger) {
+                return retractRequired(p1, p2);
+            }
             let int = false;
             POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
-                        int = true;
-                        return int;
+                        return int = true;
                     }
                 });
             });
             return int;
         }
 
-        function outputTraces(poly, extrude) {
+        // returns true if no path around and retract required
+        // returns false if routed around or no retract
+        function retractRequired(p1, p2) {
+            const dbug = false;
+
+            let ints = [];
+            let tops = POLY.flatten(slice.topPolys().clone(true));
+            for (let poly of tops) {
+                poly.forEachSegment(function(s1, s2) {
+                    let ip = UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT);
+                    if (ip) {
+                        ints.push({ip, poly});
+                    }
+                });
+            }
+
+            // no intersections
+            if (ints.length === 0) {
+                return false;
+            }
+
+            // odd # of intersections ?!? do retraction
+            if (ints.length && ints.length % 2 !== 0) {
+                if (dbug === slice.index) console.log(slice.index, {odd_intersects: ints});
+                return true;
+            }
+
+            // sort by distance
+            ints.sort((a, b) => {
+                return a.ip.dist - b.ip.dist;
+            });
+
+            let valid = ints.length;
+
+            // check pairs. eliminate too close points.
+            // pairs must intersect same poly or retract.
+            for (let i=0; i<ints.length; i += 2) {
+                let i1 = ints[0];
+                let i2 = ints[1];
+                // different poly. force retract
+                if (i1.poly !== i2.poly) {
+                    if (dbug === slice.index) console.log(slice.index, {int_diff_poly: ints, i});
+                    return true;
+                }
+                if (i1.ip.distTo2D(i2.ip) < retractDist) {
+                    if (dbug === slice.index) console.log(slice.index, {int_dist_too_small: i1.ip.distTo2D(i2.ip), retractDist});
+                    valid -= 2;
+                }
+            }
+
+            if (valid > 2) {
+                if (dbug === slice.index) console.log(slice.index, {complex_route: valid});
+                return true;
+            }
+
+            if (valid) {
+                // can route around intersected top polys
+                for (let i=0; i<ints.length; i += 2) {
+                    let i1 = ints[0];
+                    let i2 = ints[1];
+
+                    // output first point
+                    addOutput(preout, i1.ip, 0, moveSpeed, extruder);
+
+                    // create two loops around poly
+                    // find shortest of two paths and emit poly points
+                    let poly = i1.poly;
+                    let isCW = poly.isClockwise();
+                    let points = poly.points;
+
+                    let p1p = isCW ? points : points.slice().reverse(); // CW
+                    let p2p = isCW ? points.slice().reverse() : points; // CCW
+
+                    let r1s = p1p.indexOf(isCW ? i1.ip.p2 : i1.ip.p1);
+                    let r1e = p1p.indexOf(isCW ? i2.ip.p1 : i2.ip.p2);
+
+                    let r1 = r1s === r1e ?
+                        [ p1p[r1s] ] : r1s < r1e ?
+                        [ ...p1p.slice(r1s,r1e+1) ] :
+                        [ ...p1p.slice(r1s), ...p1p.slice(0,r1e+1) ];
+
+                    let r1d = 0;
+                    for (let i=1; i<r1.length; i++) {
+                        r1d += r1[i-1].distTo2D(r1[i]);
+                    }
+
+                    let r2s = p2p.indexOf(isCW ? i1.ip.p1 : i1.ip.p2);
+                    let r2e = p2p.indexOf(isCW ? i2.ip.p2 : i2.ip.p1);
+
+                    let r2 = r2s === r2e ?
+                        [ p2p[r2s] ] : r2s < r2e ?
+                        [ ...p2p.slice(r2s,r2e+1) ] :
+                        [ ...p2p.slice(r2s), ...p2p.slice(0,r2e+1) ];
+
+                    let r2d = 0;
+                    for (let i=1; i<r2.length; i++) {
+                        r2d += r2[i-1].distTo2D(r2[i]);
+                    }
+
+                    let route = r1d <= r2d ? r1 : r2;
+
+                    if (dbug === slice.index) console.log(slice.index, {
+                        ints: ints.map(i=>i.ip.dist),
+                        i1, i2, same: i1.poly === i2.poly,
+                        route,
+                        r1, r1d, r1s, r1e,
+                        r2, r2d, r2s, r2e,
+                        isCW});
+
+                    for (let p of route) {
+                        addOutput(preout, p, 0, moveSpeed, extruder);
+                    }
+
+                    // output last point
+                    addOutput(preout, i2.ip, 0, moveSpeed, extruder);
+                }
+            }
+
+            return false;
+        }
+
+        function outputTraces(poly, opt = {}) {
             if (!poly) return;
             if (Array.isArray(poly)) {
-                outputOrderClosest(poly, function(next) {
-                    outputTraces(next, extrude);
-                }, null);
+                if (opt.sort) {
+                    let polys = poly.slice().sort(function(a,b) {
+                        return (a.perimeter() - b.perimeter()) * opt.sort;
+                    });
+                    let debug = polys.length > 3;
+                    let last;
+                    while (polys.length) {
+                        let next;
+                        for (let p of polys) {
+                            if (!last) {
+                                next = p;
+                                break;
+                            }
+                            if (opt.sort > 0) {
+                                // in-out
+                                if (last.isInside(p)) {
+                                    next = p;
+                                    break;
+                                }
+                            } else {
+                                // out-in
+                                if (p.isInside(last)) {
+                                    next = p;
+                                    break;
+                                }
+                            }
+                        }
+                        if (next) {
+                            last = next;
+                            polys.remove(next);
+                            outputTraces(next, opt);
+                        } else {
+                            last = null;
+                        }
+                    }
+                } else {
+                    outputOrderClosest(poly, function(next) {
+                        outputTraces(next, opt);
+                    }, null);
+                }
             } else {
                 let finishShell = poly.depth === 0 && !firstLayer;
                 startPoint = scope.polyPrintPath(poly, startPoint, preout, {
@@ -489,13 +751,18 @@
                     accel: finishShell,
                     wipe: process.outputWipeDistance || 0,
                     coast: firstLayer ? 0 : coastDist,
-                    extrude: pref(extrude, shellMult),
+                    extrude: pref(opt.extrude, shellMult),
                     onfirst: function(firstPoint) {
-                        if (startPoint.distTo2D(firstPoint) > retractDist) {
-                            retract();
+                        let from = seedPoint || startPoint;
+                        if (from.distTo2D(firstPoint) > retractDist) {
+                            if (intersectsTop(from, firstPoint)) {
+                                retract();
+                            }
                         }
+                        seedPoint = null;
                     }
                 });
+                lastPoly = slice.lastPoly = poly;
             }
         }
 
@@ -530,12 +797,12 @@
                     // let emit = i === 0 ? 0 : extrude;
                     addOutput(preout, p, emit, speed || printSpeed, extruder);
                     lp = p;
-                });
+                }, !poly.open);
                 return lp;
             });
         }
 
-        function outputFills(lines, options) {
+        function outputFills(lines, opt = {}) {
             if (!lines || lines.length === 0) {
                 return;
             }
@@ -544,10 +811,10 @@
                 start = 0,
                 skip = false,
                 lastIndex = -1,
-                opt = options || {},
+                flow = opt.flow || 1,
                 near = opt.near || false,
                 fast = opt.fast || false,
-                fill = opt.fill >= 0 ? opt.fill : fillMult,
+                fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
                 thinDist = near ? thinWall : thinWall;
 
             while (lines && marked < lines.length) {
@@ -684,11 +951,11 @@
          * the special exception that depth is considered into distance
          * so that inner polygons are emitted first.
          *
-         * @param {Array} array of Polygon or Polygon wrappers
-         * @param {Function} fn
-         * @param {Function} fnp convert 'next' object into a Polygon
+         * @param {Array} array of Polygons or Polygon wrappers (tops)
+         * @param {Function} fn call to emit next candidate
+         * @param {Function} fnp convert 'next' object into a Polygon for closeness
          */
-        function outputOrderClosest(array, fn, fnp, newTop) {
+        function outputOrderClosest(array, fn, fnp) {
             if (array.length === 1) {
                 return fn(array[0]);
             }
@@ -708,7 +975,6 @@
                         d: find.distance - (poly.depth * thinWall),
                     });
                 }
-                newTop = false;
                 if (order.length === 0) {
                     return;
                 }
@@ -753,37 +1019,31 @@
                 // and enforce optimal shell order (outer first)
                 if (isBelt && opt.onBelt) {
                     startPoint = startClone;
-                    shellOrder = 1;
+                    shellOrder = -1;
                 }
 
-                // top object
-                let bounds = POLY.flatten(next.shellsAtDepth(0).clone(true));
+                // innermost shells
+                let inner = next.innerShells() || [];
 
                 // output inner polygons
-                if (shellOrder === 1)
-                outputTraces([].appendAll(next.innerShells() || []));
+                if (shellOrder === 1) outputTraces(inner, { sort: shellOrder });
 
-                // sort perimeter polygon by length to go out-to-in or in-to-out
-                (next.shells || []).sort(function(a,b) {
-                    return a.perimeter() > b.perimeter() ? shellOrder : -shellOrder;
-                }).forEach(function(poly, index) {
-                    outputTraces(poly);
-                });
+                outputTraces(next.shells, { sort: shellOrder });
 
                 // output outer polygons
-                if (shellOrder === -1)
-                outputTraces([].appendAll(next.innerShells() || []));
+                if (shellOrder === -1) outputTraces(inner, { sort: shellOrder });
 
                 // output thin fill
                 outputFills(next.thin_fill, {near: true});
 
                 // then output solid and sparse fill
-                outputFills(next.fill_lines);
-                outputSparse(next.fill_sparse, sparseMult);
+                outputFills(next.fill_lines, {flow: solidWidth});
+                outputSparse(next.fill_sparse, sparseMult, infillSpeed);
 
                 lastTop = next;
             }
         }, function(obj) {
+            // for tops
             return obj instanceof Polygon ? obj : obj.poly;
         });
 
@@ -971,15 +1231,15 @@
     function constOp(tok, consts, opch, op) {
         let pos, v1, v2;
         if ((pos = tok.indexOf(opch)) > 0) {
-            v1 = consts[tok.substring(0,pos)] || 0;
-            v2 = parseInt(tok.substring(pos+1)) || 0;
-            return op(v1,v2);
+            v1 = parseFloat(consts[tok.substring(0,pos)] || 0);
+            v2 = parseFloat(tok.substring(pos+1)) || 0;
+            return op(v1,v2).round(4);
         } else {
             return null;
         }
     }
 
-    function constReplace(str, consts, start) {
+    function constReplace(str, consts, start, pad, short) {
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
@@ -991,9 +1251,24 @@
                 constOp(tok, consts, "/", function(v1,v2) { return v1/v2 }) ||
                 constOp(tok, consts, "*", function(v1,v2) { return v1*v2 }) ||
                 consts[tok] || 0;
+            if (pad) {
+                nutok = nutok.toString();
+                let oldln = ce-cs+1;
+                let tokln = nutok.length;
+                if (tokln < oldln) {
+                    short = (short || 1) + (oldln - tokln);
+                }
+            }
             nustr = str.replace("{"+tok+"}",nutok);
-            return constReplace(nustr, consts, ce+1+(nustr.length-str.length));
+            return constReplace(nustr, consts, ce+1+(nustr.length-str.length), pad, short);
         } else {
+            // insert compensating spaces for accumulated replace string shortages
+            if (short) {
+                let si = str.indexOf(';');
+                if (si > 0) {
+                    str = str.replace(';', ';'.padStart(short,' '));
+                }
+            }
             return str;
         }
     }

@@ -476,6 +476,8 @@
     //     };
     // } else
     // load renderer code in worker context only
+    let wasm;
+
     fetch('/wasm/kiri-sla.wasm')
         .then(response => response.arrayBuffer())
         .then(bytes => WebAssembly.instantiate(bytes, {
@@ -488,7 +490,7 @@
             let {module, instance} = results;
             let {exports} = instance;
             let heap = new Uint8Array(exports.memory.buffer);
-            self.wasm = {
+            wasm = {
                 heap,
                 memory: exports.memory,
                 render: exports.render,
@@ -502,7 +504,6 @@
         let width2 = width / 2, height2 = height / 2;
         let array = [];
         let count = 0;
-        let wasm = self.wasm;
 
         function scaleMovePoly(poly) {
             let points = poly.points;

@@ -44,6 +44,17 @@
             this.show();
             for (let i=0, s=this.slices, len=s.length; i<len; i++) {
                 s[i].visible = i >= newMin && i <= newMax;
+                if (s[i].visible) this.lastVis = s[i];
+            }
+        }
+
+        setLastFraction(frac = 1) {
+            if (this.lastVis)
+            for (let mesh of this.lastVis.children) {
+                let geo = mesh.geometry;
+                let pos = geo.attributes.position;
+                let len = frac === 1 ? Infinity : Math.round(pos.count * frac);
+                geo.setDrawRange(0, len);
             }
         }
 

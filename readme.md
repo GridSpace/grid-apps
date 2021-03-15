@@ -1,6 +1,6 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
-Contributions in all forms (code, bug reports, community engagenment, cash money, etc) are warmly welcomed. They all go to the bottom line of making better apps.
+Contributions in all forms (code, bug reports, community engagement, localization, etc) are warmly welcomed.
 
 [![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
@@ -19,6 +19,8 @@ Contributions in all forms (code, bug reports, community engagenment, cash money
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.2)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.3)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.4)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.5)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.6)
 
 ### Development Activity
 
@@ -54,6 +56,21 @@ to start a local instance of the apps. then open
 [Kiri:Moto](http://localhost:8080/kiri) or
 [Meta:Moto](http://localhost:8080/meta) on your local host
 
+Alternatively, if you are using a packaged version of npm that ships with
+a Linux distribution, but still want to install in your home directory, you
+can use
+
+```
+npm config set prefix ~/.local
+```
+
+If gs-app-server is not found, then perhaps ~/.local/bin is not in
+your path. You can either add it to your path, or you can run:
+
+```
+~/local/bin/gs-app-server --debug
+```
+
 ### Windows Developers
 
 this git repo requires symbolic link support. on Windows, this means you have to clone the repo in a command shell with Administrator privileges.
@@ -68,8 +85,9 @@ web site.
 
 requires node.js 12+
 
-### Javascript Slicing API
+### Javascript Slicing APIs
 
-A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions.
+A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions. And a frame messaging API for controlling Kiri:Moto inside an IFrame.
 
-https://grid.space/kiri/engine.html
+* https://grid.space/kiri/engine.html
+* https://grid.space/kiri/frame.html

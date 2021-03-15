@@ -69,7 +69,7 @@
             boundsz = bounds.max.z + ztOff,
             zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
             zmax = outerz + zclear,
-            wmpos = widget.mesh.position,
+            wmpos = widget.track.pos,
             wmx = wmpos.x,
             wmy = wmpos.y,
             originx = startCenter ? 0 : hasStock ? -stock.x / 2 : bounds.min.x,
@@ -231,7 +231,7 @@
             );
         }
 
-        function camOut(point, cut) {
+        function camOut(point, cut, moveLen = toolDiamMove) {
             point = point.clone();
             point.x += wmx;
             point.y += wmy;
@@ -264,7 +264,7 @@
             }
 
             // convert short planar moves to cuts in some cases
-            if (isMove && deltaXY <= toolDiamMove) {
+            if (isMove && deltaXY <= moveLen) {
                 let iscontour = tolerance > 0;
                 let isflat = absDeltaZ < 0.001;
                 // restrict this to contouring
@@ -279,7 +279,7 @@
                 }
             } else if (isMove) {
                 // for longer moves, check the terrain to see if we need to go up and over
-                const bigXY = (deltaXY > toolDiamMove);
+                const bigXY = (deltaXY > moveLen);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
                 const midZ = (absDeltaZ >= tolerance);
                 if ((bigXY || bigZ) && (isMove || midZ)) {
@@ -296,11 +296,8 @@
                         ) + ztOff,
                         mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                         clearz = maxz;
-                    // up if any point between higher than start/outline, go up
+                    // up if any point between higher than start/outline, go up first
                     if (mustGoUp) {
-                        if (bigXY) {
-                            clearz += zclear;
-                        }
                         layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
                     }
                     // move to point above target point
@@ -414,7 +411,7 @@
             return last;
         }
 
-        function depthRoughPath(start, depth, levels, tops, emitter, fit) {
+        function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
             let level = levels[depth];
             if (!level) {
                 return start;
@@ -424,13 +421,19 @@
             fitted.filter(top => !top.level_emit).forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
+                if (ease) {
+                    start.z += ease;
+                }
                 start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true });
-                start = depthRoughPath(start, depth + 1, levels, tops, emitter, top);
+                if (ease) {
+                    start.z += ease;
+                }
+                start = depthRoughPath(start, depth + 1, levels, tops, emitter, top, ease);
             });
             return start;
         }
 
-        function depthOutlinePath(start, depth, levels, radius, emitter, clr) {
+        function depthOutlinePath(start, depth, levels, radius, emitter, clr, ease) {
             let bottm = depth < levels.length - 1 ? levels[levels.length - 1] : null;
             let above = levels[depth-1];
             let level = levels[depth];
@@ -458,8 +461,14 @@
             // omit polys that match bottom level polys unless level above is cleared
             start = poly2polyEmit(level, start, (poly, index, count, fromPoint) => {
                 poly.level_emit = true;
+                if (ease) {
+                    fromPoint.z += ease;
+                }
                 fromPoint = polyEmit(poly, index, count, fromPoint);
-                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr);
+                if (ease) {
+                    fromPoint.z += ease;
+                }
+                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr, ease);
                 return fromPoint;
             }, {weight: true});
             return start;
@@ -479,8 +488,9 @@
      * return tool Z clearance height for a line segment movement path
      */
     function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
+        // when terrain skipped, top + pass used
         if (terrain > 0) {
-            return terrain + zadd + over;
+            return terrain;
         }
         let maxz = z;
         let check = [];

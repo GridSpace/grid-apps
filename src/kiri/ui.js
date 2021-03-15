@@ -30,6 +30,7 @@
         prefix = "tab",
         state = {},
         units = 1,
+        lastChange = null,
         lastBtn = null,
         lastTxt = null,
         lastPop = null,
@@ -40,6 +41,7 @@
     KIRI.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
+        lastChange: function() { return lastChange },
         checkpoint,
         restore,
         refresh,
@@ -47,6 +49,7 @@
         setExpert,
         setHoverPop,
         hidePoppers,
+        hoverPop,
         bound,
         toInt,
         toFloat,
@@ -683,6 +686,7 @@
                 }
             });
             ip.addEventListener('blur', function(event) {
+                lastChange = ip;
                 action(event);
                 if (opt.trigger) {
                     refresh();
@@ -761,6 +765,7 @@
         }
         ip.setVisible = row.setVisible;
         ip.onchange = function(ev) {
+            lastChange = ip;
             action();
         };
         ip.onclick = (ev) => {
@@ -880,6 +885,56 @@
             array.push(newRowTable(arrayOfArrays[i]));
         }
         return array;
+    }
+
+    function hoverPop(el, opt = {}) {
+        if (Array.isArray(el)) {
+            opt.group = [];
+            return el.forEach(ev => hoverPop(ev, opt));
+        }
+        let group = opt.group || [];
+        let closes = opt.closes || group;
+        let target = opt.target || el;
+        let popped = false;
+        group.push(target);
+        if (closes !== group) {
+            closes.push(target);
+        }
+        let openit = () => {
+            clearTimeout(closes.timer);
+            for (let close of closes) {
+                close.classList.remove("hoverpop");
+            }
+            target.classList.add("hoverpop");
+            popped = true;
+        };
+        let closeit = () => {
+            target.classList.remove("hoverpop");
+            clearTimeout(closes.timer);
+            popped = false;
+        };
+        if (opt.auto !== false) {
+            el.addEventListener("mouseenter", openit);
+        }
+        el.addEventListener("mouseleave", (ev) => {
+            closes.timer = setTimeout(() => {
+                target.classList.remove("hoverpop");
+            }, 750);
+        });
+        if (!opt.sticky) {
+            el.addEventListener("mouseup", (ev) => {
+                if (popped) {
+                    closeit();
+                } else {
+                    openit();
+                }
+            });
+        }
+        document.addEventListener("keydown", (ev) => {
+            if (ev.keyCode === 27 || ev.code === 'Escape') {
+                closeit();
+            }
+        });
     }
 
 })();

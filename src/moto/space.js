@@ -16,8 +16,13 @@
         PI2 = PI / 2,
         PI4 = PI / 4,
         ROUND = Math.round,
+        panX = 0,
         panY = 0,
+        panZ = 0,
+        home = 0,
         gridZOff = 0,
+        tweenTime = 500,
+        tweenDelay = 20,
         platformZOff = 0,
         perspective = 35,
         refreshTimeout = null,
@@ -92,6 +97,7 @@
         camera,
         renderer,
         container,
+        raycaster,
         freezeTo,
         freeze,
         isRound = false,
@@ -139,7 +145,7 @@
 
     function tweenit() {
         TWEEN.update();
-        setTimeout(tweenit, 20);
+        setTimeout(tweenit, tweenDelay);
     }
 
     tweenit();
@@ -170,12 +176,13 @@
             }
         }
         new TWEEN.Tween(from).
-            to(to, 500).
+            to(to, tweenTime).
             onUpdate(tf).
             onComplete(() => {
                 viewControl.setPosition(pos);
                 updateLastAction();
                 refresh();
+                if (pos.then) pos.then();
             }).
             start();
     }
@@ -195,7 +202,7 @@
                 setGrid();
             };
         new TWEEN.Tween(from).
-            to(to, 500).
+            to(to, tweenTime).
             onStart(start).
             onUpdate(update).
             onComplete(complete).
@@ -676,14 +683,15 @@
         if (points.length % 2 != 0) {
             throw "invalid line : "+points.length;
         }
-        const geo = new THREE.Geometry();
-        for (let i=0; i < points.length; ) {
-            const p1 = points[i++];
-            const p2 = points[i++];
-            geo.vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-            geo.vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+        const geo = new THREE.BufferGeometry();
+        const vrt = new Float32Array(points.length * 3);
+        let vi = 0;
+        for (let p of points) {
+            vrt[vi++] = p.x;
+            vrt[vi++] = p.y;
+            vrt[vi++] = p.z;
         }
-        geo.verticesNeedUpdate = true;
+        geo.setAttribute('position', new THREE.BufferAttribute(vrt, 3));
         return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
             color: color,
             opacity: opacity || 1,
@@ -692,9 +700,7 @@
     }
 
     function intersect(objects, recurse) {
-        let lookAt = new THREE.Vector3(mouse.x, mouse.y, 0.0).unproject(camera);
-        let ray = new THREE.Raycaster(camera.position, lookAt.sub(camera.position).normalize());
-        return ray.intersectObjects(objects, recurse);
+        return raycaster.intersectObjects(objects, recurse);
     }
 
     /** ******************************************************************
@@ -802,6 +808,11 @@
         updateLastAction();
         let int, vis;
 
+        const mv = new THREE.Vector2();
+        mv.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mv.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera( mv, camera );
+
         if (viewControl.enabled) {
             event.preventDefault();
             let selection = mouseHover ? mouseHover() : null;
@@ -847,6 +858,7 @@
         onEnterKey: onEnterKey,
         onResize: onResize,
         update: requestRefresh,
+        raycast: intersect,
         refresh: refresh,
 
         showSkyGrid: function(b) {
@@ -884,6 +896,7 @@
         },
 
         platform: {
+            update:    updateDraws,
             tweenTo:   tweenPlatform,
             setSize:   setPlatformSizeUpdateGrid,
             setColor:  setPlatformColor,
@@ -896,6 +909,7 @@
             add:       function(o) { WORLD.add(o) },
             remove:    function(o) { WORLD.remove(o) },
             setMaxZ:   function(z) { panY = z / 2 },
+            setCenter: function(x,y,z) { panX = x; panY = z, panZ = y },
             isHidden:  function()  { return !showPlatform },
             setHidden: function(b) { showPlatform = !b; platform.visible = !b },
             setHiding: function(b) { hidePlatformBelow = b },
@@ -935,12 +949,12 @@
         },
 
         view: {
-            top:   function()  { tweenCam({left: 0,    up: 0,   panX: 0, panY: panY, panZ: 0}) },
-            back:  function()  { tweenCam({left: PI,   up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            home:  function()  { tweenCam({left: 0,    up: PI4, panX: 0, panY: panY, panZ: 0}) },
-            front: function()  { tweenCam({left: 0,    up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            right: function()  { tweenCam({left: PI2,  up: PI2, panX: 0, panY: panY, panZ: 0}) },
-            left:  function()  { tweenCam({left: -PI2, up: PI2, panX: 0, panY: panY, panZ: 0}) },
+            top:   function(then)  { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+            back:  function(then)  { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
+            home:  function(then)  { tweenCam({left: home, up: PI4, panX, panY, panZ, then}) },
+            front: function(then)  { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
+            right: function(then)  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
+            left:  function(then)  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
             reset: function()    { viewControl.reset(); requestRefresh() },
             load:  function(cam) { viewControl.setPosition(cam) },
             save:  function()    { return viewControl.getPosition(true) },
@@ -953,7 +967,30 @@
                     viewControl.setMouse(viewControl.mouseDefault);
                 }
             },
-            getFPS: function() { return fps }
+            getFPS: function() { return fps },
+            getFocus: function() { return viewControl.getTarget() },
+            setFocus: function(v) {
+                viewControl.setTarget(v);
+                refresh();
+            },
+            setHome: function(r) {
+                home = r || 0;
+            },
+            spin: function(then, count) {
+                Space.view.front(() => {
+                    Space.view.right(() => {
+                        Space.view.back(() => {
+                            Space.view.left(() => {
+                                if (--count > 0) {
+                                    Space.view.spin(then, count);
+                                } else {
+                                    Space.view.front(then);
+                                }
+                            });
+                        });
+                    });
+                });
+            }
         },
 
         mouse: {
@@ -973,6 +1010,14 @@
             selectRecurse = b;
         },
 
+        setTweenTime: function(t) {
+            tweenTime = t || 500;
+        },
+
+        setTweenDelay: function(d) {
+            tweenDelay = d || 20;
+        },
+
         objects: function() {
             return WC;
         },
@@ -985,7 +1030,7 @@
             return { renderer, camera, platform };
         },
 
-        init: function(domelement, slider) {
+        init: function(domelement, slider, ortho) {
             container = domelement;
 
             WORLD.rotation.x = -PI2;
@@ -998,13 +1043,15 @@
                 antialias: true,
                 preserveDrawingBuffer: true
             });
-            camera = perspective ?
-                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000) :
-                new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000);
+            camera = ortho ?
+                new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
+                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000);
 
             camera.position.set(0, 200, 340);
             renderer.setSize(width(), height());
             domelement.appendChild(renderer.domElement);
+
+            raycaster = new THREE.Raycaster();
 
             viewControl = new MOTO.CTRL(camera, domelement, function (position, moved) {
                 if (platform) {

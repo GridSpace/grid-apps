@@ -221,6 +221,7 @@
                     zM = Math.max(p1.z, p2.z, p3.z),
                     bm = Math.floor(zm * zScale),
                     bM = Math.ceil(zM * zScale);
+                if (bm < 0) bm = 0;
                 for (j = bm; j < bM; j++) {
                     buckets[j].push(p1);
                     buckets[j].push(p2);
@@ -529,6 +530,9 @@
             // for topo slices, we just need the raw lines
             if (!topoMode && !simpleMode) {
                 slice.groups = connectLines(slice.lines, slice.z);
+                if (options.union) {
+                    slice.groups = POLY.flatten(POLY.union(POLY.nest(slice.groups), null, true), null, true);
+                }
                 if ((debug && slice.lines.excessive) || xray) {
                     const dash = xray || 3;
                     slice.lines.forEach((line, i) => {

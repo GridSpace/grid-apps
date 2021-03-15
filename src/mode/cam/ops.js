@@ -109,6 +109,10 @@
             let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
             let { process, stock } = settings;
 
+            if (op.down <= 0) {
+                throw `invalid step down "${op.down}"`;
+            }
+
             let roughIn = op.inside;
             let roughTop = op.top;
             let roughDown = op.down;
@@ -219,7 +223,7 @@
             });
             shadow = POLY.nest(shadow);
 
-            // expand shadow by half tool diameter + stock to leave
+            // shell = shadow expanded by half tool diameter + leave stock
             const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
             const shell = POLY.offset(shadow, sadd + roughLeave);
 
@@ -262,7 +266,7 @@
 
                 if (!offset) return;
 
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stock.x && stock.y && stock.center) {
                     let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
                     offset = cutPolys([rect], offset, slice.z, true);
                 }
@@ -270,10 +274,12 @@
                 // elimate double inset on inners
                 offset.forEach(op => {
                     if (op.inner) {
-                        let operim = op.perimeter();
+                        let pv1 = op.perimeter();
                         let newinner = [];
                         op.inner.forEach(oi => {
-                            if (Math.abs(oi.perimeter() - operim) > 0.01) {
+                            let pv2 = oi.perimeter();
+                            let pct = pv1 > pv2 ? pv2/pv1 : pv1/pv2;
+                            if (pct < 0.98) {
                                 newinner.push(oi);
                             }
                         });
@@ -307,8 +313,10 @@
             let { polyEmit, poly2polyEmit, depthRoughPath } = ops;
             let { camOut, newLayer, printPoint } = ops;
             let { settings, widget } = state;
-            let { process } = settings;
+            let { process, controller } = settings;
 
+            let danger = controller.danger;
+            let easeDown = process.camEaseDown;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
             let depthData = [];
@@ -368,7 +376,9 @@
                     // return POLY.nest(level.filter(poly => poly.depth === 0));
                     return POLY.nest(level.filter(poly => poly.depth === 0).clone());
                 });
-                printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit);
+                // experimental start of ease down
+                let ease = danger && op.down && easeDown ? op.down : 0;
+                printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit, false, ease);
                 // printPoint = depthRoughPath(printPoint, 0, depthData, tops, (poly, index, count, start) => {
                 //     console.log({z: poly.getZ(), i: poly.id, index, poly});
                 //     return polyEmit(poly, index, count, start);
@@ -390,6 +400,10 @@
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
             let { process, stock } = settings;
 
+            if (op.down <= 0) {
+                throw `invalid step down "${op.down}"`;
+            }
+
             let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
             updateToolDiams(toolDiam);
 
@@ -405,7 +419,7 @@
             indices = indices.appendAll(flats).sort((a,b) => b-a);
             // console.log('indices', ...indices, {zBottom, slicer});
             if (op.outside && !op.inside) {
-                console.log({outline_bypass: indices, down: op.down});
+                // console.log({outline_bypass: indices, down: op.down});
                 indices.forEach((ind,i) => {
                     if (flats.indexOf(ind) >= 0) {
                         // exclude flats
@@ -509,7 +523,7 @@
                     CAM.addDogbones(offset, toolDiam / 5);
                 }
 
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stock.x && stock.y && stock.center) {
                     let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
                     offset = cutPolys([rect], offset, slice.z, true);
                 }
@@ -534,8 +548,10 @@
             let { polyEmit, poly2polyEmit, depthOutlinePath } = ops;
             let { camOut, newLayer, printPoint } = ops;
             let { settings, widget } = state;
-            let { process } = settings;
+            let { process, controller } = settings;
 
+            let danger = controller.danger;
+            let easeDown = process.camEaseDown;
             let toolDiam = this.toolDiam;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
@@ -584,8 +600,10 @@
                     printPoint = flatLevels[0]
                         .sort((a,b) => { return a.area() - b.area() })[0]
                         .average();
-                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false);
-                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true);
+                    // experimental start of ease down
+                    let ease = danger && op.down && easeDown ? op.down : 0;
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false, ease);
+                    printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true, ease);
                 }
             }
 
@@ -629,7 +647,8 @@
             let { settings, widget } = state;
             let { process } = settings;
 
-            let toolDiam = this.toolDiam;
+            let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+            let stepover = toolDiam * op.step * 2;
             let cutdir = process.camConventional;
             let depthFirst = process.camDepthFirst;
             let depthData = [];
@@ -656,7 +675,7 @@
                             poly.reverse();
                         }
                         poly.forEachPoint(function(point, pidx) {
-                            camOut(point.clone(), pidx > 0);
+                            camOut(point.clone(), pidx > 0, stepover);
                         }, false);
                     });
                     newLayer();
@@ -670,7 +689,7 @@
                         poly.reverse();
                     }
                     poly.forEachPoint(function(point, pidx) {
-                        camOut(point.clone(), pidx > 0);
+                        camOut(point.clone(), pidx > 0, stepover);
                     }, false);
                     newLayer();
                     return lastPoint();
@@ -700,7 +719,8 @@
             let toolOver = toolDiam * op.step;
             let cutdir = process.camConventional;
             let polys = [];
-            let stockRect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
+            let stockRect = stock.center && stock.x && stock.y ?
+                newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
             updateToolDiams(toolDiam);
             if (tabs) {
                 tabs.forEach(tab => {
@@ -727,7 +747,7 @@
                 } else {
                     slice.camLines = [ poly ];
                 }
-                if (process.camStockClipTo) {
+                if (process.camStockClipTo && stockRect) {
                     slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
                 }
                 slice.output()
@@ -771,19 +791,22 @@
                             case "inside": offdist = -toolDiam / 2; break;
                         }
                         if (offdist) {
-                            let pnew = POLY.offset([poly], offdist)[0];
+                            let pnew = POLY.offset([poly], offdist);
                             if (pnew) {
-                                poly = pnew.setZ(poly.getZ());
+                                poly = POLY.setZ(pnew, poly.getZ());
                             } else {
                                 continue;
                             }
+                        } else {
+                            poly = [ poly ];
                         }
+                        for (let pi of poly)
                         if (down) {
-                            for (let z of BASE.util.lerp(zMax, poly.getZ(), down)) {
-                                followZ(poly.clone().setZ(z));
+                            for (let z of BASE.util.lerp(zMax, pi.getZ(), down)) {
+                                followZ(pi.clone().setZ(z));
                             }
                         } else {
-                            followZ(poly);
+                            followZ(pi);
                         }
                     }
                     break;
@@ -904,6 +927,7 @@
             updateToolDiams(tool.fluteDiameter());
 
             let { stock } = settings,
+                tz = widget.track.pos.z,
                 lx = bounds.min.x,
                 hx = bounds.max.x,
                 ly = bounds.min.y,
@@ -915,7 +939,10 @@
                 dx = (stock.x - (hx - lx)) / 4,
                 dy = (stock.y - (hy - ly)) / 4,
                 dz = stock.z,
-                points = [];
+                points = [],
+                wo = stock.z - bounds.max.z,
+                z1 = bounds.max.z + wo + tz,
+                z2 = tz - mz;
 
             if (!(stock.x && stock.y && stock.z)) {
                 return;
@@ -969,7 +996,7 @@
                             tv = -tv;
                         }
                     }
-                    for (let z of BASE.util.lerp(zMax, -zThru, op.down)) {
+                    for (let z of BASE.util.lerp(z1, z2, op.down)) {
                         let slice = newSlice(z);
                         sliceAll.push(slice);
                         sliceOut.push(slice);
@@ -1005,8 +1032,8 @@
                 let slice = newSlice(0,null), polys = [];
                 points.forEach(point => {
                     polys.push(newPolygon()
-                        .append(point.clone().setZ(bounds.max.z))
-                        .append(point.clone().setZ(bounds.max.z - stock.z - mz)));
+                        .append(point.clone().setZ(z1))
+                        .append(point.clone().setZ(z2)));
                 });
                 slice.camLines = polys;
                 slice.output()
@@ -1096,7 +1123,7 @@
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
                 tslices.push(data.slice);
-                if (true) {
+                if (false) {
                     const slice = data.slice;
                     sliceAll.push(slice);
                     slice.output()
