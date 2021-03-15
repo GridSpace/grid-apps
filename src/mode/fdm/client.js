@@ -64,7 +64,9 @@
         };
 
         for (let key of Object.keys(rangeVars)) {
-            UI[key].range = true;
+            if (UI[key]) {
+                UI[key].range = true;
+            }
         }
 
         function filterSynth() {

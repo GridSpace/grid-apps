@@ -62,6 +62,7 @@ KIRI.worker = {
                     }
                 }
             }
+            send.done(data.id);
             return;
         }
 
