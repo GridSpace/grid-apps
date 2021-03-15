@@ -33,6 +33,7 @@
             // slice
             "sliceShells": LANG.sl_shel_s,
             "sliceFillType": LANG.fi_type,
+            "sliceFillWidth": LANG.fi_wdth_s,
             "sliceFillSparse": LANG.fi_pcnt_s,
             "sliceSolidMinArea": LANG.ad_msol_s,
             // prepare

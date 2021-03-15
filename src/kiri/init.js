@@ -1667,13 +1667,13 @@
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM}),
-            // fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillRate:       UC.newInput(LANG.ou_feed_s, {title:LANG.fi_rate_l, convert:UC.toInt, bound:UC.bound(0,300), modes:FDM}),
+            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
+            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM}),
+            // sliceFillWidth:      UC.newInput(LANG.fi_wdth_s, {title:LANG.fi_wdth_l, convert:UC.toFloat, modes:FDM}),
 
             fdmSupport:          UC.newGroup(LANG.sp_menu, null, {modes:FDM, marker:false}),
             sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM}, "extruders"),

@@ -294,6 +294,7 @@
                 let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
                 let isDense = params.sliceFillSparse > 0.98;
                 let solid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
+                let solidWidth = params.sliceFillWidth || 1;
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let offset = shellOffset * spaceMult;
                 let fillOff = fillOffset * spaceMult;
@@ -305,7 +306,7 @@
                     danger: ctrl.danger
                 });
                 if (solid) {
-                    let fillSpace = fillSpacing * spaceMult;
+                    let fillSpace = fillSpacing * spaceMult * solidWidth;
                     doSolidLayerFill(slice, fillSpace, sliceFillAngle);
                 }
                 sliceFillAngle += 90.0;
@@ -381,9 +382,11 @@
                     projectBridges(slice, solidLayers);
                 }, "solids");
                 forSlices(0.35, 0.5, slice => {
+                    let params = getRangeParameters(settings, slice.index);
                     let first = slice.index === 0;
-                    let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
-                    let fillSpace = fillSpacing * spaceMult;
+                    let solidWidth = params.sliceFillWidth || 1;
+                    let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
+                    let fillSpace = fillSpacing * spaceMult * solidWidth;
                     doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid);
                     sliceFillAngle += 90.0;
                 }, "solids");
@@ -439,7 +442,8 @@
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    doRender(slice, isSynth);
+                    let params = getRangeParameters(settings, slice.index);
+                    doRender(slice, isSynth, params);
                 }, "render");
             }
 
@@ -462,9 +466,10 @@
         return Math.max(min,Math.min(max,v));
     }
 
-    function doRender(slice, isSynth) {
+    function doRender(slice, isSynth, params) {
         const output = slice.output();
         const height = slice.height / 2;
+        const solidWidth = params.sliceFillWidth || 1;
 
         slice.tops.forEach(top => {
             if (isThin) output
@@ -489,7 +494,7 @@
 
             if (top.fill_lines && top.fill_lines.length) output
                 .setLayer("fill", isSynth ? COLOR.support : COLOR.fill)
-                .addLines(top.fill_lines, vopt({ offset, height }));
+                .addLines(top.fill_lines, vopt({ offset: offset * solidWidth, height }));
 
             if (top.fill_sparse) output
                 .setLayer("infill", COLOR.infill)

@@ -155,27 +155,28 @@
     function fillLinear(target) {
         let bounds = target.bounds();
         let height = target.zHeight();
+
+        let density = target.density();
+        let line = target.lineWidth();
+
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
-        let density = target.density();
-        let offset = target.offset() / 2;
-        let line = target.lineWidth();
-        let mf = Math.max(span_x, span_y) / line;
-        let tile = 1 + (1 - density);
-        let tile_xc = Math.ceil(span_x / tile);
-        let tile_yc = Math.ceil(span_y / tile);
+        let steps_x = (span_x / line) * density;
+        let steps_y = (span_y / line) * density;
+        let step_x = span_x / steps_x;
+        let step_y = span_x / steps_x;
 
         if (target.zIndex() % 2 === 1) {
-            for (let tx=0; tx<=tile_xc; tx++) {
+            for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step_x) {
                 target.newline();
-                target.emit(tx * tile + bounds.min.x, bounds.min.y);
-                target.emit(tx * tile + bounds.min.x, bounds.max.y);
+                target.emit(tx, bounds.min.y);
+                target.emit(tx, bounds.max.y);
             }
         } else {
-            for (let ty=0; ty<=tile_yc; ty++) {
+            for (let ty=bounds.min.y; ty<=bounds.max.y; ty += step_y) {
                 target.newline();
-                target.emit(bounds.min.x, ty * tile + bounds.min.y);
-                target.emit(bounds.max.x, ty * tile + bounds.min.y);
+                target.emit(bounds.min.x, ty);
+                target.emit(bounds.max.x, ty);
             }
         }
     }

@@ -515,6 +515,7 @@
             firstLayer = opt.first || false,
             thinWall = nozzleSize * (opt.thinWall || 1.75),
             retractDist = opt.retractOver || 2,
+            solidWidth = process.sliceFillWidth || 1,
             fillMult = opt.mult || process.outputFillMult,
             shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
             shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
@@ -801,7 +802,7 @@
             });
         }
 
-        function outputFills(lines, options) {
+        function outputFills(lines, opt = {}) {
             if (!lines || lines.length === 0) {
                 return;
             }
@@ -810,10 +811,10 @@
                 start = 0,
                 skip = false,
                 lastIndex = -1,
-                opt = options || {},
+                flow = opt.flow || 1,
                 near = opt.near || false,
                 fast = opt.fast || false,
-                fill = opt.fill >= 0 ? opt.fill : fillMult,
+                fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
                 thinDist = near ? thinWall : thinWall;
 
             while (lines && marked < lines.length) {
@@ -1036,7 +1037,7 @@
                 outputFills(next.thin_fill, {near: true});
 
                 // then output solid and sparse fill
-                outputFills(next.fill_lines);
+                outputFills(next.fill_lines, {flow: solidWidth});
                 outputSparse(next.fill_sparse, sparseMult, infillSpeed);
 
                 lastTop = next;
