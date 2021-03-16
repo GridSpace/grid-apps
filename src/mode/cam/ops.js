@@ -253,6 +253,7 @@
                 if (!roughIn) {
                     const outside = POLY.offset(shadow.clone(), toolDiam / 2, {z: slice.z});
                     if (outside) {
+                        outside.forEach(p => p.depth = -p.depth);
                         offset.appendAll(outside);
                     }
                 }
@@ -371,18 +372,22 @@
                 }
             }
 
+            function isNeg(v) {
+                return v < 0 || (v === 0 && 1/v === -Infinity);
+            }
+
             if (depthFirst) {
-                let tops = depthData.map(level => {
-                    // return POLY.nest(level.filter(poly => poly.depth === 0));
+                let ease = danger && op.down && easeDown ? op.down : 0;
+                let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
+                let itops = ins.map(level => {
                     return POLY.nest(level.filter(poly => poly.depth === 0).clone());
                 });
-                // experimental start of ease down
-                let ease = danger && op.down && easeDown ? op.down : 0;
-                printPoint = depthRoughPath(printPoint, 0, depthData, tops, polyEmit, false, ease);
-                // printPoint = depthRoughPath(printPoint, 0, depthData, tops, (poly, index, count, start) => {
-                //     console.log({z: poly.getZ(), i: poly.id, index, poly});
-                //     return polyEmit(poly, index, count, start);
-                // });
+                let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
+                let otops = outs.map(level => {
+                    return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+                });
+                printPoint = depthRoughPath(printPoint, 0, ins, itops, polyEmit, false, ease);
+                printPoint = depthRoughPath(printPoint, 0, outs, otops, polyEmit, false, ease);
             }
 
             setPrintPoint(printPoint);
