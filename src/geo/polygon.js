@@ -1707,6 +1707,7 @@
                     no.points.pop();
                     no.length--;
                 }
+                no.depth = this.depth;
             });
             return cuts;
         } else {
