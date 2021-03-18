@@ -29,6 +29,7 @@
         trimTo,
         expand,
         expand_lines,
+        route,
         union,
         inset,
         nest,
@@ -863,6 +864,45 @@
             }
         }
         return true;
+    }
+
+    // plan a route through an array of polygon center points
+    // starting with the polygon center closest to "start"
+    function route(polys, start) {
+        let centers = [];
+        let first, minDist = Infinity;
+        for (let poly of polys) {
+            let center = poly.average();
+            let rec = {poly, center, used: false};
+            let dist = center.distTo2D(start);
+            if (dist < minDist) {
+                first = rec;
+                minDist = dist;
+            }
+            centers.push(rec);
+        }
+        first.used = true;
+        let routed = [ first ];
+        for (;;) {
+            let closest;
+            let minDist = Infinity;
+            for (let rec of centers) {
+                if (!rec.used) {
+                    let dist = rec.center.distTo2D(first.center);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = rec;
+                    }
+                }
+            }
+            if (!closest) {
+                break;
+            } else {
+                closest.used = true;
+                routed.push(first = closest);
+            }
+        }
+        return routed.map(r => r.poly);
     }
 
 })();
