@@ -417,7 +417,7 @@
                 return start;
             }
             let ltops = tops[depth];
-            let fitted = fit ? ltops.filter(poly => poly.isInside(fit)) : ltops;
+            let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.01)) : ltops;
             fitted.filter(top => !top.level_emit).forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
