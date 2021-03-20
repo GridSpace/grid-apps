@@ -420,7 +420,6 @@
             let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.01)) : ltops;
             let ftops = fitted.filter(top => !top.level_emit);
             if (ftops.length > 1) {
-                console.log({depth, ftops});
                 ftops = POLY.route(ftops, start);
             }
             ftops.forEach(top => {
