@@ -130,7 +130,7 @@ kiri.lang['de-de'] = {
     dv_lzon_l:      "Skript, um den Laser einzuschalten",
     dv_lzof_s:      "Laser aus",
     dv_lzof_l:      "Skript, um den Laser auszuschalten",
-    dv_exts_s:      "Auswhälen",
+    dv_exts_s:      "Auswählen",
     dv_exts_l:      "GCode, um diesen Extruder auszuwählen",
     dv_dext_s:      "Abwählen",
     dv_dext_l:      "GCode, bevor ein anderer Extruder ausgewählt wird",
@@ -149,7 +149,7 @@ kiri.lang['de-de'] = {
     mo_cncm:        "CNC-Fräsen",
 
     // SETUP
-    su_menu:        "setup",
+    su_menu:        "Setup",
     su_devi:        "Geräte",
     su_tool:        "Werkzeuge",
     su_locl:        "Lokal",
@@ -183,7 +183,7 @@ kiri.lang['de-de'] = {
     ws_cler:        "Leeren",
 
     // OPTIONS
-    op_menu:        "interface",
+    op_menu:        "Interface",
     op_disp:        "Anzeige",
     op_xprt_s:      "Fortgeschritten",
     op_xprt_l:      "weitere Einstellungen",
