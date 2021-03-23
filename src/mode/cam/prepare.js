@@ -437,7 +437,7 @@
             return start;
         }
 
-        function depthOutlinePath(start, depth, levels, radius, emitter, clr, ease) {
+        function depthOutlinePath(start, depth, levels, radius, emitter, dir, ease) {
             let bottm = depth < levels.length - 1 ? levels[levels.length - 1] : null;
             let above = levels[depth-1];
             let level = levels[depth];
@@ -462,6 +462,8 @@
                 // }
                 return true;
             });
+            // limit level search to polys matching winding (inside vs outside)
+            level = level.filter(p => p.isClockwise() === dir);
             // omit polys that match bottom level polys unless level above is cleared
             start = poly2polyEmit(level, start, (poly, index, count, fromPoint) => {
                 poly.level_emit = true;
@@ -472,9 +474,9 @@
                 if (ease) {
                     fromPoint.z += ease;
                 }
-                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, clr, ease);
+                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, dir, ease);
                 return fromPoint;
-            }, {weight: true});
+            }, {weight: false});
             return start;
         }
 

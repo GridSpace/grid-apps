@@ -56,7 +56,6 @@
 # FDM - BELT
 
 * `B` auto bed resizing leaves the origin in the wrong place at first
-* `B` ranges don't work with anchors
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
 
