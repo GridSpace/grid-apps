@@ -1951,13 +1951,13 @@
             } else {
                 style.display = 'flex';
                 UI.dev.filter.focus();
-                deviceFilter = UI.dev.filter.value;
+                deviceFilter = UI.dev.filter.value.toLowerCase();
                 updateDeviceList();
             }
         };
 
         UI.dev.filter.onkeyup = (ev) => {
-            deviceFilter = UI.dev.filter.value;
+            deviceFilter = UI.dev.filter.value.toLowerCase();
             updateDeviceList();
         };
 

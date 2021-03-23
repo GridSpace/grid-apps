@@ -5,6 +5,7 @@
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
     --highlight: rgba(200,220,220,0.9);
+    --main-color: #7E99B7
 }
 a, a:hover, a:visited {
     border: none;
@@ -22,11 +23,20 @@ a, a:hover, a:visited {
     right: 0;
     bottom: 0;
 }
+#app-name, #app-mode-name, #app-acct {
+    cursor: pointer;
+}
+#app-mode-name {
+    border-bottom: 2px dotted grey;
+}
 #app,div {
     display: flex;
-    padding: 0px;
-    border: 0px;
-    margin: 0px;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+#device-list, #device-my {
+    background: rgba(0,0,0,0.1);
 }
 #gsbox {
     width: 40px;
@@ -51,8 +61,9 @@ button {
     border-radius: 3px;
     background-color: #eee;
     padding: 2px 7px 3px 7px;
-    margin: 1px;
-    margin-bottom: 2px;
+    margin: 1px 1px 2px;
+    cursor: pointer;
+    text-transform: capitalize;
 }
 button:hover {
     background-color: #aaa;
@@ -66,18 +77,21 @@ button[del] {
     margin-left: 5px;
 }
 input {
-    background-color: #eee;
+    background-color: #eeeeeed6;
     margin-bottom: 1px;
     text-align: right;
     border: 1px solid #bbb;
     padding-top: 0;
     padding-bottom: 0;
     margin-top: 1px;
-    margin-bottom: 1px;
     position: relative;
 }
 input:focus {
-    background-color: #fec;
+    color: #495057;
+    background-color: #fff;
+    border-color: #6C7F94;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 10%);
 }
 input[disabled] {
     background-color: #ddd;
@@ -384,6 +398,11 @@ th, tr, td, label {
 
 #mid-lcol, #mid-rcol, #modal {
     pointer-events: visible;
+    text-transform: capitalize;
+}
+
+#acct-pop {
+    text-transform: capitalize;
 }
 
 #top-sep {
@@ -398,7 +417,7 @@ th, tr, td, label {
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     left: -5px;
 }
 
@@ -408,7 +427,7 @@ th, tr, td, label {
     top: 0;
 }
 #act-sep, #lt-sep {
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     height: 10px;
     left: -5px;
 }
@@ -416,7 +435,7 @@ th, tr, td, label {
 #lt-end {
     height: 10px;
     border-bottom-right-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     left: -5px;
 }
 #act-animate.disabled {
@@ -509,6 +528,9 @@ th, tr, td, label {
     margin-left: 2px;
     margin-right: 2px;
 }
+#dg .ext-buttons button {
+    cursor: pointer;
+}
 .ext-buttons button {
     justify-content: center;
     align-items: center;
@@ -569,14 +591,14 @@ th, tr, td, label {
     width: 12px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     margin-right: 1px;
 }
 #camops .right {
     width: 12px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     margin-left: 1px;
 }
 .cam-pop-op {
@@ -726,14 +748,14 @@ th, tr, td, label {
     padding: 10px;
     min-height: 20px;
     font-size: smaller;
-    background-color: rgba(255,255,255,0.75);
+    background-color: #fff;
 }
 
 .mod-top {
     height: 10px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
 }
 #mod-x {
     position: absolute;
@@ -881,7 +903,7 @@ th, tr, td, label {
     height: 10px;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
 }
 #settingsList button.selected {
     font-weight: bold;
@@ -1054,6 +1076,7 @@ th, tr, td, label {
     background-color: rgba(255,255,255,0.75);
     border-radius: 5px;
     margin: 5px;
+    cursor: pointer;
 }
 .dev-type svg {
     width: 60px;
@@ -1324,13 +1347,17 @@ th, tr, td, label {
 
 #settings {
     align-items: stretch;
+    text-transform: capitalize;
+}
+#settings .set-group {
+    cursor: pointer;
 }
 #set-top {
     color: black;
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 0;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     min-height: 10px;
 }
 #set-end {
@@ -1338,7 +1365,7 @@ th, tr, td, label {
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 0;
     border-bottom-left-radius: 10px;
-    background-color: var(--bg-gray);
+    background-color: var(--main-color);
     height: 10px;
 }
 .pop-sep {
@@ -1385,7 +1412,7 @@ th, tr, td, label {
     white-space: nowrap;
     flex-direction: column;
     transform: translateY(-50%);
-    background-color: rgba(255,255,255,0.8);
+    background-color: #fff;
     border: 1px solid #aaa;
     border-radius: 5px;
     margin-right: 5px;
