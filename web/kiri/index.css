@@ -63,8 +63,8 @@ button {
     text-transform: capitalize;
 }
 button:hover {
-    background-color: #aaa;
-    color: black;
+    background-color: var(--main-color);
+    color: white;
 }
 button[load] {
     width: 100%;
@@ -820,7 +820,8 @@ th, tr, td, label {
     min-height: 1.5em;
 }
 .devlist button:hover {
-    background-color: rgba(200,200,200,0.9);
+    background-color: var(--main-color);
+    color: white;
 }
 .devlist button.selected {
     background-color: var(--highlight);
