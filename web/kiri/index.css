@@ -489,7 +489,7 @@ th, tr, td, label {
     text-align: center;
 }
 .lt-menu label {
-    font-size: smaller;
+    font-size: small;
 }
 .lt-enabled, .lt-active {
     color: var(--fg-gray);

@@ -281,6 +281,7 @@
             }
             let epos = isBelt ? { x: pos.x, y: pos.y, z: pos.z } : pos;
             if (isBelt) {
+                let zheight = path ? path.height || 0 : 0;
                 epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
                 epos.z = blastz = pos.z * icos;
                 epos.y = -pos.y + epos.z * bcos;
