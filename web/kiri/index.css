@@ -4,8 +4,8 @@
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
-    --highlight: rgba(200,220,220,0.9);
-    --main-color: #7E99B7
+    --highlight: rgba(126,153,183,0.4);
+    --main-color: rgba(126,153,183,1);
 }
 a, a:hover, a:visited {
     border: none;
@@ -34,9 +34,6 @@ a, a:hover, a:visited {
     padding: 0;
     border: 0;
     margin: 0;
-}
-#device-list, #device-my {
-    background: rgba(0,0,0,0.1);
 }
 #gsbox {
     width: 40px;
@@ -547,7 +544,7 @@ th, tr, td, label {
     background-color: #eee;
 }
 .txt-sel button, .btn-sel {
-    background-color: #ccc;
+    background-color: var(--highlight);
 }
 #pop-rotate input.value, #pop-scale input.value {
     width: 90%;
@@ -804,14 +801,17 @@ th, tr, td, label {
     margin-top: 5px;
     border-top: 1px solid rgba(150,130,200,0.5);
 }
+.devlist {
+    background-color: #fdfdfd;
+}
 .devlist button {
     margin: 1px;
     padding: 2px;
-    border: 1px solid rgba(0,0,0,0);
+    border: 0;
     border-radius: 0;
     font-size: 11px;
     font-family: sans-serif;
-    background-color: rgba(255,255,255,0.9);
+    background-color: #f8f8f8;
     text-align: left;
     min-height: 1.5em;
 }
@@ -1083,8 +1083,7 @@ th, tr, td, label {
     height: 30px;
 }
 .dev-sel {
-    color: #033;
-    background-color: #bbb;
+    background-color: var(--highlight);
 }
 
 .t-head {
