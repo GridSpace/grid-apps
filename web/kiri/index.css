@@ -414,6 +414,7 @@ th, tr, td, label {
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;
+    border-bottom-right-radius: 1px;
     background-color: var(--main-color);
     left: -5px;
 }
@@ -424,6 +425,8 @@ th, tr, td, label {
     top: 0;
 }
 #act-sep, #lt-sep {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
     background-color: var(--main-color);
     height: 10px;
     left: -5px;
@@ -431,6 +434,7 @@ th, tr, td, label {
 
 #lt-end {
     height: 10px;
+    border-top-right-radius: 1px;
     border-bottom-right-radius: 10px;
     background-color: var(--main-color);
     left: -5px;
@@ -1355,14 +1359,14 @@ th, tr, td, label {
     color: black;
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 10px;
-    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 1px;
     background-color: var(--main-color);
     min-height: 10px;
 }
 #set-end {
     color: black;
     padding: 1px 10px 2px 2px;
-    border-top-left-radius: 0;
+    border-top-left-radius: 1px;
     border-bottom-left-radius: 10px;
     background-color: var(--main-color);
     height: 10px;
