@@ -709,6 +709,19 @@
                 func.traceClear();
             }
         });
+        api.event.on("widget.mirror", widget => {
+            if (!isCamMode) {
+                return;
+            }
+            if (traceOn) {
+                func.traceDone();
+            }
+            unselectTraces(widget);
+            if (flipping) {
+                return;
+            }
+            mirrorTabs(widget);
+        });
         api.event.on("widget.rotate", rot => {
             if (!isCamMode) {
                 return;
@@ -740,6 +753,22 @@
             }
             func.hover(data);
         });
+
+        function mirrorTabs(widget) {
+            let tabs = API.widgets.annotate(widget.id).tab || [];
+            tabs.forEach(rec => {
+                let { id, pos, rot } = rec;
+                let tab = widget.tabs[id];
+                let e = new THREE.Euler().setFromQuaternion(rot);
+                // let dv = (e._z - (Math.PI - e._z));
+                e._z = Math.PI - e._z;
+                rec.rot = new THREE.Quaternion().setFromEuler(e);
+                // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,dv));
+                // tab.box.geometry.applyMatrix4(m4);
+                tab.box.position.x = pos.x = -pos.x;
+            });
+            SPACE.update();
+        }
 
         function rotateTabs(widget, x, y, z) {
             let tabs = API.widgets.annotate(widget.id).tab || [];
