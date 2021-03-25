@@ -20,6 +20,7 @@
             case 'da': return 'da-dk';
             case 'de': return 'de-de';
             case 'en': return 'en-us';
+            case 'es': return 'es-es';
             case 'fr': return 'fr-fr';
             case 'pl': return 'pl-pl';
         }
