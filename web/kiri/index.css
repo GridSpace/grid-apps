@@ -354,6 +354,9 @@ th, tr, td, label {
     color: #000;
     background-color: #f4f4f4;
 }
+#acct-lang {
+    justify-content: flex-end;
+}
 #acct-lang:hover #lang-pop, #acct-ver:hover #ver-pop {
     display: flex;
 }
