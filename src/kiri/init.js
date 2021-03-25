@@ -490,10 +490,7 @@
     }
 
     function mirrorSelection() {
-        API.selection.for_widgets(function(widget) {
-            widget.mirror();
-        });
-        SPACE.update();
+        API.selection.mirror();
     }
 
     function keys(o) {
@@ -540,7 +537,7 @@
             y = y - current.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
         }
 
-        moveSelection(x, y, z, true);
+        API.selection.move(x, y, z, true);
     }
 
     function deviceExport(exp, name) {

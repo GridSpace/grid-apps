@@ -77,6 +77,7 @@
         move: moveSelection,
         scale: scaleSelection,
         rotate: rotateSelection,
+        mirror: mirrorSelection,
         meshes: function() { return selectedMeshes.slice() },
         widgets: function(orall) {
             let sel = selectedMeshes.slice().map(m => m.widget);
@@ -1452,6 +1453,15 @@
     function setOpacity(value) {
         forAllWidgets(function (w) { w.setOpacity(value) });
         SPACE.update();
+    }
+
+    function mirrorSelection() {
+        API.selection.for_widgets(function(widget) {
+            widget.mirror();
+            API.event.emit("widget.mirror", widget);
+        });
+        SPACE.update();
+        auto_save();
     }
 
     function moveSelection(x, y, z, abs) {

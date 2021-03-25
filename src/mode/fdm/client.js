@@ -294,6 +294,17 @@
                 func.sclear();
             }
         });
+        api.event.on("widget.mirror", widget => {
+            if (!isFdmMode) {
+                return;
+            }
+            let ann = API.widgets.annotate(widget.id);
+            let sups = ann.support || [];
+            sups.forEach(sup => {
+                let wsup = widget.sups[sup.id];
+                wsup.box.position.x = wsup.x = sup.x = -sup.x;
+            });
+        });
         api.event.on("widget.rotate", rot => {
             if (!isFdmMode) {
                 return;
