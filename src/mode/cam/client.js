@@ -760,10 +760,14 @@
                 let { id, pos, rot } = rec;
                 let tab = widget.tabs[id];
                 let e = new THREE.Euler().setFromQuaternion(rot);
-                // let dv = (e._z - (Math.PI - e._z));
                 e._z = Math.PI - e._z;
-                rec.rot = new THREE.Quaternion().setFromEuler(e);
-                // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,dv));
+            let { _x, _y, _z, _w } = rec.rot;
+            let or = new THREE.Quaternion(_x, _y, _z, _w);
+                let nr = new THREE.Quaternion().setFromEuler(e);
+            let ra = or.angleTo(nr);
+            console.log({or, nr, ra});
+                rec.rot = nr;
+                // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,e._z));
                 // tab.box.geometry.applyMatrix4(m4);
                 tab.box.position.x = pos.x = -pos.x;
             });
