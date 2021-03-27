@@ -23,6 +23,7 @@
             case 'es': return 'es-es';
             case 'fr': return 'fr-fr';
             case 'pl': return 'pl-pl';
+            case 'pt': return 'pt-pt';
         }
         return KDFL;
     };

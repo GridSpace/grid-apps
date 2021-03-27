@@ -2021,6 +2021,10 @@
             SDB.setItem('kiri-lang', 'pl-pl');
             API.space.reload();
         };
+        $('lset-pt').onclick = function() {
+            SDB.setItem('kiri-lang', 'pt-pt');
+            API.space.reload();
+        };
         $('lset-es').onclick = function() {
             SDB.setItem('kiri-lang', 'es-es');
             API.space.reload();

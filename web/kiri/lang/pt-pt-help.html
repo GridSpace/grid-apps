@@ -1,0 +1,175 @@
+<div id="help" class="f-col a-stretch">
+
+    <div class="title f-row j-center">
+        <label>Ajuda Kiri:Moto Slicer</label>
+        <label id="kiri-version"></label>
+    </div>
+
+    <div class="f-row">
+
+    <div id="help-sel" class="f-col">
+        <div class="help-label" tab="about">sobre</div>
+        <div class="help-label" tab="start">iniciar</div>
+        <div class="help-label" tab="controls">controlos</div>
+        <div class="help-label" tab="support">suporte</div>
+        <div class="help-label" tab="project">projeto</div>
+    </div>
+
+    <div id="help-tabs" class="f-grow">
+        <div id="help-tab-about" class="help-tab f-col a-center">
+            <div class="content">
+                <p>
+                    <b>Kiri:Moto</b> é um slicer browser-based único e de código aberto que
+                    transforma modelos 3d em instruções-máquina para <u>impressoras 3D</u>, <u>fresadoras CNC</u>,
+                    e <u>Cortadoras Laser</u>.
+                </p><br><p>
+                    Ser browser-based significa que <i>todo</i> o processamento acontece no seu browser de modo local,
+                    e não na cloud. Seus dados e modelos se mantem <i>privados</i> para você.
+                </p><br><p>
+                    Isto significa que a Kiri se comporta mesmo como uma app nativa no seu computador com a segurança
+                    adicional de correr dentro do sandbox de segurança do seu browser.
+                </p><br><p>
+                    O outro benefício de correr a partir da internet é que a Kiri está sempre actualizada. Novas
+                    funcionalidades, correções de bugs e updates são disponibilizadas frequentemente. Se você quiser usar uma versão mais antiga
+                    ou em desenvolvimento da Kiri, selecione essa versão a partir do menu de usuário no topo à direita.
+                </p>
+            </div>
+            <div class="grow"></div>
+            <i>Kiri vem de Kiri-e que é a arte Japonesa de cortar papel</i>
+            <i>Moto é o diminuitivo de "Modeling Tool" do inglês ferramenta de modelagem</i>
+        </div>
+
+        <div id="help-tab-start" class="help-tab f-col"><div class="content">
+            <b class="header">Guia de Início Rápido</b>
+            <div class="content">
+                <p>
+                    <li id="help-start">veja <a href="https://youtu.be/08795Sj22QE" target="youtube">O Guia Vídeo Definitivo do Kiri:Moto 2.5</a></li>
+                    <li><button><i class="fas fa-cogs"></i></button> menu de configuração seleciona um <button><i class="fas fa-cube"></i></button> dispositivo e um modo</li>
+                    <li><button><i class="fas fa-sliders-h"></i></button> preferencias permite definições de interface e específicas do modo</li>
+                    <li><button><i class="fas fa-plus"></i></button> customize um dispositivo se pretende alterar as definições padrão</li>
+                    <li><button><i class="fas fa-folder"></i></button> abrir ficheiros ou <button><i class="fas fa-file-upload"></i></button> importar peças para o espaço de trabalho</li>
+                    <li>use os menus de perfil à direita para customizar o parametros de fatiamento</li>
+                    <li><button><i class="fas fa-bars"></i></button> fatie os objetos para ver os efeitos dos parametros</li>
+                    <li><button><i class="fas fa-cubes"></i></button> previsualizar calcula os dados do caminho a partir do objetos fatiados</li>
+                    <li><button><i class="fas fa-file-download"></i></button> exportar converte caminhos para ficheiros GCode e SVG</li>
+                </p>
+            </div>
+            <div class="content">
+                <b class="header">Modos de Operação</b>
+                <p>Cada modo (FDM, CAM, Laser, SLA) possui funcionalidades e definições diferentes.
+                    Explore os videos no Youtube para saber mais.</p>
+            </div>
+        </div></div>
+
+        <div id="help-tab-print" class="help-tab f-col">sobre impressão 3d</div>
+        <div id="help-tab-mill" class="help-tab f-col">sobre fresagem cnc</div>
+        <div id="help-tab-laser" class="help-tab f-col">sobre corte laser</div>
+
+        <div id="help-tab-controls" class="help-tab f-col a-center"><div class="content">
+            <div class="f-row">
+                <table>
+                    <tr><td colspan="2" class="header">Controlos de Teclado</td><tr>
+                    <tr><td></td></tr>
+                    <tr><th>Tecla</th><th>Ação</th></tr>
+                    <tr><td colspan=2 class="header2">Configuração</td></tr>
+                    <tr><td><label>e</label></td><td>Seleção de Dispositivo</td></tr>
+                    <tr><td><label>o</label></td><td>Seleção de Ferramenta CAM </td></tr>
+                    <tr><td><label>c</label></td><td>Dispositivos de Malha Local</td></tr>
+                    <tr><td><label>q</label></td><td>Painel de Preferências</td></tr>
+                    <tr><td><label>l</label></td><td>Perfis de Trabalho</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Modo</td></tr>
+                    <tr><td><label>a</label></td><td>Organizar</td></tr>
+                    <tr><td><label>s</label></td><td>Fatiar</td></tr>
+                    <tr><td><label>p</label></td><td>Previsualizar</td></tr>
+                    <tr><td><label>g</label></td><td>Animação</td></tr>
+                    <tr><td><label>x</label></td><td>Exportar</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Ficheiro</td></tr>
+                    <tr><td><label>i</label></td><td>Importar</td></tr>
+                    <tr><td><label>r</label></td><td>Recente</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Ver</td></tr>
+                    <tr><td><label>h</label></td><td>Início</td></tr>
+                    <tr><td><label>t</label></td><td>Topo</td></tr>
+                    <tr><td><label>f</label></td><td>Frente</td></tr>
+                    <tr><td><label>b</label></td><td>Traseira</td></tr>
+                    <tr><td><label>z</label></td><td>Recompor Vista</td></tr>
+                    <tr><td><label>&lt; &gt;</label></td><td>Percorrer Vistas Laterais</td></tr>
+                    <tr><td><label>v</label></td><td>Focar (organiza)</td></tr>
+                    <tr><td><label>v</label></td><td>Camada (fatiar/previsualizar)</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Objetos</td></tr>
+                    <tr><td><label>d</label></td><td>Duplicar</td></tr>
+                    <tr><td><label>m</label></td><td>Espelhar</td></tr>
+                    <tr><td><label>o</label></td><td>Rodar Dialogo</td></tr>
+                    <tr><td><label>delete</label></td><td>Apagar</td></tr>
+                    <tr><td><label>arrow</label></td><td>Rodar 90&deg;</td></tr>
+                    <tr><td><label>shift-arrow</label></td><td>Rodar 5&deg;</td></tr>
+                    <tr><td><label>option-arrow</label></td><td>Mover 5mm</td></tr>
+                    <tr><td><label>ctrl-a</label></td><td>Selecionar todos</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Ajuda</td></tr>
+                    <tr><td><label>?</label></td><td>Esta Janela</td></tr>
+                    <tr><td><br><br></td></tr>
+                    <tr><td colspan="2" class="header">Controlos do Mouse</td><tr>
+                    <tr><td></td></tr>
+                    <tr><th>Combinação</th><th>Ação</th></tr>
+                    <tr><td colspan=2 class="header2">View</td></tr>
+                    <tr><td><label>shift</label> roda</td><td>Change Layer</td></tr>
+                    <tr><td><label>meta</label> arrastar</td><td>Arrastar</td></tr>
+                    <tr><td><label>direito arrastar</label></td><td>Arrastar</td></tr>
+                    <tr><td><label>esquerdo arrastar</label></td><td>Rotate</td></tr>
+                    <tr><td><label>roda do mouse</label></td><td>Zoom</td></tr>
+                    <tr><td><label>meio arrastar</label></td><td>Zoom</td></tr>
+                    <tr><td><label>meta</label> arrastar</td><td>Arrastar</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">Objects</td></tr>
+                    <tr><td><label>ctrl-clique</label></td><td>Alinhar a face à base</td></tr>
+                    <tr><td><label>meta-clique</label></td><td>Alinhar a face à base</td></tr>
+                    <tr><td></td></tr>
+                </table>
+            </div>
+        </div></div>
+
+        <div id="help-tab-support" class="help-tab f-col"><div class="content">
+            <b class="header">Recursos</b>
+            <div class="content nounderline">
+                <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i> Documentação Extensiva</a>
+                <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Forums Grid.Space </a>
+                <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Chat no Discord </a>
+                <a target="_rsc" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24"><i class="fab fa-youtube"></i> Videos e tutoriais no Youtube </a>
+                <a target="_rsc" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> Siga Grid.Space no Twitter</a>
+                <a target="_rsc" href="https://facebook.com/groups/kirimoto"><i class="fab fa-facebook"></i> Grupo de Usuários Kiri:Moto no Facebook</a>
+            </div>
+            <b class="header">Opções dentro da App</b>
+            <p>
+                Por baixo do <button><i class="fas fa-user-cog"></i></button> do menu do usuário no topo à direita,
+                use a <span class="mono">export</span> opção de criar uma copia do seu dispositivo que poderá ser baixada
+                perfis e (opcional) o espaço de trabalho. Este Ficheiropode ser usado para restaurar uma fotografia completa
+                das suas definições e configurações a qualquer momento. Também poderá ser partilhado para que os desenvolvedores e outros
+                usuários possam replicar o seu ambiente para ajudar a debugar.
+            </p>
+        </div></div>
+
+        <div id="help-tab-project" class="help-tab f-col"><div class="content">
+            <b class="header">Fonte Aberta</b>
+            <p>
+                Kiri:Moto é completamente <a href="https://github.com/GridSpace/grid-apps" target="_github">fonte aberta</a>.
+                Dê uma olhada na página do projeto no GitHub. Existem projetos irmãos, tanto de hardware como de software.
+                Novos desenvolvedores e contribuições são bem-vindos a qualquer momento. A licenla de código é MIT.
+            </p><br><p>
+                <a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">Donativos</a> são igualmente bem-vindos.
+            </p>
+            <br><b class="header">Integrações</b>
+                <p>Kiri:Moto está também integrado em muitos outros aplicativos web-based</p>
+                <li><a target="app" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description"><b>Onshape</b></a> na App store</li>
+                <li><a target="app" href="http://www.thingiverse.com/apps/kirimoto/"><b>Thingiverse</b></a> como uma Thing App nativa</li>
+                <li><a target="app" href="https://simplyprint.io">SimplyPrint.io</a> como o slicer primitivo debaixo das coberturas</li>
+                <li><a target="app" href="https://sienci.com/camlab-help/">CAMLab</a> é um fork de uma versão anterior de Kiri:Moto</li>
+        </div></div>
+
+    </div>
+
+    </div>
+</div>
