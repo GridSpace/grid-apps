@@ -2188,7 +2188,8 @@
 
         // block standard browser context menu
         DOC.oncontextmenu = (event) => {
-            if (event.target.tagName === 'CANVAS') {
+            let et = event.target;
+            if (et.tagName === 'CANVAS' || et.id === 'context-menu') {
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
@@ -2196,7 +2197,12 @@
         };
 
         SPACE.mouse.up((event, int) => {
+            // context menu
             if (event.button === 2) {
+                let et = event.target;
+                if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
+                    return;
+                }
                 let full = API.view.isArrange();
                 for (let key of ["layflat","mirror","duplicate"]) {
                     $(`context-${key}`).disabled = !full;
@@ -2235,10 +2241,6 @@
             } else {
                 // return selected meshes for further mouse processing
                 return API.feature.hovers || API.selection.meshes();
-            }
-            if (event.button === 2 && API.view.isArrange()) {
-                event.preventDefault();
-                event.stopPropagation();
             }
         });
 
