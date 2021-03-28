@@ -396,6 +396,10 @@ th, tr, td, label {
     pointer-events: none;
 }
 
+#mod-print button, #catalogList button, #settingsList button {
+    text-transform: none !important;
+}
+
 #mid-lcol, #mid-rcol, #modal {
     pointer-events: visible;
     text-transform: capitalize;

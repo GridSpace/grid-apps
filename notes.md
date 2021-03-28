@@ -59,6 +59,8 @@
 * `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
 
+* `F` anchors should be generated anywhere needed in the print, not just head
+* `F` brims should extend between branches and have a slight offset from part
 * `F` slightly angle supports to lean into the Z of the part
 * `F` arrange should just align down Z, not side to side.
 
