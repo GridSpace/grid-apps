@@ -51,6 +51,8 @@
             "sliceSupportDensity": LANG.sp_dens_s,
             "sliceSupportOffset": LANG.sp_offs_s,
             "sliceLayerStart": LANG.sl_strt_s,
+            "firstLayerBrim": LANG.fl_brim_s,
+            "firstLayerBrimTrig": LANG.fl_brmn_s,
             // export
             "zHopDistance": LANG.ad_zhop_s,
             "arcTolerance": LANG.ad_zhop_s,

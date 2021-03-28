@@ -38,8 +38,6 @@
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,
             firstLayerMult = process.firstLayerPrintMult,
-            firstLayerBrim = process.firstLayerBrim,
-            firstLayerBrimTrig = process.firstLayerBrimTrig,
             layerRetract = process.outputLayerRetract,
             layerno = 0,
             zoff = 0,
@@ -505,6 +503,13 @@
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
+                let params = getRangeParameters(settings, layer.layer || 0);
+                let firstLayerBrim = params.firstLayerBrim;
+                let firstLayerBrimTrig = params.firstLayerBrimTrig;
+                if (!firstLayerBrim) {
+                    continue;
+                }
+
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
                 let mins = Infinity;
