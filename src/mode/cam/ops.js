@@ -713,7 +713,7 @@
         slice(progress) {
             let { op, state } = this;
             let { tool, rate, down, plunge, offset } = op;
-            let { settings, widget, sliceAll, zMax, tabs } = state;
+            let { settings, widget, sliceAll, zMax, zTop, tabs } = state;
             let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
             let { process, stock } = settings;
             let poly2polyEmit = BASE.util.poly2polyEmit;
@@ -760,7 +760,7 @@
                     .addPolys(slice.camLines)
             }
             function clearZ(polys, z, down) {
-                let zs = down ? BASE.util.lerp(zMax, z, down) : [ z ];
+                let zs = down ? BASE.util.lerp(zTop, z, down) : [ z ];
                 let nested = POLY.nest(polys);
                 for (let poly of nested) {
                     for (let z of zs) {
@@ -807,7 +807,7 @@
                         }
                         for (let pi of poly)
                         if (down) {
-                            for (let z of BASE.util.lerp(zMax, pi.getZ(), down)) {
+                            for (let z of BASE.util.lerp(zTop, pi.getZ(), down)) {
                                 followZ(pi.clone().setZ(z));
                             }
                         } else {

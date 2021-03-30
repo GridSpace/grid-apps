@@ -36,6 +36,7 @@
             zThru = zBottom === 0 ? (proc.camZThru || 0) : 0,
             wztop = widget.track.top,
             ztOff = hasStock ? stock.z - wztop : 0,
+            zTop = zMax + ztOff,
             minToolDiam = Infinity,
             maxToolDiam = -Infinity,
             thruHoles,
@@ -115,6 +116,7 @@
             zThru,
             ztOff,
             zMax,
+            zTop,
             unsafe
         };
 
