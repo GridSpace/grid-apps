@@ -1233,6 +1233,7 @@
             });
             return;
         }
+        API.event.emit("function.export", {mode: settings.mode});
         complete.export = true;
         KIRI.export(...argsave);
     }

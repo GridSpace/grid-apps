@@ -55,6 +55,13 @@
             });
         });
 
+        api.event.on("function.export", (mode) => {
+            if (isAnimate) {
+                CAM.animate_clear(api);
+                isAnimate = false;
+            }
+        });
+
         api.event.on("mode.set", (mode) => {
             isCamMode = mode === 'CAM';
             $('set-tools').style.display = isCamMode ? '' : 'none';

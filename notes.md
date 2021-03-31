@@ -6,9 +6,8 @@
 * `B` can't drag slider bar on ipad / ios
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
-* `P` allow selection to me decimated on demand (context menu?)
+* `P` allow selection to be decimated on demand (context menu?)
 * `P` improve decimation speed: omit point conversion or use wasm
-* `P` client/worker message interface normalization
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
 * `F` SVG import to 3D part like images
@@ -16,7 +15,7 @@
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)
 * `F` complete G2/G3 arc output / input (85% now)
-* `F` expose grouping feature
+* `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 
 # FDM
@@ -71,9 +70,7 @@
 * `B` first rough step too far down in certain circumstances?
 * `B` trace open polys are not wound consistently
 * `B` path routing with tabs sometimes makes no sense
-* `B` clicking on a pop-op should pin it until clicked or [esc]
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
-* `B` starting export during animation unleashes chaos
 
 * `F` limit cut depth to flute length of selected tool
 * `F` add ease-down support to trace op
