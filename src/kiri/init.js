@@ -2157,7 +2157,7 @@
         UC.hoverPop(UI.ltfile,  { group: hpops, target: $('file-pop') });
         UC.hoverPop(UI.ltview,  { group: hpops, target: $('pop-view') });
         UC.hoverPop(UI.ltact,   { group: hpops, target: $('pop-slice') });
-        UC.hoverPop(UI.render,  { group: hpops, target: $('pop-render'), sticky: true });
+        UC.hoverPop(UI.render,  { group: hpops, target: $('pop-render'), sticky: false });
         UC.hoverPop(UI.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
         UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
         UC.hoverPop(UI.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });

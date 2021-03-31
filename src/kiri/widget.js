@@ -531,7 +531,7 @@
 
     PRO.unrotate = function() {
         this.roto.reverse().forEach(m => {
-            this.mesh.geometry.applyMatrix4(new THREE.Matrix4().getInverse(m));
+            this.mesh.geometry.applyMatrix4(m.clone().invert());
         });
         this.roto = [];
         this.center();
