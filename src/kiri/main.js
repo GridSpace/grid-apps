@@ -2729,7 +2729,7 @@
             if (sk == settings.process.processName) {
                 load.setAttribute('class', 'selected')
             }
-            $('settingsName').value = settings.process.processName;
+            UI.settingsName.value = settings.process.processName;
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");
@@ -2758,6 +2758,7 @@
     function showSettings() {
         updateSettingsList();
         showModal("saves");
+        UI.settingsName.focus();
     }
 
     function showHelp() {

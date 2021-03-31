@@ -62,7 +62,6 @@ kiri.lang['zh'] = {
     dm_rcnt:        "最近使用文件",
     dm_savs:        "预存设置",
     dm_appp:        "应用偏好设置",
-    dm_svas:        "保存为",
 
     // CAM工具对话框
     td_tyem:        "立",        // 立铣刀
