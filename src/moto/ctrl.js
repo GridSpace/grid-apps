@@ -109,7 +109,7 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
         lastQuaternion = new THREE.Quaternion(),
         // so camera.up is the orbit axis
         quat = new THREE.Quaternion().setFromUnitVectors(object.up, new THREE.Vector3(0, 1, 0)),
-        quatInverse = quat.clone().inverse(),
+        quatInverse = quat.clone().invert(),
         // touch tracking
         firstTouch = [],
         touchSlide = false,

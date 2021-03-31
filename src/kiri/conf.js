@@ -339,6 +339,7 @@
                     outputShortPoly: 100.0,
                     outputMinSpeed: 10.0,
                     outputCoastDist: 0,
+                    outputPurgeTower: true,
                     outputLayerRetract: false,
                     outputOriginCenter: true,
                     outputLoopLayers: "",

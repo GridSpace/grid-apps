@@ -38,6 +38,7 @@
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,
             firstLayerMult = process.firstLayerPrintMult,
+            purgeTower = process.outputPurgeTower || false,
             layerRetract = process.outputLayerRetract,
             layerno = 0,
             zoff = 0,
@@ -274,7 +275,7 @@
 
         // generate purge block for given nozzle
         function purge(nozzle, track, layer, start, z, using) {
-            if (extcount < 2 || isBelt) {
+            if (!purgeTower || extcount < 2 || isBelt) {
                 return start;
             }
             let rec = track[nozzle];

@@ -74,15 +74,16 @@
         if (!SDB[SEED]) {
             SDB[SEED] = new Date().getTime();
             if (!SETUP.s && API.feature.seed) {
+                if (SETUP.debug) {
+                    return then();
+                }
                 platform.load_stl("/obj/cube.stl", function(vert) {
                     CATALOG.putFile("sample cube.stl", vert);
                     platform.compute_max_z();
                     SPACE.view.home();
                     setTimeout(() => { API.space.save(true) },500);
                     then();
-                    if (!SETUP.debug) {
-                        API.help.show();
-                    }
+                    API.help.show();
                 });
                 return true;
             }
@@ -1360,6 +1361,11 @@
         }
     }
 
+    function isMultiHead() {
+        let dev = API.conf.get().device;
+        return dev.extruders && dev.extruders.length > 1;
+    }
+
     function isBelt() {
         return UI.deviceBelt.checked;
     }
@@ -1796,6 +1802,7 @@
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true, show:isNotBelt}),
             outputLoopLayers:    UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, modes:FDM, comma:true, show:isBelt}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
+            outputPurgeTower:    UC.newBoolean(LANG.ad_purg_s, onBooleanClick, {title:LANG.ad_purg_l, modes:FDM, show:isMultiHead}),
 
             // SLA
             slaProc:             UC.newGroup(LANG.sa_menu, null, {modes:SLA, group:"sla-slice"}),
