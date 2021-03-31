@@ -2,7 +2,8 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `B` origin (and bed size) bug (Onshape?) when switching modes in 2.5 and 2.6
+* `B` origin (and bed size) bug (Onshape?) when switching device modes
+* `B` can't drag slider bar on ipad / ios
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to me decimated on demand (context menu?)
@@ -62,7 +63,7 @@
 * `F` anchors should be generated anywhere needed in the print, not just head
 * `F` brims should extend between branches and have a slight offset from part
 * `F` slightly angle supports to lean into the Z of the part
-* `F` arrange should just align down Z, not side to side.
+* `F` arrange should align down Z, not side to side.
 
 # CAM
 

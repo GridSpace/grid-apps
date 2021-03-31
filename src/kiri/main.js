@@ -2728,6 +2728,7 @@
             if (sk == settings.process.processName) {
                 load.setAttribute('class', 'selected')
             }
+            $('settingsName').value = settings.process.processName;
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");

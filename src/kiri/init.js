@@ -80,7 +80,9 @@
                     SPACE.view.home();
                     setTimeout(() => { API.space.save(true) },500);
                     then();
-                    API.help.show();
+                    if (!SETUP.debug) {
+                        API.help.show();
+                    }
                 });
                 return true;
             }
@@ -586,7 +588,7 @@
         });
     }
 
-    function settingsSave(ev) {
+    function settingsSave(ev, name) {
         if (ev) {
             ev.stopPropagation();
             ev.preventDefault();
@@ -598,10 +600,11 @@
             def = "default",
             cp = s.process,
             pl = s.sproc[mode],
-            lp = s.cproc[mode];
-
-        UC.prompt("Save Settings As", cp ? lp || def : def).then(name => {
-            if (name) {
+            lp = s.cproc[mode],
+            saveAs = (name) => {
+                if (!name) {
+                    return;
+                }
                 let np = pl[name] = {};
                 cp.processName = name;
                 pl[name] = Object.clone(cp);
@@ -614,8 +617,13 @@
                 API.conf.save();
                 API.conf.update();
                 API.event.settings();
-            }
-        });
+            };
+
+        if (name) {
+            saveAs(name);
+        } else {
+            UC.prompt("Save Settings As", cp ? lp || def : def).then(saveAs);
+        }
     }
 
     function settingsLoad() {
@@ -1833,9 +1841,17 @@
             settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
             settingsTable: UC.newRow([ UI.settingsLoad = UC.newButton(LANG.se_load, settingsLoad) ]),
             settingsTable: UC.newRow([ UI.settingsSave = UC.newButton(LANG.se_save, settingsSave) ]),
+            settingsSave: $('settingsSave'),
+            settingsName: $('settingsName'),
 
             layers:        UC.setGroup($("layers")),
         });
+
+        // override old style settings two-button menu
+        UI.settingsGroup.onclick = settingsLoad;
+        UI.settingsSave.onclick = () => {
+            settingsSave(undefined, UI.settingsName.value);
+        };
 
         function spindleShow() {
             return settings().device.spindleMax > 0;

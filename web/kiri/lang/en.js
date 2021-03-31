@@ -63,6 +63,7 @@ kiri.lang['en-us'] = {
     dm_rcnt:        "recent files",
     dm_savs:        "saved settings",
     dm_appp:        "Application Preferences",
+    dm_svas:        "Save As",
 
     // CAM Tool Dialog
     td_tyem:        "end",          // end mill

@@ -917,6 +917,21 @@ th, tr, td, label {
     border-bottom-right-radius: 10px;
     background-color: var(--main-color);
 }
+#settingsNew {
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid var(--main-color);
+}
+#settingsName {
+    margin-right: 4px;
+    padding-right: 4px;
+    padding-left: 4px;
+    text-align: center;
+}
+#settingsList {
+    max-height: 450px;
+    overflow-y: auto;
+}
 #settingsList button.selected {
     font-weight: bold;
     background-color: #ccc;
