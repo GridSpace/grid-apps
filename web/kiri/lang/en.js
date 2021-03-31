@@ -1,5 +1,5 @@
-// english. other language maps will defer to english
-// map for any missing key/value pairs
+// English language map. Other localization maps will
+// defer to English map for any missing key/value pairs
 kiri.lang['en'] =
 kiri.lang['en-us'] = {
     // common keys and menus

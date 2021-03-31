@@ -1,3 +1,5 @@
+// Spanish localization for Kiri:Moto
+// Will defer to English map for any missing key/value pairs
 kiri.lang['es'] =
 kiri.lang['es-es'] = {
     // common keys and menus

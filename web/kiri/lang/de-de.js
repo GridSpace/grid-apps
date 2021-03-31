@@ -1,5 +1,5 @@
-// english. other language maps will defer to english
-// map for any missing key/value pairs
+// German localization for Kiri:Moto
+// Will defer to English map for any missing key/value pairs
 kiri.lang['de'] =
 kiri.lang['de-de'] = {
     // common keys and menus
