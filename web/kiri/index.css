@@ -1159,6 +1159,7 @@ th, tr, td, label {
     overflow: auto;
     padding: 5px;
     width: 100%;
+    background-color: #f8f8f8;
 }
 #device-action, #tool-action {
     margin-top: 5px;
