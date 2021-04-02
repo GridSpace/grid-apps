@@ -1,5 +1,6 @@
 {
     "pre":[
+        "M107               ; turn off filament cooling fan",
         "M140 S{bed_temp}   ; set bed temp",
         "M104 S{temp}       ; set hot end temp",
         "M105               ; report temps",
