@@ -507,19 +507,17 @@
                 let params = getRangeParameters(settings, layer.layer || 0);
                 let firstLayerBrim = params.firstLayerBrim;
                 let firstLayerBrimTrig = params.firstLayerBrimTrig;
-                if (!firstLayerBrim) {
-                    continue;
-                }
-
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
                 let mins = Infinity;
                 let miny = Infinity;
+
                 for (let rec of layer) {
                     let point = rec.point;
                     let belty = rec.belty = -point.y + point.z * bfactor;
                     miny = Math.min(miny, belty);
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
+                        // apply base speed to segments touching belt
                         rec.speed = firstLayerRate;
                         rec.emit *= firstLayerMult;
                         minx = Math.min(minx, point.x, lastout.point.x);
