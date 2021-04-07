@@ -501,12 +501,16 @@
             // }
 
             let thresh = firstLayerHeight * 1.05;
+            let seqn = 0;
+
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
                 let params = getRangeParameters(settings, layer.layer || 0);
                 let firstLayerBrim = params.firstLayerBrim;
                 let firstLayerBrimTrig = params.firstLayerBrimTrig;
+                let firstLayerBrimComb = params.firstLayerBrimComb;
+                let firstLayerBrimGap = params.firstLayerBrimGap || 0;
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
                 let mins = Infinity;
@@ -539,18 +543,24 @@
                     continue;
                 }
                 // add brim, if specified
-                if (first && firstLayerBrim) {
+                if (first && firstLayerBrim && seqn <= firstLayerBrimComb) {
                     let { emit, tool } = first;
                     let y = maxy;
                     let z = minz;
-                    let b = Math.max(firstLayerBrim, 1);
+                    let g = firstLayerBrimGap || 0;
+                    let b = Math.max(firstLayerBrim, 1) + g;
                     let tmpout = [];
                     layer.last().retract = true;
                     print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
-                    print.addOutput(tmpout, newPoint(maxx + 0, y, z), emit, firstLayerRate, tool).retract = true;
+                    print.addOutput(tmpout, newPoint(maxx + g, y, z), emit, firstLayerRate, tool).retract = true;
                     print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
-                    print.addOutput(tmpout, newPoint(minx - 0, y, z), emit, firstLayerRate, tool).retract = false;
+                    print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool).retract = false;
                     layer.splice(0,0,...tmpout);
+                    if (firstLayerBrimComb) {
+                        seqn++;
+                    }
+                } else {
+                    seqn = 0;
                 }
             }
         }
