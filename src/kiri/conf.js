@@ -317,6 +317,8 @@
                     firstLayerBedTemp: 0,
                     firstLayerBrim: 0,
                     firstLayerBrimTrig: 0,
+                    firstLayerBrimComb: 0,
+                    firstLayerBrimGap: 0,
                     firstLayerBeltLead: 3,
                     firstLayerFanSpeed: 0,
                     outputRaft: false,
