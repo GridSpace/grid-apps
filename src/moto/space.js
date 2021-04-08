@@ -229,14 +229,19 @@
         }
     }
 
-    function onEnterKey(el, fn) {
+    function onEnterKey(el, fn, onblur) {
         if (Array.isArray(el)) {
-            for (let i=0; i<el.length; i += 2) onEnterKey(el[i], el[i+1]);
+            for (let i=0; i<el.length; i += 2) onEnterKey(el[i], el[i+1], fn);
             return;
         }
         addEventListener(el, 'keyup', function(event) {
             if (event.keyCode === 13) fn(event);
         });
+        if (onblur) {
+            addEventListener(el, 'blur', function(event) {
+                fn(event);
+            });
+        }
     }
 
     function addLight(x,y,z,i) {

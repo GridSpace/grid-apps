@@ -2143,7 +2143,7 @@
             $('rot_x'),       selectionRotate,
             $('rot_y'),       selectionRotate,
             $('rot_z'),       selectionRotate
-        ]);
+        ], true);
 
         $('lab-axis').onclick = () => {
             UI.lockX.checked =
