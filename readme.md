@@ -10,7 +10,6 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 
 * [Grid.Space](https://grid.space) hosts [several live versions](https://grid.space/choose) of the code
 * [Kiri:Moto](https://grid.space/kiri) -- A Unique, Multi-Modal, Browser-based Slicer for 3D printers, CNC mills and Laser cutters
-* [Meta:Moto](https://grid.space/meta) -- A Recursive Block-based Modeler
 
 ### Live Versions
 
@@ -28,13 +27,12 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 ![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
 
-## Get Involved
+## Community
 
-* [Facebook Kiri:Moto Users Group](https://www.facebook.com/groups/kirimoto/)
+* [Discord Chat](https://discord.com/channels/688863523207774209/688863523211968535)
 * [YouTube Videos](https://www.youtube.com/c/gridspace)
 * [Twitter Updates](https://twitter.com/grid_space_3d)
-* [Discord Chat](https://discord.com/channels/688863523207774209/688863523211968535)
-* [Wiki Reference](https://github.com/GridSpace/grid-apps/wiki)
+* [Facebook Users Group](https://www.facebook.com/groups/kirimoto/)
 
 ### Testing Locally (with Docker)
 
@@ -46,10 +44,9 @@ docker-compose up
 ```
 
 You can now access your environment of grid-apps by going to:
-[Kiri:Moto](http://127.0.0.1:8080/kiri) or
-[Meta:Moto](http://127.0.0.1:8080/meta).
+[Kiri:Moto](http://127.0.0.1:8080/kiri)
 
-### Testing Locally
+### Testing Locally (with NodeJS)
 
 ```
 git clone git@github.com:GridSpace/grid-apps.git
@@ -66,8 +63,7 @@ sudo npm install -g @gridspace/app-server
 ```
 
 to start a local instance of the apps. then open
-[Kiri:Moto](http://localhost:8080/kiri) or
-[Meta:Moto](http://localhost:8080/meta) on your local host
+[Kiri:Moto](http://localhost:8080/kiri) on your local host
 
 Alternatively, if you are using a packaged version of npm that ships with
 a Linux distribution, but still want to install in your home directory, you
@@ -104,3 +100,7 @@ A script include that injects a web worker into the page that will asynchronousl
 
 * https://grid.space/kiri/engine.html
 * https://grid.space/kiri/frame.html
+
+### More Documentation
+
+* https://docs.grid.space/projects/kiri-moto
