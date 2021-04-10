@@ -36,6 +36,19 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 * [Discord Chat](https://discord.com/channels/688863523207774209/688863523211968535)
 * [Wiki Reference](https://github.com/GridSpace/grid-apps/wiki)
 
+### Testing Locally (with Docker)
+
+```
+git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
+docker-compose build
+docker-compose up
+```
+
+You can now access your environment of grid-apps by going to:
+[Kiri:Moto](http://127.0.0.1:8080/kiri) or
+[Meta:Moto](http://127.0.0.1:8080/meta).
+
 ### Testing Locally
 
 ```

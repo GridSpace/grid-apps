@@ -1,0 +1,12 @@
+version: '3.1'
+
+services:
+  kirimoto:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+
+
+
+
