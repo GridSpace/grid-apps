@@ -1363,7 +1363,7 @@
 
     function isMultiHead() {
         let dev = API.conf.get().device;
-        return dev.extruders && dev.extruders.length > 1;
+        return isNotBelt() && dev.extruders && dev.extruders.length > 1;
     }
 
     function isBelt() {

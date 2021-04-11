@@ -78,7 +78,7 @@
         "sliceSupportExtra": 0,
         "sliceSupportAngle": 1,
         "sliceSupportNozzle": 0,
-        "sliceSolidMinArea": 1,
+        "sliceSolidMinArea": 15,
         "sliceSolidLayers": 3,
         "sliceBottomLayers": 3,
         "sliceTopLayers": 3,
@@ -92,8 +92,8 @@
         "outputFanMax": 255,
         "outputBedTemp": 70,
         "outputFanSpeed": 255,
-        "outputFeedrate": 50,
-        "outputFinishrate": 40,
+        "outputFeedrate": 40,
+        "outputFinishrate": 35,
         "outputSeekrate": 80,
         "outputShellMult": 1.2,
         "outputFillMult": 1.2,
@@ -108,7 +108,7 @@
         "outputCoastDist": 0.1,
         "outputWipeDistance": 1,
         "outputLayerRetract": false,
-        "detectThinWalls": true,
+        "detectThinWalls": false,
         "zHopDistance": 0,
         "antiBacklash": 0
     },{
@@ -131,7 +131,7 @@
         "sliceSupportExtra": 0,
         "sliceSupportAngle": 1,
         "sliceSupportNozzle": 0,
-        "sliceSolidMinArea": 1,
+        "sliceSolidMinArea": 15,
         "sliceSolidLayers": 3,
         "sliceBottomLayers": 3,
         "sliceTopLayers": 3,
@@ -161,7 +161,7 @@
         "outputCoastDist": 0.1,
         "outputWipeDistance": 1,
         "outputLayerRetract": false,
-        "detectThinWalls": true,
+        "detectThinWalls": false,
         "zHopDistance": 0,
         "antiBacklash": 0
     }]
