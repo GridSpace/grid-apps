@@ -159,7 +159,7 @@
             indices.shift();
             if (op.flats) {
                 let flats = Object.keys(slicer.zFlat)
-                    .map(v => parseFloat(v).round(4))
+                    .map(v => parseFloat(v).round(5))
                     .filter(v => v >= zBottom);
                 flats.forEach(v => {
                     if (!indices.contains(v)) {
