@@ -534,34 +534,34 @@
                     }
                     lastout = rec;
                 }
-                // skip if brim trigger not met
-                if (firstLayerBrimTrig > 0 && mins > firstLayerBrimTrig) {
-                    continue;
-                }
                 // do not add brims to anchor layers
-                if (layer.anchor) {
+                if (!first || layer.anchor) {
+                    seqn = 0;
                     continue;
                 }
-                // add brim, if specified
-                if (first && firstLayerBrim && seqn <= firstLayerBrimComb) {
+                let tmpout = [];
+                let trigmet = firstLayerBrimTrig === 0 || (firstLayerBrimTrig && mins > firstLayerBrimTrig);
+                // add brim when all conditions met
+                if (firstLayerBrim && seqn <= firstLayerBrimComb && trigmet) {
                     let { emit, tool } = first;
                     let y = maxy;
                     let z = minz;
                     let g = firstLayerBrimGap || 0;
                     let b = Math.max(firstLayerBrim, 1) + g;
-                    let tmpout = [];
                     layer.last().retract = true;
                     print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
                     print.addOutput(tmpout, newPoint(maxx + g, y, z), emit, firstLayerRate, tool).retract = true;
                     print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
                     print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool).retract = false;
-                    layer.splice(0,0,...tmpout);
                     if (firstLayerBrimComb) {
                         seqn++;
                     }
                 } else {
+                    // for any layer touching belt, ensure start point is nearest origin
+                    print.addOutput(tmpout, newPoint(minx, maxy, minz), 0, firstLayerSeek, first.tool);
                     seqn = 0;
                 }
+                layer.splice(0,0,...tmpout);
             }
         }
 
