@@ -351,7 +351,7 @@
                     start = start.up;
                 }
                 // if a brim applies, add that width to anchor
-                let brim = spro.firstLayerBrim || 0;
+                let brim = getRangeParameters(settings, 0).firstLayerBrim || 0;
                 if (brim) {
                     minx -= brim;
                     maxx += brim;
