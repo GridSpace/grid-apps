@@ -85,6 +85,9 @@
         }
 
         addPolys(polys, options) {
+            if (options && options.clean) {
+                polys = polys.map(p => p.clean());
+            }
             if (options && options.flat) {
                 return this.addFlats(polys, options);
             }
@@ -199,8 +202,6 @@
             polys.forEach(poly => {
                 const contour = [];
                 poly = poly.debur(0.05);
-                if (!poly) return;
-                poly = poly.clean();
                 if (!poly) return;
                 poly = poly.miter();
                 poly.points.forEach(p => {

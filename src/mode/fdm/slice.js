@@ -484,7 +484,7 @@
 
             if (top.shells) output
                 .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
-                .addPolys(top.shells, vopt({ offset, height }));
+                .addPolys(top.shells, vopt({ offset, height, clean: true }));
 
             if (top.gaps) output
                 .setLayer("gaps", COLOR.gaps)
