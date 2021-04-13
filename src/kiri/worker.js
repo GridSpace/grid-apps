@@ -6,6 +6,7 @@ let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
     time = UTIL.time,
+    qtpi = Math.cos(Math.PI/4),
     current = self.worker = {
         print: null,
         snap: null
@@ -122,6 +123,9 @@ KIRI.worker = {
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
             let rotation = (Math.PI / 180) * 45;
 
+            // move to accomodate anchor
+            ypos += (settings.process.firstLayerBeltLead || 0);
+
             widget.rotate(rotation,0,0,true);
             let minr = gmin(group);
             widget.belt = { xpos, ypos, yadd: minr.maxy - minr.miny };
@@ -147,6 +151,8 @@ KIRI.worker = {
             let { dy, dz } = widget.track.center;
             widget.groupBounds();
             let { xpos, ypos } = widget.belt;
+            // move to accomodate anchor
+            dy -= (settings.process.firstLayerBeltLead || 0) ;
             widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
             for (let others of group.slice(1)) {
                 others.rotinfo = widget.rotinfo;

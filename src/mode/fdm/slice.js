@@ -339,7 +339,7 @@
                             maxx = Math.max(maxx, poly.bounds.maxx);
                         }
                     }
-                    if (Math.abs(slice.belt.miny - smin) < 0.001) {
+                    if (Math.abs(slice.belt.miny - smin) < 0.01) {
                         slice.belt.touch = true;
                         if (!start) start = slice;
                     }
@@ -349,6 +349,12 @@
                 // ensure we start against a layer with shells
                 while (start.up && start.topShells().length === 0) {
                     start = start.up;
+                }
+                // if a brim applies, add that width to anchor
+                let brim = getRangeParameters(settings, 0).firstLayerBrim || 0;
+                if (brim) {
+                    minx -= brim;
+                    maxx += brim;
                 }
                 while (offset && start && offset >= sliceHeight) {
                     let addto = start.down;
@@ -478,7 +484,7 @@
 
             if (top.shells) output
                 .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
-                .addPolys(top.shells, vopt({ offset, height }));
+                .addPolys(top.shells, vopt({ offset, height, clean: true }));
 
             if (top.gaps) output
                 .setLayer("gaps", COLOR.gaps)
