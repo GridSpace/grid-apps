@@ -124,7 +124,7 @@ KIRI.worker = {
             let rotation = (Math.PI / 180) * 45;
 
             // move to accomodate anchor
-            ypos += (settings.process.firstLayerBeltLead || 0) * qtpi;
+            ypos += (settings.process.firstLayerBeltLead || 0);
 
             widget.rotate(rotation,0,0,true);
             let minr = gmin(group);
@@ -152,7 +152,7 @@ KIRI.worker = {
             widget.groupBounds();
             let { xpos, ypos } = widget.belt;
             // move to accomodate anchor
-            dy -= (settings.process.firstLayerBeltLead || 0) * qtpi;
+            dy -= (settings.process.firstLayerBeltLead || 0) ;
             widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
             for (let others of group.slice(1)) {
                 others.rotinfo = widget.rotinfo;
