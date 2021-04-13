@@ -200,6 +200,8 @@
                 const contour = [];
                 poly = poly.debur(0.05);
                 if (!poly) return;
+                poly = poly.clean();
+                if (!poly) return;
                 poly = poly.miter();
                 poly.points.forEach(p => {
                     contour.push(new THREE.Vector2(p.x, p.y));
