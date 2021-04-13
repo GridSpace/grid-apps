@@ -350,6 +350,12 @@
                 while (start.up && start.topShells().length === 0) {
                     start = start.up;
                 }
+                // if a brim applies, add that width to anchor
+                let brim = spro.firstLayerBrim || 0;
+                if (brim) {
+                    minx -= brim;
+                    maxx += brim;
+                }
                 while (offset && start && offset >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {
