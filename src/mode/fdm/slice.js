@@ -339,7 +339,7 @@
                             maxx = Math.max(maxx, poly.bounds.maxx);
                         }
                     }
-                    if (Math.abs(slice.belt.miny - smin) < 0.001) {
+                    if (Math.abs(slice.belt.miny - smin) < 0.01) {
                         slice.belt.touch = true;
                         if (!start) start = slice;
                     }
