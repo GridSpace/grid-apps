@@ -86,7 +86,7 @@
 
         addPolys(polys, options) {
             if (options && options.clean) {
-                polys = polys.map(p => p.clean());
+                polys = polys.map(p => p.clean(true));
             }
             if (options && options.flat) {
                 return this.addFlats(polys, options);
