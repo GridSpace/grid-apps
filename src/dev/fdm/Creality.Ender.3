@@ -3,20 +3,18 @@
         "M107                     ; turn off filament cooling fan",
         "G90                      ; set absolute positioning mode",
         "M82                      ; set absolute positioning for extruder",
-        "M104 S{temp} T{tool}     ; set extruder temperature",
-        "M140 S{bed_temp} T{tool} ; set bed temperature",
+        "M104 S{temp}             ; set extruder temperature",
+        "M140 S{bed_temp}         ; set bed temperature",
         "G28                      ; home axes",
-        "G92 X0 Y0 Z0 E0          ; reset all axes positions",
-        "G1 Z0.25 F180            ; move to Z 0.25mm over bed",
-        "G1 F225                  ; set feed speed",
-        "M190 S{bed_temp} T{tool} ; wait for bed to reach target temp",
-        "M109 S{temp} T{tool}     ; wait for extruder to reach target temp"
+        "G92 E0                   ; reset all axes positions",
+        "M109 S{temp}             ; wait for extruder to reach target temp",
+        "M190 S{bed_temp}         ; wait for bed to reach target temp"
     ],
     "post":[
         "M107                     ; turn off filament cooling fan",
         "M104 S0 T{tool}          ; turn off right extruder",
         "M140 S0 T{tool}          ; turn off bed",
-        "G1 X0 Y300 F1200         ; end move",
+        "G1 X0 Y300 F1200         ; end move eject bed",
         "M84                      ; disable stepper motors"
     ],
     "extruders":[
