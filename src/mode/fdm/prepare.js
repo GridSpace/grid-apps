@@ -413,7 +413,7 @@
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
-                    slice.belt && slice.belt.touch ? newPoint(-5000, 0, 0) : printPoint.sub(offset),
+                    slice.belt && slice.belt.touch ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),
                     offset,
                     layerout,
                     {
