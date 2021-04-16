@@ -413,7 +413,7 @@
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
-                    slice.belt && slice.belt.touch ? newPoint(-5000, 0, 0) : printPoint.sub(offset),
+                    slice.belt && slice.belt.touch ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),
                     offset,
                     layerout,
                     {
@@ -558,7 +558,8 @@
                     }
                 } else {
                     // for any layer touching belt, ensure start point is nearest origin
-                    print.addOutput(tmpout, newPoint(minx, maxy, minz), 0, firstLayerSeek, first.tool);
+                    // print.addOutput(tmpout, newPoint(minx, maxy, minz), 0, firstLayerSeek, first.tool);
+                    // print.lastPoint = newPoint(minx, maxy, minz);
                     seqn = 0;
                 }
                 layer.splice(0,0,...tmpout);
