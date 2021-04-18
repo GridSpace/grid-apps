@@ -60,7 +60,7 @@
     },
     "profiles":[{
         "processName": "CR30 PLA",
-        "sliceHeight": 0.25,
+        "sliceHeight": 0.20,
         "sliceShells": 3,
         "sliceShellOrder": "in-out",
         "sliceLayerStart": "last",
@@ -92,8 +92,8 @@
         "outputFanMax": 255,
         "outputBedTemp": 70,
         "outputFanSpeed": 255,
-        "outputFeedrate": 40,
-        "outputFinishrate": 35,
+        "outputFeedrate": 30,
+        "outputFinishrate": 30,
         "outputSeekrate": 80,
         "outputShellMult": 1.2,
         "outputFillMult": 1.2,
@@ -113,7 +113,7 @@
         "antiBacklash": 0
     },{
         "processName": "CR30 PETG",
-        "sliceHeight": 0.25,
+        "sliceHeight": 0.20,
         "sliceShells": 3,
         "sliceShellOrder": "in-out",
         "sliceLayerStart": "last",
@@ -145,7 +145,7 @@
         "outputFanMax": 0,
         "outputBedTemp": 70,
         "outputFanSpeed": 0,
-        "outputFeedrate": 40,
+        "outputFeedrate": 30,
         "outputFinishrate": 30,
         "outputSeekrate": 80,
         "outputShellMult": 1.2,
