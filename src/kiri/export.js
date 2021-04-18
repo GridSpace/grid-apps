@@ -194,7 +194,9 @@
                 API.show.progress(evt.loaded/evt.total, "sending");
             });
             ajax.open("POST", host+"/api/files/local");
-            ajax.setRequestHeader("X-Api-Key", apik);
+            if (apik) {
+                ajax.setRequestHeader("X-Api-Key", apik);
+            }
             ajax.send(form);
         }
 
