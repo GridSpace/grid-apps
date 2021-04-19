@@ -1228,43 +1228,20 @@
         return ((PI * SQR(noz/2)) / (PI * SQR(fil/2))) * (slice / noz);
     }
 
-    function subv(consts, v) {
-        let sv = consts[v];
-        if (sv !== undefined) {
-            v = sv;
-        }
-        sv = parseFloat(sv);
-        if (isNaN(sv)) {
-            return v;
-        }
-        return sv;
-    }
-
-    function constOp(tok, consts, opch, op) {
-        let pos, v1, v2;
-        if ((pos = tok.indexOf(opch)) > 0) {
-            let lv = tok.substring(0,pos);
-            let rv = tok.substring(pos+1);
-            v1 = subv(consts,lv) || 0;
-            v2 = subv(consts,rv) || 0;
-            return op(v1,v2).round(4);
-        } else {
-            return null;
-        }
-    }
-
     function constReplace(str, consts, start, pad, short) {
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
         if (cs >=0 && ce > cs) {
             tok = str.substring(cs+1,ce);
-            nutok =
-                constOp(tok, consts, "-", function(v1,v2) { return v1-v2 }) ||
-                constOp(tok, consts, "+", function(v1,v2) { return v1+v2 }) ||
-                constOp(tok, consts, "/", function(v1,v2) { return v1/v2 }) ||
-                constOp(tok, consts, "*", function(v1,v2) { return v1*v2 }) ||
-                consts[tok] || 0;
+            let eva = [];
+            for (let [k,v] of Object.entries(consts)) {
+                eva.push(`let ${k} = "${v}";`);
+            }
+            eva.push(`try {( ${tok} )} catch (e) {0}`);
+            let scr = eva.join('');
+            let evl = eval(`{ ${scr} }`);
+            nutok = evl;
             if (pad) {
                 nutok = nutok.toString();
                 let oldln = ce-cs+1;
