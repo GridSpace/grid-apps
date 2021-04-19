@@ -345,6 +345,7 @@
                     outputLayerRetract: false,
                     outputOriginCenter: true,
                     outputLoopLayers: "",
+                    outputLoops: 0,
                     outputPeelGuard: 0,
                     outputInvertX: false,
                     outputInvertY: false,

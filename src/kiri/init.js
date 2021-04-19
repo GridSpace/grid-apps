@@ -1802,7 +1802,8 @@
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             outputPeelGuard:     UC.newInput(LANG.ag_peel_s, {title:LANG.ag_peel_l, convert:UC.toInt, modes:FDM, comma:true, show:isBelt}),
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true, show:isNotBelt}),
-            outputLoopLayers:    UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, modes:FDM, comma:true, show:isBelt}),
+            // outputLoopLayers:    UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, modes:FDM, comma:true, show:isBelt}),
+            outputLoops:         UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:UC.toInt, bound:UC.bound(0,1000), modes:FDM, show:isBelt}),
             outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
             outputPurgeTower:    UC.newBoolean(LANG.ad_purg_s, onBooleanClick, {title:LANG.ad_purg_l, modes:FDM, show:isMultiHead}),
 

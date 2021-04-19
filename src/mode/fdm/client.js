@@ -48,6 +48,7 @@
             "outputShortPoly": LANG.ad_spol_s,
             "outputMinSpeed": LANG.ad_mins_s,
             "outputCoastDist": LANG.ad_scst_s,
+            "outputLoops": LANG.ag_loop_s,
             "sliceSupportDensity": LANG.sp_dens_s,
             "sliceSupportOffset": LANG.sp_offs_s,
             "sliceLayerStart": LANG.sl_strt_s,

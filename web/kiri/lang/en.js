@@ -597,8 +597,10 @@ kiri.lang['en-us'] = {
     ag_peel_l:      ["starting at this belt z positoin","periodically roll the print off and","back on to the belt to unstick it","and prevent rolling deflection"],
     ag_paws_s:      "pause layers",
     ag_paws_l:      ["comma-separated list of layers","to inject pause commands before"],
-    ag_loop_s:      "loop layers",
-    ag_loop_l:      ["layer ranges to repeat in the format","first-last-count,first-last-count,...","omitted count = 1"],
+    // ag_loop_s:      "loop layers",
+    // ag_loop_l:      ["layer ranges to repeat in the format","first-last-count,first-last-count,...","omitted count = 1"],
+    ag_loop_s:      "loop count",
+    ag_loop_l:      ["number of times to repeat","the selected range or the","entire print if no range"],
 
     // SLA MENU
     sa_menu:        "slicing",
