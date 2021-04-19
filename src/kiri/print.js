@@ -1228,11 +1228,25 @@
         return ((PI * SQR(noz/2)) / (PI * SQR(fil/2))) * (slice / noz);
     }
 
+    function subv(consts, v) {
+        let sv = consts[v];
+        if (sv !== undefined) {
+            v = sv;
+        }
+        sv = parseFloat(sv);
+        if (isNaN(sv)) {
+            return v;
+        }
+        return sv;
+    }
+
     function constOp(tok, consts, opch, op) {
         let pos, v1, v2;
         if ((pos = tok.indexOf(opch)) > 0) {
-            v1 = parseFloat(consts[tok.substring(0,pos)] || 0);
-            v2 = parseFloat(tok.substring(pos+1)) || 0;
+            let lv = tok.substring(0,pos);
+            let rv = tok.substring(pos+1);
+            v1 = subv(consts,lv) || 0;
+            v2 = subv(consts,rv) || 0;
             return op(v1,v2).round(4);
         } else {
             return null;
