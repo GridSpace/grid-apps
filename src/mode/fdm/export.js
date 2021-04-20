@@ -52,7 +52,6 @@
             blast = 0,
             blastz = 0,
             process = settings.process,
-            // loops = process.outputLoopLayers,
             loops = process.outputLoops || 0,
             zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,
@@ -151,27 +150,10 @@
         }
         loops = isBelt && rloops.length ? rloops : undefined;
 
-        // if (isBelt && loops) {
-        //     loops = loops.split(',').map(range => {
-        //         return range.split('-').map(v => parseInt(v));
-        //     }).filter(a => a.length > 1).map(a => {
-        //         return {
-        //             start: a[0],
-        //             end: a[1] ? a[1] + 1 : Infinity,
-        //             iter: a[2] >= 0 ? a[2] : 1
-        //         }
-        //     });
-        // }
-        // if (!isBelt || (loops && loops.length < 1)) {
-        //     loops = undefined;
-        // }
-
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
             if (v >= 0) pause.push(v);
         });
-
-        // console.log(loops)
 
         append = function(line) {
             if (line) {
