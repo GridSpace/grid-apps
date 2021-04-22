@@ -530,11 +530,12 @@ th, tr, td, label {
 }
 
 .dev-buttons {
-    margin: 5px 15px 0 15px;
+    margin: 1px -1px 0 -1px;
 }
 .dev-buttons button {
     margin-left: 2px;
     margin-right: 2px;
+    padding-bottom: 2px;
 }
 #dg .ext-buttons button {
     cursor: pointer;
