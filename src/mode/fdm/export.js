@@ -636,7 +636,7 @@
 
         subst.material = UTIL.round(emitted,2);
         subst.time = UTIL.round(time,2);
-        subst['print-time'] = subst.time;
+        subst['print_time'] = subst.time;
 
         append("; --- shutdown ---");
         appendAllSub(device.gcodePost);

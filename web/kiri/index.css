@@ -1566,6 +1566,7 @@ th, tr, td, label {
     border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
     background-color: #eee;
+    color: black;
 }
 #context-menu .sep {
     border-top: 1px solid #ddd;

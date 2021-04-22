@@ -470,6 +470,13 @@
         }
     }
 
+    function setFocus() {
+        let int = contextInt[0];
+        if (int && int.object && int.object.widget) {
+            API.space.set_focus(undefined, int.point);
+        }
+    }
+
     function duplicateSelection() {
         API.selection.for_widgets(function(widget) {
             let mesh = widget.mesh;
@@ -2530,6 +2537,7 @@
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = layFlat;
+        $('context-setfocus').onclick = setFocus;
 
         UI.modal.onclick = API.modal.hide;
         UI.modalBox.onclick = (ev) => { ev.stopPropagation() };

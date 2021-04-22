@@ -53,6 +53,7 @@ kiri.lang['en-us'] = {
     rc_lafl:        "lay flat",
     rc_mirr:        "mirror",
     rc_dupl:        "duplicate",
+    rc_focs:        "set focus",
     rc_xstl:        "export as STL",
 
     // DEVICE MENU and related dialogs

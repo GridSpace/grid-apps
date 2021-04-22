@@ -389,7 +389,12 @@
         work: KIRI.work
     };
 
-    function setFocus(widgets) {
+    function setFocus(widgets, point) {
+        if (point) {
+            SPACE.platform.setCenter(point.x, point.z, point.y);
+            SPACE.view.setFocus(new THREE.Vector3(point.x, point.y, point.z));
+            return;
+        }
         if (widgets === undefined) {
             widgets = WIDGETS;
         } else if (!Array.isArray) {
