@@ -255,7 +255,7 @@ kiri.lang['en-us'] = {
     sl_ltop_s:      "top layers",
     sl_ltop_l:      ["number of solid layers","to enforce at the","top of the print"],
     sl_lsld_s:      "solid layers",
-    sl_lsld_l:      ["solid fill areas computed","from layer deltas. see","layer pop menu"],
+    sl_lsld_l:      ["solid fill areas computed","from bridges and flat areas","detected betwen sliced layers"],
     sl_lbot_s:      "base layers",
     sl_lbot_l:      ["number of solid layers","to enforce at the","bottom of the print"],
     ad_adap_s:      "adaptive",
