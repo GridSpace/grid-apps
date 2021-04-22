@@ -1665,6 +1665,7 @@
             firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
             firstLayerBrim:      UC.newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:UC.toInt, modes:FDM, show:isBelt}),
+            firstLayerBrimIn:    UC.newInput(LANG.fl_brin_s, {title:LANG.fl_brin_l, convert:UC.toInt, modes:FDM, show:isBelt}),
             firstLayerBrimComb:  UC.newInput(LANG.fl_brco_s, {title:LANG.fl_brco_l, convert:UC.toInt, modes:FDM, show:isBelt}),
             firstLayerBrimTrig:  UC.newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:UC.toInt, modes:FDM, show:isBelt}),
             firstLayerBrimGap:   UC.newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:UC.toFloat, modes:FDM, show:isBelt}),

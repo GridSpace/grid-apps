@@ -310,8 +310,10 @@ kiri.lang['en-us'] = {
     // FDM BELT ONLY
     fl_zoff_s:      "belt offset",
     fl_zoff_l:      ["height offset from belt","of lowest extrusion","in millimeters"],
-    fl_brim_s:      "brim width",
-    fl_brim_l:      ["add brim to part bottom","size is width in millimeters","0 to disable"],
+    fl_brim_s:      "brim sides",
+    fl_brim_l:      ["add brim to part perimeter","size is width in millimeters","0 to disable"],
+    fl_brin_s:      "brim interior",
+    fl_brin_l:      ["add brim to part interior","when interior voids exist","size is width in millimeters","0 to disable"],
     fl_brmn_s:      "brim trigger",
     fl_brmn_l:      ["add brims only when segment","facing belt is shorter than this","value in millimeters","0 = Infinity"],
     fl_brco_s:      "brim comb",
