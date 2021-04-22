@@ -158,6 +158,7 @@
         control.decimate = UI.decimate.checked;
         control.healMesh = UI.healMesh.checked;
         control.ortho = UI.ortho.checked;
+        control.devel = UI.devel.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
         // platform.layout();
         API.conf.save();
@@ -1609,13 +1610,14 @@
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             ortho:            UC.newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-            decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
+            devel:            UC.newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
             danger:           UC.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
 
             lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
+            decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
             lineType:         UC.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          UC.newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
             units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
@@ -2411,6 +2413,7 @@
             UI.decimate.checked = control.decimate;
             UI.healMesh.checked = control.healMesh;
             UI.ortho.checked = control.ortho;
+            UI.devel.checked = control.devel;
             lineTypeSave();
             detailSave();
             updateFPS();

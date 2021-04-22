@@ -665,7 +665,8 @@
                 detail: "good",
                 animesh: "200",
                 healMesh: false,
-                ortho: false
+                ortho: false,
+                devel: false
             },
             // label state preferences
             labels: {

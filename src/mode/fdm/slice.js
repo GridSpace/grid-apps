@@ -27,7 +27,7 @@
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
         getRangeParameters = FDM.getRangeParameters,
-        debug = false;
+        debug = true;
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -449,7 +449,7 @@
             if (render) {
                 forSlices(0.9, 1.0, slice => {
                     let params = getRangeParameters(settings, slice.index);
-                    doRender(slice, isSynth, params);
+                    doRender(slice, isSynth, params, ctrl.devel);
                 }, "render");
             }
 
@@ -472,56 +472,56 @@
         return Math.max(min,Math.min(max,v));
     }
 
-    function doRender(slice, isSynth, params) {
+    function doRender(slice, isSynth, params, devel) {
         const output = slice.output();
         const height = slice.height / 2;
         const solidWidth = params.sliceFillWidth || 1;
 
         slice.tops.forEach(top => {
             if (isThin) output
-                .setLayer('slice', { line: 0x000066, check: 0x000066 })
+                .setLayer('part', { line: 0x333333, check: 0x333333 })
                 .addPolys(top.poly);
 
-            if (top.shells) output
+            output
                 .setLayer("shells", isSynth ? COLOR.support : COLOR.shell)
-                .addPolys(top.shells, vopt({ offset, height, clean: true }));
+                .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
+
+            output
+                .setLayer("solid fill", isSynth ? COLOR.support : COLOR.fill)
+                .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height }));
+
+            output
+                .setLayer("sparse fill", COLOR.infill)
+                .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true }))
+
+            if (top.thin_fill) output
+                .setLayer("thin fill", COLOR.fill)
+                .addLines(top.thin_fill, vopt({ offset, height }));
 
             if (top.gaps) output
                 .setLayer("gaps", COLOR.gaps)
                 .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-            if (isThin && debug) {
+            if (isThin && devel) {
                 slice.output()
-                    .setLayer('offset', { face: 0, line: 0x888888 })
-                    .addPolys(top.fill_off)
-                    .setLayer('last', { face: 0, line: 0x008888 })
-                    .addPolys(top.last);
+                    .setLayer('fill inset', { face: 0, line: 0xaaaaaa, check: 0xaaaaaa })
+                    .addPolys(top.fill_off);
+                    // .setLayer('last', { face: 0, line: 0x008888, check: 0x008888 })
+                    // .addPolys(top.last);
             }
-
-            if (top.fill_lines && top.fill_lines.length) output
-                .setLayer("fill", isSynth ? COLOR.support : COLOR.fill)
-                .addLines(top.fill_lines, vopt({ offset: offset * solidWidth, height }));
-
-            if (top.fill_sparse) output
-                .setLayer("infill", COLOR.infill)
-                .addPolys(top.fill_sparse, vopt({ offset, height, outline: true }))
-
-            if (top.thin_fill) output
-                .setLayer("fill", COLOR.fill)
-                .addLines(top.thin_fill, vopt({ offset, height }));
         });
 
-        if (isThin && debug) {
-            if (slice.solids) output
-                .setLayer("solids", { face: 0x00dd00 })
+        if (isThin && devel) {
+            if (slice.solids && slice.solids.length) output
+                .setLayer("solids", { face: 0xbbbb00, check: 0xbbbb00 })
                 .addAreas(slice.solids);
 
-            if (slice.bridges) output
-                .setLayer("bridges", { face: 0x00aaaa, line: 0x00aaaa })
+            if (slice.bridges && slice.bridges.length) output
+                .setLayer("bridges", { face: 0x00cccc, line: 0x00cccc, check: 0x00cccc })
                 .addAreas(slice.bridges);
 
-            if (slice.flats) output
-                .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa })
+            if (slice.flats && slice.flats.length) output
+                .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa, check: 0xaa00aa })
                 .addAreas(slice.flats);
         }
 
