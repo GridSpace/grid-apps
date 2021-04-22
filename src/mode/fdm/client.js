@@ -53,6 +53,7 @@
             "sliceSupportOffset": LANG.sp_offs_s,
             "sliceLayerStart": LANG.sl_strt_s,
             "firstLayerBrim": LANG.fl_brim_s,
+            "firstLayerBrimIn": LANG.fl_brin_s,
             "firstLayerBrimComb": LANG.fl_brco_s,
             "firstLayerBrimTrig": LANG.fl_brmn_s,
             "firstLayerBrimGap": LANG.fl_brgp_s,
