@@ -38,7 +38,7 @@
     function fillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
         let spacing = target.offset();
-        let vhlen = (1 - target.density()) * 4 + spacing;
+        let vhlen = (1 / target.density()) * (target.lineWidth() + spacing);
         let anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7);
         let anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7);
         let bounds = target.bounds();
