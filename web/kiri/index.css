@@ -910,7 +910,8 @@ th, tr, td, label {
 #code-preview-textarea {
     width: 40em;
     height: 12em;
-    font-size: 10px;
+    font-size: smaller;
+    font-family: Courier,monospace;
 }
 .mod-end {
     height: 10px;

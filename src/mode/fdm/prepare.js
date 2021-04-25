@@ -479,7 +479,8 @@
         if (isBelt) {
             // find belt min y
             let minby = Infinity;
-            for (let layer of output) {
+            let normout = output.filter(l => !l.anchor);
+            for (let layer of normout) {
                 for (let rec of layer) {
                     let point = rec.point;
                     minby = Math.min(minby, -point.y + point.z * bfactor);
@@ -502,7 +503,6 @@
 
             let thresh = firstLayerHeight * 0.25;
             let seqn = 0;
-
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
