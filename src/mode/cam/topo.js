@@ -140,7 +140,7 @@
             function push_point(x,y,z) {
                 const newP = newPoint(x,y,z);
                 // todo: merge co-linear, not just co-planar
-                if (lastP && lastP.z === z) {
+                if (lastP && Math.abs(lastP.z - z) < 0.005) {
                     if (curvesOnly) {
                         end_poly();
                     } else {

@@ -288,12 +288,12 @@
             if (false && fdm && lastPos) {
                 let dE = (absE ? pos.E - lastPos.E : pos.E);
                 let dV = Math.sqrt(
-                    (Math.pow(pos.X - lastPos.X ,2)) +
-                    (Math.pow(pos.Y - lastPos.Y ,2))
+                    (Math.pow(pos.X - lastPos.X, 2)) +
+                    (Math.pow(pos.Y - lastPos.Y, 2))
                 );
                 let dR = (dE / dV); // filament per mm
-                if (dR < 0.025 || dR > 0.35) {
-                    console.log(height.round(2), pos.Z.round(2), dV.round(2), dR.round(3));
+                if (dV > 2 && dE > 0.001 && (dR < 0.025 || dR > 0.35)) {
+                    console.log(height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(5));
                 }
             }
             // add point to current sequence
