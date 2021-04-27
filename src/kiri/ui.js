@@ -657,6 +657,7 @@
         }
         ip.addEventListener('focus', function(event) {
             hidePop();
+            setSticky(true);
         });
         if (action) {
             ip.addEventListener('keydown', function(event) {
@@ -686,6 +687,7 @@
                 }
             });
             ip.addEventListener('blur', function(event) {
+                setSticky(false);
                 lastChange = ip;
                 action(event);
                 if (opt.trigger) {
