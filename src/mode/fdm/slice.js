@@ -200,7 +200,7 @@
                     tops = slice.topPolys();
                     for (let peer of widget.group) {
                         // skip self
-                        if (peer === widget) {
+                        if (peer === widget || !peer.slices) {
                             continue;
                         }
                         for (let pslice of peer.slices) {
