@@ -568,9 +568,9 @@
             if (slice.index < 0) {
                 return false;
             }
-            if (opt.danger) {
+            // if (opt.danger) {
                 return retractRequired(p1, p2);
-            }
+            // }
             let int = false;
             POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
