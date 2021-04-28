@@ -98,10 +98,10 @@ KIRI.worker = {
                 let x = vert[i++];
                 let y = vert[i++];
                 let z = vert[i++];
-                if (z < 0.01) {
+                // if (z < 0.01) {
                     miny = Math.min(miny, y);
                     maxy = Math.max(maxy, y);
-                }
+                // }
             }
             return { miny, maxy };
         }
@@ -116,19 +116,19 @@ KIRI.worker = {
 
         for (let group of Object.values(wgroup)) {
             let { miny, maxy } = gmin(group);
-
             let widget = group[0];
             let track = widget.track;
             let xpos = track.pos.x;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
             let rotation = (Math.PI / 180) * 45;
-
             // move to accomodate anchor
             ypos += (settings.process.firstLayerBeltLead || 0);
-
-            widget.rotate(rotation,0,0,true);
+            for (let w of group) {
+                w.moveMesh(0, miny, 0);
+            }
+            widget.rotateRaw(rotation,0,0,true);
             let minr = gmin(group);
-            widget.belt = { xpos, ypos, yadd: minr.maxy - minr.miny };
+            widget.belt = { xpos, ypos, yadd: minr.maxy - minr.miny, dy: -miny, dz: 0 };
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
             }
@@ -146,11 +146,8 @@ KIRI.worker = {
         let rotation = (Math.PI / 180) * 45;
         for (let group of Object.values(wgroup)) {
             let widget = group[0];
-            widget.groupBounds();
-            widget.rotate(-rotation,0,0,true);
-            let { dy, dz } = widget.track.center;
-            widget.groupBounds();
             let { xpos, ypos } = widget.belt;
+            let { dy, dz } = widget.belt;
             // move to accomodate anchor
             dy -= (settings.process.firstLayerBeltLead || 0) ;
             widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };

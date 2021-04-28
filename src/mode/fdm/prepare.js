@@ -305,8 +305,8 @@
                 let o = rotinfo.ypos * beltfact;
                 offset = {
                     x: rotinfo.xpos,
-                    y: o - belt.midy - belt.yadd/2,
-                    z: o,
+                    y: o,
+                    z: o
                 };
                 // offset = { x:0, y:0, z:0 };
                 // locate the lowest point in slices and widget overall
@@ -322,11 +322,6 @@
                         }
                     }
                 }
-                // todo remove b/c this is now calculated at slice time
-                // flag slices as being on or off the bed / belt
-                // for (let slice of widget.slices) {
-                //     slice.onbelt = Math.abs(minby - slice.minby) < 0.01;
-                // }
             } else {
                 // when rafts used this is non-zero
                 offset.z = zoff;
@@ -494,12 +489,6 @@
                     rec.point.y += poff;
                 }
             }
-
-            // add lead in, when specified
-            // if (process.firstLayerBeltLead) {
-            //     // add belt lead in
-            //     console.log({process, output});
-            // }
 
             let thresh = firstLayerHeight * 0.25;
             let seqn = 0;

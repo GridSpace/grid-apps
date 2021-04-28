@@ -505,6 +505,12 @@
         this.center(false);
     };
 
+    PRO.rotateRaw = function(x, y, z, temp) {
+        this.group.forEach(w => {
+            w._rotate(x, y, z, temp);
+        });
+    };
+
     PRO._rotate = function(x, y, z, temp) {
         if (!temp) {
             this.bounds = null;
