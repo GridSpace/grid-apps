@@ -391,9 +391,21 @@
                             count--;
                             // break;
                         }
+                        let first = poly.first();
                         poly.push(poly.last().add({x:0, y, z:0}));
                         poly.push(poly.first().add({x:0, y, z:0}));
                         poly.setClosed();
+                        if (count > 2 && maxx - minx > 10) {
+                            let mp = (maxx + minx) / 2;
+                            let dx = (maxx - minx - 2);
+                            dx = (Math.floor(dx / 3) * 3) / 2;
+                            let fy = first.y;
+                            let fz = first.z;
+                            let n2 = nozzleSize / 2;
+                            for (let x = mp - dx; x <= mp + dx ; x += 3) {
+                                add.push( BASE.newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
+                            }
+                        }
                     }
                 }
             }
