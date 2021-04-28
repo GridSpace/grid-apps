@@ -325,6 +325,8 @@ kiri.lang['en-us'] = {
     fl_brgp_l:      ["spacing between brim and part","in millimeters"],
     fl_bled_s:      "part anchor",
     fl_bled_l:      ["belt part anchor","at start of print","in millimeters"],
+    fl_blmp_s:      "anchor bump",
+    fl_blmp_l:      ["add a bump to the start of","an anchor to help it peel","off at the end of the belt","in millimeters"],
 
     // FDM SUPPORT
     sp_menu:        "support",

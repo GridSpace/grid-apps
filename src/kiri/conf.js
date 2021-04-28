@@ -321,6 +321,7 @@
                     firstLayerBrimComb: 0,
                     firstLayerBrimGap: 0,
                     firstLayerBeltLead: 3,
+                    firstLayerBeltBump: 0,
                     firstLayerFanSpeed: 0,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,

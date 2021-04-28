@@ -1680,6 +1680,7 @@
             firstLayerBrimGap:   UC.newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
             firstLayerBeltLead:  UC.newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
+            firstLayerBeltBump:  UC.newInput(LANG.fl_blmp_s, {title:LANG.fl_blmp_l, convert:UC.toFloat, bound:UC.bound(0, 10), modes:FDM, show:isBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
             outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
             outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),

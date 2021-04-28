@@ -357,6 +357,7 @@
                     minx -= brim;
                     maxx += brim;
                 }
+                let adds = [];
                 while (offset && start && offset >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {
@@ -373,9 +374,26 @@
                     let y = z - smin - (nozzleSize / 2);
                     // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
                     let splat = BASE.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
-                    addto.addTop(splat).fill_sparse = [ splat ];
+                    let snew = addto.addTop(splat).fill_sparse = [ splat ];
+                    adds.push(snew);
                     start = addto;
                     offset -= sliceHeight;
+                }
+                // add anchor bump
+                let bump = spro.firstLayerBeltBump;
+                if (bump) {
+                    adds = adds.reverse().slice(1, adds.length - 1);
+                    let count = 1;
+                    for (let add of adds) {
+                        let poly = add[0];
+                        let y = count++ * -nozzleSize;
+                        if (-y > bump) {
+                            break;
+                        }
+                        poly.push(poly.last().add({x:0, y, z:0}));
+                        poly.push(poly.first().add({x:0, y, z:0}));
+                        poly.setClosed();
+                    }
                 }
             }
 
