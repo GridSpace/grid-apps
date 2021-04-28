@@ -565,6 +565,9 @@
         }
 
         function intersectsTop(p1, p2) {
+            if (slice.index < 0) {
+                return false;
+            }
             if (opt.danger) {
                 return retractRequired(p1, p2);
             }
