@@ -478,7 +478,9 @@
             for (let layer of normout) {
                 for (let rec of layer) {
                     let point = rec.point;
-                    minby = Math.min(minby, -point.y + point.z * bfactor);
+                    if (rec.emit) {
+                        minby = Math.min(minby, -point.y + point.z * bfactor);
+                    }
                 }
             }
             // correct y offset to desired layer offset
