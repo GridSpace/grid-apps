@@ -1781,6 +1781,10 @@
                     if (src[0].isEquivalent(dst[0]) && src[1].isEquivalent(dst[1])) {
                         return null;
                     }
+                    // only here is area sorting failed (same sizes)
+                    if (src[0].isEquivalent(dst[1]) && src[1].isEquivalent(dst[0])) {
+                        return null;
+                    }
                 }
                 return union;
             }
