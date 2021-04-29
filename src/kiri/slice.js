@@ -106,6 +106,22 @@
         return this.tops.map(top => top.poly);
     };
 
+    // FDM top intersect optimization
+    PRO.topPolysFlat = function() {
+        if (this.topFlatPolys) {
+            return this.topFlatPolys;
+        }
+        return this.topFlatPolys = POLY.flatten(this.topPolys()).clone(true);
+    };
+
+    // FDM retract path routing using first shell
+    PRO.topRouteFlat = function() {
+        if (this.topFlatRoutes) {
+            return this.topFlatRoutes;
+        }
+        return this.topFlatRoutes = POLY.flatten(this.tops.map(top => top.shells[0]).clone(true), [], true);
+    }
+
     // CAM only
     PRO.topPolyInners = function() {
         return this.tops.map(top => top.poly.inner).flat().filter(poly => poly);

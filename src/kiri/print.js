@@ -568,11 +568,11 @@
             if (slice.index < 0) {
                 return false;
             }
-            // if (opt.danger) {
+            if (opt.danger) {
                 return retractRequired(p1, p2);
-            // }
+            }
             let int = false;
-            POLY.flatten(slice.topPolys().clone(true)).forEach(function(poly) {
+            slice.topPolysFlat().forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
                     if (UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT)) {
                         return int = true;
@@ -587,8 +587,10 @@
         function retractRequired(p1, p2) {
             const dbug = false;
 
+            if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
+
             let ints = [];
-            let tops = POLY.flatten(slice.topPolys().clone(true));
+            let tops = slice.topRouteFlat();
             for (let poly of tops) {
                 poly.forEachSegment(function(s1, s2) {
                     let ip = UTIL.intersect(p1,p2,s1,s2,BASE.key.SEGINT);
@@ -600,6 +602,7 @@
 
             // no intersections
             if (ints.length === 0) {
+                if (dbug === slice.index) console.log(slice.index, 'no ints');
                 return false;
             }
 
@@ -616,21 +619,28 @@
 
             let valid = ints.length;
 
+            if (dbug === slice.index) console.log(slice.index, {ints});
+
             // check pairs. eliminate too close points.
             // pairs must intersect same poly or retract.
             for (let i=0; i<ints.length; i += 2) {
-                let i1 = ints[0];
-                let i2 = ints[1];
+                let i1 = ints[i];
+                let i2 = ints[i+1];
                 // different poly. force retract
                 if (i1.poly !== i2.poly) {
                     if (dbug === slice.index) console.log(slice.index, {int_diff_poly: ints, i});
                     return true;
                 }
+                // mark invalid intersect pairs (low or zero dist, etc)
                 if (i1.ip.distTo2D(i2.ip) < retractDist) {
                     if (dbug === slice.index) console.log(slice.index, {int_dist_too_small: i1.ip.distTo2D(i2.ip), retractDist});
+                    ints[i] = undefined;
+                    ints[i+1] = undefined;
                     valid -= 2;
                 }
             }
+            // filter out invalid intersection pairs
+            ints = ints.filter(i => i);
 
             if (valid > 2) {
                 if (dbug === slice.index) console.log(slice.index, {complex_route: valid});
@@ -687,6 +697,7 @@
                         ints: ints.map(i=>i.ip.dist),
                         i1, i2, same: i1.poly === i2.poly,
                         route,
+                        p1, p2, dist: p1.distTo2D(p2),
                         r1, r1d, r1s, r1e,
                         r2, r2d, r2s, r2e,
                         isCW});
@@ -701,6 +712,11 @@
             }
 
             return false;
+
+            // odd case where intersect triggered by starting on
+            // intersected shell and passing over shell (or inner) again
+            // not matched as valid since 0 intersect distance
+            return ints.length > 2 && p1.distTo2D(p2) >= retractDist;
         }
 
         function outputTraces(poly, opt = {}) {
