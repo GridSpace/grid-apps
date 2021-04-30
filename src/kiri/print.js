@@ -568,9 +568,6 @@
             if (slice.index < 0) {
                 return false;
             }
-            if (opt.danger) {
-                return retractRequired(p1, p2);
-            }
             let int = false;
             slice.topPolysFlat().forEach(function(poly) {
                 if (!int) poly.forEachSegment(function(s1, s2) {
@@ -579,12 +576,16 @@
                     }
                 });
             });
+            // if intersecting, look for a route around
+            if (int && opt.danger) {
+                return !routeAround(p1, p2);
+            }
             return int;
         }
 
         // returns true if no path around and retract required
         // returns false if routed around or no retract
-        function retractRequired(p1, p2) {
+        function routeAround(p1, p2) {
             const dbug = false;
 
             if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
@@ -632,6 +633,7 @@
                     return true;
                 }
                 // mark invalid intersect pairs (low or zero dist, etc)
+                // TODO: only if this is the outer pair and there are closer inner pairs
                 if (i1.ip.distTo2D(i2.ip) < retractDist) {
                     if (dbug === slice.index) console.log(slice.index, {int_dist_too_small: i1.ip.distTo2D(i2.ip), retractDist});
                     ints[i] = undefined;

@@ -111,7 +111,7 @@
         if (this.topFlatPolys) {
             return this.topFlatPolys;
         }
-        return this.topFlatPolys = POLY.flatten(this.topPolys()).clone(true);
+        return this.topFlatPolys = POLY.flatten(this.topPolys().clone(true), [], true);
     };
 
     // FDM retract path routing using first shell
@@ -119,7 +119,8 @@
         if (this.topFlatRoutes) {
             return this.topFlatRoutes;
         }
-        return this.topFlatRoutes = POLY.flatten(this.tops.map(top => top.shells[0]).clone(true), [], true);
+        let topShells0 = this.tops.map(top => top.shells[0]).filter(p => p);
+        return this.topFlatRoutes = POLY.flatten(topShells0.clone(true), [], true);
     }
 
     // CAM only

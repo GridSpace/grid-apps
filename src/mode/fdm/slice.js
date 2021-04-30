@@ -534,7 +534,7 @@
                 .setLayer("gaps", COLOR.gaps)
                 .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-            if (isThin && devel) {
+            if (isThin && devel && top.fill_off && top.fill_off.length) {
                 slice.output()
                     .setLayer('fill inset', { face: 0, line: 0xaaaaaa, check: 0xaaaaaa })
                     .addPolys(top.fill_off);
