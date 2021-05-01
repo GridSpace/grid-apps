@@ -53,6 +53,7 @@
             blast = 0,
             blastz = 0,
             process = settings.process,
+            belt_add_y = process.firstLayerYOffset || 0,
             loops = process.outputLoops || 0,
             zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,
@@ -291,7 +292,7 @@
                 let zheight = path ? path.height || 0 : 0;
                 epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
                 epos.z = blastz = pos.z * icos;
-                epos.y = -pos.y + epos.z * bcos;
+                epos.y = -pos.y + epos.z * bcos + belt_add_y;
                 lout = epos;
             }
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));

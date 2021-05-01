@@ -459,9 +459,16 @@
         // post-process for base extrusions (touching the bed)
         if (isBelt) {
             // // correct y offset to desired layer offset
-            let miny = process.firstLayerYOffset || 0;
-            let thresh = firstLayerHeight * 0.25;
             let seqn = 0;
+            // tune base threshold
+            let thresh = Infinity;
+            for (let layer of output) {
+                for (let rec of layer) {
+                    let point = rec.point;
+                    thresh = Math.min(thresh, point.z - point.y);
+                }
+            }
+            thresh = thresh + firstLayerHeight * 0.25;
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
