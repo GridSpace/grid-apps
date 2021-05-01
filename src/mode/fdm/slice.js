@@ -311,18 +311,21 @@
                 }
                 sliceFillAngle += 90.0;
             }, "offsets");
-
             // add lead in when specified in belt mode
             if (!isSynth && isBelt) {
-                let wb = widget.bounds;
                 // find adjusted zero point from slices
                 let smin = Infinity;
                 for (let slice of slices) {
+                    // skip empty / possible anchor
+                    // if (!slice.lines.length) {
+                    //     slice.belt = { miny: 0, touch: false };
+                    //     continue;
+                    // }
                     let miny = Infinity;
                     for (let poly of slice.topPolys()) {
-                        let y = poly.bounds.miny;
+                        let y = poly.bounds.maxy;
                         let z = slice.z;
-                        let by = y + z;
+                        let by = z - y;
                         if (by < miny) miny = by;
                         if (by < smin) smin = by;
                     }
@@ -366,9 +369,12 @@
                         addto.up = start;
                         start.down = addto;
                         slices.splice(0,0,addto);
+                    // } else {
+                    //     console.log({add_to_existing_slice: addto});
                     }
                     addto.index = -1;
                     addto.belt.anchor = true;
+                    addto.belt.touch = true;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
                     // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
