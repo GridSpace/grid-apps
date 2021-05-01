@@ -7,7 +7,8 @@
     let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
-        FDM = KIRI.driver.FDM;
+        FDM = KIRI.driver.FDM,
+        debug = false;
 
     /**
      * @returns {Array} gcode lines
@@ -97,7 +98,8 @@
             bcos = Math.cos(Math.PI/4),
             icos = 1 / bcos,
             inLoop,
-            arcQ = [];
+            arcQ = [],
+            minz = { x: Infinity, y: Infinity, z: Infinity };
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
@@ -295,6 +297,11 @@
             if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
             if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
             if (emit.z) o.append(" Z").append(epos.z.toFixed(decimals));
+            if (debug) {
+                if (emit.x) minz.x = Math.min(minz.x, epos.x);
+                if (emit.y) minz.y = Math.min(minz.y, epos.y);
+                if (emit.z) minz.z = Math.min(minz.z, epos.z);
+            }
             if (typeof newpos.e === 'number') {
                 outputLength += newpos.e;
                 if (extrudeAbs) {
@@ -650,6 +657,10 @@
         print.lines = lines;
         print.bytes = bytes + lines - 1;
         print.time = time;
+
+        if (debug) {
+            console.log('minz', minz);
+        }
     };
 
 })();

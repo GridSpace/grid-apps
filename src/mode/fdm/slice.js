@@ -27,7 +27,7 @@
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
         getRangeParameters = FDM.getRangeParameters,
-        debug = true;
+        debug = false;
 
     let isThin = false; // force line rendering
     let isFlat = false; // force flat rendering
@@ -38,7 +38,7 @@
             if (isFlat) {
                 opt.flat = true;
                 opt.outline = true;
-                return opt
+                return opt;
             }
             if (isThin) return null;
         }
@@ -320,9 +320,9 @@
                 for (let slice of slices) {
                     let miny = Infinity;
                     for (let poly of slice.topPolys()) {
-                        let y = poly.bounds.maxy;
+                        let y = poly.bounds.miny;
                         let z = slice.z;
-                        let by = -y + z;
+                        let by = y + z;
                         if (by < miny) miny = by;
                         if (by < smin) smin = by;
                     }
@@ -345,7 +345,6 @@
                         if (!start) start = slice;
                     }
                 }
-                // console.log({smin: smin.round(4)});
                 let offset = spro.firstLayerBeltLead * beltfact;
                 // ensure we start against a layer with shells
                 while (start.up && start.topShells().length === 0) {
