@@ -587,7 +587,6 @@
         // returns false if routed around or no retract
         function routeAround(p1, p2) {
             const dbug = false;
-
             if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
 
             let ints = [];
@@ -1026,6 +1025,10 @@
                     outputFills(next.fill, {fast: true});
                 }
             } else {
+                if (lastTop && lastTop !== next) {
+                    retract();
+                }
+
                 // control of layer start point
                 switch (process.sliceLayerStart) {
                     case "center":
