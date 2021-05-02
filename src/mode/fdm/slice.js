@@ -374,7 +374,9 @@
                     }
                     addto.index = -1;
                     addto.belt.anchor = true;
-                    addto.belt.touch = true;
+                    // this allows the anchor to print bi-directionally
+                    // by removing the forced start-point in print.js
+                    addto.belt.touch = false;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
                     // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
@@ -391,7 +393,7 @@
                     let count = 1;
                     for (let add of adds) {
                         let poly = add[0];
-                        let y = count++ * -nozzleSize;
+                        let y = count++ * -start.height * 2;
                         if (-y > bump) {
                             count--;
                             // break;
