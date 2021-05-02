@@ -344,6 +344,7 @@
                     outputMinSpeed: 10.0,
                     outputCoastDist: 0,
                     outputPurgeTower: true,
+                    outputBeltFirst: false,
                     outputLayerRetract: false,
                     outputOriginCenter: true,
                     outputLoops: 0,

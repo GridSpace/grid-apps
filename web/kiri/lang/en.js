@@ -583,6 +583,8 @@ kiri.lang['en-us'] = {
     ad_zhop_l:      ["amount to raise z","on retraction moves","in millimeters","0 to disable"],
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      ["for better flat surface finish","use micro-movements to cancel","backlash in solid layer output","in millimeters","0 to disable","if your firmware has M425","put that in the gcode header","and leave this as 0"],
+    ad_lbir_s:      "belt first",
+    ad_lbir_l:      ["always print shells touching the","belt before any other shells"],
     ad_lret_s:      "layer retract",
     ad_lret_l:      ["force filament retraction","between layers"],
     ad_play_s:      "polish layers",

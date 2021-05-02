@@ -534,6 +534,7 @@
             antiBacklash = process.antiBacklash,
             wipeDist = process.outputRetractWipe || 0,
             isBelt = device.bedBelt,
+            beltFirst = process.outputBeltFirst || false,
             startClone = startPoint.clone(),
             seedPoint = opt.seedPoint || startPoint,
             z = slice.z,
@@ -1043,7 +1044,9 @@
                 // and enforce optimal shell order (outer first)
                 if (isBelt && opt.onBelt) {
                     startPoint = startClone;
-                    shellOrder = -1;
+                    if (beltFirst) {
+                        shellOrder = -1;
+                    }
                 }
 
                 // innermost shells
