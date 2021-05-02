@@ -22,6 +22,8 @@
             gcodeFan = device.gcodeFan,
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
+            gcodeExt = device.gcodeExt,
+            gcodeInt = device.gcodeInt,
             tool = 0,
             fwRetract = device.fwRetract,
             isDanger = settings.controller.danger,
@@ -71,6 +73,7 @@
             nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
             bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
             fanSpeed = undefined,
+            lastType = undefined,
             lastNozzleTemp = nozzleTemp,
             lastBedTemp = bedTemp,
             lastFanSpeed = fanSpeed,
@@ -142,7 +145,6 @@
             });
         }
         for (let range of process.ranges) {
-            console.log({range});
             if (range.fields.outputLoops) {
                 rloops.push({
                     start: range.lo,
@@ -435,6 +437,19 @@
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
                 speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+
+                // emit gcode macro for changed print region
+                if (out.type !== last.type) {
+                    switch (out.type) {
+                        case 'ext':
+                            appendAllSub(gcodeExt);
+                            break;
+                        case 'int':
+                            appendAllSub(gcodeInt);
+                            break;
+                    }
+                    lastType = out.type;
+                }
 
                 // look for extruder change, run scripts, recalc emit factor
                 if (out.tool !== undefined && out.tool !== tool) {

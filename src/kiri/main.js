@@ -2126,14 +2126,17 @@
         // for each key in setrec object
         for (let key in setrec) {
             if (!setrec.hasOwnProperty(key)) {
+                // console.log({no_setrec: key});
                 continue;
             }
             if (!uirec.hasOwnProperty(key)) {
+                // console.log({no_uirec: key});
                 continue;
             }
             let nval = null, uie = uirec[key];
             // skip empty UI values
             if (!uie || uie === '') {
+                // console.log({uie_empty: key});
                 continue;
             }
             if (uie.type === 'text') {
@@ -2217,7 +2220,7 @@
         if (opt.controller) {
             return;
         }
-        updateSettingsFromFields(device);
+        updateSettingsFromFields(device, undefined, undefined, true);
         // range-specific values
         if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
             let changes = {};

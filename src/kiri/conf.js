@@ -17,7 +17,7 @@
 
     // add fields to o(bject) from d(efault) that are missing
     // remove fields from o(bject) that don't exist in d(efault)
-    function fill_cull_once(obj, def) {
+    function fill_cull_once(obj, def, debug) {
         if (!obj) return;
         // handle renaming
         for (let k in obj) {
@@ -26,6 +26,7 @@
                 if (nam !== k) {
                     // handle field renames
                     obj[nam] = obj[k];
+                    if (debug) console.log({rename: k, to: nam});
                     delete obj[k];
                 }
             }
@@ -36,15 +37,19 @@
                 let okv = obj[k];
                 if ((okv === undefined || okv === null)) {
                     // handle fill
-                    // console.log({fill: k});
-                    obj[k] = def[k];
+                    if (debug) console.log({fill: k, val: def[k]});
+                    if (typeof def[k] === 'object') {
+                        obj[k] = clone(def[k]);
+                    } else {
+                        obj[k] = def[k];
+                    }
                 }
             }
         }
         // remove invalid
         for (let k in obj) {
             if (!def.hasOwnProperty(k)) {
-                // console.log({cull: k});
+                if (debug) console.log({cull: k});
                 delete obj[k];
             }
         }
@@ -119,6 +124,8 @@
             gcodeLayer: valueOf(cmd.layer || code.layer, []),
             gcodePre: valueOf(code.pre, []),
             gcodePost: valueOf(code.post, []),
+            gcodeExt: valueOf(code.ext, []),
+            gcodeInt: valueOf(code.int, []),
             // post processor script of which only one exists
             // for XYZ.daVinci.Mini.w triggered in kiri.export
             // in the fdm driver to turn gcode into base64
@@ -266,6 +273,8 @@
                     maxHeight: 150,
                     gcodePre: [],
                     gcodePost: [],
+                    gcodeExt: [],
+                    gcodeInt: [],
                     gcodePause: [],
                     gcodeProc: "",
                     gcodeFan: [],

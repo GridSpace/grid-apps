@@ -752,6 +752,8 @@
                 UI.deviceName,
                 UI.gcodePre,
                 UI.gcodePost,
+                UI.gcodeExt,
+                UI.gcodeInt,
                 UI.gcodePause,
                 UI.bedDepth,
                 UI.bedWidth,
@@ -1592,19 +1594,21 @@
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
 
             gcodeEd:          UC.newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline:true, modes:GCODE}),
-            gcodeFanTrack: UC.newRow([
+            gcodeMacros:      UC.newRow([
                 (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
                 (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button,
                 (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
                 (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button,
+                (UI.gcodeExt = UC.newGCode(LANG.dv_pext_s, {title:LANG.dv_pext_l, modes:FDM, area:gcode, show:isDanger})).button,
+                (UI.gcodeInt = UC.newGCode(LANG.dv_pint_s, {title:LANG.dv_pint_l, modes:FDM, area:gcode, show:isDanger})).button,
                 (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
                 (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
                 (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,
                 (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
                 (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
-            ], {class:"ext-buttons f-row"}),
+            ], {class:"ext-buttons f-row gcode-macros"}),
 
             lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
             reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),

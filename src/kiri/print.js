@@ -25,7 +25,8 @@
     let lastPoint = null,
         lastEmit = null,
         lastOut = null,
-        lastPos;
+        lastPos,
+        nextType;
 
     KIRI.Print = Print;
 
@@ -404,11 +405,16 @@
     /**
      * @constructor
      */
-    function Output(point, emit, speed, tool) {
+    function Output(point, emit, speed, tool, type) {
         this.point = point; // point to emit
         this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
         this.speed = speed;
         this.tool = tool;
+        this.type = type;
+    }
+
+    function setType(type) {
+        nextType = type;
     }
 
     /**
@@ -429,8 +435,9 @@
         // if (emit && emit < 1) console.log(emit);
         lastPoint = point;
         lastEmit = emit;
-        lastOut = new Output(point, emit, speed, tool);
+        lastOut = new Output(point, emit, speed, tool, nextType);
         array.push(lastOut);
+        nextType = undefined;
         return lastOut;
     }
 
@@ -1049,6 +1056,9 @@
                     }
                 }
 
+                // flag extrusion type as exterior
+                setType('ext');
+
                 // innermost shells
                 let inner = next.innerShells() || [];
 
@@ -1059,6 +1069,9 @@
 
                 // output outer polygons
                 if (shellOrder === -1) outputTraces(inner, { sort: shellOrder });
+
+                // flag extrusion type as interior
+                setType('int');
 
                 // output thin fill
                 outputFills(next.thin_fill, {near: true});
