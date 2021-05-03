@@ -55,7 +55,7 @@
             blast = 0,
             blastz = 0,
             process = settings.process,
-            belt_add_y = process.firstLayerYOffset || 0,
+            belt_add_y = (process.firstLayerYOffset || 0) - (print.belty || 0),
             loops = process.outputLoops || 0,
             zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,

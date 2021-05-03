@@ -468,6 +468,8 @@
                     thresh = Math.min(thresh, point.z - point.y);
                 }
             }
+            // store this offset to be removed from Y values in export
+            print.belty = thresh;
             thresh = thresh + firstLayerHeight * 0.25;
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
