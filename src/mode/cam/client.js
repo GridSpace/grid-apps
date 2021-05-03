@@ -290,6 +290,9 @@
                     func.opDel(rec);
                 };
                 let el = $(id);
+                if (rec.disabled) {
+                    el.classList.add("disabled");
+                }
                 bounds.push(el);
                 let timer = null;
                 let inside = true;
@@ -330,6 +333,17 @@
                     let target = ev.target, clist = target.classList;
                     if (!clist.contains("draggable")) {
                         return;
+                    }
+                    if (ev.ctrlKey || ev.metaKey) {
+                        rec.disabled = !rec.disabled;
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        if (rec.disabled) {
+                            clist.add("disabled");
+                        } else {
+                            clist.remove("disabled");
+                        }
+                        return true;
                     }
                     clist.add("drag");
                     ev.stopPropagation();

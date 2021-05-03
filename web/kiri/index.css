@@ -637,6 +637,9 @@ th, tr, td, label {
 #oplist .drag {
     background-color: var(--highlight) !important;
 }
+#oplist .disabled {
+    background-color: rgba(220,150,150,0.5) !important;
+}
 #oplist div .label {
     pointer-events: none;
 }

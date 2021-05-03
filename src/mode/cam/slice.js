@@ -131,7 +131,7 @@
         let opSum = 0;
         let opTot = opList.map(op => op.weight()).reduce((a,v) => a + v);
 
-        for (let op of proc.ops) {
+        for (let op of proc.ops.filter(op => !op.disabled)) {
             let opfn = OPS[op.type];
             if (opfn) {
                 let opin = new opfn(state, op);

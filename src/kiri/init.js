@@ -2239,7 +2239,7 @@
         // block standard browser context menu
         DOC.oncontextmenu = (event) => {
             let et = event.target;
-            if (et.tagName === 'CANVAS' || et.id === 'context-menu') {
+            if (et.tagName === 'CANVAS' || et.id === 'context-menu' || et.classList.contains('draggable')) {
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
