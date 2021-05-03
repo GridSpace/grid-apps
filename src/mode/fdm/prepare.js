@@ -475,7 +475,8 @@
             // apply corrections and add brim when specified
             for (let layer of output) {
                 let params = getRangeParameters(settings, layer.layer || 0);
-                let firstLayerBrim = params.firstLayerBrim;
+                let brimHalf = params.firstLayerBrim < 0;
+                let firstLayerBrim = Math.abs(params.firstLayerBrim);
                 let firstLayerBrimIn = params.firstLayerBrimIn;
                 let firstLayerBrimTrig = params.firstLayerBrimTrig;
                 let firstLayerBrimComb = params.firstLayerBrimComb;
@@ -526,7 +527,7 @@
                     let bi = Math.max(firstLayerBrimIn, 1) + g;
                     layer.last().retract = true;
                     // outside brim
-                    if (firstLayerBrim) {
+                    if (firstLayerBrim && !brimHalf) {
                         print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    firstLayerSeek, tool);
                         print.addOutput(tmpout, newPoint(maxx + g, y, z), emit, firstLayerRate, tool).retract = true;
                     }
