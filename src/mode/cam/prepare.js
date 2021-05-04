@@ -179,6 +179,9 @@
             let remain = poly.first().z - poly.last().z,
                 points = [],
                 point = poly.first();
+            if (down <= 0) {
+                down = remain;
+            }
             for (;;) {
                 if (remain > down * 2) {
                     points.push(point.clone());
