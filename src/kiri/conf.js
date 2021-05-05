@@ -301,6 +301,7 @@
                     sliceFillWidth: 1,
                     sliceFillOverlap: 0.35,
                     sliceFillSparse: 0.25,
+                    sliceFillRepeat: 1,
                     sliceFillRate: 0,
                     sliceFillType: "hex",
                     sliceSupportDensity: 0.25,

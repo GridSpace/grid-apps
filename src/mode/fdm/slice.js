@@ -799,6 +799,7 @@
                 zHeight: function() { return height },
                 offset: function() { return spacing },
                 density: function() { return density },
+                repeat: function() { return process.sliceFillRepeat },
                 // output functions
                 emit: function(x,y) {
                     if (isNaN(x)) {

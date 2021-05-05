@@ -155,7 +155,7 @@
     function fillLinear(target) {
         let bounds = target.bounds();
         let height = target.zHeight();
-
+        let repeat = target.repeat();
         let density = target.density();
         let line = target.lineWidth();
 
@@ -166,7 +166,9 @@
         let step_x = span_x / steps_x;
         let step_y = span_x / steps_x;
 
-        if (target.zIndex() % 2 === 1) {
+        let zindex = Math.floor(target.zIndex() / repeat);
+
+        if (zindex % 2 === 1) {
             for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step_x) {
                 target.newline();
                 target.emit(tx, bounds.min.y);

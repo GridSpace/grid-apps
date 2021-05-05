@@ -280,6 +280,8 @@ kiri.lang['en-us'] = {
     fi_type:        "fill type",
     fi_pcnt_s:      "fill fraction",
     fi_pcnt_l:      ["fill density values","0.0 - 1.0"],
+    fi_rept_s:      "fill repeat",
+    fi_rept_l:      ["number of times to repeat","unchanged fill layers"],
     fi_angl_s:      "solid start",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
     fi_wdth_s:      "solid width",

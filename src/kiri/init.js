@@ -1693,8 +1693,9 @@
             outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:isNotBelt}),
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
-            sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
+            sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM, trigger:true}, "infill"),
             sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
+            sliceFillRepeat:     UC.newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:UC.toInt, bound:UC.bound(1,10), show:fillShow, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
             sliceFillRate:       UC.newInput(LANG.ou_feed_s, {title:LANG.fi_rate_l, convert:UC.toInt, bound:UC.bound(0,300), modes:FDM}),
@@ -1878,6 +1879,14 @@
         UI.settingsSave.onclick = () => {
             settingsSave(undefined, UI.settingsName.value);
         };
+
+        function optSelected(sel) {
+            return sel.options[sel.selectedIndex].value;
+        }
+
+        function fillShow() {
+            return optSelected(UI.sliceFillType) === 'linear';
+        }
 
         function spindleShow() {
             return settings().device.spindleMax > 0;
