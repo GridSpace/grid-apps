@@ -1881,7 +1881,8 @@
         };
 
         function optSelected(sel) {
-            return sel.options[sel.selectedIndex].value;
+            let opt = sel.options[sel.selectedIndex];
+            return opt ? opt.value : undefined;
         }
 
         function fillShow() {
