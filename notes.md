@@ -9,6 +9,7 @@
 * `P` allow selection to be decimated on demand (context menu?)
 * `P` improve decimation speed: omit point conversion or use wasm
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
+* `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 
 * `F` SVG import to 3D part like images
 * `F` show slider range values in workspace units (on hover?)
@@ -20,18 +21,15 @@
 
 # FDM
 
-* `B` re-calibrate slicing progress weighting
-* `B` infill densities are inaccurate
 * `B` fix support projection/end with grouped parts
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` support pillar should conform to part
+* `F` support pillar top/bottom should conform to part
 * `F` support pillar should have solid top/bottom
 * `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
 * `F` control for size of purge block (with 0=disabled)
-* `F` polishing and other non-planar work
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` first layer segment large flat areas for better fill reliability
@@ -56,11 +54,10 @@
 # FDM - BELT
 
 * `B` auto bed resizing leaves the origin in the wrong place at first
-* `B` multiple parts with one angled against origin "floats" in preview
 * `B` re-add progress calls for all work units
 
+* `F` refactor brims to be generated at slice time
 * `F` anchors should be generated anywhere needed in the print, not just head
-* `F` brims should extend between branches and have a slight offset from part
 * `F` slightly angle supports to lean into the Z of the part
 * `F` arrange should align down Z, not side to side.
 
@@ -68,11 +65,11 @@
 
 * `B` tabs are not cut to exact height
 * `B` first rough step too far down in certain circumstances?
-* `B` trace open polys are not wound consistently
-* `B` path routing with tabs sometimes makes no sense
+* `B` trace open polys are not wound consistently?
+* `B` path routing with tabs sometimes makes no sense (still?)
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 
-* `F` limit cut depth to flute length of selected tool
+* `F` limit cut depth to flute length of selected tool (or warn)
 * `F` add ease-down support to trace op
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
@@ -80,7 +77,7 @@
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
 * `F` add climb/conventional into each operation
-* `F` update analyzer to detect overhangs
+* `F` update analyzer to detect overhangs from faces, not slices
 * `F` extend acute roughing on inside polys to clear small voids
 * `F` option to use part / STL coordinate space to determine X,Y origin
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
@@ -88,7 +85,7 @@
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
 * `F` z planar settings visualizations
-* `F` convert acute angles to arcs
+* `F` convert acute angles to arcs to avoid jerk
 * `F` lead-in milling
 * `F` trapezoidal tabs in Z
 * `F` ease-in and ease-out especially on tab cut-out start/stop

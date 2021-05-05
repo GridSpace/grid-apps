@@ -633,6 +633,12 @@
         return 0;
     };
 
+    // allow worker code to run in same memspace as client
+    PRO.setInWorker = function() {
+        this.inWorker = true;
+        return this;
+    };
+
     /**
      * processes points into facets, then into slices
      *
@@ -654,7 +660,7 @@
         widget.clearSlices();
         onupdate(0.0001, "slicing");
 
-        if (KIRI.client) {
+        if (KIRI.client && !widget.inWorker) {
             // in case result of slice is nothing, do not preserve previous
             widget.slices = []
 
