@@ -1108,6 +1108,7 @@
 
             let real = ops.map(rec => rec.op).filter(op => op);
             let rough = real.filter(op => op.type === 'rough').length > 0;
+            let outline = real.filter(op => op.type === 'outline').length > 0;
             let outlineOut = real.filter(op => op.type === 'outline' && op.outside).length > 0;
 
             let minStepDown = real
@@ -1118,7 +1119,7 @@
             let tshadow = [];
             let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
             let complex = tzindex.length > 50 || widget.vertices.length > 1000000;
-            let skipTerrain = unsafe || (!rough && !outlineOut && complex);
+            let skipTerrain = unsafe || (!rough && !outline && complex);
 
             if (skipTerrain) {
                 console.log("skipping terrain generation");

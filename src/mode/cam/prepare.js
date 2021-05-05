@@ -478,6 +478,7 @@
                     fromPoint.z += ease;
                 }
                 fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, dir, ease);
+                fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, !dir, ease);
                 return fromPoint;
             }, {weight: false});
             return start;
