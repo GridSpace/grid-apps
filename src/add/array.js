@@ -3,7 +3,7 @@
 "use strict";
 
 (function() {
-    var AP = Array.prototype;
+    var AP = {};
 
     /** ******************************************************************
      * Array prototype helpers
@@ -165,6 +165,13 @@
     AP.uniq = function() {
         return this.slice().sort().filter((x, i, a) => !i || x != a[i-1]);
     };
+
+    for(let i in AP){
+        Object.defineProperty(Array.prototype, i, {
+            value: AP[i],
+            enumerable: false
+        });
+    }
 
     /** ******************************************************************
      * String prototype helpers
