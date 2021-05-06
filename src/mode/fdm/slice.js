@@ -264,7 +264,7 @@
 
             // create shadow for clipping supports
             let shadow = null;
-            if (true || spro.sliceSupportEnable) {
+            if (!isBelt || spro.sliceSupportEnable) {
                 let alltops = slices.map(slice => slice.topPolys()).flat();
                 shadow = POLY.union(alltops,null,0.1);
                 if (spro.sliceSupportExtra) {
