@@ -19,7 +19,8 @@
         "G1 F100       ; set default feed rate",
         "G0 Y20        ; wipe move to Y20",
         "G92 E0        ; zero extruder",
-        "M117 Printing..."
+        "M117 Printing...",
+        "G5            ; enable resume from outage"
     ],
     "post":[
         "M107                ; turn off fan",
