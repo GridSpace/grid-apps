@@ -18,7 +18,7 @@
         "G92 E0        ; zero extruder",
         "G1 F4000      ; set default feed rate",
         "G92 E0        ; zero extruder",
-        ";G5           ; uncomment to enable resume after power failure"
+        ";G5           ; uncomment to enable resume after power failure",
         "M117 Printing..."
     ],
     "post":[
