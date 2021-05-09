@@ -515,7 +515,7 @@
                     continue;
                 }
                 let tmpout = [];
-                let trigmet = firstLayerBrimTrig === 0 || (firstLayerBrimTrig && mins > firstLayerBrimTrig);
+                let trigmet = firstLayerBrimTrig === 0 || (firstLayerBrimTrig && mins <= firstLayerBrimTrig);
                 let brimax = Math.max(firstLayerBrim, firstLayerBrimIn);
                 // add brim when all conditions met
                 if (brimax && seqn <= firstLayerBrimComb && trigmet) {
