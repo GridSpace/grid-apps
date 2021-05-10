@@ -1278,7 +1278,8 @@
             for (let [k,v] of Object.entries(consts)) {
                 eva.push(`let ${k} = "${v}";`);
             }
-            eva.push(`try {( ${tok} )} catch (e) {0}`);
+            eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(3) }`)
+            eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
             let scr = eva.join('');
             let evl = eval(`{ ${scr} }`);
             nutok = evl;
