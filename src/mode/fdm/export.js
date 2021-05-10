@@ -92,6 +92,7 @@
                 bottom: offset ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight,
                 layers: layers.length,
+                progress: 0,
                 nozzle: 0,
                 tool: 0
             },
