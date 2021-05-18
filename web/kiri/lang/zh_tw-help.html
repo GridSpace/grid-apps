@@ -1,0 +1,169 @@
+<div id="help" class="f-col a-stretch">
+
+    <div class="title f-row j-center">
+        <label>Kiri:Moto 切片工具幫助</label>
+        <label id="kiri-version"></label>
+    </div>
+
+    <div class="f-row">
+
+    <div id="help-sel" class="f-col">
+        <div class="help-label" tab="about">關於</div>
+        <div class="help-label" tab="start">開始</div>
+        <div class="help-label" tab="controls">控制</div>
+        <div class="help-label" tab="support">幫助</div>
+        <div class="help-label" tab="project">項目</div>
+    </div>
+
+    <div id="help-tabs" class="f-grow">
+        <div id="help-tab-about" class="help-tab f-col a-center">
+            <div class="content">
+                <p>
+                    <b>Kiri:Moto</b>基於瀏覽器，是一款獨特的完全開源切片工具，能將3D模型轉換為適用於<u>3D 印表機</u>, <u>CNC數控銑削</u>,
+                    及 <u>雷射切割</u>的機器指令。
+                </p><br><p>
+                    基於瀏覽器意味著<i>所有</i>處理都在您的本地瀏覽器中進行，而不在雲端。您的數據和模型始終是您的<i>私有物</i>。
+                </p><br><p>
+                    這代表著Kiri就像您計算機上的本機應用程式一樣運作，但有著在瀏覽器的安全沙箱中運行的額外安全性。
+                </p><br><p>
+                    基於瀏覽器的另一個優勢在於Kiri永遠是最新版本。新功能、問題修復及更新將頻繁推出。如果您想要運行更早或開發版本的Kiri，請從右上角的用戶選單中選中對應版本。
+                </p>
+            </div>
+            <div class="grow"></div>
+            <i>Kiri 一詞來自日語Kiri-e，即剪紙藝術</i>
+            <i>Moto 是"Modeling Tool（建模工具）"的縮寫</i>
+        </div>
+
+        <div id="help-tab-start" class="help-tab f-col"><div class="content">
+            <b class="header">快速開始導覽</b>
+            <div class="content">
+                <p>
+                    <li id="help-start">觀看<a href="https://youtu.be/08795Sj22QE" target="youtube">Kiri:Moto 2.5權威影片指南</a></li>
+                    <li><button><i class="fas fa-cogs"></i></button> 在設置選單中選擇<button><i class="fas fa-cube"></i></button> 設備和模式</li>
+                    <li><button><i class="fas fa-sliders-h"></i></button> 偏好允許界面及模式專用設定</li>
+                    <li><button><i class="fas fa-plus"></i></button> 如果您想改變默認設定，請自定義設備</li>
+                    <li><button><i class="fas fa-folder"></i></button> 打開文件或<button><i class="fas fa-file-upload"></i></button>向工作區中導入零件</li>
+                    <li>用右側資料選單自定義切片參數</li>
+                    <li><button><i class="fas fa-bars"></i></button> 切割物品以查看參數效果</li>
+                    <li><button><i class="fas fa-cubes"></i></button>預覽將計算切割對象的路徑數據</li>
+                    <li><button><i class="fas fa-file-download"></i></button> 導出將把路徑轉換為GCode或SVG文件</li>
+                </p>
+            </div>
+            <div class="content">
+                <b class="header">操作模式</b>
+                <p>各模式（FDM、CAM、雷射、SLA）有不同的特性和設定。
+                    瀏覽Youtube影片以了解更多。</p>
+            </div>
+        </div></div>
+
+        <div id="help-tab-print" class="help-tab f-col">關於3D列印</div>
+        <div id="help-tab-mill" class="help-tab f-col">關於CNC數控銑削</div>
+        <div id="help-tab-laser" class="help-tab f-col">關於雷射切割</div>
+
+        <div id="help-tab-controls" class="help-tab f-col a-center"><div class="content">
+            <div class="f-row">
+                <table>
+                    <tr><td colspan="2" class="header">鍵盤控制</td><tr>
+                    <tr><td></td></tr>
+                    <tr><th>鍵位</th><th>動作</th></tr>
+                    <tr><td colspan=2 class="header2">配置</td></tr>
+                    <tr><td><label>e</label></td><td>選擇設備</td></tr>
+                    <tr><td><label>o</label></td><td>選擇CAM工具</td></tr>
+                    <tr><td><label>c</label></td><td>本地設備網格</td></tr>
+                    <tr><td><label>q</label></td><td>偏好面板</td></tr>
+                    <tr><td><label>l</label></td><td>工作資料</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">模式</td></tr>
+                    <tr><td><label>a</label></td><td>安排</td></tr>
+                    <tr><td><label>s</label></td><td>切片</td></tr>
+                    <tr><td><label>p</label></td><td>預覽</td></tr>
+                    <tr><td><label>g</label></td><td>動畫</td></tr>
+                    <tr><td><label>x</label></td><td>導出</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">文件</td></tr>
+                    <tr><td><label>i</label></td><td>導入</td></tr>
+                    <tr><td><label>r</label></td><td>最近</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">視圖</td></tr>
+                    <tr><td><label>h</label></td><td>主界面</td></tr>
+                    <tr><td><label>t</label></td><td>上視圖</td></tr>
+                    <tr><td><label>f</label></td><td>正視圖</td></tr>
+                    <tr><td><label>b</label></td><td>背視圖</td></tr>
+                    <tr><td><label>z</label></td><td>重置視圖</td></tr>
+                    <tr><td><label>&lt; &gt;</label></td><td>循環側面視圖</td></tr>
+                    <tr><td><label>v</label></td><td>聚焦（安排）</td></tr>
+                    <tr><td><label>v</label></td><td>層（切片/預覽）</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">對象</td></tr>
+                    <tr><td><label>d</label></td><td>拷貝</td></tr>
+                    <tr><td><label>m</label></td><td>鏡像</td></tr>
+                    <tr><td><label>o</label></td><td>旋轉對話</td></tr>
+                    <tr><td><label>delete</label></td><td>刪除</td></tr>
+                    <tr><td><label>arrow</label></td><td>旋轉90度</td></tr>
+                    <tr><td><label>shift-arrow</label></td><td>旋轉5度</td></tr>
+                    <tr><td><label>option-arrow</label></td><td>移動5mm</td></tr>
+                    <tr><td><label>ctrl-a</label></td><td>全選</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2"幫助</td></tr>
+                    <tr><td><label>?</label></td><td>本窗口</td></tr>
+                    <tr><td><br><br></td></tr>
+                    <tr><td colspan="2" class="header">滑鼠控制</td><tr>
+                    <tr><td></td></tr>
+                    <tr><th>Combo</th><th>動作</th></tr>
+                    <tr><td colspan=2 class="header2">視圖</td></tr>
+                    <tr><td><label>shift</label>滾輪</td><td>更改層</td></tr>
+                    <tr><td><label>meta</label>拖動</td><td>Pan</td></tr>
+                    <tr><td><label>right-drag</label></td><td>Pan</td></tr>
+                    <tr><td><label>left-drag</label></td><td>旋轉</td></tr>
+                    <tr><td><label>mouse-wheel</label></td><td>縮放</td></tr>
+                    <tr><td><label>middle-drag</label></td><td>縮放</td></tr>
+                    <tr><td><label>meta</label>拖動</td><td>Pan</td></tr>
+                    <tr><td></td></tr>
+                    <tr><td colspan=2 class="header2">對象</td></tr>
+                    <tr><td><label>ctrl-click</label></td><td>將表面對齊到床</td></tr>
+                    <tr><td><label>meta-click</label></td><td>將表面對齊到床</td></tr>
+                    <tr><td></td></tr>
+                </table>
+            </div>
+        </div></div>
+
+        <div id="help-tab-support" class="help-tab f-col"><div class="content">
+            <b class="header">資源</b>
+            <div class="content nounderline">
+                <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i> 詳細文件記錄</a>
+                <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Grid.Space論壇</a>
+                <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord線上聊天伺服器</a>
+                <a target="_rsc" href="https://www.youtube.com/playlist?list=PLRoVgyRoWZpumQIKWm7oldx3bjDivqP24"><i class="fab fa-youtube"></i> Youtube影片及教學</a>
+                <a target="_rsc" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> 在推特上關注Grid.Space</a>
+                <a target="_rsc" href="https://facebook.com/groups/kirimoto"><i class="fab fa-facebook"></i> Kiri:Moto 臉書社團</a>
+            </div>
+            <b class="header">應用內選項</b>
+            <p>
+                在<button><i class="fas fa-user-cog"></i></button>右上方的用戶選單中，
+                使用<span class="mono">導出</span>選項建立您的設備資料及（可選）工作區的可下載副本
+                這一文件可被隨時用來檢查或還原設置的完整快照。它還可以被共享，這一來，開發者和其他用戶
+                可以複製您的環境並幫助調試。
+            </p>
+        </div></div>
+
+        <div id="help-tab-project" class="help-tab f-col"><div class="content">
+            <b class="header">開源</b>
+            <p>
+                Kiri:Moto完全<a href="https://github.com/GridSpace/grid-apps" target="_github">開源</a>。
+                查看我們的Github項目頁面。那裡有包括硬件和軟體在內的配套項目。
+                我們隨時歡迎新的開發者和代碼貢獻者。代碼使用MIT許可。
+            </p><br><p>
+                <a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">捐款</a>也隨時歡迎哦。
+            </p>
+            <br><b class="header">集成</b>
+                <p>Kiri:Moto 也集成到其他幾個基於瀏覽器的應用中。</p>
+                <li> 應用商店中的<a target="app" href="https://appstore.onshape.com/apps/CAM/EAAEWYIOMQKBENEMYW2N7MF253CT4WYL6SUJGEY=/description"><b>Onshape</b></a></li>
+                <li>作為原生Thing應用的<a target="app" href="http://www.thingiverse.com/apps/kirimoto/"><b>Thingiverse</b></a></li>
+                <li>作為外層下主要切割軟體的<a target="app" href="https://simplyprint.io">SimplyPrint.io</a></li>
+                <li><a target="app" href="https://sienci.com/camlab-help/">CAMLab</a>是早期版本Kiri:Moto的分支產品</li>
+        </div></div>
+
+    </div>
+
+    </div>
+</div>
