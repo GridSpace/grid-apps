@@ -367,7 +367,7 @@
                     zHopDistance: 0.2,
                     arcTolerance: 0,
                     antiBacklash: 1,
-                    gcodePause: "",
+                    gcodePauseLayers: "",
                     ranges: []
                 }
             },
