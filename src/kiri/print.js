@@ -591,8 +591,7 @@
             return int;
         }
 
-        // returns true if no path around and retract required
-        // returns false if routed around or no retract
+        // returns true if routed around or no retract requried
         function routeAround(p1, p2) {
             const dbug = false;
             if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
@@ -617,15 +616,13 @@
             // odd # of intersections ?!? do retraction
             if (ints.length && ints.length % 2 !== 0) {
                 if (dbug === slice.index) console.log(slice.index, {odd_intersects: ints});
-                return true;
+                return false;
             }
 
             // sort by distance
             ints.sort((a, b) => {
                 return a.ip.dist - b.ip.dist;
             });
-
-            let valid = ints.length;
 
             if (dbug === slice.index) console.log(slice.index, {ints});
 
@@ -637,7 +634,7 @@
                 // different poly. force retract
                 if (i1.poly !== i2.poly) {
                     if (dbug === slice.index) console.log(slice.index, {int_diff_poly: ints, i});
-                    return true;
+                    return false;
                 }
                 // mark invalid intersect pairs (low or zero dist, etc)
                 // TODO: only if this is the outer pair and there are closer inner pairs
@@ -645,18 +642,17 @@
                     if (dbug === slice.index) console.log(slice.index, {int_dist_too_small: i1.ip.distTo2D(i2.ip), retractDist});
                     ints[i] = undefined;
                     ints[i+1] = undefined;
-                    valid -= 2;
                 }
             }
             // filter out invalid intersection pairs
             ints = ints.filter(i => i);
 
-            if (valid > 2) {
-                if (dbug === slice.index) console.log(slice.index, {complex_route: valid});
-                return true;
+            if (ints.length > 2) {
+                if (dbug === slice.index) console.log(slice.index, {complex_route: ints.length});
+                return false;
             }
 
-            if (valid) {
+            if (ints.length === 2) {
                 // can route around intersected top polys
                 for (let i=0; i<ints.length; i += 2) {
                     let i1 = ints[0];
@@ -718,14 +714,10 @@
                     // output last point
                     addOutput(preout, i2.ip, 0, moveSpeed, extruder);
                 }
+                return true;
             }
 
             return false;
-
-            // odd case where intersect triggered by starting on
-            // intersected shell and passing over shell (or inner) again
-            // not matched as valid since 0 intersect distance
-            return ints.length > 2 && p1.distTo2D(p2) >= retractDist;
         }
 
         function outputTraces(poly, opt = {}) {
