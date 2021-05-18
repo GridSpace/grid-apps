@@ -1,5 +1,7 @@
 {
     "pre":[
+        "G28 XY             ; home XY axes",
+        "G1 Y50 F1000       ; lift y axis off belt for heating",
         "M107               ; turn off filament cooling fan",
         "M140 S{bed_temp}   ; set bed temp",
         "M104 S{temp}       ; set hot end temp",
@@ -10,7 +12,6 @@
         "M82                ; absolute extrusion mode",
         "G90                ; absolute positioning mode",
         "G21                ; use metric values",
-        "G28                ; home axes",
         "G92 E0             ; reset filament position",
         "G1 Y0.15           ; move head to belt",
         "G1 X200 E50 F800   ; extruder purge line",
