@@ -70,6 +70,7 @@
         work_alerts: true, // allow disabling work progress alerts
         hover: false, // when true fires mouse hover events
         hoverAdds: false, // when true only searches widget additions
+        alert_event: false // emit alerts as events instead of display
     };
 
     const selection = {
@@ -559,12 +560,20 @@
              return updateAlerts(true);
          }
          let rec = [message, Date.now(), time, true];
-         alerts.push(rec);
-         updateAlerts();
+         if (feature.alert_event) {
+             API.event.emit('alert', rec);
+         } else {
+             alerts.push(rec);
+             updateAlerts();
+         }
          return rec;
      }
 
      function alert2cancel(rec) {
+         if (feature.alert_event) {
+             API.event.emit('alert.cancel', rec);
+             return;
+         }
          if (Array.isArray(rec)) {
              rec[3] = false;
              updateAlerts();
