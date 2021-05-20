@@ -220,6 +220,7 @@ KIRI.worker = {
 
         const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
         const print = current.print || {};
+        const minSpeed = (print.minSpeed || 0) * unitScale;
         const maxSpeed = (print.maxSpeed || 0) * unitScale;
         const state = { zeros: [] };
 
@@ -228,6 +229,7 @@ KIRI.worker = {
         send.done({
             done: true,
             // output: KIRI.codec.encode(layers, state),
+            minSpeed,
             maxSpeed
         }, state.zeros);
     },
@@ -282,11 +284,12 @@ KIRI.worker = {
         const parsed = print.parseGCode(code, offset, progress => {
             send.data({ progress: progress * 0.25 });
         }, done => {
+            const minSpeed = print.minSpeed;
             const maxSpeed = print.maxSpeed;
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools });
-            send.done({parsed: KIRI.codec.encode(layers), maxSpeed});
+            send.done({parsed: KIRI.codec.encode(layers), maxSpeed, minSpeed});
         }, {
             fdm: mode === 'FDM',
             belt: device.bedBelt

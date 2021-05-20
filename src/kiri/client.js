@@ -209,7 +209,7 @@ KIRI.work = {
                 update(reply.progress, reply.message, reply.layer);
             }
             if (reply.done) {
-                done(reply.output, reply.maxSpeed);
+                done(reply.output, reply.maxSpeed, reply.minSpeed);
             }
             if (reply.error) {
                 done(reply);
@@ -260,7 +260,7 @@ KIRI.work = {
                 progress(reply.progress);
             }
             if (reply.parsed) {
-                done(KIRI.codec.decode(reply.parsed), reply.maxSpeed);
+                done(KIRI.codec.decode(reply.parsed), reply.maxSpeed, reply.minSpeed);
             }
         });
     },

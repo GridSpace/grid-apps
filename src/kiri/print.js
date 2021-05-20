@@ -131,6 +131,7 @@
             height = 0,
             factor = 1,
             tool = 0,
+            minf = Infinity,
             maxf = 0,
             seq = [],
             autolayer = true,
@@ -252,6 +253,7 @@
             if (!moving && point.z) bounds.max.z = Math.max(bounds.max.z, point.z);
 
             // update max speed
+            if (pos.F) minf = Math.min(minf, pos.F);
             maxf = Math.max(maxf, pos.F);
 
             // always add moves to the current sequence
@@ -392,6 +394,7 @@
         scope.imported = gcode;
         scope.lines = lines.length;
         scope.bytes = gcode.length;
+        scope.minSpeed = Math.floor(minf / 60);
         scope.maxSpeed = Math.floor(maxf / 60);
         scope.belt = belt;
 
