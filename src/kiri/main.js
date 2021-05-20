@@ -977,6 +977,7 @@
                 });
                 UI.speedbar.innerHTML = list.join('');
             });
+            API.event.emit('preview.maxspeed', maxSpeed);
         }
     }
 
