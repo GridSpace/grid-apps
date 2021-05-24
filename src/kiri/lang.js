@@ -25,6 +25,7 @@
             case 'pl': return 'pl-pl';
             case 'pt': return 'pt-pt';
             case 'zh': return 'zh';
+            case 'zh-tw': return 'zh-tw';
         }
         return KDFL;
     };
