@@ -453,7 +453,7 @@
                 }
 
                 // look for extruder change, run scripts, recalc emit factor
-                if (out.tool !== undefined && out.tool !== tool) {
+                if (out.tool !== undefined && out.tool != tool) {
                     appendAllSub(extruder.extDeselect);
                     tool = out.tool;
                     subst.nozzle = subst.tool = tool;
