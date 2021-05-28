@@ -325,7 +325,7 @@
             }
             for (let slice of widget.slices) {
                 slice.widget = widget;
-                let z = slice.z + widget.offset.z;
+                let z = (slice.z + widget.offset.z).round(2);
                 let rec = zrec[z] = zrec[z] || {z, slices:[]};
                 if (rec.slices.length === 0) {
                     cake.push(rec);
