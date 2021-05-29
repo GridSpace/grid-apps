@@ -66,7 +66,6 @@
             sdev = settings.device,
             isBelt = sdev.bedBelt,
             isSynth = widget.track.synth,
-            update_start = Date.now(),
             minSolid = spro.sliceSolidMinArea,
             solidLayers = spro.sliceSolidLayers,
             vaseMode = spro.sliceFillType === 'vase' && !isSynth,
@@ -76,17 +75,14 @@
             sliceHeight = spro.sliceHeight,
             firstSliceHeight = isBelt ? sliceHeight : spro.firstSliceHeight,
             nozzleSize = sdev.extruders[extruder].extNozzle,
-            lineWidth = nozzleSize,
+            lineWidth = spro.sliceLineWidth || nozzleSize,
             fillOffsetMult = 1.0 - bound(spro.sliceFillOverlap, 0, 0.8),
-            firstWidthMult = spro.firstLayerShellMult || 1,
             shellOffset = lineWidth,
             fillSpacing = lineWidth,
             fillOffset = lineWidth * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             supportDensity = spro.sliceSupportDensity,
-            view = widget.mesh && widget.mesh.newGroup ? widget.mesh.newGroup() : null,
-            beltfact = Math.cos(Math.PI/4),
-            invbfact = 1 / beltfact;
+            beltfact = Math.cos(Math.PI/4);
 
         isFlat = ctrl.lineType === "flat";
         isThin = !isFlat && ctrl.lineType === "line";

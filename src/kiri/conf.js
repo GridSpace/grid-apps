@@ -297,6 +297,7 @@
                     sliceShells: 3,
                     sliceShellOrder: "in-out",
                     sliceLayerStart: "last",
+                    sliceLineWidth: 0,
                     sliceFillAngle: 45,
                     sliceFillWidth: 1,
                     sliceFillOverlap: 0.35,
