@@ -268,6 +268,8 @@ kiri.lang['en-us'] = {
     // FDM SHELLS
     sl_shel_s:      "shell count",
     sl_shel_l:      ["number of perimeter","walls to generate"],
+    sl_line_s:      "line width",
+    sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
     sl_ordr_s:      "shell order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "layer start",
