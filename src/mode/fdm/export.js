@@ -65,6 +65,7 @@
             timeDwell = retDwell / 1000,
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
+            arcMax = 1,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -510,9 +511,9 @@
                     if (arcDist) {
                         let rec = {e:out.emit, x, y, z, dist, emitPerMM, speedMMM};
                         arcQ.push(rec);
-                        let deem = false;
-                        let depm = false;
-                        let desp = false;
+                        let deem = false; // do arcQ[0] and rec have differing emit values?
+                        let depm = false; // do arcQ[0] and rec have differing emit speeds?
+                        let desp = false; // do arcQ[0] and rec have differing move speeds?
                         if (arcQ.length > 1) {
                             deem = arcQ[0].e !== rec.e;
                             depm = arcQ[0].emitPerMM !== rec.emitPerMM;
@@ -520,10 +521,10 @@
                         }
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
-                            let e1 = arcQ[el-3];
-                            let e2 = arcQ[el-2];
-                            let e3 = arcQ[el-1];
-                            let cc = BASE.util.center2d(e1, e2, e3, 1);
+                            let e1 = arcQ[el-3]; // third last in arcQ
+                            let e2 = arcQ[el-2]; // second last in arcQ
+                            let e3 = arcQ[el-1]; // last in arcQ
+                            let cc = BASE.util.center2d(e1, e2, e3, 1); //
                             let dc = 0;
                             if (arcQ.length === 3) {
                                 arcQ.center = [ cc ];
@@ -534,7 +535,7 @@
                                 dc = Math.sqrt(dx * dx + dy * dy);
                             }
                             // if new point is off the arc
-                            if (deem || depm || desp || dc > arcDist) {
+                            if (deem || depm || desp || dc > arcDist || cc.r >= arcMax) {
                                 // console.log({dc, depm, desp});
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
@@ -594,8 +595,8 @@
                 append(`M808`);
                 inLoop = undefined;
             }
+            drainQ();
         }
-        drainQ();
 
         function emitQrec(rec) {
             let {e, x, y, dist, emitPerMM, speedMMM} = rec;
