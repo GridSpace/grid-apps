@@ -118,6 +118,7 @@
             let roughDown = op.down;
             let roughLeave = op.leave;
             let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+            let trueShadow = process.camTrueShadow === true;
 
             // create facing slices
             if (roughTop) {
@@ -203,7 +204,11 @@
                 progress((index / total) * 0.5);
             }, genso: true });
 
-            shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
+            if (trueShadow) {
+                shadow = tshadow.clone(true);
+            } else {
+                shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
+            }
 
             // inset or eliminate thru holes from shadow
             shadow = POLY.flatten(shadow.clone(true), [], true);
@@ -1110,6 +1115,7 @@
             let rough = real.filter(op => op.type === 'rough').length > 0;
             let outline = real.filter(op => op.type === 'outline').length > 0;
             let outlineOut = real.filter(op => op.type === 'outline' && op.outside).length > 0;
+            let trueShadow = state.settings.process.camTrueShadow === true;
 
             let minStepDown = real
                 .map(op => (op.down || 3) / 3)
@@ -1127,7 +1133,14 @@
             }
 
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-                tshadow = POLY.union(tshadow.slice().appendAll(data.tops), 0.01, true);
+                let downfaces = trueShadow ? CAM.angledFaces(widget, data.z).map(a => {
+                    return newPolygon()
+                        .add(a[0].x,a[0].y,a[0].z)
+                        .add(a[1].x,a[1].y,a[1].z)
+                        .add(a[2].x,a[2].y,a[2].z);
+                }) : [];
+                let downunion = POLY.union(downfaces, 0.0001, true);
+                tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(downunion), 0.01, true);
                 tslices.push(data.slice);
                 if (false) {
                     const slice = data.slice;
@@ -1165,6 +1178,35 @@
             state.thruHoles = tshadow.map(p => p.inner || []).flat();
         }
     }
+
+    CAM.angledFaces = function(widget, z) {
+        let geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        let rad = (Math.PI / 180);
+        let deg = (180 / Math.PI);
+        let angle = rad * 1;
+        let thresh = -Math.sin(angle);
+        let found = [];
+        let { position } = geo.attributes;
+        let { itemSize, count, array } = position;
+        for (let i = 0; i<count; i += 3) {
+            let ip = i * itemSize;
+            let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            // skip faces below threshold
+            if (a.z < z || b.z < z || c.z < z) {
+                continue;
+            }
+            let norm = THREE.computeFaceNormal(a,b,c);
+            // limit to downward faces
+            if (norm.z > thresh) {
+                continue;
+            }
+            found.push([a,b,c]);
+        }
+        return found;
+    };
 
     CAM.OPS = CamOp.MAP = {
         "xray": OpXRay,

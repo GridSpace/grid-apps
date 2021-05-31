@@ -523,6 +523,7 @@
                     outputInvertX: false,
                     outputInvertY: false,
                     camExpertFast: false,
+                    camTrueShadow: false,
                     ops: [], // current ops
                     op2: []  // flip ops
                 }

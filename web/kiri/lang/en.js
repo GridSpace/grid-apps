@@ -605,6 +605,8 @@ kiri.lang['en-us'] = {
     // CAM EXPERT
     cx_fast_s:      "skip shadow",
     cx_fast_l:      ["disable overhang detection","can be faster and use less","memory with complex models","but fails with overhangs","try enabling if slicing","hangs during shadowing"],
+    cx_true_s:      "true shadow",
+    cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
 
     // FDM GCODE
     ag_menu:        "gcode",
