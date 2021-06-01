@@ -525,7 +525,9 @@
                             let e2 = arcQ[el-2]; // second last in arcQ
                             let e3 = arcQ[el-1]; // last in arcQ
                             let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
-                            if (isNaN(cc.x)) console.log({cc, e1, e2, e3});
+                            if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
+                                console.log({cc, e1, e2, e3});
+                            }
                             let dc = 0;
                             if (arcQ.length === 3) {
                                 arcQ.center = [ cc ];
