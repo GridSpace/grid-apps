@@ -316,27 +316,29 @@
         return (d2y * d1x) - (d2x * d1y);
     }
 
+    /**
+     * find circle center given 3 points in XY plane
+     */
     function circleCenter(A,B,C)
     {
-        let yDelta_a = B.y - A.y;
-        let xDelta_a = B.x - A.x;
-        let yDelta_b = C.y - B.y;
-        let xDelta_b = C.x - B.x;
-        let center = {z: A.z};
-        let cheat = 0;
-        if (!xDelta_a) { xDelta_a = 0.00000000001; cheat++ } // cheat!
-        if (!xDelta_b) { xDelta_b = 0.00000000001; cheat++ } // cheat!
-        if (!yDelta_a) { yDelta_a = 0.00000000001; cheat++ } // cheat!
-        if (!yDelta_b) { yDelta_b = 0.00000000001; cheat++ } // cheat!
-        let aSlope = yDelta_a / xDelta_a;
-        let bSlope = yDelta_b / xDelta_b;
-        center.x = (aSlope * bSlope * (A.y - C.y) + bSlope * (A.x + B.x) - aSlope*(B.x+C.x)) / (2 * (bSlope-aSlope));
-        center.y = (-1 * (center.x - (A.x + B.x) / 2)) / aSlope + ((A.y+B.y) / 2);
-        if (cheat > 1 || [center.x,center.y].hasNaN()) {
-            // console.log({xDelta_a, xDelta_b, aSlope, bSlope, cheat});
-            return undefined;
-        }
+        let xmat = [[A.x*A.x + A.y*A.y, A.y, 1],[B.x*B.x + B.y*B.y, B.y, 1],[C.x*C.x + C.y*C.y, C.y, 1]];
+        let ymat = [[A.y, A.x*A.x + A.y*A.y, 1],[B.y, B.x*B.x + B.y*B.y, 1],[C.y, C.x*C.x + C.y*C.y, 1]];
+
+        let center = {x:determinant33(xmat), y:determinant33(ymat), z:A.z};
+
         return center;
+    }
+
+    /**
+     * find the determinant of a 3x3 matrix array organized [row, col]
+     */
+    function determinant33(mat33)
+    {
+        let cofactor00 =  mat33[0][0] * (mat33[1][1] * mat33[2][2] - mat33[1][2] * mat33[2][1]);
+        let cofactor01 = -mat33[0][1] * (mat33[1][0] * mat33[2][2] - mat33[1][2] * mat33[2][0]);
+        let cofactor02 =  mat33[0][2] * (mat33[1][0] * mat33[2][1] - mat33[1][1] * mat33[2][0]);
+
+        return cofactor00 + cofactor01 + cofactor02;
     }
 
     /**
@@ -352,6 +354,8 @@
         }
         return center;
     }
+
+
 
     /**
      * return two possible circle centers given two points and a radius
