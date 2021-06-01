@@ -183,6 +183,7 @@
             top: 0, // z top
             mirror: false
         },
+        this.cache = {};
         this.stats = {
             slice_time: 0,
             load_time: 0,

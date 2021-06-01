@@ -1133,8 +1133,9 @@
                 tzindex = [ tzindex.pop() ];
             }
 
+            let lsz; // only shadow up to bottom of last shadow for progressive union
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-                let shadowAt = trueShadow ? CAM.shadowAt(widget, data.z) : [];
+                let shadowAt = trueShadow ? CAM.shadowAt(widget, data.z, lsz) : [];
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
                 tslices.push(data.slice);
                 if (false) {
@@ -1159,6 +1160,7 @@
                     //     .setLayer("lines2", {line: 0x444488, thin: true })
                     //     .addLines(p2, { thin: true });
                 }
+                lsz = data.z;
                 progress(index / total);
             }, genso: true });
 
@@ -1175,8 +1177,9 @@
     }
 
     CAM.shadowAt = function(widget, z, ztop) {
-        let geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        let geo = widget.cache.geo || new THREE.BufferGeometry()
+            .setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
+        widget.cache.geo = geo;
         let rad = (Math.PI / 180);
         let deg = (180 / Math.PI);
         let angle = rad * 1;

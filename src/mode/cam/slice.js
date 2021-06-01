@@ -121,6 +121,7 @@
         };
 
         let opList = [
+            // silently preface op list with OpShadow
             new CAM.OPS.shadow(state, { type: "shadow" })
         ];
 
