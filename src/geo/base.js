@@ -323,15 +323,19 @@
         let yDelta_b = C.y - B.y;
         let xDelta_b = C.x - B.x;
         let center = {z: A.z};
-        if (!xDelta_a) xDelta_a = 0.00000000001; // cheat!
-        if (!xDelta_b) xDelta_b = 0.00000000001; // cheat!
+        let cheat = 0;
+        if (!xDelta_a) { xDelta_a = 0.00000000001; cheat++ } // cheat!
+        if (!xDelta_b) { xDelta_b = 0.00000000001; cheat++ } // cheat!
+        if (!yDelta_a) { yDelta_a = 0.00000000001; cheat++ } // cheat!
+        if (!yDelta_b) { yDelta_b = 0.00000000001; cheat++ } // cheat!
         let aSlope = yDelta_a / xDelta_a;
         let bSlope = yDelta_b / xDelta_b;
-        center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
-        center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
-        // if (isNaN(center.x)) {
-        //     console.log({xDelta_a, xDelta_b, aSlope, bSlope});
-        // }
+        center.x = (aSlope * bSlope * (A.y - C.y) + bSlope * (A.x + B.x) - aSlope*(B.x+C.x)) / (2 * (bSlope-aSlope));
+        center.y = (-1 * (center.x - (A.x + B.x) / 2)) / aSlope + ((A.y+B.y) / 2);
+        if (cheat > 1 || [center.x,center.y].hasNaN()) {
+            // console.log({xDelta_a, xDelta_b, aSlope, bSlope, cheat});
+            return undefined;
+        }
         return center;
     }
 
@@ -341,7 +345,7 @@
      */
     function center2d(A,B,C,rad) {
         let center = circleCenter(A,B,C);
-        if (rad) {
+        if (center && rad) {
             let dx = center.x - A.x;
             let dy = center.y - A.y;
             center.r = Math.sqrt(dx*dx + dy*dy)
