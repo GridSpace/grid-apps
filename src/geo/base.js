@@ -323,7 +323,7 @@
     {
         let denominator = 2*determinant33([[A.x, A.y, 1], [B.x, B.y, 1], [C.x, C.y, 1]]);
         let xmat = [[A.x*A.x + A.y*A.y, A.y, 1],[B.x*B.x + B.y*B.y, B.y, 1],[C.x*C.x + C.y*C.y, C.y, 1]];
-        let ymat = [[A.y, A.x*A.x + A.y*A.y, 1],[B.y, B.x*B.x + B.y*B.y, 1],[C.y, C.x*C.x + C.y*C.y, 1]];
+        let ymat = [[A.x, A.x*A.x + A.y*A.y, 1],[B.x, B.x*B.x + B.y*B.y, 1],[C.x, C.x*C.x + C.y*C.y, 1]];
 
         let center = {x:determinant33(xmat)/denominator, y:determinant33(ymat)/denominator, z:A.z};
 
@@ -357,8 +357,6 @@
         }
         return center;
     }
-
-
 
     /**
      * return two possible circle centers given two points and a radius
