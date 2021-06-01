@@ -65,7 +65,8 @@
             timeDwell = retDwell / 1000,
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
-            arcMax = 300,
+            arcMin = 1,
+            arcMax = 200,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -539,7 +540,8 @@
                                     dc = Math.sqrt(dx * dx + dy * dy);
                                 }
                                 // if new point is off the arc
-                                if (deem || depm || desp || dc > arcDist || cc.r >= arcMax) {
+                                // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
+                                if (deem || depm || desp || dc > arcDist || dist > cc.r) {
                                     // console.log({dc, depm, desp});
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
@@ -623,7 +625,7 @@
                 let to = arcQ.peek();
                 let cc = {x:0, y:0, z:0, r:0};
                 let cl = 0;
-                for (let center of arcQ.center.filter(rec => !isNaN(rec.r))) {
+                for (let center of arcQ.center) {
                     cc.x += center.x;
                     cc.y += center.y;
                     cc.z += center.z;
