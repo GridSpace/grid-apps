@@ -316,40 +316,23 @@
         return (d2y * d1x) - (d2x * d1y);
     }
 
-    /**
-     * return circle center given three points
-     * from https://math.stackexchange.com/questions/1076177/3d-coordinates-of-circle-center-given-three-point-on-the-circle
-     */
-    function center3d(a,b,c) {
-        let ax = a.x,
-            ay = a.y,
-            az = a.z || 0,
-            bx = b.x,
-            by = b.y,
-            bz = b.z || 0,
-            cx = c.x,
-            cy = c.y,
-            cz = c.z || 0,
-            Cx = bx-ax,
-            Cy = by-ay,
-            Cz = bz-az,
-            Bx = cx-ax,
-            By = cy-ay,
-            Bz = cz-az,
-            B2 = (ax*ax)-(cx*cx)+(ay*ay)-(cy*cy)+(az*az)-(cz*cz),
-            C2 = (ax*ax)-(bx*bx)+(ay*ay)-(by*by)+(az*az)-(bz*bz),
-            CByz = Cy*Bz-Cz*By,
-            CBxz = Cx*Bz-Cz*Bx,
-            CBxy = Cx*By-Cy*Bx,
-            ZZ1 = -(Bz-Cz*Bx/Cx)/(By-Cy*Bx/Cx),
-            Z01 = -(B2-Bx/Cx*C2)/(2*(By-Cy*Bx/Cx)),
-            ZZ2 = -(ZZ1*Cy+Cz)/Cx,
-            Z02 = -(2*Z01*Cy+C2)/(2*Cx),
-            dz = -((Z02-ax)*CByz-(Z01-ay)*CBxz-az*CBxy)/(ZZ2*CByz-ZZ1*CBxz+CBxy),
-            dx = ZZ2*dz + Z02,
-            dy = ZZ1*dz + Z01;
-
-        return {x:dx, y:dy, z:dz};
+    function circleCenter(A,B,C)
+    {
+        let yDelta_a = B.y - A.y;
+        let xDelta_a = B.x - A.x;
+        let yDelta_b = C.y - B.y;
+        let xDelta_b = C.x - B.x;
+        let center = {z: A.z};
+        if (!xDelta_a) xDelta_a = 0.00000000001; // cheat!
+        if (!xDelta_b) xDelta_b = 0.00000000001; // cheat!
+        let aSlope = yDelta_a / xDelta_a;
+        let bSlope = yDelta_b / xDelta_b;
+        center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
+        center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
+        // if (isNaN(center.x)) {
+        //     console.log({xDelta_a, xDelta_b, aSlope, bSlope});
+        // }
+        return center;
     }
 
     /**
@@ -357,21 +340,11 @@
      * from https://stackoverflow.com/questions/4103405/what-is-the-algorithm-for-finding-the-center-of-a-circle-from-three-points
      */
     function center2d(A,B,C,rad) {
-        // let yDelta_a = B.y - A.y,
-        //     xDelta_a = B.x - A.x,
-        //     yDelta_b = C.y - B.y,
-        //     xDelta_b = C.x - B.x,
-        //     aSlope = yDelta_a/xDelta_a,
-        //     bSlope = yDelta_b/xDelta_b,
-        //     center = {x:0, y:0, z:0};
-        // center.x = (aSlope*bSlope*(A.y - C.y) + bSlope*(A.x + B.x) - aSlope*(B.x+C.x) )/(2* (bSlope-aSlope) );
-        // center.y = -1*(center.x - (A.x+B.x)/2)/aSlope +  (A.y+B.y)/2;
-        let center = center3d(A,B,C);
+        let center = circleCenter(A,B,C);
         if (rad) {
             let dx = center.x - A.x;
             let dy = center.y - A.y;
             center.r = Math.sqrt(dx*dx + dy*dy)
-            // if (isNaN(center.r)) console.log('NaN',{dx,dy,A,B,C,center,xDelta_a,xDelta_b,yDelta_a,yDelta_b,aSlope,bSlope});
         }
         return center;
     }
@@ -488,7 +461,6 @@
         round,
         area2,
         center2d,
-        center3d,
         center2pr,
         thetaDiff,
         distSq : dist2,

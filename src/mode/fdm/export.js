@@ -65,7 +65,7 @@
             timeDwell = retDwell / 1000,
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
-            arcMax = 1,
+            arcMax = 300,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -524,7 +524,8 @@
                             let e1 = arcQ[el-3]; // third last in arcQ
                             let e2 = arcQ[el-2]; // second last in arcQ
                             let e3 = arcQ[el-1]; // last in arcQ
-                            let cc = BASE.util.center2d(e1, e2, e3, 1); //
+                            let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
+                            if (isNaN(cc.x)) console.log({cc, e1, e2, e3});
                             let dc = 0;
                             if (arcQ.length === 3) {
                                 arcQ.center = [ cc ];
