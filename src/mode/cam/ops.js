@@ -196,7 +196,7 @@
                     // exclude flats injected to complete shadow
                     return;
                 }
-                data.shadow = shadow.clone(true);
+                data.shadow = trueShadow ? CAM.shadowAt(widget, data.z) : shadow.clone(true);
                 data.slice.shadow = data.shadow;
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -420,6 +420,7 @@
             let shadow = [];
             let slices = [];
             let indices = slicer.interval(op.down, { down: true, min: zBottom, fit: true, off: 0.01 });
+            let trueShadow = process.camTrueShadow === true;
             // shift out first (top-most) slice
             indices.shift();
             // add flats to shadow
@@ -446,7 +447,7 @@
                     // exclude flats injected to complete shadow
                     return;
                 }
-                data.shadow = shadow.clone(true);
+                data.shadow = trueShadow ? CAM.shadowAt(widget, data.z) : shadow.clone(true);
                 data.slice.shadow = data.shadow;
                 // data.slice.tops[0].inner = data.shadow;
                 // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -911,7 +912,7 @@
 
         prepare(ops, progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
+            let { settings, widget, sliceAll, updateToolDiams } = state;
             let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
             setTool(op.tool, undefined, op.rate);
@@ -928,7 +929,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, bounds, sliceAll, tslices, zMax, zThru } = state;
+            let { settings, widget, bounds, sliceAll, zMax, zThru } = state;
             let { updateToolDiams } = state;
 
             let tool = new CAM.Tool(settings, op.tool);
@@ -1056,7 +1057,7 @@
 
         prepare(ops, progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, tslices, updateToolDiams } = state;
+            let { settings, widget, sliceAll, updateToolDiams } = state;
             let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
             if (op.axis === '-') {
@@ -1118,7 +1119,7 @@
             let trueShadow = state.settings.process.camTrueShadow === true;
 
             let minStepDown = real
-                .map(op => (op.down || 3) / 3)
+                .map(op => (op.down || 3) / (trueShadow ? 1 : 3))
                 .reduce((a,v) => Math.min(a, v, 1));
 
             let tslices = [];
@@ -1133,14 +1134,8 @@
             }
 
             let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-                let downfaces = trueShadow ? CAM.angledFaces(widget, data.z).map(a => {
-                    return newPolygon()
-                        .add(a[0].x,a[0].y,a[0].z)
-                        .add(a[1].x,a[1].y,a[1].z)
-                        .add(a[2].x,a[2].y,a[2].z);
-                }) : [];
-                let downunion = POLY.union(downfaces, 0.0001, true);
-                tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(downunion), 0.01, true);
+                let shadowAt = trueShadow ? CAM.shadowAt(widget, data.z) : [];
+                tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
                 tslices.push(data.slice);
                 if (false) {
                     const slice = data.slice;
@@ -1148,9 +1143,9 @@
                     slice.output()
                         .setLayer("shadow", {line: 0x888800, thin: true })
                         .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
-                    // slice.output()
-                    //     .setLayer("slice", {line: 0x886622, thin: true })
-                    //     .addPolys(POLY.setZ(data.tops.clone(true), data.z), { thin: true });
+                    slice.output()
+                        .setLayer("slice", {line: 0x886622, thin: true })
+                        .addPolys(POLY.setZ(data.tops.clone(true), data.z), { thin: true });
                     // let p1 = [], p2 = [], cp = p1;
                     // for (let line of data.lines) {
                     //     cp.push(line.p1);
@@ -1179,7 +1174,7 @@
         }
     }
 
-    CAM.angledFaces = function(widget, z) {
+    CAM.shadowAt = function(widget, z, ztop) {
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let rad = (Math.PI / 180);
@@ -1194,18 +1189,60 @@
             let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
             let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
             let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-            // skip faces below threshold
-            if (a.z < z || b.z < z || c.z < z) {
+            let where = undefined;
+            if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
+                // skip faces over top threshold
                 continue;
             }
-            let norm = THREE.computeFaceNormal(a,b,c);
-            // limit to downward faces
-            if (norm.z > thresh) {
+            if (a.z < z && b.z < z && c.z < z) {
+                // skip faces under threshold
+                continue;
+            } else if (a.z > z && b.z > z && c.z > z) {
+                // limit to selected faces over threshold
+                let norm = THREE.computeFaceNormal(a,b,c);
+                if (norm.z < thresh) {
+                    continue;
+                }
+                found.push([a,b,c]);
+                continue;
+            } else {
+                // check faces straddling threshold
+                where = {under: [], over: [], on: []};
+            }
+            if (where) {
+                let { checkOverUnderOn, intersectPoints } = self.kiri.slicer2;
+                checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
+                checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
+                checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
+                if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
+                    // compute two point intersections and construct line
+                    let line = intersectPoints(where.over, where.under, z);
+                    if (line.length === 2) {
+                        if (where.over.length === 2) {
+                            found.push([where.over[0], line[0], line[1]]);
+                            found.push([where.over[1], line[0], line[1]]);
+                            found.push([where.over[0], where.over[1], line[1]]);
+                            found.push([where.over[0], where.over[1], line[0]]);
+                        } else {
+                            found.push([where.over[0], line[0], line[1]]);
+                        }
+                    } else {
+                        console.log({msg: "invalid ips", line: line, where: where});
+                    }
+                }
+                continue;
+            } else {
                 continue;
             }
             found.push([a,b,c]);
         }
-        return found;
+        let polys = found.map(a => {
+            return newPolygon()
+                .add(a[0].x,a[0].y,a[0].z)
+                .add(a[1].x,a[1].y,a[1].z)
+                .add(a[2].x,a[2].y,a[2].z);
+        });
+        return POLY.union(polys, 0.0001, true);
     };
 
     CAM.OPS = CamOp.MAP = {

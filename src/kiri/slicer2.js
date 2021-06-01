@@ -837,6 +837,9 @@
         return output;
     }
 
+    Slicer.checkOverUnderOn = checkOverUnderOn;
+    Slicer.intersectPoints = intersectPoints;
+
     self.kiri.slicer2 = Slicer;
 
 })();
