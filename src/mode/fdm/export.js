@@ -522,8 +522,8 @@
                         }
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
-                            let e1 = arcQ[el-3]; // third last in arcQ
-                            let e2 = arcQ[el-2]; // second last in arcQ
+                            let e1 = arcQ[0]; // first in arcQ
+                            let e2 = arcQ[Math.floor(el/2)]; // mid in arcQ
                             let e3 = arcQ[el-1]; // last in arcQ
                             let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
                             let dc = 0;
