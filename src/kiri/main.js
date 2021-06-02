@@ -2827,8 +2827,14 @@
             let html = ['<table>'];
             html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
             html.push(`<tbody>`);
+            let recs = [];
             for (let k in data) {
-                let r = data[k].stat;
+                recs.push(data[k].stat);
+            }
+            recs.sort((a,b) => {
+                return a.device.name < b.device.name ? -1 : 1;
+            });
+            for (let r of recs) {
                 bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
                 html.push(`<tr>`);
                 html.push(`<td>${r.device.name}</td>`);
