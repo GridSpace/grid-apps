@@ -1,1 +1,0 @@
-Creality.CR-10S
