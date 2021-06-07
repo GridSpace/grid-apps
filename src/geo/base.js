@@ -317,6 +317,21 @@
     }
 
     /**
+     * Find Z of XY pair given plane defined by 3 points
+     */
+     function zInPlane(p1, p2, p3, x, y) 
+     {
+         let vec1 = new THREE.Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+         let vec2 = new THREE.Vector3(p3.x - p1.x, p3.y - p1.y, p3.z - p1.z);
+ 
+         vec1.cross(vec2);
+ 
+         if (vec1.z !== 0) {
+             return ((vec1.x * (x - p1.x) + vec1.y * (y - p1.y)) / -vec1.z) + p1.z;
+         }
+     }
+
+    /**
      * find circle center given 3 points in XY plane
      */
     function circleCenter(A,B,C)
@@ -486,6 +501,7 @@
         intersect,
         determinant,
         numOrDefault,
+        zInPlane,
         comma: (v) => {
             if (!v) return v;
             let [lt,rt] = v.toString().split('.');
