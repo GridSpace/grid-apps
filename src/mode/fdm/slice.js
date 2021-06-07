@@ -1345,28 +1345,44 @@
         let platform = new THREE.Mesh(
             new THREE.PlaneGeometry(1000,1000,1), mat
         );
-        function tl(p1, p2) {
-            let dist = p1.distanceTo(p2);
-            let mp = new THREE.Vector3().add(p1).add(p2).divideScalar(2);
-            if (dist >= size * 3) {
-                tp(p1);
-                tp(p2);
-                let itr = Math.floor(dist / size);
-                let seg = p2.clone().sub(p1).divideScalar(itr);
-                let pnt = p1.clone();
-                while (itr-- > 0) {
-                    pnt.add(seg);
-                    tp(pnt.clone());
+        function pointIn(x, y, p1, p2, p3) {
+            let det = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
+            return det * ((p2.x - p1.x) * (y - p1.y) - (p2.y - p1.y) * (x - p1.x)) > 0 &&
+                det * ((p3.x - p2.x) * (y - p2.y) - (p3.y - p2.y) * (x - p2.x)) > 0 &&
+                det * ((p1.x - p3.x) * (y - p3.y) - (p1.y - p3.y) * (x - p3.x)) > 0
+        }
+        // first, last, distance
+        function fld(arr, key) {
+            let first = arr[0];
+            let last = arr.last();
+            let dist = last[key] - first[key];
+            return { first, last, dist }
+        }
+        // sorted range distance from key
+        function rdist(range, key) {
+            return range.last[key] - range.first[key];
+        }
+        // test area
+        function ta(p1, p2, p3) {
+            let s4 = size / 4;
+            let s2 = size * 0.45;
+            let sortx = [p1,p2,p3].sort((a,b) => { return a.x - b.x });
+            let sorty = [p1,p2,p3].sort((a,b) => { return a.y - b.y });
+            let sortz = [p1,p2,p3].sort((a,b) => { return a.z - b.z });
+            let xv = fld(sortx, 'x');
+            let yv = fld(sorty, 'y');
+            let xa = BASE.util.lerp(xv.first.x + s4, xv.last.x - s4, s2, true);
+            let ya = BASE.util.lerp(yv.first.y + s4, yv.last.y - s4, s2, true);
+            for (let x of xa) {
+                for (let y of ya) {
+                    if (pointIn(x, y, p1, p2, p3)) {
+                        let z = BASE.util.zInPlane(p1, p2, p3, x, y);
+                        tp(new THREE.Vector3(x, y, z));
+                    }
                 }
-            } else if (dist >= size * 2) {
-                tp(p1);
-                tp(p2);
-                tp(mp);
-            } else if (dist >= size) {
-                tp(p1);
-                tp(p2);
             }
         }
+        // test point
         function tp(point) {
             if (point.added) {
                 return;
@@ -1380,7 +1396,7 @@
             }
             let ray = new THREE.Raycaster(point, dir);
             let int = ray.intersectObjects([ mesh, platform ], false);
-            if (int && int.length && int[0].distance > 0.01) {
+            if (int && int.length && int[0].distance > 0.5) {
                 let mid = new THREE.Vector3().add(point).add(int[0].point).divideScalar(2);
                 add.push({from: point, to: int[0].point, mid});
                 point.added = true;
@@ -1408,10 +1424,12 @@
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
                 continue;
             }
-            tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
-            tl(a,b);
-            tl(b,c);
-            tl(a,c);
+            // midpoint only for areas about the size of the support pillar
+            if (area < size * size * 1.5) {
+                tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
+                continue;
+            }
+            ta(a,b,c);
         }
         widget.supports = add;
         return add.length > 0;
