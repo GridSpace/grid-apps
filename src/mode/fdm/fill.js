@@ -17,7 +17,7 @@
             gyroid: fillGyroid,
             triangle: fillTriangle,
             linear: fillLinear,
-            bubbles: fillBubbles
+            cubic: fillCubic
         },
         CACHE = self.kiri.fill_fixed = {
             hex: fillHexFull,
@@ -152,30 +152,59 @@
         }
     }
 
-    function fillLinear(target) {
+    function fillCubic(target) {
         let bounds = target.bounds();
-        let height = target.zHeight();
-        let repeat = target.repeat();
-        let density = target.density();
-        let line = target.lineWidth();
-
-        let span_x = bounds.max.x - bounds.min.x;
-        let span_y = bounds.max.y - bounds.min.y;
-        let steps_x = (span_x / line) * density;
-        let steps_y = (span_y / line) * density;
-        let step_x = span_x / steps_x;
-        let step_y = span_x / steps_x;
-
-        let zindex = Math.floor(target.zIndex() / repeat);
-
-        if (zindex % 2 === 1) {
-            for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step_x) {
+        let span = Math.max(
+            bounds.max.x - bounds.min.x,
+            bounds.max.y - bounds.min.y
+        );
+        let steps = Math.floor((span / target.lineWidth()) * target.density());
+        let step = span / steps;
+        let ztype = Math.floor(target.zIndex() / target.repeat()) % 3;
+        if (ztype === 1) {
+            for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step) {
                 target.newline();
                 target.emit(tx, bounds.min.y);
                 target.emit(tx, bounds.max.y);
             }
+        } else if (ztype === 0) {
+            for (let ty=bounds.min.y; ty<=bounds.max.y; ty += step) {
+                target.newline();
+                target.emit(bounds.min.x, ty);
+                target.emit(bounds.max.x, ty);
+            }
         } else {
-            for (let ty=bounds.min.y; ty<=bounds.max.y; ty += step_y) {
+            step *- Math.sqrt(2);
+            for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step) {
+                target.newline();
+                target.emit(tx, bounds.min.y);
+                target.emit(tx + 1000, bounds.max.y + 1000);
+            }
+            for (let ty=bounds.min.y; ty<=bounds.max.y; ty += step) {
+                target.newline();
+                target.emit(bounds.min.x, ty);
+                target.emit(bounds.min.x + 1000, ty + 1000);
+            }
+        }
+    }
+
+    function fillLinear(target) {
+        let bounds = target.bounds();
+        let span = Math.max(
+            bounds.max.x - bounds.min.x,
+            bounds.max.y - bounds.min.y
+        );
+        let steps = Math.floor((span / target.lineWidth()) * target.density());
+        let step = span / steps;
+        let ztype = Math.floor(target.zIndex() / target.repeat()) % 2;
+        if (ztype === 1) {
+            for (let tx=bounds.min.x; tx<=bounds.max.x; tx += step) {
+                target.newline();
+                target.emit(tx, bounds.min.y);
+                target.emit(tx, bounds.max.y);
+            }
+        } else if (ztype === 0) {
+            for (let ty=bounds.min.y; ty<=bounds.max.y; ty += step) {
                 target.newline();
                 target.emit(bounds.min.x, ty);
                 target.emit(bounds.max.x, ty);
@@ -185,13 +214,11 @@
 
     function fillTriangle(target) {
         let bounds = target.bounds();
-        let height = target.zHeight();
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
-        let density = target.density();
         let offset = target.offset();
         let line_w = target.lineWidth() / 2;
-        let tile = 1 + (1 - density) * 5;
+        let tile = 1 + (1 - target.density()) * 5;
         let tile_x = tile + offset*2 + line_w;
         let tile_xc = span_x / tile_x;
         let tile_yc = span_y / tile;
@@ -219,43 +246,5 @@
             target.emit(xp, bounds.max.y);
         }
     }
-
-    function fillBubbles(api) {
-        let {min, max} = api.bounds();
-        let slice = api.slice(); // slice object (for adding solids)
-        let height = api.zHeight(); // layer height
-        let offset = api.lineWidth() / 2; // offset size by nozzle width
-        let size = 3 / api.density(); // circle diameter from density
-        let rad = size / 2 - offset; // max circle radius
-        let minr = offset + (2 - api.density() * 2) * offset;
-        let zrep = size / height; // # layers to repeat pattern
-        let zpad = zrep * 0.3; // # pad layers between pattern
-        let bind = api.zIndex() % (zrep + zpad); // index into pattern
-        let brad = bind < zrep ? Math.max(minr,(rad * Math.sin(((bind + 1) / zrep) * Math.PI))) : minr;
-        let sind = (api.zIndex() + (zrep + zpad)/2) % (zrep + zpad); // index into pattern
-        let srad = sind < zrep ? Math.max(minr,(rad * Math.sin(((sind + 1) / (zrep + 0)) * Math.PI))) : minr;
-        for (let x=min.x-size; x<max.x+size; x += size) {
-            let eoy = 0;
-            for (let y=min.y-size; y<max.y+size; y += size) {
-                let xo = (eoy++ % 2 === 0) ? (size / 2) : 0;
-                // primary pattern
-                self.base
-                    .newPolygon()
-                    .centerCircle({x:x+xo, y:y*0.85}, brad, 20, true)
-                    .forEachPoint(p => {
-                        api.emit(p.x, p.y);
-                    }, true);
-                api.newline();
-                // alternate pattern
-                self.base
-                    .newPolygon()
-                    .centerCircle({x:x+xo, y:y*0.85+(size/1.75)}, srad, 20, true)
-                    .forEachPoint(p => {
-                        api.emit(p.x, p.y);
-                    }, true);
-                api.newline();
-            }
-        }
-    };
 
 })();
