@@ -1409,11 +1409,13 @@
         };
         let { position } = geo.attributes;
         let { itemSize, count, array } = position;
+        let v3cache = new Vector3Cache();
+        let coplane = new Coplanars();
         for (let i = 0; i<count; i += 3) {
             let ip = i * itemSize;
-            let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-            let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-            let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            let a = v3cache.get(array[ip++], array[ip++], array[ip++]);
+            let b = v3cache.get(array[ip++], array[ip++], array[ip++]);
+            let c = v3cache.get(array[ip++], array[ip++], array[ip++]);
             let norm = THREE.computeFaceNormal(a,b,c);
             // limit to downward faces
             if (!filter(norm)) {
@@ -1424,6 +1426,11 @@
             if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
                 continue;
             }
+            // skip faces on bed
+            if (a.z + b.z + c.z < 0.01) {
+                continue;
+            }
+            // coplane.put(a, b, c, norm.z);
             // midpoint only for areas about the size of the support pillar
             if (area < size) {
                 tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
@@ -1431,8 +1438,74 @@
             }
             ta(a,b,c);
         }
+        // console.log({v3cache, coplane});
+        // coplane.group();
         widget.supports = add;
         return add.length > 0;
     };
+
+    class Vector3Cache {
+        constructor() {
+            this.cache = {};
+        }
+
+        get(x, y, z) {
+            let key = [x.round(4),y.round(4),z.round(4)].sort().join(',');
+            let val = this.cache[key];
+            if (!val) {
+                val = new THREE.Vector3(x, y, z);
+                this.cache[key] = val;
+            }
+            return val;
+        }
+    }
+
+    class Coplanars {
+        constructor() {
+            this.cache = {};
+        }
+
+        put(a, b, c, norm) {
+            let key = norm.round(4).toString();
+            let arr = this.cache[key];
+            if (!arr) {
+                arr = [];
+                this.cache[key] = arr;
+            }
+            arr.push([a,b,c]);
+        }
+
+        group() {
+            let out = {};
+            for (let norm in this.cache) {
+                let arr = this.cache[norm];
+                let groups = [];
+                for (let face of arr) {
+                    let match = undefined;
+                    // see if face matches vertices in any group
+                    outer: for (let group of groups) {
+                        for (let el of group) {
+                            if (
+                                el.indexOf(face[0]) >= 0 ||
+                                el.indexOf(face[1]) >= 0 ||
+                                el.indexOf(face[2]) >= 0
+                            ) {
+                                match = group;
+                                break outer;
+                            }
+                        }
+                    }
+                    if (match) {
+                        match.push(face);
+                    } else {
+                        groups.push([face]);
+                    }
+                }
+                out[norm] = groups;
+            }
+            // console.log(out);
+            return out;
+        }
+    }
 
 })();
