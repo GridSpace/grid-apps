@@ -1425,7 +1425,7 @@
                 continue;
             }
             // midpoint only for areas about the size of the support pillar
-            if (area < size * size * 1.5) {
+            if (area < size) {
                 tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
                 continue;
             }
