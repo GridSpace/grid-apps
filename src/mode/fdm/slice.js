@@ -1418,7 +1418,7 @@
             }
         }
         let filter = isBelt ? (norm) => {
-            return norm.z < thresh && norm.y < -0.001;
+            return norm.z <= thresh && norm.y < 0;
         } : (norm) => {
             return norm.z < thresh;
         };
@@ -1437,8 +1437,7 @@
                 continue;
             }
             // skip tiny faces
-            let area = BASE.newPolygon().addPoints([a,b,c]).area();
-            let poly = BASE.newPolygon().addPoints([a,b,c]);
+            let poly = BASE.newPolygon().addPoints([a,b,c].map(v => BASE.newPoint(v.x, v.y, v.z)));
             if (poly.area() < min && poly.perimeter() < size) {
                 continue;
             }
@@ -1448,15 +1447,9 @@
             }
             // match with other attached, coplanar faces
             coplane.put(a, b, c, norm.z);
-            // midpoint only for areas about the size of the support pillar
-            // if (area < size) {
-            //     tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
-            //     continue;
-            // }
-            // ta(a,b,c);
         }
-        // console.log({v3cache, coplane});
         let groups = coplane.group(true);
+        // console.log({v3cache, coplane, groups});
         for (let group of Object.values(groups)) {
             for (let polys of group) {
                 for (let poly of polys) {
