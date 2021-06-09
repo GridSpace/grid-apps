@@ -65,7 +65,8 @@
             timeDwell = retDwell / 1000,
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
-            arcMax = 1,
+            arcMin = 1,
+            arcMax = 200,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -521,36 +522,45 @@
                         }
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
-                            let e1 = arcQ[el-3]; // third last in arcQ
-                            let e2 = arcQ[el-2]; // second last in arcQ
+                            let e1 = arcQ[0]; // first in arcQ
+                            let e2 = arcQ[Math.floor(el/2)]; // mid in arcQ
                             let e3 = arcQ[el-1]; // last in arcQ
-                            let cc = BASE.util.center2d(e1, e2, e3, 1); //
+                            let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
                             let dc = 0;
-                            if (arcQ.length === 3) {
-                                arcQ.center = [ cc ];
-                            } else {
-                                // check center point delta
-                                let dx = cc.x - arcQ.center[0].x;
-                                let dy = cc.y - arcQ.center[0].y;
-                                dc = Math.sqrt(dx * dx + dy * dy);
-                            }
-                            // if new point is off the arc
-                            if (deem || depm || desp || dc > arcDist || cc.r >= arcMax) {
-                                // console.log({dc, depm, desp});
-                                if (arcQ.length === 4) {
-                                    // not enough points for an arc, drop first point and recalc center
-                                    emitQrec(arcQ.shift());
-                                    arcQ.center = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                            if (cc) {
+                                if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
+                                    console.log({cc, e1, e2, e3});
+                                }
+                                if (arcQ.length === 3) {
+                                    arcQ.center = [ cc ];
                                 } else {
-                                    // enough to consider an arc, emit and start new arc
-                                    let defer = arcQ.pop();
-                                    drainQ();
-                                    // re-add point that was off the last arc
-                                    arcQ.push(defer);
+                                    // check center point delta
+                                    let dx = cc.x - arcQ.center[0].x;
+                                    let dy = cc.y - arcQ.center[0].y;
+                                    dc = Math.sqrt(dx * dx + dy * dy);
+                                }
+                                // if new point is off the arc
+                                // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
+                                if (deem || depm || desp || dc > arcDist || dist > cc.r) {
+                                    // console.log({dc, depm, desp});
+                                    if (arcQ.length === 4) {
+                                        // not enough points for an arc, drop first point and recalc center
+                                        emitQrec(arcQ.shift());
+                                        arcQ.center = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                                    } else {
+                                        // enough to consider an arc, emit and start new arc
+                                        let defer = arcQ.pop();
+                                        drainQ();
+                                        // re-add point that was off the last arc
+                                        arcQ.push(defer);
+                                    }
+                                } else {
+                                    // new point is on the arc
+                                    arcQ.center.push(cc);
                                 }
                             } else {
-                                // new point is on the arc
-                                arcQ.center.push(cc);
+                                // drainQ on invalid center
+                                drainQ();
                             }
                         }
                     } else {
@@ -615,7 +625,7 @@
                 let to = arcQ.peek();
                 let cc = {x:0, y:0, z:0, r:0};
                 let cl = 0;
-                for (let center of arcQ.center.filter(rec => !isNaN(rec.r))) {
+                for (let center of arcQ.center) {
                     cc.x += center.x;
                     cc.y += center.y;
                     cc.z += center.z;

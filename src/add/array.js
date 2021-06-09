@@ -166,6 +166,10 @@
         return this.slice().sort().filter((x, i, a) => !i || x != a[i-1]);
     };
 
+    AP.hasNaN = function() {
+        return this.filter(v => isNaN(v)).length > 0;
+    };
+
     for(let i in AP){
         Object.defineProperty(Array.prototype, i, {
             value: AP[i],
