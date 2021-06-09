@@ -1405,7 +1405,7 @@
             for (let added of add) {
                 let p2 = new THREE.Vector2(point.x, point.y);
                 let pm = new THREE.Vector2(added.mid.x, added.mid.y);
-                if (p2.distanceTo(pm) < s4) {
+                if (Math.abs(point.z - added.from.z) < s2 && p2.distanceTo(pm) < s4) {
                     return;
                 }
             }
@@ -1438,7 +1438,8 @@
             }
             // skip tiny faces
             let area = BASE.newPolygon().addPoints([a,b,c]).area();
-            if (BASE.newPolygon().addPoints([a,b,c]).area() < min) {
+            let poly = BASE.newPolygon().addPoints([a,b,c]);
+            if (poly.area() < min && poly.perimeter() < size) {
                 continue;
             }
             // skip faces on bed
