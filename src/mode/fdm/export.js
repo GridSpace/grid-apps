@@ -527,6 +527,7 @@
                             let e3 = arcQ[el-1]; // last in arcQ
                             let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
                             let dc = 0;
+
                             if (cc) {
                                 if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
                                     console.log({cc, e1, e2, e3});
@@ -546,7 +547,13 @@
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
                                         emitQrec(arcQ.shift());
-                                        arcQ.center = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                                        let tc = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                                        // the new center is invalid as well. drop the first point
+                                        if (!tc) {
+                                            emitQrec(arcQ.shift());
+                                        } else {
+                                            arcQ.center = [ tc ];
+                                        }
                                     } else {
                                         // enough to consider an arc, emit and start new arc
                                         let defer = arcQ.pop();
