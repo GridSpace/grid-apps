@@ -1331,7 +1331,9 @@
         let isBelt = settings.device.bedBelt;
         let process = settings.process;
         let size = process.sliceSupportSize;
-        let min = process.sliceSupportArea || 1;
+        let s4 = size / 4;
+        let s2 = size * 0.45;
+        let min = 0.01;//process.sliceSupportArea || 1;
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();
@@ -1364,8 +1366,6 @@
         }
         // test area
         function ta(p1, p2, p3) {
-            let s4 = size / 4;
-            let s2 = size * 0.45;
             let sortx = [p1,p2,p3].sort((a,b) => { return a.x - b.x });
             let sorty = [p1,p2,p3].sort((a,b) => { return a.y - b.y });
             let sortz = [p1,p2,p3].sort((a,b) => { return a.z - b.z });
@@ -1382,15 +1382,30 @@
                 }
             }
         }
+        // test poly
+        function tP(poly, face) {
+            let bounds = poly.bounds;
+            let xa = BASE.util.lerp(bounds.minx + s4, bounds.maxx - s4, s2, true);
+            let ya = BASE.util.lerp(bounds.miny + s4, bounds.maxy - s4, s2, true);
+            for (let x of xa) {
+                for (let y of ya) {
+                    if (BASE.newPoint(x, y, 0).isInPolygon(poly)) {
+                        let z = BASE.util.zInPlane(face[0], face[1], face[2], x, y);
+                        tp(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+        }
         // test point
         function tp(point) {
             if (point.added) {
                 return;
             }
+            // omit pillars close to existing pillars
             for (let added of add) {
                 let p2 = new THREE.Vector2(point.x, point.y);
                 let pm = new THREE.Vector2(added.mid.x, added.mid.y);
-                if (p2.distanceTo(pm) < 1) {
+                if (p2.distanceTo(pm) < s4) {
                     return;
                 }
             }
@@ -1430,16 +1445,25 @@
             if (a.z + b.z + c.z < 0.01) {
                 continue;
             }
-            // coplane.put(a, b, c, norm.z);
+            // match with other attached, coplanar faces
+            coplane.put(a, b, c, norm.z);
             // midpoint only for areas about the size of the support pillar
-            if (area < size) {
-                tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
-                continue;
-            }
-            ta(a,b,c);
+            // if (area < size) {
+            //     tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
+            //     continue;
+            // }
+            // ta(a,b,c);
         }
         // console.log({v3cache, coplane});
-        // coplane.group();
+        let groups = coplane.group(true);
+        for (let group of Object.values(groups)) {
+            for (let polys of group) {
+                for (let poly of polys) {
+                    if (poly.area() >= process.sliceSupportArea)
+                    tP(poly, polys.face);
+                }
+            }
+        }
         widget.supports = add;
         return add.length > 0;
     };
@@ -1466,7 +1490,7 @@
         }
 
         put(a, b, c, norm) {
-            let key = norm.round(4).toString();
+            let key = norm.round(7).toString();
             let arr = this.cache[key];
             if (!arr) {
                 arr = [];
@@ -1475,7 +1499,7 @@
             arr.push([a,b,c]);
         }
 
-        group() {
+        group(union) {
             let out = {};
             for (let norm in this.cache) {
                 let arr = this.cache[norm];
@@ -1500,6 +1524,21 @@
                     } else {
                         groups.push([face]);
                     }
+                }
+                if (union) {
+                    // convert groups of faces to contiguous polygon groups
+                    groups = groups.map(group => {
+                        let parr = group.map(arr => {
+                            return BASE.newPolygon()
+                                .add(arr[0].x, arr[0].y, arr[0].z)
+                                .add(arr[1].x, arr[1].y, arr[1].z)
+                                .add(arr[2].x, arr[2].y, arr[2].z);
+                        });
+                        let union = POLY.union(parr, 0, true);
+                        union.merged = parr.length;
+                        union.face = group[0];
+                        return union;
+                    });
                 }
                 out[norm] = groups;
             }
