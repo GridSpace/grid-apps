@@ -551,7 +551,7 @@
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
                                         emitQrec(arcQ.shift());
-                                        let tc = [ BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1) ];
+                                        let tc = BASE.util.center2d(arcQ[0], arcQ[1], arcQ[2], 1);
                                         // the new center is invalid as well. drop the first point
                                         if (!tc) {
                                             emitQrec(arcQ.shift());
