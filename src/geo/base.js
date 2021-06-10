@@ -372,10 +372,10 @@
     }
 
     /**
-     * return two possible circle centers given two points and a radius
+     * return one of two possible circle centers given two points, a radius and clock direction
      * https://stackoverflow.com/questions/36211171/finding-center-of-a-circle-given-two-points-and-radius
      */
-    function center2pr(p1, p2, r) {
+    function center2pr(p1, p2, r, clockwise) {
         let x1 = p1.x,
             x2 = p2.x,
             y1 = p1.y,
@@ -388,15 +388,25 @@
             centerx1 = x3 + basex, //center x of circle 1
             centery1 = y3 + basey, //center y of circle 1
             centerx2 = x3 - basex, //center x of circle 2
-            centery2 = y3 - basey; //center y of circle 2
-        return [{x:centerx1, y:centery1}, {x:centerx2, y:centery2}];
+            centery2 = y3 - basey, //center y of circle 2
+            dir = new THREE.Vector2(x2 - x1, y2 - y1),
+            vec1 = new THREE.Vector2(centerx1 - x1, centery1 - y1),
+            vec2 = new THREE.Vector2(centerx2 - x1, centery2 - x1);
+        if (clockwise) {
+            return dir.cross(vec1) > 0 ? {x:centerx1, y:centery1} : {x:centerx2, y:centery2};
+        } else {
+            return dir.cross(vec1) < 0 ? {x:centerx1, y:centery1} : {x:centerx2, y:centery2};
+        }
     }
 
-    function thetaDiff(n1, n2, sign) {
+    // find angle difference between 0 and 2pi from n1 to n2 (signed depending on clock direction)
+    function thetaDiff(n1, n2, clockwise) {
         let diff = n2 - n1;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        return sign ? diff : Math.abs(diff);
+        if (clockwise && diff > 0) diff -= Math.PI * 2;
+        if (!clockwise && diff < 0) diff += Math.PI * 2;
+        return diff;
     }
 
     /** ******************************************************************

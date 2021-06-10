@@ -67,6 +67,7 @@
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             arcMin = 1,
             arcMax = 200,
+            arcSegMax = 1,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -515,10 +516,13 @@
                         let deem = false; // do arcQ[0] and rec have differing emit values?
                         let depm = false; // do arcQ[0] and rec have differing emit speeds?
                         let desp = false; // do arcQ[0] and rec have differing move speeds?
+                        let arcSeg = 0;   // distance from this point to the last
                         if (arcQ.length > 1) {
+                            let el = arcQ.length;
                             deem = arcQ[0].e !== rec.e;
                             depm = arcQ[0].emitPerMM !== rec.emitPerMM;
                             desp = arcQ[0].speedMMM !== rec.speedMMM;
+                            arcSeg = Math.sqrt(Math.pow(arcQ[el - 1].x - arcQ[el-2].x, 2) + Math.pow(arcQ[el - 1].y - arcQ[el-2].y, 2));
                         }
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
@@ -542,7 +546,7 @@
                                 }
                                 // if new point is off the arc
                                 // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                                if (deem || depm || desp || dc > arcDist || dist > cc.r) {
+                                if (deem || depm || desp || dc > arcDist || dist > cc.r || cc.r > arcMax || arcSeg > arcSegMax) {
                                     // console.log({dc, depm, desp});
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
@@ -657,7 +661,10 @@
                     emit = outputLength;
                 }
                 let gc = area > 0 ? 'G2' : 'G3';
-                let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
+                // XYR form
+                // let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
+                // XYIJ form
+                let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} I${(cc.x - pos.x).toFixed(decimals)} J${(cc.y - pos.y).toFixed(decimals)} E${emit.toFixed(decimals)}`;
                 let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
                 append(`${pre}${add} ; merged=${cl-1} len=${dist.toFixed(decimals)} cp=${cc.x.round(2)},${cc.y.round(2)}`);
                 pos.x = to.x;

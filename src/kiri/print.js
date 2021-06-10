@@ -136,7 +136,7 @@
             seq = [],
             autolayer = true,
             newlayer = false,
-            arcdivs = Math.PI / 12,
+            arcdivs = Math.PI / 24,
             hasmoved = false;
 
         const output = scope.output = [ seq ];
@@ -159,8 +159,7 @@
             if (rec.I !== undefined && rec.J !== undefined) {
                 center.x = pos.X + rec.I;
                 center.y = pos.Y + rec.J;
-                //center.r = TODO
-                console.log("G[2,3] IJ not supported");
+                center.r = Math.sqrt(rec.I*rec.I + rec.J*rec.J);
             } else if (rec.R !== undefined) {
                 let pd = { x: rec.X - pos.X, y: rec.Y - pos.Y };
                 let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2;
@@ -176,7 +175,7 @@
                     }, {
                         x: rec.X,
                         y: rec.Y
-                    }, rec.R)[g2 ? 1 : 0];
+                    }, rec.R, g2);
                 }
                 center.x = pr2.x;
                 center.y = pr2.y;
@@ -188,8 +187,8 @@
             // line angles
             let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X) + Math.PI;
             let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X) + Math.PI;
-            let ad = BASE.util.thetaDiff(a1, a2, true);
-            let steps = Math.floor(Math.abs(ad) / arcdivs);
+            let ad = BASE.util.thetaDiff(a1, a2, g2);
+            let steps = Math.max(Math.floor(Math.abs(ad) / arcdivs), 3);
             let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
             let rot = a1 + step;
 
