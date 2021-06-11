@@ -631,6 +631,8 @@
                 return;
             }
             if (arcQ.length > 4) {
+                let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
+                let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
                 let area = BASE.newPolygon().addObj(arcQ).area();
                 let from = arcQ[0];
                 let to = arcQ.peek();
@@ -660,7 +662,7 @@
                 if (extrudeAbs) {
                     emit = outputLength;
                 }
-                let gc = area > 0 ? 'G2' : 'G3';
+                let gc = vec1.cross(vec2) < 0 ? 'G2' : 'G3';
                 // XYR form
                 // let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
                 // XYIJ form
