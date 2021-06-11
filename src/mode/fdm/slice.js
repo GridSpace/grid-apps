@@ -1333,7 +1333,7 @@
         let size = process.sliceSupportSize;
         let s4 = size / 4;
         let s2 = size * 0.45;
-        let min = 0.01;//process.sliceSupportArea || 1;
+        let min = 0.01;
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
         let mat = new THREE.MeshBasicMaterial();

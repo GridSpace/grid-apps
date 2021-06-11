@@ -6,17 +6,36 @@
 
     if (self.base.gyroid) return;
 
-    const base = self.base,
-        PI2 = Math.PI * 2;
+    const base = self.base;
+    const PI2 = Math.PI * 2;
+    let cache = {};
+    let lastVal;
+    let lastRes = 0;
+    let lastSlice = 0;
 
     /**
      * @param off {number} z offset value from 0-1
      * @param res {number} resolution (pixels/slices per side)
      */
     function slice(off, res, val) {
+        // auto clear cach if it hasn't been hit in the last 20 seconds
+        // or the requested resolution or tip values have changed
+        let now = Date.now();
+        if (res !== lastRes || val !== lastVal || now - lastSlice > 20000) {
+            // console.log({clear_cache: now});
+            cache = {};
+        }
+        lastVal = val;
+        lastRes = res;
+        lastSlice = now;
         let rez = parseInt(res || 200);
         let inc = PI2 / rez;
         let z = PI2 * off;
+        let key = (z % PI2).round(3);
+        let hit = cache[key];
+        if (hit) {
+            return hit;
+        }
         let tip = val || 0;
         let edge = [];
         let vals = [];
@@ -146,7 +165,9 @@
             .map(poly => filter(poly, 0))
             .map(poly => filter(poly, inc));
 
-        return {edge, points, dir, polys: psimple};
+        let slice = {edge, points, dir, polys: psimple};
+        cache[key] = slice;
+        return slice;
     }
 
     // merge co-linear and distance threshold
