@@ -633,7 +633,6 @@
             if (arcQ.length > 4) {
                 let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
-                let area = BASE.newPolygon().addObj(arcQ).area();
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 let cc = {x:0, y:0, z:0, r:0};
