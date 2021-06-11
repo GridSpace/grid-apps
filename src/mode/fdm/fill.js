@@ -110,18 +110,88 @@
         let tile_z = 1 / tile;
         let gyroid = BASE.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
 
-        gyroid.polys.forEach(poly => {
-            for (let tx=0; tx<=tile_x; tx++) {
-                for (let ty=0; ty<=tile_y; ty++) {
+        // gyroid.polys.forEach(poly => {
+        //     for (let tx=0; tx<=tile_x; tx++) {
+        //         for (let ty=0; ty<=tile_y; ty++) {
+        //             target.newline();
+        //             let bx = tx * tile + bounds.min.x;
+        //             let by = ty * tile + bounds.min.y;
+        //             poly.forEach(point => {
+        //                 target.emit(bx + point.x * tile, by + point.y * tile);
+        //             });
+        //         }
+        //     }
+        // });
+
+        let polys = [];
+        for (let tx=0; tx<=tile_x; tx++) {
+            for (let ty=0; ty<=tile_y; ty++) {
+                for (let poly of gyroid.polys) {
                     target.newline();
-                    let bx = tx * tile + bounds.min.x;
-                    let by = ty * tile + bounds.min.y;
-                    poly.forEach(point => {
-                        target.emit(bx + point.x * tile, by + point.y * tile);
+                    let points = poly.map(el => {
+                        return {
+                            x: el.x * tile + tx * tile + bounds.min.x,
+                            y: el.y * tile + ty * tile + bounds.min.y,
+                            z: 0
+                        }
                     });
+                    polys.push(BASE.newPolygon().setOpen(true).addObj(points));
                 }
             }
-        });
+        }
+        polys = connectOpenPolys(polys.filter(p => p.perimeter() > 2));
+        for (let poly of polys) {
+            target.newline();
+            for (let point of poly.points) {
+                target.emit(point.x, point.y);
+            }
+        }
+    }
+
+    function connectOpenPolys(noff, dist = 0.1) {
+        if (noff.length <= 1) {
+            return noff;
+        }
+        let heal = 0;
+        // heal/rejoin open segments that have close endpoints
+        outer: for(;; heal++) {
+            let ntmp = noff, tlen = ntmp.length;
+            for (let i=0; i<tlen; i++) {
+                let s1 = ntmp[i];
+                if (!s1 || !s1.open) continue;
+                for (let j=i+1; j<tlen; j++) {
+                    let s2 = ntmp[j];
+                    if (!s2 || !s2.open) continue;
+                    if (s1.last().distTo2D(s2.first()) <= dist) {
+                        s1.addPoints(s2.points);
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                    if (s1.first().distTo2D(s2.last()) <= dist) {
+                        s2.addPoints(s1.points);
+                        ntmp[i] = null;
+                        continue outer;
+                    }
+                    if (s1.first().distTo2D(s2.first()) <= dist) {
+                        s1.reverse();
+                        s1.addPoints(s2.points);
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                    if (s1.last().distTo2D(s2.last()) <= dist) {
+                        s1.addPoints(s2.points.reverse());
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                }
+            }
+            break;
+        }
+        if (heal > 0) {
+            // cull nulls
+            noff = noff.filter(o => o);
+        }
+        return noff;
     }
 
     function fillGrid(target) {
