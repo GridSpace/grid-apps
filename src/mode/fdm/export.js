@@ -148,6 +148,7 @@
                 iter: loops - 1
             });
         }
+        if (process.ranges)
         for (let range of process.ranges) {
             if (range.fields.outputLoops) {
                 rloops.push({
