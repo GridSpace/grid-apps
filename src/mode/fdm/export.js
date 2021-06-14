@@ -58,6 +58,7 @@
             belt_add_y = (process.firstLayerYOffset || 0) - (print.belty || 0),
             loops = process.outputLoops || 0,
             zhop = process.zHopDistance || 0, // range
+            lineWidth = process.sliceLineWidth || 0,
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist || 0, // range
             retSpeed = process.outputRetractSpeed * 60, // range
@@ -360,7 +361,7 @@
             }
 
             emitPerMM = print.extrudePerMM(
-                extruder.extNozzle,
+                lineWidth || extruder.extNozzle,
                 extruder.extFilament,
                 path.layer === 0 ?
                     (process.firstSliceHeight || process.sliceHeight) : path.height);
@@ -464,7 +465,7 @@
                     offset_x = extruder.extOffsetX;
                     offset_y = extruder.extOffsetY;
                     emitPerMM = print.extrudePerMM(
-                        extruder.extNozzle,
+                        lineWidth || extruder.extNozzle,
                         extruder.extFilament,
                         path.layer === 0 ?
                             (process.firstSliceHeight || process.sliceHeight) : path.height);
