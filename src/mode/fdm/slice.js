@@ -1468,7 +1468,7 @@
         }
 
         get(x, y, z) {
-            let key = [x.round(4),y.round(4),z.round(4)].sort().join(',');
+            let key = [x.round(4),y.round(4),z.round(4)].join(',');
             let val = this.cache[key];
             if (!val) {
                 val = new THREE.Vector3(x, y, z);
