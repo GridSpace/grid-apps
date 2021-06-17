@@ -365,8 +365,9 @@
                         addto.up = start;
                         start.down = addto;
                         slices.splice(0,0,addto);
-                    // } else {
-                    //     console.log({add_to_existing_slice: addto});
+                    } else if (!addto.belt) {
+                        console.log({addto_missing_belt: addto});
+                        addto.belt = {};
                     }
                     addto.index = -1;
                     addto.belt.anchor = true;
