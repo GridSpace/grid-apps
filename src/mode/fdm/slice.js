@@ -333,7 +333,7 @@
                 let minx = Infinity, maxx = -Infinity;
                 let peek = 0;
                 for (let slice of slices) {
-                    if (slice.groups.length && peek++ < 5) {
+                    if (slice.tops.length && peek++ < 5) {
                         for (let poly of slice.topPolys()) {
                             minx = Math.min(minx, poly.bounds.minx);
                             maxx = Math.max(maxx, poly.bounds.maxx);

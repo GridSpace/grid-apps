@@ -60,7 +60,7 @@
             zhop = process.zHopDistance || 0, // range
             seekMMM = process.outputSeekrate * 60,
             retDist = process.outputRetractDist || 0, // range
-            retSpeed = process.outputRetractSpeed * 60, // range
+            retSpeed = process.outputRetractSpeed * 60 || 1, // range
             retDwell = process.outputRetractDwell || 0, // range
             timeDwell = retDwell / 1000,
             peelGuard = process.outputPeelGuard || 0,
@@ -114,7 +114,7 @@
             let process = getRangeParameters(settings, layer);
             zhop = process.zHopDistance || 0; // range
             retDist = process.outputRetractDist || 0; // range
-            retSpeed = process.outputRetractSpeed * 60; // range
+            retSpeed = process.outputRetractSpeed * 60 || 1; // range
             retDwell = process.outputRetractDwell || 0; // range
             timeDwell = retDwell / 1000;
             nozzleTemp = layer === 0 ?
