@@ -67,6 +67,8 @@
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             arcMin = 1,
+            arcRes = 16,
+            arcDev = 0.5,
             arcMax = 200,
             arcSegMax = 1,
             originCenter = process.outputOriginCenter,
@@ -524,15 +526,29 @@
                             deem = arcQ[0].e !== rec.e;
                             depm = arcQ[0].emitPerMM !== rec.emitPerMM;
                             desp = arcQ[0].speedMMM !== rec.speedMMM;
-                            arcSeg = Math.sqrt(Math.pow(arcQ[el - 1].x - arcQ[el-2].x, 2) + Math.pow(arcQ[el - 1].y - arcQ[el-2].y, 2));
                         }
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
                             let e1 = arcQ[0]; // first in arcQ
                             let e2 = arcQ[Math.floor(el/2)]; // mid in arcQ
                             let e3 = arcQ[el-1]; // last in arcQ
+                            let e4 = arcQ[el-2]; // second last in arcQ
+                            let e5 = arcQ[el-3]; // third last in arcQ
                             let cc = BASE.util.center2d(e1, e2, e3, 1); // find center
+                            let lr = BASE.util.center2d(e3, e4, e5, 1); // find local radius
                             let dc = 0;
+
+                            let radFault = false;
+                            if (lr) {
+                                let angle = 2 * Math.asin(dist/(2*lr.r));
+                                radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
+                                if (arcQ.center && arcQ.center.length > 1) {
+                                    let avg = arcQ.rSum / arcQ.center.length;
+                                    radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
+                                }
+                            } else {
+                                radFault = true;
+                            }
 
                             if (cc) {
                                 if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
@@ -540,15 +556,18 @@
                                 }
                                 if (arcQ.length === 3) {
                                     arcQ.center = [ cc ];
+                                    arcQ.xSum = cc.x;
+                                    arcQ.ySum = cc.y;
+                                    arcQ.rSum = cc.r;
                                 } else {
                                     // check center point delta
-                                    let dx = cc.x - arcQ.center[0].x;
-                                    let dy = cc.y - arcQ.center[0].y;
+                                    let dx = cc.x - arcQ.xSum / arcQ.center.length;
+                                    let dy = cc.y - arcQ.ySum / arcQ.center.length;
                                     dc = Math.sqrt(dx * dx + dy * dy);
                                 }
                                 // if new point is off the arc
                                 // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                                if (deem || depm || desp || dc > arcDist || dist > cc.r || cc.r > arcMax || arcSeg > arcSegMax) {
+                                if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault) {
                                     // console.log({dc, depm, desp});
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
@@ -570,6 +589,9 @@
                                 } else {
                                     // new point is on the arc
                                     arcQ.center.push(cc);
+                                    arcQ.xSum += cc.x;
+                                    arcQ.ySum += cc.y;
+                                    arcQ.rSum += cc.r;
                                 }
                             } else {
                                 // drainQ on invalid center
@@ -637,19 +659,8 @@
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
                 let from = arcQ[0];
                 let to = arcQ.peek();
-                let cc = {x:0, y:0, z:0, r:0};
-                let cl = 0;
-                for (let center of arcQ.center) {
-                    cc.x += center.x;
-                    cc.y += center.y;
-                    cc.z += center.z;
-                    cc.r += center.r;
-                    cl++;
-                }
-                cc.x /= cl;
-                cc.y /= cl;
-                cc.z /= cl;
-                cc.r /= cl;
+                let cl = arcQ.center.length;
+                let cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
                 // first arc point
                 emitQrec(from);
                 // console.log(arcQ.slice(), arcQ.center);
