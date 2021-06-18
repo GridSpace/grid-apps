@@ -50,21 +50,25 @@
      ******************************************************************* */
 
     function setZ(polys, z) {
-        polys.forEach(p => p.setZ(z));
+        for (let poly of polys) {
+            poly.setZ(z);
+        }
         return polys;
     }
 
-    function toClipper(polys,debug) {
+    function toClipper(polys) {
         let out = [];
-        polys.forEach(function(poly) { poly.toClipper(out,debug) });
+        for (let poly of polys) {
+            poly.toClipper(out);
+        }
         return out;
     }
 
     function fromClipperNode(tnode, z) {
         let poly = BASE.newPolygon();
-        tnode.m_polygon.forEach(function(p) {
-            poly.push(newPoint(null, null, z, null, p));
-        });
+        for (let point of tnode.m_polygon) {
+            poly.push(BASE.pointFromClipper(point, z));
+        }
         poly.open = tnode.IsOpen;
         return poly;
     };
@@ -636,10 +640,15 @@
         rayint.origin = newPoint(start.x, start.y, start.z);
 
         for (i = 0; i < steps; i++) {
-            let p1 = newPoint(start.x - raySlope.dx * 1000, start.y - raySlope.dy * 1000, zpos, NOKEY),
-                p2 = newPoint(start.x + raySlope.dx * 1000, start.y + raySlope.dy * 1000, zpos, NOKEY);
-
-            lines.push([p1,p2]);
+            lines.push([
+                {
+                    X: (start.x - raySlope.dx * 1000) * CONF.clipper,
+                    Y: (start.y - raySlope.dy * 1000) * CONF.clipper
+                },{
+                    X: (start.x + raySlope.dx * 1000) * CONF.clipper,
+                    Y: (start.y + raySlope.dy * 1000) * CONF.clipper
+                }
+            ]);
             start.x += stepX;
             start.y += stepY;
         }
@@ -656,8 +665,8 @@
                     if (minlen && plen < minlen) return;
                     if (maxlen && plen > maxlen) return;
                 }
-                let p1 = newPoint(null,null,zpos,null,poly.m_polygon[0]);
-                let p2 = newPoint(null,null,zpos,null,poly.m_polygon[1]);
+                let p1 = BASE.pointFromClipper(poly.m_polygon[0], zpos);
+                let p2 = BASE.pointFromClipper(poly.m_polygon[1], zpos);
                 let od = rayint.origin.distToLineNew(p1,p2) / spacing;
                 lines.push([p1, p2, od]);
             });

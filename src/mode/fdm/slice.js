@@ -803,7 +803,7 @@
                     if (isNaN(x)) {
                         solids.push(x);
                     } else {
-                        line.push(newPoint(x,y,slice.z));
+                        line.push(newPoint(x, y, slice.z));
                         slice.isSparseFill = true;
                     }
                 },
@@ -904,6 +904,7 @@
             return;
         }
 
+        lines = lines.map(a => a.map(p => p.toClipper()));
         clip.AddPaths(lines, ptyp.ptSubject, false);
         clip.AddPaths(POLY.toClipper(polys), ptyp.ptClip, true);
 

@@ -10,50 +10,54 @@
         UTIL = BASE.util,
         CONF = BASE.config,
         KEYS = BASE.key,
-        ROUND = UTIL.round,
-        PRO = Point.prototype;
+        ROUND = UTIL.round;
+
+    class Point {
+        constructor(x,y,z,key,CP) {
+            // todo make more efficient for cloning when all 5 params are passed
+            if (CP) {
+                console.trace({x,y,z,key,CP});
+                throw "invalid point constructor"
+            } else {
+                this.x = x;
+                this.y = y;
+                this.z = z || 0;
+                this._key = key;
+            }
+            this.poly = null; // parent polygon
+            this.pos = 0; // position in group
+        }
+
+        get key() {
+            if (this._key) {
+                return this._key;
+            }
+            return this._key = [
+                this.x.round(6),
+                this.y.round(6),
+                this.z.round(6)
+            ].toString();
+        }
+    }
+
+    const PRO = Point.prototype;
 
     BASE.Point = Point;
     BASE.newPoint = newPoint;
-
-    /**
-     *
-     * @param {number} x
-     * @param {number} y
-     * @param {number} z
-     * @param {String} [key]
-     * @constructor
-     */
-    function Point(x,y,z,key,CP) {
-        // todo make more efficient for cloning when all 5 params are passed
-        if (CP) {
-            this.x = x || (CP.X / CONF.clipper) || 0;
-            this.y = y || (CP.Y / CONF.clipper) || 0;
-            this.z = z || 0;
-            this.X = CP.X;
-            this.Y = CP.Y;
-            this.key = null;
-        } else {
-            this.x = x;
-            this.y = y;
-            this.z = z || 0;
-            this.X = (x * CONF.clipper);
-            this.Y = (y * CONF.clipper);
-            this.key = key || [x, y, z].toString();
-        }
-        this.poly = null; // parent polygon
-        // this.dist = 0.0; // for group intersection sorting and tests
-        // this.p1 = null; // used in sliceIntersect(), connectLines() and intersect()
-        // this.p2 = null; // used in sliceIntersect(), connectLines() and intersect()
-        this.pos = 0; // position in group
-        // this.mod = 0; // group length (for modulus of pos)
-        // this.del = false; // for culling
-        // this.group = null; // for grouping in slice intersect, offset lines in trace
-    }
+    BASE.pointFromClipper = function(cp, z) {
+        return newPoint(cp.X / CONF.clipper, cp.Y / CONF.clipper, z);
+    };
 
     /** ******************************************************************
      * Point Prototype Functions
      ******************************************************************* */
+
+    PRO.toClipper = function() {
+        return {
+            X: this.x * CONF.clipper,
+            Y: this.y * CONF.clipper
+        };
+    }
 
     PRO.setZ = function(z) {
         this.z = z;
@@ -85,7 +89,8 @@
     };
 
     PRO.rekey = function() {
-        this.key = [this.x,this.y,this.z].join(',');
+        this._key = undefined;
+        // this.key = [this.x,this.y,this.z].join(',');
     };
 
     PRO.toString = function() {
@@ -96,7 +101,7 @@
      * @returns {Point}
      */
     PRO.clone = function() {
-        return newPoint(this.x, this.y, this.z, this.key);
+        return newPoint(this.x, this.y, this.z, this._key);
     };
 
     /**

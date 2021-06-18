@@ -1406,7 +1406,8 @@
     function fromClipperPath(path, z) {
         let poly = newPolygon(), i = 0, l = path.length;
         while (i < l) {
-            poly.push(newPoint(null,null,z,null,path[i++]));
+            // poly.push(newPoint(null,null,z,null,path[i++]));
+            poly.push(BASE.pointFromClipper(path[i++], z));
         }
         return poly;
     };
@@ -1455,28 +1456,14 @@
         return poly;
     };
 
-    PRO.toClipper = function(inout,debug) {
+    PRO.toClipper = function(inout) {
         let poly = this,
             cur = [],
             out = inout || [];
-        if (debug) {
-            let d = [],
-                points = poly.points,
-                len = points.length,
-                i = 0,
-                p;
-            while (i < len) {
-                p = points[i++];
-                d.push({X:p.x, Y:p.y});
-            }
-            // poly.points.forEach(function(p) { d.push({X:p.x, Y:p.y}) });
-            out.push(d);
-        } else {
-            out.push(poly.points);
-        }
+        out.push(poly.points.map(p => p.toClipper()));
         if (poly.inner) {
             poly.inner.forEach(function(p) {
-                p.toClipper(out, debug);
+                p.toClipper(out);
             });
         }
         return out;
