@@ -239,7 +239,10 @@
             zOrdered.sort(function(a,b) { return a - b});
         }
 
-        if (useFlats) {
+        if (options.indices) {
+            zIndexes = options.indices;
+            zHeights = zIndexes.map(v => options.height);
+        } else if (useFlats) {
             zIndexes.appendAll(zOrdered);
         } else if (options.single) {
             // usually for laser single slice

@@ -153,7 +153,8 @@
             union: ctrl.healMesh,
             // debug: true,
             // xray: 3,
-            // view: view
+            // view: view,
+            indices: spro.indices
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {

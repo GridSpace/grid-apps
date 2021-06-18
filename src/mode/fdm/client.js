@@ -85,6 +85,11 @@
             });
         }
 
+        function clearRanges() {
+            API.conf.get().process.ranges = [];
+            UI.rangeGroup.firstElementChild.innerHTML = '';
+        }
+
         function updateRanges(ranges = []) {
             UI.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
             let html = [];
@@ -297,7 +302,14 @@
         });
         api.event.on("selection.scale", () => {
             if (isFdmMode) {
+                clearRanges();
                 func.sclear();
+            }
+        });
+        api.event.on("widget.delete", widget => {
+            if (isFdmMode) {
+                clearRanges();
+                return;
             }
         });
         api.event.on("widget.mirror", widget => {
