@@ -481,7 +481,32 @@
                 return func.hoverup();
             }
         });
+        api.event.on("export.debug", msg => {
+            if (msg.arcQ && msg.arcQ.length > 5) {
+                if (xpdebug) {
+                    xpdebug.destroy();
+                    xpdebug = undefined;
+                }
+                let poly = BASE.newPolygon().setOpen();
+                for (let rec of msg.arcQ) {
+                    poly.addObj(rec);
+                }
+
+                let layers = new KIRI.Layers();
+                let layer = layers.setLayer("arcq", { line: 0xff00ff, face: 0xff00ff, opacity: 1 });
+                layer.addPoly(poly, {z:10, thin:true});
+
+                xpdebug = new KIRI.Stack(SPACE.platform.world, false);
+                xpdebug.addLayers(layers);
+                xpdebug.setVisible(0,Infinity);
+                xpdebug.show();
+
+                console.log(msg, poly);
+            }
+        });
     }
+
+    let xpdebug;
 
     function activeSupports() {
         const active = [];

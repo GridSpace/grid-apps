@@ -228,6 +228,9 @@ KIRI.work = {
             if (reply.error) {
                 ondone(null, reply.error);
             }
+            if (reply.debug) {
+                KIRI.api.event.emit("export.debug", reply.debug);
+            }
         });
     },
 

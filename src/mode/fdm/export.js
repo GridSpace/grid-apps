@@ -13,7 +13,7 @@
     /**
      * @returns {Array} gcode lines
      */
-    FDM.export = function(print, online) {
+    FDM.export = function(print, online, ondone, ondebug) {
         let layers = print.output,
             settings = FDM.fixExtruders(print.settings),
             getRangeParameters = FDM.getRangeParameters,
@@ -517,6 +517,7 @@
                     if (arcDist) {
                         let rec = {e:out.emit, x, y, z, dist, emitPerMM, speedMMM};
                         arcQ.push(rec);
+                        // ondebug({arcQ});
                         let deem = false; // do arcQ[0] and rec have differing emit values?
                         let depm = false; // do arcQ[0] and rec have differing emit speeds?
                         let desp = false; // do arcQ[0] and rec have differing move speeds?

@@ -249,6 +249,8 @@ KIRI.worker = {
         }, function(done) {
             // SLA workaround
             output = done;
+        }, function(debug) {
+            send.data({debug});
         });
         const { bounds, time, lines, bytes, distance, settings } = current.print;
 
