@@ -475,28 +475,6 @@
     //         rle_encode: exports.rle_encode
     //     };
     // } else
-    // load renderer code in worker context only
-    let wasm;
-
-    fetch('/wasm/kiri-sla.wasm')
-        .then(response => response.arrayBuffer())
-        .then(bytes => WebAssembly.instantiate(bytes, {
-            env: {
-                reportf: (a,b) => { console.log('[f]',a,b) },
-                reporti: (a,b) => { console.log('[i]',a,b) }
-            }
-        }))
-        .then(results => {
-            let {module, instance} = results;
-            let {exports} = instance;
-            let heap = new Uint8Array(exports.memory.buffer);
-            wasm = {
-                heap,
-                memory: exports.memory,
-                render: exports.render,
-                rle_encode: exports.rle_encode
-            };
-        });
 
     // new WebAssembly rasterizer
     function renderLayerWasm(params) {
@@ -561,6 +539,7 @@
             }
         });
 
+        let wasm = SLA.wasm;
         let imagelen = width * height;
         let writer = new self.DataWriter(new DataView(wasm.memory.buffer), imagelen);
         writer.writeU16(width, true);

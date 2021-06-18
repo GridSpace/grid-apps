@@ -496,7 +496,7 @@ self.kiri.loader.push(function() {
     }
 
     // load renderer code in worker context only
-    if (KIRI.worker)
+    if (KIRI.worker && false)
     fetch('/wasm/kiri-ani.wasm')
         .then(response => response.arrayBuffer())
         .then(bytes => WebAssembly.instantiate(bytes, {

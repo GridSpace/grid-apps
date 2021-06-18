@@ -43,12 +43,12 @@
         this.area2 = 0.0; // computed as 2x area (sign = direction)
         this.perim = 0.0; // for caching the result
         this.bounds = new Bounds();
-        this.inner = null; // array of enclosed polygons (if any)
+        // this.inner = null; // array of enclosed polygons (if any)
         this.parent = null; // enclosing parent polygon
         this.depth = 0; // depth nested from top parent (density for support fill)
         this.delete = false; // for culling during tracing
-        this.fillang = null; // hinted fill angle
-        this.fill = null; // fill lines (only used by supports currently)
+        // this.fillang = null; // hinted fill angle
+        // this.fill = null; // fill lines (only used by supports currently)
         if (points) this.addPoints(points);
     }
 

@@ -22,6 +22,27 @@
     // runs in worker. would usually be in src/mode/sla/prepare.js
     function prepare(widgets, settings, update) {
         self.worker.print = KIRI.newPrint(settings, widgets);
+        if (!SLA.wasm) {
+            fetch('/wasm/kiri-sla.wasm')
+                .then(response => response.arrayBuffer())
+                .then(bytes => WebAssembly.instantiate(bytes, {
+                    env: {
+                        reportf: (a,b) => { console.log('[f]',a,b) },
+                        reporti: (a,b) => { console.log('[i]',a,b) }
+                    }
+                }))
+                .then(results => {
+                    let {module, instance} = results;
+                    let {exports} = instance;
+                    let heap = new Uint8Array(exports.memory.buffer);
+                    SLA.wasm = {
+                        heap,
+                        memory: exports.memory,
+                        render: exports.render,
+                        rle_encode: exports.rle_encode
+                    };
+                });
+        }
         update(1);
     }
 

@@ -42,13 +42,13 @@
             this.key = key || [x, y, z].toString();
         }
         this.poly = null; // parent polygon
-        this.dist = 0.0; // for group intersection sorting and tests
-        this.p1 = null; // used in sliceIntersect(), connectLines() and intersect()
-        this.p2 = null; // used in sliceIntersect(), connectLines() and intersect()
+        // this.dist = 0.0; // for group intersection sorting and tests
+        // this.p1 = null; // used in sliceIntersect(), connectLines() and intersect()
+        // this.p2 = null; // used in sliceIntersect(), connectLines() and intersect()
         this.pos = 0; // position in group
-        this.mod = 0; // group length (for modulus of pos)
-        this.del = false; // for culling
-        this.group = null; // for grouping in slice intersect, offset lines in trace
+        // this.mod = 0; // group length (for modulus of pos)
+        // this.del = false; // for culling
+        // this.group = null; // for grouping in slice intersect, offset lines in trace
     }
 
     /** ******************************************************************
