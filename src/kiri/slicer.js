@@ -585,6 +585,10 @@
                 }
             }
             slices.push(slice);
+            if (!(topoMode || simpleMode)) {
+                delete slice.lines;
+                delete slice.groups;
+            }
             return slice;
         }
     }
