@@ -123,6 +123,10 @@
                 }
             });
             return bounds;
+        },
+
+        clear: function() {
+            groups.length = 0;
         }
     };
 
