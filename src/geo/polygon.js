@@ -19,38 +19,42 @@
         PI = Math.PI,
         DEG2RAD = PI / 180,
         newPoint = BASE.newPoint,
-        Bounds = BASE.Bounds,
-        PRO = Polygon.prototype;
+        Bounds = BASE.Bounds;
 
     let seqid = 1;
-
-    BASE.Polygon = Polygon;
-    BASE.newPolygon = newPolygon;
 
     /** ******************************************************************
      * Constructors
      ******************************************************************* */
 
-    /**
-     * @param {Points[]} [points] to seed poly
-     * @constructor
-     */
-    function Polygon(points) {
-        this.id = seqid++; // polygon unique id
-        this.open = false;
-        this.length = 0; // number of points
-        this.points = []; // ordered array of points
-        this.area2 = 0.0; // computed as 2x area (sign = direction)
-        this.perim = 0.0; // for caching the result
-        this.bounds = new Bounds();
-        // this.inner = null; // array of enclosed polygons (if any)
-        this.parent = null; // enclosing parent polygon
-        this.depth = 0; // depth nested from top parent (density for support fill)
-        this.delete = false; // for culling during tracing
-        // this.fillang = null; // hinted fill angle
-        // this.fill = null; // fill lines (only used by supports currently)
-        if (points) this.addPoints(points);
+    class Polygon {
+        constructor(points) {
+            this.id = seqid++; // polygon unique id
+            this.open = false;
+            this.length = 0; // number of points
+            this.points = []; // ordered array of points
+            this.area2 = 0.0; // computed as 2x area (sign = direction)
+            this.parent = null; // enclosing parent polygon
+            this.depth = 0; // depth nested from top parent (density for support fill)
+            if (points) this.addPoints(points);
+        }
+
+        get bounds() {
+            if (this._bounds) {
+                return this._bounds;
+            }
+            let bounds = this._bounds = new Bounds();
+            for (let point of this.points) {
+                bounds.update(point);
+            }
+            return bounds;
+        }
     }
+
+    BASE.Polygon = Polygon;
+    BASE.newPolygon = newPolygon;
+
+    const PRO = Polygon.prototype;
 
     /** ******************************************************************
      * Polygon Filter/Chain Functions
@@ -312,7 +316,7 @@
             });
             let lp, eo = 0;
             for (let x of cntr) {
-                let p = BASE.newPoint(x, y, z);
+                let p = newPoint(x, y, z);
                 if (eo++ % 2) {
                     let d = lp.distTo2D(p);
                     if (d >= min && d <= max) {
@@ -320,7 +324,7 @@
                             cloud.push(lp);
                             cloud.push(p);
                         } else {
-                            cloud.push(BASE.newPoint(
+                            cloud.push(newPoint(
                                 (lp.x + p.x) / 2, y, z
                             ));
                         }
@@ -369,7 +373,7 @@
             });
             let lp, eo = 0;
             for (let y of cntr) {
-                let p = BASE.newPoint(x, y, z);
+                let p = newPoint(x, y, z);
                 if (eo++ % 2) {
                     let d = lp.distTo2D(p);
                     if (d >= min && d <= max) {
@@ -377,7 +381,7 @@
                             cloud.push(lp);
                             cloud.push(p);
                         } else {
-                            cloud.push(BASE.newPoint(
+                            cloud.push(newPoint(
                                 x, (lp.y + p.y) / 2, z
                             ));
                         }
@@ -575,27 +579,21 @@
     };
 
     PRO.swap = function(x,y) {
-        let poly = this,
-            points = poly.points,
-            length = points.length,
-            bounds = new Bounds();
+        this._bounds = undefined;
         if (x) {
-            for (let i=0; i<length; i++) {
-                let p = points[i];
+            for (let p of this.points) {
                 p.swapXZ();
-                bounds.update(p);
             }
         } else if (y) {
-            for (let i=0; i<length; i++) {
-                let p = points[i];
+            for (let p of this.points) {
                 p.swapYZ();
-                bounds.update(p);
             }
         }
-        poly.bounds = bounds;
-        if (poly.inner) poly.inner.forEach(function(i) {
-            i.swap(x,y);
-        });
+        if (this.inner) {
+            for (let inner of this.inner) {
+                inner.swap(x,y);
+            }
+        }
         return this;
     }
 
@@ -717,40 +715,39 @@
     };
 
     /**
-     * offset all points
-     * @param {THREE.Vector3} offset
-     * @returns {Polygon}
+     * move all poly points by some offset
      */
     PRO.move = function(offset) {
-        let scope = this,
-            bounds = scope.bounds = new Bounds();
-        scope.points.forEach(function(p) {
-            p.move(offset);
-            bounds.update(p);
-        });
-        if (scope.inner) {
-            scope.inner.forEach(function(p) {
-                p.move(offset);
-            });
+        this._bounds = undefined;
+        this.points = this.points.map(point => point.move(offset));
+        if (this.inner) {
+            for (let inner of this.inner) {
+                inner.move(offset);
+            }
         }
-        return scope;
     };
 
+    /**
+     * scale polygon around origin
+     */
     PRO.scale = function(scale, round) {
-        let scope = this,
-            bounds = scope.bounds = new Bounds();
-        scope.points.forEach(function(p) {
-            p.x *= scale;
-            p.y *= scale;
-            p.z *= scale;
+        this._bounds = undefined;
+        this.points = this.points.map(point => {
             if (round) {
-                p.x = UTIL.round(p.x, round);
-                p.y = UTIL.round(p.y, round);
-                p.z = UTIL.round(p.z, round);
+                point.x = (point.x * scale).round(round);
+                point.y = (point.y * scale).round(round);
+                point.z = (point.z * scale).round(round);
+            } else {
+                point.x = point.x * scale;
+                point.y = point.y * scale;
+                point.z = point.z * scale;
             }
-            bounds.update(p);
         });
-        if (scope.inner) scope.inner.forEach(function(i) { i.scale(scale,round) });
+        if (this.inner) {
+            for (let inner of this.inner) {
+                inner.scale(scale, round);
+            }
+        }
     };
 
     /**
@@ -797,7 +794,7 @@
 
         while (i < ln) np.push(this.points[i++]);
 
-        np.fillang = this.fillang;
+        if (this.fillang) np.fillang = this.fillang;
         np.depth = this.depth;
         np.open = this.open;
 
@@ -896,7 +893,6 @@
         p.poly = this;
         this.length++;
         this.points.push(p);
-        this.bounds.update(p);
         return p;
     };
 

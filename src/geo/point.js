@@ -14,15 +14,16 @@
 
     class Point {
         constructor(x,y,z,key,CP) {
-            // todo make more efficient for cloning when all 5 params are passed
             if (CP) {
                 console.trace({x,y,z,key,CP});
-                throw "invalid point constructor"
+                throw "deprecated point constructor"
             } else {
                 this.x = x;
                 this.y = y;
                 this.z = z || 0;
-                this._key = key;
+                if (key) {
+                    this._key = key;
+                }
             }
             this.poly = null; // parent polygon
             this.pos = 0; // position in group
@@ -681,15 +682,13 @@
     };
 
     /**
-      *
+     *
      * @param {THREE.Vector3} delta
      */
     PRO.move = function(delta) {
         this.x += delta.x;
         this.y += delta.y;
         this.z += delta.z;
-        this.X += delta.x * CONF.clipper;
-        this.Y += delta.y * CONF.clipper;
         return this;
     };
 
