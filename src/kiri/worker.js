@@ -47,6 +47,7 @@ KIRI.worker = {
         current.print = null;
         dispatch.group = wgroup = {};
         dispatch.cache = wcache = {};
+        KIRI.Widget.Groups.clear();
         send.done({ clear: true });
     },
 
@@ -161,6 +162,8 @@ KIRI.worker = {
 
     slice: function(data, send) {
         send.data({update:0.001, updateStatus:"slicing"});
+
+        current.print = null;
 
         let settings = data.settings,
             widget = wcache[data.id],

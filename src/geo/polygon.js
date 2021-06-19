@@ -31,12 +31,14 @@
         constructor(points) {
             this.id = seqid++; // polygon unique id
             this.open = false;
-            this.length = 0; // number of points
             this.points = []; // ordered array of points
-            this.area2 = 0.0; // computed as 2x area (sign = direction)
             this.parent = null; // enclosing parent polygon
             this.depth = 0; // depth nested from top parent (density for support fill)
             if (points) this.addPoints(points);
+        }
+
+        get length() {
+            return this.points.length;
         }
 
         get bounds() {
@@ -891,7 +893,6 @@
         // clone any point belonging to another polygon
         if (p.poly) p = p.clone();
         p.poly = this;
-        this.length++;
         this.points.push(p);
         return p;
     };
@@ -991,7 +992,9 @@
      * @returns {Polygon} self
      */
     PRO.reverse = function() {
-        this.area2 = -this.area2;
+        if (this.area2) {
+            this.area2 = -this.area2;
+        }
         this.points = this.points.reverse();
         return this;
     };
@@ -1351,15 +1354,18 @@
      * @returns {number} area
      */
     PRO.area = function(raw) {
-        if (this.length < 3) return 0;
-        if (this.area2 === 0.0) {
+        if (this.length < 3) {
+            return 0;
+        }
+        if (this.area2 === undefined) {
+            this.area2 = 0.0;
             for (let p=this.points,pl=p.length,pi=0,p1,p2; pi<pl; pi++) {
                 p1 = p[pi];
                 p2 = p[(pi+1)%pl];
                 this.area2 += (p2.x - p1.x) * (p2.y + p1.y);
             }
         }
-        return raw ? this.area2 : ABS(this.area2/2);
+        return raw ? this.area2 : ABS(this.area2 / 2);
     };
 
     /**
@@ -1369,7 +1375,9 @@
      * @returns {number} area
      */
     PRO.areaDeep = function() {
-        if (!this.inner) return this.area();
+        if (!this.inner) {
+            return this.area();
+        }
         let i, c = this.inner, a = this.area();
         for (i=0; i<c.length; i++) {
             a -= c[i].area();

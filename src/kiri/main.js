@@ -2872,7 +2872,7 @@
                 complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
-                // KIRI.work.clear();
+                KIRI.client.clear();
                 STACKS.clear();
                 hideSlider();
                 updateSpeeds();
