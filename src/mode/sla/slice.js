@@ -85,7 +85,7 @@
                     polys.appendAll(slice.tops.map(t => t.poly.clone()));
                 });
                 // p.clone prevents inner voids from forming
-                let union = POLY.union(polys).map(p => p.clone());
+                let union = POLY.union(polys, undefined, true).map(p => p.clone());
                 let expand = POLY.expand(union, off, zoff, [], 1);
                 let lastraft;
                 for (let s=0; s<layers + gap; s++) {
@@ -333,7 +333,7 @@
         // union support pillars
         slices.forEach(slice => {
             if (slice.supports) {
-                slice.supports = POLY.union(slice.supports,0);
+                slice.supports = POLY.union(slice.supports, 0, true);
             }
         });
     }
@@ -577,14 +577,14 @@
         }
 
         if (!cached) {
-            fill = POLY.union(fill);
+            fill = POLY.union(fill, 0, true);
             fill_cache[seq_c] = fill;
         } else {
             fill = cached.slice().map(p => p.clone(true).setZ(slice.z));
         }
 
         fill = POLY.trimTo(fill, slice.tops.map(t => t.poly));
-        fill = POLY.union(slice.unioned.appendAll(fill),0,true);
+        fill = POLY.union(slice.unioned.appendAll(fill), 0, true);
 
         slice.unioned = fill;
     }
