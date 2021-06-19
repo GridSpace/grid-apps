@@ -482,24 +482,35 @@
             }
         });
         api.event.on("export.debug", msg => {
-            if (msg.arcQ && msg.arcQ.length > 5) {
+            if (msg.arcQ && msg.arcQ.length > 2) {
                 if (xpdebug) {
                     xpdebug.destroy();
                     xpdebug = undefined;
                 }
                 let poly = BASE.newPolygon().setOpen();
                 for (let rec of msg.arcQ) {
+                    rec.z += 1;
                     poly.addObj(rec);
                 }
 
                 let layers = new KIRI.Layers();
                 let layer = layers.setLayer("arcq", { line: 0xff00ff, face: 0xff00ff, opacity: 1 });
-                layer.addPoly(poly, {z:10, thin:true});
+                layer.addPoly(poly, {thin:true});
+
+                layer = layers.setLayer("arcc", { line: 0xff0000, face: 0xff0000, opacity: 1 });
+                for (let center of msg.arcQ.center) {
+                    center.z += 0.5;
+                    layer.addPoly(BASE.newPolygon().centerCircle(
+                        center, center.r, 20
+                    ));
+                }
 
                 xpdebug = new KIRI.Stack(SPACE.platform.world, false);
                 xpdebug.addLayers(layers);
                 xpdebug.setVisible(0,Infinity);
                 xpdebug.show();
+
+                SPACE.refresh();
 
                 console.log(msg, poly);
             }

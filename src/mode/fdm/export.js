@@ -67,10 +67,9 @@
             peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             arcMin = 1,
-            arcRes = 16,
+            arcRes = 20,
             arcDev = 0.5,
-            arcMax = 200,
-            arcSegMax = 1,
+            arcMax = 40,
             originCenter = process.outputOriginCenter,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
@@ -517,17 +516,16 @@
                     if (arcDist) {
                         let rec = {e:out.emit, x, y, z, dist, emitPerMM, speedMMM};
                         arcQ.push(rec);
-                        // ondebug({arcQ});
                         let deem = false; // do arcQ[0] and rec have differing emit values?
                         let depm = false; // do arcQ[0] and rec have differing emit speeds?
                         let desp = false; // do arcQ[0] and rec have differing move speeds?
-                        let arcSeg = 0;   // distance from this point to the last
                         if (arcQ.length > 1) {
                             let el = arcQ.length;
                             deem = arcQ[0].e !== rec.e;
                             depm = arcQ[0].emitPerMM !== rec.emitPerMM;
                             desp = arcQ[0].speedMMM !== rec.speedMMM;
                         }
+                        // ondebug({arcQ});
                         if (arcQ.length > 2) {
                             let el = arcQ.length;
                             let e1 = arcQ[0]; // first in arcQ
@@ -543,7 +541,8 @@
                             if (lr) {
                                 let angle = 2 * Math.asin(dist/(2*lr.r));
                                 radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
-                                if (arcQ.center && arcQ.center.length > 1) {
+                                if (arcQ.center) {
+                                    arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                                     let avg = arcQ.rSum / arcQ.center.length;
                                     radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
                                 }
@@ -562,14 +561,17 @@
                                     arcQ.rSum = cc.r;
                                 } else {
                                     // check center point delta
+                                    arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
+                                    arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
                                     let dx = cc.x - arcQ.xSum / arcQ.center.length;
                                     let dy = cc.y - arcQ.ySum / arcQ.center.length;
                                     dc = Math.sqrt(dx * dx + dy * dy);
                                 }
+                                
                                 // if new point is off the arc
                                 // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                                if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault) {
-                                    // console.log({dc, depm, desp});
+                                if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault || !arcValid()) {
+                                    // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
                                     if (arcQ.length === 4) {
                                         // not enough points for an arc, drop first point and recalc center
                                         emitQrec(arcQ.shift());
@@ -579,6 +581,10 @@
                                             emitQrec(arcQ.shift());
                                         } else {
                                             arcQ.center = [ tc ];
+                                            let angle = 2 * Math.asin(arcQ[1].dist/(2*tc.r));
+                                            if (Math.abs(angle) > Math.PI * 2 / arcRes) { // enforce arcRes on initial angle
+                                                emitQrec(arcQ.shift());
+                                            }
                                         }
                                     } else {
                                         // enough to consider an arc, emit and start new arc
@@ -590,9 +596,6 @@
                                 } else {
                                     // new point is on the arc
                                     arcQ.center.push(cc);
-                                    arcQ.xSum += cc.x;
-                                    arcQ.ySum += cc.y;
-                                    arcQ.rSum += cc.r;
                                 }
                             } else {
                                 // drainQ on invalid center
@@ -660,6 +663,9 @@
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
                 let from = arcQ[0];
                 let to = arcQ.peek();
+                arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
+                arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
+                arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                 let cl = arcQ.center.length;
                 let cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
                 // first arc point
@@ -692,6 +698,65 @@
             }
             arcQ.length = 0;
             arcQ.center = undefined;
+        }
+
+        // comprehensive arc validator
+        function arcValid() {
+            if (arcQ.length < 3) {
+                return false;
+            }
+
+            let globalCenters = []; // see how a point first the curve within the context of the arc's end points.
+
+            for (let i = 0; i < arcQ.length - 2; i++) {
+                let cc = UTIL.center2d(arcQ[0], arcQ[i+1], arcQ[arcQ.length - 1], 1);
+                if (!cc) {
+                    return false;
+                }
+                globalCenters.push(cc);
+            }
+
+            let ac = { // average center
+                x:globalCenters.reduce( (t,v) =>  t + v.x , 0) / (globalCenters.length),
+                y:globalCenters.reduce( (t,v) =>  t + v.y , 0) / (globalCenters.length),
+                z:globalCenters.reduce( (t,v) =>  t + v.z , 0) / (globalCenters.length),
+                r:globalCenters.reduce( (t,v) =>  t + v.r , 0) / (globalCenters.length)
+            };
+
+            // make sure centers are within specified tolerance
+            for (let cc of globalCenters) {
+                let dc = Math.sqrt(Math.pow(cc.x - ac.x, 2) + Math.pow(cc.y - ac.y, 2));
+                if (dc / ac.r > arcDist) {
+                    return false;
+                }
+            }
+
+            // make sure radii are within specified tolerance
+            for (let point of arcQ) {
+                let rad = Math.sqrt(Math.pow(point.x - ac.x, 2) + Math.pow(point.y - ac.y, 2));
+                if (Math.abs(rad - ac.r) > ac.r * arcDist) {
+                    return false;
+                }
+            }
+
+            // enforce arcRes(olution)
+            for (let i = 1; i < arcQ.length; i++) {
+                let angle = 2 * Math.asin(arcQ[i].dist/(2*ac.r));
+                if (Math.abs(angle) > Math.PI * 2 / arcRes) {
+                    return false;
+                }
+            }
+
+            // check points in the context of neighbors
+            for (let i = 0; i < arcQ.length - 2; i++) {
+                let cc = UTIL.center2d(arcQ[i], arcQ[i+1], arcQ[i+2], 1);
+                if (!cc || Math.abs((cc.r - ac.r) / cc.r) > arcDev) {
+                    return false;
+                }
+            }
+
+            return true;
+
         }
 
         if (inLoop) {
