@@ -259,20 +259,6 @@
                 slice.solids = [];
             });
 
-            // create shadow for clipping supports
-            let shadow = null;
-            if (!isBelt || spro.sliceSupportEnable) {
-                let alltops = slices.map(slice => slice.topPolys()).flat();
-                shadow = POLY.union(alltops,null,0.1);
-                if (spro.sliceSupportExtra) {
-                    shadow = POLY.offset(shadow, spro.sliceSupportExtra);
-                }
-                widget.shadow = shadow;
-                // slices[0].output()
-                //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
-                //     .addPolys(shadow);
-            }
-
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.2, slice => {
                 let params = getRangeParameters(settings, slice.index);
@@ -474,6 +460,24 @@
 
             // auto support generation
             if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
+                // create shadow for clipping supports
+                let mark = Date.now();
+                let shadow = null;
+                let alltops = slices.map(slice => slice.topPolys()).flat();
+                let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
+                // console.log({alllen});
+                if (alllen > 100000) {
+                    alltops = alltops.map(p => p.clean(true, undefined, 10000));
+                    // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
+                }
+                shadow = POLY.union(alltops,0.1,true);
+                if (spro.sliceSupportExtra) {
+                    shadow = POLY.offset(shadow, spro.sliceSupportExtra);
+                }
+                widget.shadow = shadow;
+                // slices[0].output()
+                //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
+                //     .addPolys(shadow);
                 forSlices(0.7, 0.8, slice => {
                     doSupport(slice, spro, shadow);
                 }, "support");

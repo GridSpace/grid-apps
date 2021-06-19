@@ -41,6 +41,16 @@
             return this.points.length;
         }
 
+        get deepLength() {
+            let len = this.length;
+            if (this.inner) {
+                for (let inner of this.inner) {
+                    len += inner.length;
+                }
+            }
+            return len;
+        }
+
         get bounds() {
             if (this._bounds) {
                 return this._bounds;
@@ -1420,14 +1430,14 @@
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.
      */
-    PRO.clean = function(deep, parent) {
+    PRO.clean = function(deep, parent, merge = CONF.clipperClean) {
         let clib = self.ClipperLib,
             clip = clib.Clipper,
-            clean = clip.CleanPolygon(this.toClipper()[0], CONF.clipperClean),
+            clean = clip.CleanPolygon(this.toClipper()[0], merge),
             poly = fromClipperPath(clean, this.getZ());
         if (poly.length === 0) return this;
         if (deep && this.inner) {
-            poly.inner = this.inner.map(inr => inr.clean(false, poly));
+            poly.inner = this.inner.map(inr => inr.clean(false, poly, merge));
         }
         poly.parent = parent || this.parent;
         poly.area2 = this.area2;
