@@ -325,6 +325,29 @@ const script = {
         "kiri/codec",
         "kiri/worker"
     ].map(p => `src/${p}.js`),
+    minion : [
+        "kiri",
+        "license",
+        "ext/clip2",
+        "ext/earcut",
+        "add/array",
+        "add/class",
+        "geo/base",
+        "geo/debug",
+        "geo/point",
+        "geo/points",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/gyroid",
+        "kiri/slice",
+        "kiri/layers",
+        "kiri/widget",
+        "kiri/codec",
+        "kiri/minion"
+    ].map(p => `src/${p}.js`),
     engine : [
         "kiri",
         "license",
@@ -342,7 +365,6 @@ const script = {
         "geo/polygon",
         "geo/polygons",
         "moto/kv",
-        // "moto/ajax",
         "moto/load-stl",
         "kiri/conf",
         "kiri/client",
@@ -550,6 +572,7 @@ function prepareScripts() {
     code.meta = concatCode(script.meta);
     code.kiri = concatCode(script.kiri);
     code.worker = concatCode(script.worker);
+    code.minion = concatCode(script.minion);
     code.engine = concatCode(script.engine);
     code.frame = concatCode(script.frame);
 }

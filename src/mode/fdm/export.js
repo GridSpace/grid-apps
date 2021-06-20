@@ -567,7 +567,7 @@
                                     let dy = cc.y - arcQ.ySum / arcQ.center.length;
                                     dc = Math.sqrt(dx * dx + dy * dy);
                                 }
-                                
+
                                 // if new point is off the arc
                                 // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                                 if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault || !arcValid()) {

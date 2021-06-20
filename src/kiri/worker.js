@@ -5,18 +5,79 @@
 let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
+    POLY = BASE.polygons,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
+    concurrent = self.Worker ? navigator.hardwareConcurrency || 0 : 0,
     current = self.worker = {
         print: null,
         snap: null
     },
     wgroup = {},
-    wcache = {};
+    wcache = {},
+    minions = [],
+    minionq = [];
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
     console.log(o);
+};
+
+// start concurrent workers (minions)
+if (concurrent) {
+    for (let i=0; i < concurrent; i++) {
+        minions.push(new Worker(`/code/minion.js?${self.kiri.version}`));
+    }
+    console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent}`);
+}
+
+// for concurrent operations
+KIRI.minions = {
+    union: function(polys, minarea) {
+        return new Promise((resolve, reject) => {
+            if (concurrent === 0 || polys.length * 2 < concurrent) {
+                resolve(POLY.union(polys, 0, true));
+            }
+            let polyper = Math.ceil(polys.length / concurrent);
+            let running = 0;
+            let union = [];
+            let receiver = function(msg) {
+                let polys = KIRI.codec.decode(msg.data.union);
+                union.appendAll(polys);
+                if (--running === 0) {
+                    resolve(POLY.union(union, 0, true));
+                }
+            };
+            for (let i=0; i<polys.length; i += polyper) {
+                minions[running].onmessage = receiver;
+                minions[running].postMessage({
+                    cmd: "union",
+                    minarea,
+                    polys: KIRI.codec.encode(polys.slice(i, i + polyper))
+                });
+                running++;
+            }
+        });
+    },
+
+    queue: function(work) {
+        return new Promise((resolve, reject) => {
+            minionq.push({work, resolve, reject});
+            kick();
+        });
+    },
+
+    kick: function() {
+        if (minions.length && minionq.length) {
+            let qrec = minionq.shift();
+            let minion = minions.shift();
+            minion.onmessage = (msg) => {
+                qrec.resolve(msg.data);
+                minions.push(minion);
+            };
+            minion.postMessage(work);
+        }
+    }
 };
 
 console.log(`kiri | init work | ${KIRI.version || "rogue"}`);

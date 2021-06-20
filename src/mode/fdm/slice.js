@@ -162,6 +162,10 @@
         }
 
         function onSliceDone(slices) {
+            onSliceDoneAsync(slices).then(ondone);
+        }
+
+        async function onSliceDoneAsync(slices) {
             // remove all empty slices above part but leave below
             // for multi-part (multi-extruder) setups where the void is ok
             // also reverse because slicing occurs bottom-up
@@ -294,6 +298,7 @@
                 }
                 sliceFillAngle += 90.0;
             }, "offsets");
+
             // add lead in when specified in belt mode
             if (!isSynth && isBelt) {
                 // find adjusted zero point from slices
@@ -461,16 +466,18 @@
             // auto support generation
             if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
                 // create shadow for clipping supports
-                let mark = Date.now();
                 let shadow = null;
                 let alltops = slices.map(slice => slice.topPolys()).flat();
                 let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
-                // console.log({alllen});
                 if (alllen > 100000) {
-                    alltops = alltops.map(p => p.clean(true, undefined, 10000));
+                    // console.log({alllen});
+                    alltops = alltops.map(p => p.clean(true, undefined, 5000));
                     // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
                 }
-                shadow = POLY.union(alltops,0.1,true);
+                // let mark = Date.now();
+                // shadow = POLY.union(alltops, 0.1, true);
+                shadow = await KIRI.minions.union(alltops, 0.1);
+                // console.log({unioned_in: Date.now() - mark});
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
                 }
@@ -502,9 +509,6 @@
                 widget.belt.miny = -bounds.miny;
                 widget.belt.midy = (bounds.miny + bounds.maxy) / 2;
             }
-
-            // report slicing complete
-            ondone();
         }
 
     }
@@ -602,138 +606,138 @@
      */
     function doShells(slice, count, offsetN, fillOffset, opt = {}) {
         let offset1 = offsetN / 2;
-        let shellout = 0;
 
-        slice.tops.forEach(function(top) {
-            let top_poly = [ top.poly ];
+        if (slice.index === 0) {
+            // console.log({slice_top_0: top_poly, count});
+            // segment polygon
+        }
 
-            if (slice.index === 0) {
-                // console.log({slice_top_0: top_poly, count});
-                // segment polygon
-            }
+        for (let top of slice.tops) {
+            doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
+        }
+    }
 
-            if (opt.vase) {
-                // remove top poly inners in vase mode
-                top.poly = top.poly.clone(false);
-            }
+    function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt) {
+        let top_poly = [ top.poly ];
 
-            top.shells = [];
-            top.fill_off = [];
-            top.fill_lines = [];
+        if (opt.vase) {
+            // remove top poly inners in vase mode
+            top.poly = top.poly.clone(false);
+        }
 
-            let last = [],
-                gaps = [],
-                z = top.poly.getZ();
+        top.shells = [];
+        top.fill_off = [];
+        top.fill_lines = [];
 
-            if (count) {
-                // permit offset of 0 for laser and drag knife
-                if (offset1 === 0 && count === 1) {
-                    last = top_poly.clone(true);
-                    top.shells = last;
-                } else {
-                    // heal top open polygons if the ends are close (benchy tilt test)
-                    top_poly.forEach(p => { if (p.open) {
-                        let dist = p.first().distTo2D(p.last());
-                        if (dist < 1) p.open = false;
-                    } });
-                    if (opt.danger && opt.thin) {
-                        top.thin_fill = [];
-                        top.fill_sparse = [];
-                        let layers = POLY.inset(top_poly, offsetN, count, z);
-                        last = layers.last().mid;
-                        top.shells = layers.map(r => r.mid).flat();
-                        top.gaps = layers.map(r => r.gap).flat();
-                        let off = offsetN;
-                        let min = off * 0.75;
-                        let max = off * 4;
-                        for (let poly of layers.map(r => r.gap).flat()) {
-                            let centers = poly.centers(off/2, z, min, max, {lines:false});
-                            top.fill_sparse.appendAll(centers);
-                            // top.fill_lines.appendAll(centers);
-                        }
-                    } else if (opt.thin) {
-                        top.thin_fill = [];
-                        let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
-                        POLY.offset(top_poly, [-offset1, -offsetN], oso);
+        let last = [],
+            gaps = [];
 
-                        oso.outs.forEach((polys, i) => {
-                            polys.forEach(p => {
-                                p.depth = i;
-                                if (p.fill_off) {
-                                    p.fill_off.forEach(pi => pi.depth = i);
+        if (count) {
+            // permit offset of 0 for laser and drag knife
+            if (offset1 === 0 && count === 1) {
+                last = top_poly.clone(true);
+                top.shells = last;
+            } else {
+                // heal top open polygons if the ends are close (benchy tilt test)
+                top_poly.forEach(p => { if (p.open) {
+                    let dist = p.first().distTo2D(p.last());
+                    if (dist < 1) p.open = false;
+                } });
+                if (opt.danger && opt.thin) {
+                    top.thin_fill = [];
+                    top.fill_sparse = [];
+                    let layers = POLY.inset(top_poly, offsetN, count, z);
+                    last = layers.last().mid;
+                    top.shells = layers.map(r => r.mid).flat();
+                    top.gaps = layers.map(r => r.gap).flat();
+                    let off = offsetN;
+                    let min = off * 0.75;
+                    let max = off * 4;
+                    for (let poly of layers.map(r => r.gap).flat()) {
+                        let centers = poly.centers(off/2, z, min, max, {lines:false});
+                        top.fill_sparse.appendAll(centers);
+                        // top.fill_lines.appendAll(centers);
+                    }
+                } else if (opt.thin) {
+                    top.thin_fill = [];
+                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
+                    POLY.offset(top_poly, [-offset1, -offsetN], oso);
+
+                    oso.outs.forEach((polys, i) => {
+                        polys.forEach(p => {
+                            p.depth = i;
+                            if (p.fill_off) {
+                                p.fill_off.forEach(pi => pi.depth = i);
+                            }
+                            if (p.inner) {
+                                for (let pi of p.inner) {
+                                    pi.depth = p.depth;
                                 }
+                            }
+                            top.shells.push(p);
+                        });
+                        last = polys;
+                    });
+
+                    // slice.solids.trimmed = slice.solids.trimmed || [];
+                    oso.gaps.forEach((polys, i) => {
+                        let off = (i == 0 ? offset1 : offsetN);
+                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
+                        top.thin_fill.appendAll(cullIntersections(
+                            fillArea(polys, 45, off/2, [], 0.01, off*2),
+                            fillArea(polys, 135, off/2, [], 0.01, off*2),
+                        ));
+                        gaps = polys;
+                    });
+                } else {
+                    // standard wall offsetting strategy
+                    POLY.expand(
+                        top_poly,   // reference polygon(s)
+                        -offset1,   // first inset distance
+                        z,          // set new polys to this z
+                        top.shells, // accumulator array
+                        count,      // number of insets to perform
+                        -offsetN,   // subsequent inset distance
+                        // on each new offset trace ...
+                        function(polys, countNow) {
+                            last = polys;
+                            // mark each poly with depth (offset #) starting at 0
+                            polys.forEach(function(p) {
+                                p.depth = count - countNow;
+                                if (p.fill_off) p.fill_off.forEach(function(pi) {
+                                    // use negative offset for inners
+                                    pi.depth = -(count - countNow);
+                                });
                                 if (p.inner) {
                                     for (let pi of p.inner) {
                                         pi.depth = p.depth;
                                     }
                                 }
-                                top.shells.push(p);
                             });
-                            last = polys;
                         });
-
-                        // slice.solids.trimmed = slice.solids.trimmed || [];
-                        oso.gaps.forEach((polys, i) => {
-                            let off = (i == 0 ? offset1 : offsetN);
-                            polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
-                            top.thin_fill.appendAll(cullIntersections(
-                                fillArea(polys, 45, off/2, [], 0.01, off*2),
-                                fillArea(polys, 135, off/2, [], 0.01, off*2),
-                            ));
-                            gaps = polys;
-                        });
-                    } else {
-                        // standard wall offsetting strategy
-                        POLY.expand(
-                            top_poly,   // reference polygon(s)
-                            -offset1,   // first inset distance
-                            z,          // set new polys to this z
-                            top.shells, // accumulator array
-                            count,      // number of insets to perform
-                            -offsetN,   // subsequent inset distance
-                            // on each new offset trace ...
-                            function(polys, countNow) {
-                                last = polys;
-                                // mark each poly with depth (offset #) starting at 0
-                                polys.forEach(function(p) {
-                                    p.depth = count - countNow;
-                                    if (p.fill_off) p.fill_off.forEach(function(pi) {
-                                        // use negative offset for inners
-                                        pi.depth = -(count - countNow);
-                                    });
-                                    if (p.inner) {
-                                        for (let pi of p.inner) {
-                                            pi.depth = p.depth;
-                                        }
-                                    }
-                                });
-                            });
-                    }
                 }
-            } else {
-                // no shells, just infill, is permitted
-                last = [top.poly];
             }
+        } else {
+            // no shells, just infill, is permitted
+            last = [top.poly];
+        }
 
-            // generate fill offset poly set from last offset to top.fill_off
-            if (fillOffset && last.length > 0) {
-                // if gaps present, remove that area from fill inset
-                if (gaps.length) {
-                    let nulast = [];
-                    POLY.subtract(last, gaps, nulast, null, slice.z);
-                    last = nulast;
-                }
-                last.forEach(function(inner) {
-                    POLY.offset([inner], -fillOffset, {outs: top.fill_off, flat: true, z: slice.z});
-                });
+        // generate fill offset poly set from last offset to top.fill_off
+        if (fillOffset && last.length > 0) {
+            // if gaps present, remove that area from fill inset
+            if (gaps.length) {
+                let nulast = [];
+                POLY.subtract(last, gaps, nulast, null, z);
+                last = nulast;
             }
+            last.forEach(function(inner) {
+                POLY.offset([inner], -fillOffset, {outs: top.fill_off, flat: true, z});
+            });
+        }
 
-            // for diffing
-            top.last = last;
-
-            shellout += top.shells.length;
-        });
-    };
+        // for diffing
+        top.last = last;
+    }
 
     /**
      * Create an entirely solid layer by filling all top polygons
