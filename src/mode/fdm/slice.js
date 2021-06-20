@@ -295,7 +295,6 @@
                 doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls && !isSynth,
-                    // widget: widget,
                     danger: ctrl.danger
                 }, promises);
             }, "shells");
@@ -425,27 +424,28 @@
             if (doSolidLayers) {
                 forSlices(0.2, 0.34, slice => {
                     if (slice.index > 0) doDiff(slice, minSolid);
-                }, "diff");
+                }, "layer deltas");
                 forSlices(0.34, 0.35, slice => {
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
-                }, "solids");
+                }, "project solids");
                 forSlices(0.35, 0.5, slice => {
-                    let params = getRangeParameters(settings, slice.index);
+                    let params = slice.params;// getRangeParameters(settings, slice.index);
                     let first = slice.index === 0;
                     let solidWidth = params.sliceFillWidth || 1;
                     let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
                     let fillSpace = fillSpacing * spaceMult * solidWidth;
                     doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid);
                     sliceFillAngle += 90.0;
-                }, "solids");
+                }, "fill solids");
+                await fillResolve();
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!isSynth) {
                 let lastType;
                 forSlices(0.5, 0.7, slice => {
-                    let params = getRangeParameters(settings, slice.index);
+                    let params = slice.params;// getRangeParameters(settings, slice.index);
                     if (vaseMode || !params.sliceFillSparse) {
                         return;
                     }
@@ -466,7 +466,7 @@
                 }, "infill");
             } else if (isSynth) {
                 forSlices(0.5, 0.7, slice => {
-                    let params = getRangeParameters(settings, slice.index);
+                    let params = slice.params;// getRangeParameters(settings, slice.index);
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
@@ -492,7 +492,7 @@
                 let mark = Date.now();
                 // shadow = POLY.union(alltops, 0.1, true);
                 shadow = await KIRI.minions.union(alltops, 0.1);
-                console.log({unioned_in: Date.now() - mark});
+                // console.log({unioned_in: Date.now() - mark});
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
                 }
@@ -511,7 +511,7 @@
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    let params = getRangeParameters(settings, slice.index);
+                    let params = slice.params;// getRangeParameters(settings, slice.index);
                     doRender(slice, isSynth, params, ctrl.devel);
                 }, "render");
             }
@@ -636,7 +636,7 @@
                 promises.push(
                     new Promise((resolve, reject) => {
                         KIRI.minions.queue({
-                            cmd: "top.shells",
+                            cmd: "topShells",
                             z: slice.z, count, offset1, offsetN, fillOffset, opt,
                             top: KIRI.codec.encode(top, {full: true})
                         }, data => {
@@ -1028,8 +1028,6 @@
      */
     function doSolidsFill(slice, spacing, angle, minArea) {
 
-        const render = slice.output();
-
         let minarea = minArea || 1,
             tops = slice.tops,
             solids = slice.solids;
@@ -1093,7 +1091,7 @@
             }
             const tofill = [];
             const angfill = [];
-            const newfill = [];
+            const newfill = top.fill_lines = [];
             // determine fill orientation from top
             solids.forEach(function(solid) {
                 if (solid.parent === top.poly) {
@@ -1105,22 +1103,34 @@
                 }
             });
             if (tofill.length > 0) {
-                fillArea(tofill, angle, spacing, newfill);
+                fillAsync(tofill, angle, spacing, newfill);
                 top.fill_lines_norm = {angle:angle,spacing:spacing};
             }
             if (angfill.length > 0) {
                 top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
                 angfill.forEach(function(af) {
-                    fillArea([af], af.fillang.angle + 45, spacing, newfill);
+                    fillAsync([af], af.fillang.angle + 45, spacing, newfill);
                     top.fill_lines_ang.list.push(af.fillang.angle + 45);
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }
-            top.fill_lines.appendAll(newfill);
+            // top.fill_lines.appendAll(newfill);
         });
 
         return true;
     };
+
+    let fillQ = [];
+
+    function fillAsync(polys, angle, spacing, output, minLen, maxLen) {
+        fillQ.push(KIRI.minions.fill(polys, angle, spacing, output, minLen, maxLen));
+    }
+
+    async function fillResolve() {
+        // console.log({resolving: fillQ.length});
+        await Promise.all(fillQ);
+        fillQ.length = 0;
+    }
 
     /**
      * calculate external overhangs requiring support

@@ -60,6 +60,29 @@ KIRI.minions = {
         });
     },
 
+    fill: function(polys, angle, spacing, output, minLen, maxLen) {
+        return new Promise((resolve, reject) => {
+            if (concurrent === 0) {
+                resolve(POLY.fillArea(polys, angle, spacing, [], minLen, maxLen));
+            }
+            minwork.queue({
+                cmd: "fill",
+                polys: KIRI.codec.encode(polys),
+                angle, spacing, minLen, maxLen
+            }, data => {
+                let arr = data.fill;
+                let fill = [];
+                for (let i=0; i<arr.length; ) {
+                    let pt = BASE.newPoint(arr[i++], arr[i++], arr[i++]);
+                    pt.index = arr[i++];
+                    fill.push(pt);
+                }
+                output.appendAll(fill);
+                resolve(fill);
+            });
+        });
+    },
+
     queue: function(work, ondone) {
         minionq.push({work, ondone});
         minwork.kick();

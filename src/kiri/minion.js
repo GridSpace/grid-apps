@@ -13,32 +13,50 @@ self.alert = function(o) {
     console.log(o);
 };
 
-function reply(msg) {
-    self.postMessage(msg);
-}
-
 self.onmessage = function(msg) {
     let data = msg.data;
-    switch (data.cmd) {
-        case "union":
-            if (!(data.polys && data.polys.length)) {
-                reply({union: CODEC.encode([])});
-                return;
-            }
-            let polys = CODEC.decode(data.polys);
-            let union = POLY.union(polys, data.minarea || 0, true);
-            reply({union: CODEC.encode(union)});
-            break;
-        case "top.shells":
-            let top = CODEC.decode(data.top, {full: true});
-            let {z, count, offset1, offsetN, fillOffset, opt} = data;
-            KIRI.driver.FDM.share.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
-            reply({top: CODEC.encode(top, {full: true})});
-            break;
-        default:
-            reply({error: "invalid command"});
-            break;
-    }
+    let cmd = data.cmd;
+    (funcs[cmd] || funcs.bad)(data);
 };
 
-// console.log(`kiri | init mini | ${KIRI.version || "rogue"}`);
+function reply(msg, direct) {
+    self.postMessage(msg, direct);
+}
+
+const funcs = {
+    union: data => {
+        if (!(data.polys && data.polys.length)) {
+            reply({union: CODEC.encode([])});
+            return;
+        }
+        let polys = CODEC.decode(data.polys);
+        let union = POLY.union(polys, data.minarea || 0, true);
+        reply({union: CODEC.encode(union)});
+    },
+
+    topShells: data => {
+        let top = CODEC.decode(data.top, {full: true});
+        let {z, count, offset1, offsetN, fillOffset, opt} = data;
+        KIRI.driver.FDM.share.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        reply({top: CODEC.encode(top, {full: true})});
+    },
+
+    fill: data => {
+        let polys = CODEC.decode(data.polys);
+        let { angle, spacing, minLen, maxLen } = data;
+        let fill = POLY.fillArea(polys, angle, spacing, [], minLen, maxLen);
+        let arr = new Float32Array(fill.length * 4);
+        for (let i=0, p=0; p<fill.length; ) {
+            let pt = fill[p++];
+            arr[i++] = pt.x;
+            arr[i++] = pt.y;
+            arr[i++] = pt.z;
+            arr[i++] = pt.index;
+        }
+        reply({ fill: arr }, [ arr.buffer ]);
+    },
+
+    bad: data => {
+        reply({error: "invalid command"});
+    }
+};

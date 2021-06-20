@@ -15,7 +15,9 @@
         encode: encode,
         decode: decode,
         registerDecoder: registerDecoder,
-        allocFloat32Array: allocFloat32Array
+        allocFloat32Array: allocFloat32Array,
+        encodePointArray,
+        decodePointArray
     };
 
     function allocFloat32Array(arg) {
