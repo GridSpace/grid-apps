@@ -137,7 +137,9 @@
 
         if (bucketCount > 1) {
             // create empty buckets
-            for (i = 0; i < bucketCount + 1; i++) buckets.push([]);
+            for (i = 0; i < bucketCount + 1; i++) {
+                buckets.push({ points: []});
+            }
 
             // copy triples into all matching z-buckets
             for (i = 0; i < points.length;) {
@@ -150,11 +152,13 @@
                     bM = Math.ceil(zM * zScale);
                 if (bm < 0) bm = 0;
                 for (j = bm; j < bM; j++) {
-                    buckets[j].push(p1);
-                    buckets[j].push(p2);
-                    buckets[j].push(p3);
+                    buckets[j].points.push(p1);
+                    buckets[j].points.push(p2);
+                    buckets[j].points.push(p3);
                 }
             }
+        } else {
+            buckets.push({ points });
         }
 
         // we need Z ordered list for laser auto or adaptive fdm slicing
@@ -267,7 +271,7 @@
                 zIndexes[i] -= -0.001;
             }
             // slice next layer and add to slices[] array
-            let slice = sliceZ(zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
+            sliceZ(zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
             onupdate(i / zIndexes.length);
         }
 
@@ -365,18 +369,14 @@
         function sliceZ(z, height, onflat, online, thick) {
             let phash = {},
                 lines = [],
-                slice = newSlice(z, options.view ? options.view.newGroup() : null),
-                bucket = bucketCount == 1 ? points : buckets[Math.floor(z * zScale)];
-
-            if (!bucket) {
-                return;
-            }
+                slice = newSlice(z),
+                points = buckets[Math.floor(z * zScale)].points;
 
             // iterate over matching buckets for this z offset
-            for (let i = 0; i < bucket.length;) {
-                p1 = bucket[i++];
-                p2 = bucket[i++];
-                p3 = bucket[i++];
+            for (let i = 0; i < points.length; ) {
+                p1 = points[i++];
+                p2 = points[i++];
+                p3 = points[i++];
                 let where = {under: [], over: [], on: []};
                 checkUnderOverOn(p1, z, where);
                 checkUnderOverOn(p2, z, where);
@@ -447,8 +447,6 @@
             });
 
             slices.push(slice);
-
-            return slice;
         }
     }
 

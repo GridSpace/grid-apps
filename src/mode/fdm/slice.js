@@ -463,7 +463,7 @@
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
                         type: newType,
-                        cache: params._range !== true && lastType === newType,
+                        cache: params._range !== true && lastType === newType && !doConcurrent,
                         promises
                     });
                     lastType = newType;
