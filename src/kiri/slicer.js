@@ -47,58 +47,10 @@
      */
     function slice(points, bounds, options, ondone, onupdate) {
         let useFlats = options.flats,
-            swap = options.swapX || options.swapY,
             debug = options.debug,
             xray = options.xray,
             ox = 0,
             oy = 0;
-
-        // handle rotating meshes for CAM finishing.
-        // slicer expects things just so, so we alter
-        // geometry to satisfy
-        if (swap) {
-            points = points.slice();
-
-            let btmp = new THREE.Box3(),
-                pref = {},
-                cached;
-
-            btmp.setFromPoints(points);
-            if (options.swapX) ox = -btmp.max.x;
-            if (options.swapY) oy = -btmp.max.y;
-
-            // array re-uses points so we need
-            // to be careful not to alter a point
-            // more than once
-            for (let p, index=0; index<points.length; index++) {
-                p = points[index];
-                cached = pref[p.key];
-                // skip points already altered
-                if (cached) {
-                    points[index] = cached;
-                    continue;
-                }
-                cached = p.clone();
-                if (options.swapX) cached.swapXZ();
-                else if (options.swapY) cached.swapYZ();
-                cached.rekey();
-                pref[p.key] = cached;
-                points[index] = cached;
-            }
-
-            // update temp bounds from new points
-            btmp.setFromPoints(points);
-            for (let p, index=0; index<points.length; index++) {
-                p = points[index];
-                if (p.mod === 1) continue;
-                p.mod = 1;
-                p.z -= btmp.min.z;
-            }
-
-            // update temp bounds from points with altered Z
-            btmp.setFromPoints(points);
-            bounds = btmp;
-        }
 
         let zMin = options.zmin || options.firstHeight || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
@@ -121,7 +73,9 @@
             i, j = 0, k, p1, p2, p3, px,
             CPRO = KIRI.driver.CAM.process;
 
-        if (options.add) zMax += zInc;
+        if (options.add) {
+            zMax += zInc;
+        }
 
         function countZ(z) {
             z = UTIL.round(z,5);
@@ -171,30 +125,6 @@
                     zLines[zkey] = (zval || 0) + 1;
                 }
             }
-        }
-
-        // CAM: find slice candidates to trace for ballmills and tapermills
-        if (options.trace) {
-            let zl = {};
-            let le;
-            let zs = Object.entries(zLines).map(oe => {
-                return oe.map(v => parseFloat(v));
-            }).sort((a,b) => {
-                return b[0] - a[0];
-            }).forEach((e,i) => {
-                if (i > 0) {
-                    let zd = le[0]-e[0];
-                    if (zd > 0.1 && e[1] > 100) {
-                        // zl.push(e)
-                        zl[e[0].toFixed(5)] = e[1];
-                        zFlat[e[0].toFixed(5)] = e[1];
-                    }
-                }
-                if (e[1] > 10) {
-                    le = e;
-                }
-            });
-            zLines = zl;
         }
 
         /**
