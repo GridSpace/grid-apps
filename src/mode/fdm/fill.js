@@ -140,7 +140,7 @@
             }
         }
         polys = connectOpenPolys(polys);
-        for (let poly of polys) {
+        for (let poly of polys.filter(p => p.perimeter() > 2)) {
             target.newline();
             for (let point of poly.points) {
                 target.emit(point.x, point.y);

@@ -1338,7 +1338,7 @@
      * @returns {number} perimeter length (sum of all segment lengths)
      */
     PRO.perimeter = function() {
-        if (this.perim !== 0.0) {
+        if (this.perim) {
             return this.perim;
         }
 
