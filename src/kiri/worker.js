@@ -34,10 +34,13 @@ if (concurrent) {
 // for concurrent operations
 const minwork =
 KIRI.minions = {
+    concurrent,
+
     union: function(polys, minarea) {
         return new Promise((resolve, reject) => {
             if (concurrent === 0 || polys.length * 2 < concurrent) {
                 resolve(POLY.union(polys, 0, true));
+                return;
             }
             let polyper = Math.ceil(polys.length / concurrent);
             let running = 0;
@@ -64,6 +67,7 @@ KIRI.minions = {
         return new Promise((resolve, reject) => {
             if (concurrent === 0) {
                 resolve(POLY.fillArea(polys, angle, spacing, [], minLen, maxLen));
+                return;
             }
             minwork.queue({
                 cmd: "fill",
@@ -79,6 +83,30 @@ KIRI.minions = {
                 }
                 output.appendAll(fill);
                 resolve(fill);
+            });
+        });
+    },
+
+    clip: function(slice, polys, lines) {
+        return new Promise((resolve, reject) => {
+            if (concurrent === 0) {
+                reject("concurrent clip unavaiable");
+            }
+            minwork.queue({
+                cmd: "clip",
+                polys: POLY.toClipper(polys),
+                lines: lines.map(a => a.map(p => p.toClipper())),
+                z: slice.z
+            }, data => {
+                let polys = KIRI.codec.decode(data.clips);
+                for (let top of slice.tops) {
+                    for (let poly of polys) {
+                        if (poly.isInside(top.poly)) {
+                            top.fill_sparse.push(poly);
+                        }
+                    }
+                }
+                resolve(polys);
             });
         });
     },

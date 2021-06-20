@@ -6,7 +6,11 @@ let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
     POLY = BASE.polygons,
-    CODEC = KIRI.codec;
+    CODEC = KIRI.codec,
+    clib = self.ClipperLib,
+    ctyp = clib.ClipType,
+    ptyp = clib.PolyType,
+    cfil = clib.PolyFillType;
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -54,6 +58,23 @@ const funcs = {
             arr[i++] = pt.index;
         }
         reply({ fill: arr }, [ arr.buffer ]);
+    },
+
+    clip: data => {
+        let clip = new clib.Clipper();
+        let ctre = new clib.PolyTree();
+        let clips = [];
+
+        clip.AddPaths(data.lines, ptyp.ptSubject, false);
+        clip.AddPaths(data.polys, ptyp.ptClip, true);
+
+        if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
+            for (let node of ctre.m_AllPolys) {
+                clips.push(CODEC.encode(POLY.fromClipperNode(node, data.z)));
+            }
+        }
+
+        reply({ clips });
     },
 
     bad: data => {

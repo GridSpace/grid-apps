@@ -82,7 +82,8 @@
             fillOffset = lineWidth * fillOffsetMult,
             sliceFillAngle = spro.sliceFillAngle,
             supportDensity = spro.sliceSupportDensity,
-            beltfact = Math.cos(Math.PI/4);
+            beltfact = Math.cos(Math.PI/4),
+            doConcurrent = ctrl.danger && KIRI.minions.concurrent;
 
         isFlat = ctrl.lineType === "flat";
         isThin = !isFlat && ctrl.lineType === "line";
@@ -263,7 +264,7 @@
                 slice.solids = [];
             });
 
-            let promises = ctrl.danger ? [] : undefined;
+            let promises = doConcurrent ? [] : undefined;
             // create shells and diff inner fillable areas
             forSlices(0.0, 0.15, slice => {
                 let params = slice.params = getRangeParameters(settings, slice.index);
@@ -298,10 +299,8 @@
                     danger: ctrl.danger
                 }, promises);
             }, "shells");
-
             if (promises) {
                 await Promise.all(promises);
-                // console.log('resolved', promises.length);
             }
 
             // just the top/bottom special solid layers
@@ -429,23 +428,28 @@
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
                 }, "project solids");
+                let promises = doConcurrent ? [] : undefined;
                 forSlices(0.35, 0.5, slice => {
-                    let params = slice.params;// getRangeParameters(settings, slice.index);
+                    let params = slice.params;
                     let first = slice.index === 0;
                     let solidWidth = params.sliceFillWidth || 1;
                     let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
                     let fillSpace = fillSpacing * spaceMult * solidWidth;
-                    doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid);
+                    doSolidsFill(slice, fillSpace, sliceFillAngle, minSolid, promises);
                     sliceFillAngle += 90.0;
                 }, "fill solids");
-                await fillResolve();
+                if (promises) {
+                    console.log({fill_awaiting: promises.length});
+                    await Promise.all(promises);
+                }
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
             if (!isSynth) {
                 let lastType;
+                let promises = doConcurrent ? [] : undefined;
                 forSlices(0.5, 0.7, slice => {
-                    let params = slice.params;// getRangeParameters(settings, slice.index);
+                    let params = slice.params;
                     if (vaseMode || !params.sliceFillSparse) {
                         return;
                     }
@@ -460,13 +464,18 @@
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
                         type: newType,
-                        cache: params._range !== true && lastType === newType
+                        cache: params._range !== true && lastType === newType,
+                        promises
                     });
                     lastType = newType;
                 }, "infill");
+                if (promises) {
+                    console.log({infill_awaiting: promises.length});
+                    await Promise.all(promises);
+                }
             } else if (isSynth) {
                 forSlices(0.5, 0.7, slice => {
-                    let params = slice.params;// getRangeParameters(settings, slice.index);
+                    let params = slice.params;
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
@@ -491,7 +500,9 @@
                 }
                 let mark = Date.now();
                 // shadow = POLY.union(alltops, 0.1, true);
-                shadow = await KIRI.minions.union(alltops, 0.1);
+                shadow = doConcurrent ?
+                    await KIRI.minions.union(alltops, 0.1) :
+                    POLY.union(alltops, 0.1, true);
                 // console.log({unioned_in: Date.now() - mark});
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
@@ -511,7 +522,7 @@
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    let params = slice.params;// getRangeParameters(settings, slice.index);
+                    let params = slice.params;
                     doRender(slice, isSynth, params, ctrl.devel);
                 }, "render");
             }
@@ -803,7 +814,7 @@
      * Take output from pluggable sparse infill algorithm and clip to
      * the bounds of the top polygons and their inner solid areas.
      */
-    function doSparseLayerFill(slice, options) {
+    function doSparseLayerFill(slice, options = {}) {
         let process = options.process,
             spacing = options.spacing,  // spacing space between fill lines
             density = options.density,  // density of infill 0.0 - 1.0
@@ -950,6 +961,11 @@
             return;
         }
 
+        if (options.promises) {
+            options.promises.push(KIRI.minions.clip(slice, polys, lines));
+            return;
+        }
+
         lines = lines.map(a => a.map(p => p.toClipper()));
         clip.AddPaths(lines, ptyp.ptSubject, false);
         clip.AddPaths(POLY.toClipper(polys), ptyp.ptClip, true);
@@ -1026,7 +1042,7 @@
      * fill projected areas and store line data
      * @return {boolean} true if filled, false if not
      */
-    function doSolidsFill(slice, spacing, angle, minArea) {
+    function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
 
         let minarea = minArea || 1,
             tops = slice.tops,
@@ -1103,33 +1119,28 @@
                 }
             });
             if (tofill.length > 0) {
-                fillAsync(tofill, angle, spacing, newfill);
+                doFillArea(fillQ, tofill, angle, spacing, newfill);
                 top.fill_lines_norm = {angle:angle,spacing:spacing};
             }
             if (angfill.length > 0) {
                 top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
                 angfill.forEach(function(af) {
-                    fillAsync([af], af.fillang.angle + 45, spacing, newfill);
+                    doFillArea(fillQ, [af], af.fillang.angle + 45, spacing, newfill);
                     top.fill_lines_ang.list.push(af.fillang.angle + 45);
                     top.fill_lines_ang.poly.push(af.clone());
                 });
             }
-            // top.fill_lines.appendAll(newfill);
         });
 
         return true;
     };
 
-    let fillQ = [];
-
-    function fillAsync(polys, angle, spacing, output, minLen, maxLen) {
-        fillQ.push(KIRI.minions.fill(polys, angle, spacing, output, minLen, maxLen));
-    }
-
-    async function fillResolve() {
-        // console.log({resolving: fillQ.length});
-        await Promise.all(fillQ);
-        fillQ.length = 0;
+    function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
+        if (fillQ) {
+            fillQ.push(KIRI.minions.fill(polys, angle, spacing, output, minLen, maxLen));
+        } else {
+            POLY.fillArea(polys, angle, spacing, output, minLen, maxLen);
+        }
     }
 
     /**
