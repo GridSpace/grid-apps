@@ -13,20 +13,30 @@ self.alert = function(o) {
     console.log(o);
 };
 
+function reply(msg) {
+    self.postMessage(msg);
+}
+
 self.onmessage = function(msg) {
     let data = msg.data;
     switch (data.cmd) {
         case "union":
             if (!(data.polys && data.polys.length)) {
-                self.postMessage({union: CODEC.encode([])});
+                reply({union: CODEC.encode([])});
                 return;
             }
             let polys = CODEC.decode(data.polys);
             let union = POLY.union(polys, data.minarea || 0, true);
-            self.postMessage({union: CODEC.encode(union)});
+            reply({union: CODEC.encode(union)});
+            break;
+        case "top.shells":
+            let top = CODEC.decode(data.top, {full: true});
+            let {z, count, offset1, offsetN, fillOffset, opt} = data;
+            KIRI.driver.FDM.share.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+            reply({top: CODEC.encode(top, {full: true})});
             break;
         default:
-            self.postMessage({error: "invalid command"});
+            reply({error: "invalid command"});
             break;
     }
 };

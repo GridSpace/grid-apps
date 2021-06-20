@@ -680,8 +680,8 @@
 
                 if (Math.abs(angle) <= 3 * Math.PI / 4) {
                     cc = BASE.util.center2pr(from, to, arcQ.rSum / cl, gc === "G3");
-                } 
-                
+                }
+
                 if (!cc) {
                     cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
                 }

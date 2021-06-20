@@ -32,6 +32,7 @@ if (concurrent) {
 }
 
 // for concurrent operations
+const minwork =
 KIRI.minions = {
     union: function(polys, minarea) {
         return new Promise((resolve, reject) => {
@@ -41,30 +42,27 @@ KIRI.minions = {
             let polyper = Math.ceil(polys.length / concurrent);
             let running = 0;
             let union = [];
-            let receiver = function(msg) {
-                let polys = KIRI.codec.decode(msg.data.union);
+            let receiver = function(data) {
+                let polys = KIRI.codec.decode(data.union);
                 union.appendAll(polys);
                 if (--running === 0) {
                     resolve(POLY.union(union, 0, true));
                 }
             };
             for (let i=0; i<polys.length; i += polyper) {
-                minions[running].onmessage = receiver;
-                minions[running].postMessage({
+                running++;
+                minwork.queue({
                     cmd: "union",
                     minarea,
                     polys: KIRI.codec.encode(polys.slice(i, i + polyper))
-                });
-                running++;
+                }, receiver);
             }
         });
     },
 
-    queue: function(work) {
-        return new Promise((resolve, reject) => {
-            minionq.push({work, resolve, reject});
-            kick();
-        });
+    queue: function(work, ondone) {
+        minionq.push({work, ondone});
+        minwork.kick();
     },
 
     kick: function() {
@@ -72,10 +70,11 @@ KIRI.minions = {
             let qrec = minionq.shift();
             let minion = minions.shift();
             minion.onmessage = (msg) => {
-                qrec.resolve(msg.data);
                 minions.push(minion);
+                qrec.ondone(msg.data);
+                minwork.kick();
             };
-            minion.postMessage(work);
+            minion.postMessage(qrec.work);
         }
     }
 };

@@ -21,7 +21,7 @@
         newPoint = BASE.newPoint,
         Bounds = BASE.Bounds;
 
-    let seqid = 1;
+    let seqid = Math.round(Math.random() * 0xffffffff);
 
     /** ******************************************************************
      * Constructors

@@ -263,9 +263,10 @@
                 slice.solids = [];
             });
 
+            let promises = ctrl.danger ? [] : undefined;
             // create shells and diff inner fillable areas
-            forSlices(0.0, 0.2, slice => {
-                let params = getRangeParameters(settings, slice.index);
+            forSlices(0.0, 0.15, slice => {
+                let params = slice.params = getRangeParameters(settings, slice.index);
                 let shellFrac = (params.sliceShells - (params.sliceShells | 0));
                 let sliceShells = params.sliceShells | 0;
                 if (ctrl.danger && shellFrac) {
@@ -280,24 +281,38 @@
                 let isBottom = slice.index < spro.sliceBottomLayers;
                 let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
                 let isDense = params.sliceFillSparse > 0.98;
-                let solid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
                 let solidWidth = params.sliceFillWidth || 1;
                 let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
+                if ((isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth) {
+                    slice.solid = {
+                        solidWidth,
+                        spaceMult
+                    };
+                }
                 let offset = shellOffset * spaceMult;
                 let fillOff = fillOffset * spaceMult;
                 let count = isSynth ? 1 : sliceShells;
                 doShells(slice, count, offset, fillOff, {
                     vase: vaseMode,
                     thin: spro.detectThinWalls && !isSynth,
-                    widget: widget,
+                    // widget: widget,
                     danger: ctrl.danger
-                });
-                if (solid) {
-                    let fillSpace = fillSpacing * spaceMult * solidWidth;
+                }, promises);
+            }, "shells");
+
+            if (promises) {
+                await Promise.all(promises);
+                // console.log('resolved', promises.length);
+            }
+
+            // just the top/bottom special solid layers
+            forSlices(0.15, 0.2, slice => {
+                if (slice.solid) {
+                    let fillSpace = fillSpacing * slice.solid.spaceMult * slice.solid.solidWidth;
                     doSolidLayerFill(slice, fillSpace, sliceFillAngle);
                 }
                 sliceFillAngle += 90.0;
-            }, "offsets");
+            }, "shells");
 
             // add lead in when specified in belt mode
             if (!isSynth && isBelt) {
@@ -474,10 +489,10 @@
                     alltops = alltops.map(p => p.clean(true, undefined, 5000));
                     // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
                 }
-                // let mark = Date.now();
+                let mark = Date.now();
                 // shadow = POLY.union(alltops, 0.1, true);
                 shadow = await KIRI.minions.union(alltops, 0.1);
-                // console.log({unioned_in: Date.now() - mark});
+                console.log({unioned_in: Date.now() - mark});
                 if (spro.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, spro.sliceSupportExtra);
                 }
@@ -586,6 +601,7 @@
     // shared with SLA driver
     FDM.share = {
         doShells,
+        doTopShells,
         doDiff,
         projectFlats,
         projectBridges,
@@ -604,7 +620,7 @@
      * @param {number} fillOffset
      * @param {Obejct} options
      */
-    function doShells(slice, count, offsetN, fillOffset, opt = {}) {
+    function doShells(slice, count, offsetN, fillOffset, opt = {}, promises) {
         let offset1 = offsetN / 2;
 
         if (slice.index === 0) {
@@ -612,12 +628,34 @@
             // segment polygon
         }
 
-        for (let top of slice.tops) {
-            doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
+        if (promises) {
+            let oldtops = slice.tops;
+            let newtops = slice.tops = [];
+            oldtops.old = true;
+            for (let top of oldtops) {
+                promises.push(
+                    new Promise((resolve, reject) => {
+                        KIRI.minions.queue({
+                            cmd: "top.shells",
+                            z: slice.z, count, offset1, offsetN, fillOffset, opt,
+                            top: KIRI.codec.encode(top, {full: true})
+                        }, data => {
+                            let top = KIRI.codec.decode(data.top, {full: true});
+                            newtops.push(top);
+                            resolve();
+                        });
+                    })
+                );
+            }
+            newtops.new = true;
+        } else {
+            for (let top of slice.tops) {
+                doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
+            }
         }
     }
 
-    function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt) {
+    function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
         let top_poly = [ top.poly ];
 
         if (opt.vase) {

@@ -342,6 +342,8 @@ const script = {
         "geo/polygon",
         "geo/polygons",
         "geo/gyroid",
+        "mode/fdm/driver",
+        "mode/fdm/slice",
         "kiri/slice",
         "kiri/layers",
         "kiri/widget",

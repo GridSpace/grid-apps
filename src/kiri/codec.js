@@ -231,14 +231,27 @@
     });
 
     KIRI.Top.prototype.encode = function(state) {
-        return {
+        let obj = {
             type: 'top',
-            poly: encode(this.poly, state),
+            poly: encode(this.poly, state)
         };
+        if (state.full) {
+            obj.last = encode(this.last, state);
+            obj.shells = encode(this.shells, state);
+            obj.fill_off = encode(this.fill_off, state);
+            obj.fill_lines = encode(this.fill_lines, state);
+        }
+        return obj;
     };
 
     registerDecoder('top', function(v, state) {
         let top = KIRI.newTop(decode(v.poly, state));
+        if (state.full) {
+            top.last = decode(v.last, state);
+            top.shells = decode(v.shells, state);
+            top.fill_off = decode(v.fill_off, state);
+            top.fill_lines = decode(v.fill_lines, state);
+        }
         return top;
     });
 
