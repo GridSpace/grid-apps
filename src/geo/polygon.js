@@ -737,6 +737,7 @@
                 inner.move(offset);
             }
         }
+        return this;
     };
 
     /**
@@ -760,6 +761,7 @@
                 inner.scale(scale, round);
             }
         }
+        return this;
     };
 
     /**

@@ -485,12 +485,11 @@
 
         function scaleMovePoly(poly) {
             let points = poly.points;
-            let bounds = poly.bounds = BASE.newBounds();
+            poly._bounds = undefined;
             for (let i=0, il=points.length; i<il; i++) {
                 let p = points[i];
                 p.y = height - (p.y * scaleY + height2);
                 p.x = p.x * scaleX + width2;
-                bounds.update(p);
             }
             if (poly.inner) {
                 for (let i=0, ia=poly.inner, il=poly.inner.length; i<il; i++) {

@@ -439,7 +439,6 @@
                     sliceFillAngle += 90.0;
                 }, "fill solids");
                 if (promises) {
-                    console.log({fill_awaiting: promises.length});
                     await Promise.all(promises);
                 }
             }
@@ -470,7 +469,6 @@
                     lastType = newType;
                 }, "infill");
                 if (promises) {
-                    console.log({infill_awaiting: promises.length});
                     await Promise.all(promises);
                 }
             } else if (isSynth) {

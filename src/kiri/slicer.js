@@ -46,11 +46,8 @@
      * @param {Function} onupdate callback to report slicing progress
      */
     function slice(points, bounds, options, ondone, onupdate) {
-        let topoMode = options.topo,
-            simpleMode = options.simple,
-            useFlats = options.flats,
+        let useFlats = options.flats,
             swap = options.swapX || options.swapY,
-            isCam = options.cam,
             debug = options.debug,
             xray = options.xray,
             ox = 0,
@@ -267,29 +264,6 @@
                 zIndexes.push((zl[i] + zl[i+1]) / 2);
                 zThick.push(zl[i+1] - zl[i]);
             }
-        } else if (isCam) {
-            // re-divide slice height so that top and
-            // bottom slices fall exactly on those faces
-            zInc = (zMax - zMin) / (Math.floor(zMax / zInc) + 1);
-            for (i = zMin; i < zMax; i += zInc) {
-                zIndexes.push(i);
-            }
-            for (let key in zFlat) {
-                // todo make threshold for flat detection configurable
-                if (!zFlat.hasOwnProperty(key) || zFlat[key] < 10){
-                    continue;
-                }
-                key = parseFloat(key);
-                if (!zIndexes.contains(key) && key >= zMin) {
-                    zIndexes.push(key);
-                }
-            }
-            // sort top down
-            zIndexes.sort(function(a,b) {
-                return b-a;
-            });
-            // copy to store original z
-            zHeights = zIndexes.slice();
         } else if (zIncMin) {
             // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
             // FDM adaptive slicing
@@ -360,21 +334,11 @@
             if (zFlat[ik]) onFlat = true;
             if (zLines[ik]) onLine = true;
             if (!useFlats && (onFlat || onLine)) {
-                zIndexes[i] += isCam ? 0.001 : -0.001;
+                zIndexes[i] -= -0.001;
             }
             // slice next layer and add to slices[] array
             let slice = sliceZ(zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
-            // override z in cam in case it was moved for a flat or line
-            if (isCam && slice) {
-                slice.z = zHeights[i];
-            }
             onupdate(i / zIndexes.length);
-        }
-
-        // for cam, bottom as mandatory (hasFlats)
-        if (isCam && slices.length > 0) {
-            // slices[0].hasFlats = true;
-            slices[slices.length-1].hasFlats = true;
         }
 
         // connect slices into linked list for island/bridge projections
@@ -478,11 +442,6 @@
                 return;
             }
 
-            // annotate slices with cam flats for finishing waterlines
-            if (onflat && isCam) {
-                slice.hasFlats = true;
-            }
-
             // iterate over matching buckets for this z offset
             for (let i = 0; i < bucket.length;) {
                 p1 = bucket[i++];
@@ -527,71 +486,38 @@
 
             slice.height = height;
             slice.index = slices.length;
-            slice.lines = removeDuplicateLines(lines);
             slice.thick = thick;
 
-            // for topo slices, we just need the raw lines
-            if (!topoMode && !simpleMode) {
-                slice.groups = connectLines(slice.lines, slice.z);
-                if (options.union) {
-                    slice.groups = POLY.flatten(POLY.union(POLY.nest(slice.groups), null, true), null, true);
-                }
-                if ((debug && slice.lines.excessive) || xray) {
-                    const dash = xray || 3;
-                    slice.lines.forEach((line, i) => {
-                        const group = i % dash;
-                        const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                        slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
-                    });
-                }
-                POLY.nest(slice.groups).forEach((poly, i) => {
-                    slice.addTop(poly);
-                    if (xray) {
-                        const group = i % (xray || 3);
-                        const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                        slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
-                    }
+            // de-dup and group lines
+            lines = removeDuplicateLines(lines);
+            let groups = connectLines(lines, slice.z);
+
+            // simplistic healing of bad meshes
+            if (options.union) {
+                groups = POLY.flatten(POLY.union(POLY.nest(groups), null, true), null, true);
+            }
+
+            if ((debug && lines.excessive) || xray) {
+                const dash = xray || 3;
+                lines.forEach((line, i) => {
+                    const group = i % dash;
+                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                    slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
                 });
             }
 
-            // fixup un-rotates polygons for CAM
-            if (options.swapX || options.swapY) {
-                let move = {x:ox, y:oy, z:0};
-                if (topoMode) {
-                    let lines = slice.lines, llen = lines.length, idx, line;
-                    // shared points causing problems
-                    for (idx=0; idx<llen; idx++) {
-                        line = lines[idx];
-                        line.p1 = line.p1.clone();
-                        line.p2 = line.p2.clone();
-                    }
-                    for (idx=0; idx<llen; idx++) {
-                        line = lines[idx];
-                        if (options.swapX) {
-                            line.p1.swapXZ();
-                            line.p2.swapXZ();
-                        } else {
-                            line.p1.swapYZ();
-                            line.p2.swapYZ();
-                        }
-                        line.p1.move(move);
-                        line.p2.move(move);
-                    }
-                } else if (simpleMode) {
-                    // fdm polishing mode
-                    slice.groups = connectLines(slice.lines, slice.z);
-                    slice.groups.forEach(poly => {
-                        poly.swap(options.swapX, options.swapY);
-                        poly.move(move);
-                        poly.inner = null;
-                    });
+            // identify and add tops to slice
+            POLY.nest(groups).forEach((poly, i) => {
+                slice.addTop(poly);
+                if (xray) {
+                    const group = i % (xray || 3);
+                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                    slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
                 }
-            }
+            });
+
             slices.push(slice);
-            if (!(topoMode || simpleMode)) {
-                delete slice.lines;
-                delete slice.groups;
-            }
+
             return slice;
         }
     }
