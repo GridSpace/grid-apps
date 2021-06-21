@@ -541,11 +541,11 @@
                             if (lr) {
                                 let angle = 2 * Math.asin(dist/(2*lr.r));
                                 radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
-                                if (arcQ.center) {
-                                    arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-                                    let avg = arcQ.rSum / arcQ.center.length;
-                                    radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
-                                }
+                                // if (arcQ.center) {
+                                //     arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
+                                //     let avg = arcQ.rSum / arcQ.center.length;
+                                //     radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
+                                // }
                             } else {
                                 radFault = true;
                             }
@@ -563,6 +563,7 @@
                                     // check center point delta
                                     arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
                                     arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
+                                    arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                                     let dx = cc.x - arcQ.xSum / arcQ.center.length;
                                     let dy = cc.y - arcQ.ySum / arcQ.center.length;
                                     dc = Math.sqrt(dx * dx + dy * dy);
@@ -659,15 +660,32 @@
                 return;
             }
             if (arcQ.length > 4) {
+                // ondebug({arcQ});
                 let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
+                let gc = vec1.cross(vec2) < 0 ? 'G2' : 'G3';
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
                 arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
                 arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                 let cl = arcQ.center.length;
-                let cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
+                let cc;
+
+                let angle = BASE.util.thetaDiff(
+                    Math.atan2((from.y - arcQ.ySum / cl), (from.x - arcQ.xSum / cl)),
+                    Math.atan2((to.y - arcQ.ySum / cl), (to.x - arcQ.xSum / cl)),
+                    gc === "G2"
+                );
+
+                if (Math.abs(angle) <= 3 * Math.PI / 4) {
+                    cc = BASE.util.center2pr(from, to, arcQ.rSum / cl, gc === "G3");
+                }
+
+                if (!cc) {
+                    cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
+                }
+
                 // first arc point
                 emitQrec(from);
                 // console.log(arcQ.slice(), arcQ.center);
@@ -681,7 +699,6 @@
                 if (extrudeAbs) {
                     emit = outputLength;
                 }
-                let gc = vec1.cross(vec2) < 0 ? 'G2' : 'G3';
                 // XYR form
                 // let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
                 // XYIJ form
