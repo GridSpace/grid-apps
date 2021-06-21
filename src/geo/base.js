@@ -31,7 +31,18 @@
             out.push(from);
         }
         return out;
-    };
+    }
+
+    async function pwait(promises, tracker) {
+        let count = 0;
+        if (tracker)
+        for (let p of promises) {
+            p.then(() => {
+                tracker(count++, promises.length);
+            });
+        }
+        await Promise.all(promises);
+    }
 
     function numOrDefault(num, def) {
         return num !== undefined ? num : def;
@@ -492,6 +503,7 @@
         time,
         round,
         area2,
+        pwait,
         center2d,
         center2pr,
         thetaDiff,

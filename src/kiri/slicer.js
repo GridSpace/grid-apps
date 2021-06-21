@@ -19,6 +19,7 @@
         UTIL = BASE.util,
         POLY = BASE.polygons,
         time = UTIL.time,
+        tracker = UTIL.pwait,
         newSlice = KIRI.newSlice,
         newOrderedLine = BASE.newOrderedLine;
 
@@ -280,7 +281,7 @@
                 zIndexes[i] -= -0.001;
             }
             bucketZ(i, zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
-            onupdate(i / zIndexes.length);
+            onupdate((i / zIndexes.length) * 0.1);
         }
 
         // create slices from each bucketed region
@@ -316,12 +317,15 @@
                 for (let bucket of buckets) {
                     promises.push(KIRI.minions.sliceBucket(bucket, options, output));
                 }
-                await Promise.all(promises);
+                await tracker(promises, (i,t) => {
+                    onupdate(0.1 + (i / t) * 0.9);
+                });
             }
             return output;
         }
 
         function sliceBucketsLocal(buckets, output) {
+            let count = 0;
             for (let bucket of buckets) {
                 for (let slice of bucket.slices) {
                     let { index, z, height, thick } = slice;
@@ -331,6 +335,7 @@
                     slice.index = index;
                     slice.thick = thick;
                     output.push(slice);
+                    onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
                 }
             }
         }

@@ -15,6 +15,7 @@
         fillArea = POLY.fillArea,
         newPoint = BASE.newPoint,
         newSlice = KIRI.newSlice,
+        tracker = UTIL.pwait,
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
         COLOR = {
@@ -243,7 +244,12 @@
 
             // calculate % complete and call onupdate()
             function doupdate(index, from, to, msg) {
-                onupdate(0.5 + (from + ((index/slices.length) * (to-from))) * 0.5, msg);
+                // onupdate(0.5 + (from + ((index/slices.length) * (to-from))) * 0.5, msg);
+                trackupdate(index / slices.length, from, to, msg);
+            }
+
+            function trackupdate(pct, from, to, msg) {
+                onupdate(0.5 + (from + (pct * (to - from))) * 0.5, msg);
             }
 
             // for each slice, performe a function and call doupdate()
@@ -267,7 +273,7 @@
 
             let promises = doConcurrent ? [] : undefined;
             // create shells and diff inner fillable areas
-            forSlices(0.0, 0.15, slice => {
+            forSlices(0.0, promises ? 0.05 : 0.15, slice => {
                 let params = slice.params = getRangeParameters(settings, slice.index);
                 let shellFrac = (params.sliceShells - (params.sliceShells | 0));
                 let sliceShells = params.sliceShells | 0;
@@ -301,7 +307,10 @@
                 }, promises);
             }, "shells");
             if (promises) {
-                await Promise.all(promises);
+                // await Promise.all(promises);
+                await tracker(promises, (i, t) => {
+                    trackupdate(i / t, 0.05, 0.15);
+                });
             }
 
             // just the top/bottom special solid layers
@@ -430,7 +439,7 @@
                     projectBridges(slice, solidLayers);
                 }, "project solids");
                 let promises = doConcurrent ? [] : undefined;
-                forSlices(0.35, 0.5, slice => {
+                forSlices(0.35, promises ? 0.4 : 0.5, slice => {
                     let params = slice.params;
                     let first = slice.index === 0;
                     let solidWidth = params.sliceFillWidth || 1;
@@ -440,7 +449,9 @@
                     sliceFillAngle += 90.0;
                 }, "fill solids");
                 if (promises) {
-                    await Promise.all(promises);
+                    await tracker(promises, (i, t) => {
+                        trackupdate(i / t, 0.4, 0.5);
+                    });
                 }
             }
 
@@ -448,7 +459,7 @@
             if (!isSynth) {
                 let lastType;
                 let promises = doConcurrent ? [] : undefined;
-                forSlices(0.5, 0.7, slice => {
+                forSlices(0.5, promises ? 0.55 : 0.7, slice => {
                     let params = slice.params;
                     if (vaseMode || !params.sliceFillSparse) {
                         return;
@@ -470,7 +481,9 @@
                     lastType = newType;
                 }, "infill");
                 if (promises) {
-                    await Promise.all(promises);
+                    await tracker(promises, (i, t) => {
+                        trackupdate(i / t, 0.55, 0.7);
+                    });
                 }
             } else if (isSynth) {
                 forSlices(0.5, 0.7, slice => {
