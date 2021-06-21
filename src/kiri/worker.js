@@ -484,6 +484,12 @@ KIRI.worker = {
         } else {
             console.log({invalid:data});
         }
+        for (let minion of minions) {
+            minion.postMessage({
+                cmd: "config",
+                base: data.base
+            });
+        }
         send.done({config: update});
     },
 

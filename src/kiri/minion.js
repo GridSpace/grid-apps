@@ -28,6 +28,14 @@ function reply(msg, direct) {
 }
 
 const funcs = {
+    config: data => {
+        if (data.base) {
+            Object.assign(BASE.config, data.base);
+        } else {
+            console.log({invalid: data});
+        }
+    },
+
     union: (data, seq) => {
         if (!(data.polys && data.polys.length)) {
             reply({ seq, union: CODEC.encode([]) });

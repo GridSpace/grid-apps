@@ -126,28 +126,6 @@
             firstSliceHeight = sliceMinHeight || sliceHeight;
         }
 
-        // const slicer = new KIRI.slicer2(widget.getPoints(), { });
-        // const levels = slicer.interval(sliceHeight, {
-        //     zlist: true,
-        //     zline: true,
-        //     boff: spro.firstSliceHeight || spro.sliceHeight
-        // });
-        // const slices = [];
-        // let last;
-        // slicer.slice(levels, { genso: true, each: (data, idx, tot, time) => {
-        //     const slice = data.slice;
-        //     if (last) {
-        //         slice.down = last;
-        //         last.up = slice;
-        //     }
-        //     last = slice;
-        //     slice.index = idx;
-        //     slice.height = spro.firstSliceHeight || spro.sliceHeight;
-        //     slices.push(slice);
-        //     onupdate((idx / tot) * 0.5);
-        // } });
-        // onSliceDone(slices);
-
         SLICER.sliceWidget(widget, {
             height: sliceHeight,
             minHeight: sliceMinHeight,
@@ -646,15 +624,9 @@
     function doShells(slice, count, offsetN, fillOffset, opt = {}, promises) {
         let offset1 = offsetN / 2;
 
-        if (slice.index === 0) {
-            // console.log({slice_top_0: top_poly, count});
-            // segment polygon
-        }
-
         if (promises) {
             let oldtops = slice.tops;
             let newtops = slice.tops = [];
-            oldtops.old = true;
             for (let top of oldtops) {
                 promises.push(
                     new Promise((resolve, reject) => {
@@ -670,7 +642,6 @@
                     })
                 );
             }
-            newtops.new = true;
         } else {
             for (let top of slice.tops) {
                 doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
@@ -1055,7 +1026,6 @@
      * @return {boolean} true if filled, false if not
      */
     function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
-
         let minarea = minArea || 1,
             tops = slice.tops,
             solids = slice.solids;

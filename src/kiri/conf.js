@@ -185,6 +185,15 @@
             settings.ver = CVER;
         }
 
+        // fixup old/new detail settings
+        let detail = settings.controller.detail;
+        settings.controller.detail = {
+            "best": "100",
+            "good": "75",
+            "fair": "50",
+            "poor": "25"
+        }[detail] || detail;
+
         fill_cull_once(settings, template);
         fill_cull_once(settings.device, default_dev);
         fill_cull_once(settings.process, default_pro);
@@ -676,7 +685,7 @@
                 exportLocal: false,
                 exportPreview: false,
                 decimate: true,
-                detail: "100",
+                detail: "75",
                 animesh: "200",
                 healMesh: false,
                 threaded: false,
