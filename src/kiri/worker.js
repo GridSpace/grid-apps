@@ -28,7 +28,7 @@ self.alert = function(o) {
 
 // start concurrent workers (minions)
 if (concurrent) {
-    function dispatch(msg) {
+    function minhandler(msg) {
         let data = msg.data;
         let seq = data.seq;
         let fn = minifns[seq];
@@ -41,7 +41,7 @@ if (concurrent) {
 
     for (let i=0; i < concurrent; i++) {
         let minion = new Worker(`/code/minion.js?${self.kiri.version}`);
-        minion.onmessage = dispatch;
+        minion.onmessage = minhandler;
         minions.push(minion);
     }
     console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent}`);
