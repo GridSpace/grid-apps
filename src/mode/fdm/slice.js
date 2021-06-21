@@ -418,7 +418,7 @@
                 }, "layer deltas");
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.35, promises ? 0.4 : 0.5, slice => {
-                    let params = slice.params;
+                    let params = slice.params || spro;
                     let first = slice.index === 0;
                     let solidWidth = params.sliceFillWidth || 1;
                     let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
@@ -438,7 +438,7 @@
                 let lastType;
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.5, promises ? 0.55 : 0.7, slice => {
-                    let params = slice.params;
+                    let params = slice.params || spro;
                     if (vaseMode || !params.sliceFillSparse) {
                         return;
                     }
@@ -465,7 +465,7 @@
                 }
             } else if (isSynth) {
                 forSlices(0.5, 0.7, slice => {
-                    let params = slice.params;
+                    let params = slice.params || spro;
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
@@ -512,7 +512,7 @@
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    let params = slice.params;
+                    let params = slice.params || spro;
                     doRender(slice, isSynth, params, ctrl.devel);
                 }, "render");
             }
