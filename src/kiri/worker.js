@@ -9,7 +9,7 @@ let BASE = self.base,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
     ccvalue = navigator ? navigator.hardwareConcurrency || 0 : 0,
-    concurrent = self.Worker && ccvalue >= 2 ? ccvalue : 0,
+    concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
     current = self.worker = {
         print: null,
         snap: null
@@ -44,7 +44,7 @@ if (concurrent) {
         minion.onmessage = minhandler;
         minions.push(minion);
     }
-    console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent}`);
+    console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent + 1}`);
 }
 
 // for concurrent operations
