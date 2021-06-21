@@ -20,7 +20,7 @@ self.alert = function(o) {
 self.onmessage = function(msg) {
     let data = msg.data;
     let cmd = data.cmd;
-    (funcs[cmd] || funcs.bad)(data);
+    (funcs[cmd] || funcs.bad)(data, data.seq);
 };
 
 function reply(msg, direct) {
@@ -28,24 +28,24 @@ function reply(msg, direct) {
 }
 
 const funcs = {
-    union: data => {
+    union: (data, seq) => {
         if (!(data.polys && data.polys.length)) {
-            reply({union: CODEC.encode([])});
+            reply({ seq, union: CODEC.encode([]) });
             return;
         }
         let polys = CODEC.decode(data.polys);
         let union = POLY.union(polys, data.minarea || 0, true);
-        reply({union: CODEC.encode(union)});
+        reply({ seq, union: CODEC.encode(union) });
     },
 
-    topShells: data => {
+    topShells: (data, seq) => {
         let top = CODEC.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
         KIRI.driver.FDM.share.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
-        reply({top: CODEC.encode(top, {full: true})});
+        reply({ seq, top: CODEC.encode(top, {full: true}) });
     },
 
-    fill: data => {
+    fill: (data, seq) => {
         let polys = CODEC.decode(data.polys);
         let { angle, spacing, minLen, maxLen } = data;
         let fill = POLY.fillArea(polys, angle, spacing, [], minLen, maxLen);
@@ -57,10 +57,10 @@ const funcs = {
             arr[i++] = pt.z;
             arr[i++] = pt.index;
         }
-        reply({ fill: arr }, [ arr.buffer ]);
+        reply({ seq, fill: arr }, [ arr.buffer ]);
     },
 
-    clip: data => {
+    clip: (data, seq) => {
         let clip = new clib.Clipper();
         let ctre = new clib.PolyTree();
         let clips = [];
@@ -74,10 +74,10 @@ const funcs = {
             }
         }
 
-        reply({ clips });
+        reply({ seq, clips });
     },
 
-    sliceBucket: data => {
+    sliceBucket: (data, seq) => {
         let { points, slices, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
@@ -90,10 +90,10 @@ const funcs = {
                 tops: KIRI.slicer.sliceZ(slice.z, realp, options).tops
             });
         }
-        reply({ output: CODEC.encode(output) });
+        reply({ seq, output: CODEC.encode(output) });
     },
 
-    bad: data => {
-        reply({error: "invalid command"});
+    bad: (data, seq) => {
+        reply({ seq, error: "invalid command" });
     }
 };

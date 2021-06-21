@@ -301,8 +301,7 @@
         });
 
         function bucketZ(index, z, height, thick) {
-            let bucket = buckets[Math.floor(z * zScale)];
-            bucket.slices.push({
+            buckets[Math.floor(z * zScale)].slices.push({
                 index, z, height, thick
             });
         }

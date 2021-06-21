@@ -17,7 +17,9 @@ let BASE = self.base,
     wgroup = {},
     wcache = {},
     minions = [],
-    minionq = [];
+    minionq = [],
+    minifns = {},
+    miniseq = 0;
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -26,8 +28,21 @@ self.alert = function(o) {
 
 // start concurrent workers (minions)
 if (concurrent) {
+    function dispatch(msg) {
+        let data = msg.data;
+        let seq = data.seq;
+        let fn = minifns[seq];
+        if (!fn) {
+            throw `missing dispatch ${seq}`;
+        }
+        delete minifns[seq];
+        fn(data);
+    }
+
     for (let i=0; i < concurrent; i++) {
-        minions.push(new Worker(`/code/minion.js?${self.kiri.version}`));
+        let minion = new Worker(`/code/minion.js?${self.kiri.version}`);
+        minion.onmessage = dispatch;
+        minions.push(minion);
     }
     console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent}`);
 }
@@ -153,9 +168,11 @@ KIRI.minions = {
         if (minions.length && minionq.length) {
             let qrec = minionq.shift();
             let minion = minions.shift();
-            minion.onmessage = (msg) => {
+            let seq = miniseq++;
+            qrec.work.seq = seq;
+            minifns[seq] = (data) => {
+                qrec.ondone(data);
                 minions.push(minion);
-                qrec.ondone(msg.data);
                 minwork.kick();
             };
             minion.postMessage(qrec.work, qrec.direct);
