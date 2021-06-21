@@ -118,7 +118,7 @@
                 case '100': rez = 50; break;
                 case '75': rez = BASE.config.clipperClean; break;
                 case '50': rez = 500; break;
-                case '20': rez = 1000; break;
+                case '25': rez = 1000; break;
             }
             KIRI.client.config({
                 base: { clipperClean: rez }

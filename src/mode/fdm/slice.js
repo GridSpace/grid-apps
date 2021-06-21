@@ -415,7 +415,7 @@
                 forSlices(0.34, 0.35, slice => {
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
-                }, "project solids");
+                }, "layer deltas");
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.35, promises ? 0.4 : 0.5, slice => {
                     let params = slice.params;
