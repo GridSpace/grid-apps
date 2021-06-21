@@ -345,6 +345,7 @@ const script = {
         "mode/fdm/driver",
         "mode/fdm/slice",
         "kiri/slice",
+        "kiri/slicer",
         "kiri/layers",
         "kiri/widget",
         "kiri/codec",

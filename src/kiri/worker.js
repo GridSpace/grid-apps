@@ -8,7 +8,8 @@ let BASE = self.base,
     POLY = BASE.polygons,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
-    concurrent = self.Worker ? navigator.hardwareConcurrency || 0 : 0,
+    ccvalue = navigator ? navigator.hardwareConcurrency || 0 : 0,
+    concurrent = self.Worker && ccvalue >= 2 ? ccvalue : 0,
     current = self.worker = {
         print: null,
         snap: null
@@ -38,7 +39,7 @@ KIRI.minions = {
 
     union: function(polys, minarea) {
         return new Promise((resolve, reject) => {
-            if (concurrent === 0 || polys.length * 2 < concurrent) {
+            if (concurrent < 2 || polys.length * 2 < concurrent) {
                 resolve(POLY.union(polys, 0, true));
                 return;
             }
@@ -65,7 +66,7 @@ KIRI.minions = {
 
     fill: function(polys, angle, spacing, output, minLen, maxLen) {
         return new Promise((resolve, reject) => {
-            if (concurrent === 0) {
+            if (concurrent < 2) {
                 resolve(POLY.fillArea(polys, angle, spacing, [], minLen, maxLen));
                 return;
             }
@@ -89,7 +90,7 @@ KIRI.minions = {
 
     clip: function(slice, polys, lines) {
         return new Promise((resolve, reject) => {
-            if (concurrent === 0) {
+            if (concurrent < 2) {
                 reject("concurrent clip unavaiable");
             }
             minwork.queue({
@@ -111,8 +112,40 @@ KIRI.minions = {
         });
     },
 
-    queue: function(work, ondone) {
-        minionq.push({work, ondone});
+    sliceBucket: function(bucket, options, output) {
+        return new Promise((resolve, reject) => {
+            if (concurrent < 2) {
+                reject("concurrent slice unavaiable");
+            }
+            let { points, slices } = bucket;
+            let i = 0, floatP = new Float32Array(points.length * 3);
+            for (let p of points) {
+                floatP[i++] = p.x;
+                floatP[i++] = p.y;
+                floatP[i++] = p.z;
+            }
+            minwork.queue({
+                cmd: "sliceBucket",
+                points: floatP,
+                slices,
+                options
+            }, data => {
+                for (let rec of KIRI.codec.decode(data.output)) {
+                    let { slice, tops } = rec;
+                    let newSlice = KIRI.newSlice(slice.z);
+                    newSlice.index = slice.index;
+                    newSlice.thick = slice.thick;
+                    newSlice.height = slice.height;
+                    newSlice.addTops(tops);
+                    output.push(newSlice);
+                }
+                resolve();
+            }, [ floatP.buffer ]);
+        });
+    },
+
+    queue: function(work, ondone, direct) {
+        minionq.push({work, ondone, direct});
         minwork.kick();
     },
 
@@ -125,7 +158,7 @@ KIRI.minions = {
                 qrec.ondone(msg.data);
                 minwork.kick();
             };
-            minion.postMessage(qrec.work);
+            minion.postMessage(qrec.work, qrec.direct);
         }
     }
 };

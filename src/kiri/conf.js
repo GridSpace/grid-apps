@@ -676,9 +676,10 @@
                 exportLocal: false,
                 exportPreview: false,
                 decimate: true,
-                detail: "good",
+                detail: "100",
                 animesh: "200",
                 healMesh: false,
+                threaded: false,
                 ortho: false,
                 devel: false
             },

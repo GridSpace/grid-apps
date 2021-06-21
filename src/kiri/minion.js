@@ -77,6 +77,22 @@ const funcs = {
         reply({ clips });
     },
 
+    sliceBucket: data => {
+        let { points, slices, options } = data;
+        let i = 0, p = 0, realp = new Array(points.length / 3);
+        while (i < points.length) {
+            realp[p++] = BASE.newPoint(points[i++], points[i++], points[i++]);
+        }
+        let output = [];
+        for (let slice of slices) {
+            output.push({
+                slice,
+                tops: KIRI.slicer.sliceZ(slice.z, realp, options).tops
+            });
+        }
+        reply({ output: CODEC.encode(output) });
+    },
+
     bad: data => {
         reply({error: "invalid command"});
     }

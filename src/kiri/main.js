@@ -165,10 +165,10 @@
             { name: "8", id: 8 }
         ],
         detail: [
-            { name: "best" },
-            { name: "good" },
-            { name: "fair" },
-            { name: "poor" },
+            { name: "100" },
+            { name: "75" },
+            { name: "50" },
+            { name: "25" },
         ],
         linetype: [
             { name: "path" },

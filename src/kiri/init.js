@@ -115,10 +115,10 @@
             level = level.value;
             let rez = BASE.config.clipperClean;
             switch (level) {
-                case 'best': rez = 50; break;
-                case 'good': rez = BASE.config.clipperClean; break;
-                case 'fair': rez = 500; break;
-                case 'poor': rez = 1000; break;
+                case '100': rez = 50; break;
+                case '75': rez = BASE.config.clipperClean; break;
+                case '50': rez = 500; break;
+                case '20': rez = 1000; break;
             }
             KIRI.client.config({
                 base: { clipperClean: rez }
@@ -157,6 +157,7 @@
         control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
         control.healMesh = UI.healMesh.checked;
+        control.threaded = UI.threaded.checked;
         control.ortho = UI.ortho.checked;
         control.devel = UI.devel.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
@@ -1642,6 +1643,7 @@
             detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             decimate:         UC.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
             healMesh:         UC.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
+            threaded:         UC.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l}),
 
             prefadd:          UC.checkpoint($('prefs-add')),
 
@@ -2432,6 +2434,7 @@
             UI.autoSave.checked = control.autoSave;
             UI.decimate.checked = control.decimate;
             UI.healMesh.checked = control.healMesh;
+            UI.threaded.checked = control.threaded;
             UI.ortho.checked = control.ortho;
             UI.devel.checked = control.devel;
             lineTypeSave();

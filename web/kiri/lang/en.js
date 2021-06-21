@@ -235,13 +235,15 @@ kiri.lang['en-us'] = {
 
     lo_menu:        "layout",
 
-    pt_menu:        "parts",
+    pt_menu:        "slicer",
     pt_deci_s:      "decimate",
     pt_deci_l:      ["enable or disable point decimation","during port import. for faster slicing","and lower memory usage"],
-    pt_qual_s:      "quality",
+    pt_qual_s:      "detail",
     pt_qual_l:      ["level of detail to retain","during slicing operations","lower is faster"],
     pt_heal_s:      "heal mesh",
     pt_heal_l:      ["attempt to heal","non-manifold meshes","adds to slicing time"],
+    pt_thrd_s:      "threaded",
+    pt_thrd_l:      ["use parallel processin","when browser permits"],
 
     xp_menu:        "exports",
 

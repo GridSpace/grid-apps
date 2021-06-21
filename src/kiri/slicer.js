@@ -7,9 +7,10 @@
     if (self.kiri.slicer) return;
 
     self.kiri.slicer = {
-        slice: slice,
-        sliceWidget: sliceWidget,
-        connectLines: connectLines
+        slice,
+        sliceZ,
+        sliceWidget,
+        connectLines
     };
 
     let KIRI = self.kiri,
@@ -67,11 +68,11 @@
             zLines = {},        // map count of z index lines
             zScale,             // bucket span in z units
             timeStart = time(),
-            slices = [],
             zSum = 0.0,
             buckets = [],
             i, j = 0, k, p1, p2, p3, px,
-            CPRO = KIRI.driver.CAM.process;
+            CPRO = KIRI.driver.CAM.process,
+            concurrent = options.concurrent ? KIRI.minions.concurrent : 0;
 
         if (options.add) {
             zMax += zInc;
@@ -133,12 +134,20 @@
          */
         let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
 
+        if (concurrent > 1) {
+            if (bucketCount < concurrent) {
+                bucketCount = concurrent;
+            } else if (bucketCount > 128) {
+                bucketCount = 128;
+            }
+        }
+
         zScale = 1 / (zMax / bucketCount);
 
         if (bucketCount > 1) {
             // create empty buckets
             for (i = 0; i < bucketCount + 1; i++) {
-                buckets.push({ points: []});
+                buckets.push({ points: [], slices: [] });
             }
 
             // copy triples into all matching z-buckets
@@ -158,7 +167,7 @@
                 }
             }
         } else {
-            buckets.push({ points });
+            buckets.push({ points, slices: [] });
         }
 
         // we need Z ordered list for laser auto or adaptive fdm slicing
@@ -259,7 +268,7 @@
             }
         }
 
-        // create a Slice for each z offset in the zIndexes array
+        // create buckets data structure
         for (let i = 0; i < zIndexes.length; i++) {
             let ik = zIndexes[i].toFixed(5),
                 onFlat = false,
@@ -270,184 +279,222 @@
             if (!useFlats && (onFlat || onLine)) {
                 zIndexes[i] -= -0.001;
             }
-            // slice next layer and add to slices[] array
-            sliceZ(zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
+            bucketZ(i, zIndexes[i], zHeights[i], onFlat, onLine, zThick[i]);
             onupdate(i / zIndexes.length);
         }
 
-        // connect slices into linked list for island/bridge projections
-        for (i=1; i<slices.length; i++) {
-            slices[i-1].up = slices[i];
-            slices[i].down = slices[i-1];
-        }
+        // create slices from each bucketed region
+        sliceBuckets().then(slices => {
+            slices = slices.sort((a,b) => a.index - b.index);
 
-        slices.slice_time = time() - timeStart;
-
-        // pass Slices array back to ondone function
-        ondone(slices);
-
-        /** ***** SLICING FUNCTIONS ***** */
-
-        /**
-         * given a point, append to the correct
-         * 'where' objec tarray (on, over or under)
-         *
-         * @param {Point} p
-         * @param {number} z offset
-         * @param {Obejct} where
-         */
-        function checkUnderOverOn(p, z, where) {
-            let delta = p.z - z;
-            if (Math.abs(delta) < CONF.precision_slice_z) { // on
-                where.on.push(p);
-            } else if (delta < 0) { // under
-                where.under.push(p);
-            } else { // over
-                where.over.push(p);
-            }
-        }
-
-        /**
-         * Given a point over and under a z offset, calculate
-         * and return the intersection point on that z plane
-         *
-         * @param {Point} over
-         * @param {Point} under
-         * @param {number} z offset
-         * @returns {Point} intersection point
-         */
-        function intersectPoints(over, under, z) {
-            let ip = [];
-            for (let i = 0; i < over.length; i++) {
-                for (let j = 0; j < under.length; j++) {
-                    ip.push(over[i].intersectZ(under[j], z));
-                }
-            }
-            return ip;
-        }
-
-        /**
-         * Ensure points are unique with a cache/key algorithm
-         */
-        function getCachedPoint(phash, p) {
-            let cached = phash[p.key];
-            if (!cached) {
-                phash[p.key] = p;
-                return p;
-            }
-            return cached;
-        }
-        /**
-         * Given two points and hints about their edges,
-         * return a new Line object with points sorted
-         * lexicographically by key.  This allows for future
-         * line de-duplication and joins.
-         *
-         * @param {Object} phash
-         * @param {Point} p1
-         * @param {Point} p2
-         * @param {boolean} [coplanar]
-         * @param {boolean} [edge]
-         * @returns {Line}
-         */
-        function makeZLine(phash, p1, p2, coplanar, edge) {
-            p1 = getCachedPoint(phash, p1);
-            p2 = getCachedPoint(phash, p2);
-            let line = newOrderedLine(p1,p2);
-            line.coplanar = coplanar || false;
-            line.edge = edge || false;
-            return line;
-        }
-
-        /**
-         * process a single z-slice on a single mesh and
-         * add to slices array
-         *
-         * @param {number} z
-         * @param {number} [height] optional real height (fdm)
-         */
-        function sliceZ(z, height, onflat, online, thick) {
-            let phash = {},
-                lines = [],
-                slice = newSlice(z),
-                points = buckets[Math.floor(z * zScale)].points;
-
-            // iterate over matching buckets for this z offset
-            for (let i = 0; i < points.length; ) {
-                p1 = points[i++];
-                p2 = points[i++];
-                p3 = points[i++];
-                let where = {under: [], over: [], on: []};
-                checkUnderOverOn(p1, z, where);
-                checkUnderOverOn(p2, z, where);
-                checkUnderOverOn(p3, z, where);
-                if (where.under.length === 3 || where.over.length === 3) {
-                    // does not intersect (all 3 above or below)
-                } else if (where.on.length === 2) {
-                    // one side of triangle is on the Z plane and 3rd is below
-                    // drop lines with 3rd above because that leads to ambiguities
-                    // with complex nested polygons on flat surface
-                    if (where.under.length === 1) {
-                        lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
-                    }
-                } else if (where.on.length === 3) {
-                    // triangle is coplanar with Z
-                    // we drop these because this face is attached to 3 others
-                    // that will satisfy the if above (line) with 2 points
-                } else if (where.under.length === 0 || where.over.length === 0) {
-                    // does not intersect but one point is on the slice Z plane
-                } else {
-                    // compute two point intersections and construct line
-                    let line = intersectPoints(where.over, where.under, z);
-                    if (line.length < 2 && where.on.length === 1) {
-                        line.push(where.on[0]);
-                    }
-                    if (line.length === 2) {
-                        lines.push(makeZLine(phash, line[0], line[1]));
-                    } else {
-                        console.log({msg: "invalid ips", line: line, where: where});
-                    }
-                }
+            // connect slices into linked list for island/bridge projections
+            for (i=1; i<slices.length; i++) {
+                slices[i-1].up = slices[i];
+                slices[i].down = slices[i-1];
             }
 
-            // allow empty slices in CAM swap mode (for topos w/ gaps)
-            // if (lines.length == 0 && !(options.swapX || options.swapY)) return;
-            if (lines.length == 0 && options.noEmpty) return;
+            slices.slice_time = time() - timeStart;
 
-            slice.height = height;
-            slice.index = slices.length;
-            slice.thick = thick;
+            // pass Slices array back to ondone function
+            ondone(slices);
+        });
 
-            // de-dup and group lines
-            lines = removeDuplicateLines(lines);
-            let groups = connectLines(lines, slice.z);
-
-            // simplistic healing of bad meshes
-            if (options.union) {
-                groups = POLY.flatten(POLY.union(POLY.nest(groups), null, true), null, true);
-            }
-
-            if ((debug && lines.excessive) || xray) {
-                const dash = xray || 3;
-                lines.forEach((line, i) => {
-                    const group = i % dash;
-                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                    slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
-                });
-            }
-
-            // identify and add tops to slice
-            POLY.nest(groups).forEach((poly, i) => {
-                slice.addTop(poly);
-                if (xray) {
-                    const group = i % (xray || 3);
-                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                    slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
-                }
+        function bucketZ(index, z, height, thick) {
+            let bucket = buckets[Math.floor(z * zScale)];
+            bucket.slices.push({
+                index, z, height, thick
             });
-
-            slices.push(slice);
         }
+
+        async function sliceBuckets() {
+            let output = [];
+            // console.log({buckets});
+            if (concurrent < 2) {
+                sliceBucketsLocal(buckets, output);
+            } else {
+                let promises = [];
+                for (let bucket of buckets) {
+                    promises.push(KIRI.minions.sliceBucket(bucket, options, output));
+                }
+                await Promise.all(promises);
+            }
+            return output;
+        }
+
+        function sliceBucketsLocal(buckets, output) {
+            for (let bucket of buckets) {
+                for (let slice of bucket.slices) {
+                    let { index, z, height, thick } = slice;
+                    let { lines, groups, tops } = sliceZ(z, bucket.points, options);
+                    slice = newSlice(z).addTops(tops);
+                    slice.height = height;
+                    slice.index = index;
+                    slice.thick = thick;
+                    output.push(slice);
+                }
+            }
+        }
+    }
+
+    /** ***** SLICING FUNCTIONS ***** */
+
+    /**
+     * given a point, append to the correct
+     * 'where' objec tarray (on, over or under)
+     *
+     * @param {Point} p
+     * @param {number} z offset
+     * @param {Obejct} where
+     */
+    function checkUnderOverOn(p, z, where) {
+        let delta = p.z - z;
+        if (Math.abs(delta) < CONF.precision_slice_z) { // on
+            where.on.push(p);
+        } else if (delta < 0) { // under
+            where.under.push(p);
+        } else { // over
+            where.over.push(p);
+        }
+    }
+
+    /**
+     * Given a point over and under a z offset, calculate
+     * and return the intersection point on that z plane
+     *
+     * @param {Point} over
+     * @param {Point} under
+     * @param {number} z offset
+     * @returns {Point} intersection point
+     */
+    function intersectPoints(over, under, z) {
+        let ip = [];
+        for (let i = 0; i < over.length; i++) {
+            for (let j = 0; j < under.length; j++) {
+                ip.push(over[i].intersectZ(under[j], z));
+            }
+        }
+        return ip;
+    }
+
+    /**
+     * Ensure points are unique with a cache/key algorithm
+     */
+    function getCachedPoint(phash, p) {
+        let cached = phash[p.key];
+        if (!cached) {
+            phash[p.key] = p;
+            return p;
+        }
+        return cached;
+    }
+
+    /**
+     * Given two points and hints about their edges,
+     * return a new Line object with points sorted
+     * lexicographically by key.  This allows for future
+     * line de-duplication and joins.
+     *
+     * @param {Object} phash
+     * @param {Point} p1
+     * @param {Point} p2
+     * @param {boolean} [coplanar]
+     * @param {boolean} [edge]
+     * @returns {Line}
+     */
+    function makeZLine(phash, p1, p2, coplanar, edge) {
+        p1 = getCachedPoint(phash, p1);
+        p2 = getCachedPoint(phash, p2);
+        let line = newOrderedLine(p1,p2);
+        line.coplanar = coplanar || false;
+        line.edge = edge || false;
+        return line;
+    }
+
+    /**
+     * process a single z-slice on a single mesh and
+     * add to slices array
+     *
+     * @param {number} z
+     * @param {number} [height] optional real height (fdm)
+     */
+    function sliceZ(z, points, options = {}) {
+        let phash = {},
+            lines = [],
+            p1, p2, p3;
+
+        // iterate over matching buckets for this z offset
+        for (let i = 0; i < points.length; ) {
+            p1 = points[i++];
+            p2 = points[i++];
+            p3 = points[i++];
+            let where = {under: [], over: [], on: []};
+            checkUnderOverOn(p1, z, where);
+            checkUnderOverOn(p2, z, where);
+            checkUnderOverOn(p3, z, where);
+            if (where.under.length === 3 || where.over.length === 3) {
+                // does not intersect (all 3 above or below)
+            } else if (where.on.length === 2) {
+                // one side of triangle is on the Z plane and 3rd is below
+                // drop lines with 3rd above because that leads to ambiguities
+                // with complex nested polygons on flat surface
+                if (where.under.length === 1) {
+                    lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
+                }
+            } else if (where.on.length === 3) {
+                // triangle is coplanar with Z
+                // we drop these because this face is attached to 3 others
+                // that will satisfy the if above (line) with 2 points
+            } else if (where.under.length === 0 || where.over.length === 0) {
+                // does not intersect but one point is on the slice Z plane
+            } else {
+                // compute two point intersections and construct line
+                let line = intersectPoints(where.over, where.under, z);
+                if (line.length < 2 && where.on.length === 1) {
+                    line.push(where.on[0]);
+                }
+                if (line.length === 2) {
+                    lines.push(makeZLine(phash, line[0], line[1]));
+                } else {
+                    console.log({msg: "invalid ips", line: line, where: where});
+                }
+            }
+        }
+
+        if (lines.length == 0 && options.noEmpty) {
+            return;
+        }
+
+        // de-dup and group lines
+        lines = removeDuplicateLines(lines);
+        let groups = connectLines(lines, z);
+
+        // simplistic healing of bad meshes
+        if (options.union) {
+            groups = POLY.flatten(POLY.union(POLY.nest(groups), null, true), null, true);
+        }
+
+        // if ((debug && lines.excessive) || xray) {
+        //     const dash = xray || 3;
+        //     lines.forEach((line, i) => {
+        //         const group = i % dash;
+        //         const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+        //         slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
+        //     });
+        // }
+
+        let tops = POLY.nest(groups);
+
+        // identify and add tops to slice
+        // POLY.nest(groups).forEach((poly, i) => {
+        //     slice.addTop(poly);
+        //     if (xray) {
+        //         const group = i % (xray || 3);
+        //         const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+        //         slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
+        //     }
+        // });
+
+        return { lines, groups, tops };
     }
 
     /**

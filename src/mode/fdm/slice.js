@@ -83,7 +83,7 @@
             sliceFillAngle = spro.sliceFillAngle,
             supportDensity = spro.sliceSupportDensity,
             beltfact = Math.cos(Math.PI/4),
-            doConcurrent = ctrl.danger && KIRI.minions.concurrent;
+            doConcurrent = ctrl.threaded && KIRI.minions.concurrent;
 
         isFlat = ctrl.lineType === "flat";
         isThin = !isFlat && ctrl.lineType === "line";
@@ -155,7 +155,8 @@
             // debug: true,
             // xray: 3,
             // view: view,
-            indices: spro.indices
+            indices: spro.indices,
+            concurrent: doConcurrent
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
