@@ -342,6 +342,11 @@
      * Slice.doProjectedFills()
      * Print.init w/ brims
      *
+     * clipper is natively less efficient at merging many polygons. this iterative
+     * approach skips attempting to merge polys lacking overlapping bounding boxes
+     * and can quickly check if the attempt to union two polys outputs the same
+     * two input polys. the latter bit is the key to greater speed.
+     *
      * @param {Polygon[]} polys
      * @returns {Polygon[]}
      */

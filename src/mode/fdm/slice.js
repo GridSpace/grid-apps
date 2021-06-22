@@ -1034,7 +1034,7 @@
             return;
         }
 
-        let unioned = POLY.union(solids, undefined, true).flat(), // TODO verify
+        let unioned = POLY.union(solids, undefined, true).flat(),
             isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;
