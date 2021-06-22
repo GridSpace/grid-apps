@@ -867,11 +867,11 @@
         target.newline();
 
         // prepare top infill structure
-        tops.forEach(function(top) {
+        for (let top of tops) {
             top.fill_sparse = top.fill_sparse || [];
             polys.appendAll(top.fill_off);
             polys.appendAll(top.solids);
-        });
+        }
 
         // update fill fingerprint for this slice
         slice._fill_finger = POLY.fingerprint(polys);
@@ -904,20 +904,20 @@
 
         // solid fill areas
         if (solids.length) {
-            tops.forEach(top => {
+            for (let top of tops) {
                 if (!top.fill_off) return;
                 let masks = top.fill_off.slice();
                 if (top.solids) {
                     masks = POLY.subtract(masks, top.solids, [], null, slice.z);
                 }
                 let angl = process.sliceFillAngle * ((slice.index % 2) + 1);
-                solids.forEach(solid => {
+                for (let solid of solids) {
                     let inter = [],
                         fillable = [];
-                    masks.forEach(mask => {
+                    for (let mask of masks) {
                         let p = solid.mask(mask);
                         if (p && p.length) inter.appendAll(p);
-                    });
+                    }
                     // offset fill area to accommodate trace
                     if (inter.length) {
                         POLY.expand(inter, -options.lineWidth/2, slice.z, fillable);
@@ -925,18 +925,18 @@
                     // fill intersected areas
                     if (inter.length) {
                         slice.isSparseFill = true;
-                        inter.forEach(p => {
+                        for (let p of inter) {
                             p.forEachSegment((p1, p2) => {
                                 top.fill_lines.push(p1, p2);
                             });
-                        });
+                        }
                     }
                     if (fillable.length) {
                         let lines = POLY.fillArea(fillable, angl, options.lineWidth);
                         top.fill_lines.appendAll(lines);
                     }
-                });
-            });
+                }
+            }
         }
 
         // if only solids were added and no lines to clip
@@ -954,15 +954,15 @@
         clip.AddPaths(POLY.toClipper(polys), ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
-            ctre.m_AllPolys.forEach(function(node) {
+            for (let node of ctre.m_AllPolys) {
                 poly = POLY.fromClipperNode(node, slice.z);
-                tops.forEach(function(top) {
+                for (let top of tops) {
                     // use only polygons inside this top
                     if (poly.isInside(top.poly)) {
                         top.fill_sparse.push(poly);
                     }
-                });
-            });
+                }
+            }
         }
     };
 
@@ -1044,15 +1044,15 @@
             inner = isSLA ? slice.topPolys() : slice.topFillOff();
 
         // trim each solid to the inner bounds
-        unioned.forEach(function(p) {
+        for (let p of unioned) {
             p.setZ(slice.z);
-            inner.forEach(function(i) {
+            for (let i of inner) {
                 let masks = p.mask(i);
                 if (masks && masks.length > 0) {
                     trims.appendAll(masks);
                 }
-            });
-        });
+            }
+        }
 
         // clear old solids and make array for new
         tops.forEach(top => { top.solids = [] });
@@ -1061,20 +1061,20 @@
         slice.solids = solids = trims;
 
         // parent each solid polygon inside the smallest bounding top
-        solids.forEach(function(solid) {
-            tops.forEach(function(top) {
+        for (let solid of solids) {
+            for (let top of tops) {
                 if (top.poly.overlaps(solid)) {
                     if (!solid.parent || solid.parent.area() > top.poly.area()) {
                         if (solid.areaDeep() < minarea) {
                             // console.log({i:slice.index,cull_solid:solid,area:solid.areaDeep()});
-                            return;
+                            continue;
                         }
                         solid.parent = top.poly;
                         top.solids.push(solid);
                     }
                 }
-            });
-        });
+            }
+        }
 
         // for SLA to bypass line infill
         if (isSLA) {
@@ -1082,16 +1082,16 @@
         }
 
         // create empty filled line array for each top
-        tops.forEach(function(top) {
+        for (let top of tops) {
             // synth belt anchor tops don't want fill
             if (!top.fill_lines) {
-                return;
+                continue;
             }
             const tofill = [];
             const angfill = [];
             const newfill = top.fill_lines = [];
             // determine fill orientation from top
-            solids.forEach(function(solid) {
+            for (let solid of solids) {
                 if (solid.parent === top.poly) {
                     if (solid.fillang) {
                         angfill.push(solid);
@@ -1099,20 +1099,20 @@
                         tofill.push(solid);
                     }
                 }
-            });
+            }
             if (tofill.length > 0) {
                 doFillArea(fillQ, tofill, angle, spacing, newfill);
                 top.fill_lines_norm = {angle:angle,spacing:spacing};
             }
             if (angfill.length > 0) {
                 top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
-                angfill.forEach(function(af) {
+                for (let af of angfill) {
                     doFillArea(fillQ, [af], af.fillang.angle + 45, spacing, newfill);
                     top.fill_lines_ang.list.push(af.fillang.angle + 45);
                     top.fill_lines_ang.poly.push(af.clone());
-                });
+                }
             }
-        });
+        }
 
         return true;
     };

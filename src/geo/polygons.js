@@ -78,11 +78,11 @@
             polys = tops || [],
             min = numOrDefault(minarea, 0.1);
 
-        tnode.m_Childs.forEach(function(child) {
+        for (let child of tnode.m_Childs) {
             poly = fromClipperNode(child, z);
             // throw out all tiny polygons
             if (!poly.open && poly.area() < min) {
-                return;
+                continue;
             }
             if (parent) {
                 parent.addInner(poly);
@@ -92,7 +92,7 @@
             if (child.m_Childs) {
                 fromClipperTree(child, z, polys, parent ? null : poly, minarea);
             }
-        });
+        }
 
         return polys;
     };
@@ -100,10 +100,10 @@
     function fromClipperTreeUnion(tnode, z, minarea, tops, parent) {
         let polys = tops || [], poly;
 
-        tnode.m_Childs.forEach(function(child) {
+        for (let child of tnode.m_Childs) {
             poly = fromClipperNode(child, z);
             if (!poly.open && minarea && poly.area() < minarea) {
-                return;
+                continue;
             }
             if (parent) {
                 parent.addInner(poly);
@@ -113,7 +113,7 @@
             if (child.m_Childs) {
                 fromClipperTreeUnion(child, z, minarea, polys, parent ? null : poly);
             }
-        });
+        }
 
         return polys;
     };
@@ -122,16 +122,17 @@
         let clib = self.ClipperLib,
             clip = clib.Clipper;
 
-        if (tree.m_Childs) tree.m_Childs.forEach(function(child) {
+        if (tree.m_Childs)
+        for (let child of tree.m_Childs) {
             child.m_polygon = clip.CleanPolygon(child.m_polygon, CONF.clipperClean);
             cleanClipperTree(child.m_Childs);
-        });
+        }
 
         return tree;
     };
 
     function filter(array, output, fn) {
-        array.forEach(function(poly) {
+        for (let poly of array) {
             poly = fn(poly);
             if (poly) {
                 if (Array.isArray(poly)) {
@@ -140,7 +141,7 @@
                     output.push(poly);
                 }
             }
-        });
+        }
         return output;
     }
 
@@ -479,11 +480,11 @@
 
         // cause inner / outer polys to be reversed from each other
         alignWindings(polys);
-        polys.forEach(function(poly) {
+        for (let poly of polys) {
             if (poly.inner) {
                 setWinding(poly.inner, !poly.isClockwise());
             }
-        });
+        }
 
         let orig = polys,
             count = numOrDefault(opts.count, 1),
@@ -501,13 +502,13 @@
             zed = opts.z || 0;
 
         // setup offset
-        polys.forEach(function(poly) {
+        for (let poly of polys) {
             // convert to clipper format
             poly = poly.toClipper();
             if (clean) poly = ClipperLib.Clipper.CleanPolygons(poly, CONF.clipperClean);
             if (simple) poly = ClipperLib.Clipper.SimplifyPolygons(poly, fill);
             coff.AddPaths(poly, join, type);
-        });
+        }
         // perform offset
         coff.Execute(ctre, offs * CONF.clipper);
         // convert back from clipper output format
@@ -619,7 +620,9 @@
         );
 
         // compute union of top boundaries
-        while (i < polys.length) bounds.merge(polys[i++].bounds);
+        while (i < polys.length) {
+            bounds.merge(polys[i++].bounds);
+        }
 
         // ray stepping is an axis from the line perpendicular to the ray
         let rayint = output || [],
@@ -664,7 +667,7 @@
         lines = [];
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
-            ctre.m_AllPolys.forEach(function(poly) {
+            for (let poly of ctre.m_AllPolys) {
                 if (minlen || maxlen) {
                     let plen = clib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
                     if (minlen && plen < minlen) return;
@@ -674,20 +677,20 @@
                 let p2 = BASE.pointFromClipper(poly.m_polygon[1], zpos);
                 let od = rayint.origin.distToLineNew(p1,p2) / spacing;
                 lines.push([p1, p2, od]);
-            });
+            }
         }
 
         lines.sort(function(a,b) {
             return a[2] - b[2];
         })
 
-        lines.forEach(function(line) {
+        for (let line of lines) {
             let dist = Math.round(line[2]);
             line[0].index = dist;
             line[1].index = dist;
             rayint.push(line[0]);
             rayint.push(line[1]);
-        })
+        }
 
         return rayint;
     }
