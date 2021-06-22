@@ -1772,6 +1772,16 @@
         return tl;
     };
 
+    PRO.areaDiff = function(poly) {
+        let a1 = this.area(),
+            a2 = poly.area();
+        return (a1 > a2) ? a2 / a1 : a1 / a2;
+    };
+
+    PRO.areaOrLength = function(poly) {
+        return this.length === poly.length || this.areaDiff(poly) > 0.98;
+    };
+
     /**
      * return logical OR of two polygons' enclosed areas
      *
@@ -1812,16 +1822,16 @@
                     if (
                         src[0].isEqual2D(dst[0]) &&
                         src[1].isEqual2D(dst[1]) &&
-                        Math.abs(src[0].poly.area() - dst[0].poly.area()) < 0.01 &&
-                        Math.abs(src[1].poly.area() - dst[1].poly.area()) < 0.01
+                        src[0].poly.areaOrLength(dst[0].poly) &&
+                        src[1].poly.areaOrLength(dst[1].poly)
                     ) {
                         return null;
                     } else if (debug) {
                         console.log("union debug", {
                             src,
                             dst,
-                            d0: Math.abs(src[0].poly.area() - dst[0].poly.area()),
-                            d1: Math.abs(src[1].poly.area() - dst[1].poly.area()),
+                            d0: src[0].poly.areaDiff(dst[0].poly),
+                            d1: src[1].poly.areaDiff(dst[1].poly),
                             m0: src[0].isEqual2D(dst[0]),
                             m1: src[1].isEqual2D(dst[1])
                         });
