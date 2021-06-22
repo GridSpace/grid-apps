@@ -146,6 +146,36 @@
             onSliceDoneAsync(slices).then(ondone);
         }
 
+        async function doShadow(slices) {
+            if (widget.shadow) {
+                return;
+            }
+            // create shadow for clipping supports
+            let shadow = null;
+            let allslices = widget.group.map(w => w.slices).flat();
+            let alltops = allslices.map(slice => slice.topPolys()).flat();
+            let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
+            // de-rez for really large #s
+            if (alllen > 100000) {
+                // console.log({alllen});
+                alltops = alltops.map(p => p.clean(true, undefined, 5000));
+                // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
+            }
+            let mark = Date.now();
+            // shadow = POLY.union(alltops, 0.1, true);
+            shadow = doConcurrent ?
+                await KIRI.minions.union(alltops, 0.1) :
+                POLY.union(alltops, 0.1, true);
+            // console.log({unioned_in: Date.now() - mark});
+            if (spro.sliceSupportExtra) {
+                shadow = POLY.offset(shadow, spro.sliceSupportExtra);
+            }
+            widget.shadow = shadow;
+            // slices[0].output()
+            //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
+            //     .addPolys(shadow);
+        }
+
         async function onSliceDoneAsync(slices) {
             // remove all empty slices above part but leave below
             // for multi-part (multi-extruder) setups where the void is ok
@@ -163,6 +193,11 @@
 
             if (!slices) {
                 return;
+            }
+
+            // create shadow for non-belt supports
+            if (!isBelt && (isSynth || (!isSynth && supportDensity && spro.sliceSupportEnable))) {
+                await doShadow(slices);
             }
 
             // for synth support widgets, merge tops
@@ -200,17 +235,17 @@
                         }
                         // trim to group's shadow if not in belt mode
                         if (!isBelt) {
-                            let group = widget.group[0];
-                            if (!group.shadow) {
-                                let gs = [];
-                                for (let w of group) {
-                                    if (w.shadow) {
-                                        gs = POLY.union([w.shadow,...gs],null,0.1);
-                                    }
-                                }
-                                group.shadow = gs;
-                            }
-                            tops = POLY.setZ(POLY.trimTo(tops, group.shadow), slice.z);
+                            // let group = widget.group[0];
+                            // if (!group.shadow) {
+                            //     let gs = [];
+                            //     for (let w of group) {
+                            //         if (w.shadow) {
+                            //             gs = POLY.union([w.shadow,...gs],null,0.1);
+                            //         }
+                            //     }
+                            //     group.shadow = gs;
+                            // }
+                            tops = POLY.setZ(POLY.trimTo(tops, widget.shadow), slice.z);
                         }
                     }
                     slice.tops = [];
@@ -464,54 +499,38 @@
                     });
                 }
             } else if (isSynth) {
-                forSlices(0.5, 0.7, slice => {
+                let promises = doConcurrent ? [] : undefined;
+                forSlices(0.5, promises ? 0.6 : 0.7, slice => {
                     let params = slice.params || spro;
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
                         let offset = [];
                         POLY.expand(top.shells, -nozzleSize/4, slice.z, offset);
-                        fillSupportPolys(offset, lineWidth, density, slice.z);
+                        fillSupportPolys(promises, offset, lineWidth, density, slice.z);
                         top.fill_lines = offset.map(o => o.fill).flat().filter(v => v);
                     }
                 }, "infill");
+                if (promises) {
+                    await tracker(promises, (i, t) => {
+                        trackupdate(i / t, 0.6, 0.7);
+                    });
+                }
             }
 
             // auto support generation
             if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
-                // create shadow for clipping supports
-                let shadow = null;
-                let alltops = slices.map(slice => slice.topPolys()).flat();
-                let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
-                if (alllen > 100000) {
-                    // console.log({alllen});
-                    alltops = alltops.map(p => p.clean(true, undefined, 5000));
-                    // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
-                }
-                let mark = Date.now();
-                // shadow = POLY.union(alltops, 0.1, true);
-                shadow = doConcurrent ?
-                    await KIRI.minions.union(alltops, 0.1) :
-                    POLY.union(alltops, 0.1, true);
-                // console.log({unioned_in: Date.now() - mark});
-                if (spro.sliceSupportExtra) {
-                    shadow = POLY.offset(shadow, spro.sliceSupportExtra);
-                }
-                widget.shadow = shadow;
-                // slices[0].output()
-                //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
-                //     .addPolys(shadow);
+                doShadow(slices);
                 // console.log('start'); await BASE.util.ptimer(1000);
                 forSlices(0.7, 0.8, slice => {
-                    doSupport(slice, spro, shadow);
+                    doSupport(slice, spro, widget.shadow);
                 }, "support");
                 // console.log('stop'); await BASE.util.ptimer(1000);
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.8, promises ? 0.88 : 0.9, slice => {
                     doSupportFill(promises, slice, lineWidth, supportDensity, spro.sliceSupportArea);
-                }, "support.fill");
+                }, "support");
                 if (promises) {
-                    console.log({promises});
                     await tracker(promises, (i, t) => {
                         trackupdate(i / t, 0.88, 0.9);
                     });
