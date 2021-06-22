@@ -1826,15 +1826,15 @@
                         src[1].poly.areaOrLength(dst[1].poly)
                     ) {
                         return null;
-                    } else if (debug) {
-                        console.log("union debug", {
-                            src,
-                            dst,
-                            d0: src[0].poly.areaDiff(dst[0].poly),
-                            d1: src[1].poly.areaDiff(dst[1].poly),
-                            m0: src[0].isEqual2D(dst[0]),
-                            m1: src[1].isEqual2D(dst[1])
-                        });
+                    // } else {
+                    //     console.log("union debug", {
+                    //         src,
+                    //         dst,
+                    //         d0: src[0].poly.areaDiff(dst[0].poly),
+                    //         d1: src[1].poly.areaDiff(dst[1].poly),
+                    //         m0: src[0].isEqual2D(dst[0]),
+                    //         m1: src[1].isEqual2D(dst[1])
+                    //     });
                     }
                     return null;
                 }
