@@ -33,6 +33,7 @@
         return out;
     }
 
+    /** track an array of promises as they all complete */
     async function pwait(promises, tracker) {
         let count = 0;
         if (tracker)
@@ -42,6 +43,13 @@
             });
         }
         await Promise.all(promises);
+    }
+
+    /** return a promise that resolves after a given time */
+    function ptimer(time) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, time);
+        });
     }
 
     function numOrDefault(num, def) {
@@ -504,6 +512,7 @@
         round,
         area2,
         pwait,
+        ptimer,
         center2d,
         center2pr,
         thetaDiff,

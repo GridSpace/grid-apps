@@ -501,12 +501,21 @@
                 // slices[0].output()
                 //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
                 //     .addPolys(shadow);
+                // console.log('start'); await BASE.util.ptimer(1000);
                 forSlices(0.7, 0.8, slice => {
                     doSupport(slice, spro, shadow);
                 }, "support");
-                forSlices(0.8, 0.9, slice => {
-                    doSupportFill(slice, lineWidth, supportDensity, spro.sliceSupportArea);
-                }, "support");
+                // console.log('stop'); await BASE.util.ptimer(1000);
+                let promises = doConcurrent ? [] : undefined;
+                forSlices(0.8, promises ? 0.88 : 0.9, slice => {
+                    doSupportFill(promises, slice, lineWidth, supportDensity, spro.sliceSupportArea);
+                }, "support.fill");
+                if (promises) {
+                    console.log({promises});
+                    await tracker(promises, (i, t) => {
+                        trackupdate(i / t, 0.88, 0.9);
+                    });
+                }
             }
 
             // render if not explicitly disabled
@@ -1140,8 +1149,11 @@
             tops = slice.topPolys(),
             trimTo = tops;
 
-        // create inner clip offset from tops
-        POLY.expand(tops, offset, slice.z, slice.offsets = []);
+        // create inner clip offset from tops (unless pre-computed)
+        if (!slice.offsets) {
+            // POLY.expand(tops, offset, slice.z, slice.offsets = []);
+            slice.offsets = geo.poly.offset(tops, offset, slice.z);
+        }
 
         let traces = POLY.flatten(slice.topShells().clone(true)),
             fill = slice.topFill(),
@@ -1256,7 +1268,7 @@
      * @param {number} density
      * @param {number} offset
      */
-    function doSupportFill(slice, linewidth, density, minArea) {
+    function doSupportFill(promises, slice, linewidth, density, minArea) {
         let supports = slice.supports,
             nsB = [],
             nsC = [],
@@ -1280,14 +1292,14 @@
         }
 
         if (supports) {
-            fillSupportPolys(supports, linewidth, density, slice.z);
+            fillSupportPolys(promises, supports, linewidth, density, slice.z);
         }
 
         // re-assign new supports back to slice
         slice.supports = supports;
     };
 
-    function fillSupportPolys(polys, linewidth, density, z) {
+    function fillSupportPolys(promises, polys, linewidth, density, z) {
         // calculate fill density
         let spacing = linewidth * (1 / density);
         polys.forEach(function (poly) {
@@ -1297,7 +1309,7 @@
             let inset = POLY.offset([poly], -linewidth/3, {flat: true, z});
             // do the fill
             if (inset && inset.length > 0) {
-                fillArea(inset, angle, spacing, poly.fill = []);
+                doFillArea(promises, inset, angle, spacing, poly.fill = []);
             }
             return true;
         });
