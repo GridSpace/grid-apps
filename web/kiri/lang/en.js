@@ -243,7 +243,7 @@ kiri.lang['en-us'] = {
     pt_heal_s:      "heal mesh",
     pt_heal_l:      ["attempt to heal","non-manifold meshes","adds to slicing time"],
     pt_thrd_s:      "threaded",
-    pt_thrd_l:      ["use parallel processin","when browser permits"],
+    pt_thrd_l:      ["use parallel processing","when browser permits"],
 
     xp_menu:        "exports",
 

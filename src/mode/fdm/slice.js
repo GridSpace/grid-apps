@@ -255,7 +255,7 @@
                 let params = slice.params = getRangeParameters(settings, slice.index);
                 let shellFrac = (params.sliceShells - (params.sliceShells | 0));
                 let sliceShells = params.sliceShells | 0;
-                if (ctrl.danger && shellFrac) {
+                if (shellFrac) {
                     let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
                     let v2 = 1 - v1;
                     let parts = Math.round(v2/v1) + 1;
@@ -264,11 +264,11 @@
                     sliceShells += rem >= trg ? 1 : 0;
                 }
                 let first = slice.index === 0;
+                let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 let isBottom = slice.index < spro.sliceBottomLayers;
                 let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
                 let isDense = params.sliceFillSparse > 0.98;
                 let solidWidth = params.sliceFillWidth || 1;
-                let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
                 if ((isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth) {
                     slice.solid = {
                         solidWidth,

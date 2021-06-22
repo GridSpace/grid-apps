@@ -499,6 +499,10 @@
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
     };
 
+    PRO.isEqual2D = function(p) {
+        return this === p || (this.x === p.x && this.y === p.y);
+    };
+
     /**
      * returns true if points are close enough to be considered equivalent
      *

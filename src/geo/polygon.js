@@ -1751,6 +1751,27 @@
         return null;
     }
 
+    function leftmost(p1, p2) {
+        if (!p1) {
+            return p2;
+        }
+        if (p1.x <= p2.x) {
+            if (p1.x < p2.x || (p1.x === p2.x && p1.y < p2.y)) {
+                return p2;
+            }
+        }
+        return p1;
+    }
+
+    // return top-most, left-post point
+    PRO.leftmost = function() {
+        let tl = undefined;
+        for (let p of this.points) {
+            tl = leftmost(tl, p);
+        }
+        return tl;
+    };
+
     /**
      * return logical OR of two polygons' enclosed areas
      *
@@ -1778,16 +1799,27 @@
             let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
             if (all) {
                 if (union.length === 2) {
-                    // TODO look for faster equivalence check. area? perimeter?
-                    let src = [this, poly].sort((a,b) => { return a.area() - b.area() });
-                    let dst = union.sort((a,b) => { return a.area() - b.area() });
-                    if (src[0].isEquivalent(dst[0]) && src[1].isEquivalent(dst[1])) {
-                        return null;
+                    let src = [ this.leftmost(), poly.leftmost() ];
+                    let dst = [ union[0].leftmost(), union[1].leftmost() ];
+
+                    if (leftmost(src[0], src[1]) === src[1]) {
+                        src.reverse();
                     }
-                    // only here is area sorting failed (same sizes)
-                    if (src[0].isEquivalent(dst[1]) && src[1].isEquivalent(dst[0])) {
-                        return null;
+                    if (leftmost(dst[0], dst[1]) === dst[1]) {
+                        dst.reverse();
                     }
+
+                    if (
+                        src[0].isEqual2D(dst[0]) &&
+                        src[1].isEqual2D(dst[1]) &&
+                        Math.abs(src[0].poly.area() - dst[0].poly.area()) < 0.01 &&
+                        Math.abs(src[1].poly.area() - dst[1].poly.area()) < 0.01
+                    ) {
+                        return null;
+                    } else if (debug) {
+                        console.log("union debug", { src, dst });
+                    }
+                    return null;
                 }
                 return union;
             }
