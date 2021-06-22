@@ -94,7 +94,7 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
 }
 
 __attribute__ ((export_name("poly_union")))
-Uint32 poly_union(Uint32 memat, Uint32 polys) {
+Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
 
     using namespace ClipperLib;
 
@@ -116,9 +116,72 @@ Uint32 poly_union(Uint32 memat, Uint32 polys) {
     }
 
     Clipper clip;
-    clip.AddPath(ins[0], ptSubject, true);
-    clip.AddPath(ins[1], ptClip, true);
-    clip.Execute(ctUnion, outs, pftEvenOdd, pftEvenOdd);
+    clip.AddPaths(ins, ptSubject, true);
+    clip.Execute(ctUnion, outs);
+
+    Uint32 resat = pos;
+
+    for (Path po : outs) {
+        struct length16 *ls = (struct length16 *)(mem + pos);
+        ls->length = po.size();
+        pos += 2;
+        for (IntPoint pt : po) {
+            struct point32 *ip = (struct point32 *)(mem + pos);
+            ip->x = (int)pt.X;
+            ip->y = (int)pt.Y;
+            pos += 8;
+        }
+    }
+
+    // null terminate
+    struct length16 *ls = (struct length16 *)(mem + pos);
+    ls->length = 0;
+
+    clip.Clear();
+
+    return resat;
+}
+
+
+
+__attribute__ ((export_name("poly_diff")))
+Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
+
+    using namespace ClipperLib;
+
+    Paths inA(polysA);
+    Paths inB(polysB);
+    Paths outs;
+    Uint32 pos = memat;
+
+    for (Uint32 poly = 0; poly < polysA; poly++ ) {
+        struct length16 *ls = (struct length16 *)(mem + pos);
+        Uint16 points = ls->length;
+        pos += 2;
+        while (points-- > 0) {
+            struct point32 *ip = (struct point32 *)(mem + pos);
+            pos += 8;
+            inA[poly] << IntPoint(ip->x, ip->y);
+        }
+        poly++;
+    }
+
+    for (Uint32 poly = 0; poly < polysB; poly++ ) {
+        struct length16 *ls = (struct length16 *)(mem + pos);
+        Uint16 points = ls->length;
+        pos += 2;
+        while (points-- > 0) {
+            struct point32 *ip = (struct point32 *)(mem + pos);
+            pos += 8;
+            inB[poly] << IntPoint(ip->x, ip->y);
+        }
+        poly++;
+    }
+
+    Clipper clip;
+    clip.AddPaths(inA, ptSubject, true);
+    clip.AddPaths(inB, ptClip, true);
+    clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
 
     Uint32 resat = pos;
 

@@ -11,6 +11,7 @@ if (!self.window) (function() {
     const geo = self.geo;
 
     geo.poly = {
+        diff: polyDiff,
         union: polyUnion,
         offset: polyOffset
     };
@@ -94,6 +95,29 @@ if (!self.window) (function() {
         return polyNest(out);
     }
 
+    function polyDiff(polysA, polysB, z) {
+        let wasm = geo.wasm,
+            memat = wasm.malloc(1024 * 128),
+            writer = new DataWriter(wasm.heap, memat),
+            pcountA = 0,
+            pcountB = 0;
+        polysA.forEach(poly => pcountA += writePoly(writer, poly));
+        polysB.forEach(poly => pcountB += writePoly(writer, poly));
+        let resat = wasm.diff(memat, pcountA, pcountB, (pcountA + pcountB) * factor),
+            reader = new DataReader(wasm.heap, resat),
+            out = [];
+        for (;;) {
+            let poly = readPoly(reader, z);
+            if (poly) {
+                out.push(poly);
+            } else {
+                break;
+            }
+        }
+        wasm.free(memat);
+        return polyNest(out);
+    }
+
     // nest closed polygons without existing parent / child relationships
     function polyNest(polys) {
         polys.sort((a,b) => {
@@ -149,6 +173,7 @@ if (!self.window) (function() {
                 malloc: exports.mem_get,
                 start: exports._start,
                 free: exports.mem_clr,
+                diff: exports.poly_diff,
                 union: exports.poly_union,
                 offset: exports.poly_offset
             };

@@ -299,13 +299,14 @@
             min = minArea || 0.1,
             out = [];
 
-        function filter(from, to) {
+        function filter(from, to = []) {
             from.forEach(function(poly) {
                 if (poly.area() >= min) {
                     to.push(poly);
                     out.push(poly);
                 }
             });
+            return to;
         }
 
         // expensive but worth it?
@@ -319,6 +320,9 @@
                 cleanClipperTree(ctre);
                 filter(fromClipperTree(ctre, z, null, null, min), outA);
             }
+            let woutA = filter(geo.poly.diff(setA, setB, z));
+            // outA.appendAll(woutA);
+            // console.log({outA, woutA});
         }
 
         if (outB) {
@@ -334,6 +338,9 @@
                 cleanClipperTree(ctre);
                 filter(fromClipperTree(ctre, z, null, null, min), outB);
             }
+            let woutB = filter(geo.poly.diff(setB, setA, z));
+            // outB.appendAll(woutB);
+            // console.log({outB, woutB});
         }
 
         return out;
