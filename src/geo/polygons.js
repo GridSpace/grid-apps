@@ -320,7 +320,7 @@
                 cleanClipperTree(ctre);
                 filter(fromClipperTree(ctre, z, null, null, min), outA);
             }
-            let woutA = filter(geo.poly.diff(setA, setB, z));
+            // let woutA = filter(geo.poly.diff(setA, setB, z));
             // outA.appendAll(woutA);
             // console.log({outA, woutA});
         }
@@ -338,7 +338,7 @@
                 cleanClipperTree(ctre);
                 filter(fromClipperTree(ctre, z, null, null, min), outB);
             }
-            let woutB = filter(geo.poly.diff(setB, setA, z));
+            // let woutB = filter(geo.poly.diff(setB, setA, z));
             // outB.appendAll(woutB);
             // console.log({outB, woutB});
         }
