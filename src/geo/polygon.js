@@ -1817,7 +1817,14 @@
                     ) {
                         return null;
                     } else if (debug) {
-                        console.log("union debug", { src, dst });
+                        console.log("union debug", {
+                            src,
+                            dst,
+                            d0: Math.abs(src[0].poly.area() - dst[0].poly.area()),
+                            d1: Math.abs(src[1].poly.area() - dst[1].poly.area()),
+                            m0: src[0].isEqual2D(dst[0]),
+                            m1: src[1].isEqual2D(dst[1])
+                        });
                     }
                     return null;
                 }

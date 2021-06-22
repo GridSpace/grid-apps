@@ -10,7 +10,10 @@ if (!self.window) (function() {
     const factor = self.base.config.clipper;
     const geo = self.geo;
 
-    geo.poly = { offset : polyOffset };
+    geo.poly = {
+        union: polyUnion,
+        offset: polyOffset
+    };
 
     function log() {
         console.log(...arguments);
@@ -56,6 +59,27 @@ if (!self.window) (function() {
             pcount = 0;
         polys.forEach(poly => pcount += writePoly(writer, poly));
         let resat = wasm.offset(memat, pcount, offset * factor),
+            reader = new DataReader(wasm.heap, resat),
+            out = [];
+        for (;;) {
+            let poly = readPoly(reader, z);
+            if (poly) {
+                out.push(poly);
+            } else {
+                break;
+            }
+        }
+        wasm.free(memat);
+        return polyNest(out);
+    }
+
+    function polyUnion(polys, z) {
+        let wasm = geo.wasm,
+            memat = wasm.malloc(1024 * 128),
+            writer = new DataWriter(wasm.heap, memat),
+            pcount = 0;
+        polys.forEach(poly => pcount += writePoly(writer, poly));
+        let resat = wasm.union(memat, pcount, pcount * factor),
             reader = new DataReader(wasm.heap, resat),
             out = [];
         for (;;) {
@@ -120,14 +144,16 @@ if (!self.window) (function() {
             let heap = new DataView(exports.memory.buffer);
             let wasm = geo.wasm = {
                 heap,
+                exports,
                 memory: exports.memory,
-                start: exports._start,
-                offset: exports.poly_offset,
                 malloc: exports.mem_get,
-                free: exports.mem_clr
+                start: exports._start,
+                free: exports.mem_clr,
+                union: exports.poly_union,
+                offset: exports.poly_offset
             };
 
-            wasm.start();
+            // wasm.start();
         });
 
 })();
