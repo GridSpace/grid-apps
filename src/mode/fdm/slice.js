@@ -1171,7 +1171,7 @@
         // create inner clip offset from tops (unless pre-computed)
         if (!slice.offsets) {
             // POLY.expand(tops, offset, slice.z, slice.offsets = []);
-            slice.offsets = geo.poly.offset(tops, offset, slice.z);
+            slice.offsets = geo.wasm.js.offset(tops, offset, slice.z);
         }
 
         let traces = POLY.flatten(slice.topShells().clone(true)),

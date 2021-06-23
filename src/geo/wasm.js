@@ -11,12 +11,6 @@ if (!self.window) (function() {
     const geo = self.geo;
     const debug = false;
 
-    geo.poly = {
-        diff: polyDiff,
-        union: polyUnion,
-        offset: polyOffset
-    };
-
     function log() {
         console.log(...arguments);
     }
@@ -76,34 +70,36 @@ if (!self.window) (function() {
 
     function polyOffset(polys, offset, z) {
         let wasm = geo.wasm,
-            memat = wasm.malloc(1024 * 128),
-            pcount = writePolys(new DataWriter(wasm.heap, memat), polys),
-            resat = wasm.offset(memat, pcount, offset * factor),
+            buffer = geo.wasm.shared,
+            pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
+            resat = wasm.fn.offset(buffer, pcount, offset * factor),
             out = readPolys(new DataReader(wasm.heap, resat), z);
-        wasm.free(memat);
         return polyNest(out);
     }
 
     function polyUnion(polys, z) {
         let wasm = geo.wasm,
-            memat = wasm.malloc(1024 * 128),
-            pcount = writePolys(new DataWriter(wasm.heap, memat), polys),
-            resat = wasm.union(memat, pcount),
+        buffer = geo.wasm.shared,
+            pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
+            resat = wasm.fn.union(buffer, pcount),
             out = readPolys(new DataReader(wasm.heap, resat), z);
-        wasm.free(memat);
         return polyNest(out);
     }
 
-    function polyDiff(polysA, polysB, z) {
+    function polyDiff(polysA, polysB, z, AB, BA) {
         let wasm = geo.wasm,
-            memat = wasm.malloc(1024 * 128),
-            writer = new DataWriter(wasm.heap, memat),
+        buffer = geo.wasm.shared,
+            writer = new DataWriter(wasm.heap, buffer),
             pcountA = writePolys(writer, polysA),
             pcountB = writePolys(writer, polysB),
-            resat = wasm.diff(memat, pcountA, pcountB, 1, 0),
-            out = readPolys(new DataReader(wasm.heap, resat), z);
-        wasm.free(memat);
-        return polyNest(out);
+            resat = wasm.fn.diff(buffer, pcountA, pcountB, AB?1:0, BA?1:0, base.config.clipperClean),
+            reader = new DataReader(wasm.heap, resat);
+        if (AB) {
+            AB.appendAll(polyNest(readPolys(reader, z)));
+        }
+        if (BA) {
+            BA.appendAll(polyNest(readPolys(reader, z)));
+        }
     }
 
     // nest closed polygons without existing parent / child relationships
@@ -138,10 +134,11 @@ if (!self.window) (function() {
         let newPolygon = self.base.newPolygon;
         let p1 = newPolygon().add(0,0).add(4,0).add(4,4).add(0,4);
         let p2 = p1.clone().setZ(0).move({x:2, y:2});
-        let d1 = geo.poly.diff([p1], [p2], 0);
-        let d2 = geo.poly.diff([p2], [p1], 0);
+        let d1 = [];
+        let d2 = [];
+        geo.wasm.js.diff([p1], [p2], 0, d1, d2);
         console.log('diff',{p1:p1.points, p2:p2.points, d1:d1[0].points, d2:d2[0].points});
-        let o1 = geo.poly.offset([p1], 1, 0);
+        let o1 = geo.wasm.js.offset([p1], 1, 0);
         console.log('offs',{o1:o1[0].points});
     }
 
@@ -162,8 +159,8 @@ if (!self.window) (function() {
             }
         }))
         .then(results => {
-            let {module, instance} = results;
-            let {exports} = instance;
+            let { module, instance } = results;
+            let { exports } = instance;
             let heap = new DataView(exports.memory.buffer);
             let wasm = geo.wasm = {
                 heap,
@@ -172,10 +169,18 @@ if (!self.window) (function() {
                 memmax: exports.memory.buffer.byteLength,
                 malloc: exports.mem_get,
                 free: exports.mem_clr,
+                set_debug: exports.set_debug
+            };
+            wasm.shared = wasm.malloc(1024 * 1024 * 10),
+            wasm.fn = {
                 diff: exports.poly_diff,
                 union: exports.poly_union,
-                offset: exports.poly_offset,
-                set_debug: exports.set_debug
+                offset: exports.poly_offset
+            };
+            wasm.js = {
+                diff: polyDiff,
+                union: polyUnion,
+                offset: polyOffset
             };
             if (debug) {
                 wasm.set_debug(1);
