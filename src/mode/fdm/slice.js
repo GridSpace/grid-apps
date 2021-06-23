@@ -451,6 +451,7 @@
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
                 }, "layer deltas");
+                // console.log('start'); await BASE.util.ptimer(1000);
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.35, promises ? 0.4 : 0.5, slice => {
                     let params = slice.params || spro;
@@ -466,6 +467,7 @@
                         trackupdate(i / t, 0.4, 0.5);
                     });
                 }
+                // console.log('stop'); await BASE.util.ptimer(1000);
             }
 
             // sparse layers only present when non-vase mose and sparse % > 0
@@ -1164,7 +1166,6 @@
             gap = proc.sliceSupportGap,
             min = minArea || 0.01,
             size = (pillarSize || 1),
-            mergeDist = size * 3, // pillar merge dist
             tops = slice.topPolys(),
             trimTo = tops;
 
@@ -1180,6 +1181,15 @@
             down = slice.down,
             down_tops = down ? down.topPolys() : null,
             down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
+
+        if (down_tops) {
+            // de-rez complex polys because it's not that important for supports
+            let points = down_tops.map(p => p.deepLength).reduce((a,v)=>a+v);
+            if (points > 200) {
+                down_tops = down_tops.map(p => p.clean(true, undefined, CONF.clipper / 10));
+                down_traces = down_traces.map(p => p.clean(true, undefined, CONF.clipper / 10));
+            }
+        }
 
         // check if point is supported by layer below
         function checkPointSupport(point) {

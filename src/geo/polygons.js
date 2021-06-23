@@ -288,15 +288,7 @@
      * @returns {Polygon[]} out
      */
     function subtract(setA, setB, outA, outB, z, minArea) {
-        let clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
-            clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
-            sp1 = toClipper(setA),
-            sp2 = toClipper(setB),
-            min = minArea || 0.1,
+        let min = minArea || 0.1,
             out = [];
 
         function filter(from, to = []) {
@@ -309,10 +301,17 @@
             return to;
         }
 
-        const JS = true;
+        if (true) {
+            let clib = self.ClipperLib,
+                ctyp = clib.ClipType,
+                ptyp = clib.PolyType,
+                cfil = clib.PolyFillType,
+                clip = new clib.Clipper(),
+                ctre = new clib.PolyTree(),
+                sp1 = toClipper(setA),
+                sp2 = toClipper(setB);
 
-        if (JS) {
-            // expensive but worth it?
+            // more expensive? worth it?
             clip.StrictlySimple = true;
             if (outA) {
                 clip.AddPaths(sp1, ptyp.ptSubject, true);
