@@ -8,11 +8,15 @@ typedef unsigned short Uint16;
 typedef unsigned int Uint32;
 typedef int int32;
 
+using namespace ClipperLib;
+
 Uint8 *mem = 0;
+const Uint8 debug = 0;
 
 extern "C" {
     extern void polygon(Uint32 points, Uint32 inners);
     extern void point(Uint32 x, Uint32 y);
+    extern void abc(Uint32 a, Uint32 b, Uint32 c);
 }
 
 struct length16 {
@@ -34,29 +38,52 @@ void mem_clr(Uint32 loc) {
     free((void *)loc);
 }
 
+Uint32 readPolys(Paths paths, Uint32 pos, Uint32 count) {
+    Uint32 poly = 0;
+    if (debug) abc(poly, count, pos);
+    while (count > 0) {
+        struct length16 *ls = (struct length16 *)(mem + pos);
+        Uint16 points = ls->length;
+        if (debug) polygon(points, 0);
+        pos += 2;
+        while (points-- > 0) {
+            struct point32 *ip = (struct point32 *)(mem + pos);
+            pos += 8;
+            paths[poly] << IntPoint(ip->x, ip->y);
+            if (debug) point(ip->x, ip->y);
+        }
+        poly++;
+        count--;
+    }
+    if (debug) abc(poly, count, pos);
+    return pos;
+}
+
 __attribute__ ((export_name("poly_offset")))
 Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
-
-    using namespace ClipperLib;
 
     Paths ins(polys);
     Paths outs;
     Uint32 pos = memat;
     Uint16 poly = 0;
 
+    // pos = readPolys(ins, pos, polys);
+
     while (poly < polys) {
         struct length16 *ls = (struct length16 *)(mem + pos);
         Uint16 points = ls->length;
-        // polygon(points, 0);
+        if (debug) polygon(points, 0);
         pos += 2;
         while (points-- > 0) {
             struct point32 *ip = (struct point32 *)(mem + pos);
             pos += 8;
             ins[poly] << IntPoint(ip->x, ip->y);
-            // point(ip->x, ip->y);
+            if (debug) point(ip->x, ip->y);
         }
         poly++;
     }
+
+    if (debug) abc(memat, pos, memat - pos);
 
     // clean and simplify polygons
     // Paths cleans, simples;
@@ -71,12 +98,12 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
     Uint32 resat = pos;
 
     for (Path po : outs) {
-        // polygon(po.size(), 1);
+        if (debug) polygon(po.size(), 1);
         struct length16 *ls = (struct length16 *)(mem + pos);
         ls->length = po.size();
         pos += 2;
         for (IntPoint pt : po) {
-            // point(pt.X, pt.Y);
+            if (debug) point(pt.X, pt.Y);
             struct point32 *ip = (struct point32 *)(mem + pos);
             ip->x = (int)pt.X;
             ip->y = (int)pt.Y;
@@ -95,8 +122,6 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
 
 __attribute__ ((export_name("poly_union")))
 Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
-
-    using namespace ClipperLib;
 
     Paths ins(polys);
     Paths outs;
@@ -146,8 +171,6 @@ Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
 
 __attribute__ ((export_name("poly_diff")))
 Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
-
-    using namespace ClipperLib;
 
     Paths inA(polysA);
     Paths inB(polysB);

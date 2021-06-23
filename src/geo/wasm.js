@@ -9,6 +9,7 @@ if (!self.window) (function() {
 
     const factor = self.base.config.clipper;
     const geo = self.geo;
+    const debug = false;
 
     geo.poly = {
         diff: polyDiff,
@@ -70,6 +71,9 @@ if (!self.window) (function() {
                 break;
             }
         }
+        // if (debug) {
+        //     console.log({diff_resat: resat, memat});
+        // }
         wasm.free(memat);
         return polyNest(out);
     }
@@ -114,6 +118,9 @@ if (!self.window) (function() {
                 break;
             }
         }
+        // if (debug) {
+        //     console.log({diff_resat: resat, memat, delta: resat-memat});
+        // }
         wasm.free(memat);
         return polyNest(out);
     }
@@ -146,13 +153,24 @@ if (!self.window) (function() {
         return tops;
     }
 
+    function runTests() {
+        let newPolygon = self.base.newPolygon;
+        let p1 = newPolygon().add(0,0).add(4,0).add(4,4).add(0,4);
+        let p2 = p1.clone().setZ(0).move({x:2, y:2});
+        let d1 = geo.poly.diff([p1], [p2], 0);
+        let d2 = geo.poly.diff([p2], [p1], 0);
+        console.log('diff',{p1:p1.points, p2:p2.points, d1:d1[0].points, d2:d2[0].points});
+        let o1 = geo.poly.offset([p1], 1, 0);
+        console.log('offs',{o1:o1[0].points});
+    }
+
     fetch('/wasm/kiri-geo.wasm')
         .then(response => response.arrayBuffer())
         .then(bytes => WebAssembly.instantiate(bytes, {
             env: {
                 polygon: (a,b) => { console.log('polygon',a,b) },
                 point: (a,b) => { console.log('point',a,b) },
-                abs:  (a) => { console.log('abs',a); return Math.abs(a) }
+                abc:  (a,b,c) => { console.log('abc',a,b,c) }
             },
             wasi_snapshot_preview1: {
                 args_get: (count,bufsize) => { return 0 },
@@ -170,15 +188,16 @@ if (!self.window) (function() {
                 heap,
                 exports,
                 memory: exports.memory,
+                memmax: exports.memory.buffer.byteLength,
                 malloc: exports.mem_get,
-                start: exports._start,
                 free: exports.mem_clr,
                 diff: exports.poly_diff,
                 union: exports.poly_union,
                 offset: exports.poly_offset
             };
-
-            // wasm.start();
+            if (debug) {
+                runTests();
+            }
         });
 
 })();

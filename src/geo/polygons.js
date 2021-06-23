@@ -312,17 +312,22 @@
         // expensive but worth it?
         clip.StrictlySimple = true;
 
-        if (outA) {
-            clip.AddPaths(sp1, ptyp.ptSubject, true);
-            clip.AddPaths(sp2, ptyp.ptClip, true);
+        const JS = true;
 
-            if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-                cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z, null, null, min), outA);
+        if (outA) {
+            if (JS) {
+                clip.AddPaths(sp1, ptyp.ptSubject, true);
+                clip.AddPaths(sp2, ptyp.ptClip, true);
+
+                if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+                    cleanClipperTree(ctre);
+                    filter(fromClipperTree(ctre, z, null, null, min), outA);
+                }
+            } else {
+                let woutA = filter(geo.poly.diff(setA, setB, z));
+                outA.appendAll(woutA);
+                console.log({outA, woutA});
             }
-            // let woutA = filter(geo.poly.diff(setA, setB, z));
-            // outA.appendAll(woutA);
-            // console.log({outA, woutA});
         }
 
         if (outB) {
@@ -331,16 +336,19 @@
                 clip.Clear();
             }
 
-            clip.AddPaths(sp2, ptyp.ptSubject, true);
-            clip.AddPaths(sp1, ptyp.ptClip, true);
+            if (JS) {
+                clip.AddPaths(sp2, ptyp.ptSubject, true);
+                clip.AddPaths(sp1, ptyp.ptClip, true);
 
-            if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-                cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z, null, null, min), outB);
+                if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+                    cleanClipperTree(ctre);
+                    filter(fromClipperTree(ctre, z, null, null, min), outB);
+                }
+            } else {
+                let woutB = filter(geo.poly.diff(setB, setA, z));
+                outB.appendAll(woutB);
+                console.log({outB, woutB});
             }
-            // let woutB = filter(geo.poly.diff(setB, setA, z));
-            // outB.appendAll(woutB);
-            // console.log({outB, woutB});
         }
 
         return out;
