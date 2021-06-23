@@ -135,26 +135,36 @@ Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
 }
 
 __attribute__ ((export_name("poly_diff")))
-Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
+Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA) {
 
     Paths inA(polysA);
     Paths inB(polysB);
-    Paths outs;
     Uint32 pos = memat;
 
     pos = readPolys(inA, pos, polysA);
     pos = readPolys(inB, pos, polysB);
 
-    Clipper clip;
-    clip.AddPaths(inA, ptSubject, true);
-    clip.AddPaths(inB, ptClip, true);
-    clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
-
     Uint32 resat = pos;
 
-    pos = writePolys(outs, pos);
+    if (AB) {
+        Paths outs;
+        Clipper clip;
+        clip.AddPaths(inA, ptSubject, true);
+        clip.AddPaths(inB, ptClip, true);
+        clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
+        pos = writePolys(outs, pos);
+        clip.Clear();
+    }
 
-    clip.Clear();
+    if (BA) {
+        Paths outs;
+        Clipper clip;
+        clip.AddPaths(inB, ptSubject, true);
+        clip.AddPaths(inA, ptClip, true);
+        clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
+        pos = writePolys(outs, pos);
+        clip.Clear();
+    }
 
     return resat;
 }

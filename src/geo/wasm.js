@@ -21,6 +21,14 @@ if (!self.window) (function() {
         console.log(...arguments);
     }
 
+    function writePolys(view, polys) {
+        let pcount = 0;
+        for (let poly of polys) {
+            pcount += writePoly(view, poly);
+        }
+        return pcount;
+    }
+
     function writePoly(view, poly, inner) {
         if (inner) {
             poly.setCounterClockwise();
@@ -54,26 +62,24 @@ if (!self.window) (function() {
         return poly;
     }
 
-    function polyOffset(polys, offset, z) {
-        let wasm = geo.wasm,
-            memat = wasm.malloc(1024 * 128),
-            writer = new DataWriter(wasm.heap, memat),
-            pcount = 0;
-        polys.forEach(poly => pcount += writePoly(writer, poly));
-        let resat = wasm.offset(memat, pcount, offset * factor),
-            reader = new DataReader(wasm.heap, resat),
-            out = [];
+    function readPolys(view, z, out = []) {
         for (;;) {
-            let poly = readPoly(reader, z);
+            let poly = readPoly(view, z);
             if (poly) {
                 out.push(poly);
             } else {
                 break;
             }
         }
-        if (debug) {
-            console.log({offset: polys, resat, memat, len: resat - memat});
-        }
+        return out;
+    }
+
+    function polyOffset(polys, offset, z) {
+        let wasm = geo.wasm,
+            memat = wasm.malloc(1024 * 128),
+            pcount = writePolys(new DataWriter(wasm.heap, memat), polys),
+            resat = wasm.offset(memat, pcount, offset * factor),
+            out = readPolys(new DataReader(wasm.heap, resat), z);
         wasm.free(memat);
         return polyNest(out);
     }
@@ -81,20 +87,9 @@ if (!self.window) (function() {
     function polyUnion(polys, z) {
         let wasm = geo.wasm,
             memat = wasm.malloc(1024 * 128),
-            writer = new DataWriter(wasm.heap, memat),
-            pcount = 0;
-        polys.forEach(poly => pcount += writePoly(writer, poly));
-        let resat = wasm.union(memat, pcount, pcount * factor),
-            reader = new DataReader(wasm.heap, resat),
-            out = [];
-        for (;;) {
-            let poly = readPoly(reader, z);
-            if (poly) {
-                out.push(poly);
-            } else {
-                break;
-            }
-        }
+            pcount = writePolys(new DataWriter(wasm.heap, memat), polys),
+            resat = wasm.union(memat, pcount),
+            out = readPolys(new DataReader(wasm.heap, resat), z);
         wasm.free(memat);
         return polyNest(out);
     }
@@ -103,24 +98,10 @@ if (!self.window) (function() {
         let wasm = geo.wasm,
             memat = wasm.malloc(1024 * 128),
             writer = new DataWriter(wasm.heap, memat),
-            pcountA = 0,
-            pcountB = 0;
-        polysA.forEach(poly => pcountA += writePoly(writer, poly));
-        polysB.forEach(poly => pcountB += writePoly(writer, poly));
-        let resat = wasm.diff(memat, pcountA, pcountB, (pcountA + pcountB) * factor),
-            reader = new DataReader(wasm.heap, resat),
-            out = [];
-        for (;;) {
-            let poly = readPoly(reader, z);
-            if (poly) {
-                out.push(poly);
-            } else {
-                break;
-            }
-        }
-        // if (debug) {
-        //     console.log({diff_resat: resat, memat, delta: resat-memat});
-        // }
+            pcountA = writePolys(writer, polysA),
+            pcountB = writePolys(writer, polysB),
+            resat = wasm.diff(memat, pcountA, pcountB, 1, 0),
+            out = readPolys(new DataReader(wasm.heap, resat), z);
         wasm.free(memat);
         return polyNest(out);
     }
