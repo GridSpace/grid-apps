@@ -38,33 +38,48 @@ void mem_clr(Uint32 loc) {
     free((void *)loc);
 }
 
-Uint32 readPoly(Path path, Uint32 pos) {
+Uint32 readPoly(Path &path, Uint32 pos) {
     struct length16 *ls = (struct length16 *)(mem + pos);
     Uint16 points = ls->length;
-    if (debug) polygon(points, 0);
+    // if (debug) polygon(points, 0);
     pos += 2;
     while (points-- > 0) {
         struct point32 *ip = (struct point32 *)(mem + pos);
         pos += 8;
         path << IntPoint(ip->x, ip->y);
-        if (debug) point(ip->x, ip->y);
+        // if (debug) point(ip->x, ip->y);
     }
     return pos;
 }
 
-Uint32 readPolys(Paths paths, Uint32 pos, Uint32 count) {
+Uint32 readPolys(Paths &paths, Uint32 pos, Uint32 count) {
     Uint32 poly = 0;
-    if (debug) abc(poly, count, pos);
+    // if (debug) abc(poly, count, pos);
     while (count-- > 0) {
         pos = readPoly(paths[poly++], pos);
     }
-    if (debug) abc(poly, count, pos);
+    // if (debug) abc(poly, count, pos);
     return pos;
 }
 
-__attribute__ ((export_name("set_debug")))
-void set_debug(Uint8 value) {
-    debug = value;
+Uint32 writePolys(Paths &outs, Uint32 pos) {
+    for (Path po : outs) {
+        // if (debug) polygon(po.size(), 1);
+        struct length16 *ls = (struct length16 *)(mem + pos);
+        ls->length = po.size();
+        pos += 2;
+        for (IntPoint pt : po) {
+            // if (debug) point(pt.X, pt.Y);
+            struct point32 *ip = (struct point32 *)(mem + pos);
+            ip->x = (int)pt.X;
+            ip->y = (int)pt.Y;
+            pos += 8;
+        }
+    }
+    // null terminate
+    struct length16 *ls = (struct length16 *)(mem + pos);
+    ls->length = 0;
+    return pos + 2;
 }
 
 __attribute__ ((export_name("poly_offset")))
@@ -75,27 +90,7 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
     Uint32 pos = memat;
     Uint16 poly = 0;
 
-    // pos = readPolys(ins, pos, polys);
-
-    // while (polys-- > 0) {
-    //     pos = readPoly(ins[poly++], pos);
-    // }
-
-    while (poly < polys) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        Uint16 points = ls->length;
-        if (debug) polygon(points, 0);
-        pos += 2;
-        while (points-- > 0) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            pos += 8;
-            ins[poly] << IntPoint(ip->x, ip->y);
-            if (debug) point(ip->x, ip->y);
-        }
-        poly++;
-    }
-
-    if (debug) abc(memat, pos, pos - memat);
+    pos = readPolys(ins, pos, polys);
 
     // clean and simplify polygons
     // Paths cleans, simples;
@@ -109,23 +104,7 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
 
     Uint32 resat = pos;
 
-    for (Path po : outs) {
-        if (debug) polygon(po.size(), 1);
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        ls->length = po.size();
-        pos += 2;
-        for (IntPoint pt : po) {
-            if (debug) point(pt.X, pt.Y);
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            ip->x = (int)pt.X;
-            ip->y = (int)pt.Y;
-            pos += 8;
-        }
-    }
-
-    // null terminate
-    struct length16 *ls = (struct length16 *)(mem + pos);
-    ls->length = 0;
+    pos = writePolys(outs, pos);
 
     co.Clear();
 
@@ -140,17 +119,7 @@ Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
     Uint32 pos = memat;
     Uint16 poly = 0;
 
-    while (poly < polys) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        Uint16 points = ls->length;
-        pos += 2;
-        while (points-- > 0) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            pos += 8;
-            ins[poly] << IntPoint(ip->x, ip->y);
-        }
-        poly++;
-    }
+    pos = readPolys(ins, pos, polys);
 
     Clipper clip;
     clip.AddPaths(ins, ptSubject, true);
@@ -158,28 +127,12 @@ Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
 
     Uint32 resat = pos;
 
-    for (Path po : outs) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        ls->length = po.size();
-        pos += 2;
-        for (IntPoint pt : po) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            ip->x = (int)pt.X;
-            ip->y = (int)pt.Y;
-            pos += 8;
-        }
-    }
-
-    // null terminate
-    struct length16 *ls = (struct length16 *)(mem + pos);
-    ls->length = 0;
+    pos = writePolys(outs, pos);
 
     clip.Clear();
 
     return resat;
 }
-
-
 
 __attribute__ ((export_name("poly_diff")))
 Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
@@ -189,29 +142,8 @@ Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
     Paths outs;
     Uint32 pos = memat;
 
-    for (Uint32 poly = 0; poly < polysA; poly++ ) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        Uint16 points = ls->length;
-        pos += 2;
-        while (points-- > 0) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            pos += 8;
-            inA[poly] << IntPoint(ip->x, ip->y);
-        }
-        poly++;
-    }
-
-    for (Uint32 poly = 0; poly < polysB; poly++ ) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        Uint16 points = ls->length;
-        pos += 2;
-        while (points-- > 0) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            pos += 8;
-            inB[poly] << IntPoint(ip->x, ip->y);
-        }
-        poly++;
-    }
+    pos = readPolys(inA, pos, polysA);
+    pos = readPolys(inB, pos, polysB);
 
     Clipper clip;
     clip.AddPaths(inA, ptSubject, true);
@@ -220,23 +152,14 @@ Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, float offset) {
 
     Uint32 resat = pos;
 
-    for (Path po : outs) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        ls->length = po.size();
-        pos += 2;
-        for (IntPoint pt : po) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            ip->x = (int)pt.X;
-            ip->y = (int)pt.Y;
-            pos += 8;
-        }
-    }
-
-    // null terminate
-    struct length16 *ls = (struct length16 *)(mem + pos);
-    ls->length = 0;
+    pos = writePolys(outs, pos);
 
     clip.Clear();
 
     return resat;
+}
+
+__attribute__ ((export_name("set_debug")))
+void set_debug(Uint8 value) {
+    debug = value;
 }

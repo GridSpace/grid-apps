@@ -326,7 +326,7 @@
             } else {
                 let woutA = filter(geo.poly.diff(setA, setB, z));
                 outA.appendAll(woutA);
-                console.log({outA, woutA});
+                // console.log({outA, woutA});
             }
         }
 
@@ -347,7 +347,7 @@
             } else {
                 let woutB = filter(geo.poly.diff(setB, setA, z));
                 outB.appendAll(woutB);
-                console.log({outB, woutB});
+                // console.log({outB, woutB});
             }
         }
 
