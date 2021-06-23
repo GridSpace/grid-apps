@@ -146,6 +146,13 @@
             onSliceDoneAsync(slices).then(ondone);
         }
 
+        let lastlog = Date.now();
+        function logger() {
+            let now = Date.now();
+            console.log(now - lastlog, ...arguments);
+            lastlog = now;
+        }
+
         async function doShadow(slices) {
             if (widget.shadow) {
                 return;
@@ -157,20 +164,15 @@
             let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
             // de-rez for really large #s
             if (alllen > 100000) {
-                // console.log({alllen});
-                alltops = alltops.map(p => p.clean(true, undefined, 5000));
-                // console.log({reduced: alltops.map(p => p.deepLength).reduce((a,v)=>a+v)});
+                alltops = alltops.map(p => p.clean(true, undefined, CONF.clipper / 10));
             }
-            let mark = Date.now();
-            // shadow = POLY.union(alltops, 0.1, true);
             shadow = doConcurrent ?
                 await KIRI.minions.union(alltops, 0.1) :
                 POLY.union(alltops, 0.1, true);
-            // console.log({unioned_in: Date.now() - mark});
             if (spro.sliceSupportExtra) {
                 shadow = POLY.offset(shadow, spro.sliceSupportExtra);
             }
-            widget.shadow = shadow;
+            widget.shadow = POLY.setZ(shadow, 0);
             // slices[0].output()
             //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
             //     .addPolys(shadow);
@@ -525,7 +527,7 @@
                 doShadow(slices);
                 // console.log('start'); await BASE.util.ptimer(1000);
                 forSlices(0.7, 0.8, slice => {
-                    doSupport(slice, spro, widget.shadow);
+                    doSupport(slice, spro, widget.shadow, ctrl.danger);
                 }, "support");
                 // console.log('stop'); await BASE.util.ptimer(1000);
                 let promises = doConcurrent ? [] : undefined;
@@ -1158,7 +1160,7 @@
     /**
      * calculate external overhangs requiring support
      */
-    function doSupport(slice, proc, shadow) {
+    function doSupport(slice, proc, shadow, experimental) {
         let maxBridge = proc.sliceSupportSpan || 5,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,
@@ -1182,7 +1184,7 @@
             down_tops = down ? down.topPolys() : null,
             down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
 
-        if (down_tops) {
+        if (experimental && down_tops) {
             // de-rez complex polys because it's not that important for supports
             let points = down_tops.map(p => p.deepLength).reduce((a,v)=>a+v);
             if (points > 200) {
