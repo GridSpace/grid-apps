@@ -11,7 +11,7 @@ typedef int int32;
 using namespace ClipperLib;
 
 Uint8 *mem = 0;
-const Uint8 debug = 0;
+Uint8 debug = 0;
 
 extern "C" {
     extern void polygon(Uint32 points, Uint32 inners);
@@ -38,25 +38,33 @@ void mem_clr(Uint32 loc) {
     free((void *)loc);
 }
 
+Uint32 readPoly(Path path, Uint32 pos) {
+    struct length16 *ls = (struct length16 *)(mem + pos);
+    Uint16 points = ls->length;
+    if (debug) polygon(points, 0);
+    pos += 2;
+    while (points-- > 0) {
+        struct point32 *ip = (struct point32 *)(mem + pos);
+        pos += 8;
+        path << IntPoint(ip->x, ip->y);
+        if (debug) point(ip->x, ip->y);
+    }
+    return pos;
+}
+
 Uint32 readPolys(Paths paths, Uint32 pos, Uint32 count) {
     Uint32 poly = 0;
     if (debug) abc(poly, count, pos);
-    while (count > 0) {
-        struct length16 *ls = (struct length16 *)(mem + pos);
-        Uint16 points = ls->length;
-        if (debug) polygon(points, 0);
-        pos += 2;
-        while (points-- > 0) {
-            struct point32 *ip = (struct point32 *)(mem + pos);
-            pos += 8;
-            paths[poly] << IntPoint(ip->x, ip->y);
-            if (debug) point(ip->x, ip->y);
-        }
-        poly++;
-        count--;
+    while (count-- > 0) {
+        pos = readPoly(paths[poly++], pos);
     }
     if (debug) abc(poly, count, pos);
     return pos;
+}
+
+__attribute__ ((export_name("set_debug")))
+void set_debug(Uint8 value) {
+    debug = value;
 }
 
 __attribute__ ((export_name("poly_offset")))
@@ -68,6 +76,10 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
     Uint16 poly = 0;
 
     // pos = readPolys(ins, pos, polys);
+
+    // while (polys-- > 0) {
+    //     pos = readPoly(ins[poly++], pos);
+    // }
 
     while (poly < polys) {
         struct length16 *ls = (struct length16 *)(mem + pos);
@@ -83,7 +95,7 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
         poly++;
     }
 
-    if (debug) abc(memat, pos, memat - pos);
+    if (debug) abc(memat, pos, pos - memat);
 
     // clean and simplify polygons
     // Paths cleans, simples;

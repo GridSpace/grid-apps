@@ -71,9 +71,9 @@ if (!self.window) (function() {
                 break;
             }
         }
-        // if (debug) {
-        //     console.log({diff_resat: resat, memat});
-        // }
+        if (debug) {
+            console.log({offset: polys, resat, memat, len: resat - memat});
+        }
         wasm.free(memat);
         return polyNest(out);
     }
@@ -193,9 +193,11 @@ if (!self.window) (function() {
                 free: exports.mem_clr,
                 diff: exports.poly_diff,
                 union: exports.poly_union,
-                offset: exports.poly_offset
+                offset: exports.poly_offset,
+                set_debug: exports.set_debug
             };
             if (debug) {
+                wasm.set_debug(1);
                 runTests();
             }
         });
