@@ -113,21 +113,21 @@
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
-            let process = getRangeParameters(process, layer);
-            zhop = process.zHopDistance || 0; // range
-            retDist = process.outputRetractDist || 0; // range
-            retSpeed = process.outputRetractSpeed * 60 || 1; // range
-            retDwell = process.outputRetractDwell || 0; // range
+            let params = getRangeParameters(process, layer);
+            zhop = params.zHopDistance || 0; // range
+            retDist = params.outputRetractDist || 0; // range
+            retSpeed = params.outputRetractSpeed * 60 || 1; // range
+            retDwell = params.outputRetractDwell || 0; // range
             timeDwell = retDwell / 1000;
             nozzleTemp = layer === 0 ?
-                process.firstLayerNozzleTemp || process.outputTemp :
-                process.outputTemp || process.firstLayerNozzleTemp;
+                params.firstLayerNozzleTemp || params.outputTemp :
+                params.outputTemp || params.firstLayerNozzleTemp;
             bedTemp = layer === 0 ?
-                process.firstLayerBedTemp || process.outputBedTemp :
-                process.outputBedTemp || process.firstLayerBedTemp;
+                params.firstLayerBedTemp || params.outputBedTemp :
+                params.outputBedTemp || params.firstLayerBedTemp;
             fanSpeed = layer === 0 ?
-                process.firstLayerFanSpeed || 0 :
-                process.outputFanSpeed || 0;
+                params.firstLayerFanSpeed || 0 :
+                params.outputFanSpeed || 0;
             Object.assign(subst, {
                 temp_bed: bedTemp,
                 bed_temp: bedTemp,
@@ -135,9 +135,9 @@
                 speed: fanSpeed, // legacy
                 retract_speed: retSpeed,
                 retract_distance: retDist,
-                temp: process.outputTemp, // range
-                temp_bed: process.outputBedTemp, // range
-                bed_temp: process.outputBedTemp, // range
+                temp: params.outputTemp, // range
+                temp_bed: params.outputBedTemp, // range
+                bed_temp: params.outputBedTemp, // range
             });
         }
 
