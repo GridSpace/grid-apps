@@ -54,8 +54,8 @@ KIRI.minions = {
 
     union: function(polys, minarea) {
         return new Promise((resolve, reject) => {
-            if (concurrent < 2 || polys.length * 2 < concurrent) {
-                resolve(POLY.union(polys, 0, true));
+            if (concurrent < 2 || polys.length < concurrent * 2 || POLY.points(polys) < concurrent * 50) {
+                resolve(POLY.union(polys, minarea, true));
                 return;
             }
             let polyper = Math.ceil(polys.length / concurrent);
@@ -65,7 +65,7 @@ KIRI.minions = {
                 let polys = KIRI.codec.decode(data.union);
                 union.appendAll(polys);
                 if (--running === 0) {
-                    resolve(POLY.union(union, 0, true));
+                    resolve(POLY.union(union, minarea, true));
                 }
             };
             for (let i=0; i<polys.length; i += polyper) {

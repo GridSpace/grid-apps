@@ -29,6 +29,7 @@
         trimTo,
         expand,
         expand_lines,
+        points,
         route,
         union,
         inset,
@@ -143,6 +144,10 @@
             }
         }
         return output;
+    }
+
+    function points(polys) {
+        return polys.length ? polys.map(p => p.deepLength).reduce((a,v) => a+v) : 0;
     }
 
     /**

@@ -11,6 +11,7 @@
         SLA = KIRI.driver.SLA,
         FDM = KIRI.driver.FDM.share,
         SLICER = KIRI.slicer,
+        tracker = UTIL.pwait,
         newTop = KIRI.newTop,
         newSlice = KIRI.newSlice,
         newPoint = BASE.newPoint,
@@ -26,8 +27,8 @@
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
     SLA.slice = function(settings, widget, onupdate, ondone) {
-        let process = settings.process,
-            device = settings.device,
+        let { process, device, controller } = settings,
+            isConcurrent = controller.threaded && KIRI.minions.concurrent,
             work_total,
             work_remain;
 
@@ -59,10 +60,7 @@
         });
         let height = process.slaSlice || 0.05;
 
-        SLICER.sliceWidget(widget, {
-            height: height,
-            add: !process.slaOpenTop
-        }, function(slices) {
+        async function onSliceDone(slices) {
             // hold onto last (empty) slice
             let last = slices[slices.length-1];
             // remove empty slices
@@ -143,7 +141,7 @@
                 } else {
                     FDM.doShells(slice, 1, 0);
                 }
-            }, "slice");
+            }, "shells");
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
                 FDM.doDiff(slice, 0.000001, true, !process.slaOpenBase);
@@ -154,14 +152,22 @@
                     FDM.projectFlats(slice, solidLayers);
                     FDM.projectBridges(slice, solidLayers);
                 }, "project");
-                forSlices(slices, 10, (slice) => {
+                async function doUnionSolid(slice) {
                     if (slice.synth) return;
                     let traces = POLY.nest(POLY.flatten(slice.topShells()));
-                    let trims = slice.solids || [];
-                    traces.appendAll(trims);
-                    let union = POLY.union(traces, undefined, true);
-                    slice.unioned = POLY.setZ(union, slice.z);
-                }, "solid");
+                    if (slice.solids) {
+                        let trims = slice.solids || [];
+                        traces.appendAll(trims);
+                        // slice.unioned = POLY.setZ(POLY.union(traces, undefined, true), slice.z);
+                        slice.unioned = POLY.setZ(await KIRI.minions.union(traces), slice.z);
+                    } else {
+                        slice.unioned = traces;
+                    }
+                }
+                let promises = slices.map(slice => doUnionSolid(slice));
+                await tracker(promises, (i, t) => {
+                    doupdate(10 / promises.length, "solid");
+                });
             } else {
                 forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
@@ -181,7 +187,14 @@
                 });
             }
             doRender(widget);
-            ondone();
+        }
+
+        SLICER.sliceWidget(widget, {
+            height: height,
+            add: !process.slaOpenTop,
+            concurrent: isConcurrent
+        }, function(slices) {
+            onSliceDone(slices).then(ondone);
         }, function(update) {
             return onupdate(0.0 + update * 0.25);
         });
