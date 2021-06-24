@@ -145,16 +145,12 @@ KIRI.minions = {
                 slices,
                 options
             }, data => {
-                for (let rec of KIRI.codec.decode(data.output)) {
-                    let { slice, tops } = rec;
-                    let newSlice = KIRI.newSlice(slice.z);
-                    newSlice.index = slice.index;
-                    newSlice.thick = slice.thick;
-                    newSlice.height = slice.height;
-                    newSlice.addTops(tops);
-                    output.push(newSlice);
+                let recs = KIRI.codec.decode(data.output);
+                for (let rec of recs) {
+                    let { params, data } = rec;
+                    output.push(KIRI.slicer.createSlice(params, data));
                 }
-                resolve();
+                resolve(recs);
             }, [ floatP.buffer ]);
         });
     },

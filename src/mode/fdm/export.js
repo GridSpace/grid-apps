@@ -113,7 +113,7 @@
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
-            let process = getRangeParameters(settings, layer);
+            let process = getRangeParameters(process, layer);
             zhop = process.zHopDistance || 0; // range
             retDist = process.outputRetractDist || 0; // range
             retSpeed = process.outputRetractSpeed * 60 || 1; // range

@@ -28,6 +28,7 @@
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
         getRangeParameters = FDM.getRangeParameters,
+        slicePost = true,
         debug = false;
 
     let isThin = false; // force line rendering
@@ -46,6 +47,49 @@
         return opt;
     }
 
+    // console.log('slicing', {debug, slicePost});
+
+    /**
+     * may run in minion or worker context. do not create objects
+     * that will not quickly encode in threaded mode. add to existing
+     * data object. return is ignored.
+     */
+    FDM.slicePost = slicePost ? function(data, options, params) {
+        let { lines, groups, tops } = data;
+        let { z, index, total, height, thick } = params;
+        let { process, isSynth, isDanger, vaseMode, shellOffset, fillOffset } = options.post;
+        let range = getRangeParameters(process, index);
+        let shellFrac = (range.sliceShells - (range.sliceShells | 0));
+        let sliceShells = range.sliceShells | 0;
+        if (shellFrac) {
+            let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
+            let v2 = 1 - v1;
+            let parts = Math.round(v2/v1) + 1;
+            let rem = index % parts;
+            let trg = shellFrac > 0.5 ? 1 : parts - 1;
+            sliceShells += rem >= trg ? 1 : 0;
+        }
+        let spaceMult = index === 0 ? process.firstLayerLineMult || 1 : 1;
+        let isBottom = index < process.sliceBottomLayers;
+        let isTop = index > total - process.sliceTopLayers - 1;
+        let isDense = range.sliceFillSparse > 0.98;
+        let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
+        let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
+        let count = isSynth ? 1 : sliceShells;
+        let offset =  shellOffset * spaceMult;
+        let fillOff = fillOffset * spaceMult;
+
+        let nutops = [];
+        for (let top of tops) {
+            nutops.push(FDM.share.doTopShells(z, top, count, offset/2, offset, fillOff, {
+                vase: vaseMode,
+                thin: process.detectThinWalls && !isSynth,
+                danger: isDanger
+            }));
+        }
+        data.tops = nutops;
+    } : undefined;
+
     /**
      * DRIVER SLICE CONTRACT
      *
@@ -62,32 +106,31 @@
     FDM.slice = function(settings, widget, onupdate, ondone) {
         FDM.fixExtruders(settings);
         let render = settings.render !== false,
-            ctrl = settings.controller,
-            spro = settings.process,
-            sdev = settings.device,
-            isBelt = sdev.bedBelt,
+            { process, device, controller } = settings,
+            isBelt = device.bedBelt,
             isSynth = widget.track.synth,
-            minSolid = spro.sliceSolidMinArea,
-            solidLayers = spro.sliceSolidLayers,
-            vaseMode = spro.sliceFillType === 'vase' && !isSynth,
+            isDanger = controller.danger,
+            minSolid = process.sliceSolidMinArea,
+            solidLayers = process.sliceSolidLayers,
+            vaseMode = process.sliceFillType === 'vase' && !isSynth,
             doSolidLayers = solidLayers && !vaseMode && !isSynth,
             metadata = settings.widget[widget.id] || {},
             extruder = metadata.extruder || 0,
-            sliceHeight = spro.sliceHeight,
-            firstSliceHeight = isBelt ? sliceHeight : spro.firstSliceHeight,
-            nozzleSize = sdev.extruders[extruder].extNozzle,
-            lineWidth = spro.sliceLineWidth || nozzleSize,
-            fillOffsetMult = 1.0 - bound(spro.sliceFillOverlap, 0, 0.8),
+            sliceHeight = process.sliceHeight,
+            firstSliceHeight = isBelt ? sliceHeight : process.firstSliceHeight,
+            nozzleSize = device.extruders[extruder].extNozzle,
+            lineWidth = process.sliceLineWidth || nozzleSize,
+            fillOffsetMult = 1.0 - bound(process.sliceFillOverlap, 0, 0.8),
             shellOffset = lineWidth,
             fillSpacing = lineWidth,
             fillOffset = lineWidth * fillOffsetMult,
-            sliceFillAngle = spro.sliceFillAngle,
-            supportDensity = spro.sliceSupportDensity,
+            sliceFillAngle = process.sliceFillAngle,
+            supportDensity = process.sliceSupportDensity,
             beltfact = Math.cos(Math.PI/4),
-            doConcurrent = ctrl.threaded && KIRI.minions.concurrent;
+            doConcurrent = controller.threaded && KIRI.minions.concurrent;
 
-        isFlat = ctrl.lineType === "flat";
-        isThin = !isFlat && ctrl.lineType === "line";
+        isFlat = controller.lineType === "flat";
+        isThin = !isFlat && controller.lineType === "line";
         offset = lineWidth / 2;
 
         if (isFlat) {
@@ -117,8 +160,8 @@
             firstSliceHeight = sliceHeight;
         }
 
-        const sliceMinHeight = spro.sliceAdaptive && spro.sliceMinHeight > 0 ?
-            Math.min(spro.sliceMinHeight, sliceHeight) : 0;
+        const sliceMinHeight = process.sliceAdaptive && process.sliceMinHeight > 0 ?
+            Math.min(process.sliceMinHeight, sliceHeight) : 0;
 
         if (firstSliceHeight < sliceHeight) {
             DBUG.log("invalid first layer height < slice height");
@@ -127,15 +170,25 @@
         }
 
         SLICER.sliceWidget(widget, {
+            mode: 'FDM',
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: firstSliceHeight,
-            union: ctrl.healMesh,
+            union: controller.healMesh,
+            indices: process.indices,
+            concurrent: doConcurrent,
+            post: slicePost ? {
+                shellOffset,
+                fillOffset,
+                lineWidth,
+                vaseMode,
+                isSynth,
+                process,
+                isDanger
+            } : undefined
             // debug: true,
-            // xray: 3,
             // view: view,
-            indices: spro.indices,
-            concurrent: doConcurrent
+            // xray: 3,
         }, onSliceDone, onSliceUpdate);
 
         function onSliceUpdate(update) {
@@ -169,8 +222,8 @@
             shadow = doConcurrent ?
                 await KIRI.minions.union(alltops, 0.1) :
                 POLY.union(alltops, 0.1, true);
-            if (spro.sliceSupportExtra) {
-                shadow = POLY.offset(shadow, spro.sliceSupportExtra);
+            if (process.sliceSupportExtra) {
+                shadow = POLY.offset(shadow, process.sliceSupportExtra);
             }
             widget.shadow = POLY.setZ(shadow, 0);
             // slices[0].output()
@@ -198,7 +251,7 @@
             }
 
             // create shadow for non-belt supports
-            if (!isBelt && (isSynth || (!isSynth && supportDensity && spro.sliceSupportEnable))) {
+            if (!isBelt && (isSynth || (!isSynth && supportDensity && process.sliceSupportEnable))) {
                 await doShadow(slices);
             }
 
@@ -214,7 +267,7 @@
                             slice.addTop(u);
                         }
                     }
-                    let gap = sliceHeight * (isBelt ? 0 : spro.sliceSupportGap);
+                    let gap = sliceHeight * (isBelt ? 0 : process.sliceSupportGap);
                     // clip tops to other widgets in group
                     tops = slice.topPolys();
                     for (let peer of widget.group) {
@@ -226,9 +279,9 @@
                             if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.1) {
                                 continue;
                             }
-                            // offset pslice tops by spro.sliceSupportOffset
+                            // offset pslice tops by process.sliceSupportOffset
                             if (!pslice.synth_off) {
-                                pslice.synth_off = POLY.offset(pslice.topPolys(), spro.sliceSupportOffset);
+                                pslice.synth_off = POLY.offset(pslice.topPolys(), process.sliceSupportOffset);
                             }
                             let ptops = pslice.synth_off;
                             let ntops = [];
@@ -276,7 +329,7 @@
             }
 
             // do not hint polygin fill longer than a max span length
-            CONF.hint_len_max = UTIL.sqr(spro.sliceBridgeMax);
+            CONF.hint_len_max = UTIL.sqr(process.sliceBridgeMax);
 
             // reset for solids, support projections
             // and other annotations
@@ -286,46 +339,48 @@
                 slice.solids = [];
             });
 
-            let promises = doConcurrent ? [] : undefined;
             // create shells and diff inner fillable areas
-            forSlices(0.0, promises ? 0.05 : 0.15, slice => {
-                let params = slice.params = getRangeParameters(settings, slice.index);
-                let shellFrac = (params.sliceShells - (params.sliceShells | 0));
-                let sliceShells = params.sliceShells | 0;
-                if (shellFrac) {
-                    let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
-                    let v2 = 1 - v1;
-                    let parts = Math.round(v2/v1) + 1;
-                    let rem = slice.index % parts;
-                    let trg = shellFrac > 0.5 ? 1 : parts - 1;
-                    sliceShells += rem >= trg ? 1 : 0;
+            if (!slicePost) {
+                let promises = doConcurrent ? [] : undefined;
+                forSlices(0.0, promises ? 0.05 : 0.15, slice => {
+                    let params = slice.params = getRangeParameters(process, slice.index);
+                    let shellFrac = (params.sliceShells - (params.sliceShells | 0));
+                    let sliceShells = params.sliceShells | 0;
+                    if (shellFrac) {
+                        let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
+                        let v2 = 1 - v1;
+                        let parts = Math.round(v2/v1) + 1;
+                        let rem = slice.index % parts;
+                        let trg = shellFrac > 0.5 ? 1 : parts - 1;
+                        sliceShells += rem >= trg ? 1 : 0;
+                    }
+                    let first = slice.index === 0;
+                    let spaceMult = first ? process.firstLayerLineMult || 1 : 1;
+                    let isBottom = slice.index < process.sliceBottomLayers;
+                    let isTop = slice.index > slices.length - process.sliceTopLayers-1;
+                    let isDense = params.sliceFillSparse > 0.98;
+                    let solidWidth = params.sliceFillWidth || 1;
+                    if ((isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth) {
+                        slice.solid = {
+                            solidWidth,
+                            spaceMult
+                        };
+                    }
+                    let offset = shellOffset * spaceMult;
+                    let fillOff = fillOffset * spaceMult;
+                    let count = isSynth ? 1 : sliceShells;
+                    doShells(slice, count, offset, fillOff, {
+                        vase: vaseMode,
+                        thin: process.detectThinWalls && !isSynth,
+                        danger: controller.danger
+                    }, promises);
+                }, "shells");
+                if (promises) {
+                    // await Promise.all(promises);
+                    await tracker(promises, (i, t) => {
+                        trackupdate(i / t, 0.05, 0.15);
+                    });
                 }
-                let first = slice.index === 0;
-                let spaceMult = first ? spro.firstLayerLineMult || 1 : 1;
-                let isBottom = slice.index < spro.sliceBottomLayers;
-                let isTop = slice.index > slices.length - spro.sliceTopLayers-1;
-                let isDense = params.sliceFillSparse > 0.98;
-                let solidWidth = params.sliceFillWidth || 1;
-                if ((isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth) {
-                    slice.solid = {
-                        solidWidth,
-                        spaceMult
-                    };
-                }
-                let offset = shellOffset * spaceMult;
-                let fillOff = fillOffset * spaceMult;
-                let count = isSynth ? 1 : sliceShells;
-                doShells(slice, count, offset, fillOff, {
-                    vase: vaseMode,
-                    thin: spro.detectThinWalls && !isSynth,
-                    danger: ctrl.danger
-                }, promises);
-            }, "shells");
-            if (promises) {
-                // await Promise.all(promises);
-                await tracker(promises, (i, t) => {
-                    trackupdate(i / t, 0.05, 0.15);
-                });
             }
 
             // just the top/bottom special solid layers
@@ -335,7 +390,7 @@
                     doSolidLayerFill(slice, fillSpace, sliceFillAngle);
                 }
                 sliceFillAngle += 90.0;
-            }, "shells");
+            }, "solid layers");
 
             // add lead in when specified in belt mode
             if (!isSynth && isBelt) {
@@ -374,13 +429,13 @@
                         if (!start) start = slice;
                     }
                 }
-                let offset = spro.firstLayerBeltLead * beltfact;
+                let offset = process.firstLayerBeltLead * beltfact;
                 // ensure we start against a layer with shells
                 while (start.up && start.topShells().length === 0) {
                     start = start.up;
                 }
                 // if a brim applies, add that width to anchor
-                let brim = getRangeParameters(settings, 0).firstLayerBrim || 0;
+                let brim = getRangeParameters(process, 0).firstLayerBrim || 0;
                 if (brim) {
                     minx -= brim;
                     maxx += brim;
@@ -414,7 +469,7 @@
                     offset -= sliceHeight;
                 }
                 // add anchor bump
-                let bump = spro.firstLayerBeltBump;
+                let bump = process.firstLayerBeltBump;
                 if (bump) {
                     adds = adds.reverse().slice(1, adds.length - 1);
                     let count = 1;
@@ -456,7 +511,7 @@
                 // console.log('start'); await BASE.util.ptimer(1000);
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.35, promises ? 0.4 : 0.5, slice => {
-                    let params = slice.params || spro;
+                    let params = slice.params || process;
                     let first = slice.index === 0;
                     let solidWidth = params.sliceFillWidth || 1;
                     let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
@@ -477,16 +532,16 @@
                 let lastType;
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.5, promises ? 0.55 : 0.7, slice => {
-                    let params = slice.params || spro;
+                    let params = slice.params || process;
                     if (vaseMode || !params.sliceFillSparse) {
                         return;
                     }
                     let newType = params.sliceFillType;
                     doSparseLayerFill(slice, {
-                        settings: settings,
-                        process: spro,
-                        device: sdev,
-                        lineWidth: lineWidth,
+                        settings,
+                        process,
+                        device,
+                        lineWidth,
                         spacing: fillOffset,
                         density: params.sliceFillSparse,
                         bounds: widget.getBoundingBox(),
@@ -505,7 +560,7 @@
             } else if (isSynth) {
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.5, promises ? 0.6 : 0.7, slice => {
-                    let params = slice.params || spro;
+                    let params = slice.params || process;
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
@@ -523,16 +578,16 @@
             }
 
             // auto support generation
-            if (!isBelt && !isSynth && supportDensity && spro.sliceSupportEnable) {
+            if (!isBelt && !isSynth && supportDensity && process.sliceSupportEnable) {
                 doShadow(slices);
                 // console.log('start'); await BASE.util.ptimer(1000);
                 forSlices(0.7, 0.8, slice => {
-                    doSupport(slice, spro, widget.shadow, ctrl.danger);
+                    doSupport(slice, process, widget.shadow, controller.danger);
                 }, "support");
                 // console.log('stop'); await BASE.util.ptimer(1000);
                 let promises = doConcurrent ? [] : undefined;
                 forSlices(0.8, promises ? 0.88 : 0.9, slice => {
-                    doSupportFill(promises, slice, lineWidth, supportDensity, spro.sliceSupportArea);
+                    doSupportFill(promises, slice, lineWidth, supportDensity, process.sliceSupportArea);
                 }, "support");
                 if (promises) {
                     await tracker(promises, (i, t) => {
@@ -544,8 +599,8 @@
             // render if not explicitly disabled
             if (render) {
                 forSlices(0.9, 1.0, slice => {
-                    let params = slice.params || spro;
-                    doRender(slice, isSynth, params, ctrl.devel);
+                    let params = slice.params || process;
+                    doRender(slice, isSynth, params, controller.devel);
                 }, "render");
             }
 
@@ -631,7 +686,7 @@
         // console.log(slice.index, slice.render.stats);
     }
 
-    // shared with SLA driver
+    // shared with SLA driver and minions
     FDM.share = {
         doShells,
         doTopShells,
@@ -682,6 +737,11 @@
     }
 
     function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
+        // pretend we're a top object in minions
+        if (!top.poly) {
+            top = { poly: top };
+        }
+
         let top_poly = [ top.poly ];
 
         if (opt.vase) {
@@ -801,6 +861,8 @@
 
         // for diffing
         top.last = last;
+
+        return top;
     }
 
     /**

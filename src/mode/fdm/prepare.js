@@ -374,7 +374,7 @@
                     return a.dst - b.dst;
                 });
                 let { z, slice, offset } = order[0];
-                let params = getRangeParameters(settings, slice.index);
+                let params = getRangeParameters(process, slice.index);
                 slice.prep = true;
                 // retract between widgets or layers (when set)
                 if (layerout.length && slice.widget !== lastWidget) {
@@ -474,7 +474,7 @@
             // iterate over layers, find extrusion on belt and
             // apply corrections and add brim when specified
             for (let layer of output) {
-                let params = getRangeParameters(settings, layer.layer || 0);
+                let params = getRangeParameters(process, layer.layer || 0);
                 let brimHalf = params.firstLayerBrim < 0;
                 let firstLayerBrim = Math.abs(params.firstLayerBrim);
                 let firstLayerBrimIn = params.firstLayerBrimIn;

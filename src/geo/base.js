@@ -38,8 +38,8 @@
         let count = 0;
         if (tracker)
         for (let p of promises) {
-            p.then(() => {
-                tracker(count++, promises.length);
+            p.then(data => {
+                tracker(count++, promises.length, data);
             });
         }
         await Promise.all(promises);

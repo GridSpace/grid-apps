@@ -176,9 +176,21 @@
     }
 
     PRO.addTop = function(poly) {
-        let top = new Top(poly);
-        this.tops.push(top);
-        return top;
+        if (poly.length) {
+            let top = new Top(poly);
+            this.tops.push(top);
+            return top;
+        } else {
+            let top = new Top(poly.poly);
+            top.fill_lines = poly.fill_lines;
+            top.fill_off = poly.fill_off;
+            top.last = poly.last;
+            top.shells = poly.shells;
+            this.tops.push(top);
+            return top;
+        }
+        console.log('top', poly);
+        throw "invalid top";
     };
 
     PRO.findClosestPointTo = function(target) {

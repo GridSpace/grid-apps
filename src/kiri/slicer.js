@@ -2,6 +2,9 @@
 
 "use strict";
 
+/**
+ * Slicing engine used by FDM, Laser, and SLA
+ */
 (function() {
 
     if (self.kiri.slicer) return;
@@ -10,7 +13,8 @@
         slice,
         sliceZ,
         sliceWidget,
-        connectLines
+        connectLines,
+        createSlice
     };
 
     let KIRI = self.kiri,
@@ -138,8 +142,8 @@
         if (concurrent > 1) {
             if (bucketCount < concurrent) {
                 bucketCount = concurrent;
-            } else if (bucketCount > 128) {
-                bucketCount = 128;
+            } else if (bucketCount > 100) {
+                bucketCount = 100;
             }
         }
 
@@ -302,42 +306,65 @@
 
         function bucketZ(index, z, height, thick) {
             buckets[Math.floor(z * zScale)].slices.push({
-                index, z, height, thick
+                index, z, height, thick, total: zIndexes.length
             });
         }
 
         async function sliceBuckets() {
             let output = [];
-            // console.log({buckets});
-            if (concurrent < 2) {
-                sliceBucketsLocal(buckets, output);
-            } else {
-                let promises = [];
-                for (let bucket of buckets) {
-                    promises.push(KIRI.minions.sliceBucket(bucket, options, output));
-                }
-                await tracker(promises, (i,t) => {
+            if (concurrent) {
+                let promises = buckets.map(
+                    bucket => KIRI.minions.sliceBucket(bucket, options, output)
+                );
+                await tracker(promises, (i,t,d) => {
                     onupdate(0.1 + (i / t) * 0.9);
                 });
+            } else {
+                let count = 0;
+                for (let bucket of buckets) {
+                    for (let params of bucket.slices) {
+                        output.push(createSlice(
+                            params,
+                            sliceZ(params.z, bucket.points, options, params),
+                            options
+                        ));
+                        onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
+                    }
+                }
             }
             return output;
         }
 
-        function sliceBucketsLocal(buckets, output) {
-            let count = 0;
-            for (let bucket of buckets) {
-                for (let slice of bucket.slices) {
-                    let { index, z, height, thick } = slice;
-                    let { lines, groups, tops } = sliceZ(z, bucket.points, options);
-                    slice = newSlice(z).addTops(tops);
-                    slice.height = height;
-                    slice.index = index;
-                    slice.thick = thick;
-                    output.push(slice);
-                    onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
-                }
+    }
+
+    function createSlice(params, data, options = {}) {
+        let { index, z, height, thick } = params;
+        let { lines, groups, tops } = data;
+        let slice = newSlice(z).addTops(tops);
+        slice.height = height;
+        slice.index = index;
+        slice.thick = thick;
+        // debugging (non-threaded mode only)
+        let { debug, xray, view } = options;
+        if (view && (debug || xray)) {
+            if ((debug && lines.excessive) || xray) {
+                const dash = xray || 3;
+                lines.forEach((line, i) => {
+                    const group = i % dash;
+                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                    slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
+                });
             }
+            POLY.nest(groups).forEach((poly, i) => {
+                slice.addTop(poly);
+                if (xray) {
+                    const group = i % (xray || 3);
+                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                    slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
+                }
+            });
         }
+        return slice;
     }
 
     /** ***** SLICING FUNCTIONS ***** */
@@ -421,7 +448,7 @@
      * @param {number} z
      * @param {number} [height] optional real height (fdm)
      */
-    function sliceZ(z, points, options = {}) {
+    function sliceZ(z, points, options = {}, params = {}) {
         let phash = {},
             lines = [],
             p1, p2, p3;
@@ -477,28 +504,18 @@
             groups = POLY.flatten(POLY.union(POLY.nest(groups), null, true), null, true);
         }
 
-        // if ((debug && lines.excessive) || xray) {
-        //     const dash = xray || 3;
-        //     lines.forEach((line, i) => {
-        //         const group = i % dash;
-        //         const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-        //         slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
-        //     });
-        // }
-
         let tops = POLY.nest(groups);
+        let data = { lines, groups, tops };
 
-        // identify and add tops to slice
-        // POLY.nest(groups).forEach((poly, i) => {
-        //     slice.addTop(poly);
-        //     if (xray) {
-        //         const group = i % (xray || 3);
-        //         const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-        //         slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
-        //     }
-        // });
+        // look for driver-specific slice post-processor
+        if (options.mode) {
+            let fn = KIRI.driver[options.mode].slicePost;
+            if (fn) {
+                fn(data, options, params);
+            }
+        }
 
-        return { lines, groups, tops };
+        return data;
     }
 
     /**

@@ -29,15 +29,15 @@
         return settings;
     }
 
-    function getRangeParameters(settings, index) {
+    function getRangeParameters(process, index) {
         if (index === undefined || index === null || index < 0) {
-            return settings.process;
+            return process;
         }
-        let ranges = settings.process.ranges;
+        let ranges = process.ranges;
         if (!(ranges && ranges.length)) {
-            return settings.process;
+            return process;
         }
-        let params = Object.clone(settings.process);
+        let params = Object.clone(process);
         for (let range of ranges) {
             if (index >= range.lo && index <= range.hi) {
                 for (let [key,value] of Object.entries(range.fields)) {

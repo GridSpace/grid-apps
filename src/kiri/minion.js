@@ -92,10 +92,10 @@ const funcs = {
             realp[p++] = BASE.newPoint(points[i++], points[i++], points[i++]);
         }
         let output = [];
-        for (let slice of slices) {
+        for (let params of slices) {
             output.push({
-                slice,
-                tops: KIRI.slicer.sliceZ(slice.z, realp, options).tops
+                params,
+                data: { tops: KIRI.slicer.sliceZ(params.z, realp, options, params).tops }
             });
         }
         reply({ seq, output: CODEC.encode(output) });

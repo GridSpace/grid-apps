@@ -2,6 +2,9 @@
 
 "use strict";
 
+/**
+ * Slicing engine used by CAM
+ */
 (function() {
 
     let KIRI = self.kiri,
