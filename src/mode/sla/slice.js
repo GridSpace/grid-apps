@@ -156,7 +156,6 @@
                 }, "project");
                 forSlices(slices, 10, (slice) => {
                     if (slice.synth) return;
-                    FDM.doSolidsFill(slice, undefined, undefined, 0.001);
                     let traces = POLY.nest(POLY.flatten(slice.topShells()));
                     let trims = slice.solids || [];
                     traces.appendAll(trims);
