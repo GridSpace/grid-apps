@@ -80,12 +80,17 @@
         let fillOff = fillOffset * spaceMult;
 
         let nutops = [];
+        // co-locate shell processing with top generation in slicer
         for (let top of tops) {
             nutops.push(FDM.share.doTopShells(z, top, count, offset/2, offset, fillOff, {
                 vase: vaseMode,
                 thin: process.detectThinWalls && !isSynth,
                 danger: isDanger
             }));
+        }
+        // add shadow (low rez poly) if needed
+        for (let top of nutops) {
+            top.shadow = top.poly.clean(true, undefined, CONF.clipper / 10);
         }
         data.tops = nutops;
     } : undefined;
@@ -211,17 +216,13 @@
                 return;
             }
             // create shadow for clipping supports
-            let shadow = null;
-            let allslices = widget.group.map(w => w.slices).flat();
-            let alltops = allslices.map(slice => slice.topPolys()).flat();
-            let alllen = alltops.map(p => p.deepLength).reduce((a,v)=>a+v);
-            // de-rez for really large #s
-            if (alllen > 100000) {
-                alltops = alltops.map(p => p.clean(true, undefined, CONF.clipper / 10));
-            }
-            shadow = doConcurrent ?
+            let alltops = widget.group
+                .map(w => w.slices).flat()
+                .map(s => s.tops).flat().map(t => t.shadow);
+            let shadow = doConcurrent ?
                 await KIRI.minions.union(alltops, 0.1) :
                 POLY.union(alltops, 0.1, true);
+            // expand shadow when requested (support clipping)
             if (process.sliceSupportExtra) {
                 shadow = POLY.offset(shadow, process.sliceSupportExtra);
             }
@@ -1247,10 +1248,11 @@
             down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
 
         if (experimental && down_tops) {
-            // de-rez complex polys because it's not that important for supports
             let points = down_tops.map(p => p.deepLength).reduce((a,v)=>a+v);
             if (points > 200) {
-                down_tops = down_tops.map(p => p.clean(true, undefined, CONF.clipper / 10));
+                // use de-rez'd top shadow instead
+                down_tops = down.tops.map(t => t.shadow);
+                // de-rez trace polys because it's not that important for supports
                 down_traces = down_traces.map(p => p.clean(true, undefined, CONF.clipper / 10));
             }
         }

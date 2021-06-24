@@ -177,15 +177,18 @@
 
     PRO.addTop = function(poly) {
         if (poly.length) {
+            // standard legacy polygon
             let top = new Top(poly);
             this.tops.push(top);
             return top;
         } else {
+            // frop top object passed back by slicePost()
             let top = new Top(poly.poly);
             top.fill_lines = poly.fill_lines;
             top.fill_off = poly.fill_off;
             top.last = poly.last;
             top.shells = poly.shells;
+            top.shadow = poly.shadow;
             this.tops.push(top);
             return top;
         }
