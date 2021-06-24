@@ -665,9 +665,9 @@
      * @param {number} fillOffset
      * @param {Obejct} options
      */
-    function doShells(slice, count, offsetN, fillOffset, opt = {}) {
+    function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
         for (let top of slice.tops) {
-            doTopShells(slice.z, top, count, offsetN / 2, offsetN, fillOffset, opt);
+            doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
         }
     }
 

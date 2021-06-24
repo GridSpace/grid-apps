@@ -528,7 +528,7 @@
             let slice = widget.slices[index];
             if (slice) {
                 if (slice.synth) count++;
-                let polys = slice.solids.unioned;
+                let polys = slice.unioned;
                 if (!polys) polys = slice.tops.map(t => t.poly);
                 if (slice.supports) polys.appendAll(slice.supports);
                 array.appendAll(polys.map(poly => {
@@ -576,7 +576,7 @@
             if (slice) {
                 // prevent premature exit on empty synth slice
                 if (slice.synth) count++;
-                let polys = slice.solids.unioned;
+                let polys = slice.unioned;
                 if (!polys) polys = slice.tops.map(t => t.poly);
                 if (slice.supports) polys.appendAll(slice.supports);
                 polys.forEach(poly => {

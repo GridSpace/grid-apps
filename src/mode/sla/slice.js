@@ -160,7 +160,7 @@
                     let trims = slice.solids || [];
                     traces.appendAll(trims);
                     let union = POLY.union(traces, undefined, true);
-                    slice.unioned = union;
+                    slice.unioned = POLY.setZ(union, slice.z);
                 }, "solid");
             } else {
                 forSlices(slices, 10, (slice) => {
