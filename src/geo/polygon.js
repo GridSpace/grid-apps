@@ -1429,6 +1429,13 @@
     };
 
     /**
+     * shortcut to de-rez poly
+     */
+    PRO.simple = function() {
+        return this.clean(true, undefined, Math.min(CONF.clipper / 10, CONF.clipperClean * 5));
+    };
+
+    /**
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.
      */

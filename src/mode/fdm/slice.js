@@ -94,7 +94,8 @@
         }
         // add simple (low rez poly) where less accuracy is OK
         for (let top of nutops) {
-            top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
+            // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
+            top.simple = top.poly.simple();
         }
         data.tops = nutops;
     };
