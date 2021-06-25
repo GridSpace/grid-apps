@@ -292,7 +292,7 @@
      * @param {number} [minArea]
      * @returns {Polygon[]} out
      */
-    function subtract(setA, setB, outA, outB, z, minArea) {
+    function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
         let min = minArea || 0.1,
             out = [];
 
@@ -306,7 +306,25 @@
             return to;
         }
 
-        if (true) {
+        if (opt.prof) {
+            if (setA.length === 0 || setB.length === 0) {
+                console.log('sub_zero', {setA, setB});
+            }
+            opt.prof.pin = (opt.prof.pin || 0) + points(setA) + points(setB);
+            opt.prof.call = (opt.prof.call || 0) + 1;
+        }
+
+        if (opt.wasm) {
+            let oA = outA ? [] : undefined;
+            let oB = outB ? [] : undefined;
+            geo.wasm.js.diff(setA, setB, z, oA, oB);
+            if (oA) {
+                outA.appendAll(filter(oA));
+            }
+            if (oB) {
+                outB.appendAll(filter(oB));
+            }
+        } else {
             let clib = self.ClipperLib,
                 ctyp = clib.ClipType,
                 ptyp = clib.PolyType,
@@ -338,16 +356,10 @@
                     filter(fromClipperTree(ctre, z, null, null, min), outB);
                 }
             }
-        } else {
-            let oA = outA ? [] : undefined;
-            let oB = outB ? [] : undefined;
-            geo.wasm.js.diff(setA, setB, z, oA, oB);
-            if (oA) {
-                outA.appendAll(filter(oA));
-            }
-            if (oB) {
-                outB.appendAll(filter(oB));
-            }
+        }
+
+        if (opt.prof) {
+            opt.prof.pout = (opt.prof.pout || 0) + points(out);
         }
 
         return out;

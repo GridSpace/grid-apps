@@ -106,6 +106,10 @@
         return this.tops.map(top => top.poly);
     };
 
+    PRO.topSimples = function() {
+        return this.tops.map(top => top.simple);
+    };
+
     // FDM top intersect optimization
     PRO.topPolysFlat = function() {
         if (this.topFlatPolys) {
@@ -188,7 +192,7 @@
             top.fill_off = poly.fill_off;
             top.last = poly.last;
             top.shells = poly.shells;
-            top.shadow = poly.shadow;
+            top.simple = poly.simple;
             this.tops.push(top);
             return top;
         }

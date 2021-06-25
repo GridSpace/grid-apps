@@ -28,6 +28,10 @@
         PROTO = Object.clone(COLOR),
         bwcomp = (1 / Math.cos(Math.PI/4)),
         getRangeParameters = FDM.getRangeParameters,
+        noop = function() {},
+        profile = false,
+        profileStart = profile ? console.profile : noop,
+        profileEnd = profile ? console.profileEnd : noop,
         debug = false;
 
     let isThin = false, // force line rendering
@@ -88,9 +92,9 @@
                 danger: isDanger
             }));
         }
-        // add shadow (low rez poly) if needed
+        // add simple (low rez poly) where less accuracy is OK
         for (let top of nutops) {
-            top.shadow = top.poly.clean(true, undefined, CONF.clipper / 10);
+            top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
         }
         data.tops = nutops;
     };
@@ -203,7 +207,7 @@
             // create shadow for clipping supports
             let alltops = widget.group
                 .map(w => w.slices).flat()
-                .map(s => s.tops).flat().map(t => t.shadow);
+                .map(s => s.tops).flat().map(t => t.simple);
             let shadow = isConcurrent ?
                 await KIRI.minions.union(alltops, 0.1) :
                 POLY.union(alltops, 0.1, true);
@@ -281,16 +285,6 @@
                         }
                         // trim to group's shadow if not in belt mode
                         if (!isBelt) {
-                            // let group = widget.group[0];
-                            // if (!group.shadow) {
-                            //     let gs = [];
-                            //     for (let w of group) {
-                            //         if (w.shadow) {
-                            //             gs = POLY.union([w.shadow,...gs],null,0.1);
-                            //         }
-                            //     }
-                            //     group.shadow = gs;
-                            // }
                             tops = POLY.setZ(POLY.trimTo(tops, widget.shadow), slice.z);
                         }
                     }
@@ -452,14 +446,18 @@
 
             // calculations only relevant when solid layers are used
             if (solidLayers && !vaseMode && !isSynth) {
+                profileStart("delta");
                 forSlices(0.2, 0.34, slice => {
                     if (slice.index > 0) doDiff(slice, solidMinArea);
                 }, "layer deltas");
+                profileEnd();
+                profileStart("delta-project");
                 forSlices(0.34, 0.35, slice => {
                     projectFlats(slice, solidLayers);
                     projectBridges(slice, solidLayers);
                 }, "layer deltas");
-                // console.log('start'); await BASE.util.ptimer(1000);
+                profileEnd();
+                profileStart("solid-fill")
                 let promises = isConcurrent ? [] : undefined;
                 forSlices(0.35, promises ? 0.4 : 0.5, slice => {
                     let params = slice.params || process;
@@ -475,7 +473,7 @@
                         trackupdate(i / t, 0.4, 0.5);
                     });
                 }
-                // console.log('stop'); await BASE.util.ptimer(1000);
+                profileEnd();
             }
 
             if (!isSynth && !vaseMode) {
@@ -532,15 +530,16 @@
             // auto support generation
             if (!isBelt && !isSynth && supportDensity && process.sliceSupportEnable) {
                 doShadow(slices);
-                // console.log('start'); await BASE.util.ptimer(1000);
+                profileStart("support");
                 let promises = [];
                 forSlices(0.7, 0.75, slice => {
-                    promises.push(doSupport(slice, process, widget.shadow, controller.danger));
+                    promises.push(doSupport(slice, process, widget.shadow, { exp: isDanger }));
                 }, "support");
                 await tracker(promises, (i, t) => {
                     trackupdate(i / t, 0.75, 0.8);
                 });
-                // console.log('stop'); await BASE.util.ptimer(1000);
+                profileEnd();
+                profileStart("support-fill");
                 promises = false && isConcurrent ? [] : undefined;
                 forSlices(0.8, promises ? 0.88 : 0.9, slice => {
                     doSupportFill(promises, slice, lineWidth, supportDensity, process.sliceSupportArea);
@@ -550,6 +549,7 @@
                         trackupdate(i / t, 0.88, 0.9);
                     });
                 }
+                profileEnd();
             }
 
             // render if not explicitly disabled
@@ -796,6 +796,7 @@
 
         // for diffing
         top.last = last;
+        // top.last_simple = last.map(p => p.clean(true, undefined, CONF.clipper / 10));
 
         return top;
     }
@@ -1155,7 +1156,7 @@
     /**
      * calculate external overhangs requiring support
      */
-    async function doSupport(slice, proc, shadow, experimental) {
+    async function doSupport(slice, proc, shadow, opt = {}) {
         let maxBridge = proc.sliceSupportSpan || 5,
             minArea = proc.supportMinArea,
             pillarSize = proc.sliceSupportSize,
@@ -1179,11 +1180,11 @@
             down_tops = down ? down.topPolys() : null,
             down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
 
-        if (experimental && down_tops) {
+        if (opt.exp && down_tops) {
             let points = down_tops.map(p => p.deepLength).reduce((a,v)=>a+v);
             if (points > 200) {
                 // use de-rez'd top shadow instead
-                down_tops = down.tops.map(t => t.shadow);
+                down_tops = down.topSimples();
                 // de-rez trace polys because it's not that important for supports
                 down_traces = down_traces.map(p => p.clean(true, undefined, CONF.clipper / 10));
             }
@@ -1271,7 +1272,10 @@
             let trimmed = [], culled = [];
 
             // clip supports to shell offsets
-            POLY.subtract(supports, down.topPolys(), trimmed, null, slice.z, min);
+            POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, min, {
+                prof: opt.prof,
+                wasm: false
+            });
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
