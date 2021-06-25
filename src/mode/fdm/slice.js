@@ -67,6 +67,12 @@
         let { lines, groups, tops } = data;
         let { z, index, total, height, thick } = params;
         let { process, isSynth, isDanger, vaseMode, shellOffset, fillOffset } = options.post;
+        if (isSynth) {
+            // do not shell synth widgets because
+            // they will be clipped against peers later
+            // which requires shelling post-clip
+            return;
+        }
         let range = getRangeParameters(process, index);
         // calculate fractional shells
         let shellFrac = (range.sliceShells - (range.sliceShells | 0));
@@ -92,11 +98,11 @@
                 danger: isDanger
             }));
         }
-        // add simple (low rez poly) where less accuracy is OK
-        for (let top of nutops) {
-            // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
-            top.simple = top.poly.simple();
-        }
+        // // add simple (low rez poly) where less accuracy is OK
+        // for (let top of nutops) {
+        //     // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
+        //     top.simple = top.poly.simple();
+        // }
         data.tops = nutops;
     };
 
@@ -180,7 +186,8 @@
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: sliceHeightBase,
-            union: controller.healMesh,
+            // support/synth usually has overlapping boxes
+            union: controller.healMesh || isSynth,
             indices: process.indices,
             concurrent: isConcurrent,
             post: {
@@ -205,8 +212,14 @@
             if (widget.shadow) {
                 return;
             }
+            let root = widget.group[0];
+            if (root.shadow) {
+                widget.shadow = root.shadow;
+                return;
+            }
             // create shadow for clipping supports
             let alltops = widget.group
+                .filter(w => !w.track.synth) // no supports in shadow
                 .map(w => w.slices).flat()
                 .map(s => s.tops).flat().map(t => t.simple);
             let shadow = isConcurrent ?
@@ -216,7 +229,7 @@
             if (process.sliceSupportExtra) {
                 shadow = POLY.offset(shadow, process.sliceSupportExtra);
             }
-            widget.shadow = POLY.setZ(shadow, 0);
+            widget.shadow = root.shadow = POLY.setZ(shadow, 0);
             // slices[0].output()
             //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
             //     .addPolys(shadow);
@@ -251,21 +264,12 @@
                 await doShadow(slices);
             }
 
-            // for synth support widgets, merge tops
+            // for synth support widgets, clip/offset to other widgets in group
             if (isSynth) {
                 for (let slice of slices) {
-                    // union top support polys
-                    let tops = slice.topPolys();
-                    let union = POLY.union(tops, null, true);
-                    if (union.length < tops.length) {
-                        slice.tops = [];
-                        for (let u of union) {
-                            slice.addTop(u);
-                        }
-                    }
                     let gap = sliceHeight * (isBelt ? 0 : process.sliceSupportGap);
                     // clip tops to other widgets in group
-                    tops = slice.topPolys();
+                    let tops = slice.topPolys();
                     for (let peer of widget.group) {
                         // skip self
                         if (peer === widget || !peer.slices) {
@@ -293,6 +297,7 @@
                     for (let t of tops) {
                         slice.addTop(t);
                     }
+                    doShells(slice, 1, shellOffset / 2);
                 }
             }
 
@@ -508,23 +513,27 @@
                     });
                 }
             } else if (isSynth) {
-                // fill supports differently
+                // fill manual supports differently
                 let promises = isConcurrent ? [] : undefined;
+                let resolve = [];
                 forSlices(0.5, promises ? 0.6 : 0.7, slice => {
                     let params = slice.params || process;
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
                         let offset = [];
-                        POLY.expand(top.shells, -nozzleSize/4, slice.z, offset);
+                        POLY.expand(top.shells || [], -nozzleSize/4, slice.z, offset);
                         fillSupportPolys(promises, offset, lineWidth, density, slice.z);
-                        top.fill_lines = offset.map(o => o.fill).flat().filter(v => v);
+                        resolve.push({top, offset});
                     }
                 }, "infill");
                 if (promises) {
                     await tracker(promises, (i, t) => {
                         trackupdate(i / t, 0.6, 0.7);
                     });
+                }
+                for (let rec of resolve) {
+                    rec.top.fill_lines = rec.offset.map(o => o.fill).flat().filter(v => v);
                 }
             }
 
@@ -677,6 +686,10 @@
         if (!top.poly) {
             top = { poly: top };
         }
+
+        // add simple (low rez poly) where less accuracy is OK
+        // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
+        top.simple = top.poly.simple();
 
         let top_poly = [ top.poly ];
 
