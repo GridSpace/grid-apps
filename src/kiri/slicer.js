@@ -685,8 +685,8 @@
 
         // create point map, unique point list and point group arrays
         input.forEach(function(line) {
-            p1 = cachedPoint(line.p1.round(4));
-            p2 = cachedPoint(line.p2.round(4));
+            p1 = cachedPoint(line.p1.round(5));
+            p2 = cachedPoint(line.p2.round(5));
             addConnected(p1,p2);
             addConnected(p2,p1);
         });

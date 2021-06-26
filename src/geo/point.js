@@ -80,7 +80,10 @@
     };
 
     PRO.round = function(precision) {
-        return newPoint(ROUND(this.x,precision), ROUND(this.y,precision), ROUND(this.z,precision));
+        return newPoint(
+            this.x.round(precision),
+            this.y.round(precision),
+            this.z.round(precision));
     };
 
     PRO.addFacet = function(facet) {
@@ -91,7 +94,6 @@
 
     PRO.rekey = function() {
         this._key = undefined;
-        // this.key = [this.x,this.y,this.z].join(',');
     };
 
     PRO.toString = function() {
@@ -394,7 +396,9 @@
         let point = this, i;
         if (Array.isArray(poly)) {
             for (i=0; i<poly.length; i++) {
-                if (point.isInPolygonOnly(poly[i])) return true;
+                if (point.isInPolygonOnly(poly[i])) {
+                    return true;
+                }
             }
             return false;
         }

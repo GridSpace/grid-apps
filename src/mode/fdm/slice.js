@@ -1272,7 +1272,7 @@
             .setLayer('pts', { line: 0xdd33dd, check: 0xdd33dd })
             .addPolys(points.map(p => base.newPolygon().centerRectangle(p, 0.8, 0.8)))
             .setLayer('dtr', { line: 0x0, check: 0x0 })
-            .addPolys(down_traces)
+            .addPolys(POLY.setZ(down_traces.clone(true),slice.z));
             ;
 
         if (supports.length === 0) {

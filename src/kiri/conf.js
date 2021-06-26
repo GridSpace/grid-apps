@@ -319,6 +319,7 @@
                     sliceSupportGap: 1,
                     sliceSupportSize: 5,
                     sliceSupportArea: 0.1,
+                    sliceSupportSpan: 5,
                     sliceSupportExtra: 0,
                     sliceSupportAngle: 50,
                     sliceSupportNozzle: 0,
