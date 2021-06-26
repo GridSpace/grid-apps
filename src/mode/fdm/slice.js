@@ -98,7 +98,7 @@
                 danger: isDanger
             }));
         }
-        data.clip = POLY.offset(nutops.map(t => t.simple), clipOffset);
+        data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
         data.tops = nutops;
     };
 
@@ -680,7 +680,6 @@
         }
 
         // add simple (low rez poly) where less accuracy is OK
-        // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
         top.simple = top.poly.simple();
 
         let top_poly = [ top.poly ];
@@ -1164,11 +1163,10 @@
      */
     async function doSupport(slice, proc, shadow, opt = {}) {
         let maxBridge = proc.sliceSupportSpan || 5,
-            minArea = proc.supportMinArea,
+            minArea = proc.supportMinArea || 0.1,
             pillarSize = proc.sliceSupportSize,
             offset = proc.sliceSupportOffset,
             gap = proc.sliceSupportGap,
-            min = minArea || 0.01,
             size = (pillarSize || 1),
             tops = slice.topPolys(),
             trimTo = tops;
@@ -1245,6 +1243,7 @@
                 pillars.push(BASE.newPolygon().centerRectangle(point, size/2, size/2));
             });
 
+            supports.appendAll(POLY.union(pillars, null, true));
             // merge pillars and replace with convex hull of outer points (aka smoothing)
             pillars = POLY.union(pillars, null, true).forEach(function(pillar) {
                 supports.push(BASE.newPolygon().createConvexHull(pillar.points));
@@ -1271,15 +1270,13 @@
 
             let trimmed = [], culled = [];
 
+            // culled = supports;
             // clip supports to shell offsets
-            POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, min, {
-                prof: opt.prof,
-                wasm: false
-            });
+            POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, minArea);
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
-                // if (trim.area() < 0.1) return;
+                if (trim.area() < minArea) return;
                 culled.push(trim.setZ(down.z));
             });
 
@@ -1306,12 +1303,10 @@
         if (!supports) return;
 
         // union supports
-        supports = POLY.union(supports, undefined, true);
+        supports = POLY.setZ(POLY.union(supports, undefined, true), slice.z);
 
-        // trim to clip offsets
-        if (slice.clips) {
-            POLY.subtract(supports, slice.clips, nsB, null, slice.z, min);
-        }
+        // clip supports to slice clip offset (or shell if none)
+        POLY.subtract(supports, slice.clips, nsB, null, slice.z, min);
         supports = nsB;
 
         // also trim to lower offsets, if they exist

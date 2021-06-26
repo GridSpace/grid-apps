@@ -344,7 +344,7 @@
         slice.height = height;
         slice.index = index;
         slice.thick = thick;
-        slice.clips = clip;
+        slice.clips = clip || slice.topSimples();
         // debugging (non-threaded mode only)
         let { debug, xray, view } = options;
         if (view && (debug || xray)) {
