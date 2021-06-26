@@ -66,7 +66,7 @@
     FDM.slicePost = function(data, options, params) {
         let { lines, groups, tops } = data;
         let { z, index, total, height, thick } = params;
-        let { process, isSynth, isDanger, vaseMode, shellOffset, fillOffset } = options.post;
+        let { process, isSynth, isDanger, vaseMode, shellOffset, fillOffset, clipOffset } = options.post;
         if (isSynth) {
             // do not shell synth widgets because
             // they will be clipped against peers later
@@ -98,11 +98,7 @@
                 danger: isDanger
             }));
         }
-        // // add simple (low rez poly) where less accuracy is OK
-        // for (let top of nutops) {
-        //     // top.simple = top.poly.clean(true, undefined, CONF.clipper / 10);
-        //     top.simple = top.poly.simple();
-        // }
+        data.clip = POLY.offset(nutops.map(t => t.simple), clipOffset);
         data.tops = nutops;
     };
 
@@ -140,6 +136,7 @@
             shellOffset = lineWidth,
             fillSpacing = lineWidth,
             fillOffset = lineWidth * fillOffsetMult,
+            clipOffset = process.sliceSupportOffset,
             sliceFillAngle = process.sliceFillAngle,
             supportDensity = process.sliceSupportDensity,
             beltfact = Math.cos(Math.PI/4);
@@ -193,6 +190,7 @@
             post: {
                 shellOffset,
                 fillOffset,
+                clipOffset,
                 lineWidth,
                 vaseMode,
                 isSynth,
@@ -279,13 +277,8 @@
                             if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.1) {
                                 continue;
                             }
-                            // offset pslice tops by process.sliceSupportOffset
-                            if (!pslice.synth_off) {
-                                pslice.synth_off = POLY.offset(pslice.topPolys(), process.sliceSupportOffset);
-                            }
-                            let ptops = pslice.synth_off;
                             let ntops = [];
-                            POLY.subtract(tops, ptops, ntops, null, slice.z, 0);
+                            POLY.subtract(tops, pslice.clips, ntops, null, slice.z, 0);
                             tops = ntops;
                         }
                         // trim to group's shadow if not in belt mode
@@ -303,7 +296,6 @@
 
             // calculate % complete and call onupdate()
             function doupdate(index, from, to, msg) {
-                // onupdate(0.5 + (from + ((index/slices.length) * (to-from))) * 0.5, msg);
                 trackupdate(index / slices.length, from, to, msg);
             }
 
@@ -1181,12 +1173,6 @@
             tops = slice.topPolys(),
             trimTo = tops;
 
-        // create inner clip offset from tops (unless pre-computed)
-        if (!slice.offsets) {
-            // POLY.expand(tops, offset, slice.z, slice.offsets = []);
-            slice.offsets = geo.wasm.js.offset(tops, offset, slice.z);
-        }
-
         let traces = POLY.flatten(slice.topShells().clone(true)),
             fill = slice.topFill(),
             points = [],
@@ -1311,12 +1297,6 @@
         }
     }
 
-    /**
-     * @param {number} linewidth
-     * @param {number} angle
-     * @param {number} density
-     * @param {number} offset
-     */
     function doSupportFill(promises, slice, linewidth, density, minArea) {
         let supports = slice.supports,
             nsB = [],
@@ -1329,14 +1309,14 @@
         supports = POLY.union(supports, undefined, true);
 
         // trim to clip offsets
-        if (slice.offsets) {
-            POLY.subtract(supports, slice.offsets, nsB, null, slice.z, min);
+        if (slice.clips) {
+            POLY.subtract(supports, slice.clips, nsB, null, slice.z, min);
         }
         supports = nsB;
 
         // also trim to lower offsets, if they exist
-        if (slice.down && slice.down.offsets) {
-            POLY.subtract(nsB, slice.down.offsets, nsC, null, slice.z, min);
+        if (slice.down && slice.down.clips) {
+            POLY.subtract(nsB, slice.down.clips, nsC, null, slice.z, min);
             supports = nsC;
         }
 

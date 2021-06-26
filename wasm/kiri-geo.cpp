@@ -43,11 +43,12 @@ Uint32 readPoly(Path &path, Uint32 pos) {
     Uint16 points = ls->length;
     // if (debug) polygon(points, 0);
     pos += 2;
-    while (points-- > 0) {
+    while (points > 0) {
         struct point32 *ip = (struct point32 *)(mem + pos);
         pos += 8;
         path << IntPoint(ip->x, ip->y);
         // if (debug) point(ip->x, ip->y);
+        points--;
     }
     return pos;
 }
@@ -55,8 +56,9 @@ Uint32 readPoly(Path &path, Uint32 pos) {
 Uint32 readPolys(Paths &paths, Uint32 pos, Uint32 count) {
     Uint32 poly = 0;
     // if (debug) abc(poly, count, pos);
-    while (count-- > 0) {
+    while (count > 0) {
         pos = readPoly(paths[poly++], pos);
+        count--;
     }
     // if (debug) abc(poly, count, pos);
     return pos;

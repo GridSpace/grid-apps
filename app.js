@@ -288,7 +288,7 @@ const script = {
         "add/three",
         "add/class",
         "geo/base",
-        "geo/wasm",
+        // "geo/wasm",
         "geo/debug",
         "geo/point",
         "geo/points",

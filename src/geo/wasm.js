@@ -79,7 +79,7 @@ if (!self.window) (function() {
 
     function polyUnion(polys, z) {
         let wasm = geo.wasm,
-        buffer = geo.wasm.shared,
+            buffer = geo.wasm.shared,
             pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
             resat = wasm.fn.union(buffer, pcount),
             out = readPolys(new DataReader(wasm.heap, resat), z);
@@ -88,7 +88,7 @@ if (!self.window) (function() {
 
     function polyDiff(polysA, polysB, z, AB, BA) {
         let wasm = geo.wasm,
-        buffer = geo.wasm.shared,
+            buffer = geo.wasm.shared,
             writer = new DataWriter(wasm.heap, buffer),
             pcountA = writePolys(writer, polysA),
             pcountB = writePolys(writer, polysB),
@@ -132,7 +132,8 @@ if (!self.window) (function() {
 
     function runTests() {
         let newPolygon = self.base.newPolygon;
-        let p1 = newPolygon().add(0,0).add(4,0).add(4,4).add(0,4);
+        let p1 = newPolygon().centerCircle({x:2,y:2,z:0}, 2, 50);
+        // let p1 = newPolygon().add(0,0).add(4,0).add(4,4).add(0,4);
         let p2 = p1.clone().setZ(0).move({x:2, y:2});
         let d1 = [];
         let d2 = [];
@@ -184,7 +185,9 @@ if (!self.window) (function() {
             };
             if (debug) {
                 wasm.set_debug(1);
-                runTests();
+                for (let i=0; i<100; i++) {
+                    runTests();
+                }
             }
         });
 

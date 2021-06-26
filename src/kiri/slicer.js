@@ -339,11 +339,12 @@
 
     function createSlice(params, data, options = {}) {
         let { index, z, height, thick } = params;
-        let { lines, groups, tops } = data;
+        let { lines, groups, tops, clip } = data;
         let slice = newSlice(z).addTops(tops);
         slice.height = height;
         slice.index = index;
         slice.thick = thick;
+        slice.clips = clip;
         // debugging (non-threaded mode only)
         let { debug, xray, view } = options;
         if (view && (debug || xray)) {
