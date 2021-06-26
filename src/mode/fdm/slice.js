@@ -1165,7 +1165,7 @@
         let maxBridge = proc.sliceSupportSpan || 5,
             minArea = proc.supportMinArea || 0.1,
             pillarSize = proc.sliceSupportSize,
-            offset = proc.sliceSupportOffset,
+            offset = proc.sliceSupportOffset || 0,
             gap = proc.sliceSupportGap,
             size = (pillarSize || 1),
             tops = slice.topPolys(),
@@ -1188,21 +1188,32 @@
             }
         }
 
+        // DEBUG code
+        let SDBG = false;
+        let cks = SDBG ? [] : undefined;
+        let pip = SDBG ? [] : undefined;
+        let pcl = SDBG ? [] : undefined;
+
         // check if point is supported by layer below
         function checkPointSupport(point) {
+            if (SDBG) cks.push(point); // DEBUG
             // skip points close to other support points
             for (let i=0; i<points.length; i++) {
                 if (point.distTo2D(points[i]) < size/4) return;
             }
             let supported = point.isInPolygonOnly(down_tops);
+            if (SDBG && supported) pip.push(point); // DEBUG
+            let dist = false; // DEBUG
             if (!supported) down_traces.forEach(function(trace) {
                 trace.forEachSegment(function(p1, p2) {
-                    if (point.distToLine(p1, p2) <= offset) {
+                    if (point.distToLine(p1, p2) < offset) {
+                        dist = true;
                         return supported = true;
                     }
                 });
                 return supported;
             });
+            if (SDBG && dist) pcl.push(point); // DEBUG
             if (!supported) points.push(point);
         }
 
@@ -1250,6 +1261,20 @@
             });
         })();
 
+        // DEBUG code
+        if (SDBG && down_traces) slice.output()
+            .setLayer('cks', { line: 0xee5533, check: 0xee5533 })
+            .addPolys(cks.map(p => base.newPolygon().centerRectangle(p, 0.25, 0.25)))
+            .setLayer('pip', { line: 0xdd4422, check: 0xdd4422 })
+            .addPolys(pip.map(p => base.newPolygon().centerRectangle(p, 0.4, 0.4)))
+            .setLayer('pcl', { line: 0xcc3311, check: 0xcc3311 })
+            .addPolys(pcl.map(p => base.newPolygon().centerRectangle(p, 0.3, 0.3)))
+            .setLayer('pts', { line: 0xdd33dd, check: 0xdd33dd })
+            .addPolys(points.map(p => base.newPolygon().centerRectangle(p, 0.8, 0.8)))
+            .setLayer('dtr', { line: 0x0, check: 0x0 })
+            .addPolys(down_traces)
+            ;
+
         if (supports.length === 0) {
             return;
         }
@@ -1292,6 +1317,7 @@
             down = down.down;
             depth++;
         }
+
     }
 
     function doSupportFill(promises, slice, linewidth, density, minArea) {
