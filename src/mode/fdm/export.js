@@ -450,7 +450,7 @@
                 speedMMM = (out.speed || process.outputFeedrate) * 60; // range
 
                 // emit gcode macro for changed print region
-                if (out.type !== last.type) {
+                if (last && out.type !== last.type) {
                     switch (out.type) {
                         case 'ext':
                             appendAllSub(gcodeExt);
