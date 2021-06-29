@@ -24,6 +24,7 @@
             gcodeTrack = device.gcodeTrack,
             gcodeExt = device.gcodeExt,
             gcodeInt = device.gcodeInt,
+            zMoveMax = device.deviceZMax || 0,
             tool = 0,
             fwRetract = device.fwRetract,
             isDanger = settings.controller.danger,
@@ -320,6 +321,9 @@
                 } else {
                     o.append(" E").append(newpos.e.toFixed(decimals));
                 }
+            }
+            if (zMoveMax && emit.z) {
+                rate = Math.min(zMoveMax, rate) * 60;
             }
             if (rate && rate != pos.f) {
                 o.append(" F").append(Math.round(rate));
