@@ -53,7 +53,6 @@
      */
     function slice(points, bounds, options, ondone, onupdate) {
         let useFlats = options.flats,
-            debug = options.debug,
             xray = options.xray,
             ox = 0,
             oy = 0;
@@ -345,25 +344,11 @@
         slice.index = index;
         slice.thick = thick;
         slice.clips = clip || slice.topSimples();
-        // debugging (non-threaded mode only)
-        let { debug, xray, view } = options;
-        if (view && (debug || xray)) {
-            if ((debug && lines.excessive) || xray) {
-                const dash = xray || 3;
-                lines.forEach((line, i) => {
-                    const group = i % dash;
-                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                    slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
-                });
-            }
-            POLY.nest(groups).forEach((poly, i) => {
-                slice.addTop(poly);
-                if (xray) {
-                    const group = i % (xray || 3);
-                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
-                    slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
-                }
-            });
+        // when debugging individual layers, attach lines and groups
+        if (options.xray) {
+            slice.lines = lines;
+            slice.groups = groups;
+            slice.xray = options.xray;
         }
         return slice;
     }
@@ -498,7 +483,7 @@
 
         // de-dup and group lines
         lines = removeDuplicateLines(lines);
-        let groups = connectLines(lines, z);
+        let groups = connectLines(lines, z, options.debug);
 
         // simplistic healing of bad meshes
         if (options.union) {
@@ -529,7 +514,7 @@
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input, z) {
+    function connectLines(input, z, debug) {
         // map points to all other points they're connected to
         let DBUG = BASE.debug,
             CONF = BASE.config,
@@ -629,13 +614,21 @@
             }
 
             // undo temp del/used marks
-            for (let i=0; i<stack.length; i++) stack[i].del = false;
+            for (let i=0; i<stack.length; i++) {
+                stack[i].del = false;
+                // stack[i].pos = 0;
+            }
         }
 
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly) {
             poly = poly.clean();
-            if (poly.length > 2) output.push(poly);
+            if (debug) console.log({emit: poly});
+            if (poly.length > 2) {
+                output.push(poly);
+            } else if (debug) {
+                console.log({clean_to_zero: poly});
+            }
         }
 
         // given an array of paths, emit longest to shortest
@@ -678,7 +671,9 @@
                 if (longest.open) {
                     connect.push(longest);
                 } else {
-                    emit(BASE.newPolygon().addPoints(longest));
+                    // mark points so they don't get re-used
+                    for (let p of longest) p.del = true;
+                    emit(BASE.newPolygon().addPoints(longest), debug);
                 }
             }
         }
@@ -702,16 +697,34 @@
             }
         });
 
-        // for each point, find longest path back to self
-        points.forEach(function(point) {
-            // must not have been used or be at a split
-            if (point.pos === 0 && point.group.length === 2) {
-                let path = [],
-                    paths = [];
-                findPathsMinRecurse(point, path, paths);
-                if (paths.length > 0) emitLongestAsPolygon(paths);
+        for (let i=0; i<2; i++) {
+            // for each point, find longest path back to self
+            points.forEach(function(point) {
+                // must not have been used or be at a split
+                if (point.pos === 0 && point.group.length === 2) {
+                    let path = [];
+                    let paths = [];
+                    findPathsMinRecurse(point, path, paths);
+                    if (paths.length > 0) {
+                        emitLongestAsPolygon(paths, i>0);
+                    }
+                }
+            });
+
+            if (debug) console.log({
+                used: points.filter(p => p.del),
+                free: points.filter(p => !p.del)
+            });
+
+            points = points.filter(p => !p.del);
+            for (let p of points) {
+                p.pos = 0;
             }
-        });
+            if (points.length < 2) {
+                break;
+            }
+        }
+        if (debug) console.log({output});
 
         // return true if points are deemed "close enough" close a polygon
         function close(p1,p2) {
