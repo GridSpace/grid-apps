@@ -9,7 +9,6 @@
     const BASE = self.base,
         CONF = BASE.config,
         UTIL = BASE.util,
-        DBUG = BASE.debug,
         KEYS = BASE.key,
         SQRT = Math.sqrt,
         POLY = function() { return BASE.polygons },

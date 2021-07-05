@@ -1,4 +1,4 @@
-/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
@@ -8,7 +8,6 @@
         KIRI    = self.kiri,
         BASE    = self.base,
         UTIL    = BASE.util,
-        DBUG    = BASE.debug,
         LANG    = KIRI.lang.current,
         WIN     = self.window,
         DOC     = self.document,
@@ -55,8 +54,6 @@
         grouping = false,
         saveTimer = null,
         noop = () => {};
-
-    DBUG.enable();
 
     // add show() to catalog for API
     CATALOG.show = showCatalog;
@@ -1134,7 +1131,7 @@
             API.event.emit('slice.end', getMode());
             // print stats
             segtimes.total = Date.now() - now;
-            DBUG.log(segtimes);
+            console.log(segtimes);
             if (callback && typeof callback === 'function') {
                 callback();
             }
@@ -1231,7 +1228,7 @@
 
             // print stats
             segtimes.total = Date.now() - now;
-            DBUG.log(segtimes);
+            console.log(segtimes);
 
             API.event.emit('print', pMode);
             API.event.emit('preview.end', pMode);
@@ -2483,7 +2480,7 @@
 
     function loadFile() {
         $('load-file').onchange = function(event) {
-            DBUG.log(event);
+            console.log(event);
             platformLoadFiles(event.target.files);
         };
         $('load-file').click();
@@ -2908,7 +2905,7 @@
                 setWidgetVisibility(true);
                 break;
             default:
-                DBUG.log("invalid view mode: "+mode);
+                console.log("invalid view mode: "+mode);
                 return;
         }
         API.event.emit('view.set', mode);
@@ -2933,7 +2930,7 @@
 
     function setMode(mode, lock, then) {
         if (!MODES[mode]) {
-            DBUG.log("invalid mode: "+mode);
+            console.log("invalid mode: "+mode);
             mode = 'FDM';
         }
         // change mode constants

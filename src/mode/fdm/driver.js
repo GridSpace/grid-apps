@@ -6,7 +6,6 @@
 
     const KIRI = self.kiri,
         BASE = self.base,
-        DBUG = BASE.debug,
         UTIL = BASE.util,
         POLY = BASE.polygons,
         FDM = KIRI.driver.FDM = {

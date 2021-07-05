@@ -1,4 +1,4 @@
-/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
@@ -10,7 +10,6 @@
         DRIVERS = KIRI.driver,
         BASE = self.base,
         CONF = BASE.config,
-        DBUG = BASE.debug,
         UTIL = BASE.util,
         POLY = BASE.polygons,
         MATH = Math,
@@ -721,7 +720,7 @@
             if (driver) {
                 driver.slice(settings, widget, catchupdate, catchdone);
             } else {
-                DBUG.log('invalid mode: '+settings.mode);
+                console.log('invalid mode: '+settings.mode);
                 ondone('invalid mode: '+settings.mode);
             }
         }

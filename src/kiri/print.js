@@ -13,7 +13,6 @@
         FDM = DRIVERS.FDM,
         BASE = self.base,
         UTIL = BASE.util,
-        DBUG = BASE.debug,
         POLY = BASE.polygons,
         SQRT = Math.sqrt,
         SQR = UTIL.sqr,

@@ -745,9 +745,7 @@
         while (i < polygons.length) {
             let polygon = polygons[i++],
                 pp = polygon.points,
-                pl = pp.length,
-                dbug = BASE.debug,
-                debug = false;
+                pl = pp.length;;
             for (let j = 0; j < pl; j++) {
                 let j2 = (j + 1) % pl,
                     ip = UTIL.intersectRayLine(start, slope, pp[j], pp[j2]);
@@ -760,13 +758,9 @@
                     if (ip.isNear(pp[j], merge_dist)) {
                         ip.pos = j;
                         ip.mod = pl;
-                        if (debug) dbug.points([ip], 0x0000ff, 0.5, 1.0);
                     } else if (ip.isNear(pp[j2], merge_dist)) {
                         ip.pos = j2;
                         ip.mod = pl;
-                        if (debug) dbug.points([ip], 0x00ffff, 0.5, 0.85);
-                    } else {
-                        if (debug) dbug.points([ip], 0xff00ff, 0.5, 0.5);
                     }
                 }
             }
@@ -788,7 +782,7 @@
                      * was added later. see below for what else can happen.
                      */
                     if (line.length < 2) {
-                        dbug.log("sliceInt: line common ep fail: "+line.length);
+                        console.log("sliceInt: line common ep fail: "+line.length);
                     } else
                     if (line.length > 2) {
                         p1.del = true;
@@ -804,11 +798,9 @@
                         del = true;
                         p1.del = true;
                         p2.del = true;
-                        if (debug) dbug.points([p1, p2], 0xffffff, 0.2, 1);
                     } else {
                         del = true;
                         p1.del = true;
-                        if (debug) dbug.points([p1], 0xffff00, 0.2, 0.85);
                     }
                 }
                 return p1.dist - p2.dist; // sort on 'a' dist from ray origin
@@ -839,7 +831,6 @@
                             //    p1.del = true;
                             //    p2.del = true;
                             //    del = true;
-                            //    if (debug) dbug.points([p1, p2], 0xfff000, 0.2, 2);
                             //}
                             // check cull co-linear with group edge
                             if (same && p1.mod && p2.mod) {
@@ -848,7 +839,6 @@
                                     p1.del = true;
                                     p2.del = true;
                                     del = true;
-                                    if (debug) dbug.points([p1, p2], 0xffffff, 0.2, 1.85);
                                 }
                             }
                         }

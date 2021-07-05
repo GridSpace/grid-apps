@@ -516,8 +516,7 @@
      */
     function connectLines(input, z, debug) {
         // map points to all other points they're connected to
-        let DBUG = BASE.debug,
-            CONF = BASE.config,
+        let CONF = BASE.config,
             pmap = {},
             points = [],
             output = [],
@@ -532,6 +531,7 @@
             if (cp) return cp;
             points.push(p);
             pmap[p.key] = p;
+            p.pos = 0;
             p.mod = nextMod++; // unique seq ID for points
             p.toString = function() { return this.mod }; // point array concat
             return p;
@@ -559,7 +559,7 @@
         function findPathsMinRecurse(point, path, paths, from) {
             let stack = [ ];
             if (paths.length > 10000) {
-                DBUG.log(`indeterminate path @ ${z} from paths=${paths.length} input=${input.length}`);
+                console.log(`indeterminate path @ ${z} from paths=${paths.length} input=${input.length}`);
                 input.excessive = paths.length;
                 return;
             }

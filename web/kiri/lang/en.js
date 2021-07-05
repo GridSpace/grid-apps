@@ -203,7 +203,7 @@ kiri.lang['en-us'] = {
     op_dang_s:      "experimental",
     op_dang_l:      "show experimental parameters",
     op_devl_s:      "developer",
-    op_devl_l:      "show developer options",
+    op_devl_l:      ["show developer options","enable developer debugging"],
     op_hopo_s:      "hover pop",
     op_hopo_l:      ["enable menu hover","to activate"],
     op_dark_s:      "dark mode",

@@ -4,9 +4,8 @@
 
 (function() {
 
-    const BASE = self.base,
-        DBUG = BASE.debug,
-        CONF = BASE.config;
+    const BASE = self.base;
+    const CONF = BASE.config;
 
     BASE.verticesToPoints = verticesToPoints;
     BASE.pointsToVertices = pointsToVertices;
@@ -104,7 +103,7 @@
 
         // if (passes) console.trace({passes, threshold, precision, maxpass});
 
-        if (passes) DBUG.log({
+        if (passes) console.log({
             before: array.length / 3,
             after: parr.length,
             unique: unique,

@@ -13,20 +13,14 @@
         ROUND = UTIL.round;
 
     class Point {
-        constructor(x,y,z,key,CP) {
-            if (CP) {
-                console.trace({x,y,z,key,CP});
-                throw "deprecated point constructor"
-            } else {
-                this.x = x;
-                this.y = y;
-                this.z = z || 0;
-                if (key) {
-                    this._key = key;
-                }
+        constructor(x,y,z,key) {
+            this.x = x;
+            this.y = y;
+            this.z = z || 0;
+            if (key) {
+                this._key = key;
             }
             this.poly = null; // parent polygon
-            this.pos = 0; // position in group
         }
 
         get key() {
@@ -710,11 +704,10 @@
      * @param {number} y
      * @param {number} z
      * @param {String} [key]
-     * @param {Object} [CP] clipper point
      * @returns {Point}
      */
-    function newPoint(x, y, z, key, CP) {
-        return new Point(x, y, z, key, CP);
+    function newPoint(x, y, z, key) {
+        return new Point(x, y, z, key);
     }
 
 })();

@@ -1,4 +1,4 @@
-/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
@@ -203,7 +203,7 @@
         function gridhost_tracker(host,key) {
             ajax(host+"/api/check?key="+key, function(data) {
                 data = js2o(data);
-                DBUG.log(data);
+                console.log(data);
                 if (!(data.done || data.error)) {
                     setTimeout(function() { gridhost_tracker(host,key) }, 1000);
                 }
@@ -373,7 +373,7 @@
                         gridhost_tracker(host,json.key);
                         API.ajax(host+"/api/wait?key="+json.key, function(data) {
                             data = js2o(data);
-                            DBUG.log(data);
+                            console.log(data);
                             API.show.alert("print to "+target+": "+data.status, 600);
                         });
                     } else {

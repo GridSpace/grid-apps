@@ -6,7 +6,6 @@
 
     const KIRI = self.kiri,
         BASE = self.base,
-        DBUG = BASE.debug,
         POLY = BASE.polygons,
         UTIL = BASE.util,
         CONF = BASE.config,
@@ -173,8 +172,8 @@
             Math.min(process.sliceMinHeight, sliceHeight) : 0;
 
         if (sliceHeightBase < sliceHeight) {
-            DBUG.log("invalid first layer height < slice height");
-            DBUG.log("reverting to min valid slice height");
+            console.log("invalid first layer height < slice height");
+            console.log("reverting to min valid slice height");
             sliceHeightBase = sliceMinHeight || sliceHeight;
         }
 

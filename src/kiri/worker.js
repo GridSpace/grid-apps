@@ -177,7 +177,6 @@ KIRI.minions = {
 };
 
 console.log(`kiri | init work | ${KIRI.version || "rogue"}`);
-BASE.debug.disable();
 
 // code is running in the worker / server context
 const dispatch =
