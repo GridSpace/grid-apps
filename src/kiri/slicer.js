@@ -487,7 +487,7 @@
 
         // simplistic healing of bad meshes
         if (options.union) {
-            groups = POLY.flatten(POLY.union(POLY.nest(groups), null, true), null, true);
+            groups = POLY.flatten(POLY.union(POLY.nest(groups), 0.1, true), null, true);
         }
 
         let tops = POLY.nest(groups);
@@ -686,20 +686,25 @@
             addConnected(p2,p1);
         });
 
+        // order points leftmost to right-most
+        // points = points.sort((a,b) => {
+        //     return a.x - b.x;
+        // });
+
         // first trace paths starting at dangling endpoinds (bad polygon soup)
-        points.forEach(function(point) {
+        for (let point of points) {
             // must not have been used and be a dangling end
             if (point.pos === 0 && point.group.length === 1) {
-                let path = [],
-                    paths = [];
+                let path = [];
+                let paths = [];
                 findPathsMinRecurse(point, path, paths);
                 if (paths.length > 0) emitLongestAsPolygon(paths);
             }
-        });
+        }
 
         for (let i=0; i<2; i++) {
             // for each point, find longest path back to self
-            points.forEach(function(point) {
+            for (let point of points) {
                 // must not have been used or be at a split
                 if (point.pos === 0 && point.group.length === 2) {
                     let path = [];
@@ -709,13 +714,14 @@
                         emitLongestAsPolygon(paths, i>0);
                     }
                 }
-            });
+            }
 
             if (debug) console.log({
                 used: points.filter(p => p.del),
                 free: points.filter(p => !p.del)
             });
 
+            // prepare points for re-use
             points = points.filter(p => !p.del);
             for (let p of points) {
                 p.pos = 0;
@@ -831,17 +837,17 @@
         });
 
         // associate points with their lines, cull deleted
-        lines.forEach(function(line) {
+        for (let line of lines) {
             if (!line.del) {
                 tmplines.push(line);
                 addLinesToPoint(line.p1, line);
                 addLinesToPoint(line.p2, line);
             }
-        });
+        }
 
         // merge collinear lines
-        points.forEach(function(point) {
-            if (point.group.length != 2) return;
+        for (let point of points) {
+            if (point.group.length != 2) continue;
             let l1 = point.group[0],
                 l2 = point.group[1];
             if (l1.isCollinear(l2)) {
@@ -863,7 +869,7 @@
                 newline.edge = l1.edge || l2.edge;
                 tmplines.push(newline);
             }
-        });
+        }
 
         // mark duplicates for deletion
         // but preserve one if it's an edge
@@ -877,13 +883,13 @@
         });
 
         // create new line array culling deleted
-        tmplines.forEach(function(line) {
+        for (let line of tmplines) {
             if (!line.del) {
                 output.push(line);
                 line.p1.group = null;
                 line.p2.group = null;
             }
-        });
+        }
 
         return output;
     }

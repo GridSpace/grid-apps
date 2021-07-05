@@ -213,6 +213,16 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         gcode_decimals: (v) => { API.work.config({base:{gcode_decimals: v}}) }
     };
 
+    const devel = {
+        xray: (layers) => {
+            let proc = API.conf.get().process;
+            let size = proc.sliceHeight || 1;
+            layers = Array.isArray(layers) ? layers : [ layers ];
+            proc.xray = layers.map(l => l * size + size / 2);
+            API.function.slice();
+        }
+    };
+
     const API = KIRI.api = {
         ui: UI,
         uc: UC,
@@ -253,6 +263,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             STACKS,
             SPACE
         },
+        devel,
         var: {
             layer_lo: 0,
             layer_hi: 0,
