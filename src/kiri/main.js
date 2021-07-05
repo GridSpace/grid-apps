@@ -2912,10 +2912,6 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         DOC.activeElement.blur();
     }
 
-    // function setExpert(bool) {
-    //     UC.setExpert(UI.expert.checked = settings.controller.expert = bool);
-    // }
-
     function getMode() {
         return settings.mode;
     }

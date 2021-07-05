@@ -20,7 +20,6 @@
             if (key) {
                 this._key = key;
             }
-            this.poly = null; // parent polygon
         }
 
         get key() {
@@ -38,7 +37,9 @@
     const PRO = Point.prototype;
 
     BASE.Point = Point;
+
     BASE.newPoint = newPoint;
+
     BASE.pointFromClipper = function(cp, z) {
         return newPoint(cp.X / CONF.clipper, cp.Y / CONF.clipper, z);
     };

@@ -31,9 +31,10 @@
             this.id = seqid++; // polygon unique id
             this.open = false;
             this.points = []; // ordered array of points
-            this.parent = null; // enclosing parent polygon
             this.depth = 0; // depth nested from top parent (density for support fill)
-            if (points) this.addPoints(points);
+            if (points) {
+                this.addPoints(points);
+            }
         }
 
         get length() {
@@ -63,6 +64,7 @@
     }
 
     BASE.Polygon = Polygon;
+
     BASE.newPolygon = newPolygon;
 
     const PRO = Polygon.prototype;
