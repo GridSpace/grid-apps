@@ -500,6 +500,7 @@
             if (cp) return cp;
             points.push(p);
             pmap[p.key] = p;
+            p.pos = 0;
             p.mod = nextMod++; // unique seq ID for points
             p.toString = function() { return this.mod }; // point array concat
             return p;
