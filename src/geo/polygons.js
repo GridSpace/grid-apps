@@ -520,8 +520,6 @@
             fill = numOrDefault(opts.fill, ClipperLib.PolyFillType.pftNonZero),
             join = numOrDefault(opts.join, ClipperLib.JoinType.jtMiter),
             type = numOrDefault(opts.type, ClipperLib.EndType.etClosedPolygon),
-            coff = new ClipperLib.ClipperOffset(opts.miter, opts.arc),
-            ctre = new ClipperLib.PolyTree(),
             // if dist is array with values, shift out next offset
             offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,
             mina = numOrDefault(opts.minArea, 0.1),
@@ -530,6 +528,9 @@
         if (opts.wasm && geo.wasm) {
             polys = geo.wasm.js.offset(polys, offs, zed);
         } else {
+            let coff = new ClipperLib.ClipperOffset(opts.miter, opts.arc),
+                ctre = new ClipperLib.PolyTree();
+
             // setup offset
             for (let poly of polys) {
                 // convert to clipper format
