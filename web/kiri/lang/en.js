@@ -246,6 +246,8 @@ kiri.lang['en-us'] = {
     pt_heal_l:      ["attempt to heal","non-manifold meshes","adds to slicing time"],
     pt_thrd_s:      "threaded",
     pt_thrd_l:      ["use parallel processing","when browser permits"],
+    pt_assy_s:      "assembly",
+    pt_assy_l:      ["use web assembly","when browser permits"],
 
     xp_menu:        "exports",
 

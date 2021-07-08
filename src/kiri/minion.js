@@ -102,6 +102,14 @@ const funcs = {
         reply({ seq, output: CODEC.encode(output) });
     },
 
+    wasm: data => {
+        if (data.enable) {
+            geo.enable();
+        } else {
+            geo.disable();
+        }
+    },
+
     bad: (data, seq) => {
         reply({ seq, error: "invalid command" });
     }

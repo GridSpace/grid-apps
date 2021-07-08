@@ -1503,9 +1503,6 @@
      * @returns {?Polygon[]} returns output array provided as input or new array if not provided
      */
     PRO.offset = function(offset, output) {
-        // let offs = geo.poly.offset([this], -offset, this.getZ());
-        // if (output) output.appendAll(offs);
-        // return output || offs;
         return POLY().expand([this], -offset, this.getZ(), output);
     };
 

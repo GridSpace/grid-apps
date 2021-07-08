@@ -173,6 +173,15 @@ KIRI.minions = {
             };
             minion.postMessage(qrec.work, qrec.direct);
         }
+    },
+
+    wasm: function(enable) {
+        for (let minion of minions) {
+            minion.postMessage({
+                cmd: "wasm",
+                enable
+            });
+        }
     }
 };
 
@@ -727,6 +736,16 @@ KIRI.worker = {
         }).then(output => {
             send.done(output);
         });
+    },
+
+    wasm: function(data, send) {
+        if (data.enable) {
+            geo.enable();
+        } else {
+            geo.disable();
+        }
+        minwork.wasm(data.enable);
+        send.done({ wasm: data });
     }
 };
 

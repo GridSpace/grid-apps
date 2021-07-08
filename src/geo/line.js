@@ -72,6 +72,7 @@
     };
 
     /**
+     * faulty when line doubles back at 180?
      * @param {Line} line
      * @returns {boolean}
      */
@@ -85,7 +86,7 @@
             d2x = (p4.x - p3.x),
             d2y = (p4.y - p3.y);
 
-        return Math.abs( (d2y * d1x) - (d2x * d1y) ) < 0.000001;
+        return Math.abs( (d2y * d1x) - (d2x * d1y) ) < 0.0001;
     };
 
     /** ******************************************************************

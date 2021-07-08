@@ -692,6 +692,7 @@
                 animesh: "200",
                 healMesh: false,
                 threaded: false,
+                assembly: false,
                 ortho: false,
                 devel: false
             },

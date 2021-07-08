@@ -142,6 +142,9 @@
         let control = settings().controller;
         let isDark = control.dark;
         let doAlert = UI.ortho.checked !== control.ortho;
+        if (control.assembly != UI.assembly.checked) {
+            KIRI.client.wasm(UI.assembly.checked);
+        }
         control.decals = UI.decals.checked;
         control.danger = UI.danger.checked;
         control.showOrigin = UI.showOrigin.checked;
@@ -158,6 +161,7 @@
         control.decimate = UI.decimate.checked;
         control.healMesh = UI.healMesh.checked;
         control.threaded = UI.threaded.checked;
+        control.assembly = UI.assembly.checked;
         control.ortho = UI.ortho.checked;
         control.devel = UI.devel.checked;
         SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
@@ -1647,6 +1651,7 @@
             decimate:         UC.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
             healMesh:         UC.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
             threaded:         UC.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_SLA}),
+            assembly:         UC.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_SLA}),
 
             prefadd:          UC.checkpoint($('prefs-add')),
 
@@ -2439,6 +2444,7 @@
             UI.decimate.checked = control.decimate;
             UI.healMesh.checked = control.healMesh;
             UI.threaded.checked = control.threaded;
+            UI.assembly.checked = control.assembly;
             UI.ortho.checked = control.ortho;
             UI.devel.checked = control.devel;
             lineTypeSave();
@@ -2471,6 +2477,9 @@
 
             // update everything dependent on the platform size
             platform.update_size();
+
+            // load wasm if indicated
+            KIRI.client.wasm(control.assembly);
         };
 
         UI.sync();

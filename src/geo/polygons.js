@@ -18,7 +18,7 @@
         newPoint = BASE.newPoint,
         numOrDefault = UTIL.numOrDefault;
 
-    BASE.polygons = {
+    const POLYS = BASE.polygons = {
         rayIntersect,
         alignWindings,
         setWinding,
@@ -527,18 +527,23 @@
             mina = numOrDefault(opts.minArea, 0.1),
             zed = opts.z || 0;
 
-        // setup offset
-        for (let poly of polys) {
-            // convert to clipper format
-            poly = poly.toClipper();
-            if (clean) poly = ClipperLib.Clipper.CleanPolygons(poly, CONF.clipperClean);
-            if (simple) poly = ClipperLib.Clipper.SimplifyPolygons(poly, fill);
-            coff.AddPaths(poly, join, type);
+        if (opts.wasm && geo.wasm) {
+            polys = geo.wasm.js.offset(polys, offs, zed);
+        } else {
+            // setup offset
+            for (let poly of polys) {
+                // convert to clipper format
+                poly = poly.toClipper();
+                if (clean) poly = ClipperLib.Clipper.CleanPolygons(poly, CONF.clipperClean);
+                if (simple) poly = ClipperLib.Clipper.SimplifyPolygons(poly, fill);
+                coff.AddPaths(poly, join, type);
+            }
+            // perform offset
+            coff.Execute(ctre, offs * CONF.clipper);
+            // convert back from clipper output format
+            polys = fromClipperTree(ctre, zed, null, null, mina);
         }
-        // perform offset
-        coff.Execute(ctre, offs * CONF.clipper);
-        // convert back from clipper output format
-        polys = fromClipperTree(ctre, zed, null, null, mina);
+
 
         // if specified, perform offset gap analysis
         if (opts.gaps && polys.length) {
@@ -583,15 +588,15 @@
      * as performing subtractive analysis between initial layer shell (ref)
      * and last offset (cmp) to produce gap candidates (for thinfill)
      */
-    function inset(polys, dist, count, z) {
+    function inset(polys, dist, count, z, wasm) {
         let total = count;
         let layers = [];
         let ref = polys;
         let depth = 0;
         while (count-- > 0 && ref && ref.length) {
-            let off = offset(ref, -dist, {z});
-            let mid = offset(off, dist / 2, {z});
-            let cmp = offset(off, dist, {z});
+            let off = offset(ref, -dist, {z, wasm});
+            let mid = offset(off, dist / 2, {z, wasm});
+            let cmp = offset(off, dist, {z, wasm});
             let gap = [];
             let aref = ref.map(p => p.areaDeep()).reduce((a,p) => a +p);
             let cref = cmp.length ? cmp.map(p => p.areaDeep()).reduce((a,p) => a + p) : 0;

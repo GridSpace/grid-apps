@@ -847,7 +847,10 @@
 
         // merge collinear lines
         for (let point of points) {
-            if (point.group.length != 2) continue;
+            // only merge when point connects to exactly one other point
+            if (point.group.length != 2) {
+                continue;
+            }
             let l1 = point.group[0],
                 l2 = point.group[1];
             if (l1.isCollinear(l2)) {

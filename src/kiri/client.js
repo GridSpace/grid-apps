@@ -287,6 +287,12 @@ KIRI.work = {
                 output(reply);
             }
         });
+    },
+
+    wasm: function(enable) {
+        send("wasm", {enable}, reply => {
+            // console.log({wasm_worker_said: reply});
+        });
     }
 };
 

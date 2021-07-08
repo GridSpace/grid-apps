@@ -402,7 +402,6 @@
                     addto.belt.touch = false;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
-                    // let splat = BASE.newPolygon().add(wb.min.x, y, z).add(wb.max.x, y, z).setOpen();
                     let splat = BASE.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                     let snew = addto.addTop(splat).fill_sparse = [ splat ];
                     adds.push(snew);
@@ -726,7 +725,7 @@
                 if (opt.danger && opt.thin) {
                     top.thin_fill = [];
                     top.fill_sparse = [];
-                    let layers = POLY.inset(top_poly, offsetN, count, z);
+                    let layers = POLY.inset(top_poly, offsetN, count, z, true);
                     last = layers.last().mid;
                     top.shells = layers.map(r => r.mid).flat();
                     top.gaps = layers.map(r => r.gap).flat();
@@ -740,7 +739,7 @@
                     }
                 } else if (opt.thin) {
                     top.thin_fill = [];
-                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05};
+                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm: true};
                     POLY.offset(top_poly, [-offset1, -offsetN], oso);
 
                     oso.outs.forEach((polys, i) => {
@@ -762,7 +761,7 @@
                     // slice.solids.trimmed = slice.solids.trimmed || [];
                     oso.gaps.forEach((polys, i) => {
                         let off = (i == 0 ? offset1 : offsetN);
-                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0});
+                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm: true});
                         top.thin_fill.appendAll(cullIntersections(
                             fillArea(polys, 45, off/2, [], 0.01, off*2),
                             fillArea(polys, 135, off/2, [], 0.01, off*2),
@@ -771,30 +770,33 @@
                     });
                 } else {
                     // standard wall offsetting strategy
-                    POLY.expand(
-                        top_poly,   // reference polygon(s)
-                        -offset1,   // first inset distance
-                        z,          // set new polys to this z
-                        top.shells, // accumulator array
-                        count,      // number of insets to perform
-                        -offsetN,   // subsequent inset distance
-                        // on each new offset trace ...
-                        function(polys, countNow) {
-                            last = polys;
-                            // mark each poly with depth (offset #) starting at 0
-                            polys.forEach(function(p) {
-                                p.depth = count - countNow;
-                                if (p.fill_off) p.fill_off.forEach(function(pi) {
-                                    // use negative offset for inners
-                                    pi.depth = -(count - countNow);
-                                });
-                                if (p.inner) {
-                                    for (let pi of p.inner) {
-                                        pi.depth = p.depth;
+                    POLY.offset(
+                        top_poly,
+                        [-offset1, -offsetN],
+                        {
+                            z,
+                            outs: top.shells,
+                            flat: true,
+                            wasm: true,
+                            call: (polys, onCount) => {
+                                last = polys;
+                                // mark each poly with depth (offset #) starting at 0
+                                for (let p of polys) {
+                                    p.depth = count - onCount;
+                                    if (p.fill_off) p.fill_off.forEach(function(pi) {
+                                        // use negative offset for inners
+                                        pi.depth = -(count - onCount);
+                                    });
+                                    // mark inner depth to match parent
+                                    if (p.inner) {
+                                        for (let pi of p.inner) {
+                                            pi.depth = p.depth;
+                                        }
                                     }
                                 }
-                            });
-                        });
+                            }
+                        }
+                    );
                 }
             }
         } else {
@@ -1372,7 +1374,7 @@
             // angle based on width/height ratio
             let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
             // inset support poly for fill lines 33% of nozzle width
-            let inset = POLY.offset([poly], -linewidth/3, {flat: true, z});
+            let inset = POLY.offset([poly], -linewidth/3, {flat: true, z, wasm: true});
             // do the fill
             if (inset && inset.length > 0) {
                 doFillArea(promises, inset, angle, spacing, poly.fill = []);

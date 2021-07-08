@@ -102,9 +102,9 @@
      * @param {Point} p3
      * @returns {boolean}
      */
-    function isCollinear(p1, p2, p3) {
-        return inCloseRange(area2(p1, p2, p3), -0.00001, 0.00001);
-    }
+    // function isCollinear(p1, p2, p3) {
+    //     return inCloseRange(area2(p1, p2, p3), -0.00001, 0.00001);
+    // }
 
     function pac(p1, p2) {
         return (p2.x - p1.x) * (p2.y + p1.y);
@@ -521,7 +521,7 @@
         inRange,
         isCloseTo,
         inCloseRange,
-        isCollinear,
+        // isCollinear,
         isClockwise,
         isCounterClockwise,
         doCombinations,
