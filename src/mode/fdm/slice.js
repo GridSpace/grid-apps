@@ -65,7 +65,9 @@
     FDM.slicePost = function(data, options, params) {
         let { lines, groups, tops } = data;
         let { z, index, total, height, thick } = params;
-        let { process, isSynth, isDanger, vaseMode, shellOffset, fillOffset, clipOffset } = options.post;
+        let { useAssembly, post } = options;
+        let { process, isSynth, isDanger, vaseMode } = post;
+        let { shellOffset, fillOffset, clipOffset } = post;
         if (isSynth) {
             // do not shell synth widgets because
             // they will be clipped against peers later
@@ -94,6 +96,7 @@
             nutops.push(FDM.share.doTopShells(z, top, count, offset/2, offset, fillOff, {
                 vase: vaseMode,
                 thin: process.detectThinWalls && !isSynth,
+                wasm: useAssembly,
                 danger: isDanger
             }));
         }
@@ -121,6 +124,7 @@
             isBelt = device.bedBelt,
             isSynth = widget.track.synth,
             isDanger = controller.danger,
+            useAssembly = controller.assembly,
             isConcurrent = controller.threaded && KIRI.minions.concurrent,
             solidMinArea = process.sliceSolidMinArea,
             solidLayers = process.sliceSolidLayers || 0,
@@ -186,6 +190,7 @@
             union: controller.healMesh || isSynth,
             indices: process.indices || process.xray,
             concurrent: isConcurrent,
+            useAssembly,
             post: {
                 shellOffset,
                 fillOffset,
@@ -194,7 +199,7 @@
                 vaseMode,
                 isSynth,
                 process,
-                isDanger
+                isDanger,
             },
             xray: process.xray,
             debug: process.xray
@@ -697,6 +702,7 @@
         // add simple (low rez poly) where less accuracy is OK
         top.simple = top.poly.simple();
 
+        let wasm = opt.wasm;
         let top_poly = [ top.poly ];
 
         if (opt.vase) {
@@ -739,7 +745,7 @@
                     }
                 } else if (opt.thin) {
                     top.thin_fill = [];
-                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm: true};
+                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
                     POLY.offset(top_poly, [-offset1, -offsetN], oso);
 
                     oso.outs.forEach((polys, i) => {
@@ -761,7 +767,7 @@
                     // slice.solids.trimmed = slice.solids.trimmed || [];
                     oso.gaps.forEach((polys, i) => {
                         let off = (i == 0 ? offset1 : offsetN);
-                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm: true});
+                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
                         top.thin_fill.appendAll(cullIntersections(
                             fillArea(polys, 45, off/2, [], 0.01, off*2),
                             fillArea(polys, 135, off/2, [], 0.01, off*2),
@@ -775,9 +781,10 @@
                         [-offset1, -offsetN],
                         {
                             z,
+                            wasm,
+                            count,
                             outs: top.shells,
                             flat: true,
-                            wasm: true,
                             call: (polys, onCount) => {
                                 last = polys;
                                 // mark each poly with depth (offset #) starting at 0

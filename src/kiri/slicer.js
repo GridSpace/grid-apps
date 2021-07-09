@@ -76,6 +76,7 @@
             buckets = [],
             i, j = 0, k, p1, p2, p3, px,
             CPRO = KIRI.driver.CAM.process,
+            useAssembly = options.useAssembly,
             concurrent = options.concurrent ? KIRI.minions.concurrent : 0;
 
         if (options.add) {
