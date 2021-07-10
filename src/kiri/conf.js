@@ -686,6 +686,7 @@
                 exportOcto: false,
                 exportGhost: false,
                 exportLocal: false,
+                exportThumb: false,
                 exportPreview: false,
                 decimate: true,
                 detail: "75",

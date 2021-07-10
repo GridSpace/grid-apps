@@ -1027,8 +1027,26 @@
             return WC;
         },
 
-        screenshot: function(format) {
-            return renderer.domElement.toDataURL(format || "image/png");
+        screenshot: function(format, options) {
+            return renderer.domElement.toDataURL(format || "image/png", options);
+        },
+
+        screenshot2: function(param = {}) {
+            let oco = renderer.domElement;
+            let oWidth = oco.offsetWidth;
+            let oHeight = oco.offsetHeight;
+            let oRatio = oHeight / oWidth;
+            let width = param.width || 240;
+            let ncv = document.createElement('canvas');
+            ncv.width = width;
+            ncv.height = width * oRatio;
+            let nco = ncv.getContext('2d');
+            nco.drawImage(oco, 0, 0, ncv.width, ncv.height);
+            return {
+                url: ncv.toDataURL(param.format || "image/png", param.options),
+                width: ncv.width,
+                height: ncv.height
+            };
         },
 
         internals: function() {

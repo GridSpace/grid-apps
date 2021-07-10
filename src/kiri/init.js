@@ -157,6 +157,7 @@
         control.exportOcto = UI.exportOcto.checked;
         control.exportGhost = UI.exportGhost.checked;
         control.exportLocal = UI.exportLocal.checked;
+        control.exportThumb = UI.exportThumb.checked;
         control.exportPreview = UI.exportPreview.checked;
         control.decimate = UI.decimate.checked;
         control.healMesh = UI.healMesh.checked;
@@ -1644,6 +1645,7 @@
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
+            exportThumb:      UC.newBoolean(`Thumbnail`, booleanSave),
             exportPreview:    UC.newBoolean(`Code Preview`, booleanSave),
 
             parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),

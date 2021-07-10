@@ -992,8 +992,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     function prepareSlices(callback, scale = 1, offset = 0) {
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
-            API.view.snapshot = snap.substring(snap.indexOf(",")+1);
-            KIRI.work.snap(API.view.snapshot);
+            API.view.snapshot = snap.substring(snap.indexOf(",") + 1);
+            KIRI.work.snap(SPACE.screenshot2());
         }
         if (MODE === MODES.SLA && !callback) {
             callback = preparePreview;

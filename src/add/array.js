@@ -170,7 +170,7 @@
         return this.filter(v => isNaN(v)).length > 0;
     };
 
-    for(let i in AP){
+    for (let i in AP) {
         Object.defineProperty(Array.prototype, i, {
             value: AP[i],
             enumerable: false
@@ -191,6 +191,14 @@
 
     Object.clone = function(o) {
         return o ? JSON.parse(JSON.stringify(o)) : o;
+    };
+
+    Object.toArray = function(o) {
+        let ret = [];
+        for (let [key,value] of Object.entries(o)) {
+            ret.push({key, value});
+        }
+        return ret;
     };
 
     Math.bound = function(val,min,max) {
