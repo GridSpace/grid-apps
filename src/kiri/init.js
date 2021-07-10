@@ -1645,7 +1645,7 @@
             exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
             exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
             exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
-            exportThumb:      UC.newBoolean(`Thumbnail`, booleanSave),
+            exportThumb:      UC.newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
             exportPreview:    UC.newBoolean(`Code Preview`, booleanSave),
 
             parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
