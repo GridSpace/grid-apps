@@ -143,7 +143,7 @@ Uint32 poly_union(Uint32 memat, Uint32 polys, float offset) {
 }
 
 __attribute__ ((export_name("poly_diff")))
-Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA, Uint32 clean) {
+Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA, float clean) {
 
     Paths inA(polysA);
     Paths inB(polysB);
@@ -154,27 +154,33 @@ Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA,
 
     Uint32 resat = pos;
 
-    if (AB) {
+    if (AB > 0) {
         Paths outs;
         Clipper clip;
         clip.AddPaths(inA, ptSubject, true);
         clip.AddPaths(inB, ptClip, true);
         clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
         if (clean > 0) {
-            CleanPolygons(outs, (double)clean);
+            // CleanPolygons(outs, clean);
+            for (Path po : outs) {
+                CleanPolygon(po, clean);
+            }
         }
         pos = writePolys(outs, pos);
         clip.Clear();
     }
 
-    if (BA) {
+    if (BA > 0) {
         Paths outs;
         Clipper clip;
         clip.AddPaths(inB, ptSubject, true);
         clip.AddPaths(inA, ptClip, true);
         clip.Execute(ctDifference, outs, pftEvenOdd, pftEvenOdd);
         if (clean > 0) {
-            CleanPolygons(outs, (double)clean);
+            // CleanPolygons(outs, clean);
+            for (Path po : outs) {
+                CleanPolygon(po, clean);
+            }
         }
         pos = writePolys(outs, pos);
         clip.Clear();
