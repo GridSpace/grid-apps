@@ -526,7 +526,7 @@
             zed = opts.z || 0;
 
         if (opts.wasm && geo.wasm) {
-            polys = geo.wasm.js.offset(polys, offs, zed);
+            polys = geo.wasm.js.offset(polys, offs, zed, clean ? CONF.clipperClean : 0, simple ? 1 : 0);
         } else {
             let coff = new ClipperLib.ClipperOffset(opts.miter, opts.arc),
                 ctre = new ClipperLib.PolyTree();

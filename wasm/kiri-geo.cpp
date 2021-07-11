@@ -85,7 +85,7 @@ Uint32 writePolys(Paths &outs, Uint32 pos) {
 }
 
 __attribute__ ((export_name("poly_offset")))
-Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
+Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset, float clean, Uint8 simple) {
 
     Paths ins(polys);
     Paths outs;
@@ -94,11 +94,17 @@ Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset) {
 
     pos = readPolys(ins, pos, polys);
 
-    // clean and simplify polygons
-    // Paths cleans, simples;
-    // CleanPolygons(ins, cleans, 250);
-    // SimplifyPolygons(cleans, simples, pftNonZero);
-    // ins = simples;
+    if (clean > 0) {
+        Paths cleans;
+        CleanPolygons(ins, cleans, clean);
+        ins = cleans;
+    }
+
+    if (simple > 0) {
+        Paths simples;
+        SimplifyPolygons(ins, simples);
+        ins = simples;
+    }
 
     ClipperOffset co;
     co.AddPaths(ins, jtMiter, etClosedPolygon);

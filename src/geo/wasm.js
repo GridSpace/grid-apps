@@ -76,12 +76,12 @@ if (!self.window) (function() {
         return out;
     }
 
-    function polyOffset(polys, offset, z) {
+    function polyOffset(polys, offset, z, clean, simple) {
         geo.count.offset++;
         let wasm = geo.wasm,
             buffer = geo.wasm.shared,
             pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
-            resat = wasm.fn.offset(buffer, pcount, offset * factor),
+            resat = wasm.fn.offset(buffer, pcount, offset * factor, clean, simple),
             out = readPolys(new DataReader(wasm.heap, resat), z);
         return polyNest(out);
     }
