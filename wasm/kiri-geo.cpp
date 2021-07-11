@@ -11,12 +11,9 @@ typedef int int32;
 using namespace ClipperLib;
 
 Uint8 *mem = 0;
-Uint8 debug = 0;
 
 extern "C" {
-    extern void polygon(Uint32 points, Uint32 inners);
-    extern void point(Uint32 x, Uint32 y);
-    extern void ostr(Uint32 len, std::string str);
+    extern void debug_string(Uint32 len, char *str);
 }
 
 struct length16 {
@@ -38,16 +35,23 @@ void mem_clr(Uint32 loc) {
     free((void *)loc);
 }
 
+void send_string(const char *format, ...) {
+    char buffer[100];
+    va_list args;
+    va_start(args, format);
+    Uint32 len =  vsprintf(buffer, format, args);
+    va_end(args);
+    debug_string(len, buffer);
+}
+
 Uint32 readPoly(Path &path, Uint32 pos) {
     struct length16 *ls = (struct length16 *)(mem + pos);
     Uint16 points = ls->length;
-    // if (debug) polygon(points, 0);
     pos += 2;
     while (points > 0) {
         struct point32 *ip = (struct point32 *)(mem + pos);
         pos += 8;
         path << IntPoint(ip->x, ip->y);
-        // if (debug) point(ip->x, ip->y);
         points--;
     }
     return pos;
@@ -64,12 +68,10 @@ Uint32 readPolys(Paths &paths, Uint32 pos, Uint32 count) {
 
 Uint32 writePolys(Paths &outs, Uint32 pos) {
     for (Path po : outs) {
-        // if (debug) polygon(po.size(), 1);
         struct length16 *ls = (struct length16 *)(mem + pos);
         ls->length = po.size();
         pos += 2;
         for (IntPoint pt : po) {
-            // if (debug) point(pt.X, pt.Y);
             struct point32 *ip = (struct point32 *)(mem + pos);
             ip->x = (int)pt.X;
             ip->y = (int)pt.Y;
@@ -84,7 +86,6 @@ Uint32 writePolys(Paths &outs, Uint32 pos) {
 
 __attribute__ ((export_name("poly_offset")))
 Uint32 poly_offset(Uint32 memat, Uint32 polys, float offset, float clean, Uint8 simple) {
-
     Paths ins(polys);
     Paths outs;
     Uint32 pos = memat;
@@ -185,18 +186,4 @@ Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA,
     }
 
     return resat;
-}
-
-__attribute__ ((export_name("set_debug")))
-void set_debug(Uint8 value) {
-    debug = value;
-}
-
-__attribute__ ((export_name("test_string")))
-void test_string(Uint8 value) {
-    // Creating a string from const char*
-    std::string str1 = "hello";
-    //std::string str1 = std::format("{} {}", "hello", value);
-
-    ostr(str1.length(), str1);
 }

@@ -17,7 +17,6 @@ if (!self.window) (function() {
 
     const factor = self.base.config.clipper;
     const geo = self.geo;
-    const debug = false;
 
     function log() {
         console.log(...arguments);
@@ -141,20 +140,6 @@ if (!self.window) (function() {
         return tops;
     }
 
-    function runTests() {
-        let newPolygon = self.base.newPolygon;
-        let p1 = newPolygon().centerCircle({x:2,y:2,z:0}, 2, 50);
-        // let p1 = newPolygon().add(0,0).add(4,0).add(4,4).add(0,4);
-        let p2 = p1.clone().setZ(0).move({x:2, y:2});
-        let d1 = [];
-        let d2 = [];
-        geo.wasm.js.diff([p1], [p2], 0, d1, d2);
-        console.log('diff',{p1:p1.points, p2:p2.points, d1:d1[0].points, d2:d2[0].points});
-        let o1 = geo.wasm.js.offset([p1], 1, 0);
-        console.log('offs',{o1:o1[0].points});
-		wasm.test_string(5);
-    }
-
     function readString(pos, len) {
         let view = new DataReader(geo.wasm.heap, pos);
         let out = [];
@@ -173,9 +158,7 @@ if (!self.window) (function() {
             .then(response => response.arrayBuffer())
             .then(bytes => WebAssembly.instantiate(bytes, {
                 env: {
-                    polygon: (a,b) => { console.log('polygon',a,b) },
-                    point: (a,b) => { console.log('point',a,b) },
-                    ostr: (len, ptr) => { console.log('ostr', readString(ptr, len)) }
+                    debug_string: (len, ptr) => { console.log('wasm', readString(ptr, len)) }
                 },
                 wasi_snapshot_preview1: {
                     args_get: (count,bufsize) => { return 0 },
@@ -197,9 +180,7 @@ if (!self.window) (function() {
                     memory: exports.memory,
                     memmax: exports.memory.buffer.byteLength,
                     malloc: exports.mem_get,
-                    free: exports.mem_clr,
-                    set_debug: exports.set_debug,
-                    test_string: exports.test_string
+                    free: exports.mem_clr
                 };
                 wasm.shared = wasm.malloc(1024 * 1024 * 30),
                 wasm.fn = {
@@ -212,10 +193,6 @@ if (!self.window) (function() {
                     union: polyUnion,
                     offset: polyOffset
                 };
-                if (debug) {
-                    wasm.set_debug(1);
-                    runTests();
-                }
             });
     }
 

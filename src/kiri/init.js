@@ -2481,7 +2481,7 @@
             platform.update_size();
 
             // load wasm if indicated
-            KIRI.client.wasm(control.assembly);
+            KIRI.client.wasm(control.assembly === true);
         };
 
         UI.sync();
