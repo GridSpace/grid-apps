@@ -898,7 +898,7 @@
             let ra = a[i];
             let rb = b[i];
             // test circularity
-            if (Math.abs(ra.c - rb.c) > 0.001) {
+            if (Math.abs(ra.c - rb.c) > 0.0005) {
                 return false;
             }
             // test perimeter

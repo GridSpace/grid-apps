@@ -1058,7 +1058,7 @@
         }
 
         POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea, {
-            wasm: options.wasm
+            // wasm: options.wasm
         });
     };
 
