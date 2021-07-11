@@ -190,7 +190,7 @@ if (!self.window) (function() {
                     free: exports.mem_clr,
                     set_debug: exports.set_debug
                 };
-                wasm.shared = wasm.malloc(1024 * 1024 * 32),
+                wasm.shared = wasm.malloc(1024 * 1024 * 30),
                 wasm.fn = {
                     diff: exports.poly_diff,
                     union: exports.poly_union,

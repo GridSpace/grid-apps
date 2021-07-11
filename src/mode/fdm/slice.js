@@ -479,7 +479,7 @@
             if (!isSynth && !vaseMode) {
                 // sparse layers only present when non-vase mose and sparse % > 0
                 let lastType;
-                let promises = false && isConcurrent ? [] : undefined;
+                let promises = isConcurrent ? [] : undefined;
                 forSlices(0.5, promises ? 0.55 : 0.7, slice => {
                     let params = slice.params || process;
                     if (!params.sliceFillSparse) {
@@ -496,7 +496,7 @@
                         bounds: widget.getBoundingBox(),
                         height: sliceHeight,
                         type: newType,
-                        cache: params._range !== true && lastType === newType && !isConcurrent,
+                        cache: params._range !== true && lastType === newType,
                         promises
                     });
                     lastType = newType;
@@ -505,6 +505,16 @@
                     await tracker(promises, (i, t) => {
                         trackupdate(i / t, 0.55, 0.7);
                     });
+                }
+                // back-fill slices marked for infill cloning
+                for (let slice of slices) {
+                    if (slice._clone_sparse) {
+                        let tops = slice.tops;
+                        let down = slice.down.tops;
+                        for (let i=0; i<tops.length; i++) {
+                            tops[i].fill_sparse = down[i].fill_sparse.map(p => p.cloneZ(slice.z));
+                        }
+                    }
                 }
             } else if (isSynth) {
                 // fill manual supports differently
@@ -943,20 +953,15 @@
         if (skippable && slice.fingerprintSame(down)) {
             // the fill fingerprint can slightly different because of solid projections
             if (down._fill_finger && POLY.fingerprintCompare(slice._fill_finger, down._fill_finger)) {
-                // console.log({fill_clone: down.index});
                 for (let i=0; i<tops.length; i++) {
                     // the layer below may not have infill computed if it's solid
-                    if (down.tops[i].fill_sparse) {
-                        // tops[i].fill_sparse = down.tops[i].fill_sparse.map(p => p.cloneZ(slice.z));
-                        tops[i].fill_sparse = down.tops[i].fill_sparse.map(poly => {
-                            return poly.clone().setZ(slice.z);
-                        });
-                    } else {
+                    if (!down.tops[i].fill_sparse) {
                         miss = true;
                     }
                 }
-                // if any of the fills as missing from below, re-compute
+                // mark for infill cloning if nothing is missing
                 if (!miss) {
+                    slice._clone_sparse = true;
                     return;
                 }
             }
