@@ -16,7 +16,7 @@ Uint8 debug = 0;
 extern "C" {
     extern void polygon(Uint32 points, Uint32 inners);
     extern void point(Uint32 x, Uint32 y);
-    extern void abc(Uint32 a, Uint32 b, Uint32 c);
+    extern void ostr(Uint32 len, std::string str);
 }
 
 struct length16 {
@@ -55,12 +55,10 @@ Uint32 readPoly(Path &path, Uint32 pos) {
 
 Uint32 readPolys(Paths &paths, Uint32 pos, Uint32 count) {
     Uint32 poly = 0;
-    // if (debug) abc(poly, count, pos);
     while (count > 0) {
         pos = readPoly(paths[poly++], pos);
         count--;
     }
-    // if (debug) abc(poly, count, pos);
     return pos;
 }
 
@@ -192,4 +190,13 @@ Uint32 poly_diff(Uint32 memat, Uint32 polysA, Uint32 polysB, Uint8 AB, Uint8 BA,
 __attribute__ ((export_name("set_debug")))
 void set_debug(Uint8 value) {
     debug = value;
+}
+
+__attribute__ ((export_name("test_string")))
+void test_string(Uint8 value) {
+    // Creating a string from const char*
+    std::string str1 = "hello";
+    //std::string str1 = std::format("{} {}", "hello", value);
+
+    ostr(str1.length(), str1);
 }

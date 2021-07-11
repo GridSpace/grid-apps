@@ -152,6 +152,16 @@ if (!self.window) (function() {
         console.log('diff',{p1:p1.points, p2:p2.points, d1:d1[0].points, d2:d2[0].points});
         let o1 = geo.wasm.js.offset([p1], 1, 0);
         console.log('offs',{o1:o1[0].points});
+		wasm.test_string(5);
+    }
+
+    function readString(pos, len) {
+        let view = new DataReader(geo.wasm.heap, pos);
+        let out = [];
+        while (len-- > 0) {
+            out.push(String.fromCharCode(view.readU8()));
+        }
+        return out.join('');
     }
 
     function enable() {
@@ -165,7 +175,7 @@ if (!self.window) (function() {
                 env: {
                     polygon: (a,b) => { console.log('polygon',a,b) },
                     point: (a,b) => { console.log('point',a,b) },
-                    abc:  (a,b,c) => { console.log('abc',a,b,c) }
+                    ostr: (len, ptr) => { console.log('ostr', readString(ptr, len)) }
                 },
                 wasi_snapshot_preview1: {
                     args_get: (count,bufsize) => { return 0 },
@@ -188,7 +198,8 @@ if (!self.window) (function() {
                     memmax: exports.memory.buffer.byteLength,
                     malloc: exports.mem_get,
                     free: exports.mem_clr,
-                    set_debug: exports.set_debug
+                    set_debug: exports.set_debug,
+                    test_string: exports.test_string
                 };
                 wasm.shared = wasm.malloc(1024 * 1024 * 30),
                 wasm.fn = {
