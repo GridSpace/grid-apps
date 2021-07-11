@@ -314,7 +314,7 @@
             opt.prof.call = (opt.prof.call || 0) + 1;
         }
 
-        if (false && opt.wasm) {
+        if (opt.wasm && geo.wasm) {
             let oA = outA ? [] : undefined;
             let oB = outB ? [] : undefined;
             geo.wasm.js.diff(setA, setB, z, oA, oB);

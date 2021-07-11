@@ -448,7 +448,7 @@
             if (solidLayers && !vaseMode && !isSynth) {
                 profileStart("delta");
                 forSlices(0.2, 0.34, slice => {
-                    if (slice.index > 0) doDiff(slice, solidMinArea);
+                    if (slice.index > 0) doDiff(slice, solidMinArea, { wasm: useAssembly });
                 }, "layer deltas");
                 profileEnd();
                 profileStart("delta-project");
@@ -1038,10 +1038,11 @@
      * Used to calculate bridges, flats and then solid projections.
      * 'expand' is used for top offsets in SLA mode
      */
-    function doDiff(slice, minArea, sla, fakedown) {
+    function doDiff(slice, minArea, options = {}) {
         if (slice.index === 0 && !fakedown) {
             return;
         }
+        const { sla, fakedown } = options;
         const top = slice,
             down = slice.down || (fakedown ? newSlice(-1) : null),
             topInner = sla ? top.topPolys() : top.topInners(),
@@ -1056,7 +1057,9 @@
             return;
         }
 
-        POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea);
+        POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea, {
+            wasm: options.wasm
+        });
     };
 
     /**

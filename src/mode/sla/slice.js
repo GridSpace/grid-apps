@@ -144,7 +144,10 @@
             }, "shells");
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
-                FDM.doDiff(slice, 0.000001, true, !process.slaOpenBase);
+                FDM.doDiff(slice, 0.000001, {
+                    sla: true,
+                    fakedown: !process.slaOpenBase
+                });
             }, "delta");
             if (solidLayers) {
                 forSlices(slices, 10, (slice) => {
