@@ -600,7 +600,7 @@
 
             output
                 .setLayer("sparse fill", COLOR.infill)
-                .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true }))
+                .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
             if (top.thin_fill) output
                 .setLayer("thin fill", COLOR.fill)
@@ -866,7 +866,7 @@
             cache = !(options.cache === false),
             type = options.type || 'hex';
 
-        if (slice.tops.length === 0 || density === 0.0 || slice.isSolidLayer) {
+        if (slice.tops.length === 0 || density === 0.0 || slice.isSolidLayer || slice.index < 0) {
             slice.isSparseFill = false;
             return;
         }
@@ -943,9 +943,11 @@
         if (skippable && slice.fingerprintSame(down)) {
             // the fill fingerprint can slightly different because of solid projections
             if (down._fill_finger && POLY.fingerprintCompare(slice._fill_finger, down._fill_finger)) {
+                // console.log({fill_clone: down.index});
                 for (let i=0; i<tops.length; i++) {
                     // the layer below may not have infill computed if it's solid
                     if (down.tops[i].fill_sparse) {
+                        // tops[i].fill_sparse = down.tops[i].fill_sparse.map(p => p.cloneZ(slice.z));
                         tops[i].fill_sparse = down.tops[i].fill_sparse.map(poly => {
                             return poly.clone().setZ(slice.z);
                         });

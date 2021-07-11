@@ -59,6 +59,17 @@
     };
 
     /**
+     * @returns {Number} absolute delta in x,y coordinate space
+     */
+    PRO.delta = function(bounds) {
+        return
+            Math.abs(this.minx - bounds.minx) +
+            Math.abs(this.miny - bounds.miny) +
+            Math.abs(this.maxx - bounds.maxx) +
+            Math.abs(this.maxy - bounds.maxy);
+    };
+
+    /**
      * @param {Bounds} b
      */
     PRO.merge = function(b) {

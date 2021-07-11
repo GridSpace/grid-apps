@@ -85,6 +85,9 @@
         }
 
         addPolys(polys, options) {
+            if (polys.length === 0) {
+                return this;
+            }
             if (options && options.clean) {
                 polys = polys.map(p => p.clean(true));
             }

@@ -257,7 +257,7 @@
         return top;
     });
 
-    function encodePointArray(points, state) {
+    function encodePointArray(points, state, z) {
         if (!points) return null;
 
         let array = codec.allocFloat32Array(points.length * 3),
@@ -280,7 +280,7 @@
             }
             array[pos++] = point.x;
             array[pos++] = point.y;
-            array[pos++] = point.z;
+            array[pos++] = z !== undefined ? z : point.z;
         });
 
         if (zeroOut && state.zeros) {
@@ -314,11 +314,10 @@
         }
 
         state.poly[this.id] = this;
-
         return {
             type: 'poly',
             id: this.id,
-            array: encodePointArray(this.points, state),
+            array: encodePointArray(this.points, state, this.z),
             inner: encode(this.inner, state),
             parent: encode(this.parent, state),
             depth: this.depth,

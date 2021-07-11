@@ -871,37 +871,62 @@
         flatten(polys).sort((a,b) => {
             return a.area() > b.area();
         }).forEach(p => {
-            finger.push(p.area());
-            finger.push(p.perimeter());
-            finger.push(p.bounds);
+            // finger.push(p.area());
+            // finger.push(p.perimeter());
+            // finger.push(p.bounds);
+            finger.push({
+                c: p.circularityDeep(),
+                p: p.perimeterDeep(),
+                b: p.bounds
+            });
         });
         return finger;
     }
 
+    // compare fingerprint arrays
     function fingerprintCompare(a, b) {
+        // true if array is the same object
         if (a === b) {
             return true;
         }
+        // fail on missing array
         if (!a || !b) {
             return false;
         }
+        // require identical length arrays
         if (a.length !== b.length) {
             return false;
         }
-        for (let i=0; i<a.length; i += 3) {
-            if (Math.abs(a[i] - b[i]) > 0.001) {
+        for (let i=0; i<a.length; i++) {
+            let ra = a[i];
+            let rb = b[i];
+            // test circularity
+            if (Math.abs(ra.c - rb.c) > 0.001) {
                 return false;
             }
-            if (Math.abs(a[i+1] - b[i+1]) > 0.0001) {
+            // test perimeter
+            if (Math.abs(ra.p - rb.p) > 0.001) {
                 return false;
             }
-            if (Math.abs(a[i+2].centerx() - b[i+2].centerx()) > 0.0001) {
-                return false;
-            }
-            if (Math.abs(a[i+2].centery() - b[i+2].centery()) > 0.0001) {
+            // test bounds
+            if (ra.b.delta(rb.b) > 0.001) {
                 return false;
             }
         }
+        // for (let i=0; i<a.length; i += 3) {
+        //     if (Math.abs(a[i] - b[i]) > 0.001) {
+        //         return false;
+        //     }
+        //     if (Math.abs(a[i+1] - b[i+1]) > 0.0001) {
+        //         return false;
+        //     }
+        //     if (Math.abs(a[i+2].centerx() - b[i+2].centerx()) > 0.0001) {
+        //         return false;
+        //     }
+        //     if (Math.abs(a[i+2].centery() - b[i+2].centery()) > 0.0001) {
+        //         return false;
+        //     }
+        // }
         return true;
     }
 
