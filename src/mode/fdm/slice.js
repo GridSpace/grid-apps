@@ -448,7 +448,7 @@
             if (solidLayers && !vaseMode && !isSynth) {
                 profileStart("delta");
                 forSlices(0.2, 0.34, slice => {
-                    if (slice.index > 0) doDiff(slice, solidMinArea, { wasm: useAssembly });
+                    if (slice.index > 0) doDiff(slice, solidMinArea);
                 }, "layer deltas");
                 profileEnd();
                 profileStart("delta-project");
@@ -1058,7 +1058,7 @@
         }
 
         POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea, {
-            wasm: options.wasm
+            wasm: true
         });
     };
 
@@ -1104,7 +1104,7 @@
             return;
         }
 
-        let unioned = POLY.union(solids, undefined, true).flat(),
+        let unioned = POLY.union(solids, undefined, true, { wasm: true }).flat(),
             isSLA = (spacing === undefined && angle === undefined);
 
         if (solids.length === 0) return false;
@@ -1289,9 +1289,9 @@
                 pillars.push(BASE.newPolygon().centerRectangle(point, size/2, size/2));
             });
 
-            supports.appendAll(POLY.union(pillars, null, true));
+            supports.appendAll(POLY.union(pillars, null, true, { wasm: false }));
             // merge pillars and replace with convex hull of outer points (aka smoothing)
-            pillars = POLY.union(pillars, null, true).forEach(function(pillar) {
+            pillars = POLY.union(pillars, null, true, { wasm: false }).forEach(function(pillar) {
                 supports.push(BASE.newPolygon().createConvexHull(pillar.points));
             });
         })();
@@ -1318,7 +1318,7 @@
         if (supports.length > 10) {
             supports = await KIRI.minions.union(supports);
         } else {
-            supports = POLY.union(supports, null, true);
+            supports = POLY.union(supports, null, true, { wasm: false });
         }
 
         // clip to top polys
@@ -1332,7 +1332,7 @@
 
             // culled = supports;
             // clip supports to shell offsets
-            POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, minArea);
+            POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, minArea, { wasm: false });
 
             // set depth hint on support polys for infill density
             trimmed.forEach(function(trim) {
@@ -1364,15 +1364,15 @@
         if (!supports) return;
 
         // union supports
-        supports = POLY.setZ(POLY.union(supports, undefined, true), slice.z);
+        supports = POLY.setZ(POLY.union(supports, undefined, true, { wasm: false }), slice.z);
 
         // clip supports to slice clip offset (or shell if none)
-        POLY.subtract(supports, slice.clips, nsB, null, slice.z, min);
+        POLY.subtract(supports, slice.clips, nsB, null, slice.z, min, { wasm: false });
         supports = nsB;
 
         // also trim to lower offsets, if they exist
         if (slice.down && slice.down.clips) {
-            POLY.subtract(nsB, slice.down.clips, nsC, null, slice.z, min);
+            POLY.subtract(nsB, slice.down.clips, nsC, null, slice.z, min, { wasm: false });
             supports = nsC;
         }
 

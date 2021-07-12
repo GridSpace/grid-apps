@@ -314,7 +314,8 @@
             opt.prof.call = (opt.prof.call || 0) + 1;
         }
 
-        if (opt.wasm && geo.wasm) {
+        // wasm diff currently doesn't seem to be any faster
+        if (false && opt.wasm && geo.wasm) {
             let oA = outA ? [] : undefined;
             let oB = outB ? [] : undefined;
             geo.wasm.js.diff(setA, setB, z, oA, oB);
@@ -377,8 +378,19 @@
      * @param {Polygon[]} polys
      * @returns {Polygon[]}
      */
-     function union(polys, minarea, all) {
+     function union(polys, minarea, all, opt = {}) {
          if (polys.length < 2) return polys;
+
+         if (opt.wasm && geo.wasm) {
+             let min = minarea || 0.01;
+             // let deepLength = polys.map(p => p.deepLength).reduce((a,v) => a+v);
+             // if (deepLength < 15000)
+             try {
+                 return geo.wasm.js.union(polys, polys[0].getZ()).filter(p => p.area() > min);
+             } catch (e) {
+                 console.log({union_fail: polys, minarea, all, deepLength});
+             }
+         }
 
          let out = polys.slice(), i, j, union, uset = [];
 

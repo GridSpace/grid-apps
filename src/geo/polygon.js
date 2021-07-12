@@ -1860,7 +1860,6 @@
                     //         m1: src[1].isEqual2D(dst[1])
                     //     });
                     }
-                    return null;
                 }
                 return union;
             }
