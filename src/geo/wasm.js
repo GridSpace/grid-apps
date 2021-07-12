@@ -161,10 +161,10 @@ if (!self.window) (function() {
                     debug_string: (len, ptr) => { console.log('wasm', readString(ptr, len)) }
                 },
                 wasi_snapshot_preview1: {
-                    args_get: (count,bufsize) => { return 0 },
-                    args_sizes_get: (count,bufsize) => { },
-                    environ_get: (count,bufsize) => { return 0 },
-                    environ_sizes_get: (count,bufsize) => { },
+                    // args_get: (count,bufsize) => { return 0 },
+                    // args_sizes_get: (count,bufsize) => { },
+                    // environ_get: (count,bufsize) => { return 0 },
+                    // environ_sizes_get: (count,bufsize) => { },
                     proc_exit: (code) => { return code }
                 }
             }))

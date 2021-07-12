@@ -1172,14 +1172,14 @@
             }
             if (tofill.length > 0) {
                 doFillArea(fillQ, tofill, angle, spacing, newfill);
-                top.fill_lines_norm = {angle:angle,spacing:spacing};
+                // top.fill_lines_norm = {angle:angle,spacing:spacing};
             }
             if (angfill.length > 0) {
                 top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
                 for (let af of angfill) {
                     doFillArea(fillQ, [af], af.fillang.angle + 45, spacing, newfill);
-                    top.fill_lines_ang.list.push(af.fillang.angle + 45);
-                    top.fill_lines_ang.poly.push(af.clone());
+                    // top.fill_lines_ang.list.push(af.fillang.angle + 45);
+                    // top.fill_lines_ang.poly.push(af.clone());
                 }
             }
         }

@@ -655,6 +655,7 @@
 
         // ensure angle is in the -90:90 range
         angle = angle % 180;
+        while (angle < -90) angle += 180;
         while (angle > 90) angle -= 180;
 
         // X,Y ray slope derived from angle
