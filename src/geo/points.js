@@ -69,9 +69,12 @@
             // create offset mid-points
             for (i=0; i<lines.length; i++) {
                 line = lines[i];
+                // skip lines longer than precision threshold
                 if (line.d >= precision) break;
+                // skip lines where one of the points is already offset
                 if (line.p1.op || line.p2.op) continue;
                 // todo skip dropping lines where either point is a "sharp" on 3 vectors
+                // todo skip dropping lines where either point connects to a "long" line
                 line.p1.op = line.p2.op = line.p1.midPointTo3D(line.p2);
                 dec++;
             }
