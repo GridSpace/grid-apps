@@ -62,7 +62,7 @@
      * @returns {Number} absolute delta in x,y coordinate space
      */
     PRO.delta = function(bounds) {
-        return
+        return 0 +
             Math.abs(this.minx - bounds.minx) +
             Math.abs(this.miny - bounds.miny) +
             Math.abs(this.maxx - bounds.maxx) +

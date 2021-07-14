@@ -7,7 +7,6 @@
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)
-* `P` improve decimation speed: omit point conversion or use wasm
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 
