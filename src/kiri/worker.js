@@ -361,6 +361,19 @@ KIRI.worker = {
         });
     },
 
+    sliceAll: function(data, send) {
+        const drivers = KIRI.driver;
+        const settings = data.settings;
+        const mode = settings.mode;
+        const driver = drivers[mode];
+
+        if (driver.sliceAll) {
+            driver.sliceAll(settings, send.data);
+        }
+
+        send.done({done: true});
+    },
+
     prepare: function(data, send) {
         // create widget array from id:widget cache
         const widgets = Object.values(wcache);

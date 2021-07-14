@@ -203,6 +203,10 @@ KIRI.work = {
         });
     },
 
+    sliceAll: function(settings, callback) {
+        send("sliceAll", { settings }, callback);
+    },
+
     prepare: function(settings, update, done) {
         send("prepare", { settings }, function(reply) {
             if (reply.progress) {

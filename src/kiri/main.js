@@ -1051,12 +1051,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             if (toSlice.length) {
                 sliceWidget(toSlice.shift())
             } else {
-                sliceDone();
+                KIRI.client.sliceAll(settings, sliceDone);
             }
         }
 
         function sliceWidget(widget) {
-            let stack = widget.stack = STACKS.create(widget.id, widget.mesh),
+            widget.stack = STACKS.create(widget.id, widget.mesh),
                 factor = (widget.getVertices().count / defvert);
 
             widget.slice(settings, function(sliced, error) {

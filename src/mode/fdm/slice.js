@@ -25,7 +25,6 @@
             gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity: 1 }
         },
         PROTO = Object.clone(COLOR),
-        bwcomp = (1 / Math.cos(Math.PI/4)),
         getRangeParameters = FDM.getRangeParameters,
         noop = function() {},
         profile = false,
@@ -36,14 +35,6 @@
     let isThin = false, // force line rendering
         isFlat = false, // force flat rendering
         offset = 0;     // poly line generation offsets
-
-    let lastLogTime = 0;
-
-    function timelog() {
-        let now = Date.now();
-        console.log(now - (lastLogTime || now), ...arguments);
-        lastLogTime = now;
-    }
 
     function vopt(opt) {
         if (opt) {
@@ -102,6 +93,10 @@
         }
         data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
         data.tops = nutops;
+    };
+
+    FDM.sliceAll = function(settings, onupdate) {
+        // future home of brim and anchor generation
     };
 
     /**
