@@ -2101,7 +2101,10 @@
             SDB.setItem('kiri-lang', 'zh');
             API.space.reload();
         };
-
+        $('lset-zh-tw').onclick = function() {
+            SDB.setItem('kiri-lang', 'zh-tw');
+            API.space.reload();
+        };
         SPACE.addEventHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
