@@ -249,8 +249,9 @@
 
     let CONF = KIRI.conf = {
         // --------------- helper functions
-        normalize: normalize,
-        device_from_code: device_from_code,
+        normalize,
+        device_from_code,
+        fill_cull_once,
         // ---------------
         MODES: {
             FDM: 1,   // fused deposition modeling (also FFF)
