@@ -95,7 +95,7 @@
     function device_from_code(code,mode) {
         // presence of internal field indicates already converted
         if (code.internal >= 0) return code;
-        if (self.navigator) console.log({mode, convert: code});
+        // if (self.navigator) console.log({mode, convert: code});
         let API = KIRI.api,
             cmd = code.cmd || {},
             set = code.settings || {},
