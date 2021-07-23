@@ -1,4 +1,3 @@
-console.log("conf from from cmd line");
 let fs = require('fs');
 var clone = Object.clone = function(o) {
     return JSON.parse(JSON.stringify(o));
@@ -20,5 +19,6 @@ for (let file of arg) {
     delete devi.new;
     delete devi.internal;
     delete devi.deviceName;
-    console.log({code, devi});
+    // console.log({code, devi});
+    console.log(JSON.stringify(code,undefined,4));
 }
