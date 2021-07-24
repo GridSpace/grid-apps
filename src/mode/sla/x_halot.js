@@ -142,9 +142,9 @@
                     let d2 = this.view.getUint16(pos); pos += 2;
                     let d3 = this.view.getUint16(pos); pos += 2;
                     let y_start = d1 >> 3;
-                    let y_end = (d1 & 0x07) | (d2 >> 6);
-                    let x_end = (d2 & 0x3f) | (d3 >> 8);
-                    let color = d3 & 0xf;
+                    let y_end = ((d1 & 0b111) << 10) | (d2 >> 6);
+                    let x_end = ((d2 & 0b111111) << 8) | (d3 >> 8);
+                    let color = d3 & 0xff;
                     out.push({y_start, y_end, x_end, color});
                 }
                 return out;
@@ -167,114 +167,13 @@
         // let fpos = 0;
         let view = new DataView(fs.readFileSync(file).buffer);
         let read = new DataReader(view, 0);
-
         let cxdlp = new CXDLP().read(view);
-        console.log({cxdlp}, cxdlp.layers.slice(0,5));
-        console.log(cxdlp.get_layer_lines(1));
-        //
-        // function skip(len) {
-        //     return read.skip(len);
-        // }
-        //
-        // function readU8() {
-        //     return read.readU8();
-        // }
-        //
-        // function readU16() {
-        //     return read.readU16();
-        // }
-        //
-        // function readU32() {
-        //     return read.readU32();
-        // }
-        //
-        // function read_string(dbl) {
-        //     let len = readU32();
-        //     let str = '';
-        //     while (--len > 0) {
-        //         if (dbl) {
-        //             readU8();
-        //             len--;
-        //         }
-        //         str += String.fromCharCode(readU8());
-        //     }
-        //     if (!dbl) {
-        //         skip(1); // zero term on byte strings
-        //         // fpos++;
-        //     }
-        //     return str;
-        // }
-        //
-        // let meta = {
-        //     file,
-        //     magic: read_string(),
-        //     version: readU16(),
-        //     model: read_string(),
-        //     layer_count: readU16(),
-        //     res_x: readU16(),
-        //     res_y: readU16(),
-        //     height: readU32(),
-        //     skip: skip(60),
-        //     thumb: skip(26914),
-        //     preview1: skip(168202),
-        //     preview2: skip(168202),
-        //     dim_x: read_string(true),
-        //     dim_y: read_string(true),
-        //     layer: read_string(true),
-        //     layer_light_on: readU16(),
-        //     layer_light_off: readU16(),
-        //     base_light_on: readU16(),
-        //     base_layers: readU16(),
-        //     base_lift_dist: readU16(),
-        //     base_lift_speed: readU16(),
-        //     layer_lift_dist: readU16(),
-        //     layer_lift_speed: readU16(),
-        //     down_speed: readU16(),
-        //     base_light_pwm: readU16(),
-        //     layer_light_pwm: readU16()
-        // };
-        // console.log(meta);
-        // let layer_sizes = [];
-        // for (let i=0; i<meta.layer_count; i++) {
-        //     layer_sizes.push(readU32());
-        // }
-        // let term = readU16(); // 0x0d0a
-        // console.log(layer_sizes, term.toString(16));
-        // let layer_data = [];
-        // for (let i=0; i<meta.layer_count; i++) {
-        //     let size = readU32();
-        //     if (size !== layer_sizes[i]) {
-        //         console.log({size_mismatch: size, expected: layer_sizes[i]});
-        //         break;
-        //     }
-        //     let lines = readU32();
-        //     for (let j=0; j<lines; j++) {
-        //         let d1 = readU16();
-        //         let d2 = readU16();
-        //         let d3 = readU16();
-        //         let y_start = d1 >> 3;
-        //         let y_end = (d1 & 0x07) | (d2 >> 6);
-        //         let x_end = (d2 & 0x3f) | (d3 >> 8);
-        //         let color = d3 & 0xf;
-        //         if (i === 1 && j < 100) {
-        //             console.log({j, lines, y_start, y_end, x_end, color});
-        //         }
-        //     }
-        //     term = readU16(); // 0x0d0a
-        //     // console.log({i, fpos, size, lines, term: term.toString(16)});
-        //     if (term != 0xd0a) {
-        //         console.log({term_mismatch: term.toString(16)});
-        //         break;
-        //     }
-        //     layer_data.push({ size, lines, term });
-        // }
-        // let magic2 = read_string();
-        // // calculate checksum with progressive XOR of all bytes up to this one
-        // let csum = 0;
-        // for (let i=0; i<read.pos; i++) {
-        //     csum = csum ^ view.getUint8(i);
-        // }
-        // let checksum = readU32();
-        // console.log({magic2, checksum: checksum.toString(16), csum: csum.toString(16)});
+        console.log({
+            cxdlp,
+            layers5: cxdlp.layers.slice(0,5),
+            lines1: cxdlp.get_layer_lines(1)
+        });
+    } else if (this.navigator) {
+        window.CXDLP = CXDLP;
     }
 }());
