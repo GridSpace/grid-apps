@@ -1034,10 +1034,10 @@
      * 'expand' is used for top offsets in SLA mode
      */
     function doDiff(slice, minArea, options = {}) {
+        const { sla, fakedown } = options;
         if (slice.index === 0 && !fakedown) {
             return;
         }
-        const { sla, fakedown } = options;
         const top = slice,
             down = slice.down || (fakedown ? newSlice(-1) : null),
             topInner = sla ? top.topPolys() : top.topInners(),

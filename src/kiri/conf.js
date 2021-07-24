@@ -115,6 +115,8 @@
             bedDepth: valueOf(set.bed_depth, 175),
             bedRound: valueOf(set.bed_circle, false),
             bedBelt: valueOf(set.bed_belt, false),
+            resolutionX: valueOf(set.resolution_x, 1600),
+            resolutionY: valueOf(set.resolution_y, 900),
             deviceZMax: valueOf(set.z_move_max, 0),
             maxHeight: valueOf(set.build_height, 150),
             originCenter: valueOf(set.origin_center, false),
@@ -397,7 +399,9 @@
                     bedWidth: 150,
                     bedDepth: 150,
                     bedHeight: 1.5,
-                    maxHeight: 150
+                    maxHeight: 150,
+                    resolutionX: 1600,
+                    resolutionY: 900
                 },
                 // process defaults SLA:Process
                 p:{

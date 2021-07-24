@@ -50,7 +50,8 @@
             });
         }
 
-        let b64 = atob(self.worker.snap);
+        let sws = self.worker.snap.url;
+        let b64 = atob(sws.substring(sws.indexOf(',') + 1));
         let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
         let img = new png.PNG();
         img.parse(bin, (err, data) => {

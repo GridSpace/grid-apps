@@ -22,8 +22,8 @@
             process = settings.process,
             output = print.output,
             layermax = 0,
-            width = 2560,
-            height = 1440,
+            width = device.resolutionX,
+            height = device.resolutionY,
             width2 = width/2,
             height2 = height/2,
             scaleX = width / device.bedWidth,
@@ -75,6 +75,9 @@
             case 'Anycubic.Photon.S':
                 exp_func = generatePhotons;
                 break;
+            case 'Creality.Halot.Sky':
+                exp_func = generateCXDLP;
+                break;
         }
 
         let file = exp_func(print, {
@@ -95,6 +98,10 @@
 
         console.log('print.export', Date.now() - mark);
     };
+
+    function generateCXDLP(print, conf, progress) {
+        console.log({generateCXDLP: print, conf, progress});
+    }
 
     function generatePhoton(print, conf, progress) {
         let printset = print.settings,
