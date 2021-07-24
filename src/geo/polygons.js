@@ -911,15 +911,15 @@
             let ra = a[i];
             let rb = b[i];
             // test circularity
-            if (Math.abs(ra.c - rb.c) > 0.0005) {
+            if (Math.abs(ra.c - rb.c) > 0.001) {
                 return false;
             }
             // test perimeter
-            if (Math.abs(ra.p - rb.p) > 0.001) {
+            if (Math.abs(ra.p - rb.p) > 0.01) {
                 return false;
             }
             // test bounds
-            if (ra.b.delta(rb.b) > 0.001) {
+            if (ra.b.delta(rb.b) > 0.01) {
                 return false;
             }
         }

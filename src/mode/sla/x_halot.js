@@ -42,7 +42,7 @@
             }
             return str;
         }
-        console.log({
+        let meta = {
             file,
             magic: read_string(),
             version: nextU16(),
@@ -68,7 +68,41 @@
             layer_lift_speed: nextU16(),
             down_speed: nextU16(),
             base_light_pwm: nextU16(),
-            layer_light_pwm: nextU16(),
-        });
+            layer_light_pwm: nextU16()
+        };
+        console.log(meta);
+        let layer_sizes = [];
+        for (let i=0; i<meta.layers; i++) {
+            layer_sizes.push(nextU32());
+        }
+        let term = nextU16(); // 0x0d0a
+        console.log(layer_sizes, term.toString(16));
+        let layer_data = [];
+        for (let i=0; i<meta.layers; i++) {
+            let size = nextU32();
+            let lines = nextU32();
+            for (let j=0; j<lines; j++) {
+                skip(6); // line data
+            }
+            term = nextU16(); // 0x0d0a
+            // console.log({i, fpos, size, lines, term: term.toString(16)});
+            if (term != 0xd0a) {
+                console.log({term_mismatch: term.toString(16)});
+                break;
+            }
+            if (size !== layer_sizes[i]) {
+                console.log({size_mismatch: size, expected: layer_sizes[i]});
+                break;
+            }
+            layer_data.push({ size, lines, term });
+        }
+        let magic2 = read_string();
+        // calculate checksum with progressive XOR of all bytes up to this one
+        let csum = 0;
+        for (let i=0; i<fpos; i++) {
+            csum = csum ^ view.getUint8(i);
+        }
+        let checksum = nextU32();
+        console.log({magic2, checksum: checksum.toString(16), csum: csum.toString(16)});
     }
 }());
