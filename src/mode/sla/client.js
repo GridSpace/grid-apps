@@ -92,7 +92,9 @@
             range.min = 0;
             range.max = lines.length - 1;
             range.oninput = function() {
-                let lineDV = new DataView(lines[range.value]);
+                let pdata = lines[range.value];
+                if (!pdata) return;
+                let lineDV = new DataView(pdata);
                 for (let i=0; i<lineDV.byteLength; i++) {
                     imgDV.setUint32(i*4, lineDV.getUint8(i));
                 }

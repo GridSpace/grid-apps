@@ -341,7 +341,7 @@
             writePoly(writer, poly);
         }
         wasm.render(0, imagelen, 0);
-        let image = wasm.heap.slice(0, imagelen);
+        let image = wasm.heap;//.slice(0, imagelen);
         let lines = [];
         for (let x=0; x<width; x++) {
             let y_start = 0;
@@ -361,7 +361,8 @@
                 lastv = v;
             }
         }
-        return { image, lines };
+        return { lines };
+        // return { image, lines };
     }
 
     if (!this.navigator && this.process && this.process.env) {

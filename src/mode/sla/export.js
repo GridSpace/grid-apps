@@ -107,7 +107,7 @@
                 slices.push(lines);
                 // transfer image memory to browser main
                 // it *should* be sampled to save memory
-                image = image.buffer;
+                image = image ? image.buffer : undefined;
                 online({
                     progress: (index / layermax) * part1,
                     message: "image_gen",
