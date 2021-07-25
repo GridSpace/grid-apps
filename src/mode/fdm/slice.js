@@ -175,7 +175,7 @@
 
             widget.slices = slices;
 
-            if (!slices) {
+            if (!slices || slices.length === 0) {
                 return;
             }
 
