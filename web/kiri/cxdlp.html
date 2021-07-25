@@ -9,6 +9,9 @@
             display: flex;
             flex-direction: row;
         }
+        th {
+            text-align: left;
+        }
         #slider {
             flex-grow: 1;
         }
@@ -17,7 +20,7 @@
         }
     </style>
     <script src="/src/add/class.js"></script>
-    <script src="/src/mode/sla/x_halot.js"></script>
+    <script src="/src/mode/sla/x_cxdlp.js"></script>
     <script>
         function onload() {
             document.addEventListener("drop", (ev) => {
@@ -30,6 +33,7 @@
                     console.log({cxdlp});
                     slider.max = layers.value = cxdlp.layers.length - 1;
                     render(slider.value = layer.value = 0);
+                    meta(cxdlp);
                 };
                 reader.readAsArrayBuffer(files[0]);
                 console.log("drop", files);
@@ -52,6 +56,20 @@
             layer.onchange = () => {
                 render(slider.value = layer.value);
             };
+        }
+        function row(key,value) {
+            return `<tr><th>${key}</th><td>${value}</td></tr>`;
+        }
+        function meta(cxdlp) {
+            let rows = Object.entries(cxdlp).filter(e => {
+                let t = typeof(e[1]);
+                return t === 'number' || t === 'string';
+            }).map(e => row(e[0], e[1]));
+            params.innerHTML = [
+                '<table>',
+                ...rows,
+                '</table>'
+            ].join('');
         }
         function render(layer) {
             let cxdlp = window.cxdlp;
@@ -84,5 +102,11 @@
         <input id="layers" size=5 disabled=true>
     </div>
     <canvas id="canvas" width=4000 height=2000></canvas>
+    <div>
+        <div id="params"></div>
+        <canvas id="thumb"></canvas>
+        <canvas id="pre1"></canvas>
+        <canvas id="pre2"></canvas>
+    </div>
 </body>
 </html>

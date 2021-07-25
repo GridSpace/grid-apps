@@ -19,9 +19,8 @@
         });
     };
 
-    SLA.printDownload = function(preview, output, API) {
-        const lines = preview;
-        const { file, width, height } = output;
+    SLA.printDownload = function(output, API) {
+        const { file, width, height, layers } = output;
         const filename = `print-${new Date().getTime().toString(36)}`;
 
         API.ajax("/kiri/output-sla.html", html => {
@@ -31,10 +30,10 @@
                 process = settings.process,
                 device = settings.device,
                 print_sec = (process.slaBaseLayers * process.slaBaseOn) +
-                    (lines.length - process.slaBaseLayers) * process.slaLayerOn;
+                    (layers - process.slaBaseLayers) * process.slaLayerOn;
 
             // add peel lift/drop times to total print time
-            for (let i=0; i<lines.length; i++) {
+            for (let i=0; i<layers; i++) {
                 let dist = process.slaPeelDist,
                     lift = process.slaPeelLiftRate,
                     drop = process.slaPeelDropRate,
@@ -51,7 +50,7 @@
 
             let print_min = Math.floor(print_sec/60),
                 print_hrs = Math.floor(print_min/60),
-                download = $('print-photon');
+                download = $('print-sla');
 
             // add lift/drop time
             print_sec -= (print_min * 60);
@@ -61,7 +60,7 @@
             print_hrs = print_hrs.toString().padStart(2,'0');
 
             $('print-filename').value = filename;
-            $('print-layers').value = lines.length;
+            $('print-layers').value = layers;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
 
             switch (device.deviceName) {
@@ -80,29 +79,6 @@
                     break;
             }
 
-            let canvas = $('print-canvas');
-            // rotate 90 degrees for export view
-            canvas.width = height;
-            canvas.height = width;
-            let ctx = canvas.getContext('2d');
-            let img = ctx.createImageData(height, width);
-            let imgDV = new DataView(img.data.buffer);
-            let range = $('print-range');
-            range.value = 0;
-            range.min = 0;
-            range.max = lines.length - 1;
-            range.oninput = function() {
-                let pdata = lines[range.value];
-                if (!pdata) return;
-                let lineDV = new DataView(pdata);
-                for (let i=0; i<lineDV.byteLength; i++) {
-                    imgDV.setUint32(i*4, lineDV.getUint8(i));
-                }
-                ctx.putImageData(img,0,0);
-                $('print-layer').innerText = range.value.padStart(4,'0');
-            };
-
-            range.oninput();
             API.modal.show('print');
         });
     }

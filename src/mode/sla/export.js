@@ -64,13 +64,10 @@
                 let {image, layers, end} = render(param);
                 images.push(image);
                 slices.push(layers);
-                // transfer image memory to browser main
-                image = image.buffer;
                 online({
                     progress: (index / layermax) * part1,
                     message: "image_gen",
-                    data: image
-                }, [image]);
+                });
                 if (end) break;
             }
 
@@ -89,41 +86,39 @@
             }, (progress, message) => {
                 online({progress: progress * part2 + part1, message});
             });
-            ondone({
-                width: width,
-                height: height,
-                file: file
-            },[file]);
+            ondone({ width, height, file, layers: images.length }, [file]);
         } else {
-            let part1 = 0.25;
+            let part1 = 0.95;
             let part2 = 1 - part1;
-            let images = [];
             let slices = [];
 
             for (let index=0; index < layermax; index++) {
                 let param = { index, width, height, widgets, scaleX, scaleY };
-                let {image, lines} = CXDLP.render(param);
-                images.push(image);
+                let {lines} = CXDLP.render(param);
                 slices.push(lines);
-                // transfer image memory to browser main
-                // it *should* be sampled to save memory
-                image = image ? image.buffer : undefined;
                 online({
                     progress: (index / layermax) * part1,
-                    message: "image_gen",
-                    data: image
-                }, [image]);
+                    message: "image_gen"
+                });
                 // bail on an empty layer
                 if (lines.length === 0) {
                     break;
                 }
             }
 
-            let file = CXDLP.export({settings, width, height, slices});
+            // generate thumb, preview1, preview2
+
+            let file = CXDLP.export({
+                settings,
+                width,
+                height,
+                slices
+            });
             ondone({
                 width: width,
                 height: height,
-                file: file
+                file: file,
+                layers: slices.length
             }, [file]);
         }
 

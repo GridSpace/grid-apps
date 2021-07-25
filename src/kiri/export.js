@@ -60,27 +60,19 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     }
 
     function callExportSLA(options) {
-        const preview = [];
         KIRI.client.export(API.conf.get(), (line) => {
             API.show.progress(line.progress, "exporting");
-            if (line.data) {
-                preview.push(line.data);
-            }
         }, (output, error) => {
             API.show.progress(0);
             if (error) {
                 API.show.alert(error, 5);
             } else {
-                KIRI.driver.SLA.printDownload(preview, output, API);
+                KIRI.driver.SLA.printDownload(output, API);
             }
         });
     }
 
     function exportLaserDialog(data) {
-        // if (!isPrepared()) {
-        //     return API.function.prepare(exportLaser);
-        // }
-
         const filename = "laser-"+(new Date().getTime().toString(36));
         const settings = API.conf.get();
         const driver = KIRI.driver.LASER;
