@@ -2,7 +2,7 @@
 
     const default_values = {
         magic1: 'CXSW3DV2',
-        magic2: '',
+        magic2: 'CXSW3DV2',
         model: 'CL-89',
         version: 1,
         layer_count: 0,
@@ -79,7 +79,7 @@
                 lift_dist: read.readU16(),
                 lift_speed: read.readU16(),
                 down_speed: read.readU16(),
-                light_pwm: read.readU16(),
+                base_light_pwm: read.readU16(),
                 light_pwm: read.readU16()
             };
 
@@ -96,7 +96,7 @@
             for (let i=0; i<meta.layer_count; i++) {
                 let size = read.readU32();
                 if (size !== layers[i].length) {
-                    throw `layer length mismatch: ${size} != ${layer_sizes[i]}}`;
+                    throw `layer length mismatch: ${size} != ${layers[i].length} @ i=${i}`;
                 }
                 let lines = read.readU32();
                 layers[i].lines = lines;
@@ -154,8 +154,214 @@
         }
 
         write() {
-            // TODO
+            let output = new ArrayWriter();
+
+            output.write_string = function write_string(str, dbl = false) {
+                let len = str.length;
+                output.writeU32(dbl ? len * 2 : len + 1);
+                let pos = 0;
+                while (pos < len) {
+                    if (dbl) {
+                        output.writeU8(0);
+                    }
+                    output.writeU8(str.charCodeAt(pos++));
+                }
+                if (!dbl) {
+                    output.writeU8(0);
+                }
+            }
+
+            let layers = this.layers;
+            this.layer_count = layers.length;
+            output.write_string(this.magic1);
+            output.writeU16(this.version);
+            output.write_string(this.model);
+            output.writeU16(this.layer_count);
+            output.writeU16(this.res_x);
+            output.writeU16(this.res_y);
+            output.writeU32(this.height);
+            output.skip(60);
+            output.skip(26912); // thumb
+            output.writeU16(data_term);
+            output.skip(168200); // preview1
+            output.writeU16(data_term);
+            output.skip(168200); // preview1
+            output.writeU16(data_term);
+            output.write_string(this.dim_x, true);
+            output.write_string(this.dim_y, true);
+            output.write_string(this.layer, true);
+            output.writeU16(this.light_on);
+            output.writeU16(this.light_off);
+            output.writeU16(this.base_light_on);
+            output.writeU16(this.base_layers);
+            output.writeU16(this.base_lift_dist);
+            output.writeU16(this.base_lift_speed);
+            output.writeU16(this.lift_dist);
+            output.writeU16(this.lift_speed);
+            output.writeU16(this.down_speed);
+            output.writeU16(this.base_light_pwm);
+            output.writeU16(this.light_pwm);
+
+            // write placeholder layer length to capture position
+            for (let layer of layers) {
+                layer.l1 = output.pos;
+                output.writeU32(0);
+            }
+            output.writeU16(data_term);
+
+            // write out encoded layers
+            for (let layer of layers) {
+                layer.l2 = output.pos;
+                // placeholder to be written post
+                output.writeU32(0);
+                output.writeU32(layer.lines.length);
+                let start = output.pos;
+                for (let line of layer.lines) {
+                    let b1 = (line.y_start >> 5);
+                    let b2 = ((line.y_start << 3) | (line.y_end >> 10)) & 0xff;
+                    let b3 = (line.y_end >> 2) & 0xff;
+                    let b4 = ((line.y_end << 6) | (line.x_end >> 8)) & 0xff;
+                    let b5 = (line.x_end) & 0xff;
+                    output.writeU8(b1);
+                    output.writeU8(b2);
+                    output.writeU8(b3);
+                    output.writeU8(b4);
+                    output.writeU8(b5);
+                    output.writeU8(line.color);
+                }
+                layer.length = output.pos - start;
+                output.writeU16(data_term);
+            }
+
+            output.write_string(this.magic2);
+            let ckpos = output.pos;
+
+            // retrace and write layer lengths
+            for (let layer of layers) {
+                output.seek(layer.l1);
+                output.writeU32(layer.length);
+                output.seek(layer.l2);
+                output.writeU32(layer.length);
+            }
+
+            output.seek(ckpos);
+            // compute xor checksum
+            let cksum = 0;
+            let array = output.array;
+            for (let i=0; i<array.length; i++) {
+                cksum = cksum ^ (array[i] || 0);
+            }
+            output.writeU32(cksum);
+
+            return output.toBuffer();
         }
+    }
+
+    CXDLP.export = function(params) {
+        let { settings, width, height, slices } = params;
+
+        let cxdlp = new CXDLP();
+        cxdlp.layers = slices.map(a => {return { lines: a }});
+
+        return cxdlp.write();
+    };
+
+    CXDLP.render = function(params) {
+        let { width, height, index, widgets, scaleX, scaleY  } = params;
+        let width2 = width / 2, height2 = height / 2;
+        let array = [];
+        let count = 0;
+
+        function scaleMovePoly(poly) {
+            let points = poly.points;
+            poly._bounds = undefined;
+            for (let i=0, il=points.length; i<il; i++) {
+                let p = points[i];
+                p.y = height - (p.y * scaleY + height2);
+                p.x = p.x * scaleX + width2;
+            }
+            if (poly.inner) {
+                for (let i=0, ia=poly.inner, il=poly.inner.length; i<il; i++) {
+                    scaleMovePoly(ia[i]);
+                }
+            }
+        }
+
+        // serialize poly into wasm heap memory
+        function writePoly(writer, poly) {
+            let pos = writer.skip(2);
+            let inner = poly.inner;
+            writer.writeU16(inner ? inner.length : 0, true);
+            let points = poly.points;
+            let bounds = poly.bounds;
+            writer.writeU16(points.length, true);
+            writer.writeU16(bounds.minx, true);
+            writer.writeU16(bounds.maxx, true);
+            writer.writeU16(bounds.miny, true);
+            writer.writeU16(bounds.maxy, true);
+            for (let j=0, jl=points.length; j<jl; j++) {
+                let point = points[j];
+                writer.writeF32(point.x, true);
+                writer.writeF32(point.y, true);
+            }
+            if (inner && inner.length) {
+                for (let i=0, il=inner.length; i<il; i++) {
+                    writePoly(writer, inner[i]);
+                }
+            }
+            // write total struct length at struct head
+            writer.view.setUint16(pos, writer.pos - pos, true);
+        }
+
+        widgets.forEach(widget => {
+            let slice = widget.slices[index];
+            if (slice) {
+                if (slice.synth) count++;
+                let polys = slice.unioned;
+                if (!polys) polys = slice.tops.map(t => t.poly);
+                if (slice.supports) polys.appendAll(slice.supports);
+                array.appendAll(polys.map(poly => {
+                    return poly.clone(true).move(widget.track.pos);
+                }));
+                count += polys.length;
+            }
+        });
+
+        let wasm = kiri.driver.SLA.wasm;
+        let imagelen = width * height;
+        let writer = new self.DataWriter(new DataView(wasm.memory.buffer), imagelen);
+        writer.writeU16(width, true);
+        writer.writeU16(height, true);
+        writer.writeU16(array.length, true);
+
+        // scale and move all polys to fit in rendered platform coordinates
+        for (let i=0, il=array.length; i<il; i++) {
+            let poly = array[i];
+            scaleMovePoly(poly);
+            writePoly(writer, poly);
+        }
+        wasm.render(0, imagelen, 0);
+        let image = wasm.heap.slice(0, imagelen);
+        let lines = [];
+        for (let x=0; x<width; x++) {
+            let y_start = 0;
+            let lastv = 0;
+            for (let y=0; y<height; y++) {
+                let v = image[x * height + y];
+                if (v !== lastv) {
+                    if (lastv) {
+                        // emit any non-zero sequence
+                        lines.push({y_start, y_end: y, x_end: x, color: lastv});
+                    }
+                    if (v) {
+                        // start a new sequence
+                        y_start = y;
+                    }
+                }
+                lastv = v;
+            }
+        }
+        return { image, lines };
     }
 
     if (!this.navigator && this.process && this.process.env) {
@@ -174,6 +380,6 @@
             lines1: cxdlp.get_layer_lines(1)
         });
     } else if (this.navigator) {
-        window.CXDLP = CXDLP;
+        this.CXDLP = CXDLP;
     }
 }());

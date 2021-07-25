@@ -1,3 +1,41 @@
+self.ArrayWriter = class ArrayWriter {
+    constructor() {
+        this.pos = 0;
+        this.array = [];
+    }
+
+    seek(pos) {
+        let last = this.pos;
+        this.pos = pos;
+        return last;
+    }
+
+    skip(len) {
+        this.pos += len;
+        return this.pos;
+    }
+
+    writeU8(v) {
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    writeU16(v) {
+        this.array[this.pos++] = (v >> 8) & 0xff;
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    writeU32(v) {
+        this.array[this.pos++] = (v >> 24) & 0xff;
+        this.array[this.pos++] = (v >> 16) & 0xff;
+        this.array[this.pos++] = (v >> 8) & 0xff;
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    toBuffer() {
+        return new Uint8ClampedArray(this.array).buffer;
+    }
+};
+
 self.DataWriter = class DataWriter {
     constructor(view, pos) {
         this.view = view;

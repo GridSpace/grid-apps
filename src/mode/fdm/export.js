@@ -395,7 +395,7 @@
                 pos.z = zpos;
                 if (peelGuard && bmax > peelGuard && blast < peelGuard) {
                     peelGuard += 50;
-                    append(`G0 Z${(blast + 55).round(decimals)} F200 ; peel guard`);
+                    append(`G0 Z${(blast + 100).round(decimals)} F200 ; peel guard (100)`);
                     append(`G0 Z${blastz.round(decimals)} F200 ; unpeel`);
                 }
                 blast = bmax;

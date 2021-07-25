@@ -309,6 +309,8 @@ const script = {
         "mode/sla/driver",
         "mode/sla/slice",
         "mode/sla/export",
+        "mode/sla/x_halot",
+        "mode/sla/x_photon",
         "mode/cam/driver",
         "mode/cam/ops",
         "mode/cam/tool",

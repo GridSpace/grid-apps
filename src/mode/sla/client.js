@@ -73,9 +73,17 @@
                     download.innerText += " .photons";
                     download.onclick = () => { saveFile(API, file, ".photons") };
                     break;
+                case 'Creality.Halot.Sky':
+                default:
+                    download.innerText += " .cxdlp";
+                    download.onclick = () => { saveFile(API, file, ".cxdlp") };
+                    break;
             }
 
             let canvas = $('print-canvas');
+            // rotate 90 degrees for export view
+            canvas.width = height;
+            canvas.height = width;
             let ctx = canvas.getContext('2d');
             let img = ctx.createImageData(height, width);
             let imgDV = new DataView(img.data.buffer);
