@@ -246,7 +246,7 @@
 
             widget.slices = slices;
 
-            if (!slices) {
+            if (!slices || slices.length === 0) {
                 return;
             }
 
@@ -370,7 +370,7 @@
                     }
                 }
                 // ensure we start against a layer with shells
-                while (start.up && start.topShells().length === 0) {
+                while (start && start.up && start.topShells().length === 0) {
                     start = start.up;
                 }
                 // if a brim applies, add that width to anchor
