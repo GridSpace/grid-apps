@@ -1839,7 +1839,6 @@
             arcTolerance:        UC.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:UC.bound(0,1.0), convert:UC.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputPeelGuard:     UC.newInput(LANG.ag_peel_s, {title:LANG.ag_peel_l, convert:UC.toInt, modes:FDM, comma:true, show:isBelt}),
             gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true, show:isNotBelt}),
             outputLoops:         UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:UC.toInt, bound:UC.bound(0,1000), modes:FDM, show:isBelt}),
             outputPurgeTower:    UC.newBoolean(LANG.ad_purg_s, onBooleanClick, {title:LANG.ad_purg_l, modes:FDM, show:isMultiHead}),

@@ -55,7 +55,6 @@
             last = null,
             zpos = 0,
             bmax = 0,
-            blast = 0,
             blastz = 0,
             process = settings.process,
             belt_add_y = (process.firstLayerYOffset || 0) - (print.belty || 0),
@@ -67,7 +66,6 @@
             retSpeed = process.outputRetractSpeed * 60 || 1, // range
             retDwell = process.outputRetractDwell || 0, // range
             timeDwell = retDwell / 1000,
-            peelGuard = process.outputPeelGuard || 0,
             arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
             arcMin = 1,
             arcRes = 20,
@@ -393,12 +391,6 @@
 
             if (isBelt) {
                 pos.z = zpos;
-                if (peelGuard && bmax > peelGuard && blast < peelGuard) {
-                    peelGuard += 50;
-                    append(`G0 Z${(blast + 100).round(decimals)} F200 ; peel guard (100)`);
-                    append(`G0 Z${blastz.round(decimals)} F200 ; unpeel`);
-                }
-                blast = bmax;
             }
 
             if (pauseCmd && pause.indexOf(layer) >= 0) {
