@@ -20,19 +20,24 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     let printSeq = parseInt(SDB['kiri-print-seq'] || SDB['print-seq'] || "0") + 1;
 
     function exportFile(options) {
-        const mode = API.mode.get();
+        let mode = API.mode.get();
+        let names = API.widgets.all().map(w => w.meta ? w.meta.file : undefined)
+            .filter(v => v)
+            .map(v => v.replace(/ /g,'-'))
+            .map(v => v.substring(0,20))
+            .map(v => v.split('.')[0]);
         API.event.emit('export', mode);
         switch (mode) {
-            case 'LASER': return callExportLaser(options);
-            case 'FDM': return callExport(options, mode);
-            case 'CAM': return callExport(options, mode);
-            case 'SLA': return callExportSLA(options);
+            case 'LASER': return callExportLaser(options, names);
+            case 'FDM': return callExport(options, mode, names);
+            case 'CAM': return callExport(options, mode, names);
+            case 'SLA': return callExportSLA(options, names);
         }
     }
 
-    function callExport(callback, mode) {
+    function callExport(callback, mode, names) {
         let alert = API.feature.work_alerts ? API.show.alert("Exporting") : null;
-        const gcode = [];
+        let gcode = [];
         KIRI.client.export(API.conf.get(), (line) => {
             gcode.push(line);
         }, (output, error) => {
@@ -42,24 +47,24 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             } else if (callback) {
                 callback(gcode.join('\r\n'), output);
             } else {
-                exportGCodeDialog(gcode.join('\r\n'), output);
+                exportGCodeDialog(gcode.join('\r\n'), output, names);
             }
         });
     }
 
-    function callExportLaser(options) {
+    function callExportLaser(options, names) {
         KIRI.client.export(API.conf.get(), (line) => {
             console.log({unexpected_line: line});
         }, (output, error) => {
             if (error) {
                 API.show.alert(error, 5);
             } else {
-                exportLaserDialog(output);
+                exportLaserDialog(output, names);
             }
         });
     }
 
-    function callExportSLA(options) {
+    function callExportSLA(options, names) {
         KIRI.client.export(API.conf.get(), (line) => {
             API.show.progress(line.progress, "exporting");
         }, (output, error) => {
@@ -67,13 +72,16 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             if (error) {
                 API.show.alert(error, 5);
             } else {
-                KIRI.driver.SLA.printDownload(output, API);
+                KIRI.driver.SLA.printDownload(output, API, names);
             }
         });
     }
 
-    function exportLaserDialog(data) {
-        const filename = "laser-"+(new Date().getTime().toString(36));
+    function exportLaserDialog(data, names) {
+        SDB['kiri-print-seq'] = printSeq++;
+
+        const fileroot = names[0] || "laser";
+        const filename = `${fileroot}-${(printSeq.toString().padStart(3,"0"))}`;
         const settings = API.conf.get();
         const driver = KIRI.driver.LASER;
 
@@ -111,17 +119,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         });
     }
 
-    function exportGCodeDialog(gcode, info) {
+    function exportGCodeDialog(gcode, info, names) {
         SDB['kiri-print-seq'] = printSeq++;
 
         let settings = API.conf.get(),
             MODE = API.mode.get_id(),
-            names = API.widgets.all()
-                .map(w => w.meta ? w.meta.file : undefined)
-                .filter(v => v)
-                .map(v => v.replace(/ /g,'-'))
-                .map(v => v.substring(0,20))
-                .map(v => v.split('.')[0]),
             name = names[0] || (MODE === MODES.CAM ? "cnc" : "print"),
             pre = `${name}-${(printSeq.toString().padStart(3,"0"))}`,
             filename = pre,// + (new Date().getTime().toString(36)),

@@ -30,13 +30,11 @@
                 reader.onloadend = (e) => {
                     let cxdlp = window.cxdlp = new CXDLP();
                     cxdlp.read(new DataView(e.target.result), 0);
-                    console.log({cxdlp});
                     slider.max = layers.value = cxdlp.layers.length - 1;
                     render(slider.value = layer.value = 0);
                     meta(cxdlp);
                 };
                 reader.readAsArrayBuffer(files[0]);
-                console.log("drop", files);
                 ev.stopPropagation();
                 ev.preventDefault();
             }, false);

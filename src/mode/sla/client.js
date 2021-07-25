@@ -19,9 +19,10 @@
         });
     };
 
-    SLA.printDownload = function(output, API) {
+    SLA.printDownload = function(output, API, names) {
         const { file, width, height, layers } = output;
-        const filename = `print-${new Date().getTime().toString(36)}`;
+        const fileroot = names[0] || "print";
+        const filename = `${fileroot}-${new Date().getTime().toString(36)}`;
 
         API.ajax("/kiri/output-sla.html", html => {
             API.ui.print.innerHTML = html;
