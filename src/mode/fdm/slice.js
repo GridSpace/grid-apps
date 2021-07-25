@@ -333,7 +333,7 @@
                 let minx = Infinity, maxx = -Infinity;
                 let peek = 0;
                 for (let slice of slices) {
-                    if (slice.groups.length && peek++ < 5) {
+                    if (slice.tops.length && peek++ < 5) {
                         for (let poly of slice.topPolys()) {
                             minx = Math.min(minx, poly.bounds.minx);
                             maxx = Math.max(maxx, poly.bounds.maxx);
@@ -365,8 +365,9 @@
                         addto.up = start;
                         start.down = addto;
                         slices.splice(0,0,addto);
-                    // } else {
-                    //     console.log({add_to_existing_slice: addto});
+                    } else if (!addto.belt) {
+                        console.log({addto_missing_belt: addto});
+                        addto.belt = {};
                     }
                     addto.index = -1;
                     addto.belt.anchor = true;
@@ -1468,7 +1469,7 @@
         }
 
         get(x, y, z) {
-            let key = [x.round(4),y.round(4),z.round(4)].sort().join(',');
+            let key = [x.round(4),y.round(4),z.round(4)].join(',');
             let val = this.cache[key];
             if (!val) {
                 val = new THREE.Vector3(x, y, z);
