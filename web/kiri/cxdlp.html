@@ -8,11 +8,22 @@
         div {
             display: flex;
             flex-direction: row;
+            justify-content: flex-start;
+            align-items: flex-start;
         }
         th {
             text-align: left;
         }
+        canvas, #params, #ctrl {
+            margin: 1px;
+            padding: 3px;
+            border: 1px solid black;
+            border-radius: 3px;
+        }
         #slider {
+            flex-grow: 1;
+        }
+        #params {
             flex-grow: 1;
         }
         .over {
@@ -58,16 +69,41 @@
         function row(key,value) {
             return `<tr><th>${key}</th><td>${value}</td></tr>`;
         }
+        function rev(value, bits = 8) {
+            let out = 0
+            for (let i=0; i<bits; i++) {
+                out |= (value >> i & 1) << bits-1-i
+            }
+            return out >>> 0;
+        }
+        function decode(canvas, image, size) {
+            let tile = new Uint8Array(image);
+            let draw = canvas.getContext('2d');
+            let data = draw.getImageData(0,0,size,size);
+            let rawd = data.data;
+            for (let x=0; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let ind = (x * size + y) * 2;
+                    let rgb = (tile[ind] << 8) | (tile[ind+1] << 0);
+                    let pos = (y * size + x) * 4;
+                    rawd[pos+0] = ((rgb >> 11) << 3) & 0xff;
+                    rawd[pos+1] = ((rgb >>  5) << 2) & 0xff;
+                    rawd[pos+2] = ((rgb >>  0) << 3) & 0xff;
+                    rawd[pos+3] = 255;
+                }
+            }
+            draw.putImageData(data, 0, 0);
+        }
         function meta(cxdlp) {
             let rows = Object.entries(cxdlp).filter(e => {
                 let t = typeof(e[1]);
                 return t === 'number' || t === 'string';
             }).map(e => row(e[0], e[1]));
-            params.innerHTML = [
-                '<table>',
-                ...rows,
-                '</table>'
-            ].join('');
+            params.innerHTML = [ '<table>', ...rows, '</table>' ].join('');
+            console.log({cxdlp});
+            decode(thumb, cxdlp.thumb, 116);
+            decode(pre1, cxdlp.preview1, 290);
+            decode(pre2, cxdlp.preview2, 290);
         }
         function render(layer) {
             let cxdlp = window.cxdlp;
@@ -94,7 +130,7 @@
     </script>
 </head>
 <body>
-    <div>
+    <div id="ctrl">
         <input id="layer" size=5>
         <input id="slider" type="range" min=0 max=100 value=0>
         <input id="layers" size=5 disabled=true>
@@ -102,9 +138,9 @@
     <canvas id="canvas" width=4000 height=2000></canvas>
     <div>
         <div id="params"></div>
-        <canvas id="thumb"></canvas>
-        <canvas id="pre1"></canvas>
-        <canvas id="pre2"></canvas>
+        <canvas id="pre1" width=290 height=290></canvas>
+        <canvas id="pre2" width=290 height=290></canvas>
+        <canvas id="thumb" width=116 height=116></canvas>
     </div>
 </body>
 </html>

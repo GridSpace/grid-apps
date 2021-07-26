@@ -64,9 +64,12 @@
                 res_y: read.readU16(),
                 height: read.readU32(),
                 skip: read.skip(60),
-                thumb: read.skip(26914),
-                preview1: read.skip(168202),
-                preview2: read.skip(168202),
+                thumb: read.readBytes(26912),
+                skip: read.skip(2), // 0xd0a term
+                preview1: read.readBytes(168200),
+                skip: read.skip(2), // 0xd0a term
+                preview2: read.readBytes(168200),
+                skip: read.skip(2), // 0xd0a term
                 dim_x: read_string(true),
                 dim_y: read_string(true),
                 layer: read_string(true),

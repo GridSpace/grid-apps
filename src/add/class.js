@@ -106,6 +106,12 @@ self.DataReader = class DataReader {
         return p;
     }
 
+    readBytes(len) {
+        let buf = this.view.buffer.slice(this.pos, this.pos + len);
+        this.pos += len;
+        return buf;
+    }
+
     readU8() {
         return this.view.getUint8(this.pos++);
     }
