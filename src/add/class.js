@@ -31,6 +31,11 @@ self.ArrayWriter = class ArrayWriter {
         this.array[this.pos++] = v & 0xff;
     }
 
+    writeBytes(bytes) {
+        this.array.appendAll(bytes);
+        this.pos += bytes.length;
+    }
+
     toBuffer() {
         return new Uint8ClampedArray(this.array).buffer;
     }

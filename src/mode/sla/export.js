@@ -107,12 +107,32 @@
             }
 
             // generate thumb, preview1, preview2
+            let thumb = [];
+            for (let x=0; x<116; x++) {
+                for (let y=0; y<116; y++) {
+                    let val = 1 << Math.floor(x / 7.25);
+                    thumb.push((val >> 8) & 0xff);
+                    thumb.push(val & 0xff);
+                }
+            }
+            let preview1 = [];
+            for (let x=0; x<290; x++) {
+                for (let y=0; y<290; y++) {
+                    let val = 1 << Math.floor(x / 18.125);
+                    preview1.push((val >> 8) & 0xff);
+                    preview1.push(val & 0xff);
+                }
+            }
+            let preview2 = preview1;
 
             let file = CXDLP.export({
                 settings,
                 width,
                 height,
-                slices
+                slices,
+                thumb,
+                preview1,
+                preview2
             });
             ondone({
                 width: width,

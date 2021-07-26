@@ -174,6 +174,29 @@
                 }
             }
 
+            output.write_bytes = function(array, len) {
+                if (!array) {
+                    output.skip(len);
+                } else if (array.byteLength) {
+                    if (len !== array.byteLength) {
+                        throw `invalid array length: ${array.byteLength} != ${len}`;
+                    }
+                    // ArrayBuffer
+                    let read = new DataReader(array);
+                    for (let i=0; i<array.byteLength; i++) {
+                        output.writeU8(read.readU8());
+                    }
+                } else if (array.length) {
+                    if (len !== array.length) {
+                        throw `invalid array length: ${array.length} != ${len}`;
+                    }
+                    // standard array
+                    output.writeBytes(array);
+                } else {
+                    throw "invalid byte array";
+                }
+            };
+
             let layers = this.layers;
             this.layer_count = layers.length;
             output.write_string(this.magic1);
@@ -184,11 +207,11 @@
             output.writeU16(this.res_y);
             output.writeU32(this.height);
             output.skip(60);
-            output.skip(26912); // thumb
+            output.write_bytes(this.thumb, 26912); // thumb
             output.writeU16(data_term);
-            output.skip(168200); // preview1
+            output.write_bytes(this.preview1, 168200); // preview1
             output.writeU16(data_term);
-            output.skip(168200); // preview1
+            output.write_bytes(this.preview2, 168200); // preview1
             output.writeU16(data_term);
             output.write_string(this.dim_x, true);
             output.write_string(this.dim_y, true);
@@ -274,7 +297,7 @@
         cxdlp.layer = process.slaSlice.toFixed(5);
         cxdlp.thumb = thumb;
         cxdlp.preview1 = preview1;
-        cxdlp.preview1 = preview2;
+        cxdlp.preview2 = preview2;
         cxdlp.light_on = process.slaLayerOn;
         cxdlp.light_off = process.slaLayerOff;
         // cxdlp.light_pwm = 255;
