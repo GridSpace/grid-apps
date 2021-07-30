@@ -5,6 +5,15 @@
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
     "private": false,
+    "main": "http://localhost:8080/kiri/",
+    "node-remote": "http://localhost:8080/kiri/",
+    "node-main": "",
+    "window": {
+        "width": 960,
+        "height": 700,
+        "min_width": 700,
+        "min_height": 500
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/gridspace/apps.git"
@@ -36,5 +45,58 @@
         "uglify-es": "3.3.9",
         "validator": "^8.2.0",
         "ws": "^7.2.3"
+    },
+    "devDependencies": {
+        "@gridspace/app-server": "^0.0.7",
+        "concurrently": "^6.2.0",
+        "nw": "0.54.0-sdk",
+        "nwjs-builder-phoenix": "^1.15.0",
+        "rimraf": "^3.0.2",
+        "wait-on": "^5.3.0"
+    },
+    "scripts": {
+        "debug": "gs-app-server --debug",
+        "server": "gs-app-server",
+        "start": "concurrently \"npm run debug\" \"wait-on http://localhost:8080/kiri/ && nw .\"",
+        "build": "npm run build:clean && npm run build:nw",
+        "build:clean": "rimraf ./dist",
+        "build:vue": "vue-cli-service build --modern --dest ./dist-vue",
+        "build:nw": "build --concurrent --tasks win-x86,linux-x86,linux-x64,mac-x64 --mirror https://dl.nwjs.io/ .",
+        "build:win": "npm run build:win:clean && build --tasks win-x86 --mirror https://dl.nwjs.io/ .",
+        "build:lin": "npm run build:lin:clean && build --tasks linux-x64 --mirror https://dl.nwjs.io/ .",
+        "build:win:clean": "rimraf ./dist/grid-apps-3.0.15D-win-x86 ./dist/grid-apps-3.0.15D-win-x86.zip ./dist/grid-apps-3.0.15D-win-x86.7z ./dist/grid-apps-3.0.15D-win-x86-Setup.exe",
+        "build:lin:clean": "rimraf ./dist-vue ./dist/grid-apps-3.0.15D-linux-x64 ./dist/grid-apps-3.0.15D-linux-x64.zip",
+        "nw": "nw ."
+    },
+    "build": {
+        "nwVersion": "v0.54.0",
+        "nwFlavor": "normal",
+        "targets": [
+            "zip",
+            "nsis7z"
+        ],
+        "files": [
+            "**/*"
+        ],
+        "excludes": [
+            "src/**/*"
+        ],
+        "strippedProperties": [
+            "ManifestComments",
+            "scripts",
+            "devDependencies",
+            "build"
+        ],
+        "overriddenProperties": {
+            "main": "http://localhost:8080/kiri/",
+            "node-remote": "http://localhost:8080/kiri/",
+            "node-main": "./node_modules/@gridspace/app-server/app-server-run.js",
+            "window": {
+                "width": 960,
+                "height": 700,
+                "min_width": 700,
+                "min_height": 500
+            }
+        }
     }
 }
