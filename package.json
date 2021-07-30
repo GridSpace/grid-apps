@@ -57,7 +57,7 @@
     "scripts": {
         "debug": "gs-app-server --debug",
         "server": "gs-app-server",
-        "start": "concurrently \"npm run debug\" \"wait-on http://localhost:8080/kiri/ && nw .\"",
+        "start": "concurrently -k \"npm run debug\" \"wait-on http://localhost:8080/kiri/ && nw .\"",
         "build": "npm run build:clean && npm run build:nw",
         "build:clean": "rimraf ./dist",
         "build:nw": "build --concurrent --tasks win-x86,linux-x86,linux-x64,mac-x64 --mirror https://dl.nwjs.io/ .",
