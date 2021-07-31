@@ -12,7 +12,8 @@
         "width": 960,
         "height": 700,
         "min_width": 700,
-        "min_height": 500
+        "min_height": 500,
+        "icon": "web/meta/favicon-mobile.png"
     },
     "repository": {
         "type": "git",
@@ -95,7 +96,23 @@
                 "width": 960,
                 "height": 700,
                 "min_width": 700,
-                "min_height": 500
+                "min_height": 500,
+                "icon": "web/meta/favicon-mobile.png"
+            },
+            "win": {
+                "icon": "web/meta/favicon.ico"
+            },
+            "mac": {
+                "icon": "web/meta/favicon-mobile.png"
+            },
+            "nsis": {
+                "icon": "web/meta/favicon.ico",
+                "unIcon": "web/meta/favicon.ico",
+                "languages": [
+                    "English"
+                ],
+                "diffUpdaters": false,
+                "hashCalculation": true
             }
         }
     }
