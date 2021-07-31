@@ -78,7 +78,8 @@
             "**/*"
         ],
         "excludes": [
-            "src/**/*"
+            "src/**/*",
+            "apps/grid/apps/**"
         ],
         "strippedProperties": [
             "ManifestComments",
