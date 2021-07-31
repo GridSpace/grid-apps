@@ -387,7 +387,7 @@
             subst.z = subst.Z = zpos.round(3);
             subst.e = subst.E = outputLength;
             subst.layer = layer;
-            subst.height = path.height.toFixed(3);
+            subst.height = path.height;
 
             if (isBelt) {
                 pos.z = zpos;
@@ -424,7 +424,7 @@
             if (gcodeLayer && gcodeLayer.length) {
                 appendAllSub(gcodeLayer);
             } else {
-                append(`;; --- layer ${layer} (${subst.height} @ ${subst.z.round(3)}) ---`);
+                append(`;; --- layer ${layer} (${subst.height.toFixed(3)} @ ${subst.z.round(3)}) ---`);
             }
 
             // layer temp and fan overrides at layer changes
