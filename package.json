@@ -30,6 +30,7 @@
         "slicer"
     ],
     "dependencies": {
+        "@gridspace/app-server": "^0.0.7",
         "base64-js": "^1.5.1",
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
@@ -47,7 +48,6 @@
         "ws": "^7.2.3"
     },
     "devDependencies": {
-        "@gridspace/app-server": "^0.0.7",
         "concurrently": "^6.2.0",
         "nw": "0.54.0-sdk",
         "nwjs-builder-phoenix": "^1.15.0",
