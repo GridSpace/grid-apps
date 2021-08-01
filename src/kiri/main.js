@@ -2443,7 +2443,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     newWidget(undefined,group)
                     .loadVertices(JSON.parse(e.target.result).toFloat32())
                 );
-                if (isstl) {
+                else if (isstl) {
                     if (API.feature.on_add_stl) {
                         API.feature.on_add_stl(e.target.result, file);
                     } else {
@@ -2455,11 +2455,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                         );
                     }
                 }
-                if (isgcode) loadCode(e.target.result, 'gcode');
-                if (issvg) loadCode(e.target.result, 'svg');
-                if (isset) settingsImport(e.target.result, true);
-                if (ispng) loadImageDialog(e.target.result, e.target.file.name);
-                if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
+                else if (isgcode) loadCode(e.target.result, 'gcode');
+                else if (issvg) loadCode(e.target.result, 'svg');
+                else if (isset) settingsImport(e.target.result, true);
+                else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
+                else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
+                else API.show.alert(`Unsupported file: ${files[i].name}`);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
             if (isstl || ispng || isjpg) {
