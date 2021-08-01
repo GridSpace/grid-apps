@@ -83,7 +83,7 @@
             let rawd = data.data;
             for (let x=0; x<size; x++) {
                 for (let y=0; y<size; y++) {
-                    let ind = (x * size + y) * 2;
+                    let ind = (y * size + x) * 2;
                     let rgb = (tile[ind] << 8) | (tile[ind+1] << 0);
                     let pos = (y * size + x) * 4;
                     rawd[pos+0] = ((rgb >> 11) << 3) & 0xff;
