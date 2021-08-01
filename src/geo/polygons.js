@@ -57,7 +57,7 @@
         return polys;
     }
 
-    function toClipper(polys) {
+    function toClipper(polys = []) {
         let out = [];
         for (let poly of polys) {
             poly.toClipper(out);
