@@ -65,7 +65,7 @@
         "build:win": "npm run build:win:clean && build --tasks win-x86 --mirror https://dl.nwjs.io/ .",
         "build:lin": "npm run build:lin:clean && build --tasks linux-x64 --mirror https://dl.nwjs.io/ .",
         "build:win:clean": "rimraf ./dist/grid-apps-3.0.15D-win-x86 ./dist/grid-apps-3.0.15D-win-x86.zip ./dist/grid-apps-3.0.15D-win-x86.7z ./dist/grid-apps-3.0.15D-win-x86-Setup.exe",
-        "build:lin:clean": "rimraf ./dist-vue ./dist/grid-apps-3.0.15D-linux-x64 ./dist/grid-apps-3.0.15D-linux-x64.zip",
+        "build:lin:clean": "rimraf ./dist/grid-apps-3.0.15D-linux-x64 ./dist/grid-apps-3.0.15D-linux-x64.zip",
         "run:win": "dist\\grid-apps-3.0.15D-win-x86\\grid-apps.exe",
         "run:lin": "./dist/grid-apps-3.0.15D-linux-x64/grid-apps",
         "nw": "nw ."
