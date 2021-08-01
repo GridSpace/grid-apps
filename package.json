@@ -91,9 +91,9 @@
             "build"
         ],
         "overriddenProperties": {
-            "main": "http://localhost:8080/kiri/",
-            "node-remote": "http://localhost:8080/kiri/",
-            "node-main": "./node_modules/@gridspace/app-server/app-server-run.js",
+            "main": "http://localhost:19757/kiri/",
+            "node-remote": "http://localhost:19757/kiri/",
+            "node-main": "./server.js",
             "window": {
                 "width": 960,
                 "height": 700,
