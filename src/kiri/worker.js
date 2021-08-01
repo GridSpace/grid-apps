@@ -8,7 +8,7 @@ let BASE = self.base,
     POLY = BASE.polygons,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
-    ccvalue = navigator ? navigator.hardwareConcurrency || 0 : 0,
+    ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
     concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
     current = self.worker = {
         print: null,

@@ -411,9 +411,8 @@
         // return { image, lines };
     }
 
-    if (!this.navigator && this.process && this.process.env) {
+    if (!self.navigator && self.process && self.process.env) {
         let fs = require('fs');
-        let self = this;
         eval(fs.readFileSync("src/add/class.js").toString());
         let args = process.argv.slice(2);
         let file = args.shift();
@@ -426,7 +425,7 @@
             layers5: cxdlp.layers.slice(0,5),
             lines1: cxdlp.get_layer_lines(1)
         });
-    } else if (this.navigator) {
-        this.CXDLP = CXDLP;
+    } else if (self.navigator) {
+        self.CXDLP = CXDLP;
     }
 }());

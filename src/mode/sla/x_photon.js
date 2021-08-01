@@ -525,7 +525,7 @@
         ctx.closePath();
     }
 
-    this.photon = {
+    self.photon = {
         generatePhoton,
         generatePhotons,
         renderLayer,
