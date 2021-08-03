@@ -1,0 +1,44 @@
+name: Build Desktop App
+
+on:
+  push:
+    branches: [ master, feature/nwjs ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - id: set_var
+        run: |
+          content=`cat ./package.json`
+          # the following lines are only required for multi line json
+          content="${content//'%'/'%25'}"
+          content="${content//$'\n'/'%0A'}"
+          content="${content//$'\r'/'%0D'}"
+          # end of optional handling for multi line json
+          echo "::set-output name=packageJson::$content"
+      - run: |
+          echo "${{fromJson(steps.set_var.outputs.packageJson).name}}"
+          echo "${{fromJson(steps.set_var.outputs.packageJson).version}}"
+      - name: Build App
+        run: |
+          npm install
+          npm build:nw
+      - uses: actions/upload-artifact@v2
+        name: Store ZIPs
+        with:
+          name: ZIPs
+          path: dist/*.zip
+      - uses: actions/upload-artifact@v2
+        name: Store EXEs
+        with:
+          name: EXEs
+          path: dist/*.exe
+      - uses: actions/upload-artifact@v2
+        name: Store 7z
+        with:
+          name: 7z
+          path: dist/*.7z
