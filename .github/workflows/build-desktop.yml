@@ -28,17 +28,22 @@ jobs:
           npm install
           npm run build:nw
       - uses: actions/upload-artifact@v2
-        name: Store ZIPs
+        name: Store Linux x64
         with:
-          name: ZIPs
-          path: dist/*.zip
+          name: kiri-moto-linux-x64.zip
+          path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).name}}-linux-x64.zip
       - uses: actions/upload-artifact@v2
-        name: Store EXEs
+        name: Store Linux x86
         with:
-          name: EXEs
-          path: dist/*.exe
+          name: kiri-moto-linux-x86.zip
+          path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).name}}-linux-x86
       - uses: actions/upload-artifact@v2
-        name: Store 7z
+        name: Store Windows x86
         with:
-          name: 7z
-          path: dist/*.7z
+          name: kiri-moto-win-x86.zip
+          path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).name}}-win-x86
+      - uses: actions/upload-artifact@v2
+        name: Store macOS x86
+        with:
+          name: kiri-moto-mac-x64.zip
+          path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).name}}-mac-x64.zip
