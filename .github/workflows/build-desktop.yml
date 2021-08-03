@@ -26,7 +26,7 @@ jobs:
       - name: Build App
         run: |
           npm install
-          npm build:nw
+          npm run build:nw
       - uses: actions/upload-artifact@v2
         name: Store ZIPs
         with:
