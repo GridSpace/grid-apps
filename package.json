@@ -81,12 +81,14 @@
             "**/*"
         ],
         "excludes": [
-            "src",
-            "apps/grid/apps",
-            "apps/grid/node_modules/nwjs-builder-phoenix/caches",
-            "apps/grid/dist",
-            "apps/grid/node_modules",
-            "web"
+            "src/**",
+            "logs/**",
+            "apps/grid/apps/**",
+            "apps/grid/node_modules/nwjs-builder-phoenix/caches/**",
+            "apps/grid/dist/**",
+            "apps/grid/logs/**",
+            "apps/grid/node_modules/**",
+            "web/**"
         ],
         "strippedProperties": [
             "ManifestComments",
