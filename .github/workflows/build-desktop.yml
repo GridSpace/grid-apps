@@ -34,9 +34,9 @@ jobs:
           # end of optional handling for multi line json
           echo "::set-output name=packageJson::$content"
       - run: |
-        shell: bash
           echo "${{fromJson(steps.set_var.outputs.packageJson).name}}"
           echo "${{fromJson(steps.set_var.outputs.packageJson).version}}"
+        shell: bash
       - name: Build App
         shell: bash
         run: |
