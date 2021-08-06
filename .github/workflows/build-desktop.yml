@@ -26,6 +26,7 @@ jobs:
       - id: set_var
         shell: bash
         run: |
+          sed -i 's/"name": "grid-apps"/"name": "kiri-moto"/g' package.json
           content=`cat ./package.json`
           # the following lines are only required for multi line json
           content="${content//'%'/'%25'}"
