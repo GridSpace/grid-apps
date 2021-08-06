@@ -13,6 +13,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install wine
         run: sudo apt-get install wine
+      - name: Install wine gecko
+        run: |
+          wget http://dl.winehq.org/wine/wine-gecko/2.47.1/wine-gecko-2.47.1-x86.msi
+          wine msiexec /i wine-gecko-2.47.1-x86.msi
       - uses: actions/cache@v2
         with:
           path: ~/.npm
