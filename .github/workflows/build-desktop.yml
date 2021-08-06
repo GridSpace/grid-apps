@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install wine
-        run: sudo apt-get install wine32
+        run: sudo apt-get install wine
       - uses: actions/cache@v2
         with:
           path: ~/.npm
