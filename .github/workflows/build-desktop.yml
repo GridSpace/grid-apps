@@ -61,4 +61,4 @@ jobs:
         name: Store Windows x64
         with:
           name: kiri-moto-win-x64
-          files: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).version}}-win-x64.zip
+          path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).version}}-win-x64.zip
