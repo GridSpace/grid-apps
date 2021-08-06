@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install wine
+        run: sudo apt-get install win32
       - uses: actions/cache@v2
         with:
           path: ~/.npm
