@@ -57,12 +57,8 @@ jobs:
         with:
           name: kiri-moto-mac-x64
           path: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).version}}-mac-x64.zip
-      - uses: papeloto/action-zip@v1
-        with:
-          files: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).version}}-win-x86
-          dest: kiri-moto-win-x86.zip
       - uses: actions/upload-artifact@v2
-        name: Store Windows x86
+        name: Store Windows x64
         with:
-          name: kiri-moto-win-x86
-          path: kiri-moto-win-x86.zip
+          name: kiri-moto-win-x64
+          files: dist/${{fromJson(steps.set_var.outputs.packageJson).name}}-${{fromJson(steps.set_var.outputs.packageJson).version}}-win-x64.zip
