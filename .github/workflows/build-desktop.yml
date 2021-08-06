@@ -24,6 +24,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       - id: set_var
+        shell: bash
         run: |
           content=`cat ./package.json`
           # the following lines are only required for multi line json
@@ -33,9 +34,11 @@ jobs:
           # end of optional handling for multi line json
           echo "::set-output name=packageJson::$content"
       - run: |
+        shell: bash
           echo "${{fromJson(steps.set_var.outputs.packageJson).name}}"
           echo "${{fromJson(steps.set_var.outputs.packageJson).version}}"
       - name: Build App
+        shell: bash
         run: |
           npm install
           npm run build:nw
