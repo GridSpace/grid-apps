@@ -8,15 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install wine
-        run: sudo apt-get install wine
-      - name: Install wine gecko
-        run: |
-          wget http://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi
-          wine msiexec /i wine-gecko-2.47.2-x86_64.msi
+#      - name: Install wine
+#        run: sudo apt-get install wine
+#      - name: Install wine gecko
+#        run: |
+#          wget http://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi
+#          wine msiexec /i wine-gecko-2.47.2-x86_64.msi
       - uses: actions/cache@v2
         with:
           path: ~/.npm
