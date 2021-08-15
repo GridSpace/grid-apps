@@ -34,18 +34,6 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 * [Twitter Updates](https://twitter.com/grid_space_3d)
 * [Facebook Users Group](https://www.facebook.com/groups/kirimoto/)
 
-### Testing Locally (with Docker)
-
-```
-git clone git@github.com:GridSpace/grid-apps.git
-cd grid-apps
-docker-compose build
-docker-compose up
-```
-
-You can now access your environment of grid-apps by going to:
-[Kiri:Moto](http://127.0.0.1:8080/kiri)
-
 ### Testing Locally (with NodeJS)
 
 ```
@@ -79,6 +67,17 @@ your path. You can either add it to your path, or you can run:
 ```
 ~/local/bin/gs-app-server --debug
 ```
+### Testing Locally (with Docker)
+
+```
+git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
+docker-compose build
+docker-compose up
+```
+
+You can now access your environment of grid-apps by going to:
+[Kiri:Moto](http://127.0.0.1:8080/kiri)
 
 ### Windows Developers
 
