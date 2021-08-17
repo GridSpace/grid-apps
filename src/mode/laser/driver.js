@@ -191,7 +191,6 @@
             newpts.push( tmp.clone().move({x:knifeTipOff, y:0, z: 0}) );
             poly.open = true;
             poly.points = newpts;
-            poly.length = newpts.length;
         }
 
         // find max layers (for updates)

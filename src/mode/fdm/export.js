@@ -71,7 +71,7 @@
             arcRes = 20,
             arcDev = 0.5,
             arcMax = 40,
-            originCenter = process.outputOriginCenter,
+            originCenter = process.outputOriginCenter || device.bedRound,
             offset = originCenter ? null : {
                 x: device.bedWidth/2,
                 y: isBelt ? 0 : device.bedDepth/2

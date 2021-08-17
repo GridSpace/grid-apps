@@ -1611,7 +1611,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
          let stockCenter = stock.center || {};
          let hasStock = stock.x && stock.y && stock.z;
          let isBelt = dev.bedBelt;
-         let center = MODE === MODES.FDM ? dev.originCenter :
+         let center = MODE === MODES.FDM ? dev.originCenter || dev.bedRound :
             MODE === MODES.SLA ? false :
             MODE === MODES.CAM ? proc.outputOriginCenter :
             dev.originCenter || proc.outputOriginCenter;
@@ -2309,7 +2309,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         settings.sproc[mode][settings.process.processName] = settings.process;
         settings.device.bedBelt = UI.deviceBelt.checked;
         settings.device.bedRound = UI.deviceRound.checked;
-        settings.device.originCenter = UI.deviceOrigin.checked;
+        settings.device.originCenter = UI.deviceOrigin.checked || UI.deviceRound.checked;
         settings.device.fwRetract = UI.fwRetract.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
         API.event.emit('settings.saved', settings);

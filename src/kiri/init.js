@@ -542,7 +542,7 @@
             return;
         }
         let current = settings(),
-            center = current.process.outputOriginCenter,
+            center = current.process.outputOriginCenter || current.device.bedRound,
             bounds = boundsSelection(),
             coord = prompt("Enter X,Y coordinates for selection").split(','),
             x = parseFloat(coord[0] || 0.0),
@@ -722,7 +722,7 @@
             UI.deviceName.value = devicename;
             UI.deviceBelt.checked = dev.bedBelt;
             UI.deviceRound.checked = dev.bedRound;
-            UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
+            UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
             UI.fwRetract.checked = dev.fwRetract;
 
             // add extruder selection buttons
@@ -1583,7 +1583,7 @@
             deviceZMax:       UC.newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:UC.toInt, size: 6, modes:FDM}),
             fdmSep:           UC.newBlank({class:"pop-sep", modes:FDM}),
             fwRetract:        UC.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
-            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER}),
+            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER, show:() => !UI.deviceRound.checked}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
             deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !UI.deviceRound.checked}),
 
