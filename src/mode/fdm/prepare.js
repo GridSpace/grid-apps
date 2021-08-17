@@ -44,11 +44,9 @@
             layerno = 0,
             zoff = 0,
             layerout = [],
-            slices = [],
+            // slices = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
-            beltYoff = device.bedDepth / 2,
-            beltfact = Math.cos(Math.PI/4),
-            invbfact = 1 / beltfact;
+            beltfact = Math.cos(Math.PI/4);
 
         // compute bounds if missing
         if (!bounds) {
@@ -97,7 +95,7 @@
             brims = POLY.union(brims, undefined, true);
 
             // if brim is offset, over-expand then shrink to induce brims to merge
-            if (offset && brims.length) {
+            if (brims.length) {
                 let extra = process.sliceSupportExtra + 2;
                 let zheight = brims[0].getZ();
                 brims = POLY.expand(brims, extra, zheight, null, 1);
@@ -158,14 +156,12 @@
                 let polys = [],
                     preout = [];
 
-                // expand specified # of brims
-                brims.forEach(function(brim) {
-                    POLY.offset([brim], nozzle, {
-                        outs: polys,
-                        flat: true,
-                        count: process.outputBrimCount,
-                        z: firstLayerHeight / 2
-                    });
+                // offset specified # of brims
+                POLY.offset(brims, nozzle, {
+                    outs: polys,
+                    flat: true,
+                    count: process.outputBrimCount,
+                    z: firstLayerHeight / 2
                 });
 
                 // output brim points
@@ -449,7 +445,6 @@
             layerout.layer = layerno++;
             update((layerno / cake.length) * 0.5, "prepare");
 
-            slices = [];
             layerout = [];
             lastOut = undefined;
         }
