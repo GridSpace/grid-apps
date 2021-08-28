@@ -2456,12 +2456,28 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     }
                 } else if (isobj) {
                     let objs = MOTO.OBJ.parse(e.target.result);
-                    for (let obj of objs) {
-                        platform.add(
-                            newWidget(undefined,group)
-                            .loadVertices(obj.toFloat32(),unitScale())
-                            .saveToCatalog(e.target.file.name)
-                        );
+                    let odon = function() {
+                        for (let obj of objs) {
+                            let name = e.target.file.name;
+                            if (obj.name) {
+                                name = obj.name + ' - ' + name;
+                            }
+                            platform.add(
+                                newWidget(undefined,group)
+                                .loadVertices(obj.toFloat32(), true)
+                                .saveToCatalog(name)
+                            );
+                        }
+                    };
+                    if (objs.length > 1 && !group) {
+                        UC.confirm('group objects?').then(ok => {
+                            if (ok) {
+                                group = [];
+                            }
+                            odon();
+                        });
+                    } else {
+                        odon();
                     }
                 }
                 else if (isgcode) loadCode(e.target.result, 'gcode');

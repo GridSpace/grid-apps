@@ -275,7 +275,19 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      * @param {Float32Array} vertices
      * @returns {Widget}
      */
-    PRO.loadVertices = function(vertices) {
+    PRO.loadVertices = function(vertices, autoscale) {
+        if (autoscale === true) {
+            // onshape exports obj in meters by default :/
+            let maxv = 0;
+            for (let i=0; i<vertices.length; i++) {
+                maxv = Math.max(Math.abs(vertices[i]));
+            }
+            if (maxv < 1) {
+                for (let i=0; i<vertices.length; i++) {
+                    vertices[i] *= 1000;
+                }
+            }
+        }
         if (this.mesh) {
             this.mesh.geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             this.mesh.geometry.computeFaceNormals();
