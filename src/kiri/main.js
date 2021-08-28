@@ -2432,6 +2432,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 lower = files[i].name.toLowerCase(),
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
+                isobj = lower.indexOf(".obj") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 ispng = lower.indexOf(".png") > 0,
                 isjpg = lower.indexOf(".jpg") > 0,
@@ -2447,10 +2448,18 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     if (API.feature.on_add_stl) {
                         API.feature.on_add_stl(e.target.result, file);
                     } else {
-                        let scale = unitScale();
                         platform.add(
                             newWidget(undefined,group)
-                            .loadVertices(new MOTO.STL().parse(e.target.result,scale))
+                            .loadVertices(new MOTO.STL().parse(e.target.result,unitScale()))
+                            .saveToCatalog(e.target.file.name)
+                        );
+                    }
+                } else if (isobj) {
+                    let objs = MOTO.OBJ.parse(e.target.result);
+                    for (let obj of objs) {
+                        platform.add(
+                            newWidget(undefined,group)
+                            .loadVertices(obj.toFloat32(),unitScale())
                             .saveToCatalog(e.target.file.name)
                         );
                     }
