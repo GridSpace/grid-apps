@@ -8,7 +8,8 @@
 
     if (typeof(module) === 'object') {
         module.exports = terms;
-    } else if (self.kiri) {
+    }
+    if (typeof(self) !== 'undefined' && self.kiri) {
         // self.exports = terms;
         self.kiri.license = terms.LICENSE;
         self.kiri.version = terms.VERSION;

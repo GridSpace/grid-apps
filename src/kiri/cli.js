@@ -158,6 +158,7 @@ let moto = self.moto;
 let engine = kiri.newEngine();
 
 fetch('/web/obj/cube.stl').then(data => {
+    console.log({version: kiri.version});
     let buf = data.arrayBuffer().buffer;
     engine.parse(buf)
     .then(data => {
