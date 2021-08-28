@@ -2720,7 +2720,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
         // cloning loaded process into settings requires user to save
         // process before switching devices or risk losing any changes
-        settings.process = load;//clone(load);
+        settings.process = clone(load);
         // update process name
         settings.process.processName = name;
         // save named process with the current device
