@@ -486,6 +486,10 @@
                     let point = rec.point;
                     let belty = rec.belty = -point.y + point.z;
                     miny = Math.min(miny, belty);
+                    if (layer.anchor) {
+                        // apply base rate to entire anchor (including bump)
+                        rec.speed = firstLayerRate;
+                    }
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                         // apply base speed to segments touching belt
                         rec.speed = firstLayerRate;
