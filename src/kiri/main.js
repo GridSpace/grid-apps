@@ -2486,6 +2486,10 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     MOTO.TMF.parse(e.target.result).then(models => {
                         console.log({models});
                         for (let model of models) {
+                            let name = e.target.file.name;
+                            if (model.name) {
+                                name = model.name + ' - ' + name;
+                            }
                             platform.add(
                                 newWidget(undefined,group)
                                 .loadVertices(model.faces.toFloat32())

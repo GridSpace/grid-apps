@@ -32,22 +32,25 @@
         let models = [];
 
         function emitModel(model, faces) {
-            models.push({model, faces});
+            if (faces && faces.length) {
+                models.push({name: model, faces});
+            }
         }
 
         return new Promise((resolve, reject) => {
             let model;
             let faces;
+            let units;
 
-            query(doc, ["+model","resources","object","+mesh"], (type, node) => {
-                console.log({type, node});
+            query(doc, ["+model","resources","+object","+mesh"], (type, node) => {
                 switch (type) {
                     case "model":
-                        if (model) {
-                            emitModel(mode, faces);
-                        }
-                        model = node;
+                        units = node.getAttribute("unit");
+                        break;
+                    case "object":
+                        emitModel(model, faces);
                         faces = [];
+                        model = node.getAttribute("name") || undefined;
                         break;
                     case "mesh":
                         let vertices = [];
@@ -70,10 +73,7 @@
                 }
             });
 
-            if (model) {
-                emitModel(model, faces);
-            }
-
+            emitModel(model, faces);
             resolve(models);
         });
     }
