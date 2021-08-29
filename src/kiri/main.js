@@ -993,7 +993,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
             API.view.snapshot = snap.substring(snap.indexOf(",") + 1);
-            KIRI.work.snap(SPACE.screenshot2());
+            KIRI.work.snap(SPACE.screenshot2({width: 640}));
         }
         if (MODE === MODES.SLA && !callback) {
             callback = preparePreview;

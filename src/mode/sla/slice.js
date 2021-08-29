@@ -50,14 +50,28 @@
             });
         }
 
+        let smallDims = { x: 200, y: 125 };
+        let largeDims = { x: 400, y: 300 };
+
+        switch (device.deviceName) {
+            case 'Anycubic.Photon':
+            case 'Anycubic.Photon.S':
+                // defaults above
+                break;
+            case 'Creality.Halot.Sky':
+                smallDims = { x: 116, y: 116 };
+                largeDims = { x: 290, y: 290 };
+                break;
+        }
+
         let sws = self.worker.snap.url;
         let b64 = atob(sws.substring(sws.indexOf(',') + 1));
         let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
         let img = new png.PNG();
         img.parse(bin, (err, data) => {
             SLA.preview = img;
-            SLA.previewSmall = samplePNG(img, 200, 125);
-            SLA.previewLarge = samplePNG(img, 400, 300);
+            SLA.previewSmall = samplePNG(img, smallDims.x, smallDims.y);
+            SLA.previewLarge = samplePNG(img, largeDims.x, largeDims.y);
         });
         let height = process.slaSlice || 0.05;
 
@@ -635,11 +649,12 @@
 
     function samplePNG(png, width, height) {
         let th = width, tw = height,
+            aspect = width / height, // was fixed at 4/3 for photon
             ratio = png.width / png.height,
             buf = new Uint8Array(th * tw * 4),
             div, xoff, yoff, dx, ex, dy, ey, bidx, pixval;
 
-        if (ratio > 4/3) {
+        if (ratio >= aspect) {
             div = png.height / tw;
             xoff = Math.round((png.width - (th * div)) / 2);
             yoff = 0;

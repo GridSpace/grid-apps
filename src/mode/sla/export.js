@@ -108,19 +108,30 @@
 
             // generate thumb, preview1, preview2
             let thumb = [];
+            let tdata = SLA.previewSmall.data;
             for (let x=0; x<116; x++) {
                 for (let y=0; y<116; y++) {
-                    let val = 1 << Math.floor(x / 7.25);
-                    thumb.push((val >> 8) & 0xff);
-                    thumb.push(val & 0xff);
+                    let p = (x * 116 + y) * 4;
+                    let r = (tdata[p + 0] >> 3) << 11;
+                    let g = (tdata[p + 1] >> 2) << 5;
+                    let b = (tdata[p + 2] >> 3);
+                    let v = (r | g | b) & 0xffff;
+                    thumb.push((v >> 8) & 0xff);
+                    thumb.push(v & 0xff);
                 }
             }
             let preview1 = [];
+            let pdata = SLA.previewLarge.data;
+console.log({pdata});
             for (let x=0; x<290; x++) {
                 for (let y=0; y<290; y++) {
-                    let val = 1 << Math.floor(x / 18.125);
-                    preview1.push((val >> 8) & 0xff);
-                    preview1.push(val & 0xff);
+                    let p = (x * 290 + y) * 4;
+                    let r = (pdata[p + 0] >> 3) << 11;
+                    let g = (pdata[p + 1] >> 2) << 5;
+                    let b = (pdata[p + 2] >> 3);
+                    let v = (r | g | b) & 0xffff;
+                    preview1.push((v >> 8) & 0xff);
+                    preview1.push(v & 0xff);
                 }
             }
             let preview2 = preview1;
