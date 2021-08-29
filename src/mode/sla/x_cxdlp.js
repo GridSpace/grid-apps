@@ -29,6 +29,11 @@
     };
     const data_term = 0x0d0a;
 
+    // https://github.com/sn4k3/UVtools/blob/v2.20.4/UVtools.Core/FileFormats/CXDLPFile.cs
+    // CL-60  1620 x 2560
+    // CL-89  3840 x 2400
+    // CL-133 3840 x 2160
+
     class CXDLP {
         constructor() {
             Object.assign(this, default_values);
