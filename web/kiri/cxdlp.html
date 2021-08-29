@@ -59,7 +59,7 @@
                 ev.preventDefault();
                 document.body.classList.remove("over");
             }, false);
-            slider.onchange = () => {
+            slider.oninput = slider.onchange = () => {
                 render(layer.value = slider.value);
             };
             layer.onchange = () => {
