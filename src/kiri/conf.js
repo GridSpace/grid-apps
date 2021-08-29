@@ -329,6 +329,7 @@
                     sliceSupportAngle: 50,
                     sliceSupportNozzle: 0,
                     sliceSupportEnable: false,
+                    sliceSupportOutline: true,
                     sliceSolidMinArea: 1,
                     sliceSolidLayers: 3,
                     sliceBottomLayers: 3,

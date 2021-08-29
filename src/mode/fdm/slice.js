@@ -513,6 +513,7 @@
                 }
             } else if (isSynth) {
                 // fill manual supports differently
+                let outline = process.sliceSupportOutline || false;
                 let promises = isConcurrent ? [] : undefined;
                 let resolve = [];
                 forSlices(0.5, promises ? 0.6 : 0.7, slice => {
@@ -520,10 +521,16 @@
                     let density = params.sliceSupportDensity;
                     if (density)
                     for (let top of slice.tops) {
-                        let offset = [];
-                        POLY.expand(top.shells || [], -nozzleSize/4, slice.z, offset);
-                        fillSupportPolys(promises, offset, lineWidth, density, slice.z);
-                        resolve.push({top, offset});
+                        if (!outline) {
+                            let offset = top.shells;
+                            fillSupportPolys(promises, offset, lineWidth, density, slice.z);
+                            resolve.push({top, offset});
+                        } else {
+                            let offset = [];
+                            POLY.expand(top.shells || [], -nozzleSize/4, slice.z, offset);
+                            fillSupportPolys(promises, offset, lineWidth, density, slice.z);
+                            resolve.push({top, offset});
+                        }
                     }
                 }, "infill");
                 if (promises) {
@@ -532,7 +539,31 @@
                     });
                 }
                 for (let rec of resolve) {
-                    rec.top.fill_lines = rec.offset.map(o => o.fill).flat().filter(v => v);
+                    let lines = rec.top.fill_lines = rec.offset.map(o => o.fill).flat().filter(v => v);
+                    // if copying simply's support type, eliminate shells
+                    // and zig/zag lines connectd by shell segments
+                    if (!outline) {
+                        let newlines = [];
+                        let op1, op2;
+                        let eo = 0;
+                        for (let i=0; i<lines.length; i += 2) {
+                            let p1 = lines[i];
+                            let p2 = lines[i+1];
+                            if (eo++ % 2 === 1) {
+                                let t = p1;
+                                p1 = p2;
+                                p2 = t;
+                            }
+                            if (op2) {
+                                newlines.push(op2);
+                                newlines.push(p1);
+                            }
+                            newlines.push(op1 = p1);
+                            newlines.push(op2 = p2);
+                        }
+                        rec.top.fill_lines = newlines;
+                        rec.top.shells = [];
+                    }
                 }
             }
 

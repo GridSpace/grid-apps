@@ -1735,6 +1735,7 @@
             sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM, show:() => !UI.sliceSupportEnable.checked}),
             sliceSupportSpan:    UC.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM, show:() => UI.sliceSupportEnable.checked}),
             sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, modes:FDM, show:isNotBelt}),
+            sliceSupportOutline: UC.newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, modes:FDM, show:() => !UI.sliceSupportEnable.checked}),
 
             sliceSupportGen:     UC.newRow([
                 UI.ssaGen = UC.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})

@@ -367,6 +367,8 @@ kiri.lang['en-us'] = {
     sp_xpnd_l:      ["expand support area","beyond part boundary","in millimeters"],
     sp_nozl_s:      "extruder",
     sp_nozl_l:      ["in multi-extruder systems","the extruder to use for","support material"],
+    sp_outl_s:      "outline",
+    sp_outl_l:      ["enclose support pattern","inside a perimeter shell"],
     sp_auto_s:      "automatic",
     sp_auto_l:      ["enable generated supports","using at-slice-time geometry","supports will only appear","after slicing completes"],
 
