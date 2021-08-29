@@ -538,7 +538,13 @@
             zed = opts.z || 0;
 
         if (opts.wasm && geo.wasm) {
-            polys = geo.wasm.js.offset(polys, offs, zed, clean ? CONF.clipperClean : 0, simple ? 1 : 0);
+            try {
+                polys = geo.wasm.js.offset(polys, offs, zed, clean ? CONF.clipperClean : 0, simple ? 1 : 0);
+            } catch (e) {
+                console.log('wasm error', e.message || e);
+                opts.wasm = false;
+                return offset(polys, dist, opts);
+            }
         } else {
             let coff = new ClipperLib.ClipperOffset(opts.miter, opts.arc),
                 ctre = new ClipperLib.PolyTree();
