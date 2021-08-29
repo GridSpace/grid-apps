@@ -122,7 +122,6 @@
             }
             let preview1 = [];
             let pdata = SLA.previewLarge.data;
-console.log({pdata});
             for (let x=0; x<290; x++) {
                 for (let y=0; y<290; y++) {
                     let p = (x * 290 + y) * 4;

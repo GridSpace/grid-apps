@@ -11,7 +11,7 @@ self.ArrayWriter = class ArrayWriter {
     }
 
     skip(len) {
-        this.pos += len;
+        this.writeBytes(new Array(len).fill(0), len);
         return this.pos;
     }
 
