@@ -221,6 +221,7 @@ const script = {
         "kiri",
         "ext/three",
         "ext/three-bgu",
+        "ext/jszip",
         "license",
         "ext/clip2", // work.test
         "ext/tween",
@@ -244,6 +245,7 @@ const script = {
         "moto/ctrl",
         "moto/pack",
         "moto/space",
+        "moto/load-3mf",
         "moto/load-obj",
         "moto/load-stl",
         "moto/db",

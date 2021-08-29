@@ -2433,6 +2433,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
                 isstl = lower.indexOf(".stl") > 0,
                 isobj = lower.indexOf(".obj") > 0,
+                is3mf = lower.indexOf(".3mf") > 0,
                 issvg = lower.indexOf(".svg") > 0,
                 ispng = lower.indexOf(".png") > 0,
                 isjpg = lower.indexOf(".jpg") > 0,
@@ -2454,7 +2455,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                             .saveToCatalog(e.target.file.name)
                         );
                     }
-                } else if (isobj) {
+                }
+                else if (isobj) {
                     let objs = MOTO.OBJ.parse(e.target.result);
                     let odon = function() {
                         for (let obj of objs) {
@@ -2479,6 +2481,18 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     } else {
                         odon();
                     }
+                }
+                else if (is3mf) {
+                    MOTO.TMF.parse(e.target.result).then(models => {
+                        console.log({models});
+                        for (let model of models) {
+                            platform.add(
+                                newWidget(undefined,group)
+                                .loadVertices(model.faces.toFloat32())
+                                .saveToCatalog(name)
+                            );
+                        }
+                    });
                 }
                 else if (isgcode) loadCode(e.target.result, 'gcode');
                 else if (issvg) loadCode(e.target.result, 'svg');
