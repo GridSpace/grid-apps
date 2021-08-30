@@ -903,7 +903,7 @@
                 if (!near && !found) {
                     if (start === 0 && lastIndex === -1) {
                         console.log('infinite loop', lines, {
-                            marked, options, i, group, start, lastIndex,
+                            marked, i, group, start, lastIndex,
                             points: lines.map(p => p.index).join(', ')
                         });
                         break;

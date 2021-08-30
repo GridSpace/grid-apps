@@ -545,22 +545,29 @@
                     // and zig/zag lines connectd by shell segments
                     if (!outline) {
                         let newlines = [];
-                        let op1, op2;
+                        let op2;
                         let eo = 0;
+                        let idx = 1;
                         for (let i=0; i<lines.length; i += 2) {
                             let p1 = lines[i];
                             let p2 = lines[i+1];
+                            p1.index = idx;
+                            p2.index = idx++;
                             if (eo++ % 2 === 1) {
                                 let t = p1;
                                 p1 = p2;
                                 p2 = t;
                             }
                             if (op2) {
+                                let op1 = p1.clone();
+                                op1.index = op2.index;
                                 newlines.push(op2);
-                                newlines.push(p1);
+                                newlines.push(op1);
                             }
-                            newlines.push(op1 = p1);
-                            newlines.push(op2 = p2);
+                            newlines.push(p1);
+                            newlines.push(p2);
+                            op2 = p2.clone();
+                            op2.index = idx++;
                         }
                         rec.top.fill_lines = newlines;
                         rec.top.shells = [];

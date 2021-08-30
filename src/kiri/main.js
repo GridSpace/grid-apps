@@ -1060,7 +1060,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 factor = (widget.getVertices().count / defvert);
 
             // compensate for zcut (widget moved through floor)
-            widget.stack.obj.view.position.z = widget.track.zcut;
+            widget.stack.obj.view.position.z = widget.track.zcut || 0;
 
             widget.slice(settings, function(sliced, error) {
                 widget.rotinfo = null;
