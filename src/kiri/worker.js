@@ -742,7 +742,7 @@ KIRI.worker = {
         zip.generateAsync({
             type: "uint8array",
             compression: "DEFLATE",
-            compressionOptions: { level: 3 },
+            compressionOptions: { level: 6 },
             streamFiles: true
         }, progress => {
             send.data(progress);

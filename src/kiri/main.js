@@ -2315,6 +2315,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         API.event.emit('settings.saved', settings);
     }
 
+    function settingsImportZip(data, ask) {
+        let alert = API.show.alert("Importing Workspace");
+        JSZip.loadAsync(data).then(zip => {
+            for (let [key,value] of Object.entries(zip.files)) {
+                if (key === "workspace.json") {
+                    value.async("string").then(json => {
+                        API.hide.alert(alert);
+                        settingsImport(JSON.parse(json), ask);
+                    });
+                }
+            }
+        });
+    }
+
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
@@ -2403,13 +2417,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
     }
 
-    function settingsExport(options) {
-        const opts = options || {};
+    function settingsExport(opts = {}) {
         const note = opts.node || undefined;
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
-        return API.util.b64enc({
+        const xprt = {
             settings: settings,
             version: KIRI.version,
             screen: shot,
@@ -2420,7 +2433,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             moto: MOTO.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
-        });
+        };
+        return opts.clear ? xprt : API.util.b64enc(xprt);
     }
 
     function platformLoadFiles(files,group) {
@@ -2438,7 +2452,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 ispng = lower.indexOf(".png") > 0,
                 isjpg = lower.indexOf(".jpg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
-                isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0;
+                isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0,
+                iskmz = lower.indexOf(".kmz") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
                 if (israw) platform.add(
@@ -2500,13 +2515,14 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 }
                 else if (isgcode) loadCode(e.target.result, 'gcode');
                 else if (issvg) loadCode(e.target.result, 'svg');
+                else if (iskmz) settingsImportZip(e.target.result, true);
                 else if (isset) settingsImport(e.target.result, true);
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
                 else API.show.alert(`Unsupported file: ${files[i].name}`);
                 if (--loaded === 0) platform.group_done(isgcode);
             };
-            if (isstl || ispng || isjpg) {
+            if (isstl || ispng || isjpg || iskmz) {
                 reader.readAsArrayBuffer(reader.file);
             } else {
                 reader.readAsBinaryString(reader.file);
