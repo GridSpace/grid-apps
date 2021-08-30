@@ -178,6 +178,7 @@
 
         SLICER.sliceWidget(widget, {
             mode: 'FDM',
+            zCut: widget.track.zcut || 0,
             height: sliceHeight,
             minHeight: sliceMinHeight,
             firstHeight: sliceHeightBase,

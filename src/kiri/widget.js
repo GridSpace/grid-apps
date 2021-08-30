@@ -438,7 +438,6 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     /**
      * moves top of widget to given Z
-     * used in CAM mode
      *
      * @param {number} z position
      */
@@ -453,7 +452,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             this.track.top = z;
         } else {
             pos.z = 0;
-            mesh.position.z = 0;
+            mesh.position.z = -this.track.zcut || 0;
             this.track.top = mbz;
         }
         let ntz = {
@@ -462,7 +461,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         };
         this.modified |= (ltz.pz !== ntz.pz || ltz.mpz !== ntz.mpz);
         this.last_top_z = ntz;
-    }
+    };
+
+    PRO.cutZ = function(dist) {
+        this.track.zcut = dist;
+        this.setTopZ();
+    };
 
     PRO.move = function(x, y, z, abs) {
         this.group.forEach(w => {
@@ -472,11 +476,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     PRO._move = function(x, y, z, abs) {
         let mesh = this.mesh,
-            pos = this.track.pos;
-        // do not allow moves in pure slice view
+            pos = this.track.pos,
+            zcut = this.track.zcut || 0;
+            // do not allow moves in pure slice view
         if (!mesh.material.visible) return;
         if (abs) {
-            mesh.position.set(x,y,z);
+            mesh.position.set(x, y, z - zcut);
             pos.x = (x || 0);
             pos.y = (y || 0);
             pos.z = (z || 0);

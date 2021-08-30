@@ -1059,6 +1059,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             widget.stack = STACKS.create(widget.id, widget.mesh),
                 factor = (widget.getVertices().count / defvert);
 
+            // compensate for zcut (widget moved through floor)
+            widget.stack.obj.view.position.z = widget.track.zcut;
+
             widget.slice(settings, function(sliced, error) {
                 widget.rotinfo = null;
                 let mark = Date.now();

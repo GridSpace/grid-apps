@@ -53,9 +53,19 @@
      */
     function slice(points, bounds, options, ondone, onupdate) {
         let useFlats = options.flats,
+            zCut = options.zCut || 0,
             xray = options.xray,
             ox = 0,
             oy = 0;
+
+        if (zCut) {
+            for (let p of points) {
+                if (!p._z) {
+                    p._z = p.z;
+                    p.z -= zCut;
+                }
+            }
+        }
 
         let zMin = options.zmin || options.firstHeight || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),

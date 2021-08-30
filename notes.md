@@ -14,7 +14,6 @@
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)
-* `F` complete G2/G3 arc output / input (85% now)
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 
