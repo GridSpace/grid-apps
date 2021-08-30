@@ -1,0 +1,12 @@
+{
+    "no_clone": true,
+    "cmd":{},
+    "settings":{
+        "bed_width": 80,
+        "bed_depth": 127,
+        "bed_height": 1,
+        "max_height": 160,
+        "resolution_x": 1620,
+        "resolution_y": 2560
+    }
+}

@@ -58,6 +58,8 @@
             case 'Anycubic.Photon.S':
                 // defaults above
                 break;
+            case 'Creality.Halot.One':
+            case 'Creality.Halot.Max':
             case 'Creality.Halot.Sky':
                 smallDims = { x: 116, y: 116 };
                 largeDims = { x: 290, y: 290 };

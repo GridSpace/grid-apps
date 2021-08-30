@@ -294,6 +294,19 @@
         let { device, process } = settings;
 
         let cxdlp = new CXDLP();
+
+        if (width === 1620 && height === 2560) {
+            cxdlp.model = "CL-60";
+        } else
+        if (width === 3840 && height === 2400) {
+            cxdlp.model = "CL-89";
+        } else
+        if (width === 3840 && height === 2160) {
+            cxdlp.model = "CL-133";
+        } else {
+            throw `invalid printer dimensions ${width} x ${height}`;
+        }
+
         cxdlp.layers = slices.map(a => {return { lines: a }});
         cxdlp.res_x = device.resolutionX;
         cxdlp.res_y = device.resolutionY;
