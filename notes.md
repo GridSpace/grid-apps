@@ -3,19 +3,22 @@
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
 * `B` origin (and bed size) bug (Onshape?) when switching device modes
-* `B` can't drag slider bar on ipad / ios
+* `B` can't drag slider bar on ipad / ios -- touch pad scrolling dodgy
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
+* `P` do not move (average) endpoints connected to long lines in decimate
 
-* `F` SVG import to 3D part like images
+* `F` create event-driven do/undo stack and port relevant actions to this
+* `F` convert SVG to mesh https://muffinman.io/blog/three-js-extrude-svg-path/
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
+* `F` warn if part hanging in negative Z space or off bed in general
 
 # FDM
 
@@ -53,6 +56,7 @@
 * `B` auto bed resizing leaves the origin in the wrong place at first
 * `B` re-add progress calls for all work units
 
+* `F` test and enable arcs in belt moe
 * `F` refactor brims to be generated at slice time
 * `F` anchors should be generated anywhere needed in the print, not just head
 * `F` slightly angle supports to lean into the Z of the part
@@ -61,14 +65,18 @@
 # CAM
 
 * `B` tabs are not cut to exact height
+* `B` tabs do not properly track widget mirror events
 * `B` first rough step too far down in certain circumstances?
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
+* `B` contour does not honor clip to stock?
 
+* `F` roughing flats should be constrained to flat region
+* `F` option to output discrete operations as a zip of .gcode files
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` add ease-down support to trace op
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
-* `F` user-selectable origin (issue #28)
+* `F` user-defined origin (issue #28)
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` trace follow hole that matches endmill should turn into a drill op
 * `F` add climb/conventional into each operation
@@ -114,12 +122,6 @@
 # More CNC
 
 * https://www.researchgate.net/publication/250328721_Toolpath_Optimization_on_Automatic_Removal_Uncut_and_Application
-
-# Zip output
-
-* https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
-* https://en.wikipedia.org/wiki/ZIP_(file_format)
-* https://stuk.github.io/jszip/
 
 # Meta
 
