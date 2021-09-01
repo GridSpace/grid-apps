@@ -17,7 +17,8 @@ self.kiri.loader.push(function() {
         speedLabel,
         speed,
         pauseButton,
-        playButton;
+        playButton,
+        posOffset = { x:0, y:0, z:0 };
 
     // ---( CLIENT FUNCTIONS )---
 
@@ -92,8 +93,11 @@ self.kiri.loader.push(function() {
             return;
         }
         if (data.mesh_add) {
-            const { id, ind, pos } = data.mesh_add;
+            const { id, ind, pos, offset } = data.mesh_add;
             meshAdd(id, ind, pos);
+            if (offset) {
+                posOffset = offset;
+            }
         }
         if (data.mesh_del) {
             deleteMesh(data.mesh_del);
@@ -107,9 +111,9 @@ self.kiri.loader.push(function() {
                 mesh.position.z = pos.z;
                 SPACE.update();
                 if (id !== 0) {
-                    toolPosX.value = (pos.x * unitScale).toFixed(2);
-                    toolPosY.value = (pos.y * unitScale).toFixed(2);
-                    toolPosZ.value = (pos.z * unitScale).toFixed(2);
+                    toolPosX.value = ((pos.x + posOffset.x) * unitScale).toFixed(2);
+                    toolPosY.value = ((pos.y + posOffset.y) * unitScale).toFixed(2);
+                    toolPosZ.value = ((pos.z + posOffset.z) * unitScale).toFixed(2);
                 }
             }
         }
@@ -221,6 +225,7 @@ self.kiri.loader.push(function() {
     if (KIRI.worker)
     KIRI.worker.animate_setup = function(data, send) {
         const { settings } = data;
+        const { process } = settings;
         const print = current.print;
         const density = parseInt(settings.controller.animesh) * 1000;
 
@@ -235,6 +240,11 @@ self.kiri.loader.push(function() {
         const stepsX = Math.floor(stock.x / step);
         const stepsY = Math.floor(stock.y / step);
         const { pos, ind } = createGrid(stepsX, stepsY, stock, step);
+        const offset = {
+            x: process.outputOriginCenter ? 0 : stock.x / 2,
+            y: process.outputOriginCenter ? 0 : stock.y / 2,
+            z: process.camOriginTop ? -stock.z : 0
+        }
 
         grid = pos;
         gridX = stepsX;
@@ -248,7 +258,7 @@ self.kiri.loader.push(function() {
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
-        send.data({ mesh_add: { id: 0, pos, ind } });
+        send.data({ mesh_add: { id: 0, pos, ind, offset } });
         send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };

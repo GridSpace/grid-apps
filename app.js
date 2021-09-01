@@ -72,7 +72,6 @@ function init(mod) {
     ]));
     mod.add(fixedmap("/api/", api));
     if (debug) {
-        mod.static("/src/", "src");
         mod.static("/mod/", "mod");
         mod.sync("/reload", () => {
             mod.reload();
@@ -80,6 +79,7 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
+    mod.static("/src/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/moto/", "web/moto");
     mod.static("/meta/", "web/meta");
