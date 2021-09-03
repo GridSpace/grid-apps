@@ -6,19 +6,27 @@
     if (self.moto.OBJ) return;
 
     self.moto.OBJ = {
-        parse : parse
+        parse,
+        parseAsync
     };
 
     /**
      * @param {String} text
      * @returns {Array} vertex face array
      */
+
+    function parseAsync(text) {
+        return new Promise((resolve,reject) => {
+            resolve(parse(text));
+        });
+    }
+
     function parse(text) {
 
         let lines = text.split('\n').map(l => l.trim());
         let verts = [];
         let faces = [];
-        let obj = [ faces ];
+        let objs = [ faces ];
 
         for (let line of lines) {
             let toks = line.split(' ');
@@ -35,7 +43,7 @@
                     break;
                 case 'g':
                     if (faces.length) {
-                        obj.push(faces = []);
+                        objs.push(faces = []);
                     }
                     if (toks[0]) {
                         faces.name = toks[0];
@@ -44,7 +52,7 @@
             }
         }
 
-        return obj;
+        return objs;
     }
 
 })();

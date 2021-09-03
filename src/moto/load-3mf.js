@@ -6,7 +6,7 @@
     if (self.moto.OBJ) return;
 
     self.moto.TMF = {
-        parse : parse
+        parseAsync
     };
 
     function query(node, path, fn) {
@@ -30,7 +30,6 @@
 
     function loadModel(doc) {
         let models = [];
-
         function emitModel(model, faces) {
             if (faces && faces.length) {
                 models.push({name: model, faces});
@@ -82,7 +81,7 @@
      * @param {Object} data binary file
      * @returns {Array} vertex face array
      */
-    function parse(data) {
+    function parseAsync(data) {
         return new Promise((resolve, reject) => {
             JSZip.loadAsync(data).then(zip => {
                 for (let [key,value] of Object.entries(zip.files)) {

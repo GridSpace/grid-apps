@@ -248,6 +248,7 @@ const script = {
         "moto/load-3mf",
         "moto/load-obj",
         "moto/load-stl",
+        "moto/load-url",
         "moto/db",
         "kiri/ui",
         "kiri/lang",

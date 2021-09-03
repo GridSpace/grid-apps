@@ -95,6 +95,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         layout: platformLayout,
         load: platformLoad,
         load_stl: platformLoadSTL,
+        load_url: platformLoadURL,
         deselect: platformDeselect,
         select: platformSelect,
         select_all: platformSelectAll,
@@ -1874,6 +1875,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }, formdata, scale);
     }
 
+    function platformLoadURL(url, group) {
+        platform.group();
+        MOTO.URL.load(url).then((objects) => {
+            for (let object of objects) {
+                let widget = newWidget(undefined, group).loadVertices(object.mesh);
+                widget.meta.file = object.file;
+                platform.add(widget);
+            }
+            platform.group_done();
+        }).catch(error => {
+            API.show.alert(error);
+        });
+    }
+
     function platformComputeMaxZ() {
         topZ = 0;
         forAllWidgets(function(widget) {
@@ -2501,7 +2516,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     }
                 }
                 else if (is3mf) {
-                    MOTO.TMF.parse(e.target.result).then(models => {
+                    MOTO.TMF.parseAsync(e.target.result).then(models => {
                         console.log({models});
                         for (let model of models) {
                             let name = e.target.file.name;

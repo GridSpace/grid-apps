@@ -107,6 +107,11 @@
         return bin;
     };
 
+    /**
+     * @param {ArrayBuffer} data
+     * @param {number} scale
+     * @returns vertex array
+     */
     SP.parse = function(data, scale) {
         let binData = this.convertToBinary(data);
 
@@ -122,6 +127,12 @@
         return isBinary()
             ? this.parseBinary(binData, scale)
             : this.parseASCII(this.convertToString(data), scale);
+    };
+
+    SP.parseAsync = function(data, scale) {
+        return new Promise((resolve, reject) => {
+            resolve(this.parse(data, scale));
+        });
     };
 
     SP.parseBinary = function(data, scale = 1)  {
