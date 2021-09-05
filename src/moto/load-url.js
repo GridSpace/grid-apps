@@ -9,7 +9,7 @@
     function load(url, options = {}) {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
-            let file = (((url.split('?')[0]).split('#')[0]).split('/')).pop();
+            let file = options.file || options.filename || (((url.split('?')[0]).split('#')[0]).split('/')).pop();
             let ext = file.split('.').pop().toLowerCase();
             let deftype = ext === "obj" ? "text" : "arraybuffer";
             let datatype = options.datatype || deftype;

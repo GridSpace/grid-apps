@@ -1875,11 +1875,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }, formdata, scale);
     }
 
-    function platformLoadURL(url, group) {
+    function platformLoadURL(url, options = {}) {
         platform.group();
-        MOTO.URL.load(url).then((objects) => {
+        MOTO.URL.load(url, options).then((objects) => {
             for (let object of objects) {
-                let widget = newWidget(undefined, group).loadVertices(object.mesh);
+                let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
                 widget.meta.file = object.file;
                 platform.add(widget);
             }
