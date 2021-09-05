@@ -1878,12 +1878,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     function platformLoadURL(url, options = {}) {
         platform.group();
         MOTO.URL.load(url, options).then((objects) => {
+            let widgets = [];
             for (let object of objects) {
                 let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
                 widget.meta.file = object.file;
                 platform.add(widget);
+                widgets.push(widget);
             }
             platform.group_done();
+            API.event.emit("load.url", { url, options, widgets });
         }).catch(error => {
             API.show.alert(error);
         });
@@ -2478,6 +2481,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     newWidget(undefined,group)
                     .loadVertices(JSON.parse(e.target.result).toFloat32())
                 );
+                else if (API.feature.on_load && (isstl || isobj || is3mf)) {
+                    API.feature.on_load(e.target.result, file);
+                }
                 else if (isstl) {
                     if (API.feature.on_add_stl) {
                         API.feature.on_add_stl(e.target.result, file);
