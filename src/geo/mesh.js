@@ -23,11 +23,11 @@
          * then the data is assumed to be un-indexed and will be indexed into
          * faces. if faces are provided, they are assumed to be index references
          * into the vertex data.
-         * 
+         *
          * the end result is face data mapped to an indexed set of unique vertices.
-         * 
-         * @param {number[]} vertices 
-         * @param {number[]} faces 
+         *
+         * @param {number[]} vertices
+         * @param {number[]} faces
          */
         setData(vertices, faces) {
             if (!vertices) {
@@ -91,6 +91,30 @@
                         this.faces.push(face);
                     }
                 }
+
+                unitVector() {
+                    if (this.unit !== undefined) {
+                        return this.unit;
+                    }
+                    let v1 = this.v1;
+                    let v2 = this.v2;
+                    let d = [
+                        vertices[v1] - vertices[v2],
+                        vertices[v1 + 1] - vertices[v2 + 1],
+                        vertices[v1 + 2] - vertices[v2 + 2],
+                    ];
+                    let max = Math.max(...d.map(v => Math.abs(v)));
+                    // console.log({d, max});
+                    return this.unit = d.map(v => v / max);
+                }
+            }
+
+            function diffUnitVector(uv1, uv2) {
+                let diff = 0;
+                for (let i=0; i<3; i++) {
+                    diff += Math.abs(uv1[i] - uv2[i]);
+                }
+                return diff;
             }
 
             function getLine(v1, v2) {
@@ -142,7 +166,9 @@
                 let loop = [ line ];
                 // build line through adjacent lines
                 while (true) {
-                    let adjacent = vmap[line.v1].concat(vmap[line.v2]).filter(l => l !== line && !l.used && l.faces.length === 1);
+                    let adjacent = vmap[line.v1]
+                        .concat(vmap[line.v2])
+                        .filter(l => l !== line && !l.used && l.faces.length === 1);
                     if (adjacent.length === 0) {
                         break;
                     }
@@ -150,11 +176,20 @@
                         console.log('error adjacent', adjacent);
                         break;
                     }
-                    line = adjacent[0];
+                    if (adjacent.length === 1) {
+                        if (line.v2 !== adjacent[0].v1) {
+                            console.log('chirality mismatch');
+                        }
+                        line = adjacent[0];
+                    } else {
+                        // follow edges according to chirality
+                        line = adjacent[0].v1 === line.v2 ?
+                            adjacent[0] :
+                            adjacent[1]
+                    }
                     loop.push(line);
                     line.used = true;
                 }
-                console.log({loop});
                 // drop co-linear points because they can't be connected into valid faces
                 // fixup remaining line by dropping common point and using dropped line's point
                 for (let j=0, jl=loop.length; j<jl-1; j++) {
@@ -168,8 +203,15 @@
                             continue;
                         }
                         // todo
+                        if (diffUnitVector(l1.unitVector(), l2.unitVector()) < 0.0001) {
+                            // console.log('collinear', l1, l2);
+                            l2.del = true;
+                            l1.v2 = l2.v2;
+                        }
                     }
                 }
+                loop = loop.filter(l => !l.del);
+                console.log({loop});
                 loops.push(loop);
             }
 
