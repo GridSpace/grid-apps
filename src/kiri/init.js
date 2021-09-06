@@ -1696,6 +1696,7 @@
             firstLayerFanSpeed:  UC.newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:UC.toInt, bound:UC.bound(0,255), modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
             firstLayerYOffset:   UC.newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
+            firstLayerFlatten:   UC.newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
             firstLayerRate:      UC.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:UC.toFloat, modes:FDM}),
             firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),

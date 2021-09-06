@@ -56,47 +56,35 @@
     function slice(points, bounds, options, ondone, onupdate) {
         let useFlats = options.flats,
             isBelt = options.isBelt || false,
-            zPress = options.zPress || 0, // compress z values less than zPress (flaten bottom)
+            zPress = options.zPress || 0, // lower z values less than zPress (flaten bottoms)
             zCut = options.zCut || 0, // cut bottom off model below bed/belt
             xray = options.xray,
-            zList = {},         // map count of z index points for adaptive slicing
             ox = 0,
             oy = 0;
 
-        // support moving parts below bed to "cut" them
-        // and/or flatten part bottoms
-        let zpress = 0;
-        let zneg = 0;
+        // support moving parts below bed to "cut" them in Z
+        // and/or flatten part bottoms belowa a given thresold
         if (zCut || zPress) {
             for (let p of points) {
                 if (!p._z) {
                     p._z = p.z;
                     if (zPress) {
                         if (isBelt) {
-                            let z = (p.z - p.y);
-                            let zo = z * ibeltfact;
-                            let zb = z * beltfact;
-        if (z < 0) zneg++;
-                            if (zo > 0 && zo < zPress) {
-                                p.y += z;
-                                p.z -= z;
-        zpress++;
+                            let zb = (p.z - p.y) * beltfact;
+                            if (zb > 0 && zb <= zPress) {
+                                p.y += zb * beltfact;
+                                p.z -= zb * beltfact;
                             }
-                            countZ(zo);
                         } else {
-                            if (p.z < zPress) p.z = 0;
+                            if (p.z <= zPress) p.z = 0;
                         }
                     }
-                    if (zCut) {
+                    if (zCut && !isBelt) {
                         p.z -= zCut;
                     }
                 }
             }
         }
-        console.log({zpress, zneg});
-        console.log({
-            zList: Object.entries(zList).sort((a,b) => { return parseFloat(a[0]) - parseFloat(b[0]) })
-        });
 
         let zMin = options.zmin || options.firstHeight || Math.floor(bounds.min.z),
             zMax = options.zmax || Math.ceil(bounds.max.z),
@@ -108,7 +96,7 @@
             zIndexes = [],      // auto-detected z slicing offsets (laser/cam)
             zOrdered = [],      // ordered list of Z indexes
             zThick = [],        // ordered list of Z slice thickness (laser)
-            // zList = {},         // map count of z index points for adaptive slicing
+            zList = {},         // map count of z index points for adaptive slicing
             zFlat = {},         // map area of z index flat areas (cam)
             zLines = {},        // map count of z index lines
             zScale,             // bucket span in z units

@@ -331,6 +331,8 @@ kiri.lang['en-us'] = {
     // FDM BELT ONLY
     fl_zoff_s:      "belt offset",
     fl_zoff_l:      ["height offset from belt","of lowest extrusion","in millimeters"],
+    fl_flat_s:      "flatten",
+    fl_flat_l:      ["flatten to the belt any point","height less than this value","in millimeters"],
     fl_brim_s:      "brim sides",
     fl_brim_l:      ["add brim to part perimeter","size is width in millimeters","0 to disable"],
     fl_brin_s:      "brim interior",

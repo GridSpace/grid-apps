@@ -350,6 +350,7 @@
                     firstLayerBeltLead: 3,
                     firstLayerBeltBump: 0,
                     firstLayerFanSpeed: 0,
+                    firstLayerFlatten: 0,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,
                     outputTemp: 200,
