@@ -303,6 +303,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
     };
 
+    PRO.debugMesh = function(precision) {
+        let mesh = new base.Mesh({precision, vertices: this.getVertices().array});
+        return mesh;
+    };
+
     PRO.getVertices = function() {
         return this.mesh.geometry.attributes.position;
     };

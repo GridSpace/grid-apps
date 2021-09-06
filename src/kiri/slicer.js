@@ -26,8 +26,7 @@
         tracker = UTIL.pwait,
         newSlice = KIRI.newSlice,
         newOrderedLine = BASE.newOrderedLine,
-        beltfact = Math.cos(Math.PI/4),
-        ibeltfact = 1/beltfact;
+        beltfact = Math.cos(Math.PI/4);
 
     /**
      * Convenience method. Gets a Widget's points and calls slice()
