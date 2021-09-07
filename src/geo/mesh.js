@@ -229,11 +229,10 @@
 
             // console.log({loops});
 
-            // emit loops
-            let faceCount = this.faces.length;
-            for (let loop of loops) {
+            // progressive boundary run algorithm
+            function emitLoop1(loop) {
                 while (loop.length > 2) {
-                    // console.log({loop});
+                    console.log({loop});
                     let nuloop = [];
                     // proceed through line pairs
                     for (let i=0, l=loop.length; i<l; i++) {
@@ -248,6 +247,9 @@
                         }
                         // synthesize a new face reversing point order
                         let face = faces.length;
+                        if (l1.v2 !== l2.v1) {
+                            console.log('out of order');
+                        }
                         faces.push(l1.v1);
                         faces.push(l2.v2);
                         faces.push(l2.v1);
@@ -262,6 +264,75 @@
                     // console.log({nuloop});
                     loop = nuloop;
                 }
+            }
+
+            // rotate/flatten to Z plane and use earcut
+            // then map emitted points back to original rotation plane
+            function emitLoop2(loop) {
+                let lastPoint;
+                let pindex = [];
+                let points = [];
+                let dx = 0, dy = 0, dz = 0;
+
+                // gather points, find axis with least deviaton to swap with Z
+                let loop1 = loop.slice();
+                loop1.push(loop[0]);
+                for (let i=0; i<loop1.length; i++) {
+                    let line = loop1[i];
+                    let nextPoint;
+                    if (line.v1 === lastPoint) {
+                        nextPoint = line.v2;
+                    } else {
+                        nextPoint = line.v1;
+                    }
+                    if (i < loop1.length - 1) {
+                        pindex.push(nextPoint);
+                        points.push([
+                            vertices[nextPoint],
+                            vertices[nextPoint+1],
+                            vertices[nextPoint+2]
+                        ]);
+                    }
+                    if (lastPoint >= 0) {
+                        dx = Math.max(dx, Math.abs(vertices[lastPoint] - vertices[nextPoint]));
+                        dy = Math.max(dy, Math.abs(vertices[lastPoint+1] - vertices[nextPoint+1]));
+                        dz = Math.max(dz, Math.abs(vertices[lastPoint+2] - vertices[nextPoint+2]));
+                    }
+                    lastPoint = nextPoint;
+                }
+
+                // swap Z axis with least delta axis
+                let swap = 2;
+                if (dy < Math.max(dx,dz)) {
+                    // swap y,z
+                    swap = 1;
+                } else if (dx < Math.max(dy,dz)) {
+                    // swap x,z
+                    swap = 0;
+                }
+                if (swap < 2) {
+                    // console.log({swap_axis: swap});
+                    for (let point of points) {
+                        let tmpz = point[2];
+                        point[2] = point[swap];
+                        point[swap] = tmpz;
+                    }
+                }
+
+                let fpoints = points.flat();
+                let ec = earcut(fpoints, undefined, 3);
+                // console.log({points, fpoints, ec, dx, dy, dz});
+
+                for (let point of ec) {
+                    faces.push(pindex[point]);
+                }
+            }
+
+            // emit loops
+            let faceCount = this.faces.length;
+            for (let loop of loops) {
+                emitLoop2(loop);
+                // emitLoop1(loop);
             }
             this.newFaces = this.faces.length - faceCount;
             // console.log({newFaces: this.newFaces});
