@@ -186,7 +186,7 @@
                     }
                     if (adjacent.length > 2) {
                         console.log('error adjacent', adjacent);
-                        break;
+                        // break;
                     }
                     if (adjacent.length === 1) {
                         if (line.v2 !== adjacent[0].v1) {
