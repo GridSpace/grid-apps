@@ -190,7 +190,10 @@
                     }
                     if (adjacent.length === 1) {
                         if (line.v2 !== adjacent[0].v1) {
-                            console.log('chirality mismatch');
+                            let tmp = adjacent[0].v1;
+                            adjacent[0].v1 = adjacent[0].v2;
+                            adjacent[0].v2 = tmp;
+                            // console.log('chirality mismatch fixed');
                         }
                         line = adjacent[0];
                     } else {
