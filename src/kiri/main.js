@@ -856,8 +856,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     function healWidgets() {
         let widgets = API.widgets.all();
+        let marker;
         if (widgets.length) {
-            API.show.alert("Analyzing objects");
+            marker = API.show.alert("Analyzing objects");
         } else {
             return;
         }
@@ -867,6 +868,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 healed++;
             }
         }
+        API.hide.alert(marker);
         if (healed) {
             API.show.alert(`${healed} Object${healed ? 's':''} healed`);
         } else {

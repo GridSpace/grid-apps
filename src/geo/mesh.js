@@ -303,10 +303,10 @@
 
                 // swap Z axis with least delta axis
                 let swap = 2;
-                if (dy < Math.max(dx,dz)) {
+                if (dy < dx && dy < dz) {
                     // swap y,z
                     swap = 1;
-                } else if (dx < Math.max(dy,dz)) {
+                } else if (dx < dy && dx < dz) {
                     // swap x,z
                     swap = 0;
                 }
