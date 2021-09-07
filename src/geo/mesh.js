@@ -67,6 +67,18 @@
             return this;
         }
 
+        // return non-indexed vertex list (for compatibility)
+        unrolled() {
+            let out = [];
+            let vertices = this.vertices;
+            for (let face of this.faces) {
+                out.push(vertices[face]);
+                out.push(vertices[face+1]);
+                out.push(vertices[face+2]);
+            }
+            return out;
+        }
+
         heal() {
             // construct ordered line map with array of connected lines
             // for each point pair, create ordered line
@@ -90,6 +102,7 @@
                     if (this.faces.indexOf(face) < 0) {
                         this.faces.push(face);
                     }
+                    return this;
                 }
 
                 unitVector() {
@@ -151,10 +164,9 @@
 
             // lines belonging to only one face or with only 2 peers
             // are on the edge of a hole
-            let edges = lines.filter(l => l.faces.length === 1);
-            console.log({edges});
-
-            let loops = [];
+            let edges = this.edges = lines.filter(l => l.faces.length === 1);
+            let loops = this.loops = [];
+            // console.log({edges});
 
             // connect edge lines into closed loops
             for (let i=0, l=edges.length; i<l; i++) {
@@ -192,7 +204,8 @@
                 }
                 // drop co-linear points because they can't be connected into valid faces
                 // fixup remaining line by dropping common point and using dropped line's point
-                for (let j=0, jl=loop.length; j<jl-1; j++) {
+                // todo: disabled until faces are fixed up, too. otherwise, problems
+                if (false) for (let j=0, jl=loop.length; j<jl-1; j++) {
                     let l1 = loop[j];
                     if (l1.del) {
                         continue;
@@ -211,11 +224,47 @@
                     }
                 }
                 loop = loop.filter(l => !l.del);
-                console.log({loop});
                 loops.push(loop);
             }
 
-            console.log({loops});
+            // console.log({loops});
+
+            // emit loops
+            let faceCount = this.faces.length;
+            for (let loop of loops) {
+                while (loop.length > 2) {
+                    // console.log({loop});
+                    let nuloop = [];
+                    // proceed through line pairs
+                    for (let i=0, l=loop.length; i<l; i++) {
+                        let l1 = loop[i];
+                        let l2 = loop[i+1];
+                        // check if two lines share a face
+                        // we know edge lines belong to only one face
+                        if (!l2 || l1.faces[0] === l2.faces[0]) {
+                            nuloop.push(l1);
+                            // console.log('end or same face', l1, l2);
+                            continue;
+                        }
+                        // synthesize a new face reversing point order
+                        let face = faces.length;
+                        faces.push(l1.v1);
+                        faces.push(l2.v2);
+                        faces.push(l2.v1);
+                        // add new loop line and increment i to skip l2
+                        nuloop.push(getLine(l1.v1, l2.v2).addPeers(l1, face).addPeers(l2, face));
+                        i++;
+                    }
+                    if (nuloop.length === loop.length) {
+                        console.log("no new faces created");
+                        break;
+                    }
+                    // console.log({nuloop});
+                    loop = nuloop;
+                }
+            }
+            this.newFaces = this.faces.length - faceCount;
+            // console.log({newFaces: this.newFaces});
 
             return this;
         }

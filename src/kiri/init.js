@@ -2581,6 +2581,7 @@
         $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
         // context menu
+        $('context-heal-mesh').onclick = () => { API.widgets.heal() };
         $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
         $('context-clear-workspace').onclick = () => {

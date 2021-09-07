@@ -289,9 +289,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             }
         }
         if (this.mesh) {
-            this.mesh.geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            this.mesh.geometry.computeFaceNormals();
-            this.mesh.geometry.computeVertexNormals();
+            let geo = this.mesh.geometry;
+            geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geo.setAttribute('normal', undefined);
+            geo.attributes.position.needsUpdate = true;
+            geo.computeFaceNormals();
+            geo.computeVertexNormals();
             this.points = null;
             this.meta.vertices = vertices.length / 3;
             return this;
@@ -303,9 +306,18 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
     };
 
+    PRO.heal = function() {
+        let mesh = this.debugMesh();
+        mesh.heal();
+        if (mesh.newFaces) {
+            this.loadVertices(mesh.unrolled().toFloat32());
+            return this.modified = true;
+        }
+        return false;
+    };
+
     PRO.debugMesh = function(precision) {
-        let mesh = new base.Mesh({precision, vertices: this.getVertices().array});
-        return mesh;
+        return new base.Mesh({precision, vertices: this.getVertices().array});
     };
 
     PRO.getVertices = function() {

@@ -54,6 +54,7 @@ kiri.lang['en-us'] = {
     rc_mirr:        "mirror",
     rc_dupl:        "duplicate",
     rc_focs:        "set focus",
+    rc_heal:        "heal meshes",
     rc_xstl:        "export as STL",
 
     // DEVICE MENU and related dialogs

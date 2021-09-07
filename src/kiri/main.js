@@ -388,6 +388,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             filter: (fn) => { WIDGETS = WIDGETS.filter(fn) },
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
+            heal: healWidgets,
             meshes: meshArray,
             opacity: setOpacity,
             annotate: (id) => {
@@ -851,6 +852,26 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             out.appendAll(widget.adds);
         });
         return out;
+    }
+
+    function healWidgets() {
+        let widgets = API.widgets.all();
+        if (widgets.length) {
+            API.show.alert("Analyzing objects");
+        } else {
+            return;
+        }
+        let healed = 0;
+        for (let w of widgets) {
+            if (w.heal()) {
+                healed++;
+            }
+        }
+        if (healed) {
+            API.show.alert(`${healed} Object${healed ? 's':''} healed`);
+        } else {
+            API.show.alert('Nothing found to heal');
+        }
     }
 
     function forAllWidgets(f) {
