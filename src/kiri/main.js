@@ -862,18 +862,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         } else {
             return;
         }
-        let healed = 0;
-        for (let w of widgets) {
-            if (w.heal()) {
-                healed++;
+        setTimeout(() => {
+            let healed = 0;
+            for (let w of widgets) {
+                if (w.heal()) {
+                    healed++;
+                }
             }
-        }
-        API.hide.alert(marker);
-        if (healed) {
-            API.show.alert(`${healed} Object${healed ? 's':''} healed`);
-        } else {
-            API.show.alert('Nothing found to heal');
-        }
+            API.hide.alert(marker);
+            if (healed) {
+                API.show.alert(`${healed} Object${healed ? 's':''} healed`);
+            } else {
+                API.show.alert('Nothing found to heal');
+            }
+        }, 1);
     }
 
     function forAllWidgets(f) {
