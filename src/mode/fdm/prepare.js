@@ -483,17 +483,19 @@
                 let pads = [];
 
                 for (let rec of layer) {
+                    let brate = params.firstLayerRate || firstLayerRate;
+                    let bmult = params.firstLayerPrintMult || firstLayerMult;
                     let point = rec.point;
                     let belty = rec.belty = -point.y + point.z;
                     miny = Math.min(miny, belty);
                     if (layer.anchor) {
                         // apply base rate to entire anchor (including bump)
-                        rec.speed = firstLayerRate;
+                        rec.speed = brate;
                     }
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                         // apply base speed to segments touching belt
-                        rec.speed = firstLayerRate;
-                        rec.emit *= firstLayerMult;
+                        rec.speed = brate;
+                        rec.emit *= bmult;
                         minx = Math.min(minx, point.x, lastout.point.x);
                         maxx = Math.max(maxx, point.x, lastout.point.x);
                         maxy = Math.max(maxy, point.y);

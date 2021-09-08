@@ -36,6 +36,8 @@
             "sliceFillWidth": LANG.fi_wdth_s,
             "sliceFillSparse": LANG.fi_pcnt_s,
             "sliceSolidMinArea": LANG.ad_msol_s,
+            "firstLayerRate": LANG.fl_rate_s,
+            "firstLayerPrintMult": LANG.fl_mult_s,
             // prepare
             "sliceShellOrder": LANG.sl_ordr_s,
             "sliceFillOverlap": LANG.fi_over_s,
