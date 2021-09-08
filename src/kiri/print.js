@@ -1272,7 +1272,7 @@
                 if (typeof v === 'number') {
                     eva.push(`let ${k} = ${v};`);
                 } else {
-                    eva.push(`let ${k} = "${v}";`);
+                    eva.push(`let ${k} = "${v.replace(/\"/g,"\\\"")}";`);
                 }
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`)
