@@ -1270,6 +1270,7 @@
                 if (typeof v === 'number') {
                     eva.push(`let ${k} = ${v};`);
                 } else {
+                    if (v === undefined) v = '';
                     eva.push(`let ${k} = "${v.replace(/\"/g,"\\\"")}";`);
                 }
             }
