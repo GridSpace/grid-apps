@@ -307,14 +307,14 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.heal = function(debug) {
-        let mesh = this.debugMesh();
+        let mesh = this.debugMesh(undefined);
         mesh.heal();
         if (debug) {
             let verts = mesh.vertices;
             let edges = mesh.edges;
-            let error = mesh.edges.filter(l => l.error);
+            let split = mesh.edges.filter(l => l.split);
             let layrz = new KIRI.Layers();
-            layrz.setLayer("edges", {line: 0xff0000});
+            layrz.setLayer("edges", {line: 0});
             for (let line of edges) {
                 layrz.addLine(
                     BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2]),
@@ -322,24 +322,25 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 );
             }
             for (let l=0; l<mesh.loops.length; l++) {
-                layrz.setLayer(`loop ${l}`, {line: l % 2 === 0 ? 0xff00ff : 0x00ff00});
+                layrz.setLayer(`loop ${l}`, {line: [ 0xff0000, 0x00ff00, 0x0000ff ][l % 3]});
+                let zo = [0.15, 0.3, 0.45][l % 3];
                 for (let line of mesh.loops[l]) {
                     layrz.addLine(
-                        BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.03),
-                        BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.03)
+                        BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - zo),
+                        BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - zo)
                     );
                 }
             }
-            layrz.setLayer("error", {line: 0x0000ff});
-            for (let line of error) {
+            layrz.setLayer("split", {line: 0xff00ff});
+            for (let line of split) {
                 layrz.addLine(
-                    BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.06),
-                    BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.06)
+                    BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.6),
+                    BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.6)
                 );
             }
             let stack = new KIRI.Stack(this.mesh);
             stack.addLayers(layrz);
-            return { layrz, stack };
+            return { mesh, layrz, stack };
         }
         if (mesh.newFaces) {
             this.loadVertices(mesh.unrolled().toFloat32());

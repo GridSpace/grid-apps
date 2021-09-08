@@ -39,6 +39,8 @@
             // when face/index data is missing, vertices need to be normalized
             if (!faces) {
                 faces = [];
+                let fcac = {}; // seen face hash
+                let fnew = []; // accumulate vertex triplets
                 let nuvt = []; // new vertex list
                 let hash = {}; // find vertex matches
                 let prec = this.precision;
@@ -58,7 +60,22 @@
                         nuvt.push(y);
                         nuvt.push(z);
                     }
-                    faces.push(vpos);
+                    fnew.push(vpos);
+                    if (fnew.length === 3) {
+                        if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+                            // console.log('invalid face', fnew);
+                            fnew = [];
+                            continue;
+                        }
+                        let key = fnew.slice().sort().join('-');
+                        if (!fcac[key]) {
+                            faces.appendAll(fnew);
+                        // } else {
+                        //     console.log('dup face', key);
+                        }
+                        fcac[key] = key;
+                        fnew = [];
+                    }
                 }
                 vertices = nuvt;
             }
@@ -99,10 +116,29 @@
                 addFace(face) {
                     if (this.faces.indexOf(face) < 0) {
                         this.faces.push(face);
-                    // } else {
-                    //     console.log('adding face to line twice', this, face);
+                    } else {
+                        console.log('adding face to line twice', this, face);
                     }
                     return this;
+                }
+
+                adjacentUnused() {
+                    return vmap[this.v1]
+                        .concat(vmap[this.v2])
+                        .filter(l => l !== this && !l.used && l.faces.length === 1);
+                }
+
+                adjacentUsed() {
+                    return vmap[this.v1]
+                        .concat(vmap[this.v2])
+                        .filter(l => l !== this && l.used && l.faces.length === 1);
+                }
+
+                touches(line) {
+                    return this.v1 === line.v1 ||
+                        this.v1 === line.v2 ||
+                        this.v2 === line.v1 ||
+                        this.v2 === line.v2;
                 }
 
                 unitVector() {
@@ -171,22 +207,27 @@
                 if (line.used) {
                     continue;
                 }
+                // cannot start on split
+                if (line.adjacentUnused().length > 2) {
+                    console.log('cannot start on a split');
+                    continue;
+                }
                 // line.used = true;
-                let loop = [ line ];
+                let loop = [ ];
                 // build line through adjacent lines
                 while (true) {
-                    let adjacent = vmap[line.v1]
-                        .concat(vmap[line.v2])
-                        .filter(l => l !== line && !l.used && l.faces.length === 1);
+                    let adjacent = line.adjacentUnused();
                     if (adjacent.length === 0) {
+                        let first = loop[0];
+                        let last = loop.last();
+                        loop.open = loop.length < 3
+                            || (first.v1 !== last.v1
+                            && first.v2 !== last.v2
+                            && first.v1 !== last.v2
+                            && first.v2 !== last.v1);
+                        // console.log({term: line, adj: line.adjacentUsed(), open, loop});
                         break;
-                    }
-                    if (adjacent.length > 2) {
-                        console.log('error adjacent', line, adjacent, loops.length, loop.length);
-                        line.error = adjacent;
-                        // break;
-                    }
-                    if (adjacent.length === 1) {
+                    } else if (adjacent.length === 1) {
                         if (line.v2 !== adjacent[0].v1) {
                             let tmp = adjacent[0].v1;
                             adjacent[0].v1 = adjacent[0].v2;
@@ -194,41 +235,56 @@
                             // console.log('chirality mismatch fixed');
                         }
                         line = adjacent[0];
-                    } else {
+                    } else if (adjacent.length === 2) {
                         // follow edges according to chirality
                         line = adjacent[0].v1 === line.v2 ?
                             adjacent[0] :
                             adjacent[1]
+                    } else {
+                        // console.log('error adjacent', line, adjacent, loops.length, loop.length);
+                        line.split = adjacent;
+                        line = adjacent[0];
                     }
                     loop.push(line);
                     line.used = true;
                 }
-                // drop co-linear points because they can't be connected into valid faces
-                // fixup remaining line by dropping common point and using dropped line's point
-                // todo: disabled until faces are fixed up, too. otherwise, problems
-                if (false) for (let j=0, jl=loop.length; j<jl-1; j++) {
-                    let l1 = loop[j];
-                    if (l1.del) {
-                        continue;
-                    }
-                    for (let k=j+1; k<jl; k++) {
-                        let l2 = loop[k];
-                        if (l2.del) {
-                            continue;
-                        }
-                        // todo
-                        if (diffUnitVector(l1.unitVector(), l2.unitVector()) < 0.0001) {
-                            // console.log('collinear', l1, l2);
-                            l2.del = true;
-                            l1.v2 = l2.v2;
-                        }
-                    }
-                }
-                loop = loop.filter(l => !l.del);
                 loops.push(loop);
             }
 
-            // console.log({loops});
+            // attempt to connect open loops
+            if (loops.length > 1) {
+                outer: for (let i=0; i<loops.length-1; i++) {
+                    let l1 = loops[i];
+                    if (!(l1 && l1.open)) {
+                        continue;
+                    }
+                    for (let j=i+1; j<loops.length; j++) {
+                        let l2 = loops[j];
+                        if (!(l2 && l2.open)) {
+                            continue;
+                        }
+                        let nuloop;
+                        if (l1[0].touches(l2[0])) {
+                            nuloop = [...l1, ...l2.reverse()];
+                        } else if (l1[0].touches(l2.last())) {
+                            nuloop = [...l2, ...l1];
+                        } else if (l1.last().touches(l2[0])) {
+                            nuloop = [...l1, ...l2];
+                        } else if (l1.last().touches(l2.last())) {
+                            nuloop = [...l1, ...l2.reverse()];
+                        }
+                        if (nuloop) {
+                            nuloop.open = true;
+                            loops.push(nuloop);
+                            loops[i] = loops[j] = undefined;
+                            continue outer;
+                        }
+                    }
+
+                }
+            }
+            this.loops = loops = loops.filter(l => l && l.length > 2);
+            console.log({loops});
 
             // progressive boundary run algorithm
             function emitLoop1(loop) {
