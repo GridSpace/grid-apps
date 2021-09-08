@@ -93,14 +93,14 @@
                 constructor(v1, v2) {
                     this.v1 = v1;
                     this.v2 = v2;
-                    this.peers = [];
                     this.faces = [];
                 }
 
-                addPeers(lines, face) {
-                    this.peers.appendAll(lines);
+                addFace(face) {
                     if (this.faces.indexOf(face) < 0) {
                         this.faces.push(face);
+                    // } else {
+                    //     console.log('adding face to line twice', this, face);
                     }
                     return this;
                 }
@@ -139,6 +139,7 @@
                     // point order will be swapped for reconstructed faces
                     // to preserve chirality (assuming face normals are correct)
                     line = hash[key] = new Line(v1, v2);
+                    line.key = key;
                     lines.push(line);
                     let lm1 = vmap[v1] = vmap[v1] || [];
                     let lm2 = vmap[v2] = vmap[v2] || [];
@@ -152,18 +153,14 @@
                 let v1 = faces[i];
                 let v2 = faces[i+1];
                 let v3 = faces[i+2];
-                let l1 = getLine(v1, v2);
-                let l2 = getLine(v2, v3);
-                let l3 = getLine(v3, v1);
-                l1.addPeers([l2, l3], i);
-                l2.addPeers([l3, l1], i);
-                l3.addPeers([l1, l2], i);
+                let l1 = getLine(v1, v2).addFace(i);
+                let l2 = getLine(v2, v3).addFace(i);
+                let l3 = getLine(v3, v1).addFace(i);
             }
 
             this.lines = lines;
 
-            // lines belonging to only one face or with only 2 peers
-            // are on the edge of a hole
+            // lines belonging to only one face are on the edge of a hole
             let edges = this.edges = lines.filter(l => l.faces.length === 1);
             let loops = this.loops = [];
             // console.log({edges});
@@ -174,7 +171,7 @@
                 if (line.used) {
                     continue;
                 }
-                line.used = true;
+                // line.used = true;
                 let loop = [ line ];
                 // build line through adjacent lines
                 while (true) {
@@ -185,7 +182,8 @@
                         break;
                     }
                     if (adjacent.length > 2) {
-                        console.log('error adjacent', adjacent);
+                        console.log('error adjacent', line, adjacent, loops.length, loop.length);
+                        line.error = adjacent;
                         // break;
                     }
                     if (adjacent.length === 1) {
