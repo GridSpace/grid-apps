@@ -22,7 +22,7 @@
          * set vertices and faces of the mesh. if only vertices are provided
          * then the data is assumed to be un-indexed and will be indexed into
          * faces. if faces are provided, they are assumed to be index references
-         * into the vertex data.
+         * into the vertex data. removes invalid faces.
          *
          * the end result is face data mapped to an indexed set of unique vertices.
          *
@@ -62,16 +62,15 @@
                     }
                     fnew.push(vpos);
                     if (fnew.length === 3) {
+                        // cull invalid faces (shares 2 or more points)
                         if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
-                            // console.log('invalid face', fnew);
                             fnew = [];
                             continue;
                         }
                         let key = fnew.slice().sort().join('-');
+                        // drop duplicate faces (even when reversed - thus the sort)
                         if (!fcac[key]) {
                             faces.appendAll(fnew);
-                        // } else {
-                        //     console.log('dup face', key);
                         }
                         fcac[key] = key;
                         fnew = [];
@@ -96,10 +95,12 @@
             return out;
         }
 
+        /**
+         * finds edge lines which are line segments on a single face.
+         * construct ordered line maps with array of connected edges.
+         * connect lines into polys. earcut polys into new faces.
+         */
         heal() {
-            // construct ordered line map with array of connected lines
-            // for each point pair, create ordered line
-            // for each face triple, add lines to connect line array
             let vertices = this.vertices;
             let faces = this.faces;
             let hash = {}; // key to line map
@@ -287,62 +288,13 @@
 
                 }
             }
+
+            // filter out null and short loops
             this.loops = loops = loops.filter(l => l && l.length > 2);
-            // console.log({
-            //     loops,
-            //     ends: loops.map(loop => {
-            //         return [loop[0], loop.last()];
-            //     }),
-            //     coor: loops.map(loop => {
-            //         return [
-            //             getXYZ(loop[0].v1),
-            //             getXYZ(loop[0].v2),
-            //             getXYZ(loop.last().v2),
-            //             getXYZ(loop.last().v1)
-            //         ];
-            //     })
-            // });
 
-            // progressive boundary run algorithm
-            function emitLoop1(loop) {
-                while (loop.length > 2) {
-                    console.log({loop});
-                    let nuloop = [];
-                    // proceed through line pairs
-                    for (let i=0, l=loop.length; i<l; i++) {
-                        let l1 = loop[i];
-                        let l2 = loop[i+1];
-                        // check if two lines share a face
-                        // we know edge lines belong to only one face
-                        if (!l2 || l1.faces[0] === l2.faces[0]) {
-                            nuloop.push(l1);
-                            // console.log('end or same face', l1, l2);
-                            continue;
-                        }
-                        // synthesize a new face reversing point order
-                        let face = faces.length;
-                        if (l1.v2 !== l2.v1) {
-                            console.log('out of order');
-                        }
-                        faces.push(l1.v1);
-                        faces.push(l2.v2);
-                        faces.push(l2.v1);
-                        // add new loop line and increment i to skip l2
-                        nuloop.push(getLine(l1.v1, l2.v2).addPeers(l1, face).addPeers(l2, face));
-                        i++;
-                    }
-                    if (nuloop.length === loop.length) {
-                        console.log("no new faces created");
-                        break;
-                    }
-                    // console.log({nuloop});
-                    loop = nuloop;
-                }
-            }
-
-            // rotate/flatten to Z plane and use earcut
-            // then map emitted points back to original rotation plane
-            function emitLoop2(loop) {
+            // rotate/flatten to Z plane and use earcut to generate faces
+            // because earcut emits point indexes, no need to un-rotate
+            function emitLoop(loop) {
                 let lastPoint;
                 let pindex = [];
                 let points = [];
@@ -405,9 +357,9 @@
             // emit loops
             let faceCount = this.faces.length;
             for (let loop of loops) {
-                emitLoop2(loop);
-                // emitLoop1(loop);
+                emitLoop(loop);
             }
+
             this.newFaces = this.faces.length - faceCount;
             // console.log({newFaces: this.newFaces});
 
