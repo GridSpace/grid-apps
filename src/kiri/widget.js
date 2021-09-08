@@ -307,7 +307,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.heal = function(debug) {
-        let mesh = this.debugMesh(undefined);
+        let mesh = this.debugMesh();
         mesh.heal();
         if (debug) {
             let verts = mesh.vertices;

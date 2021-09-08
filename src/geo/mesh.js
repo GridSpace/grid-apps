@@ -185,6 +185,10 @@
                 return line;
             }
 
+            function getXYZ(v) {
+                return {x: vertices[v], y: vertices[v+1], z: vertices[v+2]};
+            }
+
             for (let i=0, l=this.faces.length; i<l; i += 3) {
                 let v1 = faces[i];
                 let v2 = faces[i+1];
@@ -265,7 +269,7 @@
                         }
                         let nuloop;
                         if (l1[0].touches(l2[0])) {
-                            nuloop = [...l1, ...l2.reverse()];
+                            nuloop = [...l2.reverse(), ...l1];
                         } else if (l1[0].touches(l2.last())) {
                             nuloop = [...l2, ...l1];
                         } else if (l1.last().touches(l2[0])) {
@@ -284,7 +288,20 @@
                 }
             }
             this.loops = loops = loops.filter(l => l && l.length > 2);
-            console.log({loops});
+            // console.log({
+            //     loops,
+            //     ends: loops.map(loop => {
+            //         return [loop[0], loop.last()];
+            //     }),
+            //     coor: loops.map(loop => {
+            //         return [
+            //             getXYZ(loop[0].v1),
+            //             getXYZ(loop[0].v2),
+            //             getXYZ(loop.last().v2),
+            //             getXYZ(loop.last().v1)
+            //         ];
+            //     })
+            // });
 
             // progressive boundary run algorithm
             function emitLoop1(loop) {
