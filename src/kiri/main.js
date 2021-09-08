@@ -858,23 +858,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         let widgets = API.widgets.all();
         let marker;
         if (widgets.length) {
-            marker = API.show.alert("Analyzing objects");
+            marker = API.show.alert("Analyzing objects", 100000);
         } else {
             return;
         }
         setTimeout(() => {
-            let healed = 0;
-            for (let w of widgets) {
-                if (w.heal()) {
-                    healed++;
+            Promise.all(widgets.map(w => w.heal())).then(mod => {
+                API.hide.alert(marker);
+                let healed = mod.map(m => m).length;
+                if (healed) {
+                    API.show.alert(`${healed} Object${healed ? 's':''} healed`);
+                } else {
+                    API.show.alert('Nothing found to heal');
                 }
-            }
-            API.hide.alert(marker);
-            if (healed) {
-                API.show.alert(`${healed} Object${healed ? 's':''} healed`);
-            } else {
-                API.show.alert('Nothing found to heal');
-            }
+            });
         }, 1);
     }
 

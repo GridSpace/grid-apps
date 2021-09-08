@@ -307,9 +307,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.heal = function(debug) {
-        let mesh = this.debugMesh();
-        mesh.heal();
         if (debug) {
+            let mesh = this.debugMesh().heal();
             let verts = mesh.vertices;
             let edges = mesh.edges;
             let split = mesh.edges.filter(l => l.split);
@@ -342,11 +341,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             stack.addLayers(layrz);
             return { mesh, layrz, stack };
         }
-        if (mesh.newFaces) {
-            this.loadVertices(mesh.unrolled().toFloat32());
-            return this.modified = true;
-        }
-        return false;
+        return new Promise((resolve, reject) => {
+            KIRI.client.heal(this.getVertices().array, data => {
+                if (data.vertices) {
+                    this.loadVertices(data.vertices);
+                    this.modified = true;
+                }
+                resolve(this.modified);
+            });
+        });
     };
 
     PRO.debugMesh = function(precision) {

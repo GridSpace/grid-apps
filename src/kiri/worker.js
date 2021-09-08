@@ -202,6 +202,17 @@ KIRI.worker = {
         send.done(vertices);
     },
 
+    heal: function(data, send) {
+        let { vertices } = data;
+        let mesh = new base.Mesh({vertices}).heal();
+        if (mesh.newFaces) {
+            vertices = mesh.unrolled().toFloat32();
+            send.done({vertices}, [vertices]);
+        } else {
+            send.done({});
+        }
+    },
+
     snap: function(data, send) {
         current.snap = data;
         send.done();

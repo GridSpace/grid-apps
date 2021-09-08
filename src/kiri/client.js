@@ -126,6 +126,12 @@ KIRI.work = {
         });
     },
 
+    heal: function(vertices, callback) {
+        send("heal", {vertices}, function(output) {
+            callback(output);
+        });
+    },
+
     config: function(obj) {
         send("config", obj, function(reply) { });
     },
