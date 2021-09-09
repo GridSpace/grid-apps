@@ -947,7 +947,9 @@
     function renderDevices(devices) {
         let selectedIndex = -1,
             selected = API.device.get(),
-            devs = settings().devices;
+            features = API.feature,
+            devs = settings().devices,
+            dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
 
         for (let local in devs) {
             if (!(devs.hasOwnProperty(local) && devs[local])) {
@@ -1007,6 +1009,10 @@
             let loc = isLocalDevice(device);
             // if filter set, use
             if (!loc && deviceFilter && device.toLowerCase().indexOf(deviceFilter) < 0) {
+                return;
+            }
+            // allow for device filter feature
+            if (dfilter && dfilter(device) === false) {
                 return;
             }
             if (incr === 0) {
