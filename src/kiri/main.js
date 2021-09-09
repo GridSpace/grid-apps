@@ -59,15 +59,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     CATALOG.show = showCatalog;
 
     const feature = {
-        seed: true,
+        seed: true, // seed profiles on first use
         meta: true, // show selected widget metadata
+        alert_event: false, // emit alerts as events instead of display
         controls: true, // show or not side menus
+        device_filter: undefined, // function to limit devices shown
         drop_group: undefined, // optional array to group multi drop
         drop_layout: true, // layout on new drop
-        work_alerts: true, // allow disabling work progress alerts
         hover: false, // when true fires mouse hover events
         hoverAdds: false, // when true only searches widget additions
-        alert_event: false // emit alerts as events instead of display
+        on_key: undefined, // function override default key handlers
+        on_load: undefined, // function override file drop loads
+        on_add_stl: undefined, // legacy override stl drop loads
+        work_alerts: true, // allow disabling work progress alerts
+        modes: [ "fdm", "sla", "cam", "laser" ] // enable device modes
     };
 
     const selection = {

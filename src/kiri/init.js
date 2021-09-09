@@ -2263,10 +2263,13 @@
             return lbl;
         }
 
-        $('mode-fdm').appendChild(mksvg(icons.fdm));
-        $('mode-sla').appendChild(mksvg(icons.sla));
-        $('mode-cam').appendChild(mksvg(icons.cnc));
-        $('mode-laser').appendChild(mksvg(icons.laser));
+        for (let mode of ["fdm","sla","cam","laser"]) {
+            if (API.feature.modes.indexOf(mode) >= 0) {
+                $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
+            } else {
+                $(`mode-${mode}`).style.display = 'none';
+            }
+        }
 
         API.platform.update_size();
 
