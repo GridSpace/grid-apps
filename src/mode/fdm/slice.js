@@ -329,7 +329,7 @@
                 let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
                 let isBottom = slice.index < process.sliceBottomLayers;
                 let isTop = slice.index > slices.length - process.sliceTopLayers - 1;
-                let isDense = range.sliceFillSparse > 0.98;
+                let isDense = range.sliceFillSparse > 0.995;
                 let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
                 let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
                 if (solidWidth) {

@@ -38,7 +38,8 @@
     function fillHex(target, full) {
         // compute segment lengths (vert/horiz and 45)
         let spacing = target.offset();
-        let vhlen = (1 / target.density()) * (target.lineWidth() + spacing);
+        // let vhlen = (1 / target.density()) * (target.lineWidth() + spacing);
+        let vhlen = (1 / target.density()) * target.lineWidth() * 0.5;
         let anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7);
         let anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7);
         let bounds = target.bounds();
@@ -199,9 +200,8 @@
         let height = target.zHeight();
         let span_x = bounds.max.x - bounds.min.x;
         let span_y = bounds.max.y - bounds.min.y;
-        let density = target.density();
         let offset = target.offset() / 2;
-        let tile = 1 + (1 - density) * 3;
+        let tile = (1 / target.density()) * target.lineWidth();
         let tile_x = tile + offset;
         let tile_xc = span_x / tile_x;
         let tile_yc = span_y / tile;
@@ -288,7 +288,7 @@
         let span_y = bounds.max.y - bounds.min.y;
         let offset = target.offset();
         let line_w = target.lineWidth() / 2;
-        let tile = 1 + (1 - target.density()) * 5;
+        let tile = (1 / target.density()) * (target.lineWidth() * 1.25);
         let tile_x = tile + offset*2 + line_w;
         let tile_xc = span_x / tile_x;
         let tile_yc = span_y / tile;
