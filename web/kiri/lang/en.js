@@ -396,9 +396,9 @@ kiri.lang['en-us'] = {
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      ["step down depth","for each pass","in workspace units","0 to disable"],
     cc_feed_s:      "feed rate",
-    cc_feed_l:      ["max cutting speed in","workspace units / second"],
+    cc_feed_l:      ["max cutting speed in","workspace units / minute"],
     cc_plng_s:      "plunge rate",
-    cc_plng_l:      ["max z axis speed in","workspace units / second"],
+    cc_plng_l:      ["max z axis speed in","workspace units / minute"],
     cc_sngl_s:      "select lines only",
     cc_sngl_l:      ["select only single edges","instead of connected polylines"],
 
@@ -406,9 +406,9 @@ kiri.lang['en-us'] = {
     cc_menu:        "limits",
     cc_flip:        "flip",
     cc_rapd_s:      "xy feed",
-    cc_rapd_l:      ["max xy moves feedrate","in workspace units / second"],
+    cc_rapd_l:      ["max xy moves feedrate","in workspace units / minute"],
     cc_rzpd_s:      "z feed",
-    cc_rzpd_l:      ["max z moves feedrate","in workspace units / second"],
+    cc_rzpd_l:      ["max z moves feedrate","in workspace units / minute"],
 
     cc_loff_s:      "offset",
     cc_loff_l:      ["distance from stock face","for leveling pass","in workspace units"],
