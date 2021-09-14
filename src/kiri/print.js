@@ -1271,7 +1271,12 @@
             tok = str.substring(cs+1,ce);
             let eva = [];
             for (let [k,v] of Object.entries(consts)) {
-                eva.push(`let ${k} = "${v}";`);
+                if (typeof v === 'number') {
+                    eva.push(`let ${k} = ${v};`);
+                } else {
+                    if (v === undefined) v = '';
+                    eva.push(`let ${k} = "${v.replace(/\"/g,"\\\"")}";`);
+                }
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(3) }`)
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
