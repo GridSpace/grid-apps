@@ -1027,6 +1027,21 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             callback = preparePreview;
         }
 
+        // force layout in belt mode when widget exceeds bed length
+        if (WIDGETS.length && settings.device.bedBelt) {
+            let doLayout = false;
+            for (let w of WIDGETS) {
+                let bb = w.getBoundingBox();
+                let yspan = bb.max.y - bb.min.y;
+                if (yspan > settings.device.bedDepth) {
+                    doLayout = true;
+                }
+            }
+            if (doLayout) {
+                platformLayout();
+            }
+        }
+
         // clear completion marks
         complete = {};
 
