@@ -511,7 +511,7 @@ kiri.lang['de-de'] = {
     ou_zclr_s:      "z clearance",
     ou_zclr_l:      ["safe travel offset","from top of part","in workspace units"],
     ou_ztru_s:      "z thru",
-    ou_ztru_l:      ["extend cutout pass down","in workspace units"],
+    ou_ztru_l:      ["extend cutout pass down","and increase drill depth","in workspace units"],
     ou_conv_s:      "Gegenlauffräsen",
     ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",

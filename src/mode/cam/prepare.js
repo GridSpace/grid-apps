@@ -201,7 +201,7 @@
                     break;
                 }
             }
-            camOut(point.clone().setZ(zmax));
+            camOut(point.clone().setZ(zmax + zThru));
             points.forEach(function(point, index) {
                 camOut(point, 1);
                 if (index > 0 && index < points.length - 1) {
@@ -209,7 +209,7 @@
                     if (lift) camOut(point.clone().setZ(point.z + lift), 0);
                 }
             })
-            camOut(point.clone().setZ(zmax));
+            camOut(point.clone().setZ(zmax + zThru));
             newLayer();
         }
 
