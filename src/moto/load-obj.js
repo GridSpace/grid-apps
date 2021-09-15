@@ -32,7 +32,11 @@
             let toks = line.split(' ');
             switch (toks.shift()) {
                 case 'v':
-                    verts.push(toks.map(v => parseFloat(v)));
+                    let v = toks.map(v => parseFloat(v)).slice(0,3);
+                    if (v.length < 3) {
+                        console.log('??',toks,line);
+                    }
+                    verts.push(v);
                     break;
                 case 'f':
                     let tok = toks.map(f => parseInt(f.split('/')[0]));
