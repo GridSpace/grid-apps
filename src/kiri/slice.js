@@ -184,6 +184,7 @@
             // standard legacy polygon
             let top = new Top(poly);
             this.tops.push(top);
+            top.simple = poly;
             return top;
         } else {
             // frop top object passed back by slicePost()

@@ -214,7 +214,7 @@
                 }
                 // cannot start on split
                 if (line.adjacentUnused().length > 2) {
-                    console.log('cannot start on a split');
+                    // console.log('cannot start on a split');
                     continue;
                 }
                 // line.used = true;
@@ -253,7 +253,9 @@
                     loop.push(line);
                     line.used = true;
                 }
-                loops.push(loop);
+                if (loop.length) {
+                    loops.push(loop);
+                }
             }
 
             // attempt to connect open loops
@@ -288,9 +290,13 @@
 
                 }
             }
+            // console.log({loops})
 
+            // store invalid loops for display / culling
+            this.shorts = loops.filter(l => l && l.length <= 2);
             // filter out null and short loops
             this.loops = loops = loops.filter(l => l && l.length > 2);
+            // console.log({loops})
 
             // rotate/flatten to Z plane and use earcut to generate faces
             // because earcut emits point indexes, no need to un-rotate

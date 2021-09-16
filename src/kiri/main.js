@@ -870,7 +870,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         setTimeout(() => {
             Promise.all(widgets.map(w => w.heal())).then(mod => {
                 API.hide.alert(marker);
-                let healed = mod.map(m => m).length;
+                let healed = mod.filter(m => m).length;
                 if (healed) {
                     API.show.alert(`${healed} Object${healed ? 's':''} healed`);
                 } else {

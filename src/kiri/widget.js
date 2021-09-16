@@ -346,6 +346,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 if (data.vertices) {
                     this.loadVertices(data.vertices);
                     this.modified = true;
+                } else {
+                    this.modified = false;
                 }
                 resolve(this.modified);
             });
