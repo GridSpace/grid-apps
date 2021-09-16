@@ -780,7 +780,6 @@
                     if (flat && poly.appearsClosed()) {
                         poly.setClosed();
                         poly.points.pop();
-                        poly.length--;
                     }
                     output
                     .setLayer(opts.action || 'print', printOpt)
