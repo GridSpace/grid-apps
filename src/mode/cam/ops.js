@@ -256,7 +256,7 @@
 
                 // add outside pass if not inside only
                 if (!roughIn) {
-                    const outside = POLY.offset(shadow.clone(), toolDiam / 2, {z: slice.z});
+                    const outside = POLY.offset(shadow.clone(), toolDiam / 2 + roughLeave, {z: slice.z});
                     if (outside) {
                         outside.forEach(p => p.depth = -p.depth);
                         offset.appendAll(outside);
