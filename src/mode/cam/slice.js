@@ -337,7 +337,6 @@
             for (let poly of noff) {
                 if (poly.open && poly.first().isMergable2D(poly.last())) {
                     poly.points.pop();
-                    poly.length--;
                     poly.open = false;
                 }
             }

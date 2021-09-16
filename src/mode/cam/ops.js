@@ -1029,7 +1029,6 @@
                             move(0, -y4);
                         });
                         poly.points.pop();
-                        poly.length--;
                         slice.camTrace = { tool: tool.getID(), rate: op.feed, plunge: op.rate };
                         slice.camLines = [ poly ];
                         slice.output()
