@@ -1732,7 +1732,6 @@
                 if (no.open && no.first().distTo2D(no.last()) < 0.001) {
                     no.open = false;
                     no.points.pop();
-                    no.length--;
                 }
                 no.depth = this.depth;
             });
