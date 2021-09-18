@@ -106,17 +106,6 @@
         return this;
     };
 
-    // may be faster than the equivalent matrix transform. to be tested
-//     BP.translate = function(x,y,z) {
-//         let off = [x,y,z],
-//             arr = this.attributes.position.array,
-//             len = arr.length;
-//         for (let i=0; i<len; i++) {
-//             arr[i] += off[i%3];
-//         }
-//         return this;
-//     }
-
     THREE.Object3D.prototype.newGroup = function() {
         var group = new THREE.Group();
         this.add(group);

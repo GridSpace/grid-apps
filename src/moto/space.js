@@ -1064,7 +1064,8 @@
 
             renderer = new THREE.WebGLRenderer({
                 antialias: true,
-                preserveDrawingBuffer: true
+                preserveDrawingBuffer: true,
+                logarithmicDepthBuffer: true
             });
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :

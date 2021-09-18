@@ -796,6 +796,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 ondone('invalid mode: '+settings.mode);
             }
         }
+
+        // discard point cache
+        widget.points = undefined;
     };
 
     /**
@@ -815,12 +818,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         let mesh = this.mesh,
             widget = this;
         if (this.wire) {
+            this.setOpacity(solid_opacity);
             mesh.remove(this.wire);
             this.wire = null;
-            this.setOpacity(solid_opacity);
         }
         if (set) {
-            widget.wire = base.render.wireframe(mesh, this.getPoints(), color);
+            let geo = new THREE.WireframeGeometry(mesh.geometry);
+            let mat = new THREE.LineBasicMaterial({ color: 0 });
+            let wire = widget.wire = new THREE.LineSegments(geo, mat);
+            mesh.add(wire);
         }
         if (opacity !== undefined) {
             widget.setOpacity(opacity);
