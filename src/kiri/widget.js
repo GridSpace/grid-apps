@@ -217,11 +217,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         KIRI.odb.get('ws-save-'+id, function(data) {
             if (data) {
                 let vertices = data.geo || data,
+                    indices = data.ind || undefined,
                     track = data.track || undefined,
                     group = data.group || id,
                     widget = newWidget(id, Group.forid(group)),
                     meta = data.meta || widget.meta,
-                    ptr = widget.loadVertices(vertices);
+                    ptr = widget.loadVertices({vertices, indices});
                 widget.meta = meta;
                 // restore widget position if specified
                 if (move && track && track.pos) {
@@ -248,7 +249,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         let time = UTIL.time();
         widget.meta.file = filename;
         widget.meta.save = time;
-        KIRI.catalog.putFile(filename, this.getGeoVertices(), function(vertices) {
+        KIRI.catalog.putFile(filename, this.getGeoVertices(true), function(vertices) {
             if (vertices && vertices.length) {
                 console.log("saving decimated mesh ["+vertices.length+"] time ["+(UTIL.time()-time)+"]");
                 widget.loadVertices(vertices);
@@ -260,7 +261,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     PRO.saveState = function(ondone) {
         let widget = this;
         KIRI.odb.put('ws-save-'+this.id, {
-            geo: widget.getGeoVertices(),
+            geo: widget.getGeoVertices(false),
+            ind: widget.getGeoIndices(),
             track: widget.track,
             group: this.group.id,
             meta: this.meta
@@ -337,6 +339,16 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.loadData = PRO.loadVertices;
+
+    PRO.indexGeo = function() {
+        let indices = this.getGeoIndices();
+        if (!indices) {
+            let mesh = new BASE.Mesh({vertices: this.getGeoVertices()});
+            vertices = mesh.vertices.toFloat32();
+            indices = Uint32Array.from(mesh.faces.map(v => v/3));
+            this.loadData({vertices, indices});
+        }
+    };
 
     PRO.heal = function(debug) {
         if (debug) {
@@ -690,10 +702,10 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         this.points = null;
     };
 
-    PRO.getGeoVertices = function() {
+    PRO.getGeoVertices = function(unroll) {
         let geo = this.mesh.geometry;
         let pos = geo.getAttribute('position').array;
-        if (geo.index) {
+        if (geo.index && unroll !== false) {
             let idx = geo.index.array;
             let len = idx.length;
             let p2 = new Float32Array(len * 3);
@@ -709,6 +721,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         } else {
             return pos;
         }
+    };
+
+    PRO.getGeoIndices = function() {
+        let indices = this.mesh.geometry.index;
+        return indices ? indices.array : undefined;
     };
 
     PRO.iterPoints = function() {
