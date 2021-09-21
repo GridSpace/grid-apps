@@ -275,7 +275,28 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      * @param {Float32Array} vertices
      * @returns {Widget}
      */
-    PRO.loadVertices = function(vertices, autoscale) {
+    PRO.loadVertices = function(data, options = { index: false }) {
+        let vertices,
+            indices,
+            autoscale = false;
+        if (ArrayBuffer.isView(data) || typeof(data) != 'object') {
+            vertices = data;
+        } else {
+            vertices = data.vertices;
+            indices = data.indices;
+        }
+        switch (typeof(autoscale)) {
+            case 'boolean':
+                autoscale = options;
+                break;
+            case 'object':
+                autoscale = options.autoscale;
+                break;
+        }
+        if (!vertices) {
+            console.log('missing vertices', {data, options});
+            return;
+        }
         if (autoscale === true) {
             // onshape exports obj in meters by default :/
             let maxv = 0;
@@ -288,23 +309,34 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 }
             }
         }
+        if (options.index && !indices) {
+            let mesh = new BASE.Mesh({vertices});
+            vertices = mesh.vertices.toFloat32();
+            indices = Uint32Array.from(mesh.faces.map(v => v/3));
+        }
         if (this.mesh) {
             let geo = this.mesh.geometry;
+            if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             geo.setAttribute('normal', undefined);
             geo.attributes.position.needsUpdate = true;
             geo.computeFaceNormals();
             geo.computeVertexNormals();
-            this.points = null;
             this.meta.vertices = vertices.length / 3;
+            this.points = null;
             return this;
         } else {
-            let geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            let geo = new THREE.BufferGeometry();
+            if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+            geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geo.setAttribute('normal', undefined);
             this.meta.vertices = vertices.length / 3;
-            return this.loadGeometry(geometry);
+            this.points = null;
+            return this.loadGeometry(geo);
         }
     };
+
+    PRO.loadData = PRO.loadVertices;
 
     PRO.heal = function(debug) {
         if (debug) {
@@ -677,6 +709,21 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         } else {
             return pos;
         }
+    };
+
+    PRO.iterPoints = function() {
+        let verts = this.getGeoVertices();
+        let index = 0;
+        let count = verts.length;
+        return new class ITER {
+            [Symbol.iterator]() { return {
+                next: () => {
+                    let done = index >= count;
+                    return done ? { done } :
+                        { value: BASE.newPoint(verts[index++], verts[index++], verts[index++]) };
+                }
+            } }
+        };
     };
 
     PRO.getPoints = function() {
