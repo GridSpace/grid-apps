@@ -1100,8 +1100,8 @@
         }
 
         function sliceWidget(widget) {
-            widget.stack = STACKS.create(widget.id, widget.mesh),
-                factor = (widget.getVertices().count / defvert);
+            widget.stack = STACKS.create(widget.id, widget.mesh);
+            let factor = (widget.getVertices().count / defvert);
 
             // compensate for zcut (widget moved through floor)
             widget.stack.obj.view.position.z = widget.track.zcut || 0;

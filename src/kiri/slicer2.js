@@ -395,7 +395,8 @@
                     return opt.down ? b-a : a-b;
                 });
             }
-
+            // filter duplicate values
+            array = array.map(v => v.round(5)).filter((e,i,a) => i < 1 || a[i-1] !== a[i]);
             return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
         }
     }
