@@ -25,11 +25,13 @@
      * @param {number} [version]
      * @constructor
      */
-    function Storage(dbname, version) {
+    function Storage(dbname, options = {}) {
         this.db = null;
         this.name = dbname;
-        this.version = version || 1;
+        this.stores = options.stores || [ dbname ];
+        this.version = options.version || 1;
         this.queue = [];
+        this.idle = [];
         this.initCalled = false;
     }
 
@@ -42,6 +44,37 @@
     /** ******************************************************************
      * indexedDB implementation
      ******************************************************************* */
+
+    SP.onIdle = function(fn) {
+        if (this.queue.length) {
+            this.idle.push(fn);
+        } else {
+            fn();
+        }
+        return this;
+    };
+
+    SP.promise = {
+        keys: (lower, upper) => new Promise(function(resolve, reject) {
+            this.keys(resolve,lower,upper);
+        }),
+
+        iterate: (lower, upper, nullterm) => new Promise(function(resolve, reject) {
+            this.iterate(resolve, lower, upper, nullterm);
+        }),
+
+        get: (key) => new Promise(function(resolve, reject) {
+            this.get(key, resolve);
+        }),
+
+        put: (key, value) => new Promise(function(resolve, reject) {
+            this.put(key, value, resolve);
+        }),
+
+        remove: (key) => new Promise(function(resolve, reject) {
+            this.remove(key, resolve);
+        })
+    };
 
     SP.keys = function(callback, lower, upper) {
         let out = [];
@@ -63,15 +96,18 @@
                     lower ? IRR.lowerBound(lower) :
                     upper ? IRR.upperBound(upper) : undefined;
         // iterate over all db values for debugging
-        this.db.transaction(this.name).objectStore(this.name).openCursor(range).onsuccess = function(event) {
-            let cursor = event.target.result;
-            if (cursor) {
-                callback(cursor.key,cursor.value);
-                cursor.continue();
-            } else if (nullterm) {
-                callback(null);
-            }
-        };
+        this.db
+            .transaction(this.name)
+            .objectStore(this.current)
+            .openCursor(range).onsuccess = function(event) {
+                let cursor = event.target.result;
+                if (cursor) {
+                    callback(cursor.key,cursor.value);
+                    cursor.continue();
+                } else if (nullterm) {
+                    callback(null);
+                }
+            };
     };
 
     SP.deleteStore = function() {
@@ -80,7 +116,12 @@
         return this.init(true);
     };
 
-    SP.init = function(deleteOS) {
+    SP.use = function(store) {
+        this.current = store;
+        return this;
+    }
+
+    SP.init = function(options = {}) {
         if (this.initCalled) return;
 
         let storage = this,
@@ -97,18 +138,22 @@
             request = IDB.open(name, this.version);
 
             request.onupgradeneeded = function(event) {
-                if (deleteOS) {
+                if (options.delete === true) {
                     storage.db.deleteObjectStore(name);
                     return;
                 }
-                storage.db = request.result;
-                storage.store = storage.db.createObjectStore(name);
+                let db = storage.db = request.result;
+                for (let store of storage.stores) {
+                    storage.store = db.createObjectStore(store);
+                    storage.current = store;
+                }
                 event.target.transaction.oncomplete = function(event) {
                     storage.runQueue();
                 };
             };
 
             request.onsuccess = function(event) {
+                storage.current = storage.stores[0];
                 storage.db = request.result;
                 storage.runQueue();
             };
@@ -141,6 +186,9 @@
             }
             this.queue = [];
         }
+        while (this.idle.length) {
+            this.idle.shift()();
+        }
     };
 
     SP.put = function(key, value, callback) {
@@ -154,7 +202,9 @@
             return this.queue.push(['put', key, value, callback]);
         }
         try {
-            let req = this.db.transaction(this.name, "readwrite").objectStore(this.name).put(value, key);
+            let req = this.db
+                .transaction(this.name, "readwrite")
+                .objectStore(this.current).put(value, key);
             if (callback) {
                 req.onsuccess = function(event) { callback(true) };
                 req.onerror = function(event) { callback(false) };
@@ -175,7 +225,9 @@
             return this.queue.push(['get', key, callback]);
         }
         try {
-            let req = this.db.transaction(this.name).objectStore(this.name).get(key);
+            let req = this.db
+                .transaction(this.name)
+                .objectStore(this.current).get(key);
             if (callback) {
                 req.onsuccess = function(event) { callback(req.result) };
                 req.onerror = function(event) { callback(null) };
@@ -197,7 +249,9 @@
             return this.queue.push(['remove', key, callback]);
         }
         try {
-            let req = this.db.transaction(this.name, "readwrite").objectStore(this.name).delete(key);
+            let req = this.db
+                .transaction(this.name, "readwrite")
+                .objectStore(this.current).delete(key);
             if (callback) {
                 req.onsuccess = function(event) { callback(true) };
                 req.onerror = function(event) { callback(false) };
@@ -213,7 +267,9 @@
             this.init();
             return this.queue.push(['clear']);
         }
-        this.db.transaction(this.name, "readwrite").objectStore(this.name).clear();
+        this.db
+            .transaction(this.name, "readwrite")
+            .objectStore(this.current).clear();
     };
 
 })();

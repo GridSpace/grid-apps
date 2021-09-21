@@ -1,4 +1,4 @@
-console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
@@ -18,6 +18,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         LOCAL   = self.debug && !SETUP.remote,
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
+        K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB),
@@ -246,7 +247,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             dec: () => { kiri.api.event.emit("busy", --busy) }
         },
         conf: {
-            dbo: () => { return ls2o('ws-settings') },
+            dbo: () => { console.log("dbo() deprecated"); return ls2o('ws-settings') },
             get: getSettings,
             put: putSettings,
             load: loadSettings,
@@ -3140,10 +3141,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
+    K3DB.onIdle(function() {
+        console.log("k3db idle");
+    });
+
     // run optional module functions NOW before kiri-init has run
     if (Array.isArray(self.kirimod)) {
         kirimod.forEach(function(mod) { mod(kiri.api) });
     }
+
     // new module loading
     kiri.loader.forEach(mod => { mod(kiri.api)} );
 

@@ -254,7 +254,7 @@ const script = {
         "kiri/ui",
         "kiri/lang",
         "kiri/lang-en",
-        "kiri/db",
+        "kiri/catalog",
         "kiri/slice",
         "kiri/layers",
         "kiri/client",
@@ -411,7 +411,7 @@ const script = {
         "moto/load-stl",
         "moto/db",
         "moto/ui",
-        "kiri/db",
+        "kiri/catalog",
         "meta"
     ].map(p => `src/${p}.js`)
 };
