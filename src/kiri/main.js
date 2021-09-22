@@ -3142,7 +3142,8 @@
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
     K3DB.onIdle(function() {
-        console.log("k3db idle");
+        // upgrade on db idle. maybe delay init, too
+        // console.log("k3db idle");
     });
 
     // run optional module functions NOW before kiri-init has run
