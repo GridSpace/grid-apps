@@ -31,6 +31,10 @@
     KIRI.Print = Print;
 
     KIRI.newPrint = function(settings, widgets, id) {
+        lastPoint = null;
+        lastEmit = null;
+        lastOut = null;
+        lastPos = null;
         return new Print(settings, widgets, id);
     };
 
