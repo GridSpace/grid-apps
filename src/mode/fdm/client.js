@@ -238,6 +238,7 @@
                     }
                     wa.support = ws;
                 }
+                api.event.emit("fdm.supports.detected");
             });
         });
         api.event.on("fdm.supports.add", func.sadd = () => {
