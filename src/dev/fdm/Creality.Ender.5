@@ -6,7 +6,7 @@
         "M104 S{temp} T{tool}     ; set extruder temperature",
         "M140 S{bed_temp} T{tool} ; set bed temperature",
         "G28                      ; home axes",
-        "G92 X0 Y0 Z0 E0          ; reset all axes positions",
+        "G92 E0                   ; reset extruder position",
         "M109 S{temp} T{tool}     ; wait for extruder to reach target temp",
         "M190 S{bed_temp} T{tool} ; wait for bed to reach target temp"
     ],
