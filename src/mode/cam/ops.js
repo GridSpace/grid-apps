@@ -853,7 +853,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, sliceAll, tslices, updateToolDiams, zBottom } = state;
+            let { settings, sliceAll, tslices, updateToolDiams, zBottom, zThru, thruHoles } = state;
 
             let drills = [],
                 drillTool = new CAM.Tool(settings, op.tool),
@@ -877,7 +877,7 @@
                             closest = Infinity,
                             dist;
                         // TODO reject if inside camShellPolys (means there is material above)
-                        // if (center.isInPolygon(camShellPolys)) return;
+                        if (center.isInPolygon(slice.shadow)) return;
                         drills.forEach(function(drill) {
                             if (merged) return;
                             if ((dist = drill.last().distTo2D(center)) <= centerDiff) {
@@ -901,6 +901,10 @@
                     point.x = center.x;
                     point.y = center.y;
                 });
+                // for thru holes, follow z thru when set
+                if (zThru && center.isInPolygon(thruHoles)) {
+                    drill.points.push(drill.points.last().sub({x:0,y:0,z:zThru}));
+                }
                 slice.camLines = [ drill ];
                 slice.output()
                     .setLayer("drill", {face: 0, line: 0})
@@ -1137,6 +1141,7 @@
                 let shadowAt = trueShadow ? CAM.shadowAt(widget, data.z, lsz) : [];
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
                 tslices.push(data.slice);
+                data.slice.shadow = tshadow;
                 if (false) {
                     const slice = data.slice;
                     sliceAll.push(slice);
