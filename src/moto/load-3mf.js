@@ -40,11 +40,23 @@
             let model;
             let faces;
             let units;
+            let scale = 1;
+            let scaleMap = {
+                "inch": (1 / 25.4),
+                "foot": (1 / 304.8),
+                "micron": (1 / 1000),
+                "meter": 1000,
+                "millimeter": 1,
+                "centimeter": (1 / 10)
+            };
 
             query(doc, ["+model","resources","+object","+mesh"], (type, node) => {
                 switch (type) {
                     case "model":
                         units = node.getAttribute("unit");
+                        if (units) {
+                            scale = scaleMap[units] || 1;
+                        }
                         break;
                     case "object":
                         emitModel(model, faces);
@@ -55,9 +67,9 @@
                         let vertices = [];
                         query(node, ["vertices","+vertex"], (type, vertex) => {
                             vertices.push([
-                                parseFloat(vertex.getAttribute("x")),
-                                parseFloat(vertex.getAttribute("y")),
-                                parseFloat(vertex.getAttribute("z"))
+                                parseFloat(vertex.getAttribute("x")) * scale,
+                                parseFloat(vertex.getAttribute("y")) * scale,
+                                parseFloat(vertex.getAttribute("z")) * scale
                             ]);
                         });
                         query(node, ["triangles","+triangle"], (type, triangle) => {
