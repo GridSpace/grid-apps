@@ -787,8 +787,63 @@
                     }
                 }
             }
+            function similar(v1, v2, epsilon = 0.01) {
+                return Math.abs(v1-v2) <= epsilon;
+            }
+            function centerPoly(p1, p2) {
+                // follow poly with most points
+                if (p2.length > p1.length) {
+                    let t = p1;
+                    p1 = p2;
+                    p2 = t;
+                }
+                let np = newPolygon().setOpen(true);
+                for (let p of p1.points) {
+                    let q = p2.findClosestPointTo(p);
+                    np.push(p.midPointTo3D(q.point));
+                }
+                return np;
+            }
+            function centerPolys(polys) {
+                // select open polys and sort by length
+                let ptst = polys.filter(p => p.isOpen()).sort((a,b) => b.perimeter() - a.perimeter());
+                if (ptst.length < 2) {
+                    return polys;
+                }
+                let pt = newPoint(0,0,0);
+                // ensure polys are ordered with start point closest to 0,0
+                ptst.forEach(p => {
+                    if (p.last().distTo2D(pt) < p.first().distTo2D(pt)) {
+                        p.reverse();
+                    }
+                });
+                let pout = polys.filter(p => p.isClosed());
+                outer: for (let i=0,l=ptst.length; i<l-1; i++) {
+                    let p0 = ptst[i];
+                    if (!p0) continue;
+                    for (let j=i+1; j<l; j++) {
+                        let p1 = ptst[j];
+                        if (!p1) continue;
+                        if (
+                            similar(p0.perimeter(), p1.perimeter(), 0.1) &&
+                            similar(p0.first().distTo2D(p1.first()), toolDiam) &&
+                            similar(p0.last().distTo2D(p1.last()), toolDiam)
+                        ) {
+                            console.log({candidates: [p0, p1]});
+                            pout.push(centerPoly(p0, p1));
+                            ptst[i] = undefined;
+                            ptst[j] = undefined;
+                            continue outer;
+                        }
+                    }
+                }
+                pout.appendAll(ptst.filter(p => p));
+                return pout;
+            }
             // connect selected segments if open and touching
             polys = healPolys(polys);
+            // find center line for open polys spaced by tool diameter
+            polys = centerPolys(polys);
             switch (op.mode) {
                 case "follow":
                     let routed = [];
