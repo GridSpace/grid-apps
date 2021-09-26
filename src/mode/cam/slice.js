@@ -302,6 +302,10 @@
                     for (let j=i+1; j<tlen; j++) {
                         let s2 = ntmp[j];
                         if (!s2) continue;
+                        // require polys at same Z to heal
+                        if (Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
+                            continue;
+                        }
                         if (!(s1.open && s2.open)) continue;
                         if (s1.last().isMergable2D(s2.first())) {
                             s1.addPoints(s2.points.slice(1));

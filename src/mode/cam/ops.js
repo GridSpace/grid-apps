@@ -829,7 +829,6 @@
                             similar(p0.first().distTo2D(p1.first()), toolDiam) &&
                             similar(p0.last().distTo2D(p1.last()), toolDiam)
                         ) {
-                            console.log({candidates: [p0, p1]});
                             pout.push(centerPoly(p0, p1));
                             ptst[i] = undefined;
                             ptst[j] = undefined;
