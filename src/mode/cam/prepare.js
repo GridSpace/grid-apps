@@ -54,8 +54,8 @@
 
         let device = settings.device,
             process = settings.process,
-            stock = settings.stock,
-            outer = settings.bounds,
+            stock = settings.stock || {},
+            outer = settings.bounds || widget.getPositionBox(),
             outerz = outer.max.z,
             slices = widget.slices,
             hasStock = stock.x && stock.y && stock.z && process.camStockOn,
