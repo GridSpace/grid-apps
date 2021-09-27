@@ -719,7 +719,7 @@
         slice(progress) {
             let { op, state } = this;
             let { tool, rate, down, plunge, offset } = op;
-            let { settings, widget, sliceAll, zMax, zTop, tabs } = state;
+            let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
             let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
             let { process, stock } = settings;
             let poly2polyEmit = BASE.util.poly2polyEmit;
@@ -867,7 +867,11 @@
                         }
                         for (let pi of poly)
                         if (down) {
-                            for (let z of BASE.util.lerp(zTop, pi.getZ(), down)) {
+                            let zto = pi.getZ();
+                            if (zThru && similar(zto,0)) {
+                                zto -= zThru;
+                            }
+                            for (let z of BASE.util.lerp(zTop, zto, down)) {
                                 followZ(pi.clone().setZ(z));
                             }
                         } else {
