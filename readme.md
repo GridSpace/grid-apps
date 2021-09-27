@@ -65,7 +65,7 @@ If gs-app-server is not found, then perhaps ~/.local/bin is not in
 your path. You can either add it to your path, or you can run:
 
 ```
-~/local/bin/gs-app-server --debug
+~/.local/bin/gs-app-server --debug
 ```
 ### Testing Locally (with Docker)
 
