@@ -625,6 +625,16 @@
         return this.bounds;
     };
 
+    PRO.getPositionBox = function() {
+        let bounds = this.getBoundingBox().clone();
+        let pos = this.track.pos;
+        bounds.min.x += pos.x;
+        bounds.max.x += pos.x;
+        bounds.min.y += pos.y;
+        bounds.max.y += pos.y;
+        return bounds;
+    };
+
     PRO.isModified = function() {
         return this.modified;
     };

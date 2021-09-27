@@ -29,6 +29,7 @@
             settings = print.settings,
             device = settings.device,
             gcodes = settings.device || {},
+            origin = settings.origin || { x: 0, y: 0, z: 0 },
             tools = settings.tools,
             space = gcodes.gcodeSpace ? ' ' : '',
             isRML = device.gcodeFExt.toLowerCase() === 'rml',
@@ -57,8 +58,8 @@
                 min: { x:Infinity, y:Infinity, z:Infinity}
             },
             offset = {
-                x: -settings.origin.x,
-                y:  settings.origin.y
+                x: -origin.x,
+                y:  origin.y
             },
             consts = {
                 tool: 0,
