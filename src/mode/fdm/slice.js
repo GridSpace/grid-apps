@@ -18,6 +18,7 @@
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
         COLOR = {
+            anchor: { check: 0x999933, face: 0x999933, line: 0x999933, opacity: 1 },
             shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity: 1 },
             fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity: 1 },
             infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
@@ -382,6 +383,7 @@
                     minx -= brim;
                     maxx += brim;
                 }
+                // array of added top.fill_sparse arrays
                 let adds = [];
                 // add enough lead in layers to fill anchor area
                 let anchorlen = process.firstLayerBeltLead * beltfact;
@@ -424,10 +426,13 @@
                             // break;
                         }
                         let first = poly.first();
+                        // add up/over/down to anchor line (close = down)
+                        // which completes the bump perimeter
                         poly.push(poly.last().add({x:0, y, z:0}));
                         poly.push(poly.first().add({x:0, y, z:0}));
                         poly.setClosed();
                         if (count > 2 && maxx - minx > 10) {
+                            // add vertical hatch lines insibe bump shell
                             let mp = (maxx + minx) / 2;
                             let dx = (maxx - minx - 2);
                             dx = (Math.floor(dx / 3) * 3) / 2;
@@ -644,8 +649,12 @@
                 .setLayer("solid fill", isSynth ? COLOR.support : COLOR.fill)
                 .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height }));
 
-            output
+            if (!(slice.belt && slice.belt.anchor)) output
                 .setLayer("sparse fill", COLOR.infill)
+                .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
+
+            if (slice.belt && slice.belt.anchor) output
+                .setLayer("anchor", COLOR.anchor)
                 .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
             if (top.thin_fill) output
