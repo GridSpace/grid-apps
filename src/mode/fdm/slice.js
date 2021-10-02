@@ -531,12 +531,12 @@
                     for (let top of slice.tops) {
                         if (!outline) {
                             let offset = top.shells;
-                            fillSupportPolys(promises, offset, lineWidth, density, slice.z);
+                            fillSupportPolys(promises, offset, lineWidth, density, slice.z, isBelt);
                             resolve.push({top, offset});
                         } else {
                             let offset = [];
                             POLY.expand(top.shells || [], -nozzleSize/4, slice.z, offset);
-                            fillSupportPolys(promises, offset, lineWidth, density, slice.z);
+                            fillSupportPolys(promises, offset, lineWidth, density, slice.z, isBelt);
                             resolve.push({top, offset});
                         }
                     }
@@ -597,7 +597,7 @@
                 profileStart("support-fill");
                 promises = false && isConcurrent ? [] : undefined;
                 forSlices(0.8, promises ? 0.88 : 0.9, slice => {
-                    doSupportFill(promises, slice, lineWidth, supportDensity, process.sliceSupportArea);
+                    doSupportFill(promises, slice, lineWidth, supportDensity, process.sliceSupportArea, isBelt);
                 }, "support");
                 if (promises) {
                     await tracker(promises, (i, t) => {
@@ -1400,7 +1400,7 @@
 
     }
 
-    function doSupportFill(promises, slice, linewidth, density, minArea) {
+    function doSupportFill(promises, slice, linewidth, density, minArea, isBelt) {
         let supports = slice.supports,
             nsB = [],
             nsC = [],
@@ -1422,19 +1422,19 @@
         }
 
         if (supports) {
-            fillSupportPolys(promises, supports, linewidth, density, slice.z);
+            fillSupportPolys(promises, supports, linewidth, density, slice.z, isBelt);
         }
 
         // re-assign new supports back to slice
         slice.supports = supports;
     };
 
-    function fillSupportPolys(promises, polys, linewidth, density, z) {
+    function fillSupportPolys(promises, polys, linewidth, density, z, isBelt) {
         // calculate fill density
         let spacing = linewidth * (1 / density);
         polys.forEach(function (poly) {
             // angle based on width/height ratio
-            let angle = (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
+            let angle = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
             // inset support poly for fill lines 33% of nozzle width
             let inset = POLY.offset([poly], -linewidth/3, {flat: true, z, wasm: true});
             // do the fill
