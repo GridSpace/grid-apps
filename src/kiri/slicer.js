@@ -200,6 +200,11 @@
             zLines = zl;
         }
 
+        /** short-circuit for microscopic and invalid objects */
+        if (zMax == 0 || zSum == 0 || points.length == 0) {
+            return ondone([]);
+        }
+
         /**
          * bucket polygons into z-bounded groups (inside or crossing)
          * to reduce the search space in complex models
