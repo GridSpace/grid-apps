@@ -69,58 +69,6 @@
 
     const PRO = Polygon.prototype;
 
-    /** ******************************************************************
-     * Polygon Filter/Chain Functions
-     ******************************************************************* */
-
-    Polygon.filterTooSmall = function(p) {
-        return p.length < 3 ? null : p;
-    };
-
-    Polygon.filterTooSkinny = function(p) {
-        return (p.circularityDeep() * p.areaDeep()) < 0.25 ? null : p;
-    };
-
-    Polygon.filterArea = function(area) {
-        return function(p) {
-            return p.area() >= area ? p : null;
-        };
-    };
-
-    Polygon.filterDeleted = function(p) {
-        return p.delete ? null : p;
-    };
-
-    Polygon.filterInside = function(pin) {
-        return function(p) {
-            return pin.contains(p);
-        }
-    };
-
-    Polygon.filterCollect = function(out) {
-        return function(p) {
-            out.push(p);
-            return p;
-        }
-    };
-
-    Polygon.filterEvolve = function(p) {
-        return p.evolve();
-    };
-
-    Polygon.filterChain = function(filters) {
-        return function() {
-            let f = filters;
-            return function(p) {
-                let len = f.length,
-                    idx = 0;
-                while (idx < len && (p = f[idx++](p)))
-                    ;
-                return p;
-            }
-        }();
-    };
-
     Polygon.fromArray = function(array) {
         return newPolygon().fromArray(array);
     };
