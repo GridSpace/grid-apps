@@ -242,7 +242,7 @@
             append(`; Target: ${settings.filter[settings.mode]}`);
             append("; --- process ---");
             for (let pk in spro) {
-                if (pk !== "ops") {
+                if (pk !== "ops" && pk !== "op2") {
                     append("; " + pk + " = " + spro[pk]);
                 }
             }
