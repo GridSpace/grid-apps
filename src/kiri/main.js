@@ -1154,7 +1154,7 @@
 
         function sliceDone() {
             let alert = null;
-            if (scale === 1 && feature.work_alerts) {
+            if (scale === 1 && feature.work_alerts && slicing.length) {
                 alert = API.show.alert("Rendering");
             };
             KIRI.client.unrotate(settings, () => {
