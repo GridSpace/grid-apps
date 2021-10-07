@@ -340,6 +340,14 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     PRO.loadData = PRO.loadVertices;
 
+    PRO.setModified = function() {
+        this.modified = true;
+        if (this.mesh && this.mesh.geometry) {
+            // this fixes ray intersections after the mesh is modified
+            this.mesh.geometry.boundingSphere = null;
+        }
+    };
+
     PRO.indexGeo = function() {
         let indices = this.getGeoIndices();
         if (!indices) {
@@ -532,7 +540,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         // for use with the packer
         // invalidate cached points
         this.points = null;
-        this.modified = true;
+        this.setModified();
     };
 
     /**
@@ -593,7 +601,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             pos.z += (z || 0);
         }
         if (x || y || z) {
-            this.modified = true;
+            this.setModified();
             KIRI.api.event.emit('widget.move', {widget: this, pos});
         }
     };
@@ -615,7 +623,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
-        this.modified = true;
+        this.setModified();
     };
 
     PRO.rotate = function(x, y, z, temp) {
@@ -652,7 +660,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             rot.y += (y || 0);
             rot.z += (z || 0);
         }
-        this.modified = true;
+        this.setModified();
     };
 
     PRO.unrotate = function() {
@@ -661,7 +669,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         });
         this.roto = [];
         this.center();
-        this.modified = true;
+        this.setModified();
     };
 
     PRO.mirror = function() {
@@ -698,7 +706,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         geo.computeFaceNormals();
         geo.computeVertexNormals();
         ot.mirror = !ot.mirror;
-        this.modified = true;
+        this.setModified();
         this.points = null;
     };
 
