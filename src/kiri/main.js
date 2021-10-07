@@ -2095,7 +2095,12 @@
             gap = spacing * 1.5;
         }
 
-        let i, m, sz = SPACE.platform.size(),
+        // space parts to account for anchor in belt mode
+        if (isBelt) {
+            gap += proc.firstLayerBeltLead || 0;
+        }
+
+        let i, m, sz = isBelt ? {x:1, y:100000} : SPACE.platform.size(),
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             c = Widget.Groups.blocks().sort(MOTO.Sort),

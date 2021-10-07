@@ -164,7 +164,7 @@
             }
         }
         loops = isBelt && rloops.length ? rloops : undefined;
-console.log({loops});
+
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
             if (v >= 0) pause.push(v);
