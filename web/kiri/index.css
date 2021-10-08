@@ -429,6 +429,12 @@ th, tr, td, label {
     background-image: var(--gradbar);
 }
 
+#float-tools {
+    display: none;
+    position: absolute;
+    left: 100%;
+}
+
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;

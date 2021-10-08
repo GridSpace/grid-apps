@@ -21,6 +21,7 @@ kiri.lang['en-us'] = {
     import:         "import",
     language:       "language",
     machine:        "machine",      // device or machine
+    mesh:           "mesh",         // mesh editing
     metric:         "metric",
     name:           "name",
     prefs:          "prefs",        // left menu "preferences"
@@ -31,6 +32,7 @@ kiri.lang['en-us'] = {
     rotate:         "rotate",       // left rotate pop menu
     save:           "save",
     scale:          "scale",        // left object scale pop menu
+    select:         "select",
     setup:          "setup",
     settings:       "settings",
     size:           "size",

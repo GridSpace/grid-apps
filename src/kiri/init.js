@@ -1509,6 +1509,7 @@
             ltfile:             $('lt-file'),
             ltview:             $('lt-view'),
             ltact:              $('act-slice'),
+            edit:               $('lt-tools'),
             rotate:             $('lt-rotate'),
             scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
@@ -2229,6 +2230,7 @@
         UC.hoverPop(UI.ltview,  { group: hpops, target: $('pop-view') });
         UC.hoverPop(UI.ltact,   { group: hpops, target: $('pop-slice') });
         UC.hoverPop(UI.render,  { group: hpops, target: $('pop-render'), sticky: false });
+        UC.hoverPop(UI.edit,    { group: hpops, target: $('pop-tools'), sticky: false });
         UC.hoverPop(UI.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
         UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
         UC.hoverPop(UI.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
@@ -2620,11 +2622,22 @@
 
     // update static html elements with language overrides
     UI.lang = function() {
+        // lk attribute causes inner text to be replaced with lang value
         for (let el of [...DOC.querySelectorAll("[lk]")]) {
             let key = el.getAttribute('lk');
             let val = LANG[key];
             if (val) {
                 el.innerText = val;
+            } else {
+                console.log({missing_ln: key});
+            }
+        }
+        // lkt attribute causes a title attribute to be set from lang value
+        for (let el of [...DOC.querySelectorAll("[lkt]")]) {
+            let key = el.getAttribute('lkt');
+            let val = LANG[key];
+            if (val) {
+                el.setAttribute("title", val);
             } else {
                 console.log({missing_ln: key});
             }
