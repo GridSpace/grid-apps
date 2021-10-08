@@ -2613,6 +2613,30 @@
         // show topline separator when iframed
         // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
 
+        // bind movable objects and panel tictacs
+        let groups = {};
+        for (let tt of [...document.getElementsByClassName('tictac')]) {
+            let sid = tt.getAttribute('select');
+            let gid = tt.getAttribute('group') || 'default';
+            let grp = groups[gid] = groups[gid] || [];
+            let target = $(sid);
+            target.style.display = 'none';
+            grp.push(target);
+            tt.onclick = () => {
+                for (let p of grp) {
+                    p.style.display = p === target ? 'flex' : 'none';
+                }
+            };
+        }
+        for (let tt of [...document.getElementsByClassName('closer')]) {
+            let tid = tt.getAttribute('target');
+            let target = $(tid);
+            target.style.display = 'none';
+            tt.onclick = () => {
+                target.style.display = 'none';
+            };
+        }
+
         // warn users they are running a beta release
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
             API.show.alert("this is a beta / development release");

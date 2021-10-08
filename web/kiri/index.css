@@ -429,10 +429,51 @@ th, tr, td, label {
     background-image: var(--gradbar);
 }
 
+.movable {
+    margin: 5px;
+}
+
+.movable .title {
+    padding: 5px;
+    background-color: rgba(200,200,200,0.9);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.movable .body {
+    padding-right: 5px;
+    padding-bottom: 2px;
+    background-color: rgba(245,245,245,0.9);
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.mover {
+}
+
+.closer {
+    margin-left: 5px;
+}
+
+.tictac {
+    margin: 2px 2px 0 0;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid white;
+    background-color: rgba(255,255,255,0.7);
+}
+
+.tictac:hover {
+    border: 1px solid #ccc;
+}
+
 #float-tools {
-    display: none;
     position: absolute;
     left: 100%;
+}
+
+#lt-rotate, #lt-scale {
+    display: none;
 }
 
 #lt-top {
@@ -529,7 +570,7 @@ th, tr, td, label {
 .lt-active .hoverpop {
     display: flex;
 }
-@media only screen and (max-height : 800px) {
+@media only screen and (max-height : 750px) {
     .lt-menu, .pop-lcol {
         font-size: 16px !important;
     }
