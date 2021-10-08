@@ -196,10 +196,20 @@
         }, 100);
     }
 
-    function onLayerToggle() {
-        API.conf.update();
-        API.show.slices();
+    function parentWithClass(el, classname) {
+        while (el) {
+            if (el.classList.contains(classname)) {
+                return el;
+            }
+            el = el.parentNode;
+        }
+        return el;
     }
+
+    // function onLayerToggle() {
+    //     API.conf.update();
+    //     API.show.slices();
+    // }
 
     function onBooleanClick() {
         // prevent hiding elements in device editor on clicks
@@ -1510,8 +1520,8 @@
             ltview:             $('lt-view'),
             ltact:              $('act-slice'),
             edit:               $('lt-tools'),
-            rotate:             $('lt-rotate'),
-            scale:              $('lt-scale'),
+            // rotate:             $('lt-rotate'),
+            // scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
             render:             $('lt-render'),
 
@@ -2231,8 +2241,8 @@
         UC.hoverPop(UI.ltact,   { group: hpops, target: $('pop-slice') });
         UC.hoverPop(UI.render,  { group: hpops, target: $('pop-render'), sticky: false });
         UC.hoverPop(UI.edit,    { group: hpops, target: $('pop-tools'), sticky: false });
-        UC.hoverPop(UI.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
-        UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
+        // UC.hoverPop(UI.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
+        // UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
         UC.hoverPop(UI.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
         UC.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
         UC.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
@@ -2621,6 +2631,7 @@
             let grp = groups[gid] = groups[gid] || [];
             let target = $(sid);
             target.style.display = 'none';
+            target.control = tt;
             grp.push(target);
             tt.onclick = () => {
                 for (let p of grp) {
@@ -2630,12 +2641,23 @@
         }
         for (let tt of [...document.getElementsByClassName('closer')]) {
             let tid = tt.getAttribute('target');
-            let target = $(tid);
+            let target = tid ? $(tid) : parentWithClass(tt, 'movable');
             target.style.display = 'none';
             tt.onclick = () => {
                 target.style.display = 'none';
             };
         }
+        // bind tool show buttons
+        function showTool(tictac) {
+            if (typeof(tictac) === 'string') {
+                tictac = $(tictac);
+            }
+            let mover = parentWithClass(tictac.control, 'movable');
+            mover.style.display = 'flex';
+            tictac.control.onclick();
+        }
+        $('tool-rotate').onclick = () => { showTool('ft-rotate') };
+        $('tool-scale').onclick = () => { showTool('ft-scale') };
 
         // warn users they are running a beta release
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {

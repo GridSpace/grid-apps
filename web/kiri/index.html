@@ -80,9 +80,9 @@
             <div id="lt-top">
                 <div id="float-tools" class="f-col movable">
 
-                    <div id="float-tools-title" class="title mover" target="float-tools">
+                    <div id="float-tools-title" class="title mover">
                         <label class="grow">title bar</label>
-                        <div id="float-tools-close" class="closer" target="float-tools">
+                        <div id="float-tools-close" class="closer">
                             <i class="fas fa-times"></i>
                         </div>
                     </div>
@@ -145,16 +145,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div id="lt-rotate" xclass="lt-menu">
-                        <div lkt="rotate"><i class="fas fa-sync-alt"></i></div>
-                        <div id="pop-rotate" class="pop-lcol f-row russo"></div>
-                    </div>
-                    <div id="lt-scale" xclass="lt-menu">
-                        <div lkt="scale"><i class="fas fa-expand"></i></div>
-                        <div id="pop-scale" class="pop-lcol f-row russo"></div>
-                    </div>
-
                 </div>
             </div>
             <div id="lt-setup" class="lt-menu lt-active">
@@ -256,11 +246,11 @@
                 <i class="fas fa-tools"></i>
                 <label lk="tools">edit</label>
                 <div id="pop-tools" class="pop-lcol f-row">
-                    <div class="grow a-center">
+                    <div id="tool-rotate" class="grow a-center">
                         <i class="fas fa-sync-alt"></i>
                         <label lk="rotate">rotate</label>
                     </div>
-                    <div class="grow a-center">
+                    <div id="tool-scale" class="grow a-center">
                         <i class="fas fa-expand"></i>
                         <label lk="scale">scale</label>
                     </div>

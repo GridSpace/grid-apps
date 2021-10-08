@@ -1816,8 +1816,8 @@
         let menu_show = selcount ? 'flex': '';
         $('winfo').style.display = 'none';
         if (selcount) {
-            UI.scale.classList.add('lt-active');
-            UI.rotate.classList.add('lt-active');
+            // UI.scale.classList.add('lt-active');
+            // UI.rotate.classList.add('lt-active');
             UI.nozzle.classList.add('lt-active');
             UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
@@ -1838,8 +1838,8 @@
                 }
             }
         } else {
-            UI.scale.classList.remove('lt-active');
-            UI.rotate.classList.remove('lt-active');
+            // UI.scale.classList.remove('lt-active');
+            // UI.rotate.classList.remove('lt-active');
             UI.nozzle.classList.remove('lt-active');
             UI.trash.style.display = '';
         }
