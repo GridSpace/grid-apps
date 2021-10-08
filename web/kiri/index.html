@@ -81,70 +81,53 @@
                 <div id="float-tools" class="f-col movable">
 
                     <div id="float-tools-title" class="title mover">
-                        <label class="grow">title bar</label>
-                        <div id="float-tools-close" class="closer">
-                            <i class="fas fa-times"></i>
-                        </div>
+                        <label id="ft-label" class="grow">title bar</label>
+                        <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
                     </div>
                     <div class="body f-row">
-                        <div class="f-col">
-                            <div lkt="rotate" class="tictac" select="ft-rotate"><i class="fas fa-sync-alt"></i></div>
-                            <div lkt="scale" class="tictac" select="ft-scale"><i class="fas fa-expand"></i></div>
+                        <div class="f-col menu">
+                            <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
+                            <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
+                            <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
+                            <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
                         </div>
-                        <div id="ft-rotate" class="grow f-col">
-                            <div>
-                                <div class="grow a-center">
-                                    <i id="rot_x_lt" class="fas fa-chevron-left"></i>
-                                    <label>X</label>
-                                    <i id="rot_x_gt" class="fas fa-chevron-right"></i>
-                                </div>
-                                <input id="rot_x" class="value center" size="5"/ value="0">
-                            </div>
-                            <div>
-                                <div class="grow a-center">
-                                    <i id="rot_y_lt" class="fas fa-chevron-left"></i>
-                                    <label>Y</label>
-                                    <i id="rot_y_gt" class="fas fa-chevron-right"></i>
-                                </div>
-                                <input id="rot_y" class="value center" size="5"/ value="0">
-                            </div>
-                            <div>
-                                <div class="grow a-center">
-                                    <i id="rot_z_lt" class="fas fa-chevron-left"></i>
-                                    <label>Z</label>
-                                    <i id="rot_z_gt" class="fas fa-chevron-right"></i>
-                                </div>
-                                <input id="rot_z" class="value center" size="5"/ value="0">
-                            </div>
-                            <div id="lay-flat" class="f-col j-center center">lay flat</div>
-                            <div id="unrotate" class="f-col j-center" lk="reset">reset</div>
-                        </div>
-                        <div id="ft-scale" class="grow f-row">
-                            <div class="f-col">
-                                <input id="lock_x" type="checkbox" checked/>
-                                <div><label>X</label></div>
-                                <div><input id="size_x" xsize="8" class="value"/></div>
-                                <div><input id="scale_x" xsize="8" class="value" value="1"/></div>
-                            </div>
-                            <div class="f-col">
-                                <input id="lock_y" type="checkbox" checked/>
-                                <div><label>Y</label></div>
-                                <div><input id="size_y" xsize="8" class="value"/></div>
-                                <div><input id="scale_y" xsize="8" class="value" value="1"/></div>
-                            </div>
-                            <div class="f-col">
-                                <input id="lock_z" type="checkbox" checked/>
-                                <div><label>Z</label></div>
-                                <div><input id="size_z" xsize="8" class="value"/></div>
-                                <div><input id="scale_z" xsize="8" class="value" value="1"/></div>
-                            </div>
-                            <div class="f-col j-center">
-                                <div><label id="lab-axis" lk="axis">axis</label></div>
-                                <div><label id="lab-size" lk="size">size</label></div>
-                                <div><label id="lab-scale" lk="scale">scale</label></div>
+                        <div id="ft-rotate" class="grow grid">
+                            <div><i id="rot_x_lt" class="fas fa-chevron-left"></i></div>
+                            <label>X</label>
+                            <div><i id="rot_x_gt" class="fas fa-chevron-right"></i></div>
+                            <input id="rot_x" class="value center" size="6" value="0">
+                            <div><i id="rot_y_lt" class="fas fa-chevron-left"></i></div>
+                            <label>Y</label>
+                            <div><i id="rot_y_gt" class="fas fa-chevron-right"></i></div>
+                            <input id="rot_y" class="value center" size="6" value="0">
+                            <div><i id="rot_z_lt" class="fas fa-chevron-left"></i></div>
+                            <label>Z</label>
+                            <div><i id="rot_z_gt" class="fas fa-chevron-right"></i></div>
+                            <input id="rot_z" class="value center" size="6" value="0">
+                            <div class="buttons f-row">
+                                <!-- <button id="lay-flat" class="grow">lay flat</button> -->
+                                <button id="unrotate" class="grow" lk="reset">reset</button>
                             </div>
                         </div>
+                        <div id="ft-scale" class="grow grid">
+                            <div><label>X</label><input id="lock_x" type="checkbox" checked/></div>
+                            <div><label>Y</label><input id="lock_y" type="checkbox" checked/></div>
+                            <div><label>Z</label><input id="lock_z" type="checkbox" checked/></div>
+                            <div><label id="lab-axis" lk="axis">axis</label></div>
+                            <div><input id="size_x" size="8" class="value"/></div>
+                            <div><input id="size_y" size="8" class="value"/></div>
+                            <div><input id="size_z" size="8" class="value"/></div>
+                            <div><label id="lab-size" lk="size">size</label></div>
+                            <div><input id="scale_x" size="8" class="value" value="1"/></div>
+                            <div><input id="scale_y" size="8" class="value" value="1"/></div>
+                            <div><input id="scale_z" size="8" class="value" value="1"/></div>
+                            <div><label id="lab-scale" lk="scale">scale</label></div>
+                            <button id="scale-reset" class="gr4">reset</button>
+                        </div>
+                        <div id="ft-mesh" class="grow middle">coming soon</div>
+                        <div id="ft-select" class="grow middle">coming soon</div>
                     </div>
+                    <div class="footer"></div>
                 </div>
             </div>
             <div id="lt-setup" class="lt-menu lt-active">
@@ -254,11 +237,11 @@
                         <i class="fas fa-expand"></i>
                         <label lk="scale">scale</label>
                     </div>
-                    <div class="grow a-center">
+                    <div id="tool-mesh" class="grow a-center">
                         <i class="fas fa-dice-d20"></i>
                         <label lk="mesh">mesh</label>
                     </div>
-                    <div class="grow a-center">
+                    <div id="tool-select" class="grow a-center">
                         <i class="fas fa-mouse-pointer"></i>
                         <label lk="select">select</label>
                     </div>

@@ -156,7 +156,10 @@ th, tr, td, label {
 .noshow {
     display: none;
 }
-.f-row {
+.grid {
+    display: grid;
+}
+.frow {
     flex-direction: row;
 }
 .f-col {
@@ -200,6 +203,11 @@ th, tr, td, label {
 }
 .center {
     text-align: center;
+}
+.middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .t-just {
     text-align: justify;
@@ -434,25 +442,36 @@ th, tr, td, label {
 }
 
 .movable .title {
-    padding: 5px;
-    background-color: rgba(200,200,200,0.9);
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    color: white;
+    padding: 2px 3px 1px 3px;
+    background-color: var(--main-color);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    font-size: smaller;
+    text-align: center;
 }
 
 .movable .body {
-    padding-right: 5px;
-    padding-bottom: 2px;
+    margin: 0;
+    padding: 0 5px 0 0;
     background-color: rgba(245,245,245,0.9);
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
 }
 
-.mover {
+.movable .footer {
+    height: 10px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    background-color: var(--main-color);
 }
 
 .closer {
-    margin-left: 5px;
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    z-index: 200;
+}
+.closer:hover {
+    color: #555;
 }
 
 .tictac {
@@ -461,6 +480,13 @@ th, tr, td, label {
     border-radius: 3px;
     border: 1px solid white;
     background-color: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tictac.selected {
+    background-color: var(--main-color);
+    color: #fff;
 }
 
 .tictac:hover {
@@ -469,11 +495,63 @@ th, tr, td, label {
 
 #float-tools {
     position: absolute;
+    margin: 0 0 0 5px;
+    top: 0;
     left: 100%;
+    z-index: 16;
+}
+#float-tools button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
 }
 
-#lt-rotate, #lt-scale {
-    display: none;
+#float-tools .menu {
+    margin-right: 5px;
+    border-right: 3px solid var(--main-color);
+}
+
+#ft-rotate {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-columns: auto auto auto auto;
+}
+#ft-rotate label, #ft-rotate svg {
+    text-align: center;
+}
+#ft-rotate > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#ft-rotate .buttons {
+    grid-column: 1/4;
+    align-items: stretch;
+    min-width: 150px;
+}
+#ft-scale {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-columns: auto auto auto 1fr;
+}
+#ft-scale label {
+    text-align: center;
+    flex-grow: 1;
+}
+#ft-scale button {
+    grid-column: 1/4;
+    margin-left: 0;
+    margin-right: 0;
+}
+#ft-mesh, #ft-select {
+    min-width: 200px;
+}
+
+#lock_x, #lock_y, #lock_z {
+    position: absolute;
+    right: 2px;
+    top: 7px;
 }
 
 #lt-top {
@@ -616,29 +694,6 @@ th, tr, td, label {
 .txt-sel button, .btn-sel {
     background-color: var(--highlight);
 }
-#pop-rotate input.value, #pop-scale input.value {
-    width: 90%;
-}
-#pop-rotate label {
-    padding: 3px;
-}
-#pop-rotate svg {
-    padding: 3px;
-    font-size: 20px;
-    border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0);
-}
-#pop-rotate svg:hover {
-    color: #345;
-    font-size: 20px;
-    background-color: rgba(255,255,255,0.5);
-    border: 1px solid #aaa;
-}
-#lock_x, #lock_y, #lock_z {
-    position: absolute;
-    left: 2px;
-    top: 7px;
-}
 
 #end {
     left: 0;
@@ -761,8 +816,6 @@ th, tr, td, label {
     position: absolute;
     right: 0;
     top: 0;
-    xtransform: translateX(-100%);
-    xtransform: translateY(-50%);
 }
 
 #progress {
@@ -1649,7 +1702,6 @@ th, tr, td, label {
 }
 
 #lab-axis, #lab-scale {
-    padding: 0 6px 0 6px;
     border-radius: 3px;
 }
 #lab-axis:hover, #lab-scale:hover {

@@ -429,6 +429,9 @@
             case cca('e'): // device
                 showDevices();
                 break;
+            case cca('w'): // scale
+                UI.tool.scale();
+                break;
             case cca('o'): // tools
                 showTools();
                 break;
@@ -1506,6 +1509,12 @@
                 search:         $('dev-search'),
                 filter:         $('dev-filter')
             },
+            tool: {
+                rotate:         () => { UI.tool.show('ft-rotate') },
+                scale:          () => { UI.tool.show('ft-scale') },
+                mesh:           () => { UI.tool.show('ft-mesh') },
+                select:         () => { UI.tool.show('ft-select') },
+            },
 
             fps:                $('fps'),
             load:               $('load-file'),
@@ -1520,8 +1529,6 @@
             ltview:             $('lt-view'),
             ltact:              $('act-slice'),
             edit:               $('lt-tools'),
-            // rotate:             $('lt-rotate'),
-            // scale:              $('lt-scale'),
             nozzle:             $('lt-nozzle'),
             render:             $('lt-render'),
 
@@ -1529,10 +1536,10 @@
             modalBox:           $('modal-box'),
             help:               $('mod-help'),
             setup:              $('mod-setup'),
-            tools:              $('mod-tools'),
             prefs:              $('mod-prefs'),
             files:              $('mod-files'),
             saves:              $('mod-saves'),
+            tools:              $('mod-tools'),
             print:              $('mod-print'),
             local:              $('mod-local'),
             any:                $('mod-any'),
@@ -2159,6 +2166,10 @@
                 xr = ((tl && xc) || (!tl && xt) ? ra : 1),
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
+            // prevent null scale
+            if (xr * yr * zr === 0) {
+                return;
+            }
             API.selection.scale(xr,yr,zr);
             UI.sizeX.was = UI.sizeX.value = xv * xr;
             UI.sizeY.was = UI.sizeY.value = yv * yr;
@@ -2228,7 +2239,7 @@
             );
         };
 
-        $('lab-scale').onclick = () => {
+        $('scale-reset').onclick = $('lab-scale').onclick = () => {
             API.selection.scale(1 / UI.scaleX.was, 1 / UI.scaleY.was, 1 / UI.scaleZ.was);
             UI.scaleX.value = UI.scaleY.value = UI.scaleZ.value =
             UI.scaleX.was = UI.scaleY.was = UI.scaleZ.was = 1;
@@ -2623,32 +2634,86 @@
         // show topline separator when iframed
         // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
 
-        // bind movable objects and panel tictacs
+        // bind tictac buttons to panel show/hide
         let groups = {};
         for (let tt of [...document.getElementsByClassName('tictac')]) {
             let sid = tt.getAttribute('select');
             let gid = tt.getAttribute('group') || 'default';
+            let lid = tt.getAttribute('label');
             let grp = groups[gid] = groups[gid] || [];
             let target = $(sid);
             target.style.display = 'none';
             target.control = tt;
-            grp.push(target);
+            grp.push({button: tt, div: target});
             tt.onclick = () => {
-                for (let p of grp) {
-                    p.style.display = p === target ? 'flex' : 'none';
+                for (let rec of grp) {
+                    let {button, div} = rec;
+                    if (div === target) {
+                        div.style.display = '';
+                        button.classList.add('selected');
+                    } else {
+                        div.style.display = 'none';
+                        button.classList.remove('selected');
+                    }
+                }
+                if (lid) {
+                    $(lid).innerText = tt.getAttribute('title');
                 }
             };
         }
+        // bind closer X to hiding parent action
         for (let tt of [...document.getElementsByClassName('closer')]) {
             let tid = tt.getAttribute('target');
             let target = tid ? $(tid) : parentWithClass(tt, 'movable');
             target.style.display = 'none';
-            tt.onclick = () => {
+            tt.onmousedown = (ev) => {
                 target.style.display = 'none';
+                ev.preventDefault();
+                ev.stopPropagation();
             };
         }
+        // add drag behavior to movers
+        [...document.getElementsByClassName('mover')].forEach(mover => {
+            mover.onmousedown = (ev) => {
+                let moving = parentWithClass(mover, 'movable');
+                let mpos = {
+                    x: moving.offsetLeft,
+                    y: moving.offsetTop
+                };
+                ev.preventDefault();
+                ev.stopPropagation();
+                let origin = {
+                    x: ev.screenX,
+                    y: ev.screenY
+                };
+                let tracker = UI.tracker;
+                tracker.style.display = 'block';
+                tracker.onmousemove = (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    let pos = {
+                        x: ev.screenX,
+                        y: ev.screenY
+                    };
+                    let delta = {
+                        x: pos.x - origin.x,
+                        y: pos.y - origin.y
+                    };
+                    moving.style.left = `${mpos.x + delta.x}px`;
+                    moving.style.top = `${mpos.y + delta.y}px`;
+                };
+                tracker.onmouseup = (ev) => {
+                    UI.tracker.style.display = 'none';
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    tracker.onmouseup = null;
+                    tracker.onmouseout = null;
+                    tracker.onmousemove = null;
+                };
+            };
+        });
         // bind tool show buttons
-        function showTool(tictac) {
+        UI.tool.show = function(tictac) {
             if (typeof(tictac) === 'string') {
                 tictac = $(tictac);
             }
@@ -2656,8 +2721,10 @@
             mover.style.display = 'flex';
             tictac.control.onclick();
         }
-        $('tool-rotate').onclick = () => { showTool('ft-rotate') };
-        $('tool-scale').onclick = () => { showTool('ft-scale') };
+        $('tool-rotate').onclick = () => { UI.tool.show('ft-rotate') };
+        $('tool-scale').onclick = () => { UI.tool.show('ft-scale') };
+        $('tool-mesh').onclick = () => { UI.tool.show('ft-mesh') };
+        $('tool-select').onclick = () => { UI.tool.show('ft-select') };
 
         // warn users they are running a beta release
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
