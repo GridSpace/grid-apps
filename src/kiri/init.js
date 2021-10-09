@@ -2650,7 +2650,6 @@
         for (let tt of [...document.getElementsByClassName('tictac')]) {
             let sid = tt.getAttribute('select');
             let gid = tt.getAttribute('group') || 'default';
-            let lid = tt.getAttribute('label');
             let grp = groups[gid] = groups[gid] || [];
             let target = $(sid);
             target.style.display = 'none';
@@ -2667,6 +2666,7 @@
                         button.classList.remove('selected');
                     }
                 }
+                let lid = tt.getAttribute('label');
                 if (lid) {
                     $(lid).innerText = tt.getAttribute('title');
                 }
@@ -2772,52 +2772,52 @@
                 console.log({missing_ln: key});
             }
         }
-    };
+    }
 
-    // if a language needs to load, the script is injected and loaded
-    // first.  once this loads, or doesn't, the initialization begins
-    let lang_load = false;
-    let lang_set = undefined;
-    let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang') || KIRI.lang.get();
+    // init lang must happen before all other init functions
+    function init_lang() {
+        // if a language needs to load, the script is injected and loaded
+        // first.  once this loads, or doesn't, the initialization begins
+        let lang_load = false;
+        let lang_set = undefined;
+        let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang') || KIRI.lang.get();
 
-    // inject language script if not english
-    if (lang && lang !== 'en' && lang !== 'en-us') {
-        lang_set = lang;
-        let map = KIRI.lang.map(lang);
-        let scr = DOC.createElement('script');
-        // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${map}.js?${KIRI.version}`);
-        (DOC.body || DOC.head).appendChild(scr);
-        STATS.set('ll',lang);
-        scr.onload = function() {
-            lang_load = true;
-            KIRI.lang.set(map);
+        // inject language script if not english
+        if (lang && lang !== 'en' && lang !== 'en-us') {
+            lang_set = lang;
+            let map = KIRI.lang.map(lang);
+            let scr = DOC.createElement('script');
+            // scr.setAttribute('defer',true);
+            scr.setAttribute('src',`/kiri/lang/${map}.js?${KIRI.version}`);
+            (DOC.body || DOC.head).appendChild(scr);
+            STATS.set('ll',lang);
+            scr.onload = function() {
+                lang_load = true;
+                KIRI.lang.set(map);
+                UI.lang();
+                init_one();
+            };
+            scr.onerror = function(err) {
+                console.log({language_load_error: err, lang})
+                init_one();
+            }
+        }
+
+        // set to browser default which will be overridden
+        // by any future script loads (above)
+        if (!lang_load) {
+            KIRI.lang.set();
             UI.lang();
             init_one();
-        };
-        scr.onerror = function(err) {
-            console.log({language_load_error: err, lang})
-            init_one();
         }
     }
 
-    // set to browser default which will be overridden
-    // by any future script loads (above)
-    if (!lang_load) {
-        KIRI.lang.set();
-        UI.lang();
-    }
-
-    // schedule init_one to run after all page content is loaded
-    // unless a languge script is loading first, in which case it
-    // will call init once it's done (or failed)
-    if (!lang_set) {
-        if (document.readyState === 'loading') {
-            SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one);
-        } else {
-            // happens in debug mode when scripts are chain loaded
-            init_one();
-        }
+    if (document.readyState === 'loading') {
+        // schedule init_one to run after all page content is loaded
+        SPACE.addEventListener(DOC, 'DOMContentLoaded', init_lang);
+    } else {
+        // happens in debug mode when scripts are chain loaded
+        init_lang();
     }
 
 })();
