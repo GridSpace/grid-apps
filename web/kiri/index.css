@@ -514,6 +514,9 @@ th, tr, td, label {
     margin-right: 5px;
     border-right: 3px solid var(--main-color);
 }
+#float-tools .title {
+    min-height: 18px;
+}
 
 #lab-axis, #lab-scale, #lab-size {
     border-radius: 3px;
