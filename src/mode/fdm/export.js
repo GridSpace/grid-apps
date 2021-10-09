@@ -58,7 +58,7 @@
             blastz = 0,
             process = settings.process,
             belt_add_y = (process.firstLayerYOffset || 0) - (print.belty || 0),
-            loops = process.outputLoops || 0,
+            oloops = process.outputLoops || 0,
             zhop = process.zHopDistance || 0, // range
             lineWidth = process.sliceLineWidth || 0,
             seekMMM = process.outputSeekrate * 60,
@@ -143,12 +143,12 @@
         }
 
         let rloops = [];
-        if (loops > 0) {
-            // if loops set, loop entire part
+        if (oloops > 0) {
+            // if oloops set, loop entire part
             rloops.push({
                 start: layers[0].slice.index,
-                end: layers.last().slice.index,
-                iter: loops - 1
+                end: Infinity,
+                iter: oloops - 1
             });
         }
         if (process.ranges) {
@@ -163,7 +163,7 @@
                 }
             }
         }
-        loops = isBelt && rloops.length ? rloops : undefined;
+        let loops = isBelt && rloops.length ? rloops : undefined;
 
         (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
             let v = parseInt(lv);
