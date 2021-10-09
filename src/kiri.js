@@ -5,10 +5,11 @@
 (function () {
 
     if (!self.kiri) {
-        self.kiri = {
+        let kiri = self.kiri = {
             beta: 3029,
             driver: {}, // driver modules
-            loader: []  // module loading: array of functions
+            loader: [], // module loading: array of functions
+            load: (fn) => kiri.loader.push(fn)
         };
     }
 

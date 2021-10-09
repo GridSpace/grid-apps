@@ -3202,6 +3202,7 @@
 
     // new module loading
     kiri.loader.forEach(mod => { mod(kiri.api)} );
+    kiri.load = (mod) => { mod(kiri.api) };
 
     // upon restore, seed presets
     API.event.emit('preset', API.conf.dbo());

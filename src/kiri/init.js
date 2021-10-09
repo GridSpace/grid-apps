@@ -2604,6 +2604,7 @@
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
         $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
+        $('lay-flat').onclick = () => { API.event.emit("tool.mesh.lay-flat") };
         // rotation buttons
         let d = (Math.PI / 180) * 5;
         $('rot_x_lt').onclick = () => { API.selection.rotate(-d,0,0) };
