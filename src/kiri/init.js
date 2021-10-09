@@ -2603,7 +2603,10 @@
         $('mode-sla').onclick = () => { API.mode.set('SLA') };
         $('mode-cam').onclick = () => { API.mode.set('CAM') };
         $('mode-laser').onclick = () => { API.mode.set('LASER') };
-        $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
+        $('unrotate').onclick = () => {
+            API.widgets.for(w => w.unrotate());
+            API.selection.update_info();
+        };
         $('lay-flat').onclick = () => { API.event.emit("tool.mesh.lay-flat") };
         // rotation buttons
         let d = (Math.PI / 180) * 5;

@@ -91,6 +91,7 @@
         for_meshes: forSelectedMeshes,
         for_widgets: forSelectedWidgets,
         update_bounds: updateSelectedBounds,
+        update_info: updateSelectedInfo,
         delete: function() { platform.delete(selection.widgets()) },
         export: exportSelection
     };
@@ -1847,13 +1848,14 @@
     }
 
     function platformUpdateSelected() {
-        let selcount = platform.selected_count();
+        let selwid = selection.widgets(true);
+        let selcount = selwid.length;
         let extruders = settings.device.extruders;
         if (selcount) {
             UI.nozzle.classList.add('lt-active');
             UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
-                let sel = selection.widgets()[0];
+                let sel = selwid[0];
                 let name = sel.meta.file || sel.meta.url;
                 if (name) {
                     name = name
