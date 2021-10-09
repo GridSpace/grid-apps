@@ -440,7 +440,9 @@ th, tr, td, label {
 .movable {
     margin: 5px;
 }
-
+.movable input {
+    background-color: rgba(255,255,255,0.5);
+}
 .movable .title {
     color: white;
     padding: 2px 3px 1px 3px;
@@ -450,13 +452,14 @@ th, tr, td, label {
     font-size: smaller;
     text-align: center;
 }
-
 .movable .body {
     margin: 0;
     padding: 0 5px 0 0;
-    background-color: rgba(245,245,245,0.9);
+    background-color: rgba(245,245,245,0.8);
 }
-
+.movable:hover .body {
+    background-color: rgba(245,245,245,0.95);
+}
 .movable .footer {
     height: 10px;
     border-bottom-left-radius: 5px;
@@ -475,7 +478,7 @@ th, tr, td, label {
 }
 
 .tictac {
-    margin: 2px 2px 0 0;
+    margin: 2px 2px 2px 0;
     padding: 4px;
     border-radius: 3px;
     border: 1px solid white;
@@ -484,13 +487,13 @@ th, tr, td, label {
     align-items: center;
     justify-content: center;
 }
+.tictac:hover {
+    border: 1px solid #ccc;
+    background-color: #eee;
+}
 .tictac.selected {
     background-color: var(--main-color);
     color: #fff;
-}
-
-.tictac:hover {
-    border: 1px solid #ccc;
 }
 
 #float-tools {
@@ -580,11 +583,17 @@ th, tr, td, label {
     grid-template-rows: auto auto auto;
     grid-template-columns: auto 1fr;
 }
-
 #lock_x, #lock_y, #lock_z {
     position: absolute;
     right: 2px;
     top: 7px;
+}
+#ft-select {
+    max-height: 300px;
+    overflow-y: auto;
+}
+#ft-select button {
+    text-transform: none;
 }
 
 #lt-top {

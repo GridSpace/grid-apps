@@ -91,6 +91,21 @@
                             <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
                             <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
                         </div>
+                        <div id="ft-scale" class="grow grid">
+                            <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked/></div>
+                            <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked/></div>
+                            <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked/></div>
+                            <div><label id="lab-axis" lk="axis">axis</label></div>
+                            <div><input id="size_x" size="8" class="value"/></div>
+                            <div><input id="size_y" size="8" class="value"/></div>
+                            <div><input id="size_z" size="8" class="value"/></div>
+                            <div><label id="lab-size" lk="size">size</label></div>
+                            <div><input id="scale_x" size="8" class="value" value="1"/></div>
+                            <div><input id="scale_y" size="8" class="value" value="1"/></div>
+                            <div><input id="scale_z" size="8" class="value" value="1"/></div>
+                            <div><label id="lab-scale" lk="scale">scale</label></div>
+                            <button id="scale-reset" class="gr4">reset</button>
+                        </div>
                         <div id="ft-rotate" class="grow grid">
                             <div><i id="rot_x_lt" class="fas fa-chevron-left"></i></div>
                             <label>X</label>
@@ -109,21 +124,6 @@
                                 <button id="unrotate" class="grow" lk="reset">reset</button>
                             </div>
                         </div>
-                        <div id="ft-scale" class="grow grid">
-                            <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked/></div>
-                            <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked/></div>
-                            <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked/></div>
-                            <div><label id="lab-axis" lk="axis">axis</label></div>
-                            <div><input id="size_x" size="8" class="value"/></div>
-                            <div><input id="size_y" size="8" class="value"/></div>
-                            <div><input id="size_z" size="8" class="value"/></div>
-                            <div><label id="lab-size" lk="size">size</label></div>
-                            <div><input id="scale_x" size="8" class="value" value="1"/></div>
-                            <div><input id="scale_y" size="8" class="value" value="1"/></div>
-                            <div><input id="scale_z" size="8" class="value" value="1"/></div>
-                            <div><label id="lab-scale" lk="scale">scale</label></div>
-                            <button id="scale-reset" class="gr4">reset</button>
-                        </div>
                         <div id="ft-mesh" class="grow f-col">
                             <div id="mesh-info" class="grid">
                                 <label>object:</label>
@@ -137,7 +137,7 @@
                             <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
                             <button id="mesh-heal" lk="rc_heal">heal</button>
                         </div>
-                        <div id="ft-select" class="grow middle">coming soon</div>
+                        <div id="ft-select" class="grow f-col"></div>
                     </div>
                     <div class="footer"></div>
                 </div>
@@ -475,12 +475,13 @@
     </div>
     <div id="tool-info" class="noshow"></div>
     <div id="context-menu">
-        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
         <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
+        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
         <div class="sep"></div>
         <button id="context-layflat" lk="rc_lafl">lay flat</button>
         <button id="context-mirror" lk="rc_mirr">mirror</button>
         <button id="context-duplicate" lk="rc_dupl">duplicate</button>
+        <div class="sep"></div>
         <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>
     <div id="fps" class="noshow"></div>

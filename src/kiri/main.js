@@ -1985,6 +1985,7 @@
         platform.select(widget, shift);
         platform.compute_max_z();
         API.event.emit('widget.add', widget);
+        platformChanged();
         auto_save();
         if (nolayout) {
             return;
@@ -2057,7 +2058,30 @@
         platformUpdateSelected();
         if (feature.drop_layout) platform.layout();
         API.event.emit('widget.delete', widget);
+        platformChanged();
         auto_save();
+    }
+
+    function platformChanged() {
+        let fts = $('ft-select');
+        fts.innerHTML = '';
+        for (let w of WIDGETS) {
+            let b = DOC.createElement('button');
+            fts.appendChild(b);
+            b.innerText = w.meta.file || 'no name';
+            let color;
+            b.onmouseenter = function() {
+                color = w.getColor();
+                w.setColor(0x0088ff);
+            };
+            b.onmouseleave = function() {
+                w.setColor(color);
+            };
+            b.onclick = function() {
+                platformSelect(w, true);
+                color = w.getColor();
+            };
+        }
     }
 
     function platformSelectAll() {

@@ -430,7 +430,7 @@
                 showDevices();
                 break;
             case cca('w'): // scale
-                UI.tool.scale();
+                UI.tool.next();
                 break;
             case cca('o'): // tools
                 showTools();
@@ -2722,12 +2722,18 @@
         // bind tool show buttons
         UI.tool.show = function(tictac) {
             if (typeof(tictac) === 'string') {
+                nextool = listool.indexOf(tictac)+1;
                 tictac = $(tictac);
             }
             let mover = parentWithClass(tictac.control, 'movable');
             mover.style.display = 'flex';
             tictac.control.onclick();
         }
+        let nextool = 0;
+        let listool = ['ft-scale','ft-mesh','ft-select','ft-rotate'];
+        UI.tool.next = function() {
+            UI.tool.show(listool[nextool++ % 4]);
+        };
         $('tool-rotate').onclick = () => { UI.tool.show('ft-rotate') };
         $('tool-scale').onclick = () => { UI.tool.show('ft-scale') };
         $('tool-mesh').onclick = () => { UI.tool.show('ft-mesh') };

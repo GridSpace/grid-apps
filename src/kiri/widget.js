@@ -477,8 +477,13 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         if (Array.isArray(color)) {
             color = color[this.getExtruder(settings) % color.length];
         }
+        this.color = color;
         let material = this.mesh.material;
         material.color.set(color);
+    };
+
+    PRO.getColor = function() {
+        return this.color;
     };
 
     /**
