@@ -110,9 +110,9 @@
                             </div>
                         </div>
                         <div id="ft-scale" class="grow grid">
-                            <div><label>X</label><input id="lock_x" type="checkbox" checked/></div>
-                            <div><label>Y</label><input id="lock_y" type="checkbox" checked/></div>
-                            <div><label>Z</label><input id="lock_z" type="checkbox" checked/></div>
+                            <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked/></div>
+                            <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked/></div>
+                            <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked/></div>
                             <div><label id="lab-axis" lk="axis">axis</label></div>
                             <div><input id="size_x" size="8" class="value"/></div>
                             <div><input id="size_y" size="8" class="value"/></div>
@@ -124,7 +124,19 @@
                             <div><label id="lab-scale" lk="scale">scale</label></div>
                             <button id="scale-reset" class="gr4">reset</button>
                         </div>
-                        <div id="ft-mesh" class="grow middle">coming soon</div>
+                        <div id="ft-mesh" class="grow f-col">
+                            <div id="mesh-info" class="grid">
+                                <label>object:</label>
+                                <span id="mesh-name" class="value">[0]</span>
+                                <label>points:</label>
+                                <span id="mesh-points" class="value">-</span>
+                                <label>faces:</label>
+                                <span id="mesh-faces" class="value">-</span>
+                            </div>
+                            <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
+                            <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
+                            <button id="mesh-heal" lk="rc_heal">heal</button>
+                        </div>
                         <div id="ft-select" class="grow middle">coming soon</div>
                     </div>
                     <div class="footer"></div>
@@ -470,14 +482,10 @@
         <button id="context-mirror" lk="rc_mirr">mirror</button>
         <button id="context-duplicate" lk="rc_dupl">duplicate</button>
         <button id="context-setfocus" lk="rc_focs">set focus</button>
-        <div class="sep"></div>
-        <button id="context-heal-mesh" lk="rc_heal">heal meshes</button>
-        <button id="context-export-stl" lk="rc_xstl">export as STL</button>
     </div>
     <div id="fps" class="noshow"></div>
     <div id="layer-animate" class="f-col a-center"></div>
     <div id="layer-toolpos" class="f-row a-center"></div>
-    <div id="winfo" class="noshow"></div>
     <div id="alert-area">
         <div id="alert-border">
             <div id="alert-text">alerts<br>alerts<br>alerts</div>

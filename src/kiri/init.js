@@ -582,14 +582,14 @@
         });
     }
 
-    function objectsExport() {
+    function objectsExport(format = "stl") {
         // return API.selection.export();
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "selected.stl").then(name => {
+        UC.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
             if (!name) return;
-            if (name.toLowerCase().indexOf(".stl") < 0) {
-                name = `${name}.stl`;
+            if (name.toLowerCase().indexOf(`.${format}`) < 0) {
+                name = `${name}.${format}`;
             }
-            API.util.download(API.selection.export(), name);
+            API.util.download(API.selection.export(format), name);
         });
     }
 
@@ -1514,6 +1514,11 @@
                 scale:          () => { UI.tool.show('ft-scale') },
                 mesh:           () => { UI.tool.show('ft-mesh') },
                 select:         () => { UI.tool.show('ft-select') },
+            },
+            mesh: {
+                name:           $('mesh-name'),
+                points:         $('mesh-points'),
+                faces:          $('mesh-faces'),
             },
 
             fps:                $('fps'),
@@ -2612,9 +2617,11 @@
         $('render-ghost').onclick = () => { API.view.wireframe(false, 0, 0.5); };
         $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
+        // mesh buttons
+        $('mesh-heal').onclick = () => { API.widgets.heal() };
+        $('mesh-export-stl').onclick = () => { objectsExport('stl') };
+        $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         // context menu
-        $('context-heal-mesh').onclick = () => { API.widgets.heal() };
-        $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
         $('context-clear-workspace').onclick = () => {
             API.view.set(VIEWS.ARRANGE);

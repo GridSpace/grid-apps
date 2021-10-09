@@ -512,6 +512,16 @@ th, tr, td, label {
     border-right: 3px solid var(--main-color);
 }
 
+#lab-axis, #lab-scale, #lab-size {
+    border-radius: 3px;
+    padding: 2px;
+    border: 1px solid white;
+}
+#lab-axis:hover, #lab-scale:hover {
+    background-color: var(--main-color);
+    color: white;
+}
+
 #ft-rotate {
     grid-gap: 2px;
     grid-template-rows: auto auto auto 1fr;
@@ -519,6 +529,17 @@ th, tr, td, label {
 }
 #ft-rotate label, #ft-rotate svg {
     text-align: center;
+}
+#ft-rotate svg {
+    margin-top: 2px;
+    padding: 1px 15px 1px 15px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+}
+#ft-rotate svg:hover {
+    border: 1px solid #ccc;
+    background-color: var(--main-color);
+    color: white;
 }
 #ft-rotate > div {
     display: flex;
@@ -544,8 +565,20 @@ th, tr, td, label {
     margin-left: 0;
     margin-right: 0;
 }
+#ft-mesh label {
+    font-size: smaller;
+}
+#ft-mesh .value {
+    font-family: monospace;
+    padding-left: 4px;
+}
 #ft-mesh, #ft-select {
     min-width: 200px;
+}
+#mesh-info {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto;
+    grid-template-columns: auto 1fr;
 }
 
 #lock_x, #lock_y, #lock_z {
@@ -1667,13 +1700,6 @@ th, tr, td, label {
     font-size: 12px;
     color: #000;
 }
-#winfo {
-    position: fixed;
-    font-size: 10px;
-    bottom: 5px;
-    left: 5px;
-    color: #000;
-}
 #context-menu {
     display: none;
     position: absolute;
@@ -1699,13 +1725,6 @@ th, tr, td, label {
 #context-menu .sep {
     border-top: 1px solid #ddd;
     margin: 5px 0 5px 0;
-}
-
-#lab-axis, #lab-scale {
-    border-radius: 3px;
-}
-#lab-axis:hover, #lab-scale:hover {
-    background-color: rgba(0,0,0,0.2);
 }
 
 .range-info {

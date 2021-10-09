@@ -1593,7 +1593,7 @@
         auto_save();
     }
 
-    function exportSelection() {
+    function exportSelection(format = "stl") {
         let widgets = API.selection.widgets();
         if (widgets.length === 0) {
             widgets = API.widgets.all();
@@ -1606,6 +1606,24 @@
             outs.push({geo, widget});
             facets += geo.attributes.position.count;
         });
+        if (format === "obj") {
+            let obj = [];
+            for (let out of outs) {
+                let meta = out.widget.meta;
+                let name = meta.file || 'unnamed';
+                obj.push(`g ${name}`);
+                let { position } = out.geo.attributes;
+                let pvals = position.array;
+                for (let i=0, il=position.count; i<il; i += 3) {
+                    let pi = i * position.itemSize;
+                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
+                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
+                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
+                    obj.push(`f ${i+1} ${i+2} ${i+3}`);
+                }
+            }
+            return obj.join('\n');
+        }
         let stl = new Uint8Array(80 + 4 + facets * 50);
         let dat = new DataView(stl.buffer);
         let pos = 84;
@@ -1813,11 +1831,7 @@
     function platformUpdateSelected() {
         let selcount = platform.selected_count();
         let extruders = settings.device.extruders;
-        let menu_show = selcount ? 'flex': '';
-        $('winfo').style.display = 'none';
         if (selcount) {
-            // UI.scale.classList.add('lt-active');
-            // UI.rotate.classList.add('lt-active');
             UI.nozzle.classList.add('lt-active');
             UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
@@ -1833,13 +1847,19 @@
                     if (sp >= 0) {
                         name = name.substring(sp + 1);
                     }
-                    $('winfo').style.display = 'flex';
-                    $('winfo').innerHTML = `${UTIL.comma(sel.meta.vertices)}<br>${name}`;
+                    UI.mesh.name.innerText = name;
+                    UI.mesh.points.innerText = sel.meta.vertices;
+                    UI.mesh.faces.innerText = sel.meta.vertices / 3;
                 }
+            } else {
+                UI.mesh.name.innerText = `[${selcount}]`;
+                UI.mesh.points.innerText = '-';
+                UI.mesh.faces.innerText = '-';
             }
         } else {
-            // UI.scale.classList.remove('lt-active');
-            // UI.rotate.classList.remove('lt-active');
+            UI.mesh.name.innerText = '[0]';
+            UI.mesh.points.innerText = '-';
+            UI.mesh.faces.innerText = '-';
             UI.nozzle.classList.remove('lt-active');
             UI.trash.style.display = '';
         }
