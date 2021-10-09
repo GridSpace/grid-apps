@@ -763,6 +763,11 @@
             return;
         }
 
+        // set aside belt loops and re-append later
+        // since we do not want to collapse/merge loops
+        let exclude = ranges.filter(r => r.fields.outputLoops);
+        ranges = ranges.filter(r => !r.fields.outputLoops);
+
         // flatten ranges
         ranges.push({lo, hi, fields: values});
         for (let range of ranges) {
@@ -780,7 +785,7 @@
         }
 
         // merge contiguous matching ranges
-        ranges.length = 0;
+        ranges = settings.process.ranges = [];
         let range;
         for (let i=min; i<=max; i++) {
             let slice = slices[i];
@@ -799,6 +804,8 @@
         }
 
         ranges.push(range);
+        ranges.appendAll(exclude);
+
         updateFieldsFromSettings(settings.process);
         API.show.alert("update ranges", 2);
         API.event.emit("range.updates", ranges);
