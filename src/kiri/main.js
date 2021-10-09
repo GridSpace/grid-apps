@@ -735,6 +735,17 @@
         let min = lo;
         let max = hi;
 
+        // special case for belt loops which should not be flattened
+        if (values.outputLoops) {
+            ranges.push({
+                lo, hi, fields: values
+            });
+            updateFieldsFromSettings(settings.process);
+            API.show.alert("update ranges", 2);
+            API.event.emit("range.updates", ranges);
+            return;
+        }
+
         // just remove values from matching ranges
         if (!add) {
             for (let range of getOverlappingRanges(lo, hi)) {
