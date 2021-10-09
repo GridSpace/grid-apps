@@ -2778,13 +2778,10 @@
     function init_lang() {
         // if a language needs to load, the script is injected and loaded
         // first.  once this loads, or doesn't, the initialization begins
-        let lang_load = false;
-        let lang_set = undefined;
         let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang') || KIRI.lang.get();
 
         // inject language script if not english
         if (lang && lang !== 'en' && lang !== 'en-us') {
-            lang_set = lang;
             let map = KIRI.lang.map(lang);
             let scr = DOC.createElement('script');
             // scr.setAttribute('defer',true);
@@ -2792,20 +2789,19 @@
             (DOC.body || DOC.head).appendChild(scr);
             STATS.set('ll',lang);
             scr.onload = function() {
-                lang_load = true;
                 KIRI.lang.set(map);
                 UI.lang();
                 init_one();
             };
             scr.onerror = function(err) {
                 console.log({language_load_error: err, lang})
+                KIRI.lang.set();
+                UI.lang();
                 init_one();
             }
-        }
-
-        // set to browser default which will be overridden
-        // by any future script loads (above)
-        if (!lang_load) {
+        } else {
+            // set to browser default which will be overridden
+            // by any future script loads (above)
             KIRI.lang.set();
             UI.lang();
             init_one();
