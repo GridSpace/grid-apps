@@ -2734,7 +2734,7 @@
             tictac.control.onclick();
         }
         let nextool = 0;
-        let listool = ['ft-scale','ft-mesh','ft-select','ft-rotate'];
+        let listool = ['ft-rotate','ft-scale','ft-mesh','ft-select'];
         UI.tool.next = function() {
             UI.tool.show(listool[nextool++ % 4]);
         };
