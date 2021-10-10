@@ -1848,12 +1848,13 @@
     }
 
     function platformUpdateSelected() {
+        let selreal = selection.widgets();
         let selwid = selection.widgets(true);
         let selcount = selwid.length;
         let extruders = settings.device.extruders;
+        UI.trash.style.display = selreal.length ? 'flex' : '';
         if (selcount) {
             UI.nozzle.classList.add('lt-active');
-            UI.trash.style.display = 'flex';
             if (feature.meta && selcount === 1) {
                 let sel = selwid[0];
                 let name = sel.meta.file || sel.meta.url;
@@ -1881,7 +1882,6 @@
             UI.mesh.points.innerText = '-';
             UI.mesh.faces.innerText = '-';
             UI.nozzle.classList.remove('lt-active');
-            UI.trash.style.display = '';
         }
         UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
         if (extruders) {
