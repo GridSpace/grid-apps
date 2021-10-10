@@ -1,8 +1,24 @@
 kiri.load(function(API) {
+    // circle
     let pgeo = new THREE.CircleGeometry(8, 30);
     let pmat = new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0.5, transparent: true});
     let pmesh = new THREE.Mesh(pgeo, pmat);
-    let wgeo = new THREE.WireframeGeometry(pgeo);
+    // circle outline
+    let pi = pgeo.index.array;
+    let pp = pgeo.attributes.position.array;
+    let np = [];
+    for (let i=0; i<pi.length; i++) {
+        if (pi[i] * pi[i+1]) {
+            np.push(pp[pi[i]*3+0]);
+            np.push(pp[pi[i]*3+1]);
+            np.push(pp[pi[i]*3+2]);
+            np.push(pp[pi[i+1]*3+0]);
+            np.push(pp[pi[i+1]*3+1]);
+            np.push(pp[pi[i+1]*3+2]);
+        }
+    }
+    let wgeo = new THREE.BufferGeometry();
+    wgeo.setAttribute('position', new THREE.BufferAttribute(np.toFloat32(), 3));
     let wmat = new THREE.LineBasicMaterial({ color: 0x883333 });
     let wmesh = new THREE.LineSegments(wgeo, wmat);
     pmesh.add(wmesh);
