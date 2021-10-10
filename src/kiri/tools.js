@@ -22,6 +22,7 @@ kiri.load(function(API) {
     function endit() {
         if (enabled) {
             API.hide.alert(alert);
+            $('lay-flat').classList.remove('selected');
             API.feature.hover = false;
             enabled = false;
             alert = undefined;
@@ -31,10 +32,15 @@ kiri.load(function(API) {
 
     API.event.on('key.esc', endit);
     API.event.on('tool.mesh.lay-flat', () => {
+        if (enabled) {
+            endit();
+            return;
+        }
         if (API.feature.hover) {
             console.log('lay flat cannot pre-empt hover');
             return;
         }
+        $('lay-flat').classList.add('selected');
         API.feature.hover = true;
         enabled = true;
         alert = API.show.alert('[ESC] to end lay-flat operation', 600000);
@@ -46,9 +52,10 @@ kiri.load(function(API) {
             lastface = int.face;
             let obj = lastobj = int.object;
             let norm = int.face.normal;
+            let opos = obj.widget.track.pos;
             obj.add(pmesh);
-            pmesh.position.x = point.x + norm.x * 0.1;
-            pmesh.position.y = -point.z + norm.y * 0.1;
+            pmesh.position.x = point.x - opos.x + norm.x * 0.1;
+            pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
             pmesh.position.z = point.y + norm.z * 0.1;
             let q = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,0,1),
@@ -58,7 +65,10 @@ kiri.load(function(API) {
         }
     });
     API.event.on('mouse.hover.up', (ev) => {
-        let { int, point } = ev;
+        let { int, point, object } = ev;
+        if (!object) {
+            return;
+        }
         let q = new THREE.Quaternion().setFromUnitVectors(lastface.normal, new THREE.Vector3(0,0,-1));
         API.selection.rotate(q);
         endit();

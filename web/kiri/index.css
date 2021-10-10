@@ -598,6 +598,9 @@ th, tr, td, label {
 #ft-select button {
     text-transform: none;
 }
+#lay-flat.selected {
+    background-color: var(--main-color);
+}
 
 #lt-top {
     height: 10px;
