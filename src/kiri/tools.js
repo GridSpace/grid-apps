@@ -1,9 +1,9 @@
 kiri.load(function(API) {
-    let pgeo = new THREE.PlaneGeometry(10, 10);
+    let pgeo = new THREE.CircleGeometry(8, 30);
     let pmat = new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0.5, transparent: true});
     let pmesh = new THREE.Mesh(pgeo, pmat);
     let wgeo = new THREE.WireframeGeometry(pgeo);
-    let wmat = new THREE.LineBasicMaterial({ color: 0 });
+    let wmat = new THREE.LineBasicMaterial({ color: 0x883333 });
     let wmesh = new THREE.LineSegments(wgeo, wmat);
     pmesh.add(wmesh);
 
