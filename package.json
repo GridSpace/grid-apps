@@ -5,6 +5,16 @@
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
     "private": false,
+    "main": "http://localhost:8080/kiri/",
+    "node-remote": "http://localhost:8080/kiri/",
+    "node-main": "",
+    "window": {
+        "width": 960,
+        "height": 700,
+        "min_width": 700,
+        "min_height": 500,
+        "icon": "web/meta/favicon-mobile.png"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/gridspace/apps.git"
@@ -21,6 +31,7 @@
         "slicer"
     ],
     "dependencies": {
+        "@gridspace/app-server": "^0.0.7",
         "base64-js": "^1.5.1",
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
@@ -36,5 +47,80 @@
         "uglify-es": "3.3.9",
         "validator": "^8.2.0",
         "ws": "^7.2.3"
+    },
+    "devDependencies": {
+        "concurrently": "^6.2.0",
+        "nw": "0.54.0-sdk",
+        "nwjs-builder-phoenix": "^1.15.0",
+        "rimraf": "^3.0.2",
+        "wait-on": "^5.3.0"
+    },
+    "scripts": {
+        "debug": "gs-app-server --debug",
+        "server": "gs-app-server",
+        "start": "concurrently -k \"npm run debug\" \"wait-on http://localhost:8080/kiri/ && nw .\"",
+        "build": "npm run build:clean && npm run build:nw",
+        "build:clean": "rimraf ./dist",
+        "build:nw": "build --concurrent --tasks win-x64,linux-x86,linux-x64,mac-x64 --mirror https://dl.nwjs.io/ .",
+        "build:win": "npm run build:win:clean && build --tasks win-x64 --mirror https://dl.nwjs.io/ .",
+        "build:lin": "npm run build:lin:clean && build --tasks linux-x64 --mirror https://dl.nwjs.io/ .",
+        "build:win:clean": "rimraf ./dist/grid-apps-3.0.15D-win-x64 ./dist/grid-apps-3.0.15D-win-x86.zip ./dist/grid-apps-3.0.15D-win-x86.7z ./dist/grid-apps-3.0.15D-win-x86-Setup.exe",
+        "build:lin:clean": "rimraf ./dist/grid-apps-3.0.15D-linux-x64 ./dist/grid-apps-3.0.15D-linux-x64.zip",
+        "run:win": "dist\\grid-apps-3.0.15D-win-x86\\grid-apps.exe",
+        "run:lin": "./dist/grid-apps-3.0.15D-linux-x64/grid-apps",
+        "nw": "nw ."
+    },
+    "build": {
+        "nwVersion": "v0.54.0",
+        "nwFlavor": "normal",
+        "targets": [
+            "zip"
+        ],
+        "files": [
+            "**/*"
+        ],
+        "excludes": [
+            "src/**",
+            "logs/**",
+            "apps/grid/apps/**",
+            "apps/grid/node_modules/nwjs-builder-phoenix/caches/**",
+            "apps/grid/dist/**",
+            "apps/grid/logs/**",
+            "apps/grid/node_modules/**",
+            "web/**"
+        ],
+        "strippedProperties": [
+            "ManifestComments",
+            "scripts",
+            "devDependencies",
+            "build"
+        ],
+        "overriddenProperties": {
+            "main": "http://localhost:19757/kiri/",
+            "node-remote": "http://localhost:19757/kiri/",
+            "node-main": "./server.js",
+            "window": {
+                "width": 960,
+                "height": 700,
+                "min_width": 700,
+                "min_height": 500,
+                "icon": "web/meta/favicon-mobile.png"
+            },
+            "win": {
+                "icon": "web/meta/favicon.ico"
+            },
+            "mac": {
+                "icon": "web/meta/favicon-mobile.png"
+            },
+            "nsis": {
+                "icon": "web/meta/favicon.ico",
+                "unIcon": "web/meta/favicon.ico",
+                "languages": [
+                    "English"
+                ],
+                "diffUpdaters": false,
+                "hashCalculation": true
+            }
+        }
     }
 }
