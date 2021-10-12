@@ -2650,7 +2650,23 @@
                     });
                 }
                 else if (isgcode) loadCode(e.target.result, 'gcode');
-                else if (issvg) loadCode(e.target.result, 'svg');
+                else if (issvg) {
+                    if (MODE === MODES.LASER) {
+                        loadCode(e.target.result, 'svg');
+                    } else {
+                        let name = e.target.file.name;
+                        let svg = MOTO.SVG.parse(e.target.result);
+                        let ind = 0;
+                        for (let v of svg) {
+                            let num = ind++;
+                            platform.add(
+                                newWidget(undefined, group)
+                                .loadVertices(svg[num].toFloat32())
+                                .saveToCatalog(num ? `${name}-${num}` : name)
+                            );
+                        }
+                    }
+                }
                 else if (iskmz) settingsImportZip(e.target.result, true);
                 else if (isset) settingsImport(e.target.result, true);
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);

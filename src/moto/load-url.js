@@ -11,7 +11,7 @@
             let xhr = new XMLHttpRequest();
             let file = options.file || options.filename || (((url.split('?')[0]).split('#')[0]).split('/')).pop();
             let ext = file.split('.').pop().toLowerCase();
-            let deftype = ext === "obj" ? "text" : "arraybuffer";
+            let deftype = ext === "obj" || ext === 'svg' ? "text" : "arraybuffer";
             let datatype = options.datatype || deftype;
             let formdata = options.formdata;
 
@@ -50,6 +50,9 @@
                                     return { mesh: m.faces.toFloat32(), file }
                                 }));
                             });
+                            break;
+                        case "svg":
+                            resolve(moto.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
                             break;
                         default:
                             reject(`unknown file type: "${ext}" from ${url}`);
