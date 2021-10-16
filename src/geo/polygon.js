@@ -1789,8 +1789,8 @@
                     if (leftmost(dst[0], dst[1]) === dst[1]) {
                         dst.reverse();
                     }
-
                     if (
+                        src[0].poly && src[1].poly && // missing for cam tabs
                         src[0].isEqual2D(dst[0]) &&
                         src[1].isEqual2D(dst[1]) &&
                         src[0].poly.areaOrLength(dst[0].poly) &&
