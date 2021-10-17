@@ -1762,7 +1762,7 @@
          });
      }
 
-    function platformUpdateSize() {
+    function platformUpdateSize(updateDark = true) {
         let dev = settings.device,
             isBelt = dev.bedBelt,
             width, depth,
@@ -1780,16 +1780,18 @@
             unitMM = ctrl.units === 'mm',
             gridMajor = unitMM ? 25 : 25.4,
             gridMinor = unitMM ? 5 : 25.4 / 10;
-        if (ctrl.dark) {
-            SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
-            SPACE.platform.opacity(0.8);
-            SPACE.setSkyColor(0);
-            DOC.body.classList.add('dark');
-        } else {
-            SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
-            SPACE.platform.opacity(0.3);
-            SPACE.setSkyColor(0xffffff);
-            DOC.body.classList.remove('dark');
+        if (updateDark) {
+            if (ctrl.dark) {
+                SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
+                SPACE.platform.opacity(0.8);
+                SPACE.setSkyColor(0);
+                DOC.body.classList.add('dark');
+            } else {
+                SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
+                SPACE.platform.opacity(0.3);
+                SPACE.setSkyColor(0xffffff);
+                DOC.body.classList.remove('dark');
+            }
         }
         SPACE.platform.setRulers(ruler, ruler, 1 / unitScale(), 'X', isBelt ? 'Z' : 'Y');
         SPACE.platform.setGZOff(height/2 - 0.1);
