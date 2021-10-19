@@ -13,20 +13,8 @@
             // slice,          // src/mode/fdm/slice.js
             // prepare,        // src/mode/fdm/prepare.js
             // export,         // src/mode/fdm/export.js
-            getRangeParameters,
-            fixExtruders
+            getRangeParameters
         };
-
-    function fixExtruders(settings) {
-        Object.entries(settings.widget).forEach(arr => {
-            let [wid,val] = arr;
-            let dext = settings.device.extruders[val.extruder];
-            if (!dext) {
-                settings.widget[wid].extruder = 0;
-            }
-        });
-        return settings;
-    }
 
     function getRangeParameters(process, index) {
         if (index === undefined || index === null || index < 0) {

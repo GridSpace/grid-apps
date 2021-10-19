@@ -401,7 +401,7 @@
             annotate: (id) => {
                 // add per widget annotation
                 // for things like extruder and supports
-                return settings.widget[id] = ( settings.widget[id] || {} );
+                return WIDGETS.filter(w => w.id === id)[0].anno;
             }
         },
         work: KIRI.work
@@ -1838,7 +1838,7 @@
             if (!shift) platform.deselect();
             selectedMeshes.push(mesh);
             API.event.emit('widget.select', widget);
-            widget.setColor(color.selected, settings);
+            widget.setColor(color.selected);
             updateSelectedInfo();
         }
         platformUpdateSelected();
@@ -1892,10 +1892,11 @@
                 if (b) b.classList.remove('pop-sel');
             }
             forSelectedWidgets(w => {
-                w.setColor(color.selected, settings);
+                w.setColor(color.selected);
                 let ext = API.widgets.annotate(w.id).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
                 if (b) b.classList.add('pop-sel');
+                w.saveState();
             }, true);
         }
     }
@@ -1926,7 +1927,7 @@
             selectedMeshes.splice(si,1);
             API.event.emit('widget.deselect', widget);
         }
-        widget.setColor(color.deselected, settings);
+        widget.setColor(color.deselected);
         platformUpdateSelected();
         SPACE.update();
         updateSelectedInfo();
@@ -1999,9 +2000,7 @@
     }
 
     function platformAdd(widget, shift, nolayout) {
-        if (!settings.widget[widget.id]) {
-            settings.widget[widget.id] = {extruder: 0};
-        }
+        widget.anno.extruder = widget.anno.extruder || 0;
         WIDGETS.push(widget);
         SPACE.platform.add(widget.mesh);
         platform.select(widget, shift);
@@ -2066,7 +2065,6 @@
             return;
         }
         KIRI.work.clear(widget);
-        delete settings.widget[widget.id];
         WIDGETS.remove(widget);
         Widget.Groups.remove(widget);
         SPACE.platform.remove(widget.mesh);
@@ -2744,6 +2742,21 @@
 
     function restoreSettings(save) {
         let newset = ls2o('ws-settings') || settings;
+        // extract legacy widget annotations into widgets
+        if (newset.widget) {
+            for (let id of Object.keys(newset.widget)) {
+                let anno = newset.widget[id];
+                let wid = WIDGETS.filter(w => w.id === id)[0];
+                if (wid && anno) {
+                    wid.anno = anno;
+                    console.log('transfer settings annotations to widget', id);
+                    delete newset.widget[id];
+                    wid.saveState();
+                } else {
+                    console.log('missing widget for annotations', id);
+                }
+            }
+        }
         settings = CONF.normalize(newset);
         // override camera from settings
         if (settings.controller.view) {
@@ -2791,7 +2804,8 @@
             platform.delete(widget);
         });
 
-        // remove widget keys if they are not going to be restored
+        // remove widget keys if they are not going to be restored (TODO: remove in 3.1)
+        if (settings.widget)
         Object.keys(settings.widget).filter(k => toload.indexOf(k) < 0).forEach(k => {
             delete settings.widget[k];
         });

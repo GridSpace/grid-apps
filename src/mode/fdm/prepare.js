@@ -24,7 +24,6 @@
         // filter ignored widgets
         widgets = widgets.filter(w => !w.track.ignore);
 
-        settings = FDM.fixExtruders(settings);
         let render = settings.render !== false,
             { device, process, controller, bounds, mode } = settings,
             { bedWidth, bedDepth } = device,
@@ -222,7 +221,7 @@
                 swidget.belt = widget.belt;
                 swidget.track = Object.clone(widget.track);
                 swidget.mesh = { widget: swidget, position: swidget.track.pos };
-                settings.widget[swidget.id] = { extruder: process.sliceSupportNozzle };
+                widget.anno.extruder = process.sliceSupportNozzle;
                 widgets.push(swidget);
             }
         }
@@ -235,7 +234,7 @@
         // find max layers (for updates)
         // generate list of used extruders for purge blocks
         for (let widget of widgets) {
-            let extruder = (settings.widget[widget.id] || {}).extruder || 0;
+            let extruder = widget.anno.extruder || 0;
             if (!extruders[extruder]) {
                 extruders[extruder] = {};
                 extcount++;

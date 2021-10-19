@@ -114,7 +114,6 @@
      * @param {Function} ondone (called when complete with an array of Slice objects)
      */
     FDM.slice = function(settings, widget, onupdate, ondone) {
-        FDM.fixExtruders(settings);
         let render = settings.render !== false,
             { process, device, controller } = settings,
             isBelt = device.bedBelt,
@@ -125,8 +124,8 @@
             solidMinArea = process.sliceSolidMinArea,
             solidLayers = process.sliceSolidLayers || 0,
             vaseMode = process.sliceFillType === 'vase' && !isSynth,
-            metadata = settings.widget[widget.id] || {},
-            extruder = metadata.extruder || 0,
+            metadata = widget.anno,
+            extruder = parseInt(isSynth ? process.sliceSupportNozzle : metadata.extruder || 0),
             sliceHeight = process.sliceHeight,
             sliceHeightBase = (isBelt ? sliceHeight : process.firstSliceHeight) || sliceHeight,
             nozzleSize = device.extruders[extruder].extNozzle,
@@ -171,7 +170,7 @@
         const sliceMinHeight = process.sliceAdaptive && process.sliceMinHeight > 0 ?
             Math.min(process.sliceMinHeight, sliceHeight) : 0;
 
-        if (sliceHeightBase < sliceHeight) {
+        if (sliceHeightBase <= 0) {
             console.log("invalid first layer height < slice height");
             console.log("reverting to min valid slice height");
             sliceHeightBase = sliceMinHeight || sliceHeight;

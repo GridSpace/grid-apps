@@ -346,6 +346,8 @@ KIRI.worker = {
             last = time(),
             now;
 
+        widget.anno = data.anno || widget.anno;
+
         widget.slice(settings, function(error) {
             if (error) {
                 send.data({error: error});

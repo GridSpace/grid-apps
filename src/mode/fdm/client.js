@@ -521,6 +521,18 @@
     }
 
     let xpdebug;
+    let supsave = {};
+    let suptimer;
+
+    function scheduleSupportSave(widget) {
+        clearTimeout(suptimer);
+        supsave[widget.id] = widget;
+        suptimer = setTimeout(() => {
+            for (let w of Object.values(supsave)) {
+                w.saveState();
+            }
+        }, 50);
+    }
 
     function activeSupports() {
         const active = [];
@@ -554,6 +566,7 @@
             pos.box.pillar = Object.assign({widget}, pos);
             sups[id] = pos;
             widget.adds.push(pos.box);
+            scheduleSupportSave(widget);
         }
         return sups[id];
     }
@@ -572,6 +585,7 @@
         });
         sa.splice(ix,1);
         API.conf.save();
+        scheduleSupportSave(widget);
         fromPillar = undefined;
     }
 
@@ -604,6 +618,7 @@
         });
         widget.sups = {};
         delete API.widgets.annotate(widget.id).support;
+        scheduleSupportSave(widget);
         return cleared;
     }
 

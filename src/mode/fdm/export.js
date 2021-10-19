@@ -15,7 +15,7 @@
      */
     FDM.export = function(print, online, ondone, ondebug) {
         let layers = print.output,
-            settings = FDM.fixExtruders(print.settings),
+            settings = print.settings,
             controller = settings.controller,
             thumbnails = controller.exportThumb,
             getRangeParameters = FDM.getRangeParameters,

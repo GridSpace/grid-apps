@@ -40,7 +40,7 @@
             minToolDiam = Infinity,
             maxToolDiam = -Infinity,
             thruHoles,
-            tabs = settings.widget[widget.id].tab,
+            tabs = widget.anno.tab,
             unsafe = proc.camExpertFast,
             units = settings.controller.units === 'in' ? 25.4 : 1;
 

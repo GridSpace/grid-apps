@@ -197,6 +197,7 @@ KIRI.work = {
     slice: function(settings, widget, callback) {
         send("slice", {
             id: widget.id,
+            anno: widget.annotations(),
             settings: settings
         }, function(reply) {
             callback(reply);

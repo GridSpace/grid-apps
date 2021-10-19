@@ -62,6 +62,9 @@ kiri.load(function(API) {
         alert = API.show.alert('[ESC] to end lay-flat operation', 600000);
     });
     API.event.on('mouse.hover', (ev) => {
+        if (!enabled) {
+            return;
+        }
         cleanup();
         let { int, ints, event, point, type } = ev;
         if (type === 'widget') {
@@ -81,6 +84,9 @@ kiri.load(function(API) {
         }
     });
     API.event.on('mouse.hover.up', (ev) => {
+        if (!enabled) {
+            return;
+        }
         let { int, point, object } = ev;
         if (!object) {
             return;

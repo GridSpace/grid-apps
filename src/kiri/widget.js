@@ -151,6 +151,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         this.roto = [];
         // added meshes (supports, tabs, etc)
         this.adds = [];
+        // persisted client annotations (cam tabs, fdm supports)
+        this.anno = {};
         // THREE Mesh and points
         this.mesh = null;
         this.points = null;
@@ -220,10 +222,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     indices = data.ind || undefined,
                     track = data.track || undefined,
                     group = data.group || id,
+                    anno = data.anno || undefined,
                     widget = newWidget(id, Group.forid(group)),
                     meta = data.meta || widget.meta,
                     ptr = widget.loadVertices({vertices, indices});
                 widget.meta = meta;
+                widget.anno = anno || widget.anno;
                 // restore widget position if specified
                 if (move && track && track.pos) {
                     widget.track = track;
@@ -265,11 +269,23 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             ind: widget.getGeoIndices(),
             track: widget.track,
             group: this.group.id,
-            meta: this.meta
+            meta: this.meta,
+            anno: this.annotations()
         }, function(result) {
             widget.meta.saved = time();
             if (ondone) ondone();
         });
+    };
+
+    PRO.annotations = function() {
+        let o = Object.clone(this.anno);
+        if (o.support) {
+            // clear out THREE.Box temps
+            for (let s of o.support) {
+                delete s.box;
+            }
+        }
+        return o;
     };
 
     /**
@@ -474,8 +490,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      * @param {number} color
      */
     PRO.setColor = function(color,settings) {
+        if (settings) {
+            console.trace('legacy call with settings');
+        }
         if (Array.isArray(color)) {
-            color = color[this.getExtruder(settings) % color.length];
+            color = color[this.getExtruder() % color.length];
         }
         this.color = color;
         let material = this.mesh.material;
@@ -789,11 +808,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.getExtruder = function(settings) {
-        if (settings && settings.widget) {
-            let rec = settings.widget[this.id];
-            return rec && rec.extruder >= 0 ? rec.extruder : 0;
+        if (settings) {
+            console.trace('legacy call with settings');
         }
-        return 0;
+        return this.anno.extruder || 0;
+        // if (settings && settings.widget) {
+        //     let rec = settings.widget[this.id];
+        //     return rec && rec.extruder >= 0 ? rec.extruder : 0;
+        // }
+        // return 0;
     };
 
     // allow worker code to run in same memspace as client

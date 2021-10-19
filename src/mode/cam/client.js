@@ -100,11 +100,11 @@
                 proc.ops = proc.ops.filter(v => v);
             }
             // for any tabs or traces to set markers
-            Object.keys(settings.widget).forEach(wid => {
-                let wannot = settings.widget[wid];
+            for (let widget of API.widgets.all()) {
+                let wannot = widget.anno;
                 if (wannot.tab && wannot.tab.length) hasTabs = true;
                 if (wannot.trace && wannot.trace.length) hasTraces = true;
-            });
+            }
             // show/hide dots in enabled process pop buttons
             api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
             api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
@@ -478,6 +478,7 @@
             func.tabDone();
             API.widgets.all().forEach(widget => {
                 clearTabs(widget);
+                widget.saveState();
             });
             API.conf.save();
         });
@@ -524,6 +525,7 @@
                 });
                 ta.splice(ix,1);
                 API.conf.save();
+                widget.saveState();
                 return;
             }
             if (!iw) return;
@@ -541,6 +543,7 @@
             wt.push(Object.clone(rec));
             addWidgetTab(iw, rec);
             API.conf.save();
+            iw.saveState();
         };
 
         // TRACE FUNCS
