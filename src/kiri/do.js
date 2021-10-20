@@ -92,21 +92,22 @@ kiri.load(function(API) {
     });
 
     // selection event (store position)
-    event.on('widget.rotate', (rec) => {
+    event.on('selection.rotate', (rec) => {
         let type = "rotate";
-        let {widget, x, y, z} = rec;
+        let widgets = API.selection.widgets(true);
+        let {x, y, z} = rec;
         if (!(x || y || z)) {
             return;
         }
         pushActions({
             redo: {
                 type,
-                widgets: [ widget ],
+                widgets,
                 x, y, z
             },
             undo: {
                 type,
-                widgets: [ widget ],
+                widgets,
                 x: -x, y: -y, z: -z
             }
         })
