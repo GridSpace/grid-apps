@@ -6,7 +6,7 @@
 
     if (!self.kiri) {
         let kiri = self.kiri = {
-            beta: 3031,
+            beta: 3032,
             driver: {}, // driver modules
             loader: [], // module loading: array of functions
             load: (fn) => kiri.loader.push(fn)
