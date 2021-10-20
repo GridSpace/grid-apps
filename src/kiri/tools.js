@@ -1,3 +1,5 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
 kiri.load(function(API) {
     // circle
     let pgeo = new THREE.CircleGeometry(8, 30);

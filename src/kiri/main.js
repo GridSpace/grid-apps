@@ -272,6 +272,10 @@
             SPACE
         },
         devel,
+        doit: {
+            undo: noop, // set in do.js
+            redo: noop  // set in do.js
+        },
         var: {
             layer_lo: 0,
             layer_hi: 0,
@@ -360,7 +364,8 @@
             restore: restoreWorkspace,
             clear: clearWorkspace,
             save: saveWorkspace,
-            set_focus: setFocus
+            set_focus: setFocus,
+            update: SPACE.update
         },
         tweak,
         util: {

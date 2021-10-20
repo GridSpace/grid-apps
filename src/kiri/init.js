@@ -2388,9 +2388,12 @@
             }
         });
 
-        SPACE.mouse.onDrag(function(delta) {
+        SPACE.mouse.onDrag(function(delta, offset, up = false) {
             if (API.feature.hover) {
                 return;
+            }
+            if (up) {
+                API.event.emit('mouse.drag.done', offset);
             }
             if (delta && UI.freeLayout.checked) {
                 let set = settings();

@@ -12,7 +12,6 @@
 * `P` do not move (average) endpoints connected to long lines in decimate
 
 * `F` create event-driven do/undo stack and port relevant actions to this
-* `F` convert SVG to mesh https://muffinman.io/blog/three-js-extrude-svg-path/
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` add % field type with conversion (like units)

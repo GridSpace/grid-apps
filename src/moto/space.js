@@ -777,7 +777,9 @@
             event.preventDefault();
             let refresh = false,
                 selection = null;
-            if (mouseUpSelect) selection = mouseUpSelect();
+            if (mouseUpSelect) {
+                selection = mouseUpSelect();
+            }
             if (selection && selection.length > 0) {
                 let int = intersect(selection, selectRecurse);
                 if (mouseUp) {
@@ -800,7 +802,9 @@
             if (!refresh && platformClickAt) {
                 platformClick(platformClickAt);
             }
-            if (refresh) requestRefresh();
+            if (refresh) {
+                requestRefresh();
+            }
             mouseStart = null;
         } else if (mouseDrag && mouseDragStart) {
             mouseDrag(null,null,true);

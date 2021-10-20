@@ -280,6 +280,7 @@ const script = {
         "kiri/init",
         "kiri/export",
         "kiri/tools",
+        "kiri/do",
         "@devices",
         "@icons"
     ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),

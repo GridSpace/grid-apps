@@ -343,6 +343,31 @@ th, tr, td, label {
     background-color: white;
 }
 
+#doit {
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-top: 5px;
+    padding: 5px;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#undo, #redo {
+    color: var(--main-color);
+    margin: 2px;
+    padding: 4px;
+}
+#undo:disabled, #redo:disabled {
+    color: rgba(0,0,0,.1) !important;
+    background-color: rgba(0,0,0,0.1) !important;
+}
+#undo:hover, #redo:hover {
+    color: black;
+    background-color: rgba(0,0,0,0.2);
+}
+
 #app-acct {
     align-items: center;
     justify-content: flex-end;
