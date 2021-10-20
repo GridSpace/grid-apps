@@ -37,7 +37,8 @@ kiri.load(function(API) {
     };
 
     function updateButtons() {
-        $('doit').style.display = stack.length ? '' : 'none';
+        let isArrange = API.view.get() === API.const.VIEWS.ARRANGE;
+        $('doit').style.display = isArrange && stack.length ? 'flex' : 'none';
         $('undo').disabled = stpos === 0;
         $('redo').disabled = stpos == stack.length;
     }
@@ -86,6 +87,10 @@ kiri.load(function(API) {
         clear();
     });
 
+    event.on('view.set', mode => {
+        updateButtons();
+    });
+
     // selection event (store position)
     event.on('widget.rotate', (rec) => {
         let type = "rotate";
@@ -113,7 +118,7 @@ kiri.load(function(API) {
         if (Math.abs(1 - (x * y * z)) < 0.0001) {
             return;
         }
-        let widgets = API.selection.widgets();
+        let widgets = API.selection.widgets(true);
         let type = "scale";
         pushActions({
             redo: {
@@ -137,7 +142,7 @@ kiri.load(function(API) {
 
     // move complete (store updated position)
     event.on('mouse.drag.done', () => {
-        let widgets = API.selection.widgets();
+        let widgets = API.selection.widgets(true);
         let type = "move";
         pushActions({
             redo: {

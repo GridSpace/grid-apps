@@ -344,6 +344,7 @@ th, tr, td, label {
 }
 
 #doit {
+    display: none;
     position: absolute;
     white-space: nowrap;
     font-size: smaller;

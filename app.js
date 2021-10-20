@@ -254,6 +254,7 @@ const script = {
         "moto/load-url",
         "moto/db",
         "kiri/ui",
+        "kiri/do",
         "kiri/lang",
         "kiri/lang-en",
         "kiri/catalog",
@@ -280,7 +281,6 @@ const script = {
         "kiri/init",
         "kiri/export",
         "kiri/tools",
-        "kiri/do",
         "@devices",
         "@icons"
     ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
