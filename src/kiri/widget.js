@@ -263,6 +263,14 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.saveState = function(ondone) {
+        if (!ondone) {
+            clearTimeout(this._save_timer);
+            this._save_timer = setTimeout(() => {
+                this._save_timer = undefined;
+                this.saveState(() => {});
+            }, 150);
+            return;
+        }
         let widget = this;
         KIRI.odb.put('ws-save-'+this.id, {
             geo: widget.getGeoVertices(false),
