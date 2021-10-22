@@ -2560,8 +2560,13 @@
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
+        const setn = Object.clone(settings);
+        // stuff in legacy annotations for re-import
+        for (let w of WIDGETS) {
+            setn.widget[w.id] = w.anno;
+        }
         const xprt = {
-            settings: settings,
+            settings: setn,
             version: KIRI.version,
             screen: shot,
             space: SPACE.info,
