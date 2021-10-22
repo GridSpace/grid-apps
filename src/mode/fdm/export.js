@@ -51,7 +51,7 @@
             emitted = 0,
             retracted = 0,
             pos = {x:0, y:0, z:0, f:0},
-            lout = null,
+            lout = {x:0, y:0, z:0},
             last = null,
             zpos = 0,
             bmax = 0,

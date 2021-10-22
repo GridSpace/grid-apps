@@ -95,6 +95,9 @@ kiri.load(function(API) {
     event.on('selection.rotate', (rec) => {
         let type = "rotate";
         let widgets = API.selection.widgets(true);
+        if (!widgets.length) {
+            return;
+        }
         let {x, y, z} = rec;
         if (!(x || y || z)) {
             return;
@@ -120,6 +123,9 @@ kiri.load(function(API) {
             return;
         }
         let widgets = API.selection.widgets(true);
+        if (!widgets.length) {
+            return;
+        }
         let type = "scale";
         pushActions({
             redo: {
@@ -144,6 +150,9 @@ kiri.load(function(API) {
     // move complete (store updated position)
     event.on('mouse.drag.done', () => {
         let widgets = API.selection.widgets(true);
+        if (!widgets.length) {
+            return;
+        }
         let type = "move";
         pushActions({
             redo: {
