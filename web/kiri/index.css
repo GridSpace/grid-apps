@@ -1030,6 +1030,34 @@ th, tr, td, label {
     background-color: var(--highlight);
     border: 1px solid var(--highlight);
 }
+#mod-help svg {
+    width: 36px;
+    height: 36px;
+    padding-right: 10px;
+    color: var(--main-color);
+}
+#mod-help a {
+    border-radius: 5px;
+    padding: 3px 10px 3px 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+#mod-help a:hover {
+    background-color: #eee;
+}
+#mod-help a:hover svg {
+    color: #123;
+}
+#mod-help .title {
+    font-weight: bold;
+    font-size: larger;
+    padding-bottom: 10px;
+}
+#kiri-version {
+    font-family: monospace;
+    padding-top: 5px;
+}
 #mod-print {
     background-color: rgba(255,255,255,0.85);
 }

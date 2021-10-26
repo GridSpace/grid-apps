@@ -3041,42 +3041,44 @@
     }
 
     function showHelp() {
-        showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`,() => {
-            const sel = $('help-sel');
-            const labels = [...sel.getElementsByTagName('div')];
-            const tabs = [];
-            const click = (label, tab) => {
-                labels.forEach(l => l.classList.remove('sel'));
-                label.classList.add('sel');
-                tabs.forEach(t => t.style.display = 'none');
-                tab.style.display = 'flex';
-            };
-            labels.forEach(label => {
-                const name = label.getAttribute('tab');
-                const tab = $(`help-tab-${name}`);
-                tabs.push(tab);
-                label.onclick = () => { click(label, tab) };
-            });
-            click(labels[1], tabs[1]);
-        });
+        showHelpFile(`local`,() => {});
+        // showHelpFile(`/kiri/lang/${KIRI.lang.get()}-help.html?${KIRI.version}`,() => {
+        //     const sel = $('help-sel');
+        //     const labels = [...sel.getElementsByTagName('div')];
+        //     const tabs = [];
+        //     const click = (label, tab) => {
+        //         labels.forEach(l => l.classList.remove('sel'));
+        //         label.classList.add('sel');
+        //         tabs.forEach(t => t.style.display = 'none');
+        //         tab.style.display = 'flex';
+        //     };
+        //     labels.forEach(label => {
+        //         const name = label.getAttribute('tab');
+        //         const tab = $(`help-tab-${name}`);
+        //         tabs.push(tab);
+        //         label.onclick = () => { click(label, tab) };
+        //     });
+        //     click(labels[1], tabs[1]);
+        // });
     }
 
     function showHelpFile(local,then) {
         if (!local) {
-            WIN.open("//wiki.grid.space/wiki/Kiri:Moto", "_help");
+            WIN.open("//docs.grid.space/", "_help");
             return;
         }
-        ajax(local, function(html) {
-            UI.help.innerHTML = html;
-            try {
+        // ajax(local, function(html) {
+        //     UI.help.innerHTML = html;
+        //     try {
                 $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
-                // $('kiri-version').innerHTML = `${KIRI.version}`;
-            } catch (e) { }
-            if (then) {
-                then();
-            }
-            showModal('help');
-        });
+        //         // $('kiri-version').innerHTML = `${KIRI.version}`;
+        //     } catch (e) { }
+        //     if (then) {
+        //         then();
+        //     }
+        //     showModal('help');
+        // });
+        showModal('help');
         API.event.emit('help.show', local);
     }
 
