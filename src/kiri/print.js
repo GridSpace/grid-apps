@@ -820,6 +820,10 @@
                         }
                     }
                     // let emit = i === 0 ? 0 : extrude;
+                    // handle shallow cloned infill
+                    if (poly.z !== undefined) {
+                        p = p.clone().setZ(poly.z);
+                    }
                     addOutput(preout, p, emit, speed || printSpeed, extruder);
                     lp = p;
                 }, !poly.open);

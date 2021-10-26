@@ -18,7 +18,7 @@
         LOCAL   = self.debug && !SETUP.remote,
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
-        K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
+        // K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB),
@@ -248,7 +248,7 @@
             dec: () => { kiri.api.event.emit("busy", --busy) }
         },
         conf: {
-            dbo: () => { console.log("dbo() deprecated"); return ls2o('ws-settings') },
+            dbo: () => { return ls2o('ws-settings') },
             get: getSettings,
             put: putSettings,
             load: loadSettings,
@@ -3252,10 +3252,10 @@
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
-    K3DB.onIdle(function() {
+    // K3DB.onIdle(function() {
         // upgrade on db idle. maybe delay init, too
         // console.log("k3db idle");
-    });
+    // });
 
     // run optional module functions NOW before kiri-init has run
     if (Array.isArray(self.kirimod)) {
