@@ -228,7 +228,7 @@
 
         let lastPoly;
         let lastLayer;
-        let extruders = [];
+        let extruders = print.extruders = [];
         let extcount = 0;
 
         // find max layers (for updates)

@@ -21,6 +21,7 @@
             getRangeParameters = FDM.getRangeParameters,
             device = settings.device,
             extruders = device.extruders,
+            extused = Object.keys(print.extruders).map(v => parseInt(v)),
             gcodeFan = device.gcodeFan,
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
@@ -265,8 +266,8 @@
                     }
                 });
             }
-            if (line.indexOf("{tool}") > 0 && extruders.length > 1) {
-                for (let i=0; i<extruders.length; i++) {
+            if (line.indexOf("{tool}") > 0 && extused.length > 0) {
+                for (let i of extused) {
                     subst.tool = i;
                     appendSubPad(line);
                 }
