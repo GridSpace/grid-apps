@@ -2744,7 +2744,7 @@
         $('tool-rotate').onclick = () => { UI.tool.show('ft-rotate') };
         $('tool-scale').onclick = () => { UI.tool.show('ft-scale') };
         $('tool-mesh').onclick = () => { UI.tool.show('ft-mesh') };
-        $('tool-select').onclick = () => { UI.tool.show('ft-select') };
+        $('tool-selector').onclick = () => { UI.tool.show('ft-select') };
 
         // warn users they are running a beta release
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
