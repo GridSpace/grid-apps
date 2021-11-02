@@ -57,6 +57,7 @@ kiri.lang['en-us'] = {
     rc_dupl:        "duplicate",
     rc_focs:        "set focus",
     rc_heal:        "heal meshes",
+    rc_swap:        "replace vertices",
     rc_xobj:        "export OBJ",
     rc_xstl:        "export STL",
 

@@ -2626,6 +2626,7 @@
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
         // mesh buttons
         $('mesh-heal').onclick = () => { API.widgets.heal() };
+        $('mesh-swap').onclick = () => { API.widgets.replace() };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         // context menu

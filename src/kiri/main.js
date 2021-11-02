@@ -401,6 +401,7 @@
             for: forAllWidgets,
             load: Widget.loadFromCatalog,
             heal: healWidgets,
+            replace: replaceVertices,
             meshes: meshArray,
             opacity: setOpacity,
             annotate: (id) => {
@@ -882,6 +883,37 @@
             out.appendAll(widget.adds);
         });
         return out;
+    }
+
+    function replaceVertices(vertices) {
+        let widgets = API.selection.widgets(true);
+        if (!widgets.length) {
+            return;
+        }
+        function onload(vertices) {
+            for (let w of widgets) {
+                let track = Object.clone(w.track);
+                let { scale, rot, pos } = track;
+                let roto = w.roto.slice();
+                w.loadVertices(vertices);
+                for (let m of roto) {
+                    w.mesh.geometry.applyMatrix4(m.clone());
+                }
+                w._scale(scale.x, scale.y, scale.z);
+            }
+            platform.update();
+        }
+        if (vertices) {
+            onload(vertices);
+        } else {
+            // dialog
+            $('load-file').onchange = function(event) {
+                MOTO.File.load(event.target.files[0])
+                    .then(data => onload(data[0].mesh))
+                    .catch(error => console.log({error}));
+            };
+            $('load-file').click();
+        }
     }
 
     function healWidgets() {

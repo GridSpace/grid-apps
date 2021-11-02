@@ -252,6 +252,7 @@ const script = {
         "moto/load-stl",
         "moto/load-svg",
         "moto/load-url",
+        "moto/load-file",
         "moto/db",
         "kiri/ui",
         "kiri/do",
