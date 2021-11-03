@@ -614,6 +614,8 @@ kiri.lang['en-us'] = {
     ad_lbir_l:      ["always print shells touching the","belt before any other shells"],
     ad_lret_s:      "layer retract",
     ad_lret_l:      ["force filament retraction","between layers"],
+    ad_agap_s:      "avoid gaps",
+    ad_agap_l:      ["route around gaps rather","than perform a retract","when possible"],
     ad_play_s:      "polish layers",
     ad_play_l:      ["polish up to specified","# of layers at a time"],
     ad_pspd_s:      "polish speed",

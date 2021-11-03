@@ -373,6 +373,7 @@
                     outputCoastDist: 0,
                     outputPurgeTower: true,
                     outputBeltFirst: false,
+                    outputAvoidGaps: true,
                     outputLayerRetract: false,
                     outputOriginCenter: true,
                     outputLoops: 0,

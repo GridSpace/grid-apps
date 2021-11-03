@@ -393,6 +393,7 @@
                     offset,
                     layerout,
                     {
+                        routeAround: process.outputAvoidGaps,
                         seedPoint: printPoint.sub(offset),
                         danger: isDanger,
                         params, // range parameters

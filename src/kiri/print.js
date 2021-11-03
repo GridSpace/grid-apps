@@ -590,7 +590,7 @@
                 });
             });
             // if intersecting, look for a route around
-            if (int && opt.danger) {
+            if (int && opt.routeAround) {
                 return !routeAround(p1, p2);
             }
             return int;
