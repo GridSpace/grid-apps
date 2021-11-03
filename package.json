@@ -25,16 +25,16 @@
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
         "connect": "^3.7.0",
-        "earcut": "^2.2.2",
+        "earcut": "^2.2.3",
         "express-useragent": "^1.0.13",
-        "jszip": "^3.5.0",
+        "jszip": "^3.7.1",
         "moment": "^2.24.0",
         "pixi.js": "^4.8.9",
         "serve-static": "^1.14.1",
         "three": "^0.126.0",
-        "tween.js": "^0.14.0",
+        "@tweenjs/tween.js": "^16.6.0",
         "uglify-es": "3.3.9",
         "validator": "^8.2.0",
-        "ws": "^7.2.3"
+        "ws": "^7.5.5"
     }
 }
