@@ -1,6 +1,6 @@
 {
     "pre":[
-        "G28 XY             ; home XY axes",
+        "G28                ; home axes",
         "G1 Y50 F1000       ; lift y axis off belt for heating",
         "M107               ; turn off filament cooling fan",
         "M140 S{bed_temp}   ; set bed temp",
