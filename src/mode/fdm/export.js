@@ -73,7 +73,10 @@
             arcDev = 0.5,
             arcMax = 40,
             originCenter = process.outputOriginCenter || device.bedRound,
-            offset = originCenter ? null : {
+            offset = originCenter ? {
+                x: 0,
+                y: 0
+            } : {
                 x: device.bedWidth/2,
                 y: isBelt ? 0 : device.bedDepth/2
             },
@@ -84,7 +87,12 @@
             lastNozzleTemp = nozzleTemp,
             lastBedTemp = bedTemp,
             lastFanSpeed = fanSpeed,
+            bounds = settings.bounds,
             subst = {
+                minx: bounds.min.x + offset.x,
+                maxx: bounds.max.x + offset.x,
+                miny: bounds.min.y + offset.y,
+                maxy: bounds.max.y + offset.y,
                 travel_speed: seekMMM,
                 retract_speed: retSpeed,
                 retract_distance: retDist,
@@ -93,10 +101,10 @@
                 bed_temp: bedTemp,
                 fan_speed: fanSpeed,
                 speed: fanSpeed, // legacy
-                top: offset ? device.bedDepth : device.bedDepth/2,
-                left: offset ? 0 : -device.bedWidth/2,
-                right: offset ? device.bedWidth : device.bedWidth/2,
-                bottom: offset ? 0 : -device.bedDepth/2,
+                top: offset.x ? device.bedDepth : device.bedDepth/2,
+                left: offset.x ? 0 : -device.bedWidth/2,
+                right: offset.x ? device.bedWidth : device.bedWidth/2,
+                bottom: offset.x ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight,
                 layers: layers.length,
                 progress: 0,
