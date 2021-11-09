@@ -280,7 +280,7 @@
                     layer.last().retract = true;
                 }
                 start = print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
-                    tool: using || nozzle,
+                    tool: using !== undefined ? using : nozzle,
                     open: true,
                     simple: true
                 });
@@ -414,7 +414,7 @@
                     }
                 );
                 lastOut = slice;
-                lastExt = lastOut.ext
+                lastExt = lastOut.extruder;
                 lastPoly = slice.lastPoly;
                 lastLayer = layerout;
                 if (layerRetract && layerout.length) {
