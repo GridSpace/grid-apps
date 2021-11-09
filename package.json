@@ -34,7 +34,7 @@
         "three": "^0.126.0",
         "@tweenjs/tween.js": "^16.6.0",
         "uglify-es": "3.3.9",
-        "validator": "^8.2.0",
+        "validator": ">=13.7.0",
         "ws": "^7.5.5"
     }
 }

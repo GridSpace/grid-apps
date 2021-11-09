@@ -59,6 +59,11 @@
     // add show() to catalog for API
     CATALOG.show = showCatalog;
 
+    const PMODES = {
+        SPEED: 1,
+        TOOLS: 2
+    };
+
     const feature = {
         seed: true, // seed profiles on first use
         meta: true, // show selected widget metadata
@@ -73,7 +78,8 @@
         on_load: undefined, // function override file drop loads
         on_add_stl: undefined, // legacy override stl drop loads
         work_alerts: true, // allow disabling work progress alerts
-        modes: [ "fdm", "sla", "cam", "laser" ] // enable device modes
+        modes: [ "fdm", "sla", "cam", "laser" ], // enable device modes
+        pmode: PMODES.SPEED // preview modes
     };
 
     const selection = {
@@ -1048,6 +1054,7 @@
 
     function updateSpeeds(maxSpeed, minSpeed) {
         UI.speeds.style.display =
+            maxSpeed &&
             settings.mode !== 'SLA' &&
             settings.mode !== 'LASER' &&
             viewMode === VIEWS.PREVIEW &&
@@ -1253,14 +1260,13 @@
     }
 
     function preparePreview(callback, scale = 1, offset = 0) {
-        if (complete.preview) {
+        if (complete.preview === feature.pmode) {
             if (callback) callback();
             return;
         }
         if (!complete.slice) {
             settings.render = false;
             prepareSlices(() => {
-                settings.render = true;
                 preparePreview(callback, 0.25, 0.75);
             }, 0.75);
             return;
@@ -1289,6 +1295,10 @@
             startTime,
             lastMsg,
             output = [];
+
+        // pass preview mode to worker
+        settings.pmode = feature.pmode;
+        settings.render = true;
 
         KIRI.client.prepare(settings, function(progress, message, layer) {
             if (layer) {
@@ -1350,11 +1360,15 @@
             SPACE.update();
             updateSliderMax(true);
             setVisibleLayer(-1, 0);
-            updateSpeeds(maxSpeed, minSpeed);
+            if (feature.pmode === PMODES.SPEED) {
+                updateSpeeds(maxSpeed, minSpeed);
+            } else {
+                updateSpeeds();
+            }
             updateStackLabelState();
 
             // mark preview complete for export
-            complete.preview = true;
+            complete.preview = feature.pmode;
 
             if (typeof(callback) === 'function') {
                 callback();

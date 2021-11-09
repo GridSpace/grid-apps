@@ -423,6 +423,17 @@
                 }
             }
 
+            // clear slice.prep so it can be re-previewed in a different mode
+            for (let widget of widgets) {
+                // skip synthesized support widget(s)
+                if (!widget.mesh) {
+                    continue;
+                }
+                for (let slice of widget.slices) {
+                    slice.prep = false;
+                }
+            }
+
             // if a declared extruder isn't used in a layer, use selected
             // extruder to fill the relevant purge blocks for later support
             track.forEach(ext => {
@@ -575,7 +586,13 @@
         if (render) {
             print.render = FDM.prepareRender(output, (progress, layer) => {
                 update(0.5 + progress * 0.5, "render", layer);
-            }, { tools: device.extruders, thin: isThin, flat: isFlat, fdm: true });
+            }, {
+                toolMode: settings.pmode === 2,
+                tools: device.extruders,
+                thin: isThin,
+                flat: isFlat,
+                fdm: true
+            });
         }
 
         return print.render;
@@ -618,6 +635,7 @@
         const arrowAll = false;
         const arrowSize = arrowAll ? 0.2 : 0.4;
         const layers = [];
+        const toolMode = opts.toolMode;
 
         const moveOpt = {
             face: moveColor,
@@ -632,12 +650,18 @@
 
         let minspd = Infinity;
         let maxspd = 0;
+        let maxtool = [];
 
         for (let level of levels) {
             for (let o of level) {
                 if (o.speed) {
                     minspd = Math.min(minspd, o.speed);
                     maxspd = Math.max(maxspd, o.speed);
+                }
+                if (toolMode && o.tool !== undefined) {
+                    if (maxtool.indexOf(o.tool) < 0) {
+                        maxtool.push(o.tool);
+                    }
                 }
             }
         }
@@ -652,6 +676,7 @@
         self.worker.print.thinColor = thin;
         self.worker.print.flatColor = flat;
 
+        let lastTool = null;
         let lastEnd = null;
         let lastOut = null;
         let current = null;
@@ -659,13 +684,18 @@
         let retractz = 0;
 
         function color(point) {
-            return FDM.rateToColor(point.speed, maxspd);
+            if (toolMode) {
+                return FDM.rateToColor(maxtool.indexOf(point.tool), maxtool.length);
+            } else {
+                return FDM.rateToColor(point.speed, maxspd);
+            }
         }
 
         levels.forEach((level, index) => {
             const prints = {};
             const moves = [];
             const heads = [];
+            const changes = [];
             const retracts = [];
             const engages = [];
             const output = new KIRI.Layers();
@@ -688,6 +718,10 @@
                 if (retracted && out.emit) {
                     retracted = false;
                     engages.push(lastOut.point);
+                }
+                if (out.tool !== lastTool) {
+                    lastTool = out.tool;
+                    changes.push(out.point);
                 }
                 if (out.retract) {
                     retracts.push(out.point);
@@ -743,18 +777,25 @@
                 pushPrint(lastOut.tool, current)
             }
             lastEnd = lastOut;
+            if (changes.length) {
+                output
+                    .setLayer('tool', { line: 0x000055, face: 0x0000ff, opacity: 0.5 }, true)
+                    .addAreas(changes.map(point => {
+                        return newPolygon().centerCircle(point, 0.2, 4).setZ(point.z + 0.03);
+                    }), { outline: true });
+            }
             if (retracts.length) {
                 output
                     .setLayer('retract', { line: 0x550000, face: 0xff0000, opacity: 0.5 }, true)
                     .addAreas(retracts.map(point => {
-                        return newPolygon().centerCircle(point, 0.2, 16).setZ(point.z + 0.01);
+                        return newPolygon().centerCircle(point, 0.2, 5).setZ(point.z + 0.01);
                     }), { outline: true });
             }
             if (engages.length) {
                 output
                     .setLayer('engage', { line: 0x005500, face: 0x00ff00, opacity: 0.5 }, true)
                     .addAreas(engages.map(point => {
-                        return newPolygon().centerCircle(point, 0.2, 16).setZ(point.z + 0.01);
+                        return newPolygon().centerCircle(point, 0.2, 7).setZ(point.z + 0.02);
                     }), { outline: true });
             }
             if (heads.length) {
