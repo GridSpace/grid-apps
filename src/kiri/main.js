@@ -1853,7 +1853,7 @@
         if (viewMode !== VIEWS.ARRANGE) {
             return;
         }
-        // apply deselect to entire group
+        // apply select to entire group
         if (recurse && widget && widget.group.length > 1) {
             for (let w of widget.group) {
                 platformSelect(w, true, false);
@@ -1864,15 +1864,15 @@
             sel = (selectedMeshes.indexOf(mesh) >= 0);
         if (sel) {
             if (shift) {
-                platform.deselect(widget)
+                platform.deselect(widget, recurse)
             } else if (selectedMeshes.length > 1) {
-                platform.deselect();
-                platform.select(widget, false);
+                platform.deselect(undefined, recurse);
+                platform.select(widget, false, recurse);
             }
         } else {
             // prevent selection in slice view
             if (!mesh.material.visible) return;
-            if (!shift) platform.deselect();
+            if (!shift) platform.deselect(undefined, recurse);
             selectedMeshes.push(mesh);
             API.event.emit('widget.select', widget);
             widget.setColor(color.selected);
@@ -2135,7 +2135,7 @@
                 w.setColor(color);
             };
             b.onclick = function() {
-                platformSelect(w, true);
+                platformSelect(w, true, false);
                 color = w.getColor();
             };
         }

@@ -2379,7 +2379,7 @@
             if (event && event.target.nodeName === "CANVAS") {
                 if (object && object.object) {
                     if (object.object.widget) {
-                        platform.select(object.object.widget, event.shiftKey);
+                        platform.select(object.object.widget, event.shiftKey, false);
                     }
                 } else {
                     platform.deselect();
