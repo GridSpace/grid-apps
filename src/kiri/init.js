@@ -109,6 +109,14 @@
         }
     }
 
+    function filamentSourceSave() {
+        const sel = UI.filamentSource.options[UI.filamentSource.selectedIndex];
+        if (sel) {
+            settings().device.filamentSource = sel.value;
+            API.conf.save();
+        }
+    }
+
     function detailSave() {
         let level = UI.detail.options[UI.detail.selectedIndex];
         if (level) {
@@ -745,6 +753,7 @@
             UI.deviceRound.checked = dev.bedRound;
             UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
             UI.fwRetract.checked = dev.fwRetract;
+            if (!dev.filamentSource) UI.filamentSource.selectedIndex = 0;
 
             // add extruder selection buttons
             if (dev.extruders) {
@@ -791,6 +800,7 @@
                 UI.deviceRound,
                 UI.deviceBelt,
                 UI.fwRetract,
+                UI.filamentSource,
                 UI.deviceZMax,
                 UI.gcodeFan,
                 UI.gcodeTrack,
@@ -1619,7 +1629,7 @@
             spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
             deviceZMax:       UC.newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:UC.toInt, size: 6, modes:FDM}),
             fdmSep:           UC.newBlank({class:"pop-sep", modes:FDM}),
-            filamentSource:   UC.newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: lineTypeSave, modes:FDM}, "filasrc"),
+            filamentSource:   UC.newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM}, "filasrc"),
             fwRetract:        UC.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
             deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER, show:() => !UI.deviceRound.checked}),
             deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),

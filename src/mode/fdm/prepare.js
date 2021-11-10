@@ -34,6 +34,7 @@
             isThin = controller.lineType === "line",
             isFlat = controller.lineType === "flat",
             isDanger = controller.danger || false,
+            isPalette = device.filamentSource === 'palette3',
             firstLayerHeight = isBelt ? process.sliceHeight : process.firstSliceHeight || process.sliceHeight,
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,

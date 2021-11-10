@@ -119,7 +119,8 @@
             icos = 1 / bcos,
             inloops = 0,
             arcQ = [],
-            minz = { x: Infinity, y: Infinity, z: Infinity };
+            minz = { x: Infinity, y: Infinity, z: Infinity },
+            isPalette = device.filamentSource === 'palette3';
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
