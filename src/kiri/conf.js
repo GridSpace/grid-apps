@@ -700,8 +700,8 @@
                 detail: "75",
                 animesh: "200",
                 healMesh: false,
-                threaded: false,
-                assembly: false,
+                threaded: true,
+                assembly: true,
                 ortho: false,
                 devel: false
             },
