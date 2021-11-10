@@ -1739,6 +1739,11 @@ th, tr, td, label {
     font-family: monospace;
 }
 
+#fs-edit {
+    text-transform: none;
+    padding: 1px 3px 1px 3px;
+    margin: 0 3px 0 0 !important;
+}
 #gdpr {
     position: absolute;
     display: none;

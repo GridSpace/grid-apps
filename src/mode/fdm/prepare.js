@@ -242,6 +242,7 @@
             }
         }
 
+        // determine size/location of purge blocks
         let blokpos, walkpos, blok;
         if (bounds.min.x < bounds.min.y) {
             let dx = ((bounds.max.x - bounds.min.x) - (extcount * 10)) / 2 + 5;
@@ -255,7 +256,7 @@
             blok = { x:4, y:9 };
         }
 
-        // compute purge blocks
+        // replace extruders array with object array containing more info
         extruders = extruders.map((ext,i) => {
             if (!ext) return ext;
             let noz = device.extruders[i].extNozzle,

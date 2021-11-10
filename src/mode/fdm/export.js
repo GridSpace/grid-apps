@@ -120,7 +120,8 @@
             inloops = 0,
             arcQ = [],
             minz = { x: Infinity, y: Infinity, z: Infinity },
-            isPalette = device.filamentSource === 'palette3';
+            isPalette = device.filamentSource === 'palette3',
+            segments = [];
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
@@ -485,6 +486,7 @@
 
                 // look for extruder change, run scripts, recalc emit factor
                 if (out.tool !== undefined && out.tool != tool) {
+                    segments.push({emitted, tool});
                     appendAllSub(extruder.extDeselect);
                     tool = out.tool;
                     subst.nozzle = subst.tool = tool;
@@ -496,7 +498,10 @@
                         extruder.extFilament,
                         path.layer === 0 ?
                             (process.firstSliceHeight || process.sliceHeight) : path.height);
-                    appendAllSub(extruder.extSelect);
+                    // do not run extruder swapping code when source is Palette3
+                    if (!isPalette) {
+                        appendAllSub(extruder.extSelect);
+                    }
                 }
 
                 // if no point in output, it's a dwell command
@@ -804,6 +809,7 @@
             append(`M808`);
         }
 
+        segments.push({emitted, tool});
         subst.material = UTIL.round(emitted,2);
         subst.time = UTIL.round(time,2);
         subst['print_time'] = subst.time;
@@ -816,12 +822,14 @@
         // force emit of buffer
         append();
 
+        print.segments = segments;
         print.distance = emitted;
         print.lines = lines;
         print.bytes = bytes + lines - 1;
         print.time = time;
 
         if (debug) {
+            console.log('segments', segments);
             console.log('minz', minz);
         }
     };

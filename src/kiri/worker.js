@@ -446,11 +446,11 @@ KIRI.worker = {
         }, function(debug) {
             send.data({debug});
         });
-        const { bounds, time, lines, bytes, distance, settings } = current.print;
+        const { bounds, time, lines, bytes, distance, settings, segments } = current.print;
 
         send.done({
             done: true,
-            output: output ? output : { bounds, time, lines, bytes, distance, settings }
+            output: output ? output : { bounds, time, lines, bytes, distance, settings, segments }
         });
     },
 

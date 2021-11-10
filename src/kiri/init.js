@@ -109,11 +109,32 @@
         }
     }
 
+    function filamentSourceEditUpdate() {
+        if (UI.filamentSource && UI.filamentSourceEdit) {
+            const sel = UI.filamentSource.options[UI.filamentSource.selectedIndex];
+            if (sel) {
+                UI.filamentSourceEdit.style.display = sel.value === 'palette3' ? '' : 'none';
+            }
+        }
+    }
+
     function filamentSourceSave() {
         const sel = UI.filamentSource.options[UI.filamentSource.selectedIndex];
         if (sel) {
             settings().device.filamentSource = sel.value;
             API.conf.save();
+        }
+        filamentSourceEditUpdate();
+    }
+
+    function palette3Config() {
+        let conf = API.conf.get().extras;
+        if (!conf.palette) {
+            conf.palette = { printer: "uuid" };
+        }
+        let uuid = prompt('Printer UID from Canvas', conf.palette.printer);
+        if (uuid) {
+            conf.palette.printer = uuid;
         }
     }
 
@@ -868,6 +889,7 @@
             }
 
             UC.refresh();
+            filamentSourceEditUpdate();
 
             if (dev.imageURL) {
                 if (dev.imageURL !== deviceURL) {
@@ -1642,6 +1664,7 @@
             extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM}),
             extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
             extDeselect:      UC.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
+            extPad:           UC.newBlank({class:"grow", modes:FDM}),
             extActions:       UC.newRow([
                 UI.extPrev = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
                 UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
@@ -2763,6 +2786,16 @@
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
             API.show.alert("this is a beta / development release");
             SDB.kiri_beta = KIRI.beta;
+        }
+
+        // add palette3 edit button after filament source selector
+        {
+            let fsp = UI.filamentSource.parentNode;
+            let btn = UI.filamentSourceEdit = DOC.createElement('button');
+            btn.setAttribute('id', 'fs-edit');
+            btn.appendChild(DOC.createTextNode('edit'));
+            fsp.insertBefore(btn, UI.filamentSource);
+            btn.onclick = palette3Config;
         }
     }
 
