@@ -186,6 +186,10 @@
             { name: "flat" },
             { name: "line" }
         ],
+        filasrc: [
+            { name: "direct" },
+            { name: "palette3" }
+        ],
         animesh: [
             { name: "100" },
             { name: "200" },

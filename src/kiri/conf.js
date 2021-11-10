@@ -282,6 +282,7 @@
                     bedRound: false,
                     bedBelt: false,
                     fwRetract: false,
+                    filamentSource: "direct",
                     originCenter: false,
                     deviceZMax: 0,
                     maxHeight: 150,

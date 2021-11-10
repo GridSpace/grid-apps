@@ -60,6 +60,7 @@ kiri.lang['en-us'] = {
     rc_swap:        "replace vertices",
     rc_xobj:        "export OBJ",
     rc_xstl:        "export STL",
+    sb_info:        ["print speed","in mm/s"],
 
     // DEVICE MENU and related dialogs
     dm_sldt:        "select a device type",
@@ -116,6 +117,8 @@ kiri.lang['en-us'] = {
     dv_bedc_l:      "device bed is circular",
     dv_belt_s:      "belt bed",
     dv_belt_l:      "continuous printing bed",
+    dv_fsrc_s:      "filament source",
+    dv_fsrc_l:      ["how filament is fed\ninto the extruder"],
     dv_retr_s:      "firmware retract",
     dv_retr_l:      ["device fimware supports G10/G11"],
     dv_fanp_s:      "fan power",

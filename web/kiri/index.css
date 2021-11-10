@@ -1580,9 +1580,7 @@ th, tr, td, label {
     top: 3px;
     right: 0;
     bottom: 3px;
-    border-radius: 5px;
-    border: 3px solid rgba(200,200,200,0.5);
-    background-color: #888;
+    background-color: transparent;
 }
 #speedbar label {
     flex-grow: 1;
@@ -1595,6 +1593,8 @@ th, tr, td, label {
     font-size: 12px;
     padding: 0 5px 0 5px;
     color: #fff;
+    margin: 0.5px;
+    border-radius: 3px;
 }
 
 #settings {
@@ -1625,6 +1625,7 @@ th, tr, td, label {
     padding: 0 !important;
     height: 1px;
     margin-top: 2px;
+    margin-bottom: 2px;
     background-color: #bbb;
 }
 .set-sep {
