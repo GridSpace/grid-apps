@@ -1265,8 +1265,14 @@
 
     function preparePreview(callback, scale = 1, offset = 0) {
         if (complete.preview === feature.pmode) {
-            if (callback) callback();
-            return;
+            if (settings.device.extruders.length > 1) {
+                if (++feature.pmode > 2) {
+                    feature.pmode = 1;
+                }
+            } else {
+                if (callback) callback();
+                return;
+            }
         }
         if (!complete.slice) {
             settings.render = false;
