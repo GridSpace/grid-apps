@@ -822,7 +822,7 @@
         // force emit of buffer
         append();
 
-        print.segments = segments;
+        print.segments = isPalette ? segments : undefined;
         print.distance = emitted;
         print.lines = lines;
         print.bytes = bytes + lines - 1;

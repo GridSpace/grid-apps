@@ -106,6 +106,10 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 $('print-filename').value + ".gcode");
         }
 
+        function download_palette() {
+            console.log('todo');
+        }
+
         API.ajax("/kiri/output-laser.html", function(html) {
             let segments = 0;
             data.forEach(layer => { segments += layer.length });
@@ -452,6 +456,98 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             calcTime();
             if (fdm) {
                 calcWeight();
+            }
+
+            // in palette mode, show download button
+            let downloadPalette = $('print-palette');
+            downloadPalette.style.display = info.segments ? 'flex' : 'none';
+            // generate MAFX downloadble file
+            if (info.segments) {
+                // todo: reduce segments to eliminate 0 lenghts and transitions before 150mm
+                let { settings, segments } = info;
+                let { bounds } = settings;
+                let { min, max } = bounds;
+                let driveInfo = {};
+                let volume = {};
+                let length = {};
+                for (let seg of segments) {
+                    let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
+                    seginfo.length += seg.emitted;
+                    seginfo.volume += seg.emitted * Math.PI;
+                    volume[seg.tool+1] = seginfo.volume;
+                    length[seg.tool+1] = seginfo.length;
+                }
+                let totalVolume = Object.values(volume).reduce((a,v) => a+v);
+                let meta = {
+                    version: "3.2",
+                    printerProfile: {
+                        id: settings.extras.palette.printer,
+                        name: "my printer"
+                    },
+                    preheatTemperature: { nozzle: [0], bed: 0 },
+                    paletteNozzle: 0,
+                    time: info.time.round(1),
+                    volume,
+                    length,
+                    totalLength: info.distance.round(1),
+                    totalVolume,
+                    inputsUsed: Object.keys(driveInfo).length,
+                    splices: segments.length,
+                    pings: 0,
+                    boundingBox: {
+                        min: [ min.x, min.y, min.z ],
+                        max: [ max.x, max.y, max.z ]
+                    },
+                    filaments: Object.keys(driveInfo).map(v => { return {
+                        name: `Color${v}`,
+                        type: "Filament",
+                        color: `#${v}0${v}0${v}0`,
+                        materialId: 1,
+                        filamentId: parseInt(v)+1
+                    }}),
+                };
+                let lastDrive;
+                let algokeys = {};
+                let algorithms = [];
+                let palette = {
+                    version: "3.0",
+                    drives: [0, 0, 0, 0, 0, 0, 0, 0].map((v,i) => {
+                        return driveInfo[i] ? i+1 : 0
+                    }),
+                    splices: segments.filter(r => {
+                        return r.emitted >= 150;
+                    }).map(r => {
+                        if (lastDrive >= 0 && lastDrive !== r.tool) {
+                            let key = `${lastDrive}+${r.tool}`;
+                            if (!algokeys[key]) {
+                                let rec = algokeys[key] = {
+                                    ingoingId: lastDrive + 1,
+                                    outgoingId: r.tool + 1,
+                                    compression: 0,
+                                    cooling: 0,
+                                    heat: 0
+                                };
+                                algorithms.push(rec);
+                            }
+                        }
+                        lastDrive = r.tool;
+                        return { id: r.tool + 1, length: r.emitted.round(2) }
+                    }),
+                    pings: [],
+                    algorithms
+                };
+                console.log({meta, palette});
+                downloadPalette.onclick = function() {
+                    KIRI.client.zip([
+                        {name:"meta.json", data:JSON.stringify(meta,undefined,4)},
+                        {name:"palette.json", data:JSON.stringify(palette,undefined,4)}
+                    ], progress => {
+                        API.show.progress(progress.percent/100, "generating palette files");
+                    }, output => {
+                        API.show.progress(0);
+                        API.util.download(output, `${name}.mafx`);
+                    })
+                };
             }
 
             // octoprint setup

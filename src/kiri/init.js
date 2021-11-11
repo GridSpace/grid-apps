@@ -641,14 +641,14 @@
                 let work = $('incwork').checked;
                 let json = API.conf.export({work, clear:true});
 
-                KIRI.client.zip([{
-                    name:"workspace.json", data:JSON.stringify(json)}
+                KIRI.client.zip([
+                    {name:"workspace.json", data:JSON.stringify(json)}
                 ], progress => {
                     API.show.progress(progress.percent/100, "compressing workspace");
                 }, output => {
                     API.show.progress(0);
                     API.util.download(output, `${name}.kmz`);
-                })
+                });
             }
         });
     }

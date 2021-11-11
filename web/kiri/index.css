@@ -1130,6 +1130,9 @@ th, tr, td, label {
 #print-download {
     min-height: 4em !important;
 }
+#print-palette {
+    display: none;
+}
 #code-preview-textarea {
     width: 40em;
     height: 12em;
