@@ -1094,7 +1094,6 @@
         if (MODE === MODES.SLA && !callback) {
             callback = preparePreview;
         }
-
         // force layout in belt mode when widget exceeds bed length
         if (WIDGETS.length && settings.device.bedBelt) {
             let doLayout = false;

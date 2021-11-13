@@ -218,6 +218,20 @@ KIRI.worker = {
         send.done();
     },
 
+    png: function(data, send) {
+        if (current.snap) {
+            let sws = current.snap.url;
+            let b64 = atob(sws.substring(sws.indexOf(',') + 1));
+            let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
+            let img = new png.PNG();
+            img.parse(bin, (err, data) => {
+                send.done({png: bin}, [ bin ]);
+            });
+        } else {
+            send.done({error: "missing snapshot"});
+        }
+    },
+
     clear: function(data, send) {
         current.snap = null;
         current.print = null;

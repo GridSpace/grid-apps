@@ -132,7 +132,7 @@
         if (!conf.palette) {
             conf.palette = { printer: "uuid" };
         }
-        let uuid = prompt('Printer UID from Canvas', conf.palette.printer);
+        let uuid = prompt('Unique Printer Identifier (can me made up)', conf.palette.printer);
         if (uuid) {
             conf.palette.printer = uuid;
         }

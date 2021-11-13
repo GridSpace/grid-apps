@@ -106,10 +106,6 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 $('print-filename').value + ".gcode");
         }
 
-        function download_palette() {
-            console.log('todo');
-        }
-
         API.ajax("/kiri/output-laser.html", function(html) {
             let segments = 0;
             data.forEach(layer => { segments += layer.length });
@@ -465,14 +461,16 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             if (info.segments) {
                 // todo: reduce segments to eliminate 0 lenghts and transitions before 150mm
                 let { settings, segments } = info;
-                let { bounds } = settings;
+                let { device, bounds } = settings;
                 let { min, max } = bounds;
                 let driveInfo = {};
                 let volume = {};
                 let length = {};
+                // add 600mm of filament to the last segment for bowden drives
+                segments.peek().emitted += 650;
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
-                    seginfo.length += seg.emitted;
+                    seginfo.length += seg.emitted + 5;
                     seginfo.volume += seg.emitted * Math.PI;
                     volume[seg.tool+1] = seginfo.volume;
                     length[seg.tool+1] = seginfo.length;
@@ -482,7 +480,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     version: "3.2",
                     printerProfile: {
                         id: settings.extras.palette.printer,
-                        name: "my printer"
+                        name: device.deviceName || "My Printer"
                     },
                     preheatTemperature: { nozzle: [0], bed: 0 },
                     paletteNozzle: 0,
@@ -536,16 +534,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     pings: [],
                     algorithms
                 };
-                console.log({meta, palette});
+                let png;
+                KIRI.work.png({}, data => {
+                    png = data.png;
+                });
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},
-                        {name:"palette.json", data:JSON.stringify(palette,undefined,4)}
+                        {name:"palette.json", data:JSON.stringify(palette,undefined,4)},
+                        {name:"thumbnail.png", data:png.buffer}
                     ], progress => {
                         API.show.progress(progress.percent/100, "generating palette files");
                     }, output => {
                         API.show.progress(0);
-                        API.util.download(output, `${name}.mafx`);
+                        API.util.download(output, `${$('print-filename').value}.mafx`);
                     })
                 };
             }

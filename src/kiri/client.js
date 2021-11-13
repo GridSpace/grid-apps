@@ -145,6 +145,10 @@ KIRI.work = {
         send("snap", data, function(reply) { });
     },
 
+    png: function(data, ondone) {
+        send("png", data, ondone);
+    },
+
     // widget sync
     sync: function(widgets) {
         if (!widgets) {

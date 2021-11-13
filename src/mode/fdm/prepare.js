@@ -243,17 +243,23 @@
         }
 
         // determine size/location of purge blocks
+        let blokw = isPalette ? 20 : 10, blokh = isPalette ? 20 : 10;
+        let stepw = blokw + nozzle / 2;
         let blokpos, walkpos, blok;
+
         if (bounds.min.x < bounds.min.y) {
-            let dx = ((bounds.max.x - bounds.min.x) - (extcount * 10)) / 2 + 5;
-            blokpos = { x:bounds.min.x + dx, y: bounds.max.y + 5};
-            walkpos  = { x:10, y:0 };
-            blok = { x:9, y:4 };
+            let mx = (bounds.max.x + bounds.min.x) / 2;
+            let px = mx - (extcount * blokw) / 2 + (blokw / 2);
+            let dx = ((bounds.max.x - bounds.min.x) - (extcount * blokw)) / 2;
+            blokpos = { x:px, y: bounds.max.y + 2 + blokh / 2};
+            walkpos  = { x:stepw, y:0 };
+            blok = { x:blokw, y:blokh };
         } else {
-            let dy = ((bounds.max.y - bounds.min.y) - (extcount * 10)) / 2 + 5;
-            blokpos = { x:bounds.max.x + 5, y: bounds.min.y + dy};
-            walkpos  = { x:0, y:10 };
-            blok = { x:4, y:9 };
+            let my = (bounds.max.y + bounds.min.y) / 2;
+            let py = my - (extcount * blokw) / 2 + (blokw / 2);
+            blokpos = { x:bounds.max.x + 2 + blokh / 2, y:py};
+            walkpos  = { x:0, y:stepw };
+            blok = { x:blokh, y:blokw };
         }
 
         // replace extruders array with object array containing more info
@@ -261,14 +267,42 @@
             if (!ext) return ext;
             let noz = device.extruders[i].extNozzle,
                 pos = {x:blokpos.x, y:blokpos.y, z:0},
+                rect = newPolygon().centerRectangle(pos, blok.x, blok.y),
+                full = linesToPoly(POLY.fillArea([
+                    newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
+                ], 45, noz)),
+                sparse = linesToPoly(POLY.fillArea([
+                    newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
+                ], 135, noz * 5)),
                 rec = {
                     extruder: i,
-                    poly: newPolygon().centerSpiral(pos, blok.x, blok.y, noz*2, 3)
+                    rect,
+                    full,
+                    sparse
                 };
             blokpos.x += walkpos.x;
             blokpos.y += walkpos.y;
             return rec;
         });
+
+        function linesToPoly(points) {
+            let poly = newPolygon().setOpen();
+            let ping = 0;
+            for (let i=0; i<points.length; i += 2) {
+                let p1 = points[i];
+                let p2 = points[i+1];
+                if (ping++ % 2 === 0) {
+                    poly.push(p1);
+                    poly.push(p2);
+                } else {
+                    poly.push(p2);
+                    poly.push(p1);
+                }
+            }
+            return poly;
+        }
+
+        let lastPurgeTool;
 
         // generate purge block for given nozzle
         function purge(nozzle, track, layer, start, z, using) {
@@ -276,15 +310,27 @@
                 return start;
             }
             let rec = track[nozzle];
+            let thin = using >= 0 || lastPurgeTool === nozzle;
+            let tool = using >= 0 ? using : nozzle;
+            let first = layer.slice.index === 0;
+            let rate = first ? process.firstLayerRate : process.outputFeedrate;
+            lastPurgeTool = tool;
             if (rec) {
                 track[nozzle] = null;
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
-                start = print.polyPrintPath(rec.poly.clone().setZ(z), start, layer, {
-                    tool: using !== undefined ? using : nozzle,
+                start = print.polyPrintPath(rec.rect.clone().setZ(z), start, layer, {
+                    tool,
+                    rate,
+                    simple: true,
+                    open: false,
+                });
+                start = print.polyPrintPath((thin && !first ? rec.sparse : rec.full).clone().setZ(z), start, layer, {
+                    tool,
+                    rate,
+                    simple: true,
                     open: true,
-                    simple: true
                 });
                 layer.last().retract = true;
                 return start;

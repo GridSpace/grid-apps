@@ -268,11 +268,16 @@
                     }
                 });
             }
-            if (extrudeAbs && line.indexOf('E') > 0) {
+            if (line.indexOf('E') > 0) {
                 line.split(";")[0].split(' ').forEach(function (tok) {
                     // use max E position from gcode-preamble
                     if (tok[0] == 'E') {
-                        outputLength = Math.max(outputLength, parseFloat(tok.substring(1)) || 0);
+                        if (extrudeAbs) {
+                            outputLength = Math.max(outputLength, parseFloat(tok.substring(1)) || 0);
+                            emitted = outputLength;
+                        } else {
+                            emitted += parseFloat(tok.substring(1) || 0);
+                        }
                     }
                 });
             }
