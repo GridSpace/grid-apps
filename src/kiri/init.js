@@ -811,7 +811,6 @@
                 UI.gcodePost,
                 UI.gcodeExt,
                 UI.gcodeInt,
-                UI.gcodePause,
                 UI.bedDepth,
                 UI.bedWidth,
                 UI.maxHeight,
@@ -1684,7 +1683,6 @@
                 (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
-                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeExt = UC.newGCode(LANG.dv_pext_s, {title:LANG.dv_pext_l, modes:FDM, area:gcode, show:isDanger})).button,
                 (UI.gcodeInt = UC.newGCode(LANG.dv_pint_s, {title:LANG.dv_pint_l, modes:FDM, area:gcode, show:isDanger})).button,
                 (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
@@ -1913,9 +1911,8 @@
             arcTolerance:        UC.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:UC.bound(0,1.0), convert:UC.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
             antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true, show:isNotBelt}),
             outputLoops:         UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:UC.toInt, bound:UC.bound(0,1000), modes:FDM, show:isBelt}),
-            outputPurgeTower:    UC.newBoolean(LANG.ad_purg_s, onBooleanClick, {title:LANG.ad_purg_l, modes:FDM, show:isMultiHead}),
+            outputPurgeTower:    UC.newInput(LANG.ad_purg_s, {title:LANG.ad_purg_l, convert:UC.toInt, bound:UC.bound(0,1000), modes:FDM}),
 
             // SLA
             slaProc:             UC.newGroup(LANG.sa_menu, null, {modes:SLA, group:"sla-slice"}),

@@ -39,7 +39,7 @@
             firstLayerSeek = process.outputSeekrate,
             firstLayerRate = process.firstLayerRate,
             firstLayerMult = process.firstLayerPrintMult,
-            purgeTower = process.outputPurgeTower || false,
+            purgeTower = process.outputPurgeTower || 0,
             layerRetract = process.outputLayerRetract,
             layerno = 0,
             zoff = 0,
@@ -243,7 +243,8 @@
         }
 
         // determine size/location of purge blocks
-        let blokw = isPalette ? 20 : 10, blokh = isPalette ? 20 : 10;
+        let blokw = Math.sqrt(purgeTower),
+            blokh = blokw;
         let stepw = blokw + nozzle / 2;
         let blokpos, walkpos, blok;
 

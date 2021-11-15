@@ -133,7 +133,6 @@
             // for XYZ.daVinci.Mini.w triggered in kiri.export
             // in the fdm driver to turn gcode into base64
             gcodeProc: valueOf(code.proc, ''),
-            gcodePause: valueOf(code.pause, []),
             gcodeDwell: valueOf(code.dwell, []),
             gcodeSpindle: valueOf(code.spindle || cmd.spindle, []),
             gcodeChange: valueOf(code['tool-change'], []),
@@ -290,7 +289,6 @@
                     gcodePost: [],
                     gcodeExt: [],
                     gcodeInt: [],
-                    gcodePause: [],
                     gcodeProc: "",
                     gcodeFan: [],
                     gcodeTrack: [],
@@ -372,7 +370,7 @@
                     outputShortPoly: 100.0,
                     outputMinSpeed: 10.0,
                     outputCoastDist: 0,
-                    outputPurgeTower: true,
+                    outputPurgeTower: 0,
                     outputBeltFirst: false,
                     outputAvoidGaps: true,
                     outputLayerRetract: false,
@@ -386,7 +384,6 @@
                     zHopDistance: 0.2,
                     arcTolerance: 0,
                     antiBacklash: 1,
-                    gcodePauseLayers: "",
                     ranges: []
                 }
             },

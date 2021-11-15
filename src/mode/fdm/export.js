@@ -176,10 +176,10 @@
         }
         let loops = isBelt && rloops.length ? rloops : undefined;
 
-        (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
-            let v = parseInt(lv);
-            if (v >= 0) pause.push(v);
-        });
+        // (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
+        //     let v = parseInt(lv);
+        //     if (v >= 0) pause.push(v);
+        // });
 
         append = function(line) {
             if (line) {
@@ -826,7 +826,7 @@
 
         // force emit of buffer
         append();
-
+        // console.log({segments, emitted, outputLength});
         print.segments = isPalette ? segments : undefined;
         print.distance = emitted;
         print.lines = lines;

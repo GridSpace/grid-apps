@@ -470,7 +470,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 segments.peek().emitted += 650;
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
-                    seginfo.length += seg.emitted + 5;
+                    seginfo.length += seg.emitted;
                     seginfo.volume += seg.emitted * Math.PI;
                     volume[seg.tool+1] = seginfo.volume;
                     length[seg.tool+1] = seginfo.length;
@@ -500,13 +500,26 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                         name: `Color${v}`,
                         type: "Filament",
                         color: `#${v}0${v}0${v}0`,
-                        materialId: 1,
-                        filamentId: parseInt(v)+1
+                        materialId: parseInt(v) + 1,
+                        filamentId: parseInt(v) + 1
                     }}),
                 };
                 let lastDrive;
                 let algokeys = {};
                 let algorithms = [];
+                let defaultSplice = {
+                    compression: 3,
+                    cooling: 2,
+                    heat: 4
+                };
+                for (let key of Object.keys(driveInfo)) {
+                    key = parseInt(key) + 1;
+                    algorithms.push({
+                        ingoingId: key,
+                        outgoingId: key,
+                        ...defaultSplice
+                    });
+                }
                 let palette = {
                     version: "3.0",
                     drives: [0, 0, 0, 0, 0, 0, 0, 0].map((v,i) => {
@@ -521,9 +534,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                                 let rec = algokeys[key] = {
                                     ingoingId: lastDrive + 1,
                                     outgoingId: r.tool + 1,
-                                    compression: 0,
-                                    cooling: 0,
-                                    heat: 0
+                                    ...defaultSplice
                                 };
                                 algorithms.push(rec);
                             }
@@ -538,6 +549,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 KIRI.work.png({}, data => {
                     png = data.png;
                 });
+                console.log({meta,palette});
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},

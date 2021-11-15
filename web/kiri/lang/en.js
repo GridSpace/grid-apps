@@ -624,7 +624,7 @@ kiri.lang['en-us'] = {
     ad_pspd_s:      "polish speed",
     ad_pspd_l:      ["polishing speed","in millimeters / second"],
     ad_purg_s:      "purge tower",
-    ad_purg_l:      ["enable purge tower","for multiple extruders"],
+    ad_purg_l:      ["purge tower area in mm^2","for multi extruder setups","0 = disabled"],
 
     // CAM EXPERT
     cx_fast_s:      "skip shadow",
@@ -638,8 +638,8 @@ kiri.lang['en-us'] = {
     ag_nozl_l:      "select output nozzle or head",
     ag_peel_s:      "peel guard",
     ag_peel_l:      ["starting at this belt z position","periodically roll the print off and","back on to the belt to unstick it","and prevent rolling deflection"],
-    ag_paws_s:      "pause layers",
-    ag_paws_l:      ["comma-separated list of layers","to inject pause commands before"],
+    // ag_paws_s:      "pause layers",
+    // ag_paws_l:      ["comma-separated list of layers","to inject pause commands before"],
     // ag_loop_s:      "loop layers",
     // ag_loop_l:      ["layer ranges to repeat in the format","first-last-count,first-last-count,...","omitted count = 1"],
     ag_loop_s:      "loop count",

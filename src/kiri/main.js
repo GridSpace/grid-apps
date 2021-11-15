@@ -2165,7 +2165,7 @@
     }
 
     function platformSelectAll() {
-        forAllWidgets(function(w) { platform.select(w, true) })
+        forAllWidgets(function(w) { platform.select(w, true, false) })
     }
 
     function platformLayout(event, space = settings.controller.spaceLayout) {
