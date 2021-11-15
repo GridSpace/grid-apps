@@ -111,6 +111,7 @@
 
     function filamentSourceEditUpdate() {
         if (UI.filamentSource && UI.filamentSourceEdit) {
+            API.event.emit("filament.source");
             const sel = UI.filamentSource.options[UI.filamentSource.selectedIndex];
             if (sel) {
                 UI.filamentSourceEdit.style.display = sel.value === 'palette3' ? '' : 'none';
@@ -2836,16 +2837,13 @@
                     };
                 };
             };
-            API.event.on("device.select", () => {
+            API.event.on(["device.select", "filament.source"], () => {
                 UI.extruder.parentNode.style.display = 'flex';
                 UI.palette.parentNode.style.display = 'none';
                 btn.innerText = 'edit';
                 btn.onclick = edit;
             });
-            API.event.on("device.save", () => {
-                console.log('before device save');
-                editDone();
-            });
+            API.event.on("device.save", editDone);
         }
     }
 
