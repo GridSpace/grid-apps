@@ -301,7 +301,9 @@
                         extDeselect: [],
                         extOffsetX: 0,
                         extOffsetY: 0
-                    }]
+                    }],
+                    // other stored info like palette3 config
+                    extras: {}
                 },
                 // process defaults FDM:Process
                 p:{
@@ -713,8 +715,6 @@
             synth: {},
             // widget extra info for slicing (extruder mapping)
             widget: {},
-            // other stored info like palette3 config
-            extras: {},
             mode: 'FDM',
             id: genID(),
             ver: CVER

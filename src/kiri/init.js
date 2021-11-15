@@ -127,17 +127,6 @@
         filamentSourceEditUpdate();
     }
 
-    function palette3Config() {
-        let conf = API.conf.get().extras;
-        if (!conf.palette) {
-            conf.palette = { printer: "uuid" };
-        }
-        let uuid = prompt('Unique Printer Identifier (can me made up)', conf.palette.printer);
-        if (uuid) {
-            conf.palette.printer = uuid;
-        }
-    }
-
     function detailSave() {
         let level = UI.detail.options[UI.detail.selectedIndex];
         if (level) {
@@ -735,6 +724,7 @@
     }
 
     function setDeviceCode(code, devicename) {
+        API.event.emit('device.select', {devicename, code});
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
 
@@ -1010,7 +1000,10 @@
 
         devices = devices.sort();
 
+        API.event.emit('devices.render', devices);
+
         UI.deviceSave.onclick = function() {
+            API.event.emit('device.save');
             API.function.clear();
             API.conf.save();
             showDevices();
@@ -1671,7 +1664,16 @@
                 UI.extNext = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
             ], {modes:FDM, class:"dev-buttons ext-buttons"}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LASER}),
+            palette:          UC.newGroup(LANG.dv_gr_pal, $('palette3'), {group:"dext", inline:true, modes:FDM}),
+            paletteId:        UC.newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15}),
+            palettePing:      UC.newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:UC.toInt}),
+            paletteFeed:      UC.newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:UC.toInt}),
+            palettePush:      UC.newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:UC.toInt}),
+            paletteHeat:      UC.newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:UC.toInt}),
+            paletteCool:      UC.newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:UC.toInt}),
+            palettePress:     UC.newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:UC.toInt}),
+
+            gcode:            UC.newGroup(LANG.dv_gr_out, $('device3'), {group:"dgco", inline:true, modes:CAM_LASER}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
@@ -1680,9 +1682,9 @@
             gcodeMacros:      UC.newRow([
                 (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
                 (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button,
-                (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
-                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
+                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
+                (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
                 (UI.gcodeExt = UC.newGCode(LANG.dv_pext_s, {title:LANG.dv_pext_l, modes:FDM, area:gcode, show:isDanger})).button,
                 (UI.gcodeInt = UC.newGCode(LANG.dv_pint_s, {title:LANG.dv_pint_l, modes:FDM, area:gcode, show:isDanger})).button,
                 (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
@@ -2792,7 +2794,58 @@
             btn.setAttribute('id', 'fs-edit');
             btn.appendChild(DOC.createTextNode('edit'));
             fsp.insertBefore(btn, UI.filamentSource);
-            btn.onclick = palette3Config;
+            let editDone;
+            let edit = btn.onclick = () => {
+                let device = API.conf.get().device;
+                let extra = device.extras = device.extras || {};
+                let pinfo = extra.palette;
+                if (!pinfo) {
+                    pinfo = extra.palette = {
+                        printer: Math.round(Math.random() * 0xffffffffffff).toString(16),
+                        feed: 570,
+                        push: 600,
+                        heat: 0,
+                        cool: 0,
+                        press: 0
+                    };
+                }
+                UI.paletteId.value = pinfo.printer;
+                UI.palettePing.value = pinfo.ping || 0;
+                UI.paletteFeed.value = pinfo.feed || 0;
+                UI.palettePush.value = pinfo.push || 0;
+                UI.paletteHeat.value = pinfo.heat || 0;
+                UI.paletteCool.value = pinfo.cool || 0;
+                UI.palettePress.value = pinfo.press || 0;
+                UI.extruder.parentNode.style.display = 'none';
+                UI.palette.parentNode.style.display = 'flex';
+                btn.innerText = 'done';
+                btn.onclick = editDone = () => {
+                    btn.onclick = edit;
+                    btn.innerText = 'edit';
+                    UI.extruder.parentNode.style.display = 'flex';
+                    UI.palette.parentNode.style.display = 'none';
+                    // save settings
+                    extra.palette = {
+                        printer: UI.paletteId.value,
+                        ping: UI.palettePing.convert(),
+                        feed: UI.paletteFeed.convert(),
+                        push: UI.palettePush.convert(),
+                        heat: UI.paletteHeat.convert(),
+                        cool: UI.paletteCool.convert(),
+                        press: UI.palettePress.convert()
+                    };
+                };
+            };
+            API.event.on("device.select", () => {
+                UI.extruder.parentNode.style.display = 'flex';
+                UI.palette.parentNode.style.display = 'none';
+                btn.innerText = 'edit';
+                btn.onclick = edit;
+            });
+            API.event.on("device.save", () => {
+                console.log('before device save');
+                editDone();
+            });
         }
     }
 

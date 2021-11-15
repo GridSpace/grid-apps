@@ -20,6 +20,7 @@
             thumbnails = controller.exportThumb,
             getRangeParameters = FDM.getRangeParameters,
             device = settings.device,
+            extras = device.extras || {},
             extruders = device.extruders,
             extused = Object.keys(print.extruders).map(v => parseInt(v)),
             gcodeFan = device.gcodeFan,
@@ -121,6 +122,9 @@
             arcQ = [],
             minz = { x: Infinity, y: Infinity, z: Infinity },
             isPalette = device.filamentSource === 'palette3',
+            paletteInfo = extras.palette || {},
+            palettePingStart = paletteInfo.push + paletteInfo.feed + 200,
+            palettePingSpace = paletteInfo.ping || 0,
             segments = [];
 
         // smallish band-aid. refactor above to remove redundancy
@@ -312,6 +316,26 @@
             time += (retDist / retSpeed) * 60 * 2; // retraction time
         }
 
+        function unretract() {
+            if (!retracted) {
+                return;
+            }
+            drainQ();
+            // console.log({engage:zhop});
+            // when enabled, resume previous Z
+            if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
+            // re-engage retracted filament
+            if (fwRetract) {
+                append('G11');
+            } else {
+                moveTo({e:retracted}, retSpeed, `e-engage ${retracted}`);
+            }
+            retracted = 0;
+            // optional dwell after re-engaging filament to allow pressure to build
+            if (retDwell) dwell(retDwell);
+            time += (retDist / retSpeed) * 60 * 2; // retraction time
+        }
+
         let taxis = new THREE.Vector3( 1, 0, 0 );
         let tcent = new THREE.Vector2( 0, 0 );
         let angle = -Math.PI / 4;
@@ -471,10 +495,39 @@
                 moveTo({z:zpos}, seekMMM);
             }
 
+            // track purges for palette3 pings
+            let purgeOn;
+            let purgeOff = 0;
+
             // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
                 speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+
+                // track purge towers for palette3
+                // do not generate pings before total tube length exhausted
+                // because the palette cannot respond to differences before then
+                if (isPalette && palettePingSpace && emitted >= palettePingStart) {
+                    if (out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
+                        retract();
+                        append(`G4 P13000`);
+                        unretract();
+                        purgeOn = emitted;
+                    }
+                    if (purgeOn && out.point.purgeOff) {
+                        retract();
+                        append(`G4 P7000`);
+                        unretract();
+                        purgeOff = emitted;
+                        if (!print.purges) {
+                            print.purges = [];
+                        }
+                        print.purges.push({
+                            length: purgeOn,
+                            extrusion: purgeOff - purgeOn
+                        });
+                    }
+                }
 
                 // emit gcode macro for changed print region
                 if (last && out.type !== last.type) {
@@ -531,20 +584,7 @@
 
                 // re-engage post-retraction before new extrusion
                 if (out.emit && retracted) {
-                    drainQ();
-                    // console.log({engage:zhop});
-                    // when enabled, resume previous Z
-                    if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
-                    // re-engage retracted filament
-                    if (fwRetract) {
-                        append('G11');
-                    } else {
-                        moveTo({e:retracted}, retSpeed, `e-engage ${retracted}`);
-                    }
-                    retracted = 0;
-                    // optional dwell after re-engaging filament to allow pressure to build
-                    if (retDwell) dwell(retDwell);
-                    time += (retDist / retSpeed) * 60 * 2; // retraction time
+                    unretract();
                 }
 
                 if (lastp && out.emit) {

@@ -327,12 +327,15 @@
                     simple: true,
                     open: false,
                 });
-                start = print.polyPrintPath((thin && !first ? rec.sparse : rec.full).clone().setZ(z), start, layer, {
+                let purgeOn = first || !thin;
+                start = print.polyPrintPath((purgeOn ? rec.full : rec.sparse).clone().setZ(z), start, layer, {
                     tool,
                     rate,
                     simple: true,
                     open: true,
+                    onfirst: (point) => { point.purgeOn = purgeOn }
                 });
+                start.purgeOff = purgeOn;
                 layer.last().retract = true;
                 return start;
             } else {

@@ -1379,8 +1379,11 @@ th, tr, td, label {
 #devices {
     width: 225px;
 }
-#device1, #device2 {
+#device1, #device2, #palette3 {
     width: 225px;
+}
+#palette3 {
+    display: none;
 }
 #dev-gcode textarea {
     font-family: monospace;

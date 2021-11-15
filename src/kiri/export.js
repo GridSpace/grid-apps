@@ -463,23 +463,28 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let { settings, segments } = info;
                 let { device, bounds } = settings;
                 let { min, max } = bounds;
+                let extras = device.extras || {};
+                let pinfo = extras.palette || {};
+                // filter pings to those occuring after all tubes combined
+                let pings = info.purges || [];
                 let driveInfo = {};
                 let volume = {};
                 let length = {};
-                // add 600mm of filament to the last segment for bowden drives
-                segments.peek().emitted += 650;
+                // add length push filament to the last segment
+                // console.log({device, pinfo});
+                segments.peek().emitted += pinfo.push;
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
                     seginfo.length += seg.emitted;
                     seginfo.volume += seg.emitted * Math.PI;
-                    volume[seg.tool+1] = seginfo.volume;
+                    volume[seg.tool+1] = seginfo.volume + 2; // prepad 2mm
                     length[seg.tool+1] = seginfo.length;
                 }
                 let totalVolume = Object.values(volume).reduce((a,v) => a+v);
                 let meta = {
                     version: "3.2",
                     printerProfile: {
-                        id: settings.extras.palette.printer,
+                        id: pinfo.printer,
                         name: device.deviceName || "My Printer"
                     },
                     preheatTemperature: { nozzle: [0], bed: 0 },
@@ -491,7 +496,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     totalVolume,
                     inputsUsed: Object.keys(driveInfo).length,
                     splices: segments.length,
-                    pings: 0,
+                    pings: pings.length,
                     boundingBox: {
                         min: [ min.x, min.y, min.z ],
                         max: [ max.x, max.y, max.z ]
@@ -508,9 +513,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let algokeys = {};
                 let algorithms = [];
                 let defaultSplice = {
-                    compression: 3,
-                    cooling: 2,
-                    heat: 4
+                    compression: pinfo.press,
+                    cooling: pinfo.cool,
+                    heat: pinfo.head
                 };
                 for (let key of Object.keys(driveInfo)) {
                     key = parseInt(key) + 1;
@@ -542,14 +547,14 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                         lastDrive = r.tool;
                         return { id: r.tool + 1, length: r.emitted.round(2) }
                     }),
-                    pings: [],
+                    pings,
                     algorithms
                 };
                 let png;
                 KIRI.work.png({}, data => {
                     png = data.png;
                 });
-                console.log({meta,palette});
+                // console.log({meta,palette});
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},

@@ -83,6 +83,7 @@ kiri.lang['en-us'] = {
     // DEVICE dialog groups
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",
+    dv_gr_pal:      "palette",
     dv_gr_out:      "output",
     dv_gr_gco:      "gcode macros",
 
@@ -133,6 +134,7 @@ kiri.lang['en-us'] = {
     dv_strc_l:      ["strip gcode comments","comments begin with ;"],
     dv_fext_s:      "file extension",
     dv_fext_l:      "file name extension",
+
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",
     dv_tool_s:      "tool change",
@@ -163,6 +165,21 @@ kiri.lang['en-us'] = {
     dv_exox_l:      "nozzle offset x",
     dv_exoy_s:      "offset y",
     dv_exoy_l:      "nozzle offset y",
+
+    dv_paid_s:      "printer id",
+    dv_paid_l:      ["unique printer identifier","may be made up"],
+    dv_paps_s:      "ping spacing",
+    dv_paps_l:      ["minimum filament consumption","between pings in millimeters","0 = disable pings"],
+    dv_pafe_s:      "feed length",
+    dv_pafe_l:      ["feeder tube length in millimeters","short=570, medium=800, long=1100"],
+    dv_papl_s:      "push length",
+    dv_papl_l:      ["distance between extruder gear","and nozzle tip in millimeters"],
+    dv_pahe_s:      "heating time",
+    dv_pahe_l:      ["offset from default"],
+    dv_paco_s:      "cooling time",
+    dv_paco_l:      ["offset from default"],
+    dv_pacm_s:      "compression time",
+    dv_pacm_l:      ["offset from default"],
 
     // MODE
     mo_menu:        "mode",

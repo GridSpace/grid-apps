@@ -460,11 +460,17 @@ KIRI.worker = {
         }, function(debug) {
             send.data({debug});
         });
-        const { bounds, time, lines, bytes, distance, settings, segments } = current.print;
+        const {
+            bounds, time, lines, bytes, distance,
+            settings, segments, purges
+        } = current.print;
 
         send.done({
             done: true,
-            output: output ? output : { bounds, time, lines, bytes, distance, settings, segments }
+            output: output ? output : {
+                bounds, time, lines, bytes, distance,
+                settings, segments, purges
+            }
         });
     },
 
