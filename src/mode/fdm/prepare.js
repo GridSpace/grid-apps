@@ -268,7 +268,8 @@
         // replace extruders array with object array containing more info
         extruders = extruders.map((ext,i) => {
             if (!ext) return ext;
-            let noz = device.extruders[i].extNozzle,
+            let exi = device.extruders[i],
+                noz = exi.extNozzle,
                 pos = {x:blokpos.x, y:blokpos.y, z:0},
                 rect = newPolygon().centerRectangle(pos, blok.x, blok.y),
                 full = linesToPoly(POLY.fillArea([
@@ -279,6 +280,7 @@
                 ], 135, noz * 5)),
                 rec = {
                     extruder: i,
+                    diameter: exi.extNozzle,
                     rect,
                     full,
                     sparse
@@ -323,12 +325,14 @@
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
-                let purgeOn = first || !thin;
+                let purgeOn = (!isBelt && first) || !thin;
                 let box = rec.rect.clone().setZ(z);
                 let fill = (purgeOn ? rec.full : rec.sparse).clone().setZ(z);
                 if (isBelt) {
-                    box.move({x:0, y:z, z:0});
-                    fill.move({x:0, y:z, z:0});
+                    // offset by nozzle diameter + half step (shell) then angled
+                    let exo = rec.diameter * (1/Math.sqrt(2)) * 1.5;
+                    box.move({x:0, y:z - exo, z:0});
+                    fill.move({x:0, y:z - exo, z:0});
                     if (offset) {
                         box.move(offset);
                         fill.move(offset);

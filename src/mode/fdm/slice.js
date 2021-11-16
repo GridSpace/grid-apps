@@ -367,7 +367,8 @@
                         }
                     }
                     // mark slice as touching belt if near miny
-                    if (Math.abs(slice.belt.miny - smin) < 0.01) {
+                    // if (Math.abs(slice.belt.miny - smin) < 0.01) {
+                    if (Math.abs(slice.belt.miny) < 0.01) {
                         slice.belt.touch = true;
                         if (!start) start = slice;
                     }
