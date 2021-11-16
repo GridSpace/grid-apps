@@ -401,13 +401,13 @@
         });
 
         let lastWidget;
+        let lastExt;
 
         // walk cake layers bottom up
         for (let layer of cake) {
             // track purge blocks generated for each layer
             let track = extruders.slice();
             let lastOut;
-            let lastExt;
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
@@ -421,7 +421,7 @@
                     let find = slice.findClosestPointTo(printPoint.sub(offset));
                     if (find) {
                         let ext = slice.extruder;
-                        let lex = lastOut ? lastOut.extruder : ext;
+                        let lex = lastExt;
                         let dst = Math.abs(find.distance);
                         // penalize extruder swaps
                         if (ext !== lex) {
@@ -454,10 +454,11 @@
                     printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z, undefined, offset);
                 }
                 let wtb = slice.widget.track.box;
+                let beltStart = slice.belt && slice.belt.touch;// && (widgets.length === 1);
                 // output seek to start point between mesh slices if previous data
                 printPoint = print.slicePrintPath(
                     slice,
-                    slice.belt && slice.belt.touch ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),
+                    beltStart ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),
                     offset,
                     layerout,
                     {
@@ -467,7 +468,7 @@
                         params, // range parameters
                         first: slice.index === 0,
                         support: slice.widget.support,
-                        onBelt: slice.belt && slice.belt.touch,
+                        onBelt: beltStart,
                         pretract: (wipeDist) => {
                             if (lastLayer && lastLayer.length) {
                                 let lastOut = lastLayer.last();
