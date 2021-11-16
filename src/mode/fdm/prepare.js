@@ -229,6 +229,7 @@
 
         let lastPoly;
         let lastLayer;
+        let lastOffset;
         let extruders = print.extruders = [];
         let extcount = 0;
 
@@ -248,7 +249,7 @@
         let stepw = blokw + nozzle / 2;
         let blokpos, walkpos, blok;
 
-        if (bounds.min.x < bounds.min.y) {
+        if (bounds.min.x < bounds.min.y && !isBelt) {
             let mx = (bounds.max.x + bounds.min.x) / 2;
             let px = mx - (extcount * blokw) / 2 + (blokw / 2);
             let dx = ((bounds.max.x - bounds.min.x) - (extcount * blokw)) / 2;
@@ -257,8 +258,9 @@
             blok = { x:blokw, y:blokh };
         } else {
             let my = (bounds.max.y + bounds.min.y) / 2;
-            let py = my - (extcount * blokw) / 2 + (blokw / 2);
-            blokpos = { x:bounds.max.x + 2 + blokh / 2, y:py};
+            let mp = (extcount * blokw) / 2 + (blokw / 2);
+            let py = my - mp;
+            blokpos = { x:bounds.max.x + 2 + blokh / 2, y:isBelt ? -mp : py};
             walkpos  = { x:0, y:stepw };
             blok = { x:blokh, y:blokw };
         }
@@ -306,8 +308,8 @@
         let lastPurgeTool;
 
         // generate purge block for given nozzle
-        function purge(nozzle, track, layer, start, z, using) {
-            if (!purgeTower || extcount < 2 || isBelt) {
+        function purge(nozzle, track, layer, start, z, using, offset) {
+            if (!purgeTower || extcount < 2) {
                 return start;
             }
             let rec = track[nozzle];
@@ -321,14 +323,24 @@
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
-                start = print.polyPrintPath(rec.rect.clone().setZ(z), start, layer, {
+                let purgeOn = first || !thin;
+                let box = rec.rect.clone().setZ(z);
+                let fill = (purgeOn ? rec.full : rec.sparse).clone().setZ(z);
+                if (isBelt) {
+                    box.move({x:0, y:z, z:0});
+                    fill.move({x:0, y:z, z:0});
+                    if (offset) {
+                        box.move(offset);
+                        fill.move(offset);
+                    }
+                }
+                start = print.polyPrintPath(box, start, layer, {
                     tool,
                     rate,
                     simple: true,
                     open: false,
                 });
-                let purgeOn = first || !thin;
-                start = print.polyPrintPath((purgeOn ? rec.full : rec.sparse).clone().setZ(z), start, layer, {
+                start = print.polyPrintPath(fill, start, layer, {
                     tool,
                     rate,
                     simple: true,
@@ -401,7 +413,7 @@
                     if (slice.prep) {
                         continue;
                     }
-                    let offset = slice.widget.offset;
+                    let offset = lastOffset = slice.widget.offset;
                     let find = slice.findClosestPointTo(printPoint.sub(offset));
                     if (find) {
                         let ext = slice.extruder;
@@ -435,7 +447,7 @@
                 layerout.anchor = slice.belt && slice.belt.anchor;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
-                    printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z);
+                    printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z, undefined, offset);
                 }
                 let wtb = slice.widget.track.box;
                 // output seek to start point between mesh slices if previous data
@@ -490,7 +502,7 @@
             // extruder to fill the relevant purge blocks for later support
             track.forEach(ext => {
                 if (ext && lastOut) {
-                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt);
+                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt, lastOffset);
                 }
             });
 
