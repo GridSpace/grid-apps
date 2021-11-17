@@ -1670,6 +1670,8 @@
             palettePing:      UC.newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:UC.toInt}),
             paletteFeed:      UC.newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:UC.toInt}),
             palettePush:      UC.newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:UC.toInt}),
+            paletteOffset:    UC.newInput(LANG.dv_paof_s, {title:LANG.dv_paof_l, modes:FDM, convert:UC.toInt}),
+            paletteSep:       UC.newBlank({class:"pop-sep", modes:FDM}),
             paletteHeat:      UC.newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:UC.toInt}),
             paletteCool:      UC.newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:UC.toInt}),
             palettePress:     UC.newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:UC.toInt}),
@@ -2814,6 +2816,7 @@
                 UI.palettePing.value = pinfo.ping || 0;
                 UI.paletteFeed.value = pinfo.feed || 0;
                 UI.palettePush.value = pinfo.push || 0;
+                UI.paletteOffset.value = pinfo.offset || 0;
                 UI.paletteHeat.value = pinfo.heat || 0;
                 UI.paletteCool.value = pinfo.cool || 0;
                 UI.palettePress.value = pinfo.press || 0;
@@ -2831,6 +2834,7 @@
                         ping: UI.palettePing.convert(),
                         feed: UI.paletteFeed.convert(),
                         push: UI.palettePush.convert(),
+                        offset: UI.paletteOffset.convert(),
                         heat: UI.paletteHeat.convert(),
                         cool: UI.paletteCool.convert(),
                         press: UI.palettePress.convert()

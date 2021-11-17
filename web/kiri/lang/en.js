@@ -174,6 +174,8 @@ kiri.lang['en-us'] = {
     dv_pafe_l:      ["feeder tube length in millimeters","short=570, medium=800, long=1100"],
     dv_papl_s:      "push length",
     dv_papl_l:      ["distance between extruder gear","and nozzle tip in millimeters"],
+    dv_paof_s:      "offset length",
+    dv_paof_l:      ["length to add or remove from","the first segment in millimeters","usually 0"],
     dv_pahe_s:      "heating time",
     dv_pahe_l:      ["offset from default"],
     dv_paco_s:      "cooling time",

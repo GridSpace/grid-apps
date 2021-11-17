@@ -475,14 +475,15 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     p.length = p.length.round(2);
                     p.extrusion = p.extrusion.round(2);
                 });
-                // add length push filament to the last segment
+                // add length of push filament to the last segment
                 segments.peek().emitted += pinfo.push;
                 let lastEmit = 0;
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
+                    seg.emitted += pinfo.offset;
                     seginfo.length += seg.emitted - lastEmit;
                     seginfo.volume = seginfo.length * Math.PI;
-                    volume[seg.tool+1] = (seginfo.volume + 2).round(2); // prepad 2mm
+                    volume[seg.tool+1] = seginfo.volume.round(2);
                     length[seg.tool+1] = seginfo.length.round(2);
                     lastEmit = seg.emitted;
                 }
@@ -562,7 +563,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 KIRI.work.png({}, data => {
                     png = data.png;
                 });
-                console.log({meta,palette});
+                // console.log({meta,palette});
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},

@@ -233,7 +233,7 @@ KIRI.worker = {
     },
 
     clear: function(data, send) {
-        current.snap = null;
+        // current.snap = null;
         current.print = null;
         dispatch.group = wgroup = {};
         dispatch.cache = wcache = {};
