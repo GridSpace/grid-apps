@@ -523,7 +523,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let defaultSplice = {
                     compression: pinfo.press,
                     cooling: pinfo.cool,
-                    heat: pinfo.head
+                    heat: pinfo.heat
                 };
                 for (let key of Object.keys(driveInfo)) {
                     key = parseInt(key) + 1;
