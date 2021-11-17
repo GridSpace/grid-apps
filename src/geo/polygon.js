@@ -693,16 +693,24 @@
      * scale polygon around origin
      */
     PRO.scale = function(scale, round) {
+        let x,y,z;
+        if (typeof(scale) === 'number') {
+            x = y = z = scale;
+        } else {
+            x = scale.x;
+            y = scale.y;
+            z = scale.z;
+        }
         this._bounds = undefined;
-        this.points = this.points.map(point => {
+        this.points.forEach(point => {
             if (round) {
-                point.x = (point.x * scale).round(round);
-                point.y = (point.y * scale).round(round);
-                point.z = (point.z * scale).round(round);
+                point.x = (point.x * x).round(round);
+                point.y = (point.y * y).round(round);
+                point.z = (point.z * z).round(round);
             } else {
-                point.x = point.x * scale;
-                point.y = point.y * scale;
-                point.z = point.z * scale;
+                point.x = point.x * x;
+                point.y = point.y * y;
+                point.z = point.z * z;
             }
         });
         if (this.inner) {

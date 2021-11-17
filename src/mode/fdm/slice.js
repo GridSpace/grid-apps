@@ -385,8 +385,7 @@
                 }
                 // array of added top.fill_sparse arrays
                 let adds = [];
-                // add enough lead in layers to fill anchor area
-                let anchorlen = process.firstLayerBeltLead * beltfact;
+                let anchorlen = process.beltAnchor * beltfact;
                 while (anchorlen && start && anchorlen >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {

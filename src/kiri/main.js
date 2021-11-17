@@ -1094,6 +1094,7 @@
         if (MODE === MODES.SLA && !callback) {
             callback = preparePreview;
         }
+
         // force layout in belt mode when widget exceeds bed length
         if (WIDGETS.length && settings.device.bedBelt) {
             let doLayout = false;
@@ -1109,6 +1110,15 @@
             }
         }
 
+        let process = settings.process,
+            device = settings.device,
+            isBelt = device.bedBelt,
+            mode = settings.mode,
+            now = Date.now(),
+            totvert = 0,
+            track = {},
+            totalProgress;
+
         // clear completion marks
         complete = {};
 
@@ -1119,28 +1129,15 @@
         API.conf.save();
         API.event.emit('slice.begin', getMode());
 
-        let slicing = WIDGETS.slice().filter(w => !w.track.ignore),
-            totalProgress,
-            track = {},
-            mode = settings.mode,
-            now = Date.now(),
-            totvert = 0,
-            defvert;
+        let slicing = WIDGETS.slice().filter(w => !w.track.ignore);
 
         // determing this widgets % of processing time estimated by vertex count
         for (let widget of slicing) {
             totvert += widget.getVertices().count;
         }
-        defvert = totvert / slicing.length;
+        let defvert = totvert / slicing.length;
 
         setOpacity(color.slicing_opacity);
-
-        STACKS.clear();
-        if (settings.device.bedBelt) {
-            KIRI.client.clear();
-        }
-        KIRI.client.sync();
-        KIRI.client.rotate(settings);
 
         let segtimes = {},
             segNumber = 0,
@@ -1148,12 +1145,32 @@
             startTime = Date.now(),
             toSlice = slicing.slice(),
             camOrLaser = mode === 'CAM' || mode === 'LASER',
+            extruders = {},
             lastMsg;
 
         for (let widget of toSlice) {
             widget.stats.progress = 0;
             widget.setColor(color.slicing);
+            extruders[widget.anno.extruder] = widget.anno.extruder;
         }
+
+        // in multi-material belt mode, the anchor needs to be extended
+        // to allow room for the purge tower to be built. calculate here
+        extruders = Object.values(extruders);
+        if (isBelt && extruders.length > 1 && process.outputPurgeTower) {
+            process.beltAnchor = Math.max(
+                process.firstLayerBeltLead,
+                Math.sqrt(process.outputPurgeTower) * extruders.length * (1/Math.sqrt(2)));
+        } else {
+            process.beltAnchor = process.firstLayerBeltLead;
+        }
+
+        STACKS.clear();
+        if (isBelt) {
+            KIRI.client.clear();
+        }
+        KIRI.client.sync();
+        KIRI.client.rotate(settings);
 
         sliceNext();
 

@@ -111,7 +111,7 @@
                 printPoint = null;
 
                 let raft = function(height, angle, spacing, speed, extrude) {
-                    let slice = kiri.newSlice(zoff + height / 2);
+                    let slice = KIRI.newSlice(zoff + height / 2);
                     brims.forEach(function(brim) {
                         // use first point of first brim as start point
                         if (printPoint === null) printPoint = brim.first();
@@ -329,13 +329,23 @@
                 let box = rec.rect.clone().setZ(z);
                 let fill = (purgeOn ? rec.full : rec.sparse).clone().setZ(z);
                 if (isBelt) {
+                    let scale = z >= 0 ? 0 : 1 + ((z / blokw));
+                    if (scale) {
+                        box.scale({x:1, y:scale, z:1});
+                        let inset = box.offset(rec.diameter/2);
+                        if (inset) {
+                            fill = linesToPoly(POLY.fillArea(inset, 90, rec.diameter * 5));
+                        } else {
+                            fill = undefined;
+                        }
+                    }
                     // offset by nozzle diameter + half step (shell) then angled
-                    let exo = rec.diameter * (1/Math.sqrt(2)) * 1.5;
+                    let exo = rec.diameter * beltfact * 1.5;
                     box.move({x:0, y:z - exo, z:0});
-                    fill.move({x:0, y:z - exo, z:0});
+                    if (fill) fill.move({x:0, y:z - exo, z:0});
                     if (offset) {
                         box.move(offset);
-                        fill.move(offset);
+                        if (fill) fill.move(offset);
                     }
                 }
                 start = print.polyPrintPath(box, start, layer, {
@@ -344,7 +354,7 @@
                     simple: true,
                     open: false,
                 });
-                start = print.polyPrintPath(fill, start, layer, {
+                if (fill) start = print.polyPrintPath(fill, start, layer, {
                     tool,
                     rate,
                     simple: true,
@@ -451,6 +461,7 @@
                 layerout.anchor = slice.belt && slice.belt.anchor;
                 // detect extruder change and print purge block
                 if (!lastOut || lastOut.extruder !== slice.extruder) {
+                    if (slice.extruder >= 0)
                     printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z, undefined, offset);
                 }
                 let wtb = slice.widget.track.box;
