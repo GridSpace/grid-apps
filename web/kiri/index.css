@@ -7,6 +7,10 @@
     --highlight: rgba(126,153,183,0.4);
     --main-color: rgba(126,153,183,1);
 }
+@font-face {
+    font-family: 'Russo One';
+    src: url('ext/russo-one.ttf');
+}
 a, a:hover, a:visited {
     border: none;
     color: inherit;
