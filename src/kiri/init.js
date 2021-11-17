@@ -1666,7 +1666,7 @@
             ], {modes:FDM, class:"dev-buttons ext-buttons"}),
 
             palette:          UC.newGroup(LANG.dv_gr_pal, $('palette3'), {group:"dext", inline:true, modes:FDM}),
-            paletteId:        UC.newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15}),
+            paletteId:        UC.newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
             palettePing:      UC.newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:UC.toInt}),
             paletteFeed:      UC.newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:UC.toInt}),
             palettePush:      UC.newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:UC.toInt}),

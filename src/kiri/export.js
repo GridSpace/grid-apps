@@ -470,17 +470,25 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let driveInfo = {};
                 let volume = {};
                 let length = {};
+                // clean up and round pings
+                pings.forEach(p => {
+                    p.length = p.length.round(2);
+                    p.extrusion = p.extrusion.round(2);
+                });
                 // add length push filament to the last segment
-                // console.log({device, pinfo});
                 segments.peek().emitted += pinfo.push;
+                let lastEmit = 0;
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
-                    seginfo.length += seg.emitted;
-                    seginfo.volume += seg.emitted * Math.PI;
-                    volume[seg.tool+1] = seginfo.volume + 2; // prepad 2mm
-                    length[seg.tool+1] = seginfo.length;
+                    seginfo.length += seg.emitted - lastEmit;
+                    seginfo.volume = seginfo.length * Math.PI;
+                    volume[seg.tool+1] = (seginfo.volume + 2).round(2); // prepad 2mm
+                    length[seg.tool+1] = seginfo.length.round(2);
+                    lastEmit = seg.emitted;
                 }
-                let totalVolume = Object.values(volume).reduce((a,v) => a+v);
+                let totalLength = Object.values(length).reduce((a,v) => a+v).round(2);
+                let totalVolume = Object.values(volume).reduce((a,v) => a+v).round(2);
+                // console.log({info, device, pinfo, segments, volume, length, totalLength});
                 let meta = {
                     version: "3.2",
                     printerProfile: {
@@ -554,7 +562,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 KIRI.work.png({}, data => {
                     png = data.png;
                 });
-                // console.log({meta,palette});
+                console.log({meta,palette});
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},

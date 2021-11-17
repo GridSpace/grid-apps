@@ -390,6 +390,7 @@
                     let addto = start.down;
                     if (!addto) {
                         addto = newSlice(start.z - sliceHeight);
+                        addto.extruder = extruder;
                         addto.belt = { };
                         addto.height = start.height;
                         addto.up = start;

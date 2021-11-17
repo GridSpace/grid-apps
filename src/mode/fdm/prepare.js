@@ -244,40 +244,42 @@
         }
 
         // determine size/location of purge blocks
-        let blokw = Math.sqrt(purgeTower),
-            blokh = blokw;
-        let stepw = blokw + nozzle / 2;
+        let blokw = Math.sqrt(purgeTower);
+        let blokh = blokw;
         let blokpos, walkpos, blok;
 
-        if (bounds.min.x < bounds.min.y && !isBelt) {
-            let mx = (bounds.max.x + bounds.min.x) / 2;
-            let px = mx - (extcount * blokw) / 2 + (blokw / 2);
-            let dx = ((bounds.max.x - bounds.min.x) - (extcount * blokw)) / 2;
-            blokpos = { x:px, y: bounds.max.y + 2 + blokh / 2};
-            walkpos  = { x:stepw, y:0 };
-            blok = { x:blokw, y:blokh };
-        } else {
-            let my = (bounds.max.y + bounds.min.y) / 2;
-            let mp = (extcount * blokw) / 2 + (blokw / 2);
-            let py = my - mp;
-            blokpos = { x:bounds.max.x + 2 + blokh / 2, y:isBelt ? -mp : py};
-            walkpos  = { x:0, y:stepw };
-            blok = { x:blokh, y:blokw };
+        function mkblok(w,h) {
+            let stepw = w + nozzle / 2;
+            if (bounds.min.x < bounds.min.y && !isBelt) {
+                let mx = (bounds.max.x + bounds.min.x) / 2;
+                let px = mx - (extcount * w) / 2 + (w / 2);
+                let dx = ((bounds.max.x - bounds.min.x) - (extcount * w)) / 2;
+                blokpos = { x:px, y: bounds.max.y + 2 + h / 2};
+                walkpos = { x:stepw, y:0 };
+                blok = { x:w, y:h };
+            } else {
+                let my = (bounds.max.y + bounds.min.y) / 2;
+                let mp = (extcount * w) / 2 + (w / 2);
+                let py = my - mp;
+                blokpos = { x:bounds.max.x + 2 + h / 2, y:isBelt ? -mp : py};
+                walkpos = { x:0, y:stepw };
+                blok = { x:h, y:w };
+            }
         }
 
-        // replace extruders array with object array containing more info
-        extruders = extruders.map((ext,i) => {
-            if (!ext) return ext;
+        function mkrec(i, angle = 45) {
+            blokpos.x += walkpos.x * i;
+            blokpos.y += walkpos.y * i;
             let exi = device.extruders[i],
                 noz = exi.extNozzle,
                 pos = {x:blokpos.x, y:blokpos.y, z:0},
                 rect = newPolygon().centerRectangle(pos, blok.x, blok.y),
                 full = linesToPoly(POLY.fillArea([
                     newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
-                ], 45, noz)),
+                ], angle, noz)),
                 sparse = linesToPoly(POLY.fillArea([
                     newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
-                ], 135, noz * 5)),
+                ], angle + 90, noz * 5)),
                 rec = {
                     extruder: i,
                     diameter: exi.extNozzle,
@@ -285,9 +287,14 @@
                     full,
                     sparse
                 };
-            blokpos.x += walkpos.x;
-            blokpos.y += walkpos.y;
             return rec;
+        }
+
+        mkblok(blokw, blokh);
+
+        // replace extruders array with object array containing more info
+        extruders = extruders.map((ext,i) => {
+            return ext ? mkrec(i) : ext;
         });
 
         function linesToPoly(points) {
@@ -326,19 +333,14 @@
                     layer.last().retract = true;
                 }
                 let purgeOn = (!isBelt && first) || !thin;
+                if (isBelt && z < 0) {
+                    let scale = 1 + ((z / blokw));
+                    mkblok(blokw * scale, blokh);
+                    rec = mkrec(rec.extruder, 0);
+                }
                 let box = rec.rect.clone().setZ(z);
-                let fill = (purgeOn ? rec.full : rec.sparse).clone().setZ(z);
+                let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
                 if (isBelt) {
-                    let scale = z >= 0 ? 0 : 1 + ((z / blokw));
-                    if (scale) {
-                        box.scale({x:1, y:scale, z:1});
-                        let inset = box.offset(rec.diameter/2);
-                        if (inset) {
-                            fill = linesToPoly(POLY.fillArea(inset, 90, rec.diameter * 5));
-                        } else {
-                            fill = undefined;
-                        }
-                    }
                     // offset by nozzle diameter + half step (shell) then angled
                     let exo = rec.diameter * beltfact * 1.5;
                     box.move({x:0, y:z - exo, z:0});
@@ -354,7 +356,7 @@
                     simple: true,
                     open: false,
                 });
-                if (fill) start = print.polyPrintPath(fill, start, layer, {
+                if (fill && fill.length) start = print.polyPrintPath(fill, start, layer, {
                     tool,
                     rate,
                     simple: true,
