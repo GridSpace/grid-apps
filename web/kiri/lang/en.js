@@ -345,7 +345,7 @@ kiri.lang['en-us'] = {
     fl_skrt_s:      "skirt count",
     fl_skrt_l:      ["number of first-layer offset","brims to generate"],
     fl_skro_s:      "skirt offset",
-    fl_skro_l:      ["skirt offset from part","in millimeters"],
+    fl_skro_l:      ["skirt offset from part","in millimeters","when rafts are used","this is the raft offset"],
     fl_nozl_s:      "nozzle temp",
     fl_nozl_l:      ["degrees in celsius","output setting used","when this is zero"],
     fl_bedd_s:      "bed temp",

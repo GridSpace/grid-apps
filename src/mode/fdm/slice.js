@@ -98,6 +98,15 @@
 
     FDM.sliceAll = function(settings, onupdate) {
         // future home of brim and anchor generation
+        let widgets = Object.values(KIRI.worker.cache).sort((a,b) => {
+            return a.slices[0].z - b.slices[0].z
+        });
+        // ignore first widget
+        widgets.shift();
+        // remove anchor slices from other widgets
+        for (let w of widgets) {
+            w.slices = w.slices.filter(s => s.index >= 0);
+        }
     };
 
     /**

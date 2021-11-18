@@ -44,7 +44,6 @@
             layerno = 0,
             zoff = 0,
             layerout = [],
-            // slices = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             beltfact = Math.cos(Math.PI/4);
 
@@ -274,7 +273,7 @@
             }
         }
 
-        function mkrec(i, angle = 45) {
+        function mkrec(i, angle = 45, thin = 6) {
             blokpos.x += walkpos.x * i;
             blokpos.y += walkpos.y * i;
             let exi = device.extruders[i],
@@ -286,7 +285,7 @@
                 ], angle, noz)),
                 sparse = linesToPoly(POLY.fillArea([
                     newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
-                ], angle + 90, noz * 5)),
+                ], angle + 90, noz * thin)),
                 rec = {
                     extruder: i,
                     diameter: exi.extNozzle,
@@ -343,7 +342,7 @@
                 if (isBelt && z < 0) {
                     let scale = 1 + ((z / blokw));
                     mkblok(blokw * scale, blokh);
-                    rec = mkrec(rec.extruder, 0);
+                    rec = mkrec(rec.extruder, 0, 10);
                 }
                 let box = rec.rect.clone().setZ(z);
                 let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
