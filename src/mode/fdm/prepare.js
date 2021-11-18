@@ -250,7 +250,14 @@
 
         function mkblok(w,h) {
             let stepw = w + nozzle / 2;
-            if (bounds.min.x < bounds.min.y && !isBelt) {
+            if (isBelt) {
+                let my = (bounds.max.y + bounds.min.y) / 2;
+                let mp = (extcount * w) / 2 + (w / 2);
+                let py = my - mp;
+                blokpos = { x:bounds.max.x + 2 + h / 2, y:isBelt ? -mp : py};
+                walkpos = { x:0, y:stepw };
+                blok = { x:h, y:w };
+            } else if (bounds.min.x < bounds.min.y) {
                 let mx = (bounds.max.x + bounds.min.x) / 2;
                 let px = mx - (extcount * w) / 2 + (w / 2);
                 let dx = ((bounds.max.x - bounds.min.x) - (extcount * w)) / 2;
@@ -259,11 +266,11 @@
                 blok = { x:w, y:h };
             } else {
                 let my = (bounds.max.y + bounds.min.y) / 2;
-                let mp = (extcount * w) / 2 + (w / 2);
-                let py = my - mp;
-                blokpos = { x:bounds.max.x + 2 + h / 2, y:isBelt ? -mp : py};
-                walkpos = { x:0, y:stepw };
-                blok = { x:h, y:w };
+                let py = my - (extcount * w) / 2 + (w / 2);
+                let dy = ((bounds.max.y - bounds.min.y) - (extcount * w)) / 2;
+                blokpos = { y:py, x: bounds.max.x + 2 + h / 2};
+                walkpos = { y:stepw, x:0 };
+                blok = { x:w, y:h };
             }
         }
 

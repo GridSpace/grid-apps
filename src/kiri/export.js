@@ -563,7 +563,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 KIRI.work.png({}, data => {
                     png = data.png;
                 });
-                // console.log({meta,palette});
+                console.log({meta,palette});
                 downloadPalette.onclick = function() {
                     KIRI.client.zip([
                         {name:"meta.json", data:JSON.stringify(meta,undefined,4)},
