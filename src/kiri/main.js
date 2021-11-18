@@ -134,8 +134,8 @@
     const color = {
         wireframe: 0x444444,
         wireframe_opacity: 0.25,
-        selected: [ 0xbbff00, 0xbbee00, 0xbbdd00 ],
-        deselected: [ 0xffff00, 0xffdd00, 0xffbb00 ],
+        selected: [ 0xbbff00, 0xbbee00, 0xbbdd00, 0xbb9900 ],
+        deselected: [ 0xffff00, 0xffdd00, 0xffbb00, 0xff9900 ],
         slicing: 0xffaaaa,
         preview_opacity: 0.0,
         model_opacity: 1.0,
@@ -1652,6 +1652,7 @@
             w.move(x, y, z, abs);
         });
         updateSelectedBounds();
+        platformUpdateBounds();
         API.event.emit('selection.move', {x, y, z, abs});
         SPACE.update();
         auto_save();
@@ -1665,6 +1666,7 @@
         });
         platform.compute_max_z();
         updateSelectedBounds();
+        platformUpdateBounds();
         API.event.emit('selection.scale', [...arguments]);
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
@@ -1682,6 +1684,7 @@
             API.event.emit('widget.rotate', {widget: w, x, y, z});
         });
         updateSelectedBounds();
+        platformUpdateBounds();
         platform.compute_max_z();
         API.event.emit('selection.rotate', {x, y, z});
         updateSelectedInfo();

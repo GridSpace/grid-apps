@@ -43,6 +43,7 @@
             layerRetract = process.outputLayerRetract,
             layerno = 0,
             zoff = 0,
+            zmin = 0,
             layerout = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             beltfact = Math.cos(Math.PI/4);
@@ -197,6 +198,7 @@
 
         // synthesize support widgets when needed
         // so that they can use a separate extruder
+        // compute zmin for belt purge towers
         for (let widget of widgets.slice()) {
             let sslices = [];
             if (!widget.slices) {
@@ -204,6 +206,7 @@
                 continue;
             }
             for (let slice of widget.slices) {
+                zmin = Math.min(zmin, slice.z);
                 if (!slice.supports) {
                     continue;
                 }
@@ -248,44 +251,48 @@
         let blokpos, walkpos, blok;
 
         function mkblok(w,h) {
-            let stepw = w + nozzle / 2;
+            let gap = nozzle;
             if (isBelt) {
-                let my = (bounds.max.y + bounds.min.y) / 2;
-                let mp = (extcount * w) / 2 + (w / 2);
-                let py = my - mp;
-                blokpos = { x:bounds.max.x + 2 + h / 2, y:isBelt ? -mp : py};
-                walkpos = { x:0, y:stepw };
+                let step = w + gap;
+                let mp = (bounds.max.y + bounds.min.y) / 2;         // part y midpoint
+                let sp = (bounds.max.y - bounds.min.y);             // part y span
+                let ts = (w * extcount) + (gap * (extcount - 1));   // tower y span
+                let ty = -ts + w/2 - gap/2;                         // tower start y
+                blokpos = { y:ty, x: bounds.max.x + 2 + h / 2};     // first block pos
+                walkpos = { y:step, x:0 };
                 blok = { x:h, y:w };
             } else if (bounds.min.x < bounds.min.y) {
-                let mx = (bounds.max.x + bounds.min.x) / 2;
-                let px = mx - (extcount * w) / 2 + (w / 2);
-                let dx = ((bounds.max.x - bounds.min.x) - (extcount * w)) / 2;
-                blokpos = { x:px, y: bounds.max.y + 2 + h / 2};
-                walkpos = { x:stepw, y:0 };
+                let step = h + gap;
+                let mp = (bounds.max.x + bounds.min.x) / 2;         // part y midpoint
+                let sp = (bounds.max.x - bounds.min.x);             // part y span
+                let ts = (h * extcount) + (gap * (extcount - 1));   // tower y span
+                let tx = mp - ts / 2 + step / 2;                    // tower start y
+                blokpos = { x:tx, y: bounds.max.y + 2 + w / 2};     // first block pos
+                walkpos = { x:step, y:0 };
                 blok = { x:w, y:h };
             } else {
-                let my = (bounds.max.y + bounds.min.y) / 2;
-                let py = my - (extcount * w) / 2 + (w / 2);
-                let dy = ((bounds.max.y - bounds.min.y) - (extcount * w)) / 2;
-                blokpos = { y:py, x: bounds.max.x + 2 + h / 2};
-                walkpos = { y:stepw, x:0 };
+                let step = w + gap;
+                let mp = (bounds.max.y + bounds.min.y) / 2;         // part y midpoint
+                let sp = (bounds.max.y - bounds.min.y);             // part y span
+                let ts = (w * extcount) + (gap * (extcount - 1));   // tower y span
+                let ty = mp - ts / 2 + step / 2;                    // tower start y
+                blokpos = { y:ty, x: bounds.max.x + 2 + h / 2};     // first block pos
+                walkpos = { y:step, x:0 };
                 blok = { x:w, y:h };
             }
         }
 
         function mkrec(i, angle = 45, thin = 6) {
-            blokpos.x += walkpos.x * i;
-            blokpos.y += walkpos.y * i;
             let exi = device.extruders[i],
                 noz = exi.extNozzle,
-                pos = {x:blokpos.x, y:blokpos.y, z:0},
+                pos = {x:blokpos.x + walkpos.x * i, y:blokpos.y + walkpos.y * i, z:0},
                 rect = newPolygon().centerRectangle(pos, blok.x, blok.y),
                 full = linesToPoly(POLY.fillArea([
                     newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
                 ], angle, noz)),
-                sparse = linesToPoly(POLY.fillArea([
+                sparse = rect.area() > 10 ? linesToPoly(POLY.fillArea([
                     newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
-                ], angle + 90, noz * thin)),
+                ], angle + 90, noz * thin)) : newPolygon(),
                 rec = {
                     extruder: i,
                     diameter: exi.extNozzle,
@@ -340,17 +347,15 @@
                 }
                 let purgeOn = (!isBelt && first) || !thin;
                 if (isBelt && z < 0) {
-                    let scale = 1 + ((z / blokw));
+                    let scale = 1 - ((z / zmin));
                     mkblok(blokw * scale, blokh);
                     rec = mkrec(rec.extruder, 0, 10);
                 }
                 let box = rec.rect.clone().setZ(z);
                 let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
                 if (isBelt) {
-                    // offset by nozzle diameter + half step (shell) then angled
-                    let exo = rec.diameter * beltfact * 1.5;
-                    box.move({x:0, y:z - exo, z:0});
-                    if (fill) fill.move({x:0, y:z - exo, z:0});
+                    box.move({x:0, y:z, z:0});
+                    if (fill) fill.move({x:0, y:z, z:0});
                     if (offset) {
                         box.move(offset);
                         if (fill) fill.move(offset);
