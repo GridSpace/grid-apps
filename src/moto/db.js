@@ -54,27 +54,30 @@
         return this;
     };
 
-    SP.promise = {
-        keys: (lower, upper) => new Promise(function(resolve, reject) {
-            this.keys(resolve,lower,upper);
-        }),
+    SP.promise = function() {
+        let db =  this;
+        return {
+            keys: (lower, upper) => new Promise(function(resolve, reject) {
+                db.keys(resolve,lower,upper);
+            }),
 
-        iterate: (lower, upper, nullterm) => new Promise(function(resolve, reject) {
-            this.iterate(resolve, lower, upper, nullterm);
-        }),
+            iterate: (lower, upper, nullterm) => new Promise(function(resolve, reject) {
+                db.iterate(resolve, lower, upper, nullterm);
+            }),
 
-        get: (key) => new Promise(function(resolve, reject) {
-            this.get(key, resolve);
-        }),
+            get: (key) => new Promise(function(resolve, reject) {
+                db.get(key, resolve);
+            }),
 
-        put: (key, value) => new Promise(function(resolve, reject) {
-            this.put(key, value, resolve);
-        }),
+            put: (key, value) => new Promise(function(resolve, reject) {
+                db.put(key, value, resolve);
+            }),
 
-        remove: (key) => new Promise(function(resolve, reject) {
-            this.remove(key, resolve);
-        })
-    };
+            remove: (key) => new Promise(function(resolve, reject) {
+                db.remove(key, resolve);
+            })
+        };
+    }
 
     SP.keys = function(callback, lower, upper) {
         let out = [];

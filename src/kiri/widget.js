@@ -268,7 +268,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             this._save_timer = setTimeout(() => {
                 this._save_timer = undefined;
                 this.saveState(() => {});
-            }, 150);
+            }, 1500);
             return;
         }
         let widget = this;

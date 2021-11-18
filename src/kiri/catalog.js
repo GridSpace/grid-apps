@@ -14,6 +14,7 @@
             this.listeners = [];
             this.options = options || {};
             this.deferredHandler = null;
+            this.concurrent = 0;
             this.refresh();
         }
 
@@ -82,20 +83,36 @@
          * @param {Function} [callback]
          */
         putFile(name, vertices, callback) {
+            let mark = Date.now();
             let store = this;
-            store.db.put('file-'+name, vertices, function(ok) {
-                if (ok) {
+            let pdb = store.db.promise();
+            store.concurrent++;
+
+            function ondone(error) {
+                if (callback) callback(error);
+                if (--store.concurrent === 0) {
+                    notifyFileListeners(store);
+                }
+            }
+
+            pdb.put(`file-${name}`, vertices)
+                .then(() => {
                     store.files[name] = {
-                        vertices: vertices.length/3,
+                        vertices: vertices.length / 3,
                         updated: new Date().getTime()
                     };
-                    saveFileList(store);
-                    store.decimate(vertices, function(decimated) {
-                        store.db.put('fdec-'+name, decimated);
-                        if (callback) callback(decimated);
+                    return pdb.put('files', store.files);
+                })
+                .then(() => {
+                    return new Promise((resolve,reject) => {
+                        store.decimate(vertices, resolve);
                     });
-                } else if (callback) callback(ok);
-            });
+                })
+                .then(decimated => {
+                    return pdb.put(`fdec-${name}`, decimated)
+                })
+                .then(ondone)
+                .catch(ondone);
         };
 
         rename(name, newname, callback) {
