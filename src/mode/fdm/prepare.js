@@ -327,6 +327,7 @@
             return poly;
         }
 
+        let purgedFirst = false;
         let lastPurgeTool;
 
         // generate purge block for given nozzle
@@ -337,7 +338,7 @@
             let rec = track[nozzle];
             let thin = using >= 0 || lastPurgeTool === nozzle;
             let tool = using >= 0 ? using : nozzle;
-            let first = layer.slice.index === 0;
+            let first = isBelt ? !purgedFirst && layer.slice.index >= 0 : layer.slice.index === 0;
             let rate = first ? process.firstLayerRate : process.outputFeedrate;
             lastPurgeTool = tool;
             if (rec) {
@@ -345,7 +346,8 @@
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
-                let purgeOn = (!isBelt && first) || !thin;
+                purgedFirst = purgedFirst || first;
+                let purgeOn = first || !thin;
                 if (isBelt && z < 0) {
                     let scale = 1 - ((z / zmin));
                     mkblok(blokw * scale, blokh);

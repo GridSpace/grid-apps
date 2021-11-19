@@ -169,7 +169,7 @@ kiri.lang['en-us'] = {
     dv_paid_s:      "printer id",
     dv_paid_l:      ["unique printer identifier","may be made up"],
     dv_paps_s:      "ping spacing",
-    dv_paps_l:      ["minimum filament consumption","between pings in millimeters","0 = disable pings"],
+    dv_paps_l:      ["minimum filament consumption","between pings in millimeters","recommended 500 - 1000","0 = disable pings"],
     dv_pafe_s:      "feed length",
     dv_pafe_l:      ["feeder tube length in millimeters","short=570, medium=800, long=1100"],
     dv_papl_s:      "push length",

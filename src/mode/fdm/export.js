@@ -123,7 +123,7 @@
             minz = { x: Infinity, y: Infinity, z: Infinity },
             isPalette = device.filamentSource === 'palette3',
             paletteInfo = extras.palette || {},
-            palettePingStart = paletteInfo.push + paletteInfo.feed + 200,
+            palettePingStart = paletteInfo.ping / 2,
             palettePingSpace = paletteInfo.ping || 0,
             segments = [];
 
@@ -508,15 +508,27 @@
                 // do not generate pings before total tube length exhausted
                 // because the palette cannot respond to differences before then
                 if (isPalette && palettePingSpace && emitted >= palettePingStart) {
-                    if (out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
+                    if (out.point.purgeOn && (purgeOff === 0 || emitted - purgeOff >= palettePingSpace)) {
                         retract();
-                        append(`G4 P13000`);
+                        // for (let i=0; i<13; i++) {
+                        //     append(`G4 P1000`);
+                        //     if (i < 12) append('G1');
+                        // }
+                        append(`G4 P4000`); append('G1');
+                        append(`G4 P4000`); append('G1');
+                        append(`G4 P4000`); append('G1');
+                        append(`G4 P1000`);
                         unretract();
                         purgeOn = emitted;
                     }
                     if (purgeOn && out.point.purgeOff) {
                         retract();
-                        append(`G4 P7000`);
+                        // for (let i=0; i<7; i++) {
+                        //     append(`G4 P1000`);
+                        //     if (i < 6) append('G1');
+                        // }
+                        append(`G4 P4000`); append('G1');
+                        append(`G4 P3000`);
                         unretract();
                         purgeOff = emitted;
                         if (!print.purges) {
