@@ -376,8 +376,16 @@
                     open: true,
                     onfirst: (point) => { point.purgeOn = purgeOn }
                 });
-                start.purgeOff = purgeOn;
                 layer.last().retract = true;
+                // experimental post-retract wipe
+                start = print.polyPrintPath(box, start, layer, {
+                    tool,
+                    rate,
+                    simple: true,
+                    open: false,
+                    extrude: 0
+                });
+                start.purgeOff = purgeOn;
                 return start;
             } else {
                 console.log({already_purged: nozzle, from: track, layer});
