@@ -2797,7 +2797,25 @@
             btn.setAttribute('id', 'fs-edit');
             btn.appendChild(DOC.createTextNode('edit'));
             fsp.insertBefore(btn, UI.filamentSource);
-            let editDone;
+            let editDone = () => {
+                let device = API.conf.get().device;
+                let extra = device.extras = device.extras || {};
+                btn.onclick = edit;
+                btn.innerText = 'edit';
+                UI.extruder.parentNode.style.display = 'flex';
+                UI.palette.parentNode.style.display = 'none';
+                // save settings
+                extra.palette = {
+                    printer: UI.paletteId.value,
+                    ping: UI.palettePing.convert(),
+                    feed: UI.paletteFeed.convert(),
+                    push: UI.palettePush.convert(),
+                    offset: UI.paletteOffset.convert(),
+                    heat: UI.paletteHeat.convert(),
+                    cool: UI.paletteCool.convert(),
+                    press: UI.palettePress.convert()
+                };
+            };
             let edit = btn.onclick = () => {
                 let device = API.conf.get().device;
                 let extra = device.extras = device.extras || {};
@@ -2823,23 +2841,7 @@
                 UI.extruder.parentNode.style.display = 'none';
                 UI.palette.parentNode.style.display = 'flex';
                 btn.innerText = 'done';
-                btn.onclick = editDone = () => {
-                    btn.onclick = edit;
-                    btn.innerText = 'edit';
-                    UI.extruder.parentNode.style.display = 'flex';
-                    UI.palette.parentNode.style.display = 'none';
-                    // save settings
-                    extra.palette = {
-                        printer: UI.paletteId.value,
-                        ping: UI.palettePing.convert(),
-                        feed: UI.paletteFeed.convert(),
-                        push: UI.palettePush.convert(),
-                        offset: UI.paletteOffset.convert(),
-                        heat: UI.paletteHeat.convert(),
-                        cool: UI.paletteCool.convert(),
-                        press: UI.palettePress.convert()
-                    };
-                };
+                btn.onclick = editDone;
             };
             API.event.on(["device.select", "filament.source"], () => {
                 UI.extruder.parentNode.style.display = 'flex';
