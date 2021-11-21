@@ -433,6 +433,7 @@
             return a.z - b.z;
         });
 
+        let firstExt;
         let lastWidget;
         let lastExt;
 
@@ -460,6 +461,10 @@
                         if (ext !== lex) {
                             dst *= 10000;
                         }
+                        // for first object, penalize extruders other than first
+                        if (lastExt === undefined && ext > 0) {
+                            dst *= 10000;
+                        }
                         order.push({dst, slice, offset, z: layer.z});
                     }
                 }
@@ -470,6 +475,9 @@
                     return a.dst - b.dst;
                 });
                 let { z, slice, offset } = order[0];
+                if (firstExt === undefined) {
+                    firstExt = slice.extruder;
+                }
                 let params = getRangeParameters(process, slice.index);
                 slice.prep = true;
                 // retract between widgets or layers (when set)
