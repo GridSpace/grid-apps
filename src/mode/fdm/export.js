@@ -102,10 +102,10 @@
                 bed_temp: bedTemp,
                 fan_speed: fanSpeed,
                 speed: fanSpeed, // legacy
-                top: offset.x ? device.bedDepth : device.bedDepth/2,
+                top: offset.y ? device.bedDepth : device.bedDepth/2,
                 left: offset.x ? 0 : -device.bedWidth/2,
                 right: offset.x ? device.bedWidth : device.bedWidth/2,
-                bottom: offset.x ? 0 : -device.bedDepth/2,
+                bottom: offset.y ? 0 : -device.bedDepth/2,
                 z_max: device.maxHeight,
                 layers: layers.length,
                 progress: 0,
