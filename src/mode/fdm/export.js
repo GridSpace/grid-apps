@@ -125,7 +125,10 @@
             paletteInfo = extras.palette || {},
             palettePingStart = paletteInfo.ping / 2,
             palettePingSpace = paletteInfo.ping || 0,
-            segments = [];
+            segments = [],
+            // track purges for palette3 pings
+            purgeOff = 0,
+            purgeOn;
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
@@ -339,6 +342,16 @@
         let taxis = new THREE.Vector3( 1, 0, 0 );
         let tcent = new THREE.Vector2( 0, 0 );
         let angle = -Math.PI / 4;
+        let savePos = pos;
+
+        function pushPos(newpos, rate, comment) {
+            savePos = Object.clone(pos);
+            moveTo(newpos, rate, comment);
+        }
+
+        function popPos(rate, comment) {
+            moveTo(savePos, rate, comment);
+        }
 
         function moveTo(newpos, rate, comment) {
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
@@ -495,10 +508,6 @@
                 moveTo({z:zpos}, seekMMM);
             }
 
-            // track purges for palette3 pings
-            let purgeOn;
-            let purgeOff = 0;
-
             // iterate through layer outputs
             for (pidx=0; pidx<path.length; pidx++) {
                 out = path[pidx];
@@ -510,34 +519,31 @@
                 if (isPalette && palettePingSpace && emitted >= palettePingStart) {
                     if (out.point.purgeOn && (purgeOff === 0 || emitted - purgeOff >= palettePingSpace)) {
                         retract();
-                        // for (let i=0; i<13; i++) {
-                        //     append(`G4 P1000`);
-                        //     if (i < 12) append('G1');
-                        // }
+                        if (isBelt) pushPos({x:195});
                         append(`G4 P4000`); append('G1');
                         append(`G4 P4000`); append('G1');
                         append(`G4 P4000`); append('G1');
                         append(`G4 P1000`);
+                        if (isBelt) popPos();
                         unretract();
                         purgeOn = emitted;
                     }
                     if (purgeOn && out.point.purgeOff) {
                         retract();
-                        // for (let i=0; i<7; i++) {
-                        //     append(`G4 P1000`);
-                        //     if (i < 6) append('G1');
-                        // }
+                        if (isBelt) pushPos({x:195});
                         append(`G4 P4000`); append('G1');
                         append(`G4 P3000`);
+                        if (isBelt) popPos();
                         unretract();
-                        purgeOff = emitted;
                         if (!print.purges) {
                             print.purges = [];
                         }
                         print.purges.push({
                             length: purgeOn,
-                            extrusion: purgeOff - purgeOn
+                            extrusion: emitted - purgeOn
                         });
+                        purgeOff = emitted;
+                        purgeOn = 0;
                     }
                 }
 

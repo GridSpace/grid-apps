@@ -484,7 +484,10 @@
                     options.onfirst(point);
                 }
                 // move to first output point on poly
-                addOutput(output, point, 0, moveSpeed, tool);
+                let out = addOutput(output, point, 0, moveSpeed, tool);
+                if (options.onfirstout) {
+                    options.onfirstout(out);
+                }
                 first = false;
             } else {
                 let seglen = last.distTo2D(point);

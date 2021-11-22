@@ -340,6 +340,7 @@
             let tool = using >= 0 ? using : nozzle;
             let first = isBelt ? !purgedFirst && layer.slice.index >= 0 : layer.slice.index === 0;
             let rate = first ? process.firstLayerRate : process.outputFeedrate;
+            let wipe = true;
             lastPurgeTool = tool;
             if (rec) {
                 track[nozzle] = null;
@@ -352,6 +353,8 @@
                     let scale = 1 - ((z / zmin));
                     mkblok(blokw * scale, blokh);
                     rec = mkrec(rec.extruder, 0, 10);
+                    rate = (process.outputFeedrate - process.firstLayerRate) * scale + process.firstLayerRate;
+                    wipe = false;
                 }
                 let box = rec.rect.clone().setZ(z);
                 let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
@@ -359,8 +362,9 @@
                     box.move({x:0, y:z, z:0});
                     if (fill) fill.move({x:0, y:z, z:0});
                     if (offset) {
-                        box.move(offset);
-                        if (fill) fill.move(offset);
+                        let bo = { x:0, y:offset.y, z:offset.z };
+                        box.move(bo);
+                        if (fill) fill.move(bo);
                     }
                 }
                 start = print.polyPrintPath(box, start, layer, {
@@ -368,23 +372,27 @@
                     rate,
                     simple: true,
                     open: false,
+                    onfirstout: (out => out.overate = (isBelt ? rate : 0))
                 });
-                if (fill && fill.length) start = print.polyPrintPath(fill, start, layer, {
-                    tool,
-                    rate,
-                    simple: true,
-                    open: true,
-                    onfirst: (point) => { point.purgeOn = purgeOn }
-                });
+                if (fill && fill.length) {
+                    start = print.polyPrintPath(fill, start, layer, {
+                        tool,
+                        rate,
+                        simple: true,
+                        open: true,
+                        onfirst: (point) => { point.purgeOn = purgeOn }
+                    });
+                }
                 layer.last().retract = true;
                 // experimental post-retract wipe
-                start = print.polyPrintPath(box, start, layer, {
+                if (wipe) start = print.polyPrintPath(box, start, layer, {
                     tool,
                     rate,
                     simple: true,
                     open: false,
                     extrude: 0
                 });
+                layer.last().overate = 0;
                 start.purgeOff = purgeOn;
                 return start;
             } else {
@@ -603,8 +611,10 @@
                 let mins = Infinity;
                 let miny = Infinity;
                 let pads = [];
+                let overate = 0;
 
                 for (let rec of layer) {
+                    overate = rec.overate >= 0 ? rec.overate : overate;
                     let brate = params.firstLayerRate || firstLayerRate;
                     let bmult = params.firstLayerPrintMult || firstLayerMult;
                     let point = rec.point;
@@ -612,11 +622,11 @@
                     miny = Math.min(miny, belty);
                     if (layer.anchor) {
                         // apply base rate to entire anchor (including bump)
-                        rec.speed = brate;
+                        rec.speed = overate || brate;
                     }
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                         // apply base speed to segments touching belt
-                        rec.speed = brate;
+                        rec.speed = overate || brate;
                         rec.emit *= bmult;
                         minx = Math.min(minx, point.x, lastout.point.x);
                         maxx = Math.max(maxx, point.x, lastout.point.x);
