@@ -251,12 +251,13 @@
         let blokpos, walkpos, blok;
 
         function mkblok(w,h) {
+            let count = extcount - 1;
             let gap = nozzle;
             if (isBelt) {
                 let step = w + gap;
                 let mp = (bounds.max.y + bounds.min.y) / 2;         // part y midpoint
                 let sp = (bounds.max.y - bounds.min.y);             // part y span
-                let ts = (w * extcount) + (gap * (extcount - 1));   // tower y span
+                let ts = (w * count) + (gap * (count - 1));         // tower y span
                 let ty = -ts + w/2 - gap/2;                         // tower start y
                 blokpos = { y:ty, x: bounds.max.x + 2 + h / 2};     // first block pos
                 walkpos = { y:step, x:0 };
@@ -265,7 +266,7 @@
                 let step = h + gap;
                 let mp = (bounds.max.x + bounds.min.x) / 2;         // part y midpoint
                 let sp = (bounds.max.x - bounds.min.x);             // part y span
-                let ts = (h * extcount) + (gap * (extcount - 1));   // tower y span
+                let ts = (h * count) + (gap * (count - 1));         // tower y span
                 let tx = mp - ts / 2 + step / 2;                    // tower start y
                 blokpos = { x:tx, y: bounds.max.y + 2 + w / 2};     // first block pos
                 walkpos = { x:step, y:0 };
@@ -274,7 +275,7 @@
                 let step = w + gap;
                 let mp = (bounds.max.y + bounds.min.y) / 2;         // part y midpoint
                 let sp = (bounds.max.y - bounds.min.y);             // part y span
-                let ts = (w * extcount) + (gap * (extcount - 1));   // tower y span
+                let ts = (w * count) + (gap * (count - 1));         // tower y span
                 let ty = mp - ts / 2 + step / 2;                    // tower start y
                 blokpos = { y:ty, x: bounds.max.x + 2 + h / 2};     // first block pos
                 walkpos = { y:step, x:0 };
@@ -305,8 +306,8 @@
 
         mkblok(blokw, blokh);
 
-        // replace extruders array with object array containing more info
-        extruders = extruders.map((ext,i) => {
+        // allocate tower space for extruders-1 locations
+        let towers = extruders.slice(1).map((ext,i) => {
             return ext ? mkrec(i) : ext;
         });
 
@@ -335,7 +336,7 @@
             if (!purgeTower || extcount < 2) {
                 return start;
             }
-            let rec = track[nozzle];
+            let rec = track.shift();
             let thin = using >= 0 || lastPurgeTool === nozzle;
             let tool = using >= 0 ? using : nozzle;
             let first = isBelt ? !purgedFirst && layer.slice.index >= 0 : layer.slice.index === 0;
@@ -343,7 +344,6 @@
             let wipe = true;
             lastPurgeTool = tool;
             if (rec) {
-                track[nozzle] = null;
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
@@ -396,7 +396,7 @@
                 start.purgeOff = purgeOn;
                 return start;
             } else {
-                console.log({already_purged: nozzle, from: track, layer});
+                console.log({no_purge_tower_for: nozzle, using, track, layer});
                 return start;
             }
         }
@@ -444,12 +444,12 @@
         let firstExt;
         let lastWidget;
         let lastExt;
+        let lastOut;
 
         // walk cake layers bottom up
         for (let layer of cake) {
             // track purge blocks generated for each layer
-            let track = extruders.slice();
-            let lastOut;
+            let track = towers.slice();
 
             // iterate over layer slices, find closest widget, print, eliminate
             for (;;) {
@@ -555,10 +555,8 @@
 
             // if a declared extruder isn't used in a layer, use selected
             // extruder to fill the relevant purge blocks for later support
-            track.forEach(ext => {
-                if (ext && lastOut) {
-                    printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt, lastOffset);
-                }
+            track.slice().forEach(ext => {
+                printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt, lastOffset);
             });
 
             // if layer produced output, append to output array
@@ -576,7 +574,6 @@
             update((layerno / cake.length) * 0.5, "prepare");
 
             layerout = [];
-            lastOut = undefined;
         }
 
         print.output = output;
