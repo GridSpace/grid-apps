@@ -616,14 +616,15 @@
                     let bmult = params.firstLayerPrintMult || firstLayerMult;
                     let point = rec.point;
                     let belty = rec.belty = -point.y + point.z;
+                    let lowrate = belty <= thresh ? brate : overate || brate;
                     miny = Math.min(miny, belty);
                     if (layer.anchor) {
                         // apply base rate to entire anchor (including bump)
-                        rec.speed = overate || brate;
+                        rec.speed = lowrate;
                     }
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                         // apply base speed to segments touching belt
-                        rec.speed = overate || brate;
+                        rec.speed = lowrate;
                         rec.emit *= bmult;
                         minx = Math.min(minx, point.x, lastout.point.x);
                         maxx = Math.max(maxx, point.x, lastout.point.x);
