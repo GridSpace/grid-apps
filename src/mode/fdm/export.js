@@ -76,10 +76,12 @@
             originCenter = process.outputOriginCenter || device.bedRound,
             offset = originCenter ? {
                 x: 0,
-                y: 0
+                y: 0,
+                z: 0
             } : {
                 x: device.bedWidth/2,
-                y: isBelt ? 0 : device.bedDepth/2
+                y: isBelt ? 0 : device.bedDepth/2,
+                z: 0
             },
             nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
             bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
@@ -127,8 +129,9 @@
             palettePingSpace = paletteInfo.ping || 0,
             segments = [],
             // track purges for palette3 pings
-            purgeOff = 0,
-            purgeOn;
+            purgePos,
+            purgeOn = 0,
+            purgeOff = 0;
 
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
@@ -182,11 +185,6 @@
             }
         }
         let loops = isBelt && rloops.length ? rloops : undefined;
-
-        // (process.gcodePauseLayers || "").split(",").forEach(function(lv) {
-        //     let v = parseInt(lv);
-        //     if (v >= 0) pause.push(v);
-        // });
 
         append = function(line) {
             if (line) {
@@ -346,7 +344,11 @@
 
         function pushPos(newpos, rate, comment) {
             savePos = Object.clone(pos);
-            moveTo(newpos, rate, comment);
+            moveTo({
+                x: newpos.x + offset.x,
+                y: newpos.y + offset.y,
+                z: newpos.z + offset.z
+            }, rate, comment);
         }
 
         function popPos(rate, comment) {
@@ -354,6 +356,15 @@
         }
 
         function moveTo(newpos, rate, comment) {
+            if (pingRemain) {
+                if (newpos.e) {
+                    if (pingRemain - newpos.e < -0.4) {
+                        // split move if ping over-extrudes? complicates emitted calc.
+                        // console.log({over_ping: pingRemain - newpos.e});
+                    }
+                    pingRemain -= newpos.e;
+                }
+            }
             let o = [!rate && !newpos.e ? 'G0' : 'G1'];
             let emit = { x: false, y: false, z: false };
             if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
@@ -419,13 +430,17 @@
         }
 
         // calc total distance traveled by head as proxy for progress
-        let allout = [], totaldistance = 0;
+        let allout = [];
+        let totaldistance = 0;
         layers.forEach(function(outs) {
             allout.appendAll(outs);
         });
         allout.forEachPair(function (o1, o2) {
             totaldistance += o1.point.distTo2D(o2.point);
         }, 1);
+
+        // for palette pings, amount of extrusion left
+        let pingRemain = 0;
 
         // retract before first move
         retract();
@@ -517,23 +532,25 @@
                 // do not generate pings before total tube length exhausted
                 // because the palette cannot respond to differences before then
                 if (isPalette && palettePingSpace && emitted >= palettePingStart) {
-                    if (out.point.purgeOn && (purgeOff === 0 || emitted - purgeOff >= palettePingSpace)) {
+                    if (purgeOn === 0 && out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
                         retract();
-                        if (isBelt) pushPos({x:195});
+                        pushPos(out.point.purgeOn);
                         append(`G4 P4000`); append('G1');
                         append(`G4 P4000`); append('G1');
                         append(`G4 P4000`); append('G1');
                         append(`G4 P1000`);
-                        if (isBelt) popPos();
+                        popPos();
                         unretract();
                         purgeOn = emitted;
+                        purgePos = out.point.purgeOn;
+                        pingRemain = 20;
                     }
-                    if (purgeOn && out.point.purgeOff) {
+                    if (purgeOn && pingRemain <= 0) {
                         retract();
-                        if (isBelt) pushPos({x:195});
+                        pushPos(purgePos);
                         append(`G4 P4000`); append('G1');
                         append(`G4 P3000`);
-                        if (isBelt) popPos();
+                        popPos();
                         unretract();
                         if (!print.purges) {
                             print.purges = [];
@@ -544,6 +561,7 @@
                         });
                         purgeOff = emitted;
                         purgeOn = 0;
+                        pingRemain = 0;
                     }
                 }
 

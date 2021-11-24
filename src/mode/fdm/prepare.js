@@ -299,7 +299,8 @@
                     diameter: exi.extNozzle,
                     rect,
                     full,
-                    sparse
+                    sparse,
+                    pause: newPoint(pos.x + walkpos.y, pos.y + walkpos.x, pos.z)
                 };
             return rec;
         }
@@ -357,13 +358,19 @@
                     wipe = false;
                 }
                 let box = rec.rect.clone().setZ(z);
+                let pause = rec.pause.clone().setZ(z);
                 let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
                 if (isBelt) {
-                    box.move({x:0, y:z, z:0});
-                    if (fill) fill.move({x:0, y:z, z:0});
+                    let bmove = {x:0, y:z, z:0};
+                    box.move(bmove);
+                    pause.move(bmove);
+                    if (fill) {
+                        fill.move(bmove);
+                    }
                     if (offset) {
                         let bo = { x:0, y:offset.y, z:offset.z };
                         box.move(bo);
+                        pause.move(bo);
                         if (fill) fill.move(bo);
                     }
                 }
@@ -375,12 +382,13 @@
                     onfirstout: (out => out.overate = (isBelt ? rate : 0))
                 });
                 if (fill && fill.length) {
+                    // for pings, split path at 20mm
                     start = print.polyPrintPath(fill, start, layer, {
                         tool,
                         rate,
                         simple: true,
                         open: true,
-                        onfirst: (point) => { point.purgeOn = purgeOn }
+                        onfirst: (point) => { point.purgeOn = purgeOn ? pause : undefined }
                     });
                 }
                 layer.last().retract = true;
@@ -393,7 +401,6 @@
                     extrude: 0
                 });
                 layer.last().overate = 0;
-                start.purgeOff = purgeOn;
                 return start;
             } else {
                 console.log({no_purge_tower_for: nozzle, using, track, layer});
