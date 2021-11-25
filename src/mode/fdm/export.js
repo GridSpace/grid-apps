@@ -115,7 +115,6 @@
                 tool: 0
             },
             pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
-            append,
             lines = 0,
             bytes = 0,
             bcos = Math.cos(Math.PI/4),
@@ -123,11 +122,13 @@
             inloops = 0,
             arcQ = [],
             minz = { x: Infinity, y: Infinity, z: Infinity },
+            // lenghts of each filament (by nozzle) consumed
+            segments = [],
+            // palette & ping data
             isPalette = device.filamentSource === 'palette3',
             paletteInfo = extras.palette || {},
             palettePingStart = paletteInfo.ping / 2,
             palettePingSpace = paletteInfo.ping || 0,
-            segments = [],
             // track purges for palette3 pings
             purgePos,
             purgeOn = 0,
@@ -186,12 +187,15 @@
         }
         let loops = isBelt && rloops.length ? rloops : undefined;
 
-        append = function(line) {
+        function append(line) {
             if (line) {
                 lines++;
                 bytes += line.length;
                 output.append(line);
             }
+            // batch gcode output to free memory in worker
+            // consider alternate transfer schemes like indexeddb
+            // since this transfers the burden to the main thread
             if (!line || output.length > 1000) {
                 online(output.join("\n"));
                 output = [];
@@ -298,8 +302,17 @@
         }
 
         function dwell(ms) {
-            append(`G4 P${ms}`);
-            time += timeDwell;
+            time += ms;
+            // break up dwell times over 4s because of
+            // limitations in some firmwares
+            while (ms > 0) {
+                let wait = Math.min(4000, ms);
+                append(`G4 P${wait}`);
+                ms -= wait;
+                if (ms) {
+                    append('G1');
+                }
+            }
         }
 
         function retract(zhop) {
@@ -535,10 +548,8 @@
                     if (purgeOn === 0 && out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
                         retract();
                         pushPos(out.point.purgeOn);
-                        append(`G4 P4000`); append('G1');
-                        append(`G4 P4000`); append('G1');
-                        append(`G4 P4000`); append('G1');
-                        append(`G4 P1000`);
+                        // shorter pause accounts for retract/move
+                        dwell(12750);
                         popPos();
                         unretract();
                         purgeOn = emitted;
@@ -548,8 +559,8 @@
                     if (purgeOn && pingRemain <= 0) {
                         retract();
                         pushPos(purgePos);
-                        append(`G4 P4000`); append('G1');
-                        append(`G4 P3000`);
+                        // shorter pause accounts for retract/move
+                        dwell(6750);
                         popPos();
                         unretract();
                         if (!print.purges) {
