@@ -127,7 +127,7 @@
             // palette & ping data
             isPalette = device.filamentSource === 'palette3',
             paletteInfo = extras.palette || {},
-            palettePingStart = paletteInfo.ping / 2,
+            palettePingStart = paletteInfo.ping || 500,
             palettePingSpace = paletteInfo.ping || 0,
             // track purges for palette3 pings
             purgePos,
