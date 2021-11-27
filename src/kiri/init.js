@@ -872,7 +872,8 @@
 
             API.conf.save();
 
-            API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0);
+            // API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
+            API.const.SPACE.view.setHome(0, Math.PI / 2.5);
             // when changing devices, update focus on widgets
             if (chgdev) {
                 setTimeout(API.space.set_focus, 0);

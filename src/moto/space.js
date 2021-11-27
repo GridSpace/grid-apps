@@ -20,6 +20,7 @@
         panY = 0,
         panZ = 0,
         home = 0,
+        up = PI4,
         gridZOff = 0,
         tweenTime = 500,
         tweenDelay = 20,
@@ -960,7 +961,7 @@
         view: {
             top:   function(then)  { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
             back:  function(then)  { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
-            home:  function(then)  { tweenCam({left: home, up: PI4, panX, panY, panZ, then}) },
+            home:  function(then)  { tweenCam({left: home, up,      panX, panY, panZ, then}) },
             front: function(then)  { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
             right: function(then)  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
             left:  function(then)  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
@@ -982,8 +983,9 @@
                 viewControl.setTarget(v);
                 refresh();
             },
-            setHome: function(r) {
+            setHome: function(r,u) {
                 home = r || 0;
+                up = u || PI4;
             },
             spin: function(then, count) {
                 Space.view.front(() => {
