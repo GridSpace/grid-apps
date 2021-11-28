@@ -56,7 +56,7 @@
         "extrude_abs": true,
         "bed_belt": true,
         "bed_width": 220,
-        "bed_depth": 300,
+        "bed_depth": 350,
         "build_height": 170
     },
     "profiles":[{

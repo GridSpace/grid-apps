@@ -872,8 +872,12 @@
 
             API.conf.save();
 
-            // API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
-            API.const.SPACE.view.setHome(0, Math.PI / 2.5);
+            if (isBelt()) {
+                // API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
+                API.const.SPACE.view.setHome(0, Math.PI / 2.5);
+            } else {
+                API.const.SPACE.view.setHome(0);
+            }
             // when changing devices, update focus on widgets
             if (chgdev) {
                 setTimeout(API.space.set_focus, 0);
@@ -2793,6 +2797,7 @@
 
         // add palette3 edit button after filament source selector
         {
+            let randomId = Math.round(Math.random() * 0xffffffffffff).toString(16);
             let fsp = UI.filamentSource.parentNode;
             let btn = UI.filamentSourceEdit = DOC.createElement('button');
             btn.setAttribute('id', 'fs-edit');
@@ -2807,7 +2812,7 @@
                 UI.palette.parentNode.style.display = 'none';
                 // save settings
                 extra.palette = {
-                    printer: UI.paletteId.value,
+                    printer: UI.paletteId.value || randomId,
                     ping: UI.palettePing.convert(),
                     feed: UI.paletteFeed.convert(),
                     push: UI.palettePush.convert(),
@@ -2823,7 +2828,7 @@
                 let pinfo = extra.palette;
                 if (!pinfo) {
                     pinfo = extra.palette = {
-                        printer: Math.round(Math.random() * 0xffffffffffff).toString(16),
+                        printer: randomId,
                         feed: 570,
                         push: 600,
                         heat: 0,

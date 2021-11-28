@@ -472,17 +472,20 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let length = {};
                 // clean up and round pings
                 pings.forEach(p => {
-                    p.length = p.length.round(2);
-                    p.extrusion = p.extrusion.round(2);
+                    p.length = p.length.round(3);
+                    // p.length = (p.length - pinfo.offset).round(2);
+                    // p.length = (p.length + pinfo.offset).round(2);
+                    p.extrusion = p.extrusion.round(3);
                 });
                 // add length of push filament to the last segment
                 segments.peek().emitted += pinfo.push;
                 let lastEmit = 0;
+                let ratioVolume = (0.4 * 0.4) / (1.75 * 1.75);
                 for (let seg of segments) {
                     let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
                     seg.emitted += pinfo.offset;
                     seginfo.length += seg.emitted - lastEmit;
-                    seginfo.volume = seginfo.length * Math.PI;
+                    seginfo.volume = seginfo.length * ratioVolume;
                     volume[seg.tool+1] = seginfo.volume.round(2);
                     length[seg.tool+1] = seginfo.length.round(2);
                     lastEmit = seg.emitted;
@@ -501,7 +504,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     time: info.time.round(1),
                     volume,
                     length,
-                    totalLength: info.distance.round(1),
+                    totalLength,
                     totalVolume,
                     inputsUsed: Object.keys(driveInfo).length,
                     splices: segments.length,
