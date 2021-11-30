@@ -213,10 +213,17 @@
             }
         });
         api.event.on("fdm.supports.detect", func.sgen = () => {
-            alert = api.show.alert("analyzing part(s)...", 1000);
+            let alerts = [];
+            let { process, device } = api.conf.get();
+            if (!device.bedBelt) {
+                if (process.sliceSupportAngle < 10) {
+                    alerts.push(api.show.alert("angles below 10 degrees may fail"));
+                }
+            }
+            alerts.push(api.show.alert("analyzing part(s)...", 1000));
             FDM.support_generate(array => {
                 func.sclear();
-                api.hide.alert(alert);
+                api.hide.alert(undefined,alerts);
                 for (let rec of array) {
                     let { widget, supports } = rec;
                     let wa = API.widgets.annotate(widget.id);

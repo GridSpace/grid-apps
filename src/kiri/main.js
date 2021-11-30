@@ -328,7 +328,7 @@
             split: groupSplit,
         },
         hide: {
-            alert: function(rec) { alert2cancel(rec) },
+            alert: function(rec,recs) { alert2cancel(rec,recs) },
             import: function() { },
             slider: hideSlider
         },
@@ -602,7 +602,13 @@
          return rec;
      }
 
-     function alert2cancel(rec) {
+     function alert2cancel(rec,recs) {
+         if (Array.isArray(recs)) {
+             for (let r of recs) {
+                 alert2cancel(r);
+             }
+             return;
+         }
          if (feature.alert_event) {
              API.event.emit('alert.cancel', rec);
              return;

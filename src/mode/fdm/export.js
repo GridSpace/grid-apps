@@ -302,7 +302,7 @@
         }
 
         function dwell(ms) {
-            time += ms;
+            time += ms/1000;
             // break up dwell times over 4s because of
             // limitations in some firmwares
             while (ms > 0) {
