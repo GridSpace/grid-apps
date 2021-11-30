@@ -90,7 +90,7 @@
             toolType,
             toolDiam,
             toolDiamMove,
-            plungeRate,
+            plungeRate = process.camFastFeedZ,
             feedRate,
             lastTool,
             lastMode,
@@ -142,7 +142,7 @@
                 lastTool = toolID;
             }
             feedRate = feed || feedRate;
-            plungeRate = plunge || plungeRate;
+            plungeRate = plunge || plungeRate || feedRate;
         }
 
         function setDrill(down, lift, dwell) {
