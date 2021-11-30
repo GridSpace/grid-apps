@@ -88,6 +88,7 @@
         scale: scaleSelection,
         rotate: rotateSelection,
         mirror: mirrorSelection,
+        duplicate: duplicateSelection,
         meshes: function() { return selectedMeshes.slice() },
         widgets: function(orall) {
             let sel = selectedMeshes.slice().map(m => m.widget);
@@ -1641,6 +1642,21 @@
     function setOpacity(value) {
         forAllWidgets(function (w) { w.setOpacity(value) });
         SPACE.update();
+    }
+
+    function duplicateSelection() {
+        API.selection.for_widgets(function(widget) {
+            let mesh = widget.mesh;
+            let bb = mesh.getBoundingBox();
+            let ow = widget;
+            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
+            nw.meta.file = ow.meta.file;
+            nw.meta.vertices = ow.meta.vertices;
+            nw.move(bb.max.x - bb.min.x + 1, 0, 0);
+            platform.add(nw,true);
+            nw.anno = ow.annotations();
+            API.event.emit("widget.duplicate", nw, ow);
+        });
     }
 
     function mirrorSelection() {

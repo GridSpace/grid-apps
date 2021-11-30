@@ -733,6 +733,25 @@
                 func.traceClear();
             }
         });
+        api.event.on("widget.duplicate", (widget, oldwidget) => {
+            if (!isCamMode) {
+                return;
+            }
+            if (traceOn) {
+                func.traceDone();
+            }
+            unselectTraces(widget);
+            if (flipping) {
+                return;
+            }
+            let ann = API.widgets.annotate(widget.id);
+            if (ann.tab) {
+                ann.tab.forEach((tab,i) => {
+                    tab.id = Date.now() + i;
+                });
+                restoreTabs([widget]);
+            }
+        });
         api.event.on("widget.mirror", widget => {
             if (!isCamMode) {
                 return;

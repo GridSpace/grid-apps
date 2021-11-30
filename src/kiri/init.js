@@ -517,25 +517,7 @@
     }
 
     function duplicateSelection() {
-        API.selection.for_widgets(function(widget) {
-            let mesh = widget.mesh;
-            let bb = mesh.getBoundingBox();
-            let ow = widget;
-            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
-            nw.meta.file = ow.meta.file;
-            nw.meta.vertices = ow.meta.vertices;
-            nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-            platform.add(nw,true);
-            let owa = API.widgets.annotate(ow.id);
-            let nwa = API.widgets.annotate(nw.id);
-            if (owa.tab) {
-                nwa.tab = Object.clone(owa.tab);
-                nwa.tab.forEach((tab,i) => {
-                    tab.id = Date.now() + i
-                });
-            }
-            KIRI.driver.CAM.restoreTabs([nw]);
-        });
+        API.selection.duplicate();
     }
 
     function mirrorSelection() {

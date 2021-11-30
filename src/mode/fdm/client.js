@@ -322,6 +322,18 @@
                 return;
             }
         });
+        api.event.on("widget.duplicate", (widget, oldwidget) => {
+            if (!isFdmMode) {
+                return;
+            }
+            let ann = API.widgets.annotate(widget.id);
+            if (ann.support) {
+                for (let supp of Object.values(ann.support)) {
+                    supp.id = Math.abs(Math.random() * 0xffffffffffff);
+                }
+                restoreSupports([widget]);
+            }
+        });
         api.event.on("widget.mirror", widget => {
             if (!isFdmMode) {
                 return;
@@ -670,5 +682,6 @@
 
     FDM.delbox = delbox;
     FDM.addbox = addbox;
+    FDM.restoreSupports = restoreSupports;
 
 })();
