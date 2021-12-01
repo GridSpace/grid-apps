@@ -103,7 +103,18 @@
         });
         // ignore first widget
         widgets.shift();
-        // remove anchor slices from other widgets
+        // count extruders used
+        let ext = [];
+        for (let w of widgets) {
+            if (w.anno && w.anno.extruder >= 0) {
+                let e = w.anno.extruder;
+                if (ext.indexOf(e) < 0) {
+                    ext.push(e);
+                }
+            }
+        }
+        // remove anchor slices from other widgets (only with multi-material)
+        if (ext.length > 1)
         for (let w of widgets) {
             w.slices = w.slices.filter(s => s.index >= 0);
         }
