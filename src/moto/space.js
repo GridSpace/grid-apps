@@ -1075,7 +1075,7 @@
             });
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
-                new THREE.PerspectiveCamera(perspective, aspect(), 5, 100000);
+                new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);
 
             camera.position.set(0, 200, 340);
             renderer.setSize(width(), height());
