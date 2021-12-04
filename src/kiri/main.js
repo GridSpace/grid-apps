@@ -2741,8 +2741,8 @@
                     }
                 }
                 else if (is3mf) {
-                    MOTO.TMF.parseAsync(e.target.result).then(models => {
-                        console.log({models});
+                    let odon = function(models) {
+                        let msg = API.show.alert('Adding Objects');
                         for (let model of models) {
                             let name = e.target.file.name;
                             if (model.name) {
@@ -2753,6 +2753,21 @@
                                 .loadVertices(model.faces.toFloat32())
                                 .saveToCatalog(name)
                             );
+                        }
+                        API.hide.alert(msg);
+                    }
+                    let msg = API.show.alert('Decoding 3MF');
+                    MOTO.TMF.parseAsync(e.target.result).then(models => {
+                        API.hide.alert(msg);
+                        if (models.length > 1 && !group) {
+                            UC.confirm(`group ${models.length} objects?`).then(ok => {
+                                if (ok) {
+                                    group = [];
+                                }
+                                odon(models);
+                            });
+                        } else {
+                            odon(models);
                         }
                     });
                 }
