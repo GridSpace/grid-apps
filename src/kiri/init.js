@@ -2601,14 +2601,10 @@
         // lift curtain
         $('curtain').style.display = 'none';
 
-        function showSetup() {
-            API.modal.show('setup');
-        }
-
         // bind interface action elements
         $('app-name').onclick = API.help.show;
-        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showSetup() };
-        $('set-device').onclick = (ev) => { ev.stopPropagation(); showSetup() };
+        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showDevices() };
+        $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
         UI.acct.help.onclick = (ev) => { ev.stopPropagation(); API.help.show() };
