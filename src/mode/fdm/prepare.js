@@ -471,9 +471,9 @@
                 let params = getRangeParameters(process, layer.layer || 0);
                 let brimHalf = params.firstLayerBrim < 0;
                 let firstLayerBrim = Math.abs(params.firstLayerBrim);
-                let firstLayerBrimIn = params.firstLayerBrimIn;
-                let firstLayerBrimTrig = params.firstLayerBrimTrig;
-                let firstLayerBrimComb = params.firstLayerBrimComb;
+                let firstLayerBrimIn = params.firstLayerBrimIn || 0;
+                let firstLayerBrimTrig = params.firstLayerBrimTrig || 0;
+                let firstLayerBrimComb = params.firstLayerBrimComb || 0;
                 let firstLayerBrimGap = params.firstLayerBrimGap || 0;
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
