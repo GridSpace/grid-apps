@@ -139,6 +139,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      */
     function Widget(id, group) {
         this.id = id || new Date().getTime().toString(36)+(nextId++);
+        this.grouped = group ? true : false;
         this.group = group || [];
         this.group.push(this);
         if (!this.group.id) {
@@ -249,6 +250,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      ******************************************************************* */
 
     PRO.saveToCatalog = function(filename) {
+        if (this.grouped) {
+            return this;
+        }
         let widget = this;
         let time = UTIL.time();
         widget.meta.file = filename;

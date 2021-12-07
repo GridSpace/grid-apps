@@ -1335,22 +1335,12 @@
                 return API.platform.load_files(files, undefined);
         }
 
-        function ck_group() {
-            if (files.length === 1) {
-                API.platform.load_files(files);
-            } else {
-                UC.confirm(`group ${files.length} files?`).then(yes => {
-                    API.platform.load_files(files, yes ? [] : undefined);
-                });
-            }
-        }
-
-        if (files.length > 5) {
-            UC.confirm(`add ${files.length} objects to workspace?`).then(yes => {
-                if (yes) ck_group();
-            });
+        if (files.length === 1) {
+            API.platform.load_files(files);
         } else {
-            ck_group();
+            UC.confirm(`group ${files.length} files?`).then(yes => {
+                API.platform.load_files(files, yes ? [] : undefined);
+            });
         }
     }
 
