@@ -1895,7 +1895,7 @@
             outputRetractDwell:  UC.newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:UC.toInt, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
             sliceSolidMinArea:   UC.newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:UC.toFloat, modes:FDM}),
-            outputMinSpeed:      UC.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:UC.bound(5,200), convert:UC.toFloat, modes:FDM}),
+            outputMinSpeed:      UC.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:UC.bound(1,200), convert:UC.toFloat, modes:FDM}),
             outputShortPoly:     UC.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:UC.bound(0,10000), convert:UC.toFloat, modes:FDM}),
             outputCoastDist:     UC.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),

@@ -587,7 +587,7 @@
 
         // post-process for base extrusions (touching the bed)
         if (isBelt) {
-            // // correct y offset to desired layer offset
+            // correct y offset to desired layer offset
             let seqn = 0;
             // tune base threshold
             let thresh = Infinity;
@@ -627,11 +627,11 @@
                     miny = Math.min(miny, belty);
                     if (layer.anchor) {
                         // apply base rate to entire anchor (including bump)
-                        rec.speed = lowrate;
+                        rec.speed = Math.min(rec.speed, lowrate);
                     }
                     if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                         // apply base speed to segments touching belt
-                        rec.speed = lowrate;
+                        rec.speed = Math.min(rec.speed, lowrate);
                         rec.emit *= bmult;
                         minx = Math.min(minx, point.x, lastout.point.x);
                         maxx = Math.max(maxx, point.x, lastout.point.x);
