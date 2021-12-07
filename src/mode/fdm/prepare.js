@@ -587,8 +587,6 @@
 
         // post-process for base extrusions (touching the bed)
         if (isBelt) {
-            // correct y offset to desired layer offset
-            let seqn = 0;
             // tune base threshold
             let thresh = Infinity;
             for (let layer of output) {
@@ -608,7 +606,6 @@
                 let firstLayerBrim = Math.abs(params.firstLayerBrim);
                 let firstLayerBrimIn = params.firstLayerBrimIn || 0;
                 let firstLayerBrimTrig = params.firstLayerBrimTrig || 0;
-                let firstLayerBrimComb = params.firstLayerBrimComb || 0;
                 let firstLayerBrimGap = params.firstLayerBrimGap || 0;
                 let lastout, first = false;
                 let minz = Infinity, maxy = -Infinity, minx = Infinity, maxx = -Infinity;
@@ -649,14 +646,13 @@
                 }
                 // do not add brims to anchor layers
                 if (!first || layer.anchor) {
-                    seqn = 0;
                     continue;
                 }
                 let tmpout = [];
                 let trigmet = firstLayerBrimTrig === 0 || (firstLayerBrimTrig && mins <= firstLayerBrimTrig);
                 let brimax = Math.max(firstLayerBrim, firstLayerBrimIn);
                 // add brim when all conditions met
-                if (brimax && seqn <= firstLayerBrimComb && trigmet) {
+                if (brimax && trigmet) {
                     let { emit, tool } = first;
                     let y = maxy;
                     let z = minz;
@@ -695,14 +691,10 @@
                         print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    firstLayerSeek, tool);
                         print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool).retract = false;
                     }
-                    if (firstLayerBrimComb) {
-                        seqn++;
-                    }
                 } else {
                     // for any layer touching belt, ensure start point is nearest origin
                     // print.addOutput(tmpout, newPoint(minx, maxy, minz), 0, firstLayerSeek, first.tool);
                     // print.lastPoint = newPoint(minx, maxy, minz);
-                    seqn = 0;
                 }
                 layer.splice(0,0,...tmpout);
             }

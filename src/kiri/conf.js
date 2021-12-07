@@ -346,7 +346,6 @@
                     firstLayerBrim: 0,
                     firstLayerBrimIn: 0,
                     firstLayerBrimTrig: 0,
-                    firstLayerBrimComb: 0,
                     firstLayerBrimGap: 0,
                     firstLayerBeltLead: 3,
                     firstLayerBeltBump: 0,
