@@ -577,6 +577,7 @@
                     outputLaserGroup: true,
                     outputLaserZColor: false,
                     outputLaserLayer: false,
+                    outputLaserStack: false,
                     outputLaserMerged: false,
                     outputOriginCenter: true,
                     outputInvertX: false,

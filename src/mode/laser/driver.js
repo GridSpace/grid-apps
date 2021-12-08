@@ -68,28 +68,43 @@
         });
     };
 
-    function sliceEmitObjects(print, slice, groups, simple) {
+    function sliceEmitObjects(print, slice, groups, opt = { }) {
         let start = newPoint(0,0,0);
         let process = print.settings.process;
         let grouped = process.outputLaserGroup;
+        let stacked = process.outputLaserStack;
+        let simple = opt.simple || false;
         let group = [];
+        let emit = { in: [], out: [], mark: [] };
+        let lastEmit = opt.lastEmit;
         let zcolor = print.settings.process.outputLaserZColor;
 
         group.thick = slice.thick;
 
-        function laserOut(poly, group) {
+        function laserOut(poly, group, type) {
             if (!poly) {
                 return;
             }
             if (Array.isArray(poly)) {
                 poly.forEach(function(pi) {
-                    laserOut(pi, group);
+                    laserOut(pi, group, type);
                 });
             } else {
-                let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1};
+                let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
+                if (type === "mark") {
+                    pathOpt.rate = 0.001;
+                }
                 if (simple) pathOpt.simple = true;
                 if (poly.open) pathOpt.open = true;
+                emit[type].push(poly);
                 print.polyPrintPath(poly, start, group, pathOpt);
+                if (stacked && type === "out" && lastEmit) {
+                    for (let out of lastEmit.out) {
+                        if (out.isInside(poly)) {
+                            laserOut(out, group, "mark");
+                        }
+                    }
+                }
             }
         }
 
@@ -97,8 +112,8 @@
         let inner = offset.map(poly => poly.inner || []).flat();
 
         // cut inside before outside
-        laserOut(inner, group);
-        laserOut(offset, group);
+        laserOut(inner, group, "in");
+        laserOut(offset, group, "out");
 
         if (!grouped) {
             groups.push(group);
@@ -109,6 +124,8 @@
         if (grouped) {
             groups.push(group);
         }
+
+        return emit;
     };
 
     /**
@@ -246,10 +263,11 @@
                         });
                     });
                 }
-                widget.slices.forEach(function(slice) {
-                    sliceEmitObjects(print, slice, output, knifeOn);
+                let lastEmit;
+                for (let slice of widget.slices.reverse()) {
+                    lastEmit = sliceEmitObjects(print, slice, output, {simple: knifeOn, lastEmit});
                     update((slices++ / totalSlices) * 0.5, "prepare");
-                });
+                }
             }
         });
 

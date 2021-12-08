@@ -1729,6 +1729,7 @@
             laserOffset:         UC.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:UC.toFloat, modes:LASER}),
             laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER, trigger: true}),
             laserSliceHeightMin: UC.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:UC.toFloat, modes:LASER, show:() => { return UI.laserSliceHeight.value == 0 }}),
+            laserSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
             laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
             firstLayer:          UC.newGroup(LANG.fl_menu, null, {modes:FDM}),
@@ -1845,8 +1846,11 @@
             output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
             outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
             outputLaserSpeed:    UC.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:UC.toInt, modes:LASER}),
+            laserSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
             outputLaserZColor:   UC.newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:LASER, show:() => { return UI.outputLaserMerged.checked === false }}),
             outputLaserLayer:    UC.newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:LASER}),
+            outputLaserStack:    UC.newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l, modes:LASER}),
+            laserSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
 
             outputTemp:          UC.newInput(LANG.ou_nozl_s, {title:LANG.ou_nozl_l, convert:UC.toInt, modes:FDM}),
             outputBedTemp:       UC.newInput(LANG.ou_bedd_s, {title:LANG.ou_bedd_l, convert:UC.toInt, modes:FDM}),

@@ -546,6 +546,8 @@ kiri.lang['en-us'] = {
     ou_layr_l:      ["output layer order","from top right to","bottom left"],
     ou_layo_s:      "layer color",
     ou_layo_l:      ["output layer colors","for each z index","overridden by merged"],
+    ou_lays_s:      "layer stacking",
+    ou_lays_l:      ["mark layers for stacking","with a unique color"],
     ou_drkn_s:      "drag knife",
     ou_drkn_l:      ["enable drag knife","output in gcode","cut radii are added","to corners with","cut down passes"],
 
