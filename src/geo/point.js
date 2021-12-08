@@ -27,10 +27,10 @@
                 return this._key;
             }
             return this._key = [
-                this.x.round(6),
-                this.y.round(6),
-                this.z.round(6)
-            ].toString();
+                ((this.x * 100000) | 0),
+                ((this.y * 100000) | 0),
+                ((this.z * 100000) | 0)
+            ].join('');
         }
     }
 
