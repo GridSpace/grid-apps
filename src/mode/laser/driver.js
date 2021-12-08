@@ -93,6 +93,7 @@
                 let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
                 if (type === "mark") {
                     pathOpt.rate = 0.001;
+                    pathOpt.extrude = 2;
                 }
                 if (simple) pathOpt.simple = true;
                 if (poly.open) pathOpt.open = true;
@@ -506,7 +507,9 @@
      *
      */
     function exportSVG(settings, data, cut_color) {
-        let zcolor = settings.process.outputLaserZColor ? 1 : 0;
+        let { process } = settings;
+        let zcolor = process.outputLaserZColor ? 1 : 0;
+        let zstack = process.outputLaserStack;
         let lines = [], dx = 0, dy = 0, my, z = 0;
         let colors = [
             "black",
