@@ -16,6 +16,7 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
+        EVENT   = new Broker(),
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         // K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
@@ -40,7 +41,6 @@
         STACKS = KIRI.stacks,
         DRIVER = undefined,
         complete = {},
-        onEvent = {},
         selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
@@ -654,22 +654,12 @@
          return showFavorites;
      }
 
-     function sendOnEvent(name, data) {
-         if (name && onEvent[name]) {
-             onEvent[name].forEach(function(fn) {
-                 fn(data, name);
-             });
-         }
+     function sendOnEvent(name, data, options) {
+         EVENT.publish(name, data, options);
      }
 
      function addOnEvent(name, handler) {
-         if (Array.isArray(name)) {
-             return name.forEach(n => addOnEvent(n, handler));
-         }
-         if (name && typeof(name) === 'string' && typeof(handler) === 'function') {
-             onEvent[name] = onEvent[name] || [];
-             onEvent[name].push(handler);
-         }
+         EVENT.subscribe(name, handler);
          return API.event;
      }
 
