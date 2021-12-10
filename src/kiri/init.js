@@ -449,7 +449,7 @@
                 showDevices();
                 break;
             case cca('w'): // scale
-                UI.tool.next();
+                API.event.emit("tool.next");
                 break;
             case cca('o'): // tools
                 showTools();
@@ -1429,10 +1429,12 @@
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
-        API.event.emit('init.one');
+        let { event, conf, view, show } = API;
+
+        event.emit('init.one');
 
         // ensure we have settings from last session
-        API.conf.restore();
+        conf.restore();
 
         let container = $('container'),
             welcome = $('welcome'),
@@ -1443,43 +1445,44 @@
         UC.setHoverPop(false);
 
         WIN.addEventListener("resize", () => {
-            API.event.emit('resize');
+            event.emit('resize');
         });
 
-        API.event.on('resize', () => {
+        event.on('resize', () => {
             if (WIN.innerHeight < 800) {
                 UI.modalBox.classList.add('mh85');
             } else {
                 UI.modalBox.classList.remove('mh85');
             }
-            API.view.update_slider();
+            view.update_slider();
         });
 
         SPACE.showSkyGrid(false);
         SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
-            if (API.var.layer_max === 0 || !delta) return;
+            let vars = API.var;
+            if (vars.layer_max === 0 || !delta) return;
             if (controller.reverseZoom) delta = -delta;
-            let same = API.var.layer_hi === API.var.layer_lo;
-            let track = API.var.layer_lo > 0;
+            let same = vars.layer_hi === vars.layer_lo;
+            let track = vars.layer_lo > 0;
             if (delta > 0) {
-                API.var.layer_hi = Math.max(same ? 0 : API.var.layer_lo, API.var.layer_hi - 1);
+                vars.layer_hi = Math.max(same ? 0 : vars.layer_lo, vars.layer_hi - 1);
                 if (track) {
-                    API.var.layer_lo = Math.max(0, API.var.layer_lo - 1);
+                    vars.layer_lo = Math.max(0, vars.layer_lo - 1);
                 }
             } else if (delta < 0) {
-                API.var.layer_hi = Math.min(API.var.layer_max, API.var.layer_hi + 1);
+                vars.layer_hi = Math.min(vars.layer_max, vars.layer_hi + 1);
                 if (track) {
-                    API.var.layer_lo = Math.min(API.var.layer_hi, API.var.layer_lo + 1);
+                    vars.layer_lo = Math.min(vars.layer_hi, vars.layer_lo + 1);
                 }
             }
             if (same) {
-                API.var.layer_lo = API.var.layer_hi;
+                vars.layer_lo = vars.layer_hi;
             }
-            API.view.update_slider();
-            API.show.slices();
+            view.update_slider();
+            show.slices();
         }, controller.ortho);
-        SPACE.platform.onMove(API.conf.save);
+        SPACE.platform.onMove(conf.save);
         SPACE.platform.setRound(true);
         SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
 
@@ -1510,12 +1513,6 @@
             dev: {
                 search:         $('dev-search'),
                 filter:         $('dev-filter')
-            },
-            tool: {
-                rotate:         () => { UI.tool.show('ft-rotate') },
-                scale:          () => { UI.tool.show('ft-scale') },
-                mesh:           () => { UI.tool.show('ft-mesh') },
-                select:         () => { UI.tool.show('ft-select') },
             },
             mesh: {
                 name:           $('mesh-name'),
@@ -2740,25 +2737,29 @@
                 };
             };
         });
-        // bind tool show buttons
-        UI.tool.show = function(tictac) {
-            if (typeof(tictac) === 'string') {
-                nextool = listool.indexOf(tictac)+1;
-                tictac = $(tictac);
-            }
-            let mover = parentWithClass(tictac.control, 'movable');
-            mover.style.display = 'flex';
-            tictac.control.onclick();
+
+        // bind tool buttons
+        {
+            let { event } = API;
+            let next = 0;
+            let list = ['rotate','scale','mesh','select'];
+            event.on("tool.next", () => {
+                event.emit("tool.show", list[next++ % 4]);
+            });
+            event.on("tool.show", tictac => {
+                if (typeof(tictac) === 'string') {
+                    next = list.indexOf(tictac)+1;
+                    tictac = $(`ft-${tictac}`);
+                }
+                let mover = parentWithClass(tictac.control, 'movable');
+                mover.style.display = 'flex';
+                tictac.control.onclick();
+            });
+            $('tool-rotate').onclick = event.bind("tool.show", "rotate");
+            $('tool-scale').onclick = event.bind("tool.show", "scale");
+            $('tool-mesh').onclick = event.bind("tool.show", "mesh");
+            $('tool-selector').onclick = event.bind("tool.show", "select");
         }
-        let nextool = 0;
-        let listool = ['ft-rotate','ft-scale','ft-mesh','ft-select'];
-        UI.tool.next = function() {
-            UI.tool.show(listool[nextool++ % 4]);
-        };
-        $('tool-rotate').onclick = () => { UI.tool.show('ft-rotate') };
-        $('tool-scale').onclick = () => { UI.tool.show('ft-scale') };
-        $('tool-mesh').onclick = () => { UI.tool.show('ft-mesh') };
-        $('tool-selector').onclick = () => { UI.tool.show('ft-select') };
 
         // warn users they are running a beta release
         if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {

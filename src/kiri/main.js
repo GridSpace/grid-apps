@@ -307,8 +307,9 @@
             file: showHelpFile
         },
         event: {
-            on: addOnEvent,
-            emit: sendOnEvent,
+            on: (t,l) => { EVENT.subscribe(t,l) },
+            emit: (t,m,o) => { EVENT.publish(t,m,o) },
+            bind: (t,m,o) => { return EVENT.bind(t,m,o) },
             import: loadFile,
             alerts: updateAlerts,
             settings: triggerSettingsEvent
@@ -584,88 +585,78 @@
      * Utility Functions
      ******************************************************************* */
 
-     function unitScale() {
-         return MODE === MODES.CAM &&
-            settings.controller.units === 'in' ? 25.4 : 1;
-     }
+    function unitScale() {
+        return MODE === MODES.CAM && settings.controller.units === 'in' ? 25.4 : 1;
+    }
 
-     function alert2(message, time) {
-         if (message === undefined || message === null) {
-             return updateAlerts(true);
-         }
-         let rec = [message, Date.now(), time, true];
-         if (feature.alert_event) {
-             API.event.emit('alert', rec);
-         } else {
-             alerts.push(rec);
-             updateAlerts();
-         }
-         return rec;
-     }
+    function alert2(message, time) {
+        if (message === undefined || message === null) {
+            return updateAlerts(true);
+        }
+        let rec = [message, Date.now(), time, true];
+        if (feature.alert_event) {
+            API.event.emit('alert', rec);
+        } else {
+            alerts.push(rec);
+            updateAlerts();
+        }
+        return rec;
+    }
 
-     function alert2cancel(rec,recs) {
-         if (Array.isArray(recs)) {
-             for (let r of recs) {
-                 alert2cancel(r);
-             }
-             return;
-         }
-         if (feature.alert_event) {
-             API.event.emit('alert.cancel', rec);
-             return;
-         }
-         if (Array.isArray(rec)) {
-             rec[3] = false;
-             updateAlerts();
-         }
-     }
+    function alert2cancel(rec,recs) {
+        if (Array.isArray(recs)) {
+            for (let r of recs) {
+                alert2cancel(r);
+            }
+            return;
+        }
+        if (feature.alert_event) {
+            API.event.emit('alert.cancel', rec);
+            return;
+        }
+        if (Array.isArray(rec)) {
+            rec[3] = false;
+            updateAlerts();
+        }
+    }
 
-     function updateAlerts(clear) {
-         if (clear) {
-             alerts = [];
-         }
-         let now = Date.now();
-         // filter out by age and active flag
-         alerts = alerts.filter(alert => {
-             return alert[3] && (now - alert[1]) < ((alert[2] || 5) * 1000);
-         });
-         // limit to 5 showing
-         while (alerts.length > 5) {
-             alerts.shift();
-         }
-         // return if called before UI configured
-         if (!UI.alert) {
-             return;
-         }
-         if (alerts.length > 0) {
-             UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
-             UI.alert.dialog.style.display = 'flex';
-         } else {
-             UI.alert.dialog.style.display = 'none';
-         }
-     }
+    function updateAlerts(clear) {
+        if (clear) {
+            alerts = [];
+        }
+        let now = Date.now();
+        // filter out by age and active flag
+        alerts = alerts.filter(alert => {
+            return alert[3] && (now - alert[1]) < ((alert[2] || 5) * 1000);
+        });
+        // limit to 5 showing
+        while (alerts.length > 5) {
+            alerts.shift();
+        }
+        // return if called before UI configured
+        if (!UI.alert) {
+            return;
+        }
+        if (alerts.length > 0) {
+            UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
+            UI.alert.dialog.style.display = 'flex';
+        } else {
+            UI.alert.dialog.style.display = 'none';
+        }
+    }
 
-     function getShowFavorites(bool) {
-         if (bool !== undefined) {
-             SDB.setItem('dev-favorites', bool);
-             showFavorites = bool;
-             return bool;
-         }
-         return showFavorites;
-     }
+    function getShowFavorites(bool) {
+        if (bool !== undefined) {
+            SDB.setItem('dev-favorites', bool);
+            showFavorites = bool;
+            return bool;
+        }
+        return showFavorites;
+    }
 
-     function sendOnEvent(name, data, options) {
-         EVENT.publish(name, data, options);
-     }
-
-     function addOnEvent(name, handler) {
-         EVENT.subscribe(name, handler);
-         return API.event;
-     }
-
-     function triggerSettingsEvent() {
-         API.event.emit('settings', settings);
-     }
+    function triggerSettingsEvent() {
+        API.event.emit('settings', settings);
+    }
 
     function isSecure(proto) {
          return proto.toLowerCase().indexOf("https") === 0;
