@@ -16,7 +16,7 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        EVENT   = new Broker(),
+        EVENT   = KIRI.broker = new Broker(),
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         // K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),

@@ -46,4 +46,12 @@ class Broker {
             }
         }
     }
+
+    // return function bound to a topic
+    bind(topic, message, options) {
+        let broker = this;
+        return function(msg = message, opt = options) {
+            broker.publish(topic, msg, opt);
+        }
+    }
 }
