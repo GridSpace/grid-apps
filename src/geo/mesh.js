@@ -5,6 +5,7 @@
 (function() {
 
     const BASE = self.base = self.base || {};
+    const TEST = 0;
 
     if (BASE.Mesh) {
         return;
@@ -12,7 +13,7 @@
 
     BASE.Mesh = class Mesh {
         constructor(params = {}) {
-            this.precision = params.precision || 6;
+            this.precision = Math.pow(10, params.precision || 6);
             if (params.vertices) {
                 this.setData(params.vertices, params.faces);
             }
@@ -38,21 +39,24 @@
             }
             // when face/index data is missing, vertices need to be normalized
             if (!faces) {
+                if (TEST) console.time('generate faces');
                 faces = [];
                 let fcac = {}; // seen face hash
                 let fnew = []; // accumulate vertex triplets
                 let nuvt = []; // new vertex list
                 let hash = {}; // find vertex matches
                 let prec = this.precision;
+                let dups = 0;
+                // let cull = 0;
                 for (let i=0, l=vertices.length; i<l; i += 3) {
                     let x = vertices[i];
                     let y = vertices[i+1];
                     let z = vertices[i+2];
                     let key = [
-                        x.toFixed(prec),
-                        y.toFixed(prec),
-                        z.toFixed(prec)
-                    ].join(',');
+                        (x * prec) | 0,
+                        (y * prec) | 0,
+                        (z * prec) | 0
+                    ].join('');
                     let vpos = hash[key];
                     if (vpos === undefined) {
                         hash[key] = vpos = nuvt.length;
@@ -63,20 +67,25 @@
                     fnew.push(vpos);
                     if (fnew.length === 3) {
                         // cull invalid faces (shares 2 or more points)
-                        if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
-                            fnew = [];
-                            continue;
-                        }
+                        // if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+                        //     fnew = [];
+                        //     cull++;
+                        //     continue;
+                        // }
                         let key = fnew.slice().sort().join('-');
-                        // drop duplicate faces (even when reversed - thus the sort)
+                        // drop duplicate faces (sort handles reverse order)
                         if (!fcac[key]) {
                             faces.appendAll(fnew);
+                        } else {
+                            dups++;
                         }
                         fcac[key] = key;
                         fnew = [];
                     }
                 }
                 vertices = nuvt;
+                if (TEST) console.timeEnd('generate faces');
+                if (TEST) console.log({dups, faces:faces.length/3});
             }
             this.vertices = vertices;
             this.faces = faces;
@@ -101,6 +110,8 @@
          * connect lines into polys. earcut polys into new faces.
          */
         heal() {
+            if (TEST) console.time('heal');
+
             let vertices = this.vertices;
             let faces = this.faces;
             let hash = {}; // key to line map
@@ -117,7 +128,7 @@
                 addFace(face) {
                     if (this.faces.indexOf(face) < 0) {
                         this.faces.push(face);
-                    } else {
+                    } else if (TEST) {
                         console.log('adding face to line twice', this, face);
                     }
                     return this;
@@ -204,7 +215,6 @@
             // lines belonging to only one face are on the edge of a hole
             let edges = this.edges = lines.filter(l => l.faces.length === 1);
             let loops = this.loops = [];
-            // console.log({edges});
 
             // connect edge lines into closed loops
             for (let i=0, l=edges.length; i<l; i++) {
@@ -237,7 +247,7 @@
                             let tmp = adjacent[0].v1;
                             adjacent[0].v1 = adjacent[0].v2;
                             adjacent[0].v2 = tmp;
-                            // console.log('chirality mismatch fixed');
+                            if (TEST > 1) console.log('chirality mismatch fixed');
                         }
                         line = adjacent[0];
                     } else if (adjacent.length === 2) {
@@ -246,7 +256,7 @@
                             adjacent[0] :
                             adjacent[1]
                     } else {
-                        // console.log('error adjacent', line, adjacent, loops.length, loop.length);
+                        if (TEST > 1) console.log('error adjacent', line, adjacent, loops.length, loop.length);
                         line.split = adjacent;
                         line = adjacent[0];
                     }
@@ -290,13 +300,14 @@
 
                 }
             }
-            // console.log({loops})
 
             // store invalid loops for display / culling
             this.shorts = loops.filter(l => l && l.length <= 2);
+            if (TEST) console.log({edges, loops, shorts: this.shorts});
+
             // filter out null and short loops
             this.loops = loops = loops.filter(l => l && l.length > 2);
-            // console.log({loops})
+            if (TEST > 1) console.log({loops_filtered: loops});
 
             // rotate/flatten to Z plane and use earcut to generate faces
             // because earcut emits point indexes, no need to un-rotate
@@ -353,7 +364,7 @@
 
                 let fpoints = points.flat();
                 let ec = earcut(fpoints, undefined, 3);
-                // console.log({points, fpoints, ec, dx, dy, dz});
+                if (TEST > 2) console.log({points, fpoints, ec, dx, dy, dz});
 
                 for (let point of ec) {
                     faces.push(pindex[point]);
@@ -367,8 +378,9 @@
             }
 
             this.newFaces = this.faces.length - faceCount;
-            // console.log({newFaces: this.newFaces});
+            if (TEST) console.log({newFaces: this.newFaces});
 
+            if (TEST) console.timeEnd('heal');
             return this;
         }
     };

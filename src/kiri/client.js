@@ -126,8 +126,8 @@ KIRI.work = {
         });
     },
 
-    heal: function(vertices, callback) {
-        send("heal", {vertices}, function(output) {
+    heal: function(vertices, callback, refresh) {
+        send("heal", {vertices, refresh}, function(output) {
             callback(output);
         });
     },

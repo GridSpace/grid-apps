@@ -386,7 +386,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
     };
 
-    PRO.heal = function(debug) {
+    PRO.heal = function(debug, refresh) {
         if (debug) {
             let mesh = this.debugMesh().heal();
             let verts = mesh.vertices;
@@ -430,7 +430,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     this.modified = false;
                 }
                 resolve(this.modified);
-            });
+            }, refresh);
         });
     };
 

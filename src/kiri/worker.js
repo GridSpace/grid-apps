@@ -203,9 +203,9 @@ KIRI.worker = {
     },
 
     heal: function(data, send) {
-        let { vertices } = data;
+        let { vertices, refresh } = data;
         let mesh = new base.Mesh({vertices}).heal();
-        if (mesh.newFaces) {
+        if (mesh.newFaces || refresh) {
             vertices = mesh.unrolled().toFloat32();
             send.done({vertices}, [vertices]);
         } else {
