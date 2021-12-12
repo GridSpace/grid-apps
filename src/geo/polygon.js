@@ -1730,42 +1730,27 @@
         return null;
     }
 
-    function leftmost(p1, p2) {
-        if (!p1) {
-            return p2;
-        }
-        if (p1.x <= p2.x) {
-            if (p1.x < p2.x || (p1.x === p2.x && p1.y < p2.y)) {
-                return p2;
-            }
-        }
-        return p1;
-    }
-
-    // return top-most, left-post point
-    PRO.leftmost = function() {
-        let tl = undefined;
-        for (let p of this.points) {
-            tl = leftmost(tl, p);
-        }
-        return tl;
-    };
-
     PRO.areaDiff = function(poly) {
         let a1 = this.area(),
             a2 = poly.area();
         return (a1 > a2) ? a2 / a1 : a1 / a2;
     };
 
-    PRO.areaOrLength = function(poly) {
-        return this.length === poly.length || this.areaDiff(poly) > 0.98;
+    PRO.unionMatch = function(polys) {
+        return polys.filter(poly => poly.isEquivalent(this)).length;
+        // for (let poly of polys) {
+        //     if (this.isEquivalent(poly)) {
+        //         return true;
+        //     }
+        // }
+        // return false;
     };
 
     /**
      * return logical OR of two polygons' enclosed areas
      *
      * @param {Polygon} poly
-     * @returns {?Polygon} intersected polygon or null if no intersection
+     * @returns {?Polygon} intersected polygon, null if no intersection, or all when indicated
      */
     PRO.union = function(poly, min, all) {
         if (!this.overlaps(poly)) return null;
@@ -1788,33 +1773,10 @@
             let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
             if (all) {
                 if (union.length === 2) {
-                    let src = [ this.leftmost(), poly.leftmost() ];
-                    let dst = [ union[0].leftmost(), union[1].leftmost() ];
-
-                    if (leftmost(src[0], src[1]) === src[1]) {
-                        src.reverse();
-                    }
-                    if (leftmost(dst[0], dst[1]) === dst[1]) {
-                        dst.reverse();
-                    }
-                    if (
-                        src[0].poly && src[1].poly && // missing for cam tabs
-                        src[0].isEqual2D(dst[0]) &&
-                        src[1].isEqual2D(dst[1]) &&
-                        src[0].poly.areaOrLength(dst[0].poly) &&
-                        src[1].poly.areaOrLength(dst[1].poly)
-                    ) {
-                        return null;
-                    // } else {
-                    //     console.log("union debug", {
-                    //         src,
-                    //         dst,
-                    //         d0: src[0].poly.areaDiff(dst[0].poly),
-                    //         d1: src[1].poly.areaDiff(dst[1].poly),
-                    //         m0: src[0].isEqual2D(dst[0]),
-                    //         m1: src[1].isEqual2D(dst[1])
-                    //     });
-                    }
+                    return null;
+                    // if (this.unionMatch(union) || poly.unionMatch(union)) {
+                    //     return null;
+                    // }
                 }
                 return union;
             }

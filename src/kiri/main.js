@@ -1954,9 +1954,9 @@
                         name = name.substring(sp + 1);
                     }
                     UI.mesh.name.innerText = name;
-                    UI.mesh.points.innerText = sel.meta.vertices;
-                    UI.mesh.faces.innerText = sel.meta.vertices / 3;
                 }
+                UI.mesh.points.innerText = sel.meta.vertices;
+                UI.mesh.faces.innerText = sel.meta.vertices / 3;
             } else {
                 UI.mesh.name.innerText = `[${selcount}]`;
                 UI.mesh.points.innerText = '-';

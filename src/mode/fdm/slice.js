@@ -1664,14 +1664,19 @@
         }
         let groups = coplane.group(true);
         // console.log({v3cache, coplane, groups});
+        // let ptotl = Object.values(groups).flat().flat().length;
+        // console.log({ptotl});
+        // let pdone = 0;
         for (let group of Object.values(groups)) {
             for (let polys of group) {
                 for (let poly of polys) {
                     if (poly.area() >= process.sliceSupportArea)
                     tP(poly, polys.face);
+                    // console.log(++pdone / ptotl);
                 }
             }
         }
+
         widget.supports = add;
         return add.length > 0;
     };
@@ -1742,7 +1747,8 @@
                                 .add(arr[1].x, arr[1].y, arr[1].z)
                                 .add(arr[2].x, arr[2].y, arr[2].z);
                         });
-                        let union = POLY.union(parr, 0, true, {wasm:true});
+                        let union = parr.length === 1 ? parr :
+                            POLY.union(parr, 0, true, {wasm:false});
                         union.merged = parr.length;
                         union.face = group[0];
                         return union;
