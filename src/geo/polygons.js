@@ -392,31 +392,19 @@
              }
          }
 
-         let out = polys.slice(), i, j, union, uset = [];
+         let clib = self.ClipperLib,
+             ctyp = clib.ClipType,
+             ptyp = clib.PolyType,
+             clip = new clib.Clipper(),
+             ctre = new clib.PolyTree();
 
-         outer: for (i=0; i<out.length; i++) {
-             if (!out[i]) continue;
-             for (j=i+1; j<out.length; j++) {
-                 if (!out[j]) continue;
-                 union = out[i].union(out[j], minarea, all);
-                 if (union) {
-                     out[i] = null;
-                     out[j] = null;
-                     if (all) {
-                         out.appendAll(union);
-                     } else {
-                         out.push(union);
-                     }
-                     continue outer;
-                 }
-             }
+         clip.AddPaths(toClipper(polys), ptyp.ptSubject, true);
+
+         if (clip.Execute(ctyp.ctUnion, ctre)) {
+             return fromClipperTree(ctre, polys[0].getZ());
+         } else {
+             return [];
          }
-
-         for (i=0; i<out.length; i++) {
-             if (out[i]) uset.push(out[i]);
-         }
-
-         return uset;
      }
 
     /**
