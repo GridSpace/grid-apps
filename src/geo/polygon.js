@@ -1757,6 +1757,10 @@
         return (a1 > a2) ? a2 / a1 : a1 / a2;
     };
 
+    PRO.areaOrLength = function(poly) {
+        return this.length === poly.length || this.areaDiff(poly) > 0.98;
+    };
+
     /**
      * return logical OR of two polygons' enclosed areas
      *
@@ -1765,7 +1769,65 @@
      */
     PRO.union = function(poly, min, all) {
         if (!this.overlaps(poly)) return null;
-        return POLY.union([this,poly], min, all);
+
+        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
+            clib = self.ClipperLib,
+            ctyp = clib.ClipType,
+            ptyp = clib.PolyType,
+            cfil = clib.PolyFillType,
+            clip = new clib.Clipper(),
+            ctre = new clib.PolyTree(),
+            sp1 = this.toClipper(),
+            sp2 = poly.toClipper(),
+            minarea = min >= 0 ? min : 0.1;
+
+        clip.AddPaths(sp1, ptyp.ptSubject, true);
+        clip.AddPaths(sp2, ptyp.ptClip, true);
+
+        if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+            let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+            if (all) {
+                if (union.length === 2) {
+                    let src = [ this.leftmost(), poly.leftmost() ];
+                    let dst = [ union[0].leftmost(), union[1].leftmost() ];
+
+                    if (leftmost(src[0], src[1]) === src[1]) {
+                        src.reverse();
+                    }
+                    if (leftmost(dst[0], dst[1]) === dst[1]) {
+                        dst.reverse();
+                    }
+                    if (
+                        src[0].poly && src[1].poly && // missing for cam tabs
+                        src[0].isEqual2D(dst[0]) &&
+                        src[1].isEqual2D(dst[1]) &&
+                        src[0].poly.areaOrLength(dst[0].poly) &&
+                        src[1].poly.areaOrLength(dst[1].poly)
+                    ) {
+                        return null;
+                    // } else {
+                    //     console.log("union debug", {
+                    //         src,
+                    //         dst,
+                    //         d0: src[0].poly.areaDiff(dst[0].poly),
+                    //         d1: src[1].poly.areaDiff(dst[1].poly),
+                    //         m0: src[0].isEqual2D(dst[0]),
+                    //         m1: src[1].isEqual2D(dst[1])
+                    //     });
+                    }
+                }
+                return union;
+            }
+            if (union.length === 1) {
+                union = union[0];
+                union.fillang = fillang;
+                return union;
+            } else {
+                console.trace({check_union_call_path: union, this: this, poly});
+            }
+        }
+
+        return null;
      };
 
     /** ******************************************************************
