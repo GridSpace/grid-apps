@@ -327,7 +327,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             // onshape exports obj in meters by default :/
             let maxv = 0;
             for (let i=0; i<vertices.length; i++) {
-                maxv = Math.max(Math.abs(vertices[i]));
+                maxv = Math.max(maxv,Math.abs(vertices[i]));
             }
             if (maxv < 1) {
                 for (let i=0; i<vertices.length; i++) {
