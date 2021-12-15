@@ -159,7 +159,10 @@
             // shift out first (top-most) slice
             indices.shift();
             if (op.flats) {
-                let flats = Object.keys(slicer.zFlat)
+                let flatArea = (Math.PI * (toolDiam/2) * (toolDiam/2)) / 2;
+                let flats = Object.entries(slicer.zFlat)
+                    .filter(row => row[1] > flatArea)
+                    .map(row => row[0])
                     .map(v => parseFloat(v).round(5))
                     .filter(v => v >= zBottom);
                 flats.forEach(v => {
