@@ -350,6 +350,7 @@
                 newLayer();
             }
 
+            let index = 0;
             for (let slice of sliceOut) {
                 let polys = [], t = [], c = [];
                 POLY.flatten(slice.camLines).forEach(function (poly) {
@@ -375,6 +376,7 @@
                     });
                     newLayer();
                 }
+                progress(++index / sliceOut.length, "routing");
             }
 
             function isNeg(v) {
