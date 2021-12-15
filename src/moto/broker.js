@@ -8,6 +8,12 @@ class Broker {
     }
 
     subscribe(topic, listener) {
+        if (Array.isArray(topic)) {
+            for (let t of topic) {
+                this.subscribe(t, listener);
+            }
+            return;
+        }
         let topics = this.topics;
         let channel = topics[topic];
         if (!channel) {
@@ -36,13 +42,24 @@ class Broker {
     }
 
     publish(topic, message, options = {}) {
+        if (Array.isArray(topic)) {
+            for (let t of topic) {
+                this.publish(t, message, options);
+            }
+            return;
+        }
         if (topic !== ".topic.publish") {
             this.publish(".topic.publish", {topic, message, options});
         }
         let channel = this.topics[topic];
         if (channel && channel.length) {
             for (let listener of channel) {
-                listener(message, topic, options);
+                try {
+                    listener(message, topic, options);
+                } catch (e) {
+                    // console.log({listener_error: e, topic, options, listener});
+                    setTimeout(() => { throw e }, 1);
+                }
             }
         }
     }
