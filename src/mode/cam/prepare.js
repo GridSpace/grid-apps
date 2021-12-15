@@ -28,13 +28,13 @@
 
         let point;
         widgets.forEach((widget, index) => {
-            point = prepEach(widget, settings, print, point, progress => {
-                update((index * weight + progress * weight) * 0.5, "prepare");
+            point = prepEach(widget, settings, print, point, (progress, msg) => {
+                update((index * weight + progress * weight) * 0.75, msg || "prepare");
             });
         });
 
         print.render = KIRI.driver.FDM.prepareRender(print.output, (progress, layer) => {
-            update(0.5 + progress * 0.5, "render", layer);
+            update(0.75 + progress * 0.25, "render", layer);
         }, {
             thin: true,
             print: 0,
@@ -384,7 +384,7 @@
             lastMode = op.op.type;
             let weight = op.weight();
             op.prepare(ops, (progress, message) => {
-                onupdate((opSum + (progress * weight)) / opTot, message || op.type());
+                update((opSum + (progress * weight)) / opTot, message || op.type(), message);
             });
             opSum += weight;
         }
