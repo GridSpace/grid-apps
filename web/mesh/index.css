@@ -1,0 +1,354 @@
+:root {
+    --fg-gray: #495057;
+    --bg-gray: rgba(0,0,0,0.25);
+    --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
+    --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
+    --highlight: rgba(126,153,183,0.4);
+    --main-color: rgba(126,153,183,1);
+}
+@font-face {
+    font-family: 'Russo One';
+    src: url('ext/russo-one.ttf');
+}
+a, a:hover, a:visited {
+    border: none;
+    color: inherit;
+    text-decoration: none;
+}
+#app {
+    position: fixed;
+    overflow: hidden;
+    font-weight: normal;
+    font-family: sans-serif;
+    font-size: larger;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+#app-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 50;
+}
+#app-name, #app-mode-name, #app-acct {
+    cursor: pointer;
+}
+#app-mode-name {
+    border-bottom: 2px dotted grey;
+}
+#app,div {
+    display: flex;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+#gsbox {
+    width: 40px;
+    height: 40px;
+    padding-right: 15px;
+    position: fixed;
+    display: none;
+}
+div {
+    position: relative;
+}
+button.yellow {
+    background-color: #eda;
+    border: 1px solid rgba(0,0,255,0.5);
+}
+button.yellow:hover {
+    background-color: #eea;
+}
+button {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: #eee;
+    padding: 2px 7px 3px 7px;
+    margin: 1px 1px 2px;
+    cursor: pointer;
+    text-transform: capitalize;
+}
+button:hover {
+    background-color: var(--main-color);
+    color: white;
+}
+button[load] {
+    width: 100%;
+    text-align: left;
+}
+button[del] {
+    margin-left: 5px;
+}
+input {
+    background-color: #eeeeeed6;
+    margin-bottom: 1px;
+    text-align: right;
+    border: 1px solid #bbb;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 1px;
+    position: relative;
+}
+input:focus {
+    color: #495057;
+    background-color: #fff;
+    border-color: #6C7F94;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 10%);
+}
+input[disabled] {
+    background-color: #ddd;
+    color: #000;
+    border-width: 1px;
+}
+input[type="range"] {
+    width: 85px;
+    background-color: transparent;
+}
+input[type=range]::-moz-focus-outer {
+    border: 0;
+}
+input[type="checkbox"] + .color {
+    z-index: 10000;
+    width: 15px;
+    height: 15px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 3px;
+    display: inline-block;
+    pointer-events: none;
+    margin: 2px;
+}
+input[type="checkbox"]:not(:checked) + .color {
+    border: 1px solid blue;
+    background-color: rgba(255,255,255,0.5) !important;
+}
+input[type="checkbox"].color {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+}
+select, textarea, button, input, a {
+    outline: none;
+}
+textarea {
+    overflow: scroll;
+}
+select {
+    border: 1px solid #bbb;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 3px;
+}
+th, tr, td, span, div, label, button {
+    user-select: none;
+}
+th, tr, td, label {
+    white-space: nowrap;
+}
+.noselect {
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.hide {
+    display: none !important;
+}
+.noshow {
+    display: none;
+}
+.grid {
+    display: grid;
+}
+.frow {
+    flex-direction: row;
+}
+.f-col {
+    flex-direction: column;
+}
+.auto {
+    flex-basis: auto;
+}
+.basis-50 {
+    flex-basis: 50%;
+}
+.grow {
+    flex-grow: 1;
+}
+.a-start {
+    align-items: flex-start;
+}
+.a-center {
+    align-items: center;
+}
+.a-end {
+    align-items: flex-end;
+}
+.a-stretch {
+    align-items: stretch;
+}
+.j-start {
+    justify-content: flex-start;
+}
+.j-center {
+    justify-content: center;
+}
+.j-end {
+    justify-content: flex-end;
+}
+.space-around {
+    justify-content: space-around;
+}
+.space-between {
+    justify-content: space-between;
+}
+.center {
+    text-align: center;
+}
+.middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.t-just {
+    text-align: justify;
+}
+.t-right {
+    text-align: right;
+}
+.russo {
+    font-family: 'Russo One', sans-serif;
+}
+.overy {
+    overflow-y: auto;
+}
+.mh0 {
+    min-height: 0;
+}
+.mh35 {
+    max-height: 35%;
+}
+.mh85 {
+    max-height: 85%;
+}
+
+:-moz-any() {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+}
+:-moz-any() {
+    overflow-x: scroll !important;
+    overflow-y: scroll !important;
+    margin-right: -14px !important;
+    margin-bottom: -14px !important;
+}
+
+#curtain {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    background-color: #fff;
+    font-family: 'Russo One', sans-serif;
+    z-index: 11;
+}
+
+#tracker {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    display: none;
+    z-index: 101;
+}
+
+#container {
+    position: fixed;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+}
+#container canvas {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#top {
+    font-family: 'Russo One', sans-serif;
+    background-color: rgba(255,255,255,0.75);
+    padding: 3px;
+    z-index: 15;
+}
+#top > div {
+    margin: 0 5px 0 5px;
+}
+
+#modal {
+    display: none;
+    position: fixed;
+    z-index: 20;
+    top: 50%;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    height: 300px;
+    transform: translateY(-50%);
+    background-color: var(--bg-gray);
+    border-bottom: 1px solid black;
+    border-top: 1px solid black;
+    overflow: hidden;
+}
+#modal > div {
+    position: absolute;
+    transform: translateX(50%) translateY(-50%);
+    right: 50%;
+    top: 50%;
+}
+.mdialog {
+    display: none;
+    padding: 10px;
+    min-height: 20px;
+    font-size: smaller;
+    background-color: #fff;
+}
+
+#gdpr {
+    position: absolute;
+    display: none;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid black;
+    background-color: white;
+}
+#gdpr a {
+    text-decoration: underline;
+}
+#gotit {
+    font-weight: bold;
+    font-size: larger;
+    padding: 5px 20px 5px 20px;
+    margin-left: 10px;
+}
+#fps {
+    position: fixed;
+    font-size: 10px;
+    bottom: 5px;
+    right: 5px;
+    color: #000;
+}
