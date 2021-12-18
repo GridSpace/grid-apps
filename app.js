@@ -10,7 +10,7 @@ const fs = require('fs');
 const uglify = require('uglify-es');
 const moment = require('moment');
 const agent = require('express-useragent');
-const license = require_fresh('./src/license.js');
+const license = require_fresh('./src/add/license.js');
 const version = license.VERSION || "rogue";
 
 const fileCache = {};
@@ -61,8 +61,10 @@ function init(mod) {
     mod.add(handleOptions);
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
+        "/mesh"            : redir("/mesh/", 301),
         "/meta"            : redir("/meta/", 301),
         "/kiri/index.html" : redir("/kiri/", 301),
+        "/mesh/index.html" : redir("/mesh/", 301),
         "/meta/index.html" : redir("/meta/", 301)
     }));
     mod.add(handleVersion);
@@ -81,6 +83,8 @@ function init(mod) {
     mod.add(rewriteHtmlVersion);
     mod.static("/src/", "src");
     mod.static("/obj/", "web/obj");
+    mod.static("/font/", "web/font");
+    mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
     mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
@@ -218,12 +222,12 @@ function initModule(mod, file, dir) {
 
 const script = {
     kiri : [
-        "kiri",
+        "main/kiri",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
         "ext/jszip",
-        "license",
+        "add/license",
         "ext/clip2", // work.test
         "ext/tween",
         "ext/fsave",
@@ -287,11 +291,11 @@ const script = {
         "@icons"
     ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
     worker : [
-        "kiri",
+        "main/kiri",
         "ext/three",
         "ext/pngjs",
         "ext/jszip",
-        "license",
+        "add/license",
         "ext/clip2",
         "ext/earcut",
         "add/array",
@@ -339,8 +343,8 @@ const script = {
         "kiri/worker"
     ].map(p => `src/${p}.js`),
     minion : [
-        "kiri",
-        "license",
+        "main/kiri",
+        "add/license",
         "ext/clip2",
         "ext/earcut",
         "add/array",
@@ -365,8 +369,8 @@ const script = {
         "kiri/minion"
     ].map(p => `src/${p}.js`),
     engine : [
-        "kiri",
-        "license",
+        "main/kiri",
+        "add/license",
         "ext/three",
         "add/array",
         "add/three",
@@ -396,7 +400,7 @@ const script = {
     ].map(p => `src/${p}.js`),
     meta : [
         "ext/three",
-        "license",
+        "add/license",
         "ext/tween",
         "ext/fsave",
         "ext/earcut",
@@ -420,8 +424,63 @@ const script = {
         "moto/db",
         "moto/ui",
         "kiri/catalog",
-        "meta"
-    ].map(p => `src/${p}.js`)
+        "main/meta"
+    ].map(p => `src/${p}.js`),
+    mesh : [
+        "main/mesh",
+        "ext/three",
+        "ext/three-bgu",
+        "ext/three-svg",
+        "ext/jszip",
+        "add/license",
+        "ext/clip2",
+        "ext/tween",
+        "ext/fsave",
+        "ext/earcut",
+        "ext/base64",
+        "add/array",
+        "add/three",
+        "geo/base",
+        "geo/point",
+        "geo/points",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/mesh",
+        // "moto/kv",
+        // "moto/ajax",
+        "moto/ctrl",
+        // "moto/pack",
+        "moto/space",
+        "moto/load-3mf",
+        "moto/load-obj",
+        "moto/load-stl",
+        "moto/load-svg",
+        "moto/load-url",
+        "moto/load-file",
+        "moto/broker",
+        "moto/db",
+        // "kiri/ui",
+        // "kiri/do",
+        // "kiri/lang",
+        // "kiri/lang-en",
+        "kiri/catalog",
+        // "kiri/slice",
+        // "kiri/layers",
+        // "kiri/client",
+        // "kiri/stack",
+        // "kiri/stacks",
+        // "kiri/widget",
+        // "kiri/print",
+        // "kiri/codec",
+        // "kiri/conf",
+        // "kiri/main",
+        // "kiri/init",
+        // "kiri/export",
+        // "kiri/tools",
+    ].map(p => `src/${p}.js`),
 };
 
 // prevent caching of specified modules
@@ -461,7 +520,7 @@ function handleSetup(req, res, next) {
 
 function handleVersion(req, res, next) {
     let vstr = oversion || version;
-    if (req.app.path === "/kiri/" && req.url.indexOf(vstr) < 0) {
+    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
@@ -489,7 +548,7 @@ function handleOptions(req, res, next) {
 function handleWasm(req, res, next) {
     let [root, file] = req.app.path.split('/').slice(1);
     let ext = (file || '').split('.')[1];
-    let path = `${dir}/wasm/${file}`;
+    let path = `${dir}/src/wasm/${file}`;
     let mod = lastmod(path);
 
     if (root === 'wasm' && ext === 'wasm' && mod) {
@@ -587,6 +646,7 @@ function prepareScripts() {
     generateIcons();
     generateDevices();
     code.meta = concatCode(script.meta);
+    code.mesh = concatCode(script.mesh);
     code.kiri = concatCode(script.kiri);
     code.worker = concatCode(script.worker);
     code.minion = concatCode(script.minion);
@@ -795,7 +855,7 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (req.app.path === "/kiri/") {
+    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0) {
         let real_write = res.write;
         let real_end = res.end;
         res.write = function() {
