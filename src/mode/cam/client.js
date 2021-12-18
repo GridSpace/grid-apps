@@ -22,7 +22,11 @@
 
     let zaxis = { x: 0, y: 0, z: 1 },
         popOp = {},
-        func = {},
+        noop = () => {},
+        func = {
+            hover: noop,
+            hoverUp: noop
+        },
         flipping;
 
     CAM.restoreTabs = restoreTabs;
