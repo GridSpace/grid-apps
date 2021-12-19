@@ -558,6 +558,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      * called by center() and Group.center()
      */
     PRO.moveMesh = function(x, y, z) {
+        if (!(x || y || z)) {
+            return;
+        }
         let gap = this.mesh.geometry.attributes.position,
             pa = gap.array;
         // center point array on 0,0,0

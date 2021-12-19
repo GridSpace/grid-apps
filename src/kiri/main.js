@@ -1710,6 +1710,7 @@
         });
         if (format === "obj") {
             let obj = [];
+            let vpad = 0;
             for (let out of outs) {
                 let meta = out.widget.meta;
                 let name = meta.file || 'unnamed';
@@ -1721,8 +1722,9 @@
                     obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
                     obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
                     obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                    obj.push(`f ${i+1} ${i+2} ${i+3}`);
+                    obj.push(`f ${i+1+vpad} ${i+2+vpad} ${i+3+vpad}`);
                 }
+                vpad += position.count;
             }
             return obj.join('\n');
         }
@@ -2677,12 +2679,19 @@
                 iskmz = lower.indexOf(".kmz") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
-                if (israw) platform.add(
-                    newWidget(undefined,group)
-                    .loadVertices(JSON.parse(e.target.result).toFloat32())
-                );
+                function load_dec() {
+                    if (--loaded === 0) platform.group_done(isgcode);
+                }
+                if (israw) {
+                    platform.add(
+                        newWidget(undefined,group)
+                        .loadVertices(JSON.parse(e.target.result).toFloat32())
+                    );
+                    load_dec();
+                }
                 else if (API.feature.on_load && (isstl || isobj || is3mf)) {
                     API.feature.on_load(e.target.result, file);
+                    load_dec();
                 }
                 else if (isstl) {
                     if (API.feature.on_add_stl) {
@@ -2694,6 +2703,7 @@
                             .saveToCatalog(e.target.file.name)
                         );
                     }
+                    load_dec();
                 }
                 else if (isobj) {
                     let objs = MOTO.OBJ.parse(e.target.result);
@@ -2709,6 +2719,7 @@
                                 .saveToCatalog(name)
                             );
                         }
+                        load_dec();
                     };
                     if (objs.length > 1 && !group) {
                         UC.confirm('group objects?').then(ok => {
@@ -2735,6 +2746,7 @@
                                 .saveToCatalog(name)
                             );
                         }
+                        load_dec();
                         API.hide.alert(msg);
                     }
                     let msg = API.show.alert('Decoding 3MF');
@@ -2752,7 +2764,10 @@
                         }
                     });
                 }
-                else if (isgcode) loadCode(e.target.result, 'gcode');
+                else if (isgcode) {
+                    loadCode(e.target.result, 'gcode');
+                    load_dec();
+                }
                 else if (issvg) {
                     if (MODE === MODES.LASER) {
                         loadCode(e.target.result, 'svg');
@@ -2769,13 +2784,13 @@
                             );
                         }
                     }
+                    load_dec();
                 }
                 else if (iskmz) settingsImportZip(e.target.result, true);
                 else if (isset) settingsImport(e.target.result, true);
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
                 else API.show.alert(`Unsupported file: ${files[i].name}`);
-                if (--loaded === 0) platform.group_done(isgcode);
             };
             if (isstl || ispng || isjpg || iskmz) {
                 reader.readAsArrayBuffer(reader.file);
