@@ -388,7 +388,7 @@
              try {
                  return geo.wasm.js.union(polys, polys[0].getZ()).filter(p => p.area() > min);
              } catch (e) {
-                 console.log({union_fail: polys, minarea, all, deepLength});
+                 console.log({union_fail: polys, minarea, all});
              }
          }
 
