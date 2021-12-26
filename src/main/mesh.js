@@ -15,6 +15,7 @@ function init() {
         zoomspd = 1,
         Space = moto.Space;
 
+    // setup default workspace
     Space.showSkyGrid(sky);
     Space.setSkyColor(dark ? 0 : 0xffffff);
     Space.init(container, delta => { }, ortho);
@@ -26,7 +27,11 @@ function init() {
     Space.view.setZoom(zoomrev, zoomspd);
     Space.useDefaultKeys(true);
 
+    // hide loading curtain
     $('curtain').style.display = 'none';
+
+    // remove version cache bust from url
+    window.history.replaceState({},'','/mesh/');
 }
 
 document.onreadystatechange = function() {

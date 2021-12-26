@@ -14,12 +14,11 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 ### Live Versions
 
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)](https://grid.space/kiri/)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.1)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.2)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.3)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.4)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.5)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.6)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.7)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.8)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-2.9)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.0)
 
 ### Development Activity
 
@@ -72,8 +71,7 @@ your path. You can either add it to your path, or you can run:
 ```
 git clone git@github.com:GridSpace/grid-apps.git
 cd grid-apps
-docker-compose build
-docker-compose up
+docker-compose -f src/dock/compose.yml up
 ```
 
 You can now access your environment of grid-apps by going to:
