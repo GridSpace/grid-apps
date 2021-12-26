@@ -452,7 +452,6 @@ const script = {
         // "moto/kv",
         // "moto/ajax",
         "moto/ctrl",
-        // "moto/pack",
         "moto/space",
         "moto/load-3mf",
         "moto/load-obj",
