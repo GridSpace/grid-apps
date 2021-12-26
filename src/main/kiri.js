@@ -5,7 +5,7 @@
 (function () {
 
     if (!self.kiri) {
-        let kiri = self.kiri = {
+        let kiri = self.gapp = self.kiri = {
             beta: 3110,
             driver: {}, // driver modules
             loader: [], // module loading: array of functions

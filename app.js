@@ -466,7 +466,7 @@ const script = {
         // "kiri/do",
         // "kiri/lang",
         // "kiri/lang-en",
-        "kiri/catalog",
+        // "kiri/catalog",
         // "kiri/slice",
         // "kiri/layers",
         // "kiri/client",

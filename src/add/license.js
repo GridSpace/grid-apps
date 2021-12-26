@@ -9,11 +9,13 @@
     if (typeof(module) === 'object') {
         module.exports = terms;
     }
-    if (typeof(self) !== 'undefined' && self.kiri) {
-        // self.exports = terms;
-        self.kiri.license = terms.LICENSE;
-        self.kiri.version = terms.VERSION;
-        self.kiri.copyright = terms.COPYRIGHT;
+
+    if (typeof(self) !== 'undefined' && self.gapp) {
+        let app = self.gapp;
+        app.license = terms.LICENSE;
+        app.version = terms.VERSION;
+        app.copyright = terms.COPYRIGHT;
+        // for earcut and other modules
         self.module = { exports: terms };
     }
 
