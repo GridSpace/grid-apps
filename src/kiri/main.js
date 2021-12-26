@@ -59,6 +59,12 @@
     // add show() to catalog for API
     CATALOG.show = showCatalog;
 
+    // patch broker for api backward compatibility
+    EVENT.on = (topic, listener) => {
+        EVENT.subscribe(topic, listener);
+        return EVENT;
+    };
+
     const PMODES = {
         SPEED: 1,
         TOOLS: 2
@@ -307,7 +313,7 @@
             file: showHelpFile
         },
         event: {
-            on: (t,l) => { EVENT.subscribe(t,l) },
+            on: (t,l) => { return EVENT.on(t,l) },
             emit: (t,m,o) => { EVENT.publish(t,m,o) },
             bind: (t,m,o) => { return EVENT.bind(t,m,o) },
             import: loadFile,
