@@ -28,10 +28,9 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 
 ## Community
 
-* [Discord Chat](https://discord.com/channels/688863523207774209/688863523211968535)
-* [YouTube Videos](https://www.youtube.com/c/gridspace)
-* [Twitter Updates](https://twitter.com/grid_space_3d)
-* [Facebook Users Group](https://www.facebook.com/groups/kirimoto/)
+* [Discord](https://discord.com/invite/suyCCgr)
+* [YouTube](https://www.youtube.com/c/gridspace)
+* [Twitter](https://twitter.com/grid_space_3d)
 
 ### Testing Locally (with NodeJS)
 
@@ -50,7 +49,7 @@ sudo npm install -g @gridspace/app-server
 ```
 
 to start a local instance of the apps. then open
-[Kiri:Moto](http://localhost:8080/kiri) on your local host
+[localhost:8080/kiri](http://localhost:8080/kiri) on your local host
 
 Alternatively, if you are using a packaged version of npm that ships with
 a Linux distribution, but still want to install in your home directory, you
@@ -75,7 +74,7 @@ docker-compose -f src/dock/compose.yml up
 ```
 
 You can now access your environment of grid-apps by going to:
-[Kiri:Moto](http://127.0.0.1:8080/kiri)
+[localhost:8080/kiri](http://127.0.0.1:8080/kiri)
 
 ### Windows Developers
 
