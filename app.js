@@ -446,7 +446,7 @@ const script = {
         "load/file",
         "moto/broker",
         "moto/idb",
-        "main/mesh"
+        "main/mesh-ui"
     ],
     mesh_work : [
         "moto/worker",
@@ -468,7 +468,8 @@ const script = {
         "geo/polygons",
         "geo/mesh",
         "moto/broker",
-        "moto/idb"
+        "moto/idb",
+        "main/mesh-work"
     ]
 };
 

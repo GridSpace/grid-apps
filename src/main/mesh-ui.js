@@ -21,10 +21,10 @@ let DOC = document,
 
 function init() {
     let moto = self.moto,
-        sky = false;
+        sky = false,
         dark = false,
         ortho = false,
-        zoomrev = true;
+        zoomrev = true,
         zoomspd = 1,
         space = moto.Space,
         platform = space.platform;
