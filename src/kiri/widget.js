@@ -558,9 +558,6 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      * called by center() and Group.center()
      */
     PRO.moveMesh = function(x, y, z) {
-        if (!(x || y || z)) {
-            return;
-        }
         let gap = this.mesh.geometry.attributes.position,
             pa = gap.array;
         // center point array on 0,0,0
@@ -571,6 +568,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
         gap.needsUpdate = true;
         let bb = this.groupBounds();
+        // critical to layout and grouping
         this.track.box = {
             w: (bb.max.x - bb.min.x),
             h: (bb.max.y - bb.min.y),
