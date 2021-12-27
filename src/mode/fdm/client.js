@@ -79,7 +79,7 @@
         function filterSynth() {
             api.widgets.filter((widget) => {
                 if (widget.track.synth) {
-                    api.const.SPACE.platform.remove(widget.mesh);
+                    api.const.SPACE.world.remove(widget.mesh);
                     kiri.Widget.Groups.remove(widget);
                 }
                 return !widget.track.synth
@@ -295,7 +295,7 @@
                 sw._move(fwp.x, fwp.y, fwp.z);
                 api.widgets.add(sw);
                 sw.track.synth = true;
-                api.const.SPACE.platform.add(sw.mesh);
+                api.const.SPACE.world.add(sw.mesh);
             }
         });
         api.event.on("slice.end", () => {
