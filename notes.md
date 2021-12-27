@@ -1,4 +1,4 @@
-# Kiri:Moto todo and notes
+# Kiri:Moto / Grid:Apps notes
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -108,20 +108,3 @@
 # Laser
 
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
-
-# References
-
-* https://www.canva.com/colors/color-wheel/
-* http://lcamtuf.coredump.cx/gcnc/full/
-* http://wiki.imal.org/howto/cnc-milling-introduction-cutting-tools
-* http://www.twak.co.uk/2011/01/degeneracy-in-weighted-straight.html
-* http://photon.chrisgraf.de/
-* https://github.com/Jack000/SVGnest
-
-# More CNC
-
-* https://www.researchgate.net/publication/250328721_Toolpath_Optimization_on_Automatic_Removal_Uncut_and_Application
-
-# Meta
-
-* free-space tetrahedron modeler with vertex mating

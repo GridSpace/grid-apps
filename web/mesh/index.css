@@ -9,7 +9,7 @@
 }
 @font-face {
     font-family: 'Russo One';
-    src: url('ext/russo-one.ttf');
+    src: url('/kiri/ext/russo-one.ttf');
 }
 a, a:hover, a:visited {
     border: none;
@@ -28,23 +28,44 @@ a, a:hover, a:visited {
     bottom: 0;
 }
 #app-name {
-    position: absolute;
+    xposition: absolute;
     top: 50%;
     left: 50%;
     transform: translateX(-50%) translateY(-50%);
     z-index: 50;
 }
-#app-name, #app-mode-name, #app-acct {
-    cursor: pointer;
+#app-name:hover #app-info {
+    display: flex;
 }
-#app-mode-name {
-    border-bottom: 2px dotted grey;
+#app-info {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-top: 5px;
+    padding: 5px;
+    transform: translateX(-50%);
+    left: 50%;
+    top: 100%;
+    color: var(--fg-gray);
+    border-radius: 3px;
+    border: 1px solid #ddd;
+    background-color: white;
+}
+#app-name, #app-acct {
+    cursor: pointer;
 }
 #app,div {
     display: flex;
     padding: 0;
     border: 0;
     margin: 0;
+}
+#top-sep, #mid-sep {
+    z-index: 14;
+    height: 1px;
+    background-image: var(--gradbar);
 }
 #gsbox {
     width: 40px;

@@ -289,7 +289,7 @@ const script = {
         "kiri/tools",
         "@devices",
         "@icons"
-    ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
+    ],
     worker : [
         "main/kiri",
         "ext/three",
@@ -341,7 +341,7 @@ const script = {
         "kiri/print",
         "kiri/codec",
         "kiri/worker"
-    ].map(p => `src/${p}.js`),
+    ],
     minion : [
         "main/kiri",
         "add/license",
@@ -367,7 +367,7 @@ const script = {
         "kiri/widget",
         "kiri/codec",
         "kiri/minion"
-    ].map(p => `src/${p}.js`),
+    ],
     engine : [
         "main/kiri",
         "add/license",
@@ -394,10 +394,10 @@ const script = {
         "kiri/widget",
         "kiri/codec",
         "kiri/engine"
-    ].map(p => `src/${p}.js`),
+    ],
     frame : [
         "kiri/frame"
-    ].map(p => `src/${p}.js`),
+    ],
     meta : [
         "ext/three",
         "add/license",
@@ -425,32 +425,19 @@ const script = {
         "moto/ui",
         "kiri/catalog",
         "main/meta"
-    ].map(p => `src/${p}.js`),
+    ],
     mesh : [
         "main/mesh",
+        "moto/client",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
-        "ext/jszip",
         "add/license",
-        "ext/clip2",
         "ext/tween",
         "ext/fsave",
-        "ext/earcut",
-        "ext/base64",
         "add/array",
         "add/three",
-        "geo/base",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
         "geo/mesh",
-        // "moto/kv",
-        // "moto/ajax",
         "moto/ctrl",
         "moto/space",
         "moto/load-3mf",
@@ -460,27 +447,34 @@ const script = {
         "moto/load-url",
         "moto/load-file",
         "moto/broker",
-        "moto/db",
-        // "kiri/ui",
-        // "kiri/do",
-        // "kiri/lang",
-        // "kiri/lang-en",
-        // "kiri/catalog",
-        // "kiri/slice",
-        // "kiri/layers",
-        // "kiri/client",
-        // "kiri/stack",
-        // "kiri/stacks",
-        // "kiri/widget",
-        // "kiri/print",
-        // "kiri/codec",
-        // "kiri/conf",
-        // "kiri/main",
-        // "kiri/init",
-        // "kiri/export",
-        // "kiri/tools",
-    ].map(p => `src/${p}.js`),
+        "moto/db"
+    ],
+    mesh_work : [
+        "moto/worker",
+        "add/license",
+        "ext/jszip",
+        "ext/clip2",
+        "ext/earcut",
+        "ext/base64",
+        "ext/three",
+        "add/three",
+        "ext/three-bgu",
+        "geo/base",
+        "geo/point",
+        "geo/points",
+        "geo/slope",
+        "geo/line",
+        "geo/bounds",
+        "geo/polygon",
+        "geo/polygons",
+        "geo/mesh",
+    ]
 };
+
+// process script dependencies, expand paths
+for (let [key,val] of Object.entries(script)) {
+    script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
+}
 
 // prevent caching of specified modules
 const cachever = {};
@@ -644,13 +638,9 @@ function generateDevices() {
 function prepareScripts() {
     generateIcons();
     generateDevices();
-    code.meta = concatCode(script.meta);
-    code.mesh = concatCode(script.mesh);
-    code.kiri = concatCode(script.kiri);
-    code.worker = concatCode(script.worker);
-    code.minion = concatCode(script.minion);
-    code.engine = concatCode(script.engine);
-    code.frame = concatCode(script.frame);
+    for (let key of Object.keys(script)) {
+        code[key] = concatCode(script[key]);
+    }
 }
 
 function concatCode(array) {

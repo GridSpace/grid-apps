@@ -48,8 +48,8 @@ if installing the app-server fails or gives you permissions errors, then your no
 sudo npm install -g @gridspace/app-server
 ```
 
-to start a local instance of the apps. then open
-[localhost:8080/kiri](http://localhost:8080/kiri) on your local host
+to start a local instance of the apps. then use a browser to open
+[localhost:8080/kiri](http://localhost:8080/kiri)
 
 Alternatively, if you are using a packaged version of npm that ships with
 a Linux distribution, but still want to install in your home directory, you
@@ -73,7 +73,7 @@ cd grid-apps
 docker-compose -f src/dock/compose.yml up
 ```
 
-You can now access your environment of grid-apps by going to:
+You can now access your environment of grid-apps by going to
 [localhost:8080/kiri](http://127.0.0.1:8080/kiri)
 
 ### Windows Developers

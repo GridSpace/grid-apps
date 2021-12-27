@@ -1,8 +1,12 @@
 // required for license and other grid app dependencies
-self.gapp = {};
+self.gapp = self.gapp || {};
 
 function $(id) {
     return document.getElementById(id);
+}
+
+function $d(id, v) {
+    $(id).style.display = v;
 }
 
 function init() {
@@ -28,10 +32,13 @@ function init() {
     Space.useDefaultKeys(true);
 
     // hide loading curtain
-    $('curtain').style.display = 'none';
+    $d('curtain','none');
 
     // remove version cache bust from url
     window.history.replaceState({},'','/mesh/');
+
+    // start worker
+    moto.client.start(`/code/mesh_work?${gapp.version}`);
 }
 
 document.onreadystatechange = function() {
