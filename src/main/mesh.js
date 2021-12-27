@@ -29,13 +29,12 @@ function init() {
         platform = space.platform;
 
     // setup default workspace
-    space.showSkyGrid(sky);
-    space.setSkyColor(dark ? 0 : 0xffffff);
+    space.sky.showGrid(sky);
+    space.sky.setColor(dark ? 0 : 0xffffff);
     space.init($('container'), delta => { }, ortho);
     platform.onMove(delta => { } );
     platform.setRound(false);
     platform.setZOff(0.2);
-    platform.setGZOff(1.24); // half platform thickness - 0.1
     platform.setSize(300,300,2.5,300);
     platform.setGrid(25,5,0x999999,0xcccccc);
     platform.setColor(0xcccccc);

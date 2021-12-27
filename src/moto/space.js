@@ -186,28 +186,6 @@
             start();
     }
 
-    function tweenPlatform(w,h,d) {
-        let from = {x: platform.scale.x, y: platform.scale.y, z: platform.scale.z},
-            to = {x:w, y:h, z:d},
-            start = function() {
-                setGrid();
-            },
-            update = function() {
-                setPlatformSize(this.x, this.y, this.z);
-                updateLastAction();
-                refresh();
-            },
-            complete = function() {
-                setGrid();
-            };
-        new TWEEN.Tween(from).
-            to(to, tweenTime).
-            onStart(start).
-            onUpdate(update).
-            onComplete(complete).
-            start();
-    }
-
     /** ******************************************************************
      * Utility Functions
      ******************************************************************* */
@@ -298,7 +276,7 @@
                 {x: -width/2, z:  depth/2, y: maxz},
             ];
             SCENE.add(volume = makeLinesFromPoints(points, 0x888888, 0.25));
-            setVolume(volumeOn);
+            showVolume(volumeOn);
         }
     }
 
@@ -325,12 +303,12 @@
         updateRulers();
     }
 
-    function setAxes(bool) {
+    function showAxes(bool) {
         axesOn = bool;
         updateRulers();
     }
 
-    function setVolume(bool) {
+    function showVolume(bool) {
         volumeOn = bool;
         if (volume) volume.visible = bool;
         requestRefresh();
@@ -380,7 +358,7 @@
             w = x / 2,
             h = y / 2,
             d = z / 2,
-            zp = -d - platformZOff + gridZOff,
+            zp = -d - platformZOff + (gridZOff || (z/2-0.1)),
             labelSize = grid.unitMinor * fontScale,
             oldView = ruler.view,
             view = ruler.view = new THREE.Group();
@@ -456,7 +434,7 @@
             x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
-            zp = -(z / 2) - platformZOff + gridZOff,
+            zp = -(z / 2) - platformZOff + (gridZOff || (z/2-0.1)),
             xh = x / 2,
             yh = y / 2,
             x1 = -xh - origin.x,
@@ -869,18 +847,20 @@
         raycast: intersect,
         refresh: refresh,
 
-        showSkyGrid: function(b) {
-            showSkyGrid = b;
-        },
+        sky: {
+            showGrid: (b) => {
+                showSkyGrid = b;
+            },
 
-        setSkyColor: function(c) {
-            skyColor = c;
-            if (skyMaterial) skyMaterial.color = new THREE.Color(c);
-        },
+            setColor: (c) => {
+                skyColor = c;
+                if (skyMaterial) skyMaterial.color = new THREE.Color(c);
+            },
 
-        setSkyGridColor: function(c) {
-            skyGridColor = c;
-            if (skyGridMaterial) skyGridMaterial.color = new THREE.Color(c);
+            setGridColor: (c) => {
+                skyGridColor = c;
+                if (skyGridMaterial) skyGridMaterial.color = new THREE.Color(c);
+            }
         },
 
         scene: {
@@ -888,9 +868,11 @@
                 o.rotation.x = WORLD.rotation.x;
                 return SCENE.add(o);
             },
+
             remove: function (o) {
                 return SCENE.remove(o);
             },
+
             active: updateLastAction
         },
 
@@ -898,39 +880,37 @@
             add: function(o) {
                 WORLD.add(o);
             },
+
             remove: function(o) {
                 WORLD.remove(o);
             }
         },
 
         platform: {
-            update:    updateDraws,
-            tweenTo:   tweenPlatform,
-            setSize:   setPlatformSizeUpdateGrid,
-            setColor:  setPlatformColor,
-            setOrigin: setOrigin,
-            setRulers: setRulers,
-            setGrid:   setGrid,
-            setFont:   setFont,
-            setAxes:   setAxes,
-            setVolume: setVolume,
-            add:       function(o) { WORLD.add(o) },
-            remove:    function(o) { WORLD.remove(o) },
-            setMaxZ:   function(z) { panY = z / 2 },
-            setCenter: function(x,y,z) { panX = x; panY = z, panZ = y },
-            isHidden:  function()  { return !showPlatform },
-            setHidden: function(b) { showPlatform = !b; platform.visible = !b },
-            setHiding: function(b) { hidePlatformBelow = b },
-            setZOff:   function(z) { platformZOff = z; updatePlatformPosition() },
-            setGZOff:  function(z) { gridZOff = z; updatePlatformPosition() },
-            opacity:   function(o) { platform.material.opacity = o },
-            onMove:    function(f) { platformOnMove = f },
-            onHover:   function(f) { platformHover = f },
-            onClick:   function(f) { platformClick = f},
-            size:      function()  { return platform.scale },
-            isVisible: function()  { return platform.visible },
-            showGrid:  function(b) { grid.view.visible = b },
-            setRound:  function(bool) {
+            update:     updateDraws,
+            setSize:    setPlatformSizeUpdateGrid,
+            setColor:   setPlatformColor,
+            setOrigin:  setOrigin,
+            setRulers:  setRulers,
+            setGrid:    setGrid,
+            setFont:    setFont,
+            showAxes:   showAxes,
+            showVolume: showVolume,
+            setMaxZ:    (z) => { panY = z / 2 },
+            setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
+            isHidden:   ()  => { return !showPlatform },
+            setHidden:  (b) => { showPlatform = !b; platform.visible = !b },
+            setHiding:  (b) => { hidePlatformBelow = b },
+            setZOff:    (z) => { platformZOff = z; updatePlatformPosition() },
+            setGridZOff:(z) => { gridZOff = z; updatePlatformPosition() },
+            opacity:    (o) => { platform.material.opacity = o },
+            onMove:     (f) => { platformOnMove = f },
+            onHover:    (f) => { platformHover = f },
+            onClick:    (f) => { platformClick = f},
+            size:       ()  => { return platform.scale },
+            isVisible:  ()  => { return platform.visible },
+            showGrid:   (b) => { grid.view.visible = b },
+            setRound:   (bool) => {
                 let current = platform;
                 isRound = bool;
                 if (bool) {
@@ -957,35 +937,35 @@
         },
 
         view: {
-            top:   function(then)  { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
-            back:  function(then)  { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
-            home:  function(then)  { tweenCam({left: home, up,      panX, panY, panZ, then}) },
-            front: function(then)  { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
-            right: function(then)  { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
-            left:  function(then)  { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
-            reset: function()    { viewControl.reset(); requestRefresh() },
-            load:  function(cam) { viewControl.setPosition(cam) },
-            save:  function()    { return viewControl.getPosition(true) },
-            panTo: function(x,y,z) { tweenCamPan(x,y,z) },
-            setZoom: function(r,v) { viewControl.setZoom(r,v) },
-            setCtrl: function(name) {
+            top:   (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+            back:  (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
+            home:  (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },
+            front: (then) => { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
+            right: (then) => { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
+            left:  (then) => { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
+            reset: ()     => { viewControl.reset(); requestRefresh() },
+            load:  (cam)  => { viewControl.setPosition(cam) },
+            save:  ()     => { return viewControl.getPosition(true) },
+            panTo: (x,y,z) => { tweenCamPan(x,y,z) },
+            setZoom: (r,v) => { viewControl.setZoom(r,v) },
+            setCtrl: (name) => {
                 if (name === 'onshape') {
                     viewControl.setMouse(viewControl.mouseOnshape);
                 } else {
                     viewControl.setMouse(viewControl.mouseDefault);
                 }
             },
-            getFPS: function() { return fps },
-            getFocus: function() { return viewControl.getTarget() },
-            setFocus: function(v) {
+            getFPS: () => { return fps },
+            getFocus: () => { return viewControl.getTarget() },
+            setFocus: (v) => {
                 viewControl.setTarget(v);
                 refresh();
             },
-            setHome: function(r,u) {
+            setHome: (r,u) => {
                 home = r || 0;
                 up = u || PI4;
             },
-            spin: function(then, count) {
+            spin: (then, count) => {
                 Space.view.front(() => {
                     Space.view.right(() => {
                         Space.view.back(() => {
@@ -1003,39 +983,39 @@
         },
 
         mouse: {
-            up:         function(f) { mouseUp = f },
-            down:       function(f) { mouseDown = f },
-            downSelect: function(f) { mouseDownSelect = f },
-            upSelect:   function(f) { mouseUpSelect = f },
-            onDrag:     function(f) { mouseDrag = f },
-            onHover:    function(f) { mouseHover = f }
+            up:         (f) => { mouseUp = f },
+            down:       (f) => { mouseDown = f },
+            downSelect: (f) => { mouseDownSelect = f },
+            upSelect:   (f) => { mouseUpSelect = f },
+            onDrag:     (f) => { mouseDrag = f },
+            onHover:    (f) => { mouseHover = f }
         },
 
-        useDefaultKeys: function(b) {
+        useDefaultKeys: (b) => {
             defaultKeys = b;
         },
 
-        selectRecurse: function(b) {
+        selectRecurse: (b) => {
             selectRecurse = b;
         },
 
-        setTweenTime: function(t) {
+        setTweenTime: (t) => {
             tweenTime = t || 500;
         },
 
-        setTweenDelay: function(d) {
+        setTweenDelay: (d) => {
             tweenDelay = d || 20;
         },
 
-        objects: function() {
+        objects: () => {
             return WC;
         },
 
-        screenshot: function(format, options) {
+        screenshot: (format, options) => {
             return renderer.domElement.toDataURL(format || "image/png", options);
         },
 
-        screenshot2: function(param = {}) {
+        screenshot2: (param = {}) => {
             let oco = renderer.domElement;
             let oWidth = oco.offsetWidth;
             let oHeight = oco.offsetHeight;
@@ -1053,11 +1033,11 @@
             };
         },
 
-        internals: function() {
+        internals: () => {
             return { renderer, camera, platform };
         },
 
-        init: function(domelement, slider, ortho) {
+        init: (domelement, slider, ortho) => {
             container = domelement;
 
             WORLD.rotation.x = -PI2;
@@ -1081,7 +1061,7 @@
 
             raycaster = new THREE.Raycaster();
 
-            viewControl = new MOTO.CTRL(camera, domelement, function (position, moved) {
+            viewControl = new MOTO.CTRL(camera, domelement, (position, moved) => {
                 if (platform) {
                     platform.visible = hidePlatformBelow ?
                         initialized && position.y >= 0 && showPlatform : showPlatform;

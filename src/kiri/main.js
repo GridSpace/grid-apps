@@ -132,8 +132,8 @@
         group_done: platformGroupDone,
         update: SPACE.platform.update,
         set_font: SPACE.platform.setFont,
-        set_axes: SPACE.platform.setAxes,
-        set_volume: SPACE.platform.setVolume,
+        show_axes: SPACE.platform.showAxes,
+        show_volume: SPACE.platform.showVolume,
         top_z: () => { return topZ },
         clear: () => { clearWorkspace(); saveWorkspace(true)  }
     };
@@ -1875,17 +1875,17 @@
             if (ctrl.dark) {
                 SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0x333333);
                 SPACE.platform.opacity(0.8);
-                SPACE.setSkyColor(0);
+                SPACE.sky.setColor(0);
                 DOC.body.classList.add('dark');
             } else {
                 SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
                 SPACE.platform.opacity(0.3);
-                SPACE.setSkyColor(0xffffff);
+                SPACE.sky.setColor(0xffffff);
                 DOC.body.classList.remove('dark');
             }
         }
         SPACE.platform.setRulers(ruler, ruler, 1 / unitScale(), 'X', isBelt ? 'Z' : 'Y');
-        SPACE.platform.setGZOff(height/2 - 0.1);
+        // SPACE.platform.setGZOff(height/2 - 0.1);
         platform.update_origin();
     }
 
@@ -2093,7 +2093,7 @@
     function platformAdd(widget, shift, nolayout) {
         widget.anno.extruder = widget.anno.extruder || 0;
         WIDGETS.push(widget);
-        SPACE.platform.add(widget.mesh);
+        SPACE.world.add(widget.mesh);
         platform.select(widget, shift);
         platform.compute_max_z();
         API.event.emit('widget.add', widget);
@@ -2158,7 +2158,7 @@
         KIRI.work.clear(widget);
         WIDGETS.remove(widget);
         Widget.Groups.remove(widget);
-        SPACE.platform.remove(widget.mesh);
+        SPACE.world.remove(widget.mesh);
         selectedMeshes.remove(widget.mesh);
         updateSliderMax();
         platform.compute_max_z();

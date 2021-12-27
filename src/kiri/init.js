@@ -1457,8 +1457,8 @@
             view.update_slider();
         });
 
-        SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
+        SPACE.sky.showGrid(false);
+        SPACE.sky.setColor(controller.dark ? 0 : 0xffffff);
         SPACE.init(container, function (delta) {
             let vars = API.var;
             if (vars.layer_max === 0 || !delta) return;
