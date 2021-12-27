@@ -7,13 +7,11 @@
 
     if (self.kiri.init) return;
 
-    const KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
-        MOTO = self.moto,
         CONF = KIRI.conf,
         WIN = self.window,
         DOC = self.document,
-        LOC = self.location,
         API = KIRI.api,
         SDB = API.sdb,
         UI = API.ui,

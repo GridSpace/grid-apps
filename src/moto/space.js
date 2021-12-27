@@ -340,9 +340,9 @@
     function setRulers(
         xon = ruler.xon,
         yon = ruler.yon,
-        factor = ruler.factor,
-        xl = ruler.xlabel,
-        yl = ruler.ylabel)
+        factor = ruler.factor || 1,
+        xl = ruler.xlabel || 'X',
+        yl = ruler.ylabel || 'Y')
     {
         if (xon !== ruler.xon || yon !== ruler.yon || factor !== ruler.factor || xl !== ruler.xlabel || yl !== ruler.ylabel) {
             ruler.factor = factor;

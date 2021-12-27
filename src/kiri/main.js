@@ -4,8 +4,9 @@
 
 (function () {
 
-    let MOTO    = moto,
+    let MOTO    = self.moto,
         KIRI    = self.kiri,
+        LOAD    = self.load,
         BASE    = self.base,
         UTIL    = BASE.util,
         LANG    = KIRI.lang.current,
@@ -912,7 +913,7 @@
         } else {
             // dialog
             $('load-file').onchange = function(event) {
-                MOTO.File.load(event.target.files[0])
+                LOAD.File.load(event.target.files[0])
                     .then(data => onload(data[0].mesh))
                     .catch(error => console.log({error}));
             };
@@ -2040,7 +2041,7 @@
 
     function platformLoadSTL(url, onload, formdata) {
         let scale = 1 / unitScale();
-        new MOTO.STL().load(url, function(vertices, filename) {
+        new LOAD.STL().load(url, function(vertices, filename) {
             if (vertices) {
                 let widget = newWidget().loadVertices(vertices);
                 widget.meta.file = filename;
@@ -2054,7 +2055,7 @@
 
     function platformLoadURL(url, options = {}) {
         platform.group();
-        MOTO.URL.load(url, options).then((objects) => {
+        LOAD.URL.load(url, options).then((objects) => {
             let widgets = [];
             for (let object of objects) {
                 let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
@@ -2705,14 +2706,14 @@
                     } else {
                         platform.add(
                             newWidget(undefined,group)
-                            .loadVertices(new MOTO.STL().parse(e.target.result,unitScale()))
+                            .loadVertices(new LOAD.STL().parse(e.target.result,unitScale()))
                             .saveToCatalog(e.target.file.name)
                         );
                     }
                     load_dec();
                 }
                 else if (isobj) {
-                    let objs = MOTO.OBJ.parse(e.target.result);
+                    let objs = LOAD.OBJ.parse(e.target.result);
                     let odon = function() {
                         for (let obj of objs) {
                             let name = e.target.file.name;
@@ -2756,7 +2757,7 @@
                         API.hide.alert(msg);
                     }
                     let msg = API.show.alert('Decoding 3MF');
-                    MOTO.TMF.parseAsync(e.target.result).then(models => {
+                    LOAD.TMF.parseAsync(e.target.result).then(models => {
                         API.hide.alert(msg);
                         if (models.length > 1 && !group) {
                             UC.confirm(`group ${models.length} objects?`).then(ok => {
@@ -2779,7 +2780,7 @@
                         loadCode(e.target.result, 'svg');
                     } else {
                         let name = e.target.file.name;
-                        let svg = MOTO.SVG.parse(e.target.result);
+                        let svg = LOAD.SVG.parse(e.target.result);
                         let ind = 0;
                         for (let v of svg) {
                             let num = ind++;

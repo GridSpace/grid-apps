@@ -4,7 +4,8 @@
 
 (function() {
 
-let moto = self.moto = self.moto || {},
+let gapp = self.gapp = self.gapp || {},
+    moto = self.moto = self.moto || {},
     time = function() { return new Date().getTime() },
     restarting = false,
     running = {},

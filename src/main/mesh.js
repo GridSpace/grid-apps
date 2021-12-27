@@ -1,5 +1,6 @@
-// required for license and other grid app dependencies
-self.gapp = self.gapp || {};
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+"use strict";
 
 function $(id) {
     return document.getElementById(id);
@@ -32,12 +33,13 @@ function init() {
     space.sky.showGrid(sky);
     space.sky.setColor(dark ? 0 : 0xffffff);
     space.init($('container'), delta => { }, ortho);
-    platform.onMove(delta => { } );
+    platform.onMove(delta => { });
     platform.setRound(false);
     platform.setZOff(0.2);
     platform.setSize(300,300,2.5,300);
     platform.setGrid(25,5,0x999999,0xcccccc);
     platform.setColor(0xcccccc);
+    platform.showVolume(false);
     platform.opacity(0.3);
     space.view.setZoom(zoomrev, zoomspd);
     space.useDefaultKeys(true);

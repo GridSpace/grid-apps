@@ -4,7 +4,8 @@
 
 (function() {
 
-let moto = self.moto = self.moto || {},
+let gapp = self.gapp = self.gapp || {},
+    moto = self.moto = self.moto || {},
     time = Date.now;
 
 if (moto.worker) return;
