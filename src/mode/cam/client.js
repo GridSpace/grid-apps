@@ -1224,7 +1224,7 @@
                 });
                 camStock = new THREE.Mesh(geo, mat);
                 camStock.renderOrder = 2;
-                SPACE.platform.add(camStock);
+                SPACE.world.add(camStock);
             }
             stock = settings.stock = {
                 x: csx,
@@ -1244,7 +1244,7 @@
             camStock.position.z = csz / 2;
             delta = csz - topZ;
         } else if (camStock) {
-            SPACE.platform.remove(camStock);
+            SPACE.world.remove(camStock);
             camStock = null;
             delta = 0;
         }
@@ -1252,7 +1252,7 @@
         const {x, y, z} = stock;
         if (x && y && z && !STACKS.getStack('bounds')) {
             const render = new KIRI.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
-            const stack = STACKS.setFreeMem(false).create('bounds', SPACE.platform.world);
+            const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
             stack.add(render.addPolys([
                 newPolygon().centerRectangle({x:csox, y:csoy, z:0}, x, y),
                 newPolygon().centerRectangle({x:csox, y:csoy, z}, x, y)
