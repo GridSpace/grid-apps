@@ -18,8 +18,9 @@ let endpoints = {};
 // code is running in the worker / server context
 const dispatch = moto.worker = {
 
-    register: (name, fn) => {
+    bind: (name, fn) => {
         endpoints[name] = fn;
+        dispatch.send({bind: name});
     },
 
     send: (msg) => {

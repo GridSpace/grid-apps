@@ -449,6 +449,7 @@ const script = {
         "main/mesh-ui"
     ],
     mesh_work : [
+        "moto/client",
         "moto/worker",
         "moto/license",
         "ext/jszip",
@@ -470,6 +471,11 @@ const script = {
         "moto/broker",
         "moto/idb",
         "main/mesh-work"
+    ],
+    mesh_pool : [
+        "moto/worker",
+        "moto/license",
+        "main/mesh-pool"
     ]
 };
 

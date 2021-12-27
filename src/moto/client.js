@@ -19,8 +19,26 @@ if (moto.client) return;
 // code is running in the browser / client context
 let client = moto.client = {
 
-    active: () => {
+    live: () => {
         return workers.length;
+    },
+
+    free: () => {
+        return workers.filter(w => w.run === null).length;
+    },
+
+    max: () => {
+        return ccmax;
+    },
+
+    fn: {},
+
+    bind: (task) => {
+        if (!client.fn[task]) {
+            client.fn[task] = (data, options) => {
+                return client.call(task, data, options);
+            };
+        }
     },
 
     call: (task, data, options = {}) => {
@@ -131,9 +149,9 @@ let client = moto.client = {
     },
 
     // same as restart
-    start: function(url = workurl, cc = workcc) {
+    start: function(url = workurl, cc = workcc || 1) {
         workcc = cc;
-        worknum = cc ? ccmax : 1;
+        worknum = Math.min(ccmax, workcc);
         workurl = url;
         client.restart(url, cc);
     },
@@ -150,16 +168,20 @@ let client = moto.client = {
 
         for (let i=0; i<worknum; i++) {
             let worker = client.spawn(workurl);
-
             worker.run = null;
             worker.index = i;
             worker.onmessage = function(e) {
+                let reply = e.data;
+                if (reply.bind) {
+                    client.bind(reply.bind);
+                    return;
+                }
+
                 if (worker.run === null) {
-                    console.log({unhandled: e});
+                    console.log({client_unhandled: e});
                     throw "message on idle worker";
                 }
 
-                let reply = e.data;
                 let { done, data, error } = reply;
                 let { ondone, ondata, onerror } = worker.run;
                 let handled = false;
@@ -184,8 +206,8 @@ let client = moto.client = {
                 }
 
                 if (!handled) {
-                    console.log({unhandled: e});
-                    throw "unhandled reply";
+                    console.log({client_unhandled: e});
+                    throw "client unhandled reply";
                 }
             };
 
