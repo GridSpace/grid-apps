@@ -9,11 +9,9 @@
         DOC = document,
         SCENE = new THREE.Scene(),
         WORLD = new THREE.Group(),
-        WC = WORLD.children,
         PI = Math.PI,
         PI2 = PI / 2,
         PI4 = PI / 4,
-        ROUND = Math.round,
         panX = 0,
         panY = 0,
         panZ = 0,
@@ -339,7 +337,13 @@
     }
 
 
-    function setRulers(xon = ruler.xon, yon = ruler.yon, factor = ruler.factor, xl = ruler.xlabel, yl = ruler.ylabel) {
+    function setRulers(
+        xon = ruler.xon,
+        yon = ruler.yon,
+        factor = ruler.factor,
+        xl = ruler.xlabel,
+        yl = ruler.ylabel)
+    {
         if (xon !== ruler.xon || yon !== ruler.yon || factor !== ruler.factor || xl !== ruler.xlabel || yl !== ruler.ylabel) {
             ruler.factor = factor;
             ruler.xon = xon;
@@ -406,7 +410,12 @@
         requestRefresh();
     }
 
-    function setGrid(unitMajor = grid.unitMajor, unitMinor = grid.unitMinor, colorMajor = grid.colorMajor, colorMinor = grid.colorMinor) {
+    function setGrid(
+            unitMajor = grid.unitMajor,
+            unitMinor = grid.unitMinor,
+            colorMajor = grid.colorMajor,
+            colorMinor = grid.colorMinor)
+    {
         if (!unitMajor) {
             return;
         }
@@ -566,6 +575,30 @@
         });
         Space.scene.add(group);
         updateDraws();
+    }
+
+    function setRound(bool) {
+        let current = platform;
+        isRound = bool;
+        if (bool) {
+            platform = new THREE.Mesh(
+                new THREE.CylinderGeometry(.5, .5, 1, 60),
+                platformMaterial
+            );
+            platform.rotation.x = 0;
+        } else {
+            platform = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                platformMaterial
+            );
+            platform.rotation.x = -PI2;
+        }
+
+        platform.position.y = current.position.y;
+        platform.visible = current.visible;
+
+        SCENE.remove(current);
+        SCENE.add(platform);
     }
 
     function refresh() {
@@ -838,14 +871,17 @@
      ******************************************************************* */
 
     let Space = MOTO.Space = {
-        alignTracking: alignTracking,
-        addEventListener: addEventListener,
-        addEventHandlers: addEventHandlers,
-        onEnterKey: onEnterKey,
-        onResize: onResize,
-        update: requestRefresh,
-        raycast: intersect,
         refresh: refresh,
+        update: requestRefresh,
+
+        alignTracking: alignTracking,
+        raycast: intersect,
+
+        event: {
+            addHandlers: addEventHandlers,
+            onEnterKey: onEnterKey,
+            onResize: onResize
+        },
 
         sky: {
             showGrid: (b) => {
@@ -876,15 +912,7 @@
             active: updateLastAction
         },
 
-        world: {
-            add: function(o) {
-                WORLD.add(o);
-            },
-
-            remove: function(o) {
-                WORLD.remove(o);
-            }
-        },
+        world: WORLD,
 
         platform: {
             update:     updateDraws,
@@ -894,59 +922,36 @@
             setRulers:  setRulers,
             setGrid:    setGrid,
             setFont:    setFont,
+            setRound:   setRound,
             showAxes:   showAxes,
             showVolume: showVolume,
+            showGrid:   (b) => { grid.view.visible = b },
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
-            isHidden:   ()  => { return !showPlatform },
             setHidden:  (b) => { showPlatform = !b; platform.visible = !b },
             setHiding:  (b) => { hidePlatformBelow = b },
             setZOff:    (z) => { platformZOff = z; updatePlatformPosition() },
             setGridZOff:(z) => { gridZOff = z; updatePlatformPosition() },
+            isHidden:   ()  => { return !showPlatform },
+            isVisible:  ()  => { return platform.visible },
             opacity:    (o) => { platform.material.opacity = o },
             onMove:     (f) => { platformOnMove = f },
             onHover:    (f) => { platformHover = f },
             onClick:    (f) => { platformClick = f},
-            size:       ()  => { return platform.scale },
-            isVisible:  ()  => { return platform.visible },
-            showGrid:   (b) => { grid.view.visible = b },
-            setRound:   (bool) => {
-                let current = platform;
-                isRound = bool;
-                if (bool) {
-                    platform = new THREE.Mesh(
-                        new THREE.CylinderGeometry(.5, .5, 1, 60),
-                        platformMaterial
-                    );
-                    platform.rotation.x = 0;
-                } else {
-                    platform = new THREE.Mesh(
-                        new THREE.BoxGeometry(1, 1, 1),
-                        platformMaterial
-                    );
-                    platform.rotation.x = -PI2;
-                }
-
-                platform.position.y = current.position.y;
-                platform.visible = current.visible;
-
-                SCENE.remove(current);
-                SCENE.add(platform);
-            },
-            world: WORLD
+            size:       ()  => { return platform.scale }
         },
 
         view: {
-            top:   (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
-            back:  (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
-            home:  (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },
-            front: (then) => { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
-            right: (then) => { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
-            left:  (then) => { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
-            reset: ()     => { viewControl.reset(); requestRefresh() },
-            load:  (cam)  => { viewControl.setPosition(cam) },
-            save:  ()     => { return viewControl.getPosition(true) },
-            panTo: (x,y,z) => { tweenCamPan(x,y,z) },
+            top:    (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+            back:   (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
+            home:   (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },
+            front:  (then) => { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
+            right:  (then) => { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
+            left:   (then) => { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
+            reset:  ()     => { viewControl.reset(); requestRefresh() },
+            load:   (cam)  => { viewControl.setPosition(cam) },
+            save:   ()     => { return viewControl.getPosition(true) },
+            panTo:  (x,y,z) => { tweenCamPan(x,y,z) },
             setZoom: (r,v) => { viewControl.setZoom(r,v) },
             setCtrl: (name) => {
                 if (name === 'onshape') {
@@ -957,27 +962,24 @@
             },
             getFPS: () => { return fps },
             getFocus: () => { return viewControl.getTarget() },
-            setFocus: (v) => {
-                viewControl.setTarget(v);
-                refresh();
-            },
+            setFocus: (v) => { viewControl.setTarget(v); refresh() },
             setHome: (r,u) => {
                 home = r || 0;
                 up = u || PI4;
             },
             spin: (then, count) => {
                 Space.view.front(() => {
-                    Space.view.right(() => {
-                        Space.view.back(() => {
-                            Space.view.left(() => {
-                                if (--count > 0) {
-                                    Space.view.spin(then, count);
-                                } else {
-                                    Space.view.front(then);
-                                }
-                            });
-                        });
-                    });
+                Space.view.right(() => {
+                Space.view.back(() => {
+                Space.view.left(() => {
+                    if (--count > 0) {
+                        Space.view.spin(then, count);
+                    } else {
+                        Space.view.front(then);
+                    }
+                });
+                });
+                });
                 });
             }
         },
@@ -991,25 +993,14 @@
             onHover:    (f) => { mouseHover = f }
         },
 
-        useDefaultKeys: (b) => {
-            defaultKeys = b;
+        tween: {
+            setTime:    (t) => { tweenTime = t || 500 },
+            setDelay:   (d) => { tweenDelay = d || 20 }
         },
 
-        selectRecurse: (b) => {
-            selectRecurse = b;
-        },
-
-        setTweenTime: (t) => {
-            tweenTime = t || 500;
-        },
-
-        setTweenDelay: (d) => {
-            tweenDelay = d || 20;
-        },
-
-        objects: () => {
-            return WC;
-        },
+        useDefaultKeys: (b) => { defaultKeys = b  },
+        selectRecurse:  (b) => { selectRecurse = b },
+        objects:        () => { return WORLD.children },
 
         screenshot: (format, options) => {
             return renderer.domElement.toDataURL(format || "image/png", options);

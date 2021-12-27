@@ -2158,7 +2158,7 @@
             API.space.reload();
         };
 
-        SPACE.addEventHandlers(self, [
+        SPACE.event.addHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
             'keypress', keyHandler,
@@ -2229,7 +2229,7 @@
             }
         }
 
-        SPACE.onEnterKey([
+        SPACE.event.onEnterKey([
             UI.scaleX,        selectionScale,
             UI.scaleY,        selectionScale,
             UI.scaleZ,        selectionScale,

@@ -1355,7 +1355,7 @@
                 let alert = feature.work_alerts ? API.show.alert("Rendering") : null;
                 startTime = Date.now();
                 STACKS.clear();
-                const stack = STACKS.create('print', SPACE.platform.world)
+                const stack = STACKS.create('print', SPACE.world)
                 output.forEach(layer => {
                     stack.add(layer);
                 });
