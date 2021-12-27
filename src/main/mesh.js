@@ -9,40 +9,56 @@ function $d(id, v) {
     $(id).style.display = v;
 }
 
+function $h(id, h) {
+    $(id).innerHTML = h;
+}
+
+(function() {
+
+let DOC = document,
+    WIN = window;
+
 function init() {
-    let container = $('container'),
-        moto = self.moto,
+    let moto = self.moto,
         sky = false;
         dark = false,
         ortho = false,
         zoomrev = true;
         zoomspd = 1,
-        Space = moto.Space;
+        space = moto.Space,
+        platform = space.platform;
 
     // setup default workspace
-    Space.showSkyGrid(sky);
-    Space.setSkyColor(dark ? 0 : 0xffffff);
-    Space.init(container, delta => { }, ortho);
-    Space.platform.onMove(delta => { } );
-    Space.platform.setRound(false);
-    Space.platform.setZOff(0.2);
-    Space.platform.setSize(500,500,2.5);
-    Space.platform.setGrid(25,5);
-    Space.view.setZoom(zoomrev, zoomspd);
-    Space.useDefaultKeys(true);
-
-    // hide loading curtain
-    $d('curtain','none');
-
-    // remove version cache bust from url
-    window.history.replaceState({},'','/mesh/');
+    space.showSkyGrid(sky);
+    space.setSkyColor(dark ? 0 : 0xffffff);
+    space.init($('container'), delta => { }, ortho);
+    platform.onMove(delta => { } );
+    platform.setRound(false);
+    platform.setZOff(0.2);
+    platform.setSize(500,500,2.5);
+    platform.setGrid(25,5);
+    space.view.setZoom(zoomrev, zoomspd);
+    space.useDefaultKeys(true);
 
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
+
+    // set app version
+    $h('app-name', "Mesh:Tool");
+    $h('app-vers', gapp.version);
+
+    // hide loading curtain
+    $d('curtain','none');
 }
 
-document.onreadystatechange = function() {
-    if (document.readyState === 'complete') {
+// remove version cache bust from url
+WIN.history.replaceState({},'','/mesh/');
+
+// setup init() trigger when dom + scripts complete
+DOC.onreadystatechange = function() {
+    if (DOC.readyState === 'complete') {
         init();
     }
 }
+
+})();
