@@ -1162,7 +1162,7 @@
 
         if (!isCamMode) {
             if (camStock) {
-                SPACE.platform.remove(camStock);
+                SPACE.world.remove(camStock);
                 camStock = null;
             }
             return;
