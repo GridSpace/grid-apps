@@ -1,8 +1,14 @@
 'use strict';
 
 (function() {
-    if (!self.moto) self.moto = {};
-    if (self.moto.File) return;
+
+    let moto = self.moto = self.moto || {};
+    if (moto.File) return;
+
+    moto.File = {
+        load_data,
+        load
+    };
 
     function load_data(data, file, ext) {
         ext = ext || name.toLowerCase().split('.').pop();
@@ -51,10 +57,5 @@
             }
         });
     }
-
-    self.moto.File = {
-        load_data,
-        load
-    };
 
 })();

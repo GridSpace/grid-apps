@@ -2,10 +2,10 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
-    if (self.moto.SVG) return;
+    let moto = self.moto = self.moto || {};
+    if (moto.SVG) return;
 
-    self.moto.SVG = {
+    moto.SVG = {
         parse,
         parseAsync
     };

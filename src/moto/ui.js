@@ -4,7 +4,7 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
+    let moto = self.moto = self.moto || {};
     if (moto.ui) return;
 
     let SELF = self,

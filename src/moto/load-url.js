@@ -1,8 +1,13 @@
 'use strict';
 
 (function() {
-    if (!self.moto) self.moto = {};
-    if (self.moto.URL) return;
+
+    let moto = self.moto = self.moto || {};
+    if (moto.URL) return;
+
+    moto.URL = {
+        load
+    };
 
     const CDH = 'Content-Disposition';
 
@@ -75,10 +80,6 @@
             xhr.responseType = datatype;
             xhr.send(formdata);
         });
-    };
-
-    self.moto.URL = {
-        load
     };
 
 })();

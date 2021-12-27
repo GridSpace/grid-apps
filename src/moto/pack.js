@@ -7,13 +7,13 @@
  * http://codeincomplete.com/posts/2011/5/7/bin_packing/
  */
 
-(function (){
+(function () {
 
-    if (!self.moto) self.moto = {};
-    if (self.moto.Pack) return;
+    let moto = self.moto = self.moto || {};
+    if (moto.Pack) return;
 
-    self.moto.Pack = Packer;
-    self.moto.Sort = function (a, b) {
+    moto.Pack = Packer;
+    moto.Sort = function (a, b) {
         let aa = (a.w * a.h);
         let ab = (b.w * b.h);
         if (Math.abs(aa-ab) < 1) {

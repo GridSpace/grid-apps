@@ -8,13 +8,13 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
-    if (self.moto.STL) return;
+    let moto = self.moto = self.moto || {};
+    if (moto.STL) return;
 
     const SP = STL.prototype;
     const CDH = 'Content-Disposition';
 
-    self.moto.STL = STL;
+    moto.STL = STL;
 
     /**
      * @constructor

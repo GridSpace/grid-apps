@@ -4,7 +4,7 @@
 
 (function() {
 
-    let moto = self.moto = self.moto = {};
+    let moto = self.moto = self.moto || {};
     if (moto.KV) return;
 
     function KV() {

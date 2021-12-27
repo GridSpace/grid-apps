@@ -2,10 +2,10 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
-    if (self.moto.OBJ) return;
+    let moto = self.moto = self.moto || {};
+    if (moto.OBJ) return;
 
-    self.moto.OBJ = {
+    moto.OBJ = {
         parse,
         parseAsync
     };

@@ -4,9 +4,7 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
-
-    let MOTO = self.moto,
+    let MOTO = self.moto = self.moto || {},
         WIN = window,
         DOC = document,
         SCENE = new THREE.Scene(),
