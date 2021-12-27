@@ -2887,12 +2887,11 @@
         }
     }
 
-    if (document.readyState === 'loading') {
-        // schedule init_one to run after all page content is loaded
-        SPACE.addEventListener(DOC, 'DOMContentLoaded', init_lang);
-    } else {
-        // happens in debug mode when scripts are chain loaded
-        init_lang();
+    // setup init() trigger when dom + scripts complete
+    DOC.onreadystatechange = function() {
+        if (DOC.readyState === 'complete') {
+            init_lang();
+        }
     }
 
 })();
