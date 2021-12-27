@@ -32,6 +32,14 @@ Contributions in all forms (code, bug reports, community engagement, localizatio
 * [YouTube](https://www.youtube.com/c/gridspace)
 * [Twitter](https://twitter.com/grid_space_3d)
 
+### Testing Locally (with Docker)
+
+```
+git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
+docker-compose -f src/dock/compose.yml up
+```
+
 ### Testing Locally (with NodeJS)
 
 ```
@@ -42,14 +50,14 @@ npm install -g @gridspace/app-server
 gs-app-server --debug
 ```
 
+to start a local instance of the apps. then use a browser to open
+[localhost:8080/kiri](http://localhost:8080/kiri)
+
 if installing the app-server fails or gives you permissions errors, then your node installation (on linux/mac) is installed as another user (like root). try instead:
 
 ```
 sudo npm install -g @gridspace/app-server
 ```
-
-to start a local instance of the apps. then use a browser to open
-[localhost:8080/kiri](http://localhost:8080/kiri)
 
 Alternatively, if you are using a packaged version of npm that ships with
 a Linux distribution, but still want to install in your home directory, you
@@ -64,13 +72,6 @@ your path. You can either add it to your path, or you can run:
 
 ```
 ~/.local/bin/gs-app-server --debug
-```
-### Testing Locally (with Docker)
-
-```
-git clone git@github.com:GridSpace/grid-apps.git
-cd grid-apps
-docker-compose -f src/dock/compose.yml up
 ```
 
 You can now access your environment of grid-apps by going to
