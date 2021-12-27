@@ -4,29 +4,48 @@
 
 (function() {
 
-let MOTO = self.moto = self.moto || {},
+let moto = self.moto = self.moto || {},
     time = Date.now;
 
+if (moto.worker) return;
+
 // allow license to inject module
-self.gapp = self.gapp || MOTO;
+self.gapp = self.gapp || moto;
+
+let isinit = false;
+let endpoints = {};
 
 // code is running in the worker / server context
-const dispatch = MOTO.worker = {
+const dispatch = moto.worker = {
+
+    register: (name, fn) => {
+        endpoints[name] = fn;
+        sync(name);
+    },
 
     send: (msg) => {
         self.postMessage(msg);
     },
 
+    sync: (name) => {
+        if (name) {
+            if (isinit) dispatch.send({register: [name]});
+        } else {
+            dispatch.send({register: Object.keys(endpoints)});
+        }
+    },
+
     onmessage: (e) => {
 
         if (e.data === '--init--') {
-            console.log('worker got init');
+            isinit = true;
+            dispatch.sync();
             return;
         }
 
         let time_recv = time(),
             msg = e.data || {},
-            run = dispatch[msg.task],
+            run = endpoints[msg.task],
             send = {
                 data : function(data,direct) {
                     dispatch.send({

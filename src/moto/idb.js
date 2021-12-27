@@ -4,10 +4,10 @@
 
 (function() {
 
-    if (!self.moto) self.moto = {};
-    if (self.moto.Storage) return;
+    let moto = self.moto = self.moto || {};
+    if (moto.IDB) return;
 
-    self.moto.Storage = Storage;
+    moto.IDB = moto.Storage = Storage;
 
     // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 

@@ -228,10 +228,10 @@ const script = {
         "ext/three-svg",
         "ext/jszip",
         "add/license",
-        "ext/clip2", // work.test
+        "ext/clip2",
         "ext/tween",
         "ext/fsave",
-        "ext/earcut", // work.test
+        "ext/earcut",
         "ext/base64",
         "add/array",
         "add/three",
@@ -258,7 +258,7 @@ const script = {
         "moto/load-url",
         "moto/load-file",
         "moto/broker",
-        "moto/db",
+        "moto/idb",
         "kiri/ui",
         "kiri/do",
         "kiri/lang",
@@ -421,7 +421,7 @@ const script = {
         "moto/space",
         "moto/load-obj",
         "moto/load-stl",
-        "moto/db",
+        "moto/idb",
         "moto/ui",
         "kiri/catalog",
         "main/meta"
@@ -437,7 +437,6 @@ const script = {
         "ext/fsave",
         "add/array",
         "add/three",
-        "geo/mesh",
         "moto/ctrl",
         "moto/space",
         "moto/load-3mf",
@@ -447,7 +446,7 @@ const script = {
         "moto/load-url",
         "moto/load-file",
         "moto/broker",
-        "moto/db"
+        "moto/idb"
     ],
     mesh_work : [
         "moto/worker",
@@ -468,6 +467,8 @@ const script = {
         "geo/polygon",
         "geo/polygons",
         "geo/mesh",
+        "moto/broker",
+        "moto/idb"
     ]
 };
 

@@ -9,7 +9,7 @@
 }
 @font-face {
     font-family: 'Russo One';
-    src: url('ext/russo-one.ttf');
+    src: url('/moto/russo-one.ttf');
 }
 a, a:hover, a:visited {
     border: none;

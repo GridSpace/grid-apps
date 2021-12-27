@@ -4,7 +4,7 @@
 
 (function() {
 
-let MOTO = self.moto = self.moto || {},
+let moto = self.moto = self.moto || {},
     time = function() { return new Date().getTime() },
     restarting = false,
     running = {},
@@ -12,8 +12,10 @@ let MOTO = self.moto = self.moto || {},
     worker = null,
     seqid = 1;
 
+if (moto.client) return;
+
 /**
- * @param {Function} fn name of function in MOTO.worker
+ * @param {Function} fn name of function in moto.worker
  * @param {Object} data to send to server
  * @param {Function} onreply function to call on reply messages
  * @param {Object[]} zerocopy array of objects to pass using zerocopy
@@ -39,7 +41,7 @@ function send(fn, data, onreply, zerocopy) {
 }
 
 // code is running in the browser / client context
-let CLIENT = MOTO.client = {
+let client = moto.client = {
     send: send,
 
     // factory can be overridden
@@ -69,7 +71,7 @@ let CLIENT = MOTO.client = {
 
     // same as restart
     start: function(url) {
-        CLIENT.restart(url);
+        client.restart(url);
     },
 
     restart: function(url) {
@@ -78,7 +80,7 @@ let CLIENT = MOTO.client = {
             return;
         }
 
-        CLIENT.stop();
+        client.stop();
 
         restarting = true;
 
@@ -90,14 +92,19 @@ let CLIENT = MOTO.client = {
         }
 
         running = {};
-        worker = CLIENT.newWorker(url);
+        worker = client.newWorker(url);
 
-        // bind to CLIENT to enable synth injections
-        CLIENT.onmessage = worker.onmessage = function(e) {
+        // bind to client to enable synth injections
+        client.onmessage = worker.onmessage = function(e) {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],
                 onreply = record ? record.fn : undefined;
+
+            if (reply.register) {
+                // console.log({register: reply.register});
+                return;
+            }
 
             if (reply.done) {
                 delete running[reply.seq];
