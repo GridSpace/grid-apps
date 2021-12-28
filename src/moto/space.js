@@ -870,6 +870,40 @@
      * Space Object
      ******************************************************************* */
 
+    function setSky(opt = {}) {
+        let { grid, color, gridColor } = opt;
+        if (grid) Space.sky.showGrid(grid);
+        if (color) Space.sky.setColor(color);
+        if (gridColor) Space.sky.setGridColor(gridColor);
+    }
+
+    function setPlatform(opt = {}) {
+        let { color, round, size, grid, opacity, volume, zOffset } = opt;
+        if (color) {
+            Space.platform.setColor(color);
+        }
+        if (round !== undefined) {
+            Space.platform.setRound(round);
+        }
+        if (size) {
+            let { width = 300, depth = 300, height = 2.5, maxz = 300 } = size;
+            Space.platform.setSize(width, depth, height, maxz);
+        }
+        if (grid) {
+            let { major = 25, minor = 5, majorColor = 0x999999, minorColor = 0xcccccc } = grid;
+            Space.platform.setGrid(major, minor, majorColor, minorColor);
+        }
+        if (opacity !== undefined) {
+            Space.platform.opacity(opacity);
+        }
+        if (volume !== undefined) {
+            Space.platform.showVolume(volume);
+        }
+        if (zOffset !== undefined) {
+            Space.platform.setZOff(zOffset);
+        }
+    }
+
     let Space = MOTO.Space = {
         refresh: refresh,
         update: requestRefresh,
@@ -884,6 +918,8 @@
         },
 
         sky: {
+            set: setSky,
+
             showGrid: (b) => {
                 showSkyGrid = b;
             },
@@ -915,6 +951,7 @@
         world: WORLD,
 
         platform: {
+            set:        setPlatform,
             update:     updateDraws,
             setSize:    setPlatformSizeUpdateGrid,
             setColor:   setPlatformColor,

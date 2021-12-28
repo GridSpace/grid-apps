@@ -30,17 +30,22 @@ function init() {
         platform = space.platform;
 
     // setup default workspace
-    space.sky.showGrid(sky);
-    space.sky.setColor(dark ? 0 : 0xffffff);
+    space.sky.set({
+        grid: sky,
+        color: dark ? 0 : 0xffffff
+    });
     space.init($('container'), delta => { }, ortho);
     platform.onMove(delta => { });
-    platform.setRound(false);
-    platform.setZOff(0.2);
-    platform.setSize(300,300,2.5,300);
-    platform.setGrid(25,5,0x999999,0xcccccc);
-    platform.setColor(0xcccccc);
-    platform.showVolume(false);
-    platform.opacity(0.3);
+    platform.set({
+        volume: false,
+        round: false,
+        zOffset: 0.2,
+        opacity: 0.3,
+        color: 0xcccccc,
+        zoom: { reverse: true, speed: 1 },
+        size: { width: 300, depth: 300, height: 2.5, maxz: 2.5 },
+        grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc }
+    });
     space.view.setZoom(zoomrev, zoomspd);
     space.useDefaultKeys(true);
 
