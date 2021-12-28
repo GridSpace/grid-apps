@@ -63,7 +63,7 @@
                 },
                 data = topo.data,
                 newslices = [],
-                tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z)) : 0,
+                tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z/2 + tab.pos.z)) : 0,
                 tabsOn = tabs,
                 tabHeight = Math.max(proc.camTabsHeight + zBottom, tabsMax),
                 clipTab = tabsOn ? [] : null,
@@ -85,7 +85,7 @@
             if (tabs) {
                 clipTab.appendAll(tabs.map(tab => {
                     let ctab = POLY.expand([tab.poly], toolDiameter/2);
-                    ctab.forEach(ct => ct.z = tab.dim.z);
+                    ctab.forEach(ct => ct.z = tab.dim.z/2 + tab.pos.z);
                     return ctab;
                 }).flat());
             }
