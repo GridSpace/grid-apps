@@ -4,10 +4,10 @@
 
 (function() {
 
-    let moto = self.moto = self.moto || {};
-    if (moto.IDB) return;
+    let data = self.data = self.data || {};
+    if (data.Index) return;
 
-    moto.IDB = moto.Storage = Storage;
+    data.Index = IDBStore;
 
     // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 
@@ -25,7 +25,7 @@
      * @param {number} [version]
      * @constructor
      */
-    function Storage(dbname, options = {}) {
+    function IDBStore(dbname, options = {}) {
         this.db = null;
         this.name = dbname;
         this.stores = options.stores || [ dbname ];
@@ -35,11 +35,11 @@
         this.initCalled = false;
     }
 
-    Storage.delete = function(dbname) {
+    IDBStore.delete = function(dbname) {
         IDB.deleteDatabase(dbname);
     };
 
-    let SP = Storage.prototype;
+    let SP = IDBStore.prototype;
 
     /** ******************************************************************
      * indexedDB implementation

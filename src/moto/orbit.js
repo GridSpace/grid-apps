@@ -8,7 +8,7 @@ let MOTO = self.moto = self.moto || {};
  * Adapted from THREE.OrbitControls
  */
 
-MOTO.CTRL = function (object, domElement, notify, slider) {
+MOTO.Orbit = function (object, domElement, notify, slider) {
 
     this.object = object;
     this.domElement = ( domElement !== undefined ) ? domElement : document;
@@ -620,4 +620,4 @@ MOTO.CTRL = function (object, domElement, notify, slider) {
     window.addEventListener('keydown', onKeyDown, false);
 };
 
-MOTO.CTRL.prototype = Object.create(THREE.EventDispatcher.prototype);
+MOTO.Orbit.prototype = Object.create(THREE.EventDispatcher.prototype);

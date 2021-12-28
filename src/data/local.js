@@ -4,15 +4,15 @@
 
 (function() {
 
-    let moto = self.moto = self.moto || {};
-    if (moto.KV) return;
+    let data = self.data = self.data || {};
+    if (data.Local) return;
 
-    function KV() {
+    function Local() {
         this.__data__ = {};
         this.__mem__ = true;
     }
 
-    var KP = KV.prototype;
+    var KP = Local.prototype;
 
     KP.getItem = function(key) {
         return this[key];
@@ -32,13 +32,13 @@
     };
 
     try {
-        let KV = moto.KV = self.localStorage,
+        let local = data.Local = self.localStorage,
             testkey = '__test';
-        KV.setItem(testkey, 1);
-        KV.getItem(testkey);
-        KV.removeItem(testkey);
+        local.setItem(testkey, 1);
+        local.getItem(testkey);
+        local.removeItem(testkey);
     } catch (e) {
-        moto.KV = new KV();
+        data.Local = new Local();
         let msg = "in private or restricted browsing mode. local storage blocked. application may not function properly.";
         console.log(msg);
         alert(msg);

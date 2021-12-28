@@ -1089,7 +1089,7 @@
 
             raycaster = new THREE.Raycaster();
 
-            viewControl = new MOTO.CTRL(camera, domelement, (position, moved) => {
+            viewControl = new MOTO.Orbit(camera, domelement, (position, moved) => {
                 if (platform) {
                     platform.visible = hidePlatformBelow ?
                         initialized && position.y >= 0 && showPlatform : showPlatform;

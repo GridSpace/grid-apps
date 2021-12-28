@@ -14,7 +14,7 @@
     };
 
     const AP = Ajax.prototype,
-        KV = moto.KV,
+        KV = data.Local,
         KEY = "moto-ajax",
         TIME = function() { return new Date().getTime() },
         MOKEY = moto.id = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());

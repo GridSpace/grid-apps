@@ -5,6 +5,7 @@
 (function () {
 
     let MOTO    = self.moto,
+        DATA    = self.data,
         KIRI    = self.kiri,
         LOAD    = self.load,
         BASE    = self.base,
@@ -18,9 +19,9 @@
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
         EVENT   = KIRI.broker,
-        SDB     = MOTO.KV,
-        ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
-        // K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
+        SDB     = DATA.Local,
+        ODB     = KIRI.odb = new DATA.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
+        // K3DB    = KIRI.wdb = new DATA.Index('kiri3', { stores:["file","work"] }).init(),
         SPACE   = KIRI.space = MOTO.Space,
         WIDGETS = KIRI.widgets = [],
         CATALOG = KIRI.catalog = KIRI.openCatalog(ODB),
