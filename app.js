@@ -249,7 +249,6 @@ const script = {
         "moto/kv",
         "moto/ajax",
         "moto/ctrl",
-        "moto/pack",
         "moto/space",
         "load/3mf",
         "load/obj",
@@ -261,6 +260,7 @@ const script = {
         "moto/idb",
         "kiri/ui",
         "kiri/do",
+        "kiri/pack",
         "kiri/lang",
         "kiri/lang-en",
         "kiri/catalog",
@@ -290,7 +290,7 @@ const script = {
         "@devices",
         "@icons"
     ],
-    worker : [
+    kiri_work : [
         "main/kiri",
         "ext/three",
         "ext/pngjs",
@@ -312,8 +312,8 @@ const script = {
         "geo/polygons",
         "geo/gyroid",
         "geo/mesh",
-        "moto/pack",
-        "moto/broker",
+        // "moto/broker",
+        "kiri/pack",
         "kiri/slice",
         "kiri/slicer",
         "kiri/slicer2",
@@ -342,7 +342,7 @@ const script = {
         "kiri/codec",
         "kiri/worker"
     ],
-    minion : [
+    kiri_pool : [
         "main/kiri",
         "moto/license",
         "ext/clip2",
@@ -422,7 +422,7 @@ const script = {
         "load/url",
         "load/file",
         "moto/idb",
-        "main/mesh-ui"
+        "main/mesh"
     ],
     mesh_work : [
         "moto/client",
@@ -446,12 +446,12 @@ const script = {
         "geo/mesh",
         "moto/broker",
         "moto/idb",
-        "main/mesh-work"
+        "mesh/work"
     ],
     mesh_pool : [
         "moto/worker",
         "moto/license",
-        "main/mesh-pool"
+        "mesh/pool"
     ]
 };
 

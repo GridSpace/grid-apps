@@ -9,11 +9,12 @@
 
 (function () {
 
-    let moto = self.moto = self.moto || {};
-    if (moto.Pack) return;
+    let kiri = self.kiri = self.kiri || {};
+    if (kiri.Pack) return;
 
-    moto.Pack = Packer;
-    moto.Sort = function (a, b) {
+    kiri.Pack = Packer;
+
+    kiri.Sort = function (a, b) {
         let aa = (a.w * a.h);
         let ab = (b.w * b.h);
         if (Math.abs(aa-ab) < 1) {
@@ -23,7 +24,7 @@
         }
     };
 
-    function Packer (w, h, spacing) {
+    function Packer(w, h, spacing) {
         this.root = { x: 0, y: 0, w: w, h: h };
         this.max = { w: 0, h: 0 };
         this.packed = false;

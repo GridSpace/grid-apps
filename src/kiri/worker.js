@@ -40,11 +40,11 @@ if (concurrent) {
     }
 
     for (let i=0; i < concurrent; i++) {
-        let minion = new Worker(`/code/minion.js?${self.kiri.version}`);
+        let minion = new Worker(`/code/kiri_pool.js?${self.kiri.version}`);
         minion.onmessage = minhandler;
         minions.push(minion);
     }
-    console.log(`kiri | init mini | ${KIRI.version || "rogue"} | ${concurrent + 1}`);
+    console.log(`kiri | init pool | ${KIRI.version || "rogue"} | ${concurrent + 1}`);
 }
 
 // for concurrent operations

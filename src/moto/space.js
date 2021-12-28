@@ -1182,6 +1182,8 @@
                 requestAnimationFrame(animate);
                 if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                     renderer.render(SCENE, camera);
+                } else {
+                    fps = 0;
                 }
             }
 

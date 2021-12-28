@@ -43,6 +43,9 @@ function load_data(data, file, ext) {
 
 function load_file(file) {
     return new Promise((resolve, reject) => {
+        if (!file) {
+            return reject('invalid or missing file');
+        }
         let reader = new FileReader();
         let name = file.name;
         let ext = name.toLowerCase().split('.').pop();

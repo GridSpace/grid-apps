@@ -14,6 +14,11 @@ function $h(id, h) {
     $(id).innerHTML = h;
 }
 
+function estop(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+}
+
 (function() {
 
 let DOC = document,
@@ -27,7 +32,8 @@ function init() {
         zoomrev = true,
         zoomspd = 1,
         space = moto.Space,
-        platform = space.platform;
+        platform = space.platform,
+        platcolor = 0x00ff00;
 
     // setup default workspace
     space.sky.set({
@@ -48,6 +54,27 @@ function init() {
     });
     space.view.setZoom(zoomrev, zoomspd);
     space.useDefaultKeys(true);
+
+    // add file drop handler
+    space.event.addHandlers(self, [
+        'drop', (evt) => {
+            estop(evt);
+            platform.setColor(platcolor);
+            load.File.load(evt.dataTransfer.files[0])
+                .then(data => {
+                    console.log({data});
+                })
+        },
+        'dragover', (evt) => {
+            estop(evt);
+            evt.dataTransfer.dropEffect = 'copy';
+            let color = platform.setColor(0x00ff00);
+            if (color !== 0x00ff00) platcolor = color;
+        },
+        'dragleave', (evt) => {
+            platform.setColor(platcolor);
+        }
+    ]);
 
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);

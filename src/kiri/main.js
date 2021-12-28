@@ -2260,12 +2260,12 @@
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             c = Widget.Groups.blocks().sort(MOTO.Sort),
-            p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
+            p = new KIRI.Pack(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
             ms[0] *= 1.1;
             ms[1] *= 1.1;
-            p = new MOTO.Pack(ms[0], ms[1], gap).fit(c);
+            p = new KIRI.Pack(ms[0], ms[1], gap).fit(c);
         }
 
         for (i = 0; i < c.length; i++) {

@@ -7,7 +7,7 @@
     if (!self.kiri.driver) self.kiri.driver = { };
     if (self.kiri.driver.LASER) return;
 
-    const KIRI = self.kiri,
+    let KIRI = self.kiri,
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
@@ -295,19 +295,18 @@
 
         // do object layout packing
         let i, m, e,
-            MOTO = self.moto,
             dw = device.bedWidth / 2,
             dh = device.bedDepth / 2,
             sort = !process.outputLaserLayer,
             // sort objects by size when not using laser layer ordering
-            c = sort ? output.sort(MOTO.Sort) : output,
-            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c, !sort);
+            c = sort ? output.sort(KIRI.Sort) : output,
+            p = new KIRI.Pack(dw, dh, process.outputTileSpacing).fit(c, !sort);
 
         // test different ratios until packed
         while (!p.packed) {
             dw *= 1.1;
             dh *= 1.1;
-            p = new MOTO.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
+            p = new KIRI.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
         }
 
         for (i = 0; i < c.length; i++) {
