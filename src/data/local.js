@@ -12,28 +12,28 @@
         this.__mem__ = true;
     }
 
-    var KP = Local.prototype;
+    var LS = Local.prototype;
 
-    KP.getItem = function(key) {
+    LS.getItem = function(key) {
         return this[key];
     };
 
-    KP.setItem = function(key, val) {
+    LS.setItem = function(key, val) {
         this.__data__[key] = val;
         this[key] = val;
     };
 
-    KP.removeItem = function(key) {
+    LS.removeItem = function(key) {
         delete this.__data__[key];
     };
 
-    KP.clear = function() {
+    LS.clear = function() {
         this.__data__ = {};
     };
 
     try {
-        let local = data.Local = self.localStorage,
-            testkey = '__test';
+        let local = data.Local = self.localStorage;
+        let testkey = '__test';
         local.setItem(testkey, 1);
         local.getItem(testkey);
         local.removeItem(testkey);
