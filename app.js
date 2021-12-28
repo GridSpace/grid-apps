@@ -831,13 +831,20 @@ function rewriteHtmlVersion(req, res, next) {
     if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0) {
         let real_write = res.write;
         let real_end = res.end;
+        let mlen = '{{version}}'.length;
+        let vstr = version;
+        if (vstr.length < mlen) {
+            vstr = vstr.padStart(mlen,0);
+        } else if (vstr.length > mlen) {
+            vstr = vstr.substring(0,mlen);
+        }
         res.write = function() {
-            arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
+            arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             real_write.apply(res, arguments);
         };
         res.end = function() {
             if (arguments[0]) {
-                arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
+                arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             }
             real_end.apply(res, arguments);
         };
