@@ -5,8 +5,7 @@
 (function() {
 
 let gapp = self.gapp = self.gapp || {},
-    moto = self.moto = self.moto || gapp,
-    time = Date.now;
+    moto = self.moto = self.moto || gapp;
 
 if (moto.worker) return;
 
