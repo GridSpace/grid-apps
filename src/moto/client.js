@@ -5,7 +5,7 @@
 (function() {
 
 let gapp = self.gapp = self.gapp || {},
-    moto = self.moto = self.moto || {},
+    moto = self.moto = self.moto || gapp,
     ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
     ccmax = ccvalue > 3 ? ccvalue - 1 : 0,
     workcc = false, // concurrent or not

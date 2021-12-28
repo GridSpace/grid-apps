@@ -5,7 +5,7 @@
 (function() {
 
 let gapp = self.gapp = self.gapp || {},
-    moto = self.moto = self.moto || {},
+    moto = self.moto = self.moto || gapp,
     time = Date.now;
 
 if (moto.worker) return;
@@ -44,7 +44,10 @@ const dispatch = moto.worker = {
                     }
                 },
                 error: (data) => {
-                    dispatch.send({ error: data });
+                    if (canSend(data)) {
+                        done = true;
+                        dispatch.send({ error: data });
+                    }
                 }
             },
             canSend = (data) => {

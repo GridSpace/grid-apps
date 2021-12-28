@@ -72,3 +72,9 @@ class Broker {
         }
     }
 }
+
+// establish default broker when GridApp container present
+let gapp = self.gapp;
+if (gapp && !gapp.broker) {
+    gapp.broker = new Broker();
+}

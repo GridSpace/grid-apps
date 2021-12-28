@@ -17,7 +17,7 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        EVENT   = KIRI.broker = new Broker(),
+        EVENT   = KIRI.broker,
         SDB     = MOTO.KV,
         ODB     = KIRI.odb = new MOTO.Storage(SETUP.d ? SETUP.d[0] : 'kiri'),
         // K3DB    = KIRI.wdb = new MOTO.Storage('kiri3', { stores:["file","work"] }).init(),
@@ -522,7 +522,7 @@
                 break;
         }
         if (data.parse) {
-            new moto.STL().parse(data.parse, vertices => {
+            new load.STL().parse(data.parse, vertices => {
                 let widget = newWidget().loadVertices(vertices);
                 platform.add(widget);
             });

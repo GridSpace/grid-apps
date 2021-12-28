@@ -399,36 +399,13 @@ const script = {
         "kiri/frame"
     ],
     meta : [
-        "ext/three",
+        "main/meta",
         "moto/license",
-        "ext/tween",
-        "ext/fsave",
-        "ext/earcut",
-        "add/array",
-        "add/three",
-        "geo/base",
-        // "geo/render",
-        "geo/point",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "geo/gyroid",
-        "moto/kv",
-        "moto/ajax",
-        "moto/ctrl",
-        "moto/space",
-        "load/obj",
-        "load/stl",
-        "moto/idb",
-        "moto/ui",
-        "kiri/catalog",
-        "main/meta"
     ],
     mesh : [
         "moto/client",
         "moto/license",
+        "moto/broker",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
@@ -444,7 +421,6 @@ const script = {
         "load/svg",
         "load/url",
         "load/file",
-        "moto/broker",
         "moto/idb",
         "main/mesh-ui"
     ],
@@ -521,7 +497,7 @@ function handleSetup(req, res, next) {
 
 function handleVersion(req, res, next) {
     let vstr = oversion || version;
-    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+    if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
@@ -852,7 +828,7 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0) {
+    if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0) {
         let real_write = res.write;
         let real_end = res.end;
         res.write = function() {
