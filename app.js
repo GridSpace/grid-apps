@@ -45,6 +45,24 @@ function init(mod) {
 
     cacheDir = mod.util.datadir("cache");
 
+    // process script dependencies, expand paths
+    for (let [key,val] of Object.entries(script)) {
+        for (let path of val) {
+            if (path.charAt(0) === '@') {
+                continue;
+            }
+            let lines = fs.readFileSync(`${dir}/src/${path}.js`).toString().split('\n');
+            for (let line of lines) {
+                let dpos = line.indexOf('// dep:');
+                if (dpos >= 0) {
+                    let dep = line.substring(dpos+7).trim();
+                    console.log({path, dep});
+                }
+            }
+        }
+        script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
+    }
+
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
         let vmatch = mod.meta.version || "*";
@@ -463,11 +481,6 @@ const script = {
         "mesh/pool"
     ]
 };
-
-// process script dependencies, expand paths
-for (let [key,val] of Object.entries(script)) {
-    script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
-}
 
 // prevent caching of specified modules
 const cachever = {};
