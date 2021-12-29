@@ -7,11 +7,20 @@
 gapp.register("mesh.object", [
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
-    "moto.worker",  // dep: moto.worker
 ]);
 
 let mesh = self.mesh = self.mesh || {};
 if (mesh.object) return;
+
+mesh.material = {
+    solid: new THREE.MeshPhongMaterial({
+        transparent: true,
+        shininess: 100,
+        specular: 0x181818,
+        color: 0xffff00,
+        opacity: 1
+    })
+};
 
 mesh.object = class MeshObject {
     constructor(data) {
@@ -22,7 +31,23 @@ mesh.object = class MeshObject {
             return;
         }
 
-        console.log({new_mesh_object: data});
+        this.file = file;
+        this.mesh = this.load(mesh);
+    }
+
+    load(vertices, indices) {
+        let geo = new THREE.BufferGeometry();
+        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geo.setAttribute('normal', undefined);
+        let meh = new THREE.Mesh(geo, mesh.material.solid);
+        geo.computeFaceNormals();
+        geo.computeVertexNormals();
+        meh.material.side = THREE.DoubleSide;
+        meh.receiveShadow = true;
+        meh.castShadow = true;
+        meh.renderOrder = 1;
+        return meh;
     }
 };
 

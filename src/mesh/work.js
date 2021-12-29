@@ -11,7 +11,9 @@ moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
 // dep: ext.three-bgu
 gapp.finalize("mesh.work", [
     "moto.license", // dep: moto.license
-    "moto.client"   // dep: moto.client
+    "moto.client",  // dep: moto.client
+    "moto.worker",  // dep: moto.worker
+    "mesh.tool",    // dep: mesh.tool
 ]);
 
 })();

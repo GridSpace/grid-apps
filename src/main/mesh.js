@@ -85,7 +85,8 @@ broker.subscribe('space_init', data => {
 // add object loader
 broker.subscribe('space_load', data => {
     for (let od of data) {
-        new mesh.object(od);
+        let obj = new mesh.object(od);
+        moto.Space.world.add(obj.mesh);
     }
 });
 
