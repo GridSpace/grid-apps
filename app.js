@@ -69,7 +69,8 @@ function init(mod) {
                 }
                 let deep = find_deps(dep, seen);
                 if (deep) {
-                    deps.appendAll(deep);
+                    // deeper dependencies go first
+                    deps = [...deep, ...deps];
                 }
             }
         }
@@ -480,23 +481,11 @@ const script = {
     mesh : [
         "main/gapp",
         "moto/license",
-        "ext/three",
-        "ext/three-bgu",
-        "ext/three-svg",
-        "ext/tween",
-        "ext/fsave",
         "&main/mesh"
     ],
     mesh_work : [
         "main/gapp",
         "moto/license",
-        "ext/jszip",
-        "ext/clip2",
-        "ext/earcut",
-        "ext/base64",
-        "ext/three",
-        "add/three",
-        "ext/three-bgu",
         "&mesh/work"
     ],
     mesh_pool : [
