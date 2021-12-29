@@ -10,6 +10,7 @@ class Broker {
     constructor() {
         this.topics = {};
         this.used = {};
+        this.send = {};
     }
 
     topics() {
@@ -29,6 +30,9 @@ class Broker {
             channel = topics[topic] = [];
         }
         if (channel.indexOf(listener) < 0) {
+            let send = this.send;
+            let name = topic.replace(/\./g, '_');
+            send[name] = send[name] = this.bind(topic);
             channel.push(listener);
             this.publish(".topic.add", topic);
         }

@@ -55,7 +55,7 @@ function init() {
     space.useDefaultKeys(true);
 
     // trigger space event binding
-    broker.publish('space.init', { space, platform });
+    broker.send.space_init({ space, platform });
 
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
@@ -79,7 +79,7 @@ broker.subscribe('space.init', data => {
             platform.setColor(platcolor);
             load.File.load(evt.dataTransfer.files[0])
                 .then(data => {
-                    broker.publish('space.load', data);
+                    broker.send.space_load(data);
                 })
                 .catch(error => {
                     dbug.error(error);
