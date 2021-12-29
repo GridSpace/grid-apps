@@ -6,7 +6,9 @@
 
 if (gapp.broker) return;
 
-class Broker {
+gapp.register('moto.broker');
+
+gapp.broker = new class Broker {
     constructor() {
         this.topics = {};
         this.used = {};
@@ -90,8 +92,5 @@ class Broker {
         }
     }
 }
-
-gapp.broker = new Broker();
-gapp.register('moto.broker');
 
 })();

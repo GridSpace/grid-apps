@@ -2,24 +2,6 @@
 
 "use strict";
 
-// some ui helpers that need to go into a ui class
-function $(id) {
-    return document.getElementById(id);
-}
-
-function $d(id, v) {
-    $(id).style.display = v;
-}
-
-function $h(id, h) {
-    $(id).innerHTML = h;
-}
-
-function estop(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
-}
-
 (function() {
 
 let broker = gapp.broker;
@@ -117,6 +99,7 @@ document.onreadystatechange = function() {
 
 // finalize modules
 gapp.finalize("main.mesh", [
+    "moto.webui",   // dep: moto.webui
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
     "moto.space"    // dep: moto.space
