@@ -69,7 +69,7 @@ function init() {
 }
 
 // add space event bindings
-broker.subscribe('space.init', data => {
+broker.subscribe('space_init', data => {
     let { space, platform } = data;
     let platcolor = 0x00ff00;
     // add file drop handler
@@ -101,7 +101,7 @@ broker.subscribe('space.init', data => {
 });
 
 // add object loader
-broker.subscribe('space.load', data => {
+broker.subscribe('space_load', data => {
     console.log({space_load: data});
 });
 
@@ -117,8 +117,8 @@ document.onreadystatechange = function() {
 
 // finalize modules
 gapp.finalize("main.mesh", [
-    "moto.broker",
-    "moto.space"
+    "moto.broker",  // dep: moto.broker
+    "moto.space"    // dep: moto.space
 ]);
 
 })();
