@@ -426,9 +426,12 @@
             meshes: meshArray,
             opacity: setOpacity,
             annotate: (id) => {
-                // add per widget annotation
-                // for things like extruder and supports
-                return WIDGETS.filter(w => w.id === id)[0].anno;
+                let w = WIDGETS.filter(w => w.id === id)[0];
+                if (!w) {
+                    console.log(`annotate missing widget ${id}`);
+                    return {};
+                }
+                return (w.anno = w.anno || {});
             }
         },
         work: KIRI.work
