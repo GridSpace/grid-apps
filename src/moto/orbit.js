@@ -2,7 +2,11 @@
 
 "use strict";
 
+(function() {
+
 let MOTO = self.moto = self.moto || {};
+
+gapp.register('moto.orbit');
 
 /**
  * Adapted from THREE.OrbitControls
@@ -621,3 +625,5 @@ MOTO.Orbit = function (object, domElement, notify, slider) {
 };
 
 MOTO.Orbit.prototype = Object.create(THREE.EventDispatcher.prototype);
+
+})();

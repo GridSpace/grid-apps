@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.STL) return;
 
+gapp.register('load.stl');
+
 const SP = STL.prototype;
 const CDH = 'Content-Disposition';
 

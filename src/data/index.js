@@ -4,6 +4,8 @@
 
 (function() {
 
+    gapp.register('data.index');
+
     let data = self.data = self.data || {};
     if (data.Index) return;
 

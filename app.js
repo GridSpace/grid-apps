@@ -222,6 +222,7 @@ function initModule(mod, file, dir) {
 
 const script = {
     kiri : [
+        "main/gapp",
         "main/kiri",
         "ext/three",
         "ext/three-bgu",
@@ -291,6 +292,7 @@ const script = {
         "@icons"
     ],
     kiri_work : [
+        "main/gapp",
         "main/kiri",
         "ext/three",
         "ext/pngjs",
@@ -343,6 +345,7 @@ const script = {
         "kiri/worker"
     ],
     kiri_pool : [
+        "main/gapp",
         "main/kiri",
         "moto/license",
         "ext/clip2",
@@ -369,6 +372,7 @@ const script = {
         "kiri/minion"
     ],
     engine : [
+        "main/gapp",
         "main/kiri",
         "moto/license",
         "data/local",
@@ -396,13 +400,16 @@ const script = {
         "kiri/engine"
     ],
     frame : [
+        "main/gapp",
         "kiri/frame"
     ],
     meta : [
+        "main/gapp",
         "main/meta",
         "moto/license",
     ],
     mesh : [
+        "main/gapp",
         "moto/client",
         "moto/license",
         "moto/broker",
@@ -425,6 +432,7 @@ const script = {
         "main/mesh"
     ],
     mesh_work : [
+        "main/gapp",
         "moto/client",
         "moto/worker",
         "moto/license",
@@ -449,6 +457,7 @@ const script = {
         "mesh/work"
     ],
     mesh_pool : [
+        "main/gapp",
         "moto/worker",
         "moto/license",
         "mesh/pool"

@@ -4,7 +4,7 @@
 
 (function () {
 
-    let meta = self.meta = self.gapp = self.gapp || {},
+    let meta = self.meta = self.meta || {},
         DOC = document;
 
     DOC.onreadystatechange = function() {

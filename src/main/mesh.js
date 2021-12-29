@@ -2,6 +2,7 @@
 
 "use strict";
 
+// some ui helpers that need to go into a ui class
 function $(id) {
     return document.getElementById(id);
 }
@@ -21,8 +22,7 @@ function estop(evt) {
 
 (function() {
 
-let DOC = document,
-    WIN = window;
+let broker = gapp.broker;
 
 function init() {
     let moto = self.moto,
@@ -32,8 +32,7 @@ function init() {
         zoomrev = true,
         zoomspd = 1,
         space = moto.Space,
-        platform = space.platform,
-        platcolor = 0x00ff00;
+        platform = space.platform;
 
     // setup default workspace
     space.sky.set({
@@ -55,26 +54,8 @@ function init() {
     space.view.setZoom(zoomrev, zoomspd);
     space.useDefaultKeys(true);
 
-    // add file drop handler
-    space.event.addHandlers(self, [
-        'drop', (evt) => {
-            estop(evt);
-            platform.setColor(platcolor);
-            load.File.load(evt.dataTransfer.files[0])
-                .then(data => {
-                    console.log({data});
-                })
-        },
-        'dragover', (evt) => {
-            estop(evt);
-            evt.dataTransfer.dropEffect = 'copy';
-            let color = platform.setColor(0x00ff00);
-            if (color !== 0x00ff00) platcolor = color;
-        },
-        'dragleave', (evt) => {
-            platform.setColor(platcolor);
-        }
-    ]);
+    // trigger space event binding
+    broker.publish('space.init', { space, platform });
 
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
@@ -87,14 +68,57 @@ function init() {
     $d('curtain','none');
 }
 
+// add space event bindings
+broker.subscribe('space.init', data => {
+    let { space, platform } = data;
+    let platcolor = 0x00ff00;
+    // add file drop handler
+    space.event.addHandlers(self, [
+        'drop', (evt) => {
+            estop(evt);
+            platform.setColor(platcolor);
+            load.File.load(evt.dataTransfer.files[0])
+                .then(data => {
+                    broker.publish('space.load', data);
+                })
+                .catch(error => {
+                    dbug.error(error);
+                })
+                .finally(() => {
+                    // hide spinner
+                });
+        },
+        'dragover', evt => {
+            estop(evt);
+            evt.dataTransfer.dropEffect = 'copy';
+            let color = platform.setColor(0x00ff00);
+            if (color !== 0x00ff00) platcolor = color;
+        },
+        'dragleave', evt => {
+            platform.setColor(platcolor);
+        }
+    ]);
+});
+
+// add object loader
+broker.subscribe('space.load', data => {
+    console.log({space_load: data});
+});
+
 // remove version cache bust from url
-WIN.history.replaceState({},'','/mesh/');
+window.history.replaceState({},'','/mesh/');
 
 // setup init() trigger when dom + scripts complete
-DOC.onreadystatechange = function() {
-    if (DOC.readyState === 'complete') {
+document.onreadystatechange = function() {
+    if (document.readyState === 'complete') {
         init();
     }
 }
+
+// finalize modules
+gapp.finalize("main.mesh", [
+    "moto.broker",
+    "moto.space"
+]);
 
 })();

@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.URL) return;
 
+gapp.register('load.url');
+
 load.URL = {
     load: load_url
 };

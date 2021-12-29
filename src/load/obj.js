@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.OBJ) return;
 
+gapp.register('load.obj');
+
 load.OBJ = {
     parse,
     parseAsync

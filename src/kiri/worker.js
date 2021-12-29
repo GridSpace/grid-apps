@@ -44,7 +44,7 @@ if (concurrent) {
         minion.onmessage = minhandler;
         minions.push(minion);
     }
-    console.log(`kiri | init pool | ${KIRI.version || "rogue"} | ${concurrent + 1}`);
+    console.log(`kiri | init pool | ${gapp.version || "rogue"} | ${concurrent + 1}`);
 }
 
 // for concurrent operations
@@ -185,7 +185,7 @@ KIRI.minions = {
     }
 };
 
-console.log(`kiri | init work | ${KIRI.version || "rogue"}`);
+console.log(`kiri | init work | ${gapp.version || "rogue"}`);
 
 // code is running in the worker / server context
 const dispatch =

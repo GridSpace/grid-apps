@@ -3,6 +3,7 @@
 "use strict";
 
 (function() {
+    gapp.register('moto.space');
 
     let MOTO = self.moto = self.moto || {},
         WIN = window,

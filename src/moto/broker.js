@@ -1,6 +1,15 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+"use strict";
+
+(function() {
+
+if (gapp.broker) return;
+
 class Broker {
     constructor() {
         this.topics = {};
+        this.used = {};
     }
 
     topics() {
@@ -51,6 +60,9 @@ class Broker {
         if (topic !== ".topic.publish") {
             this.publish(".topic.publish", {topic, message, options});
         }
+        // store last seen message on a topic
+        // acts as a tracker for all used topics
+        this.used[topic] = message;
         let channel = this.topics[topic];
         if (channel && channel.length) {
             for (let listener of channel) {
@@ -61,6 +73,8 @@ class Broker {
                     setTimeout(() => { throw e }, 1);
                 }
             }
+        } else if (topic.indexOf(".topic.") < 0) {
+            dbug.debug(`undelivered '${topic}'`, message);
         }
     }
 
@@ -73,8 +87,7 @@ class Broker {
     }
 }
 
-// establish default broker when GridApp container present
-let gapp = self.gapp;
-if (gapp && !gapp.broker) {
-    gapp.broker = new Broker();
-}
+gapp.broker = new Broker();
+gapp.register('moto.broker');
+
+})();

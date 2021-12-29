@@ -18,7 +18,7 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        EVENT   = KIRI.broker,
+        EVENT   = KIRI.broker = gapp.broker,
         SDB     = DATA.Local,
         ODB     = KIRI.odb = new DATA.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
         // K3DB    = KIRI.wdb = new DATA.Index('kiri3', { stores:["file","work"] }).init(),
@@ -56,6 +56,7 @@
         alerts = [],
         grouping = false,
         saveTimer = null,
+        version = KIRI.version = gapp.version,
         noop = () => {};
 
     // add show() to catalog for API

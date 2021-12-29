@@ -4,8 +4,7 @@
 
 (function() {
 
-let gapp = self.gapp = self.gapp || {},
-    moto = self.moto = self.moto || gapp,
+let moto = self.moto = self.moto || {},
     ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
     ccmax = ccvalue > 3 ? ccvalue - 1 : 0,
     workcc = false, // concurrent or not
@@ -15,6 +14,8 @@ let gapp = self.gapp = self.gapp || {},
     queue = [];     // array of work requests
 
 if (moto.client) return;
+
+gapp.register('moto.client');
 
 // code is running in the browser / client context
 let client = moto.client = {

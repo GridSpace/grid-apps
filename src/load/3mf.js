@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.TMF) return;
 
+gapp.register('load.3mf');
+
 load.TMF = {
     parseAsync
 };

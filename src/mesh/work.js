@@ -4,7 +4,9 @@
 
 (function() {
 
-    // start worker pool
-    moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max());
+    // start worker pool (disabled for now with *0)
+    moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
+
+    gapp.finalize("mesh.work");
 
 })();

@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.SVG) return;
 
+gapp.register('load.svg');
+
 load.SVG = {
     parse,
     parseAsync

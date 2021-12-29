@@ -4,6 +4,8 @@
 
 (function() {
 
+    gapp.register('data.local');
+
     let data = self.data = self.data || {};
     if (data.Local) return;
 

@@ -4,4 +4,6 @@
 
 (function() {
 
+    gapp.finalize("mesh.pool");
+
 })();

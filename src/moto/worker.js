@@ -4,13 +4,11 @@
 
 (function() {
 
-let gapp = self.gapp = self.gapp || {},
-    moto = self.moto = self.moto || gapp;
+let moto = self.moto = self.moto || {};
 
 if (moto.worker) return;
 
-// allow license to inject module
-self.gapp = self.gapp || moto;
+gapp.register('moto.worker');
 
 let endpoints = {};
 

@@ -4,6 +4,8 @@
 
 (function() {
 
+    gapp.register('moto.ajax');
+
     let moto = self.moto = self.moto || {};
     if (moto.Ajax) return;
 

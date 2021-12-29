@@ -7,6 +7,8 @@
 let load = self.load = self.load || {};
 if (load.File) return;
 
+gapp.register('load.file');
+
 load.File = {
     load_data, load_data,
     load: load_file
