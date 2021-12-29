@@ -45,19 +45,70 @@ function init(mod) {
 
     cacheDir = mod.util.datadir("cache");
 
+    let depcache = {};
+
+    function find_deps(path, seen = []) {
+        let cached = depcache[path];
+        if (cached) {
+            return cached;
+        }
+        let deps = [];
+        let lines = fs.readFileSync(`${dir}/src/${path}.js`)
+            .toString()
+            .split('\n');
+        for (let line of lines) {
+            let dpos = line.indexOf('// dep:');
+            if (dpos >= 0) {
+                let dep = line.substring(dpos+7).trim().replace('.','/');
+                if (seen.indexOf(dep) >= 0) {
+                    dbug.warn(`circular ${dep} from ${path}`);
+                    continue;
+                }
+                if (deps.indexOf(dep) < 0) {
+                    deps.push(dep);
+                }
+                let deep = find_deps(dep, seen);
+                if (deep) {
+                    deps.appendAll(deep);
+                }
+            }
+        }
+        return deps.length ? deps : undefined;
+    }
+
     // process script dependencies, expand paths
     for (let [key,val] of Object.entries(script)) {
+        let nval = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
+        let modd = false;
         for (let path of val) {
-            if (path.charAt(0) === '@') {
+            let fc = path.charAt(0);
+            if (fc === '@') {
                 continue;
             }
-            let lines = fs.readFileSync(`${dir}/src/${path}.js`).toString().split('\n');
-            for (let line of lines) {
-                let dpos = line.indexOf('// dep:');
-                if (dpos >= 0) {
-                    let dep = line.substring(dpos+7).trim();
-                    console.log({path, dep});
+            if (fc === '&') {
+                path = path.substring(1);
+            } else {
+                continue;
+            }
+            let deps = find_deps(path);
+            if (deps) {
+                // remove deps already in list
+                // todo: promote filtered deps order in path array
+                deps = deps.filter(p => nval.indexOf(p) < 0);
+                let ppos = nval.indexOf(path);
+                if (ppos < 0) {
+                    throw `missing ${path} in nval`;
                 }
+                // inject deps
+                nval.splice(ppos,0,...deps);
+                modd = true;
+            }
+            // if list is modified, substitute
+            if (modd) {
+                if (debug) {
+                    console.log({path, val, nval});
+                }
+                val = nval;
             }
         }
         script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
@@ -241,12 +292,12 @@ function initModule(mod, file, dir) {
 const script = {
     kiri : [
         "main/gapp",
+        "moto/license",
         "main/kiri",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
         "ext/jszip",
-        "moto/license",
         "ext/clip2",
         "ext/tween",
         "ext/fsave",
@@ -311,11 +362,11 @@ const script = {
     ],
     kiri_work : [
         "main/gapp",
+        "moto/license",
         "main/kiri",
         "ext/three",
         "ext/pngjs",
         "ext/jszip",
-        "moto/license",
         "ext/clip2",
         "ext/earcut",
         "add/array",
@@ -364,8 +415,8 @@ const script = {
     ],
     kiri_pool : [
         "main/gapp",
-        "main/kiri",
         "moto/license",
+        "main/kiri",
         "ext/clip2",
         "ext/earcut",
         "add/array",
@@ -391,8 +442,8 @@ const script = {
     ],
     engine : [
         "main/gapp",
-        "main/kiri",
         "moto/license",
+        "main/kiri",
         "data/local",
         "ext/three",
         "add/array",
@@ -423,38 +474,22 @@ const script = {
     ],
     meta : [
         "main/gapp",
-        "main/meta",
         "moto/license",
+        "main/meta",
     ],
     mesh : [
         "main/gapp",
-        "moto/client",
         "moto/license",
-        "moto/broker",
-        "data/index",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
         "ext/tween",
         "ext/fsave",
-        "add/array",
-        "add/three",
-        "moto/orbit",
-        "moto/space",
-        "load/3mf",
-        "load/obj",
-        "load/stl",
-        "load/svg",
-        "load/url",
-        "load/file",
-        "main/mesh"
+        "&main/mesh"
     ],
     mesh_work : [
         "main/gapp",
-        "moto/client",
-        "moto/worker",
         "moto/license",
-        "data/index",
         "ext/jszip",
         "ext/clip2",
         "ext/earcut",
@@ -462,23 +497,12 @@ const script = {
         "ext/three",
         "add/three",
         "ext/three-bgu",
-        "geo/base",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "geo/mesh",
-        "moto/broker",
-        "mesh/work"
+        "&mesh/work"
     ],
     mesh_pool : [
         "main/gapp",
-        "moto/worker",
         "moto/license",
-        "mesh/pool"
+        "&mesh/pool"
     ]
 };
 

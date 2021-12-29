@@ -3,7 +3,10 @@
 "use strict";
 
 (function() {
-    var AP = {};
+
+    gapp.register('add.array');
+
+    let AP = {};
 
     /** ******************************************************************
      * Array prototype helpers

@@ -10,6 +10,7 @@
         module.exports = terms;
     }
 
+    // allow license to be required() by app without gapp
     if (typeof(self) !== 'undefined' && self.gapp) {
         let app = self.gapp;
         app.license = terms.LICENSE;

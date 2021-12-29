@@ -1,3 +1,11 @@
+/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
+
+"use strict";
+
+if (!self.ArrayWriter) {
+    gapp.register('add.class');
+}
+
 self.ArrayWriter = class ArrayWriter {
     constructor() {
         this.pos = 0;

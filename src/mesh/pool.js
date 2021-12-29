@@ -4,6 +4,8 @@
 
 (function() {
 
-    gapp.finalize("mesh.pool");
+    gapp.finalize("mesh.pool", [
+        "moto.worker"   // dep: moto.worker
+    ]);
 
 })();

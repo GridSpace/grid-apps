@@ -4,6 +4,8 @@
 
 (function() {
 
+    gapp.register('add.three');
+
     var MP = THREE.Mesh.prototype,
         BP = THREE.BufferGeometry.prototype;
 

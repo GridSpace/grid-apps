@@ -2,6 +2,12 @@
 
 "use strict";
 
+/** node compatibility **/
+
+if (typeof(self) === 'undefined') {
+    var self = this;
+}
+
 (function () {
 
 /** debug and logging **/

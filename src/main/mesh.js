@@ -117,6 +117,7 @@ document.onreadystatechange = function() {
 
 // finalize modules
 gapp.finalize("main.mesh", [
+    "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
     "moto.space"    // dep: moto.space
 ]);

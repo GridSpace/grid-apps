@@ -3,7 +3,10 @@
 "use strict";
 
 (function() {
-    gapp.register('moto.space');
+    gapp.register('moto.space', [
+        'add.array',    // dep: add.array
+        'moto.orbit'    // dep: moto.orbit
+    ]);
 
     let MOTO = self.moto = self.moto || {},
         WIN = window,
