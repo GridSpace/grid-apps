@@ -5,6 +5,7 @@
 (function() {
 
     gapp.finalize("mesh.pool", [
+        "moto.license", // dep: moto.license
         "moto.worker"   // dep: moto.worker
     ]);
 

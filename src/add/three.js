@@ -4,6 +4,7 @@
 
 (function() {
 
+    // dep: ext.three
     gapp.register('add.three');
 
     var MP = THREE.Mesh.prototype,

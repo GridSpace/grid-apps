@@ -47,12 +47,12 @@ function init(mod) {
 
     let depcache = {};
 
-    function find_deps(path, seen = []) {
+    function find_deps(path) {
         let cached = depcache[path];
         if (cached) {
             return cached;
         }
-        let deps = [];
+        let deps = [ "main/gapp" ];
         let lines = fs.readFileSync(`${dir}/src/${path}.js`)
             .toString()
             .split('\n');
@@ -60,21 +60,17 @@ function init(mod) {
             let dpos = line.indexOf('// dep:');
             if (dpos >= 0) {
                 let dep = line.substring(dpos+7).trim().replace('.','/');
-                if (seen.indexOf(dep) >= 0) {
-                    dbug.warn(`circular ${dep} from ${path}`);
-                    continue;
-                }
                 if (deps.indexOf(dep) < 0) {
                     deps.push(dep);
                 }
-                let deep = find_deps(dep, seen);
-                if (deep) {
-                    // deeper dependencies go first
-                    deps = [...deep, ...deps];
-                }
+                let deep = find_deps(dep);
+                deps = deps.filter(p => deep.indexOf(p) < 0);
+                // deeper dependencies go first
+                deps = [...deep, ...deps];
             }
         }
-        return deps.length ? deps : undefined;
+        depcache[path] = deps;
+        return deps;
     }
 
     // process script dependencies, expand paths
@@ -94,7 +90,6 @@ function init(mod) {
             let deps = find_deps(path);
             if (deps) {
                 // remove deps already in list
-                // todo: promote filtered deps order in path array
                 deps = deps.filter(p => nval.indexOf(p) < 0);
                 let ppos = nval.indexOf(path);
                 if (ppos < 0) {
@@ -479,18 +474,12 @@ const script = {
         "main/meta",
     ],
     mesh : [
-        "main/gapp",
-        "moto/license",
         "&main/mesh"
     ],
     mesh_work : [
-        "main/gapp",
-        "moto/license",
         "&mesh/work"
     ],
     mesh_pool : [
-        "main/gapp",
-        "moto/license",
         "&mesh/pool"
     ]
 };

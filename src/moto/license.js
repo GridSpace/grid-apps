@@ -16,8 +16,10 @@
         app.license = terms.LICENSE;
         app.version = terms.VERSION;
         app.copyright = terms.COPYRIGHT;
+        // satisfy resolver
+        gapp.register('moto.license');
         // for earcut and other modules
-        self.module = { exports: terms };
+        (self.module = self.module || {}).exports = terms;
     }
 
 })();

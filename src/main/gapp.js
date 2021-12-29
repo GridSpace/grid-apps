@@ -10,6 +10,10 @@ if (typeof(self) === 'undefined') {
 
 (function () {
 
+/** satisfy earcut, tween, etc **/
+
+if (!self.module) self.module = { exports: {} };
+
 /** debug and logging **/
 
 let mark = Date.now();

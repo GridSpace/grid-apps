@@ -99,10 +99,11 @@ document.onreadystatechange = function() {
 
 // finalize modules
 gapp.finalize("main.mesh", [
+    "moto.license", // dep: moto.license
     "moto.webui",   // dep: moto.webui
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
-    "moto.space"    // dep: moto.space
+    "moto.space",   // dep: moto.space
 ]);
 
 })();

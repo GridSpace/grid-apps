@@ -10,6 +10,7 @@
     // dep: ext.three
     // dep: ext.three-bgu
     gapp.finalize("mesh.work", [
+        "moto.license", // dep: moto.license
         "moto.client"   // dep: moto.client
     ]);
 
