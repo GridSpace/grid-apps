@@ -7,7 +7,13 @@
 let load = self.load = self.load || {};
 if (load.File) return;
 
-gapp.register('load.file');
+gapp.register('load.file', [
+    'load.3mf', // dep: load.3mf
+    'load.obj', // dep: load.obj
+    'load.stl', // dep: load.stl
+    'load.svg', // dep: load.svg
+    'load.url', // dep: load.url
+]);
 
 load.File = {
     load_data, load_data,

@@ -4,10 +4,8 @@
 
 (function() {
     // dep: ext.tween
-    // dep: ext.three
-    // dep: ext.three-bgu
-    // dep: ext.three-svg
     gapp.register('moto.space', [
+        'add.three',    // dep: add.three
         'add.array',    // dep: add.array
         'moto.orbit'    // dep: moto.orbit
     ]);

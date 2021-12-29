@@ -6,7 +6,9 @@
 
 let MOTO = self.moto = self.moto || {};
 
-gapp.register('moto.orbit');
+gapp.register('moto.orbit', [
+    'add.three',    // dep: add.three
+]);
 
 /**
  * Adapted from THREE.OrbitControls

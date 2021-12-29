@@ -5,6 +5,8 @@
 (function() {
 
     // dep: ext.three
+    // dep: ext.three-bgu
+    // dep: ext.three-svg
     gapp.register('add.three');
 
     var MP = THREE.Mesh.prototype,

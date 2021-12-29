@@ -7,6 +7,7 @@
 let load = self.load = self.load || {};
 if (load.TMF) return;
 
+// dep: ext.jszip
 gapp.register('load.3mf');
 
 load.TMF = {
