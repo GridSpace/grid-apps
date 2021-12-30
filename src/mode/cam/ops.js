@@ -1190,7 +1190,7 @@
             let tshadow = [];
             let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
             let complex = tzindex.length > 50 || widget.vertices.length > 1000000;
-            let skipTerrain = unsafe || (!rough && !outline && !drill && complex);
+            let skipTerrain = unsafe;// || (!rough && !outline && !drill && complex);
 
             if (skipTerrain) {
                 console.log("skipping terrain generation");
