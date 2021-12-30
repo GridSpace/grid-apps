@@ -189,7 +189,7 @@
         } else {
             // frop top object passed back by slicePost()
             let top = new Top(poly.poly);
-            top.thin_fill = poly.thin_fill.map(p => BASE.newPoint(p.x,p.y,p.z));
+            top.thin_fill = poly.thin_fill ? poly.thin_fill.map(p => BASE.newPoint(p.x,p.y,p.z)) : undefined;
             top.fill_lines = poly.fill_lines;
             top.fill_off = poly.fill_off;
             top.last = poly.last;
