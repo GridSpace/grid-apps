@@ -721,8 +721,8 @@
             for (let poly of ctre.m_AllPolys) {
                 if (minlen || maxlen) {
                     let plen = clib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
-                    if (minlen && plen < minlen) return;
-                    if (maxlen && plen > maxlen) return;
+                    if (minlen && plen < minlen) continue;
+                    if (maxlen && plen > maxlen) continue;
                 }
                 let p1 = BASE.pointFromClipper(poly.m_polygon[0], zpos);
                 let p2 = BASE.pointFromClipper(poly.m_polygon[1], zpos);
