@@ -23,7 +23,9 @@ let models = [];
 let api = mesh.api = {
 
     models: {
-        all: models,
+        get all() {
+            return models.slice();
+        },
 
         add: (list, group = new THREE.Group()) => {
             if (!Array.isArray(list)) {

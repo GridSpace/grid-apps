@@ -1193,7 +1193,7 @@
             let tshadow = [];
             let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
             let complex = tzindex.length > 50 || widget.vertices.length > 1000000;
-            let skipTerrain = unsafe || (!rough && !outline && !drill && complex);
+            let skipTerrain = unsafe;// || (!rough && !outline && !drill && complex);
 
             if (skipTerrain) {
                 console.log("skipping terrain generation");
@@ -1206,7 +1206,7 @@
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
                 tslices.push(data.slice);
                 data.slice.shadow = tshadow;
-                if (false) {
+                if (true) {
                     const slice = data.slice;
                     sliceAll.push(slice);
                     slice.output()
