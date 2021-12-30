@@ -954,6 +954,19 @@
             active: updateLastAction
         },
 
+        // wraps WORLD add/remove with immediate refresh
+        model: {
+            add: mesh => {
+                WORLD.add(mesh);
+                refresh();
+            },
+
+            remove: (mesh) => {
+                WORLD.remove(mesh);
+                refresh();
+            }
+        },
+
         world: WORLD,
 
         platform: {

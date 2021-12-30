@@ -8,8 +8,9 @@
 gapp.register("mesh.tool");
 
 let mesh = self.mesh = self.mesh || {};
-if (mesh.object) return;
+if (mesh.tool) return;
 
+/** tool for identiying defects and healing them **/
 mesh.tool = class MeshTool {
     constructor(params = {}) {
         this.precision = Math.pow(10, params.precision || 6);

@@ -4,14 +4,15 @@
 
 (function() {
 
-gapp.register("mesh.object", [
+gapp.register("mesh.model", [
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
 ]);
 
 let mesh = self.mesh = self.mesh || {};
-if (mesh.object) return;
+if (mesh.model) return;
 
+/** default materials **/
 mesh.material = {
     solid: new THREE.MeshPhongMaterial({
         transparent: true,
@@ -22,7 +23,8 @@ mesh.material = {
     })
 };
 
-mesh.object = class MeshObject {
+/** 3D model rendered on plaform **/
+mesh.model = class MeshModel {
     constructor(data) {
         let { file, mesh } = data;
 

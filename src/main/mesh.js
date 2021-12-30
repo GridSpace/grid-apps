@@ -85,8 +85,7 @@ broker.subscribe('space_init', data => {
 // add object loader
 broker.subscribe('space_load', data => {
     for (let od of data) {
-        let obj = new mesh.object(od);
-        moto.Space.world.add(obj.mesh);
+        mesh.api.models.add(new mesh.model(od));
     }
 });
 
@@ -107,7 +106,8 @@ gapp.finalize("main.mesh", [
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
     "moto.space",   // dep: moto.space
-    "mesh.object",  // dep: mesh.object
+    "mesh.api",     // dep: mesh.api
+    "mesh.model",   // dep: mesh.model
     "load.file",    // dep: load.file
 ]);
 

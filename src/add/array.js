@@ -173,6 +173,24 @@
         return this.filter(v => isNaN(v)).length > 0;
     };
 
+    // wrap a function and unroll the first parameter into
+    // successive function calls if it is an array
+    Array.handle = function(fn) {
+        return function() {
+            let args = [...arguments];
+            let val = args.shift();
+            if (Array.isArray(val)) {
+                let rv = [];
+                for (let v of val.slice()) {
+                    rv.push(fn(v, ...args));
+                }
+                return rv;
+            } else {
+                return fn(val, ...args);
+            }
+        }
+    };
+
     for (let i in AP) {
         Object.defineProperty(Array.prototype, i, {
             value: AP[i],
