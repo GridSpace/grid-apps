@@ -25,17 +25,33 @@ let api = mesh.api = {
     models: {
         all: models,
 
-        add: model => {
-            if (!models.contains(model)) {
-                space.model.add(model.mesh);
-                models.push(model);
+        add: (list, group = new THREE.Group()) => {
+            if (!Array.isArray(list)) {
+                list = [ list ];
             }
+            for (let model of list) {
+                models.addOnce(model);
+                model.group = group;
+                group.add(model.mesh);
+            }
+            space.world.add(group);
+            space.refresh();
         },
 
-        remove: Array.handle(model => {
-            space.model.remove(model.mesh);
-            models.remove(model);
-        })
+        remove: list => {
+            if (!Array.isArray(list)) {
+                list = [ list ];
+            }
+            for (let model of list) {
+                if (models.remove(model)) {
+                    model.group.remove(model.mesh);
+                    if (model.group.children.length === 0) {
+                        space.world.remove(model.group);
+                    }
+                    space.refresh();
+                }
+            }
+        }
     }
 };
 

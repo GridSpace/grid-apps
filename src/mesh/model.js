@@ -51,6 +51,17 @@ mesh.model = class MeshModel {
         meh.renderOrder = 1;
         return meh;
     }
+
+    get group() {
+        return this._group;
+    }
+
+    set group(gv) {
+        if (this._group && this._group !== gv) {
+            throw "model cannot change groups";
+        }
+        this._group = gv;
+    }
 };
 
 })();

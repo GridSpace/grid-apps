@@ -59,7 +59,7 @@ broker.subscribe('space_init', data => {
         'drop', (evt) => {
             estop(evt);
             platform.setColor(platcolor);
-            load.File.load(evt.dataTransfer.files[0])
+            load.File.load([...evt.dataTransfer.files])
                 .then(data => {
                     broker.send.space_load(data);
                 })
@@ -84,9 +84,7 @@ broker.subscribe('space_init', data => {
 
 // add object loader
 broker.subscribe('space_load', data => {
-    for (let od of data) {
-        mesh.api.models.add(new mesh.model(od));
-    }
+    mesh.api.models.add(data.flat().map(el => new mesh.model(el)));
 });
 
 // remove version cache bust from url

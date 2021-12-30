@@ -43,13 +43,16 @@ function load_data(data, file, ext) {
                 resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
                 break;
             default:
-                reject(`unknown file type: "${ext}" from ${url}`);
+                reject(`unknown file type: "${ext}" from ${file}`);
                 break;
         }
     });
 }
 
 function load_file(file) {
+    if (Array.isArray(file)) {
+        return Promise.all(file.map(file => load_file(file)));
+    }
     return new Promise((resolve, reject) => {
         if (!file) {
             return reject('invalid or missing file');

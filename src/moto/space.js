@@ -142,6 +142,10 @@
         timers[key] = setTimeout(fn, time);
     }
 
+    WORLD.contains = (obj) => {
+        return WORLD.children.contains(obj);
+    };
+
     /** ******************************************************************
      * TWEENing Functions
      ******************************************************************* */
@@ -952,19 +956,6 @@
             },
 
             active: updateLastAction
-        },
-
-        // wraps WORLD add/remove with immediate refresh
-        model: {
-            add: mesh => {
-                WORLD.add(mesh);
-                refresh();
-            },
-
-            remove: (mesh) => {
-                WORLD.remove(mesh);
-                refresh();
-            }
         },
 
         world: WORLD,

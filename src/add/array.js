@@ -67,6 +67,13 @@
         return this;
     };
 
+    AP.addOnce = function(val) {
+        if (!this.contains(val)) {
+            this.push(val);
+        }
+        return this;
+    };
+
     /**
      * shallow cloning with clone(arg) call on each new element
      *
