@@ -834,6 +834,37 @@
             });
         }
 
+        function outputThin(lines) {
+            let points = lines.group(2).map(grp => {
+                let [ p1, p2 ] = grp;
+                return newPoint(
+                    (p1.x + p2.x) / 2,
+                    (p1.y + p2.y) / 2,
+                    (p1.z + p2.z) / 2
+                )
+            });
+            let order = UTIL.orderClosest(points, (p1, p2) => p1.distTo2D(p2));
+            if (order.length === 0) {
+                return;
+            }
+            let first = points[0];
+            let last = first;
+            addOutput(preout, first, 0, moveSpeed, extruder);
+            for (let p of order) {
+                let dist = last ? last.distTo2D(p) : 0;
+                if (dist > thinWall) {
+                    retract();
+                    addOutput(preout, p, 0, moveSpeed, extruder);
+                }
+                addOutput(preout, p, 1, fillSpeed, extruder);
+                last = p;
+            }
+            // close a circle
+            if (last && last.distTo2D(first) <= thinWall) {
+                addOutput(preout, first, 1, fillSpeed, extruder);
+            }
+        }
+
         function outputFills(lines, opt = {}) {
             if (!lines || lines.length === 0) {
                 return;
@@ -1078,7 +1109,7 @@
                 setType('int');
 
                 // output thin fill
-                outputFills(next.thin_fill, {near: true});
+                outputThin(next.thin_fill);
 
                 // then output solid and sparse fill
                 outputFills(next.fill_lines, {flow: solidWidth});

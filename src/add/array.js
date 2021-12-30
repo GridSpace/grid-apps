@@ -180,6 +180,20 @@
         return this.filter(v => isNaN(v)).length > 0;
     };
 
+    // turn array into arrays of specified size
+    AP.group = function(size) {
+        let na = new Array(Math.ceil(this.length / size));
+        let nai = 0;
+        for (let i=0; i<this.length; i += size) {
+            let grp = new Array(size);
+            for (let j=0; j<size; j++) {
+                grp[j] = this[i+j];
+            }
+            na[nai++] = grp;
+        }
+        return na;
+    };
+
     // wrap a function and unroll the first parameter into
     // successive function calls if it is an array
     Array.handle = function(fn) {
