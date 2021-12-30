@@ -835,6 +835,9 @@
         }
 
         function outputThin(lines) {
+            if (!lines) {
+                return;
+            }
             let points = lines.group(2).map(grp => {
                 let [ p1, p2 ] = grp;
                 return newPoint(
