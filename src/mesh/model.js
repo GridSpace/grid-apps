@@ -45,16 +45,19 @@ mesh.model = class MeshModel {
     floor() {
         let b = this.bounds();
         this.move(0, 0, -b.min.z);
+        return this;
     }
 
     centerXY() {
         let b = this.bounds();
-        this.move(-b.center.x, -b.center.y, 0);
+        this.move(-b.center.x, b.center.y, 0);
+        return this;
     }
 
     move(x = 0, y = 0, z = 0) {
         let pos = this.position();
         pos.set(pos.x + x, pos.y + y, pos.z + z);
+        return this;
     }
 
     position() {
