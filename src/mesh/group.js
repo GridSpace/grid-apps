@@ -27,16 +27,6 @@ mesh.group = class MeshGroup extends mesh.object {
         }
     }
 
-    // center objects to group bounds
-    // dependent on first being added to world/scene
-    centerModels() {
-        let bounds = this.bounds();
-        for (let model of this.models) {
-            model.center(bounds);
-        }
-        return this;
-    }
-
     object() {
         return this.group;
     }
@@ -61,6 +51,28 @@ mesh.group = class MeshGroup extends mesh.object {
         }
         moto.Space.update();
         return this;
+    }
+
+    // center objects to group bounds
+    // dependent on first being added to world/scene
+    centerModels() {
+        let bounds = this.bounds();
+        for (let model of this.models) {
+            model.center(bounds);
+        }
+        return this;
+    }
+
+    opacity() {
+        for (let model of this.models) {
+            model.opacity(...arguments);
+        }
+    }
+
+    wireframe() {
+        for (let model of this.models) {
+            model.wireframe(...arguments);
+        }
     }
 };
 

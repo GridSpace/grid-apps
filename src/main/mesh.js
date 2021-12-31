@@ -81,20 +81,26 @@ broker.subscribe('space_init', data => {
             platform.setColor(platcolor);
         },
         'keypress', evt => {
+            switch (evt.code) {
+                case 'KeyV':
+                    api.selection.focus();
+                    break;
+            }
         },
         'keydown', evt => {
+            let rv = Math.PI / 16;
             switch (evt.code) {
                 case 'ArrowUp':
-                    api.selection.rotate(-0.2,0,0).floor();
+                    api.selection.rotate(-rv,0,0).floor();
                     break;
                 case 'ArrowDown':
-                    api.selection.rotate(0.2,0,0).floor();
+                    api.selection.rotate(rv,0,0).floor();
                     break;
                 case 'ArrowLeft':
-                    api.selection.rotate(0,0,0.2).floor();
+                    api.selection.rotate(0,0,rv).floor();
                     break;
                 case 'ArrowRight':
-                    api.selection.rotate(0,0,-0.2).floor();
+                    api.selection.rotate(0,0,-rv).floor();
                     break;
             }
         }
@@ -106,7 +112,8 @@ broker.subscribe('space_load', data => {
     mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
         .centerModels()
         .centerXY()
-        .floor();
+        .floor()
+        .focus();
 });
 
 // remove version cache bust from url

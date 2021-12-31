@@ -73,13 +73,21 @@ let selection = {
 
     centerXY() {
         for (let s of selected) {
-            s.floor(...arguments);
+            s.centerXY(...arguments);
         }
         return selection;
     },
 
     home() {
         return selection.centerXY().floor();
+    },
+
+    focus() {
+        api.focus(selected);
+    },
+
+    bounds() {
+        return util.bounds(selected.map(s => s.object()));
     }
 };
 
@@ -118,6 +126,18 @@ let api = mesh.api = {
         }
     },
 
+    // @param object {THREE.Object3D | THREE.Object3D[]}
+    focus: (object) => {
+        let { center } = util.bounds(object);
+        // when no objects supplied
+        if (isNaN(center.x * center.y * center.z)) {
+            return;
+        }
+        space.view.setFocus(new THREE.Vector3(
+            center.x, center.z, center.y
+        ));
+    },
+
     selection,
 
     group,
@@ -137,10 +157,22 @@ let api = mesh.api = {
 
 let util = mesh.util = {
 
-    // @param object {THREE.Object3D}
+    // @param object {THREE.Object3D | THREE.Object3D[]}
     // @returns bounds modified for moto.Space
     bounds: (object) => {
-        let box = new THREE.Box3().setFromObject(object);
+        let box = new THREE.Box3();
+        if (Array.isArray(object)) {
+            for (let o of object) {
+                box.union(new THREE.Box3().setFromObject(
+                    o instanceof mesh.object ? o.object() : o
+                ));
+            }
+        } else if (object) {
+            box.setFromObject(
+                object instanceof mesh.object ? object.object() : object);
+        } else {
+            return box;
+        }
         let bnd = {
             min: {
                 x: box.min.x,

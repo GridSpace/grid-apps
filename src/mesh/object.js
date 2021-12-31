@@ -23,6 +23,10 @@ mesh.object = class MeshObject {
         return mesh.util.bounds(this.object());
     }
 
+    focus() {
+        mesh.api.focus(this.object());
+    }
+
     floor() {
         let b = this.bounds();
         this.move(0, 0, -b.min.z);
