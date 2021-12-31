@@ -5,8 +5,10 @@
 (function() {
 
 gapp.register("mesh.model", [
+    "add.array",    // dep: add.array
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
+    "mesh.object",  // dep: mesh.object
     "mesh.group",   // dep: mesh.group
 ]);
 
@@ -25,8 +27,9 @@ mesh.material = {
 };
 
 /** 3D model rendered on plaform **/
-mesh.model = class MeshModel {
+mesh.model = class MeshModel extends mesh.object {
     constructor(data) {
+        super();
         let { file, mesh } = data;
 
         if (!mesh) {
@@ -38,34 +41,8 @@ mesh.model = class MeshModel {
         this.mesh = this.load(mesh);
     }
 
-    bounds() {
-        return mesh.util.bounds(this.mesh);
-    }
-
-    floor() {
-        let b = this.bounds();
-        this.move(0, 0, -b.min.z);
-        return this;
-    }
-
-    centerXY() {
-        let b = this.bounds();
-        this.move(-b.center.x, b.center.y, 0);
-        return this;
-    }
-
-    move(x = 0, y = 0, z = 0) {
-        let pos = this.position();
-        pos.set(pos.x + x, pos.y + y, pos.z + z);
-        return this;
-    }
-
-    position() {
-        let pos = this.mesh.position;
-        if (arguments.length === 0) {
-            return pos;
-        }
-        pos.set(...this.arguments);
+    object() {
+        return this.mesh;
     }
 
     load(vertices, indices) {

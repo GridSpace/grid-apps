@@ -96,13 +96,16 @@ let h = self.h = moto.webui = {
         } else {
             el.innerHTML = html;
         }
+        let map = {};
         for (let bind of ctx) {
             let { elid, func } = bind;
             let et = $(elid);
+            map[elid] = et;
             for (let [name, fn] of Object.entries(func)) {
                 et[name] = fn;
             }
         }
+        return map;
     },
 
     el: (type, attr, innr) => {

@@ -8,16 +8,18 @@ gapp.register("mesh.group", [
     "add.array",    // dep: add.array
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
+    "mesh.object",  // dep: mesh.object
     "mesh.model",   // dep: mesh.model
 ]);
 
 let mesh = self.mesh = self.mesh || {};
 if (mesh.group) return;
 
-mesh.group = class MeshGroup {
+mesh.group = class MeshGroup extends mesh.object {
 
-    // @param group {THREE.Group}
+    // @param group {mesh.model[]}
     constructor(models) {
+        super();
         this.group = new THREE.Group();
         this.models = [];
         for (let model of (models || [])) {
@@ -25,34 +27,8 @@ mesh.group = class MeshGroup {
         }
     }
 
-    bounds() {
-        return mesh.util.bounds(this.group);
-    }
-
-    floor() {
-        let b = this.bounds();
-        this.move(0, 0, -b.min.z);
-        return this;
-    }
-
-    centerXY() {
-        let b = this.bounds();
-        this.move(-b.center.x, b.center.y, 0);
-        return this;
-    }
-
-    move(x = 0, y = 0, z = 0) {
-        let pos = this.position();
-        pos.set(pos.x + x, pos.y + y, pos.z + z);
-        return this;
-    }
-
-    position() {
-        let pos = this.group.position;
-        if (arguments.length === 0) {
-            return pos;
-        }
-        pos.set(...arguments);
+    object() {
+        return this.group;
     }
 
     // @param model {MeshModel}
