@@ -23,6 +23,7 @@ let groups = [];
 let api = mesh.api = {
 
     group: {
+        // @returns {MeshGroup[]}
         list() {
             return groups.slice();
         },
@@ -48,14 +49,49 @@ let api = mesh.api = {
     },
 
     model: {
+        // @returns {MeshModel[]}
         list() {
             return groups.map(g => g.models).flat();
         },
 
+        // @param group {MeshModel}
         remove: (model) => {
             model.group.remove(model);
         }
     }
+};
+
+let util = mesh.util = {
+
+    // @param object {THREE.Object3D}
+    // @returns bounds modified for moto.Space
+    bounds: (object) => {
+        let box = new THREE.Box3().setFromObject(object);
+        let bnd = {
+            min: {
+                x: box.min.x,
+                y: box.min.z,
+                z: box.min.y
+                },
+            max: {
+                x: box.max.x,
+                y: box.max.z,
+                z: box.max.y
+            }
+        };
+        bnd.size = {
+            x: bnd.max.x - bnd.min.x,
+            y: bnd.max.y - bnd.min.y,
+            z: bnd.max.z - bnd.min.z
+        };
+        bnd.center = {
+            x: (bnd.max.x + bnd.min.x) / 2,
+            y: (bnd.max.y + bnd.min.y) / 2,
+            z: (bnd.max.z + bnd.min.z) / 2
+        };
+        return bnd;
+    }
+
 };
 
 })();

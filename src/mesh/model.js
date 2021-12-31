@@ -39,7 +39,30 @@ mesh.model = class MeshModel {
     }
 
     bounds() {
-        return new THREE.Box3().setFromObject(this.mesh);
+        return mesh.util.bounds(this.mesh);
+    }
+
+    floor() {
+        let b = this.bounds();
+        this.move(0, 0, -b.min.z);
+    }
+
+    centerXY() {
+        let b = this.bounds();
+        this.move(-b.center.x, -b.center.y, 0);
+    }
+
+    move(x = 0, y = 0, z = 0) {
+        let pos = this.position();
+        pos.set(pos.x + x, pos.y + y, pos.z + z);
+    }
+
+    position() {
+        let pos = this.mesh.position;
+        if (arguments.length === 0) {
+            return pos;
+        }
+        pos.set(...this.arguments);
     }
 
     load(vertices, indices) {
