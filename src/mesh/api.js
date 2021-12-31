@@ -18,41 +18,42 @@ let mesh = self.mesh = self.mesh || {};
 if (mesh.api) return;
 
 let space = moto.Space;
-let models = [];
+let groups = [];
 
 let api = mesh.api = {
 
-    models: {
-        get all() {
-            return models.slice();
+    group: {
+        list() {
+            return groups.slice();
         },
 
-        add: (list, group = new THREE.Group()) => {
-            if (!Array.isArray(list)) {
-                list = [ list ];
-            }
-            for (let model of list) {
-                models.addOnce(model);
-                model.group = group;
-                group.add(model.mesh);
-            }
-            space.world.add(group);
-            space.refresh();
+        // @param group {MeshModel[]}
+        new: (models) => {
+            api.group.add(new mesh.group(models));
         },
 
-        remove: list => {
-            if (!Array.isArray(list)) {
-                list = [ list ];
-            }
-            for (let model of list) {
-                if (models.remove(model)) {
-                    model.group.remove(model.mesh);
-                    if (model.group.children.length === 0) {
-                        space.world.remove(model.group);
-                    }
-                    space.refresh();
-                }
-            }
+        // @param group {MeshGroup}
+        add: (group) => {
+            groups.addOnce(group);
+            space.world.add(group.group);
+            space.update();
+        },
+
+        // @param group {MeshGroup}
+        remove: (group) => {
+            groups.remove(group);
+            space.world.remove(group.group);
+            space.update();
+        }
+    },
+
+    model: {
+        list() {
+            return groups.map(g => g.models).flat();
+        },
+
+        remove: (model) => {
+            model.group.remove(model);
         }
     }
 };

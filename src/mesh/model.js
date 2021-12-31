@@ -7,6 +7,7 @@
 gapp.register("mesh.model", [
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
+    "mesh.group",   // dep: mesh.group
 ]);
 
 let mesh = self.mesh = self.mesh || {};
@@ -37,6 +38,10 @@ mesh.model = class MeshModel {
         this.mesh = this.load(mesh);
     }
 
+    bounds() {
+        return new THREE.Box3().setFromObject(this.mesh);
+    }
+
     load(vertices, indices) {
         let geo = new THREE.BufferGeometry();
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
@@ -57,10 +62,14 @@ mesh.model = class MeshModel {
     }
 
     set group(gv) {
-        if (this._group && this._group !== gv) {
-            throw "model cannot change groups";
+        if (gv && this._group && this._group !== gv) {
+            throw "models can only belong to one group";
         }
         this._group = gv;
+    }
+
+    remove() {
+        mesh.api.model.remove(this);
     }
 };
 

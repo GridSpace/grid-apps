@@ -47,11 +47,18 @@ function init(mod) {
 
     let depcache = {};
 
-    function find_deps(path) {
+    function find_deps(path, seen = []) {
         let cached = depcache[path];
         if (cached) {
             return cached;
         }
+        if (seen.indexOf(path) >= 0) {
+            if (debug) {
+                console.log(`circular dependency at ${path}`, seen);
+            }
+            return [];
+        }
+        seen.push(path);
         let deps = [ "main/gapp" ];
         let lines = fs.readFileSync(`${dir}/src/${path}.js`)
             .toString()
@@ -63,7 +70,7 @@ function init(mod) {
                 if (deps.indexOf(dep) < 0) {
                     deps.push(dep);
                 }
-                let deep = find_deps(dep);
+                let deep = find_deps(dep, seen);
                 deps = deps.filter(p => deep.indexOf(p) < 0);
                 // deeper dependencies go first
                 deps = [...deep, ...deps];
