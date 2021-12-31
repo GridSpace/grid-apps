@@ -54,6 +54,7 @@ function init() {
 broker.subscribe('space_init', data => {
     let { space, platform } = data;
     let platcolor = 0x00ff00;
+    let api = mesh.api;
     // add file drop handler
     space.event.addHandlers(self, [
         'drop', (evt) => {
@@ -78,13 +79,31 @@ broker.subscribe('space_init', data => {
         },
         'dragleave', evt => {
             platform.setColor(platcolor);
+        },
+        'keypress', evt => {
+        },
+        'keydown', evt => {
+            switch (evt.code) {
+                case 'ArrowUp':
+                    api.selection.rotate(-0.2,0,0).floor();
+                    break;
+                case 'ArrowDown':
+                    api.selection.rotate(0.2,0,0).floor();
+                    break;
+                case 'ArrowLeft':
+                    api.selection.rotate(0,0,0.2).floor();
+                    break;
+                case 'ArrowRight':
+                    api.selection.rotate(0,0,-0.2).floor();
+                    break;
+            }
         }
     ]);
 });
 
 // add object loader
 broker.subscribe('space_load', data => {
-    mesh.api.group.new(data.flat().map(el => new mesh.model(el)));
+    mesh.api.group.new(data.flat().map(el => new mesh.model(el))).centerXY().floor();
 });
 
 // remove version cache bust from url

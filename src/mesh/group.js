@@ -37,6 +37,7 @@ mesh.group = class MeshGroup extends mesh.object {
         this.models.addOnce(model);
         this.group.add(model.mesh);
         moto.Space.update();
+        return this;
     }
 
     // @param model {MeshModel}
@@ -49,6 +50,7 @@ mesh.group = class MeshGroup extends mesh.object {
             mesh.api.group.remove(this);
         }
         moto.Space.update();
+        return this;
     }
 };
 

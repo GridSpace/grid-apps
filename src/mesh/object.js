@@ -38,6 +38,7 @@ mesh.object = class MeshObject {
     move(x = 0, y = 0, z = 0) {
         let pos = this.position();
         pos.set(pos.x + x, pos.y + y, pos.z + z);
+        moto.Space.update();
         return this;
     }
 
@@ -47,6 +48,16 @@ mesh.object = class MeshObject {
             return scale;
         }
         scale.set(...arguments);
+        moto.Space.update();
+    }
+
+    rotation() {
+        let rot = this.object().rotation;
+        if (arguments.length === 0) {
+            return rot;
+        }
+        rot.set(...arguments);
+        moto.Space.update();
     }
 
     position() {
@@ -55,6 +66,7 @@ mesh.object = class MeshObject {
             return pos;
         }
         pos.set(...arguments);
+        moto.Space.update();
     }
 };
 
