@@ -18,13 +18,23 @@ if (mesh.group) return;
 mesh.group = class MeshGroup extends mesh.object {
 
     // @param group {mesh.model[]}
-    constructor(models) {
+    constructor(models = []) {
         super();
         this.group = new THREE.Group();
         this.models = [];
-        for (let model of (models || [])) {
+        for (let model of models) {
             this.add(model);
         }
+    }
+
+    // center objects to group bounds
+    // dependent on first being added to world/scene
+    centerModels() {
+        let bounds = this.bounds();
+        for (let model of this.models) {
+            model.center(bounds);
+        }
+        return this;
     }
 
     object() {

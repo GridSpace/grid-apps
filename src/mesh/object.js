@@ -29,8 +29,14 @@ mesh.object = class MeshObject {
         return this;
     }
 
-    centerXY() {
-        let b = this.bounds();
+    center(bounds) {
+        let b = bounds || this.bounds();
+        this.move(-b.center.x, b.center.y, -b.center.z);
+        return this;
+    }
+
+    centerXY(bounds) {
+        let b = bounds || this.bounds();
         this.move(-b.center.x, b.center.y, 0);
         return this;
     }

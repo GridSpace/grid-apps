@@ -103,7 +103,10 @@ broker.subscribe('space_init', data => {
 
 // add object loader
 broker.subscribe('space_load', data => {
-    mesh.api.group.new(data.flat().map(el => new mesh.model(el))).centerXY().floor();
+    mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
+        .centerModels()
+        .centerXY()
+        .floor();
 });
 
 // remove version cache bust from url
