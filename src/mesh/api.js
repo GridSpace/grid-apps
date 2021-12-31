@@ -51,8 +51,7 @@ let selection = {
 
     rotate(dx = 0, dy = 0, dz = 0) {
         for (let s of selected) {
-            let { x, y, z } = s.rotation();
-            s.rotation(x + dx, y + dy, z + dz);
+            s.rotate(dx, dy, dz);
         }
         return selection;
     },

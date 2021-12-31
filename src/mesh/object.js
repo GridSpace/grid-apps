@@ -57,6 +57,7 @@ mesh.object = class MeshObject {
         moto.Space.update();
     }
 
+    // use with caution. frames of reference interfere.
     rotation() {
         let rot = this.object().rotation;
         if (arguments.length === 0) {
@@ -64,6 +65,12 @@ mesh.object = class MeshObject {
         }
         rot.set(...arguments);
         moto.Space.update();
+    }
+
+    rotate(x = 0, y = 0, z = 0) {
+        if (x) this.object().rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
+        if (y) this.object().rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
+        if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
     }
 
     position() {
