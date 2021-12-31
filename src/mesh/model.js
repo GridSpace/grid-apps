@@ -68,6 +68,40 @@ mesh.model = class MeshModel {
         this._group = gv;
     }
 
+    opacity(ov) {
+        let mat = this.mesh.material;
+        if (ov === undefined) {
+            return mat.opacity;
+        }
+        if (ov <= 0.0) {
+            mat.transparent = false;
+            mat.opacity = 1;
+            mat.visible = false;
+        } else {
+            mat.transparent = ov < 1.0;
+            mat.opacity = ov;
+            mat.visible = true;
+        }
+        moto.Space.update();
+    }
+
+    wireframe(bool, opt = {}) {
+        if (this._wire) {
+            this.mesh.remove(this._wire);
+            this._wire = undefined;
+            this.opacity(this._wireo);
+        }
+        if (bool) {
+            this._wireo = this.opacity();
+            this._wire = new THREE.LineSegments(
+                new THREE.WireframeGeometry(this.mesh.geometry),
+                new THREE.LineBasicMaterial({ color: opt.color || 0 }));
+            this.mesh.add(this._wire);
+            this.opacity(opt.opacity || 0);
+        }
+        moto.Space.update();
+    }
+
     remove() {
         mesh.api.model.remove(this);
     }
