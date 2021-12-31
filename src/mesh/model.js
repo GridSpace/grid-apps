@@ -86,6 +86,15 @@ mesh.model = class MeshModel {
     }
 
     wireframe(bool, opt = {}) {
+        if (bool === undefined) {
+            return this._wire ? {
+                enabled: true,
+                opacity: this._wireo,
+                color: this._wire ? this._wire.material.color : undefined,
+            } : {
+                enabled: false
+            };
+        }
         if (this._wire) {
             this.mesh.remove(this._wire);
             this._wire = undefined;
