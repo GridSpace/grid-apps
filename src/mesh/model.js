@@ -16,12 +16,19 @@ let mesh = self.mesh = self.mesh || {};
 if (mesh.model) return;
 
 /** default materials **/
-mesh.material = {
-    solid: new THREE.MeshPhongMaterial({
+let materials = mesh.material = {
+    unselected: new THREE.MeshPhongMaterial({
         transparent: true,
         shininess: 100,
         specular: 0x181818,
         color: 0xffff00,
+        opacity: 1
+    }),
+    selected: new THREE.MeshPhongMaterial({
+        transparent: true,
+        shininess: 100,
+        specular: 0x181818,
+        color: 0x00ff00,
         opacity: 1
     })
 };
@@ -50,7 +57,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
-        let meh = new THREE.Mesh(geo, mesh.material.solid);
+        let meh = new THREE.Mesh(geo, materials.unselected);
         geo.computeFaceNormals();
         geo.computeVertexNormals();
         meh.material.side = THREE.DoubleSide;
@@ -112,6 +119,10 @@ mesh.model = class MeshModel extends mesh.object {
             this.opacity(opt.opacity || 0);
         }
         moto.Space.update();
+    }
+
+    material(mat) {
+        this.mesh.material = mat;
     }
 
     remove() {

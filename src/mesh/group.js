@@ -74,6 +74,12 @@ mesh.group = class MeshGroup extends mesh.object {
             model.wireframe(...arguments);
         }
     }
+
+    material() {
+        for (let model of this.models) {
+            model.material(...arguments);
+        }
+    }
 };
 
 })();

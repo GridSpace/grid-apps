@@ -22,24 +22,41 @@ let groups = [];
 let selected = [];
 
 let selection = {
+    // @returns {MeshObject[]}
     list() {
         return selected.slice()
     },
 
+    // @param group {MeshObject[]}
     set(objects) {
         selected = objects;
+        this.update();
     },
 
+    // @param group {MeshObject}
     add(object) {
         selected.addOnce(object);
+        this.update();
     },
 
+    // @param group {MeshObject}
     remove(object) {
         selected.remove(object);
+        this.update();
     },
 
     clear() {
         selected = [];
+        this.update();
+    },
+
+    update() {
+        for (let group of groups) {
+            group.material(mesh.material.unselected);
+        }
+        for (let object of selected) {
+            object.material(mesh.material.selected);
+        }
     },
 
     move(dx = 0, dy = 0, dz = 0) {
@@ -129,7 +146,7 @@ let api = mesh.api = {
     // @param object {THREE.Object3D | THREE.Object3D[]}
     focus: (object) => {
         let { center } = util.bounds(object);
-        // when no objects supplied
+        // when no valid objects supplied
         if (isNaN(center.x * center.y * center.z)) {
             return;
         }
@@ -157,7 +174,7 @@ let api = mesh.api = {
 
 let util = mesh.util = {
 
-    // @param object {THREE.Object3D | THREE.Object3D[]}
+    // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
     // @returns bounds modified for moto.Space
     bounds: (object) => {
         let box = new THREE.Box3();
