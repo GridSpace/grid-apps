@@ -146,10 +146,13 @@ let api = mesh.api = {
     // @param object {THREE.Object3D | THREE.Object3D[]}
     focus: (object) => {
         let { center } = util.bounds(object);
-        // when no valid objects supplied
+        // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
-            return;
+            center = { x: 0, y: 0, z: 0 };
         }
+        // sets "home" views (front, back, home, reset)
+        space.platform.setCenter(center.x, center.y, center.z);
+        // sets camera focus
         space.view.setFocus(new THREE.Vector3(
             center.x, center.z, center.y
         ));
