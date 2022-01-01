@@ -73,7 +73,6 @@ mesh.object = class MeshObject {
         return this;
     }
 
-    // use with caution. frames of reference interfere.
     rotation() {
         let rot = this.object().rotation;
         if (arguments.length === 0) {
@@ -85,8 +84,7 @@ mesh.object = class MeshObject {
         return this;
     }
 
-    // use with caution. frames of reference interfere.
-    qrotate(quaternion) {
+    qrotation(quaternion) {
         this.object().setRotationFromQuaternion(quaternion);
         this.updateBoundsBox();
         moto.Space.update();

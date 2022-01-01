@@ -154,11 +154,7 @@ broker.subscribe('space_init', data => {
                     let q = new THREE.Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
                     q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                    group.qrotate(q);
-                    // let e = new THREE.Euler().setFromQuaternion(q);
-                    // let n = int.face.normal;
-                    // console.log({n,q,e});
-                    // group.rotation(e.x, e.y, e.z);
+                    group.qrotation(q);
                     group.floor();
                 } else {
                     api.selection.toggle(model.group);

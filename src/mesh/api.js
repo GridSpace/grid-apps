@@ -249,9 +249,6 @@ let util = mesh.util = {
                 box.expandByObject(
                     o instanceof mesh.object ? o.object() : o
                 );
-                // box.union(new THREE.Box3().setFromObject(
-                //     o instanceof mesh.object ? o.object() : o
-                // ));
             }
         } else if (object) {
             box.setFromObject(
