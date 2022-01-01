@@ -57,12 +57,12 @@ mesh.model = class MeshModel extends mesh.object {
             vertices: this.mesh.geometry.attributes.position.array,
             matrix: this.mesh.matrixWorld.elements
         }).then(data => {
-            console.log({data: data[0]});
-            // mesh.api.group.new([new mesh.model({
-            //     file: "synth",
-            //     mesh: data[0]
-            // })]);
-            this.load(data[0]);
+            if (data && data.length)
+            // for debugging matrix ops
+            return mesh.api.group.new([new mesh.model({
+                file: "synth",
+                mesh: data[0]
+            })]);
         });
     }
 
@@ -78,7 +78,22 @@ mesh.model = class MeshModel extends mesh.object {
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
+        // this ref allows clicks to be traced to models and groups
+        meh.model = this;
         return meh;
+    }
+
+    reload(vertices, indices) {
+        let geo = this.mesh.geometry;
+        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geo.setAttribute('normal', undefined);
+        if (indices) {
+            geo.setIndex(new THREE.BufferAttribute(indices, 1));
+            geo.attributes.index.needsUpdate = true;
+        }
+        geo.attributes.position.needsUpdate = true;
+        geo.computeFaceNormals();
+        geo.computeVertexNormals();
     }
 
     get group() {

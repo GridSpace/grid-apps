@@ -77,6 +77,10 @@ mesh.object = class MeshObject {
         if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
     }
 
+    qrotate(quaternion) {
+        this.object().setRotationFromQuaternion(quaternion);
+    }
+
     position() {
         let pos = this.object().position;
         if (arguments.length === 0) {

@@ -22,7 +22,7 @@ let space_rotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
 
 moto.worker.bind("model_sync", (data, send) => {
     let { vertices, matrix } = data;
-    console.log('model_sync', {vertices, matrix, send});
+    // return send.done(vertices);
     let geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geo.setAttribute('normal', undefined);
@@ -30,6 +30,8 @@ moto.worker.bind("model_sync", (data, send) => {
     geo.computeVertexNormals();
     let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
     geo.applyMatrix4(m4);
+    return send.done();
+    // for debugging matrix ops
     send.done(geo.attributes.position.array);
 });
 

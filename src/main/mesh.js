@@ -8,6 +8,7 @@ let broker = gapp.broker;
 
 function init() {
     let moto = self.moto,
+        api = mesh.api,
         sky = false,
         dark = false,
         ortho = false,
@@ -22,6 +23,9 @@ function init() {
         color: dark ? 0 : 0xffffff
     });
     space.init($('container'), delta => { }, ortho);
+    platform.onClick(click => {
+        api.selection.clear();
+    });
     platform.onMove(delta => { });
     platform.set({
         volume: false,
@@ -55,6 +59,7 @@ broker.subscribe('space_init', data => {
     let { space, platform } = data;
     let platcolor = 0x00ff00;
     let api = mesh.api;
+
     // add file drop handler
     space.event.addHandlers(self, [
         'drop', (evt) => {
@@ -105,6 +110,41 @@ broker.subscribe('space_init', data => {
             }
         }
     ]);
+
+    // mouse hover/click handlers
+    space.mouse.downSelect((int, event) => {
+        // mesh array including platform
+        return api.objects();
+    });
+
+    space.mouse.upSelect((int, event) => {
+        if (event && event.target.nodeName === "CANVAS") {
+            let model = int && int.object.model ? int.object.model : undefined;
+            if (model) {
+                let group = model.group;
+                // lay flat with meta or ctrl clicking a selected face
+                if ((event.ctrlKey || event.metaKey)) {
+                    let q = new THREE.Quaternion();
+                    // find intersecting point, look "up" on Z and rotate to face that
+                    q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
+                    group.qrotate(q);
+                } else {
+                    api.selection.toggle(model.group);
+                }
+            }
+        } else {
+            return api.objects();
+        }
+    });
+
+    space.mouse.onDrag((delta, offset, up = false) => {
+        if (delta) {
+            api.selection.move(delta.x, delta.y, 0);
+        } else {
+            return api.objects().length > 0;
+        }
+    });
+
 });
 
 // add object loader

@@ -24,7 +24,7 @@ let selected = [];
 let selection = {
     // @returns {MeshObject[]}
     list() {
-        return selected.slice()
+        return selected.slice();
     },
 
     // @param group {MeshObject[]}
@@ -36,6 +36,11 @@ let selection = {
     // @param group {MeshObject}
     add(object) {
         selected.addOnce(object);
+        this.update();
+    },
+
+    toggle(object) {
+        selected.remove(object) || selected.addOnce(object);
         this.update();
     },
 
@@ -172,6 +177,10 @@ let api = mesh.api = {
         remove: (model) => {
             model.group.remove(model);
         }
+    },
+
+    objects: () => {
+        return group.list().map(o => o.models).flat().map(o => o.object());
     }
 };
 
