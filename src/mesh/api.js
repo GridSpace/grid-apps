@@ -78,6 +78,13 @@ let selection = {
         return selection;
     },
 
+    qrotate(q) {
+        for (let s of selected) {
+            s.qrotate(q);
+        }
+        return selection;
+    },
+
     scale(dx = 0, dy = 0, dz = 0) {
         for (let s of selected) {
             let { x, y, z } = s.scale();
@@ -192,9 +199,12 @@ let util = mesh.util = {
         let box = new THREE.Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
-                box.union(new THREE.Box3().setFromObject(
+                box.expandByObject(
                     o instanceof mesh.object ? o.object() : o
-                ));
+                );
+                // box.union(new THREE.Box3().setFromObject(
+                //     o instanceof mesh.object ? o.object() : o
+                // ));
             }
         } else if (object) {
             box.setFromObject(
