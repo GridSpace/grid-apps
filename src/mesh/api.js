@@ -183,7 +183,6 @@ let group = {
         groups.addOnce(group);
         space.world.add(group.group);
         space.update();
-        selection.set([group]);
         return group;
     },
 
@@ -234,6 +233,7 @@ let api = mesh.api = {
     },
 
     objects: () => {
+        // return models, not groups
         return group.list().map(o => o.models).flat().map(o => o.object());
     }
 };

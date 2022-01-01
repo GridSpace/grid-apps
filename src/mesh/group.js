@@ -42,6 +42,13 @@ mesh.group = class MeshGroup extends mesh.object {
 
     // @param model {MeshModel}
     remove(model) {
+        // remove all models
+        if (arguments.length === 0) {
+            for (let m of this.models.slice()) {
+                this.remove(m);
+            }
+            return;
+        }
         model.group = undefined;
         this.models.remove(model);
         this.group.remove(model.mesh);

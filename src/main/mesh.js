@@ -24,7 +24,7 @@ function init() {
     });
     space.init($('container'), delta => { }, ortho);
     platform.onClick(click => {
-        api.selection.clear();
+        // api.selection.clear();
     });
     platform.onMove(delta => { });
     platform.set({
@@ -102,6 +102,9 @@ broker.subscribe('space_init', data => {
                 case 'KeyH':
                     space.view.home();
                     break;
+                case 'KeyF':
+                    space.view.front();
+                    break;
                 case 'KeyT':
                     space.view.top();
                     break;
@@ -113,6 +116,13 @@ broker.subscribe('space_init', data => {
         'keydown', evt => {
             let rv = Math.PI / 16;
             switch (evt.code) {
+                case 'Backspace':
+                case 'Delete':
+                    for (let s of api.selection.list()) {
+                        s.showBounds(false);
+                        s.remove();
+                    }
+                    break;
                 case 'ArrowUp':
                     api.selection.rotate(-rv,0,0).floor();
                     break;
@@ -144,11 +154,11 @@ broker.subscribe('space_init', data => {
                     let q = new THREE.Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
                     q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                    // group.qrotate(q);
-                    let e = new THREE.Euler().setFromQuaternion(q);
-                    let n = int.face.normal;
-                    console.log({n,q,e});
-                    group.rotation(e.x, e.y, e.z);
+                    group.qrotate(q);
+                    // let e = new THREE.Euler().setFromQuaternion(q);
+                    // let n = int.face.normal;
+                    // console.log({n,q,e});
+                    // group.rotation(e.x, e.y, e.z);
                     group.floor();
                 } else {
                     api.selection.toggle(model.group);
