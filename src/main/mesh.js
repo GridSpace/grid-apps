@@ -35,7 +35,7 @@ function init() {
         color: 0xcccccc,
         zoom: { reverse: true, speed: 1 },
         size: { width: 300, depth: 300, height: 2.5, maxz: 2.5 },
-        grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc }
+        grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc },
     });
     space.view.setZoom(zoomrev, zoomspd);
     space.useDefaultKeys(false);
@@ -146,14 +146,14 @@ broker.subscribe('space_init', data => {
                     break;
                 case 'ArrowLeft':
                     if (shiftKey) {
-                        api.selection.rotate(0,rv,0).floor();
+                        api.selection.rotate(0,-rv,0).floor();
                     } else {
                         api.selection.rotate(0,0,rv).floor();
                     }
                     break;
                 case 'ArrowRight':
                     if (shiftKey) {
-                        api.selection.rotate(0,-rv,0).floor();
+                        api.selection.rotate(0,rv,0).floor();
                     } else {
                         api.selection.rotate(0,0,-rv).floor();
                     }

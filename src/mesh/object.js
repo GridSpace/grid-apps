@@ -120,7 +120,7 @@ mesh.object = class MeshObject {
                 new THREE.Vector3(center.x, center.y, center.z),
                 new THREE.Vector3(size.x, size.y, size.z)
             );
-            let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x1155aa);
+            let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x555555);
             world.add(helper);
         }
     }

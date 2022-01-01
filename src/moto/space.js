@@ -470,22 +470,22 @@
         ruler.xo = xh - xo;
         ruler.yo = yh - yo;
 
-        for (let x=0; x>x1; x -= unitMinor) {
+        for (let x=-unitMinor; x>x1; x -= unitMinor) {
             let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
             let arr = modMatch(x, unitMajor) ? majors : minors;
             arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
         }
-        for (let x=0; x<x2; x += unitMinor) {
+        for (let x=unitMinor; x<x2; x += unitMinor) {
             let oh = isRound ? Math.sqrt(1-(x/xh)*(x/xh)) * yh : yh;
             let arr = modMatch(x, unitMajor) ? majors : minors;
             arr.append({x:x-xo, y:-oh, z:zp}).append({x:x-xo, y:oh, z:zp});
         }
-        for (let y=0; y>y1; y -= unitMinor) {
+        for (let y=-unitMinor; y>y1; y -= unitMinor) {
             let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
             let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
         }
-        for (let y=0; y<y2; y += unitMinor) {
+        for (let y=unitMinor; y<y2; y += unitMinor) {
             let ow = isRound ? Math.sqrt(1-(y/yh)*(y/yh)) * xh : xh;
             let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
@@ -493,6 +493,14 @@
 
         view.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
         view.add(makeLinesFromPoints(minors, colorMinor || 0xcccccc, 1));
+        view.add(makeLinesFromPoints([
+            {x: -xo, y:y1-yo, z:zp},
+            {x: -xo, y:y2-yo, z:zp},
+        ], 0x000099, 1));
+        view.add(makeLinesFromPoints([
+            {x: x1-xo, y:-yo, z:zp},
+            {x: x2-xo, y:-yo, z:zp},
+        ], 0x990000, 1));
 
         Space.scene.remove(oldView);
         Space.scene.add(grid.view);
@@ -888,7 +896,7 @@
     }
 
     function setPlatform(opt = {}) {
-        let { color, round, size, grid, opacity, volume, zOffset } = opt;
+        let { color, round, size, grid, opacity, volume, zOffset, origin } = opt;
         if (color) {
             Space.platform.setColor(color);
         }
@@ -902,6 +910,10 @@
         if (grid) {
             let { major = 25, minor = 5, majorColor = 0x999999, minorColor = 0xcccccc } = grid;
             Space.platform.setGrid(major, minor, majorColor, minorColor);
+        }
+        if (origin) {
+            let { x, y, z, show } = origin;
+            Space.platform.setOrigin(x || 0, y || 0, z || 0, show);
         }
         if (opacity !== undefined) {
             Space.platform.opacity(opacity);
