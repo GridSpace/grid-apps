@@ -116,12 +116,23 @@ broker.subscribe('space_init', data => {
         'keydown', evt => {
             let rv = Math.PI / 16;
             switch (evt.code) {
+                case 'KeyA':
+                    if (evt.metaKey || evt.ctrlKey) {
+                        api.selection.set(api.group.list());
+                        estop(evt);
+                    }
+                    break;
+                case 'Escape':
+                    api.selection.clear();
+                    estop(evt);
+                    break;
                 case 'Backspace':
                 case 'Delete':
                     for (let s of api.selection.list()) {
                         s.showBounds(false);
                         s.remove();
                     }
+                    estop(evt);
                     break;
                 case 'ArrowUp':
                     api.selection.rotate(-rv,0,0).floor();
