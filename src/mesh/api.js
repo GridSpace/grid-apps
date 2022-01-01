@@ -37,6 +37,28 @@ let selection = {
         return selected.slice();
     },
 
+    groups() {
+        let all = selection.list();
+        let grp = all.filter(s => s instanceof mesh.group);
+        let mdl = all.filter(s => s instanceof mesh.model);
+        for (let m of mdl) {
+            grp.addOnce(m.group);
+        }
+        return grp;
+    },
+
+    models() {
+        let all = selection.list();
+        let grp = all.filter(s => s instanceof mesh.group);
+        let mdl = all.filter(s => s instanceof mesh.model);
+        for (let g of grp) {
+            for (let m of g.models) {
+                mdl.addOnce(m);
+            }
+        }
+        return mdl;
+    },
+
     // @param group {MeshObject[]}
     set(objects) {
         selected = objects;
@@ -68,11 +90,9 @@ let selection = {
     update() {
         for (let group of groups) {
             group.material(mesh.material.unselected);
-            group.showBounds(true);
         }
         for (let object of selected) {
             object.material(mesh.material.selected);
-            object.showBounds(true);
         }
         return selection;
     },
@@ -116,6 +136,20 @@ let selection = {
     centerXY() {
         for (let s of selected) {
             s.centerXY(...arguments);
+        }
+        return selection;
+    },
+
+    wireframe() {
+        for (let m of selection.models()) {
+            m.wireframe(...arguments);
+        }
+        return selection;
+    },
+
+    boundsBox() {
+        for (let m of selection.groups()) {
+            m.showBounds(...arguments);
         }
         return selection;
     },
@@ -176,10 +210,10 @@ let api = mesh.api = {
             center = { x: 0, y: 0, z: 0 };
         }
         // sets "home" views (front, back, home, reset)
-        space.platform.setCenter(center.x, center.y, center.z);
+        space.platform.setCenter(center.x, -center.y, center.z);
         // sets camera focus
         space.view.setFocus(new THREE.Vector3(
-            center.x, center.z, center.y
+            center.x, center.z, -center.y
         ));
     },
 

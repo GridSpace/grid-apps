@@ -42,7 +42,7 @@ mesh.object = class MeshObject {
 
     centerXY(bounds) {
         let b = bounds || this.bounds();
-        this.move(-b.center.x, b.center.y, 0);
+        this.move(-b.center.x, -b.center.y, 0);
         return this;
     }
 
@@ -64,6 +64,15 @@ mesh.object = class MeshObject {
         moto.Space.update();
     }
 
+    rotate(x = 0, y = 0, z = 0) {
+        if (x) this.object().rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
+        if (y) this.object().rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
+        if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
+        this.updateBoundsBox();
+        moto.Space.update();
+        return this;
+    }
+
     // use with caution. frames of reference interfere.
     rotation() {
         let rot = this.object().rotation;
@@ -76,15 +85,7 @@ mesh.object = class MeshObject {
         return this;
     }
 
-    rotate(x = 0, y = 0, z = 0) {
-        if (x) this.object().rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
-        if (y) this.object().rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
-        if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
-        this.updateBoundsBox();
-        moto.Space.update();
-        return this;
-    }
-
+    // use with caution. frames of reference interfere.
     qrotate(quaternion) {
         this.object().setRotationFromQuaternion(quaternion);
         this.updateBoundsBox();
@@ -102,7 +103,11 @@ mesh.object = class MeshObject {
     }
 
     showBounds(bool) {
+        if (bool && bool.toggle) {
+            bool = !this._showBounds;
+        }
         this._showBounds = bool;
+        this.updateBoundsBox();
     }
 
     updateBoundsBox() {
@@ -117,7 +122,7 @@ mesh.object = class MeshObject {
                 new THREE.Vector3(center.x, center.y, center.z),
                 new THREE.Vector3(size.x, size.y, size.z)
             );
-            let helper = this._boundsBox = new THREE.Box3Helper(b3, 0xff00ff);
+            let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x1155aa);
             world.add(helper);
         }
     }

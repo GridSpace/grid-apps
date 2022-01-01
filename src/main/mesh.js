@@ -38,7 +38,7 @@ function init() {
         grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc }
     });
     space.view.setZoom(zoomrev, zoomspd);
-    space.useDefaultKeys(true);
+    space.useDefaultKeys(false);
 
     // trigger space event binding
     broker.send.space_init({ space, platform });
@@ -87,8 +87,26 @@ broker.subscribe('space_init', data => {
         },
         'keypress', evt => {
             switch (evt.code) {
+                case 'KeyC':
+                    api.selection.centerXY();
+                    break;
                 case 'KeyV':
                     api.selection.focus();
+                    break;
+                case 'KeyW':
+                    api.selection.wireframe({toggle:true});
+                    break;
+                case 'KeyB':
+                    api.selection.boundsBox({toggle:true});
+                    break;
+                case 'KeyH':
+                    space.view.home();
+                    break;
+                case 'KeyT':
+                    space.view.top();
+                    break;
+                case 'KeyZ':
+                    space.view.reset();
                     break;
             }
         },
@@ -129,7 +147,7 @@ broker.subscribe('space_init', data => {
                     // group.qrotate(q);
                     let e = new THREE.Euler().setFromQuaternion(q);
                     let n = int.face.normal;
-                    // console.log({n,q,e});
+                    console.log({n,q,e});
                     group.rotation(e.x, e.y, e.z);
                     group.floor();
                 } else {

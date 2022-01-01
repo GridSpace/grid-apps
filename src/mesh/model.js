@@ -135,6 +135,9 @@ mesh.model = class MeshModel extends mesh.object {
                 enabled: false
             };
         }
+        if (bool.toggle) {
+            return this.wireframe(this._wire ? false : true);
+        }
         if (this._wire) {
             this.mesh.remove(this._wire);
             this._wire = undefined;
