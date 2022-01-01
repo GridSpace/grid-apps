@@ -6,13 +6,22 @@
 
 // dep: ext.three
 // dep: ext.three-bgu
-gapp.register("mesh.api", [
+gapp.load(bind, "mesh.api", [
     "moto.license", // dep: moto.license
     "moto.client",  // dep: moto.client
+    "moto.broker",  // dep: moto.broker
     "moto.space",   // dep: moto.space
     "mesh.tool",    // dep: mesh.tool
     "add.array",    // dep: add.array
 ]);
+
+function bind() {
+    broker = gapp.broker;
+    // publish messages with results of function call
+    // selection.move = broker.wrap('selection.move', selection.move);
+    // selection.rotate = broker.wrap('selection.rotate', selection.rotate);
+    // selection.update = broker.wrap('selection.update', selection.update);
+}
 
 let mesh = self.mesh = self.mesh || {};
 if (mesh.api) return;
@@ -20,6 +29,7 @@ if (mesh.api) return;
 let space = moto.Space;
 let groups = [];
 let selected = [];
+let broker;
 
 let selection = {
     // @returns {MeshObject[]}
@@ -58,10 +68,13 @@ let selection = {
     update() {
         for (let group of groups) {
             group.material(mesh.material.unselected);
+            group.showBounds(true);
         }
         for (let object of selected) {
             object.material(mesh.material.selected);
+            object.showBounds(true);
         }
+        return selection;
     },
 
     move(dx = 0, dy = 0, dz = 0) {
@@ -231,7 +244,7 @@ let util = mesh.util = {
         };
         bnd.center = {
             x: (bnd.max.x + bnd.min.x) / 2,
-            y: (bnd.max.y + bnd.min.y) / 2,
+            y: -(bnd.max.y + bnd.min.y) / 2,
             z: (bnd.max.z + bnd.min.z) / 2
         };
         return bnd;

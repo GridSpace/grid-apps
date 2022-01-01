@@ -113,7 +113,6 @@ broker.subscribe('space_init', data => {
 
     // mouse hover/click handlers
     space.mouse.downSelect((int, event) => {
-        // mesh array including platform
         return api.objects();
     });
 
@@ -127,11 +126,11 @@ broker.subscribe('space_init', data => {
                     let q = new THREE.Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
                     q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                    // let e = new THREE.Euler().setFromQuaternion(q);
-                    // let n = int.face.normal;
+                    // group.qrotate(q);
+                    let e = new THREE.Euler().setFromQuaternion(q);
+                    let n = int.face.normal;
                     // console.log({n,q,e});
-                    // group.rotation(e.x, e.y, e.z);
-                    group.qrotate(q);
+                    group.rotation(e.x, e.y, e.z);
                     group.floor();
                 } else {
                     api.selection.toggle(model.group);

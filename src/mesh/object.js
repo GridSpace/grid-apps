@@ -7,6 +7,7 @@
 gapp.register("mesh.object", [
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
+    "mesh.api",     // dep: mesh.api
 ]);
 
 let mesh = self.mesh = self.mesh || {};
@@ -48,6 +49,7 @@ mesh.object = class MeshObject {
     move(x = 0, y = 0, z = 0) {
         let pos = this.position();
         pos.set(pos.x + x, pos.y + y, pos.z + z);
+        this.updateBoundsBox();
         moto.Space.update();
         return this;
     }
@@ -58,6 +60,7 @@ mesh.object = class MeshObject {
             return scale;
         }
         scale.set(...arguments);
+        this.updateBoundsBox();
         moto.Space.update();
     }
 
@@ -68,6 +71,7 @@ mesh.object = class MeshObject {
             return rot;
         }
         rot.set(...arguments);
+        this.updateBoundsBox();
         moto.Space.update();
         return this;
     }
@@ -76,12 +80,14 @@ mesh.object = class MeshObject {
         if (x) this.object().rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
         if (y) this.object().rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
         if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
+        this.updateBoundsBox();
         moto.Space.update();
         return this;
     }
 
     qrotate(quaternion) {
         this.object().setRotationFromQuaternion(quaternion);
+        this.updateBoundsBox();
         moto.Space.update();
         return this;
     }
@@ -93,6 +99,27 @@ mesh.object = class MeshObject {
         }
         pos.set(...arguments);
         moto.Space.update();
+    }
+
+    showBounds(bool) {
+        this._showBounds = bool;
+    }
+
+    updateBoundsBox() {
+        let helper = this._boundsBox;
+        let world = moto.Space.world;
+        if (helper) {
+            world.remove(helper);
+        }
+        if (this._showBounds) {
+            let { center, size } = this.bounds();
+            let b3 = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(center.x, center.y, center.z),
+                new THREE.Vector3(size.x, size.y, size.z)
+            );
+            let helper = this._boundsBox = new THREE.Box3Helper(b3, 0xff00ff);
+            world.add(helper);
+        }
     }
 };
 

@@ -82,6 +82,7 @@ gapp.broker = new class Broker {
         } else if (topic.indexOf(".topic.") < 0) {
             dbug.debug(`undelivered '${topic}'`, message);
         }
+        return message;
     }
 
     // return function bound to a topic
@@ -89,6 +90,14 @@ gapp.broker = new class Broker {
         let broker = this;
         return function(msg, opt) {
             broker.publish(topic, message || msg, options || opt);
+        }
+    }
+
+    // return function wrapper that publishes a message to a topic
+    wrap(topic, fn) {
+        let broker = this;
+        return function() {
+            return broker.publish(topic, fn(...arguments));
         }
     }
 }
