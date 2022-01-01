@@ -115,12 +115,16 @@ broker.subscribe('space_init', data => {
         },
         'keydown', evt => {
             let rv = Math.PI / 16;
-            switch (evt.code) {
+            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            switch (code) {
                 case 'KeyA':
-                    if (evt.metaKey || evt.ctrlKey) {
+                    if (metaKey || ctrlKey) {
                         api.selection.set(api.group.list());
                         estop(evt);
                     }
+                    break;
+                case 'KeyD':
+                    broker.send.space_debug();
                     break;
                 case 'Escape':
                     api.selection.clear();
@@ -141,10 +145,18 @@ broker.subscribe('space_init', data => {
                     api.selection.rotate(rv,0,0).floor();
                     break;
                 case 'ArrowLeft':
-                    api.selection.rotate(0,0,rv).floor();
+                    if (shiftKey) {
+                        api.selection.rotate(0,rv,0).floor();
+                    } else {
+                        api.selection.rotate(0,0,rv).floor();
+                    }
                     break;
                 case 'ArrowRight':
-                    api.selection.rotate(0,0,-rv).floor();
+                    if (shiftKey) {
+                        api.selection.rotate(0,-rv,0).floor();
+                    } else {
+                        api.selection.rotate(0,0,-rv).floor();
+                    }
                     break;
             }
         }
@@ -193,6 +205,25 @@ broker.subscribe('space_load', data => {
         .centerXY()
         .floor()
         .focus();
+});
+
+// on debug key press
+broker.subscribe('space_debug', () => {
+    for (let g of mesh.api.group.list()) {
+        let { center, size } = g.bounds();
+        console.group('group', {
+            center,
+            size,
+            pos: g.group.position
+        });
+        for (let m of g.models) {
+            console.log('model', {
+                box: m.mesh.getBoundingBox(),
+                pos: m.mesh.position
+            });
+        }
+        console.groupEnd();
+    }
 });
 
 // remove version cache bust from url
