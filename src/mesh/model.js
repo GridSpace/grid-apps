@@ -52,6 +52,20 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh;
     }
 
+    sync() {
+        moto.client.fn.model_sync({
+            vertices: this.mesh.geometry.attributes.position.array,
+            matrix: this.mesh.matrixWorld.elements
+        }).then(data => {
+            console.log({data: data[0]});
+            // mesh.api.group.new([new mesh.model({
+            //     file: "synth",
+            //     mesh: data[0]
+            // })]);
+            this.load(data[0]);
+        });
+    }
+
     load(vertices, indices) {
         let geo = new THREE.BufferGeometry();
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
