@@ -10,6 +10,7 @@ gapp.register("mesh.group", [
     "moto.license", // dep: moto.license
     "mesh.object",  // dep: mesh.object
     "mesh.model",   // dep: mesh.model
+    "mesh.api",     // dep: mesh.api
 ]);
 
 let mesh = self.mesh = self.mesh || {};

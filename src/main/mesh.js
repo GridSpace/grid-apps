@@ -18,15 +18,12 @@ function init() {
         platform = space.platform;
 
     // setup default workspace
+    space.useDefaultKeys(false);
     space.sky.set({
         grid: sky,
         color: dark ? 0 : 0xffffff
     });
     space.init($('container'), delta => { }, ortho);
-    platform.onClick(click => {
-        // api.selection.clear();
-    });
-    platform.onMove(delta => { });
     platform.set({
         volume: false,
         round: false,
@@ -38,7 +35,6 @@ function init() {
         grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc },
     });
     space.view.setZoom(zoomrev, zoomspd);
-    space.useDefaultKeys(false);
 
     // trigger space event binding
     broker.send.space_init({ space, platform });

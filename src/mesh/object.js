@@ -15,6 +15,10 @@ if (mesh.object) return;
 
 mesh.object = class MeshObject {
 
+    constructor() {
+        this.id = mesh.util.uuid();
+    }
+
     // @returns {THREE.Object3D}
     object() {
         throw "object() requires implementation";

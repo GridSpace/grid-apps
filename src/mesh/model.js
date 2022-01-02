@@ -56,7 +56,8 @@ mesh.model = class MeshModel extends mesh.object {
     sync() {
         moto.client.fn.model_sync({
             vertices: this.mesh.geometry.attributes.position.array,
-            matrix: this.mesh.matrixWorld.elements
+            matrix: this.mesh.matrixWorld.elements,
+            id: this.id
         }).then(data => {
             if (data && data.length)
             // for debugging matrix ops
@@ -71,9 +72,7 @@ mesh.model = class MeshModel extends mesh.object {
         let geo = new THREE.BufferGeometry();
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        geo.setAttribute('normal', undefined);
         let meh = new THREE.Mesh(geo, materials.unselected);
-        geo.computeFaceNormals();
         geo.computeVertexNormals();
         meh.material.side = THREE.DoubleSide;
         meh.receiveShadow = true;

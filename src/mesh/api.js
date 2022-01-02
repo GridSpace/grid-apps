@@ -6,7 +6,7 @@
 
 // dep: ext.three
 // dep: ext.three-bgu
-gapp.load(bind, "mesh.api", [
+gapp.register("mesh.api", [
     "moto.license", // dep: moto.license
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
@@ -15,21 +15,12 @@ gapp.load(bind, "mesh.api", [
     "add.array",    // dep: add.array
 ]);
 
-function bind() {
-    broker = gapp.broker;
-    // publish messages with results of function call
-    // selection.move = broker.wrap('selection.move', selection.move);
-    // selection.rotate = broker.wrap('selection.rotate', selection.rotate);
-    // selection.update = broker.wrap('selection.update', selection.update);
-}
-
 let mesh = self.mesh = self.mesh || {};
 if (mesh.api) return;
 
 let space = moto.Space;
 let groups = [];
 let selected = [];
-let broker;
 
 let selection = {
     // @returns {MeshObject[]}
@@ -194,6 +185,18 @@ let group = {
     }
 };
 
+let model = {
+    // @returns {MeshModel[]}
+    list() {
+        return groups.map(g => g.models).flat();
+    },
+
+    // @param group {MeshModel}
+    remove: (model) => {
+        model.group.remove(model);
+    }
+};
+
 let api = mesh.api = {
     clear: () => {
         for (let group of group.list()) {
@@ -220,17 +223,7 @@ let api = mesh.api = {
 
     group,
 
-    model: {
-        // @returns {MeshModel[]}
-        list() {
-            return groups.map(g => g.models).flat();
-        },
-
-        // @param group {MeshModel}
-        remove: (model) => {
-            model.group.remove(model);
-        }
-    },
+    model,
 
     objects: () => {
         // return models, not groups
@@ -239,6 +232,14 @@ let api = mesh.api = {
 };
 
 let util = mesh.util = {
+
+    uuid: (segs = 1) => {
+        let uid = [];
+        while (segs-- > 0) {
+            uid.push(Math.round(Math.random() * 0xffffffff).toString(36));
+        }
+        return uid.join('-');
+    },
 
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
     // @returns bounds modified for moto.Space
@@ -340,5 +341,13 @@ let util = mesh.util = {
     }
 
 };
+
+let broker = gapp.broker;
+// publish messages with results of function call
+selection.move = broker.wrap('selection.move', selection.move);
+selection.rotate = broker.wrap('selection.rotate', selection.rotate);
+selection.update = broker.wrap('selection.update', selection.update);
+model.remove = broker.wrap('model.remove', model.remove);
+group.remove = broker.wrap('group.remove', group.remove);
 
 })();
