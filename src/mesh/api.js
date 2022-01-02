@@ -286,17 +286,14 @@ let util = mesh.util = {
 
         if (geometry) {
             let bounds = util.geoBounds(geometry, object.matrixWorld);
-            let tmp = new THREE.Box3().copy(bounds);
-            let m = new THREE.Matrix4();
-            let v = new THREE.Vector3();
-
-            m.setPosition(v.setFromMatrixPosition(object.matrixWorld));
-            tmp.applyMatrix4(m);
-            box3.union(tmp);
+            let bt = new THREE.Box3().copy(bounds);
+            let m4 = new THREE.Matrix4();
+            m4.setPosition(new THREE.Vector3().setFromMatrixPosition(object.matrixWorld));
+            bt.applyMatrix4(m4);
+            box3.union(bt);
         }
 
         const children = object.children;
-
         for (let i = 0, l = children.length; i < l; i++) {
             util.box3expand(box3, children[i]);
         }
@@ -320,17 +317,17 @@ let util = mesh.util = {
         const morphAttributesPosition = geometry.morphAttributes.position;
         if (morphAttributesPosition) {
             for (let i = 0, il = morphAttributesPosition.length; i < il; i++) {
-                const morphAttribute = morphAttributesPosition[i];
-                let box3 = new THREE.Box3().setFromBufferAttribute(morphAttribute);
+                const box3 = new THREE.Box3().setFromBufferAttribute(morphAttributesPosition[i]);
 
                 if (geometry.morphTargetsRelative) {
-                    _vector$8.addVectors(geometry.boundingBox.min, box3.min);
-                    geometry.boundingBox.expandByPoint(_vector$8);
-                    _vector$8.addVectors(geometry.boundingBox.max, box3.max);
-                    geometry.boundingBox.expandByPoint(_vector$8);
+                    let vector = new THREE.Vector3();
+                    vector.addVectors(boundingBox.min, box3.min);
+                    boundingBox.expandByPoint(vector);
+                    vector.addVectors(boundingBox.max, box3.max);
+                    boundingBox.expandByPoint(vector);
                 } else {
-                    geometry.boundingBox.expandByPoint(box3.min);
-                    geometry.boundingBox.expandByPoint(box3.max);
+                    boundingBox.expandByPoint(box3.min);
+                    boundingBox.expandByPoint(box3.max);
                 }
             }
         }
