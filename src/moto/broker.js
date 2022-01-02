@@ -13,6 +13,10 @@ gapp.broker = new class Broker {
         this.topics = {};
         this.used = {};
         this.send = {};
+        // using the pattern "broker.send(msg)" induces runtime errors
+        // when there is not at least one registered listener for a topic
+        // while also allowing for a more natural function call interface
+        // and guarding against typos in topic names
     }
 
     topics() {
@@ -94,12 +98,25 @@ gapp.broker = new class Broker {
     }
 
     // return function wrapper that publishes a message to a topic
+    // the published message is the return data from the function call
     wrap(topic, fn) {
         let broker = this;
         return function() {
             return broker.publish(topic, fn(...arguments));
         }
     }
+
+    // bind all functions in an object to a topic root
+    // functions are replaced with wrappers that publish call results
+    // a natural use case is wrapping api objects
+    wrapObject(object, root) {
+        for (let [key, fn] of Object.entries(object)) {
+            if (typeof fn === 'function') {
+                object[key] = this.wrap(`${root}_${key}`, fn);
+            }
+        }
+    }
+
 }
 
 })();

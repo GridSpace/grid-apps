@@ -53,29 +53,29 @@ let selection = {
     // @param group {MeshObject[]}
     set(objects) {
         selected = objects;
-        this.update();
+        selection.update();
     },
 
     // @param group {MeshObject}
     add(object) {
         selected.addOnce(object);
-        this.update();
+        selection.update();
     },
 
     toggle(object) {
         selected.remove(object) || selected.addOnce(object);
-        this.update();
+        selection.update();
     },
 
     // @param group {MeshObject}
     remove(object) {
         selected.remove(object);
-        this.update();
+        selection.update();
     },
 
     clear() {
         selected = [];
-        this.update();
+        selection.update();
     },
 
     update() {
@@ -165,12 +165,12 @@ let group = {
     },
 
     // @param group {MeshModel[]}
-    new: (models) => {
+    new(models) {
         return group.add(new mesh.group(models));
     },
 
     // @param group {MeshGroup}
-    add: (group) => {
+    add(group) {
         groups.addOnce(group);
         space.world.add(group.group);
         space.update();
@@ -178,7 +178,7 @@ let group = {
     },
 
     // @param group {MeshGroup}
-    remove: (group) => {
+    remove(group) {
         groups.remove(group);
         space.world.remove(group.group);
         space.update();
@@ -192,20 +192,20 @@ let model = {
     },
 
     // @param group {MeshModel}
-    remove: (model) => {
+    remove(model) {
         model.group.remove(model);
     }
 };
 
 let api = mesh.api = {
-    clear: () => {
+    clear() {
         for (let group of group.list()) {
             group.remove(group);
         }
     },
 
     // @param object {THREE.Object3D | THREE.Object3D[]}
-    focus: (object) => {
+    focus(object) {
         let { center } = util.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
@@ -225,7 +225,7 @@ let api = mesh.api = {
 
     model,
 
-    objects: () => {
+    objects() {
         // return models, not groups
         return group.list().map(o => o.models).flat().map(o => o.object());
     }
@@ -233,7 +233,7 @@ let api = mesh.api = {
 
 let util = mesh.util = {
 
-    uuid: (segs = 1) => {
+    uuid(segs = 1) {
         let uid = [];
         while (segs-- > 0) {
             uid.push(Math.round(Math.random() * 0xffffffff).toString(36));
@@ -243,7 +243,7 @@ let util = mesh.util = {
 
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
     // @returns bounds modified for moto.Space
-    bounds: (object) => {
+    bounds(object) {
         let box = new THREE.Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
@@ -281,7 +281,7 @@ let util = mesh.util = {
 
     // bounding box workaround adapted from:
     // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
-    box3expand: (box3, object) => {
+    box3expand(box3, object) {
         const geometry = object.geometry;
         object.updateWorldMatrix(geometry ? true : false, false);
 
@@ -301,7 +301,8 @@ let util = mesh.util = {
     },
 
     // second half of bound box workaround (see above)
-    geoBounds: (geometry, matrix) => {
+    // todo: cache, distribute in workers, or other mem/cpu optimization
+    geoBounds(geometry, matrix) {
         const boundingBox = new THREE.Box3();
         const position = geometry.attributes.position.clone();
 
@@ -310,7 +311,7 @@ let util = mesh.util = {
         }
 
         if (position.isGLBufferAttribute) {
-            console.error('THREE.BufferGeometry.computeBoundingBox(): GLBufferAttribute requires a manual bounding box. Alternatively set "mesh.frustumCulled" to "false".', this);
+            console.error('THREE.BufferGeometry.computeBoundingBox(): GLBufferAttribute requires a manual bounding box. Alternatively set "mesh.frustumCulled" to "false".', geometry);
         }
 
         boundingBox.setFromBufferAttribute(position);
@@ -334,7 +335,7 @@ let util = mesh.util = {
         }
 
         if (isNaN(boundingBox.min.x) || isNaN(boundingBox.min.y) || isNaN(boundingBox.min.z)) {
-            console.error('THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.', this);
+            console.error('THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.', geometry);
         }
 
         return boundingBox;
@@ -343,11 +344,9 @@ let util = mesh.util = {
 };
 
 let broker = gapp.broker;
-// publish messages with results of function call
-selection.move = broker.wrap('selection.move', selection.move);
-selection.rotate = broker.wrap('selection.rotate', selection.rotate);
-selection.update = broker.wrap('selection.update', selection.update);
-model.remove = broker.wrap('model.remove', model.remove);
-group.remove = broker.wrap('group.remove', group.remove);
+// publish messages when api functions are called
+broker.wrapObject(selection, 'selection');
+broker.wrapObject(model, 'model');
+broker.wrapObject(group, 'group');
 
 })();
