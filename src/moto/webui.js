@@ -58,8 +58,9 @@ function build(data, context) {
             func[key] = val;
             elid = elid || `_${nextid++}`;
         } else if (tov === 'object') {
-            html.push(` ${key}="${val.join(' ')}"`);
-        } else {
+            if (val.length)
+            html.push(` ${key}="${val.filter(v => v !== undefined).join(' ')}"`);
+        } else if (tov !== 'undefined') {
             html.push(` ${key}="${val}"`);
         }
     }

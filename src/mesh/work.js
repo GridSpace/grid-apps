@@ -18,7 +18,7 @@ gapp.finalize("mesh.work", [
 ]);
 
 // compensation for space/world/platform rotation
-let space_rotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+let core_matrix = new THREE.Matrix4().makeRotationX(Math.PI / 2);
 
 let { client, worker } = moto;
 let cache = {};
@@ -38,14 +38,14 @@ let model = {
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geo.computeVertexNormals();
-        cacheUpdate(id, { name, geo });
+        cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
     },
 
     debug(data) {
         let { matrix, id } = data;
         let rec = cache[id];
         let geo = rec.geo.clone();
-        let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
+        let m4 = core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
         geo.applyMatrix4(m4);
         // for debugging state / matrix ops
         return geo.attributes.position.array;
@@ -59,11 +59,6 @@ let group = {
 
     remove(data) {
         let { id, model } = data;
-    },
-
-    create(data) {
-        let { id, type } = data;
-        cache[id] = { id, type };
     }
 };
 
@@ -78,23 +73,23 @@ let object = {
     },
 
     move(data) {
-        let { id, type, x, y, z } = data;
+        let { id, x, y, z } = data;
     },
 
     position(data) {
-        let { id, type, x, y, z } = data;
+        let { id, x, y, z } = data;
     },
 
     rotate(data) {
-        let { id, type, x, y, z } = data;
+        let { id, x, y, z } = data;
     },
 
     rotation(data) {
-        let { id, type, x, y, z } = data;
+        let { id, x, y, z } = data;
     },
 
     qrotation(data) {
-        let { id, type, w, x, y, z } = data;
+        let { id, w, x, y, z } = data;
     }
 };
 

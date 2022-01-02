@@ -50,6 +50,10 @@ let selection = {
         return mdl;
     },
 
+    contains(object) {
+        return selected.contains(object);
+    },
+
     // @param group {MeshObject[]}
     set(objects) {
         selected = objects;
@@ -82,6 +86,9 @@ let selection = {
         for (let group of groups) {
             group.material(mesh.material.unselected);
         }
+        // prevent selection of model and its group
+        let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
+        selected = selected.filter(sel => !mgsel.contains(sel));
         for (let object of selected) {
             object.material(mesh.material.selected);
         }

@@ -8,6 +8,7 @@ gapp.register("mesh.group", [
     "add.array",    // dep: add.array
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
+    "moto.broker",  // dep: moto.broker
     "mesh.object",  // dep: mesh.object
     "mesh.model",   // dep: mesh.model
     "mesh.api",     // dep: mesh.api
@@ -16,12 +17,15 @@ gapp.register("mesh.group", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.group) return;
 
+let broker = gapp.broker;
+let call = broker.send;
+
 let space = moto.Space;
 let worker = moto.client.fn;
 
 mesh.group = class MeshGroup extends mesh.object {
 
-    // @param group {mesh.model[]}
+    // @param group {MeshModel[]}
     constructor(models = []) {
         super();
         this.group = new THREE.Group();
@@ -45,6 +49,7 @@ mesh.group = class MeshGroup extends mesh.object {
         this.models.addOnce(model);
         this.group.add(model.mesh);
         space.update();
+        call.model_add({model, group:this});
         worker.group_add({id: this.id, model:model.id});
         return this;
     }
@@ -61,6 +66,8 @@ mesh.group = class MeshGroup extends mesh.object {
         model.group = undefined;
         this.models.remove(model);
         this.group.remove(model.mesh);
+        // create message for listeners
+        call.model_remove({model, group:this});
         // trigger sync with worker
         worker.group_remove({id: this.id, model:model.id});
         model.remove(true);

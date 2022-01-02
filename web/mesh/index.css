@@ -140,3 +140,35 @@ body, div {
     margin-right: -14px !important;
     margin-bottom: -14px !important;
 }
+
+#grouplist {
+    position: absolute;
+    margin: 3px 3px 0 0;
+    right: 0;
+    top: 0;
+}
+
+#grouplist, #grouplist div {
+    flex-direction: column;
+    background-color: transparent;
+}
+
+#grouplist > div {
+    border: 1px solid gray;
+    border-radius: 3px;
+    padding: 3px;
+}
+
+#grouplist .models button {
+    margin-top: 1px;
+}
+
+#grouplist .selected {
+    background-color: rgba(0,255,0,0.75)
+}
+
+#grouplist .vsep {
+    height: 1px;
+    margin: 2px 0 1px 0;
+    background-color: gray;
+}

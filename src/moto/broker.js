@@ -23,6 +23,20 @@ gapp.broker = new class Broker {
         return Object.keys(this.topics);
     }
 
+    // create subscriptions for all functions in an object
+    // a complement wrapObject on the subscription side
+    listeners(object, root) {
+        for (let [key, fn] of Object.entries(object)) {
+            if (typeof fn === 'function') {
+                key = root ? `${root}_${key}` : key;
+                this.subscribe(key, fn);
+            }
+        }
+    }
+
+    // attach function to a topic
+    // creates topic if new topic
+    // creates a send function if new topic
     subscribe(topic, listener) {
         if (Array.isArray(topic)) {
             for (let t of topic) {

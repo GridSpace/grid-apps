@@ -5,6 +5,7 @@
 (function() {
 
 let broker = gapp.broker;
+let call = broker.send;
 
 function init() {
     let moto = self.moto,
@@ -36,22 +37,78 @@ function init() {
     });
     space.view.setZoom(zoomrev, zoomspd);
 
-    // trigger space event binding
-    broker.send.space_init({ space, platform });
-
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
 
-    // set app version
-    $h('app-name', "Mesh:Tool");
-    $h('app-vers', gapp.version);
+    // trigger space event binding
+    call.space_init({ space, platform });
+
+    // trigger ui building
+    call.ui_build();
 
     // hide loading curtain
     $d('curtain','none');
 }
 
+function ui_build() {
+    // set app version
+    $h('app-name', "Mesh:Tool");
+    $h('app-vers', gapp.version);
+
+    let bound = h.bind($('app-body'), [
+        h.div({id: 'grouplist'})
+    ]);
+
+    let { grouplist } = bound;
+    let api = mesh.api;
+
+    let maker = {
+        update() {
+            clearTimeout(maker.timer);
+            maker.timer = setTimeout(maker.do, 10);
+        },
+        do() {
+            let groups = api.group.list()
+                // map groups to divs
+                .map(g => h.div([
+                    h.button({
+                        _: g.id,
+                        class: [
+                            "group",
+                            api.selection.contains(g) ? 'selected' : undefined
+                        ],
+                        onclick() { api.selection.toggle(g); }
+                    }),
+                    h.div({ class: "vsep" }),
+                    h.div({ class: "models"},
+                        // map models to buttons
+                        g.models.map(m => h.button({
+                            _: m.id,
+                            class: api.selection.contains(m) ? [ 'selected' ] : [],
+                            onclick() { api.selection.toggle(m); }
+                        }))
+                    )
+                ]));
+            h.bind(grouplist, groups);
+        }
+    };
+
+    function update(object, topic) {
+        console.log({update: object, topic});
+    }
+
+    // listen for api calls
+    broker.listeners({
+        model_add: maker.update,
+        group_add: maker.update,
+        model_remove: maker.update,
+        group_remove: maker.update,
+        selection_update: maker.update,
+    })
+}
+
 // add space event bindings
-broker.subscribe('space_init', data => {
+function space_init(data) {
     let { space, platform } = data;
     let platcolor = 0x00ff00;
     let api = mesh.api;
@@ -64,7 +121,7 @@ broker.subscribe('space_init', data => {
             platform.setColor(platcolor);
             load.File.load([...evt.dataTransfer.files])
                 .then(data => {
-                    broker.send.space_load(data);
+                    call.space_load(data);
                 })
                 .catch(error => {
                     dbug.error(error);
@@ -127,7 +184,7 @@ broker.subscribe('space_init', data => {
                             m.debug();
                         }
                     } else {
-                        broker.send.space_debug();
+                        call.space_debug();
                     }
                     break;
                 case 'Escape':
@@ -199,20 +256,19 @@ broker.subscribe('space_init', data => {
             return api.objects().length > 0;
         }
     });
-
-});
+}
 
 // add object loader
-broker.subscribe('space_load', data => {
+function space_load(data) {
     mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
         .centerModels()
         .centerXY()
         .floor()
         .focus();
-});
+}
 
 // on debug key press
-broker.subscribe('space_debug', () => {
+function space_debug() {
     for (let g of mesh.api.group.list()) {
         let { center, size } = g.bounds();
         console.group(g.id);
@@ -230,6 +286,14 @@ broker.subscribe('space_debug', () => {
         console.groupEnd();
     }
     moto.client.fn.debug();
+}
+
+// bind functions to topics
+broker.listeners({
+    ui_build,
+    space_init,
+    space_load,
+    space_debug,
 });
 
 // remove version cache bust from url
