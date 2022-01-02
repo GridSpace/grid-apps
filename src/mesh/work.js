@@ -20,13 +20,32 @@ gapp.finalize("mesh.work", [
 // compensation for space/world/platform rotation
 let space_rotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
 
+let { client, worker } = moto;
 let cache = {};
 
-moto.worker.bind("model_sync", (data, send) => {
-    let { vertices, matrix, id } = data;
-    // return send.done(vertices);
+worker.bind("debug", (data, send) => {
+    console.log({cache});
+    send.done();
+});
+
+worker.bind("model_load", (data, send) => {
+    let { vertices, name, id } = data;
     let geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geo.computeVertexNormals();
+    cache[id] = { id, name, geo };
+    send.done();
+});
+
+worker.bind("model_remove", (data, send) => {
+    delete cache[data.id];
+    send.done();
+});
+
+worker.bind("model_sync", (data, send) => {
+    let { matrix, id } = data;
+    let rec = cache[id];
+    let geo = rec.geo.clone();
     let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
     geo.applyMatrix4(m4);
     // for debugging matrix ops

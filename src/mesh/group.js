@@ -53,6 +53,8 @@ mesh.group = class MeshGroup extends mesh.object {
         model.group = undefined;
         this.models.remove(model);
         this.group.remove(model.mesh);
+        // trigger sync with worker
+        model.remove(true);
         // auto-remove group when empty
         if (this.group.children.length === 0) {
             mesh.api.group.remove(this);

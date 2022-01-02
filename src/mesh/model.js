@@ -55,14 +55,13 @@ mesh.model = class MeshModel extends mesh.object {
 
     sync() {
         moto.client.fn.model_sync({
-            vertices: this.mesh.geometry.attributes.position.array,
             matrix: this.mesh.matrixWorld.elements,
             id: this.id
         }).then(data => {
             if (data && data.length)
             // for debugging matrix ops
             return mesh.api.group.new([new mesh.model({
-                file: "synth",
+                file: `synth-${this.name}`,
                 mesh: data[0]
             })]);
         });
@@ -80,6 +79,8 @@ mesh.model = class MeshModel extends mesh.object {
         meh.renderOrder = 1;
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
+        // sync data to worker
+        moto.client.fn.model_load({id: this.id, name: this.name, vertices, indices});
         return meh;
     }
 
@@ -158,7 +159,12 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     remove() {
-        mesh.api.model.remove(this);
+        if (arguments.length === 0) {
+            // direct call requires pass through group
+        } else {
+            // called from group
+            moto.client.fn.model_remove({id: this.id});
+        }
     }
 };
 

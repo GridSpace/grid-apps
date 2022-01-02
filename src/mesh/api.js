@@ -189,11 +189,6 @@ let model = {
     // @returns {MeshModel[]}
     list() {
         return groups.map(g => g.models).flat();
-    },
-
-    // @param group {MeshModel}
-    remove(model) {
-        model.group.remove(model);
     }
 };
 

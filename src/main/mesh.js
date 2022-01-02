@@ -55,6 +55,7 @@ broker.subscribe('space_init', data => {
     let { space, platform } = data;
     let platcolor = 0x00ff00;
     let api = mesh.api;
+    let { selection } = api;
 
     // add file drop handler
     space.event.addHandlers(self, [
@@ -84,16 +85,21 @@ broker.subscribe('space_init', data => {
         'keypress', evt => {
             switch (evt.code) {
                 case 'KeyC':
-                    api.selection.centerXY().focus();
+                    selection.centerXY().focus();
                     break;
                 case 'KeyV':
-                    api.selection.focus();
+                    selection.focus();
                     break;
                 case 'KeyW':
-                    api.selection.wireframe({toggle:true});
+                    selection.wireframe({toggle:true});
                     break;
                 case 'KeyB':
-                    api.selection.boundsBox({toggle:true});
+                    selection.boundsBox({toggle:true});
+                    break;
+                case 'KeyS':
+                    for (let m of selection.models()) {
+                        m.sync();
+                    }
                     break;
                 case 'KeyH':
                     space.view.home();
@@ -115,7 +121,7 @@ broker.subscribe('space_init', data => {
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
-                        api.selection.set(api.group.list());
+                        selection.set(api.group.list());
                         estop(evt);
                     }
                     break;
@@ -123,35 +129,35 @@ broker.subscribe('space_init', data => {
                     broker.send.space_debug();
                     break;
                 case 'Escape':
-                    api.selection.clear();
+                    selection.clear();
                     estop(evt);
                     break;
                 case 'Backspace':
                 case 'Delete':
-                    for (let s of api.selection.list()) {
+                    for (let s of selection.list()) {
                         s.showBounds(false);
                         s.remove();
                     }
                     estop(evt);
                     break;
                 case 'ArrowUp':
-                    api.selection.rotate(-rv,0,0).floor();
+                    selection.rotate(-rv,0,0).floor();
                     break;
                 case 'ArrowDown':
-                    api.selection.rotate(rv,0,0).floor();
+                    selection.rotate(rv,0,0).floor();
                     break;
                 case 'ArrowLeft':
                     if (shiftKey) {
-                        api.selection.rotate(0,-rv,0).floor();
+                        selection.rotate(0,-rv,0).floor();
                     } else {
-                        api.selection.rotate(0,0,rv).floor();
+                        selection.rotate(0,0,rv).floor();
                     }
                     break;
                 case 'ArrowRight':
                     if (shiftKey) {
-                        api.selection.rotate(0,rv,0).floor();
+                        selection.rotate(0,rv,0).floor();
                     } else {
-                        api.selection.rotate(0,0,-rv).floor();
+                        selection.rotate(0,0,-rv).floor();
                     }
                     break;
             }
@@ -176,7 +182,7 @@ broker.subscribe('space_init', data => {
                     group.qrotation(q);
                     group.floor();
                 } else {
-                    api.selection.toggle(model.group);
+                    selection.toggle(model.group);
                 }
             }
         } else {
@@ -186,7 +192,7 @@ broker.subscribe('space_init', data => {
 
     space.mouse.onDrag((delta, offset, up = false) => {
         if (delta) {
-            api.selection.move(delta.x, delta.y, 0);
+            selection.move(delta.x, delta.y, 0);
         } else {
             return api.objects().length > 0;
         }
