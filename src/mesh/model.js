@@ -53,36 +53,6 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh;
     }
 
-    move(x = 0, y = 0, z = 0) {
-        // doesn't fix bounds issue for some rotations. inspired by this threejs forum post:
-        // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
-        // this.mesh.applyMatrix4(new THREE.Matrix4().makeTranslation(x,y,z));
-        let pos = this.position();
-        pos.set(pos.x + x, pos.y + y, pos.z + z);
-        this.updateBoundsBox();
-        moto.Space.update();
-        return this;
-    }
-
-    rotate() {
-        throw "model rotate() not allowed";
-    }
-
-    rotation() {
-        throw "model rotation() not allowed";
-    }
-
-    qrotation() {
-        throw "model qrotation() not allowed";
-    }
-
-    position() {
-        if (arguments.length) {
-            throw "model position(...) not allowed";
-        }
-        return super.position(...arguments);
-    }
-
     sync() {
         moto.client.fn.model_sync({
             vertices: this.mesh.geometry.attributes.position.array,

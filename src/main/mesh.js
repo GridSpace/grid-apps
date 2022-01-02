@@ -88,7 +88,7 @@ broker.subscribe('space_init', data => {
         'keypress', evt => {
             switch (evt.code) {
                 case 'KeyC':
-                    api.selection.centerXY();
+                    api.selection.centerXY().focus();
                     break;
                 case 'KeyV':
                     api.selection.focus();

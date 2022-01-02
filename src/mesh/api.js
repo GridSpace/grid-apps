@@ -246,13 +246,10 @@ let util = mesh.util = {
         let box = new THREE.Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
-                box.expandByObject(
-                    o instanceof mesh.object ? o.object() : o
-                );
+                util.box3expand(box, o instanceof mesh.object ? o.object() : o);
             }
         } else if (object) {
-            box.setFromObject(
-                object instanceof mesh.object ? object.object() : object);
+            util.box3expand(box, object instanceof mesh.object ? object.object() : object);
         } else {
             return box;
         }
@@ -279,6 +276,70 @@ let util = mesh.util = {
             z: (bnd.max.z + bnd.min.z) / 2
         };
         return bnd;
+    },
+
+    // bounding box workaround adapted from:
+    // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
+    box3expand: (box3, object) => {
+        const geometry = object.geometry;
+        object.updateWorldMatrix(geometry ? true : false, false);
+
+        if (geometry) {
+            let bounds = util.geoBounds(geometry, object.matrixWorld);
+            let tmp = new THREE.Box3().copy(bounds);
+            let m = new THREE.Matrix4();
+            let v = new THREE.Vector3();
+
+            m.setPosition(v.setFromMatrixPosition(object.matrixWorld));
+            tmp.applyMatrix4(m);
+            box3.union(tmp);
+        }
+
+        const children = object.children;
+
+        for (let i = 0, l = children.length; i < l; i++) {
+            util.box3expand(box3, children[i]);
+        }
+    },
+
+    // second half of bound box workaround (see above)
+    geoBounds: (geometry, matrix) => {
+        const boundingBox = new THREE.Box3();
+        const position = geometry.attributes.position.clone();
+
+        if (matrix) {
+            position.applyMatrix4(new THREE.Matrix4().extractRotation(matrix));
+        }
+
+        if (position.isGLBufferAttribute) {
+            console.error('THREE.BufferGeometry.computeBoundingBox(): GLBufferAttribute requires a manual bounding box. Alternatively set "mesh.frustumCulled" to "false".', this);
+        }
+
+        boundingBox.setFromBufferAttribute(position);
+
+        const morphAttributesPosition = geometry.morphAttributes.position;
+        if (morphAttributesPosition) {
+            for (let i = 0, il = morphAttributesPosition.length; i < il; i++) {
+                const morphAttribute = morphAttributesPosition[i];
+                let box3 = new THREE.Box3().setFromBufferAttribute(morphAttribute);
+
+                if (geometry.morphTargetsRelative) {
+                    _vector$8.addVectors(geometry.boundingBox.min, box3.min);
+                    geometry.boundingBox.expandByPoint(_vector$8);
+                    _vector$8.addVectors(geometry.boundingBox.max, box3.max);
+                    geometry.boundingBox.expandByPoint(_vector$8);
+                } else {
+                    geometry.boundingBox.expandByPoint(box3.min);
+                    geometry.boundingBox.expandByPoint(box3.max);
+                }
+            }
+        }
+
+        if (isNaN(boundingBox.min.x) || isNaN(boundingBox.min.y) || isNaN(boundingBox.min.z)) {
+            console.error('THREE.BufferGeometry.computeBoundingBox(): Computed min/max have NaN values. The "position" attribute is likely to have NaN values.', this);
+        }
+
+        return boundingBox;
     }
 
 };
