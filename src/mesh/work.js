@@ -30,7 +30,6 @@ moto.worker.bind("model_sync", (data, send) => {
     geo.computeVertexNormals();
     let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
     geo.applyMatrix4(m4);
-    return send.done();
     // for debugging matrix ops
     send.done(geo.attributes.position.array);
 });
