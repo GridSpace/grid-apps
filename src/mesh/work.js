@@ -23,33 +23,85 @@ let space_rotation = new THREE.Matrix4().makeRotationX(Math.PI / 2);
 let { client, worker } = moto;
 let cache = {};
 
+function cacheUpdate(id, data) {
+    Object.assign(cache[id], data);
+}
+
 worker.bind("debug", (data, send) => {
-    console.log({cache});
+    console.log({work_cache: cache});
     send.done();
 });
 
-worker.bind("model_load", (data, send) => {
-    let { vertices, name, id } = data;
-    let geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-    geo.computeVertexNormals();
-    cache[id] = { id, name, geo };
-    send.done();
-});
+let model = {
+    load(data) {
+        let { vertices, name, id } = data;
+        let geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geo.computeVertexNormals();
+        cacheUpdate(id, { name, geo });
+    },
 
-worker.bind("model_remove", (data, send) => {
-    delete cache[data.id];
-    send.done();
-});
+    debug(data) {
+        let { matrix, id } = data;
+        let rec = cache[id];
+        let geo = rec.geo.clone();
+        let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
+        geo.applyMatrix4(m4);
+        // for debugging state / matrix ops
+        return geo.attributes.position.array;
+    }
+};
 
-worker.bind("model_sync", (data, send) => {
-    let { matrix, id } = data;
-    let rec = cache[id];
-    let geo = rec.geo.clone();
-    let m4 = space_rotation.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
-    geo.applyMatrix4(m4);
-    // for debugging matrix ops
-    send.done(geo.attributes.position.array);
+let group = {
+    add(data) {
+        let { id, model } = data;
+    },
+
+    remove(data) {
+        let { id, model } = data;
+    },
+
+    create(data) {
+        let { id, type } = data;
+        cache[id] = { id, type };
+    }
+};
+
+let object = {
+    create(data) {
+        let { id, type } = data;
+        cache[id] = { id, type };
+    },
+
+    destroy(data) {
+        delete cache[data.id];
+    },
+
+    move(data) {
+        let { id, type, x, y, z } = data;
+    },
+
+    position(data) {
+        let { id, type, x, y, z } = data;
+    },
+
+    rotate(data) {
+        let { id, type, x, y, z } = data;
+    },
+
+    rotation(data) {
+        let { id, type, x, y, z } = data;
+    },
+
+    qrotation(data) {
+        let { id, type, w, x, y, z } = data;
+    }
+};
+
+worker.bindObject({
+    model,
+    group,
+    object
 });
 
 })();

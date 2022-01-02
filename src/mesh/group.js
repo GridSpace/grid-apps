@@ -16,6 +16,9 @@ gapp.register("mesh.group", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.group) return;
 
+let space = moto.Space;
+let worker = moto.client.fn;
+
 mesh.group = class MeshGroup extends mesh.object {
 
     // @param group {mesh.model[]}
@@ -28,6 +31,10 @@ mesh.group = class MeshGroup extends mesh.object {
         }
     }
 
+    type() {
+        return "group";
+    }
+
     object() {
         return this.group;
     }
@@ -37,7 +44,8 @@ mesh.group = class MeshGroup extends mesh.object {
         model.group = this;
         this.models.addOnce(model);
         this.group.add(model.mesh);
-        moto.Space.update();
+        space.update();
+        worker.group_add({id: this.id, model:model.id});
         return this;
     }
 
@@ -54,12 +62,14 @@ mesh.group = class MeshGroup extends mesh.object {
         this.models.remove(model);
         this.group.remove(model.mesh);
         // trigger sync with worker
+        worker.group_remove({id: this.id, model:model.id});
         model.remove(true);
         // auto-remove group when empty
         if (this.group.children.length === 0) {
             mesh.api.group.remove(this);
+            worker.object_destroy({id: this.id});
         }
-        moto.Space.update();
+        space.update();
         return this;
     }
 

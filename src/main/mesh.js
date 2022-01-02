@@ -83,7 +83,8 @@ broker.subscribe('space_init', data => {
             platform.setColor(platcolor);
         },
         'keypress', evt => {
-            switch (evt.code) {
+            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            switch (code) {
                 case 'KeyC':
                     selection.centerXY().focus();
                     break;
@@ -95,11 +96,6 @@ broker.subscribe('space_init', data => {
                     break;
                 case 'KeyB':
                     selection.boundsBox({toggle:true});
-                    break;
-                case 'KeyS':
-                    for (let m of selection.models()) {
-                        m.sync();
-                    }
                     break;
                 case 'KeyH':
                     space.view.home();
@@ -126,7 +122,13 @@ broker.subscribe('space_init', data => {
                     }
                     break;
                 case 'KeyD':
-                    broker.send.space_debug();
+                    if (shiftKey) {
+                        for (let m of selection.models()) {
+                            m.debug();
+                        }
+                    } else {
+                        broker.send.space_debug();
+                    }
                     break;
                 case 'Escape':
                     selection.clear();
@@ -213,19 +215,21 @@ broker.subscribe('space_load', data => {
 broker.subscribe('space_debug', () => {
     for (let g of mesh.api.group.list()) {
         let { center, size } = g.bounds();
-        console.group('group', {
+        console.group(g.id);
+        console.log({
             center,
             size,
             pos: g.group.position
         });
         for (let m of g.models) {
-            console.log('model', {
+            console.log(m.id, {
                 box: m.mesh.getBoundingBox(),
                 pos: m.mesh.position
             });
         }
         console.groupEnd();
     }
+    moto.client.fn.debug();
 });
 
 // remove version cache bust from url

@@ -15,32 +15,52 @@ let endpoints = {};
 // code is running in the worker / server context
 const dispatch = moto.worker = {
 
-    bind: (name, fn) => {
+    // bind an endpoint name to a function
+    bind(name, fn) {
         endpoints[name] = fn;
         dispatch.send({bind: name});
     },
 
-    send: (msg) => {
+    // bind all functions in an object
+    bindObject(object, root, recurse) {
+        recurse = recurse || root === undefined;
+        for (let [key, fn] of Object.entries(object)) {
+            key = root ? `${root}_${key}` : key;
+            if (typeof fn === 'function') {
+                dispatch.bind(key, fn);
+            } else if (recurse) {
+                dispatch.bindObject(fn, key, recurse);
+            }
+        }
+    },
+
+    send(msg) {
         self.postMessage(msg);
     },
 
-    onmessage: (e) => {
+    onmessage(e) {
         let msg = e.data,
             run = endpoints[msg.task],
+            async = false,
             done = false,
             send = {
-                data: (data, direct) => {
+                // puts function in async mode
+                // prevents auto send.done() on function return
+                async() {
+                    async = true;
+                },
+                data(data, direct) {
                     if (canSend(data)) {
                         dispatch.send({ done: false, data: data }, direct);
                     }
                 },
-                done: (data, direct) => {
+                done(data, direct) {
                     if (canSend(data)) {
                         dispatch.send({ done: true, data: data }, direct);
                         done = true;
                     }
                 },
-                error: (data) => {
+                error(data) {
                     if (canSend(data)) {
                         done = true;
                         dispatch.send({ error: data });
@@ -57,7 +77,7 @@ const dispatch = moto.worker = {
         if (run) {
             try {
                 let data = run(msg.data, send);
-                if (data) {
+                if (data || async === false) {
                     send.done(data);
                 }
             } catch (error) {

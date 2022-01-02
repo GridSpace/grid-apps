@@ -16,6 +16,9 @@ gapp.register("mesh.model", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.model) return;
 
+let space = moto.Space;
+let worker = moto.client.fn;
+
 /** default materials **/
 let materials = mesh.material = {
     unselected: new THREE.MeshPhongMaterial({
@@ -49,16 +52,19 @@ mesh.model = class MeshModel extends mesh.object {
         this.mesh = this.load(mesh);
     }
 
+    type() {
+        return "model";
+    }
+
     object() {
         return this.mesh;
     }
 
-    sync() {
-        moto.client.fn.model_sync({
+    debug() {
+        worker.model_debug({
             matrix: this.mesh.matrixWorld.elements,
             id: this.id
         }).then(data => {
-            if (data && data.length)
             // for debugging matrix ops
             return mesh.api.group.new([new mesh.model({
                 file: `synth-${this.name}`,
@@ -80,7 +86,7 @@ mesh.model = class MeshModel extends mesh.object {
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
         // sync data to worker
-        moto.client.fn.model_load({id: this.id, name: this.name, vertices, indices});
+        worker.model_load({id: this.id, name: this.file, vertices, indices});
         return meh;
     }
 
@@ -93,8 +99,8 @@ mesh.model = class MeshModel extends mesh.object {
             geo.attributes.index.needsUpdate = true;
         }
         geo.attributes.position.needsUpdate = true;
-        geo.computeFaceNormals();
         geo.computeVertexNormals();
+        worker.model_load({id: this.id, name: this.name, vertices, indices});
     }
 
     get group() {
@@ -122,7 +128,7 @@ mesh.model = class MeshModel extends mesh.object {
             mat.opacity = ov;
             mat.visible = true;
         }
-        moto.Space.update();
+        space.update();
     }
 
     wireframe(bool, opt = {}) {
@@ -151,7 +157,7 @@ mesh.model = class MeshModel extends mesh.object {
             this.mesh.add(this._wire);
             this.opacity(opt.opacity || 0);
         }
-        moto.Space.update();
+        space.update();
     }
 
     material(mat) {
@@ -163,7 +169,7 @@ mesh.model = class MeshModel extends mesh.object {
             // direct call requires pass through group
         } else {
             // called from group
-            moto.client.fn.model_remove({id: this.id});
+            worker.object_destroy({id: this.id});
         }
     }
 };

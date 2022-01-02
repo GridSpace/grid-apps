@@ -221,7 +221,7 @@ let api = mesh.api = {
     model,
 
     objects() {
-        // return models, not groups
+        // return model objects suitable for finding ray intersections
         return group.list().map(o => o.models).flat().map(o => o.object());
     }
 };

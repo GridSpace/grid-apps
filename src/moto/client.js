@@ -120,7 +120,6 @@ let client = moto.client = {
             data,
             stream: ondata ? true : false
         };
-
         try {
             worker.postMessage(msg, direct);
         } catch (error) {
