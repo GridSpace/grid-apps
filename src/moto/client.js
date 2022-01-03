@@ -11,29 +11,51 @@ let moto = self.moto = self.moto || {},
     workurl = null, // url to load worker
     worknum = 1,    // number of workers to start
     workers = [],   // array of all workers
-    queue = [];     // array of work requests
+    queue = [],     // array of work requests
+    topics = {};    // topic handler (broker lite for worker > client msgs)
 
 if (moto.client) return;
 
-gapp.register('moto.client');
+gapp.register('moto.client', [
+    "add.array",    // dep: add.array
+]);
+
+function dispatch(topic, message) {
+    for (let fn of topics[topic] || []) {
+        fn(message);
+    }
+}
 
 // code is running in the browser / client context
 let client = moto.client = {
 
+    /** @returns [integer] total number of workers **/
     live: () => {
         return workers.length;
     },
 
+    /** @returns [integer] number of idle workers **/
     free: () => {
         return workers.filter(w => w.run === null).length;
     },
 
+    /** @returns [integer] max cpu cores available **/
     max: () => {
         return ccmax;
     },
 
+    /** process worker topic messages like "ready" **/
+    on: (topic, fn) => {
+        (topics[topic] = topics[topic] || []).addOnce(fn);
+    },
+
+    /**
+     * @returns {Object} registered worker function map
+     * auto-filled when worker process uses bind() or bindObject()
+     **/
     fn: {},
 
+    /** binds a function endpoint to a task name **/
     bind: (task) => {
         if (!client.fn[task]) {
             client.fn[task] = (data, options) => {
@@ -42,6 +64,7 @@ let client = moto.client = {
         }
     },
 
+    /** add a promised task call to the work queue **/
     call: (task, data, options = {}) => {
         let { direct, stream } = options;
         return new Promise((resolve, reject) => {
@@ -62,11 +85,13 @@ let client = moto.client = {
         });
     },
 
+    /** danger: directly add an entry to the work queue **/
     queue: (task, data, options = {}) => {
         queue.push({task, data, options});
         client.kick();
     },
 
+    /** check work queue and distribute tasks to free workers **/
     kick: () => {
         if (queue.length === 0) {
             return;
@@ -172,8 +197,16 @@ let client = moto.client = {
             worker.index = i;
             worker.onmessage = function(e) {
                 let reply = e.data;
+
+                // handle special case for task binding
                 if (reply.bind) {
                     client.bind(reply.bind);
+                    return;
+                }
+
+                // handle special case when worker ready
+                if (reply.ready) {
+                    dispatch('ready', reply.ready);
                     return;
                 }
 

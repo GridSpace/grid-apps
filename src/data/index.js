@@ -11,6 +11,10 @@
 
     data.Index = IDBStore;
 
+    data.open = function() {
+        return new IDBStore(...arguments);
+    };
+
     // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 
     let IDB, IRR, local = null;
@@ -35,6 +39,7 @@
         this.queue = [];
         this.idle = [];
         this.initCalled = false;
+        this.created = {};
     }
 
     IDBStore.delete = function(dbname) {
@@ -56,32 +61,60 @@
         return this;
     };
 
-    SP.promise = function() {
-        let db =  this;
-        return {
-            keys: (lower, upper) => new Promise(function(resolve, reject) {
-                db.keys(resolve,lower,upper);
-            }),
-
-            iterate: (lower, upper, nullterm) => new Promise(function(resolve, reject) {
-                db.iterate(resolve, lower, upper, nullterm);
+    SP.promise = function(store) {
+        let db = this;
+        let pc = {
+            iterate: (opt = {}) => new Promise(function(resolve, reject) {
+                let { lower, upper, collect } = opt;
+                if (!collect) {
+                    let rval = opt.map ? {} : [];
+                    collect = (key, value) => {
+                        if (key !== null) {
+                            if (opt.map) {
+                                rval[key] = value;
+                            } else {
+                                rval.push({key, value});
+                            }
+                        } else {
+                            resolve(rval);
+                        }
+                    };
+                } else {
+                    resolve();
+                }
+                db.iterate(collect, lower, upper, true, store);
             }),
 
             get: (key) => new Promise(function(resolve, reject) {
-                db.get(key, resolve);
+                db.get(key, resolve, store);
             }),
 
             put: (key, value) => new Promise(function(resolve, reject) {
-                db.put(key, value, resolve);
+                db.put(key, value, resolve, store);
             }),
 
             remove: (key) => new Promise(function(resolve, reject) {
-                db.remove(key, resolve);
-            })
+                db.remove(key, resolve, store);
+            }),
+
+            // wait for all outstanding transactions to complete
+            wait: () => new Promise(function(resolve, reject) {
+                db.onIdle(promise);
+            }),
+
+            use: (store) => {
+                db.use(store);
+                return pc;
+            },
         };
+        return pc;
     }
 
-    SP.keys = function(callback, lower, upper) {
+    SP.keys = function(callback, lower, upper, store) {
+        if (!this.db) {
+            this.init();
+            return this.queue.push(["keys", callback, lower, upper, store]);
+        }
         let out = [];
         this.iterate(function(k,v) {
             if (k === null) {
@@ -89,25 +122,25 @@
             } else {
                 out.push(k);
             }
-        }, lower, upper, true);
+        }, lower, upper, true, store);
     };
 
-    SP.iterate = function(callback, lower, upper, nullterm) {
+    SP.iterate = function(callback, lower, upper, nullterm, store) {
         if (!this.db) {
             this.init();
-            return this.queue.push(["iterate", callback, lower, upper]);
+            return this.queue.push(["iterate", callback, lower, upper, nullterm, store]);
         }
         let range = lower && upper ? IRR.bound(lower,upper) :
                     lower ? IRR.lowerBound(lower) :
                     upper ? IRR.upperBound(upper) : undefined;
         // iterate over all db values for debugging
         this.db
-            .transaction(this.name)
-            .objectStore(this.current)
+            .transaction(store)
+            .objectStore(store)
             .openCursor(range).onsuccess = function(event) {
                 let cursor = event.target.result;
                 if (cursor) {
-                    callback(cursor.key,cursor.value);
+                    callback(cursor.key, cursor.value);
                     cursor.continue();
                 } else if (nullterm) {
                     callback(null);
@@ -149,7 +182,7 @@
                 }
                 let db = storage.db = request.result;
                 for (let store of storage.stores) {
-                    storage.store = db.createObjectStore(store);
+                    storage.created[store] = db.createObjectStore(store);
                     storage.current = store;
                 }
                 event.target.transaction.oncomplete = function(event) {
@@ -181,12 +214,13 @@
             let i = 0, q = this.queue, e;
             while (i < q.length) {
                 e = q[i++];
-                switch (e[0]) {
-                    case 'iterate': this.iterate(e[1], e[2], e[3]); break;
-                    case 'put': this.put(e[1], e[2], e[3]); break;
-                    case 'get': this.get(e[1], e[2]); break;
-                    case 'remove': this.remove(e[1], e[2]); break;
-                    case 'clear': this.clear();
+                switch (e.shift()) {
+                    case 'iterate': this.iterate(...e); break;
+                    case 'keys': this.keys(...e); break;
+                    case 'put': this.put(...e); break;
+                    case 'get': this.get(...e); break;
+                    case 'remove': this.remove(...e); break;
+                    case 'clear': this.clear(...e);
                 }
             }
             this.queue = [];
@@ -196,7 +230,7 @@
         }
     };
 
-    SP.put = function(key, value, callback) {
+    SP.put = function(key, value, callback, store = this.current) {
         if (local) {
             local[key] = value;
             if (callback) callback(true);
@@ -204,12 +238,12 @@
         }
         if (!this.db) {
             this.init();
-            return this.queue.push(['put', key, value, callback]);
+            return this.queue.push(['put', key, value, callback, store]);
         }
         try {
             let req = this.db
-                .transaction(this.name, "readwrite")
-                .objectStore(this.current).put(value, key);
+                .transaction(store, "readwrite")
+                .objectStore(store).put(value, key);
             if (callback) {
                 req.onsuccess = function(event) { callback(true) };
                 req.onerror = function(event) { callback(false) };
@@ -220,19 +254,19 @@
         }
     };
 
-    SP.get = function(key, callback) {
+    SP.get = function(key, callback, store = this.current) {
         if (local) {
             if (callback) callback(local[key]);
             return;
         }
         if (!this.db) {
             this.init();
-            return this.queue.push(['get', key, callback]);
+            return this.queue.push(['get', key, callback, store]);
         }
         try {
             let req = this.db
-                .transaction(this.name)
-                .objectStore(this.current).get(key);
+                .transaction(store)
+                .objectStore(store).get(key);
             if (callback) {
                 req.onsuccess = function(event) { callback(req.result) };
                 req.onerror = function(event) { callback(null) };
@@ -243,7 +277,7 @@
         }
     };
 
-    SP.remove = function(key, callback) {
+    SP.remove = function(key, callback, store = this.current) {
         if (local) {
             delete local[key];
             if (callback) callback(true);
@@ -251,12 +285,12 @@
         }
         if (!this.db) {
             this.init();
-            return this.queue.push(['remove', key, callback]);
+            return this.queue.push(['remove', key, callback, store]);
         }
         try {
             let req = this.db
-                .transaction(this.name, "readwrite")
-                .objectStore(this.current).delete(key);
+                .transaction(store, "readwrite")
+                .objectStore(store).delete(key);
             if (callback) {
                 req.onsuccess = function(event) { callback(true) };
                 req.onerror = function(event) { callback(false) };
@@ -267,14 +301,14 @@
         }
     };
 
-    SP.clear = function(key) {
+    SP.clear = function(key, store = this.current) {
         if (!this.db) {
             this.init();
-            return this.queue.push(['clear']);
+            return this.queue.push(['clear', store]);
         }
         this.db
-            .transaction(this.name, "readwrite")
-            .objectStore(this.current).clear();
+            .transaction(store, "readwrite")
+            .objectStore(store).clear();
     };
 
 })();

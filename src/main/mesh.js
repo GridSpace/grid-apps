@@ -8,7 +8,8 @@ let broker = gapp.broker;
 let call = broker.send;
 
 function init() {
-    let moto = self.moto,
+    let stores = data.open('mesh', { stores:[ "admin", "cache", "space" ] }).init(),
+        moto = self.moto,
         api = mesh.api,
         sky = false,
         dark = false,
@@ -16,7 +17,16 @@ function init() {
         zoomrev = true,
         zoomspd = 1,
         space = moto.Space,
-        platform = space.platform;
+        platform = space.platform,
+        db = mesh.db = {
+            admin: stores.promise('admin'),
+            space: stores.promise('space'),
+            cache: stores.promise('cache')
+        };
+
+    // mark init time and use count
+    db.admin.put("init", Date.now());
+    db.admin.get("uses").then(v => db.admin.put("uses", (v||0) + 1));
 
     // setup default workspace
     space.useDefaultKeys(false);
@@ -33,7 +43,9 @@ function init() {
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
         size: { width: 2000, depth: 2000, height: 1, maxz: 300 },
-        grid: { major: 25, minor: 5, colorMajor: 0xcccccc, colorMinor: 0xeeeeee, colorX: 0xffaaaa, colorY: 0xaaaaff },
+        grid: { major: 25, minor: 5,
+            colorMajor: 0xcccccc, colorMinor: 0xeeeeee,
+            colorX: 0xffaaaa, colorY: 0xaaaaff },
     });
     space.view.setZoom(zoomrev, zoomspd);
 
@@ -46,8 +58,30 @@ function init() {
     // trigger ui building
     call.ui_build();
 
+    // reload stored space
+    moto.client.on('ready', restore_space);
+
     // hide loading curtain
     $d('curtain','none');
+}
+
+function restore_space() {
+    mesh.db.space.iterate({ map: true }).then(cached => {
+        for (let [id, data] of Object.entries(cached)) {
+            // restore group
+            if (Array.isArray(data)) {
+                let models = data.map(id => {
+                    let md = cached[id];
+                    return new mesh.model(md, id);
+                });
+                mesh.api.group.new(models, id)
+                    .centerModels()
+                    .centerXY()
+                    .floor()
+                    .focus();
+            }
+        }
+    })
 }
 
 function ui_build() {
@@ -190,6 +224,7 @@ function space_init(data) {
                 case 'Backspace':
                 case 'Delete':
                     for (let s of selection.list()) {
+                        selection.remove(s);
                         s.showBounds(false);
                         s.remove();
                     }
@@ -314,6 +349,7 @@ gapp.finalize("main.mesh", [
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
     "moto.space",   // dep: moto.space
+    "data.index",   // dep: data.index
     "mesh.api",     // dep: mesh.api
     "mesh.model",   // dep: mesh.model
     "load.file",    // dep: load.file

@@ -34,6 +34,10 @@ const dispatch = moto.worker = {
         }
     },
 
+    ready() {
+        dispatch.send({ready: true});
+    },
+
     send(msg) {
         self.postMessage(msg);
     },

@@ -191,8 +191,8 @@ let group = {
     },
 
     // @param group {MeshModel[]}
-    new(models) {
-        return group.add(new mesh.group(models));
+    new(models, id) {
+        return group.add(new mesh.group(models, id));
     },
 
     // @param group {MeshGroup}

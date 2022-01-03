@@ -27,11 +27,6 @@ function cacheUpdate(id, data) {
     Object.assign(cache[id], data);
 }
 
-worker.bind("debug", (data, send) => {
-    console.log({work_cache: cache});
-    send.done();
-});
-
 let model = {
     load(data) {
         let { vertices, name, id } = data;
@@ -93,10 +88,16 @@ let object = {
     }
 };
 
+worker.bind("debug", (data, send) => {
+    console.log({work_cache: cache});
+});
+
 worker.bindObject({
     model,
     group,
     object
 });
+
+worker.ready();
 
 })();

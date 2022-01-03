@@ -18,8 +18,8 @@ let worker = moto.client.fn;
 
 mesh.object = class MeshObject {
 
-    constructor() {
-        this.id = mesh.util.uuid();
+    constructor(id) {
+        this.id = id || mesh.util.uuid();
         worker.object_create({id: this.id, type: this.type()});
     }
 

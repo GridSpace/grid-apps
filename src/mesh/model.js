@@ -16,6 +16,7 @@ gapp.register("mesh.model", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.model) return;
 
+let mapp = mesh;
 let space = moto.Space;
 let worker = moto.client.fn;
 
@@ -41,8 +42,8 @@ let materials = mesh.material = {
 
 /** 3D model rendered on plaform **/
 mesh.model = class MeshModel extends mesh.object {
-    constructor(data) {
-        super();
+    constructor(data, id) {
+        super(id);
         let { file, mesh } = data;
 
         if (!mesh) {
@@ -57,6 +58,9 @@ mesh.model = class MeshModel extends mesh.object {
 
         this.file = file || 'unnamed';
         this.mesh = this.load(mesh);
+
+        // persist in db so it can be restored on page load
+        mapp.db.space.put(this.id, { file, mesh });
     }
 
     type() {
@@ -179,9 +183,16 @@ mesh.model = class MeshModel extends mesh.object {
     remove() {
         if (arguments.length === 0) {
             // direct call requires pass through group
+            this.group.remove(this);
+            this.group = undefined;
+            this.removed = 'pending';
         } else {
-            // called from group
+            // update worker state
             worker.object_destroy({id: this.id});
+            // update object store
+            mesh.db.space.remove(this.id);
+            // tag removed for debugging
+            this.removed = 'complete';
         }
     }
 };
