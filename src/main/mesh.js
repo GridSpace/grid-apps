@@ -33,7 +33,7 @@ function init() {
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
         size: { width: 300, depth: 300, height: 1, maxz: 300 },
-        grid: { major: 25, minor: 5, majorColor: 0xcccccc, minorColor: 0xeeeeee },
+        grid: { major: 25, minor: 5, colorMajor: 0xcccccc, colorMinor: 0xeeeeee, colorX: 0xffaaaa, colorY: 0xaaaaff },
     });
     space.view.setZoom(zoomrev, zoomspd);
 

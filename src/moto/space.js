@@ -59,9 +59,12 @@
             origin: origin,
             unitMinor: 0,
             unitMajor: 0,
-            colorMinor: 0,
-            colorMajor: 0,
+            colorMinor: 0xeeeeee,
+            colorMajor: 0xcccccc,
+            colorX: 0xff6666,
+            colorY: 0x6666ff,
             zoff: 0,
+            opacity: 1,
             view: undefined
         },
         ruler = {
@@ -140,6 +143,10 @@
     function delayed(key, time, fn) {
         clearTimeout(timers[key]);
         timers[key] = setTimeout(fn, time);
+    }
+
+    function valueOr(val, def) {
+        return val !== undefined ? val : def;
     }
 
     WORLD.contains = (obj) => {
@@ -283,7 +290,7 @@
                 {x:  width/2, z:  depth/2, y: maxz},
                 {x: -width/2, z:  depth/2, y: maxz},
             ];
-            SCENE.add(volume = makeLinesFromPoints(points, 0x888888, 0.25));
+            SCENE.add(volume = makeLinesFromPoints(points, 0x888888));
             showVolume(volumeOn);
         }
     }
@@ -438,13 +445,21 @@
         }
     }
 
+    function setGridColor(opt = {}) {
+        grid.colorMajor = valueOr(opt.major, grid.colorMajor);
+        grid.colorMinor = valueOr(opt.minor, grid.colorMinor);
+        grid.colorX = valueOr(opt.colorX, grid.colorX);
+        grid.colorY = valueOr(opt.colorY, grid.colorY);
+        updateGrid();
+    }
+
     function modMatch(val, mod) {
         let mv = Math.abs(val) % mod;
         return (mv < 1) || ((mod - mv) < 1);
     }
 
     function updateGrid() {
-        let { view, unitMinor, unitMajor, colorMajor, colorMinor } = grid;
+        let { view, unitMinor, unitMajor, colorMajor, colorMinor, colorX, colorY } = grid;
         let oldView = view;
         view = grid.view = new THREE.Group();
 
@@ -490,17 +505,16 @@
             let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
         }
-
-        view.add(makeLinesFromPoints(majors, colorMajor || 0x999999, 1));
-        view.add(makeLinesFromPoints(minors, colorMinor || 0xcccccc, 1));
+        view.add(makeLinesFromPoints(majors, colorMajor));
+        view.add(makeLinesFromPoints(minors, colorMinor));
         view.add(makeLinesFromPoints([
             {x: -xo, y:y1-yo, z:zp},
             {x: -xo, y:y2-yo, z:zp},
-        ], 0x000099, 1));
+        ], colorY));
         view.add(makeLinesFromPoints([
             {x: x1-xo, y:-yo, z:zp},
             {x: x2-xo, y:-yo, z:zp},
-        ], 0x990000, 1));
+        ], colorX));
 
         Space.scene.remove(oldView);
         Space.scene.add(grid.view);
@@ -712,7 +726,7 @@
      * ThreeJS Helper Functions
      ******************************************************************* */
 
-    function makeLinesFromPoints(points, color, opacity) {
+    function makeLinesFromPoints(points, color) {
         if (points.length % 2 != 0) {
             throw "invalid line : "+points.length;
         }
@@ -726,9 +740,7 @@
         }
         geo.setAttribute('position', new THREE.BufferAttribute(vrt, 3));
         return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
-            color: color,
-            opacity: opacity || 1,
-            transparent: opacity != 1
+            color: color
         }));
     }
 
@@ -900,33 +912,36 @@
     }
 
     function setPlatform(opt = {}) {
+        let platform = Space.platform;
         let { color, round, size, grid, opacity, volume, zOffset, origin } = opt;
         if (color) {
-            Space.platform.setColor(color);
+            platform.setColor(color);
         }
         if (round !== undefined) {
-            Space.platform.setRound(round);
+            platform.setRound(round);
         }
         if (size) {
             let { width = 300, depth = 300, height = 2.5, maxz = 300 } = size;
-            Space.platform.setSize(width, depth, height, maxz);
+            platform.setSize(width, depth, height, maxz);
         }
         if (grid) {
-            let { major = 25, minor = 5, majorColor = 0x999999, minorColor = 0xcccccc } = grid;
-            Space.platform.setGrid(major, minor, majorColor, minorColor);
+            let { major = 25, minor = 5 } = grid;
+            let { colorX, colorY, colorMajor, colorMinor } = grid;
+            platform.setGrid(major, minor);
+            platform.setGridColor({ colorX, colorY, colorMajor, colorMinor });
         }
         if (origin) {
             let { x, y, z, show } = origin;
-            Space.platform.setOrigin(x || 0, y || 0, z || 0, show);
+            platform.setOrigin(x || 0, y || 0, z || 0, show);
         }
         if (opacity !== undefined) {
-            Space.platform.opacity(opacity);
+            platform.opacity(opacity);
         }
         if (volume !== undefined) {
-            Space.platform.showVolume(volume);
+            platform.showVolume(volume);
         }
         if (zOffset !== undefined) {
-            Space.platform.setZOff(zOffset);
+            platform.setZOff(zOffset);
         }
     }
 
@@ -981,13 +996,14 @@
             update:     updateDraws,
             setSize:    setPlatformSizeUpdateGrid,
             setColor:   setPlatformColor,
-            setOrigin:  setOrigin,
-            setRulers:  setRulers,
-            setGrid:    setGrid,
-            setFont:    setFont,
-            setRound:   setRound,
-            showAxes:   showAxes,
-            showVolume: showVolume,
+            setOrigin,
+            setRulers,
+            setGrid,
+            setGridColor,
+            setFont,
+            setRound,
+            showAxes,
+            showVolume,
             showGrid:   (b) => { grid.view.visible = b },
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
