@@ -1648,7 +1648,7 @@
             paletteCool:      UC.newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:UC.toInt}),
             palettePress:     UC.newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:UC.toInt}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_out, $('device3'), {group:"dgco", inline:true, modes:CAM_LASER}),
+            gcode:            UC.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LASER}),
             gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
             gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
