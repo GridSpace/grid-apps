@@ -225,9 +225,9 @@ let api = mesh.api = {
         }
     },
 
-    // @param object {THREE.Object3D | THREE.Object3D[]}
+    // @param object {THREE.Object3D | THREE.Object3D[] | Point}
     focus(object) {
-        let { center } = util.bounds(object);
+        let { center } = object.center ? object : util.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };

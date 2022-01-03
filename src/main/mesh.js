@@ -236,8 +236,12 @@ function space_init(data) {
             if (model) {
                 let group = model.group;
                 let { ctrlKey, metaKey, shiftKey } = event;
-                // lay flat with meta or ctrl clicking a selected face
-                if ((ctrlKey || metaKey)) {
+                if (metaKey) {
+                    // set focus on intersected face
+                    let { x, y, z } = int.point;
+                    api.focus({center: { x, y:-z, z:y }});
+                } else if (ctrlKey) {
+                    // lay flat when ctrl clicking a selected face
                     let q = new THREE.Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
                     q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
