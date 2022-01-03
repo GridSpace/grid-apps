@@ -141,6 +141,16 @@ body, div {
     margin-bottom: -14px !important;
 }
 
+button {
+    padding: 2px 3px 2px 3px;
+    border: 1px solid rgba(150,150,150,0.5);
+    background-color: rgba(220,220,220,0.5);
+}
+
+button:hover {
+    background-color: rgba(200,200,200,1);
+}
+
 #grouplist {
     position: absolute;
     margin: 3px 3px 0 0;
@@ -174,8 +184,11 @@ body, div {
     background-color: rgba(0,255,0,0.5)
 }
 
+#grouplist .selected:hover {
+    background-color: rgba(0,255,0,1)
+}
+
 #grouplist .vsep {
-    height: 1px;
     margin: 2px 0 1px 0;
-    background-color: gray;
+    border-bottom: 1px dashed gray;
 }

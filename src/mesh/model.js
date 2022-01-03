@@ -50,7 +50,12 @@ mesh.model = class MeshModel extends mesh.object {
             return;
         }
 
-        this.file = file;
+        // remove file name extensions
+        let text = file || '';
+        let dot = text.lastIndexOf('.');
+        if (dot > 0) file = text.substring(0, dot);
+
+        this.file = file || 'unnamed';
         this.mesh = this.load(mesh);
     }
 

@@ -72,7 +72,8 @@ function ui_build() {
                 // map groups to divs
                 .map(g => h.div([
                     h.button({
-                        _: `group (${g.id})`,
+                        _: `group`,
+                        title: g.id,
                         class: [
                             "group",
                             api.selection.contains(g) ? 'selected' : undefined
