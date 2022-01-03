@@ -62,12 +62,21 @@ let selection = {
 
     // @param group {MeshObject}
     add(object) {
+        // pendantic code necessary to minimize re-entrant api calls
+        if (object.models) {
+            // if group, remove discrete selected members
+            for (let m of object.models) {
+                if (selected.contains(m)) {
+                    selection.remove(m);
+                }
+            }
+        } else {
+            // if model, remove selcted group
+            if (selected.contains(object.group)) {
+                selection.remove(object.group);
+            }
+        }
         selected.addOnce(object);
-        selection.update();
-    },
-
-    toggle(object) {
-        selected.remove(object) || selected.addOnce(object);
         selection.update();
     },
 
@@ -75,6 +84,15 @@ let selection = {
     remove(object) {
         selected.remove(object);
         selection.update();
+    },
+
+    // @param group {MeshObject}
+    toggle(object) {
+        if (selected.contains(object)) {
+            selection.remove(object);
+        } else {
+            selection.add(object);
+        }
     },
 
     clear() {

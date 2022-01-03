@@ -233,15 +233,16 @@ function space_init(data) {
             let model = int && int.object.model ? int.object.model : undefined;
             if (model) {
                 let group = model.group;
+                let { ctrlKey, metaKey, shiftKey } = event;
                 // lay flat with meta or ctrl clicking a selected face
-                if ((event.ctrlKey || event.metaKey)) {
+                if ((ctrlKey || metaKey)) {
                     let q = new THREE.Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
                     q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
                     group.qrotation(q);
                     group.floor();
                 } else {
-                    selection.toggle(model.group);
+                    selection.toggle(shiftKey ? model.group : model);
                 }
             }
         } else {
@@ -250,7 +251,7 @@ function space_init(data) {
     });
 
     space.mouse.onDrag((delta, offset, up = false) => {
-        if (delta) {
+        if (delta && delta.event.shiftKey) {
             selection.move(delta.x, delta.y, 0);
         } else {
             return api.objects().length > 0;

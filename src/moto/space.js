@@ -875,7 +875,11 @@
                 let delta = mouseDragPoint.clone().sub(int[0].point);
                 let offset = mouseDragStart.clone().sub(int[0].point);
                 mouseDragPoint = int[0].point;
-                mouseDrag({x: -delta.x, y: delta.z}, offset.multiplyVectors(offset, trackDelta));
+                mouseDrag({
+                    x: -delta.x,
+                    y: delta.z,
+                    event
+                }, offset.multiplyVectors(offset, trackDelta));
                 requestRefresh();
             }
         }
