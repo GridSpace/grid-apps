@@ -22,6 +22,7 @@ let worker = moto.client.fn;
 /** default materials **/
 let materials = mesh.material = {
     unselected: new THREE.MeshPhongMaterial({
+        side: THREE.DoubleSide,
         transparent: true,
         shininess: 100,
         specular: 0x181818,
@@ -29,6 +30,7 @@ let materials = mesh.material = {
         opacity: 1
     }),
     selected: new THREE.MeshPhongMaterial({
+        side: THREE.DoubleSide,
         transparent: true,
         shininess: 100,
         specular: 0x181818,
@@ -79,7 +81,7 @@ mesh.model = class MeshModel extends mesh.object {
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         let meh = new THREE.Mesh(geo, materials.unselected);
         geo.computeVertexNormals();
-        meh.material.side = THREE.DoubleSide;
+        // geo.computeFaceNormals();
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -100,6 +102,7 @@ mesh.model = class MeshModel extends mesh.object {
         }
         geo.attributes.position.needsUpdate = true;
         geo.computeVertexNormals();
+        // geo.computeFaceNormals();
         worker.model_load({id: this.id, name: this.name, vertices, indices});
     }
 

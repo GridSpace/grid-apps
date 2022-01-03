@@ -28,12 +28,12 @@ function init() {
     platform.set({
         volume: false,
         round: false,
-        zOffset: 0.2,
-        opacity: 0.3,
-        color: 0xcccccc,
+        zOffset: 0.1,
+        opacity: 0.1,
+        color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
-        size: { width: 300, depth: 300, height: 2.5, maxz: 2.5 },
-        grid: { major: 25, minor: 5, majorColor: 0x999999, minorColor: 0xcccccc },
+        size: { width: 300, depth: 300, height: 1, maxz: 300 },
+        grid: { major: 25, minor: 5, majorColor: 0xcccccc, minorColor: 0xeeeeee },
     });
     space.view.setZoom(zoomrev, zoomspd);
 
@@ -72,7 +72,7 @@ function ui_build() {
                 // map groups to divs
                 .map(g => h.div([
                     h.button({
-                        _: g.id,
+                        _: `group (${g.id})`,
                         class: [
                             "group",
                             api.selection.contains(g) ? 'selected' : undefined
@@ -83,7 +83,7 @@ function ui_build() {
                     h.div({ class: "models"},
                         // map models to buttons
                         g.models.map(m => h.button({
-                            _: m.id,
+                            _: m.file || m.id,
                             class: api.selection.contains(m) ? [ 'selected' ] : [],
                             onclick() { api.selection.toggle(m); }
                         }))
@@ -225,7 +225,7 @@ function space_init(data) {
 
     // mouse hover/click handlers
     space.mouse.downSelect((int, event) => {
-        return api.objects();
+        return event && event.shiftKey ? api.objects() : undefined;
     });
 
     space.mouse.upSelect((int, event) => {
@@ -242,7 +242,7 @@ function space_init(data) {
                     group.qrotation(q);
                     group.floor();
                 } else {
-                    selection.toggle(shiftKey ? model.group : model);
+                    selection.toggle(shiftKey ? model : model.group);
                 }
             }
         } else {

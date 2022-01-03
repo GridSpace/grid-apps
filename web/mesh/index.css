@@ -156,15 +156,22 @@ body, div {
 #grouplist > div {
     border: 1px solid gray;
     border-radius: 3px;
+    margin: 0 0 2px 0;
+    padding: 3px;
+}
+
+#grouplist .group {
+    font-weight: bold;
     padding: 3px;
 }
 
 #grouplist .models button {
     margin-top: 1px;
+    text-align: left;
 }
 
 #grouplist .selected {
-    background-color: rgba(0,255,0,0.75)
+    background-color: rgba(0,255,0,0.5)
 }
 
 #grouplist .vsep {

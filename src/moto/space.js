@@ -748,7 +748,7 @@
             let selection = null,
                 trackTo = alignedTracking ? trackPlane : platform,
                 isVis = trackTo.visible;
-            if (mouseDownSelect) selection = mouseDownSelect();
+            if (mouseDownSelect) selection = mouseDownSelect(undefined, event);
             if (selection && selection.length > 0) {
                 trackTo.visible = true;
                 let int = intersect(selection.slice().append(trackTo), false);

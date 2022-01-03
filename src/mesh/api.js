@@ -25,7 +25,7 @@ let selected = [];
 let selection = {
     // @returns {MeshObject[]}
     list() {
-        return selected.slice();
+        return selected.length ? selected.slice() : groups.slice();
     },
 
     groups() {
