@@ -57,7 +57,7 @@ let selection = {
     // @param group {MeshObject[]}
     set(objects) {
         selected = objects;
-        selection.update();
+        util.defer(selection.update);
     },
 
     // @param group {MeshObject}
@@ -77,13 +77,13 @@ let selection = {
             }
         }
         selected.addOnce(object);
-        selection.update();
+        util.defer(selection.update);
     },
 
     // @param group {MeshObject}
     remove(object) {
         selected.remove(object);
-        selection.update();
+        util.defer(selection.update);
     },
 
     // @param group {MeshObject}
@@ -96,8 +96,9 @@ let selection = {
     },
 
     clear() {
-        selected = [];
-        selection.update();
+        for (let s of selected) {
+            selection.remove(s);
+        }
     },
 
     update() {
@@ -251,6 +252,8 @@ let api = mesh.api = {
     }
 };
 
+let deferFn = [];
+
 let util = mesh.util = {
 
     uuid(segs = 1) {
@@ -259,6 +262,24 @@ let util = mesh.util = {
             uid.push(Math.round(Math.random() * 0xffffffff).toString(36));
         }
         return uid.join('-');
+    },
+
+    // merge repeated function calls like updates
+    // that importantly take no arguments
+    defer(fn, time = 50) {
+        for (let rec of deferFn) {
+            if (rec.fn === fn) {
+                clearTimeout(rec.timer);
+                deferFn.remove(rec);
+                break;
+            }
+        }
+        let rec = { fn };
+        rec.timer = setTimeout(() => {
+            deferFn.remove(rec);
+            fn();
+        });
+        deferFn.push(rec);
     },
 
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}

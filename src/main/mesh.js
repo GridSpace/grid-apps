@@ -32,7 +32,7 @@ function init() {
         opacity: 0.1,
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
-        size: { width: 300, depth: 300, height: 1, maxz: 300 },
+        size: { width: 2000, depth: 2000, height: 1, maxz: 300 },
         grid: { major: 25, minor: 5, colorMajor: 0xcccccc, colorMinor: 0xeeeeee, colorX: 0xffaaaa, colorY: 0xaaaaff },
     });
     space.view.setZoom(zoomrev, zoomspd);
@@ -99,6 +99,7 @@ function ui_build() {
     }
 
     // listen for api calls
+    // todo: switch to util.defer(fn)
     broker.listeners({
         model_add: maker.update,
         group_add: maker.update,
@@ -150,7 +151,7 @@ function space_init(data) {
                     selection.focus();
                     break;
                 case 'KeyW':
-                    selection.wireframe({toggle:true});
+                    selection.wireframe({toggle:true}, {opacity:0.15});
                     break;
                 case 'KeyB':
                     selection.boundsBox({toggle:true});

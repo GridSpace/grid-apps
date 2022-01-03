@@ -150,7 +150,7 @@ mesh.model = class MeshModel extends mesh.object {
             };
         }
         if (bool.toggle) {
-            return this.wireframe(this._wire ? false : true);
+            return this.wireframe(this._wire ? false : true, opt);
         }
         if (this._wire) {
             this.mesh.remove(this._wire);
@@ -158,6 +158,7 @@ mesh.model = class MeshModel extends mesh.object {
             this.opacity(this._wireo);
         }
         if (bool) {
+            this.material({clone:true});
             this._wireo = this.opacity();
             this._wire = new THREE.LineSegments(
                 new THREE.WireframeGeometry(this.mesh.geometry),
@@ -169,7 +170,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     material(mat) {
-        this.mesh.material = mat;
+        this.mesh.material = mat.clone === true ? this.mesh.material.clone() : mat;
     }
 
     remove() {
