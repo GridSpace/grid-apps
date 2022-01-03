@@ -110,7 +110,7 @@
         return pc;
     }
 
-    SP.keys = function(callback, lower, upper, store) {
+    SP.keys = function(callback, lower, upper, store = this.current) {
         if (!this.db) {
             this.init();
             return this.queue.push(["keys", callback, lower, upper, store]);
@@ -125,7 +125,7 @@
         }, lower, upper, true, store);
     };
 
-    SP.iterate = function(callback, lower, upper, nullterm, store) {
+    SP.iterate = function(callback, lower, upper, nullterm, store = this.current) {
         if (!this.db) {
             this.init();
             return this.queue.push(["iterate", callback, lower, upper, nullterm, store]);
