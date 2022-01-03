@@ -148,7 +148,7 @@
         api.event.on("code.loaded", (info) => {
             if (isCamMode && camStock) {
                 isParsed = true;
-                STACKS.getStack("parse", SPACE.platform.world).button("animate", animate);
+                STACKS.getStack("parse", SPACE.world).button("animate", animate);
             }
         });
 

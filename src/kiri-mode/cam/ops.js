@@ -1206,7 +1206,7 @@
                 tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
                 tslices.push(data.slice);
                 data.slice.shadow = tshadow;
-                if (true) {
+                if (false) {
                     const slice = data.slice;
                     sliceAll.push(slice);
                     slice.output()

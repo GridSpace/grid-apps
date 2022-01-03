@@ -997,7 +997,8 @@
             onMove:     (f) => { platformOnMove = f },
             onHover:    (f) => { platformHover = f },
             onClick:    (f) => { platformClick = f},
-            size:       ()  => { return platform.scale }
+            size:       ()  => { return platform.scale },
+            get world() { throw "platform.world deprecated" }
         },
 
         view: {

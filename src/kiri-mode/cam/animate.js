@@ -26,7 +26,7 @@ self.kiri.loader.push(function() {
     CAM.animate_clear = function(api) {
         KIRI.client.animate_cleanup();
         SPACE = (API = api).const.SPACE;
-        WORLD = SPACE.platform.world;
+        WORLD = SPACE.world;
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
@@ -35,7 +35,7 @@ self.kiri.loader.push(function() {
     if (KIRI.client)
     CAM.animate = function(api, delay) {
         SPACE = (API = api).const.SPACE;
-        WORLD = SPACE.platform.world;
+        WORLD = SPACE.world;
         KIRI.client.animate_setup(API.conf.get(), data => {
             checkMeshCommands(data);
             if (!(data && data.mesh_add)) {

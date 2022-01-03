@@ -1436,7 +1436,7 @@
         }, (layers, maxSpeed, minSpeed) => {
             API.show.progress(0);
             STACKS.clear();
-            const stack = STACKS.create('parse', SPACE.platform.world);
+            const stack = STACKS.create('parse', SPACE.world);
             layers.forEach(layer => stack.add(layer));
             updateSliderMax(true);
             updateSpeeds(maxSpeed, minSpeed);
@@ -1513,7 +1513,7 @@
             // mesh.castShadow = true;
             // mesh.receiveShadow = true;
             //
-            // SPACE.platform.world.add(mesh);
+            // SPACE.world.add(mesh);
             let widget = newWidget().loadVertices(bigv)
             widget.meta.file = opt.file;
             platform.add(widget);

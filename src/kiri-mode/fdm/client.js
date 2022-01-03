@@ -526,7 +526,7 @@
                     ));
                 }
 
-                xpdebug = new KIRI.Stack(SPACE.platform.world, false);
+                xpdebug = new KIRI.Stack(SPACE.world, false);
                 xpdebug.addLayers(layers);
                 xpdebug.setVisible(0,Infinity);
                 xpdebug.show();
