@@ -282,6 +282,13 @@ let util = mesh.util = {
         deferFn.push(rec);
     },
 
+    // return a function wrapper which can be re-used
+    deferWrap(fn, time) {
+        return function() {
+            util.defer(fn, time);
+        }
+    },
+
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
     // @returns bounds modified for moto.Space
     bounds(object) {

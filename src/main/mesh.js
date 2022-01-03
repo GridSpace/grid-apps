@@ -62,50 +62,44 @@ function ui_build() {
     let { grouplist } = bound;
     let api = mesh.api;
 
-    let maker = {
-        update() {
-            clearTimeout(maker.timer);
-            maker.timer = setTimeout(maker.do, 10);
-        },
-        do() {
-            let groups = api.group.list()
-                // map groups to divs
-                .map(g => h.div([
-                    h.button({
-                        _: `group`,
-                        title: g.id,
-                        class: [
-                            "group",
-                            api.selection.contains(g) ? 'selected' : undefined
-                        ],
-                        onclick() { api.selection.toggle(g); }
-                    }),
-                    h.div({ class: "vsep" }),
-                    h.div({ class: "models"},
-                        // map models to buttons
-                        g.models.map(m => h.button({
-                            _: m.file || m.id,
-                            class: api.selection.contains(m) ? [ 'selected' ] : [],
-                            onclick() { api.selection.toggle(m); }
-                        }))
-                    )
-                ]));
-            h.bind(grouplist, groups);
-        }
-    };
+    function build() {
+        // map groups to divs
+        let groups = api.group.list()
+            .map(g => h.div([
+                h.button({
+                    _: `group`,
+                    title: g.id,
+                    class: [ "group",
+                        api.selection.contains(g) ? 'selected' : undefined
+                    ],
+                    onclick() { api.selection.toggle(g); }
+                }),
+                h.div({ class: "vsep" }),
+                h.div({ class: "models"},
+                    // map models to buttons
+                    g.models.map(m => h.button({
+                        _: m.file || m.id,
+                        class: api.selection.contains(m) ? [ 'selected' ] : [],
+                        onclick() { api.selection.toggle(m); }
+                    }))
+                )
+            ]));
+        h.bind(grouplist, groups);
+    }
 
     function update(object, topic) {
         console.log({update: object, topic});
     }
 
     // listen for api calls
-    // todo: switch to util.defer(fn)
+    // create a deferred wrapper to merge multiple rapid events
+    let deferred = mesh.util.deferWrap(build);
     broker.listeners({
-        model_add: maker.update,
-        group_add: maker.update,
-        model_remove: maker.update,
-        group_remove: maker.update,
-        selection_update: maker.update,
+        model_add: deferred,
+        group_add: deferred,
+        model_remove: deferred,
+        group_remove: deferred,
+        selection_update: deferred,
     })
 }
 
