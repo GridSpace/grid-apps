@@ -171,6 +171,9 @@ mesh.model = class MeshModel extends mesh.object {
 
     material(mat) {
         this.mesh.material = mat.clone === true ? this.mesh.material.clone() : mat;
+        if (this._wire) {
+            this.wireframe(false);
+        }
     }
 
     remove() {
