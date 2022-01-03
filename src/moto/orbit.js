@@ -162,6 +162,16 @@ MOTO.Orbit = function (object, domElement, notify, slider) {
         pan.add(panOffset);
     };
 
+    // pass in distance in world space to move backward
+    this.panBack = function (distance) {
+        let te = this.object.matrix.elements;
+
+        // get Y column of matrix
+        panOffset.set(te[ 8 ], te[ 9 ], te[ 10 ]);
+        panOffset.multiplyScalar(distance);
+        pan.add(panOffset);
+    };
+
     // pass in x,y of change desired in pixel space,
     // right and down are positive
     this.pan = function (deltaX, deltaY) {
@@ -447,17 +457,11 @@ MOTO.Orbit = function (object, domElement, notify, slider) {
             delta = -delta;
         }
 
-        let saveZoomSpeed = scope.zoomSpeed;
-        if (event.ctrlKey) scope.zoomSpeed *= 2;
-        if (event.metaKey) scope.zoomSpeed *= 2;
-
         if (delta > 0) {
             scope.dollyOut();
         } else if (delta < 0) {
             scope.dollyIn();
         }
-
-        scope.zoomSpeed = saveZoomSpeed;
 
         scope.update();
         scope.dispatchEvent(startEvent);

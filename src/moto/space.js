@@ -1061,6 +1061,9 @@
                 });
                 });
                 });
+            },
+            get ctrl() {
+                return viewControl;
             }
         },
 
