@@ -161,7 +161,7 @@
                 } else {
                     geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                 }
-                geo.computeFaceNormals();
+                // geo.computeFaceNormals();
                 geo.computeVertexNormals();
                 if (cface) {
                     cface.forEach((c, i) => geo.addGroup(c.start, c.count, i));
@@ -189,7 +189,7 @@
                     const geo = new THREE.BufferGeometry();
                     geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
                     geo.setIndex(index);
-                    geo.computeFaceNormals();
+                    // geo.computeFaceNormals();
                     geo.computeVertexNormals();
                     if (cpath) {
                         cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));

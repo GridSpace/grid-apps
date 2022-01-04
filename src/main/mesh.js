@@ -45,7 +45,7 @@ function init() {
         size: { width: 2000, depth: 2000, height: 1, maxz: 300 },
         grid: { major: 25, minor: 5,
             colorMajor: 0xcccccc, colorMinor: 0xeeeeee,
-            colorX: 0xffaaaa, colorY: 0xaaaaff },
+            colorX: 0xff7777, colorY: 0x7777ff },
     });
     space.view.setZoom(zoomrev, zoomspd);
 

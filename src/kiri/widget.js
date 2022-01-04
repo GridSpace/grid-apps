@@ -350,7 +350,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             geo.setAttribute('normal', undefined);
             geo.attributes.position.needsUpdate = true;
-            geo.computeFaceNormals();
+            // geo.computeFaceNormals();
             geo.computeVertexNormals();
             this.meta.vertices = vertices.length / 3;
             this.points = null;
@@ -459,7 +459,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         );
         mesh.renderOrder = 1;
         // fix invalid normals
-        geometry.computeFaceNormals();
+        // geometry.computeFaceNormals();
         geometry.computeVertexNormals();
         mesh.material.side = THREE.DoubleSide;
         mesh.castShadow = true;
@@ -740,7 +740,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             arr[i*3+8] = z;
         }
         pos.needsUpdate = true;
-        geo.computeFaceNormals();
+        // geo.computeFaceNormals();
         geo.computeVertexNormals();
         ot.mirror = !ot.mirror;
         this.setModified();

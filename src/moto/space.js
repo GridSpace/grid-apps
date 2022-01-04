@@ -290,7 +290,7 @@
                 {x:  width/2, z:  depth/2, y: maxz},
                 {x: -width/2, z:  depth/2, y: maxz},
             ];
-            SCENE.add(volume = makeLinesFromPoints(points, 0x888888));
+            SCENE.add(volume = makeLinesFromPoints(points, 0xdddddd));
             showVolume(volumeOn);
         }
     }
@@ -739,9 +739,7 @@
             vrt[vi++] = p.z;
         }
         geo.setAttribute('position', new THREE.BufferAttribute(vrt, 3));
-        return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
-            color: color
-        }));
+        return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color }));
     }
 
     function intersect(objects, recurse) {

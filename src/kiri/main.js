@@ -1885,7 +1885,7 @@
                 DOC.body.classList.add('dark');
             } else {
                 SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
-                SPACE.platform.opacity(0.3);
+                SPACE.platform.opacity(0.2);
                 SPACE.sky.setColor(0xffffff);
                 DOC.body.classList.remove('dark');
             }
