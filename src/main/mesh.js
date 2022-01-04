@@ -198,7 +198,7 @@ function space_init(data) {
                             .then(data => {
                                 if (data) {
                                     console.log({data});
-                                    m.load(
+                                    m.reload(
                                         // Float32Array.from(data.vertices.toFloat32()),
                                         Float32Array.from([...data.v]),
                                         Uint32Array.from([...data.f])

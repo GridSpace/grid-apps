@@ -55,7 +55,7 @@ let model = {
             debug: false
         });
         dbug.log('...imported data');
-        tool.heal();
+        // tool.heal();
         dbug.log('...healed');
         dbug.log(tool);
         return true || tool.newFaces ? {

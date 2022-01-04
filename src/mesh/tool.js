@@ -87,6 +87,7 @@ mesh.tool = class MeshTool {
             }
             vertices = nuvt;
             this.stats = {cull, dups, faces:faces.length/3};
+            // console.log({stats: this.stats});
         } else {
             faces = faces.map(v => v*3);
         }

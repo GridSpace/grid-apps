@@ -90,14 +90,11 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     load(vertices, indices) {
-        this.wireframe(false);
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         geo.computeVertexNormals();
-        // reuse mesh if this is a "reload"
-        let meh = this.mesh || new THREE.Mesh(geo, materials.unselected);
-        meh.geometry = geo;
+        let meh = new THREE.Mesh(geo, materials.unselected);
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -105,28 +102,27 @@ mesh.model = class MeshModel extends mesh.object {
         meh.model = this;
         // sync data to worker
         worker.model_load({id: this.id, name: this.file, vertices, indices});
-        // update mesh in group
-        // if (this.group) this.group.update(oldmesh, meh);
         return meh;
     }
 
-    optimize() {
-        let ind = THREE.BufferGeometryUtils.mergeVertices(this.mesh.geometry);
-        console.log({geo: this.mesh.geometry, ind});
+    optimize(geo) {
+        let ind = THREE.BufferGeometryUtils.mergeVertices(geo || this.mesh.geometry);
+        console.log({geo: geo || this.mesh.geometry.clone(), ind});
+        return ind;
     }
 
-    // reload(vertices, indices) {
-    //     this.wireframe(false);
-    //     let geo = this.mesh.geometry;
-    //     geo.attributes.position.array = vertices;
-    //     geo.attributes.position.needsUpdate = true;
-    //     geo.setAttribute('normal', undefined);
-    //     if (indices) {
-    //         geo.setIndex(new THREE.BufferAttribute(indices, 1));
-    //     }
-    //     geo.computeVertexNormals();
-    //     worker.model_load({id: this.id, name: this.name, vertices, indices});
-    // }
+    reload(vertices, indices) {
+        this.wireframe(false);
+        let geo = this.mesh.geometry;
+        geo.attributes.position.array = vertices;
+        geo.attributes.position.needsUpdate = true;
+        geo.setAttribute('normal', undefined);
+        if (indices) {
+            geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        }
+        geo.computeVertexNormals();
+        worker.model_load({id: this.id, name: this.name, vertices, indices});
+    }
 
     get group() {
         return this._group;

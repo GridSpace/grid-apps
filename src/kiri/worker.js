@@ -21,6 +21,8 @@ let BASE = self.base,
     minifns = {},
     miniseq = 0;
 
+KIRI.version = gapp.version;
+
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
     console.log(o);
