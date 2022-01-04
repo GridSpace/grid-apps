@@ -49,7 +49,7 @@ let materials = mesh.material = {
 mesh.model = class MeshModel extends mesh.object {
     constructor(data, id) {
         super(id);
-        let { file, mesh } = data;
+        let { file, mesh, index, vertices, indices } = data;
 
         if (!mesh) {
             dbug.error(`'${file}' missing mesh data`);
@@ -62,7 +62,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (dot > 0) file = text.substring(0, dot);
 
         this.file = file || 'unnamed';
-        this.mesh = this.load(mesh);
+        this.load(mesh || vertices, index || indices);
 
         // persist in db so it can be restored on page load
         mapp.db.space.put(this.id, { file, mesh });
@@ -94,7 +94,7 @@ mesh.model = class MeshModel extends mesh.object {
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         geo.computeVertexNormals();
-        let meh = new THREE.Mesh(geo, materials.unselected);
+        let meh = this.mesh = new THREE.Mesh(geo, materials.unselected);
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -102,7 +102,6 @@ mesh.model = class MeshModel extends mesh.object {
         meh.model = this;
         // sync data to worker
         worker.model_load({id: this.id, name: this.file, vertices, indices});
-        return meh;
     }
 
     optimize(geo) {
@@ -114,12 +113,9 @@ mesh.model = class MeshModel extends mesh.object {
     reload(vertices, indices) {
         this.wireframe(false);
         let geo = this.mesh.geometry;
-        geo.attributes.position.array = vertices;
-        geo.attributes.position.needsUpdate = true;
+        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
-        if (indices) {
-            geo.setIndex(new THREE.BufferAttribute(indices, 1));
-        }
+        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         geo.computeVertexNormals();
         worker.model_load({id: this.id, name: this.name, vertices, indices});
     }

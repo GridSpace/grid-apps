@@ -202,8 +202,8 @@ MOTO.Orbit = function (object, domElement, notify, slider) {
     };
 
     this.setTarget = function(t) {
-        this.target = t;
-        this.target0 = t.clone();
+        this.target = new THREE.Vector3().add(t);
+        this.target0 = this.target.clone();
     }
 
     function isValue(v) {

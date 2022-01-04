@@ -47,6 +47,13 @@ function init() {
             colorMajor: 0xcccccc, colorMinor: 0xeeeeee,
             colorX: 0xff7777, colorY: 0x7777ff },
     });
+    platform.onMove(() => {
+        // save last location and focus
+        db.admin.put('camera', {
+            place: space.view.save(),
+            focus: space.view.getFocus()
+        });
+    }, 100);
     space.view.setZoom(zoomrev, zoomspd);
 
     // start worker
@@ -65,30 +72,32 @@ function init() {
     $d('curtain','none');
 }
 
+// restore space layout and view from previous session
 function restore_space() {
+    let space = moto.Space;
+    mesh.db.admin.get("camera")
+        .then(saved => {
+            space.view.load(saved.place);
+            space.view.setFocus(saved.focus);
+        });
     mesh.db.space.iterate({ map: true }).then(cached => {
-        let loaded = false;
         for (let [id, data] of Object.entries(cached)) {
             // restore group
             if (Array.isArray(data)) {
-                let models = loaded = data.map(id => {
+                let models = data.map(id => {
                     let md = cached[id];
                     return new mesh.model(md, id);
                 });
                 mesh.api.group.new(models, id)
                     .centerModels()
                     .centerXY()
-                    .floor()
-                    .focus();
+                    .floor();
             }
-        }
-        if (loaded) {
-            let space = moto.Space;
-            space.view.load(space.preset.top);
         }
     })
 }
 
+// create html elements
 function ui_build() {
     // set app version
     $h('app-name', "Mesh:Tool");
@@ -197,11 +206,16 @@ function space_init(data) {
                         moto.client.fn.model_heal(m.id)
                             .then(data => {
                                 if (data) {
-                                    console.log({data});
+                                    // api.group.new([new mesh.model({
+                                    //     file: 'healed',
+                                    //     mesh: data.vertices.toFloat32(),
+                                    //     // mesh: Float32Array.from([...data.v]),
+                                    //     // index: Uint32Array.from([...data.f])
+                                    // })]);
                                     m.reload(
-                                        // Float32Array.from(data.vertices.toFloat32()),
-                                        Float32Array.from([...data.v]),
-                                        Uint32Array.from([...data.f])
+                                        Float32Array.from(data.vertices),
+                                        // Float32Array.from([...data.v]),
+                                        // Uint32Array.from([...data.f])
                                     );
                                 }
                             });

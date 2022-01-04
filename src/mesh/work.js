@@ -55,13 +55,13 @@ let model = {
             debug: false
         });
         dbug.log('...imported data');
-        // tool.heal();
+        tool.heal();
         dbug.log('...healed');
         dbug.log(tool);
         return true || tool.newFaces ? {
             vertices: tool.unrolled(),
-            v: tool.vertices,
-            f: tool.faces.map(f => f/3)
+            // v: tool.vertices,
+            // f: tool.faces.map(f => f/3)
         } : 0;
     }
 };
