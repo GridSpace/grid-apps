@@ -89,11 +89,6 @@ mesh.group = class MeshGroup extends mesh.object {
         return this;
     }
 
-    // update(oldmesh, newmesh) {
-    //     this.group.remove(oldmesh);
-    //     this.group.add(newmesh);
-    // }
-
     // center objects to group bounds
     // dependent on first being added to world/scene
     centerModels() {

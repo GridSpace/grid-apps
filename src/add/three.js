@@ -111,6 +111,14 @@
         return this;
     };
 
+    BP.shallowClone = function() {
+        let geo = new THREE.BufferGeometry();
+        for (let [k, v] of Object.entries(this.attributes)) {
+            geo.setAttribute(k, new THREE.BufferAttribute(v.array, v.itemSize));
+        }
+        return geo;
+    };
+
     THREE.Object3D.prototype.newGroup = function() {
         var group = new THREE.Group();
         this.add(group);

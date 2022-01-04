@@ -104,19 +104,15 @@ mesh.model = class MeshModel extends mesh.object {
         worker.model_load({id: this.id, name: this.file, vertices, indices});
     }
 
-    optimize(geo) {
-        let ind = THREE.BufferGeometryUtils.mergeVertices(geo || this.mesh.geometry);
-        console.log({geo: geo || this.mesh.geometry.clone(), ind});
-        return ind;
-    }
-
     reload(vertices, indices) {
         this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
         if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        geo.attributes.position.needsUpdate = true;
         geo.computeVertexNormals();
+        // sync data to worker
         worker.model_load({id: this.id, name: this.name, vertices, indices});
     }
 
@@ -141,7 +137,7 @@ mesh.model = class MeshModel extends mesh.object {
             mat.opacity = 1;
             mat.visible = false;
         } else {
-            mat.transparent = ov < 1.0;
+            mat.transparent = true;
             mat.opacity = ov;
             mat.visible = true;
         }
@@ -167,9 +163,8 @@ mesh.model = class MeshModel extends mesh.object {
             this.opacity(this._wireo);
         }
         if (bool) {
-            this.material({clone:true});
             this._wireo = this.opacity();
-            this._wire = new THREE.Mesh(this.mesh.geometry, materials.wireframe);
+            this._wire = new THREE.Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
             this.mesh.add(this._wire);
             this.opacity(opt.opacity || 0);
         }
@@ -177,10 +172,8 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     material(mat) {
-        this.mesh.material = mat.clone === true ? this.mesh.material.clone() : mat;
-        if (this._wire) {
-            this.wireframe(false);
-        }
+        this.wireframe(false);
+        this.mesh.material = mat;
     }
 
     remove() {
