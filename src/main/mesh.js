@@ -67,9 +67,6 @@ function init() {
 
     // reload stored space
     moto.client.on('ready', restore_space);
-
-    // hide loading curtain
-    $d('curtain','none');
 }
 
 // restore space layout and view from previous session
@@ -77,8 +74,10 @@ function restore_space() {
     let space = moto.Space;
     mesh.db.admin.get("camera")
         .then(saved => {
-            space.view.load(saved.place);
-            space.view.setFocus(saved.focus);
+            if (saved) {
+                space.view.load(saved.place);
+                space.view.setFocus(saved.focus);
+            }
         });
     mesh.db.space.iterate({ map: true }).then(cached => {
         for (let [id, data] of Object.entries(cached)) {
@@ -95,6 +94,8 @@ function restore_space() {
             }
         }
     })
+    // hide loading curtain
+    $d('curtain','none');
 }
 
 // create html elements
