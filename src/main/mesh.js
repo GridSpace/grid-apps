@@ -67,10 +67,11 @@ function init() {
 
 function restore_space() {
     mesh.db.space.iterate({ map: true }).then(cached => {
+        let loaded = false;
         for (let [id, data] of Object.entries(cached)) {
             // restore group
             if (Array.isArray(data)) {
-                let models = data.map(id => {
+                let models = loaded = data.map(id => {
                     let md = cached[id];
                     return new mesh.model(md, id);
                 });
@@ -80,6 +81,10 @@ function restore_space() {
                     .floor()
                     .focus();
             }
+        }
+        if (loaded) {
+            let space = moto.Space;
+            space.view.load(space.preset.top);
         }
     })
 }
@@ -188,7 +193,15 @@ function space_init(data) {
                     space.view.home();
                     break;
                 case 'KeyF':
-                    space.view.front();
+                    for (let m of selection.models()) {
+                        moto.client.fn.model_heal(m.id)
+                            .then(data => {
+                                if (data) {
+                                    m.wireframe(false);
+                                    m.reload(data.vertices.toFloat32());
+                                }
+                            });
+                    }
                     break;
                 case 'KeyT':
                     space.view.top();

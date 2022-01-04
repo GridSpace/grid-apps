@@ -13,6 +13,7 @@ if (mesh.tool) return;
 /** tool for identiying defects and healing them **/
 mesh.tool = class MeshTool {
     constructor(params = {}) {
+        this.debug = params.debug;
         this.precision = Math.pow(10, params.precision || 6);
         if (params.vertices) {
             this.setData(params.vertices, params.faces);
@@ -37,6 +38,7 @@ mesh.tool = class MeshTool {
         if (vertices.length % 3 !== 0) {
             throw "invalid vertices";
         }
+        let TEST = this.debug;
         // when face/index data is missing, vertices need to be normalized
         if (!faces) {
             if (TEST) console.time('generate faces');
@@ -110,6 +112,7 @@ mesh.tool = class MeshTool {
      * connect lines into polys. earcut polys into new faces.
      */
     heal() {
+        let TEST = this.debug;
         if (TEST) console.time('heal');
 
         let vertices = this.vertices;

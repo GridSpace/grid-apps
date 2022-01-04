@@ -95,7 +95,6 @@ mesh.model = class MeshModel extends mesh.object {
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         let meh = new THREE.Mesh(geo, materials.unselected);
         geo.computeVertexNormals();
-        // geo.computeFaceNormals();
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -108,15 +107,13 @@ mesh.model = class MeshModel extends mesh.object {
 
     reload(vertices, indices) {
         let geo = this.mesh.geometry;
-        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geo.attributes.position.array = vertices;
+        geo.attributes.position.needsUpdate = true;
         geo.setAttribute('normal', undefined);
         if (indices) {
             geo.setIndex(new THREE.BufferAttribute(indices, 1));
-            geo.attributes.index.needsUpdate = true;
         }
-        geo.attributes.position.needsUpdate = true;
         geo.computeVertexNormals();
-        // geo.computeFaceNormals();
         worker.model_load({id: this.id, name: this.name, vertices, indices});
     }
 

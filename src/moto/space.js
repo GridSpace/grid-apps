@@ -1019,6 +1019,15 @@
             get world() { throw "platform.world deprecated" }
         },
 
+        preset: {
+            top:    {left: home, up: 0,   panX, panY, panZ},
+            back:   {left: PI,   up: PI2, panX, panY, panZ},
+            home:   {left: home, up,      panX, panY, panZ},
+            front:  {left: 0,    up: PI2, panX, panY, panZ},
+            right:  {left: PI2,  up: PI2, panX, panY, panZ},
+            left:   {left: -PI2, up: PI2, panX, panY, panZ},
+        },
+
         view: {
             top:    (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
             back:   (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
@@ -1027,7 +1036,7 @@
             right:  (then) => { tweenCam({left: PI2,  up: PI2, panX, panY, panZ, then}) },
             left:   (then) => { tweenCam({left: -PI2, up: PI2, panX, panY, panZ, then}) },
             reset:  ()     => { viewControl.reset(); requestRefresh() },
-            load:   (cam)  => { viewControl.setPosition(cam) },
+            load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
             save:   ()     => { return viewControl.getPosition(true) },
             panTo:  (x,y,z) => { tweenCamPan(x,y,z) },
             setZoom: (r,v) => { viewControl.setZoom(r,v) },

@@ -71,11 +71,12 @@ let client = moto.client = {
             let ondata, ondone, onerror = reject;
             if (!stream) {
                 let accum = [];
+                let simple = options.simple !== false;
                 ondata = (data) => {
                     accum.push(data);
                 };
                 ondone = () => {
-                    resolve(accum);
+                    resolve(simple && accum.length === 1 ? accum[0] : accum);
                 };
             } else {
                 ondata = stream;

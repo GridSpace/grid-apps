@@ -32,7 +32,6 @@ let model = {
         let { vertices, name, id } = data;
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        geo.computeVertexNormals();
         cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
     },
 
@@ -44,6 +43,20 @@ let model = {
         geo.applyMatrix4(m4);
         // for debugging state / matrix ops
         return geo.attributes.position.array;
+    },
+
+    heal(id) {
+        dbug.log({healing: id});
+        let tool = new mesh.tool({
+            vertices: cache[id].geo.attributes.position.array
+        });
+        dbug.log('...imported data');
+        tool.heal();
+        dbug.log('...healed');
+        dbug.log(tool);
+        return tool.newFaces ? {
+            vertices: tool.unrolled(),
+        } : 0;
     }
 };
 
