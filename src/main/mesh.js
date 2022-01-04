@@ -136,10 +136,6 @@ function ui_build() {
         h.bind(grouplist, groups);
     }
 
-    function update(object, topic) {
-        console.log({update: object, topic});
-    }
-
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
     let deferred = mesh.util.deferWrap(build);
