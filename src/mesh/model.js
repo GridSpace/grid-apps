@@ -37,7 +37,12 @@ let materials = mesh.material = {
         specular: 0x181818,
         color: 0x00ff00,
         opacity: 1
-    })
+    }),
+    wireframe: new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        wireframe: true,
+        color: 0x0
+    }),
 };
 
 /** 3D model rendered on plaform **/
@@ -164,9 +169,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (bool) {
             this.material({clone:true});
             this._wireo = this.opacity();
-            this._wire = new THREE.LineSegments(
-                new THREE.WireframeGeometry(this.mesh.geometry),
-                new THREE.LineBasicMaterial({ color: opt.color || 0 }));
+            this._wire = new THREE.Mesh(this.mesh.geometry, materials.wireframe);
             this.mesh.add(this._wire);
             this.opacity(opt.opacity || 0);
         }
