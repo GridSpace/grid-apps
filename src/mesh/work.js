@@ -29,9 +29,10 @@ function cacheUpdate(id, data) {
 
 let model = {
     load(data) {
-        let { vertices, name, id } = data;
+        let { vertices, indices, name, id } = data;
         let geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
         cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
     },
 
@@ -47,15 +48,20 @@ let model = {
 
     heal(id) {
         dbug.log({healing: id});
+        let geo = cache[id].geo;
         let tool = new mesh.tool({
-            vertices: cache[id].geo.attributes.position.array
+            vertices: geo.attributes.position.array,
+            faces: geo.index ? geo.index.array : undefined,
+            debug: false
         });
         dbug.log('...imported data');
         tool.heal();
         dbug.log('...healed');
         dbug.log(tool);
-        return tool.newFaces ? {
+        return true || tool.newFaces ? {
             vertices: tool.unrolled(),
+            v: tool.vertices,
+            f: tool.faces.map(f => f/3)
         } : 0;
     }
 };

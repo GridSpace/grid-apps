@@ -197,8 +197,12 @@ function space_init(data) {
                         moto.client.fn.model_heal(m.id)
                             .then(data => {
                                 if (data) {
-                                    m.wireframe(false);
-                                    m.reload(data.vertices.toFloat32());
+                                    console.log({data});
+                                    m.load(
+                                        // Float32Array.from(data.vertices.toFloat32()),
+                                        Float32Array.from([...data.v]),
+                                        Uint32Array.from([...data.f])
+                                    );
                                 }
                             });
                     }

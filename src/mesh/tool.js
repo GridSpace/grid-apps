@@ -13,7 +13,6 @@ if (mesh.tool) return;
 /** tool for identiying defects and healing them **/
 mesh.tool = class MeshTool {
     constructor(params = {}) {
-        this.debug = params.debug;
         this.precision = Math.pow(10, params.precision || 6);
         if (params.vertices) {
             this.setData(params.vertices, params.faces);
@@ -38,10 +37,8 @@ mesh.tool = class MeshTool {
         if (vertices.length % 3 !== 0) {
             throw "invalid vertices";
         }
-        let TEST = this.debug;
         // when face/index data is missing, vertices need to be normalized
         if (!faces) {
-            if (TEST) console.time('generate faces');
             faces = [];
             let fcac = {}; // seen face hash
             let fnew = []; // accumulate vertex triplets
@@ -49,7 +46,7 @@ mesh.tool = class MeshTool {
             let hash = {}; // find vertex matches
             let prec = this.precision;
             let dups = 0;
-            // let cull = 0;
+            let cull = 0;
             for (let i=0, l=vertices.length; i<l; i += 3) {
                 let x = vertices[i];
                 let y = vertices[i+1];
@@ -61,33 +58,37 @@ mesh.tool = class MeshTool {
                 ].join('');
                 let vpos = hash[key];
                 if (vpos === undefined) {
+                    // add new vertex x,y,z and hash entry with index
                     hash[key] = vpos = nuvt.length;
                     nuvt.push(x);
                     nuvt.push(y);
                     nuvt.push(z);
                 }
+                // add vertex position to face accumulator
                 fnew.push(vpos);
                 if (fnew.length === 3) {
-                    // cull invalid faces (shares 2 or more points)
-                    // if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
-                    //     fnew = [];
-                    //     cull++;
-                    //     continue;
-                    // }
+                    // check and emit face if it's unique
+                    // cull invalid faces (has 2 or more shared vertices)
+                    if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+                        fnew = [];
+                        cull++;
+                        continue;
+                    }
                     let key = fnew.slice().sort().join('-');
                     // drop duplicate faces (sort handles reverse order)
                     if (!fcac[key]) {
                         faces.appendAll(fnew);
+                        fcac[key] = key;
                     } else {
                         dups++;
                     }
-                    fcac[key] = key;
                     fnew = [];
                 }
             }
             vertices = nuvt;
-            if (TEST) console.timeEnd('generate faces');
-            if (TEST) console.log({dups, faces:faces.length/3});
+            this.stats = {cull, dups, faces:faces.length/3};
+        } else {
+            faces = faces.map(v => v*3);
         }
         this.vertices = vertices;
         this.faces = faces;
@@ -112,9 +113,6 @@ mesh.tool = class MeshTool {
      * connect lines into polys. earcut polys into new faces.
      */
     heal() {
-        let TEST = this.debug;
-        if (TEST) console.time('heal');
-
         let vertices = this.vertices;
         let faces = this.faces;
         let hash = {}; // key to line map
@@ -131,7 +129,7 @@ mesh.tool = class MeshTool {
             addFace(face) {
                 if (this.faces.indexOf(face) < 0) {
                     this.faces.push(face);
-                } else if (TEST) {
+                } else if (false) {
                     console.log('adding face to line twice', this, face);
                 }
                 return this;
@@ -250,7 +248,7 @@ mesh.tool = class MeshTool {
                         let tmp = adjacent[0].v1;
                         adjacent[0].v1 = adjacent[0].v2;
                         adjacent[0].v2 = tmp;
-                        if (TEST > 1) console.log('chirality mismatch fixed');
+                        // console.log('chirality mismatch fixed');
                     }
                     line = adjacent[0];
                 } else if (adjacent.length === 2) {
@@ -259,7 +257,7 @@ mesh.tool = class MeshTool {
                         adjacent[0] :
                         adjacent[1]
                 } else {
-                    if (TEST > 1) console.log('error adjacent', line, adjacent, loops.length, loop.length);
+                    // console.log('error adjacent', line, adjacent, loops.length, loop.length);
                     line.split = adjacent;
                     line = adjacent[0];
                 }
@@ -306,11 +304,11 @@ mesh.tool = class MeshTool {
 
         // store invalid loops for display / culling
         this.shorts = loops.filter(l => l && l.length <= 2);
-        if (TEST) console.log({edges, loops, shorts: this.shorts});
+        // console.log({edges, loops, shorts: this.shorts});
 
         // filter out null and short loops
         this.loops = loops = loops.filter(l => l && l.length > 2);
-        if (TEST > 1) console.log({loops_filtered: loops});
+        // console.log({loops_filtered: loops});
 
         // rotate/flatten to Z plane and use earcut to generate faces
         // because earcut emits point indexes, no need to un-rotate
@@ -367,7 +365,7 @@ mesh.tool = class MeshTool {
 
             let fpoints = points.flat();
             let ec = earcut(fpoints, undefined, 3);
-            if (TEST > 2) console.log({points, fpoints, ec, dx, dy, dz});
+            // console.log({points, fpoints, ec, dx, dy, dz});
 
             for (let point of ec) {
                 faces.push(pindex[point]);
@@ -381,8 +379,6 @@ mesh.tool = class MeshTool {
         }
 
         this.newFaces = this.faces.length - faceCount;
-        if (TEST) console.log({newFaces: this.newFaces});
-        if (TEST) console.timeEnd('heal');
         return this;
     }
 };
