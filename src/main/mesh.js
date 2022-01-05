@@ -105,22 +105,22 @@ function ui_build() {
     $h('app-vers', gapp.version);
 
     let bound = h.bind($('app-body'), [
-        h.div({id: 'grouplist'})
+        h.div({id: 'grouplist'}),
+        h.div({id: 'selectlist'})
     ]);
 
     let { grouplist } = bound;
     let api = mesh.api;
 
     function build() {
+        let selHas = api.selection.contains;
         // map groups to divs
         let groups = api.group.list()
             .map(g => h.div([
                 h.button({
                     _: `group`,
                     title: g.id,
-                    class: [ "group",
-                        api.selection.contains(g) ? 'selected' : undefined
-                    ],
+                    class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick() { api.selection.toggle(g); }
                 }),
                 h.div({ class: "vsep" }),
@@ -128,12 +128,31 @@ function ui_build() {
                     // map models to buttons
                     g.models.map(m => h.button({
                         _: m.file || m.id,
-                        class: api.selection.contains(m) ? [ 'selected' ] : [],
+                        class: selHas(m) ? [ 'selected' ] : [],
                         onclick() { api.selection.toggle(m); }
                     }))
                 )
             ]));
         h.bind(grouplist, groups);
+        // map selection to divs
+        let sel_grp = api.selection.groups()
+            .map(g => h.div([
+                h.button({
+                    _: `group`,
+                    title: g.id,
+                    class: [ "group" ],
+                }),
+                h.div({ class: "grid"}, [
+                    h.div({ _: "X" }),
+                    h.div({ _: "Y" }),
+                    h.div({ _: "Z" }),
+                    h.div({ _: "pos" }),
+                    h.div({ _: "rot" }),
+                    h.label({ id: "gp-x" }),
+                ])
+            ]));
+        let sel_mdl = api.selection.models();
+        h.bind(selectlist, sel_grp);
     }
 
     // listen for api calls

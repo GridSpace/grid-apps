@@ -151,6 +151,8 @@ button:hover {
     background-color: rgba(200,200,200,1);
 }
 
+/** for group/model buttons top/right of workspace */
+
 #grouplist {
     position: absolute;
     margin: 3px 3px 0 0;
@@ -191,4 +193,20 @@ button:hover {
 #grouplist .vsep {
     margin: 2px 0 1px 0;
     border-bottom: 1px dashed gray;
+}
+
+/** for selection info bottom/right of workspace */
+#selectlist {
+    position: absolute;
+    margin: 0 3px 3px 0;
+    bottom: 0;
+    right: 0;
+}
+
+#selectlist > div {
+    flex-direction: column;
+}
+
+#selection .grid {
+    display: grid;
 }
