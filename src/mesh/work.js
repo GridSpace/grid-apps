@@ -59,9 +59,7 @@ let model = {
         dbug.log('...healed');
         dbug.log(tool);
         return true || tool.newFaces ? {
-            vertices: tool.unrolled(),
-            // v: tool.vertices,
-            // f: tool.faces.map(f => f/3)
+            vertices: tool.unrolled().toFloat32(),
         } : 0;
     }
 };

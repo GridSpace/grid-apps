@@ -203,16 +203,10 @@ function space_init(data) {
                         moto.client.fn.model_heal(m.id)
                             .then(data => {
                                 if (data) {
-                                    // api.group.new([new mesh.model({
-                                    //     file: 'healed',
-                                    //     mesh: data.vertices.toFloat32(),
-                                    //     // mesh: Float32Array.from([...data.v]),
-                                    //     // index: Uint32Array.from([...data.f])
-                                    // })]);
                                     m.reload(
-                                        Float32Array.from(data.vertices),
-                                        // Float32Array.from([...data.v]),
-                                        // Uint32Array.from([...data.f])
+                                        data.vertices,
+                                        data.indices,
+                                        data.normals
                                     );
                                 }
                             });

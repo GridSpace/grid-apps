@@ -329,6 +329,7 @@ let util = mesh.util = {
 
     // bounding box workaround adapted from:
     // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
+    // https://discourse.threejs.org/t/invalid-bounds-generated-for-some-orientations/33205
     box3expand(box3, object) {
         let geometry = object.geometry;
         object.updateWorldMatrix(geometry ? true : false, false);
