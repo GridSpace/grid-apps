@@ -197,16 +197,53 @@ button:hover {
 
 /** for selection info bottom/right of workspace */
 #selectlist {
+    font-size: smaller;
     position: absolute;
     margin: 0 3px 3px 0;
     bottom: 0;
     right: 0;
+    gap: 2px;
 }
 
 #selectlist > div {
     flex-direction: column;
+    gap: 2px;
 }
 
-#selection .grid {
-    display: grid;
+#selectlist label {
+    border-radius: 3px;
+    font-family: monospace;
+    text-align: right;
+    padding: 2px;
+    background-color: rgba(0,0,0,0.05);
 }
+
+#selectlist .top {
+    display: block;
+    font-weight: bold;
+    font-size: smaller;
+    text-align: center;
+}
+
+#selectlist .side {
+    font-weight: bold;
+    font-size: smaller;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+#selectlist .grid {
+    background-color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 3px;
+    display: grid;
+    gap: 2px 2px;
+    grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
+    grid-template-areas:
+        ". head head head"
+        "label data data data"
+        "label data data data";
+}
+
+#selectlist

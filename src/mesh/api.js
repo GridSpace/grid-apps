@@ -23,13 +23,13 @@ let groups = [];
 let selected = [];
 
 let selection = {
-    // @returns {MeshObject[]}
-    list() {
-        return selected.length ? selected.slice() : groups.slice();
+    // @returns {MeshObject[]} or all groups if not strict and no selection
+    list(strict = false) {
+        return selected.length || strict  ? selected.slice() : groups.slice();
     },
 
-    groups() {
-        let all = selection.list();
+    groups(strict) {
+        let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
         let mdl = all.filter(s => s instanceof mesh.model);
         for (let m of mdl) {
@@ -38,8 +38,8 @@ let selection = {
         return grp;
     },
 
-    models() {
-        let all = selection.list();
+    models(strict) {
+        let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
         let mdl = all.filter(s => s instanceof mesh.model);
         for (let g of grp) {
@@ -180,7 +180,7 @@ let selection = {
     },
 
     bounds() {
-        return util.bounds(selected.map(s => s.object()));
+        return util.bounds(selected.map(s => s.object));
     }
 };
 
@@ -248,7 +248,7 @@ let api = mesh.api = {
 
     objects() {
         // return model objects suitable for finding ray intersections
-        return group.list().map(o => o.models).flat().map(o => o.object());
+        return group.list().map(o => o.models).flat().map(o => o.object);
     }
 };
 
@@ -295,10 +295,10 @@ let util = mesh.util = {
         let box = new THREE.Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
-                util.box3expand(box, o instanceof mesh.object ? o.object() : o);
+                util.box3expand(box, o instanceof mesh.object ? o.object : o);
             }
         } else if (object) {
-            util.box3expand(box, object instanceof mesh.object ? object.object() : object);
+            util.box3expand(box, object instanceof mesh.object ? object.object : object);
         } else {
             return box;
         }

@@ -112,6 +112,23 @@ function ui_build() {
     let { grouplist } = bound;
     let api = mesh.api;
 
+    function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ]) {
+        return h.div({ class: "grid"}, [
+            h.div({ _: "" }),
+            h.div({ _: top[0], class: "top" }),
+            h.div({ _: top[1], class: "top" }),
+            h.div({ _: top[2], class: "top" }),
+            h.div({ _: side[0], class: "side" }),
+            h.label({ _: v1[0] }),
+            h.label({ _: v1[1] }),
+            h.label({ _: v1[2] }),
+            h.div({ _: side[1], class: "side" }),
+            h.label({ _: v2[0] }),
+            h.label({ _: v2[1] }),
+            h.label({ _: v2[2] }),
+        ]);
+    }
+
     function build() {
         let selHas = api.selection.contains;
         // map groups to divs
@@ -134,25 +151,42 @@ function ui_build() {
                 )
             ]));
         h.bind(grouplist, groups);
+        let s_grp = api.selection.groups(true);
+        let s_mdl = api.selection.models(true);
         // map selection to divs
-        let sel_grp = api.selection.groups()
-            .map(g => h.div([
+        let h_grp = s_grp.map(g => h.div([
                 h.button({
                     _: `group`,
                     title: g.id,
                     class: [ "group" ],
                 }),
-                h.div({ class: "grid"}, [
-                    h.div({ _: "X" }),
-                    h.div({ _: "Y" }),
-                    h.div({ _: "Z" }),
-                    h.div({ _: "pos" }),
-                    h.div({ _: "rot" }),
-                    h.label({ id: "gp-x" }),
+                grid([
+                    g.object.position.x.toFixed(2),
+                    g.object.position.y.toFixed(2),
+                    g.object.position.z.toFixed(2),
+                ],[
+                    g.object.rotation.x.toFixed(2),
+                    g.object.rotation.y.toFixed(2),
+                    g.object.rotation.z.toFixed(2),
                 ])
             ]));
-        let sel_mdl = api.selection.models();
-        h.bind(selectlist, sel_grp);
+        let h_mdl = s_mdl.map(m => h.div([
+                h.button({
+                    _: `model`,
+                    title: m.id,
+                    class: [ "model" ],
+                }),
+                grid([
+                    m.object.position.x.toFixed(2),
+                    m.object.position.y.toFixed(2),
+                    m.object.position.z.toFixed(2),
+                ],[
+                    m.object.rotation.x.toFixed(2),
+                    m.object.rotation.y.toFixed(2),
+                    m.object.rotation.z.toFixed(2),
+                ])
+            ]));
+        h.bind(selectlist, [...h_grp, ...h_mdl]);
     }
 
     // listen for api calls
@@ -264,7 +298,7 @@ function space_init(data) {
                     break;
                 case 'Backspace':
                 case 'Delete':
-                    for (let s of selection.list()) {
+                    for (let s of selection.list(true)) {
                         selection.remove(s);
                         s.showBounds(false);
                         s.remove();

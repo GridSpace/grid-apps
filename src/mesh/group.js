@@ -35,11 +35,11 @@ mesh.group = class MeshGroup extends mesh.object {
         }
     }
 
-    type() {
+    get type() {
         return "group";
     }
 
-    object() {
+    get object() {
         return this.group;
     }
 
@@ -92,7 +92,7 @@ mesh.group = class MeshGroup extends mesh.object {
     // center objects to group bounds
     // dependent on first being added to world/scene
     centerModels() {
-        let bounds = this.bounds();
+        let bounds = this.bounds;
         for (let model of this.models) {
             model.center(bounds);
         }

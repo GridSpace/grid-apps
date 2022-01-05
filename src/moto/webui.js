@@ -80,7 +80,7 @@ function build(data, context) {
         }
         html.appendAll(snips.flat());
     }
-    if (text) {
+    if (text !== undefined) {
         html.push(text);
     }
     html.push(`</${type}>`);

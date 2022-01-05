@@ -20,40 +20,40 @@ mesh.object = class MeshObject {
 
     constructor(id) {
         this.id = id || mesh.util.uuid();
-        worker.object_create({id: this.id, type: this.type()});
+        worker.object_create({id: this.id, type: this.type});
     }
 
-    type() {
+    get type() {
         throw "type() requires implementation";
     }
 
     // @returns {THREE.Object3D}
-    object() {
+    get object() {
         throw "object() requires implementation";
     }
 
-    bounds() {
-        return mesh.util.bounds(this.object());
+    get bounds() {
+        return mesh.util.bounds(this.object);
     }
 
     focus() {
-        mesh.api.focus(this.object());
+        mesh.api.focus(this.object);
     }
 
     floor() {
-        let b = this.bounds();
+        let b = this.bounds;
         this.move(0, 0, -b.min.z);
         return this;
     }
 
     center(bounds) {
-        let b = bounds || this.bounds();
-        this.move(-b.center.x, b.center.y, -b.center.z);
+        let b = bounds || this.bounds;
+        this.move(-b.center.x, -b.center.y, -b.center.z);
         return this;
     }
 
     centerXY(bounds) {
-        let b = bounds || this.bounds();
+        let b = bounds || this.bounds;
         this.move(-b.center.x, -b.center.y, 0);
         return this;
     }
@@ -68,7 +68,7 @@ mesh.object = class MeshObject {
     }
 
     scale() {
-        let scale = this.object().scale;
+        let scale = this.object.scale;
         if (arguments.length === 0) {
             return scale;
         }
@@ -80,9 +80,9 @@ mesh.object = class MeshObject {
     }
 
     rotate(x = 0, y = 0, z = 0) {
-        if (x) this.object().rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
-        if (y) this.object().rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
-        if (z) this.object().rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
+        if (x) this.object.rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
+        if (y) this.object.rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
+        if (z) this.object.rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
         this.updateBoundsBox();
         worker.object_rotate({id: this.id, x, y, z});
         space.update();
@@ -90,7 +90,7 @@ mesh.object = class MeshObject {
     }
 
     rotation() {
-        let rotation = this.object().rotation;
+        let rotation = this.object.rotation;
         if (arguments.length === 0) {
             return rotation;
         }
@@ -103,7 +103,7 @@ mesh.object = class MeshObject {
     }
 
     qrotation(quaternion) {
-        this.object().setRotationFromQuaternion(quaternion);
+        this.object.setRotationFromQuaternion(quaternion);
         this.updateBoundsBox();
         let { w, x, y, z } = quaternion;
         worker.object_qrotation({id: this.id, w, x, y, z});
@@ -112,7 +112,7 @@ mesh.object = class MeshObject {
     }
 
     position() {
-        let pos = this.object().position;
+        let pos = this.object.position;
         if (arguments.length === 0) {
             return pos;
         }
@@ -137,7 +137,7 @@ mesh.object = class MeshObject {
             world.remove(helper);
         }
         if (this._showBounds) {
-            let { center, size } = this.bounds();
+            let { center, size } = this.bounds;
             let b3 = new THREE.Box3().setFromCenterAndSize(
                 new THREE.Vector3(center.x, center.y, center.z),
                 new THREE.Vector3(size.x, size.y, size.z)

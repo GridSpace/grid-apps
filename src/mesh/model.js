@@ -26,7 +26,7 @@ let materials = mesh.material = {
         side: THREE.DoubleSide,
         transparent: true,
         shininess: 100,
-        specular: 0x181818,
+        specular: 0x202020,
         color: 0xffff00,
         opacity: 1
     }),
@@ -34,7 +34,7 @@ let materials = mesh.material = {
         side: THREE.DoubleSide,
         transparent: true,
         shininess: 100,
-        specular: 0x181818,
+        specular: 0x202020,
         color: 0x00ff00,
         opacity: 1
     }),
@@ -68,11 +68,11 @@ mesh.model = class MeshModel extends mesh.object {
         mapp.db.space.put(this.id, { file, mesh });
     }
 
-    type() {
+    get type() {
         return "model";
     }
 
-    object() {
+    get object() {
         return this.mesh;
     }
 
