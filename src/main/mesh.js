@@ -167,21 +167,27 @@ function ui_build() {
             return h.bind(selectlist, []);
         }
         // map selection to divs
-        let h_grp = s_grp.map(g => h.div([
-                h.button({ _: `group`, title: g.id, xclass: [ "group" ], }),
+        let g_pos = util.average(s_grp.map(g => g.object.position));
+        let g_rot = util.average(s_grp.map(g => g.object.rotation));
+        let g_id = s_grp.map(g => g.id).join(' ');
+        let h_grp = [h.div([
+                h.button({ _: `group`, title: g_id, xclass: [ "group" ], }),
                 grid(
-                    util.extract(g.object.position, map),
-                    util.extract(g.object.rotation, map) )
-            ]));
-        let h_mdl = s_mdl.map(m => h.div([
-                h.button({ _: `model`, title: m.id, xclass: [ "model" ], }),
+                    util.extract(g_pos, map),
+                    util.extract(g_rot, map) )
+            ])];
+        let m_pos = util.average(s_mdl.map(m => m.object.position));
+        let m_rot = util.average(s_mdl.map(m => m.object.rotation));
+        let m_id = s_mdl.map(m => m.id).join(' ');
+        let h_mdl = [h.div([
+                h.button({ _: `model`, title: m_id, xclass: [ "model" ], }),
                 grid(
-                    util.extract(m.object.position, map),
-                    util.extract(m.object.rotation, map) )
-            ]));
+                    util.extract(m_pos, map),
+                    util.extract(m_rot, map) )
+            ])];
         let bounds = util.bounds(s_mdl);
         let h_bnd = [h.div([
-                h.button({ _: `box`, title: s_mdl[0].id, xclass: [ "box" ], }),
+                h.button({ _: `box`, title: m_id, xclass: [ "box" ], }),
                 grid(
                     util.extract(bounds.min, map),
                     util.extract(bounds.max, map),
@@ -189,7 +195,7 @@ function ui_build() {
                 )
             ])];
         let h_ara = [h.div([
-                h.button({ _: `area`, title: s_mdl[0].id, xclass: [ "area" ], }),
+                h.button({ _: `area`, title: m_id, xclass: [ "area" ], }),
                 grid(
                     util.extract(bounds.center, map),
                     util.extract(bounds.size, map),

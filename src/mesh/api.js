@@ -96,7 +96,7 @@ let selection = {
     },
 
     clear() {
-        for (let s of selected) {
+        for (let s of selection.list()) {
             selection.remove(s);
         }
     },
@@ -362,6 +362,20 @@ let util = mesh.util = {
             array.push(v);
         }
         return array;
+    },
+
+    average(array, opt = {}) {
+        let fields = opt.fields || ['x', 'y', 'z'];
+        let avg = {};
+        for (let e of array) {
+            for (let f of fields) {
+                avg[f] = (avg[f] || 0) + e[f];
+            }
+        }
+        for (let f of fields) {
+            avg[f] = (avg[f] || 0)  / array.length;
+        }
+        return avg;
     }
 };
 

@@ -127,6 +127,18 @@ mesh.model = class MeshModel extends mesh.object {
         this._group = gv;
     }
 
+    get attributes() {
+        return this.mesh.geometry.attributes;
+    }
+
+    get vertices() {
+        return this.attributes.vertices.count;
+    }
+
+    get faces() {
+        return this.vertices / 3;
+    }
+
     opacity(ov) {
         let mat = this.mesh.material;
         if (ov === undefined) {
