@@ -233,9 +233,9 @@ let api = mesh.api = {
         ));
     },
 
-    wireframe() {
+    wireframe(state = {toggle:true}, opt = {opacity:0.15}) {
         for (let m of api.model.list()) {
-            m.wireframe(...arguments);
+            m.wireframe(state, opt);
         }
     },
 

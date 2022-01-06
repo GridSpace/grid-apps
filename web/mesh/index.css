@@ -151,7 +151,36 @@ button:hover {
     background-color: rgba(200,200,200,1);
 }
 
-/** for group/model buttons top/right of workspace */
+/** common child look & feel */
+
+#actions > div, #grouplist > div {
+    border: 1px solid gray;
+    border-radius: 3px;
+    margin: 0 0 2px 0;
+    padding: 3px;
+}
+
+#actions .vsep, #grouplist .vsep {
+    margin: 1px 0 1px 0;
+    border-bottom: 1px dashed gray;
+}
+
+/** action and keyboard menu **/
+
+#actions {
+    flex-direction: column;
+    position: absolute;
+    margin: 3px 0 0 3px;
+    left: 0;
+    top: 0;
+}
+
+#actions > div {
+    flex-direction: column;
+    gap: 2px;
+}
+
+/** group/model buttons top/right of workspace */
 
 #grouplist {
     position: absolute;
@@ -163,13 +192,7 @@ button:hover {
 #grouplist, #grouplist div {
     flex-direction: column;
     background-color: transparent;
-}
-
-#grouplist > div {
-    border: 1px solid gray;
-    border-radius: 3px;
-    margin: 0 0 2px 0;
-    padding: 3px;
+    gap: 2px;
 }
 
 #grouplist .group {
@@ -177,8 +200,11 @@ button:hover {
     padding: 3px;
 }
 
+#grouplist .models {
+    gap: 2px;
+}
+
 #grouplist .models button {
-    margin-top: 1px;
     text-align: left;
 }
 
@@ -190,12 +216,8 @@ button:hover {
     background-color: rgba(0,255,0,1)
 }
 
-#grouplist .vsep {
-    margin: 2px 0 1px 0;
-    border-bottom: 1px dashed gray;
-}
+/** selection info bottom/right of workspace */
 
-/** for selection info bottom/right of workspace */
 #selectlist {
     font-size: smaller;
     position: absolute;

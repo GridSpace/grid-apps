@@ -98,145 +98,6 @@ function restore_space() {
     $d('curtain','none');
 }
 
-// create html elements
-function ui_build() {
-    // set app version
-    $h('app-name', "Mesh:Tool");
-    $h('app-vers', gapp.version);
-
-    let bound = h.bind($('app-body'), [
-        h.div({id: 'grouplist'}),
-        h.div({id: 'selectlist'})
-    ]);
-
-    let { grouplist } = bound;
-    let { api, util } = mesh;
-
-    function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ]) {
-        return h.div({ class: "grid"}, [
-            h.div({ _: "" }),
-            h.div({ _: top[0], class: "top" }),
-            h.div({ _: top[1], class: "top" }),
-            h.div({ _: top[2], class: "top" }),
-            h.div({ _: side[0], class: "side" }),
-            h.label({ _: v1[0] }),
-            h.label({ _: v1[1] }),
-            h.label({ _: v1[2] }),
-            h.div({ _: side[1], class: "side" }),
-            h.label({ _: v2[0] }),
-            h.label({ _: v2[1] }),
-            h.label({ _: v2[2] }),
-        ]);
-    }
-
-    function update_all() {
-        update_selector();
-        update_selection();
-    }
-
-    function update_selector() {
-        let selHas = api.selection.contains;
-        // map groups to divs
-        let groups = api.group.list()
-            .map(g => h.div([
-                h.button({ _: `group`, title: g.id,
-                    class: [ "group", selHas(g) ? 'selected' : undefined ],
-                    onclick() { api.selection.toggle(g); }
-                }),
-                h.div({ class: "vsep" }),
-                h.div({ class: "models"},
-                    // map models to buttons
-                    g.models.map(m => h.button({ _: m.file || m.id,
-                        class: selHas(m) ? [ 'selected' ] : [],
-                        onclick(e) {
-                            let sel = api.selection.list();
-                            e.shiftKey || (sel.length === 1 && m === sel[0]) ?
-                                api.selection.toggle(m) :
-                                api.selection.set([m])
-                        }
-                    }))
-                )
-            ]));
-        h.bind(grouplist, groups);
-    }
-
-    function update_selection() {
-        let map = { fixed: 2 };
-        let s_grp = api.selection.groups();
-        let s_mdl = api.selection.models();
-        if (s_mdl.length === 0) {
-            return h.bind(selectlist, []);
-        }
-        // map selection to divs
-        let g_pos = util.average(s_grp.map(g => g.object.position));
-        let g_rot = util.average(s_grp.map(g => g.object.rotation));
-        let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = [h.div([
-                h.button({ _: `group`, title: g_id }),
-                grid(
-                    util.extract(g_pos, map),
-                    util.extract(g_rot, map) )
-            ])];
-        let m_pos = util.average(s_mdl.map(m => m.object.position));
-        let m_rot = util.average(s_mdl.map(m => m.object.rotation));
-        let m_id = s_mdl.map(m => m.id).join(' ');
-        let h_mdl = [h.div([
-                h.button({ _: `model`, title: m_id }),
-                grid(
-                    util.extract(m_pos, map),
-                    util.extract(m_rot, map) )
-            ])];
-        let bounds = util.bounds(s_mdl);
-        let h_bnd = [h.div([
-                h.button({ _: `box`, title: m_id }),
-                grid(
-                    util.extract(bounds.min, map),
-                    util.extract(bounds.max, map),
-                    [ "min", "max" ]
-                )
-            ])];
-        let h_ara = [h.div([
-                h.button({ _: `area`, title: m_id }),
-                grid(
-                    util.extract(bounds.center, map),
-                    util.extract(bounds.size, map),
-                    [ "center", "size" ]
-                )
-            ])];
-        let t_vert = s_mdl.map(m => m.vertices).reduce((a,v) => a+v);
-        let t_face = s_mdl.map(m => m.faces).reduce((a,v) => a+v);
-        let h_msh = [h.div([
-            h.button({ _: `mesh` }),
-            h.div({ class: ["grid","grid2"]}, [
-                h.div({ _: "" }),
-                h.div({ _: "count", class: "top" }),
-                h.div({ _: "vertex", class: "side" }),
-                h.label({ _: t_vert }),
-                h.div({ _: "face", class: "side" }),
-                h.label({ _: t_face }),
-            ])
-        ])];
-        h.bind(selectlist, [...h_grp, ...h_mdl, ...h_bnd, ...h_ara, ...h_msh]);
-    }
-
-    // listen for api calls
-    // create a deferred wrapper to merge multiple rapid events
-    let defer_all = mesh.util.deferWrap(update_all);
-    let defer_selector = mesh.util.deferWrap(update_selector);
-    let defer_selection = mesh.util.deferWrap(update_selection);
-    broker.listeners({
-        model_add: defer_all,
-        group_add: defer_all,
-        model_remove: defer_all,
-        group_remove: defer_all,
-        selection_update: defer_all,
-        selection_move: defer_selection,
-        selection_scale: defer_selection,
-        selection_rotate: defer_selection,
-        selection_qrotate: defer_selection,
-    })
-}
-
 // add space event bindings
 function space_init(data) {
     let { space, platform } = data;
@@ -279,7 +140,7 @@ function space_init(data) {
                     selection.focus();
                     break;
                 case 'KeyW':
-                    api.wireframe({toggle:true}, {opacity:0.15});
+                    api.wireframe();
                     break;
                 case 'KeyB':
                     selection.boundsBox({toggle:true});
@@ -437,7 +298,6 @@ function space_debug() {
 
 // bind functions to topics
 broker.listeners({
-    ui_build,
     space_init,
     space_load,
     space_debug,
@@ -463,6 +323,7 @@ gapp.finalize("main.mesh", [
     "data.index",   // dep: data.index
     "mesh.api",     // dep: mesh.api
     "mesh.model",   // dep: mesh.model
+    "mesh.build",   // dep: mesh.build
     "load.file",    // dep: load.file
 ]);
 
