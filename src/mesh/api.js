@@ -352,6 +352,17 @@ let util = mesh.util = {
         }
     },
 
+    extract(object, opt = {}) {
+        let field = opt.fields || ['x', 'y', 'z'];
+        let array = [];
+        for (let k of field) {
+            let v = object[k] || 0;
+            if (opt.round !== undefined) v = v.round(opt.round);
+            if (opt.fixed !== undefined) v = v.toFixed(opt.fixed);
+            array.push(v);
+        }
+        return array;
+    }
 };
 
 let broker = gapp.broker;

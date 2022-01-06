@@ -110,7 +110,7 @@ function ui_build() {
     ]);
 
     let { grouplist } = bound;
-    let api = mesh.api;
+    let { api, util } = mesh;
 
     function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ]) {
         return h.div({ class: "grid"}, [
@@ -129,75 +129,91 @@ function ui_build() {
         ]);
     }
 
-    function build() {
+    function update_all() {
+        update_selector();
+        update_selection();
+    }
+
+    function update_selector() {
         let selHas = api.selection.contains;
         // map groups to divs
         let groups = api.group.list()
             .map(g => h.div([
-                h.button({
-                    _: `group`,
-                    title: g.id,
+                h.button({ _: `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick() { api.selection.toggle(g); }
                 }),
                 h.div({ class: "vsep" }),
                 h.div({ class: "models"},
                     // map models to buttons
-                    g.models.map(m => h.button({
-                        _: m.file || m.id,
+                    g.models.map(m => h.button({ _: m.file || m.id,
                         class: selHas(m) ? [ 'selected' ] : [],
-                        onclick() { api.selection.toggle(m); }
+                        onclick(e) {
+                            e.shiftKey ?
+                                api.selection.toggle(m) :
+                                api.selection.set([m])
+                        }
                     }))
                 )
             ]));
         h.bind(grouplist, groups);
+    }
+
+    function update_selection() {
+        let map = { fixed: 2 };
         let s_grp = api.selection.groups(true);
         let s_mdl = api.selection.models(true);
+        if (s_mdl.length === 0) {
+            return h.bind(selectlist, []);
+        }
         // map selection to divs
         let h_grp = s_grp.map(g => h.div([
-                h.button({
-                    _: `group`,
-                    title: g.id,
-                    class: [ "group" ],
-                }),
-                grid([
-                    g.object.position.x.toFixed(2),
-                    g.object.position.y.toFixed(2),
-                    g.object.position.z.toFixed(2),
-                ],[
-                    g.object.rotation.x.toFixed(2),
-                    g.object.rotation.y.toFixed(2),
-                    g.object.rotation.z.toFixed(2),
-                ])
+                h.button({ _: `group`, title: g.id, xclass: [ "group" ], }),
+                grid(
+                    util.extract(g.object.position, map),
+                    util.extract(g.object.rotation, map) )
             ]));
         let h_mdl = s_mdl.map(m => h.div([
-                h.button({
-                    _: `model`,
-                    title: m.id,
-                    class: [ "model" ],
-                }),
-                grid([
-                    m.object.position.x.toFixed(2),
-                    m.object.position.y.toFixed(2),
-                    m.object.position.z.toFixed(2),
-                ],[
-                    m.object.rotation.x.toFixed(2),
-                    m.object.rotation.y.toFixed(2),
-                    m.object.rotation.z.toFixed(2),
-                ])
+                h.button({ _: `model`, title: m.id, xclass: [ "model" ], }),
+                grid(
+                    util.extract(m.object.position, map),
+                    util.extract(m.object.rotation, map) )
             ]));
-        h.bind(selectlist, [...h_grp, ...h_mdl]);
+        let bounds = util.bounds(s_mdl);
+        let h_bnd = [h.div([
+                h.button({ _: `box`, title: s_mdl[0].id, xclass: [ "box" ], }),
+                grid(
+                    util.extract(bounds.min, map),
+                    util.extract(bounds.max, map),
+                    [ "min", "max" ]
+                )
+            ])];
+        let h_ara = [h.div([
+                h.button({ _: `area`, title: s_mdl[0].id, xclass: [ "area" ], }),
+                grid(
+                    util.extract(bounds.center, map),
+                    util.extract(bounds.size, map),
+                    [ "center", "size" ]
+                )
+            ])];
+        h.bind(selectlist, [...h_grp, ...h_mdl, ...h_bnd, ...h_ara]);
     }
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
-    let deferred = mesh.util.deferWrap(build);
+    let defer_all = mesh.util.deferWrap(update_all);
+    let defer_selector = mesh.util.deferWrap(update_selector);
+    let defer_selection = mesh.util.deferWrap(update_selection);
     broker.listeners({
-        model_add: deferred,
-        group_add: deferred,
-        model_remove: deferred,
-        group_remove: deferred,
-        selection_update: deferred,
+        model_add: defer_all,
+        group_add: defer_all,
+        model_remove: defer_all,
+        group_remove: defer_all,
+        selection_update: defer_all,
+        selection_move: defer_selection,
+        selection_scale: defer_selection,
+        selection_rotate: defer_selection,
+        selection_qrotate: defer_selection,
     })
 }
 
