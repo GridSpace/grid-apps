@@ -110,16 +110,7 @@ function space_init(data) {
         'drop', (evt) => {
             estop(evt);
             platform.setColor(platcolor);
-            load.File.load([...evt.dataTransfer.files])
-                .then(data => {
-                    call.space_load(data);
-                })
-                .catch(error => {
-                    dbug.error(error);
-                })
-                .finally(() => {
-                    // hide spinner
-                });
+            call.load_files([...evt.dataTransfer.files]);
         },
         'dragover', evt => {
             estop(evt);
@@ -275,6 +266,20 @@ function space_init(data) {
     });
 }
 
+function load_files(files) {
+    // show spinner
+    load.File.load([...files])
+        .then(data => {
+            call.space_load(data);
+        })
+        .catch(error => {
+            dbug.error(error);
+        })
+        .finally(() => {
+            // hide spinner
+        });
+}
+
 // add object loader
 function space_load(data) {
     mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
@@ -307,6 +312,7 @@ function space_debug() {
 
 // bind functions to topics
 broker.listeners({
+    load_files,
     space_init,
     space_load,
     space_debug,

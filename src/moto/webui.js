@@ -80,7 +80,7 @@ function build(data, context) {
                 snips.push(build(i, context));
             }
         } else {
-            snips.push(build(i, context));
+            snips.push(build(innr, context));
         }
         html.appendAll(snips.flat());
     }

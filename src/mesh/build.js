@@ -18,6 +18,7 @@ broker.listeners({
     ui_build
 });
 
+// add modal dialog functions to api
 let modal = mesh.api.modal = {
     show(title, contents) {
         h.bind($('modal'), contents);
@@ -81,10 +82,18 @@ function ui_build() {
     // create hotkey/action menu (top/left)
     h.bind(actions, [
         h.div([
-            h.button({ _: 'import' }),
+            // create and bind file loading elements
+            h.button({ _: 'import', onclick: api.import }, [
+                h.input({
+                    id: "import", type: "file", class: ["hide"], multiple: true,
+                    onchange(evt) { broker.send.load_files(evt.target.files) }
+                })
+            ]),
             h.button({ _: 'export' }),
             h.div({ class: "vsep" }),
             h.button({ _: 'analyze' }),
+            h.button({ _: 'repair' }),
+            h.div({ class: "vsep" }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
         ]),
     ]);

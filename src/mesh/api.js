@@ -211,6 +211,7 @@ let model = {
     }
 };
 
+// api is augmented in mesh.build
 let api = mesh.api = {
     clear() {
         for (let group of group.list()) {
@@ -244,6 +245,11 @@ let api = mesh.api = {
     group,
 
     model,
+
+    import() {
+        // binding created in mesh.build
+        $('import').click();
+    },
 
     objects() {
         // return model objects suitable for finding ray intersections
