@@ -151,9 +151,57 @@ button:hover {
     background-color: rgba(200,200,200,1);
 }
 
+/** modal dialogs **/
+
+#modal_page {
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: 50 !important;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    display: none;
+}
+
+#modal_frame {
+    background-color: white;
+    flex-direction: column;
+    padding: 0 !important; // override common below
+    z-index: 51;
+    gap: 2px;
+}
+
+#modal_frame > div {
+    padding: 3px; // compensate for removing padding above
+}
+
+#modal_title {
+    border-bottom: 1px solid gray;
+    background-color: #ccc;
+}
+
+#modal_title .pad {
+    flex-grow: 1;
+    width: 5px;
+}
+
+#modal_title_close {
+    color: #555;
+}
+
+#modal_title_close:hover {
+    color: black;
+}
+
+#modal {
+}
+
 /** common child look & feel */
 
-#actions > div, #grouplist > div {
+#modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;
     border-radius: 3px;
     margin: 0 0 2px 0;
@@ -180,7 +228,7 @@ button:hover {
     gap: 2px;
 }
 
-/** group/model buttons top/right of workspace */
+/** group/model buttons top/right of workspace **/
 
 #grouplist {
     position: absolute;
@@ -216,7 +264,7 @@ button:hover {
     background-color: rgba(0,255,0,1)
 }
 
-/** selection info bottom/right of workspace */
+/** selection info bottom/right of workspace **/
 
 #selectlist {
     font-size: smaller;

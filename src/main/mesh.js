@@ -131,6 +131,9 @@ function space_init(data) {
             platform.setColor(platcolor);
         },
         'keypress', evt => {
+            if (api.modal.showing) {
+                return;
+            }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
                 case 'KeyC':
@@ -173,6 +176,12 @@ function space_init(data) {
         'keydown', evt => {
             let rv = Math.PI / 16;
             let { shiftKey, metaKey, ctrlKey, code } = evt;
+            if (api.modal.showing) {
+                if (code === 'Escape') {
+                    api.modal.hide();
+                }
+                return;
+            }
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {

@@ -43,6 +43,10 @@ function build(data, context) {
         return html;
     }
     let { type, attr, innr } = data;
+    // auto text content
+    if (typeof attr === 'string') {
+        attr = { _: attr };
+    }
     let elid;
     let html = [];
     let text
@@ -119,7 +123,7 @@ let h = self.h = moto.webui = {
 };
 
 // add common element types
-["a", "div", "span", "label", "input", "button"].forEach(type => {
+["a", "i", "div", "span", "label", "input", "button"].forEach(type => {
     h[type] = (attr, innr) => {
         return h.el(type, attr, innr);
     }

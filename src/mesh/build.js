@@ -6,6 +6,7 @@
 
 gapp.register("mesh.build",[
     "moto.broker",  // dep: moto.broker
+    "mesh.api",     // dep: mesh.api
 ]);
 
 let mesh = self.mesh = self.mesh || {};
@@ -17,6 +18,34 @@ broker.listeners({
     ui_build
 });
 
+let modal = mesh.api.modal = {
+    show(title, contents) {
+        h.bind($('modal'), contents);
+        $('modal_title_text').innerText = title;
+        $('modal_page').style.display = 'flex';
+        modal.info = { title, contents, showing: true };
+        broker.publish('modal_show');
+    },
+
+    hide() {
+        $('modal_page').style.display = 'none';
+        modal.info.showing = false;
+        broker.publish('modal_hide');
+    },
+
+    info: {
+        showing: false
+    },
+
+    get title() {
+        return modal.info.title;
+    },
+
+    get showing() {
+        return modal.info.showing;
+    }
+};
+
 // create html elements
 function ui_build() {
     // set app version
@@ -25,9 +54,25 @@ function ui_build() {
 
     // create top level app areas
     let bound = h.bind($('app-body'), [
-        h.div({id: 'actions' }),
-        h.div({id: 'grouplist'}),
-        h.div({id: 'selectlist'}),
+        // modal dialog and page blocker
+        h.div({ id: 'modal_page' }, [
+            h.div({ id: 'modal_frame' }, [
+                h.div({ id: 'modal_title'}, [
+                    h.div({ id: 'modal_title_text', _: 'title' }),
+                    h.div({ class: 'pad' }),
+                    h.div({ id: 'modal_title_close', onclick: modal.hide }, [
+                        h.i({ class: "far fa-window-close" })
+                    ])
+                ]),
+                h.div({ id: 'modal' }, [
+                    h.div({ _: 'this is a modal test' })
+                ])
+            ])
+        ]),
+        // display and action areas
+        h.div({ id: 'actions' }),
+        h.div({ id: 'grouplist'}),
+        h.div({ id: 'selectlist'}),
     ]);
 
     let { actions, grouplist, selectlist } = bound;
