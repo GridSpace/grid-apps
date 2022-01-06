@@ -132,7 +132,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     get vertices() {
-        return this.attributes.vertices.count;
+        return this.attributes.position.count;
     }
 
     get faces() {

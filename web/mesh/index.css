@@ -240,10 +240,8 @@ button:hover {
     display: grid;
     gap: 2px 2px;
     grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
-    grid-template-areas:
-        ". head head head"
-        "label data data data"
-        "label data data data";
 }
 
-#selectlist
+#selectlist .grid2 {
+    grid: min-content 1fr / min-content 1fr;
+}

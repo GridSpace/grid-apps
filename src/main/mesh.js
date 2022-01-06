@@ -171,7 +171,7 @@ function ui_build() {
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
         let h_grp = [h.div([
-                h.button({ _: `group`, title: g_id, xclass: [ "group" ], }),
+                h.button({ _: `group`, title: g_id }),
                 grid(
                     util.extract(g_pos, map),
                     util.extract(g_rot, map) )
@@ -180,14 +180,14 @@ function ui_build() {
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
         let h_mdl = [h.div([
-                h.button({ _: `model`, title: m_id, xclass: [ "model" ], }),
+                h.button({ _: `model`, title: m_id }),
                 grid(
                     util.extract(m_pos, map),
                     util.extract(m_rot, map) )
             ])];
         let bounds = util.bounds(s_mdl);
         let h_bnd = [h.div([
-                h.button({ _: `box`, title: m_id, xclass: [ "box" ], }),
+                h.button({ _: `box`, title: m_id }),
                 grid(
                     util.extract(bounds.min, map),
                     util.extract(bounds.max, map),
@@ -195,14 +195,27 @@ function ui_build() {
                 )
             ])];
         let h_ara = [h.div([
-                h.button({ _: `area`, title: m_id, xclass: [ "area" ], }),
+                h.button({ _: `area`, title: m_id }),
                 grid(
                     util.extract(bounds.center, map),
                     util.extract(bounds.size, map),
                     [ "center", "size" ]
                 )
             ])];
-        h.bind(selectlist, [...h_grp, ...h_mdl, ...h_bnd, ...h_ara]);
+        let t_vert = s_mdl.map(m => m.vertices).reduce((a,v) => a+v);
+        let t_face = s_mdl.map(m => m.faces).reduce((a,v) => a+v);
+        let h_msh = [h.div([
+            h.button({ _: `mesh` }),
+            h.div({ class: ["grid","grid2"]}, [
+                h.div({ _: "" }),
+                h.div({ _: "count", class: "top" }),
+                h.div({ _: "vertex", class: "side" }),
+                h.label({ _: t_vert }),
+                h.div({ _: "face", class: "side" }),
+                h.label({ _: t_face }),
+            ])
+        ])];
+        h.bind(selectlist, [...h_grp, ...h_mdl, ...h_bnd, ...h_ara, ...h_msh]);
     }
 
     // listen for api calls
