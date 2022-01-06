@@ -279,7 +279,7 @@ function space_init(data) {
                     selection.focus();
                     break;
                 case 'KeyW':
-                    selection.wireframe({toggle:true}, {opacity:0.15});
+                    api.wireframe({toggle:true}, {opacity:0.15});
                     break;
                 case 'KeyB':
                     selection.boundsBox({toggle:true});

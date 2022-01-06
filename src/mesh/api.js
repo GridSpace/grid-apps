@@ -157,13 +157,6 @@ let selection = {
         return selection;
     },
 
-    wireframe() {
-        for (let m of selection.models()) {
-            m.wireframe(...arguments);
-        }
-        return selection;
-    },
-
     boundsBox() {
         for (let m of selection.groups()) {
             m.showBounds(...arguments);
@@ -238,6 +231,12 @@ let api = mesh.api = {
         space.view.setFocus(new THREE.Vector3(
             center.x, center.z, -center.y
         ));
+    },
+
+    wireframe() {
+        for (let m of api.model.list()) {
+            m.wireframe(...arguments);
+        }
     },
 
     selection,

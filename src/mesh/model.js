@@ -98,6 +98,8 @@ mesh.model = class MeshModel extends mesh.object {
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
+        // sets fallback opacity for wireframe toggle
+        this.opacity(1);
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
         // sync data to worker
@@ -139,10 +141,34 @@ mesh.model = class MeshModel extends mesh.object {
         return this.vertices / 3;
     }
 
-    opacity(ov) {
+    visible(bool) {
+        if (bool === undefined) {
+            return this.mesh.visible;
+        }
+        if (bool.toggle) {
+            return this.visible(!this.mesh.visible);
+        }
+        this.mesh.visible = bool;
+    }
+
+    material(mat) {
+        let op = this.opacity();
+        this.mesh.material = mat = mat.clone();
+        mat.opacity = op;
+        if (op === 1) this.wireframe(false);
+    }
+
+    opacity(ov, opt = {}) {
         let mat = this.mesh.material;
         if (ov === undefined) {
             return mat.opacity;
+        }
+        if (ov.restore) {
+            ov = this._op;
+        } else if (ov.temp !== undefined) {
+            ov = ov.temp;
+        } else {
+            this._op = ov;
         }
         if (ov <= 0.0) {
             mat.transparent = false;
@@ -160,7 +186,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (bool === undefined) {
             return this._wire ? {
                 enabled: true,
-                opacity: this._wireo,
+                opacity: this.opacity(),
                 color: this._wire ? this._wire.material.color : undefined,
             } : {
                 enabled: false
@@ -172,20 +198,14 @@ mesh.model = class MeshModel extends mesh.object {
         if (this._wire) {
             this.mesh.remove(this._wire);
             this._wire = undefined;
-            this.opacity(this._wireo);
+            this.opacity({restore: true});
         }
         if (bool) {
-            this._wireo = this.opacity();
             this._wire = new THREE.Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
             this.mesh.add(this._wire);
-            this.opacity(opt.opacity || 0);
+            this.opacity({temp: opt.opacity || 0});
         }
         space.update();
-    }
-
-    material(mat) {
-        this.wireframe(false);
-        this.mesh.material = mat;
     }
 
     remove() {
