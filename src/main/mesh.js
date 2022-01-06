@@ -149,7 +149,8 @@ function ui_build() {
                     g.models.map(m => h.button({ _: m.file || m.id,
                         class: selHas(m) ? [ 'selected' ] : [],
                         onclick(e) {
-                            e.shiftKey ?
+                            let sel = api.selection.list();
+                            e.shiftKey || (sel.length === 1 && m === sel[0]) ?
                                 api.selection.toggle(m) :
                                 api.selection.set([m])
                         }
@@ -161,8 +162,8 @@ function ui_build() {
 
     function update_selection() {
         let map = { fixed: 2 };
-        let s_grp = api.selection.groups(true);
-        let s_mdl = api.selection.models(true);
+        let s_grp = api.selection.groups();
+        let s_mdl = api.selection.models();
         if (s_mdl.length === 0) {
             return h.bind(selectlist, []);
         }
