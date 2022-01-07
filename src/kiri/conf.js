@@ -683,7 +683,7 @@
                 lineType: "path",
                 autoSave: true,
                 reverseZoom: true,
-                showOrigin: true,
+                showOrigin: false,
                 showRulers: true,
                 showSpeeds: true,
                 freeLayout: true,

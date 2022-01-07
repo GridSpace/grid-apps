@@ -2,18 +2,18 @@ let fs = require('fs');
 let args = process.argv.slice(2);
 let dir = args[0] || ".";
 let files = [
-    "kiri",
+    "main/gapp",
+    "moto/license",
+    "main/kiri",
     "ext/three",
     "ext/pngjs",
     "ext/jszip",
-    "license",
     "ext/clip2",
     "ext/earcut",
     "add/array",
     "add/three",
     "add/class",
     "geo/base",
-    "geo/debug",
     "geo/point",
     "geo/points",
     "geo/slope",
@@ -22,45 +22,47 @@ let files = [
     "geo/polygon",
     "geo/polygons",
     "geo/gyroid",
-    "moto/pack",
     "kiri/conf",
+    "kiri/pack",
     "kiri/client",
     "kiri/engine",
     "kiri/slice",
     "kiri/slicer",
     "kiri/slicer2",
     "kiri/layers",
-    "mode/fdm/fill",
-    "mode/fdm/driver",
-    "mode/fdm/slice",
-    "mode/fdm/prepare",
-    "mode/fdm/export",
-    "mode/sla/driver",
-    "mode/sla/slice",
-    "mode/sla/export",
-    "mode/cam/driver",
-    "mode/cam/ops",
-    "mode/cam/tool",
-    "mode/cam/topo",
-    "mode/cam/slice",
-    "mode/cam/prepare",
-    "mode/cam/export",
-    "mode/cam/animate",
-    "mode/laser/driver",
+    "kiri-mode/fdm/fill",
+    "kiri-mode/fdm/driver",
+    "kiri-mode/fdm/slice",
+    "kiri-mode/fdm/prepare",
+    "kiri-mode/fdm/export",
+    "kiri-mode/sla/driver",
+    "kiri-mode/sla/slice",
+    "kiri-mode/sla/export",
+    "kiri-mode/cam/driver",
+    "kiri-mode/cam/ops",
+    "kiri-mode/cam/tool",
+    "kiri-mode/cam/topo",
+    "kiri-mode/cam/slice",
+    "kiri-mode/cam/prepare",
+    "kiri-mode/cam/export",
+    "kiri-mode/cam/animate",
+    "kiri-mode/laser/driver",
     "kiri/widget",
     "kiri/print",
     "kiri/codec",
     "kiri/worker",
-    "moto/load-stl"
+    "load/stl"
 ].map(p => `${dir}/src/${p}.js`);
 
 let exports_save = exports,
+    navigator = { userAgent: "" },
     module_save = module,
     THREE = {},
+    gapp = {},
     geo = {},
-    navigator = { userAgent: "" },
-    self = {
+    self = this.self = {
         THREE,
+        gapp,
         kiri: { driver: {}, loader: [] },
         location: { hostname: 'local', port: 0, protocol: 'fake' },
         postMessage: (msg) => {
@@ -132,10 +134,10 @@ for (let file of files) {
         module = undefined;
     }
     try {
+        console.log(`loading ... ${dir}/${file}`);
         eval(fs.readFileSync(dir + "/" + file).toString());
     } catch (e) {
-        // console.log({dir, file, e});
-        console.log({dir, file});
+        throw e;
     }
     if (isClip) {
         ClipperLib = self.ClipperLib;
@@ -153,8 +155,7 @@ for (let file of files) {
     }
 }
 
-let kiri = self.kiri;
-let moto = self.moto;
+let { kiri, moto, load } = self;
 let engine = kiri.newEngine();
 
 fetch('/web/obj/cube.stl').then(data => {

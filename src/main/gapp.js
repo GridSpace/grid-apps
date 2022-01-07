@@ -5,7 +5,7 @@
 /** node compatibility **/
 
 if (typeof(self) === 'undefined') {
-    var self = this;
+    this.self = this;
 }
 
 (function () {

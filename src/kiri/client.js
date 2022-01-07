@@ -57,7 +57,7 @@ KIRI.work = {
         if (self.createWorker) {
             return self.createWorker();
         } else {
-            return new Worker(`/code/kiri_work.js?${self.kiri.version}`);
+            return new Worker(`/code/kiri_work.js?${gapp.version}`);
         }
     },
 
