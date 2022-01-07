@@ -86,7 +86,7 @@ let log = mesh.api.log = {
             text: `${dbug.since()} | ${msg}`,
             time: now
         });
-        while (data.length && (data.length > lines || now - data[0].time > age)) {
+        while (!log.pinned && data.length && (data.length > lines || now - data[0].time > age)) {
             data.shift();
         }
         return render();
@@ -98,17 +98,20 @@ let log = mesh.api.log = {
     },
 
     pin() {
-        return log.show(1 << 30);
+        log.pinned = true;
+        return log.show();
     },
 
     unpin() {
+        log.pinned = false;
         return log.show();
     },
 
     // show log window for `time` milliseconds or default
     show(time) {
         clearTimeout(log.timer);
-        log.timer = setTimeout(log.hide, time || log.wait);
+        log.timer = log.pinned ? null : setTimeout(log.hide, time || log.wait);
+        $('logger').style.display = 'flex';
         return log;
     },
 
@@ -117,7 +120,6 @@ let log = mesh.api.log = {
         let area = $('logtext');
         h.bind(area, log.data.map(rec => h.div({ _: rec.text })));
         area.scrollTop = area.scrollHeight;
-        $('logger').style.display = 'flex';
         return log.show();
     },
 };

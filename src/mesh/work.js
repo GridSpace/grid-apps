@@ -23,6 +23,10 @@ let core_matrix = new THREE.Matrix4().makeRotationX(Math.PI / 2);
 let { client, worker } = moto;
 let cache = {};
 
+function log(msg) {
+    return worker.publish("mesh.log", msg);
+}
+
 function cacheUpdate(id, data) {
     Object.assign(cache[id], data);
 }
@@ -47,16 +51,15 @@ let model = {
     },
 
     heal(id) {
-        dbug.log({healing: id});
+        log(`${id} | indexing...`);
         let geo = cache[id].geo;
         let tool = new mesh.tool({
             vertices: geo.attributes.position.array,
             faces: geo.index ? geo.index.array : undefined,
             debug: false
         });
-        dbug.log('...imported data');
+        log(`${id} | healing...`);
         tool.heal();
-        dbug.log('...healed');
         dbug.log(tool);
         return true || tool.newFaces ? {
             vertices: tool.unrolled().toFloat32(),
