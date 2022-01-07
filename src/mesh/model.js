@@ -35,7 +35,7 @@ let materials = mesh.material = {
         transparent: true,
         shininess: 100,
         specular: 0x202020,
-        color: 0x00ff00,
+        color: 0x00ee00,
         opacity: 1
     }),
     wireframe: new THREE.MeshBasicMaterial({

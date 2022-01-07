@@ -229,16 +229,15 @@ let tool = {
 
     repair() {
         for (let m of selection.models()) {
-            moto.client.fn.model_heal(m.id)
-                .then(data => {
-                    if (data) {
-                        m.reload(
-                            data.vertices,
-                            data.indices,
-                            data.normals
-                        );
-                    }
-                });
+            moto.client.fn.model_heal(m.id).then(data => {
+                if (data) {
+                    m.reload(
+                        data.vertices,
+                        data.indices,
+                        data.normals
+                    );
+                }
+            });
         }
     }
 };
