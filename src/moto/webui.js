@@ -123,7 +123,7 @@ let h = self.h = moto.webui = {
 };
 
 // add common element types
-["a", "i", "div", "span", "label", "input", "button"].forEach(type => {
+["a", "i", "div", "span", "label", "input", "button", "svg"].forEach(type => {
     h[type] = (attr, innr) => {
         return h.el(type, attr, innr);
     }

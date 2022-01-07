@@ -18,17 +18,22 @@ broker.listeners({
     ui_build
 });
 
+let spin_timer;
+
 // add modal dialog functions to api
 let modal = mesh.api.modal = {
     show(title, contents) {
         h.bind($('modal'), contents);
         $('modal_title_text').innerText = title;
         $('modal_page').style.display = 'flex';
+        $('modal_frame').style.display = 'flex';
+        $('spinner').style.display = 'none';
         modal.info = { title, contents, showing: true };
         broker.publish('modal_show');
     },
 
     hide() {
+        clearTimeout(spin_timer);
         $('modal_page').style.display = 'none';
         modal.info.showing = false;
         broker.publish('modal_hide');
@@ -44,6 +49,23 @@ let modal = mesh.api.modal = {
 
     get showing() {
         return modal.info.showing;
+    },
+
+    spin(bool, delay) {
+        if (bool) {
+            if (delay) {
+                spin_timer = setTimeout(() => {
+                    modal.spin(true);
+                }, delay);
+                return;
+            }
+            $('modal_page').style.display = 'flex';
+            $('modal_frame').style.display = 'none';
+            $('spinner').style.display = 'block';
+            broker.publish('modal_show', 'spinner');
+        } else {
+            modal.hide();
+        }
     }
 };
 
@@ -68,7 +90,8 @@ function ui_build() {
                 h.div({ id: 'modal' }, [
                     h.div({ _: 'this is a modal test' })
                 ])
-            ])
+            ]),
+            h.div({ id: 'spinner', class: 'spin' })
         ]),
         // display and action areas
         h.div({ id: 'actions' }),

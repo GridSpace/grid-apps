@@ -175,13 +175,13 @@ button:hover {
 #modal_frame {
     background-color: white;
     flex-direction: column;
-    padding: 0 !important; // override common below
+    padding: 0 !important; /* override common below */
     z-index: 51;
     gap: 2px;
 }
 
 #modal_frame > div {
-    padding: 3px; // compensate for removing padding above
+    padding: 3px; /* compensate for removing padding above */
 }
 
 #modal_title {
@@ -202,7 +202,31 @@ button:hover {
     color: black;
 }
 
-#modal {
+/** spinner animation **/
+
+@keyframes spinner {
+    0% {
+        transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+}
+
+.spin::before {
+    position: absolute;
+    animation: 2.0s linear infinite spinner;
+    animation-play-state: inherit;
+    border: solid 10px #cfd0d1;
+    border-bottom-color: #1c87c9;
+    border-radius: 50%;
+    content: "";
+    height: 50px;
+    width: 50px;
+    top: 10%;
+    left: 10%;
+    transform: translate3d(-50%, -50%, 0);
+    will-change: transform;
 }
 
 /** common child look & feel */

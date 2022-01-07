@@ -272,6 +272,8 @@
             }
         });
 
+        let pack = true;
+
         // compute tile width / height
         output.forEach(function(layerout) {
             let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
@@ -286,6 +288,7 @@
             layerout.w = max.w - min.w;
             layerout.h = max.h - min.h;
             // shift objects to top/left of w/h bounds
+            if (pack)
             layerout.forEach(function(out) {
                 p = out.point;
                 p.x -= min.w;
@@ -309,6 +312,7 @@
             p = new KIRI.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
         }
 
+        if (pack)
         for (i = 0; i < c.length; i++) {
             m = c[i];
             m.fit.x += m.w + p.pad;

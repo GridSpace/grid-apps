@@ -228,6 +228,7 @@ let tool = {
     },
 
     repair() {
+        api.modal.spin(true, 250);
         for (let m of selection.models()) {
             moto.client.fn.model_heal(m.id).then(data => {
                 if (data) {
@@ -237,6 +238,7 @@ let tool = {
                         data.normals
                     );
                 }
+                api.modal.spin(false);
             });
         }
     }
