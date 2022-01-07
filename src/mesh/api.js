@@ -211,6 +211,38 @@ let model = {
     }
 };
 
+let file = {
+    import() {
+        // binding created in mesh.build
+        $('import').click();
+    },
+
+    export() {
+        console.log('...export todo');
+    },
+};
+
+let tool = {
+    analyze() {
+        console.log('...analyze todo');
+    },
+
+    repair() {
+        for (let m of selection.models()) {
+            moto.client.fn.model_heal(m.id)
+                .then(data => {
+                    if (data) {
+                        m.reload(
+                            data.vertices,
+                            data.indices,
+                            data.normals
+                        );
+                    }
+                });
+        }
+    }
+};
+
 // api is augmented in mesh.build
 let api = mesh.api = {
     clear() {
@@ -246,10 +278,9 @@ let api = mesh.api = {
 
     model,
 
-    import() {
-        // binding created in mesh.build
-        $('import').click();
-    },
+    file,
+
+    tool,
 
     objects() {
         // return model objects suitable for finding ray intersections

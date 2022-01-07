@@ -83,16 +83,16 @@ function ui_build() {
     h.bind(actions, [
         h.div([
             // create and bind file loading elements
-            h.button({ _: 'import', onclick: api.import }, [
+            h.button({ _: 'import', onclick: api.file.import }, [
                 h.input({
                     id: "import", type: "file", class: ["hide"], multiple: true,
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 })
             ]),
-            h.button({ _: 'export' }),
+            h.button({ _: 'export', onclick: api.file.export, disabled: true }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'analyze' }),
-            h.button({ _: 'repair' }),
+            h.button({ _: 'analyze', disabled: true }),
+            h.button({ _: 'repair', onclick: api.tool.repair }),
             h.div({ class: "vsep" }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
         ]),
@@ -185,7 +185,7 @@ function ui_build() {
                 )
             ])];
         let h_ara = [h.div([
-                h.button({ _: `area`, title: m_id }),
+                h.button({ _: `span`, title: m_id }),
                 grid(
                     util.extract(bounds.center, map),
                     util.extract(bounds.size, map),

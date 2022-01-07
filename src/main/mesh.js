@@ -143,18 +143,7 @@ function space_init(data) {
                     space.view.home();
                     break;
                 case 'KeyF':
-                    for (let m of selection.models()) {
-                        moto.client.fn.model_heal(m.id)
-                            .then(data => {
-                                if (data) {
-                                    m.reload(
-                                        data.vertices,
-                                        data.indices,
-                                        data.normals
-                                    );
-                                }
-                            });
-                    }
+                    api.tool.repair();
                     break;
                 case 'KeyT':
                     space.view.top();

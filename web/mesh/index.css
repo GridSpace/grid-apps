@@ -256,6 +256,8 @@ button:hover {
 
 #grouplist .models {
     gap: 2px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 #grouplist .models button {
