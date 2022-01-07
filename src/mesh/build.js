@@ -69,6 +69,59 @@ let modal = mesh.api.modal = {
     }
 };
 
+// transient logging window bottom/left
+let log = mesh.api.log = {
+    age: 10000, // age out lines more than 10 seconds old
+
+    data: [],   // last n messages
+
+    wait: 3000, // time before windows closes
+
+    lines: 20,  // max log lines before forced-age out
+
+    emit(msg) {
+        let { age, data, lines, render } = log;
+        let now = Date.now();
+        data.push({
+            text: `${dbug.since()} | ${msg}`,
+            time: now
+        });
+        while (data.length && (data.length > lines || now - data[0].time > age)) {
+            data.shift();
+        }
+        return render();
+    },
+
+    hide() {
+        $('logger').style.display = 'none';
+        return log;
+    },
+
+    pin() {
+        return log.show(1 << 30);
+    },
+
+    unpin() {
+        return log.show();
+    },
+
+    // show log window for `time` milliseconds or default
+    show(time) {
+        clearTimeout(log.timer);
+        log.timer = setTimeout(log.hide, time || log.wait);
+        return log;
+    },
+
+    // re-render and show current log messages
+    render() {
+        let area = $('logtext');
+        h.bind(area, log.data.map(rec => h.div({ _: rec.text })));
+        area.scrollTop = area.scrollHeight;
+        $('logger').style.display = 'flex';
+        return log.show();
+    },
+};
+
 // create html elements
 function ui_build() {
     // set app version
@@ -97,10 +150,14 @@ function ui_build() {
         h.div({ id: 'actions' }),
         h.div({ id: 'grouplist'}),
         h.div({ id: 'selectlist'}),
+        h.div({ id: 'logger', onmouseover() { log.show() } })
     ]);
 
-    let { actions, grouplist, selectlist } = bound;
+    let { actions, grouplist, selectlist, logger } = bound;
     let { api, util } = mesh;
+
+    // create slid in/out logging window
+    h.bind(logger, [ h.div({ id: 'logtext' }) ]);
 
     // create hotkey/action menu (top/left)
     h.bind(actions, [

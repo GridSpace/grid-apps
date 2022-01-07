@@ -43,7 +43,9 @@ let dbug = self.dbug = self.dbug || {
 
     error: function() {
         if (dbug.level <= 3) return console.trace(since(),'[ERR]', ...arguments);
-    }
+    },
+
+    since
 };
 
 /** empty function. countless possible uses **/

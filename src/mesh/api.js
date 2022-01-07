@@ -169,7 +169,7 @@ let selection = {
     },
 
     focus() {
-        api.focus(selected);
+        api.focus(selection.list());
     },
 
     bounds() {
@@ -228,7 +228,7 @@ let tool = {
     },
 
     repair() {
-        api.modal.spin(true, 250);
+        api.log.emit('repairing mesh(es)...').pin();
         for (let m of selection.models()) {
             moto.client.fn.model_heal(m.id).then(data => {
                 if (data) {
@@ -238,7 +238,7 @@ let tool = {
                         data.normals
                     );
                 }
-                api.modal.spin(false);
+                api.log.emit('repair complete').unpin();
             });
         }
     }

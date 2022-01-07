@@ -84,7 +84,7 @@ mesh.model = class MeshModel extends mesh.object {
             // for debugging matrix ops
             return mesh.api.group.new([new mesh.model({
                 file: `synth-${this.name}`,
-                mesh: data[0]
+                mesh: data
             })]);
         });
     }

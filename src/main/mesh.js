@@ -71,6 +71,7 @@ function init() {
 
 // restore space layout and view from previous session
 function restore_space() {
+    mesh.api.log.emit(`restoring workspace`);
     let space = moto.Space;
     mesh.db.admin.get("camera")
         .then(saved => {
@@ -142,7 +143,7 @@ function space_init(data) {
                 case 'KeyH':
                     space.view.home();
                     break;
-                case 'KeyF':
+                case 'KeyR':
                     api.tool.repair();
                     break;
                 case 'KeyT':
@@ -256,7 +257,7 @@ function space_init(data) {
 }
 
 function load_files(files) {
-    // show spinner
+    mesh.api.log.emit(`loading file...`);
     load.File.load([...files])
         .then(data => {
             call.space_load(data);
@@ -265,7 +266,7 @@ function load_files(files) {
             dbug.error(error);
         })
         .finally(() => {
-            // hide spinner
+            mesh.api.log.hide();
         });
 }
 
@@ -281,7 +282,7 @@ function space_load(data) {
 // on debug key press
 function space_debug() {
     for (let g of mesh.api.group.list()) {
-        let { center, size } = g.bounds();
+        let { center, size } = g.bounds;
         console.group(g.id);
         console.log({
             center,

@@ -160,7 +160,7 @@ button:hover {
 /** modal dialogs **/
 
 #modal_page {
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.25);
     justify-content: center;
     align-items: center;
     position: absolute;
@@ -231,7 +231,7 @@ button:hover {
 
 /** common child look & feel */
 
-#modal_frame, #actions > div, #grouplist > div {
+#logger, #modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;
     border-radius: 3px;
     margin: 0 0 2px 0;
@@ -241,6 +241,43 @@ button:hover {
 #actions .vsep, #grouplist .vsep {
     margin: 1px 0 1px 0;
     border-bottom: 1px dashed gray;
+}
+
+/** slide in/out logging window **/
+
+#logger {
+    display: none;
+    color: #88ff88;
+    min-width: 300px;
+    flex-direction: column;
+    background-color: rgba(0,0,0,0.5);
+    position: absolute;
+    margin: 0 0 3px 3px;
+    bottom: 0;
+    left: 0;
+}
+
+#logtext {
+    flex-direction: column;
+    font-family: monospace;
+    font-size: smaller;
+    max-height: 5em;
+    min-height: 1em;
+    overflow-y: auto;
+}
+
+#logtext::-webkit-scrollbar {
+  width: 6px;
+}
+
+#logtext::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#logtext::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: #ddd;
+  border: 3px solid rgba(255,255,255,0.1);
 }
 
 /** action and keyboard menu **/
