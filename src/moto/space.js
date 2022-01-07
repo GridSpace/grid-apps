@@ -79,6 +79,9 @@
             factor: undefined,
             view: undefined
         },
+        psize = {
+
+        },
         timers = {},
         fontColor = '#333333',
         fontScale = 1.4, // computed relative to grid size
@@ -253,11 +256,17 @@
         requestRefresh();
     }
 
-    function setPlatformSize(width, depth, height, maxz) {
+    function setPlatformSize(
+        width = psize.width || 300,
+        depth = psize.depth || 300,
+        height = psize.height || 2.5,
+        maxz = psize.maxz
+    ) {
+        psize = { width, depth, height, maxz };
         if (isRound) {
-            platform.scale.set(width || 300, height || 5, depth || 175);
+            platform.scale.set(width, height, depth);
         } else {
-            platform.scale.set(width || 300, depth || 175, height || 5);
+            platform.scale.set(width, depth, height);
         }
         viewControl.maxDistance = Math.max(width,depth) * 4;
         updatePlatformPosition();
@@ -291,7 +300,7 @@
                 {x:  width/2, z:  depth/2, y: maxz},
                 {x: -width/2, z:  depth/2, y: maxz},
             ];
-            SCENE.add(volume = makeLinesFromPoints(points, 0xdddddd));
+            SCENE.add(volume = makeLinesFromPoints(points, grid.colorMinor));
             showVolume(volumeOn);
         }
     }
@@ -437,7 +446,10 @@
         if (!unitMajor) {
             return;
         }
-        if (unitMajor !== grid.unitMajor || unitMinor !== grid.unitMinor) {
+        if (
+            unitMajor !== grid.unitMajor || unitMinor !== grid.unitMinor ||
+            colorMajor !== grid.colorMajor || colorMinor !== grid.colorMinor
+        ) {
             grid.unitMajor = unitMajor;
             grid.unitMinor = unitMinor;
             grid.colorMajor = colorMajor || grid.colorMajor;
@@ -1189,12 +1201,12 @@
             trackPlane.rotation.x = PI2;
 
             let sky = new THREE.Mesh(
-                    new THREE.BoxGeometry(50000, 50000, 50000, 1, 1, 1),
+                    new THREE.BoxGeometry(3000, 3000, 3000, 1, 1, 1),
                     skyMaterial =
                     new THREE.MeshBasicMaterial({ color: skyColor, side: THREE.DoubleSide })
                 ),
                 skygrid = new THREE.Mesh(
-                    new THREE.BoxGeometry(5000, 5000, 5000, 10, 10, 10),
+                    new THREE.BoxGeometry(3000, 3000, 3000, 10, 10, 10),
                     skyGridMaterial =
                     new THREE.MeshBasicMaterial({ color: skyGridColor, side: THREE.DoubleSide })
                 );

@@ -122,6 +122,9 @@ let log = mesh.api.log = {
     },
 };
 
+// bind endpoint for worker to log in the ui
+gapp.broker.subscribe("mesh.log", log.emit);
+
 // create html elements
 function ui_build() {
     // set app version

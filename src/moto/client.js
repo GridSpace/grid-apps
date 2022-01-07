@@ -18,6 +18,7 @@ if (moto.client) return;
 
 gapp.register('moto.client', [
     "add.array",    // dep: add.array
+    "moto.broker",  // dep: moto.broker
 ]);
 
 function dispatch(topic, message) {
@@ -208,6 +209,12 @@ let client = moto.client = {
                 // handle special case when worker ready
                 if (reply.ready) {
                     dispatch('ready', reply.ready);
+                    return;
+                }
+
+                // handle special case for broker publish
+                if (reply.publish) {
+                    gapp.broker.publish(reply.publish, reply.message);
                     return;
                 }
 

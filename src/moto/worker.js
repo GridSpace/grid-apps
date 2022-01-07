@@ -34,6 +34,11 @@ const dispatch = moto.worker = {
         }
     },
 
+    // allow workers to publish messages on the client side
+    publish(topic, message) {
+        dispatch.send({publish: topic, message});
+    },
+
     ready() {
         dispatch.send({ready: true});
     },
