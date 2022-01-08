@@ -35,7 +35,6 @@
         lightIntensity = 0.3,
         initialized = false,
         alignedTracking = false,
-        skyColor = 0xbbbbbb,
         skyGridColor = 0xcccccc,
         skyMaterial = undefined,
         skyGridMaterial = undefined,
@@ -977,8 +976,7 @@
             },
 
             setColor: (c) => {
-                skyColor = c;
-                if (skyMaterial) skyMaterial.color = new THREE.Color(c);
+                SCENE.background = new THREE.Color(c);
             },
 
             setGridColor: (c) => {
@@ -1200,21 +1198,14 @@
             trackPlane.visible = false;
             trackPlane.rotation.x = PI2;
 
-            let sky = new THREE.Mesh(
-                    new THREE.BoxGeometry(3000, 3000, 3000, 1, 1, 1),
-                    skyMaterial =
-                    new THREE.MeshBasicMaterial({ color: skyColor, side: THREE.DoubleSide })
-                ),
-                skygrid = new THREE.Mesh(
-                    new THREE.BoxGeometry(3000, 3000, 3000, 10, 10, 10),
-                    skyGridMaterial =
-                    new THREE.MeshBasicMaterial({ color: skyGridColor, side: THREE.DoubleSide })
-                );
-
+            let skygrid = new THREE.Mesh(
+                new THREE.BoxGeometry(10000, 10000, 10000, 10, 10, 10),
+                skyGridMaterial =
+                new THREE.MeshBasicMaterial({ color: skyGridColor, side: THREE.DoubleSide })
+            );
 
             SCENE.add(platform);
             SCENE.add(trackPlane);
-            SCENE.add(sky);
 
             if (showSkyGrid) {
                 skygrid.material.wireframe = true;

@@ -39,7 +39,7 @@ function init() {
         volume: false,
         round: false,
         zOffset: 0.1,
-        opacity: 0.1,
+        opacity: 0,
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
         size: { width: 2000, depth: 2000, height: 1, maxz: 300 },
