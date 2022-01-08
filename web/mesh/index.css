@@ -144,7 +144,7 @@ body, div {
 button {
     padding: 2px 3px 2px 3px;
     border: 1px solid rgba(150,150,150,0.5);
-    background-color: rgba(220,220,220,0.5);
+    background-color: rgba(220,220,220,0.75);
 }
 
 button:hover {
@@ -236,6 +236,7 @@ button:hover {
     border-radius: 3px;
     margin: 0 0 2px 0;
     padding: 3px;
+    background-color: rgba(255,255,255,0.5);
 }
 
 #actions .vsep, #grouplist .vsep {
@@ -306,7 +307,6 @@ button:hover {
 
 #grouplist, #grouplist div {
     flex-direction: column;
-    background-color: transparent;
     gap: 2px;
 }
 

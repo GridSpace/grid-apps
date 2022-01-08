@@ -923,7 +923,8 @@
 
     function setPlatform(opt = {}) {
         let platform = Space.platform;
-        let { color, round, size, grid, opacity, volume, zOffset, origin } = opt;
+        let { color, round, size, grid, opacity } = opt;
+        let { visible, volume, zOffset, origin } = opt;
         if (color) {
             platform.setColor(color);
         }
@@ -952,6 +953,9 @@
         }
         if (zOffset !== undefined) {
             platform.setZOff(zOffset);
+        }
+        if (visible !== undefined) {
+            platform.setVisible(visible);
         }
     }
 
@@ -1017,11 +1021,13 @@
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
             setHidden:  (b) => { showPlatform = !b; platform.visible = !b },
+            setVisible: (b) => { showPlatform = b; platform.visible = b },
             setHiding:  (b) => { hidePlatformBelow = b },
             setZOff:    (z) => { platformZOff = z; updatePlatformPosition() },
             setGridZOff:(z) => { gridZOff = z; updatePlatformPosition() },
             isHidden:   ()  => { return !showPlatform },
             isVisible:  ()  => { return platform.visible },
+            isGridVisible()    { return grid.view.visible },
             opacity:    (o) => { platform.material.opacity = o },
             onMove:     (f,t) => { platformOnMove = f, platformOnMoveTime = t || platformOnMoveTime },
             onHover:    (f) => { platformHover = f },

@@ -267,6 +267,14 @@ let api = mesh.api = {
         ));
     },
 
+    grid(state = {toggle:true}) {
+        if (state.toggle) {
+            space.platform.showGrid(!space.platform.isGridVisible());
+        } else {
+            space.platform.showGrid(state);
+        }
+    },
+
     wireframe(state = {toggle:true}, opt = {opacity:0.15}) {
         for (let m of api.model.list()) {
             m.wireframe(state, opt);
