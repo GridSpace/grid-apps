@@ -16,7 +16,6 @@
      */
     CAM.export = function(print, online) {
         let widget = print.widgets[0];
-
         if (!widget) return;
 
         let i,
@@ -48,7 +47,7 @@
             mode,
             point,
             points = 0,
-            stock = settings.stock,
+            stock = settings.stock || { },
             hasStock = spro.camStockOn && stock.x && stock.y && stock.z,
             ztOff = hasStock ? stock.z - widget.track.top : 0,
             bounds = widget.getBoundingBox(),
