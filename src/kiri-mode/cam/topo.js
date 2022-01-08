@@ -21,12 +21,13 @@
         constructor(opt = {}) {
             let { state, contour, onupdate, ondone } = opt;
             let { widget, settings, tshadow, center, tabs } = opt.state;
-            let density = parseInt(settings.controller.animesh) * 2500,
+
+            let density = parseInt(settings.controller.animesh || 100) * 2500,
                 axis = contour.axis.toLowerCase(),
                 contourX = axis === "x",
                 contourY = axis === "y",
                 bounds = widget.getBoundingBox().clone(),
-                tolerance = contour.tolerace,
+                tolerance = contour.tolerance,
                 proc = settings.process,
                 shadow = tshadow,
                 minX = bounds.min.x,
