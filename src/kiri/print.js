@@ -24,8 +24,10 @@
     let lastPoint = null,
         lastEmit = null,
         lastOut = null,
+        lastE,
         lastPos,
-        nextType;
+        nextType,
+        debugE; // set to 1 to enable flow rate analysis (console)
 
     KIRI.Print = Print;
 
@@ -290,20 +292,22 @@
             }
 
             // debug extrusion rate
-            if (false && fdm && lastPos) {
-                let dE = (absE ? pos.E - lastPos.E : pos.E);
+            if (debugE && fdm && lastPos && pos.E) {
+                let dE = (absE ? pos.E - lastE : pos.E);
                 let dV = Math.sqrt(
                     (Math.pow(pos.X - lastPos.X, 2)) +
                     (Math.pow(pos.Y - lastPos.Y, 2))
                 );
                 let dR = (dE / dV); // filament per mm
-                if (dV > 2 && dE > 0.001 && (dR < 0.025 || dR > 0.35)) {
-                    console.log(height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(5));
+                if (dV > 2 && dE > 0.001) {
+                    let lab = (absE ? 'aA' : 'rR')[debugE++ % 2];
+                    console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
                 }
             }
             // add point to current sequence
             addOutput(seq, point, true, pos.F, tool).retract = retract;
             lastPos = Object.assign({}, pos);
+            lastE = pos.E;
         }
 
         lines.forEach(function(line, idx) {
