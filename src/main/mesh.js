@@ -11,7 +11,6 @@ function init() {
     let stores = data.open('mesh', { stores:[ "admin", "cache", "space" ] }).init(),
         moto = self.moto,
         api = mesh.api,
-        sky = false,
         dark = false,
         ortho = false,
         zoomrev = true,
@@ -31,7 +30,7 @@ function init() {
     // setup default workspace
     space.useDefaultKeys(false);
     space.sky.set({
-        grid: sky,
+        grid: false,
         color: dark ? 0 : 0xffffff
     });
     space.init($('container'), delta => { }, ortho);
@@ -175,8 +174,6 @@ function space_init(data) {
                         for (let m of selection.models()) {
                             m.debug();
                         }
-                    } else {
-                        call.space_debug();
                     }
                     break;
                 case 'Escape':
@@ -279,33 +276,11 @@ function space_load(data) {
         .focus();
 }
 
-// on debug key press
-function space_debug() {
-    for (let g of mesh.api.group.list()) {
-        let { center, size } = g.bounds;
-        console.group(g.id);
-        console.log({
-            center,
-            size,
-            pos: g.group.position
-        });
-        for (let m of g.models) {
-            console.log(m.id, {
-                box: m.mesh.getBoundingBox(),
-                pos: m.mesh.position
-            });
-        }
-        console.groupEnd();
-    }
-    moto.client.fn.debug();
-}
-
 // bind functions to topics
 broker.listeners({
     load_files,
     space_init,
     space_load,
-    space_debug,
 });
 
 // remove version cache bust from url
