@@ -384,18 +384,14 @@ let util = mesh.util = {
             let matrix = object.matrixWorld;
             let bkey = [matrix.elements.map(v => v.round(5))].join(',')
             let cached = boundsCache[object.id];
-            let bounds;
             if (!cached || cached.bkey !== bkey) {
                 let position = geometry.attributes.position.clone();
                 position.applyMatrix4(new THREE.Matrix4().extractRotation(matrix));
-                bounds = new THREE.Box3().setFromBufferAttribute(position);
-                cached = boundsCache[object.id] = {
-                    bkey,
-                    bounds
+                cached = boundsCache[object.id] = { bkey,
+                    bounds: new THREE.Box3().setFromBufferAttribute(position)
                 };
             }
-            bounds = cached.bounds.clone();
-            let bt = new THREE.Box3().copy(bounds);
+            let bt = cached.bounds.clone();
             let m4 = new THREE.Matrix4();
             m4.setPosition(new THREE.Vector3().setFromMatrixPosition(object.matrixWorld));
             bt.applyMatrix4(m4);
