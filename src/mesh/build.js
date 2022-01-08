@@ -242,50 +242,45 @@ function ui_build() {
         if (s_mdl.length === 0) {
             return h.bind(selectlist, []);
         }
+        // toggle-able stat block generator
+        let sdata = {};
+        function sblock(label, title, grid) {
+            let map = sdata[label] = {
+                hide: `${label}_hide`,
+                show: `${label}_show`,
+                data: `${label}_data`
+            };
+            return [
+                h.button({ id: map.show, class: "side" }, [ h.div(label)] ),
+                h.div({ id: map.data }, [
+                    h.button({ id: map.hide, _: label, title }),
+                    grid
+                ])
+            ];
+        }
         // map selection to divs
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = [
-            h.button({ id: "gs", class: "side" }, [ h.div('group')] ),
-            h.div({ id: "gd" }, [
-                h.button({ id: "gh", _: "group", title: g_id }),
-                grid(
-                    util.extract(g_pos, map),
-                    util.extract(g_rot, map) )
-            ])];
+        let h_grp = sblock('group', g_id, grid( util.extract(g_pos, map), util.extract(g_rot, map)) );
+
         let m_pos = util.average(s_mdl.map(m => m.object.position));
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-        let h_mdl = [
-            h.button({ id: "ms", class: "side" }, [ h.div('model')] ),
-            h.div({ id: "md" }, [
-                h.button({ id: "mh", _: "model", title: m_id }),
-                grid(
-                    util.extract(m_pos, map),
-                    util.extract(m_rot, map) )
-            ])];
+        let h_mdl = sblock('model', m_id, grid( util.extract(m_pos, map), util.extract(m_rot, map)) );
+
         let bounds = util.bounds(s_mdl);
-        let h_bnd = [
-            h.button({ id: "bs", class: "side" }, [ h.div('box')] ),
-            h.div({ id: "bd" }, [
-                h.button({ id: "bh", _: 'box', title: m_id }),
-                grid(
-                    util.extract(bounds.min, map),
-                    util.extract(bounds.max, map),
-                    [ "min", "max" ]
-                )
-            ])];
-        let h_ara = [
-            h.button({ id: "hs", class: "side" }, [ h.div('span')] ),
-            h.div({ id: "hd" }, [
-                h.button({ id: "hh", _: 'span', title: m_id }),
-                grid(
-                    util.extract(bounds.center, map),
-                    util.extract(bounds.size, map),
-                    [ "center", "size" ]
-                )
-            ])];
+        let h_bnd = sblock('box', m_id, grid(
+            util.extract(bounds.min, map),
+            util.extract(bounds.max, map),
+            [ "min", "max" ]
+        ));
+        let h_ara = sblock('span', m_id, grid(
+            util.extract(bounds.center, map),
+            util.extract(bounds.size, map),
+            [ "center", "size" ]
+        ));
+
         let t_vert = s_mdl.map(m => m.vertices).reduce((a,v) => a+v);
         let t_face = s_mdl.map(m => m.faces).reduce((a,v) => a+v);
         let h_msh = [h.div([
@@ -308,25 +303,31 @@ function ui_build() {
             ...h_msh
         ]);
         // map buttons to show/hide selection info
-        function toggle(h, s, d) {
+        function toggle(label, h, s, d) {
             s.onclick = () => {
                 s.style.display = 'none';
                 d.style.display = 'flex';
+                prefs[label] = 1;
             };
             h.onclick = () => {
                 d.style.display = 'none';
                 s.style.display = 'flex';
+                prefs[label] = 2;
             };
+            if (prefs[label] === 1) {
+                s.onclick();
+            } else {
+                h.onclick();
+            }
         }
-        let { gh, gs, gd } = bound;
-        let { mh, ms, md } = bound;
-        let { bh, bs, bd } = bound;
-        let { hh, hs, hd } = bound;
-        toggle(gh, gs, gd);
-        toggle(mh, ms, md);
-        toggle(bh, bs, bd);
-        toggle(hh, hs, hd);
+        for (let [label, map] of Object.entries(sdata)) {
+            let { data, hide, show } = map;
+            toggle(label, bound[hide], bound[show], bound[data]);
+        }
     }
+
+    // temp store of ui prefs (hide/show)
+    let prefs = {};
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
