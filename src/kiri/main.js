@@ -3344,6 +3344,13 @@
         let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
         $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
         $('_dexport_').click();
+        // fixes Chrome/iOS download, but loses name and breaks others
+        // let reader = new FileReader();
+        // let out = new Blob([data], {type: 'octet/stream'});
+        // reader.onload = function(e){
+        //     window.location.href = reader.result;
+        // }
+        // reader.readAsDataURL(out);
     }
 
     // prevent safari from exiting full screen mode

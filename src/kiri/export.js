@@ -86,24 +86,36 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         const driver = KIRI.driver.LASER;
 
         function download_svg() {
-            saveAs(new Blob(
-                [driver.exportSVG(settings, data)],
-                {type:"application/octet-stream"}),
-                $('print-filename').value + ".svg");
+            API.util.download(
+                driver.exportSVG(settings, data),
+                $('print-filename').value + ".svg"
+            );
+            // saveAs(new Blob(
+            //     [driver.exportSVG(settings, data)],
+            //     {type:"application/octet-stream"}),
+            //     $('print-filename').value + ".svg");
         }
 
         function download_dxf() {
-            saveAs(new Blob(
-                [driver.exportDXF(settings, data)],
-                {type:"application/octet-stream"}),
-                $('print-filename').value + ".dxf");
+            API.util.download(
+                driver.exportDXF(settings, data),
+                $('print-filename').value + ".dxf"
+            );
+            // saveAs(new Blob(
+            //     [driver.exportDXF(settings, data)],
+            //     {type:"application/octet-stream"}),
+            //     $('print-filename').value + ".dxf");
         }
 
         function download_gcode() {
-            saveAs(new Blob(
-                [driver.exportGCode(settings, data)],
-                {type:"application/octet-stream"}),
-                $('print-filename').value + ".gcode");
+            API.util.download(
+                driver.exportGCode(settings, data),
+                $('print-filename').value + ".gcode"
+            );
+            // saveAs(new Blob(
+            //     [driver.exportGCode(settings, data)],
+            //     {type:"application/octet-stream"}),
+            //     $('print-filename').value + ".gcode");
         }
 
         API.ajax("/kiri/output-laser.html", function(html) {
@@ -397,7 +409,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
         function download() {
             filename = $('print-filename').value;
-            saveAs(getBlob(), filename + "." + fileext);
+            API.util.download(gcode, filename + "." + fileext);
+            // saveAs(getBlob(), filename + "." + fileext);
         }
 
         function pad(v) {
