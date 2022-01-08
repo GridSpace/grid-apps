@@ -246,8 +246,10 @@ function ui_build() {
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = [h.div([
-                h.button({ _: `group`, title: g_id }),
+        let h_grp = [
+            h.button({ id: "gs", class: "side" }, [ h.div('group')] ),
+            h.div({ id: "gd" }, [
+                h.button({ id: "gh", _: "group", title: g_id }),
                 grid(
                     util.extract(g_pos, map),
                     util.extract(g_rot, map) )
@@ -255,23 +257,29 @@ function ui_build() {
         let m_pos = util.average(s_mdl.map(m => m.object.position));
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-        let h_mdl = [h.div([
-                h.button({ _: `model`, title: m_id }),
+        let h_mdl = [
+            h.button({ id: "ms", class: "side" }, [ h.div('model')] ),
+            h.div({ id: "md" }, [
+                h.button({ id: "mh", _: "model", title: m_id }),
                 grid(
                     util.extract(m_pos, map),
                     util.extract(m_rot, map) )
             ])];
         let bounds = util.bounds(s_mdl);
-        let h_bnd = [h.div([
-                h.button({ _: `box`, title: m_id }),
+        let h_bnd = [
+            h.button({ id: "bs", class: "side" }, [ h.div('box')] ),
+            h.div({ id: "bd" }, [
+                h.button({ id: "bh", _: 'box', title: m_id }),
                 grid(
                     util.extract(bounds.min, map),
                     util.extract(bounds.max, map),
                     [ "min", "max" ]
                 )
             ])];
-        let h_ara = [h.div([
-                h.button({ _: `span`, title: m_id }),
+        let h_ara = [
+            h.button({ id: "hs", class: "side" }, [ h.div('span')] ),
+            h.div({ id: "hd" }, [
+                h.button({ id: "hh", _: 'span', title: m_id }),
                 grid(
                     util.extract(bounds.center, map),
                     util.extract(bounds.size, map),
@@ -291,7 +299,33 @@ function ui_build() {
                 h.label({ _: t_face }),
             ])
         ])];
-        h.bind(selectlist, [...h_grp, ...h_mdl, ...h_bnd, ...h_ara, ...h_msh]);
+        // bind elements to selectlist div
+        let bound = h.bind(selectlist, [
+            ...h_grp,
+            ...h_mdl,
+            ...h_bnd,
+            ...h_ara,
+            ...h_msh
+        ]);
+        // map buttons to show/hide selection info
+        function toggle(h, s, d) {
+            s.onclick = () => {
+                s.style.display = 'none';
+                d.style.display = 'flex';
+            };
+            h.onclick = () => {
+                d.style.display = 'none';
+                s.style.display = 'flex';
+            };
+        }
+        let { gh, gs, gd } = bound;
+        let { mh, ms, md } = bound;
+        let { bh, bs, bd } = bound;
+        let { hh, hs, hd } = bound;
+        toggle(gh, gs, gd);
+        toggle(mh, ms, md);
+        toggle(bh, bs, bd);
+        toggle(hh, hs, hd);
     }
 
     // listen for api calls

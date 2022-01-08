@@ -344,6 +344,20 @@ button:hover {
     gap: 2px;
 }
 
+#selectlist > .side {
+    position: relative;
+    width: 1.75em;
+    display: none;
+}
+
+#selectlist > .side > div {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    padding-bottom: 2px;
+}
+
 #selectlist > div {
     flex-direction: column;
     gap: 2px;

@@ -136,6 +136,9 @@ function space_init(data) {
                 case 'KeyW':
                     api.wireframe();
                     break;
+                case 'KeyG':
+                    api.grid();
+                    break;
                 case 'KeyB':
                     selection.boundsBox({toggle:true});
                     break;
