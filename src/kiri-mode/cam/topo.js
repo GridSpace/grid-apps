@@ -74,7 +74,8 @@
                 debug_clips = debug && true,
                 debug_topo = debug && true,
                 debug_topo_lines = debug && true,
-                debug_topo_shells = debug && true;
+                debug_topo_shells = debug && true,
+                time = Date.now;
 
             if (tolerance == 0) {
                 console.log(`contour auto tolerance`,resolution.round(4));
