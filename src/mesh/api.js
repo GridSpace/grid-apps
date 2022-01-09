@@ -19,6 +19,7 @@ let mesh = self.mesh = self.mesh || {};
 if (mesh.api) return;
 
 let space = moto.Space;
+let worker = moto.client.fn;
 let groups = [];
 let selected = [];
 
@@ -224,13 +225,31 @@ let file = {
         if (recs.length === 0) {
             return api.log.emit(`no models to export`);
         }
-        api.log.emit(`exporting ${recs.length} model(s)`);
-        moto.client.fn.file_export({
-            recs, format: "obj"
-        }).then(data => {
-            if (data.length) {
-                util.download(data, "export.obj");
+        function doit() {
+            api.log.emit(`exporting ${recs.length} model(s)`);
+            let file = api.modal.bound.filename.value || "export.obj";
+            if (file.toLowerCase().indexOf(".obj") < 0) {
+                file = file + ".obj";
             }
+            worker.file_export({
+                recs, format: "obj"
+            }).then(data => {
+                if (data.length) {
+                    util.download(data, file);
+                }
+            }).finally( api.modal.hide );
+        }
+        api.modal.dialog({
+            title: `export ${recs.length} model(s)`,
+            body: [ h.div({ class: "export" }, [
+                h.div([
+                    h.div("filename"),
+                    h.input({ id: "filename", value: "mesh_export" })
+                ]),
+                h.div([
+                    h.button({ _: "download", onclick: doit })
+                ])
+            ]) ]
         });
     },
 };
@@ -243,7 +262,7 @@ let tool = {
     repair() {
         api.log.emit('repairing mesh(es)...').pin();
         for (let m of selection.models()) {
-            moto.client.fn.model_heal(m.id).then(data => {
+            worker.model_heal(m.id).then(data => {
                 if (data) {
                     m.reload(
                         data.vertices,

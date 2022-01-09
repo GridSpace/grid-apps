@@ -171,6 +171,10 @@ button:hover {
     color: #888;
 }
 
+.export, .export div {
+    gap: 4px;
+}
+
 /** modal dialogs **/
 
 #modal_page {
@@ -195,10 +199,12 @@ button:hover {
 }
 
 #modal_frame > div {
-    padding: 3px; /* compensate for removing padding above */
+    padding: 5px; /* compensate for removing padding above */
 }
 
 #modal_title {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
     border-bottom: 1px solid gray;
     background-color: #ccc;
 }

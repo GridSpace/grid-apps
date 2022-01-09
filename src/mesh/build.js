@@ -31,13 +31,17 @@ util.download = (data, filename = "mesh-data") => {
 // add modal dialog functions to api
 let modal = api.modal = {
     show(title, contents) {
-        h.bind($('modal'), contents);
+        if (this.showing) {
+            throw `modal conflict showing "${title}"`;
+        }
+        let bound = h.bind($('modal'), contents);
         $('modal_title_text').innerText = title;
         $('modal_page').style.display = 'flex';
         $('modal_frame').style.display = 'flex';
         $('spinner').style.display = 'none';
         modal.info = { title, contents, showing: true };
         broker.publish('modal_show');
+        return bound;
     },
 
     hide() {
@@ -45,6 +49,10 @@ let modal = api.modal = {
         $('modal_page').style.display = 'none';
         modal.info.showing = false;
         broker.publish('modal_hide');
+        if (modal._dialog) {
+            modal._dialog.resolve(modal._dialog.bound);
+            modal._dialog = undefined;
+        }
     },
 
     info: {
@@ -74,6 +82,26 @@ let modal = api.modal = {
         } else {
             modal.hide();
         }
+    },
+
+    dialog(opt = {}) {
+        let { title, body } = opt;
+        let contents = [];
+        if (typeof body === 'string') {
+            contents.push(h.div(body))
+        } else if (Array.isArray(body)) {
+            contents.appendAll(body);
+        } else {
+            throw "invalid dialog contents";
+        }
+        return new Promise((resolve, reject) => {
+            let bound = this.show(title, contents);
+            modal._dialog = { resolve, reject, bound };
+        });
+    },
+
+    get bound() {
+        return modal._dialog ? modal._dialog.bound : undefined;
     }
 };
 
