@@ -188,12 +188,12 @@ function ui_build() {
             ]),
             h.button({ _: 'export', onclick: api.file.export }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'analyze', disabled: true }),
-            h.button({ _: 'repair', onclick: api.tool.repair }),
-            h.div({ class: "vsep" }),
             h.button({ _: 'bounds', onclick() { api.selection.boundsBox({toggle:true}) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
+            h.div({ class: "vsep" }),
+            h.button({ _: 'analyze', disabled: true }),
+            h.button({ _: 'repair', onclick: api.tool.repair }),
         ]),
     ]);
 
