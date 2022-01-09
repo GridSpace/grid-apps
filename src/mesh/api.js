@@ -218,7 +218,16 @@ let file = {
     },
 
     export() {
-        console.log('...export todo');
+        let recs = selection.models().map(m => { return {
+            id: m.id, matrix: m.matrix, file: m.file
+        } });
+        api.log.emit(`exporting ${recs.length} model(s)`);
+        moto.client.fn.file_export({
+            recs, format: "obj"
+        }).then(data => {
+            console.log({work_export: data});
+            util.download(data, "export.obj");
+        });
     },
 };
 
@@ -244,7 +253,7 @@ let tool = {
     }
 };
 
-// api is augmented in mesh.build
+// api is augmented in mesh.build (log, modal, download)
 let api = mesh.api = {
     clear() {
         for (let group of group.list()) {
@@ -300,8 +309,8 @@ let api = mesh.api = {
 let deferFn = [];
 let boundsCache = {};
 
+// util functions augmented in build (download)
 let util = mesh.util = {
-
     uuid(segs = 1) {
         let uid = [];
         while (segs-- > 0) {

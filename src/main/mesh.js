@@ -127,33 +127,33 @@ function space_init(data) {
             }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
+                case 'KeyD':
+                    if (shiftKey) {
+                        for (let m of selection.models()) {
+                            m.debug();
+                        }
+                    }
+                    break;
                 case 'KeyC':
-                    selection.centerXY().focus();
-                    break;
+                    return selection.centerXY().focus();
+                case 'KeyX':
+                    return api.file.export();
                 case 'KeyV':
-                    selection.focus();
-                    break;
+                    return selection.focus();
                 case 'KeyW':
-                    api.wireframe();
-                    break;
+                    return api.wireframe();
                 case 'KeyG':
-                    api.grid();
-                    break;
+                    return api.grid();
                 case 'KeyB':
-                    selection.boundsBox({toggle:true});
-                    break;
+                    return selection.boundsBox({toggle:true});
                 case 'KeyH':
-                    space.view.home();
-                    break;
+                    return space.view.home();
                 case 'KeyR':
-                    api.tool.repair();
-                    break;
+                    return api.tool.repair();
                 case 'KeyT':
-                    space.view.top();
-                    break;
+                    return space.view.top();
                 case 'KeyZ':
-                    space.view.reset();
-                    break;
+                    return space.view.reset();
             }
         },
         'keydown', evt => {
@@ -170,13 +170,6 @@ function space_init(data) {
                     if (metaKey || ctrlKey) {
                         selection.set(api.group.list());
                         estop(evt);
-                    }
-                    break;
-                case 'KeyD':
-                    if (shiftKey) {
-                        for (let m of selection.models()) {
-                            m.debug();
-                        }
                     }
                     break;
                 case 'Escape':

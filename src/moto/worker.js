@@ -86,12 +86,13 @@ const dispatch = moto.worker = {
         if (run) {
             try {
                 let data = run(msg.data, send);
-                if (data || async === false) {
+                if (!done && (data || async === false)) {
                     send.done(data);
                 }
             } catch (error) {
                 console.trace(error.stack);
-                dispatch.send({ data: {error: error.toString()}, done: true });
+                send.error(error.toString());
+                // dispatch.send({ data: {error: error.toString()}, done: true });
             }
         } else {
             console.log({worker_unhandled: e});

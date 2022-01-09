@@ -20,6 +20,13 @@ broker.listeners({
 
 let spin_timer;
 
+// add download / blob export to util
+let download = mesh.util.download = (data, filename = "mesh-data") => {
+    let url = window.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
+    $('download').innerHTML = `<a id="_data_export_" href="${url}" download="${filename}">x</a>`;
+    $('_data_export_').click();
+};
+
 // add modal dialog functions to api
 let modal = mesh.api.modal = {
     show(title, contents) {
@@ -155,7 +162,8 @@ function ui_build() {
         h.div({ id: 'actions' }),
         h.div({ id: 'grouplist'}),
         h.div({ id: 'selectlist'}),
-        h.div({ id: 'logger', onmouseover() { log.show() } })
+        h.div({ id: 'logger', onmouseover() { log.show() } }),
+        h.div({ id: 'download', class: "hide" })
     ]);
 
     let { actions, grouplist, selectlist, logger } = bound;
@@ -174,7 +182,7 @@ function ui_build() {
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 })
             ]),
-            h.button({ _: 'export', onclick: api.file.export, disabled: true }),
+            h.button({ _: 'export', onclick: api.file.export }),
             h.div({ class: "vsep" }),
             h.button({ _: 'analyze', disabled: true }),
             h.button({ _: 'repair', onclick: api.tool.repair }),
@@ -215,7 +223,9 @@ function ui_build() {
             .map(g => h.div([
                 h.button({ _: `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
-                    onclick() { api.selection.toggle(g) }
+                    onclick(e) {
+                        e.shiftKey ? api.selection.toggle(g) : api.selection.set([g])
+                    }
                 }),
                 h.div({ class: "vsep" }),
                 h.div({ class: "models"},

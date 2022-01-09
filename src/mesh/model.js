@@ -76,9 +76,13 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh;
     }
 
+    get matrix() {
+        return this.mesh.matrixWorld.elements;
+    }
+
     debug() {
         worker.model_debug({
-            matrix: this.mesh.matrixWorld.elements,
+            matrix: this.matrix,
             id: this.id
         }).then(data => {
             // for debugging matrix ops

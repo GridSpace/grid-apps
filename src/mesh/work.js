@@ -31,6 +31,13 @@ function cacheUpdate(id, data) {
     Object.assign(cache[id], data);
 }
 
+function translate_encode(id, matrix) {
+    let rec = cache[id];
+    let geo = rec.geo.clone();
+    geo.applyMatrix4(core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) ));
+    return geo.attributes.position.array;
+}
+
 let model = {
     load(data) {
         let { vertices, indices, name, id } = data;
@@ -41,7 +48,9 @@ let model = {
     },
 
     debug(data) {
-        let { matrix, id } = data;
+        let { id, matrix } = data;
+        return translate_encode(id, matrix);
+        throw "should not here";
         let rec = cache[id];
         let geo = rec.geo.clone();
         let m4 = core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
@@ -108,14 +117,41 @@ let object = {
     }
 };
 
-worker.bind("debug", (data, send) => {
+let file = {
+    export(data, send) {
+        let { format, recs } = data;
+        switch (format) {
+            case "obj":
+                let p = 1;
+                let obj = [];
+                for (let rec of recs) {
+                    let { id, matrix, file } = rec;
+                    let verts = translate_encode(id, matrix);
+                    obj.push(`g ${file}`);
+                    for (let i=0; i<verts.length; p += 3) {
+                        obj.push(`v ${verts[i++]} ${verts[i++]} ${verts[i++]}`);
+                        obj.push(`v ${verts[i++]} ${verts[i++]} ${verts[i++]}`);
+                        obj.push(`v ${verts[i++]} ${verts[i++]} ${verts[i++]}`);
+                        obj.push(`f ${p} ${p+1} ${p+2}`);
+                    }
+                }
+                return obj.join('\n');
+            default:
+                throw `invalid format "${format}"`;
+        }
+    }
+};
+
+function debug() {
     console.log({work_cache: cache});
-});
+}
 
 worker.bindObject({
+    debug,
     model,
     group,
-    object
+    object,
+    file
 });
 
 worker.ready();
