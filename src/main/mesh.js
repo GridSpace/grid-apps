@@ -89,9 +89,9 @@ function restore_space() {
                 let models = data.map(id => {
                     let md = cached[id];
                     let m = md ? new mesh.model(md, id) : undefined;
-                    if (m) mesh.api.log.emit(`restored | ${m.file}`);
                     return m;
                 }).filter(m => m);
+                mesh.api.log.emit(`restored ${models.length} model(s)`);
                 mesh.api.group.new(models, id)
                     .centerModels()
                     .centerXY()

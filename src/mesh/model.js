@@ -227,6 +227,11 @@ mesh.model = class MeshModel extends mesh.object {
             this.removed = 'complete';
         }
     }
+
+    updateBoundsBox() {
+        mesh.util.defer(this.group.deferUBB);
+    }
+
 };
 
 })();

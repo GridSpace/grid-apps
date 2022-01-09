@@ -20,6 +20,7 @@ mesh.object = class MeshObject {
 
     constructor(id) {
         this.id = id || mesh.util.uuid();
+        this.deferUBB = () => { this.updateBoundsBox() };
         worker.object_create({id: this.id, type: this.type});
     }
 
