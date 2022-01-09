@@ -62,8 +62,10 @@ function init(mod) {
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
         "/meta"            : redir("/meta/", 301),
+        "/mesh"            : redir("/mesh/", 301),
         "/kiri/index.html" : redir("/kiri/", 301),
-        "/meta/index.html" : redir("/meta/", 301)
+        "/meta/index.html" : redir("/meta/", 301),
+        "/mesh/index.html" : redir("/mesh/", 301)
     }));
     mod.add(handleVersion);
     mod.add(prepath([
@@ -83,6 +85,7 @@ function init(mod) {
     mod.static("/obj/", "web/obj");
     mod.static("/moto/", "web/moto");
     mod.static("/meta/", "web/meta");
+    mod.static("/mesh/", "web/mesh");
     mod.static("/kiri/", "web/kiri");
 
     // load modules
