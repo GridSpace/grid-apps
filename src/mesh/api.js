@@ -259,6 +259,10 @@ let tool = {
 
 // api is augmented in mesh.build (log, modal, download)
 let api = mesh.api = {
+    help() {
+        window.open("https://docs.grid.space/projects/mesh-tool");
+    },
+
     clear() {
         for (let group of group.list()) {
             group.remove(group);

@@ -13,6 +13,7 @@ let mesh = self.mesh = self.mesh || {};
 if (mesh.build) return;
 
 let broker = gapp.broker;
+let { api, util } = mesh;
 
 broker.listeners({
     ui_build
@@ -21,14 +22,14 @@ broker.listeners({
 let spin_timer;
 
 // add download / blob export to util
-mesh.util.download = (data, filename = "mesh-data") => {
+util.download = (data, filename = "mesh-data") => {
     let url = window.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
     $('download').innerHTML = `<a id="_data_export_" href="${url}" download="${filename}">x</a>`;
     $('_data_export_').click();
 };
 
 // add modal dialog functions to api
-let modal = mesh.api.modal = {
+let modal = api.modal = {
     show(title, contents) {
         h.bind($('modal'), contents);
         $('modal_title_text').innerText = title;
@@ -77,7 +78,7 @@ let modal = mesh.api.modal = {
 };
 
 // transient logging window bottom/left
-let log = mesh.api.log = {
+let log = api.log = {
     age: 10000, // age out lines more than 10 seconds old
 
     data: [],   // last n messages
@@ -144,6 +145,12 @@ function ui_build() {
     $h('app-name', "Mesh:Tool");
     $h('app-vers', gapp.version);
 
+    // add a help button
+    h.bind($('top-right'), [
+        h.div({ id: "help", onclick: api.help },
+            [ h.div({ class: "far fa-question-circle" }) ])
+    ]);
+
     // create top level app areas
     let bound = h.bind($('app-body'), [
         // modal dialog and page blocker
@@ -171,7 +178,6 @@ function ui_build() {
     ]);
 
     let { actions, grouplist, selectlist, logger } = bound;
-    let { api, util } = mesh;
 
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
@@ -346,9 +352,9 @@ function ui_build() {
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
-    let defer_all = mesh.util.deferWrap(update_all);
-    let defer_selector = mesh.util.deferWrap(update_selector);
-    let defer_selection = mesh.util.deferWrap(update_selection);
+    let defer_all = util.deferWrap(update_all);
+    let defer_selector = util.deferWrap(update_selector);
+    let defer_selection = util.deferWrap(update_selection);
 
     broker.listeners({
         model_add: defer_all,

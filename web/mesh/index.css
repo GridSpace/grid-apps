@@ -107,14 +107,10 @@ body, div {
 
 #top {
     z-index: 2;
-    padding: 3px;
+    padding: 3px 0 3px 0;
     flex-direction: row;
     font-family: 'Russo One', sans-serif;
     background-color: rgba(255,255,255,0.75);
-}
-
-#top > div {
-    margin: 0 5px 0 5px;
 }
 
 #top-sep {
@@ -155,6 +151,24 @@ button:hover {
 
 .hide {
     display: none;
+}
+
+#top-right {
+    position: absolute;
+    padding: 3px;
+    bottom: 0;
+    right: 0;
+    top: 0;
+}
+
+#help {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center
+}
+
+#help:hover {
+    color: #888;
 }
 
 /** modal dialogs **/
