@@ -54,7 +54,7 @@ function parse(text) {
                     objs.push(faces = []);
                 }
                 if (toks[0]) {
-                    faces.name = toks[0];
+                    faces.name = toks.join(' ');
                 }
                 break;
         }

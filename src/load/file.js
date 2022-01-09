@@ -30,7 +30,7 @@ function load_data(data, file, ext) {
                 }]);
                 break;
             case "obj":
-                resolve(load.OBJ.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
+                resolve(load.OBJ.parse(data).map(m => { return {mesh: m.toFloat32(), file: m.name || file} }));
                 break;
             case "3mf":
                 load.TMF.parseAsync(data).then((meshes) => {
