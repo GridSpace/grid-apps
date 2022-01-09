@@ -2290,7 +2290,7 @@
             forAllWidgets(widget => {
                 // only move the root widget in the group
                 if (widget.id === widget.group.id) {
-                    widget.move(0, movey + 5, 0)
+                    widget.move(0, movey, 0);
                 }
             });
         }
