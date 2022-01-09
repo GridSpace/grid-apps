@@ -141,6 +141,8 @@ function space_init(data) {
                     break;
                 case 'KeyC':
                     return selection.centerXY().focus();
+                case 'KeyI':
+                    return api.file.import();
                 case 'KeyX':
                     return api.file.export();
                 case 'KeyV':
