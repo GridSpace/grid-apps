@@ -70,7 +70,7 @@ function init() {
 
 // restore space layout and view from previous session
 function restore_space() {
-    mesh.api.log.emit(`restoring workspace`);
+    let count = 0;
     let space = moto.Space;
     mesh.db.admin.get("camera")
         .then(saved => {
@@ -81,12 +81,17 @@ function restore_space() {
         });
     mesh.db.space.iterate({ map: true }).then(cached => {
         for (let [id, data] of Object.entries(cached)) {
+            if (count++ === 0) {
+                mesh.api.log.emit(`restoring workspace...`);
+            }
             // restore group
             if (Array.isArray(data)) {
                 let models = data.map(id => {
                     let md = cached[id];
-                    return new mesh.model(md, id);
-                });
+                    let m = md ? new mesh.model(md, id) : undefined;
+                    if (m) mesh.api.log.emit(`restored | ${m.file}`);
+                    return m;
+                }).filter(m => m);
                 mesh.api.group.new(models, id)
                     .centerModels()
                     .centerXY()
@@ -144,6 +149,8 @@ function space_init(data) {
                     return api.wireframe();
                 case 'KeyG':
                     return api.grid();
+                case 'KeyL':
+                    return api.log.toggle();
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':

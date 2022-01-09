@@ -221,12 +221,16 @@ let file = {
         let recs = selection.models().map(m => { return {
             id: m.id, matrix: m.matrix, file: m.file
         } });
+        if (recs.length === 0) {
+            return api.log.emit(`no models to export`);
+        }
         api.log.emit(`exporting ${recs.length} model(s)`);
         moto.client.fn.file_export({
             recs, format: "obj"
         }).then(data => {
-            console.log({work_export: data});
-            util.download(data, "export.obj");
+            if (data.length) {
+                util.download(data, "export.obj");
+            }
         });
     },
 };

@@ -20,9 +20,18 @@ load.File = {
     load: load_file
 };
 
+function nameOf(file, part, i) {
+    let lid = file.lastIndexOf('.');
+    if (!part && lid > 0) {
+        file = file.substring(0,lid);
+    }
+    return part ? part : `${file}_${i}`;
+}
+
 function load_data(data, file, ext) {
     ext = ext || name.toLowerCase().split('.').pop();
     return new Promise((resolve, reject) => {
+        let i = 1;
         switch (ext) {
             case "stl":
                 resolve([{
@@ -30,12 +39,14 @@ function load_data(data, file, ext) {
                 }]);
                 break;
             case "obj":
-                resolve(load.OBJ.parse(data).map(m => { return {mesh: m.toFloat32(), file: m.name || file} }));
+                resolve(load.OBJ.parse(data).map(m => {
+                    return { mesh: m.toFloat32(), file: nameOf(file, m.name, i++) }
+                }));
                 break;
             case "3mf":
                 load.TMF.parseAsync(data).then((meshes) => {
                     resolve(meshes.map(m => {
-                        return { mesh: m.faces.toFloat32(), file }
+                        return { mesh: m.faces.toFloat32(), file: nameOf(file, m.name, i++) }
                     }));
                 });
                 break;

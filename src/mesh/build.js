@@ -21,7 +21,7 @@ broker.listeners({
 let spin_timer;
 
 // add download / blob export to util
-let download = mesh.util.download = (data, filename = "mesh-data") => {
+mesh.util.download = (data, filename = "mesh-data") => {
     let url = window.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
     $('download').innerHTML = `<a id="_data_export_" href="${url}" download="${filename}">x</a>`;
     $('_data_export_').click();
@@ -102,6 +102,10 @@ let log = mesh.api.log = {
     hide() {
         $('logger').style.display = 'none';
         return log;
+    },
+
+    toggle() {
+        return log.pinned ? log.unpin() && log.hide() : log.pin();
     },
 
     pin() {
