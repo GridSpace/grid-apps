@@ -173,6 +173,17 @@ button:hover {
 
 .export, .export div {
     gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.export input {
+    padding: 3px;
+    font-family: monospace;
+}
+
+.export button {
+    padding: 4px;
 }
 
 /** modal dialogs **/
@@ -191,6 +202,7 @@ button:hover {
 }
 
 #modal_frame {
+    border-radius: 4px;
     background-color: white;
     flex-direction: column;
     padding: 0 !important; /* override common below */
@@ -203,18 +215,17 @@ button:hover {
 }
 
 #modal_title {
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
     border-bottom: 1px solid gray;
     background-color: #ccc;
-}
-
-#modal_title .pad {
-    flex-grow: 1;
-    width: 5px;
+    justify-content: center;
+    align-items: center;
 }
 
 #modal_title_close {
+    position: absolute;
+    right: 5px;
     color: #555;
 }
 

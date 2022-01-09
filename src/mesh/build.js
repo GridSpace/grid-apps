@@ -186,7 +186,6 @@ function ui_build() {
             h.div({ id: 'modal_frame' }, [
                 h.div({ id: 'modal_title'}, [
                     h.div({ id: 'modal_title_text', _: 'title' }),
-                    h.div({ class: 'pad' }),
                     h.div({ id: 'modal_title_close', onclick: modal.hide }, [
                         h.i({ class: "far fa-window-close" })
                     ])
