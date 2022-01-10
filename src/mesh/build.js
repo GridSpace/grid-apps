@@ -393,7 +393,7 @@ function ui_build() {
         selection_scale: defer_selection,
         selection_rotate: defer_selection,
         selection_qrotate: defer_selection,
-    })
+    });
 }
 
 })();

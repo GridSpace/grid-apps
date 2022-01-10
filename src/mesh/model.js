@@ -219,16 +219,15 @@ mesh.model = class MeshModel extends mesh.object {
             this.group = undefined;
             this.removed = 'pending';
         } else {
-            // update worker state
-            worker.object_destroy({id: this.id});
-            // update object store
-            mesh.db.space.remove(this.id);
+            // manage lifecycle with worker, mesh app caches, etc
+            this.destroy();
             // tag removed for debugging
             this.removed = 'complete';
         }
     }
 
     updateBoundsBox() {
+        this.updateMatrix();
         mesh.util.defer(this.group.deferUBB);
     }
 

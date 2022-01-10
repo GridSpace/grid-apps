@@ -79,6 +79,12 @@ function restore_space() {
                 space.view.setFocus(saved.focus);
             }
         });
+    mesh.db.admin.get("matrices")
+        .then(data => {
+            if (data) {
+                matrixCache = data;
+            }
+        });
     mesh.db.space.iterate({ map: true }).then(cached => {
         for (let [id, data] of Object.entries(cached)) {
             if (count++ === 0) {
@@ -86,16 +92,21 @@ function restore_space() {
             }
             // restore group
             if (Array.isArray(data)) {
-                let models = data.map(id => {
-                    let md = cached[id];
-                    let m = md ? new mesh.model(md, id) : undefined;
-                    return m;
-                }).filter(m => m);
+                let models = data
+                    .map(id => { return { id, md: cached[id] } })
+                    .filter(r => r.md) // filter cache misses
+                    .map(r => new mesh.model(r.md, r.id).applyMatrix(matrixCache[r.id]));
                 mesh.api.log.emit(`restored ${models.length} model(s)`);
-                mesh.api.group.new(models, id)
-                    .centerModels()
-                    .centerXY()
-                    .floor();
+                let group = mesh.api.group.new(models, id);
+                let matrix = matrixCache[id];
+                if (matrix) {
+                    group.applyMatrix(matrix);
+                } else {
+                    group
+                        .centerModels()
+                        .centerXY()
+                        .floor();
+                }
             }
         }
     })
@@ -281,11 +292,32 @@ function space_load(data) {
         .focus();
 }
 
+let matrixCache = {};
+
+// todo deferred with util
+function store_matrices() {
+    mesh.db.admin.put("matrices", matrixCache);
+}
+
+// cache model matrices for page restores
+function object_matrix(data) {
+    let { id, matrix } = data;
+    matrixCache[id] = matrix.elements;
+    store_matrices();
+}
+
+function object_destroy(id) {
+    delete matrixCache[id];
+    store_matrices();
+}
+
 // bind functions to topics
 broker.listeners({
     load_files,
     space_init,
     space_load,
+    object_matrix,
+    object_destroy,
 });
 
 // remove version cache bust from url

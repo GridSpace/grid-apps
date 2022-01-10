@@ -103,7 +103,7 @@ gapp.broker = new class Broker {
         return message;
     }
 
-    // return function bound to a topic
+    // return function bound to a topic for publishing
     bind(topic, message, options) {
         let broker = this;
         return function(msg, opt) {
