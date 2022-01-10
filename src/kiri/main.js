@@ -735,7 +735,7 @@
 
     function getOverlappingRanges(lo, hi) {
         let ranges = [];
-        for (let range of settings.process.ranges) {
+        for (let range of settings.process.ranges || []) {
             let in_lo = range.lo >= lo && range.lo <= hi;
             let in_hi = range.hi >= lo && range.hi <= hi;
             if (in_lo || in_hi) {
