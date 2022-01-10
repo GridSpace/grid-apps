@@ -97,7 +97,6 @@ mesh.object = class MeshObject {
         scale.set(...arguments);
         this.matrixChanged();
         let [ x, y, z ] = arguments;
-        moto.client.fn.object_scale({id: this.id, x, y, z});
     }
 
     rotate(x = 0, y = 0, z = 0) {
