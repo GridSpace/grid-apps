@@ -94,26 +94,6 @@ let object = {
 
     destroy(data) {
         delete cache[data.id];
-    },
-
-    move(data) {
-        let { id, x, y, z } = data;
-    },
-
-    position(data) {
-        let { id, x, y, z } = data;
-    },
-
-    rotate(data) {
-        let { id, x, y, z } = data;
-    },
-
-    rotation(data) {
-        let { id, x, y, z } = data;
-    },
-
-    qrotation(data) {
-        let { id, w, x, y, z } = data;
     }
 };
 

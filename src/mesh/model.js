@@ -227,7 +227,6 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     updateBoundsBox() {
-        this.updateMatrix();
         mesh.util.defer(this.group.deferUBB);
     }
 

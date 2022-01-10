@@ -54,10 +54,6 @@ mesh.object = class MeshObject {
         publish.destroy(this.id);
     }
 
-    updateMatrix() {
-        publish.matrix({ id: this.id, matrix: this.object.matrix });
-    }
-
     applyMatrix(elements) {
         if (elements) {
             this.object.applyMatrix4(new THREE.Matrix4().fromArray(elements));
@@ -90,11 +86,7 @@ mesh.object = class MeshObject {
 
     move(x = 0, y = 0, z = 0) {
         let pos = this.position();
-        pos.set(pos.x + x, pos.y + y, pos.z + z);
-        this.updateBoundsBox();
-        space.update();
-        moto.client.fn.object_move({id: this.id, x, y, z});
-        return this;
+        return this.position(pos.x + x, pos.y + y, pos.z + z);
     }
 
     scale() {
@@ -103,19 +95,16 @@ mesh.object = class MeshObject {
             return scale;
         }
         scale.set(...arguments);
-        this.updateBoundsBox();
+        this.matrixChanged();
         let [ x, y, z ] = arguments;
         moto.client.fn.object_scale({id: this.id, x, y, z});
-        space.update();
     }
 
     rotate(x = 0, y = 0, z = 0) {
         if (x) this.object.rotateOnWorldAxis(new THREE.Vector3(1,0,0), x);
         if (y) this.object.rotateOnWorldAxis(new THREE.Vector3(0,1,0), y);
         if (z) this.object.rotateOnWorldAxis(new THREE.Vector3(0,0,1), z);
-        this.updateBoundsBox();
-        worker.object_rotate({id: this.id, x, y, z});
-        space.update();
+        this.matrixChanged();
         return this;
     }
 
@@ -124,20 +113,12 @@ mesh.object = class MeshObject {
         if (arguments.length === 0) {
             return rotation;
         }
-        rotation.set(...arguments);
-        this.updateBoundsBox();
-        let { x, y, z } = rotation;
-        worker.object_rotation({id: this.id, x, y, z});
-        space.update();
-        return this;
+        return this.qrotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(...arguments)));
     }
 
     qrotation(quaternion) {
         this.object.setRotationFromQuaternion(quaternion);
-        this.updateBoundsBox();
-        let { w, x, y, z } = quaternion;
-        worker.object_qrotation({id: this.id, w, x, y, z});
-        space.update();
+        this.matrixChanged();
         return this;
     }
 
@@ -147,9 +128,8 @@ mesh.object = class MeshObject {
             return pos;
         }
         pos.set(...arguments);
-        let [ x, y, z ] = arguments;
-        worker.object_position({id: this.id, x, y, z});
-        space.update();
+        this.matrixChanged();
+        return this;
     }
 
     showBounds(bool) {
@@ -161,7 +141,6 @@ mesh.object = class MeshObject {
     }
 
     updateBoundsBox() {
-        this.updateMatrix();
         let helper = this._boundsBox;
         let world = space.world;
         if (helper) {
@@ -176,6 +155,13 @@ mesh.object = class MeshObject {
             let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x555555);
             world.add(helper);
         }
+    }
+
+    matrixChanged() {
+        this.object.updateMatrix();
+        this.updateBoundsBox();
+        space.update();
+        publish.matrix({ id: this.id, matrix: this.object.matrix });
     }
 };
 
