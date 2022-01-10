@@ -556,6 +556,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     /**
      * called by center() and Group.center()
+     * todo use new prototype.moveMesh()
      */
     PRO.moveMesh = function(x, y, z) {
         let gap = this.mesh.geometry.attributes.position,
