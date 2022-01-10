@@ -139,7 +139,7 @@ let selection = {
     scale(dx = 0, dy = 0, dz = 0) {
         for (let s of selected) {
             let { x, y, z } = s.scale();
-            s.scale(x + dx, y + dy, z + dz);
+            s.scale(x * dx, y * dy, z * dz);
         }
         return selection;
     },
@@ -423,9 +423,11 @@ let util = mesh.util = {
             if (!cached || cached.bkey !== bkey) {
                 let position = geometry.attributes.position.clone();
                 position.applyMatrix4(new THREE.Matrix4().extractRotation(matrix));
-                cached = boundsCache[object.id] = { bkey,
-                    bounds: new THREE.Box3().setFromBufferAttribute(position)
-                };
+                let bounds = new THREE.Box3().setFromBufferAttribute(position);
+                // let scale = new THREE.Vector3().setFromMatrixScale(matrix);
+                // bounds.min.multiply(scale);
+                // bounds.max.multiply(scale);
+                cached = boundsCache[object.id] = { bkey, bounds };
             }
             let bt = cached.bounds.clone();
             let m4 = new THREE.Matrix4();
