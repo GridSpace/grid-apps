@@ -28,7 +28,7 @@ mesh.group = class MeshGroup extends mesh.object {
     // @param group {MeshModel[]}
     constructor(models = [], id) {
         super(id);
-        this.group = new THREE.Group();
+        this.group3 = new THREE.Group();
         this.models = [];
         for (let model of models) {
             this.add(model);
@@ -40,14 +40,14 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     get object() {
-        return this.group;
+        return this.group3;
     }
 
     // @param model {MeshModel}
     add(model) {
         model.group = this;
         this.models.addOnce(model);
-        this.group.add(model.mesh);
+        this.group3.add(model.mesh);
         space.update();
         call.model_add({model, group:this});
         worker.group_add({id: this.id, model:model.id});
@@ -67,7 +67,7 @@ mesh.group = class MeshGroup extends mesh.object {
             return;
         }
         this.models.remove(model);
-        this.group.remove(model.mesh);
+        this.group3.remove(model.mesh);
         // create message for listeners
         call.model_remove({model, group:this});
         // trigger sync with worker
@@ -75,7 +75,7 @@ mesh.group = class MeshGroup extends mesh.object {
         // ensure worker cleanup of model
         model.remove(true);
         // auto-remove group when empty
-        if (this.group.children.length === 0) {
+        if (this.group3.children.length === 0) {
             mesh.api.group.remove(this);
             // manage lifecycle with worker, mesh app caches, etc
             this.destroy();

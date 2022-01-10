@@ -192,7 +192,7 @@ let group = {
     // @param group {MeshGroup}
     add(group) {
         groups.addOnce(group);
-        space.world.add(group.group);
+        space.world.add(group.object);
         space.update();
         return group;
     },
@@ -200,7 +200,7 @@ let group = {
     // @param group {MeshGroup}
     remove(group) {
         groups.remove(group);
-        space.world.remove(group.group);
+        space.world.remove(group.object);
         space.update();
     }
 };
@@ -329,7 +329,7 @@ let api = mesh.api = {
 
     objects() {
         // return model objects suitable for finding ray intersections
-        return group.list().map(o => o.models).flat().map(o => o.object);
+        return group.list().map(o => o.models).flat().map(o => o.mesh);
     }
 };
 

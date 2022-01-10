@@ -162,6 +162,7 @@ mesh.object = class MeshObject {
         this.updateBoundsBox();
         space.update();
         publish.matrix({ id: this.id, matrix: this.object.matrix });
+        return this;
     }
 };
 

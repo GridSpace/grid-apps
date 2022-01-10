@@ -102,6 +102,10 @@ mesh.model = class MeshModel extends mesh.object {
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
+        // center vertices then restore mesh object position
+        // let mid = meh.getBoundingBox().mid;
+        // geo.moveMesh(-mid.x, -mid.y, -mid.x);
+        // this.move(mid.x, mid.y, mid.x);
         // sets fallback opacity for wireframe toggle
         this.opacity(1);
         // this ref allows clicks to be traced to models and groups
@@ -227,6 +231,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     updateBoundsBox() {
+        if (this.group)
         mesh.util.defer(this.group.deferUBB);
     }
 

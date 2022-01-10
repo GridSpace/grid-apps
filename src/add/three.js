@@ -32,7 +32,7 @@
         },
         mid: {
             get: function() {
-                return this.dim.clone().mutiplyScalar(0.5).add(this.min);
+                return this.dim.clone().multiplyScalar(0.5).add(this.min);
             }
         }
     });
@@ -84,9 +84,9 @@
         let gap = this.attributes.position,
             pa = gap.array;
         for (let i=0; i < pa.length; i += 3) {
-            pa[i    ] -= x;
-            pa[i + 1] -= y;
-            pa[i + 2] -= z;
+            pa[i    ] += x;
+            pa[i + 1] += y;
+            pa[i + 2] += z;
         }
         gap.needsUpdate = true;
         return this;
