@@ -355,14 +355,14 @@ function ui_build() {
             s.onclick = () => {
                 s.style.display = 'none';
                 d.style.display = 'flex';
-                prefs[label] = 1;
+                api.prefs.put(label, 1);
             };
             h.onclick = () => {
                 d.style.display = 'none';
                 s.style.display = 'flex';
-                prefs[label] = 2;
+                api.prefs.put(label, 2);
             };
-            if (prefs[label] === 1) {
+            if (api.prefs.map[label] === 1) {
                 s.onclick();
             } else {
                 h.onclick();
@@ -373,9 +373,6 @@ function ui_build() {
             toggle(label, bound[hide], bound[show], bound[data]);
         }
     }
-
-    // temp store of ui prefs (hide/show)
-    let prefs = {};
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events

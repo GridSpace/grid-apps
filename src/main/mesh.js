@@ -27,6 +27,9 @@ function init() {
     db.admin.put("init", Date.now());
     db.admin.get("uses").then(v => db.admin.put("uses", (v||0) + 1));
 
+    // reload preferences
+    api.prefs.restore();
+
     // setup default workspace
     space.useDefaultKeys(false);
     space.sky.set({

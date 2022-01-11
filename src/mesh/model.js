@@ -63,7 +63,6 @@ mesh.model = class MeshModel extends mesh.object {
 
         this.file = file || 'unnamed';
         this.load(mesh || vertices, indices, normals);
-
         // persist in db so it can be restored on page load
         mapp.db.space.put(this.id, { file, mesh });
     }

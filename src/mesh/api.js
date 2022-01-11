@@ -11,6 +11,7 @@ gapp.register("mesh.api", [
     "moto.client",  // dep: moto.client
     "moto.broker",  // dep: moto.broker
     "moto.space",   // dep: moto.space
+    "data.index",   // dep: data.index
     "mesh.tool",    // dep: mesh.tool
     "add.array",    // dep: add.array
 ]);
@@ -277,6 +278,28 @@ let tool = {
     }
 };
 
+// persisted preference map
+let prefs = {
+    map: {},
+
+    put(key, val) {
+        prefs.map[key] = val;
+        prefs.update();
+    },
+
+    // persist to data store
+    update() {
+        mesh.db.admin.put("prefs", prefs.map);
+    },
+
+    // reload from data store
+    restore() {
+        mesh.db.admin.get("prefs").then(data => {
+            if (data) prefs.map = data;
+        });
+    }
+};
+
 // api is augmented in mesh.build (log, modal, download)
 let api = mesh.api = {
     help() {
@@ -327,6 +350,8 @@ let api = mesh.api = {
     file,
 
     tool,
+
+    prefs,
 
     objects() {
         // return model objects suitable for finding ray intersections
@@ -475,5 +500,8 @@ let broker = gapp.broker;
 broker.wrapObject(selection, 'selection');
 broker.wrapObject(model, 'model');
 broker.wrapObject(group, 'group');
+
+// optimize db writes by merging updates
+prefs.update = util.deferWrap(prefs.update);
 
 })();
