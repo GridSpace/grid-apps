@@ -152,12 +152,14 @@ mesh.object = class MeshObject {
             );
             let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x555555);
             world.add(helper);
+            return true;
         }
     }
 
     matrixChanged() {
-        this.object.updateMatrix();
-        this.updateBoundsBox();
+        if (!this.updateBoundsBox()) {
+            this.object.updateMatrix();
+        }
         space.update();
         publish.matrix({ id: this.id, matrix: this.object.matrix });
         return this;
