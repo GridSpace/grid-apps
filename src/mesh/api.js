@@ -396,12 +396,12 @@ let util = mesh.util = {
                 z: box.max.y
             }
         };
-        bnd.size = {
+        bnd.size = bnd.dim = {
             x: bnd.max.x - bnd.min.x,
             y: bnd.max.y - bnd.min.y,
             z: bnd.max.z - bnd.min.z
         };
-        bnd.center = {
+        bnd.center = bnd.mid = {
             x: (bnd.max.x + bnd.min.x) / 2,
             y: -(bnd.max.y + bnd.min.y) / 2,
             z: (bnd.max.z + bnd.min.z) / 2

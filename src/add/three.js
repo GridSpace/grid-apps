@@ -75,9 +75,7 @@
             this.boundingBox = null;
             this.computeBoundingBox();
         }
-        let bbox = this.boundingBox;
-        // bbox.dim = bbox.max.clone().sub(bbox.min);
-        return bbox;
+        return this.boundingBox;
     };
 
     BP.moveMesh = function(x = 0, y = 0, z = 0) {

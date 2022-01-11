@@ -145,10 +145,10 @@ mesh.object = class MeshObject {
             world.remove(helper);
         }
         if (this._showBounds) {
-            let { center, size } = this.bounds;
+            let { mid, dim } = this.bounds;
             let b3 = new THREE.Box3().setFromCenterAndSize(
-                new THREE.Vector3(center.x, center.y, center.z),
-                new THREE.Vector3(size.x, size.y, size.z)
+                new THREE.Vector3(mid.x, mid.y, mid.z),
+                new THREE.Vector3(dim.x, dim.y, dim.z)
             );
             let helper = this._boundsBox = new THREE.Box3Helper(b3, 0x555555);
             world.add(helper);
