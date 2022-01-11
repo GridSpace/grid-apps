@@ -225,7 +225,10 @@ function ui_build() {
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'analyze', disabled: true }),
+            h.button({ _: 'duplicate', onclick: api.selection.duplicate }),
+            h.button({ _: 'merge', onclick: api.selection.merge }),
+            h.div({ class: "vsep" }),
+            h.button({ _: 'analyze', onclick: api.tool.analyze }),
             h.button({ _: 'repair', onclick: api.tool.repair }),
         ]),
     ]);

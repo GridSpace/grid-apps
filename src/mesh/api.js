@@ -103,6 +103,17 @@ let selection = {
         }
     },
 
+    duplicate() {
+        for (let m of selection.models()) {
+            m.duplicate();
+        }
+    },
+
+    merge() {
+        tool.merge(selection.models());
+    },
+
+    // update material selections
     update() {
         for (let group of groups) {
             group.material(mesh.material.unselected);
@@ -257,20 +268,40 @@ let file = {
 };
 
 let tool = {
+    merge(models) {
+        api.log.emit(`merging ${models.length} models`).pin();
+        worker.model_merge(models.map(m => {
+            return { id: m.id, matrix: m.matrix }
+        }))
+        .then(data => {
+            let group = api.group.new([new mesh.model({
+                file: `merged`,
+                mesh: data
+            })]).centerModels();
+            api.selection.set([group]);
+            api.log.emit('merge complete').unpin();
+        });
+    },
+
     analyze() {
+        let promises = [];
         api.log.emit('analyzing mesh(es)...').pin();
         for (let m of selection.models()) {
-            worker.model_analyze(m.id).then(data => {
-                console.log({data});
-                api.log.emit('analysis complete').unpin();
+            let p = worker.model_analyze(m.id).then(data => {
+                // console.log({data});
             });
+            promises.push(p);
         }
+        Promise.all(promises).then(() => {
+            api.log.emit('analysis complete').unpin();
+        });
     },
 
     repair() {
+        let promises = [];
         api.log.emit('repairing mesh(es)...').pin();
         for (let m of selection.models()) {
-            worker.model_heal(m.id).then(data => {
+            let p = worker.model_heal(m.id).then(data => {
                 if (data) {
                     m.reload(
                         data.vertices,
@@ -278,9 +309,12 @@ let tool = {
                         data.normals
                     );
                 }
-                api.log.emit('repair complete').unpin();
             });
+            promises.push(p);
         }
+        Promise.all(promises).then(() => {
+            api.log.emit('repair complete').unpin();
+        });
     }
 };
 

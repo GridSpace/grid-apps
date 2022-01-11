@@ -157,15 +157,15 @@ function space_init(data) {
             switch (code) {
                 case 'KeyD':
                     if (shiftKey) {
-                        for (let m of selection.models()) {
-                            m.duplicate();
-                        }
+                        return selection.duplicate();
                     }
                     break;
                 case 'KeyC':
                     return selection.centerXY().focus();
                 case 'KeyF':
                     return selection.floor().focus();
+                case 'KeyM':
+                    return selection.merge();
                 case 'KeyI':
                     return api.file.import();
                 case 'KeyX':

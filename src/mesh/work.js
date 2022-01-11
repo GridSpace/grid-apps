@@ -65,12 +65,18 @@ let model = {
     duplicate(data) {
         let { id, matrix } = data;
         return translate_encode(id, matrix);
-        throw "should not here";
-        let rec = cache[id];
-        let geo = rec.geo.clone();
-        let m4 = core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
-        geo.applyMatrix4(m4);
-        return geo.attributes.position.array;
+    },
+
+    // merge several model vertices into a single array
+    merge(recs) {
+        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+        let length = arrays.map(a => a.length).reduce((v,a) => v + a);
+        let data = new Float32Array(length);
+        for (let i=0, l=arrays.length, p=0; i<l; ) {
+            data.set(arrays[i], p);
+            p += arrays[i++].length;
+        }
+        return data;
     },
 
     analyze(id) {
