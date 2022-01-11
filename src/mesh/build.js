@@ -350,19 +350,20 @@ function ui_build() {
             ...h_ara,
             ...h_msh
         ]);
+        let prefs = api.prefs.map.info;
         // map buttons to show/hide selection info
         function toggle(label, h, s, d) {
             s.onclick = () => {
                 s.style.display = 'none';
                 d.style.display = 'flex';
-                api.prefs.put(label, 1);
+                api.prefs.save( prefs[label] = 'show' ); // <- :)
             };
             h.onclick = () => {
                 d.style.display = 'none';
                 s.style.display = 'flex';
-                api.prefs.put(label, 2);
+                api.prefs.save( prefs[label] = 'hide' );
             };
-            if (api.prefs.map[label] === 1) {
+            if (prefs[label] === 'show') {
                 s.onclick();
             } else {
                 h.onclick();

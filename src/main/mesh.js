@@ -27,9 +27,6 @@ function init() {
     db.admin.put("init", Date.now());
     db.admin.get("uses").then(v => db.admin.put("uses", (v||0) + 1));
 
-    // reload preferences
-    api.prefs.restore();
-
     // setup default workspace
     space.useDefaultKeys(false);
     space.sky.set({
@@ -57,6 +54,12 @@ function init() {
         });
     }, 100);
     space.view.setZoom(zoomrev, zoomspd);
+
+    // restore preferences
+    api.prefs.load().then(() => {
+        let { map } = api.prefs;
+        api.grid(map.space.grid);
+    });
 
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);

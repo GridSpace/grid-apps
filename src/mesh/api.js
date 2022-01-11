@@ -280,7 +280,13 @@ let tool = {
 
 // persisted preference map
 let prefs = {
-    map: {},
+    map: {
+        info: {},
+        space: {
+            grid: true,
+            dark: false
+        },
+    },
 
     put(key, val) {
         prefs.map[key] = val;
@@ -288,14 +294,15 @@ let prefs = {
     },
 
     // persist to data store
-    update() {
+    save() {
         mesh.db.admin.put("prefs", prefs.map);
     },
 
     // reload from data store
-    restore() {
-        mesh.db.admin.get("prefs").then(data => {
-            if (data) prefs.map = data;
+    load() {
+        return mesh.db.admin.get("prefs").then(data => {
+            // handle/ignore incompatible older prefs
+            if (data) Object.assign(prefs.map, data);
         });
     }
 };
@@ -328,11 +335,15 @@ let api = mesh.api = {
     },
 
     grid(state = {toggle:true}) {
+        let { platform } = space;
+        let { map, save } = prefs;
         if (state.toggle) {
-            space.platform.showGrid(!space.platform.isGridVisible());
+            platform.showGrid(!platform.isGridVisible());
         } else {
-            space.platform.showGrid(state);
+            platform.showGrid(state);
         }
+        map.space.grid = platform.isGridVisible();
+        save();
     },
 
     wireframe(state = {toggle:true}, opt = {opacity:0.15}) {
@@ -502,6 +513,6 @@ broker.wrapObject(model, 'model');
 broker.wrapObject(group, 'group');
 
 // optimize db writes by merging updates
-prefs.update = util.deferWrap(prefs.update);
+prefs.save = util.deferWrap(prefs.save);
 
 })();
