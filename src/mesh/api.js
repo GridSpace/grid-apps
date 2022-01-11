@@ -258,7 +258,13 @@ let file = {
 
 let tool = {
     analyze() {
-        console.log('...analyze todo');
+        api.log.emit('analyzing mesh(es)...').pin();
+        for (let m of selection.models()) {
+            worker.model_analyze(m.id).then(data => {
+                console.log({data});
+                api.log.emit('analysis complete').unpin();
+            });
+        }
     },
 
     repair() {

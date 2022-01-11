@@ -113,7 +113,7 @@ mesh.tool = class MeshTool {
      * construct ordered line maps with array of connected edges.
      * connect lines into polys. earcut polys into new faces.
      */
-    heal() {
+    heal(opt = { merge: true }) {
         let vertices = this.vertices;
         let faces = this.faces;
         let hash = {}; // key to line map
@@ -314,6 +314,7 @@ mesh.tool = class MeshTool {
         // rotate/flatten to Z plane and use earcut to generate faces
         // because earcut emits point indexes, no need to un-rotate
         function emitLoop(loop) {
+            let faces = [];
             let lastPoint;
             let pindex = [];
             let points = [];
@@ -371,16 +372,32 @@ mesh.tool = class MeshTool {
             for (let point of ec) {
                 faces.push(pindex[point]);
             }
+
+            // newly generated faces
+            return faces;
         }
 
-        // emit loops
-        let faceCount = this.faces.length;
+        // create area faces covering loops
+        let areas = this.areas = [];
         for (let loop of loops) {
-            emitLoop(loop);
+            this.areas.push(emitLoop(loop));
         }
 
+        // track newly created faces when loop areas are merged
+        let faceCount = this.faces.length;
+        if (opt.merge) {
+            this.merge();
+        }
         this.newFaces = this.faces.length - faceCount;
+
         return this;
+    }
+
+    // merge poly areas into faces
+    merge() {
+        for (let area of this.areas || []) {
+            this.faces.appendAll(area);
+        }
     }
 };
 

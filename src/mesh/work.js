@@ -38,6 +38,20 @@ function translate_encode(id, matrix) {
     return geo.attributes.position.array;
 }
 
+function analyze(id) {
+    log(`${id} | indexing...`);
+    let geo = cache[id].geo;
+    let tool = new mesh.tool({
+        vertices: geo.attributes.position.array,
+        faces: geo.index ? geo.index.array : undefined,
+        debug: false
+    });
+    log(`${id} | analyzing...`);
+    tool.heal();
+    dbug.log(tool);
+    return tool;
+}
+
 let model = {
     load(data) {
         let { vertices, indices, name, id } = data;
@@ -47,7 +61,8 @@ let model = {
         cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
     },
 
-    debug(data) {
+    // return new vertices in world coordinates
+    duplicate(data) {
         let { id, matrix } = data;
         return translate_encode(id, matrix);
         throw "should not here";
@@ -55,21 +70,23 @@ let model = {
         let geo = rec.geo.clone();
         let m4 = core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) );
         geo.applyMatrix4(m4);
-        // for debugging state / matrix ops
         return geo.attributes.position.array;
     },
 
+    analyze(id) {
+        let tool = analyze(id);
+        let { stats, newFaces } = tool;
+        let { cull, dups, faces } = stats;
+        log(`${id} | face count=${faces} bad=${cull} dup=${dups}`);
+        log(`${id} | open loops=${tool.loops.length} edges=${tool.edges.length}`);
+        return {
+            new: newFaces
+        };
+    },
+
     heal(id) {
-        log(`${id} | indexing...`);
-        let geo = cache[id].geo;
-        let tool = new mesh.tool({
-            vertices: geo.attributes.position.array,
-            faces: geo.index ? geo.index.array : undefined,
-            debug: false
-        });
-        log(`${id} | healing...`);
-        tool.heal();
-        dbug.log(tool);
+        let tool = analyze(id);
+        log(`${id} | unrolling...`);
         return true || tool.newFaces ? {
             vertices: tool.unrolled().toFloat32(),
         } : 0;

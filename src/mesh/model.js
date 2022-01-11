@@ -79,14 +79,14 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh.matrixWorld.elements;
     }
 
-    debug() {
-        worker.model_debug({
+    // return new group containing just this model in world coordinates
+    duplicate() {
+        worker.model_duplicate({
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            // for debugging matrix ops
             return mesh.api.group.new([new mesh.model({
-                file: `synth-${this.name}`,
+                file: `${this.file}-dup`,
                 mesh: data
             })]);
         });
@@ -101,12 +101,6 @@ mesh.model = class MeshModel extends mesh.object {
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
-        // center vertices then restore mesh object position
-        // still this doesn't work. scale broken for bounding boxes
-        let { mid } = meh.getBoundingBox();
-        geo.moveMesh(-mid.x, -mid.y, -mid.z);
-        geo.computeBoundingBox();
-        this.move(mid.x, mid.y, mid.z);
         // sets fallback opacity for wireframe toggle
         this.opacity(1);
         // this ref allows clicks to be traced to models and groups
@@ -116,7 +110,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     reload(vertices, indices, normals) {
-        this.wireframe(false);
+        let was = this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
@@ -125,6 +119,8 @@ mesh.model = class MeshModel extends mesh.object {
         if (!normals) geo.computeVertexNormals();
         // sync data to worker
         worker.model_load({id: this.id, name: this.name, vertices, indices});
+        // restore wireframe state
+        this.wireframe(was);
     }
 
     get group() {
@@ -148,6 +144,19 @@ mesh.model = class MeshModel extends mesh.object {
 
     get faces() {
         return this.vertices / 3;
+    }
+
+    // todo -- put model into its own group
+    ungroup() {
+        // get current world coordinates
+        let { mid } = meh.getBoundingBox();
+        // transform mesh into world coordinates
+        // move mesh to origin
+        // create and add to group
+        // move group center back to original center
+        geo.moveMesh(-mid.x, -mid.y, -mid.z);
+        geo.computeBoundingBox();
+        this.move(mid.x, mid.y, mid.z);
     }
 
     visible(bool) {
@@ -204,6 +213,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (bool.toggle) {
             return this.wireframe(this._wire ? false : true, opt);
         }
+        let was = this._wire ? true : false;
         if (this._wire) {
             this.mesh.remove(this._wire);
             this._wire = undefined;
@@ -215,6 +225,7 @@ mesh.model = class MeshModel extends mesh.object {
             this.opacity({temp: opt.opacity || 0});
         }
         space.update();
+        return was;
     }
 
     remove() {

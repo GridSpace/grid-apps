@@ -79,7 +79,7 @@ function restore_space() {
     let count = 0;
     let space = moto.Space;
     let parray = [];
-    let mcache;
+    let mcache = {};
     mesh.db.admin.get("camera")
         .then(saved => {
             if (saved) {
@@ -158,7 +158,7 @@ function space_init(data) {
                 case 'KeyD':
                     if (shiftKey) {
                         for (let m of selection.models()) {
-                            m.debug();
+                            m.duplicate();
                         }
                     }
                     break;
@@ -182,6 +182,8 @@ function space_init(data) {
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':
                     return space.view.home();
+                case 'KeyA':
+                    return api.tool.analyze();
                 case 'KeyR':
                     return api.tool.repair();
                 case 'KeyT':
