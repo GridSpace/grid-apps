@@ -1028,7 +1028,7 @@
             isHidden:   ()  => { return !showPlatform },
             isVisible:  ()  => { return platform.visible },
             isGridVisible()    { return grid.view.visible },
-            opacity:    (o) => { platform.material.opacity = o },
+            opacity:    (o) => { platform.material.opacity = o; Space.platform.setVisible(o > 0) },
             onMove:     (f,t) => { platformOnMove = f, platformOnMoveTime = t || platformOnMoveTime },
             onHover:    (f) => { platformHover = f },
             onClick:    (f) => { platformClick = f},

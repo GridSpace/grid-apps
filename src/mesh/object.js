@@ -66,21 +66,23 @@ mesh.object = class MeshObject {
         return this;
     }
 
-    floor() {
-        let b = this.bounds;
-        this.move(0, 0, -b.min.z);
+    floor(clazz) {
+        if (!clazz || this instanceof clazz) {
+            let b = this.bounds;
+            this.move(0, 0, -b.min.z);
+        }
         return this;
     }
 
     center(bounds) {
         let b = bounds || this.bounds;
-        this.move(-b.center.x, -b.center.y, -b.center.z);
+        this.move(-b.mid.x, -b.mid.y, -b.mid.z);
         return this;
     }
 
     centerXY(bounds) {
         let b = bounds || this.bounds;
-        this.move(-b.center.x, -b.center.y, 0);
+        this.move(-b.mid.x, -b.mid.y, 0);
         return this;
     }
 

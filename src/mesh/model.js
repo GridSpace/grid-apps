@@ -103,10 +103,10 @@ mesh.model = class MeshModel extends mesh.object {
         meh.renderOrder = 1;
         // center vertices then restore mesh object position
         // still this doesn't work. scale broken for bounding boxes
-        // let mid = meh.getBoundingBox().mid;
-        // geo.moveMesh(-mid.x, -mid.y, -mid.x);
-        // geo.computeBoundingBox();
-        // this.move(mid.x, mid.y, mid.x);
+        let { mid } = meh.getBoundingBox();
+        geo.moveMesh(-mid.x, -mid.y, -mid.z);
+        geo.computeBoundingBox();
+        this.move(mid.x, mid.y, mid.z);
         // sets fallback opacity for wireframe toggle
         this.opacity(1);
         // this ref allows clicks to be traced to models and groups

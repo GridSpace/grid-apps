@@ -75,6 +75,8 @@ function init() {
 function restore_space() {
     let count = 0;
     let space = moto.Space;
+    let parray = [];
+    let mcache;
     mesh.db.admin.get("camera")
         .then(saved => {
             if (saved) {
@@ -85,7 +87,7 @@ function restore_space() {
     mesh.db.admin.get("matrices")
         .then(data => {
             if (data) {
-                matrixCache = data;
+                mcache = data;
             }
         });
     mesh.db.space.iterate({ map: true }).then(cached => {
@@ -98,10 +100,10 @@ function restore_space() {
                 let models = data
                     .map(id => { return { id, md: cached[id] } })
                     .filter(r => r.md) // filter cache misses
-                    .map(r => new mesh.model(r.md, r.id).applyMatrix(matrixCache[r.id]));
+                    .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
                 mesh.api.log.emit(`restored ${models.length} model(s)`);
                 let group = mesh.api.group.new(models, id);
-                let matrix = matrixCache[id];
+                let matrix = mcache[id];
                 if (matrix) {
                     group.applyMatrix(matrix);
                 } else {
@@ -112,6 +114,10 @@ function restore_space() {
                 }
             }
         }
+        // restore global cache only after objects are restored
+        // otherwise their setup will corrupt the cache for other restores
+        matrixCache = mcache;
+        store_matrices();
     })
     // hide loading curtain
     $d('curtain','none');
@@ -155,6 +161,8 @@ function space_init(data) {
                     break;
                 case 'KeyC':
                     return selection.centerXY().focus();
+                case 'KeyF':
+                    return selection.floor().focus();
                 case 'KeyI':
                     return api.file.import();
                 case 'KeyX':
@@ -188,6 +196,7 @@ function space_init(data) {
                 }
                 return;
             }
+            let rot;
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
@@ -209,25 +218,29 @@ function space_init(data) {
                     estop(evt);
                     break;
                 case 'ArrowUp':
-                    selection.rotate(-rv,0,0).floor();
+                    rot = selection.rotate(-rv,0,0);
                     break;
                 case 'ArrowDown':
-                    selection.rotate(rv,0,0).floor();
+                    rot = selection.rotate(rv,0,0);
                     break;
                 case 'ArrowLeft':
                     if (shiftKey) {
-                        selection.rotate(0,-rv,0).floor();
+                        rot = selection.rotate(0,-rv,0);
                     } else {
-                        selection.rotate(0,0,rv).floor();
+                        rot = selection.rotate(0,0,rv);
                     }
                     break;
                 case 'ArrowRight':
                     if (shiftKey) {
-                        selection.rotate(0,rv,0).floor();
+                        rot = selection.rotate(0,rv,0);
                     } else {
-                        selection.rotate(0,0,-rv).floor();
+                        rot = selection.rotate(0,0,-rv);
                     }
                     break;
+            }
+            if (rot && true) {
+                // todo future pref to auto-floor or not
+                rot.floor(mesh.group);
             }
         }
     ]);
