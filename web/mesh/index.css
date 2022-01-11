@@ -171,15 +171,20 @@ button:hover {
     color: #888;
 }
 
+.export {
+    flex-direction: column;
+    font-family: monospace;
+}
+
 .export, .export div {
     gap: 4px;
     align-items: center;
     justify-content: center;
 }
 
-.export input {
-    padding: 3px;
+.export input, .export button {
     font-family: monospace;
+    padding: 3px;
 }
 
 .export button {

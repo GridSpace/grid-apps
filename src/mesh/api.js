@@ -225,14 +225,14 @@ let file = {
         if (recs.length === 0) {
             return api.log.emit(`no models to export`);
         }
-        function doit() {
+        function doit(ext = 'obj') {
             api.log.emit(`exporting ${recs.length} model(s)`);
             let file = api.modal.bound.filename.value || "export.obj";
-            if (file.toLowerCase().indexOf(".obj") < 0) {
-                file = file + ".obj";
+            if (file.toLowerCase().indexOf(`.${ext}`) < 0) {
+                file = `${file}.${ext}`;
             }
             worker.file_export({
-                recs, format: "obj"
+                recs, format: ext
             }).then(data => {
                 if (data.length) {
                     util.download(data, file);
@@ -247,7 +247,8 @@ let file = {
                     h.input({ id: "filename", value: "mesh_export" })
                 ]),
                 h.div([
-                    h.button({ _: "download", onclick: doit })
+                    h.button({ _: "download OBJ", onclick() { doit('obj') } }),
+                    h.button({ _: "download STL", onclick() { doit('stl') } })
                 ])
             ]) ]
         });

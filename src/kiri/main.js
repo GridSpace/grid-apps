@@ -1740,10 +1740,10 @@
             }
             return obj.join('\n');
         }
-        let stl = new Uint8Array(80 + 4 + facets * 50);
+        let stl = new Uint8Array(80 + 4 + facets/3 * 50);
         let dat = new DataView(stl.buffer);
         let pos = 84;
-        dat.setInt32(80, facets, true);
+        dat.setInt32(80, facets/3, true);
         for (let out of outs) {
             let { position } = out.geo.attributes;
             let pvals = position.array;
