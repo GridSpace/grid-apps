@@ -38,7 +38,7 @@ function translate_encode(id, matrix) {
     return geo.attributes.position.array;
 }
 
-function analyze(id) {
+function analyze(id, opt = {}) {
     log(`${id} | indexing...`);
     let geo = cache[id].geo;
     let tool = new mesh.tool({
@@ -47,7 +47,7 @@ function analyze(id) {
         debug: false
     });
     log(`${id} | analyzing...`);
-    tool.heal();
+    tool.heal(opt);
     dbug.log(tool);
     return tool;
 }
@@ -80,22 +80,20 @@ let model = {
     },
 
     analyze(id) {
-        let tool = analyze(id);
-        let { stats, newFaces } = tool;
+        let tool = analyze(id, { mapped: true });
+        let { stats, mapped } = tool;
         let { cull, dups, faces } = stats;
         log(`${id} | face count=${faces} bad=${cull} dup=${dups}`);
         log(`${id} | open loops=${tool.loops.length} edges=${tool.edges.length}`);
-        return {
-            new: newFaces
-        };
+        return { stats, mapped };
     },
 
     heal(id) {
         let tool = analyze(id);
         log(`${id} | unrolling...`);
-        return true || tool.newFaces ? {
+        return {
             vertices: tool.unrolled().toFloat32(),
-        } : 0;
+        };
     }
 };
 

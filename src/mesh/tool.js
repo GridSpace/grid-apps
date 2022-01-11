@@ -91,21 +91,11 @@ mesh.tool = class MeshTool {
         } else {
             faces = faces.map(v => v*3);
         }
+        // unique vertex array
         this.vertices = vertices;
+        // unique face array. elements are offset into vertices
         this.faces = faces;
         return this;
-    }
-
-    // return non-indexed vertex list (for compatibility)
-    unrolled() {
-        let out = [];
-        let vertices = this.vertices;
-        for (let face of this.faces) {
-            out.push(vertices[face]);
-            out.push(vertices[face+1]);
-            out.push(vertices[face+2]);
-        }
-        return out;
     }
 
     /**
@@ -212,10 +202,16 @@ mesh.tool = class MeshTool {
             let l3 = getLine(v3, v1).addFace(i);
         }
 
+        // array of unique line segment records with vertices
+        // and a list of faces. one = edge, two = inside
+        // all lines should be inside or object is not manifold
+        // but does not preclude self-intersecting geometries
         this.lines = lines;
 
         // lines belonging to only one face are on the edge of a hole
         let edges = this.edges = lines.filter(l => l.faces.length === 1);
+
+        // arrays of connected edges that form a closed loop
         let loops = this.loops = [];
 
         // connect edge lines into closed loops
@@ -383,21 +379,63 @@ mesh.tool = class MeshTool {
             this.areas.push(emitLoop(loop));
         }
 
-        // track newly created faces when loop areas are merged
-        let faceCount = this.faces.length;
+        // auto-merge newly found enclosed areas
         if (opt.merge) {
             this.merge();
         }
-        this.newFaces = this.faces.length - faceCount;
+
+        // de-reference loops and edges
+        if (opt.mapped) {
+            this.mapped = {
+                edges: this.expandLoop(this.edges),
+                areas: this.areas.map(a => this.expandArray(a))
+            };
+        }
 
         return this;
     }
 
-    // merge poly areas into faces
+    // add vertex data from given index into array
+    appendVertex(index, array = []) {
+        let vertx = this.vertices;
+        array.push(vertx[index++]);
+        array.push(vertx[index++]);
+        array.push(vertx[index]);
+        return array;
+    }
+
+    // add vertices from a vertex index list to an array
+    expandArray(indices, array = []) {
+        for (let i of indices) {
+            this.appendVertex(i, array);
+        }
+        return array;
+    }
+
+    // turn loop into XYZ vertex array
+    expandLoop(loop, array = []) {
+        for (let line of loop) {
+            this.appendVertex(line.v1, array);
+            this.appendVertex(line.v2, array);
+        }
+        return array;
+    }
+
+    // merge generated poly areas into faces
     merge() {
         for (let area of this.areas || []) {
             this.faces.appendAll(area);
         }
+    }
+
+    // return non-indexed vertex list (for compatibility)
+    unrolled() {
+        let out = [];
+        let vertices = this.vertices;
+        for (let face of this.faces) {
+            this.appendVertex(face, out);
+        }
+        return out;
     }
 };
 

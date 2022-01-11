@@ -85,7 +85,7 @@ mesh.model = class MeshModel extends mesh.object {
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            return mesh.api.group.new([new mesh.model({
+            mesh.api.group.new([new mesh.model({
                 file: `${this.file}-dup`,
                 mesh: data
             })]);

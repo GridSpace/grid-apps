@@ -109,6 +109,14 @@ let selection = {
         }
     },
 
+    analyze() {
+        tool.analyze(selection.models());
+    },
+
+    repair() {
+        tool.repair(selection.models());
+    },
+
     merge() {
         tool.merge(selection.models());
     },
@@ -283,24 +291,33 @@ let tool = {
         });
     },
 
-    analyze() {
+    analyze(models) {
         let promises = [];
         api.log.emit('analyzing mesh(es)...').pin();
-        for (let m of selection.models()) {
+        let areas = [];
+        let edges = [];
+        for (let m of models) {
             let p = worker.model_analyze(m.id).then(data => {
-                // console.log({data});
+                areas.appendAll(data.mapped.areas);
+                edges.appendAll(data.mapped.edges);
             });
             promises.push(p);
         }
         Promise.all(promises).then(() => {
+            let newmdl = areas.map(area => new mesh.model({
+                file: (area.length/3).toString(),
+                mesh: area.toFloat32()
+            }));
+            mesh.api.group.new(newmdl);
+            console.log({ areas, edges, newmdl });
             api.log.emit('analysis complete').unpin();
         });
     },
 
-    repair() {
+    repair(models) {
         let promises = [];
         api.log.emit('repairing mesh(es)...').pin();
-        for (let m of selection.models()) {
+        for (let m of models) {
             let p = worker.model_heal(m.id).then(data => {
                 if (data) {
                     m.reload(

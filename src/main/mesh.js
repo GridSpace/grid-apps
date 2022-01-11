@@ -155,10 +155,12 @@ function space_init(data) {
             }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
+                case 'KeyI':
+                    return api.file.import();
+                case 'KeyX':
+                    return api.file.export();
                 case 'KeyD':
-                    if (shiftKey) {
-                        return selection.duplicate();
-                    }
+                    if (shiftKey) return selection.duplicate();
                     break;
                 case 'KeyC':
                     return selection.centerXY().focus();
@@ -166,10 +168,10 @@ function space_init(data) {
                     return selection.floor().focus();
                 case 'KeyM':
                     return selection.merge();
-                case 'KeyI':
-                    return api.file.import();
-                case 'KeyX':
-                    return api.file.export();
+                case 'KeyA':
+                    return selection.analyze();
+                case 'KeyR':
+                    return selection.repair();
                 case 'KeyV':
                     return selection.focus();
                 case 'KeyW':
@@ -182,10 +184,6 @@ function space_init(data) {
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':
                     return space.view.home();
-                case 'KeyA':
-                    return api.tool.analyze();
-                case 'KeyR':
-                    return api.tool.repair();
                 case 'KeyT':
                     return space.view.top();
                 case 'KeyZ':
