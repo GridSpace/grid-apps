@@ -105,6 +105,7 @@ mesh.model = class MeshModel extends mesh.object {
         // still this doesn't work. scale broken for bounding boxes
         // let mid = meh.getBoundingBox().mid;
         // geo.moveMesh(-mid.x, -mid.y, -mid.x);
+        // geo.computeBoundingBox();
         // this.move(mid.x, mid.y, mid.x);
         // sets fallback opacity for wireframe toggle
         this.opacity(1);
