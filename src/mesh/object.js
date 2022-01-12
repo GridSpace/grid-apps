@@ -63,7 +63,7 @@ mesh.object = class MeshObject {
     }
 
     applyMatrix4(matrix) {
-        return this.applyMatrix(matrix.elements);
+        return this.applyMatrix(matrix.elements).matrixChanged();
     }
 
     focus() {
