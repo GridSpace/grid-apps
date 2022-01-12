@@ -6,6 +6,7 @@
 
 gapp.register("mesh.build",[
     "moto.broker",  // dep: moto.broker
+    "mesh.util",    // dep: mesh.util
     "mesh.api",     // dep: mesh.api
 ]);
 

@@ -10,6 +10,7 @@ gapp.register("mesh.model", [
     "moto.license", // dep: moto.license
     "mesh.object",  // dep: mesh.object
     "mesh.group",   // dep: mesh.group
+    "mesh.util",    // dep: mesh.util
     "mesh.api",     // dep: mesh.api
 ]);
 

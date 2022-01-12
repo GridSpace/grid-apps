@@ -8,6 +8,7 @@ gapp.register("mesh.object", [
     "add.three",    // dep: add.three
     "moto.license", // dep: moto.license
     "moto.broker",  // dep: moto.broker
+    "mesh.util",    // dep: mesh.util
     "mesh.api",     // dep: mesh.api
 ]);
 
