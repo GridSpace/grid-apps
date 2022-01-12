@@ -26,6 +26,10 @@ let util = mesh.util;
 
 let groups = [];
 let selected = [];
+let toggle = {
+    wire: false,
+    bound: false
+};
 
 let selection = {
     // @returns {MeshObject[]} or all groups if not strict and no selection

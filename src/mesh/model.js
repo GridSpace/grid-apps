@@ -215,6 +215,9 @@ mesh.model = class MeshModel extends mesh.object {
             return this.wireframe(this._wire ? false : true, opt);
         }
         let was = this._wire ? true : false;
+        if (was === bool) {
+            return was;
+        }
         if (this._wire) {
             this.mesh.remove(this._wire);
             this._wire = undefined;

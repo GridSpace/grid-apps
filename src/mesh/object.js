@@ -150,8 +150,12 @@ mesh.object = class MeshObject {
     }
 
     showBounds(bool) {
+        let was = this._showBounds;
         if (bool && bool.toggle) {
             bool = !this._showBounds;
+        }
+        if (was === bool) {
+            return;
         }
         this._showBounds = bool;
         this.updateBoundsBox();
