@@ -89,7 +89,7 @@ let model = {
     },
 
     heal(id) {
-        let tool = analyze(id);
+        let tool = analyze(id, { merge: true });
         log(`${id} | unrolling...`);
         return {
             vertices: tool.unrolled().toFloat32(),
