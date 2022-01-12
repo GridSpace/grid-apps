@@ -208,8 +208,8 @@ let group = {
     },
 
     // @param group {MeshModel[]}
-    new(models, id) {
-        return group.add(new mesh.group(models, id));
+    new(models, id, name) {
+        return group.add(new mesh.group(models, id, name));
     },
 
     // @param group {MeshGroup}
@@ -295,31 +295,30 @@ let tool = {
     },
 
     analyze(models) {
-        let promises = [];
         api.log.emit('analyzing mesh(es)...').pin();
-        let areas = [];
-        let edges = [];
+        let promises = [];
+        let newmdl = [];
+        let mcore = new THREE.Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
             let p = worker.model_analyze(m.id).then(data => {
-                areas.appendAll(data.mapped.areas);
-                edges.appendAll(data.mapped.edges);
+                let { areas, edges } = data.mapped;
+                let nm = areas.map(area => new mesh.model({
+                    file: (area.length/3).toString(),
+                    mesh: area.toFloat32()
+                })).map( nm => nm.applyMatrix4(mcore.multiply(m.mesh.matrixWorld)) );
+                newmdl.appendAll(nm);
             });
             promises.push(p);
         }
         Promise.all(promises).then(() => {
-            let newmdl = areas.map(area => new mesh.model({
-                file: (area.length/3).toString(),
-                mesh: area.toFloat32()
-            }));
-            mesh.api.group.new(newmdl);
-            console.log({ areas, edges, newmdl });
+            mesh.api.group.new(newmdl, undefined, "patch");
             api.log.emit('analysis complete').unpin();
         });
     },
 
     repair(models) {
-        let promises = [];
         api.log.emit('repairing mesh(es)...').pin();
+        let promises = [];
         for (let m of models) {
             let p = worker.model_heal(m.id).then(data => {
                 if (data) {

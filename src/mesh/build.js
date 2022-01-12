@@ -263,7 +263,7 @@ function ui_build() {
         // map groups to divs
         let groups = api.group.list()
             .map(g => h.div([
-                h.button({ _: `group`, title: g.id,
+                h.button({ _: g.name || `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick(e) {
                         e.shiftKey ? api.selection.toggle(g) : api.selection.set([g])

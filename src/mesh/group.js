@@ -26,10 +26,11 @@ let worker = moto.client.fn;
 mesh.group = class MeshGroup extends mesh.object {
 
     // @param group {MeshModel[]}
-    constructor(models = [], id) {
+    constructor(models = [], id, name) {
         super(id);
         this.group3 = new THREE.Group();
         this.models = [];
+        this.name = name;
         for (let model of models) {
             this.add(model);
         }
