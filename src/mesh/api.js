@@ -288,7 +288,7 @@ let tool = {
             let group = api.group.new([new mesh.model({
                 file: `merged`,
                 mesh: data
-            })]).centerModels();
+            })]).promote();
             api.selection.set([group]);
             api.log.emit('merge complete').unpin();
         });

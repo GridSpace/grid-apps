@@ -88,6 +88,10 @@ mesh.group = class MeshGroup extends mesh.object {
         return this;
     }
 
+    promote() {
+        return this.centerModels().centerXY().floor();
+    }
+
     // center objects to group bounds
     // dependent on first being added to world/scene
     centerModels() {

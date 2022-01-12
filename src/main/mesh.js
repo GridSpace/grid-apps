@@ -78,7 +78,6 @@ function init() {
 function restore_space() {
     let count = 0;
     let space = moto.Space;
-    let parray = [];
     let mcache = {};
     mesh.db.admin.get("camera")
         .then(saved => {
@@ -105,16 +104,7 @@ function restore_space() {
                     .filter(r => r.md) // filter cache misses
                     .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
                 mesh.api.log.emit(`restored ${models.length} model(s)`);
-                let group = mesh.api.group.new(models, id);
-                let matrix = mcache[id];
-                if (matrix) {
-                    group.applyMatrix(matrix);
-                } else {
-                    group
-                        .centerModels()
-                        .centerXY()
-                        .floor();
-                }
+                mesh.api.group.new(models, id).applyMatrix(mcache[id]);
             }
         }
         // restore global cache only after objects are restored
@@ -305,9 +295,7 @@ function load_files(files) {
 // add object loader
 function space_load(data) {
     mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
-        .centerModels()
-        .centerXY()
-        .floor()
+        .promote()
         .focus();
 }
 
