@@ -176,14 +176,25 @@
             request = IDB.open(name, this.version);
 
             request.onupgradeneeded = function(event) {
-                if (options.delete === true) {
-                    storage.db.deleteObjectStore(name);
-                    return;
-                }
                 let db = storage.db = request.result;
-                for (let store of storage.stores) {
+                let current = [...db.objectStoreNames];
+                let stores = storage.stores;
+                // add missing stores
+                for (let store of stores) {
+                    if (current.indexOf(store) >= 0) {
+                        continue;
+                    }
                     storage.created[store] = db.createObjectStore(store);
                     storage.current = store;
+                    current.push(store);
+                    console.log({index_added: store});
+                }
+                // remove obsolete stores
+                for (let curr of current) {
+                    if (stores.indexOf(curr) < 0) {
+                        storage.db.deleteObjectStore(curr);
+                        console.log({index_dropped: curr});
+                    }
                 }
                 event.target.transaction.oncomplete = function(event) {
                     storage.runQueue();
@@ -197,7 +208,7 @@
             };
 
             request.onerror = function(event) {
-                console.log({error:event});
+                console.log({error: event});
                 fallback();
             };
         } catch (e) {

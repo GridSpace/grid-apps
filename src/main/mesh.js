@@ -6,9 +6,10 @@
 
 let broker = gapp.broker;
 let call = broker.send;
+let dbindex = [ "admin", "space" ];
 
 function init() {
-    let stores = data.open('mesh', { stores:[ "admin", "cache", "space" ] }).init(),
+    let stores = data.open('mesh', { stores: dbindex, version: 4 }).init(),
         moto = self.moto,
         api = mesh.api,
         dark = false,
@@ -19,8 +20,7 @@ function init() {
         platform = space.platform,
         db = mesh.db = {
             admin: stores.promise('admin'),
-            space: stores.promise('space'),
-            cache: stores.promise('cache')
+            space: stores.promise('space')
         };
 
     // mark init time and use count

@@ -361,6 +361,7 @@ let tool = {
         api.log.emit('repairing mesh(es)...').pin();
         tool.heal(models, { merge: true }).then(() => {
             api.log.emit('repair commplete').pin();
+            api.selection.update();
         });
     },
 
@@ -368,6 +369,7 @@ let tool = {
         api.log.emit('cleaning mesh(es)...').pin();
         tool.heal(models, { merge: false }).then(() => {
             api.log.emit('cleaning complete').pin();
+            api.selection.update();
         });
     }
 };
