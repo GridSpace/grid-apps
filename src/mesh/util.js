@@ -27,6 +27,13 @@ let util = mesh.util = {
         return uid.join('-');
     },
 
+    // add comma separator to 1000s
+    comma(val) {
+        let str = val.toString().split(".");
+        str[0] = str[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return str.join(".");
+    },
+
     // merge repeated function calls like updates
     // that importantly take no arguments
     defer(fn, time = 50) {

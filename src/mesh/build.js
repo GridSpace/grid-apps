@@ -346,9 +346,9 @@ function ui_build() {
                 h.div({ _: "" }),
                 h.div({ _: "count", class: "top" }),
                 h.div({ _: "vertex", class: "side" }),
-                h.label({ _: t_vert }),
+                h.label({ _: util.comma(t_vert) }),
                 h.div({ _: "face", class: "side" }),
-                h.label({ _: t_face }),
+                h.label({ _: util.comma(t_face) }),
             ])
         ])];
         // bind elements to selectlist div
