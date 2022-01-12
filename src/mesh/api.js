@@ -106,6 +106,13 @@ let selection = {
         }
     },
 
+    visible() {
+        for (let m of selection.models()) {
+            m.visible(...arguments);
+        }
+        util.defer(selection.update);
+    },
+
     duplicate() {
         for (let m of selection.models()) {
             m.duplicate();

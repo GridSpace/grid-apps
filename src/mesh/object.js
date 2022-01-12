@@ -71,6 +71,18 @@ mesh.object = class MeshObject {
         return this;
     }
 
+    visible(opt) {
+        if (opt === undefined) {
+            return this.object.visible;
+        }
+        if (opt.toggle) {
+            this.visible(!this.visible());
+        } else {
+            this.object.visible = opt;
+        }
+        return this;
+    }
+
     floor(clazz) {
         if (!clazz || this instanceof clazz) {
             let b = this.bounds;

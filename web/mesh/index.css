@@ -369,6 +369,14 @@ button:hover {
     background-color: rgba(0,255,0,1)
 }
 
+#grouplist .hidden {
+    background-color: rgba(0,0,255,0.2);
+}
+
+#grouplist .hidden:hover {
+    background-color: rgba(0,0,255,0.1);
+}
+
 /** selection info bottom/right of workspace **/
 
 #selectlist {

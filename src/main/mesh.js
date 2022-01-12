@@ -172,6 +172,8 @@ function space_init(data) {
                     return api.grid();
                 case 'KeyL':
                     return api.log.toggle();
+                case 'KeyS':
+                    return selection.visible({toggle:true});
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':

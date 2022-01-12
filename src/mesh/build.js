@@ -225,6 +225,7 @@ function ui_build() {
             h.button({ _: 'bounds', onclick() { api.selection.boundsBox({toggle:true}) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
+            h.button({ _: 'visible', onclick() { api.selection.visible({ toggle: true }) } }),
             h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: api.selection.duplicate }),
             h.button({ _: 'merge', onclick: api.selection.merge }),
@@ -274,7 +275,10 @@ function ui_build() {
                 h.div({ class: "models"},
                     // map models to buttons
                     g.models.map(m => h.button({ _: m.file || m.id,
-                        class: selHas(m) ? [ 'selected' ] : [],
+                        class: [
+                            selHas(m) ? 'selected' : undefined,
+                            m.visible() ? undefined : 'hidden'
+                        ],
                         onclick(e) {
                             let sel = api.selection.list();
                             e.shiftKey || (sel.length === 1 && m === sel[0]) ?
