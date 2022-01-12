@@ -91,7 +91,7 @@ mesh.model = class MeshModel extends mesh.object {
             mesh.api.group.new([new mesh.model({
                 file: `${this.file}-dup`,
                 mesh: data
-            })]);
+            })]).select();
         });
     }
 

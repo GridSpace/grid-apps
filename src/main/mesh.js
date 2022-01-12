@@ -9,6 +9,8 @@ let call = broker.send;
 let dbindex = [ "admin", "space" ];
 let { Quaternion, Vector3 } = THREE;
 
+// set below. called once the DOM readyState = complete
+// this is the main() entrypoint called after all dependents load
 function init() {
     let stores = data.open('mesh', { stores: dbindex, version: 4 }).init(),
         moto = self.moto,
