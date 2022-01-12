@@ -17,8 +17,10 @@ gapp.finalize("mesh.work", [
     "add.three",    // dep: add.three
 ]);
 
+let { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
+
 // compensation for space/world/platform rotation
-let core_matrix = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+let core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
 let { client, worker } = moto;
 let cache = {};
@@ -34,7 +36,7 @@ function cacheUpdate(id, data) {
 function translate_encode(id, matrix) {
     let rec = cache[id];
     let geo = rec.geo.clone();
-    geo.applyMatrix4(core_matrix.clone().multiply( new THREE.Matrix4().fromArray(matrix) ));
+    geo.applyMatrix4(core_matrix.clone().multiply( new Matrix4().fromArray(matrix) ));
     return geo.attributes.position.array;
 }
 
@@ -55,9 +57,9 @@ function analyze(id, opt = {}) {
 let model = {
     load(data) {
         let { vertices, indices, name, id } = data;
-        let geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        let geo = new BufferGeometry();
+        geo.setAttribute('position', new BufferAttribute(vertices, 3));
+        if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
     },
 
@@ -156,10 +158,10 @@ let file = {
                 for (let rec of recs) {
                     let { id, matrix, file, varr } = rec;
                     for (let i=0, l=varr.length; i<l;) {
-                        let p0 = new THREE.Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p1 = new THREE.Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p2 = new THREE.Vector3(varr[i++], varr[i++], varr[i++]);
-                        let norm = THREE.computeFaceNormal(p0, p1, p2);
+                        let p0 = new Vector3(varr[i++], varr[i++], varr[i++]);
+                        let p1 = new Vector3(varr[i++], varr[i++], varr[i++]);
+                        let p2 = new Vector3(varr[i++], varr[i++], varr[i++]);
+                        let norm = computeFaceNormal(p0, p1, p2);
                         dat.setFloat32(pos +  0, norm.x, true);
                         dat.setFloat32(pos +  4, norm.y, true);
                         dat.setFloat32(pos +  8, norm.z, true);

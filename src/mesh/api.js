@@ -20,6 +20,8 @@ gapp.register("mesh.api", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.api) return;
 
+let { Matrix4, Vector3 } = THREE;
+
 let space = moto.Space;
 let worker = moto.client.fn;
 let util = mesh.util;
@@ -313,7 +315,7 @@ let tool = {
         api.log.emit('analyzing mesh(es)...').pin();
         let promises = [];
         let newmdl = [];
-        let mcore = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+        let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
             // todo - translate vertices with source model's matrix
             let p = worker.model_analyze(m.id).then(data => {
@@ -425,7 +427,7 @@ let api = mesh.api = {
         // sets "home" views (front, back, home, reset)
         space.platform.setCenter(center.x, -center.y, center.z);
         // sets camera focus
-        space.view.setFocus(new THREE.Vector3(
+        space.view.setFocus(new Vector3(
             center.x, center.z, -center.y
         ));
     },

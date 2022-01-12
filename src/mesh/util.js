@@ -14,6 +14,8 @@ gapp.register("mesh.util", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.util) return;
 
+let { Matrix4, Vector3, Box3 } = THREE;
+
 let deferFn = [];
 let boundsCache = {};
 
@@ -62,7 +64,7 @@ let util = mesh.util = {
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
     // @returns bounds modified for moto.Space
     bounds(object) {
-        let box = new THREE.Box3();
+        let box = new Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
                 util.box3expand(box, o instanceof mesh.object ? o.object : o);
@@ -110,16 +112,16 @@ let util = mesh.util = {
             let cached = boundsCache[object.id];
             if (!cached || cached.bkey !== bkey) {
                 let position = geometry.attributes.position.clone();
-                position.applyMatrix4(new THREE.Matrix4().extractRotation(matrix));
-                let bounds = new THREE.Box3().setFromBufferAttribute(position);
-                // let scale = new THREE.Vector3().setFromMatrixScale(matrix);
+                position.applyMatrix4(new Matrix4().extractRotation(matrix));
+                let bounds = new Box3().setFromBufferAttribute(position);
+                // let scale = new Vector3().setFromMatrixScale(matrix);
                 // bounds.min.multiply(scale);
                 // bounds.max.multiply(scale);
                 cached = boundsCache[object.id] = { bkey, bounds };
             }
             let bt = cached.bounds.clone();
-            let m4 = new THREE.Matrix4();
-            m4.setPosition(new THREE.Vector3().setFromMatrixPosition(object.matrixWorld));
+            let m4 = new Matrix4();
+            m4.setPosition(new Vector3().setFromMatrixPosition(object.matrixWorld));
             bt.applyMatrix4(m4);
             box3.union(bt);
         }

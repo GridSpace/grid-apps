@@ -20,27 +20,29 @@ if (mesh.model) return;
 let mapp = mesh;
 let space = moto.Space;
 let worker = moto.client.fn;
+let { MeshPhongMaterial, MeshBasicMaterial } = THREE;
+let { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
 
 /** default materials **/
 let materials = mesh.material = {
-    unselected: new THREE.MeshPhongMaterial({
-        side: THREE.DoubleSide,
+    unselected: new MeshPhongMaterial({
+        side: DoubleSide,
         transparent: true,
         shininess: 100,
         specular: 0x202020,
         color: 0xffff00,
         opacity: 1
     }),
-    selected: new THREE.MeshPhongMaterial({
-        side: THREE.DoubleSide,
+    selected: new MeshPhongMaterial({
+        side: DoubleSide,
         transparent: true,
         shininess: 100,
         specular: 0x202020,
         color: 0x00ee00,
         opacity: 1
     }),
-    wireframe: new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
+    wireframe: new MeshBasicMaterial({
+        side: DoubleSide,
         wireframe: true,
         color: 0x0
     }),
@@ -94,11 +96,11 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     load(vertices, indices, normals) {
-        let geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        let geo = new BufferGeometry();
+        geo.setAttribute('position', new BufferAttribute(vertices, 3));
+        if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         if (!normals) geo.computeVertexNormals();
-        let meh = this.mesh = new THREE.Mesh(geo, materials.unselected);
+        let meh = this.mesh = new Mesh(geo, materials.unselected);
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -113,9 +115,9 @@ mesh.model = class MeshModel extends mesh.object {
     reload(vertices, indices, normals) {
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
-        geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geo.setAttribute('position', new BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
-        if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
+        if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         geo.attributes.position.needsUpdate = true;
         if (!normals) geo.computeVertexNormals();
         // sync data to worker
@@ -224,7 +226,7 @@ mesh.model = class MeshModel extends mesh.object {
             this.opacity({restore: true});
         }
         if (bool) {
-            this._wire = new THREE.Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
+            this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
             this.mesh.add(this._wire);
             this.opacity({temp: opt.opacity || 0});
         }

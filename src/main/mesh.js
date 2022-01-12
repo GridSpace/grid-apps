@@ -7,6 +7,7 @@
 let broker = gapp.broker;
 let call = broker.send;
 let dbindex = [ "admin", "space" ];
+let { Quaternion, Vector3 } = THREE;
 
 function init() {
     let stores = data.open('mesh', { stores: dbindex, version: 4 }).init(),
@@ -259,9 +260,9 @@ function space_init(data) {
                     api.focus({center: { x, y:-z, z:y }});
                 } else if (ctrlKey) {
                     // lay flat when ctrl clicking a selected face
-                    let q = new THREE.Quaternion();
+                    let q = new Quaternion();
                     // find intersecting point, look "up" on Z and rotate to face that
-                    q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
+                    q.setFromUnitVectors(int.face.normal, new Vector3(0,0,-1));
                     group.qrotation(q);
                     group.floor();
                 } else {
