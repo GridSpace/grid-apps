@@ -139,28 +139,28 @@ let selection = {
     },
 
     move(dx = 0, dy = 0, dz = 0) {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             s.move(dx, dy, dz);
         }
         return selection;
     },
 
     rotate(dx = 0, dy = 0, dz = 0) {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             s.rotate(dx, dy, dz);
         }
         return selection;
     },
 
     qrotate(q) {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             s.qrotate(q);
         }
         return selection;
     },
 
     scale(dx = 0, dy = 0, dz = 0) {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             let { x, y, z } = s.scale();
             s.scale(x * dx, y * dy, z * dz);
         }
@@ -168,14 +168,14 @@ let selection = {
     },
 
     floor() {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             s.floor(...arguments);
         }
         return selection;
     },
 
     centerXY() {
-        for (let s of selected) {
+        for (let s of selection.groups()) {
             s.centerXY(...arguments);
         }
         return selection;
@@ -311,7 +311,9 @@ let tool = {
             promises.push(p);
         }
         Promise.all(promises).then(() => {
-            mesh.api.group.new(newmdl, undefined, "patch");
+            if (newmdl.length) {
+                mesh.api.group.new(newmdl, undefined, "patch");
+            }
             api.log.emit('analysis complete').unpin();
         });
     },
