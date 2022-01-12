@@ -162,6 +162,8 @@ function space_init(data) {
                     return selection.analyze();
                 case 'KeyR':
                     return selection.repair();
+                case 'KeyN':
+                    return selection.clean();
                 case 'KeyV':
                     return selection.focus();
                 case 'KeyW':

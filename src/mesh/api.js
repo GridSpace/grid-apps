@@ -120,6 +120,10 @@ let selection = {
         tool.repair(selection.models());
     },
 
+    clean() {
+        tool.clean(selection.models());
+    },
+
     merge() {
         tool.merge(selection.models());
     },
@@ -318,11 +322,12 @@ let tool = {
         });
     },
 
-    repair(models) {
-        api.log.emit('repairing mesh(es)...').pin();
+    heal(models, opt = {}) {
         let promises = [];
         for (let m of models) {
-            let p = worker.model_heal(m.id).then(data => {
+            let p = worker.model_heal({
+                id: m.id, opt
+            }).then(data => {
                 if (data) {
                     m.reload(
                         data.vertices,
@@ -333,8 +338,24 @@ let tool = {
             });
             promises.push(p);
         }
-        Promise.all(promises).then(() => {
-            api.log.emit('repair complete').unpin();
+        return new Promise((resolve, reject) => {
+            Promise.all(promises).then(() => {
+                resolve();
+            });
+        });
+    },
+
+    repair(models) {
+        api.log.emit('repairing mesh(es)...').pin();
+        tool.heal(models, { merge: true }).then(() => {
+            api.log.emit('repair commplete').pin();
+        });
+    },
+
+    clean(models) {
+        api.log.emit('cleaning mesh(es)...').pin();
+        tool.heal(models, { merge: false }).then(() => {
+            api.log.emit('cleaning complete').pin();
         });
     }
 };

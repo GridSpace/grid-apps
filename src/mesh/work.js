@@ -88,8 +88,9 @@ let model = {
         return { stats, mapped };
     },
 
-    heal(id) {
-        let tool = analyze(id, { merge: true });
+    heal(data) {
+        let { id, opt } = data;
+        let tool = analyze(id, opt);
         log(`${id} | unrolling...`);
         return {
             vertices: tool.unrolled().toFloat32(),
