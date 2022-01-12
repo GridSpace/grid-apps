@@ -66,6 +66,10 @@ mesh.object = class MeshObject {
         return this.applyMatrix(matrix.elements).matrixChanged();
     }
 
+    select() {
+        mesh.api.selection.set([this]);
+    }
+
     focus() {
         mesh.api.focus(this.object);
         return this;

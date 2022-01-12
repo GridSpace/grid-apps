@@ -315,6 +315,7 @@ let tool = {
         let newmdl = [];
         let mcore = new THREE.Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
+            // todo - translate vertices with source model's matrix
             let p = worker.model_analyze(m.id).then(data => {
                 let { areas, edges } = data.mapped;
                 let nm = areas.map(area => new mesh.model({
@@ -327,7 +328,7 @@ let tool = {
         }
         Promise.all(promises).then(() => {
             if (newmdl.length) {
-                mesh.api.group.new(newmdl, undefined, "patch");
+                mesh.api.group.new(newmdl, undefined, "patch").select();
             }
             api.log.emit('analysis complete').unpin();
         });
