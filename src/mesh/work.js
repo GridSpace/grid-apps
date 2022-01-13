@@ -101,11 +101,13 @@ let model = {
     },
 
     // given model and point, locate matching vertices, lines, and faces
-    locate(data) {
-        let { id, x, y, z, matrix } = data;
+    select(data) {
+        let { id, x, y, z, a, b, c, matrix } = data;
         let arr = translate_encode(id, matrix);
         let eps = 2;
         for (let i=0, l=arr.length; i<l; ) {
+            // matches here are within radius of a vertex
+            // select all faces that share a matched vertex
             let face = (i/9) | 0;
             let ax = arr[i++];
             let ay = arr[i++];
@@ -114,9 +116,14 @@ let model = {
             let dy = Math.abs(ay - y);
             let dz = Math.abs(az - z);
             if (dz < eps && dy < eps && dz < eps) {
-                console.log(`match @ ${face}`, ax, ay, az);
+                console.log(`match @ ${i-3} = ${face}`, ax, ay, az);
             }
         }
+        // no matches and we look at the line segments from the provided face
+        // to see if x,y,z point was on or near that line. then select the
+        // two faces shared by that line
+        // ---
+        // if no lines match, select the provided face only
         return {};
     }
 };
