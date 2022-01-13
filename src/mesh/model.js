@@ -294,7 +294,6 @@ mesh.model = class MeshModel extends mesh.object {
         let groups = [];
         if (faces && faces.length) {
             faces = faces.sort((a,b) => a - b).slice();
-            console.log(faces);
             let first = faces.shift();
             if (first > 0) {
                 groups.push({ start: 0, count: first, mat: 0 });
@@ -307,7 +306,6 @@ mesh.model = class MeshModel extends mesh.object {
                 } else {
                     groups.push(range = { start: range.start + range.count, count: face - range.start - range.count });
                     groups.push(range = { start: face, count: 1, mat: 1 });
-                    range = { start: face, count: 1, mat: 1 };
                 }
             }
             groups.push({ start: range.start + range.count, count: Infinity });
@@ -319,7 +317,6 @@ mesh.model = class MeshModel extends mesh.object {
         for (let group of groups) {
             geo.addGroup(group.start*3, group.count*3, group.mat || 0);
         }
-        console.log({groups});
     }
 
     toggleSelectedFaces(toggle = []) {
@@ -332,13 +329,13 @@ mesh.model = class MeshModel extends mesh.object {
 
     // find adjacent faces to clicked point/line on a face
     find(point, face) {
-        let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
-        let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
-        let sphere = new Mesh( geometry, material );
+        // let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
+        // let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
+        // let sphere = new Mesh( geometry, material );
         let { x, y, z } = point;
         let { a, b, c } = face;
-        sphere.position.set(x,y,z);
-        space.scene.add(sphere);
+        // sphere.position.set(x,y,z);
+        // space.scene.add(sphere);
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix
         }).then(data => {
