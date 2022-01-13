@@ -122,9 +122,9 @@ mesh.group = class MeshGroup extends mesh.object {
         }
     }
 
-    material() {
+    select() {
         for (let model of this.models) {
-            model.material(...arguments);
+            model.select(...arguments);
         }
     }
 };

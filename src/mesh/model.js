@@ -25,7 +25,8 @@ let { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
 
 /** default materials **/
 let materials = mesh.material = {
-    unselected: new MeshPhongMaterial({
+    // model unselected
+    normal: new MeshPhongMaterial({
         side: DoubleSide,
         transparent: true,
         shininess: 100,
@@ -33,7 +34,17 @@ let materials = mesh.material = {
         color: 0xffff00,
         opacity: 1
     }),
-    selected: new MeshPhongMaterial({
+    // model selected
+    select: new MeshPhongMaterial({
+        side: DoubleSide,
+        transparent: true,
+        shininess: 100,
+        specular: 0x202020,
+        color: 0x00ee00,
+        opacity: 1
+    }),
+    // face selected (for groups ranges)
+    face: new MeshPhongMaterial({
         side: DoubleSide,
         transparent: true,
         shininess: 100,
@@ -63,6 +74,13 @@ mesh.model = class MeshModel extends mesh.object {
         let text = file || '';
         let dot = text.lastIndexOf('.');
         if (dot > 0) file = text.substring(0, dot);
+
+        // create local materials
+        this.mats = {
+            normal: materials.normal.clone(),
+            select: materials.select.clone(),
+            face: materials.face.clone()
+        };
 
         this.file = file || 'unnamed';
         this.load(mesh || vertices, indices, normals);
@@ -100,7 +118,11 @@ mesh.model = class MeshModel extends mesh.object {
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
         if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         if (!normals) geo.computeVertexNormals();
-        let meh = this.mesh = new Mesh(geo, materials.unselected);
+        let meh = this.mesh = new Mesh(geo, [
+            this.mats.normal,
+            this.mats.face
+        ]);
+        geo.addGroup(0, Infinity, 0);
         meh.receiveShadow = true;
         meh.castShadow = true;
         meh.renderOrder = 1;
@@ -162,6 +184,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.move(mid.x, mid.y, mid.z);
     }
 
+    // get, set, or toggle visibility of model and wireframe
     visible(bool) {
         if (bool === undefined) {
             return this.mesh.visible;
@@ -172,17 +195,27 @@ mesh.model = class MeshModel extends mesh.object {
         this.mesh.visible = bool;
     }
 
-    material(mat) {
-        let op = this.opacity();
-        this.mesh.material = mat = mat.clone();
-        mat.opacity = op;
-        if (op === 1) this.wireframe(false);
+    // get, set, or toggle selection of model (coloring)
+    select(bool) {
+        if (bool === undefined) {
+            return this.mesh.material[0] === this.mats.normal;
+        }
+        if (bool.toggle) {
+            return this.select(!this.select());
+        }
+        this.mesh.material[0] = bool ? this.mats.select : this.mats.normal;
+        return bool;
+    }
+
+    // return selected state
+    selected() {
+        return this.select();
     }
 
     opacity(ov, opt = {}) {
         let mat = this.mesh.material;
         if (ov === undefined) {
-            return mat.opacity;
+            return mat[0].opacity;
         }
         if (ov.restore) {
             ov = this._op;
@@ -191,14 +224,16 @@ mesh.model = class MeshModel extends mesh.object {
         } else {
             this._op = ov;
         }
-        if (ov <= 0.0) {
-            mat.transparent = false;
-            mat.opacity = 1;
-            mat.visible = false;
-        } else {
-            mat.transparent = true;
-            mat.opacity = ov;
-            mat.visible = true;
+        for (let m of Object.values(this.mats)) {
+            if (ov <= 0.0) {
+                m.transparent = false;
+                m.opacity = 1;
+                m.visible = false;
+            } else {
+                m.transparent = true;
+                m.opacity = ov;
+                m.visible = true;
+            }
         }
         space.update();
     }
@@ -228,7 +263,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (bool) {
             this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
             this.mesh.add(this._wire);
-            this.opacity({temp: opt.opacity || 0});
+            this.opacity({temp: opt.opacity || 0.15});
         }
         space.update();
         return was;
@@ -254,7 +289,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // find adjacent faces to clicked point/line on a face
-    select(point, face) {
+    find(point, face) {
         let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
         let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
         let sphere = new Mesh( geometry, material );

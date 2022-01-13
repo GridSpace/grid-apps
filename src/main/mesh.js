@@ -59,12 +59,6 @@ function init() {
     }, 100);
     space.view.setZoom(zoomrev, zoomspd);
 
-    // restore preferences
-    api.prefs.load().then(() => {
-        let { map } = api.prefs;
-        api.grid(map.space.grid);
-    });
-
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
 
@@ -80,6 +74,7 @@ function init() {
 
 // restore space layout and view from previous session
 function restore_space() {
+    let { api } = mesh;
     let count = 0;
     let space = moto.Space;
     let mcache = {};
@@ -115,7 +110,19 @@ function restore_space() {
         // otherwise their setup will corrupt the cache for other restores
         matrixCache = mcache;
         store_matrices();
-    })
+    }).then(() => {
+        // restore preferences after models are restored
+        api.prefs.load().then(() => {
+            let { map } = api.prefs;
+            let { space } = map;
+            api.grid(space.grid);
+            // restore selected state
+            let selist = space.select;
+            let smodel = api.model.list().filter(m => selist.contains(m.id));
+            let sgroup = api.group.list().filter(m => selist.contains(m.id));
+            api.selection.set([...smodel, ...sgroup]);
+        });
+    });
     // hide loading curtain
     $d('curtain','none');
 }
@@ -259,7 +266,7 @@ function space_init(data) {
                 let { ctrlKey, metaKey, shiftKey } = event;
                 if (shiftKey && metaKey) {
                     // find faces adjacent to point/line clicked
-                    model.select(int.point, int.face);
+                    model.find(int.point, int.face);
                     // console.log(int);
                 } else if (metaKey) {
                     // set focus on intersected face

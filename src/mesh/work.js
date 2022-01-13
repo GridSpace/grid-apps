@@ -112,10 +112,13 @@ let model = {
         // distance tolerance for click to vertex (rough distance)
         let eps = 1;
         let faces = [];
+        let verts = [];
+        let edges = [];
         for (let i=0, l=arr.length; i<l; ) {
             // matches here are within radius of a vertex
             // select all faces that share a matched vertex
-            let face = (i/9) | 0;   // face index
+            let vert = i/3;       // vertex index
+            let face = (i/9) | 0; // face index
             let ax = arr[i++];
             let ay = arr[i++];
             let az = arr[i++];
@@ -124,6 +127,7 @@ let model = {
             let dz = Math.abs(az - z);
             if (dx < eps && dy < eps && dz < eps) {
                 faces.addOnce(face);
+                verts.push(vert);
                 console.log(`match @ ${i-3} = ${face}`, ax, ay, az);
             }
         }
@@ -137,7 +141,7 @@ let model = {
         if (faces.length === 0) {
             faces.push(Math.min(a,b,c) / 3);
         }
-        return faces;
+        return { faces, edges, verts };
     }
 };
 

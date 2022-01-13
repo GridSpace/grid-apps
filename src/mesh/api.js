@@ -127,17 +127,21 @@ let selection = {
         }
     },
 
-    // update material selections
+    // update selection and wireframe for all objects
     update() {
         for (let group of groups) {
-            group.material(mesh.material.unselected);
+            group.select(false);
+            group.wireframe(prefs.map.space.wire);
         }
         // prevent selection of model and its group
         let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
         selected = selected.filter(sel => !mgsel.contains(sel));
+        // highlight selected
         for (let object of selected) {
-            object.material(mesh.material.selected);
+            object.select(true);
         }
+        // update saved selection id list
+        prefs.save( prefs.map.space.select = selected.map(s => s.id) );
         return selection;
     },
 
@@ -219,6 +223,7 @@ let group = {
     add(group) {
         groups.addOnce(group);
         space.world.add(group.object);
+        api.selection.update();
         space.update();
         return group;
     },
@@ -377,8 +382,10 @@ let prefs = {
     map: {
         info: {},
         space: {
+            wire: false,
             grid: true,
-            dark: false
+            dark: false,
+            select: []
         },
     },
 
@@ -440,10 +447,17 @@ let api = mesh.api = {
         save();
     },
 
-    wireframe(state = {toggle:true}, opt = {opacity:0.15}) {
-        for (let m of api.model.list()) {
-            m.wireframe(state, opt);
+    wireframe(state = {toggle:true}, opt = { }) {
+        let wire = prefs.map.space.wire;
+        if (state.toggle) {
+            wire = !wire;
+        } else {
+            wire = state;
         }
+        for (let m of api.model.list()) {
+            m.wireframe(wire, opt);
+        }
+        prefs.save( prefs.map.space.wire = wire );
     },
 
     selection,
