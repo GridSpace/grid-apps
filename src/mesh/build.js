@@ -210,29 +210,37 @@ function ui_build() {
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
 
+    // a few shortcuts to api calls
+    let { file, selection, mode, tool, prefs } = api;
+
     // create hotkey/action menu (top/left)
     h.bind(actions, [
         h.div([
             // create and bind file loading elements
-            h.button({ _: 'import', onclick: api.file.import }, [
+            h.button({ _: 'import', onclick: file.import }, [
                 h.input({
                     id: "import", type: "file", class: ["hide"], multiple: true,
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 })
             ]),
-            h.button({ _: 'export', onclick: api.file.export }),
+            h.button({ _: 'export', onclick: file.export }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'visible', onclick() { api.selection.visible({ toggle: true }) } }),
-            h.button({ _: 'bounds', onclick() { api.selection.boundsBox({ toggle: true }) } }),
+            h.button({ _: 'visible', onclick() { selection.visible({ toggle: true }) } }),
+            h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'duplicate', onclick: api.selection.duplicate }),
-            h.button({ _: 'merge', onclick: api.tool.merge }),
+            h.button({ _: 'duplicate', onclick: tool.duplicate }),
+            h.button({ _: 'merge', onclick: tool.merge }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'analyze', onclick: api.tool.analyze }),
-            h.button({ _: 'repair', onclick: api.tool.repair }),
-            h.button({ _: 'clean', onclick: api.tool.clean }),
+            h.button({ _: 'analyze', onclick: tool.analyze }),
+            h.button({ _: 'repair', onclick: tool.repair }),
+            h.button({ _: 'clean', onclick: tool.clean }),
+            h.div({ class: "vsep" }),
+            h.button({ _: 'object', id: "mode-object", onclick() { mode.object() } }),
+            h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
+            h.button({ _: 'line', id: "mode-line", onclick() { mode.line() } }),
+            h.button({ _: 'vertex', id: "mode-vertex", onclick() { mode.vertex() } }),
         ]),
     ]);
 
@@ -261,14 +269,14 @@ function ui_build() {
 
     // update model selector list (top/right)
     function update_selector() {
-        let selHas = api.selection.contains;
+        let selHas = selection.contains;
         // map groups to divs
         let groups = api.group.list()
             .map(g => h.div([
                 h.button({ _: g.name || `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick(e) {
-                        e.shiftKey ? api.selection.toggle(g) : api.selection.set([g])
+                        e.shiftKey ? selection.toggle(g) : selection.set([g])
                     }
                 }),
                 h.div({ class: "vsep" }),
@@ -280,10 +288,10 @@ function ui_build() {
                             m.visible() ? undefined : 'hidden'
                         ],
                         onclick(e) {
-                            let sel = api.selection.list();
+                            let sel = selection.list();
                             e.shiftKey || (sel.length === 1 && m === sel[0]) ?
-                                api.selection.toggle(m) :
-                                api.selection.set([m])
+                                selection.toggle(m) :
+                                selection.set([m])
                         }
                     }))
                 )
@@ -294,8 +302,8 @@ function ui_build() {
     // update model information dashboard (bottom)
     function update_selection() {
         let map = { fixed: 2 };
-        let s_grp = api.selection.groups();
-        let s_mdl = api.selection.models();
+        let s_grp = selection.groups();
+        let s_mdl = selection.models();
         if (s_mdl.length === 0) {
             return h.bind(selectlist, []);
         }
@@ -359,20 +367,20 @@ function ui_build() {
             ...h_ara,
             ...h_msh
         ]);
-        let prefs = api.prefs.map.info;
+        let pmap = prefs.map.info;
         // map buttons to show/hide selection info
         function toggle(label, h, s, d) {
             s.onclick = () => {
                 s.style.display = 'none';
                 d.style.display = 'flex';
-                api.prefs.save( prefs[label] = 'show' ); // <- :)
+                prefs.save( pmap[label] = 'show' ); // <- :)
             };
             h.onclick = () => {
                 d.style.display = 'none';
                 s.style.display = 'flex';
-                api.prefs.save( prefs[label] = 'hide' );
+                prefs.save( pmap[label] = 'hide' );
             };
-            if (prefs[label] === 'show') {
+            if (pmap[label] === 'show') {
                 s.onclick();
             } else {
                 h.onclick();

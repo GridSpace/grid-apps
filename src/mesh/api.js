@@ -121,12 +121,6 @@ let selection = {
         util.defer(selection.update);
     },
 
-    duplicate() {
-        for (let m of selection.models()) {
-            m.duplicate();
-        }
-    },
-
     // update selection and wireframe for all objects
     update() {
         for (let group of groups) {
@@ -309,6 +303,12 @@ let tool = {
         });
     },
 
+    duplicate() {
+        for (let m of selection.models()) {
+            m.duplicate();
+        }
+    },
+
     analyze(models) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();
@@ -377,10 +377,46 @@ let tool = {
     }
 };
 
+let modes = { object: "object", face: "face", line: "line", vertex: "vertex" };
+
+// edit mode
+let mode = {
+    set(mode) {
+        prefs.save(prefs.map.mode = mode);
+        for (let key of Object.values(modes)) {
+            $(`mode-${key}`).classList.remove('selected');
+        }
+        $(`mode-${mode}`).classList.add('selected');
+    },
+
+    get() {
+        return prefs.map.mode;
+    },
+
+    object() {
+        mode.set(modes.object);
+    },
+
+    face() {
+        mode.set(modes.face);
+    },
+
+    line() {
+        mode.set(modes.line);
+    },
+
+    vertex() {
+        mode.set(modes.vertex);
+    },
+
+    modes
+};
+
 // persisted preference map
 let prefs = {
     map: {
         info: {},
+        mode: modes.object,
         space: {
             wire: false,
             grid: true,
@@ -459,6 +495,8 @@ let api = mesh.api = {
         }
         prefs.save( prefs.map.space.wire = wire );
     },
+
+    mode,
 
     selection,
 

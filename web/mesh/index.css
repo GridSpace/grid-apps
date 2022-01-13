@@ -280,6 +280,16 @@ button:hover {
     border-bottom: 1px dashed gray;
 }
 
+/** actions menu top/left **/
+
+#actions button.selected {
+    background-color: rgba(0,255,0,0.5);
+}
+
+#actions button.selected:hover {
+    background-color: rgba(0,255,0,1);
+}
+
 /** slide in/out logging window **/
 
 #logger {

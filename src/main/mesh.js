@@ -114,13 +114,15 @@ function restore_space() {
         // restore preferences after models are restored
         api.prefs.load().then(() => {
             let { map } = api.prefs;
-            let { space } = map;
+            let { space, mode } = map;
             api.grid(space.grid);
             // restore selected state
             let selist = space.select;
             let smodel = api.model.list().filter(m => selist.contains(m.id));
             let sgroup = api.group.list().filter(m => selist.contains(m.id));
             api.selection.set([...smodel, ...sgroup]);
+            // restore edit mode
+            api.mode.set(mode);
         });
     });
     // hide loading curtain
@@ -264,11 +266,7 @@ function space_init(data) {
             if (model) {
                 let group = model.group;
                 let { ctrlKey, metaKey, shiftKey } = event;
-                if (shiftKey && metaKey) {
-                    // find faces adjacent to point/line clicked
-                    model.find(int.point, int.face);
-                    // console.log(int);
-                } else if (metaKey) {
+                if (metaKey) {
                     // set focus on intersected face
                     let { x, y, z } = int.point;
                     // y,z swap due to world rotation for orbit controls
@@ -277,7 +275,18 @@ function space_init(data) {
                     // rotate selected face towawrd z "floor"
                     group.faceDown(int.face.normal);
                 } else {
-                    selection.toggle(shiftKey ? model : model.group);
+                    let modes = api.mode.modes;
+                    switch(api.mode.get()) {
+                        case modes.object:
+                            selection.toggle(shiftKey ? model : model.group);
+                            break;
+                        case modes.face:
+                        case modes.line:
+                        case modes.vertex:
+                            // find faces adjacent to point/line clicked
+                            model.find(int.point, int.face);
+                            break;
+                    }
                 }
             }
         } else {
