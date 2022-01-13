@@ -253,6 +253,21 @@ mesh.model = class MeshModel extends mesh.object {
         mesh.util.defer(this.group.deferUBB);
     }
 
+    // find adjacent faces to clicked point/line on a face
+    select(point, face) {
+        let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
+        let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
+        let sphere = new Mesh( geometry, material );
+        let { x, y, z } = point;
+        sphere.position.set(x,y,z);
+        space.scene.add(sphere);
+        worker.model_locate({
+            id: this.id, x, y:-z, z:y, matrix: this.matrix
+        }).then(data => {
+            console.log('located', data);
+        });
+    }
+
 };
 
 })();

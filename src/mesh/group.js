@@ -17,18 +17,19 @@ gapp.register("mesh.group", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.group) return;
 
+let { Quaternion, Group, Vector3 } = THREE;
 let broker = gapp.broker;
 let call = broker.send;
-
 let space = moto.Space;
 let worker = moto.client.fn;
+let lookUp = new Vector3(0,0,-1);
 
 mesh.group = class MeshGroup extends mesh.object {
 
     // @param group {MeshModel[]}
     constructor(models = [], id, name) {
         super(id);
-        this.group3 = new THREE.Group();
+        this.group3 = new Group();
         this.models = [];
         this.name = name;
         for (let model of models) {
@@ -86,6 +87,13 @@ mesh.group = class MeshGroup extends mesh.object {
         }
         space.update();
         return this;
+    }
+
+    // rotate model so face normal points toward floor
+    faceDown(normal) {
+        let q = new Quaternion().setFromUnitVectors(normal, lookUp);
+        this.qrotation(q);
+        this.floor();
     }
 
     promote() {

@@ -33,6 +33,7 @@ function cacheUpdate(id, data) {
     Object.assign(cache[id], data);
 }
 
+// translate original mesh vertices into UI world view (PI/2 rotation on X)
 function translate_encode(id, matrix) {
     let rec = cache[id];
     let geo = rec.geo.clone();
@@ -97,6 +98,26 @@ let model = {
         return {
             vertices: tool.unrolled().toFloat32(),
         };
+    },
+
+    // given model and point, locate matching vertices, lines, and faces
+    locate(data) {
+        let { id, x, y, z, matrix } = data;
+        let arr = translate_encode(id, matrix);
+        let eps = 2;
+        for (let i=0, l=arr.length; i<l; ) {
+            let face = (i/9) | 0;
+            let ax = arr[i++];
+            let ay = arr[i++];
+            let az = arr[i++];
+            let dx = Math.abs(ax - x);
+            let dy = Math.abs(ay - y);
+            let dz = Math.abs(az - z);
+            if (dz < eps && dy < eps && dz < eps) {
+                console.log(`match @ ${face}`, ax, ay, az);
+            }
+        }
+        return {};
     }
 };
 

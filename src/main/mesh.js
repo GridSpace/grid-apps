@@ -7,6 +7,7 @@
 let broker = gapp.broker;
 let call = broker.send;
 let dbindex = [ "admin", "space" ];
+let worker = moto.client.fn;
 let { Quaternion, Vector3 } = THREE;
 
 // set below. called once the DOM readyState = complete
@@ -160,13 +161,13 @@ function space_init(data) {
                 case 'KeyF':
                     return selection.floor().focus();
                 case 'KeyM':
-                    return selection.merge();
+                    return api.tool.merge();
                 case 'KeyA':
-                    return selection.analyze();
+                    return api.tool.analyze();
                 case 'KeyR':
-                    return selection.repair();
+                    return api.tool.repair();
                 case 'KeyN':
-                    return selection.clean();
+                    return api.tool.clean();
                 case 'KeyV':
                     return selection.focus();
                 case 'KeyW':
@@ -245,7 +246,7 @@ function space_init(data) {
         }
     ]);
 
-    // mouse hover/click handlers
+    // mouse hover/click handlers. required to enable model drag in space.js
     space.mouse.downSelect((int, event) => {
         return event && event.shiftKey ? api.objects() : undefined;
     });
@@ -256,17 +257,17 @@ function space_init(data) {
             if (model) {
                 let group = model.group;
                 let { ctrlKey, metaKey, shiftKey } = event;
-                if (metaKey) {
+                if (shiftKey && metaKey) {
+                    // find faces adjacent to point/line clicked
+                    model.select(int.point, int.face);
+                } else if (metaKey) {
                     // set focus on intersected face
                     let { x, y, z } = int.point;
+                    // y,z swap due to world rotation for orbit controls
                     api.focus({center: { x, y:-z, z:y }});
                 } else if (ctrlKey) {
-                    // lay flat when ctrl clicking a selected face
-                    let q = new Quaternion();
-                    // find intersecting point, look "up" on Z and rotate to face that
-                    q.setFromUnitVectors(int.face.normal, new Vector3(0,0,-1));
-                    group.qrotation(q);
-                    group.floor();
+                    // rotate selected face towawrd z "floor"
+                    group.faceDown(int.face.normal);
                 } else {
                     selection.toggle(shiftKey ? model : model.group);
                 }

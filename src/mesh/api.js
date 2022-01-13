@@ -39,6 +39,7 @@ let selection = {
         return selected.length || strict  ? selected.slice() : groups.slice();
     },
 
+    // return selected groups + groups from selected models
     groups(strict) {
         let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
@@ -49,6 +50,7 @@ let selection = {
         return grp;
     },
 
+    // return selected models + models from selected groups
     models(strict) {
         let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
@@ -123,22 +125,6 @@ let selection = {
         for (let m of selection.models()) {
             m.duplicate();
         }
-    },
-
-    analyze() {
-        tool.analyze(selection.models());
-    },
-
-    repair() {
-        tool.repair(selection.models());
-    },
-
-    clean() {
-        tool.clean(selection.models());
-    },
-
-    merge() {
-        tool.merge(selection.models());
     },
 
     // update material selections
@@ -295,8 +281,15 @@ let file = {
     },
 };
 
+// return selection if models are invalid. can happen when called from
+// even bound to a button which delivers a PointEvent argument
+function fallback(models) {
+    return Array.isArray(models) ? models : selection.models();
+}
+
 let tool = {
     merge(models) {
+        models = fallback(models);
         api.log.emit(`merging ${models.length} models`).pin();
         worker.model_merge(models.map(m => {
             return { id: m.id, matrix: m.matrix }
@@ -312,6 +305,7 @@ let tool = {
     },
 
     analyze(models) {
+        models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();
         let promises = [];
         let newmdl = [];
@@ -337,6 +331,7 @@ let tool = {
     },
 
     heal(models, opt = {}) {
+        models = fallback(models);
         let promises = [];
         for (let m of models) {
             let p = worker.model_heal({
@@ -360,6 +355,7 @@ let tool = {
     },
 
     repair(models) {
+        models = fallback(models);
         api.log.emit('repairing mesh(es)...').pin();
         tool.heal(models, { merge: true }).then(() => {
             api.log.emit('repair commplete').pin();
@@ -367,8 +363,8 @@ let tool = {
         });
     },
 
-    clean(models) {
-        api.log.emit('cleaning mesh(es)...').pin();
+    clean(models = selection.models()) {
+        models = fallback(models);
         tool.heal(models, { merge: false }).then(() => {
             api.log.emit('cleaning complete').pin();
             api.selection.update();

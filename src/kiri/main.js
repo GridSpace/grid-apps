@@ -3344,22 +3344,10 @@
         let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
         $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
         $('_dexport_').click();
-        // fixes Chrome/iOS download, but loses name and breaks others
-        // let reader = new FileReader();
-        // let out = new Blob([data], {type: 'octet/stream'});
-        // reader.onload = function(e){
-        //     window.location.href = reader.result;
-        // }
-        // reader.readAsDataURL(out);
     }
 
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
-
-    // K3DB.onIdle(function() {
-        // upgrade on db idle. maybe delay init, too
-        // console.log("k3db idle");
-    // });
 
     // run optional module functions NOW before kiri-init has run
     if (Array.isArray(self.kirimod)) {

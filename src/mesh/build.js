@@ -228,11 +228,11 @@ function ui_build() {
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
             h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: api.selection.duplicate }),
-            h.button({ _: 'merge', onclick: api.selection.merge }),
+            h.button({ _: 'merge', onclick: api.tool.merge }),
             h.div({ class: "vsep" }),
-            h.button({ _: 'analyze', onclick: api.selection.analyze }),
-            h.button({ _: 'repair', onclick: api.selection.repair }),
-            h.button({ _: 'clean', onclick: api.selection.clean }),
+            h.button({ _: 'analyze', onclick: api.tool.analyze }),
+            h.button({ _: 'repair', onclick: api.tool.repair }),
+            h.button({ _: 'clean', onclick: api.tool.clean }),
         ]),
     ]);
 
