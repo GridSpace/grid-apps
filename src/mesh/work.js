@@ -103,28 +103,41 @@ let model = {
     // given model and point, locate matching vertices, lines, and faces
     select(data) {
         let { id, x, y, z, a, b, c, matrix } = data;
-        let arr = translate_encode(id, matrix);
-        let eps = 2;
+        // translate point into mesh matrix space
+        let v3 = new Vector3(x,y,z).applyMatrix4(
+            core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert()
+        );
+        x = v3.x; y = v3.y; z = v3.z;
+        let arr = cache[id].geo.attributes.position.array;
+        // distance tolerance for click to vertex (rough distance)
+        let eps = 1;
+        let faces = [];
         for (let i=0, l=arr.length; i<l; ) {
             // matches here are within radius of a vertex
             // select all faces that share a matched vertex
-            let face = (i/9) | 0;
+            let face = (i/9) | 0;   // face index
             let ax = arr[i++];
             let ay = arr[i++];
             let az = arr[i++];
             let dx = Math.abs(ax - x);
             let dy = Math.abs(ay - y);
             let dz = Math.abs(az - z);
-            if (dz < eps && dy < eps && dz < eps) {
+            if (dx < eps && dy < eps && dz < eps) {
+                faces.addOnce(face);
                 console.log(`match @ ${i-3} = ${face}`, ax, ay, az);
             }
         }
         // no matches and we look at the line segments from the provided face
         // to see if x,y,z point was on or near that line. then select the
         // two faces shared by that line
-        // ---
-        // if no lines match, select the provided face only
-        return {};
+        if (faces.length === 0) {
+            // todo or not todo
+        }
+        // if no lines match, select the provided face (from min vertex index)
+        if (faces.length === 0) {
+            faces.push(Math.min(a,b,c) / 3);
+        }
+        return faces;
     }
 };
 

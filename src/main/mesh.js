@@ -260,6 +260,7 @@ function space_init(data) {
                 if (shiftKey && metaKey) {
                     // find faces adjacent to point/line clicked
                     model.select(int.point, int.face);
+                    // console.log(int);
                 } else if (metaKey) {
                     // set focus on intersected face
                     let { x, y, z } = int.point;
