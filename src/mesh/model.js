@@ -49,7 +49,7 @@ let materials = mesh.material = {
         transparent: true,
         shininess: 100,
         specular: 0x202020,
-        color: 0x00ee00,
+        color: 0xee0000,
         opacity: 1
     }),
     wireframe: new MeshBasicMaterial({
@@ -284,8 +284,50 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     updateBoundsBox() {
-        if (this.group)
-        mesh.util.defer(this.group.deferUBB);
+        if (this.group) {
+            mesh.util.defer(this.group.deferUBB);
+        }
+    }
+
+    updateSelectedFaces() {
+        let faces = this._faces = this._faces || [];
+        let groups = [];
+        if (faces && faces.length) {
+            faces = faces.sort((a,b) => a - b).slice();
+            console.log(faces);
+            let first = faces.shift();
+            if (first > 0) {
+                groups.push({ start: 0, count: first, mat: 0 });
+            }
+            let range = { start: first, count: 1, mat: 1 };
+            groups.push(range);
+            for (let face of faces) {
+                if (face === range.start + range.count) {
+                    range.count++;
+                } else {
+                    groups.push(range = { start: range.start + range.count, count: face - range.start - range.count });
+                    groups.push(range = { start: face, count: 1, mat: 1 });
+                    range = { start: face, count: 1, mat: 1 };
+                }
+            }
+            groups.push({ start: range.start + range.count, count: Infinity });
+        } else {
+            groups.push({ start: 0, count: Infinity });
+        }
+        let geo = this.mesh.geometry;
+        geo.clearGroups();
+        for (let group of groups) {
+            geo.addGroup(group.start*3, group.count*3, group.mat || 0);
+        }
+        console.log({groups});
+    }
+
+    toggleSelectedFaces(toggle = []) {
+        let faces = this._faces = this._faces || [];
+        for (let t of toggle) {
+            faces.remove(t) || faces.addOnce(t);
+        }
+        this.updateSelectedFaces();
     }
 
     // find adjacent faces to clicked point/line on a face
@@ -300,7 +342,8 @@ mesh.model = class MeshModel extends mesh.object {
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix
         }).then(data => {
-            console.log('located', data);
+            let { faces, edges, verts } = data;
+            this.toggleSelectedFaces(faces);
         });
     }
 
