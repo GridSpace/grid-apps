@@ -360,6 +360,16 @@ button:hover {
     gap: 2px;
 }
 
+#actions .head {
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: smaller;
+    border-radius: 3px;
+    background-color: rgba(150,150,150,0.05);
+}
+
 /** group/model buttons top/right of workspace **/
 
 #grouplist {

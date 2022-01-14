@@ -226,6 +226,7 @@ function ui_build() {
     h.bind(actions, [
         h.div([
             // create and bind file loading elements
+            h.div({ _: "file", class: "head" }),
             h.button({ _: 'import', onclick: file.import }, [
                 h.input({
                     id: "import", type: "file", class: ["hide"], multiple: true,
@@ -233,17 +234,20 @@ function ui_build() {
                 })
             ]),
             h.button({ _: 'export', onclick: file.export }),
-            h.div({ class: "vsep" }),
+            // h.div({ class: "vsep" }),
+            h.div({ _: "view", class: "head" }),
             h.button({ _: 'visible', onclick() { selection.visible({ toggle: true }) } }),
             h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
             h.button({ _: 'normals', onclick() { api.normals() } }),
-            h.div({ class: "vsep" }),
+            // h.div({ class: "vsep" }),
+            h.div({ _: "edit", class: "head" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'merge', onclick: tool.merge }),
             h.button({ _: 'invert', onclick: tool.invert }),
-            h.div({ class: "vsep" }),
+            // h.div({ class: "vsep" }),
+            h.div({ _: "fix", class: "head" }),
             h.button({ _: 'analyze', onclick: tool.analyze }),
             h.button({ _: 'repair', onclick: tool.repair }),
             h.button({ _: 'clean', onclick: tool.clean }),
