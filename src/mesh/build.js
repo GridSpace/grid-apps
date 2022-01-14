@@ -242,6 +242,7 @@ function ui_build() {
             h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'merge', onclick: tool.merge }),
+            h.button({ _: 'invert', onclick: tool.invert }),
             h.div({ class: "vsep" }),
             h.button({ _: 'analyze', onclick: tool.analyze }),
             h.button({ _: 'repair', onclick: tool.repair }),

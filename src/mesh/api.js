@@ -313,6 +313,12 @@ let tool = {
         }
     },
 
+    invert() {
+        for (let m of selection.models(true)) {
+            m.invert(api.mode.get());
+        }
+    },
+
     analyze(models) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();

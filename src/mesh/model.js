@@ -303,6 +303,18 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
+    // invert normals for entire mesh or selected faces depending on mod
+    invert(mode) {
+        let { modes } = mesh.api;
+        switch (mode) {
+            case modes.object:
+                break;
+            case modes.face:
+                break;
+        }
+    }
+
+    // remove model from group and space
     remove() {
         if (arguments.length === 0) {
             // direct call requires pass through group
