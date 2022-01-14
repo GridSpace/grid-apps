@@ -82,6 +82,14 @@ mesh.model = class MeshModel extends mesh.object {
             face: materials.face.clone()
         };
 
+        // information about selected faces, lines, and vertices
+        // vertex compound keys are sorted least index to greatest
+        this.sel = {
+            faces: [], // first index into vertices
+            lines: {}, // key = vertex-vertex, val = [ faces ]
+            verts: {}, // key = x-y-z, val = { faces:[], sphere }
+        };
+
         this.file = file || 'unnamed';
         this.load(mesh || vertices, indices, normals);
         // persist in db so it can be restored on page load
@@ -289,8 +297,52 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
-    updateSelectedFaces() {
-        let faces = this._faces = this._faces || [];
+    clearSelections() {
+        console.log('todo: clearSelections');
+    }
+
+    deleteSelections(mode) {
+        let { geometry } = this.mesh;
+        let { groups } = geometry;
+        let { array } = geometry.attributes.position;
+        let newtot = 0;
+        // filter to unselected groups
+        groups = groups.filter(g => g.materialIndex === 0);
+        for (let group of groups) {
+            let start = group.start * 3;
+            let count = group.count * 3;
+            newtot += group.count < Infinity ? count : array.length - start;
+        }
+        // nothing to do if new length is the same
+        if (newtot === array.length) {
+            return;
+        }
+        let newverts = new Float32Array(newtot);
+        let pos = 0;
+        // copy back unselected faces
+        for (let group of groups) {
+            let start = group.start * 3;
+            let count = group.count * 3;
+            if (count === Infinity) count = array.length - start;
+            let slice = array.slice(start, start + count);
+            newverts.set(slice, pos);
+            pos += count;
+        }
+        this.reload(newverts);
+        // clear face selections (since they've been deleted);
+        this.sel.faces = [];
+        this.updateSelections();
+
+        // let { modes } = mesh.api;
+        // switch (mode) {
+        //     case modes.face:
+        //         console.log('delete selected faces');
+        //         break;
+        // }
+    }
+
+    updateSelections() {
+        let faces = this.sel.faces;
         let groups = [];
         if (faces && faces.length) {
             faces = faces.sort((a,b) => a - b).slice();
@@ -320,27 +372,51 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     toggleSelectedFaces(toggle = []) {
-        let faces = this._faces = this._faces || [];
+        let faces = this.sel.faces;
         for (let t of toggle) {
             faces.remove(t) || faces.addOnce(t);
         }
-        this.updateSelectedFaces();
+    }
+
+    toggleSelectedVertices(vert) {
+        if (Array.isArray(vert)) {
+            for (let e of vert) {
+                this.toggleSelectedVertices(e);
+            }
+            return;
+        }
+        let sel = this.sel;
+        let key = [x,y,z].map(v => v.round(5)).join('-');
+        let rec = sel.verts[key];
+        if (rec) {
+            delete sel.verts[key];
+            space.scene.remove(rec.sphere);
+        } else {
+            let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
+            let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
+            let sphere = new Mesh( geometry, material );
+            sphere.position.set(x, y, z);
+            space.scene.add(sphere);
+            sel.verts[key] = {
+                sphere,
+                faces,
+                verts
+            };
+        }
     }
 
     // find adjacent faces to clicked point/line on a face
     find(point, face) {
-        // let geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
-        // let material = new MeshPhongMaterial( { color: 0x777777, transparent: true, opacity: 0.25 } );
-        // let sphere = new Mesh( geometry, material );
         let { x, y, z } = point;
         let { a, b, c } = face;
-        // sphere.position.set(x,y,z);
-        // space.scene.add(sphere);
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix
         }).then(data => {
-            let { faces, edges, verts } = data;
+            let { faces, edges, verts, point } = data;
+            console.log({data});
+            // this.toggleSelectedVertices(verts);
             this.toggleSelectedFaces(faces);
+            this.updateSelections();
         });
     }
 

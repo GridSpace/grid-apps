@@ -114,6 +114,7 @@ let model = {
         let faces = [];
         let verts = [];
         let edges = [];
+        let point;
         for (let i=0, l=arr.length; i<l; ) {
             // matches here are within radius of a vertex
             // select all faces that share a matched vertex
@@ -141,7 +142,7 @@ let model = {
         if (faces.length === 0) {
             faces.push(Math.min(a,b,c) / 3);
         }
-        return { faces, edges, verts };
+        return { faces, edges, verts, point };
     }
 };
 

@@ -280,14 +280,32 @@ button:hover {
     border-bottom: 1px dashed gray;
 }
 
-/** actions menu top/left **/
+/** modes menu top/center **/
 
-#actions button.selected {
+#modes {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 2px;
+    margin: 3px;
+    padding: 3px;
+    gap: 2px;
+}
+
+#modes button.selected {
     background-color: rgba(0,255,0,0.5);
 }
 
-#actions button.selected:hover {
+#modes button.selected:hover {
     background-color: rgba(0,255,0,1);
+}
+
+#mode-line, #mode-vertex {
+    display: none;
 }
 
 /** slide in/out logging window **/

@@ -408,8 +408,6 @@ let mode = {
     vertex() {
         mode.set(modes.vertex);
     },
-
-    modes
 };
 
 // persisted preference map
@@ -497,6 +495,8 @@ let api = mesh.api = {
     },
 
     mode,
+
+    modes,
 
     selection,
 

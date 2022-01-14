@@ -198,6 +198,7 @@ function ui_build() {
             h.div({ id: 'spinner', class: 'spin' })
         ]),
         // display and action areas
+        h.div({ id: 'modes' }),
         h.div({ id: 'actions' }),
         h.div({ id: 'grouplist'}),
         h.div({ id: 'selectlist'}),
@@ -205,13 +206,21 @@ function ui_build() {
         h.div({ id: 'download', class: "hide" })
     ]);
 
-    let { actions, grouplist, selectlist, logger } = bound;
+    let { modes, actions, grouplist, selectlist, logger } = bound;
 
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
 
     // a few shortcuts to api calls
     let { file, selection, mode, tool, prefs } = api;
+
+    // top/center mode selector
+    h.bind(modes, [
+        h.button({ _: 'object', id: "mode-object", onclick() { mode.object() } }),
+        h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
+        h.button({ _: 'line', id: "mode-line", onclick() { mode.line() } }),
+        h.button({ _: 'vertex', id: "mode-vertex", onclick() { mode.vertex() } }),
+    ]);
 
     // create hotkey/action menu (top/left)
     h.bind(actions, [
@@ -236,11 +245,6 @@ function ui_build() {
             h.button({ _: 'analyze', onclick: tool.analyze }),
             h.button({ _: 'repair', onclick: tool.repair }),
             h.button({ _: 'clean', onclick: tool.clean }),
-            h.div({ class: "vsep" }),
-            h.button({ _: 'object', id: "mode-object", onclick() { mode.object() } }),
-            h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
-            h.button({ _: 'line', id: "mode-line", onclick() { mode.line() } }),
-            h.button({ _: 'vertex', id: "mode-vertex", onclick() { mode.vertex() } }),
         ]),
     ]);
 

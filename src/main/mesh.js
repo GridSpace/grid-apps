@@ -220,10 +220,17 @@ function space_init(data) {
                     break;
                 case 'Backspace':
                 case 'Delete':
-                    for (let s of selection.list(true)) {
-                        selection.remove(s);
-                        s.showBounds(false);
-                        s.remove();
+                    let mode = api.mode.get();
+                    if (mode !== api.modes.object) {
+                        for (let m of selection.models()) {
+                            m.deleteSelections(mode);
+                        }
+                    } else {
+                        for (let s of selection.list(true)) {
+                            selection.remove(s);
+                            s.showBounds(false);
+                            s.remove();
+                        }
                     }
                     estop(evt);
                     break;
@@ -275,7 +282,7 @@ function space_init(data) {
                     // rotate selected face towawrd z "floor"
                     group.faceDown(int.face.normal);
                 } else {
-                    let modes = api.mode.modes;
+                    let { modes } = api;
                     switch(api.mode.get()) {
                         case modes.object:
                             selection.toggle(shiftKey ? model : model.group);
