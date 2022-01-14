@@ -112,6 +112,9 @@ let selection = {
         for (let s of selection.list()) {
             selection.remove(s);
         }
+        for (let m of api.model.list()) {
+            m.clearSelections()
+        }
     },
 
     visible() {
@@ -322,7 +325,7 @@ let tool = {
                 let nm = areas.map(area => new mesh.model({
                     file: (area.length/3).toString(),
                     mesh: area.toFloat32()
-                })).map( nm => nm.applyMatrix4(mcore.multiply(m.mesh.matrixWorld)) );
+                })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
                 newmdl.appendAll(nm);
             });
             promises.push(p);

@@ -92,8 +92,6 @@ mesh.model = class MeshModel extends mesh.object {
 
         this.file = file || 'unnamed';
         this.load(mesh || vertices, indices, normals);
-        // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file, mesh });
     }
 
     get type() {
@@ -138,6 +136,8 @@ mesh.model = class MeshModel extends mesh.object {
         this.opacity(1);
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
+        // persist in db so it can be restored on page load
+        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
         // sync data to worker
         worker.model_load({id: this.id, name: this.file, vertices, indices});
     }
@@ -150,6 +150,8 @@ mesh.model = class MeshModel extends mesh.object {
         if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         geo.attributes.position.needsUpdate = true;
         if (!normals) geo.computeVertexNormals();
+        // persist in db so it can be restored on page load
+        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
         // sync data to worker
         worker.model_load({id: this.id, name: this.name, vertices, indices});
         // restore wireframe state
@@ -298,7 +300,9 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     clearSelections() {
-        console.log('todo: clearSelections');
+        // clear face selections (since they've been deleted);
+        this.sel.faces = [];
+        this.updateSelections();
     }
 
     deleteSelections(mode) {
@@ -413,7 +417,7 @@ mesh.model = class MeshModel extends mesh.object {
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix
         }).then(data => {
             let { faces, edges, verts, point } = data;
-            console.log({data});
+            // console.log({data});
             // this.toggleSelectedVertices(verts);
             this.toggleSelectedFaces(faces);
             this.updateSelections();

@@ -110,7 +110,7 @@ let model = {
         x = v3.x; y = v3.y; z = v3.z;
         let arr = cache[id].geo.attributes.position.array;
         // distance tolerance for click to vertex (rough distance)
-        let eps = 1;
+        let eps = 0.25;
         let faces = [];
         let verts = [];
         let edges = [];
@@ -129,7 +129,7 @@ let model = {
             if (dx < eps && dy < eps && dz < eps) {
                 faces.addOnce(face);
                 verts.push(vert);
-                console.log(`match @ ${i-3} = ${face}`, ax, ay, az);
+                // console.log(`match @ ${i-3} = ${face}`, ax, ay, az);
             }
         }
         // no matches and we look at the line segments from the provided face
