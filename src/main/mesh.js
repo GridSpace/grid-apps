@@ -117,7 +117,7 @@ function restore_space() {
             let { space, mode } = map;
             api.grid(space.grid);
             // restore selected state
-            let selist = space.select;
+            let selist = space.select || [];
             let smodel = api.model.list().filter(m => selist.contains(m.id));
             let sgroup = api.group.list().filter(m => selist.contains(m.id));
             api.selection.set([...smodel, ...sgroup]);

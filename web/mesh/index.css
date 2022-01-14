@@ -140,6 +140,7 @@ button {
     padding: 2px 3px 2px 3px;
     border: 1px solid rgba(150,150,150,0.5);
     background-color: rgba(220,220,220,0.75);
+    outline: none;
 }
 
 button:hover {

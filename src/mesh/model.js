@@ -49,7 +49,7 @@ let materials = mesh.material = {
         transparent: true,
         shininess: 100,
         specular: 0x202020,
-        color: 0xee0000,
+        color: 0x0088ee,
         opacity: 1
     }),
     wireframe: new MeshBasicMaterial({
@@ -306,12 +306,34 @@ mesh.model = class MeshModel extends mesh.object {
     // invert normals for entire mesh or selected faces depending on mod
     invert(mode) {
         let { modes } = mesh.api;
+        let geo = this.mesh.geometry;
+        let pos = geo.attributes.position;
+        let arr = pos.array;
+        function swap(i) {
+            let v1x = arr[i  ];
+            let v1y = arr[i+1];
+            let v1z = arr[i+2];
+            arr[i  ] = arr[i+3];
+            arr[i+1] = arr[i+4];
+            arr[i+2] = arr[i+5];
+            arr[i+3] = v1x;
+            arr[i+4] = v1y;
+            arr[i+5] = v1z;
+        }
         switch (mode) {
             case modes.object:
+                for (let i=0, l=arr.length; i<l; i += 9) {
+                    swap(i);
+                }
                 break;
             case modes.face:
+                for (let face of this.sel.faces) {
+                    swap(face * 9);
+                }
                 break;
         }
+        this.reload(arr);
+        if (this._norm) this._norm.update();
     }
 
     // remove model from group and space

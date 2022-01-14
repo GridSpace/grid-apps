@@ -314,7 +314,7 @@ let tool = {
     },
 
     invert() {
-        for (let m of selection.models(true)) {
+        for (let m of selection.models()) {
             m.invert(api.mode.get());
         }
     },
