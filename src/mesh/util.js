@@ -14,7 +14,7 @@ gapp.register("mesh.util", [
 let mesh = self.mesh = self.mesh || {};
 if (mesh.util) return;
 
-let { Matrix4, Vector3, Box3 } = THREE;
+let { Matrix4, Matrix3, Vector3, Box3 } = THREE;
 
 let deferFn = [];
 let boundsCache = {};
@@ -156,7 +156,98 @@ let util = mesh.util = {
             avg[f] = (avg[f] || 0)  / array.length;
         }
         return avg;
+    },
+
+    faceNormals(mesh, opt = { }) {
+        const _va = new THREE.Vector3();
+        const _vb = new THREE.Vector3();
+        const _vc = new THREE.Vector3();
+        const _v1 = new THREE.Vector3();
+        const _v2 = new THREE.Vector3();
+        const _normalMatrix = new THREE.Matrix3();
+
+        class FaceNormalsHelper extends THREE.LineSegments {
+            constructor(object, size = opt.size || 1, color = opt.color || 0xff0000) {
+                const objGeometry = object.geometry;
+                const nNormals = objGeometry.attributes.position.count / 3;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new THREE.Float32BufferAttribute(nNormals * 3 * 2, 3);
+                geometry.setAttribute('position', positions);
+                super(geometry, new THREE.LineBasicMaterial({
+                    color, toneMapped: false
+                }));
+                this.object = object;
+                this.size = size;
+                this.type = 'FaceNormalsHelper';
+                this.matrixAutoUpdate = false;
+                this.update();
+            }
+
+            update() {
+                this.object.updateMatrixWorld(true);
+                const position = this.geometry.attributes.position;
+                const objGeometry = this.object.geometry;
+                const objArr = objGeometry.attributes.position.array;
+                let j=0;
+                for (let idx = 0, xj = 0, jl = objArr.length; j < jl; ) {
+                    _va.set(objArr[j++], objArr[j++], objArr[j++]);
+                    _vb.set(objArr[j++], objArr[j++], objArr[j++]);
+                    _vc.set(objArr[j++], objArr[j++], objArr[j++]);
+                    let vn = THREE.computeFaceNormal(_va, _vb, _vc);
+                    let vc = _va.add(_vb).add(_vc).divideScalar(3);
+                    _v2.copy(vc).add(vn.multiplyScalar(this.size));
+                    position.setXYZ(idx++, vc.x, vc.y, vc.z);
+                    position.setXYZ(idx++, _v2.x, _v2.y, _v2.z);
+                }
+                position.needsUpdate = true;
+            }
+        }
+
+        return new FaceNormalsHelper(mesh);
+    },
+
+    vertexNormals(mesh) {
+        const _v1 = new Vector3();
+        const _v2 = new Vector3();
+        const _normalMatrix = new Matrix3();
+
+        class VertexNormalsHelper extends THREE.LineSegments {
+            constructor(object, size = 1, color = 0xff0000) {
+                const objGeometry = object.geometry;
+                const nNormals = objGeometry.attributes.normal.count;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new THREE.Float32BufferAttribute(nNormals * 2 * 3, 3);
+                geometry.setAttribute('position', positions);
+                super(geometry, new THREE.LineBasicMaterial({
+                    color,toneMapped: false
+                }));
+                this.object = object;
+                this.size = size;
+                this.type = 'VertexNormalsHelper';
+                this.matrixAutoUpdate = false;
+                this.update();
+            }
+
+            update() {
+                this.object.updateMatrixWorld(true);
+                const position = this.geometry.attributes.position;
+                const objGeometry = this.object.geometry;
+                const objPos = objGeometry.attributes.position;
+                const objNorm = objGeometry.attributes.normal;
+                for (let idx = 0, j = 0, jl = objPos.count; j < jl; j++) {
+                    _v1.set(objPos.getX(j), objPos.getY(j), objPos.getZ(j));
+                    _v2.set(objNorm.getX(j), objNorm.getY(j), objNorm.getZ(j));
+                    _v2.applyMatrix3(_normalMatrix).normalize().multiplyScalar(this.size).add(_v1);
+                    position.setXYZ(idx++, _v1.x, _v1.y, _v1.z);
+                    position.setXYZ(idx++, _v2.x, _v2.y, _v2.z);
+                }
+                position.needsUpdate = true;
+            }
+        }
+
+        return new VertexNormalsHelper(mesh);
     }
+
 };
 
 })();

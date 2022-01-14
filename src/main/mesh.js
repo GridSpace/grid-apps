@@ -175,10 +175,12 @@ function space_init(data) {
                     return api.tool.analyze();
                 case 'KeyR':
                     return api.tool.repair();
-                case 'KeyN':
+                case 'KeyE':
                     return api.tool.clean();
                 case 'KeyV':
                     return selection.focus();
+                case 'KeyN':
+                    return api.normals();
                 case 'KeyW':
                     return api.wireframe();
                 case 'KeyG':

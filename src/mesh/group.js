@@ -122,6 +122,12 @@ mesh.group = class MeshGroup extends mesh.object {
         }
     }
 
+    normals() {
+        for (let model of this.models) {
+            model.normals(...arguments);
+        }
+    }
+
     select() {
         for (let model of this.models) {
             model.select(...arguments);

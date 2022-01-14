@@ -128,7 +128,8 @@ let selection = {
     update() {
         for (let group of groups) {
             group.select(false);
-            group.wireframe(prefs.map.space.wire);
+            group.wireframe(prefs.map.space.wire || false);
+            group.normals(prefs.map.space.norm || false);
         }
         // prevent selection of model and its group
         let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
@@ -491,10 +492,23 @@ let api = mesh.api = {
         } else {
             wire = state;
         }
-        for (let m of api.model.list()) {
+        for (let m of model.list()) {
             m.wireframe(wire, opt);
         }
         prefs.save( prefs.map.space.wire = wire );
+    },
+
+    normals(state = {toggle:true}) {
+        let norm = prefs.map.space.norm;
+        if (state.toggle) {
+            norm = !norm;
+        } else {
+            norm = state;
+        }
+        for (let m of model.list()) {
+            m.normals(norm);
+        }
+        prefs.save( prefs.map.space.norm = norm );
     },
 
     mode,

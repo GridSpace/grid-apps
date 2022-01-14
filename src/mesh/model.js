@@ -55,7 +55,9 @@ let materials = mesh.material = {
     wireframe: new MeshBasicMaterial({
         side: DoubleSide,
         wireframe: true,
-        color: 0x0
+        color: 0x0,
+        transparent: true,
+        opacity: 0.5
     }),
 };
 
@@ -249,23 +251,24 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     wireframe(bool, opt = {}) {
+        let was = this._wire ? true : false;
         if (bool === undefined) {
-            return this._wire ? {
+            return was ? {
                 enabled: true,
                 opacity: this.opacity(),
-                color: this._wire ? this._wire.material.color : undefined,
+                color: was ? this._wire.material.color : undefined,
             } : {
                 enabled: false
             };
         }
         if (bool.toggle) {
-            return this.wireframe(this._wire ? false : true, opt);
+            bool = !was;
         }
-        let was = this._wire ? true : false;
+        // no change
         if (was === bool) {
             return was;
         }
-        if (this._wire) {
+        if (was) {
             this.mesh.remove(this._wire);
             this._wire = undefined;
             this.opacity({restore: true});
@@ -277,6 +280,27 @@ mesh.model = class MeshModel extends mesh.object {
         }
         space.update();
         return was;
+    }
+
+    normals(bool) {
+        let was = this._norm ? true : false;
+        if (bool === undefined) {
+            return was;
+        }
+        if (bool.toggle) {
+            bool = !was;
+        }
+        // no change
+        if (was === bool) {
+            return was;
+        }
+        if (was) {
+            this.mesh.remove(this._norm);
+            this._norm = undefined;
+        }
+        if (bool) {
+            this.mesh.add(this._norm = mesh.util.faceNormals(this.mesh, { size: 0.5 }));
+        }
     }
 
     remove() {
