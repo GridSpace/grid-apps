@@ -7,7 +7,7 @@ function require_fresh(path) {
 }
 
 const fs = require('fs');
-const uglify = require('uglify-es');
+const uglify = require('uglify-js');
 const moment = require('moment');
 const agent = require('express-useragent');
 const license = require_fresh('./src/moto/license.js');
@@ -756,6 +756,9 @@ function getCachedFile(file, fn) {
 
 function minify(path) {
     let code = fs.readFileSync(path);
+    if (path.indexOf("ext/three.js") > 0) {
+        return code;
+    }
     let mini = uglify.minify(code.toString());
     if (mini.error) {
         console.trace(mini.error);
