@@ -172,7 +172,7 @@ gapp.broker.subscribe("mesh.log", log.emit);
 function ui_build() {
     // set app version
     $h('app-name', "Mesh:Tool");
-    $h('app-vers', gapp.version);
+    $h('app-vers', 'beta' /* gapp.version */);
 
     // add a help button
     h.bind($('top-right'), [
@@ -238,6 +238,7 @@ function ui_build() {
             h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
+            h.button({ _: 'normals', onclick() { api.normals() } }),
             h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'merge', onclick: tool.merge }),

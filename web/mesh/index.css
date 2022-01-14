@@ -59,16 +59,15 @@ body, div {
     position: absolute;
     white-space: nowrap;
     font-size: smaller;
-    font-family: sans-serif;
-    margin-top: 5px;
-    padding: 5px;
-    transform: translateX(-50%);
-    left: 50%;
-    top: 100%;
+    font-family: monospace;
+    transform: translate(5px,-50%);
     color: var(--fg-gray);
+    margin: 0;
+    padding: 2px 3px 2px 3px;
+    border: 1px solid rgba(0,0,0,0.25);
     border-radius: 3px;
-    border: 1px solid #ddd;
-    background-color: white;
+    left: 100%;
+    top: 50%;
 }
 
 #app-body {
@@ -291,7 +290,7 @@ button:hover {
     justify-content: center;
     border: 1px solid rgba(0,0,0,0.5);
     border-radius: 2px;
-    margin: 3px;
+    margin-top: 3px;
     padding: 3px;
     gap: 2px;
 }
