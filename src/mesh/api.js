@@ -366,7 +366,7 @@ let tool = {
         models = fallback(models);
         api.log.emit('repairing mesh(es)...').pin();
         tool.heal(models, { merge: true }).then(() => {
-            api.log.emit('repair commplete').pin();
+            api.log.emit('repair commplete').unpin();
             api.selection.update();
         });
     },
@@ -374,7 +374,7 @@ let tool = {
     clean(models = selection.models()) {
         models = fallback(models);
         tool.heal(models, { merge: false }).then(() => {
-            api.log.emit('cleaning complete').pin();
+            api.log.emit('cleaning complete').unpin();
             api.selection.update();
         });
     }

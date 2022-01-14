@@ -163,7 +163,7 @@ function space_init(data) {
                 case 'KeyX':
                     return api.file.export();
                 case 'KeyD':
-                    if (shiftKey) return selection.duplicate();
+                    if (shiftKey) return api.tool.duplicate();
                     break;
                 case 'KeyC':
                     return selection.centerXY().focus();
