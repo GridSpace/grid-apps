@@ -82,6 +82,25 @@ let model = {
         return data;
     },
 
+    split(data) {
+        let { id, matrix, z } = data;
+        let o1 = [];
+        let o2 = [];
+        // let pos = translate_encode(id, matrix);
+        let pos = cache[id].geo.attributes.position.array;
+        for (let i=0, l=pos.length; i<l; ) {
+            let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
+            let v2 = new Vector3(pos[i++], pos[i++], pos[i++]);
+            let v3 = new Vector3(pos[i++], pos[i++], pos[i++]);
+            if (v1.z < z && v2.z < z && v3.z < z) {
+                o1.appendAll([...v1, ...v2, ...v3]);
+            } else {
+                o2.appendAll([...v1, ...v2, ...v3]);
+            }
+        }
+        return { o1, o2 };
+    },
+
     analyze(id) {
         let tool = analyze(id, { mapped: true });
         let { stats, mapped } = tool;

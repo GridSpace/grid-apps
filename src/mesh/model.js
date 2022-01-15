@@ -31,7 +31,7 @@ let materials = mesh.material = {
         transparent: true,
         shininess: 100,
         specular: 0x202020,
-        color: 0xffff00,
+        color: 0xf0f000,
         opacity: 1
     }),
     // model selected
@@ -40,7 +40,7 @@ let materials = mesh.material = {
         transparent: true,
         shininess: 100,
         specular: 0x202020,
-        color: 0x00ee00,
+        color: 0x00e000,
         opacity: 1
     }),
     // face selected (for groups ranges)
@@ -334,6 +334,27 @@ mesh.model = class MeshModel extends mesh.object {
         }
         this.reload(arr);
         if (this._norm) this._norm.update();
+    }
+
+    // split model along given plane
+    split(plane) {
+        // extract axes from plane and split when present (only z for now)
+        let { z } = plane;
+        return new Promise((resolve,reject) => {
+            let { id, matrix } = this;
+            worker.model_split({id, matrix, z}).then(data => {
+                let { o1, o2 } = data;
+                // this becomes bottom
+                this.reload(o1.toFloat32());
+                // new model becomes top
+                this.group.add(new mesh.model({
+                    file: `${this.file}-split`,
+                    mesh: o2.toFloat32()
+                })).select();
+                // and we're done
+                resolve();
+            });
+        });
     }
 
     // remove model from group and space

@@ -155,17 +155,19 @@ let split = {
         let state = split.state = { button, obj };
         // for split and lay flat modes
         space.mouse.onHover((int, event, ints) => {
-            let models = api.selection.models().map(m => m.mesh);
+            let models = state.models = api.selection.models();
+            let meshes = models.map(m => m.mesh);
             if (!event) {
-                return models;
+                return meshes;
             }
             let { button, buttons } = event;
             if (buttons) {
                 return;
             }
-            let { dim, mid } = util.bounds(models);
+            let { dim, mid } = util.bounds(meshes);
             let { x, y, z } = int.point;
-            state.point = { x, y, z };
+            // y is z in model space for the purposes of a split
+            state.plane = { z: y };
             obj.scale.set(dim.x, dim.y, 1);
             obj.position.set(mid.x, y, -mid.y);
         });
@@ -173,9 +175,8 @@ let split = {
     },
 
     select() {
-        // select plane (also exec)
-        console.log({select_plane: split.state});
-        split.end();
+        let { models, plane } = split.state;
+        Promise.all(models.map(m => m.split(plane))).then(split.end);
     },
 
     end() {
