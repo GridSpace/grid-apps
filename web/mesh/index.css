@@ -153,6 +153,16 @@ button:hover {
     display: none;
 }
 
+.pad3 {
+    width: 3px;
+    height: 3px;
+}
+
+.pad5 {
+    width: 5px;
+    height: 5px;
+}
+
 #top-right {
     position: absolute;
     padding: 3px;
@@ -216,6 +226,7 @@ button:hover {
 }
 
 #modal_frame > div {
+    flex-direction: column;
     padding: 5px; /* compensate for removing padding above */
 }
 
@@ -362,10 +373,11 @@ button:hover {
 }
 
 #actions .head {
+    color: #444;
     align-items: center;
     justify-content: center;
-    font-family: monospace;
-    font-weight: bold;
+    font-family: 'Russo One', monospace;
+    font-weight: lighter;
     font-size: smaller;
     border-radius: 3px;
     background-color: rgba(150,150,150,0.05);

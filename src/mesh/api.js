@@ -286,8 +286,8 @@ let file = {
 
 // return selection if models are invalid. can happen when called from
 // even bound to a button which delivers a PointEvent argument
-function fallback(models) {
-    return Array.isArray(models) ? models : selection.models();
+function fallback(models, strict) {
+    return Array.isArray(models) ? models : selection.models(strict);
 }
 
 let tool = {
@@ -305,6 +305,10 @@ let tool = {
             api.selection.set([group]);
             api.log.emit('merge complete').unpin();
         });
+    },
+
+    split(models) {
+        models = fallback(models);
     },
 
     duplicate() {

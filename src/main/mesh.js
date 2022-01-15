@@ -140,7 +140,7 @@ function space_init(data) {
     space.event.addHandlers(self, [
         'drop', (evt) => {
             estop(evt);
-            platform.setColor(platcolor);
+            platform.set({ opacity: 0, color: platcolor });
             call.load_files([...evt.dataTransfer.files]);
         },
         'dragover', evt => {
@@ -148,9 +148,10 @@ function space_init(data) {
             evt.dataTransfer.dropEffect = 'copy';
             let color = platform.setColor(0x00ff00);
             if (color !== 0x00ff00) platcolor = color;
+            platform.set({ opacity: 0.1 });
         },
         'dragleave', evt => {
-            platform.setColor(platcolor);
+            platform.set({ opacity: 0, color: platcolor });
         },
         'keypress', evt => {
             if (api.modal.showing) {
