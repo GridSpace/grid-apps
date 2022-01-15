@@ -307,10 +307,6 @@ let tool = {
         });
     },
 
-    split(models) {
-        models = fallback(models);
-    },
-
     duplicate() {
         for (let m of selection.models()) {
             m.duplicate();

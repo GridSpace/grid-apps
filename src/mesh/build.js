@@ -14,6 +14,7 @@ let mesh = self.mesh = self.mesh || {};
 if (mesh.build) return;
 
 let broker = gapp.broker;
+let call = broker.send;
 let { api, util } = mesh;
 
 broker.listeners({
@@ -250,7 +251,7 @@ function ui_build() {
             // h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'merge', onclick: tool.merge }),
-            h.button({ _: 'split', onclick: tool.split }),
+            h.button({ _: 'split', onclick: call.edit_split }),
             h.button({ _: 'invert', onclick: tool.invert }),
         ]),
         h.div([

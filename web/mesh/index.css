@@ -140,6 +140,7 @@ button {
     padding: 2px 3px 2px 3px;
     border: 1px solid rgba(150,150,150,0.5);
     background-color: rgba(220,220,220,0.75);
+    user-select: none;
     outline: none;
 }
 
@@ -276,7 +277,7 @@ button:hover {
     will-change: transform;
 }
 
-/** common child look & feel */
+/** common look & feel */
 
 #logger, #modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;
@@ -289,6 +290,14 @@ button:hover {
 #actions .vsep, #grouplist .vsep {
     margin: 1px 0 1px 0;
     border-bottom: 1px dashed gray;
+}
+
+button.selected {
+    background-color: rgba(0,255,0,0.5);
+}
+
+button.selected:hover {
+    background-color: rgba(0,255,0,1);
 }
 
 /** modes menu top/center **/
@@ -305,14 +314,6 @@ button:hover {
     margin-top: 3px;
     padding: 3px;
     gap: 2px;
-}
-
-#modes button.selected {
-    background-color: rgba(0,255,0,0.5);
-}
-
-#modes button.selected:hover {
-    background-color: rgba(0,255,0,1);
 }
 
 #mode-line, #mode-vertex {
@@ -414,14 +415,6 @@ button:hover {
 
 #grouplist .models button {
     text-align: left;
-}
-
-#grouplist .selected {
-    background-color: rgba(0,255,0,0.5)
-}
-
-#grouplist .selected:hover {
-    background-color: rgba(0,255,0,1)
 }
 
 #grouplist .hidden {

@@ -8,7 +8,7 @@ let broker = gapp.broker;
 let call = broker.send;
 let dbindex = [ "admin", "space" ];
 let worker = moto.client.fn;
-let { Quaternion, Vector3 } = THREE;
+let { Quaternion, Vector3, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide } = THREE;
 
 // set below. called once the DOM readyState = complete
 // this is the main() entrypoint called after all dependents load
@@ -129,6 +129,72 @@ function restore_space() {
     $d('curtain','none');
 }
 
+// toggle edit/split temporary mode (present plane on hover)
+let temp_mode;
+
+// split functions
+let split = {
+    start() {
+        let space = moto.Space;
+        let { api, util } = mesh;
+        // highlight button
+        let button = event.target;
+        button.classList.add('selected');
+        // create split plane visual
+        let geo, mat, obj = new Mesh(
+            geo = new PlaneGeometry(1,1),
+            mat = new MeshPhongMaterial({
+                side: DoubleSide,
+                color: 0x999999,
+                transparent: false,
+                opacity: 0.1
+            })
+        );
+        space.scene.add(obj);
+        // enable temp mode
+        let state = split.state = { button, obj };
+        // for split and lay flat modes
+        space.mouse.onHover((int, event, ints) => {
+            if (!event) {
+                return api.objects();
+            }
+            let { button, buttons } = event;
+            if (buttons) {
+                return;
+            }
+            let { dim, mid } = util.bounds(int.object);
+            let { x, y, z } = int.point;
+            state.point = { x, y, z };
+            obj.scale.set(dim.x, dim.y, 1);
+            obj.position.set(mid.x, y, mid.y);
+        });
+        temp_mode = split;
+    },
+
+    select() {
+        // select plane (also exec)
+        console.log({select_plane: split.state});
+        split.end();
+    },
+
+    end() {
+        let space = moto.Space;
+        let { button, obj } = split.state;
+        button.classList.remove('selected');
+        space.scene.remove(obj);
+        space.mouse.onHover(undefined);
+        temp_mode = split.state = undefined;
+    }
+}
+
+function edit_split(event) {
+    if (temp_mode) {
+        temp_mode.end();
+    } else {
+        split.start();
+    }
+}
+
 // add space event bindings
 function space_init(data) {
     let { space, platform } = data;
@@ -219,6 +285,7 @@ function space_init(data) {
                     break;
                 case 'Escape':
                     selection.clear();
+                    temp_mode && temp_mode.end();
                     estop(evt);
                     break;
                 case 'Backspace':
@@ -273,6 +340,9 @@ function space_init(data) {
     space.mouse.upSelect((int, event) => {
         if (event && event.target.nodeName === "CANVAS") {
             let model = int && int.object.model ? int.object.model : undefined;
+            if (temp_mode) {
+                return temp_mode.select(model);
+            }
             if (model) {
                 let group = model.group;
                 let { ctrlKey, metaKey, shiftKey } = event;
@@ -360,6 +430,7 @@ broker.listeners({
     space_load,
     object_matrix,
     object_destroy,
+    edit_split
 });
 
 // remove version cache bust from url
