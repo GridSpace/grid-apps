@@ -353,6 +353,7 @@ button:hover {
     margin: 3px 0 0 3px;
     left: 0;
     top: 0;
+    gap: 1px;
 }
 
 #actions > div {
