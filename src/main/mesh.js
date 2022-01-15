@@ -186,6 +186,7 @@ let split = {
         space.scene.remove(obj);
         space.mouse.onHover(undefined);
         temp_mode = split.state = undefined;
+        mesh.api.selection.update();
     }
 }
 

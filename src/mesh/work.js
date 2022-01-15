@@ -37,7 +37,8 @@ function cacheUpdate(id, data) {
 function translate_encode(id, matrix) {
     let rec = cache[id];
     let geo = rec.geo.clone();
-    geo.applyMatrix4(core_matrix.clone().multiply( new Matrix4().fromArray(matrix) ));
+    let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
+    geo.applyMatrix4(mat);
     return geo.attributes.position.array;
 }
 
@@ -87,16 +88,65 @@ let model = {
         let o1 = [];
         let o2 = [];
         let pos = translate_encode(id, matrix);
+        let split = [];
+        let on = [];
+        let over = [];
+        let under = [];
+        function sort(v) {
+            if (v.z < z) return under.push(v);
+            if (v.z > z) return over.push(v);
+            on.push(v);
+        }
+        function lerp(v1, v2) {
+            let zd = Math.abs(v1.z - v2.z);
+            let z1 = Math.abs(v1.z - z);
+            return v1.clone().lerp(v2, z1/zd);
+        }
         for (let i=0, l=pos.length; i<l; ) {
             let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
             let v2 = new Vector3(pos[i++], pos[i++], pos[i++]);
             let v3 = new Vector3(pos[i++], pos[i++], pos[i++]);
-            if (v1.z < z && v2.z < z && v3.z < z) {
-                o1.appendAll([...v1, ...v2, ...v3]);
-            } else {
+            sort(v1);
+            sort(v2);
+            sort(v3);
+            let onl = on.length;
+            let overl = over.length;
+            let underl = under.length;
+            let isover = (overl === 3 || underl === 0);
+            let isunder = (underl === 3 || overl === 0);
+            let split = !(isover || isunder);
+            if (isover) {
                 o2.appendAll([...v1, ...v2, ...v3]);
             }
+            if (isunder) {
+                o1.appendAll([...v1, ...v2, ...v3]);
+            }
+            if (split) {
+                if (overl === 2) {
+                    // two over, one under
+                    let vo = under[0] || on[0]; // under or on
+                    let m1 = lerp(over[0], vo);
+                    let m2 = lerp(over[1], vo);
+                    o2.appendAll([ ...over[0], ...over[1], ...m1 ]);
+                    o2.appendAll([ ...over[1], ...m1, ...m2 ]);
+                    o1.appendAll([ ...m1, ...m2, ...under[0] ]);
+                } else {
+                    // one over, two under
+                    let vo = over[0] || on[0]; // over or on
+                    let m1 = lerp(under[0], vo);
+                    let m2 = lerp(under[1], vo);
+                    o1.appendAll([ ...under[0], ...under[1], ...m1 ]);
+                    o1.appendAll([ ...under[1], ...m1, ...m2 ]);
+                    o2.appendAll([ ...m1, ...m2, ...over[0] ]);
+                }
+            }
+            on.length = over.length = under.length = 0;
         }
+        let mi4 = core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert();
+        let b1 = new BufferAttribute(o1.toFloat32(), 3);
+        let b2 = new BufferAttribute(o2.toFloat32(), 3);
+        o1 = b1.applyMatrix4(mi4).array;
+        o2 = b2.applyMatrix4(mi4).array;
         return { o1, o2 };
     },
 

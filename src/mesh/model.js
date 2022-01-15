@@ -340,17 +340,23 @@ mesh.model = class MeshModel extends mesh.object {
     split(plane) {
         // extract axes from plane and split when present (only z for now)
         let { z } = plane;
+        let m4 = this.mesh.matrix;
         return new Promise((resolve,reject) => {
             let { id, matrix } = this;
             worker.model_split({id, matrix, z}).then(data => {
                 let { o1, o2 } = data;
-                // this becomes bottom
-                this.reload(o1.toFloat32());
                 // new model becomes top
+                if (o2.length)
                 this.group.add(new mesh.model({
                     file: `${this.file}-split`,
-                    mesh: o2.toFloat32()
-                })).select();
+                    mesh: o2
+                }).applyMatrix4(m4)).select();
+                // this becomes bottom
+                if (o1.length) {
+                    this.reload(o1);
+                } else {
+                    this.remove();
+                }
                 // and we're done
                 resolve();
             });

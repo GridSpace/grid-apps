@@ -61,11 +61,11 @@ mesh.object = class MeshObject {
         if (elements) {
             this.object.applyMatrix4(new Matrix4().fromArray(elements));
         }
-        return this;
+        return this.matrixChanged();
     }
 
     applyMatrix4(matrix) {
-        return this.applyMatrix(matrix.elements).matrixChanged();
+        return this.applyMatrix(matrix.elements);
     }
 
     select() {
