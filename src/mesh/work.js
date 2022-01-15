@@ -86,8 +86,7 @@ let model = {
         let { id, matrix, z } = data;
         let o1 = [];
         let o2 = [];
-        // let pos = translate_encode(id, matrix);
-        let pos = cache[id].geo.attributes.position.array;
+        let pos = translate_encode(id, matrix);
         for (let i=0, l=pos.length; i<l; ) {
             let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
             let v2 = new Vector3(pos[i++], pos[i++], pos[i++]);
