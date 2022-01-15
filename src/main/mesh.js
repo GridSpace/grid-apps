@@ -155,18 +155,19 @@ let split = {
         let state = split.state = { button, obj };
         // for split and lay flat modes
         space.mouse.onHover((int, event, ints) => {
+            let models = api.selection.models().map(m => m.mesh);
             if (!event) {
-                return api.objects();
+                return models;
             }
             let { button, buttons } = event;
             if (buttons) {
                 return;
             }
-            let { dim, mid } = util.bounds(int.object);
+            let { dim, mid } = util.bounds(models);
             let { x, y, z } = int.point;
             state.point = { x, y, z };
             obj.scale.set(dim.x, dim.y, 1);
-            obj.position.set(mid.x, y, mid.y);
+            obj.position.set(mid.x, y, -mid.y);
         });
         temp_mode = split;
     },
