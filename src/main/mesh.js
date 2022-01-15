@@ -175,8 +175,13 @@ let split = {
     },
 
     select() {
+        let { log } = mesh.api;
         let { models, plane } = split.state;
-        Promise.all(models.map(m => m.split(plane))).then(split.end);
+        log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
+        Promise.all(models.map(m => m.split(plane))).then(() => {
+            log.emit('split complete').unpin();
+            split.end();
+        });
     },
 
     end() {

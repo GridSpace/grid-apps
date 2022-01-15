@@ -83,6 +83,8 @@ let model = {
         return data;
     },
 
+    // split a model along an axis at a given point
+    // return two arrays of vertices for each resulting object
     split(data) {
         let { id, matrix, z } = data;
         let o1 = [];

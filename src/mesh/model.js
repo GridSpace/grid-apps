@@ -348,7 +348,7 @@ mesh.model = class MeshModel extends mesh.object {
                 // new model becomes top
                 if (o2.length)
                 this.group.add(new mesh.model({
-                    file: `${this.file}-split`,
+                    file: `${this.file}`,
                     mesh: o2
                 }).applyMatrix4(m4)).select();
                 // this becomes bottom
