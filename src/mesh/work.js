@@ -98,7 +98,7 @@ let model = {
             let z = v1.z.round(round || 2);
             zlist[z] = '';
         }
-        return Object.keys(zlist);
+        return Object.keys(zlist).map(v => parseFloat(v));
     },
 
     // split a model along an axis at a given point
