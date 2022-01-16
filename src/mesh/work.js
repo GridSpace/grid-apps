@@ -124,22 +124,31 @@ let model = {
                 o1.appendAll([...v1, ...v2, ...v3]);
             }
             if (split) {
+                let g1, g2, oa, ua;
                 if (overl === 2) {
-                    // two over, one under
-                    let vo = under[0] || on[0]; // under or on
-                    let m1 = lerp(over[0], vo);
-                    let m2 = lerp(over[1], vo);
-                    o2.appendAll([ ...over[0], ...over[1], ...m1 ]);
-                    o2.appendAll([ ...over[1], ...m1, ...m2 ]);
-                    o1.appendAll([ ...m1, ...m2, ...under[0] ]);
+                    g1 = o2;
+                    g2 = o1;
+                    oa = over;
+                    ua = under;
                 } else {
-                    // one over, two under
-                    let vo = over[0] || on[0]; // over or on
-                    let m1 = lerp(under[0], vo);
-                    let m2 = lerp(under[1], vo);
-                    o1.appendAll([ ...under[0], ...under[1], ...m1 ]);
-                    o1.appendAll([ ...under[1], ...m1, ...m2 ]);
-                    o2.appendAll([ ...m1, ...m2, ...over[0] ]);
+                    g1 = o1;
+                    g2 = o2;
+                    oa = under;
+                    ua = over;
+                }
+                let [ p1, p2 ] = oa;
+                let p3 = ua[0] || on[0]; // under or on
+                let m1 = lerp(p1, p3);
+                let m2 = lerp(p2, p3);
+                if (v2 === ua[0]) {
+                    // reverse when the mid point gap
+                    g1.appendAll([ ...m1, ...p2, ...p1 ]);
+                    g1.appendAll([ ...m1, ...m2, ...p2 ]);
+                    g2.appendAll([ ...p3, ...m2, ...m1 ]);
+                } else {
+                    g1.appendAll([ ...p1, ...p2, ...m1 ]);
+                    g1.appendAll([ ...p2, ...m2, ...m1 ]);
+                    g2.appendAll([ ...m1, ...m2, ...p3 ]);
                 }
             }
             on.length = over.length = under.length = 0;

@@ -388,7 +388,7 @@
             w = x / 2,
             h = y / 2,
             d = z / 2,
-            zp = -d - platformZOff + (gridZOff || (z/2-0.1)),
+            zp = -d - platformZOff + numOrDef(gridZOff, (z/2-0.1)),
             labelSize = grid.unitMinor * fontScale,
             oldView = ruler.view,
             view = ruler.view = new THREE.Group();
@@ -465,6 +465,10 @@
         updateGrid();
     }
 
+    function numOrDef(v, dv) {
+        return v !== undefined ? v : dv;
+    }
+
     function modMatch(val, mod) {
         let mv = Math.abs(val) % mod;
         return (mv < 1) || ((mod - mv) < 1);
@@ -480,7 +484,7 @@
             x = platform.scale.x,
             y = isRound ? platform.scale.z : platform.scale.y,
             z = isRound ? platform.scale.y : platform.scale.z,
-            zp = -(z / 2) - platformZOff + (gridZOff || (z/2-0.1)),
+            zp = -(z / 2) - platformZOff + numOrDef(gridZOff, (z/2-0.1)),
             xh = x / 2,
             yh = y / 2,
             x1 = -xh - origin.x,
@@ -936,10 +940,12 @@
             platform.setSize(width, depth, height, maxz);
         }
         if (grid) {
+            let { zOffset } = grid;
             let { major = 25, minor = 5 } = grid;
             let { colorX, colorY, colorMajor, colorMinor } = grid;
             platform.setGrid(major, minor);
             platform.setGridColor({ colorX, colorY, colorMajor, colorMinor });
+            platform.setGridZOff(zOffset);
         }
         if (origin) {
             let { x, y, z, show } = origin;

@@ -41,11 +41,11 @@ function init() {
     platform.set({
         volume: false,
         round: false,
-        zOffset: 0.1,
+        zOffset: 0,
         opacity: 0,
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
-        size: { width: 2000, depth: 2000, height: 1, maxz: 300 },
+        size: { width: 2000, depth: 2000, height: 0.001, maxz: 200 },
         grid: { major: 25, minor: 5,
             colorMajor: 0xcccccc, colorMinor: 0xeeeeee,
             colorX: 0xff7777, colorY: 0x7777ff },

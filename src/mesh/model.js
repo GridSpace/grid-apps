@@ -158,6 +158,8 @@ mesh.model = class MeshModel extends mesh.object {
         worker.model_load({id: this.id, name: this.name, vertices, indices});
         // restore wireframe state
         this.wireframe(was);
+        // fixup normals
+        this.normals({refresh: true});
     }
 
     get group() {
@@ -289,6 +291,9 @@ mesh.model = class MeshModel extends mesh.object {
         }
         if (bool.toggle) {
             bool = !was;
+        }
+        if (bool.refresh && !was) {
+            return;
         }
         // no change
         if (was === bool) {
