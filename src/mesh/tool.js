@@ -310,7 +310,6 @@ mesh.tool = class MeshTool {
         // rotate/flatten to Z plane and use earcut to generate faces
         // because earcut emits point indexes, no need to un-rotate
         function emitLoop(loop) {
-            let faces = [];
             let lastPoint;
             let pindex = [];
             let points = [];
@@ -361,22 +360,27 @@ mesh.tool = class MeshTool {
                 }
             }
 
-            let fpoints = points.flat();
-            let ec = earcut(fpoints, undefined, 3);
-            // console.log({points, fpoints, ec, dx, dy, dz});
-
-            for (let point of ec) {
-                faces.push(pindex[point]);
-            }
-
-            // newly generated faces
-            return faces;
+            return  { index: pindex, points: points.flat(), swap };
         }
+
+        // given a loop with holes, emit faces
+        function emitFaces(loop) {
+            let { index, points } = loop;
+            let ec = earcut(points, undefined, 3);
+            return ec.map(p => index[p]);
+        }
+
+        // group loops by normal (using swap as crude proxy for now)
+        // then attempt to nest them (find holes)
+        // let polys = loops.map(loop => {
+        // });
 
         // create area faces covering loops
         let areas = this.areas = [];
         for (let loop of loops) {
-            this.areas.push(emitLoop(loop));
+            let l2 = emitLoop(loop);
+            let fs = emitFaces(l2);
+            this.areas.push(fs);
         }
 
         // auto-merge newly found enclosed areas
