@@ -2499,7 +2499,7 @@
             CATALOG.addFileListener(updateCatalog);
             SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
             SPACE.platform.setGridZOff(undefined);
-            SPACE.platform.setZOff(0.01);
+            SPACE.platform.setZOff(0.05);
 
             // restore UI state from settings
             UI.showOrigin.checked = control.showOrigin;

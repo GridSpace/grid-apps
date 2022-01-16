@@ -218,7 +218,6 @@
             }
         }
         poly.points = newpts;
-        poly.length = newpts.length;
         if (poly.inner) {
             CAM.addDogbones(poly.inner, dist, true);
         }
