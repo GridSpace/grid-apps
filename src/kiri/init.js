@@ -1692,9 +1692,9 @@
             spaceLayout:      UC.newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:UC.toFloat, size:3, units:true}),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
-            exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
-            exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
-            exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
+            exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
+            exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
+            exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
             exportThumb:      UC.newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
             exportPreview:    UC.newBoolean(`Code Preview`, booleanSave),
 
