@@ -350,9 +350,10 @@ mesh.model = class MeshModel extends mesh.object {
             let { id, matrix } = this;
             worker.model_split({id, matrix, z}).then(data => {
                 let { o1, o2 } = data;
+                let model;
                 // new model becomes top
                 if (o2.length)
-                this.group.add(new mesh.model({
+                this.group.add(model = new mesh.model({
                     file: `${this.file}`,
                     mesh: o2
                 }).applyMatrix4(m4)).select();
@@ -362,8 +363,17 @@ mesh.model = class MeshModel extends mesh.object {
                 } else {
                     this.remove();
                 }
-                // and we're done
-                resolve();
+                // return the split model
+                resolve(model);
+            });
+        });
+    }
+
+    zlist(round = 2) {
+        return new Promise((resolve,reject) => {
+            let { id, matrix } = this;
+            worker.model_zlist({id, matrix, round}).then(data => {
+                resolve(data);
             });
         });
     }

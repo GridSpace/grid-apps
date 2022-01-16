@@ -145,30 +145,52 @@ let split = {
             geo = new PlaneGeometry(1,1),
             mat = new MeshPhongMaterial({
                 side: DoubleSide,
-                color: 0x999999,
+                color: 0x5555aa,
                 transparent: false,
-                opacity: 0.1
+                opacity: 0.5
             })
         );
         space.scene.add(obj);
+        // hide until first hover
+        obj.visible = false;
         // enable temp mode
-        let state = split.state = { button, obj };
+        let state = split.state = { button, obj, zlist:[] };
+        let models = state.models = api.selection.models();
+        let meshes = models.map(m => m.mesh);
+        // get z list for snapping
+        Promise.all(models.map(m => m.zlist(3))).then(zs => {
+            for (let z of zs.flat()) {
+                state.zlist.addOnce(z);
+            }
+        });
         // for split and lay flat modes
         space.mouse.onHover((int, event, ints) => {
-            let models = state.models = api.selection.models();
-            let meshes = models.map(m => m.mesh);
             if (!event) {
                 return meshes;
             }
+            obj.visible = false;
             let { button, buttons } = event;
             if (buttons) {
                 return;
             }
             let { dim, mid } = util.bounds(meshes);
             let { x, y, z } = int.point;
+            // snap to zlist when shift pressed
+            let { zlist } = state;
+            mat.color.set(0x5555aa);
+            obj.visible = true;
+            if (event.shiftKey && zlist.length) {
+                for (let v of zlist) {
+                    if (Math.abs(v - y) < 0.1) {
+                        mat.color.set(0xaa5555);
+                        y = v;
+                        break;
+                    }
+                }
+            }
             // y is z in model space for the purposes of a split
             state.plane = { z: y };
-            obj.scale.set(dim.x, dim.y, 1);
+            obj.scale.set(dim.x + 2, dim.y + 2, 1);
             obj.position.set(mid.x, y, -mid.y);
         });
         temp_mode = split;
@@ -176,9 +198,9 @@ let split = {
 
     select() {
         let { log } = mesh.api;
-        let { models, plane } = split.state;
+        let { models, plane, zlist } = split.state;
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
-        Promise.all(models.map(m => m.split(plane))).then(() => {
+        Promise.all(models.map(m => m.split(plane))).then(models => {
             log.emit('split complete').unpin();
             split.end();
         });

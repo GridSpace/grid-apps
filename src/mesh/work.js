@@ -36,10 +36,15 @@ function cacheUpdate(id, data) {
 // translate original mesh vertices into UI world view (PI/2 rotation on X)
 function translate_encode(id, matrix) {
     let rec = cache[id];
-    let geo = rec.geo.clone();
-    let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
-    geo.applyMatrix4(mat);
-    return geo.attributes.position.array;
+    let mkey = matrix.map(v => v.round(6)).join('-');
+    if (!rec || !rec.trans || rec.mkey !== mkey) {
+        let geo = rec.geo.clone();
+        let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
+        geo.applyMatrix4(mat);
+        rec.mkey = mkey;
+        rec.trans = geo.attributes.position.array
+    }
+    return rec.trans;
 }
 
 function analyze(id, opt = {}) {
@@ -62,7 +67,7 @@ let model = {
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
         if (indices) geo.setIndex(new BufferAttribute(indices, 1));
-        cacheUpdate(id, { name, geo, matrix: core_matrix.clone() });
+        cacheUpdate(id, { name, geo, xmatrix: core_matrix.clone(), trans: undefined });
     },
 
     // return new vertices in world coordinates
@@ -81,6 +86,19 @@ let model = {
             p += arrays[i++].length;
         }
         return data;
+    },
+
+    // used to generate a list for split snapping
+    zlist(data) {
+        let { id, matrix, round } = data;
+        let zlist = {};
+        let pos = translate_encode(id, matrix);
+        for (let i=0, l=pos.length; i<l; ) {
+            let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
+            let z = v1.z.round(round || 2);
+            zlist[z] = '';
+        }
+        return Object.keys(zlist);
     },
 
     // split a model along an axis at a given point
