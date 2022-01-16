@@ -485,7 +485,7 @@ kiri.lang['en-us'] = {
     // CNC TRACE
     cu_menu:        "trace",
     cu_type_s:      "type",
-    cu_type_l:      ["follow = tool tip follows line","right or left = tool tip","follows line offset by tool radius"],
+    cu_type_l:      ["clear = clear a closed-line pocket","follow = tool tip follows line","with offset option when closed"],
 
     // CNC DRILLING
     cd_menu:        "drill",
