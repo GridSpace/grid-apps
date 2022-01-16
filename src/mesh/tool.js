@@ -5,10 +5,14 @@
 (function() {
 
 // dep: ext.earcut
-gapp.register("mesh.tool");
+gapp.register("mesh.tool", [
+    "mesh.geom",    // dep: mesh.geom
+]);
 
 let mesh = self.mesh = self.mesh || {};
 if (mesh.tool) return;
+
+let geom = mesh.geom;
 
 /** tool for identiying defects and healing them **/
 mesh.tool = class MeshTool {
@@ -352,7 +356,7 @@ mesh.tool = class MeshTool {
                 swap = 0;
             }
             if (swap < 2) {
-                // console.log({swap_axis: swap});
+                // swap x or y for z axes
                 for (let point of points) {
                     let tmpz = point[2];
                     point[2] = point[swap];
@@ -367,20 +371,70 @@ mesh.tool = class MeshTool {
         function emitFaces(loop) {
             let { index, points } = loop;
             let ec = earcut(points, undefined, 3);
+            // map earcut point indexes back to vertex indexes
             return ec.map(p => index[p]);
         }
 
+        function emitTop(rec) {
+            let points = rec.loop.points.slice();
+            let index = rec.loop.index.slice();
+            let holesAt = index.length;
+            for (let inner of rec.inner) {
+                points.appendAll(inner.loop.points);
+                index.appendAll(inner.loop.index);
+            }
+            let holes = index.slice(holesAt).map((v,i) => i + holesAt);
+            let ec = earcut(points, holes, 3);
+            // eliminate faces consisting only of hole indices
+            let ef = ec.group(3)
+                .filter(g => {
+                    return !(
+                        holes.contains(g[0]) &&
+                        holes.contains(g[1]) &&
+                        holes.contains(g[2]) )
+                })
+                .flat();
+            return ef.map(p => index[p]);
+        }
+
+        // new patch areas
+        let areas = this.areas = [];
+
+        // start disabled code path for complex (nested) paths
+        if (false) {
+
         // group loops by normal (using swap as crude proxy for now)
         // then attempt to nest them (find holes)
-        // let polys = loops.map(loop => {
-        // });
+        let polys = loops.map(loop => {
+            return emitLoop(loop);
+        });
+
+        // return nested mapping
+        let nested = geom.nest(polys.map(p => p.points));
+        // recover and map loops from point arrays
+        for (let rec of nested) {
+            rec.loop = polys.filter(loop => loop.points === rec.points)[0];
+            // keep parent/child winding reversed
+            let CCW = rec.depth % 2 === 0;
+            if ((CCW && rec.area > 0) || (!CCW && rec.area < 0)) {
+                rec.points = rec.loop.points = rec.points.group(3).reverse().flat();
+                rec.loop.index = rec.loop.index.reverse();
+            }
+        }
+
+        // extract tops which have nesting depth mod 2 === 0
+        let tops = nested.filter(rec => rec.depth % 2 === 0);
+        for (let top of tops) {
+            areas.push(emitTop(top));
+        }
+
+        } // end of disbled code
 
         // create area faces covering loops
-        let areas = this.areas = [];
         for (let loop of loops) {
             let l2 = emitLoop(loop);
             let fs = emitFaces(l2);
-            this.areas.push(fs);
+            areas.push(fs);
         }
 
         // auto-merge newly found enclosed areas
