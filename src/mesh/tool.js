@@ -400,41 +400,38 @@ mesh.tool = class MeshTool {
         // new patch areas
         let areas = this.areas = [];
 
-        // start disabled code path for complex (nested) paths
-        if (false) {
+        if (opt.compound) {
+            // group loops by normal (using swap as crude proxy for now)
+            // then attempt to nest them (find holes)
+            let polys = loops.map(loop => {
+                return emitLoop(loop);
+            });
 
-        // group loops by normal (using swap as crude proxy for now)
-        // then attempt to nest them (find holes)
-        let polys = loops.map(loop => {
-            return emitLoop(loop);
-        });
-
-        // return nested mapping
-        let nested = geom.nest(polys.map(p => p.points));
-        // recover and map loops from point arrays
-        for (let rec of nested) {
-            rec.loop = polys.filter(loop => loop.points === rec.points)[0];
-            // keep parent/child winding reversed
-            let CCW = rec.depth % 2 === 0;
-            if ((CCW && rec.area > 0) || (!CCW && rec.area < 0)) {
-                rec.points = rec.loop.points = rec.points.group(3).reverse().flat();
-                rec.loop.index = rec.loop.index.reverse();
+            // return nested mapping
+            let nested = geom.nest(polys.map(p => p.points));
+            // recover and map loops from point arrays
+            for (let rec of nested) {
+                rec.loop = polys.filter(loop => loop.points === rec.points)[0];
+                // keep parent/child winding reversed
+                let CCW = rec.depth % 2 === 0;
+                if ((CCW && rec.area > 0) || (!CCW && rec.area < 0)) {
+                    rec.points = rec.loop.points = rec.points.group(3).reverse().flat();
+                    rec.loop.index = rec.loop.index.reverse();
+                }
             }
-        }
 
-        // extract tops which have nesting depth mod 2 === 0
-        let tops = nested.filter(rec => rec.depth % 2 === 0);
-        for (let top of tops) {
-            areas.push(emitTop(top));
-        }
-
-        } // end of disbled code
-
-        // create area faces covering loops
-        for (let loop of loops) {
-            let l2 = emitLoop(loop);
-            let fs = emitFaces(l2);
-            areas.push(fs);
+            // extract tops which have nesting depth mod 2 === 0
+            let tops = nested.filter(rec => rec.depth % 2 === 0);
+            for (let top of tops) {
+                areas.push(emitTop(top));
+            }
+        } else {
+            // create area faces covering loops
+            for (let loop of loops) {
+                let l2 = emitLoop(loop);
+                let fs = emitFaces(l2);
+                areas.push(fs);
+            }
         }
 
         // auto-merge newly found enclosed areas

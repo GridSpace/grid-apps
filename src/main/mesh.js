@@ -45,8 +45,8 @@ function init() {
         opacity: 0,
         color: 0xdddddd,
         zoom: { reverse: true, speed: 1 },
-        size: { width: 2000, depth: 2000, height: 0.001, maxz: 200 },
-        grid: { major: 25, minor: 5,
+        size: { width: 2000, depth: 2000, height: 0.05, maxz: 200 },
+        grid: { major: 25, minor: 5, zOffset: 0,
             colorMajor: 0xcccccc, colorMinor: 0xeeeeee,
             colorX: 0xff7777, colorY: 0x7777ff },
     });

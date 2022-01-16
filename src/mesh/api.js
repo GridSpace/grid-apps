@@ -319,7 +319,7 @@ let tool = {
         }
     },
 
-    analyze(models) {
+    analyze(models, opt = { compound: false }) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();
         let promises = [];
@@ -327,7 +327,7 @@ let tool = {
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
             // todo - translate vertices with source model's matrix
-            let p = worker.model_analyze(m.id).then(data => {
+            let p = worker.model_analyze({ id: m.id, opt }).then(data => {
                 let { areas, edges } = data.mapped;
                 let nm = areas.map(area => new mesh.model({
                     file: (area.length/3).toString(),

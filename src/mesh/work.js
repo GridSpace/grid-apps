@@ -179,8 +179,9 @@ let model = {
         return { o1, o2 };
     },
 
-    analyze(id) {
-        let tool = analyze(id, { mapped: true });
+    analyze(data) {
+        let { id, opt } = data;
+        let tool = analyze(id, { mapped: true, ...opt });
         let { stats, mapped } = tool;
         let { cull, dups, faces } = stats;
         log(`${id} | face count=${faces} bad=${cull} dup=${dups}`);
