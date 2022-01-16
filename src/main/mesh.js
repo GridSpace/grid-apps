@@ -401,7 +401,7 @@ function space_init(data) {
                 }
             }
         } else {
-            return api.objects();
+            return api.objects().filter(o => o.visible);
         }
     });
 

@@ -36,7 +36,7 @@ let toggle = {
 let selection = {
     // @returns {MeshObject[]} or all groups if not strict and no selection
     list(strict = false) {
-        return selected.length || strict  ? selected.slice() : groups.slice();
+        return selected.length || strict ? selected.slice() : groups.slice();
     },
 
     // return selected groups + groups from selected models
