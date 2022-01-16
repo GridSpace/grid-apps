@@ -357,14 +357,14 @@ mesh.model = class MeshModel extends mesh.object {
                     file: `${this.file}`,
                     mesh: o2
                 }).applyMatrix4(m4)).select();
-                // this becomes bottom
                 if (o1.length) {
+                    // this becomes bottom
                     this.reload(o1);
+                    resolve(this);
                 } else {
                     this.remove();
+                    resolve(model);
                 }
-                // return the split model
-                resolve(model);
             });
         });
     }

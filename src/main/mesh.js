@@ -201,6 +201,7 @@ let split = {
         let { models, plane, zlist } = split.state;
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
         Promise.all(models.map(m => m.split(plane))).then(models => {
+            mesh.api.selection.set(models);
             log.emit('split complete').unpin();
             split.end();
         });
