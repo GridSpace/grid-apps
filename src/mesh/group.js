@@ -97,7 +97,15 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     promote() {
-        return this.centerModels().centerXY().floor();
+        this.centerModels();
+        let { dim } = this.bounds;
+        let { x, y, z } = dim;
+        let max = Math.max(x, y, z);
+        if (max < 2) {
+            mesh.api.log.emit(`auto-scaling import from ${max.round(5)}`);
+            this.scale(1000, 1000, 1000);
+        }
+        return this.centerXY().floor();
     }
 
     // center objects to group bounds
