@@ -404,11 +404,11 @@ mesh.tool = class MeshTool {
             for (let rec of nested) {
                 rec.loop = polys.filter(loop => loop.points === rec.points)[0];
                 // keep parent/child winding reversed
-                let CCW = rec.depth % 2 === 0;
-                if ((CCW && rec.area > 0) || (!CCW && rec.area < 0)) {
-                    rec.points = rec.loop.points = rec.points.group(3).reverse().flat();
-                    rec.loop.index = rec.loop.index.reverse();
-                }
+                // let CCW = rec.depth % 2 === 0;
+                // if ((CCW && rec.area > 0) || (!CCW && rec.area < 0)) {
+                //     rec.points = rec.loop.points = rec.points.group(3).reverse().flat();
+                //     rec.loop.index = rec.loop.index.reverse();
+                // }
             }
 
             // extract tops which have nesting depth mod 2 === 0
