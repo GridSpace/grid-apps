@@ -169,6 +169,18 @@ let log = api.log = {
 // bind endpoint for worker to log in the ui
 gapp.broker.subscribe("mesh.log", log.emit);
 
+// bind settings endpoint to api
+api.settings = function() {
+    modal.show('settings', h.div([
+        h.label('dark mode'),
+        h.input({
+            type: "checkbox",
+            onchange: ev => call.set_darkmode(ev.target.checked),
+            [ api.prefs.map.space.dark ? 'checked' : 'unchecked' ] : 1
+        })
+    ]));
+}
+
 // create html elements
 function ui_build() {
     // set app version
@@ -177,8 +189,12 @@ function ui_build() {
 
     // add a help button
     h.bind($('top-right'), [
-        h.div({ id: "help", onclick: api.help },
-            [ h.div({ class: "far fa-question-circle" }) ])
+        h.div({ id: "top-settings", onclick: api.settings }, [
+            h.div({ class: "fas fa-sliders-h" }),
+        ]),
+        h.div({ id: "top-help", onclick: api.help }, [
+            h.div({ class: "far fa-question-circle" }),
+        ]),
     ]);
 
     // create top level app areas

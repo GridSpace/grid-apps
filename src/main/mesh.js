@@ -112,7 +112,7 @@ function restore_space() {
         store_matrices();
     }).then(() => {
         // restore preferences after models are restored
-        api.prefs.load().then(() => {
+        return api.prefs.load().then(() => {
             let { map } = api.prefs;
             let { space, mode } = map;
             api.grid(space.grid);
@@ -123,10 +123,13 @@ function restore_space() {
             api.selection.set([...smodel, ...sgroup]);
             // restore edit mode
             api.mode.set(mode);
+            // restore dark mode
+            set_darkmode(map.space.dark);
         });
+    }).finally(() => {
+        // hide loading curtain
+        $d('curtain','none');
     });
-    // hide loading curtain
-    $d('curtain','none');
 }
 
 // toggle edit/split temporary mode (present plane on hover)
@@ -254,8 +257,13 @@ function space_init(data) {
             if (api.modal.showing) {
                 return;
             }
+            if (evt.key === '?') {
+                return api.help();
+            }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
+                case 'KeyQ':
+                    return api.settings();
                 case 'KeyI':
                     return api.file.import();
                 case 'KeyX':
@@ -454,6 +462,29 @@ function object_destroy(id) {
     store_matrices();
 }
 
+// listen for changes like dark mode toggle
+function set_darkmode(dark) {
+    let { prefs } = mesh.api;
+    let { sky, platform } = moto.Space;
+    if (dark) {
+        mesh.material.wireframe.color.set(0xeeeeee);
+    } else {
+        mesh.material.wireframe.color.set(0,0,0);
+    }
+    sky.set({ color: dark ? 0 : 0xffffff });
+    platform.set({
+        grid: dark ? {
+            colorMajor: 0x666666,
+            colorMinor: 0x333333,
+        } : {
+            colorMajor: 0xcccccc,
+            colorMinor: 0xeeeeee,
+        },
+    });
+    prefs.map.space.dark = dark;
+    prefs.save();
+}
+
 // bind functions to topics
 broker.listeners({
     load_files,
@@ -461,6 +492,7 @@ broker.listeners({
     space_load,
     object_matrix,
     object_destroy,
+    set_darkmode,
     edit_split
 });
 

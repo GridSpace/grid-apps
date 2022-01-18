@@ -458,8 +458,8 @@
     }
 
     function setGridColor(opt = {}) {
-        grid.colorMajor = valueOr(opt.major, grid.colorMajor);
-        grid.colorMinor = valueOr(opt.minor, grid.colorMinor);
+        grid.colorMajor = valueOr(opt.major || opt.colorMajor, grid.colorMajor);
+        grid.colorMinor = valueOr(opt.minor || opt.colorMinor, grid.colorMinor);
         grid.colorX = valueOr(opt.colorX, grid.colorX);
         grid.colorY = valueOr(opt.colorY, grid.colorY);
         updateGrid();
@@ -921,8 +921,8 @@
     function setSky(opt = {}) {
         let { grid, color, gridColor } = opt;
         if (grid) Space.sky.showGrid(grid);
-        if (color) Space.sky.setColor(color);
-        if (gridColor) Space.sky.setGridColor(gridColor);
+        if (color !== undefined) Space.sky.setColor(color);
+        if (gridColor !== undefined) Space.sky.setGridColor(gridColor);
     }
 
     function setPlatform(opt = {}) {
@@ -945,7 +945,7 @@
             let { colorX, colorY, colorMajor, colorMinor } = grid;
             platform.setGrid(major, minor);
             platform.setGridColor({ colorX, colorY, colorMajor, colorMinor });
-            platform.setGridZOff(zOffset);
+            if (zOffset !== undefined) platform.setGridZOff(zOffset);
         }
         if (origin) {
             let { x, y, z, show } = origin;

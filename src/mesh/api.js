@@ -420,6 +420,10 @@ let mode = {
     },
 };
 
+// cache pref signature so we know when it changes
+let prefsig;
+let prefsignew;
+
 // persisted preference map
 let prefs = {
     map: {
@@ -433,14 +437,18 @@ let prefs = {
         },
     },
 
-    put(key, val) {
-        prefs.map[key] = val;
-        prefs.update();
+    // look for changes in pref signature
+    changed() {
+        prefsignew = JSON.stringify(prefs.map);
+        return prefsignew !== prefsig;
     },
 
     // persist to data store
     save() {
-        mesh.db.admin.put("prefs", prefs.map);
+        if (prefs.changed()) {
+            mesh.db.admin.put("prefs", prefs.map);
+            prefsig = prefsignew;
+        }
     },
 
     // reload from data store
@@ -546,6 +554,6 @@ broker.wrapObject(model, 'model');
 broker.wrapObject(group, 'group');
 
 // optimize db writes by merging updates
-prefs.save = util.deferWrap(prefs.save);
+prefs.save = util.deferWrap(prefs.save, 100);
 
 })();

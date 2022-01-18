@@ -50,7 +50,7 @@ let util = mesh.util = {
         rec.timer = setTimeout(() => {
             deferFn.remove(rec);
             fn();
-        });
+        }, time);
         deferFn.push(rec);
     },
 
