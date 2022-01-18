@@ -191,7 +191,8 @@
         });
         UC.setHoverPop(false);
         updateFPS();
-        if (control.decals) {
+        if (control.decals && !control.dark) {
+            // disable decals in dark mode
             loadDeviceTexture(currentDevice, deviceTexture);
         } else {
             clearDeviceTexture();
@@ -909,7 +910,9 @@
     function loadDeviceTexture(dev, texture) {
         clearDeviceTexture();
         deviceTexture = texture;
-        if (!(texture && API.conf.get().controller.decals)) {
+        let { decals, dark } = API.conf.get().controller;
+        // disable decals in dark mode
+        if (!(texture && decals && !dark)) {
             return;
         }
         let { width, height } = texture.image;

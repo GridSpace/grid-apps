@@ -319,7 +319,7 @@ let tool = {
         }
     },
 
-    analyze(models, opt = { compound: false }) {
+    analyze(models, opt = { compound: true }) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();
         let promises = [];

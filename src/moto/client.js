@@ -6,7 +6,7 @@
 
 let moto = self.moto = self.moto || {},
     ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
-    ccmax = ccvalue > 3 ? ccvalue - 1 : 0,
+    ccmax = ccvalue > 3 ? ccvalue - 1 : 1,
     workcc = false, // concurrent or not
     workurl = null, // url to load worker
     worknum = 1,    // number of workers to start

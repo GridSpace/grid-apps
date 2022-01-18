@@ -59,6 +59,9 @@ function init() {
     }, 100);
     space.view.setZoom(zoomrev, zoomspd);
 
+    // reload stored space when worker is ready
+    moto.client.on('ready', restore_space);
+
     // start worker
     moto.client.start(`/code/mesh_work?${gapp.version}`);
 
@@ -67,9 +70,6 @@ function init() {
 
     // trigger ui building
     call.ui_build();
-
-    // reload stored space
-    moto.client.on('ready', restore_space);
 }
 
 // restore space layout and view from previous session
