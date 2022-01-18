@@ -378,23 +378,14 @@ mesh.tool = class MeshTool {
         function emitTop(rec) {
             let points = rec.loop.points.slice();
             let index = rec.loop.index.slice();
-            let holesAt = index.length;
+            let holes = [];
             for (let inner of rec.inner) {
+                holes.push(points.length / 3);
                 points.appendAll(inner.loop.points);
                 index.appendAll(inner.loop.index);
             }
-            let holes = index.slice(holesAt).map((v,i) => i + holesAt);
             let ec = earcut(points, holes, 3);
-            // eliminate faces consisting only of hole indices
-            let ef = ec.group(3)
-                .filter(g => {
-                    return !(
-                        holes.contains(g[0]) &&
-                        holes.contains(g[1]) &&
-                        holes.contains(g[2]) )
-                })
-                .flat();
-            return ef.map(p => index[p]);
+            return ec.map(p => index[p]);
         }
 
         // new patch areas
