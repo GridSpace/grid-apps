@@ -110,7 +110,8 @@ let util = mesh.util = {
             let matrix = object.matrixWorld;
             let bkey = [matrix.elements.map(v => v.round(5))].join(',')
             let cached = boundsCache[object.id];
-            if (!cached || cached.bkey !== bkey) {
+            // geometry._model_invalid set on model.reload(), usually after a split
+            if (!cached || cached.bkey !== bkey || geometry._model_invalid) {
                 let position = geometry.attributes.position.clone();
                 position.applyMatrix4(new Matrix4().extractRotation(matrix));
                 let bounds = new Box3().setFromBufferAttribute(position);
@@ -118,6 +119,7 @@ let util = mesh.util = {
                 // bounds.min.multiply(scale);
                 // bounds.max.multiply(scale);
                 cached = boundsCache[object.id] = { bkey, bounds };
+                geometry._model_invalid = undefined;
             }
             let bt = cached.bounds.clone();
             let m4 = new Matrix4();

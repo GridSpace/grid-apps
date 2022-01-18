@@ -149,8 +149,9 @@ mesh.model = class MeshModel extends mesh.object {
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
+        // signal util.box3expand that geometry changed
+        geo._model_invalid = true;
         if (indices) geo.setIndex(new BufferAttribute(indices, 1));
-        geo.attributes.position.needsUpdate = true;
         if (!normals) geo.computeVertexNormals();
         // persist in db so it can be restored on page load
         mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
