@@ -508,7 +508,7 @@
             iw = int.object.widget;
             ic = int.point;
             // only near vertical faces
-            if (Math.abs(n.z) > 0.1) {
+            if (Math.abs(n.z) > 0.3) {
                 return;
             }
             showTab = createTabBox(iw, ic, n);
