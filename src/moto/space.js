@@ -32,7 +32,7 @@
         refreshRequested = false,
         selectRecurse = false,
         defaultKeys = true,
-        lightIntensity = 0.3,
+        lightIntensity = 0.09,
         initialized = false,
         alignedTracking = false,
         skyAmbient,
@@ -43,7 +43,7 @@
         showPlatform = true,
         hidePlatformBelow = true,
         origin = {x:0, y:0, z: 0},
-        trackcam = addLight(0, 0, 0, lightIntensity/3),
+        trackcam = addLight(0, 0, 0, lightIntensity),
         trackDelta = {x:0, y:0, z:0},
         mouse = {x: 0, y: 0},
         mouseStart = null,
@@ -99,11 +99,7 @@
         platformOnMoveTime = 500,
         platformMoveTimer,
         volume,
-        light1,
-        light2,
-        light3,
-        light4,
-        light5,
+        lights,
         camera,
         renderer,
         container,
@@ -240,9 +236,44 @@
         }
     }
 
+    // 4 corners bottom, 4 axis centers top
+    function updateLights(x, y, z) {
+        // remove old
+        for (let l of lights || []) {
+            SCENE.remove(l);
+        }
+        x *= 1.5; y *= 1.5; z *= 1.5;
+        // add new
+        let x0 = -x/2, y0 = -y/2, z0 = 0;
+        let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
+        lights = [
+            addLight(  0,  y0,  z0, lightIntensity),
+            addLight(  0,  y1,  z0, lightIntensity),
+            addLight( x0,   0,  z0, lightIntensity),
+            addLight( x1,   0,  z0, lightIntensity),
+
+            addLight( x0,  y0,  z1, lightIntensity * 1.5),
+            addLight( x0,  y1,  z1, lightIntensity / 1.5),
+            addLight( x1,  y1,  z1, lightIntensity * 1.5),
+            addLight( x1,  y0,  z1, lightIntensity / 1.5),
+
+            addLight( x0,  y0, -z1, lightIntensity / 1.5),
+            addLight( x0,  y1, -z1, lightIntensity),
+            addLight( x1,  y1, -z1, lightIntensity / 1.5),
+            addLight( x1,  y0, -z1, lightIntensity),
+
+            addLight(  0,   0,  z2, lightIntensity * 2),
+            addLight(  0,   0, -z2, lightIntensity / 1),
+        ];
+    }
+
     function addLight(x,y,z,i) {
         let l = new THREE.PointLight(0xffffff, i, 0);
-        l.position.set(x,y,z);
+        l.position.set(x,z,y);
+        // let b; l.add(b = new THREE.Mesh(
+        //     new THREE.BoxGeometry(1,1,1),
+        //     new THREE.MeshBasicMaterial( {color: 0xff0000} )
+        // )); b.scale.set(5,5,5);
         SCENE.add(l);
         return l;
     }
@@ -270,11 +301,7 @@
         }
         viewControl.maxDistance = Math.max(width,depth) * 4;
         updatePlatformPosition();
-        let y = Math.max(width, height) * 1;
-        light1.position.set( width, y,  depth);
-        light2.position.set(-width, y, -depth);
-        light4.position.set( width, light4.position.y, -depth);
-        light5.position.set(-width, light5.position.y,  depth);
+        updateLights(width, depth, maxz);
         if (volume) {
             SCENE.remove(volume);
             volume = null;
@@ -934,7 +961,10 @@
     function setPlatform(opt = {}) {
         let platform = Space.platform;
         let { color, round, size, grid, opacity } = opt;
-        let { visible, volume, zOffset, origin } = opt;
+        let { visible, volume, zOffset, origin, light } = opt;
+        if (light) {
+            lightIntensity = light;
+        }
         if (color) {
             platform.setColor(color);
         }
@@ -1194,11 +1224,7 @@
 
             SCENE.add(skyAmbient = new THREE.AmbientLight(0x707070));
 
-            light1 = addLight( 200,  250,  200, lightIntensity * 1.15);
-            light2 = addLight(-200,  250, -200, lightIntensity * 0.95);
-            light3 = addLight(   0, -200,    0, lightIntensity * 0.5);
-            light4 = addLight( 200,    5, -200, lightIntensity * 0.35);
-            light5 = addLight(-200,    5,  200, lightIntensity * 0.4);
+            updateLights(250, 250, 250);
 
             platform = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),

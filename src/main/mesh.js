@@ -468,7 +468,7 @@ function set_darkmode(dark) {
     let { sky, platform } = moto.Space;
     prefs.map.space.dark = dark;
     if (dark) {
-        mesh.material.wireframe.color.set(0xeeeeee);
+        mesh.material.wireframe.color.set(0xaaaaaa);
         $('app').classList.add('dark');
     } else {
         mesh.material.wireframe.color.set(0,0,0);

@@ -1879,16 +1879,18 @@
             gridMinor = unitMM ? 5 : 25.4 / 10;
         if (updateDark) {
             if (ctrl.dark) {
+                SPACE.platform.set({ light: 0.13 });
                 SPACE.platform.setFont({rulerColor:'#888888'});
                 SPACE.platform.setGrid(gridMajor, gridMinor, 0x666666, 0x333333);
                 SPACE.platform.opacity(0.05);
-                SPACE.sky.setColor(0);
+                SPACE.sky.set({ color: 0, ambient: { intensity: 0.08 } });
                 DOC.body.classList.add('dark');
             } else {
+                SPACE.platform.set({ light: 0.09 });
                 SPACE.platform.setFont({rulerColor:'#333333'});
                 SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
                 SPACE.platform.opacity(0.2);
-                SPACE.sky.setColor(0xffffff);
+                SPACE.sky.set({ color: 0xffffff, ambient: { intensity: 0.9 } });
                 DOC.body.classList.remove('dark');
             }
             SPACE.platform.setSize();
