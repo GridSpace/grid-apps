@@ -1,0 +1,27 @@
+{
+    "file-ext": "gcode",
+    "token-space": " ",
+    "strip-comments": true,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "post":[
+        "M5  ; complete moves, stop spindle",
+        "M30 ; program end"
+    ],
+    "tool-change":[],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "spindle":[
+        "M3 P{spindle} ; uniquely uses percentage not RPM"
+    ],
+    "settings": {
+        "origin_center": false,
+        "bed_width": 90,
+        "bed_depth": 90,
+        "build_height": 50,
+        "spindle_max": 100
+    }
+}
