@@ -160,16 +160,17 @@ let util = mesh.util = {
         return avg;
     },
 
-    faceNormals(mesh, opt = { }) {
+    faceNormals(obj, opt = { }) {
         const _va = new THREE.Vector3();
         const _vb = new THREE.Vector3();
         const _vc = new THREE.Vector3();
         const _v1 = new THREE.Vector3();
         const _v2 = new THREE.Vector3();
         const _normalMatrix = new THREE.Matrix3();
+        const defcolor = mesh.api.prefs.map.space.dark ? 0x00ffff : 0xff0000;
 
         class FaceNormalsHelper extends THREE.LineSegments {
-            constructor(object, size = opt.size || 1, color = opt.color || 0xff0000) {
+            constructor(object, size = opt.size || 1, color = opt.color || defcolor) {
                 const objGeometry = object.geometry;
                 const nNormals = objGeometry.attributes.position.count / 3;
                 const geometry = new THREE.BufferGeometry();
@@ -205,7 +206,7 @@ let util = mesh.util = {
             }
         }
 
-        return new FaceNormalsHelper(mesh);
+        return new FaceNormalsHelper(obj);
     },
 
     vertexNormals(mesh) {

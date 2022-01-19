@@ -464,8 +464,9 @@ function object_destroy(id) {
 
 // listen for changes like dark mode toggle
 function set_darkmode(dark) {
-    let { prefs } = mesh.api;
+    let { prefs, selection, model } = mesh.api;
     let { sky, platform } = moto.Space;
+    prefs.map.space.dark = dark;
     if (dark) {
         mesh.material.wireframe.color.set(0xeeeeee);
     } else {
@@ -481,7 +482,9 @@ function set_darkmode(dark) {
             colorMinor: 0xeeeeee,
         },
     });
-    prefs.map.space.dark = dark;
+    for (let m of model.list()) {
+        m.normals({ refresh: true });
+    }
     prefs.save();
 }
 
