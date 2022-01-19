@@ -2562,6 +2562,76 @@
         });
     }
 
+    // import and convert prusa ini file
+    function settingsConvert(data) {
+        let map = {};
+        try {
+            data.split('\n')
+                .filter(l => l.charAt(0) !== '#')
+                .map(l => l.split('=').map(v => v.trim()))
+                .map(l => {
+                    if (l[0].indexOf('_gcode') > 0) {
+                        l[1] = l[1].replaceAll('\\n','\n').split('\n');
+                    }
+                    return l;
+                })
+                .forEach(l => {
+                    map[l[0]] = l[1];
+                });
+        } catch (e) {
+            console.log('data',data);
+            return UC.alert('invalid file');
+        }
+        // device setup
+        let device = Object.clone(KIRI.conf.defaults.fdm.d);
+        let dname = device.deviceName = map.printer_model;
+        if (dname) {
+            let mode = "FDM";
+            device.mode = mode;
+            device.extruders[0].extNozzle = parseFloat(map.nozzle_diameter);
+            device.gcodePre = map.start_gcode;
+            device.gcodePost = map.end_gcode;
+            device.gcodeLayer = map.layer_gcode || [];
+            device.maxHeight = parseInt(map.max_print_height || device.maxHeight);
+            if (map.bed_shape) {
+                let shape = map.bed_shape.split(',').map(l => l.split('x'));
+                device.bedWidth = parseInt(shape[2][0]);
+                device.bedDepth = parseInt(shape[2][1]);
+            }
+        }
+        // profile setup
+        let process = Object.clone(KIRI.conf.defaults.fdm.p);
+        let pname = process.processName = map.print_settings_id;
+        if (pname) {
+            process.sliceShells = parseInt(map.perimeters);
+            process.sliceHeight = parseFloat(map.layer_height);
+            process.outputFeedrate = parseInt(map.perimeter_speed);
+            process.outputSeekrate = parseInt(map.travel_speed);
+            process.outputTemp = parseInt(map.temperature);
+            process.outputBedTemp = parseInt(map.bed_temperature);
+            process.sliceTopLayers = parseInt(map.top_solid_layers);
+            process.sliceBottomLayers = parseInt(map.bottom_solid_layers);
+            process.firstSliceHeight = parseFloat(map.first_layer_height);
+            process.firstLayerNozzleTemp = parseInt(map.first_layer_temperature);
+            process.firstLayerRate = (
+                (parseFloat(map.first_layer_speed) / 100) * process.outputFeedrate);
+            process.firstLayerBedTemp = parseInt(map.first_layer_bed_temperature);
+            process.outputRetractDist = parseFloat(map.retract_length);
+            process.outputRetractSpeed = parseFloat(map.retract_speed);
+        }
+        console.log({device, process, map});
+        UC.confirm(`Import "${dname}"?`).then(yes => {
+            if (yes) {
+                settings.devices[dname] = device;
+                settings.devproc[dname] = pname;
+                settings.process = settings.sproc.FDM[pname] = process;
+                settings.filter.FDM = dname;
+                settings.cproc.FDM = pname;
+                API.show.devices();
+            }
+        });
+    }
+
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
@@ -2691,7 +2761,8 @@
                 isjpg = lower.indexOf(".jpg") > 0,
                 isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
                 isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0,
-                iskmz = lower.indexOf(".kmz") > 0;
+                iskmz = lower.indexOf(".kmz") > 0,
+                isini = lower.indexOf(".ini") > 0;
             reader.file = files[i];
             reader.onloadend = function (e) {
                 function load_dec() {
@@ -2805,6 +2876,7 @@
                 else if (isset) settingsImport(e.target.result, true);
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
+                else if (isini) settingsConvert(e.target.result);
                 else API.show.alert(`Unsupported file: ${files[i].name}`);
             };
             if (isstl || ispng || isjpg || iskmz) {
