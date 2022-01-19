@@ -33,11 +33,11 @@ function init() {
 
     // setup default workspace
     space.useDefaultKeys(false);
+    space.init($('container'), delta => { }, ortho);
     space.sky.set({
         grid: false,
         color: dark ? 0 : 0xffffff
     });
-    space.init($('container'), delta => { }, ortho);
     platform.set({
         volume: false,
         round: false,
@@ -474,7 +474,10 @@ function set_darkmode(dark) {
         mesh.material.wireframe.color.set(0,0,0);
         $('app').classList.remove('dark');
     }
-    sky.set({ color: dark ? 0 : 0xffffff });
+    sky.set({
+        color: dark ? 0 : 0xffffff,
+        ambient: { intensity: dark ? 0.6 : 1 }
+    });
     platform.set({
         grid: dark ? {
             colorMajor: 0x666666,

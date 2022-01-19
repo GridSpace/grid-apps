@@ -35,6 +35,7 @@
         lightIntensity = 0.3,
         initialized = false,
         alignedTracking = false,
+        skyAmbient,
         skyGridColor = 0xcccccc,
         skyMaterial = undefined,
         skyGridMaterial = undefined,
@@ -923,6 +924,11 @@
         if (grid) Space.sky.showGrid(grid);
         if (color !== undefined) Space.sky.setColor(color);
         if (gridColor !== undefined) Space.sky.setGridColor(gridColor);
+        if (skyAmbient && opt.ambient) {
+            let { color, intensity } = opt.ambient;
+            if (color) skyAmbient.color.set(color);
+            if (intensity) skyAmbient.intensity = intensity;
+        }
     }
 
     function setPlatform(opt = {}) {
@@ -1186,7 +1192,7 @@
             viewControl.noKeys = true;
             viewControl.maxDistance = 1000;
 
-            SCENE.add(new THREE.AmbientLight(0x707070));
+            SCENE.add(skyAmbient = new THREE.AmbientLight(0x707070));
 
             light1 = addLight( 200,  250,  200, lightIntensity * 1.15);
             light2 = addLight(-200,  250, -200, lightIntensity * 0.95);
