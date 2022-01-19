@@ -308,6 +308,10 @@ button.selected:hover {
     background-color: rgba(0,255,0,1);
 }
 
+.dark .head {
+    color: #000 !important;
+}
+
 /** modes menu top/center **/
 
 #modes {
