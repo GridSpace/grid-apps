@@ -47,6 +47,10 @@
             let settings = API.conf.get();
             let widgets = API.widgets.map();
             KIRI.client.send("fdm_support_generate", { settings }, (gen) => {
+                if (gen && gen.error) {
+                    API.show.alert('support generation canceled');
+                    return ondone([]);
+                }
                 for (let g of gen) g.widget = widgets[g.id];
                 ondone(gen);
             });
