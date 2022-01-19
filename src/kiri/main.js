@@ -2563,13 +2563,14 @@
     }
 
     // import and convert prusa ini file
-    function settingsConvert(data) {
+    function settingsPrusaConvert(data) {
         let map = {};
         try {
             data.split('\n')
                 .filter(l => l.charAt(0) !== '#')
                 .map(l => l.split('=').map(v => v.trim()))
                 .map(l => {
+                    // convert gcode string into a string array
                     if (l[0].indexOf('_gcode') > 0) {
                         l[1] = l[1].replaceAll('\\n','\n').split('\n');
                     }
@@ -2579,7 +2580,6 @@
                     map[l[0]] = l[1];
                 });
         } catch (e) {
-            console.log('data',data);
             return UC.alert('invalid file');
         }
         // device setup
@@ -2619,9 +2619,9 @@
             process.outputRetractDist = parseFloat(map.retract_length);
             process.outputRetractSpeed = parseFloat(map.retract_speed);
         }
-        console.log({device, process, map});
         UC.confirm(`Import "${dname}"?`).then(yes => {
             if (yes) {
+                // create device, associated profile, set as current and show dialog
                 settings.devices[dname] = device;
                 settings.devproc[dname] = pname;
                 settings.process = settings.sproc.FDM[pname] = process;
@@ -2876,7 +2876,7 @@
                 else if (isset) settingsImport(e.target.result, true);
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
-                else if (isini) settingsConvert(e.target.result);
+                else if (isini) settingsPrusaConvert(e.target.result);
                 else API.show.alert(`Unsupported file: ${files[i].name}`);
             };
             if (isstl || ispng || isjpg || iskmz) {
