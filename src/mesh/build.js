@@ -353,6 +353,7 @@ function ui_build() {
     // builds a modal dialog that updates the object and field
     function field_edit(title, set) {
         return function(ev) {
+            let value = ev.target.innerText;
             let onclick = (ev) => {
                 let tempval = parseFloat($('tempval').value);
                 api.modal.hide(modal.info.cancelled);
@@ -360,7 +361,7 @@ function ui_build() {
                     return;
                 }
                 for (let g of api.selection.groups()) {
-                    set(g, tempval);
+                    set(g, tempval, value);
                     g.floor(mesh.group);
                     defer_selection(); // update ui
                 }
@@ -372,7 +373,7 @@ function ui_build() {
                 }
             };
             let { tempval } = api.modal.show(title, h.div({ class: "tempedit" }, [
-                h.input({ id: 'tempval', value: ev.target.innerText, size: 10, onkeydown }),
+                h.input({ id: 'tempval', value, size: 10, onkeydown }),
                 h.button({ _: 'set', onclick })
             ]));
             tempval.setSelectionRange(0, tempval.value.length);
@@ -497,27 +498,27 @@ function ui_build() {
                 defer_selection(); // update ui
             };
         });
-        span_val_X_size.onclick = field_edit('x size', (group, val) => {
+        span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
             let dim = group.bounds.dim;
-            let rel = val / dim.x;
+            let rel = val / parseFloat(oval);
             if (axgrp.X) {
                 group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
             } else {
                 group.scale(rel, 1, 1);
             }
         });
-        span_val_Y_size.onclick = field_edit('y size', (group, val) => {
+        span_val_Y_size.onclick = field_edit('y size', (group, val, oval) => {
             let dim = group.bounds.dim;
-            let rel = val / dim.y;
+            let rel = val / parseFloat(oval);
             if (axgrp.Y) {
                 group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
             } else {
                 group.scale(1, rel, 1);
             }
         });
-        span_val_Z_size.onclick = field_edit('z size', (group, val) => {
+        span_val_Z_size.onclick = field_edit('z size', (group, val, oval) => {
             let dim = group.bounds.dim;
-            let rel = val / dim.z;
+            let rel = val / parseFloat(oval);
             if (axgrp.Z) {
                 group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
             } else {
