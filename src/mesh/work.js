@@ -75,13 +75,13 @@ let model = {
         let { id, matrix, opt } = data;
         let array = translate_encode(id, matrix);
         if (opt.mirror) {
+            array = array.slice();
             // find max z and invert z
             let maxz = -Infinity;
             for (let i=2, l=array.length; i<l; i += 3) {
                 maxz = Math.max(maxz, array[i]);
                 array[i] = -array[i];
             }
-            maxz *= 2;
             for (let i=0, l=array.length; i<l; i += 9) {
                 // swap first two vertices in face to invert normals
                 let v1 = array.slice(i, i+3);
@@ -89,7 +89,7 @@ let model = {
                     array[i+j] = array[i+j+3];
                     array[i+j+3] = v1[j];
                 }
-                // move part up in Z
+                // move part up by maxz to compensate for z inversion
                 array[i+2] += maxz;
                 array[i+5] += maxz;
                 array[i+8] += maxz;

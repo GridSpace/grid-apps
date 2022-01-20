@@ -295,6 +295,7 @@ function space_init(data) {
                 case 'KeyL':
                     return api.log.toggle();
                 case 'KeyS':
+                    if (shiftKey) return call.edit_split();
                     return selection.visible({toggle:true});
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});

@@ -143,10 +143,13 @@ mesh.model = class MeshModel extends mesh.object {
             id: this.id,
             opt
         }).then(data => {
-            mesh.api.group.new([new mesh.model({
+            let group = mesh.api.group.new([new mesh.model({
                 file: `${this.file}`,
                 mesh: data
             })]).setSelected();
+            if (opt.mirror) {
+                group.move(0, 0, group.bounds.dim.z);
+            }
         });
     }
 

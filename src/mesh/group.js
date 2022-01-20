@@ -152,6 +152,7 @@ mesh.group = class MeshGroup extends mesh.object {
     // ok, this is confusing, but necessary for now :/
     setSelected() {
         super.select();
+        return this;
     }
 };
 
