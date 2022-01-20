@@ -108,16 +108,45 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh.matrixWorld.elements;
     }
 
+    // override and translate mesh
+    move(x = 0, y = 0, z = 0) {
+        let arr = this.attributes.position.array;
+        for (let i=0, l=arr.length; i<l; ) {
+            arr[i] = arr[i++] + x;
+            arr[i] = arr[i++] + y;
+            arr[i] = arr[i++] + z;
+        }
+        this.reload(arr);
+        return this;
+    }
+
+    // override and translate mesh
+    scale(x = 1, y = 1, z = 1) {
+        let arr = this.attributes.position.array;
+        for (let i=0, l=arr.length; i<l; ) {
+            arr[i] = arr[i++] *= x;
+            arr[i] = arr[i++] *= y;
+            arr[i] = arr[i++] *= z;
+        }
+        this.reload(arr);
+        return this;
+    }
+
+    mirror() {
+        return this.duplicate({ mirror: true });
+    }
+
     // return new group containing just this model in world coordinates
-    duplicate() {
+    duplicate(opt = {}) {
         worker.model_duplicate({
             matrix: this.matrix,
-            id: this.id
+            id: this.id,
+            opt
         }).then(data => {
             mesh.api.group.new([new mesh.model({
-                file: `${this.file}-dup`,
+                file: `${this.file}`,
                 mesh: data
-            })]).select();
+            })]).setSelected();
         });
     }
 
@@ -357,7 +386,7 @@ mesh.model = class MeshModel extends mesh.object {
                 this.group.add(model = new mesh.model({
                     file: `${this.file}`,
                     mesh: o2
-                }).applyMatrix4(m4)).select();
+                }).applyMatrix4(m4)).setSelected();
                 if (o1.length) {
                     // this becomes bottom
                     this.reload(o1);

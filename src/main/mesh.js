@@ -276,6 +276,7 @@ function space_init(data) {
                 case 'KeyF':
                     return selection.floor().focus();
                 case 'KeyM':
+                    if (shiftKey) return api.tool.mirror();
                     return api.tool.merge();
                 case 'KeyA':
                     return api.tool.analyze();

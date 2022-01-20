@@ -108,6 +108,13 @@ mesh.group = class MeshGroup extends mesh.object {
         return this.centerXY().floor();
     }
 
+    scale(x = 1, y = 1, z = 1) {
+        for (let m of this.models) {
+            m.scale(x, y, z);
+        }
+        return this;
+    }
+
     // center objects to group bounds
     // dependent on first being added to world/scene
     centerModels() {
@@ -140,6 +147,11 @@ mesh.group = class MeshGroup extends mesh.object {
         for (let model of this.models) {
             model.select(...arguments);
         }
+    }
+
+    // ok, this is confusing, but necessary for now :/
+    setSelected() {
+        super.select();
     }
 };
 

@@ -140,6 +140,8 @@ let selection = {
         }
         // update saved selection id list
         prefs.save( prefs.map.space.select = selected.map(s => s.id) );
+        // force repaint in case of idle
+        space.update();
         return selection;
     },
 
@@ -293,6 +295,9 @@ function fallback(models, strict) {
 let tool = {
     merge(models) {
         models = fallback(models);
+        if (models.length <= 1) {
+            return api.log.emit('nothing to merge');
+        }
         api.log.emit(`merging ${models.length} models`).pin();
         worker.model_merge(models.map(m => {
             return { id: m.id, matrix: m.matrix }
@@ -310,6 +315,12 @@ let tool = {
     duplicate() {
         for (let m of selection.models()) {
             m.duplicate();
+        }
+    },
+
+    mirror() {
+        for (let m of selection.models()) {
+            m.mirror();
         }
     },
 

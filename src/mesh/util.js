@@ -103,6 +103,10 @@ let util = mesh.util = {
     // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
     // https://discourse.threejs.org/t/invalid-bounds-generated-for-some-orientations/33205
     box3expand(box3, object) {
+        if (object._no_bounds) {
+            return;
+        }
+
         let geometry = object.geometry;
         object.updateWorldMatrix(geometry ? true : false, false);
 
@@ -183,6 +187,7 @@ let util = mesh.util = {
                 this.size = size;
                 this.type = 'FaceNormalsHelper';
                 this.matrixAutoUpdate = false;
+                this._no_bounds = true;
                 this.update();
             }
 

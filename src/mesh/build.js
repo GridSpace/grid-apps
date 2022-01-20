@@ -267,6 +267,7 @@ function ui_build() {
             // h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'merge', onclick: tool.merge }),
+            h.button({ _: 'mirror', onclick: tool.mirror }),
             h.button({ _: 'split', onclick: call.edit_split }),
             h.button({ _: 'invert', onclick: tool.invert }),
         ]),

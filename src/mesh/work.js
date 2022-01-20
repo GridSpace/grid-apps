@@ -72,8 +72,30 @@ let model = {
 
     // return new vertices in world coordinates
     duplicate(data) {
-        let { id, matrix } = data;
-        return translate_encode(id, matrix);
+        let { id, matrix, opt } = data;
+        let array = translate_encode(id, matrix);
+        if (opt.mirror) {
+            // find max z and invert z
+            let maxz = -Infinity;
+            for (let i=2, l=array.length; i<l; i += 3) {
+                maxz = Math.max(maxz, array[i]);
+                array[i] = -array[i];
+            }
+            maxz *= 2;
+            for (let i=0, l=array.length; i<l; i += 9) {
+                // swap first two vertices in face to invert normals
+                let v1 = array.slice(i, i+3);
+                for (let j=0; j<3; j++) {
+                    array[i+j] = array[i+j+3];
+                    array[i+j+3] = v1[j];
+                }
+                // move part up in Z
+                array[i+2] += maxz;
+                array[i+5] += maxz;
+                array[i+8] += maxz;
+            }
+        }
+        return array;
     },
 
     // merge several model vertices into a single array
