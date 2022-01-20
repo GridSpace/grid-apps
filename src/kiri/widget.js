@@ -451,8 +451,8 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             geometry,
             new THREE.MeshPhongMaterial({
                 color: 0xffff00,
-                specular: 0x181818,
-                shininess: 100,
+                specular: 0x202020,
+                shininess: 125,
                 transparent: true,
                 opacity: solid_opacity
             })
