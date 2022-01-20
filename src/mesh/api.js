@@ -440,6 +440,11 @@ let prefs = {
     map: {
         info: {},
         mode: modes.object,
+        edit: {
+            scale_group_X: true,
+            scale_group_Y: true,
+            scale_group_Z: true
+        },
         space: {
             wire: false,
             grid: true,

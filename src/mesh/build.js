@@ -16,6 +16,7 @@ if (mesh.build) return;
 let broker = gapp.broker;
 let call = broker.send;
 let { api, util } = mesh;
+let rad = 180 / Math.PI;
 let und = undefined;
 
 broker.listeners({
@@ -297,14 +298,14 @@ function ui_build() {
         let [ pos, rot ] = side;
         return h.div({ class: "grid"}, [
             h.div({ _: "" }),
-            h.div({ _: X, class: "top", id: root ? [ root, l, X ] : und }),
-            h.div({ _: Y, class: "top", id: root ? [ root, l, Y ] : und }),
-            h.div({ _: Z, class: "top", id: root ? [ root, l, Z ] : und }),
-            h.div({ _: side[0], class: "side" }),
+            h.div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
+            h.div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
+            h.div({ _: Z, class: "top noselect", id: root ? [ root, l, Z ] : und }),
+            h.div({ _: side[0], class: "side noselect" }),
             h.label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
             h.label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
             h.label({ _: v1[2], id: root ? [ root, v, Z, pos ] : und }),
-            h.div({ _: side[1], class: "side" }),
+            h.div({ _: side[1], class: "side noselect" }),
             h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
             h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
             h.label({ _: v2[2], id: root ? [ root, v, Z, rot ] : und }),
@@ -350,7 +351,7 @@ function ui_build() {
 
     // return function bound to field editing clicks
     // builds a modal dialog that updates the object and field
-    function field_edit(title, get, set) {
+    function field_edit(title, set) {
         return function(ev) {
             let onclick = (ev) => {
                 let tempval = parseFloat($('tempval').value);
@@ -359,8 +360,7 @@ function ui_build() {
                     return;
                 }
                 for (let g of api.selection.groups()) {
-                    let old = get(g);
-                    set(g, tempval, old);
+                    set(g, tempval);
                     g.floor(mesh.group);
                     defer_selection(); // update ui
                 }
@@ -410,7 +410,7 @@ function ui_build() {
         let g_id = s_grp.map(g => g.id).join(' ');
         let h_grp = sblock('group', g_id, grid(
             util.extract(g_pos, map),
-            util.extract(g_rot, map),
+            util.extract(g_rot).map(r => (r * rad).round(2).toFixed(map.fixed)),
             und, und, 'group'
         ));
 
@@ -461,44 +461,68 @@ function ui_build() {
         [ group_val_X_rot, group_val_Y_rot, group_val_Z_rot ].forEach(e => {
             e.classList.add('editable');
         });
-        group_val_X_rot.onclick = field_edit('x rotation', group => {
-            return group.rotation();
-        }, (group, val, old) => {
-            group.rotation(val, old.y, old.z);
+        group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
+            let r = group.rotation();
+            group.rotation(val/rad, r.y, r.z);
         });
-        group_val_Y_rot.onclick = field_edit('y rotation', group => {
-            return group.rotation();
-        }, (group, val, old) => {
-            group.rotation(old.x, val, old.z);
+        group_val_Y_rot.onclick = field_edit('y rotation', (group, val) => {
+            let r = group.rotation();
+            group.rotation(r.x, val/rad, r.z);
         });
-        group_val_Z_rot.onclick = field_edit('z rotation', group => {
-            return group.rotation();
-        }, (group, val, old) => {
-            group.rotation(old.x, old.y, val);
+        group_val_Z_rot.onclick = field_edit('z rotation', (group, val) => {
+            let r = group.rotation();
+            group.rotation(r.x, r.y, val/rad);
         });
 
         // bind scale editable fields
+        let pedit = prefs.map.edit;
         let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound;
         [ span_val_X_size, span_val_Y_size, span_val_Z_size ].forEach(e => {
             e.classList.add('editable');
         });
-        span_val_X_size.onclick = field_edit('x size', group => {
-            return group.scale();
-        }, (group, val, old) => {
-            val = val / group.bounds.dim.x;
-            group.scale(val, old.y, old.z);
+        let axgrp = {};
+        // activate axis grouping toggles
+        [ "X", "Y", "Z" ].forEach(axis => {
+            let prefkey = `scale_group_${axis}`;
+            let agv = axgrp[axis] = pedit[prefkey];
+            let lbl = bound[`span_lbl_${axis}`];
+            lbl.classList.add('editable');
+            if (agv) {
+                lbl.classList.add('grouped');
+            } else {
+                bound[`span_lbl_${axis}`].classList.add('ungrouped');
+            }
+            lbl.onclick = () => {
+                pedit[prefkey] = !agv;
+                defer_selection(); // update ui
+            };
         });
-        span_val_Y_size.onclick = field_edit('y size', group => {
-            return group.scale();
-        }, (group, val, old) => {
-            val = val / group.bounds.dim.y;
-            group.scale(old.x, val, old.z);
+        span_val_X_size.onclick = field_edit('x size', (group, val) => {
+            let dim = group.bounds.dim;
+            let rel = val / dim.x;
+            if (axgrp.X) {
+                group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
+            } else {
+                group.scale(rel, 1, 1);
+            }
         });
-        span_val_Z_size.onclick = field_edit('z size', group => {
-            return group.scale();
-        }, (group, val, old) => {
-            val = val / group.bounds.dim.z;
-            group.scale(old.x, old.y, val);
+        span_val_Y_size.onclick = field_edit('y size', (group, val) => {
+            let dim = group.bounds.dim;
+            let rel = val / dim.y;
+            if (axgrp.Y) {
+                group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
+            } else {
+                group.scale(1, rel, 1);
+            }
+        });
+        span_val_Z_size.onclick = field_edit('z size', (group, val) => {
+            let dim = group.bounds.dim;
+            let rel = val / dim.z;
+            if (axgrp.Z) {
+                group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
+            } else {
+                group.scale(1, 1, rel);
+            }
         });
 
         let pmap = prefs.map.info;

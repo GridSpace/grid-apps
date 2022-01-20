@@ -138,6 +138,7 @@ let util = mesh.util = {
         }
     },
 
+    // extract object fields into an array with optional rounding
     extract(object, opt = {}) {
         let field = opt.fields || ['x', 'y', 'z'];
         let array = [];
@@ -150,6 +151,7 @@ let util = mesh.util = {
         return array;
     },
 
+    // for an array of maps, return the average of all named fields in a new map
     average(array, opt = {}) {
         let fields = opt.fields || ['x', 'y', 'z'];
         let avg = {};
@@ -159,7 +161,7 @@ let util = mesh.util = {
             }
         }
         for (let f of fields) {
-            avg[f] = (avg[f] || 0)  / array.length;
+            avg[f] = (avg[f] || 0) / array.length;
         }
         return avg;
     },

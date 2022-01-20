@@ -505,6 +505,14 @@ button.selected:hover {
     grid: min-content 1fr / min-content 1fr;
 }
 
+.grid .ungrouped {
+    background-color: rgba(128,128,128,0.5) !important;
+}
+
+.grid .ungrouped:hover {
+    color: #fff !important;
+}
+
 .tempedit {
     gap: 3px;
 }
@@ -514,9 +522,11 @@ button.selected:hover {
 }
 
 .editable {
-    background-color: rgba(0,128,255,0.2) !important;
+    color: #05a;
+    cursor: default;
 }
 
 .editable:hover {
+    color: #000;
     background-color: rgba(0,128,255,0.5) !important;
 }
