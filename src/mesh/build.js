@@ -16,6 +16,7 @@ if (mesh.build) return;
 let broker = gapp.broker;
 let call = broker.send;
 let { api, util } = mesh;
+let und = undefined;
 
 broker.listeners({
     ui_build
@@ -33,7 +34,7 @@ util.download = (data, filename = "mesh-data") => {
 // add modal dialog functions to api
 let modal = api.modal = {
     show(title, contents) {
-        if (this.showing) {
+        if (this.info.showing) {
             throw `modal conflict showing "${title}"`;
         }
         let bound = h.bind($('modal'), contents);
@@ -46,15 +47,24 @@ let modal = api.modal = {
         return bound;
     },
 
-    hide() {
+    hide(cancel = false) {
+        if (!modal.info.showing) {
+            return;
+        }
         clearTimeout(spin_timer);
         $('modal_page').style.display = 'none';
         modal.info.showing = false;
+        modal.info.cancelled = cancel;
         broker.publish('modal_hide');
         if (modal._dialog) {
             modal._dialog.resolve(modal._dialog.bound);
             modal._dialog = undefined;
         }
+    },
+
+    cancel() {
+        // hide but set a flag denoting cancellation
+        modal.hide(true);
     },
 
     info: {
@@ -204,7 +214,7 @@ function ui_build() {
             h.div({ id: 'modal_frame' }, [
                 h.div({ id: 'modal_title'}, [
                     h.div({ id: 'modal_title_text', _: 'title' }),
-                    h.div({ id: 'modal_title_close', onclick: modal.hide }, [
+                    h.div({ id: 'modal_title_close', onclick: modal.cancel }, [
                         h.i({ class: "far fa-window-close" })
                     ])
                 ]),
@@ -281,20 +291,23 @@ function ui_build() {
     ]);
 
     // for group/model/box/area/mesh dashboard grids
-    function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ]) {
+    function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ], root) {
+        let v = 'val', l = 'lbl';
+        let [ X, Y, Z ] = top;
+        let [ pos, rot ] = side;
         return h.div({ class: "grid"}, [
             h.div({ _: "" }),
-            h.div({ _: top[0], class: "top" }),
-            h.div({ _: top[1], class: "top" }),
-            h.div({ _: top[2], class: "top" }),
+            h.div({ _: X, class: "top", id: root ? [ root, l, X ] : und }),
+            h.div({ _: Y, class: "top", id: root ? [ root, l, Y ] : und }),
+            h.div({ _: Z, class: "top", id: root ? [ root, l, Z ] : und }),
             h.div({ _: side[0], class: "side" }),
-            h.label({ _: v1[0] }),
-            h.label({ _: v1[1] }),
-            h.label({ _: v1[2] }),
+            h.label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
+            h.label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
+            h.label({ _: v1[2], id: root ? [ root, v, Z, pos ] : und }),
             h.div({ _: side[1], class: "side" }),
-            h.label({ _: v2[0] }),
-            h.label({ _: v2[1] }),
-            h.label({ _: v2[2] }),
+            h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
+            h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
+            h.label({ _: v2[2], id: root ? [ root, v, Z, rot ] : und }),
         ]);
     }
 
@@ -335,6 +348,38 @@ function ui_build() {
         h.bind(grouplist, groups);
     }
 
+    // return function bound to field editing clicks
+    // builds a modal dialog that updates the object and field
+    function field_edit(title, get, set) {
+        return function(ev) {
+            let onclick = (ev) => {
+                let tempval = parseFloat($('tempval').value);
+                api.modal.hide(modal.info.cancelled);
+                if (modal.info.cancelled) {
+                    return;
+                }
+                for (let g of api.selection.groups()) {
+                    let old = get(g);
+                    set(g, tempval, old);
+                    g.floor(mesh.group);
+                    defer_selection(); // update ui
+                }
+            };
+            let onkeydown = (ev) => {
+                if (ev.key === 'Enter') {
+                    estop(ev);
+                    onclick();
+                }
+            };
+            let { tempval } = api.modal.show(title, h.div({ class: "tempedit" }, [
+                h.input({ id: 'tempval', value: ev.target.innerText, size: 10, onkeydown }),
+                h.button({ _: 'set', onclick })
+            ]));
+            tempval.setSelectionRange(0, tempval.value.length);
+            tempval.focus();
+        }
+    }
+
     // update model information dashboard (bottom)
     function update_selection() {
         let map = { fixed: 2 };
@@ -363,12 +408,19 @@ function ui_build() {
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = sblock('group', g_id, grid( util.extract(g_pos, map), util.extract(g_rot, map)) );
+        let h_grp = sblock('group', g_id, grid(
+            util.extract(g_pos, map),
+            util.extract(g_rot, map),
+            und, und, 'group'
+        ));
 
         let m_pos = util.average(s_mdl.map(m => m.object.position));
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-        let h_mdl = sblock('model', m_id, grid( util.extract(m_pos, map), util.extract(m_rot, map)) );
+        let h_mdl = sblock('model', m_id, grid(
+            util.extract(m_pos, map),
+            util.extract(m_rot, map)
+        ));
 
         let bounds = util.bounds(s_mdl);
         let h_bnd = sblock('box', m_id, grid(
@@ -379,7 +431,7 @@ function ui_build() {
         let h_ara = sblock('span', m_id, grid(
             util.extract(bounds.center, map),
             util.extract(bounds.size, map),
-            [ "center", "size" ]
+            [ "center", "size" ], und, 'span'
         ));
 
         let t_vert = s_mdl.map(m => m.vertices).reduce((a,v) => a+v);
@@ -403,6 +455,52 @@ function ui_build() {
             ...h_ara,
             ...h_msh
         ]);
+
+        // bind rotation editable fields
+        let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound;
+        [ group_val_X_rot, group_val_Y_rot, group_val_Z_rot ].forEach(e => {
+            e.classList.add('editable');
+        });
+        group_val_X_rot.onclick = field_edit('x rotation', group => {
+            return group.rotation();
+        }, (group, val, old) => {
+            group.rotation(val, old.y, old.z);
+        });
+        group_val_Y_rot.onclick = field_edit('y rotation', group => {
+            return group.rotation();
+        }, (group, val, old) => {
+            group.rotation(old.x, val, old.z);
+        });
+        group_val_Z_rot.onclick = field_edit('z rotation', group => {
+            return group.rotation();
+        }, (group, val, old) => {
+            group.rotation(old.x, old.y, val);
+        });
+
+        // bind scale editable fields
+        let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound;
+        [ span_val_X_size, span_val_Y_size, span_val_Z_size ].forEach(e => {
+            e.classList.add('editable');
+        });
+        span_val_X_size.onclick = field_edit('x size', group => {
+            return group.scale();
+        }, (group, val, old) => {
+            val = val / group.bounds.dim.x;
+            group.scale(val, old.y, old.z);
+        });
+        span_val_Y_size.onclick = field_edit('y size', group => {
+            return group.scale();
+        }, (group, val, old) => {
+            val = val / group.bounds.dim.y;
+            group.scale(old.x, val, old.z);
+        });
+        span_val_Z_size.onclick = field_edit('z size', group => {
+            return group.scale();
+        }, (group, val, old) => {
+            val = val / group.bounds.dim.z;
+            group.scale(old.x, old.y, val);
+        });
+
         let pmap = prefs.map.info;
         // map buttons to show/hide selection info
         function toggle(label, h, s, d) {

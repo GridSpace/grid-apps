@@ -57,7 +57,7 @@ function build(data, context) {
         if (key === '_') {
             text = val;
         } else if (key === 'id') {
-            elid = val;
+            elid = val ? (tov === 'object' ? val.join('_') : val) : undefined;
         } else if (tov === 'function') {
             func[key] = val;
             elid = elid || `_${nextid++}`;

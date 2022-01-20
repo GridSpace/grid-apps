@@ -250,8 +250,9 @@ button:hover {
 
 #modal_title_close {
     position: absolute;
-    right: 5px;
     color: #555;
+    right: 2px;
+    top: 2px;
 }
 
 #modal_title_close:hover {
@@ -502,4 +503,20 @@ button.selected:hover {
 
 #selectlist .grid2 {
     grid: min-content 1fr / min-content 1fr;
+}
+
+.tempedit {
+    gap: 3px;
+}
+
+.tempedit input {
+    text-align: center;
+}
+
+.editable {
+    background-color: rgba(0,128,255,0.2) !important;
+}
+
+.editable:hover {
+    background-color: rgba(0,128,255,0.5) !important;
 }

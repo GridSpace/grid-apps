@@ -308,11 +308,11 @@ function space_init(data) {
             }
         },
         'keydown', evt => {
-            let rv = Math.PI / 16;
             let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let rv = (Math.PI / 12);
             if (api.modal.showing) {
                 if (code === 'Escape') {
-                    api.modal.hide();
+                    api.modal.cancel();
                 }
                 return;
             }
