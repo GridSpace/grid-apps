@@ -486,7 +486,7 @@
 
         // last layer/move is to zmax
         // injected into the last layer generated
-        if (lastPoint)
+        if (lastPoint && newOutput.length)
         addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
 
         // replace output single flattened layer with all points
