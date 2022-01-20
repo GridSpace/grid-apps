@@ -508,10 +508,16 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
-    toggleSelectedFaces(toggle = []) {
+    selectFaces(list = [], action = {}) {
         let faces = this.sel.faces;
-        for (let t of toggle) {
-            faces.remove(t) || faces.addOnce(t);
+        for (let t of list) {
+            if (action.toggle) {
+                faces.remove(t) || faces.addOnce(t);
+            } else if (action.clear) {
+                faces.remove(t);
+            } else if (action.select) {
+                faces.addOnce(t);
+            }
         }
     }
 
@@ -543,7 +549,8 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // find adjacent faces to clicked point/line on a face
-    find(point, face) {
+    find(int, action) {
+        let { point, face } = int;
         let { x, y, z } = point;
         let { a, b, c } = face;
         worker.model_select({
@@ -552,7 +559,7 @@ mesh.model = class MeshModel extends mesh.object {
             let { faces, edges, verts, point } = data;
             // console.log({data});
             // this.toggleSelectedVertices(verts);
-            this.toggleSelectedFaces(faces);
+            this.selectFaces(faces, action);
             this.updateSelections();
         });
     }

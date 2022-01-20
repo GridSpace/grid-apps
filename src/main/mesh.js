@@ -388,7 +388,7 @@ function space_init(data) {
             }
             if (model) {
                 let group = model.group;
-                let { ctrlKey, metaKey, shiftKey } = event;
+                let { altKey, ctrlKey, metaKey, shiftKey } = event;
                 if (metaKey) {
                     // set focus on intersected face
                     let { x, y, z } = int.point;
@@ -408,7 +408,9 @@ function space_init(data) {
                         case modes.line:
                         case modes.vertex:
                             // find faces adjacent to point/line clicked
-                            model.find(int.point, int.face);
+                            model.find(int,
+                                altKey ? { toggle: true } :
+                                shiftKey ? { clear: true } : { select: true });
                             break;
                     }
                 }
