@@ -276,8 +276,8 @@ function space_init(data) {
                 case 'KeyF':
                     return selection.floor().focus();
                 case 'KeyM':
-                    if (shiftKey) return api.tool.mirror();
-                    return api.tool.merge();
+                    if (shiftKey) return api.tool.merge();
+                    return api.tool.mirror();
                 case 'KeyA':
                     return api.tool.analyze();
                 case 'KeyR':
@@ -296,8 +296,8 @@ function space_init(data) {
                 case 'KeyL':
                     return api.log.toggle();
                 case 'KeyS':
-                    if (shiftKey) return call.edit_split();
-                    return selection.visible({toggle:true});
+                    if (shiftKey) return selection.visible({toggle:true});
+                    return call.edit_split();
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':

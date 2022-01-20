@@ -351,7 +351,7 @@ function ui_build() {
 
     // return function bound to field editing clicks
     // builds a modal dialog that updates the object and field
-    function field_edit(title, set) {
+    function field_edit(title, set, opt = {}) {
         return function(ev) {
             let value = ev.target.innerText;
             let onclick = (ev) => {
@@ -362,7 +362,9 @@ function ui_build() {
                 }
                 for (let g of api.selection.groups()) {
                     set(g, tempval, value);
-                    g.floor(mesh.group);
+                    if (opt.floor !== false) {
+                        g.floor(mesh.group);
+                    }
                     defer_selection(); // update ui
                 }
             };
@@ -474,6 +476,24 @@ function ui_build() {
             let r = group.rotation();
             group.rotation(r.x, r.y, val/rad);
         });
+
+        // bind position editable fields
+        let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound;
+        [ group_val_X_pos, group_val_Y_pos, group_val_Z_pos ].forEach(e => {
+            e.classList.add('editable');
+        });
+        group_val_X_pos.onclick = field_edit('x position', (group, val) => {
+            let r = group.position();
+            group.position(val, r.y, r.z);
+        }, { floor: false });
+        group_val_Y_pos.onclick = field_edit('y position', (group, val) => {
+            let r = group.position();
+            group.position(r.x, val, r.z);
+        }, { floor: false });
+        group_val_Z_pos.onclick = field_edit('z position', (group, val) => {
+            let r = group.position();
+            group.position(r.x, r.y, val);
+        }, { floor: false });
 
         // bind scale editable fields
         let pedit = prefs.map.edit;
