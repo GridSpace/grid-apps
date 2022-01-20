@@ -267,7 +267,7 @@
             addLight( x1,  y1, -z1, lightIntensity * 0.5),
             addLight( x1,  y0, -z1, lightIntensity * 0.2),
 
-            addLight(  0,   0,  z2, lightIntensity * 0.8),
+            addLight(  0,   0,  z2, lightIntensity * 1.2),
             addLight(  0,   0, -z2, lightIntensity * 0.8),
         ];
     }

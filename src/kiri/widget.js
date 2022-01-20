@@ -947,8 +947,9 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             this.wire = null;
         }
         if (set) {
+            let dark = KIRI.api.conf.get().controller.dark;
             let geo = new THREE.WireframeGeometry(mesh.geometry);
-            let mat = new THREE.LineBasicMaterial({ color: 0 });
+            let mat = new THREE.LineBasicMaterial({ color: dark ? 0xaaaaaa : 0 });
             let wire = widget.wire = new THREE.LineSegments(geo, mat);
             mesh.add(wire);
         }

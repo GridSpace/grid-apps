@@ -29,7 +29,7 @@ let materials = mesh.material = {
     normal: new MeshPhongMaterial({
         side: DoubleSide,
         transparent: true,
-        shininess: 100,
+        shininess: 125,
         specular: 0x202020,
         color: 0xf0f000,
         opacity: 1
@@ -38,7 +38,7 @@ let materials = mesh.material = {
     select: new MeshPhongMaterial({
         side: DoubleSide,
         transparent: true,
-        shininess: 100,
+        shininess: 125,
         specular: 0x202020,
         color: 0x00e000,
         opacity: 1
