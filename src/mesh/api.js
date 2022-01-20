@@ -463,7 +463,10 @@ let prefsignew;
 // persisted preference map
 let prefs = {
     map: {
-        info: {},
+        info: {
+            group: "show",
+            span: "show"
+        },
         mode: modes.object,
         edit: {
             scale_group_X: true,
