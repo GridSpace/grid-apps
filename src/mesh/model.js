@@ -386,11 +386,11 @@ mesh.model = class MeshModel extends mesh.object {
                 this.group.add(model = new mesh.model({
                     file: `${this.file}`,
                     mesh: o2
-                }).applyMatrix4(m4)).setSelected();
+                }).applyMatrix4(m4));
                 if (o1.length) {
-                    // this becomes bottom
+                    // o1 becomes bottom
                     this.reload(o1);
-                    resolve(this);
+                    resolve(model);
                 } else {
                     this.remove();
                     resolve(model);
