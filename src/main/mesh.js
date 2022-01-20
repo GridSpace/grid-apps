@@ -476,9 +476,10 @@ function set_darkmode(dark) {
     }
     sky.set({
         color: dark ? 0 : 0xffffff,
-        ambient: { intensity: dark ? 0.6 : 1 }
+        ambient: { intensity: dark ? 0.4 : 0.9 }
     });
     platform.set({
+        light: dark ? 0.05 : 0.05,
         grid: dark ? {
             colorMajor: 0x666666,
             colorMinor: 0x333333,
@@ -487,6 +488,7 @@ function set_darkmode(dark) {
             colorMinor: 0xeeeeee,
         },
     });
+    platform.setSize();
     for (let m of model.list()) {
         m.normals({ refresh: true });
     }

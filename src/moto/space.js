@@ -242,28 +242,33 @@
         for (let l of lights || []) {
             SCENE.remove(l);
         }
-        x *= 1.5; y *= 1.5; z *= 1.5;
+        x *= 1.1; y *= 1.1; z *= 1.1;
         // add new
         let x0 = -x/2, y0 = -y/2, z0 = 0;
         let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
         lights = [
-            addLight(  0,  y0,  z0, lightIntensity),
-            addLight(  0,  y1,  z0, lightIntensity),
-            addLight( x0,   0,  z0, lightIntensity),
-            addLight( x1,   0,  z0, lightIntensity),
+            addLight( x0,  y0,  z1, lightIntensity * 2.5),
+            addLight( x0,  y1,  z1, lightIntensity * 2.0),
+            addLight( x1,  y1,  z1, lightIntensity * 2.5),
+            addLight( x1,  y0,  z1, lightIntensity * 2.0),
 
-            addLight( x0,  y0,  z1, lightIntensity * 1.5),
-            addLight( x0,  y1,  z1, lightIntensity / 1.5),
-            addLight( x1,  y1,  z1, lightIntensity * 1.5),
-            addLight( x1,  y0,  z1, lightIntensity / 1.5),
+            // addLight(  0,  y0,  z0, lightIntensity * 1.2),
+            // addLight(  0,  y1,  z0, lightIntensity * 0.8),
+            // addLight( x0,   0,  z0, lightIntensity * 1.2),
+            // addLight( x1,   0,  z0, lightIntensity * 0.8),
 
-            addLight( x0,  y0, -z1, lightIntensity / 1.5),
-            addLight( x0,  y1, -z1, lightIntensity),
-            addLight( x1,  y1, -z1, lightIntensity / 1.5),
-            addLight( x1,  y0, -z1, lightIntensity),
+            addLight( x0,  y0,  z0, lightIntensity * 0.8),
+            addLight( x0,  y1,  z0, lightIntensity * 1.2),
+            addLight( x1,  y1,  z0, lightIntensity * 0.8),
+            addLight( x1,  y0,  z0, lightIntensity * 1.2),
 
-            addLight(  0,   0,  z2, lightIntensity * 2),
-            addLight(  0,   0, -z2, lightIntensity / 1),
+            addLight( x0,  y0, -z1, lightIntensity * 0.5),
+            addLight( x0,  y1, -z1, lightIntensity * 0.2),
+            addLight( x1,  y1, -z1, lightIntensity * 0.5),
+            addLight( x1,  y0, -z1, lightIntensity * 0.2),
+
+            addLight(  0,   0,  z2, lightIntensity * 0.8),
+            addLight(  0,   0, -z2, lightIntensity * 0.8),
         ];
     }
 
