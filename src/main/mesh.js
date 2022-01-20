@@ -316,7 +316,7 @@ function space_init(data) {
                 }
                 return;
             }
-            let rot;
+            let rot, floor = true;
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
@@ -355,6 +355,7 @@ function space_init(data) {
                     if (shiftKey) {
                         rot = selection.rotate(0,-rv,0);
                     } else {
+                        floor = false;
                         rot = selection.rotate(0,0,rv);
                     }
                     break;
@@ -362,11 +363,12 @@ function space_init(data) {
                     if (shiftKey) {
                         rot = selection.rotate(0,rv,0);
                     } else {
+                        floor = false;
                         rot = selection.rotate(0,0,-rv);
                     }
                     break;
             }
-            if (rot && true) {
+            if (rot && floor) {
                 // todo future pref to auto-floor or not
                 rot.floor(mesh.group);
             }
@@ -395,6 +397,7 @@ function space_init(data) {
                 } else if (ctrlKey) {
                     // rotate selected face towawrd z "floor"
                     group.faceDown(int.face.normal);
+                    selection.update();
                 } else {
                     let { modes } = api;
                     switch(api.mode.get()) {
