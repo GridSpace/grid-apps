@@ -287,6 +287,7 @@ function space_init(data) {
                 case 'KeyV':
                     return selection.focus();
                 case 'KeyN':
+                    if (shiftKey) return estop(evt, api.tool.rename());
                     return api.normals();
                 case 'KeyW':
                     return api.wireframe();

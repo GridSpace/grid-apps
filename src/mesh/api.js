@@ -330,6 +330,31 @@ let tool = {
         }
     },
 
+    rename(models) {
+        models = fallback(models, true);
+        let model = models[0];
+        if (!model) {
+            return;
+        }
+        if (models.length > 1) {
+            return api.log.emit('rename requires a single selection');
+        }
+        let onclick = onkeydown = (ev) => {
+            if (ev.code && ev.code !== 'Enter') {
+                return;
+            }
+            model.rename( $('tempedit').value.trim() );
+            selection.update();
+            api.modal.hide();
+        };
+        let { tempedit } = api.modal.show(`rename model`, h.div({ class: "rename"}, [
+            h.input({ id: "tempedit", value: model.file, onkeydown }),
+            h.button({ _: 'ok', onclick })
+        ]));
+        tempedit.setSelectionRange(0,1000);
+        tempedit.focus();
+    },
+
     analyze(models, opt = { compound: true }) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();

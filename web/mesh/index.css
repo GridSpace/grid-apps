@@ -513,7 +513,7 @@ button.selected:hover {
     color: #fff !important;
 }
 
-.tempedit {
+.tempedit, .rename {
     gap: 3px;
 }
 

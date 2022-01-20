@@ -195,6 +195,12 @@ mesh.model = class MeshModel extends mesh.object {
         this.normals({refresh: true});
     }
 
+    rename(file) {
+        this.file = file;
+        // persist in db so it can be restored on page load
+        mapp.db.space.put(this.id, { file, mesh: this.attributes.position.array });
+    }
+
     get group() {
         return this._group;
     }
