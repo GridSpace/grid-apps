@@ -406,7 +406,7 @@ kiri.lang['en-us'] = {
 
     // LASER SLICING
     ls_offs_s:      "offset",
-    ls_offs_l:      ["adjust for beam width","in millimeters"],
+    ls_offs_l:      ["adjust for beam width","also known as kerf","in millimeters"],
     ls_lahi_s:      "height",
     ls_lahi_l:      ["layer height","in millimeters","0 = auto/detect"],
     ls_lahm_s:      "min",
