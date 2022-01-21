@@ -365,6 +365,7 @@ function ui_build() {
     // builds a modal dialog that updates the object and field
     function field_edit(title, set, opt = {}) {
         return function(ev) {
+            let floor = api.prefs.map.space.floor !== false;
             let value = ev.target.innerText;
             let onclick = (ev) => {
                 let tempval = parseFloat($('tempval').value);
@@ -374,7 +375,7 @@ function ui_build() {
                 }
                 for (let g of api.selection.groups()) {
                     set(g, tempval, value);
-                    if (opt.floor !== false) {
+                    if (floor && opt.floor !== false) {
                         g.floor(mesh.group);
                     }
                     defer_selection(); // update ui
@@ -531,7 +532,6 @@ function ui_build() {
             };
         });
         span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
-            let dim = group.bounds.dim;
             let rel = val / parseFloat(oval);
             if (axgrp.X) {
                 group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
@@ -540,7 +540,6 @@ function ui_build() {
             }
         });
         span_val_Y_size.onclick = field_edit('y size', (group, val, oval) => {
-            let dim = group.bounds.dim;
             let rel = val / parseFloat(oval);
             if (axgrp.Y) {
                 group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
@@ -549,7 +548,6 @@ function ui_build() {
             }
         });
         span_val_Z_size.onclick = field_edit('z size', (group, val, oval) => {
-            let dim = group.bounds.dim;
             let rel = val / parseFloat(oval);
             if (axgrp.Z) {
                 group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);

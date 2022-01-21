@@ -323,7 +323,7 @@ function space_init(data) {
                 }
                 return;
             }
-            let rot, floor = true;
+            let rot, floor = api.prefs.map.space.floor !== false;
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
