@@ -224,19 +224,6 @@ mesh.model = class MeshModel extends mesh.object {
         return this.vertices / 3;
     }
 
-    // todo -- put model into its own group
-    ungroup() {
-        // get current world coordinates
-        let { mid } = meh.getBoundingBox();
-        // transform mesh into world coordinates
-        // move mesh to origin
-        // create and add to group
-        // move group center back to original center
-        geo.moveMesh(-mid.x, -mid.y, -mid.z);
-        geo.computeBoundingBox();
-        this.move(mid.x, mid.y, mid.z);
-    }
-
     // get, set, or toggle visibility of model and wireframe
     visible(bool) {
         if (bool === undefined) {
@@ -415,6 +402,23 @@ mesh.model = class MeshModel extends mesh.object {
                 resolve(data);
             });
         });
+    }
+
+    // release from a group but remain in memory and storage
+    // so it can be re-assigned to another group
+    ungroup() {
+        this.group.remove(this, { free: false });
+        this.group = undefined;
+
+        // get current world coordinates
+        // let { mid } = this.mesh.getBoundingBox();
+        // let { geometry } = this.mesh;
+        // move group center back to original center
+        // geometry.moveMesh(-mid.x, -mid.y, -mid.z);
+        // geometry.computeBoundingBox();
+        // this.move(mid.x, mid.y, mid.z);
+
+        return this;
     }
 
     // remove model from group and space

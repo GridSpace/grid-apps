@@ -355,6 +355,23 @@ let tool = {
         tempedit.focus();
     },
 
+    regroup(models) {
+        models = fallback(models, true);
+        if (models.length === 0) {
+            return;
+        }
+        api.log.emit(`regrouping ${models.length} model(s)`);
+        let bounds = util.bounds(models);
+        let { mid} = bounds;
+        for (let m of models) {
+            m.ungroup();
+        }
+        mesh.api.group.new(models)
+            .centerModels()
+            .position(mid.x, mid.y, mid.z)
+            .select();
+    },
+
     analyze(models, opt = { compound: true }) {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();

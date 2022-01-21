@@ -102,8 +102,13 @@ function restore_space() {
                     .map(id => { return { id, md: cached[id] } })
                     .filter(r => r.md) // filter cache misses
                     .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
-                mesh.api.log.emit(`restored ${models.length} model(s)`);
-                mesh.api.group.new(models, id).applyMatrix(mcache[id]);
+                if (models.length) {
+                    mesh.api.log.emit(`restored ${models.length} model(s)`);
+                    mesh.api.group.new(models, id).applyMatrix(mcache[id]);
+                } else {
+                    mesh.api.log.emit(`removed empty group ${id}`);
+                    mesh.db.space.remove(id);
+                }
             }
         }
         // restore global cache only after objects are restored
@@ -292,6 +297,7 @@ function space_init(data) {
                 case 'KeyW':
                     return api.wireframe();
                 case 'KeyG':
+                    if (shiftKey) return api.tool.regroup();
                     return api.grid();
                 case 'KeyL':
                     return api.log.toggle();

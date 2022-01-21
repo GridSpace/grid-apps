@@ -59,7 +59,8 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     // @param model {MeshModel}
-    remove(model) {
+    // @param free {boolean} prevent cleanup of model so it can be re-used
+    remove(model, opt = { free: true }) {
         // console.log('group',this,'remove',model);
         // remove all models and group
         if (arguments.length === 0) {
@@ -75,7 +76,7 @@ mesh.group = class MeshGroup extends mesh.object {
         // trigger sync with worker
         worker.group_remove({id: this.id, model: model.id});
         // ensure worker cleanup of model
-        model.remove(true);
+        if (opt.free) model.remove(true);
         // auto-remove group when empty
         if (this.group3.children.length === 0) {
             mesh.api.group.remove(this);
