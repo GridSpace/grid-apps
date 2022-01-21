@@ -185,6 +185,8 @@ mesh.model = class MeshModel extends mesh.object {
         geo._model_invalid = true;
         if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         if (!normals) geo.computeVertexNormals();
+        // allows raycasting to work
+        geo.computeBoundingSphere();
         // persist in db so it can be restored on page load
         mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
         // sync data to worker
@@ -410,15 +412,13 @@ mesh.model = class MeshModel extends mesh.object {
         this.group.remove(this, { free: false });
         this.group = undefined;
 
-        // get current world coordinates
-        // let { mid } = this.mesh.getBoundingBox();
-        // let { geometry } = this.mesh;
-        // move group center back to original center
-        // geometry.moveMesh(-mid.x, -mid.y, -mid.z);
-        // geometry.computeBoundingBox();
-        // this.move(mid.x, mid.y, mid.z);
-
-        return this;
+        return worker.model_duplicate({
+            matrix: this.matrix,
+            id: this.id,
+            opt: {}
+        }).then(data => {
+            this.reload(data);
+        });
     }
 
     // remove model from group and space

@@ -362,14 +362,13 @@ let tool = {
         }
         api.log.emit(`regrouping ${models.length} model(s)`);
         let bounds = util.bounds(models);
-        let { mid} = bounds;
-        for (let m of models) {
-            m.ungroup();
-        }
-        mesh.api.group.new(models)
-            .centerModels()
-            .position(mid.x, mid.y, mid.z)
-            .select();
+        let { mid } = bounds;
+        Promise.all(models.map(m => m.ungroup())).then(() => {
+            mesh.api.group.new(models)
+                .centerModels()
+                .position(mid.x, mid.y, mid.z)
+                .select();
+        });
     },
 
     analyze(models, opt = { compound: true }) {
