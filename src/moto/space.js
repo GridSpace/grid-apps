@@ -182,7 +182,7 @@
                 viewControl.setPosition(pos);
                 updateLastAction();
                 refresh();
-                if (pos.then) pos.then();
+                try { if (pos.then) pos.then(); } catch (e) { }
             }).
             start();
     }
