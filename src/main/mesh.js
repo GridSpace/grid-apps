@@ -399,8 +399,11 @@ function space_init(data) {
                 if (metaKey) {
                     // set focus on intersected face
                     let { x, y, z } = int.point;
+                    let q = new THREE.Quaternion().setFromRotationMatrix(group.object.matrix);
+                    // rotate normal using group's matrix
+                    let normal = int.face.normal.applyQuaternion(q);
                     // y,z swap due to world rotation for orbit controls
-                    api.focus({center: { x, y:-z, z:y }});
+                    api.focus({center: { x, y:-z, z:y }, normal});
                 } else if (ctrlKey) {
                     // rotate selected face towawrd z "floor"
                     group.faceDown(int.face.normal);

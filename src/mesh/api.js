@@ -541,12 +541,21 @@ let api = mesh.api = {
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
         }
+        let { normal } = object;
+        let left, up;
+        if (normal) {
+            let { x, y, z } = normal;
+            left = new Vector3(x,y,0).angleTo(new Vector3(0,-1,0));
+            up = new Vector3(0,y,z).angleTo(new Vector3(0,0,1));
+            if (x < 0) left = -left;
+        }
         // sets "home" views (front, back, home, reset)
         space.platform.setCenter(center.x, -center.y, center.z);
         // sets camera focus
-        space.view.setFocus(new Vector3(
-            center.x, center.z, -center.y
-        ));
+        space.view.panTo(center.x, center.z, -center.y, left, up);
+        // space.view.setFocus(new Vector3(
+        //     center.x, center.z, -center.y
+        // ));
     },
 
     grid(state = {toggle:true}) {

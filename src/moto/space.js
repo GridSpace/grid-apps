@@ -164,12 +164,14 @@
 
     tweenit();
 
-    function tweenCamPan(x,y,z) {
+    function tweenCamPan(x,y,z,left,up) {
         updateLastAction();
         let pos = viewControl.getPosition();
         pos.panX = x;
         pos.panY = y;
         pos.panZ = z;
+        if (left !== undefined) pos.left = left;
+        if (up !== undefined) pos.up = up;
         tweenCam(pos);
     }
 
@@ -1100,7 +1102,7 @@
             reset:  ()     => { viewControl.reset(); requestRefresh() },
             load:   (cam)  => { viewControl.setPosition(cam); requestRefresh() },
             save:   ()     => { return viewControl.getPosition(true) },
-            panTo:  (x,y,z) => { tweenCamPan(x,y,z) },
+            panTo:  (x,y,z,l,u) => { tweenCamPan(x,y,z,l,u) },
             setZoom: (r,v) => { viewControl.setZoom(r,v) },
             setCtrl: (name) => {
                 if (name === 'onshape') {
