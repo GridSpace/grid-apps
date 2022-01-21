@@ -259,6 +259,15 @@ button:hover {
     color: black;
 }
 
+/** settings dialog **/
+
+.settings {
+    display: grid;
+    grid: min-content 1fr / min-content 1fr;
+    white-space: nowrap;
+    align-items: center;
+}
+
 /** spinner animation **/
 
 @keyframes spinner {

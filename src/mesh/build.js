@@ -182,13 +182,24 @@ gapp.broker.subscribe("mesh.log", log.emit);
 
 // bind settings endpoint to api
 api.settings = function() {
-    modal.show('settings', h.div([
+    let { prefs } = api;
+    let { space } = prefs.map;
+    modal.show('settings', h.div({ class: "settings" }, [
         h.label('dark mode'),
-        h.input({
-            type: "checkbox",
+        h.input({ type: "checkbox",
             onchange: ev => call.set_darkmode(ev.target.checked),
-            [ api.prefs.map.space.dark ? 'checked' : 'unchecked' ] : 1
-        })
+            [ space.dark ? 'checked' : 'unchecked' ] : 1
+        }),
+        h.label('auto floor'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( space.floor = !space.floor ),
+            [ space.floor !== false ? 'checked' : 'unchecked' ] : 1
+        }),
+        h.label('auto center'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( space.center = !space.center ),
+            [ space.center !== false ? 'checked' : 'unchecked' ] : 1
+        }),
     ]));
 }
 

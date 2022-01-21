@@ -99,14 +99,17 @@ mesh.group = class MeshGroup extends mesh.object {
 
     promote() {
         this.centerModels();
-        let { dim } = this.bounds;
+        let { dim, mid } = this.bounds;
         let { x, y, z } = dim;
         let max = Math.max(x, y, z);
         if (max < 2) {
             mesh.api.log.emit(`auto-scaling import from ${max.round(5)}`);
             this.scale(1000, 1000, 1000);
         }
-        return this.centerXY().floor();
+        let { center, floor } = mesh.api.prefs.map.space;
+        if (center !== false) this.centerXY();
+        if (floor !== false) this.floor();
+        return this;
     }
 
     scale(x = 1, y = 1, z = 1) {
@@ -122,6 +125,11 @@ mesh.group = class MeshGroup extends mesh.object {
         let bounds = this.bounds;
         for (let model of this.models) {
             model.center(bounds);
+        }
+        let { center } = mesh.api.prefs.map.space;
+        if (center === false) {
+            let { mid } = bounds;
+            this.move(mid.x, mid.y, mid.z);
         }
         return this;
     }

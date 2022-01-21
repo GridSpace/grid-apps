@@ -490,6 +490,8 @@ let prefs = {
             scale_group_Z: true
         },
         space: {
+            center: true,
+            floor: true,
             wire: false,
             grid: true,
             dark: false,
