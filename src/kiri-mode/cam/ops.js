@@ -42,7 +42,7 @@
             let { op, state } = this;
             let { settings, widget, sliceAll } = state;
             let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
-            let { bounds, zMax, ztOff } = state;
+            let { bounds, zMax, ztOff, color } = state;
             let { stock } = settings;
 
             let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
@@ -80,7 +80,7 @@
             let slice = newSlice(z);
             this.lines = slice.camLines = [ path ];
             slice.output()
-                .setLayer("level", {face: 0, line: 0})
+                .setLayer("level", {face: color, line: color})
                 .addPolys(this.lines);
             sliceAll.push(slice);
         }
@@ -104,7 +104,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, slicer, sliceAll, unsafe } = state;
+            let { settings, widget, slicer, sliceAll, unsafe, color } = state;
             let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
             let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
             let { process, stock } = settings;
@@ -139,7 +139,7 @@
                     slice.z = z;
                     slice.camLines = POLY.setZ(facing.clone(true), slice.z);
                     slice.output()
-                        .setLayer("face", {face: 0, line: 0})
+                        .setLayer("face", {face: color, line: color})
                         .addPolys(slice.camLines);
                     sliceAll.push(slice);
                     camFaces.push(slice);
@@ -307,7 +307,7 @@
                     // .setLayer("rough shell", {line: 0xaa0000})
                     // .addPolys(shell);
                 slice.output()
-                    .setLayer("roughing", {face: 0, line: 0})
+                    .setLayer("roughing", {face: color, line: color})
                     .addPolys(offset);
                 progress(0.5 + (index / slices.length) * 0.5);
             });
@@ -411,7 +411,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe } = state;
+            let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe, color } = state;
             let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
             let { process, stock } = settings;
 
@@ -550,7 +550,7 @@
                     .setLayer("slice", {line: 0xaaaa00}, false)
                     .addPolys(slice.topPolys())
                 slice.output()
-                    .setLayer("outline", {face: 0, line: 0})
+                    .setLayer("outline", {face: color, line: color})
                     .addPolys(offset);
             });
 
@@ -916,7 +916,8 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, sliceAll, tslices, updateToolDiams, zBottom, zThru, thruHoles } = state;
+            let { settings, sliceAll, tslices, updateToolDiams } = state;
+            let { zBottom, zThru, thruHoles, color } = state;
 
             let drills = [],
                 drillTool = new CAM.Tool(settings, op.tool),
@@ -970,7 +971,7 @@
                 }
                 slice.camLines = [ drill ];
                 slice.output()
-                    .setLayer("drill", {face: 0, line: 0})
+                    .setLayer("drill", {face: color, line: color})
                     .addPolys(drill);
                 sliceAll.push(slice);
                 sliceOut.push(slice);
@@ -996,7 +997,7 @@
 
         slice(progress) {
             let { op, state } = this;
-            let { settings, widget, bounds, sliceAll, zMax, zThru } = state;
+            let { settings, widget, bounds, sliceAll, zMax, zThru, color } = state;
             let { updateToolDiams } = state;
 
             let tool = new CAM.Tool(settings, op.tool);
@@ -1114,7 +1115,7 @@
                 });
                 slice.camLines = polys;
                 slice.output()
-                    .setLayer("register", {face: 0, line: 0})
+                    .setLayer("register", {face: color, line: color})
                     .addPolys(polys);
                 sliceAll.push(slice);
                 sliceOut.push(slice);

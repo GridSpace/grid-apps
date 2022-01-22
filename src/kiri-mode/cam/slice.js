@@ -40,6 +40,8 @@
             minToolDiam = Infinity,
             maxToolDiam = -Infinity,
             thruHoles,
+            dark = settings.controller.dark ? true : false,
+            color = dark ? 0xbbbbbb : 0,
             tabs = widget.anno.tab,
             unsafe = proc.camExpertFast,
             units = settings.controller.units === 'in' ? 25.4 : 1;
@@ -117,7 +119,9 @@
             ztOff,
             zMax,
             zTop,
-            unsafe
+            unsafe,
+            color,
+            dark
         };
 
         let opList = [

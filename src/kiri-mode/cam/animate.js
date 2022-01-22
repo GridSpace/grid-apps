@@ -16,6 +16,7 @@ self.kiri.loader.push(function() {
         speedIndex = 0,
         speedLabel,
         speed,
+        color = 0,
         pauseButton,
         playButton,
         posOffset = { x:0, y:0, z:0 };
@@ -129,7 +130,7 @@ self.kiri.loader.push(function() {
         const mat = new THREE.LineBasicMaterial({
             transparent: true,
             opacity: 0.75,
-            color: 0
+            color
         });
         const mesh = new THREE.LineSegments(geo, mat);
         WORLD.add(mesh);
@@ -203,6 +204,7 @@ self.kiri.loader.push(function() {
 
     if (KIRI.client)
     KIRI.client.animate_setup = function(settings, ondone) {
+        color = settings.controller.dark ? 0x888888 : 0;
         unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
         KIRI.client.send("animate_setup", {settings}, ondone);
     };

@@ -733,7 +733,9 @@
     }
 
     FDM.rateToColor = function(rate, max) {
-        return currentColorFunction(rate/max, 1, 0.85);
+        return current.print.settings.controller.dark ?
+         darkColorFunction(rate/max, 1, 0.85) :
+         currentColorFunction(rate/max, 1, 0.85);
     };
 
     FDM.prepareRender = function(levels, update, opts = {}) {
@@ -767,7 +769,7 @@
         };
 
         let minspd = Infinity;
-        let maxspd = 0;
+        let maxspd = opts.maxspeed || 0;
         let maxtool = [];
 
         for (let level of levels) {
@@ -961,12 +963,13 @@
     }
 
     const colorFunctions = FDM.colorFunctions = {
-        default: hsv2rgb.bind({ seg: 5, fn: color5 }),
+        default: hsv2rgb.bind({ seg: 4, fn: color4d }),
         simple: hsv2rgb.bind({ seg: 3, fn: color4 }),
-        dark: hsv2rgb.bind({ seg: 3, fn: color3 })
+        dark: hsv2rgb.bind({ seg: 4, fn: color4d })
     };
 
     let currentColorFunction = colorFunctions.default;
+    let darkColorFunction = colorFunctions.dark;
 
     // hsv values all = 0 to 1
     function hsv2rgb(h, s, v) {
@@ -1015,6 +1018,38 @@
         }
     }
 
+    function color4d(rgb, inc, seg) {
+        const dec = 1 - inc;
+        switch (seg) {
+            case 0:
+                rgb.r = 1;
+                rgb.g = inc;
+                rgb.b = 0;
+                break;
+            case 1:
+                rgb.r = dec;
+                rgb.g = 1;
+                rgb.b = 0;
+                break;
+            case 2:
+                rgb.r = 0;
+                rgb.g = dec;
+                rgb.b = inc;
+                break;
+            case 3:
+                rgb.r = inc * 0.85;
+                rgb.g = 0;
+                rgb.b = 1;
+                break;
+            case 4:
+                rgb.r = 0.85;
+                rgb.g = 0;
+                rgb.b = 1;
+                break;
+        }
+    }
+
+
     function color4(rgb, inc, seg) {
         const dec = 1 - inc;
         switch (seg) {
@@ -1037,27 +1072,6 @@
                 rgb.r = dec;
                 rgb.g = 0;
                 rgb.b = 0;
-                break;
-        }
-    }
-
-    function color3(rgb, inc, seg) {
-        const dec = 1 - inc;
-        switch (seg) {
-            case 0:
-                rgb.r = dec;
-                rgb.g = inc;
-                rgb.b = 0;
-                break;
-            case 1:
-                rgb.r = 0;
-                rgb.g = dec;
-                rgb.b = inc;
-                break;
-            case 2:
-                rgb.r = inc/2;
-                rgb.g = 0;
-                rgb.b = dec/2 + 0.5;
                 break;
         }
     }
