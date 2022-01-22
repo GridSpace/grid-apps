@@ -20,7 +20,7 @@
     class Topo {
         constructor(opt = {}) {
             let { state, contour, onupdate, ondone } = opt;
-            let { widget, settings, tshadow, center, tabs } = opt.state;
+            let { widget, settings, tshadow, center, tabs, color } = opt.state;
 
             let density = parseInt(settings.controller.animesh || 100) * 2500,
                 axis = contour.axis.toLowerCase(),
@@ -263,7 +263,7 @@
                                 if (nz > gridv) {
                                     gridv = data[gridi] = Math.max(nz, zMin);
                                     if (debug_topo) slice.output()
-                                        .setLayer("topo", {face: 0, line: 0})
+                                        .setLayer("topo", {face: color, line: color})
                                         .addLine(
                                             newPoint(p1.x, y, 0),
                                             newPoint(p1.x, y, gridv)
@@ -338,7 +338,7 @@
                             newslices.push(slice);
                             slice.camLines = sliceout;
                             slice.output()
-                                .setLayer("contour y", {face: 0, line: 0})
+                                .setLayer("contour y", {face: color, line: color})
                                 .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour y");
@@ -375,7 +375,7 @@
                             newslices.push(slice);
                             slice.camLines = sliceout;
                             slice.output()
-                                .setLayer("contour x", {face: 0, line: 0})
+                                .setLayer("contour x", {face: color, line: color})
                                 .addPolys(sliceout);
                         }
                         onupdate(++stepsTaken, stepsTotal, "contour x");

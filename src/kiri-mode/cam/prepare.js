@@ -42,7 +42,8 @@
             speed: false,
             moves: true,
             other: "moving",
-            action: "milling"
+            action: "milling",
+            maxspeed: settings.process.camFastFeed || 6000
         });
 
         return print.render;

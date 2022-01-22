@@ -43,6 +43,7 @@
     function slice(settings, widget, onupdate, ondone) {
         let proc = settings.process;
         let offset = proc.laserOffset;
+        let color = settings.controller.dark ? 0xbbbbbb : 0;
 
         if (proc.laserSliceHeight < 0) {
             return ondone("invalid slice height");
@@ -59,7 +60,7 @@
                 let offsets = slice.offset = offset ?
                     POLY.offset(tops, offset, {z: slice.z, miter: 2 / offset}) : tops;
                 slice.output().setLayer("layer", { line: 0x888800 }).addPolys(tops);
-                slice.output().setLayer("cut").addPolys(offsets);
+                slice.output().setLayer("cut", { line: color }).addPolys(offsets);
                 onupdate(0.80 + (index/slices.length) * 0.20);
             });
             ondone();
