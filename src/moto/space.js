@@ -256,19 +256,19 @@
         lights = [
             // top
             addLight( x0,  y0,  z1, lightIntensity * 2.5),
-            addLight( x0,  y1,  z1, lightIntensity * 2.0),
+            // addLight( x0,  y1,  z1, lightIntensity * 2.0),
             addLight( x1,  y1,  z1, lightIntensity * 2.5),
-            addLight( x1,  y0,  z1, lightIntensity * 2.0),
+            // addLight( x1,  y0,  z1, lightIntensity * 2.0),
             // middle
-            addLight( x0,  y0,  z0, lightIntensity * 0.8),
-            addLight( x0,  y1,  z0, lightIntensity * 1.2),
-            addLight( x1,  y1,  z0, lightIntensity * 0.8),
-            addLight( x1,  y0,  z0, lightIntensity * 1.2),
+            // addLight( x0,  y0,  z0, lightIntensity * 0.8),
+            // addLight( x0,  y1,  z0, lightIntensity * 1.2), // opt
+            // addLight( x1,  y1,  z0, lightIntensity * 0.8),
+            // addLight( x1,  y0,  z0, lightIntensity * 1.2), // opt
             // bottom
-            addLight( x0,  y0, -z1, lightIntensity * 0.5),
-            addLight( x0,  y1, -z1, lightIntensity * 0.2),
-            addLight( x1,  y1, -z1, lightIntensity * 0.5),
-            addLight( x1,  y0, -z1, lightIntensity * 0.2),
+            // addLight( x0,  y0, -z1, lightIntensity * 0.5),
+            addLight( x0,  y1, -z1, lightIntensity * 0.5),
+            // addLight( x1,  y1, -z1, lightIntensity * 0.5),
+            addLight( x1,  y0, -z1, lightIntensity * 0.5),
             // center top/bottom
             addLight(  0,   0,  z2, lightIntensity * 1.2),
             addLight(  0,   0, -z2, lightIntensity * 0.8),
@@ -278,10 +278,10 @@
     function addLight(x,y,z,i) {
         let l = new THREE.PointLight(0xffffff, i, 0);
         l.position.set(x,z,y);
-        // let b; l.add(b = new THREE.Mesh(
-        //     new THREE.BoxGeometry(1,1,1),
-        //     new THREE.MeshBasicMaterial( {color: 0xff0000} )
-        // )); b.scale.set(5,5,5);
+        let b; l.add(b = new THREE.Mesh(
+            new THREE.BoxGeometry(1,1,1),
+            new THREE.MeshBasicMaterial( {color: 0xff0000} )
+        )); b.scale.set(5,5,5);
         SCENE.add(l);
         return l;
     }
