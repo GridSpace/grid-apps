@@ -127,8 +127,8 @@ let model = {
     // return two arrays of vertices for each resulting object
     split(data) {
         let { id, matrix, z } = data;
-        let o1 = [];
-        let o2 = [];
+        let o1 = []; // new bottom
+        let o2 = []; // new top
         let pos = translate_encode(id, matrix);
         let split = [];
         let on = [];
@@ -170,11 +170,29 @@ let model = {
                     g2 = o1;
                     oa = over;
                     ua = under;
-                } else {
+                } else if (underl === 2) {
                     g1 = o1;
                     g2 = o2;
                     oa = under;
                     ua = over;
+                } else if (onl === 1) {
+                    let p1 = over[0];
+                    let p2 = on[0];
+                    let p3 = under[0];
+                    let p4 = lerp(p1, p3);
+                    let cw = (v1 === p1 && v2 === p2)
+                        || (v1 === p2 && v2 === p3)
+                        || (v1 === p3 && v2 === p1);
+                    // clockwise vs counter-clockwise
+                    if (cw) {
+                        o1.appendAll([ ...p2, ...p3, ...p4 ]);
+                        o2.appendAll([ ...p1, ...p2, ...p4 ]);
+                    } else {
+                        o1.appendAll([ ...p3, ...p2, ...p4 ]);
+                        o2.appendAll([ ...p2, ...p1, ...p4 ]);
+                    }
+                    on.length = over.length = under.length = 0;
+                    continue;
                 }
                 let [ p1, p2 ] = oa;
                 let p3 = ua[0] || on[0]; // under or on
