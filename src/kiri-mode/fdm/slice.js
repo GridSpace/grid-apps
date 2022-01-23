@@ -720,18 +720,18 @@
 
         if (slice.xray) {
             if (slice.lines) {
-                let dash = 3;
+                let dash = 5;
                 slice.lines.forEach((line, i) => {
                     const group = i % dash;
-                    const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                    const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff ][group];
                     slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
                 });
             }
             if (slice.groups)
             POLY.nest(slice.groups).forEach((poly, i) => {
                 slice.addTop(poly);
-                const group = i % 3;
-                const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
+                const group = i % 5;
+                const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff ][group];
                 slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
             });
         }

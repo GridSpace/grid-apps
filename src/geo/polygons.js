@@ -272,7 +272,7 @@
     }
 
     function flatten(polys, to, crush) {
-        if (!to) to = [];
+        to = to || [];
         polys.forEach(function(poly) {
             poly.flattenTo(to);
             if (crush) poly.inner = null;
@@ -399,7 +399,7 @@
              for (j=i+1; j<out.length; j++) {
                  if (!out[j]) continue;
                  union = out[i].union(out[j], minarea, all);
-                 if (union) {
+                 if (union && union.length) {
                      out[i] = null;
                      out[j] = null;
                      if (all) {

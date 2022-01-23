@@ -566,9 +566,6 @@
             if (cp) return cp;
             points.push(p);
             pmap[p.key] = p;
-            p.pos = 0;
-            p.mod = nextMod++; // unique seq ID for points
-            p.toString = function() { return this.mod }; // point array concat
             return p;
         }
 
@@ -577,200 +574,121 @@
             else p1.group.push(p2);
         }
 
-        function sliceAtTerm(path, term) {
-            let idx, len = path.length;
-            for (idx = 0; idx < len-1; idx++) {
-                if (path[idx] === term) {
-                    return path.slice(idx);
-                }
-            }
-            return path;
+        function perimeter(array) {
+            let p = BASE.newPolygon().addPoints(array);
+            // console.log(p);
+            return p.perimeter();
         }
 
         /**
-         * using minimal recursion, follow points through connected lines
-         * to form candidate output paths.
+         * follow points through connected lines to form candidate output paths
          */
-        function findPathsMinRecurse(point, path, paths, from) {
-            let stack = [ ];
-            if (paths.length > 10000) {
-                console.log(`indeterminate path @ ${z} from paths=${paths.length} input=${input.length}`);
-                input.excessive = paths.length;
-                return;
+        function findNextPath(point, current, branches, depth = 1) {
+            let path = [];
+            if (current) {
+                current.push(path);
             }
             for (;;) {
-                stack.push(point);
-
-                let last = point,
-                    links = point.group;
-
-                path.push(point);
-                // use del to mark traversed path
+                // prevent point re-use
                 point.del = true;
-                // set so point isn't used in another polygon search
-                point.pos = search++;
-                // seed path with two points to prevent redundant opposing seeks
-                if (path.length === 1) {
-                    from = point;
+                // add point to path
+                path.push(point);
+
+                let links = point.group.filter(p => !p.del);
+
+                // no need to recurse at the start
+                if (links.length === 2) {
                     point = links[0];
                     continue;
                 }
 
-                if (links.length > 2) {
-                    // TODO optimize when > 2 and limit to left-most and right-most branches
-                    // for now, pursue all possible branches
-                    links.forEach(function(nextp) {
-                        // do not backtrack
-                        if (nextp === from) {
-                            return;
-                        }
-                        if (nextp.del) {
-                            paths.push(sliceAtTerm(path,nextp));
-                        } else {
-                            findPathsMinRecurse(nextp, path.slice(), paths, point);
-                        }
+                // if fork in the road, follow all paths to their end
+                // and find the longest path
+                let root = !current, nc;
+                if (links.length > 1) {
+                    // if (debug) console.log('fork!', {links: links.length, depth, root});
+                    if (root) {
+                        current = [ path ];
+                        branches = [ ];
+                    }
+                    for (let p of links) {
+                        branches.push(nc = current.slice());
+                        let rpath = findNextPath(p, nc, branches, depth + 1);
+                        // allow point re-use in other path searches
+                        for (let p of rpath) p.del = false;
+                    }
+                    let flat = branches.map(b => b.flat()).sort((a,b) => {
+                        return perimeter(b) - perimeter(a);
+                        return b.length - a.length;
                     });
-                    break;
+                    let npath = flat[0];
+                    for (let p of npath) p.del = true;
+                    // if (debug) console.log({root, branches, flat, path, npath});
+                    return root ? npath : path;
                 } else {
-                    point = links[0] === from ? links[1] : links[0];
-                    from = last;
-                    // hit an open end
-                    if (!point) {
-                        path.open = true;
-                        paths.push(path);
-                        break;
-                    }
-                    // hit a point previously in the path (or start)
-                    if (point.del) {
-                        paths.push(sliceAtTerm(path,point));
-                        break;
-                    }
+                    path.open = point.group.length === 1;
+                    // choose next (unused) point
+                    point = links[0];
                 }
-            }
 
-            // undo temp del/used marks
-            for (let i=0; i<stack.length; i++) {
-                stack[i].del = false;
-                // stack[i].pos = 0;
+                // hit an open end or branch
+                if (!point || point.del) {
+                    // console.log({open: path.open, path: path.slice()});
+                    return path;
+                }
             }
         }
 
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly) {
             poly = poly.clean();
-            if (debug) console.log({emit: poly});
-            if (poly.length > 2) {
-                output.push(poly);
-            } else if (debug) {
-                console.log({clean_to_zero: poly});
-            }
+            if (poly.length > 2) output.push(poly);
+            if (debug) console.log('xray',poly.xray());
         }
 
         // given an array of paths, emit longest to shortest
         // eliminating points from the paths as they are emitted
         // shorter paths any point eliminated are eliminated as candidates.
-        function emitLongestAsPolygon(paths) {
-            let longest = null,
-                emitted = 0,
-                closed = 0,
-                open = 0;
-
-            paths.forEach(function(path) {
-                // use longest perimeter vs longest path?
-                if (!longest || path.length > longest.length) longest = path;
-                if (!path.open) closed++; else open++;
-            });
-
-            // it gets more complicated with multiple possible output paths
-            if (closed > 1 && open === 0) {
-                // add polygon to path (for area sorting)
-                paths.forEach(function(path) { path.poly = BASE.newPolygon().addPoints(path) });
-
-                // sort descending by area VS (length below -- better in most cases)
-                // paths.sort(function(a,b) { return b.poly.area() - a.poly.area() });
-
-                // sort descending by length
-                paths.sort(function(a,b) { return b.poly.length - a.poly.length });
-
-                // emit polygons largest to smallest
-                // omit polygon if it intersects previously emitted (has del points)
-                paths.forEach(function(path) {
-                    if (path.length < 3) return;
-                    let len = path.length, i;
-                    for (i = 0; i < len; i++) if (path[i].del) return;
-                    for (i = 0; i < len; i++) path[i].del = true;
-                    emit(path.poly);
-                    emitted++;
-                });
+        function emitPath(path) {
+            if (path.open) {
+                // if (debug) console.log('emit OPEN', path.length);
+                connect.push(path);
             } else {
-                if (longest.open) {
-                    connect.push(longest);
-                } else {
-                    // mark points so they don't get re-used
-                    for (let p of longest) p.del = true;
-                    emit(BASE.newPolygon().addPoints(longest), debug);
-                }
+                // if (debug) console.log('emit CLOSED', path.length);
+                emit(BASE.newPolygon().addPoints(path), debug);
             }
         }
 
         // create point map, unique point list and point group arrays
         input.forEach(function(line) {
-            p1 = cachedPoint(line.p1.round(4));
-            p2 = cachedPoint(line.p2.round(4));
+            p1 = cachedPoint(line.p1.round(3));
+            p2 = cachedPoint(line.p2.round(3));
             addConnected(p1,p2);
             addConnected(p2,p1);
         });
 
-        // order points leftmost to right-most
-        // points = points.sort((a,b) => {
-        //     return a.x - b.x;
-        // });
+        // console.log({points, forks: points.filter(p => p.group.length !== 2)});
 
-        // first trace paths starting at dangling endpoinds (bad polygon soup)
+        // first trace paths starting at undeleted points with connections
         for (let point of points) {
             // must not have been used and be a dangling end
-            if (point.pos === 0 && point.group.length === 1) {
-                let path = [];
-                let paths = [];
-                findPathsMinRecurse(point, path, paths);
-                if (paths.length > 0) emitLongestAsPolygon(paths);
+            if (!point.del && point.group.length) {
+                let path = findNextPath(point);
+                if (path) emitPath(path);
             }
         }
 
-        for (let i=0; i<2; i++) {
-            // for each point, find longest path back to self
-            for (let point of points) {
-                // must not have been used or be at a split
-                if (point.pos === 0 && point.group.length === 2) {
-                    let path = [];
-                    let paths = [];
-                    findPathsMinRecurse(point, path, paths);
-                    if (paths.length > 0) {
-                        emitLongestAsPolygon(paths, i>0);
-                    }
-                }
-            }
-
-            if (debug) console.log({
-                used: points.filter(p => p.del),
-                free: points.filter(p => !p.del)
-            });
-
-            // prepare points for re-use
-            points = points.filter(p => !p.del);
-            for (let p of points) {
-                p.pos = 0;
-            }
-            if (points.length < 2) {
-                break;
-            }
-        }
-        if (debug) console.log({output});
+        if (debug) console.log({
+            used: points.filter(p => p.del),
+            free: points.filter(p => !p.del)
+        });
 
         // return true if points are deemed "close enough" close a polygon
         function close(p1,p2) {
             return p1.distToSq2D(p2) <= 0.01;
         }
+
+        if (debug && connect.length) console.log({connect});
 
         // reconnect dangling/open polygons to closest endpoint
         for (let i=0; i<connect.length; i++) {

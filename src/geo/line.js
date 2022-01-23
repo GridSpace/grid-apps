@@ -20,7 +20,7 @@
      * @constructor
      */
     function Line(p1, p2, key) {
-        if (!key) key = [p1.key, p2.key].join('-');
+        if (!key) key = [p1.key, p2.key].join(';');
         this.p1 = p1;
         this.p2 = p2;
         this.key = key;
