@@ -493,10 +493,10 @@ function set_darkmode(dark) {
     }
     sky.set({
         color: dark ? 0 : 0xffffff,
-        ambient: { intensity: dark ? 0.5 : 1.0 }
+        ambient: { intensity: dark ? 0.5 : 1.1 }
     });
     platform.set({
-        light: dark ? 0.06 : 0.06,
+        light: dark ? 0.08 : 0.08,
         grid: dark ? {
             colorMajor: 0x666666,
             colorMinor: 0x333333,
