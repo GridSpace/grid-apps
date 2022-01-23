@@ -501,14 +501,16 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     /**
      * @param {number} color
      */
-    PRO.setColor = function(color,settings) {
+    PRO.setColor = function(color, settings, save = true) {
         if (settings) {
             console.trace('legacy call with settings');
         }
         if (Array.isArray(color)) {
             color = color[this.getExtruder() % color.length];
         }
-        this.color = color;
+        if (save) {
+            this.color = color;
+        }
         let material = this.mesh.material;
         material.color.set(color);
     };
@@ -952,6 +954,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             let mat = new THREE.LineBasicMaterial({ color: dark ? 0xaaaaaa : 0 });
             let wire = widget.wire = new THREE.LineSegments(geo, mat);
             mesh.add(wire);
+        }
+        if (KIRI.api.view.get() === KIRI.conf.VIEWS.ARRANGE) {
+            this.setColor(this.color);
+        } else {
+            this.setColor(0x888888,undefined,false);
         }
         if (opacity !== undefined) {
             widget.setOpacity(opacity);

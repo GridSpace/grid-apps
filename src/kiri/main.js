@@ -386,7 +386,8 @@
             clear: clearWorkspace,
             save: saveWorkspace,
             set_focus: setFocus,
-            update: SPACE.update
+            update: SPACE.update,
+            isDark() { return settings.controller.dark }
         },
         tweak,
         util: {
@@ -398,14 +399,14 @@
             b64dec: obj => { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
         },
         view: {
-            get: function() { return viewMode },
+            get() { return viewMode },
             set: setViewMode,
             update_slider: updateSlider,
             update_fields: updateFields,
             wireframe: setWireframe,
             snapshot: null,
             unit_scale: unitScale,
-            isArrange: function() { return viewMode === VIEWS.ARRANGE }
+            isArrange() { return viewMode === VIEWS.ARRANGE }
         },
         widgets: {
             map: function() {
