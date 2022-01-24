@@ -182,6 +182,14 @@ button:hover {
     color: black;
 }
 
+.dark #top-right > div {
+    color: black;
+}
+
+.dark #top-right > div:hover {
+    color: white;
+}
+
 #top-settings, #top-help {
     flex-direction: column;
     justify-content: center;
