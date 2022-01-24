@@ -1419,6 +1419,7 @@ th, tr, td, label {
 
 #layer-animate {
     position: absolute;
+    z-index: 2;
     left: 15px;
     right: 15px;
     bottom: 3px;
@@ -1442,6 +1443,7 @@ th, tr, td, label {
 
 #layer-toolpos {
     position: absolute;
+    display: none;
     right: 3px;
     bottom: 3px;
 }
