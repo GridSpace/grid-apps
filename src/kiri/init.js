@@ -2504,6 +2504,9 @@
             API.show.alert("this is a beta / development release");
             SDB.kiri_beta = KIRI.beta;
         }
+
+        API.show.alert("<a href='/choose'>this version is out of date</a>");
+        API.show.alert("<a href='/choose'>click here to update</a>");
     }
 
     // update static html elements with language overrides
