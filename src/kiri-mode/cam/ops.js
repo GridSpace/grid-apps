@@ -1149,7 +1149,7 @@
 
         slice(progress) {
             let { widget, sliceAll } = this.state;
-            let slicer = new KIRI.slicer2(widget.getPoints(), {
+            let slicer = new KIRI.cam_slicer(widget.getPoints(), {
                 zlist: true,
                 zline: true
             });
@@ -1282,7 +1282,7 @@
                 where = {under: [], over: [], on: []};
             }
             if (where) {
-                let { checkOverUnderOn, intersectPoints } = self.kiri.slicer2;
+                let { checkOverUnderOn, intersectPoints } = self.kiri.cam_slicer;
                 checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
                 checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
                 checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);

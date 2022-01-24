@@ -385,7 +385,7 @@
                 ondone(newslices);
             }
 
-            let slicer = new KIRI.slicer2(widget.getPoints(), {
+            let slicer = new KIRI.cam_slicer(widget.getPoints(), {
                 swapX: true, emptyok: true, notopok: true
             });
             let sindex = slicer.interval(resolution);

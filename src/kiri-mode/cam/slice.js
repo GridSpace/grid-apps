@@ -93,7 +93,7 @@
         }
 
         let mark = Date.now();
-        let slicer = new KIRI.slicer2(widget.getPoints(), {
+        let slicer = new KIRI.cam_slicer(widget.getPoints(), {
             zlist: true,
             zline: true
         });
@@ -232,7 +232,7 @@
             // do no work if cached
             return false;
         }
-        let slicer = new KIRI.slicer2(widget.getPoints(), {
+        let slicer = new KIRI.cam_slicer(widget.getPoints(), {
             zlist: true,
             zline: true
         });

@@ -845,6 +845,6 @@
     Slicer.checkOverUnderOn = checkOverUnderOn;
     Slicer.intersectPoints = intersectPoints;
 
-    self.kiri.slicer2 = Slicer;
+    self.kiri.cam_slicer = Slicer;
 
 })();
