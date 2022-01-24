@@ -950,9 +950,13 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
         if (set) {
             let dark = KIRI.api.conf.get().controller.dark;
-            let geo = new THREE.WireframeGeometry(mesh.geometry);
-            let mat = new THREE.LineBasicMaterial({ color: dark ? 0xaaaaaa : 0 });
-            let wire = widget.wire = new THREE.LineSegments(geo, mat);
+            let mat = new THREE.MeshBasicMaterial({
+                wireframe: true,
+                color: dark ? 0xaaaaaa : 0,
+                opacity: 0.5,
+                transparent: true
+            })
+            let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
             mesh.add(wire);
         }
         if (KIRI.api.view.get() === KIRI.conf.VIEWS.ARRANGE) {
