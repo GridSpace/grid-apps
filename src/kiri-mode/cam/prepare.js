@@ -427,12 +427,7 @@
                 ftops = POLY.route(ftops, start);
             }
 
-            let frags = ftops.filter(p => p.open);
-            ftops = ftops.filter(p => !p.open);
-            start = poly2polyEmit(frags, start, emitter, { mark: "emark", perm: true });
-            for (let f of frags) f.level_emit = true;
-
-            ftops.forEach(top => {
+            function roughTopEmit(top, index, count, start) {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
                 if (ease) {
@@ -443,7 +438,16 @@
                     start.z += ease;
                 }
                 start = depthRoughPath(start, depth + 1, levels, tops, emitter, top, ease);
-            });
+                return start;
+            }
+
+            // output fragments (due to tabs) last
+            let frag = ftops.filter(p => p.open);
+            let full = ftops.filter(p => !p.open);
+
+            poly2polyEmit(full, start, roughTopEmit, { mark: "emark" });
+            poly2polyEmit(frag, start, roughTopEmit, { mark: "emark" });
+
             return start;
         }
 
