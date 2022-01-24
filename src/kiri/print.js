@@ -1228,8 +1228,10 @@
                     if (d2l < mindist && d2l < d2f) {
                         poly.reverse();
                         found = {poly:poly, index:0, point:poly.first()};
+                        mindist = d2l;
                     } else if (d2f < mindist) {
                         found = {poly:poly, index:0, point:poly.first()};
+                        mindist = d2f;
                     }
                     continue;
                 }

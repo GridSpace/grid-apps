@@ -426,6 +426,12 @@
             if (ftops.length > 1) {
                 ftops = POLY.route(ftops, start);
             }
+
+            let frags = ftops.filter(p => p.open);
+            ftops = ftops.filter(p => !p.open);
+            start = poly2polyEmit(frags, start, emitter, { mark: "emark", perm: true });
+            for (let f of frags) f.level_emit = true;
+
             ftops.forEach(top => {
                 top.level_emit = true;
                 let inside = level.filter(poly => poly.isInside(top));
@@ -522,7 +528,6 @@
                 maxz = Math.max(maxz, data.z + zadd + over);
                 continue;
             }
-
             let s1 = p1.slopeTo(p2).toUnit().normal();
             let s2 = p2.slopeTo(p1).toUnit().normal();
             let pa = p1.projectOnSlope(s1, off);
