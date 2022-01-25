@@ -602,7 +602,7 @@
                         poly.forEachPoint(function(point, pidx, points, offset) {
                             camOut(point.clone(), offset !== 0);
                         }, poly.isClosed(), index);
-                    });
+                    }, { swapdir: false });
                     newLayer();
                 }
             }

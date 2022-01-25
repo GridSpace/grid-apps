@@ -732,10 +732,14 @@
         }
     }
 
+    FDM.isDark = function() {
+        return current.print.settings.controller.dark ? true : false;
+    };
+
     FDM.rateToColor = function(rate, max) {
-        return current.print.settings.controller.dark ?
-         darkColorFunction(rate/max, 1, 0.85) :
-         currentColorFunction(rate/max, 1, 0.85);
+        return FDM.isDark() ?
+            darkColorFunction(rate/max, 1, 0.85) :
+            currentColorFunction(rate/max, 1, 0.85);
     };
 
     FDM.prepareRender = function(levels, update, opts = {}) {
@@ -745,6 +749,7 @@
             return [];
         }
 
+        const dark = FDM.isDark();
         const tools = opts.tools || {};
         const flat = opts.flat;
         const thin = opts.thin && !flat;
@@ -752,7 +757,7 @@
         const headColor = 0x888888;
         const moveColor = opts.move >= 0 ? opts.move : 0xaaaaaa;
         const printColor = opts.print >= 0 ? opts.print : 0x777700;
-        const arrowAll = false;
+        const arrowAll = true;
         const arrowSize = arrowAll ? 0.2 : 0.4;
         const layers = [];
         const toolMode = opts.toolMode;
@@ -919,8 +924,9 @@
                     }), { outline: true });
             }
             if (heads.length) {
+                let line = dark ? 0xffffff : 0x112233;
                 output
-                    .setLayer('arrows', { face: headColor, line: 0x112233, opacity: 0.5 }, true)
+                    .setLayer('arrows', { face: headColor, line, opacity: 0.75 }, true)
                     .addAreas(heads.map(points => {
                         const {p1, p2} = points;
                         const slope = p2.slopeTo(p1);

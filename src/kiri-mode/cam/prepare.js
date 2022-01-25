@@ -435,7 +435,7 @@
                 if (ease) {
                     start.z += ease;
                 }
-                start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true });
+                start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true, swapdir: false });
                 if (ease) {
                     start.z += ease;
                 }
@@ -447,8 +447,8 @@
             let frag = ftops.filter(p => p.open);
             let full = ftops.filter(p => !p.open);
 
-            poly2polyEmit(full, start, roughTopEmit, { mark: "emark" });
-            poly2polyEmit(frag, start, roughTopEmit, { mark: "emark" });
+            poly2polyEmit(full, start, roughTopEmit, { mark: "emark", swapdir: false });
+            poly2polyEmit(frag, start, roughTopEmit, { mark: "emark", swapdir: false });
 
             return start;
         }
@@ -493,7 +493,7 @@
                 fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, dir, ease);
                 fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, !dir, ease);
                 return fromPoint;
-            }, {weight: false});
+            }, { weight: false, swapdir: false });
             return start;
         }
 

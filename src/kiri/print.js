@@ -1225,7 +1225,7 @@
                     if (d2f > mindist && d2l > mindist) {
                         continue;
                     }
-                    if (d2l < mindist && d2l < d2f) {
+                    if (d2l < mindist && d2l < d2f && opt.swapdir !== false) {
                         poly.reverse();
                         found = {poly:poly, index:0, point:poly.first()};
                         mindist = d2l;
