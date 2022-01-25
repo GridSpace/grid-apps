@@ -331,6 +331,7 @@ const script = {
         "load/url",
         "load/file",
         "moto/broker",
+        "moto/webui",
         "kiri/ui",
         "kiri/do",
         "kiri/pack",

@@ -163,6 +163,7 @@ KIRI.work = {
                 let vertices = widget.getGeoVertices().buffer.slice(0);
                 send("sync", {
                     id: widget.id,
+                    meta: widget.meta,
                     group: widget.group.id,
                     track: widget.track,
                     vertices: vertices,

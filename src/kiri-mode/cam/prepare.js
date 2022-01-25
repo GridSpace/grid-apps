@@ -21,6 +21,8 @@
      * @param {Object} [firstPoint] starting point
      */
     CAM.prepare = function(widgets, settings, update) {
+        widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
+
         const count = widgets.length;
         const weight = 1/count;
         const print = self.worker.print = KIRI.newPrint(settings, widgets);
@@ -51,7 +53,7 @@
 
     function prepEach(widget, settings, print, firstPoint, update) {
 
-        if (widget.camops.length === 0) return;
+        if (widget.camops.length === 0 || widget.meta.disabled) return;
 
         let device = settings.device,
             process = settings.process,

@@ -28,6 +28,9 @@
             mark = Date.now(),
             layermax = 0;
 
+        // filter ignored widgets
+        widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
+
         // find max layer count
         widgets.forEach(widget => {
             layermax = Math.max(widget.slices.length);

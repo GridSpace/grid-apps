@@ -647,10 +647,15 @@ th, tr, td, label {
     left: -5px;
 }
 
-#lt-back, #lt-trash {
+#lt-back, #lt-options {
+    flex-direction: row;
     position: absolute;
     display: none;
+    gap: 5px;
     top: 0;
+}
+#lt-trash:hover, #lt-w-enable:hover, #lt-w-disable:hover {
+    color: var(--main-color);
 }
 #act-sep, #lt-sep {
     border-top-right-radius: 3px;

@@ -98,9 +98,11 @@
 
     FDM.sliceAll = function(settings, onupdate) {
         // future home of brim and anchor generation
-        let widgets = Object.values(KIRI.worker.cache).sort((a,b) => {
-            return a.slices[0].z - b.slices[0].z
-        });
+        let widgets = Object.values(KIRI.worker.cache)
+            .filter(w => !w.meta.disabled)
+            .sort((a,b) => {
+                return a.slices[0].z - b.slices[0].z
+            });
         // ignore first widget
         widgets.shift();
         // count extruders used

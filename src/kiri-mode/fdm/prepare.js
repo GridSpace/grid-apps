@@ -22,7 +22,7 @@
      */
     FDM.prepare = function(widgets, settings, update) {
         // filter ignored widgets
-        widgets = widgets.filter(w => !w.track.ignore);
+        widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
         let render = settings.render !== false,
             { device, process, controller, bounds, mode } = settings,

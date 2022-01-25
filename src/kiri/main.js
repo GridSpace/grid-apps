@@ -109,7 +109,13 @@
         update_bounds: updateSelectedBounds,
         update_info: updateSelectedInfo,
         delete: function() { platform.delete(selection.widgets()) },
-        export: exportSelection
+        export: exportSelection,
+        enable() { selection.setDisabled(false) },
+        disable() { selection.setDisabled(true) },
+        setDisabled(bool) {
+            forSelectedWidgets(w => w.meta.disabled = bool);
+            platformUpdateSelected();
+        }
     };
 
     const platform = {
@@ -1130,7 +1136,7 @@
         API.conf.save();
         API.event.emit('slice.begin', getMode());
 
-        let slicing = WIDGETS.slice().filter(w => !w.track.ignore);
+        let slicing = WIDGETS.slice().filter(w => !w.track.ignore && !w.meta.disabled);
 
         // determing this widgets % of processing time estimated by vertex count
         for (let widget of slicing) {
@@ -1956,9 +1962,14 @@
         let selreal = selection.widgets();
         let selwid = selection.widgets(true);
         let selcount = selwid.length;
-        let extruders = settings.device.extruders;
-        UI.trash.style.display = selreal.length ? 'flex' : '';
+        let { extruders } = settings.device;
+        let { area, enable, disable } = UI.options;
+        area.style.display = selreal.length ? 'flex' : '';
         if (selcount) {
+            let enaC = selwid.filter(w => w.meta.disabled !== true).length;
+            let disC = selwid.filter(w => w.meta.disabled === true).length;
+            enable.style.display = disC ? 'flex' : 'none';
+            disable.style.display = enaC ? 'flex' : 'none';
             UI.nozzle.classList.add('lt-active');
             if (feature.meta && selcount === 1) {
                 let sel = selwid[0];
@@ -1983,6 +1994,8 @@
                 UI.mesh.faces.innerText = '-';
             }
         } else {
+            enable.style.display = 'none';
+            disable.style.display = 'none';
             UI.mesh.name.innerText = '[0]';
             UI.mesh.points.innerText = '-';
             UI.mesh.faces.innerText = '-';
@@ -2001,6 +2014,10 @@
                 if (b) b.classList.add('pop-sel');
                 w.saveState();
             }, true);
+        } else {
+            forSelectedWidgets(w => {
+                w.setColor(color.selected);
+            });
         }
     }
 
@@ -2186,25 +2203,24 @@
     }
 
     function platformChanged() {
-        let fts = $('ft-select');
-        fts.innerHTML = '';
-        for (let w of WIDGETS) {
-            let b = DOC.createElement('button');
-            fts.appendChild(b);
-            b.innerText = w.meta.file || 'no name';
+        h.bind($('ft-select'), WIDGETS.map(w => {
             let color;
-            b.onmouseenter = function() {
-                color = w.getColor();
-                w.setColor(0x0088ff);
-            };
-            b.onmouseleave = function() {
-                w.setColor(color);
-            };
-            b.onclick = function() {
-                platformSelect(w, true, false);
-                color = w.getColor();
-            };
-        }
+            return [
+                h.button({ _: w.meta.file || 'no name',
+                    onmouseenter() {
+                        color = w.getColor();
+                        w.setColor(0x0088ff);
+                    },
+                    onmouseleave() {
+                        w.setColor(color);
+                    },
+                    onclick() {
+                        platformSelect(w, true, false);
+                        color = w.getColor();
+                    }
+                })
+            ]
+        }));
     }
 
     function platformSelectAll() {

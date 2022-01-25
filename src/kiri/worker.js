@@ -273,6 +273,8 @@ KIRI.worker = {
         wcache[data.id] = widget;
         // stored for possible future rotations
         widget.vertices = vertices;
+        // restore meta
+        widget.meta = data.meta;
         // restore tracking object
         widget.track = data.track;
         send.done(data.id);

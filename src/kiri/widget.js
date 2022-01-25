@@ -498,6 +498,19 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         this.slices = null;
     };
 
+    function rgb(c) {
+        return [ c >> 16, (c >> 8) & 0xff , c & 0xff ];
+    }
+
+    function avgc(c1, c2, w) {
+        let r1 = rgb(c1);
+        let r2 = rgb(c2);
+        let d = (w + 2);
+        return ((r1[0] * w + r2[0]) / d) << 16
+            | ((r1[1] * w + r2[1]) / d) << 8
+            | ((r1[2] * w + r2[2]) / d);
+    }
+
     /**
      * @param {number} color
      */
@@ -512,7 +525,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             this.color = color;
         }
         let material = this.mesh.material;
-        material.color.set(color);
+        material.color.set(this.meta.disabled ? avgc(0x888888, color, 3) : color);
     };
 
     PRO.getColor = function() {

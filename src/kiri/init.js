@@ -1527,8 +1527,14 @@
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
+            options: {
+                area:           $('lt-options'),
+                trash:          $('lt-trash'),
+                enable:         $('lt-w-enable'),
+                disable:        $('lt-w-disable'),
+            },
+
             back:               $('lt-back'),
-            trash:              $('lt-trash'),
             ltsetup:            $('lt-setup'),
             ltfile:             $('lt-file'),
             ltview:             $('lt-view'),
@@ -2605,7 +2611,9 @@
         $('file-recent').onclick = () => { API.modal.show('files') };
         $('file-import').onclick = (ev) => { API.event.import(ev) };
         UI.back.onclick = API.platform.layout;
-        UI.trash.onclick = API.selection.delete;
+        UI.options.trash.onclick = API.selection.delete;
+        UI.options.enable.onclick = API.selection.enable;
+        UI.options.disable.onclick = API.selection.disable;
         UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
         UI.func.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
         UI.func.animate.onclick = (ev) => { ev.stopPropagation(); API.function.animate() };
@@ -2693,11 +2701,14 @@
             let tid = tt.getAttribute('target');
             let target = tid ? $(tid) : parentWithClass(tt, 'movable');
             target.style.display = 'none';
-            tt.onmousedown = (ev) => {
+            let close = tt.onmousedown = (ev) => {
                 target.style.display = 'none';
-                ev.preventDefault();
-                ev.stopPropagation();
+                if (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                }
             };
+            API.event.on('key.esc', close);
         }
         // add drag behavior to movers
         [...document.getElementsByClassName('mover')].forEach(mover => {

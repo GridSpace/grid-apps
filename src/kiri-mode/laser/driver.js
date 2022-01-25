@@ -148,6 +148,9 @@
             totalSlices = 0,
             slices = 0;
 
+        // filter ignored widgets
+        widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
+
         function arc(center, s1, s2, out) {
             let a1 = s1.angle;
             let a2 = s2.angle;
