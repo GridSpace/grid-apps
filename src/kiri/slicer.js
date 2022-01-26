@@ -648,12 +648,6 @@
 
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly, recurse = true) {
-            // if (recurse && union) {
-            //     for (let simple of poly.simplify()) {
-            //         emit(simple, false);
-            //     }
-            //     return;
-            // }
             poly = poly.clean();
             if (poly.length > 2) output.push(poly);
             if (debug) console.log('xray',poly.xray());
