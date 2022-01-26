@@ -563,6 +563,7 @@
             connect = [],
             search = 1,
             nextMod = 1,
+            emitted = 0,
             forks = false,
             frays = false,
             bridge = CONF.bridgeLineGapDistance,
@@ -607,9 +608,9 @@
                 let links = point.group.filter(p => !p.del);
 
                 // no need to recurse at the start
-                if (links.length === 2) {
+                if (links.length === 2 && depth === 1) {
                     point = links[0];
-                    if (debug) console.log({start_2way: point});
+                    // if (debug) console.log({start_mid: point, depth});
                     continue;
                 }
 
@@ -617,7 +618,7 @@
                 // and find the longest path
                 let root = !current, nc;
                 if (links.length > 1) {
-                    if (debug) console.log('fork!', {links: links.length, depth, root});
+                    // if (debug) console.log('fork!', {links: links.length, depth, root});
                     if (root) {
                         current = [ path ];
                         branches = [ ];
@@ -633,12 +634,19 @@
                         return perimeter(b) - perimeter(a);
                     });
                     let npath = flat[0];
-                    for (let p of npath) p.del = true;
-                    // if (debug) console.log({root, branches, flat, path, npath});
-                    return root ? npath : path;
+                    if (debug) console.log({
+                        root,
+                        branches: branches.slice(),
+                        flat, path, npath
+                    });
+                    if (root) {
+                        for (let p of npath) p.del = true;
+                        return npath;
+                    } else {
+                        return path;
+                    }
+                    // return root ? npath : path;
                 } else {
-                    // dangling end
-                    path.open = point.group.length <= 1;
                     // choose next (unused) point
                     point = links[0];
                 }
@@ -648,13 +656,16 @@
                     return path;
                 }
             }
+
+            throw "invalid state";
         }
 
         // emit a polygon if it can be cleaned and still have 2 or more points
         function emit(poly) {
+            emitted += poly.length;
             poly = poly.clean();
             if (poly.length > 2 || true) output.push(poly);
-            // if (debug) console.log('xray',poly.xray());
+            if (debug) console.log('xray',poly);
         }
 
         // given an array of paths, emit longest to shortest
@@ -688,29 +699,32 @@
             forks = forks || gl > 2;
             frays = frays || gl < 2;
         }
-        // if (debug && (forks || frays)) console.log({forks, frays});
+        if (debug && (forks || frays)) console.log({forks, frays});
 
         // process paths starting with forks
-        if (forks)
+        if (forks) {
+        if (debug) console.log('process forks');
         for (let point of points) {
             // must not have been used and be a dangling end
             if (!point.del && point.group.length > 2) {
                 let path = findNextPath(point);
                 if (path) emitPath(path);
             }
-        }
+        } }
 
         // process paths with dangling endpoints
-        if (frays)
+        if (frays) {
+        if (debug) console.log('process frays');
         for (let point of points) {
             // must not have been used and be a dangling end
             if (!point.del && point.group.length === 1) {
                 let path = findNextPath(point);
                 if (path) emitPath(path);
             }
-        }
+        } }
 
         // process normal paths
+        if (debug) console.log('process mids');
         for (let point of points) {
             // must not have been used and be a dangling end
             if (!point.del) {
@@ -721,11 +735,13 @@
 
         if (debug) console.log({
             points,
+            emitted,
             used: points.filter(p => p.del),
-            free: points.filter(p => !p.del)
+            free: points.filter(p => !p.del),
         });
 
         if (debug && connect.length) console.log({connect});
+        if (debug) connect = connect.map(a => a.slice());
 
         // progressively connect open polygons within a bridge distance
         let iter = 1000;
@@ -832,7 +848,6 @@
 
             if (debug) console.log({
                 dist: dist.round(4),
-                perim: array.perimeter.round(4),
                 merged: array.merged || false,
                 array
             });
@@ -846,6 +861,9 @@
                 );
             }
         }
+
+        if (debug) console.log({ emitted });
+        if (debug && emitted < points.length) console.log({ leftovers:points.length - emitted });
 
         return output;
     }
