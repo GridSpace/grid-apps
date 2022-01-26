@@ -1327,6 +1327,7 @@
         }
 
         let now = Date.now(),
+            isBelt = settings.device.bedBelt,
             segNumber = 0,
             segtimes = {},
             startTime,
@@ -1377,7 +1378,7 @@
                     stack.add(layer);
                 });
                 // rotate stack for belt beds
-                if (settings.device.bedBelt && WIDGETS[0].rotinfo) {
+                if (isBelt && WIDGETS[0].rotinfo) {
                     let ri = WIDGETS[0].rotinfo;
                     ri.dz = 0;
                     ri.dy = settings.device.bedDepth / 2;

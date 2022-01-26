@@ -1,4 +1,6 @@
-# Kiri:Moto / Grid:Apps notes
+# Grid:Apps TODOs and Notes
+
+# Kiri:Moto
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -109,6 +111,28 @@
 
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
 
-# Other
+# OctoPrint plugin
 
-* investigate libtess https://www.npmjs.com/package/libtess b/c earcut sometimes broken
+* subfolder parameter for dropped files
+* auto-kick check box in preferences
+
+
+# Mesh:Tool
+
+* add fix op: isolate = separate bodies
+* add flatten/crush op: for z bottoms
+* face selection: find regions with < delta to normal
+* better z snap using just vertexes from face intersected
+* allow setting model/group origin for scale/rotate
+* fix mirror to work with groups (just models currently)
+* bounding box toggle should be global, not selection
+* add analyze results dialog
+
+* rename analyze > patch
+* remove repair function?
+
+# Other / Links
+
+* investigate libtess https://www.npmjs.com/package/libtess b/c earcut sometimes wrong
+* https://stackoverflow.com/questions/40927728/three-js-determine-if-points-are-co-planar-and-mapping-co-planar-points-onto-x
+* https://stackoverflow.com/questions/52818307/determine-whether-one-polygon-contains-another
