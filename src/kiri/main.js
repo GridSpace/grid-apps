@@ -1119,6 +1119,7 @@
 
         let process = settings.process,
             device = settings.device,
+            control = settings.controller,
             isBelt = device.bedBelt,
             mode = settings.mode,
             now = Date.now(),
@@ -1268,6 +1269,9 @@
                 if (scale === 1) {
                     updateStackLabelState();
                 }
+                if (control.lineType === 'line') {
+                    $('render-ghost').onclick();
+                }
             });
             if (scale === 1) {
                 API.show.progress(0);
@@ -1399,6 +1403,10 @@
                 updateSpeeds();
             }
             updateStackLabelState();
+
+            if (settings.controller.lineType === 'line') {
+                $('render-ghost').onclick();
+            }
 
             // mark preview complete for export
             complete.preview = feature.pmode;
