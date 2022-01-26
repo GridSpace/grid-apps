@@ -631,7 +631,7 @@
                     let npath = flat[0];
                     for (let p of npath) p.del = true;
                     // if (debug) console.log({root, branches, flat, path, npath});
-                    return emitPath(root ? npath : path);
+                    return root ? npath : path;
                 } else {
                     // dangling end
                     path.open = point.group.length <= 1;
@@ -641,7 +641,7 @@
 
                 // hit an open end or branch
                 if (!point || point.del) {
-                    return emitPath(path);
+                    return path;
                 }
             }
         }
@@ -688,7 +688,8 @@
         for (let point of points) {
             // must not have been used and be a dangling end
             if (!point.del && point.group.length) {
-                findNextPath(point);
+                let path = findNextPath(point);
+                if (path) emitPath(path);
             }
         }
 
