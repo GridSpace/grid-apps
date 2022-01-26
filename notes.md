@@ -108,3 +108,7 @@
 # Laser
 
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
+
+# Other
+
+* investigate libtess https://www.npmjs.com/package/libtess b/c earcut sometimes broken

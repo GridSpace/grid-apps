@@ -250,7 +250,7 @@
     const devel = {
         xray: (layers) => {
             let proc = API.conf.get().process;
-            let size = proc.sliceHeight || 1;
+            let size = proc.sliceHeight || proc.slaSlice || 1;
             layers = Array.isArray(layers) ? layers : [ layers ];
             proc.xray = layers.map(l => l * size + size / 2);
             API.function.slice();
@@ -1269,7 +1269,7 @@
                 if (scale === 1) {
                     updateStackLabelState();
                 }
-                if (control.lineType === 'line') {
+                if (!isBelt && control.lineType === 'line' && !process.xray) {
                     $('render-ghost').onclick();
                 }
             });
@@ -1404,7 +1404,8 @@
             }
             updateStackLabelState();
 
-            if (settings.controller.lineType === 'line') {
+            let { controller, process } = settings;
+            if (!isBelt && controller.lineType === 'line' && !process.xray) {
                 $('render-ghost').onclick();
             }
 

@@ -1411,18 +1411,6 @@
         return this.clean(true, undefined, Math.min(CONF.clipper / 10, CONF.clipperClean * 5));
     };
 
-    // does not work with nested polys
-    PRO.simplify = function(parent) {
-        if (this.length === 0 || this.open) return [ this ];
-        let clib = self.ClipperLib,
-            clip = clib.Clipper,
-            ctyp = clib.ClipType,
-            p2cl = this.toClipper(),
-            clean = clip.SimplifyPolygon(p2cl[0], ctyp.pftPositive),
-            z = this.getZ();
-        return clean.map(array => fromClipperPath(array, z));
-    };
-
     /**
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.
@@ -1748,14 +1736,40 @@
         return (a1 > a2) ? a2 / a1 : a1 / a2;
     };
 
+    // does not work with nested polys
+    PRO.simplify = function(opt = {}) {
+        let z = this.getZ();
+
+        // use expand / deflate technique instead
+        if (opt.pump) {
+            let p2 = POLY().offset([ this ], opt.pump, { z });
+            if (p2) {
+                p2 = POLY().offset(p2, -opt.pump, { z });
+                return p2;
+            }
+            return null;
+        }
+
+        let clib = self.ClipperLib,
+            cfil = clib.PolyFillType,
+            clip = this.toClipper(),
+            res = clib.Clipper.SimplifyPolygons(clip, cfil.pftNonZero);
+
+        if (!(res && res.length)) {
+            return null;
+        }
+
+        return res.map(array => {
+            let poly = newPolygon();
+            for (let pt of array) {
+                poly.push(BASE.pointFromClipper(pt, z));
+            }
+            return poly;
+        });
+    };
+
     PRO.unionMatch = function(polys) {
         return polys.filter(poly => poly.isEquivalent(this)).length;
-        // for (let poly of polys) {
-        //     if (this.isEquivalent(poly)) {
-        //         return true;
-        //     }
-        // }
-        // return false;
     };
 
     /**
@@ -1767,41 +1781,45 @@
     PRO.union = function(poly, min, all) {
         if (!this.overlaps(poly)) return null;
 
-        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
-            clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
-            sp1 = this.toClipper(),
-            sp2 = poly.toClipper(),
-            minarea = min >= 0 ? min : 0.1;
+        PRO.union = function(poly, min, all) {
+            if (!this.overlaps(poly)) return null;
 
-        clip.AddPaths(sp1, ptyp.ptSubject, true);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+            let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
+                clib = self.ClipperLib,
+                ctyp = clib.ClipType,
+                ptyp = clib.PolyType,
+                cfil = clib.PolyFillType,
+                clip = new clib.Clipper(),
+                ctre = new clib.PolyTree(),
+                sp1 = this.toClipper(),
+                sp2 = poly.toClipper(),
+                minarea = min >= 0 ? min : 0.1;
 
-        if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
-            if (all) {
-                if (union.length === 2) {
-                    return null;
-                    // if (this.unionMatch(union) || poly.unionMatch(union)) {
-                    //     return null;
-                    // }
+            clip.AddPaths(sp1, ptyp.ptSubject, true);
+            clip.AddPaths(sp2, ptyp.ptClip, true);
+
+            if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+                let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+                if (all) {
+                    if (union.length === 2) {
+                        return null;
+                        // if (this.unionMatch(union) || poly.unionMatch(union)) {
+                        //     return null;
+                        // }
+                    }
+                    return union;
                 }
-                return union;
+                if (union.length === 1) {
+                    union = union[0];
+                    union.fillang = fillang;
+                    return union;
+                } else {
+                    console.trace({check_union_call_path: union, this: this, poly});
+                }
             }
-            if (union.length === 1) {
-                union = union[0];
-                union.fillang = fillang;
-                return union;
-            } else {
-                console.trace({check_union_call_path: union, this: this, poly});
-            }
-        }
 
-        return null;
+            return null;
+         };
      };
 
     /** ******************************************************************

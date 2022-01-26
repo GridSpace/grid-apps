@@ -675,7 +675,7 @@
             let closed = path[0].group.indexOf(path.peek()) >= 0;
             if (closed && path.length > 2) {
                 if (debug) console.log({ closed: path.length, path });
-                emit(BASE.newPolygon().addPoints(path), debug);
+                emit(BASE.newPolygon().addPoints(path));
             } else if (path.length > 1) {
                 let gap = path[0].distTo2D(path.peek()).round(4);
                 if (debug) console.log({ open: path.length, gap, path });
