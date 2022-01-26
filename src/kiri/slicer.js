@@ -563,9 +563,11 @@
             connect = [],
             search = 1,
             nextMod = 1,
+            forks = false,
+            frays = false,
             bridge = CONF.bridgeLineGapDistance,
             bridgeMax = CONF.bridgeLineGapDistanceMax,
-            p1, p2;
+            p1, p2, gl;
 
         function cachedPoint(p) {
             let cp = pmap[p.key];
@@ -578,6 +580,9 @@
         function addConnected(p1, p2) {
             if (!p1.group) p1.group = [ p2 ];
             else p1.group.push(p2);
+            gl = p1.group.length;
+            forks = forks || gl > 2;
+            frays = frays || gl < 2;
         }
 
         function perimeter(array) {
@@ -595,6 +600,7 @@
             if (current) {
                 current.push(path);
             }
+
             for (;;) {
                 // prevent point re-use
                 point.del = true;
@@ -606,6 +612,7 @@
                 // no need to recurse at the start
                 if (links.length === 2) {
                     point = links[0];
+                    if (debug) console.log({start_2way: point});
                     continue;
                 }
 
@@ -613,7 +620,7 @@
                 // and find the longest path
                 let root = !current, nc;
                 if (links.length > 1) {
-                    // if (debug) console.log('fork!', {links: links.length, depth, root});
+                    if (debug) console.log('fork!', {links: links.length, depth, root});
                     if (root) {
                         current = [ path ];
                         branches = [ ];
@@ -647,10 +654,10 @@
         }
 
         // emit a polygon if it can be cleaned and still have 2 or more points
-        function emit(poly, recurse = true) {
+        function emit(poly) {
             poly = poly.clean();
-            if (poly.length > 2) output.push(poly);
-            if (debug) console.log('xray',poly.xray());
+            if (poly.length > 2 || true) output.push(poly);
+            // if (debug) console.log('xray',poly.xray());
         }
 
         // given an array of paths, emit longest to shortest
@@ -659,11 +666,11 @@
         function emitPath(path) {
             let closed = path[0].group.indexOf(path.peek()) >= 0;
             if (closed && path.length > 2) {
-                if (debug) console.log(`CLOSED [${path.length}]`);
+                if (debug) console.log({ closed: path.length, path });
                 emit(BASE.newPolygon().addPoints(path), debug);
             } else if (path.length > 1) {
                 let gap = path[0].distTo2D(path.peek()).round(4);
-                if (debug) console.log(`OPEN [${path.length}] ${gap}`);
+                if (debug) console.log({ open: path.length, gap, path });
                 connect.push(path);
             }
         }
@@ -677,49 +684,69 @@
         });
 
         // console.log({points, forks: points.filter(p => p.group.length !== 2)});
-
         // for each unused point, find the longest non-intersecting path
+
+        // process paths starting with forks
+        if (forks)
         for (let point of points) {
             // must not have been used and be a dangling end
-            if (!point.del && point.group.length) {
+            if (!point.del && point.group.length > 2) {
+                let path = findNextPath(point);
+                if (path) emitPath(path);
+            }
+        }
+
+        // process paths with dangling endpoints
+        if (frays)
+        for (let point of points) {
+            // must not have been used and be a dangling end
+            if (!point.del && point.group.length === 1) {
+                let path = findNextPath(point);
+                if (path) emitPath(path);
+            }
+        }
+
+        // process normal paths
+        for (let point of points) {
+            // must not have been used and be a dangling end
+            if (!point.del) {
                 let path = findNextPath(point);
                 if (path) emitPath(path);
             }
         }
 
         if (debug) console.log({
+            points,
             used: points.filter(p => p.del),
             free: points.filter(p => !p.del)
         });
 
-        // return true if points are deemed "close enough" close a polygon
-        function close(p1,p2,dist) {
-            return p1.distToSq2D(p2) <= dist || 0.01;
-        }
-
         if (debug && connect.length) console.log({connect});
 
+        // ensure perimeters are seeded
+        connect.forEach(a => perimeter(a));
+
         // progressively connect open polygons within a bridge distance
-        let iter = 10;
+        let iter = 1000;
         let mingap;
-        do {
+        if (true) do {
             mingap = Infinity;
 
-            for (let i=0; i<connect.length; i++) {
+            outer: for (let i=0; i<connect.length; i++) {
                 if (!bridge) {
                     emit(BASE.newPolygon().addPoints(root).setOpen());
                     continue;
                 }
 
                 // rollup root with arrays after until no more ends match
-                loop: while (true) {
+                inner: while (true) {
                     let root = connect[i];
 
                     if (root.delete) break;
 
                     let rfirst = root[0],
                         rlast = root.peek(),
-                        dist = Infinity,
+                        dist = rfirst.distToSq2D(rlast),
                         closest = { dist };
 
                     for (let j=i+1; j<connect.length; j++) {
@@ -762,6 +789,12 @@
                     let { next, reverse, swap } = closest;
 
                     if (next && closest.dist < bridge) {
+                        if (debug) console.log({
+                            rollup: root.slice(),
+                            next: next.slice(),
+                            reverse,
+                            swap
+                        });
                         if (reverse) {
                             reverse.reverse();
                         }
@@ -771,23 +804,25 @@
                             connect[i] = next;
                             connect[swap] = root;
                             root.delete = true;
+                            next.merged = true;
                         } else {
                             root.perimeter += next.perimeter;
                             root.appendAll(next);
                             next.delete = true;
+                            root.merged = true;
                         }
-                        if (debug) console.log({rollup: root, next, same: root == next});
                     } else {
-                        // no more closest polys (open set)
-                        // emit(BASE.newPolygon().addPoints(root));
-                        break loop;
+                        break inner;
                     }
                 }
             }
 
             bridge = mingap < Infinity ? Math.max(mingap + 0.01, bridge + 0.1) : bridge + 0.1;
+            if (debug) console.log({iter, bridge, mingap, bridgeMax});
 
         } while (iter-- > 0 && bridge && bridge < bridgeMax && mingap < bridgeMax);
+
+        if (debug) console.log({ remain: connect.filter(c => !c.delete) });
 
         for (let array of connect) {
             if (array.delete) continue;
@@ -795,6 +830,13 @@
             let first = array[0];
             let last = array.peek();
             let dist = first.distToSq2D(last);
+
+            if (debug) console.log({
+                dist: dist.round(4),
+                perim: array.perimeter.round(4),
+                merged: array.merged || false,
+                array
+            });
             if (dist <= bridge) {
                 // tail meets head (close)
                 emit(BASE.newPolygon().addPoints(array));
@@ -802,7 +844,7 @@
                 // tail meets head (far)
                 // console.log({dist});
                 emit(BASE.newPolygon().addPoints(array)
-                    .setOpen()
+                    // .setOpen()
                 );
             }
         }
