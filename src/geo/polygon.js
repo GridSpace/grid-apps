@@ -1411,6 +1411,18 @@
         return this.clean(true, undefined, Math.min(CONF.clipper / 10, CONF.clipperClean * 5));
     };
 
+    // does not work with nested polys
+    PRO.simplify = function(parent) {
+        if (this.length === 0 || this.open) return [ this ];
+        let clib = self.ClipperLib,
+            clip = clib.Clipper,
+            ctyp = clib.ClipType,
+            p2cl = this.toClipper(),
+            clean = clip.SimplifyPolygon(p2cl[0], ctyp.pftPositive),
+            z = this.getZ();
+        return clean.map(array => fromClipperPath(array, z));
+    };
+
     /**
      * simplify and merge collinear. only works for single
      * non-nested polygons.  used primarily in slicer/connectLines.

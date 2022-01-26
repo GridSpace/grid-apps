@@ -726,15 +726,13 @@
                 slice.lines.forEach((line, i) => {
                     const group = i % dash;
                     const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff ][group];
-                    slice.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
+                    slice.output().setLayer(`l${group}`, color).addLine(line.p1, line.p2);
                 });
             }
             if (slice.groups)
             POLY.nest(slice.groups).forEach((poly, i) => {
                 slice.addTop(poly);
-                const group = i % 5;
-                const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff ][group];
-                slice.output().setLayer(`xg-${group}`, color).addPoly(poly);
+                slice.output().setLayer(`g${i}`, 0x888888).addPoly(poly);
             });
         }
 
