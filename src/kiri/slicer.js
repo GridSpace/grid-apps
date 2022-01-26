@@ -580,9 +580,6 @@
         function addConnected(p1, p2) {
             if (!p1.group) p1.group = [ p2 ];
             else p1.group.push(p2);
-            gl = p1.group.length;
-            forks = forks || gl > 2;
-            frays = frays || gl < 2;
         }
 
         function perimeter(array) {
@@ -686,6 +683,13 @@
         // console.log({points, forks: points.filter(p => p.group.length !== 2)});
         // for each unused point, find the longest non-intersecting path
 
+        for (let point of points) {
+            gl = point.group.length;
+            forks = forks || gl > 2;
+            frays = frays || gl < 2;
+        }
+        // if (debug && (forks || frays)) console.log({forks, frays});
+
         // process paths starting with forks
         if (forks)
         for (let point of points) {
@@ -722,9 +726,6 @@
         });
 
         if (debug && connect.length) console.log({connect});
-
-        // ensure perimeters are seeded
-        connect.forEach(a => perimeter(a));
 
         // progressively connect open polygons within a bridge distance
         let iter = 1000;
@@ -799,14 +800,12 @@
                             reverse.reverse();
                         }
                         if (swap) {
-                            next.perimeter += root.perimeter;
                             next.appendAll(root);
                             connect[i] = next;
                             connect[swap] = root;
                             root.delete = true;
                             next.merged = true;
                         } else {
-                            root.perimeter += next.perimeter;
                             root.appendAll(next);
                             next.delete = true;
                             root.merged = true;
@@ -842,7 +841,6 @@
                 emit(BASE.newPolygon().addPoints(array));
             } else {
                 // tail meets head (far)
-                // console.log({dist});
                 emit(BASE.newPolygon().addPoints(array)
                     // .setOpen()
                 );
