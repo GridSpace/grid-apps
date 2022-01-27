@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: geo.bounds
 (function() {
 
     if (self.base.Polygon) return;

@@ -9,6 +9,14 @@ moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
 
 // dep: ext.three
 // dep: ext.three-bgu
+// dep: geo.base
+// dep: geo.line
+// dep: geo.point
+// dep: geo.polygon
+// dep: geo.polygons
+// dep: geo.bounds
+// dep: geo.slicer
+// dep: ext.clip2
 gapp.finalize("mesh.work", [
     "moto.license", // dep: moto.license
     "moto.client",  // dep: moto.client
@@ -281,6 +289,18 @@ let model = {
             faces.push(Math.min(a,b,c) / 3);
         }
         return { faces, edges, verts, point };
+    },
+
+    rebuild(data) {
+        let { id, matrix } = data;
+        log(`${id} | rebuilding...`);
+        let points = translate_encode(id, matrix);
+        log(`${id} | ${points.length} points`);
+        base.slice(points, { flat: true, autoDim: true }).then(sliced => {
+            console.log({sliced});
+            log(`${id} | ${sliced.length} slices`);
+        });
+        return [];
     }
 };
 

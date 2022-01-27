@@ -430,12 +430,16 @@ let tool = {
         });
     },
 
-    clean(models = selection.models()) {
+    clean(models) {
         models = fallback(models);
         tool.heal(models, { merge: false }).then(() => {
             api.log.emit('cleaning complete').unpin();
             api.selection.update();
         });
+    },
+
+    rebuild(models) {
+        Promise.all(fallback(models).map(m => m.rebuild()));
     }
 };
 

@@ -153,6 +153,15 @@ mesh.model = class MeshModel extends mesh.object {
         });
     }
 
+    rebuild() {
+        worker.model_rebuild({
+            matrix: this.matrix,
+            id: this.id
+        }).then(data => {
+            console.log({rebuild: this.od, data});
+        });
+    }
+
     load(vertices, indices, normals) {
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));

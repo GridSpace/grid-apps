@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: geo.base
 (function() {
 
     if (self.base.Bounds) return;
