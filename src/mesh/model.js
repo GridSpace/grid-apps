@@ -158,7 +158,21 @@ mesh.model = class MeshModel extends mesh.object {
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            console.log({rebuild: this.od, data});
+            console.log({rebuild: this.id, data});
+            let points = [];
+            for (let arr of data) {
+                arr.push(arr[0]);
+                for (let i=0; i<arr.length-1; i++) {
+                    let p1 = arr[i];
+                    let p2 = arr[i+1];
+                    points.push(new THREE.Vector3().fromArray(p1));
+                    points.push(new THREE.Vector3().fromArray(p2));
+                }
+            }
+            let material = new THREE.LineBasicMaterial( { color: 0xdddddd } );
+            let geometry = new THREE.BufferGeometry().setFromPoints(points);
+            let line = new THREE.LineSegments(geometry, material);
+            space.scene.add(line);
         });
     }
 

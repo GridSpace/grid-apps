@@ -291,16 +291,23 @@ let model = {
         return { faces, edges, verts, point };
     },
 
-    rebuild(data) {
+    rebuild(data, send) {
+        send.async();
         let { id, matrix } = data;
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);
-        base.slice(points, { flat: true, autoDim: true }).then(sliced => {
-            console.log({sliced});
-            log(`${id} | ${sliced.length} slices`);
-        });
-        return [];
+        base.slice(points, { flat: true, autoDim: true, zinc: 0 })
+            .then(sliced => {
+                let layers = [];
+                log(`${id} | ${sliced.length} slices`);
+                for (let slice of sliced) {
+                    for (let poly of slice.groups) {
+                        layers.push(poly.points.map(p => [ p.x, p.y, p.z ]));
+                    }
+                }
+                send.done(layers);
+            });
     }
 };
 

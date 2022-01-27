@@ -76,7 +76,7 @@
         }
 
         if (zInc) {
-            for (i = zMin; i < zMax; i += zInc) {
+            for (i = zMin; i <= zMax; i += zInc) {
                 zIndexes.push(i);
             }
         } else {
@@ -97,7 +97,7 @@
 
         zScale = 1 / (zMax / bucketCount);
 
-        console.log({zMin, zMax, zIndexes, points, bucketCount, zScale, zSum});
+        // console.log({zMin, zMax, zIndexes, points, bucketCount, zScale, zSum});
 
         if (bucketCount > 1) {
             // create empty buckets
@@ -127,11 +127,6 @@
 
         // create buckets data structure
         for (let i = 0; i < zIndexes.length; i++) {
-            let ik = zIndexes[i].toFixed(5);
-            // ensure no slice through horizontal lines or planes
-            if (zFlat[ik]) {
-                zIndexes[i] -= -0.001;
-            }
             bucketZ(i, zIndexes[i]);
             onupdate((i / zIndexes.length) * 0.1);
         }
@@ -145,13 +140,11 @@
         async function sliceBuckets() {
             let output = [];
             let count = 0;
+            let opt = { ...options, zmin: zMin };
             for (let bucket of buckets) {
-                for (let params of bucket.slices) {
-                    output.push({
-                        slice: sliceZ(params.z, bucket.points, options, params),
-                        params,
-                        options
-                    });
+                let { points, slices } = bucket;
+                for (let params of slices) {
+                    output.push(sliceZ(params.z, points, opt));
                     onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
                 }
             }
@@ -244,7 +237,8 @@
     function sliceZ(z, points, options = {}) {
         let phash = {},
             lines = [],
-            p1, p2, p3;
+            p1, p2, p3,
+            zmin = options.zmin;
 
         // iterate over matching buckets for this z offset
         for (let i = 0; i < points.length; ) {
@@ -261,7 +255,7 @@
                 // one side of triangle is on the Z plane and 3rd is below
                 // drop lines with 3rd above because that leads to ambiguities
                 // with complex nested polygons on flat surface
-                if (where.under.length === 1) {
+                if (where.under.length === 1 || z === zmin) {
                     lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
                 }
             } else if (where.on.length === 3) {
@@ -290,14 +284,9 @@
 
         // de-dup and group lines
         lines = removeDuplicateLines(lines);
-        let groups = connectLines(lines, z, {
-            debug: options.debug,
-        });
+        let groups = connectLines(lines, z, { debug: options.debug });
 
-        let tops = polygons.nest(groups);
-        let data = { lines, groups, tops };
-
-        return data;
+        return { lines, groups };
     }
 
     /**
@@ -597,24 +586,18 @@
         for (let array of connect) {
             if (array.delete) continue;
 
-            let first = array[0];
-            let last = array.peek();
-            let dist = first.distToSq2D(last);
-
-            if (debug) console.log({
-                dist: dist.round(4),
-                merged: array.merged || false,
-                array
-            });
-            if (dist <= bridge) {
-                // tail meets head (close)
-                emit(newPolygon().addPoints(array));
-            } else {
-                // tail meets head (far)
-                emit(newPolygon().addPoints(array)
-                    // .setOpen()
-                );
+            if (debug) {
+                let first = array[0];
+                let last = array.peek();
+                let dist = first.distToSq2D(last);
+                console.log({
+                    dist: dist.round(4),
+                    merged: array.merged || false,
+                    array
+                });
             }
+
+            emit(newPolygon().addPoints(array));
         }
 
         if (debug) console.log({ emitted });

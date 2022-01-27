@@ -286,6 +286,7 @@ function space_init(data) {
                 case 'KeyA':
                     return api.tool.analyze();
                 case 'KeyR':
+                    if (shiftKey) return api.tool.rebuild();
                     return api.tool.repair();
                 case 'KeyE':
                     return api.tool.clean();

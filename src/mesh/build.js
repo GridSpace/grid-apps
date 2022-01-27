@@ -299,7 +299,7 @@ function ui_build() {
             // h.div({ class: "vsep" }),
             h.button({ _: 'automatic', onclick: tool.repair }),
             h.button({ _: 'analyze', onclick: tool.analyze }),
-            h.button({ _: 'rebuild', onclick: tool.rebuild }),
+            // h.button({ _: 'rebuild', onclick: tool.rebuild }),
             h.button({ _: 'clean', onclick: tool.clean }),
         ]),
     ]);
