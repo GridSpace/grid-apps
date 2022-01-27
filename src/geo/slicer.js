@@ -284,7 +284,9 @@
 
         // de-dup and group lines
         lines = removeDuplicateLines(lines);
-        let groups = connectLines(lines, z, { debug: options.debug });
+        let groups = options.connect !== false ?
+            connectLines(lines, z, { debug: options.debug }) :
+            undefined;
 
         return { lines, groups };
     }
