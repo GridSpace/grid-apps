@@ -65,6 +65,7 @@
             t = p.x;
         p.x = p.z;
         p.z = t;
+        return this;
     };
 
     PRO.swapYZ = function() {
@@ -72,6 +73,7 @@
             t = p.y;
         p.y = p.z;
         p.z = t;
+        return this;
     };
 
     PRO.round = function(precision) {

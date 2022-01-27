@@ -27,12 +27,14 @@
             zMax = options.zmax || 0,
             zInc = options.zinc || 0,
             zIndexes = options.indices || [],
+            minStep = options.minstep || 0,
             zFlat = {},         // map area of z index flat areas
             zList = {},         // fast map of z indexes
             zScale,             // bucket span in z units
             zSum = 0.0,         // sanity check that points enclose non-zere volume
             buckets = [],       // banded/grouped faces to speed up slice/search
             onupdate = options.onupdate || function() {},
+            { debug, flat, autoDim } = options,
             i, j, p1, p2, p3;
 
         if (!(points && points.length)) {
@@ -40,25 +42,35 @@
         }
 
         // convert threejs position array into points array
-        if (options.flat) {
+        if (flat) {
             let array = [];
             for (i=0, j=points.length; i<j; ) {
-                array.push(newPoint(points[i++], points[i++], points[i++]));
+                array.push(newPoint(
+                    points[i++].round(3),
+                    points[i++].round(3),
+                    points[i++].round(3)
+                ));
             }
             points = array;
+        } else {
+            // round points
+            for (i = 0; i < points.length; i++) {
+                points[i] = points[i].round(3);
+            }
+
         }
 
         // gather z-index stats
         for (i = 0; i < points.length;) {
-            p1 = points[i++].round(3);
-            p2 = points[i++].round(3);
-            p3 = points[i++].round(3);
-            // used to calculate buckets
+            p1 = points[i++];
+            p2 = points[i++];
+            p3 = points[i++];
+            // used to calculate buckets (rough sum of z span)
             zSum += (Math.abs(p1.z - p2.z) + Math.abs(p2.z - p3.z) + Math.abs(p3.z - p1.z));
             // use co-flat and co-line detection to adjust slice Z
             if (p1.z === p2.z && p2.z === p3.z && p1.z >= zMin) {
                 // detect faces co-planar with Z and sum the enclosed area
-                let zkey = p1.z.toFixed(5),
+                let zkey = p1.z,
                     area = Math.abs(util.area2(p1,p2,p3)) / 2;
                 if (!zFlat[zkey]) {
                     zFlat[zkey] = area;
@@ -66,7 +78,7 @@
                     zFlat[zkey] += area;
                 }
             }
-            if (options.autoDim) {
+            if (autoDim) {
                 zMin = Math.min(zMin, p1.z, p2.z, p3.z);
                 zMax = Math.max(zMax, p1.z, p2.z, p3.z);
             }
@@ -81,6 +93,17 @@
             }
         } else {
             zIndexes = Object.values(zList).sort((a,b) => a - b);
+            if (minStep > 0) {
+                let lastOut;
+                zIndexes = zIndexes.filter(v => {
+                    if (lastOut !== undefined && v - lastOut < minStep) {
+                        return false;
+                    } else {
+                        lastOut = v;
+                        return true;
+                    }
+                });
+            }
         }
 
         /** short-circuit for microscopic and invalid objects */
@@ -92,30 +115,38 @@
          * bucket polygons into z-bounded groups (inside or crossing)
          * to reduce the search space in complex models
          */
+        let zSpan = zMax - zMin;
+        let zSpanAvg = zSum / points.length;
         let bucketCount = options.bucket !== false ?
-            Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1) : 1;
+            Math.max(1, Math.floor(zSpan / zSpanAvg)) : 1;
 
-        zScale = 1 / (zMax / bucketCount);
+        zScale = 1 / (zSpan / bucketCount);
 
-        // console.log({zMin, zMax, zIndexes, points, bucketCount, zScale, zSum});
+        if (debug) {
+            console.log({
+                zMin, zMax, zIndexes, zScale, zSum, zSpanAvg,
+                points, bucketCount,
+                options, buckets
+            });
+        }
+
+        // create empty buckets
+        for (i = 0; i < bucketCount + 1; i++) {
+            buckets.push({ points: [], slices: [] });
+        }
 
         if (bucketCount > 1) {
-            // create empty buckets
-            for (i = 0; i < bucketCount + 1; i++) {
-                buckets.push({ points: [], slices: [] });
-            }
-
             // copy triples into all matching z-buckets
             for (i = 0; i < points.length;) {
                 p1 = points[i++];
                 p2 = points[i++];
                 p3 = points[i++];
-                let zm = Math.min(p1.z, p2.z, p3.z),
-                    zM = Math.max(p1.z, p2.z, p3.z),
+                let zm = Math.min(p1.z, p2.z, p3.z) - zMin,
+                    zM = Math.max(p1.z, p2.z, p3.z) - zMin,
                     bm = Math.floor(zm * zScale),
                     bM = Math.ceil(zM * zScale);
-                if (bm < 0) bm = 0;
-                for (j = bm; j < bM; j++) {
+                // add point to all buckets in range
+                for (j = bm; j <= bM; j++) {
                     buckets[j].points.push(p1);
                     buckets[j].points.push(p2);
                     buckets[j].points.push(p3);
@@ -126,25 +157,19 @@
         }
 
         // create buckets data structure
-        for (let i = 0; i < zIndexes.length; i++) {
-            bucketZ(i, zIndexes[i]);
+        for (let z of zIndexes) {
+            buckets[Math.floor((z - zMin) * zScale)].slices.push(z);
             onupdate((i / zIndexes.length) * 0.1);
-        }
-
-        function bucketZ(index, z) {
-            buckets[Math.floor(z * zScale)].slices.push({
-                index, z, total: zIndexes.length
-            });
         }
 
         async function sliceBuckets() {
             let output = [];
             let count = 0;
-            let opt = { ...options, zmin: zMin };
+            let opt = { ...options, zMin, zMax };
             for (let bucket of buckets) {
                 let { points, slices } = bucket;
-                for (let params of slices) {
-                    output.push(sliceZ(params.z, points, opt));
+                for (let z of slices) {
+                    output.push(sliceZ(z, points, opt));
                     onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
                 }
             }
@@ -153,7 +178,9 @@
 
         // create slices from each bucketed region
         let slices = await sliceBuckets();
-        return slices.sort((a,b) => a.index - b.index);
+        slices = slices.sort((a,b) => a.z - b.z);
+
+        return { slices, points, zMin, zMax, zIndexes, zFlat };
     }
 
     /**
@@ -235,10 +262,10 @@
      * @param {number} z
      */
     function sliceZ(z, points, options = {}) {
-        let phash = {},
+        let { zMin, zMax, under, over, both } = options,
+            phash = {},
             lines = [],
-            p1, p2, p3,
-            zmin = options.zmin;
+            p1, p2, p3;
 
         // iterate over matching buckets for this z offset
         for (let i = 0; i < points.length; ) {
@@ -255,7 +282,10 @@
                 // one side of triangle is on the Z plane and 3rd is below
                 // drop lines with 3rd above because that leads to ambiguities
                 // with complex nested polygons on flat surface
-                if (where.under.length === 1 || z === zmin) {
+                let add2 = both ||
+                    (over && (where.over.length === 1 || z === zMax)) ||
+                    (under && (where.under.length === 1 || z === zMin));
+                if (add2) {
                     lines.push(makeZLine(phash, where.on[0], where.on[1], false, true));
                 }
             } else if (where.on.length === 3) {
@@ -284,11 +314,16 @@
 
         // de-dup and group lines
         lines = removeDuplicateLines(lines);
-        let groups = options.connect !== false ?
-            connectLines(lines, z, { debug: options.debug }) :
-            undefined;
 
-        return { lines, groups };
+        // connect lines into longest contiguous chains
+        if (options.group) {
+            return {
+                z, lines,
+                groups: connectLines(lines, z, { debug: options.debug })
+            };
+        } else {
+            return { z, lines };
+        }
     }
 
     /**

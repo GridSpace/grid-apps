@@ -22,6 +22,7 @@ gapp.finalize("mesh.work", [
     "moto.client",  // dep: moto.client
     "moto.worker",  // dep: moto.worker
     "mesh.tool",    // dep: mesh.tool
+    "mesh.util",    // dep: mesh.util
     "add.three",    // dep: add.three
 ]);
 
@@ -31,6 +32,7 @@ let { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = T
 let core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
 let { client, worker } = moto;
+let { util } = mesh;
 let cache = {};
 
 function log(msg) {
@@ -297,17 +299,45 @@ let model = {
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);
-        base.slice(points, { flat: true, autoDim: true, zinc: 0 })
-            .then(sliced => {
-                let layers = [];
-                log(`${id} | ${sliced.length} slices`);
-                for (let slice of sliced) {
-                    for (let poly of slice.groups) {
-                        layers.push(poly.points.map(p => [ p.x, p.y, p.z ]));
+        base.slice(points, {
+            autoDim: true,
+            flat: true,
+            zinc: 0,
+            both: true,
+            // debug: true,
+            minstep: 0.25,
+        }).then(output => {
+            let layers = [];
+            let { points, slices } = output;
+            log(`${id} | ${slices.length} slices Z`);
+            for (let slice of slices) {
+                for (let line of slice.lines) {
+                    layers.appendAll(util.extract(line.p1));
+                    layers.appendAll(util.extract(line.p2));
+                }
+            }
+            // send.done(layers);
+            for (let p of points) p.swapXZ();
+            base.slice(points, {
+                autoDim: true,
+                zinc: 0,
+                both: true,
+                // debug: true,
+                minstep: 0.25,
+            }).then(output => {
+                let { points, slices } = output;
+                log(`${id} | ${slices.length} slices X`);
+                for (let slice of slices) {
+                    for (let line of slice.lines) {
+                        if (!line.p1.swapped) { line.p1.swapXZ().swapped = true }
+                        if (!line.p2.swapped) { line.p2.swapXZ().swapped = true }
+                        layers.appendAll(util.extract(line.p1));
+                        layers.appendAll(util.extract(line.p2));
                     }
                 }
                 send.done(layers);
             });
+        });
     }
 };
 
