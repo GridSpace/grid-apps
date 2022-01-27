@@ -38,7 +38,8 @@
             zScale,             // bucket span in z units
             zSum = 0.0,         // sanity check that points enclose non-zere volume
             buckets = [],       // banded/grouped faces to speed up slice/search
-            bucketMax = options.overlap || 0.75,
+            overlapMax = options.overlap || 0.75,
+            bucketMax = options.bucketmax || 100,
             onupdate = options.onupdate || function() {},
             sliceFn = dval(options.slicer, sliceZ),
             { debug, flat, autoDim } = options,
@@ -120,7 +121,7 @@
         let zSpan = zMax - zMin;
         let zSpanAvg = zSum / points.length;
         let bucketCount = options.bucket !== false ?
-            Math.max(1, Math.floor(zSpan / zSpanAvg)) : 1;
+            Math.min(bucketMax, Math.max(1, Math.floor(zSpan / zSpanAvg))) : 1;
 
         zScale = 1 / (zSpan / bucketCount);
 
@@ -138,12 +139,12 @@
         }
 
         // create empty buckets
-        for (i = 0; i < bucketCount + 1; i++) {
+        for (i = 0; i < bucketCount; i++) {
             buckets.push({ points: [], slices: [] });
         }
 
         if (bucketCount > 1) {
-            let failAt = (points.length * bucketMax) | 0, bucket;
+            let failAt = (points.length * overlapMax) | 0, bucket;
             // copy triples into all matching z-buckets
             outer: for (i = 0; i < points.length;) {
                 p1 = points[i++];
@@ -177,7 +178,8 @@
 
         // create buckets data structure
         for (let z of zIndexes) {
-            let index = bucketCount > 1 ? Math.floor((z - zMin) * zScale) : 0;
+            let index = bucketCount <= 1 ? 0 :
+                Math.min( Math.floor((z - zMin) * zScale), bucketCount - 1 );
             buckets[index].slices.push(z);
             onupdate((i / zIndexes.length) * 0.1);
         }

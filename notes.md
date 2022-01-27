@@ -57,7 +57,8 @@
 * `B` auto bed resizing leaves the origin in the wrong place at first
 * `B` re-add progress calls for all work units
 
-* `F` test and enable arcs in belt moe
+* `F` promote forced layer retraction to a range parameter
+* `F` test and enable arcs in belt more
 * `F` refactor brims to be generated at slice time
 * `F` anchors should be generated anywhere needed in the print, not just head
 * `F` slightly angle supports to lean into the Z of the part

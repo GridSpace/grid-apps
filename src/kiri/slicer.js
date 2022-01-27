@@ -176,10 +176,9 @@
         if (concurrent > 1) {
             if (bucketCount < concurrent) {
                 bucketCount = concurrent;
-            } else if (bucketCount > 100) {
-                bucketCount = 100;
             }
         }
+        bucketCount = Math.min(bucketCount, 100);
 
         zScale = 1 / (zMax / bucketCount);
 
