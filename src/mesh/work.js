@@ -304,7 +304,7 @@ let model = {
             autoDim: true,
             flat: true,
             both: true,
-            // debug: true,
+            debug: true,
             minstep: 0.25,
         }).then(output => {
             let { points, slices } = output;
@@ -319,7 +319,7 @@ let model = {
             return base.slice(points, {
                 autoDim: true,
                 both: true,
-                // debug: true,
+                debug: true,
                 minstep: 0.25,
             }).then(output => {
                 let { points, slices } = output;

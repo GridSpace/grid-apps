@@ -284,7 +284,7 @@ function space_init(data) {
                     if (shiftKey) return api.tool.merge();
                     return api.tool.mirror();
                 case 'KeyA':
-                    return api.tool.analyze();
+                    return shiftKey ? api.tool.analyze() : undefined;
                 case 'KeyR':
                     if (shiftKey) return api.tool.rebuild();
                     return api.tool.repair();

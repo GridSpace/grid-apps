@@ -3,7 +3,8 @@
 "use strict";
 
 /**
- * Basic slice and line connection
+ * basic slice and line connection. In future, replace kiri's fdm and cam slicers
+ * with wrappers on this one.
  */
 (function() {
 
@@ -12,6 +13,10 @@
 
     let { config, util, polygons } = base
     let { newOrderedLine, newPolygon, newPoint } = base;
+
+    function dval(v, dv) {
+        return v !== undefined ? v : dv;
+    }
 
     /**
      * Given an array of points as triples, a bounding box and a set of
@@ -33,7 +38,9 @@
             zScale,             // bucket span in z units
             zSum = 0.0,         // sanity check that points enclose non-zere volume
             buckets = [],       // banded/grouped faces to speed up slice/search
+            bucketMax = options.overlap || 0.75,
             onupdate = options.onupdate || function() {},
+            sliceFn = dval(options.slicer, sliceZ),
             { debug, flat, autoDim } = options,
             i, j, p1, p2, p3;
 
@@ -136,8 +143,9 @@
         }
 
         if (bucketCount > 1) {
+            let failAt = (points.length * bucketMax) | 0, bucket;
             // copy triples into all matching z-buckets
-            for (i = 0; i < points.length;) {
+            outer: for (i = 0; i < points.length;) {
                 p1 = points[i++];
                 p2 = points[i++];
                 p3 = points[i++];
@@ -146,19 +154,31 @@
                     bm = Math.floor(zm * zScale),
                     bM = Math.ceil(zM * zScale);
                 // add point to all buckets in range
-                for (j = bm; j <= bM; j++) {
-                    buckets[j].points.push(p1);
-                    buckets[j].points.push(p2);
-                    buckets[j].points.push(p3);
+                for (j = bm; j < bM; j++) {
+                    bucket = buckets[j].points;
+                    bucket.push(p1);
+                    bucket.push(p2);
+                    bucket.push(p3);
+                    // fail if single bucket exceeds threshold
+                    if (bucket.length > failAt) {
+                        if (debug) console.log({ bucketFail: bucket.length });
+                        bucketCount = 1;
+                        break outer;
+                    }
                 }
             }
-        } else {
-            buckets.push({ points, slices: [] });
+        }
+
+        // fallback if we can't partition point space
+        if (bucketCount === 1) {
+            buckets = [{ points, slices: [] }];
+            console.log({fallback:  buckets});
         }
 
         // create buckets data structure
         for (let z of zIndexes) {
-            buckets[Math.floor((z - zMin) * zScale)].slices.push(z);
+            let index = bucketCount > 1 ? Math.floor((z - zMin) * zScale) : 0;
+            buckets[index].slices.push(z);
             onupdate((i / zIndexes.length) * 0.1);
         }
 
@@ -166,18 +186,20 @@
             let output = [];
             let count = 0;
             let opt = { ...options, zMin, zMax };
+
             for (let bucket of buckets) {
                 let { points, slices } = bucket;
                 for (let z of slices) {
-                    output.push(sliceZ(z, points, opt));
+                    output.push(await sliceFn(z, points, opt));
                     onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
                 }
             }
+
             return output;
         }
 
         // create slices from each bucketed region
-        let slices = await sliceBuckets();
+        let slices = sliceFn ? await sliceBuckets() : [];
         slices = slices.sort((a,b) => a.z - b.z);
 
         return { slices, points, zMin, zMax, zIndexes, zFlat };
@@ -261,11 +283,15 @@
      *
      * @param {number} z
      */
-    function sliceZ(z, points, options = {}) {
+    async function sliceZ(z, points, options = {}) {
         let { zMin, zMax, under, over, both } = options,
+            groupFn = dval(options.groupr, both ? null : sliceConnect),
             phash = {},
             lines = [],
             p1, p2, p3;
+
+        // default to 'over' selection with 2 points on a line
+        if (!under && !both) over = true;
 
         // iterate over matching buckets for this z offset
         for (let i = 0; i < points.length; ) {
@@ -315,15 +341,10 @@
         // de-dup and group lines
         lines = removeDuplicateLines(lines);
 
-        // connect lines into longest contiguous chains
-        if (options.group) {
-            return {
-                z, lines,
-                groups: connectLines(lines, z, { debug: options.debug })
-            };
-        } else {
-            return { z, lines };
-        }
+        let rval = { z, lines };
+        if (groupFn) rval.groups = groupFn(lines, z, options);
+
+        return rval;
     }
 
     /**
@@ -336,8 +357,13 @@
      * @param {number} [index]
      * @returns {Array}
      */
-    function connectLines(input, z, opt = {}) {
-        let { debug } = opt;
+    function sliceConnect(input, z, opt = {}) {
+        let { debug, both } = opt;
+
+        if (both) {
+            if (debug) console.log('unable to connect lines sliced with "both" option');
+            return [];
+        }
 
         // map points to all other points they're connected to
         let pmap = {},
@@ -746,5 +772,6 @@
     }
 
     base.slice = slice;
+    base.sliceZ = sliceZ;
 
 })();
