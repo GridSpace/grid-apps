@@ -153,20 +153,26 @@ mesh.model = class MeshModel extends mesh.object {
         });
     }
 
-    rebuild() {
+    rebuild(opt = {}) {
+        if (this.lines) {
+            space.scene.remove(this.lines);
+            this.lines = undefined;
+        }
+        if (opt.clean) {
+            return;
+        }
         worker.model_rebuild({
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            console.log({rebuild: this.id, data});
             let points = [];
             for (let i=0; i<data.length;) {
                 points.push(new THREE.Vector3(data[i++], data[i++], data[i++]));
             }
             let material = new THREE.LineBasicMaterial( { color: 0xdddddd } );
             let geometry = new THREE.BufferGeometry().setFromPoints(points);
-            let line = new THREE.LineSegments(geometry, material);
-            space.scene.add(line);
+            let lines = this.lines = new THREE.LineSegments(geometry, material);
+            space.scene.add(lines);
         });
     }
 
@@ -463,6 +469,7 @@ mesh.model = class MeshModel extends mesh.object {
         // clear face selections (since they've been deleted);
         this.sel.faces = [];
         this.updateSelections();
+        this.rebuild({ clean: true });
     }
 
     deleteSelections(mode) {

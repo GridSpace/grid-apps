@@ -113,7 +113,7 @@ let selection = {
             selection.remove(s);
         }
         for (let m of api.model.list()) {
-            m.clearSelections()
+            m.clearSelections();
         }
     },
 

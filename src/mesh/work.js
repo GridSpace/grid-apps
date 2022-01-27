@@ -299,15 +299,14 @@ let model = {
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);
+        let layers = [];
         base.slice(points, {
             autoDim: true,
             flat: true,
-            zinc: 0,
             both: true,
             // debug: true,
             minstep: 0.25,
         }).then(output => {
-            let layers = [];
             let { points, slices } = output;
             log(`${id} | ${slices.length} slices Z`);
             for (let slice of slices) {
@@ -316,11 +315,9 @@ let model = {
                     layers.appendAll(util.extract(line.p2));
                 }
             }
-            // send.done(layers);
             for (let p of points) p.swapXZ();
-            base.slice(points, {
+            return base.slice(points, {
                 autoDim: true,
-                zinc: 0,
                 both: true,
                 // debug: true,
                 minstep: 0.25,
@@ -335,9 +332,11 @@ let model = {
                         layers.appendAll(util.extract(line.p2));
                     }
                 }
-                send.done(layers);
             });
-        });
+        }).finally(() => {
+            log(`${id} | rebuild complete`);
+            send.done(layers);
+        });;
     }
 };
 

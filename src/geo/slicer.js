@@ -106,11 +106,6 @@
             }
         }
 
-        /** short-circuit for microscopic and invalid objects */
-        if (zMax == 0 || zSum == 0 || points.length == 0) {
-            return [];
-        }
-
         /**
          * bucket polygons into z-bounded groups (inside or crossing)
          * to reduce the search space in complex models
@@ -128,6 +123,11 @@
                 points, bucketCount,
                 options, buckets
             });
+        }
+
+        /** short-circuit for microscopic and invalid objects */
+        if (zSpan == 0 || zSum == 0 || points.length == 0) {
+            return {};
         }
 
         // create empty buckets
