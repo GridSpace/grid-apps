@@ -2884,20 +2884,16 @@
                     load_dec();
                 }
                 else if (issvg) {
-                    if (MODE === MODES.LASER) {
-                        loadCode(e.target.result, 'svg');
-                    } else {
-                        let name = e.target.file.name;
-                        let svg = LOAD.SVG.parse(e.target.result);
-                        let ind = 0;
-                        for (let v of svg) {
-                            let num = ind++;
-                            platform.add(
-                                newWidget(undefined, group)
-                                .loadVertices(svg[num].toFloat32())
-                                .saveToCatalog(num ? `${name}-${num}` : name)
-                            );
-                        }
+                    let name = e.target.file.name;
+                    let svg = LOAD.SVG.parse(e.target.result);
+                    let ind = 0;
+                    for (let v of svg) {
+                        let num = ind++;
+                        platform.add(
+                            newWidget(undefined, group)
+                            .loadVertices(svg[num].toFloat32())
+                            .saveToCatalog(num ? `${name}-${num}` : name)
+                        );
                     }
                     load_dec();
                 }

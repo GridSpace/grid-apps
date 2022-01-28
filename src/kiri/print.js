@@ -48,7 +48,7 @@
         this.id = id || new Date().getTime().toString(36);
         this.settings = settings;
         this.widgets = widgets;
-        debugE = settings.controller.devel ? 1 : 0;
+        debugE = settings ? (settings.controller.devel ? 1 : 0) : 0;
     }
 
     PRO.addOutput = addOutput;

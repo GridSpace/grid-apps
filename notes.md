@@ -20,6 +20,7 @@
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 * `F` warn if part hanging in negative Z space or off bed in general
+* `F` add instancing support for 3MF files on import
 
 # FDM
 
