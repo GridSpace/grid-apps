@@ -118,7 +118,9 @@
         hiddenKey,
         vizChange,
         docVisible = true,
+        antiAlias = window.devicePixelRatio <= 1,
         lastAction = Date.now(),
+        renderTime = 0,
         fps = 0;
 
     if (typeof DOC.hidden !== "undefined") {
@@ -276,12 +278,12 @@
     }
 
     function addLight(x,y,z,i) {
-        let l = new THREE.PointLight(0xffffff, i, 0);
+        let l = new THREE.DirectionalLight(0xffffff, i, 0);
         l.position.set(x,z,y);
-        let b; l.add(b = new THREE.Mesh(
-            new THREE.BoxGeometry(1,1,1),
-            new THREE.MeshBasicMaterial( {color: 0xff0000} )
-        )); b.scale.set(5,5,5);
+        // let b; l.add(b = new THREE.Mesh(
+        //     new THREE.BoxGeometry(1,1,1),
+        //     new THREE.MeshBasicMaterial( {color: 0xff0000} )
+        // )); b.scale.set(5,5,5);
         SCENE.add(l);
         return l;
     }
@@ -1013,6 +1015,7 @@
         refresh: refresh,
         update: requestRefresh,
 
+        setAntiAlias(b) { antiAlias = b ? true : false },
         alignTracking: alignTracking,
         raycast: intersect,
 
@@ -1114,14 +1117,15 @@
                     viewControl.setMouse(viewControl.mouseDefault);
                 }
             },
-            getFPS: () => { return fps },
-            getFocus: () => { return viewControl.getTarget() },
-            setFocus: (v) => { viewControl.setTarget(v); refresh() },
-            setHome: (r,u) => {
+            getFPS () { return fps },
+            getRMS() { return renderTime },
+            getFocus() { return viewControl.getTarget() },
+            setFocus(v) { viewControl.setTarget(v); refresh() },
+            setHome(r,u) {
                 home = r || 0;
                 up = u || PI4;
             },
-            spin: (then, count) => {
+            spin(then, count) {
                 Space.view.front(() => {
                 Space.view.right(() => {
                 Space.view.back(() => {
@@ -1195,10 +1199,11 @@
             domelement.style.height = height();
 
             renderer = new THREE.WebGLRenderer({
-                antialias: true,
+                antialias: antiAlias,
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true
             });
+            console.log({renderer});
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
                 new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);
@@ -1278,6 +1283,10 @@
             let animates = 0;
             let rateStart = Date.now();
 
+            let renders = 0;
+            let renderSum = 0;
+            let renderStart;
+
             function animate() {
                 animates++;
                 const now = Date.now();
@@ -1286,11 +1295,17 @@
                     fps = 1000 * animates / delta;
                     animates = 0;
                     rateStart = now;
+                    renderTime = renders ? renderSum / renders : 0;
+                    renders = 0;
+                    renderSum = 0;
                 }
 
                 requestAnimationFrame(animate);
                 if (docVisible && !freeze && Date.now() - lastAction < 1500) {
+                    renderStart = Date.now();
                     renderer.render(SCENE, camera);
+                    renderSum += Date.now() - renderStart;
+                    renders++;
                 } else {
                     fps = 0;
                 }

@@ -255,6 +255,8 @@ kiri.lang['en-us'] = {
     op_spcr_l:      ["spacing between objects","during auto layout","in workspace units"],
     op_orth_s:      "orthographic",
     op_orth_l:      ["orthographic display","requires page refresh"],
+    op_anta_s:      "anti-alias",
+    op_anta_l:      ["smooth display. better but slower","requires a page refresh or reload"],
     op_invr_s:      "invert zoom",
     op_invr_l:      ["invert mouse wheel","scroll zoom"],
     op_save_s:      "auto save",

@@ -1781,12 +1781,17 @@ th, tr, td, label {
     padding: 5px 20px 5px 20px;
     margin-left: 10px;
 }
-#fps {
+#stats {
     position: fixed;
     font-size: 10px;
     bottom: 5px;
     right: 5px;
     color: #000;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.dark #stats {
+    color: #888;
 }
 #tool-info {
     position: fixed;

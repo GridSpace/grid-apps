@@ -32,6 +32,7 @@ function init() {
     db.admin.get("uses").then(v => db.admin.put("uses", (v||0) + 1));
 
     // setup default workspace
+    space.setAntiAlias(true);
     space.useDefaultKeys(false);
     space.init($('container'), delta => { }, ortho);
     space.sky.set({

@@ -682,6 +682,7 @@
                 zoomSpeed: 1.0,
                 lineType: "path",
                 autoSave: true,
+                antiAlias: true,
                 reverseZoom: true,
                 showOrigin: false,
                 showRulers: true,
