@@ -133,7 +133,7 @@ let selection = {
         }
         // prevent selection of model and its group
         let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
-        selected = selected.filter(sel => !mgsel.contains(sel));
+        selected = selected.filter(sel => !mgsel.contains(sel)).filter(v => v);
         // highlight selected
         for (let object of selected) {
             object.select(true);
