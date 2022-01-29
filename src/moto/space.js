@@ -79,9 +79,7 @@
             factor: undefined,
             view: undefined
         },
-        psize = {
-
-        },
+        psize = {},
         timers = {},
         fontColor = '#333333',
         fontScale = 1.4, // computed relative to grid size
@@ -243,40 +241,6 @@
         }
     }
 
-    // 4 corners bottom, 4 axis centers top
-    function updateLights(x, y, z) {
-        // remove old
-        for (let l of lights || []) {
-            SCENE.remove(l);
-        }
-        // override
-        x = y = z = 20000;
-        x *= 2; y *= 2; z *= 2;
-        // add new
-        let x0 = -x/2, y0 = -y/2, z0 = 0;
-        let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
-        lights = [
-            // top
-            addLight( x0,  y0,  z1, lightIntensity * 2.5),
-            // addLight( x0,  y1,  z1, lightIntensity * 2.0),
-            addLight( x1,  y1,  z1, lightIntensity * 2.5),
-            // addLight( x1,  y0,  z1, lightIntensity * 2.0),
-            // middle
-            // addLight( x0,  y0,  z0, lightIntensity * 0.8),
-            // addLight( x0,  y1,  z0, lightIntensity * 1.2), // opt
-            // addLight( x1,  y1,  z0, lightIntensity * 0.8),
-            // addLight( x1,  y0,  z0, lightIntensity * 1.2), // opt
-            // bottom
-            // addLight( x0,  y0, -z1, lightIntensity * 0.5),
-            addLight( x0,  y1, -z1, lightIntensity * 0.5),
-            // addLight( x1,  y1, -z1, lightIntensity * 0.5),
-            addLight( x1,  y0, -z1, lightIntensity * 0.5),
-            // center top/bottom
-            addLight(  0,   0,  z2, lightIntensity * 1.2),
-            addLight(  0,   0, -z2, lightIntensity * 0.8),
-        ];
-    }
-
     function addLight(x,y,z,i) {
         let l = new THREE.DirectionalLight(0xffffff, i, 0);
         l.position.set(x,z,y);
@@ -286,6 +250,29 @@
         // )); b.scale.set(5,5,5);
         SCENE.add(l);
         return l;
+    }
+
+    // 4 corners bottom, 4 axis centers top
+    function updateLights(x, y, z) {
+        // remove old
+        for (let l of lights || []) {
+            SCENE.remove(l);
+        }
+        // override
+        x *= 4; y *= 4; z *= 4;
+        // add new
+        let x0 = -x/2, y0 = -y/2, z0 = 0;
+        let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
+        lights = [
+            // over
+            addLight(  0,   0,  z2, lightIntensity * 1.2),
+            addLight( x0,  y0,  z1, lightIntensity * 2.5),
+            addLight( x1,  y1,  z1, lightIntensity * 2.5),
+            // under
+            addLight( x0,  y1, -z1, lightIntensity * 0.5),
+            addLight( x1,  y0, -z1, lightIntensity * 0.5),
+            addLight(  0,   0, -z2, lightIntensity * 0.8),
+        ];
     }
 
     function updatePlatformPosition() {
