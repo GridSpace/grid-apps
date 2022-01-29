@@ -7,12 +7,15 @@
 let load = self.load = self.load || {};
 if (load.TMF) return;
 
+// dep: add.three
 // dep: ext.jszip
 gapp.register('load.3mf');
 
 load.TMF = {
     parseAsync
 };
+
+let { BufferAttribute, Matrix4 } = THREE;
 
 function query(node, path, fn) {
     let collect = false;
@@ -41,7 +44,6 @@ function loadModel(doc) {
         let id;
         let model;
         let faces;
-        let refs;
         let units;
         let scale = 1;
         let scaleMap = {
@@ -75,14 +77,22 @@ function loadModel(doc) {
                     // emit previous model
                     emitModel();
                     faces = [];
-                    refs = [];
                     id = node.getAttribute("id") || undefined;
                     model = node.getAttribute("name") || undefined;
                     query(node, ["components","+component"], (type, node) => {
                         let objectid = node.getAttribute('objectid');
-                        let trans = node.getAttribute('transform');
-                        refs.push({ objectid, trans });
-                        // console.log({objectid, trans });
+                        let mat = node.getAttribute('transform').split(' ').map(v => parseFloat(v));
+                        mat = [
+                            ...mat.slice(0,3), 0,
+                            ...mat.slice(3,6), 0,
+                            ...mat.slice(6,9), 0,
+                            ...mat.slice(9,12), 1
+                        ];
+                        let ref = byid[objectid];
+                        if (!ref) return;
+                        let m4 = new Matrix4().fromArray(mat);
+                        let pos = new BufferAttribute(ref.faces.toFloat32(), 3).applyMatrix4(m4);
+                        faces.appendAll(pos.array);
                     });
                     break;
                 case "mesh":
