@@ -33,6 +33,7 @@
 
         destroy() {
             this._view.remove(this.view);
+            THREE.dispose(this.view);
             this.view = this.slices = this.meshes = null;
         }
 

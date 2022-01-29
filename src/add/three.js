@@ -23,6 +23,23 @@
         return cb;
     };
 
+    THREE.dispose = function(obj) {
+        if (!obj) {
+            return;
+        }
+        if (obj.geometry) {
+            obj.geometry.dispose();
+        }
+        if (obj.material && obj.material.map && obj.material.map.dispose) {
+            obj.material.map.dispose();
+        }
+        if (obj.children && obj.children.length) {
+            for (let c of obj.children) {
+                THREE.dispose(c);
+            }
+        }
+    };
+
     // add .dim and .mid getters to Box3
     Object.defineProperties(XP, {
         dim: {

@@ -112,9 +112,11 @@
             },
             remove: function() {
                 view.remove(stack.obj.view);
+                THREE.dispose(stack.obj.view);
             },
             clear: function() {
                 view.remove(stack.obj.view);
+                THREE.dispose(stack.obj.view);
             },
             button: function(label, action) {
                 UC.newRow([ UC.newButton(label, action) ]);

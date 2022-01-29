@@ -685,6 +685,7 @@
 
         SCENE.remove(current);
         SCENE.add(platform);
+        THREE.dispose(current);
     }
 
     function refresh() {
@@ -1049,13 +1050,27 @@
             },
 
             remove: function (o) {
+                THREE.dispose(o);
                 return SCENE.remove(o);
             },
 
             active: updateLastAction
         },
 
-        world: WORLD,
+        world: {
+            add: function(o) {
+                return WORLD.add(o);
+            },
+
+            remove: function(o) {
+                THREE.dispose(o);
+                return WORLD.remove(o);
+            },
+
+            newGroup: function() {
+                return WORLD.newGroup();
+            }
+        },
 
         platform: {
             set:        setPlatform,
@@ -1159,15 +1174,16 @@
             setDelay:   (d) => { tweenDelay = d || 20 }
         },
 
-        useDefaultKeys: (b) => { defaultKeys = b  },
-        selectRecurse:  (b) => { selectRecurse = b },
-        objects:        () => { return WORLD.children },
+        useDefaultKeys  (b)    { defaultKeys = b  },
+        selectRecurse   (b)    { selectRecurse = b },
+        renderInfo      ()     { return renderer.info },
+        objects         ()     { return WORLD.children },
 
-        screenshot: (format, options) => {
+        screenshot(format, options) {
             return renderer.domElement.toDataURL(format || "image/png", options);
         },
 
-        screenshot2: (param = {}) => {
+        screenshot2(param = {}) {
             let oco = renderer.domElement;
             let oWidth = oco.offsetWidth;
             let oHeight = oco.offsetHeight;
@@ -1203,7 +1219,6 @@
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true
             });
-            console.log({renderer});
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
                 new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);
