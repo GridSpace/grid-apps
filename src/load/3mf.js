@@ -35,15 +35,13 @@ function query(node, path, fn) {
 
 function loadModel(doc) {
     let models = [];
-    function emitModel(model, faces) {
-        if (faces && faces.length) {
-            models.push({name: model, faces});
-        }
-    }
+    let byid = {};
 
     return new Promise((resolve, reject) => {
+        let id;
         let model;
         let faces;
+        let refs;
         let units;
         let scale = 1;
         let scaleMap = {
@@ -55,6 +53,16 @@ function loadModel(doc) {
             "centimeter": (1 / 10)
         };
 
+        function emitModel() {
+            if (!(faces && faces.length)) {
+                return;
+            }
+            models.push({name: model, faces});
+            if (id) {
+                byid[id] = models.peek();
+            }
+        }
+
         query(doc, ["+model","resources","+object","+mesh"], (type, node) => {
             switch (type) {
                 case "model":
@@ -64,9 +72,18 @@ function loadModel(doc) {
                     }
                     break;
                 case "object":
-                    emitModel(model, faces);
+                    // emit previous model
+                    emitModel();
                     faces = [];
+                    refs = [];
+                    id = node.getAttribute("id") || undefined;
                     model = node.getAttribute("name") || undefined;
+                    query(node, ["components","+component"], (type, node) => {
+                        let objectid = node.getAttribute('objectid');
+                        let trans = node.getAttribute('transform');
+                        refs.push({ objectid, trans });
+                        // console.log({objectid, trans });
+                    });
                     break;
                 case "mesh":
                     let vertices = [];
@@ -89,7 +106,7 @@ function loadModel(doc) {
             }
         });
 
-        emitModel(model, faces);
+        emitModel();
         resolve(models);
     });
 }
