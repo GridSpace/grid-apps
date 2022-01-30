@@ -170,7 +170,7 @@
             Object.values(COLOR).forEach(color => {
                 color.flat = true;
                 color.line = 1
-                color.opacity = 0.5;
+                color.opacity = 1;
             });
         } else {
             Object.keys(COLOR).forEach(key => {

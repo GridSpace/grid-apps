@@ -151,9 +151,9 @@
             if (faces.length) {
                 const mat = [];
                 if (cface) {
-                    cface.forEach(c => { mat.push(newMat(c)) });
+                    cface.forEach(c => { mat.push(newMat(c, true)) });
                 } else {
-                    mat.push(newMat(color));
+                    mat.push(newMat(color, true));
                 }
                 mat.forEach(m => m.visible = defstate);
                 const geo = new THREE.BufferGeometry();
@@ -236,7 +236,7 @@
         return mat;
     }
 
-    function createStandardMaterial(color) {
+    function createStandardMaterial(color, flat) {
         return new THREE.MeshStandardMaterial({
             emissive,
             roughness,
@@ -244,18 +244,18 @@
             transparent: color.opacity != 1,
             opacity: color.opacity || 1,
             color: color.face,
-            side: THREE.FrontSide
+            side: flat ? THREE.DoubleSide : THREE.FrontSide
         });
     }
 
-    function createPhongMaterial(color) {
+    function createPhongMaterial(color, flat) {
         return new THREE.MeshPhongMaterial({
             shininess,
             specular,
             transparent: color.opacity != 1,
             opacity: color.opacity || 1,
             color: color.face,
-            side: THREE.FrontSide
+            side: flat ? THREE.DoubleSide : THREE.FrontSide
         });
     }
 

@@ -232,14 +232,14 @@
                 slice.unioned.forEach(poly => {
                     poly = poly.clone(true);//.move(widget.track.pos);
                     render
-                        .setLayer("layers", { line: 0x010101, face: 0x0099cc, opacity: 0.2 })
+                        .setLayer("layers", { line: 0x010101, face: 0x0099cc, opacity: 0.4 })
                         .addAreas([poly], { outline: true });
                 });
             } else if (slice.tops) {
                 slice.tops.forEach(top => {
                     let poly = top.poly;//.clone(true).move(widget.track.pos);
                     render
-                        .setLayer("layers", { line: 0x010101, face: 0xfcba03, opacity: 0.2 })
+                        .setLayer("layers", { line: 0x010101, face: 0xfcba03, opacity: 0.4 })
                         .addAreas([poly], { outline: true });
                 });
             }
@@ -247,7 +247,7 @@
             if (slice.supports) {
                 slice.supports.forEach(poly => {
                     render
-                        .setLayer("support", { line: 0x010101, face: 0xfcba03, opacity: 0.2 })
+                        .setLayer("support", { line: 0x010101, face: 0xfcba03, opacity: 0.4 })
                         .addAreas([poly], { outline: true });
                 });
             }
