@@ -13,5 +13,20 @@ server.onload(() => {
     server.util.log("--- called after all modules loaded ---");
 });
 
+// adding URL endpoints on the server
+server.path.full({
+    // register the endpoint "/postit"
+    "/postit": (req, res, next) => {
+        let chunks = [];
+        req.on('data', data => {
+            chunks.push(data.toString());
+        });
+        req.on('end', () => {
+            let data = chunks.join('');
+            server.util.log({server_received: data});
+            res.end(`received ${data.length} bytes`);
+        });
+    }
+});
 
 };
