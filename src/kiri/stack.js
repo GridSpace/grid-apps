@@ -244,7 +244,7 @@
             transparent: color.opacity != 1,
             opacity: color.opacity || 1,
             color: color.face,
-            side: THREE.DoubleSide
+            side: THREE.FrontSide
         });
     }
 
@@ -255,7 +255,7 @@
             transparent: color.opacity != 1,
             opacity: color.opacity || 1,
             color: color.face,
-            side: THREE.DoubleSide
+            side: THREE.FrontSide
         });
     }
 
