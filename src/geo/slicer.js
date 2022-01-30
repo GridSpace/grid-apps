@@ -153,7 +153,7 @@
                 let zm = Math.min(p1.z, p2.z, p3.z) - zMin,
                     zM = Math.max(p1.z, p2.z, p3.z) - zMin,
                     bm = Math.floor(zm * zScale),
-                    bM = Math.ceil(zM * zScale);
+                    bM = Math.min(Math.ceil(zM * zScale), bucketCount);
                 // add point to all buckets in range
                 for (j = bm; j < bM; j++) {
                     bucket = buckets[j].points;
