@@ -162,17 +162,27 @@ mesh.model = class MeshModel extends mesh.object {
             return;
         }
         worker.model_rebuild({
+            mode: opt.mode || 'slice',
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            let points = [];
-            for (let i=0; i<data.length;) {
-                points.push(new THREE.Vector3(data[i++], data[i++], data[i++]));
+            let { vertices, lines } = data;
+            if (vertices) {
+                mesh.api.group.new([new mesh.model({
+                    file: `healed`,
+                    mesh: data.vertices
+                })]).floor().centerXY().setSelected();
             }
-            let material = new THREE.LineBasicMaterial( { color: 0xdddddd } );
-            let geometry = new THREE.BufferGeometry().setFromPoints(points);
-            let lines = this.lines = new THREE.LineSegments(geometry, material);
-            space.scene.add(lines);
+            if (lines) {
+                let points = [];
+                for (let i=0; i<lines.length;) {
+                    points.push(new THREE.Vector3(lines[i++], lines[i++], lines[i++]));
+                }
+                let material = new THREE.LineBasicMaterial( { color: 0xdddddd } );
+                let geometry = new THREE.BufferGeometry().setFromPoints(points);
+                let segments = this.lines = new THREE.LineSegments(geometry, material);
+                space.scene.add(segments);
+            }
         });
     }
 

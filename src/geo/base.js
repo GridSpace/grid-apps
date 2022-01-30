@@ -465,7 +465,7 @@
     // two with the greatest delta to pass to the earcut algorith, then returns
     // an unwrapped array in the original dimensions
     function triangulate(array, holes, dims) {
-        let narray, d1, d2;
+        let narray;
         if (dims === 2) {
             narray = array;
         } else {
@@ -482,8 +482,7 @@
             for (let i=0; i<dims; i++) {
                 delta[i] = max[i] - min[i];
             }
-            console.log({delta: delta.slice()});
-            let dmax = 0; //d1, d2, dmax = 0;
+            let dmax = 0, d1, d2;
             for (let i=0; i<dims; i++) {
                 if (delta[i] > dmax) {
                     dmax = delta[i];
@@ -511,7 +510,6 @@
                 oa[e++] = array[ ai + j ];
             }
         }
-        console.log({d1, d2, array, narray, ec, oa});
         return oa;
     }
 

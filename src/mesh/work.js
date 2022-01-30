@@ -245,26 +245,6 @@ let model = {
         let tool = analyze(id, opt);
         log(`${id} | unrolling...`);
         let unrolled = tool.unrolled();
-
-        // log(`${id} | intersecting...`);
-        // let box = new THREE.BoxGeometry(10000, 10000, 10000).attributes.position.array;
-        // box = base.CSG.Solid.fromPositionArray(box);
-        //
-        // let solid = base.CSG.Solid.fromPositionArray(unrolled);
-        // // let inter = box.intersect(solid);
-        // let inter = solid.union(solid.clone());
-        // let ears = inter.polygons
-        //     .map(p => p.vertices.map(v => v.pos))
-        //     .map(a => {
-        //         let pa = a.map( v => [ v.x, v.y, v.z ]).flat().map(v => v.round(2));
-        //         let ec = base.util.triangulate(pa, undefined, 3);
-        //         console.log({pa, ec});
-        //         return ec;
-        //     });//.flat();
-        //
-        // console.log({solid, inter, ears, ef: ears.flat()});
-        // unrolled = ears.flat();
-
         return {
             vertices: unrolled.toFloat32(),
         };
@@ -316,11 +296,30 @@ let model = {
     },
 
     rebuild(data, send) {
-        send.async();
         let { id, matrix, mode } = data;
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);
+
+        if (mode === 'csg') {
+            log(`${id} | intersecting...`);
+            let box = base.CSG.Solid.fromPositionArray(
+                new THREE.BoxGeometry(3000, 3000, 3000)
+                    .toNonIndexed().attributes.position.array
+            );
+            let solid = base.CSG.Solid.fromPositionArray(points);
+            let solution = box.intersect(solid);
+            let vertices = solution.polygons
+                .map(p => p.vertices.map(v => v.pos))
+                .map(a => {
+                    let pa = a.map( v => [ v.x, v.y, v.z ]).flat();
+                    let ec = base.util.triangulate(pa, undefined, 3);
+                    return ec;
+                }).flat().toFloat32();
+            return { vertices };
+        }
+
+        send.async();
         let layers = [];
         base.slice(points, {
             autoDim: true,
@@ -357,7 +356,7 @@ let model = {
             });
         }).finally(() => {
             log(`${id} | rebuild complete`);
-            send.done(layers);
+            send.done({ lines: layers });
         });;
     }
 };

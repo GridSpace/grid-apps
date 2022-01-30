@@ -405,10 +405,6 @@ let tool = {
                 id: m.id, opt
             }).then(data => {
                 if (data) {
-                    // mesh.api.group.new([new mesh.model({
-                    //     file: `healed`,
-                    //     mesh: data.vertices
-                    // })]).floor().centerXY().setSelected();
                     m.reload(
                         data.vertices,
                         data.indices,
