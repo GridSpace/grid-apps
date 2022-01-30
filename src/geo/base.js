@@ -513,6 +513,10 @@
         return oa;
     }
 
+    function flatten(arr) {
+        return arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), [])
+    }
+
     /** ******************************************************************
      * Connect to base
      ******************************************************************* */
@@ -599,6 +603,7 @@
         area2,
         pwait,
         ptimer,
+        flatten,
         center2d,
         center2pr,
         thetaDiff,
