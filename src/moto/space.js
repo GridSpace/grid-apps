@@ -1285,8 +1285,7 @@
             let animates = 0;
             let rateStart = Date.now();
 
-            let renders = 0;
-            let renderSum = 0;
+            let renders = [];
             let renderStart;
 
             function animate() {
@@ -1297,17 +1296,15 @@
                     fps = 1000 * animates / delta;
                     animates = 0;
                     rateStart = now;
-                    renderTime = renders ? renderSum / renders : 0;
-                    renders = 0;
-                    renderSum = 0;
+                    renderTime = Math.max(0, ...renders);
+                    renders.length = 0;
                 }
 
                 requestAnimationFrame(animate);
                 if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                     renderStart = Date.now();
                     renderer.render(SCENE, camera);
-                    renderSum += Date.now() - renderStart;
-                    renders++;
+                    renders.push(Date.now() - renderStart);
                 } else {
                     fps = 0;
                 }
