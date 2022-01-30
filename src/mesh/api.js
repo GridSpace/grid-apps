@@ -367,7 +367,7 @@ let tool = {
             mesh.api.group.new(models)
                 .centerModels()
                 .position(mid.x, mid.y, mid.z)
-                .select();
+                .setSelected();
         });
     },
 
@@ -391,7 +391,7 @@ let tool = {
         }
         Promise.all(promises).then(() => {
             if (newmdl.length) {
-                mesh.api.group.new(newmdl, undefined, "patch").select();
+                mesh.api.group.new(newmdl, undefined, "patch").setSelected();
             }
             api.log.emit('analysis complete').unpin();
         });
@@ -405,6 +405,10 @@ let tool = {
                 id: m.id, opt
             }).then(data => {
                 if (data) {
+                    // mesh.api.group.new([new mesh.model({
+                    //     file: `healed`,
+                    //     mesh: data.vertices
+                    // })]).floor().centerXY().setSelected();
                     m.reload(
                         data.vertices,
                         data.indices,

@@ -16,6 +16,7 @@ moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
 // dep: geo.polygons
 // dep: geo.bounds
 // dep: geo.slicer
+// dep: geo.csg
 // dep: ext.clip2
 gapp.finalize("mesh.work", [
     "moto.license", // dep: moto.license
@@ -243,8 +244,29 @@ let model = {
         let { id, opt } = data;
         let tool = analyze(id, opt);
         log(`${id} | unrolling...`);
+        let unrolled = tool.unrolled();
+
+        // log(`${id} | intersecting...`);
+        // let box = new THREE.BoxGeometry(10000, 10000, 10000).attributes.position.array;
+        // box = base.CSG.Solid.fromPositionArray(box);
+        //
+        // let solid = base.CSG.Solid.fromPositionArray(unrolled);
+        // // let inter = box.intersect(solid);
+        // let inter = solid.union(solid.clone());
+        // let ears = inter.polygons
+        //     .map(p => p.vertices.map(v => v.pos))
+        //     .map(a => {
+        //         let pa = a.map( v => [ v.x, v.y, v.z ]).flat().map(v => v.round(2));
+        //         let ec = base.util.triangulate(pa, undefined, 3);
+        //         console.log({pa, ec});
+        //         return ec;
+        //     });//.flat();
+        //
+        // console.log({solid, inter, ears, ef: ears.flat()});
+        // unrolled = ears.flat();
+
         return {
-            vertices: tool.unrolled().toFloat32(),
+            vertices: unrolled.toFloat32(),
         };
     },
 
@@ -295,7 +317,7 @@ let model = {
 
     rebuild(data, send) {
         send.async();
-        let { id, matrix } = data;
+        let { id, matrix, mode } = data;
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);

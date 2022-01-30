@@ -461,6 +461,60 @@
         return out;
     }
 
+    // wrapper for earcut that handles higher order dimensions and finds the
+    // two with the greatest delta to pass to the earcut algorith, then returns
+    // an unwrapped array in the original dimensions
+    function triangulate(array, holes, dims) {
+        let narray, d1, d2;
+        if (dims === 2) {
+            narray = array;
+        } else {
+            let min = new Array(dims).fill(Infinity);
+            let max = new Array(dims).fill(-Infinity);
+            for (let i=0, l=array.length; i<l; ) {
+                for (let j=0, av; j<dims; j++) {
+                    av = array[i++];
+                    min[j] = Math.min(min[j], av);
+                    max[j] = Math.max(max[j], av);
+                }
+            }
+            let delta = new Array(dims);
+            for (let i=0; i<dims; i++) {
+                delta[i] = max[i] - min[i];
+            }
+            console.log({delta: delta.slice()});
+            let dmax = 0; //d1, d2, dmax = 0;
+            for (let i=0; i<dims; i++) {
+                if (delta[i] > dmax) {
+                    dmax = delta[i];
+                    d1 = i;
+                }
+            }
+            delta[d1] = dmax = 0;
+            for (let i=0; i<dims; i++) {
+                if (delta[i] > dmax) {
+                    dmax = delta[i];
+                    d2 = i;
+                }
+            }
+            narray = new Array((array.length / dims) * 2);
+            for (let i=0, j=0; i<array.length; i += dims) {
+                narray[j++] = array[i + d1];
+                narray[j++] = array[i + d2];
+            }
+        }
+        let ec = earcut(narray, holes, 2);
+        let oa = new Array(ec.length * dims);
+        for (let i=0, e=0, l=ec.length, ai; i<l; i++) {
+            ai = ec[i] * dims;
+            for (let j=0; j<dims; j++) {
+                oa[e++] = array[ ai + j ];
+            }
+        }
+        console.log({d1, d2, array, narray, ec, oa});
+        return oa;
+    }
+
     /** ******************************************************************
      * Connect to base
      ******************************************************************* */
@@ -566,6 +620,7 @@
         numOrDefault,
         orderClosest,
         zInPlane,
+        triangulate,
         comma: (v) => {
             if (!v) return v;
             let [lt,rt] = v.toString().split('.');
