@@ -164,6 +164,8 @@
                     z: firstLayerHeight / 2
                 });
 
+                print.setType('brim');
+
                 // output brim points
                 let brimStart = offset < nozzle * 2 ? newPoint(-bedWidth, -bedDepth, 0) : printPoint;
                 printPoint = print.poly2polyEmit(polys, brimStart, (poly, index, count, startPoint) => {
@@ -345,6 +347,7 @@
             let wipe = true;
             lastPurgeTool = tool;
             if (rec) {
+                print.setType('purge tower');
                 if (layer.last()) {
                     layer.last().retract = true;
                 }
@@ -513,6 +516,7 @@
                 let wtb = slice.widget.track.box;
                 let beltStart = slice.belt && slice.belt.touch;// && (widgets.length === 1);
                 // output seek to start point between mesh slices if previous data
+                print.setType('layer');
                 printPoint = print.slicePrintPath(
                     slice,
                     beltStart ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),

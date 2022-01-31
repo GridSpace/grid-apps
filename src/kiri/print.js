@@ -48,6 +48,7 @@
         this.id = id || new Date().getTime().toString(36);
         this.settings = settings;
         this.widgets = widgets;
+        this.setType = setType;
         debugE = settings ? (settings.controller.devel ? 1 : 0) : 0;
     }
 
@@ -1068,6 +1069,7 @@
         let lastTop = null;
         outputOrderClosest(out, function(next) {
             if (next instanceof Polygon) {
+                setType('support');
                 // support polygon
                 next.setZ(z);
                 outputTraces([next].appendAll(next.inner || []));
@@ -1076,6 +1078,7 @@
                     outputFills(next.fill, {fast: true});
                 }
             } else {
+                setType('shells');
                 if (lastTop && lastTop !== next) {
                     retract();
                 }
@@ -1099,9 +1102,6 @@
                     }
                 }
 
-                // flag extrusion type as exterior
-                setType('ext');
-
                 // innermost shells
                 let inner = next.innerShells() || [];
 
@@ -1113,14 +1113,15 @@
                 // output outer polygons
                 if (shellOrder === -1) outputTraces(inner, { sort: shellOrder });
 
-                // flag extrusion type as interior
-                setType('int');
-
                 // output thin fill
+                setType('thin fill');
                 outputThin(next.thin_fill);
 
                 // then output solid and sparse fill
+                setType('solid fill');
                 outputFills(next.fill_lines, {flow: solidWidth});
+
+                setType('sparse infill');
                 outputSparse(next.fill_sparse, sparseMult, infillSpeed);
 
                 lastTop = next;

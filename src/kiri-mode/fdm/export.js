@@ -26,8 +26,6 @@
             gcodeFan = device.gcodeFan,
             gcodeLayer = device.gcodeLayer,
             gcodeTrack = device.gcodeTrack,
-            gcodeExt = device.gcodeExt,
-            gcodeInt = device.gcodeInt,
             zMoveMax = device.deviceZMax || 0,
             tool = 0,
             fwRetract = device.fwRetract,
@@ -576,16 +574,9 @@
                     }
                 }
 
-                // emit gcode macro for changed print region
+                // emit comment on output type chage
                 if (last && out.type !== last.type) {
-                    switch (out.type) {
-                        case 'ext':
-                            appendAllSub(gcodeExt);
-                            break;
-                        case 'int':
-                            appendAllSub(gcodeInt);
-                            break;
-                    }
+                    append(`; feature ${out.type}`);
                     lastType = out.type;
                 }
 
