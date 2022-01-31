@@ -17,13 +17,15 @@
         tracker = UTIL.pwait,
         FILL = KIRI.fill,
         FILLFIXED = KIRI.fill_fixed,
+        lopacity = 0.6,
+        opacity = 1,
         COLOR = {
-            anchor: { check: 0x999933, face: 0x999933, line: 0x999933, opacity: 1 },
-            shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity: 1 },
-            fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity: 1 },
-            infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity: 1 },
-            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity: 1 },
-            gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity: 1 }
+            anchor: { check: 0x999933, face: 0x999933, line: 0x999933, opacity, lopacity },
+            shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity, lopacity },
+            fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity, lopacity },
+            infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity },
+            support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity, lopacity },
+            gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity, lopacity }
         },
         PROTO = Object.clone(COLOR),
         getRangeParameters = FDM.getRangeParameters,

@@ -304,7 +304,7 @@ const script = {
         "ext/clip2",
         "ext/tween",
         "ext/fsave",
-        "ext/earcut",
+        // "ext/earcut",
         "ext/base64",
         "add/array",
         "add/three",
