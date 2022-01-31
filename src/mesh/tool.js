@@ -24,82 +24,68 @@ mesh.tool = class MeshTool {
     constructor(params = {}) {
         this.precision = Math.pow(10, params.precision || 6);
         if (params.vertices) {
-            this.setData(params.vertices, params.faces);
+            this.setVertices(params.vertices);
         }
     }
 
     /**
-     * set vertices and faces of the mesh. if only vertices are provided
-     * then the data is assumed to be un-indexed and will be indexed into
-     * faces. if faces are provided, they are assumed to be index references
-     * into the vertex data. removes invalid faces.
-     *
-     * the end result is face data mapped to an indexed set of unique vertices.
-     *
      * @param {number[]} vertices
-     * @param {number[]} faces
      */
-    setData(vertices, faces) {
+    setVertices(vertices, opt = {}) {
         if (!vertices) {
             throw "missing vertices";
         }
         if (vertices.length % 3 !== 0) {
             throw "invalid vertices";
         }
-        // when face/index data is missing, vertices need to be normalized
-        if (!faces) {
-            faces = [];
-            let fcac = {}; // seen face hash
-            let fnew = []; // accumulate vertex triplets
-            let nuvt = []; // new vertex list
-            let hash = {}; // find vertex matches
-            let prec = this.precision;
-            let dups = 0;
-            let cull = 0;
-            for (let i=0, l=vertices.length; i<l; i += 3) {
-                let x = vertices[i];
-                let y = vertices[i+1];
-                let z = vertices[i+2];
-                let key = [
-                    (x * prec) | 0,
-                    (y * prec) | 0,
-                    (z * prec) | 0
-                ].join('');
-                let vpos = hash[key];
-                if (vpos === undefined) {
-                    // add new vertex x,y,z and hash entry with index
-                    hash[key] = vpos = nuvt.length;
-                    nuvt.push(x);
-                    nuvt.push(y);
-                    nuvt.push(z);
-                }
-                // add vertex position to face accumulator
-                fnew.push(vpos);
-                if (fnew.length === 3) {
-                    // check and emit face if it's unique
-                    // cull invalid faces (has 2 or more shared vertices)
-                    if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
-                        fnew = [];
-                        cull++;
-                        continue;
-                    }
-                    let key = fnew.slice().sort().join('-');
-                    // drop duplicate faces (sort handles reverse order)
-                    if (!fcac[key]) {
-                        faces.appendAll(fnew);
-                        fcac[key] = key;
-                    } else {
-                        dups++;
-                    }
-                    fnew = [];
-                }
+        let faces = [];
+        let fcac = {}; // seen face hash
+        let fnew = []; // accumulate vertex triplets
+        let nuvt = []; // new vertex list
+        let hash = {}; // find vertex matches
+        let prec = this.precision;
+        let dups = 0;
+        let cull = 0;
+        for (let i=0, l=vertices.length; i<l; i += 3) {
+            let x = vertices[i];
+            let y = vertices[i+1];
+            let z = vertices[i+2];
+            let key = [
+                (x * prec) | 0,
+                (y * prec) | 0,
+                (z * prec) | 0
+            ].join('');
+            let vpos = hash[key];
+            if (vpos === undefined) {
+                // add new vertex x,y,z and hash entry with index
+                hash[key] = vpos = nuvt.length;
+                nuvt.push(x);
+                nuvt.push(y);
+                nuvt.push(z);
             }
-            vertices = nuvt;
-            this.stats = {cull, dups, faces:faces.length/3};
-            // console.log({stats: this.stats});
-        } else {
-            faces = faces.map(v => v*3);
+            // add vertex position to face accumulator
+            fnew.push(vpos);
+            if (fnew.length === 3) {
+                // check and emit face if it's unique
+                // cull invalid faces (has 2 or more shared vertices)
+                if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+                    fnew = [];
+                    cull++;
+                    continue;
+                }
+                let key = fnew.slice().sort().join('-');
+                // drop duplicate faces (sort handles reverse order)
+                if (!fcac[key]) {
+                    faces.appendAll(fnew);
+                    fcac[key] = key;
+                } else {
+                    dups++;
+                }
+                fnew = [];
+            }
         }
+        vertices = nuvt;
+        this.stats = {cull, dups, faces:faces.length/3};
         // unique vertex array
         this.vertices = vertices;
         // unique face array. elements are offset into vertices
@@ -112,7 +98,7 @@ mesh.tool = class MeshTool {
      * construct ordered line maps with array of connected edges.
      * connect lines into polys. earcut polys into new faces.
      */
-    heal(opt = { merge: true }) {
+    patch(opt = { merge: true }) {
         let vertices = this.vertices;
         let faces = this.faces;
         let hash = {}; // key to line map

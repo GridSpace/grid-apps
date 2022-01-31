@@ -125,7 +125,6 @@
 * add section view. local clip. raycast skip points above plane
 * add isolate op = separate bodies
 * add decimate op = face reduction
-* add union op (applied after isolate)
 * add flatten/crush op: for z bottoms
 * face selection: find regions with < delta to normal
 * better z snap using just vertexes from face intersected

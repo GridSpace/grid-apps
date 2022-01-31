@@ -59,25 +59,23 @@ function translate_encode(id, matrix) {
 }
 
 function analyze(id, opt = {}) {
-    log(`${id} | indexing...`);
+    log(`${id} | analyzing...`);
     let geo = cache[id].geo;
     let tool = new mesh.tool({
         vertices: geo.attributes.position.array,
-        faces: geo.index ? geo.index.array : undefined,
         debug: false
     });
-    log(`${id} | analyzing...`);
-    tool.heal(opt);
+    log(`${id} | patching...`);
+    tool.patch(opt);
     dbug.log(tool);
     return tool;
 }
 
 let model = {
     load(data) {
-        let { vertices, indices, name, id } = data;
+        let { vertices, name, id } = data;
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        if (indices) geo.setIndex(new BufferAttribute(indices, 1));
         cacheUpdate(id, { name, geo, xmatrix: core_matrix.clone(), trans: undefined });
     },
 
