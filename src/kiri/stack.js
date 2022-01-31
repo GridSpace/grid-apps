@@ -224,7 +224,7 @@
         newMat = createPhongMaterial;
 
     function createLineMaterial(color, array) {
-        const opacity = color.opacity || 1;
+        const opacity = color.lopacity || color.opacity || 1;
         const mat = new THREE.LineBasicMaterial({
             transparent: true,
             opacity: opacity,
