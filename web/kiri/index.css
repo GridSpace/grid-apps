@@ -1793,6 +1793,19 @@ th, tr, td, label {
 .dark #stats {
     color: #888;
 }
+#stats:hover #rnfo {
+    display: flex;
+}
+#rnfo {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    border: 1px solid black;
+    border-radius: 3px;
+    padding: 5px;
+    white-space: pre;
+}
 #tool-info {
     position: fixed;
     white-space: pre;

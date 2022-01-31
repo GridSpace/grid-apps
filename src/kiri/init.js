@@ -210,16 +210,21 @@
         if (self.debug !== true) {
             return;
         }
-        let { div, fps, rms } = UI.stats;
+        let { div, fps, rms, rnfo } = UI.stats;
         div.style.display = 'flex';
         setInterval(() => {
             const nfps = SPACE.view.getFPS().toFixed(2);
             const nrms = SPACE.view.getRMS().toFixed(2);
+            const rend = SPACE.renderInfo();
+            const { memory, render } = rend;
             if (nfps !== fps.innerText) {
                 fps.innerText = nfps;
             }
             if (nrms !== rms.innerText) {
                 rms.innerText = nrms;
+            }
+            if (rnfo.offsetParent !== null) {
+                rnfo.innerText = JSON.stringify({ ...memory, ...render }, null, 4);
             }
         }, 100);
     }
@@ -1534,6 +1539,7 @@
                 fps:            $('fps'),
                 rms:            $('rms'),
                 div:            $('stats'),
+                rnfo:           $('rnfo'),
             },
 
             load:               $('load-file'),
