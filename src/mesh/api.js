@@ -391,7 +391,6 @@ let tool = {
         models = fallback(models);
         api.log.emit('analyzing mesh(es)...').pin();
         let promises = [];
-        let newmdl = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
             // todo - translate vertices with source model's matrix
@@ -401,14 +400,13 @@ let tool = {
                     file: (area.length/3).toString(),
                     mesh: area.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
-                newmdl.appendAll(nm);
+                if (nm.length) {
+                    mesh.api.group.new(nm, undefined, "patch").setSelected();
+                }
             });
             promises.push(p);
         }
         Promise.all(promises).then(() => {
-            if (newmdl.length) {
-                mesh.api.group.new(newmdl, undefined, "patch").setSelected();
-            }
             api.log.emit('analysis complete').unpin();
         });
     },
