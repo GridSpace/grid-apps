@@ -61,7 +61,7 @@
             print_hrs = print_hrs.toString().padStart(2,'0');
 
             $('print-filename').value = filename;
-            $('print-volume').value = Math.round(volume);
+            $('print-volume').value = (volume/1000).round(2);
             $('print-layers').value = layers;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
 
