@@ -121,6 +121,13 @@ let model = {
         return data;
     },
 
+    union(recs) {
+        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+        let solids = arrays.map(a => base.CSG.fromPositionArray(a));
+        let union = base.CSG.union(...solids);
+        return base.CSG.toPositionArray(union);
+    },
+
     // used to generate a list for split snapping
     zlist(data) {
         let { id, matrix, round } = data;
@@ -296,29 +303,10 @@ let model = {
     },
 
     rebuild(data, send) {
-        let { id, matrix, mode } = data;
+        let { id, matrix } = data;
         log(`${id} | rebuilding...`);
         let points = translate_encode(id, matrix);
         log(`${id} | ${points.length} points`);
-
-        if (mode === 'csg') {
-            log(`${id} | intersecting...`);
-            let box = base.CSG.Solid.fromPositionArray(
-                new THREE.BoxGeometry(3000, 3000, 3000)
-                    .toNonIndexed().attributes.position.array
-            );
-            let solid = base.CSG.Solid.fromPositionArray(points);
-            let solution = box.intersect(solid);
-            let vertices = solution.polygons
-                .map(p => p.vertices.map(v => v.pos))
-                .map(a => {
-                    let pa = a.map( v => [ v.x, v.y, v.z ]).flat();
-                    let ec = base.util.triangulate(pa, undefined, 3);
-                    return ec;
-                }).flat().toFloat32();
-            return { vertices };
-        }
-
         send.async();
         let layers = [];
         base.slice(points, {

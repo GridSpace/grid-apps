@@ -162,17 +162,10 @@ mesh.model = class MeshModel extends mesh.object {
             return;
         }
         worker.model_rebuild({
-            mode: opt.mode || 'slice',
             matrix: this.matrix,
             id: this.id
         }).then(data => {
-            let { vertices, lines } = data;
-            if (vertices) {
-                mesh.api.group.new([new mesh.model({
-                    file: `healed`,
-                    mesh: data.vertices
-                })]).floor().centerXY().setSelected();
-            }
+            let { lines } = data;
             if (lines) {
                 let points = [];
                 for (let i=0; i<lines.length;) {

@@ -485,6 +485,7 @@ const script = {
         "&main/mesh"
     ],
     mesh_work : [
+        "ext/jscad",
         "&mesh/work"
     ],
     mesh_pool : [
