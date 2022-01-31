@@ -335,6 +335,7 @@
         let width2 = width / 2, height2 = height / 2;
         let array = [];
         let count = 0;
+        let area = 0;
 
         function scaleMovePoly(poly) {
             let points = poly.points;
@@ -401,6 +402,7 @@
         // scale and move all polys to fit in rendered platform coordinates
         for (let i=0, il=array.length; i<il; i++) {
             let poly = array[i];
+            area += poly.areaDeep();
             scaleMovePoly(poly);
             writePoly(writer, poly);
         }
@@ -425,8 +427,7 @@
                 lastv = v;
             }
         }
-        return { lines };
-        // return { image, lines };
+        return { lines, area };
     }
 
     if (!self.navigator && self.process && self.process.env) {

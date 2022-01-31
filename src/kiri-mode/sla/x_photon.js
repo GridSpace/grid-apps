@@ -391,6 +391,7 @@
         let width2 = width / 2, height2 = height / 2;
         let array = [];
         let count = 0;
+        let area = 0;
 
         function scaleMovePoly(poly) {
             let points = poly.points;
@@ -457,6 +458,7 @@
         // scale and move all polys to fit in rendered platform coordinates
         for (let i=0, il=array.length; i<il; i++) {
             let poly = array[i];
+            area += poly.areaDeep();
             scaleMovePoly(poly);
             writePoly(writer, poly);
         }
@@ -469,7 +471,7 @@
             layers.push(wasm.heap.slice(imagelen, imagelen + rlelen));
         }
 
-        return { image, layers, end: count === 0 };
+        return { image, layers, end: count === 0, area };
     }
 
     // legacy JS-only rasterizer uses OffscreenCanvas
@@ -480,6 +482,7 @@
         let ctx = layer.getContext('2d');
         ctx.fillStyle = 'rgb(200, 0, 0)';
         let count = 0;
+        let area = 0;
         widgets.forEach(widget => {
             let slice = widget.slices[index];
             if (slice) {
@@ -489,6 +492,7 @@
                 if (!polys) polys = slice.tops.map(t => t.poly);
                 if (slice.supports) polys.appendAll(slice.supports);
                 polys.forEach(poly => {
+                    area += poly.areaDeep();
                     poly.move(widget.track.pos);
                     ctx.beginPath();
                     polyout(poly.setClockwise(), ctx, opt);
@@ -510,7 +514,7 @@
         for (let i=0; i<red.length; i++) {
             red[i] = data[i*4];
         }
-        return { image: red, end: count === 0 };
+        return { image: red, end: count === 0, area };
     }
 
     function polyout(poly, ctx, opt) {

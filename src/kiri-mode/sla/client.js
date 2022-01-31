@@ -20,7 +20,7 @@
     };
 
     SLA.printDownload = function(output, API, names) {
-        const { file, width, height, layers } = output;
+        const { file, width, height, layers, volume } = output;
         const fileroot = names[0] || "print";
         const filename = `${fileroot}-${new Date().getTime().toString(36)}`;
 
@@ -61,6 +61,7 @@
             print_hrs = print_hrs.toString().padStart(2,'0');
 
             $('print-filename').value = filename;
+            $('print-volume').value = Math.round(volume);
             $('print-layers').value = layers;
             $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
 

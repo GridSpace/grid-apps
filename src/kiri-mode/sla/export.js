@@ -24,9 +24,11 @@
             height = device.resolutionY,
             scaleX = width / device.bedWidth,
             scaleY = height / device.bedDepth,
+            layerZ = process.slaSlice,
             alias = process.slaAntiAlias || 1,
             mark = Date.now(),
-            layermax = 0;
+            layermax = 0,
+            volume = 0;
 
         // filter ignored widgets
         widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
@@ -64,7 +66,8 @@
 
             for (let index=0; index < layermax; index++) {
                 let param = { index, width, height, widgets, scaleX, scaleY, masks };
-                let {image, layers, end} = render(param);
+                let { image, layers, end, area } = render(param);
+                volume += (area * layerZ);
                 images.push(image);
                 slices.push(layers);
                 online({
@@ -89,7 +92,7 @@
             }, (progress, message) => {
                 online({progress: progress * part2 + part1, message});
             });
-            ondone({ width, height, file, layers: images.length }, [file]);
+            ondone({ width, height, file, layers: images.length, volume }, [file]);
         } else {
             let part1 = 0.95;
             let part2 = 1 - part1;
@@ -97,7 +100,8 @@
 
             for (let index=0; index < layermax; index++) {
                 let param = { index, width, height, widgets, scaleX, scaleY };
-                let {lines} = CXDLP.render(param);
+                let { lines, area } = CXDLP.render(param);
+                volume += (area * layerZ);
                 slices.push(lines);
                 online({
                     progress: (index / layermax) * part1,
@@ -151,7 +155,8 @@
                 width: width,
                 height: height,
                 file: file,
-                layers: slices.length
+                layers: slices.length,
+                volume
             }, [file]);
         }
 
