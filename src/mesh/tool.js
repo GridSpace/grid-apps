@@ -14,7 +14,12 @@ if (mesh.tool) return;
 
 let geom = mesh.geom;
 
-/** tool for identiying defects and healing them **/
+/**
+ * tool for identiying defects and healing them
+ * copied from base/mesh which is used by KM. the
+ * two need to be merged. earcut needs to be migrated
+ * to base.util.triagulate
+ */
 mesh.tool = class MeshTool {
     constructor(params = {}) {
         this.precision = Math.pow(10, params.precision || 6);
