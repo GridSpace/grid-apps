@@ -496,14 +496,16 @@ kiri.lang['en-us'] = {
     cd_menu:        "drill",
     cd_axis:        "axis",
     cd_points:      "points",
-    cd_plpr_s:      "plunge per",
-    cd_plpr_l:      ["max plunge between","dwell periods","in workspace units","0 to disable"],
+    // cd_plpr_s:      "plunge per",
+    // cd_plpr_l:      ["max plunge between","dwell periods","in workspace units","0 to disable"],
     cd_dwll_s:      "dwell time",
     cd_dwll_l:      ["dwell time","between plunges in","in milliseconds"],
     cd_lift_s:      "drill lift",
     cd_lift_l:      ["lift between plunges","after dwell period","in workspace units","0 to disable"],
     cd_regi_s:      "register",
     cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
+    cd_mark_s:      "marking",
+    cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",

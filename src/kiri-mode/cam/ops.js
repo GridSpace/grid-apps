@@ -924,7 +924,7 @@
                 drillToolDiam = drillTool.fluteDiameter(),
                 centerDiff = drillToolDiam * 0.1,
                 area = (drillToolDiam/2) * (drillToolDiam/2) * Math.PI,
-                areaDelta = area * 0.05,
+                areaDelta = op.mark ? Infinity : area * 0.05,
                 sliceOut = this.sliceOut = [];
 
             updateToolDiams(drillToolDiam);
@@ -961,6 +961,15 @@
             drills.forEach(function(drill) {
                 let center = drill.center(true),
                     slice = newSlice(0,null);
+                if (op.mark) {
+                    // replace points with single mark
+                    let points = drill.points;
+                    points = [
+                        points[0],
+                        points[0].clone().sub({x:0, y:0, z:op.down})
+                    ];
+                    drill.points = points;
+                }
                 drill.points.forEach(function(point) {
                     point.x = center.x;
                     point.y = center.y;

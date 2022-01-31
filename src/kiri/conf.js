@@ -506,6 +506,7 @@
                     camDrillDown: 5,
                     camDrillDwell: 250,
                     camDrillLift: 2,
+                    camDrillMark: false,
                     camDrillingOn: false,
                     camRegisterSpeed: 1000,
                     camFlipAxis: "X",

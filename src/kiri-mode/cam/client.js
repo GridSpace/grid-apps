@@ -976,7 +976,8 @@
             down:    'camDrillDown',
             rate:    'camDrillDownSpeed',
             dwell:   'camDrillDwell',
-            lift:    'camDrillLift'
+            lift:    'camDrillLift',
+            mark:    'camDrillMark'
         }).inputs = {
             tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
             sep:      UC.newBlank({class:"pop-sep"}),
@@ -984,7 +985,8 @@
             down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
             rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
             dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
-            lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true})
+            lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
+            mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
         };
 
         createPopOp('register', {
