@@ -312,6 +312,22 @@ let tool = {
         });
     },
 
+    union(models) {
+        models = fallback(models);
+        api.log.emit(`union ${models.length} model(s)`).pin();
+        worker.model_union(models.map(m => {
+            return { id: m.id, matrix: m.matrix }
+        }))
+        .then(data => {
+            let group = api.group.new([new mesh.model({
+                file: `unioned`,
+                mesh: data
+            })]).promote();
+            api.selection.set([group]);
+            api.log.emit('union complete').unpin();
+        });
+    },
+
     duplicate() {
         for (let m of selection.models()) {
             m.duplicate();
