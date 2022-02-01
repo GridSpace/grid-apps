@@ -2,7 +2,9 @@
 
 "use strict";
 
+// dep: ext.clip2
 // dep: geo.bounds
+// dep: geo.polygons
 (function() {
 
 const base = self.base;
