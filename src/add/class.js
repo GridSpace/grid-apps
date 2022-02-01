@@ -2,9 +2,11 @@
 
 "use strict";
 
-if (!self.ArrayWriter) {
-    gapp.register('add.class');
-}
+(function() {
+
+if (self.ArrayWriter) return;
+
+gapp.register('add.class');
 
 self.ArrayWriter = class ArrayWriter {
     constructor() {
@@ -171,3 +173,5 @@ self.DataReader = class DataReader {
         return v;
     }
 }
+
+})();
