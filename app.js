@@ -446,6 +446,7 @@ const script = {
         "main/gapp",
         "moto/license",
         "main/kiri",
+        "ext/clip2",
         "data/local",
         "ext/three",
         "add/array",
