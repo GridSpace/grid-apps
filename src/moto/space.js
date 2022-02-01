@@ -301,6 +301,7 @@
         updateLights(width, depth, maxz);
         if (volume) {
             SCENE.remove(volume);
+            THREE.dispose(volume);
             volume = null;
         }
         if (maxz) {
