@@ -5,80 +5,57 @@
 // dep: geo.bounds
 (function() {
 
-    if (self.base.Polygon) return;
+const base = self.base;
+if (base.Polygon) return;
 
-    const BASE = self.base,
-        CONF = BASE.config,
-        UTIL = BASE.util,
-        KEYS = BASE.key,
-        SQRT = Math.sqrt,
-        POLY = function() { return BASE.polygons },
-        ABS = Math.abs,
-        MIN = Math.min,
-        MAX = Math.max,
-        PI = Math.PI,
-        DEG2RAD = PI / 180,
-        newPoint = BASE.newPoint,
-        Bounds = BASE.Bounds;
+const { config, util, polygons, newBounds, newPoint } = base;
+const POLY = polygons,
+    DEG2RAD = Math.PI / 180,
+    clib = self.ClipperLib,
+    clip = clib.Clipper,
+    ctyp = clib.ClipType,
+    ptyp = clib.PolyType,
+    cfil = clib.PolyFillType;
 
-    let seqid = Math.round(Math.random() * 0xffffffff);
+let seqid = Math.round(Math.random() * 0xffffffff);
 
-    /** ******************************************************************
-     * Constructors
-     ******************************************************************* */
-
-    class Polygon {
-        constructor(points) {
-            this.id = seqid++; // polygon unique id
-            this.open = false;
-            this.points = []; // ordered array of points
-            this.depth = 0; // depth nested from top parent (density for support fill)
-            if (points) {
-                this.addPoints(points);
-            }
-        }
-
-        get length() {
-            return this.points.length;
-        }
-
-        get deepLength() {
-            let len = this.length;
-            if (this.inner) {
-                for (let inner of this.inner) {
-                    len += inner.length;
-                }
-            }
-            return len;
-        }
-
-        get bounds() {
-            if (this._bounds) {
-                return this._bounds;
-            }
-            let bounds = this._bounds = new Bounds();
-            for (let point of this.points) {
-                bounds.update(point);
-            }
-            return bounds;
+class Polygon {
+    constructor(points) {
+        this.id = seqid++; // polygon unique id
+        this.open = false;
+        this.points = []; // ordered array of points
+        this.depth = 0; // depth nested from top parent (density for support fill)
+        if (points) {
+            this.addPoints(points);
         }
     }
 
-    BASE.Polygon = Polygon;
+    get length() {
+        return this.points.length;
+    }
 
-    BASE.newPolygon = newPolygon;
+    get deepLength() {
+        let len = this.length;
+        if (this.inner) {
+            for (let inner of this.inner) {
+                len += inner.length;
+            }
+        }
+        return len;
+    }
 
-    const PRO = Polygon.prototype;
+    get bounds() {
+        if (this._bounds) {
+            return this._bounds;
+        }
+        let bounds = this._bounds = newBounds();
+        for (let point of this.points) {
+            bounds.update(point);
+        }
+        return bounds;
+    }
 
-    Polygon.fromArray = function(array) {
-        return newPolygon().fromArray(array);
-    };
-
-    /** ******************************************************************
-     * Polygon Prototype Functions
-     ******************************************************************* */
-
-    PRO.toString = function(verbose) {
+    toString(verbose) {
         let l;
         if (this.inner && this.inner.length) {
             l = '/' + this.inner.map(i => i.toString(verbose)).join(',');
@@ -90,34 +67,34 @@
         } else {
             return `P[${this.points.length,this.area().toFixed(2)}${l}]`;
         }
-    };
+    }
 
-    PRO.toArray = function() {
+    toArray() {
         let ov = this.open ? 1 : 0;
-        return this.points.map((p,i) => i === 0 ? [ov,p.x,p.y,p.z] : [p.x,p.y,p.z]).flat();
-    };
+        return this.points.map((p, i) => i === 0 ? [ov, p.x, p.y, p.z] : [p.x, p.y, p.z]).flat();
+    }
 
-    PRO.fromArray = function(array) {
+    fromArray(array) {
         this.open = array[0] === 1;
-        for (let i=1; i<array.length; ) {
+        for (let i = 1; i < array.length;) {
             this.add(array[i++], array[i++], array[i++]);
         }
         return this;
-    };
+    }
 
-    PRO.matches = function(poly) {
+    matches(poly) {
         let tarr = Array.isArray(poly) ? poly : poly.toArray();
         let parr = this.toArray();
         if (tarr.length === parr.length) {
-            for (let i=0; i<tarr.length; i++) {
+            for (let i = 0; i < tarr.length; i++) {
                 if (Math.abs(tarr[i] - parr[i]) > 0.0001) return false;
             }
             return true;
         }
         return false;
-    };
+    }
 
-    PRO.xray = function(deep) {
+    xray(deep) {
         const xray = {
             id: this.id,
             len: this.points.length,
@@ -129,13 +106,17 @@
             xray.inner = deep ? this.inner.xray(deep) : this.inner;
         }
         return xray;
-    };
+    }
 
     // return which plane (x,y,z) this polygon is coplanar with
-    PRO.alignment = function() {
+    alignment() {
         if (this._aligned) return this._aligned;
 
-        let diff = {x: false, y: false, z: false};
+        let diff = {
+            x: false,
+            y: false,
+            z: false
+        };
         let last = undefined;
 
         // flatten points into array for earcut()
@@ -151,32 +132,43 @@
         return this._aligned =
             diff.x === false ? 'yz' :
             diff.y === false ? 'xz' : 'xy';
-    };
+    }
 
     // ensure alignment with XY plane. mark if axes are swapped.
-    PRO.ensureXY = function() {
+    ensureXY() {
         if (this._swapped) return this;
         switch (this.alignment()) {
-            case 'xy': break;
-            case 'yz': this.swap(true,false)._swapped = true; break;
-            case 'xz': this.swap(false,true)._swapped = true; break;
-            default: throw `invalid alignment`;
+            case 'xy':
+                break;
+            case 'yz':
+                this.swap(true, false)._swapped = true;
+                break;
+            case 'xz':
+                this.swap(false, true)._swapped = true;
+                break;
+            default:
+                throw `invalid alignment`;
         }
         return this;
-    };
+    }
 
     // restore to original planar alignment if swapped
-    PRO.restoreXY = function() {
+    restoreXY() {
         if (!this._swapped) return this;
         switch (this.alignment()) {
-            case 'xy': break;
-            case 'yz': this.swap(true,false)._swapped = false; break;
-            case 'xz': this.swap(false,true)._swapped = false; break;
+            case 'xy':
+                break;
+            case 'yz':
+                this.swap(true, false)._swapped = false;
+                break;
+            case 'xz':
+                this.swap(false, true)._swapped = false;
+                break;
         }
         return this;
-    };
+    }
 
-    PRO.earcut = function() {
+    earcut() {
         // gather all points into a single array including inner polys
         // keeping track of array offset indices for inners
         let out = [];
@@ -198,36 +190,26 @@
         }
 
         // perform earcut()
-        let cut = self.earcut(out,holes,3);
+        let cut = self.earcut(out, holes, 3);
         let ret = [];
 
         // preserve swaps in new polys
-        for (let i=0; i<cut.length; i+=3) {
+        for (let i = 0; i < cut.length; i += 3) {
             let p = new Polygon();
             p._aligned = this._aligned;
             p._swapped = this._swapped;
-            for (let j=0; j<3; j++) {
+            for (let j = 0; j < 3; j++) {
                 let n = cut[i + j] * 3;
-                p.add(out[n], out[n+1], out[n+2]);
+                p.add(out[n], out[n + 1], out[n + 2]);
             }
             ret.push(p);
         }
 
         return ret;
-    };
-
-    // use Slope.angleDiff() then re-test path mitering / rendering
-    function slopeDiff(s1, s2) {
-        const n1 = s1.angle;
-        const n2 = s2.angle;
-        let diff = n2 - n1;
-        while (diff < -180) diff += 360;
-        while (diff > 180) diff -= 360;
-        return Math.abs(diff);
     }
 
     // generate center crossing point cloud
-    PRO.centers = function(step, z, min, max, opt = {}) {
+    centers(step, z, min, max, opt = {}) {
         let cloud = [],
             bounds = this.bounds,
             lines = opt.lines || false,
@@ -240,23 +222,23 @@
             }
         }
 
-        for (let y of UTIL.lerp(bounds.miny + stepoff, bounds.maxy - stepoff, step, true)) {
+        for (let y of util.lerp(bounds.miny + stepoff, bounds.maxy - stepoff, step, true)) {
             let ints = [];
             for (let points of set) {
                 let length = points.length;
-                for (let i=0; i<length; i++) {
+                for (let i = 0; i < length; i++) {
                     let p1 = points[i % length];
-                    let p2 = points[(i+1) % length];
+                    let p2 = points[(i + 1) % length];
                     if (
                         (p1.y <= y && p2.y > y) ||
                         (p1.y > y && p2.y <= y)
-                    ) ints.push([p1,p2]);
+                    ) ints.push([p1, p2]);
                 }
             }
             let cntr = [];
             if (ints.length && ints.length % 2 === 0) {
                 for (let int of ints) {
-                    let [p1, p2]  = int;
+                    let [p1, p2] = int;
                     if (p2.y < p1.y) {
                         let tp = p1;
                         p1 = p2;
@@ -297,23 +279,23 @@
             }
         }
 
-        for (let x of UTIL.lerp(bounds.minx + stepoff, bounds.maxx - stepoff, step, true)) {
+        for (let x of util.lerp(bounds.minx + stepoff, bounds.maxx - stepoff, step, true)) {
             let ints = [];
             for (let points of set) {
                 let length = points.length;
-                for (let i=0; i<length; i++) {
+                for (let i = 0; i < length; i++) {
                     let p1 = points[i % length];
-                    let p2 = points[(i+1) % length];
+                    let p2 = points[(i + 1) % length];
                     if (
                         (p1.x <= x && p2.x > x) ||
                         (p1.x > x && p2.x <= x)
-                    ) ints.push([p1,p2]);
+                    ) ints.push([p1, p2]);
                 }
             }
             let cntr = [];
             if (ints.length && ints.length % 2 === 0) {
                 for (let int of ints) {
-                    let [p1, p2]  = int;
+                    let [p1, p2] = int;
                     if (p2.x < p1.x) {
                         let tp = p1;
                         p1 = p2;
@@ -384,7 +366,7 @@
         let poly = [];
         while (cloud.length) {
             if (poly.length === 0) {
-                poly = [ cloud.shift() ];
+                poly = [cloud.shift()];
                 polys.push(poly);
                 continue;
             }
@@ -406,7 +388,7 @@
         return polys
             .filter(poly => poly.length > 1)
             .map(poly => {
-                let np = BASE.newPolygon().setOpen();
+                let np = base.newPolygon().setOpen();
                 for (let p of poly) {
                     np.push(p);
                 }
@@ -416,9 +398,9 @@
                 np = np.clean();
                 return np;
             });
-    };
+    }
 
-    PRO.debur = function(dist) {
+    debur(dist) {
         if (this.len < 2) {
             return null;
         }
@@ -426,10 +408,10 @@
             pln = pa.length,
             open = this.open,
             newp = newPolygon().copyZ(this.z),
-            min = dist || BASE.config.precision_merge;
+            min = dist || base.config.precision_merge;
         let lo;
         newp.push(lo = pa[0]);
-        for (let i=1; i<pln; i++) {
+        for (let i = 1; i < pln; i++) {
             if (lo.distTo2D(pa[i]) >= min) {
                 newp.push(lo = pa[i]);
             }
@@ -440,15 +422,18 @@
             return null;
         }
         return newp;
-    };
+    }
 
-    PRO.miter = function(debug) {
+    miter(debug) {
         if (this.length < 3) return this;
 
-        const slo = [], pa = this.points, pln = pa.length, open = this.open;
+        const slo = [],
+            pa = this.points,
+            pln = pa.length,
+            open = this.open;
         let last;
-        for (let i=1; i<pln; i++) {
-            slo.push(pa[i-1].slopeTo(last = pa[i]));
+        for (let i = 1; i < pln; i++) {
+            slo.push(pa[i - 1].slopeTo(last = pa[i]));
         }
         if (!open) {
             slo.push(last.slopeTo(pa[0]));
@@ -457,33 +442,33 @@
         const ang = new Array(pln).fill(0);
         let redo = false;
         const aln = open ? pln - 1 : pln;
-        for (let i=1; i<aln; i++) {
-            ang[i] = slopeDiff(slo[i-1], slo[i]);
+        for (let i = 1; i < aln; i++) {
+            ang[i] = slopeDiff(slo[i - 1], slo[i]);
             redo |= ang[i] > 90;
         }
         if (!open) {
             // ang[pln-1] = slopeDiff(slo[pln-2], slo[pln-1]);
-            ang[0] = slopeDiff(slo[pln-1], slo[0]);
-            redo |= ang[pln-1] > 90;
+            ang[0] = slopeDiff(slo[pln - 1], slo[0]);
+            redo |= ang[pln - 1] > 90;
             redo |= ang[0] > 90;
         }
         if (redo) {
             const newp = newPolygon().copyZ(this.z);
             // newp.debug = this.debug = true;
             newp.open = open;
-            for (let i=0; i<pln; i++) {
-                const p = pa[(i+pln) % pln];
-                const d = ang[(i+pln) % pln];
+            for (let i = 0; i < pln; i++) {
+                const p = pa[(i + pln) % pln];
+                const d = ang[(i + pln) % pln];
                 if (d > 179) {
-                    const s = slo[(i+pln) % pln];
-                    const pp = pa[(i+pln-1) % pln];
-                    const ps = slo[(i+pln-1) % pln];
+                    const s = slo[(i + pln) % pln];
+                    const pp = pa[(i + pln - 1) % pln];
+                    const ps = slo[(i + pln - 1) % pln];
                     newp.push(p.follow(p.slopeTo(pp).normal(), 0.001));
                     newp.push(p.follow(s.clone().normal().invert(), 0.001));
                 } else if (d > 90) {
-                    const s = slo[(i+pln) % pln];
-                    const pp = pa[(i+pln-1) % pln];
-                    const ps = slo[(i+pln-1) % pln];
+                    const s = slo[(i + pln) % pln];
+                    const pp = pa[(i + pln - 1) % pln];
+                    const ps = slo[(i + pln - 1) % pln];
                     newp.push(p.follow(p.slopeTo(pp), 0.001));
                     newp.push(p.follow(s, 0.001));
                 } else {
@@ -494,16 +479,16 @@
             return newp;
         }
         return this;
-    };
+    }
 
-    PRO.createConvexHull = function(points) {
+    createConvexHull(points) {
         function removeMiddle(a, b, c) {
             let cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);
             let dot = (a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y);
             return cross < 0 || cross == 0 && dot <= 0;
         }
 
-        points.sort(function (a, b) {
+        points.sort(function(a, b) {
             return a.x != b.x ? a.x - b.x : a.y - b.y;
         });
 
@@ -518,29 +503,30 @@
         }
 
         hull.pop();
-
         this.addPoints(hull);
-        return this;
-    };
 
-    PRO.stepsFromRoot = function() {
-        let p = this.parent, steps = 0;
+        return this;
+    }
+
+    stepsFromRoot() {
+        let p = this.parent,
+            steps = 0;
         while (p) {
             if (p.inner && p.inner.length > 1) steps++;
             p = p.parent;
         }
         return steps;
-    };
+    }
 
-    PRO.first = function() {
+    first() {
         return this.points[0];
-    };
+    }
 
-    PRO.last = function() {
-        return this.points[this.length-1];
-    };
+    last() {
+        return this.points[this.length - 1];
+    }
 
-    PRO.swap = function(x,y) {
+    swap(x, y) {
         this._bounds = undefined;
         if (x) {
             for (let p of this.points) {
@@ -553,15 +539,15 @@
         }
         if (this.inner) {
             for (let inner of this.inner) {
-                inner.swap(x,y);
+                inner.swap(x, y);
             }
         }
         return this;
     }
 
     // return average of all point positions
-    PRO.average = function() {
-        let ap = newPoint(0,0,0,null);
+    average() {
+        let ap = newPoint(0, 0, 0, null);
         this.points.forEach(p => {
             ap.x += p.x;
             ap.y += p.y;
@@ -571,14 +557,16 @@
         ap.y /= this.points.length;
         ap.z /= this.points.length;
         return ap;
-    };
+    }
 
     /**
      * @param {boolean} [point] return just the center point
      * @returns {Polygon|Point} a new polygon centered on x=0, y=0, z=0
      */
-    PRO.center = function(point) {
-        let ap = newPoint(0,0,0,null), np = newPolygon(), pa = this.points;
+    center(point) {
+        let ap = newPoint(0, 0, 0, null),
+            np = newPolygon(),
+            pa = this.points;
         pa.forEach(function(p) {
             ap.x += p.x;
             ap.y += p.y;
@@ -596,13 +584,15 @@
             ));
         });
         return np;
-    };
+    }
 
     /**
      * @returns {Point} center of a polygon assuming it's a circle
      */
-    PRO.circleCenter = function() {
-        let x=0, y=0, l=this.points.length;
+    circleCenter() {
+        let x = 0,
+            y = 0,
+            l = this.points.length;
         for (let point of this.points) {
             x += point.x;
             y += point.y;
@@ -610,7 +600,7 @@
         x /= l;
         y /= l;
         return newPoint(x, y, this.points[0].z, null);
-    };
+    }
 
     /**
      * add points forming a rectangle around a center point
@@ -619,7 +609,7 @@
      * @param {number} width
      * @param {number} height
      */
-    PRO.centerRectangle = function(center, width, height) {
+    centerRectangle(center, width, height) {
         width /= 2;
         height /= 2;
         this.push(newPoint(center.x - width, center.y - height, center.z));
@@ -627,59 +617,80 @@
         this.push(newPoint(center.x + width, center.y + height, center.z));
         this.push(newPoint(center.x - width, center.y + height, center.z));
         return this;
-    };
+    }
 
     /**
      * create square spiral (used for purge blocks)
      */
-    PRO.centerSpiral = function(center, lenx, leny, offset, count) {
+    centerSpiral(center, lenx, leny, offset, count) {
         count *= 4;
         offset /= 2;
-        let pos = { x: center.x - lenx/2, y: center.y + leny/2, z: center.z },
-            dir = { x: 1, y: 0, i: 0 }, t;
+        let pos = {
+                x: center.x - lenx / 2,
+                y: center.y + leny / 2,
+                z: center.z
+            },
+            dir = {
+                x: 1,
+                y: 0,
+                i: 0
+            },
+            t;
         while (count-- > 0) {
             this.push(newPoint(pos.x, pos.y, pos.z));
             pos.x += dir.x * lenx;
             pos.y += dir.y * leny;
             switch (dir.i++) {
-                case 0: t = dir.x; dir.x = dir.y; dir.y = -t; break;
-                case 1: t = dir.x; dir.x = dir.y; dir.y = t; break;
-                case 2: t = dir.x; dir.x = dir.y; dir.y = -t; break;
-                case 3: t = dir.x; dir.x = dir.y; dir.y = t; break;
+                case 0:
+                    t = dir.x;
+                    dir.x = dir.y;
+                    dir.y = -t;
+                    break;
+                case 1:
+                    t = dir.x;
+                    dir.x = dir.y;
+                    dir.y = t;
+                    break;
+                case 2:
+                    t = dir.x;
+                    dir.x = dir.y;
+                    dir.y = -t;
+                    break;
+                case 3:
+                    t = dir.x;
+                    dir.x = dir.y;
+                    dir.y = t;
+                    break;
             }
-            lenx -= offset/2;
-            leny -= offset/2;
+            lenx -= offset / 2;
+            leny -= offset / 2;
             dir.i = dir.i % 4;
         }
         return this;
-    };
+    }
 
     /**
      * add points forming a circle around a center point
-     *
-     * @param {Point} center
-     * @param {number} radius
-     * @param {number} points
-     * @param {boolean} clockwise
      */
-    PRO.centerCircle = function(center, radius, points, clockwise) {
-        let angle = 0, add = 360 / points;
+    centerCircle(center, radius, points, clockwise) {
+        let angle = 0,
+            add = 360 / points;
         if (clockwise) add = -add;
         while (points-- > 0) {
             this.push(newPoint(
-                UTIL.round(Math.cos(angle * DEG2RAD) * radius, 7) + center.x,
-                UTIL.round(Math.sin(angle * DEG2RAD) * radius, 7) + center.y,
+                util.round(Math.cos(angle * DEG2RAD) * radius, 7) + center.x,
+                util.round(Math.sin(angle * DEG2RAD) * radius, 7) + center.y,
                 center.z
             ));
             angle += add;
         }
         return this;
-    };
+    }
 
     /**
      * move all poly points by some offset
      */
-    PRO.move = function(offset) {
+    move(offset) {
         this._bounds = undefined;
         this.points = this.points.map(point => point.move(offset));
         if (this.inner) {
@@ -688,13 +699,13 @@
             }
         }
         return this;
-    };
+    }
 
     /**
      * scale polygon around origin
      */
-    PRO.scale = function(scale, round) {
-        let x,y,z;
+    scale(scale, round) {
+        let x, y, z;
         if (typeof(scale) === 'number') {
             x = y = z = scale;
         } else {
@@ -720,12 +731,12 @@
             }
         }
         return this;
-    };
+    }
 
     /**
      * hint fill angle hinting from longest segment
      */
-    PRO.hintFillAngle = function() {
+    hintFillAngle() {
         let index = 0,
             points = this.points,
             length = points.length,
@@ -733,16 +744,20 @@
             next,
             dist2,
             longest,
-            mincir = CONF.hint_min_circ,
-            minlen = CONF.hint_len_min,
-            maxlen = CONF.hint_len_max || Infinity;
+            mincir = config.hint_min_circ,
+            minlen = config.hint_len_min,
+            maxlen = config.hint_len_max || Infinity;
 
         while (index < length) {
             prev = points[index];
             next = points[++index % length];
             dist2 = prev.distToSq2D(next);
             if (dist2 >= minlen && dist2 <= maxlen && (!longest || dist2 > longest.len)) {
-                longest = {p1:prev, p2:next, len:dist2};
+                longest = {
+                    p1: prev,
+                    p2: next,
+                    len: dist2
+                };
             }
         }
 
@@ -751,7 +766,7 @@
         }
 
         return this.fillang;
-    };
+    }
 
     /**
      * todo make more efficient
@@ -759,7 +774,7 @@
      * @param {Boolean} deep
      * @returns {Polygon}
      */
-    PRO.clone = function(deep) {
+    clone(deep) {
         let np = newPolygon().copyZ(this.z),
             ln = this.length,
             i = 0;
@@ -775,10 +790,10 @@
         }
 
         return np;
-    };
+    }
 
     // special shallow for-render-or-read-only cloning
-    PRO.cloneZ = function(z, stop) {
+    cloneZ(z, stop) {
         let p = newPolygon();
         p.z = z;
         p.open = this.open;
@@ -787,14 +802,14 @@
             p.inner = this.inner.map(p => p.cloneZ(z, true));
         }
         return p;
-    };
+    }
 
-    PRO.copyZ = function(z) {
+    copyZ(z) {
         if (z !== undefined) {
             this.z = z;
         }
         return this;
-    };
+    }
 
     /**
      * set all points' z value
@@ -802,51 +817,43 @@
      * @param {number} z
      * @returns {Polygon} this
      */
-    PRO.setZ = function(z) {
+    setZ(z) {
         let ar = this.points,
             ln = ar.length,
             i = 0;
         while (i < ln) ar[i++].z = z;
-        if (this.inner) this.inner.forEach(function(c) {c.setZ(z)});
+        if (this.inner) this.inner.forEach(function(c) {
+            c.setZ(z)
+        });
         return this;
-    };
+    }
 
     /**
      * @returns {number} z value of first point
      */
-    PRO.getZ = function(i) {
+    getZ(i) {
         return this.z !== undefined ? this.z : this.points[i || 0].z;
-    };
+    }
 
     /**
-     *
-     * @param {Layer} layer
-     * @param {number} color
-     * @param {boolean} [recursive]
-     * @param {boolean} [open]
      */
-    PRO.render = function(layer, color, recursive, open) {
+    render(layer, color, recursive, open) {
         layer.poly(this, color, recursive, open);
-    };
+    }
 
-    PRO.renderSolid = function(layer, color) {
+    renderSolid(layer, color) {
         layer.solid(this, color);
-    };
+    }
 
     /**
      * add new point and return polygon reference for chaining
-     *
-     * @param {number} x
-     * @param {number} y
-     * @param {number} [z]
-     * @returns {Polygon}
      */
-    PRO.add = function(x,y,z) {
-        this.push(newPoint(x,y,z));
+    add(x, y, z) {
+        this.push(newPoint(x, y, z));
         return this;
-    };
+    }
 
-    PRO.addObj = function(obj) {
+    addObj(obj) {
         if (Array.isArray(obj)) {
             for (let o of obj) {
                 this.addObj(o);
@@ -858,11 +865,8 @@
 
     /**
      * append array of points to polygon and return polygon
-     *
-     * @param {Point[]} points
-     * @returns {Polygon}
      */
-    PRO.addPoints = function(points) {
+    addPoints(points) {
         let poly = this,
             length = points.length,
             i = 0;
@@ -870,138 +874,120 @@
             poly.push(points[i++]);
         }
         return this;
-    };
+    }
 
     /**
      * append point to polygon and return point
-     *
-     * @param {Point} p
-     * @returns {Point}
      */
-    PRO.push = function(p) {
+    push(p) {
         // clone any point belonging to another polygon
         if (p.poly) p = p.clone();
         p.poly = this;
         this.points.push(p);
         return p;
-    };
+    }
 
     /**
      * append point to polygon and return polygon
-     *
-     * @param {Point} p
-     * @returns {Polygon}
      */
-    PRO.append = function(p) {
+    append(p) {
         this.push(p);
         return this;
-    };
+    }
 
     /** close polygon */
-    PRO.setClosed = function() {
+    setClosed() {
         this.open = false;
         return this;
-    };
+    }
 
     /** open polygon */
-    PRO.setOpen = function() {
+    setOpen() {
         this.open = true;
         return this;
-    };
+    }
 
-    PRO.isOpen = function() {
+    isOpen() {
         return this.open;
-    };
+    }
 
-    PRO.isClosed = function() {
+    isClosed() {
         return !this.open;
-    };
+    }
 
-    PRO.appearsClosed = function() {
+    appearsClosed() {
         return this.first().isEqual(this.last());
-    };
+    }
 
-    PRO.setClockwise = function() {
+    setClockwise() {
         if (!this.isClockwise()) this.reverse();
         return this;
-    };
+    }
 
-    PRO.setCounterClockwise = function() {
+    setCounterClockwise() {
         if (this.isClockwise()) this.reverse();
         return this;
-    };
+    }
 
-    PRO.isClockwise = function() {
+    isClockwise() {
         return this.area(true) > 0;
-    };
+    }
 
-    PRO.showKey = function() {
-        return [this.first().key,this.last().key,this.length].join('~~');
-    };
+    showKey() {
+        return [this.first().key, this.last().key, this.length].join('~~');
+    }
 
     /**
      * set this polygon's winding in alignment with the supplied polygon
-     *
-     * @param {Polygon} poly
-     * @param [boolean] toLongest
-     * @returns {Polygon} self
      */
-    PRO.alignWinding = function(poly, toLongest) {
+    alignWinding(poly, toLongest) {
         if (toLongest && this.length > poly.length) {
             poly.alignWinding(this, false);
         } else if (this.isClockwise() !== poly.isClockwise()) {
             this.reverse();
         }
-    };
+    }
 
     /**
      * set this polygon's winding in opposition to supplied polygon
-     *
-     * @param {Polygon} poly
-     * @param [boolean] toLongest
-     * @returns {Polygon} self
      */
-    PRO.opposeWinding = function(poly, toLongest) {
+    opposeWinding(poly, toLongest) {
         if (toLongest && this.length > poly.length) {
             poly.opposeWinding(this, false);
         } else if (this.isClockwise() === poly.isClockwise()) {
             this.reverse();
         }
-    };
+    }
 
     /**
      * @returns {boolean} true if both polygons wind the same way
      */
-    PRO.sameWindings = function(poly) {
+    sameWindings(poly) {
         return this.isClockwise() === poly.isClockwise();
-    };
+    }
 
     /**
      * reverse direction of polygon points.
-     * @returns {Polygon} self
      */
-    PRO.reverse = function() {
+    reverse() {
         if (this.area2) {
             this.area2 = -this.area2;
         }
         this.points = this.points.reverse();
         return this;
-    };
+    }
 
     /**
      * return true if this polygon is (likely) nested inside parent
-     *
-     * @param {Polygon} parent
-     * @returns {boolean}
      */
-    PRO.isNested = function(parent) {
+    isNested(parent) {
         if (parent.bounds.contains(this.bounds)) {
-            return this.isInside(parent, CONF.precision_nested_sq);
+            return this.isInside(parent, config.precision_nested_sq);
         }
         return false;
-    };
+    }
 
-    PRO.forEachPointEaseDown = function(fn, fromPoint) {
+    forEachPointEaseDown(fn, fromPoint) {
         let index = this.findClosestPointTo(fromPoint).index,
             fromZ = fromPoint.z,
             offset = 0,
@@ -1026,7 +1012,7 @@
                     // ease down on this segment
                 } else {
                     // too short: clone n move z
-                    next = next.clone().setZ(fromZ - dist2next/2);
+                    next = next.clone().setZ(fromZ - dist2next / 2);
                 }
                 fromZ = next.z;
             } else if (offset === 0 && next.z < fromZ) {
@@ -1040,9 +1026,9 @@
         }
 
         return last;
-    };
+    }
 
-    PRO.forEachPoint = function(fn, close, start) {
+    forEachPoint(fn, close, start) {
         let index = start || 0,
             points = this.points,
             length = points.length,
@@ -1055,9 +1041,9 @@
             if (fn(points[pos], pos, points, offset++)) return;
             index++;
         }
-    };
+    }
 
-    PRO.forEachSegment = function(fn, open, start) {
+    forEachSegment(fn, open, start) {
         let index = start || 0,
             points = this.points,
             length = points.length,
@@ -1066,19 +1052,19 @@
 
         while (count-- > 0) {
             pos1 = index % length;
-            pos2 = (index+1) % length;
+            pos2 = (index + 1) % length;
             if (fn(points[pos1], points[pos2], pos1, pos2)) return;
             index++;
         }
-    };
+    }
 
     /**
      * returns intersections sorted by closest to lp1
      */
-    PRO.intersections = function(lp1, lp2, deep) {
+    intersections(lp1, lp2, deep) {
         let list = [];
         this.forEachSegment(function(pp1, pp2, ip1, ip2) {
-            let int = UTIL.intersect(lp1, lp2, pp1, pp2, BASE.key.SEGINT, false);
+            let int = util.intersect(lp1, lp2, pp1, pp2, base.key.SEGINT, false);
             if (int) {
                 list.push(int);
                 // console.log('pp1.pos',pp1.pos,'to',ip1);
@@ -1088,7 +1074,7 @@
             }
         });
         list.sort(function(p1, p2) {
-            return UTIL.distSq(lp1, p1) - UTIL.distSq(lp1, p2);
+            return util.distSq(lp1, p1) - util.distSq(lp1, p2);
         });
         if (deep && this.inner) {
             this.inner.forEach(p => {
@@ -1097,28 +1083,28 @@
             });
         }
         return list;
-    };
+    }
 
     /**
      * using two points, split polygon into two open polygons
      * or return null if p1,p2 does not intersect or poly is open
      */
-    PRO.bisect = function(p1, p2) {
+    bisect(p1, p2) {
         if (this.isOpen()) return null;
 
         let copy = this.clone().setClockwise();
 
         let int = copy.intersections(p1, p2);
-        if (!int || int.length !== 2) return  null;
+        if (!int || int.length !== 2) return null;
 
-        return [ copy.emitSegment(int[0], int[1]), copy.emitSegment(int[1], int[0]).reverse() ];
-    };
+        return [copy.emitSegment(int[0], int[1]), copy.emitSegment(int[1], int[0]).reverse()];
+    }
 
     /**
      * emit new open poly between two intersection points of a clockwise poly.
      * used in cam tabs and fdm output perimeter traces on infill
      */
-    PRO.emitSegment = function(i1, i2) {
+    emitSegment(i1, i2) {
         let poly = newPolygon(),
             start = i1.p2.pos,
             end = i2.p1.pos;
@@ -1135,41 +1121,41 @@
         poly.push(i2);
         // console.log({emit: poly});
         return poly;
-    };
+    }
 
     /**
      * @param {Polygon} poly
      * @param {number} [tolerance]
      * @returns {boolean} any points inside OR on edge
      */
-    PRO.hasPointsInside = function(poly, tolerance) {
+    hasPointsInside(poly, tolerance) {
         if (!poly.overlaps(this)) return false;
 
         let mid, exit = false;
 
         this.forEachSegment(function(prev, next) {
             // check midpoint on long lines
-            if (prev.distTo2D(next) > CONF.precision_midpoint_check_dist) {
+            if (prev.distTo2D(next) > config.precision_midpoint_check_dist) {
                 mid = prev.midPointTo(next);
-                if (mid.inPolygon(poly) || mid.nearPolygon(poly, tolerance || CONF.precision_close_to_poly_sq)) {
+                if (mid.inPolygon(poly) || mid.nearPolygon(poly, tolerance || config.precision_close_to_poly_sq)) {
                     return exit = true;
                 }
             }
-            if (next.inPolygon(poly) || next.nearPolygon(poly, tolerance || CONF.precision_close_to_poly_sq)) {
+            if (next.inPolygon(poly) || next.nearPolygon(poly, tolerance || config.precision_close_to_poly_sq)) {
                 return exit = true;
             }
         });
 
         return exit;
-    };
+    }
 
     /**
      * returns true if any point on this polygon
      * is within radius of a point on the target
      */
-    PRO.isNear = function(poly, radius, cache) {
-        const midcheck = CONF.precision_midpoint_check_dist;
-        const dist = radius || CONF.precision_close_to_poly_sq;
+    isNear(poly, radius, cache) {
+        const midcheck = config.precision_midpoint_check_dist;
+        const dist = radius || config.precision_close_to_poly_sq;
         let near = false;
         let mem = cache ? this.cacheNear = this.cacheNear || {} : undefined;
 
@@ -1194,7 +1180,7 @@
         }
 
         return near;
-    };
+    }
 
     /**
      * TODO replace isNested() with isInside() ?
@@ -1203,15 +1189,15 @@
      * @param {number} [tolerance]
      * @returns {boolean} all points inside OR on edge
      */
-    PRO.isInside = function(poly, tolerance) {
+    isInside(poly, tolerance) {
         // throw new Error("isInside");
-        const neardist = tolerance || CONF.precision_close_to_poly_sq;
+        const neardist = tolerance || config.precision_close_to_poly_sq;
         if (!this.bounds.isNested(poly.bounds, neardist * 3)) {
             return false;
         }
 
         let mid,
-            midcheck = CONF.precision_midpoint_check_dist,
+            midcheck = config.precision_midpoint_check_dist,
             exit = true;
 
         this.forEachSegment(function(prev, next) {
@@ -1230,7 +1216,7 @@
         }, this.open);
 
         return exit;
-    };
+    }
 
     /**
      * @param {Polygon} poly
@@ -1241,24 +1227,15 @@
     //     return (poly && poly.isInside(this, tolerance) && poly.isOutsideAll(this.inner, tolerance));
     // };
 
-    /**
-     *
-     * @param polys
-     * @returns {boolean}
-     */
-    PRO.containedBySet = function(polys) {
+    containedBySet(polys) {
         if (!polys) return false;
-        for (let i=0; i<polys.length; i++) {
+        for (let i = 0; i < polys.length; i++) {
             if (polys[i].contains(this)) return true;
         }
         return false;
-    };
+    }
 
-    /**
-     * @param {Polygon} child
-     * @returns {Polygon} self
-     */
-    PRO.addInner = function(child) {
+    addInner(child) {
         child.parent = this;
         if (this.inner) {
             this.inner.push(child);
@@ -1266,73 +1243,74 @@
             this.inner = [child];
         }
         return this;
-    };
+    }
 
     /**
      * @returns {number} number of inner polygons
      */
-    PRO.innerCount = function() {
+    innerCount() {
         return this.inner ? this.inner.length : 0;
-    };
+    }
 
     /**
      * @returns {boolean} if has 1 or more inner polygons
      */
-    PRO.hasInner = function() {
+    hasInner() {
         return this.inner && this.inner.length > 0;
-    };
+    }
 
     /**
      * remove all inner polygons
-     * @returns {Polygon} self
      */
-    PRO.clearInner = function() {
+    clearInner() {
         this.inner = null;
         return this;
-    };
+    }
 
-    PRO.newUndeleted = function() {
+    newUndeleted() {
         let poly = newPolygon();
         this.forEachPoint(function(p) {
             if (!p.del) poly.push(p);
         });
         return poly;
-    };
+    }
 
     /**
      * http://www.ehow.com/how_5138742_calculate-circularity.html
      * @returns {number} 0.0 - 1.0 from flat to perfectly circular
      */
-    PRO.circularity = function() {
-        return (4 * PI * this.area()) / UTIL.sqr(this.perimeter());
-    };
+    circularity() {
+        return (4 * Math.PI * this.area()) / util.sqr(this.perimeter());
+    }
 
-    PRO.circularityDeep = function() {
-        return (4 * PI * this.areaDeep()) / UTIL.sqr(this.perimeter());
-    };
+    circularityDeep() {
+        return (4 * Math.PI * this.areaDeep()) / util.sqr(this.perimeter());
+    }
 
     /**
      * @returns {number} perimeter length (sum of all segment lengths)
      */
-    PRO.perimeter = function() {
+    perimeter() {
         if (this.perim) {
             return this.perim;
         }
 
         let len = 0.0;
 
-        this.forEachSegment(function(prev,next) {
-            len += SQRT(prev.distToSq2D(next));
+        this.forEachSegment(function(prev, next) {
+            len += Math.sqrt(prev.distToSq2D(next));
         }, this.open);
 
         return this.perim = len;
-    };
+    }
 
-    PRO.perimeterDeep = function() {
+    perimeterDeep() {
         let len = this.perimeter();
-        if (this.inner) this.inner.forEach(function(p) { len += p.perimeter() });
+        if (this.inner) this.inner.forEach(function(p) {
+            len += p.perimeter()
+        });
         return len;
-    };
+    }
 
     /**
      * calculate and return the area enclosed by the polygon.
@@ -1342,20 +1320,20 @@
      * @param {boolean} [raw]
      * @returns {number} area
      */
-    PRO.area = function(raw) {
+    area(raw) {
         if (this.length < 3) {
             return 0;
         }
         if (this.area2 === undefined) {
             this.area2 = 0.0;
-            for (let p=this.points,pl=p.length,pi=0,p1,p2; pi<pl; pi++) {
+            for (let p = this.points, pl = p.length, pi = 0, p1, p2; pi < pl; pi++) {
                 p1 = p[pi];
-                p2 = p[(pi+1)%pl];
+                p2 = p[(pi + 1) % pl];
                 this.area2 += (p2.x - p1.x) * (p2.y + p1.y);
             }
         }
-        return raw ? this.area2 : ABS(this.area2 / 2);
-    };
+        return raw ? this.area2 : Math.abs(this.area2 / 2);
+    }
 
     /**
      * return the area of a polygon with the area of all
@@ -1363,24 +1341,25 @@
      *
      * @returns {number} area
      */
-    PRO.areaDeep = function() {
+    areaDeep() {
         if (!this.inner) {
             return this.area();
         }
-        let i, c = this.inner, a = this.area();
-        for (i=0; i<c.length; i++) {
+        let i, c = this.inner,
+            a = this.area();
+        for (i = 0; i < c.length; i++) {
             a -= c[i].area();
         }
         return a;
-    };
+    }
 
     /**
      * @param {Polygon} poly
      * @returns {boolean}
      */
-    PRO.overlaps = function(poly) {
-        return this.bounds.overlaps(poly.bounds, CONF.precision_merge);
-    };
+    overlaps(poly) {
+        return this.bounds.overlaps(poly.bounds, config.precision_merge);
+    }
 
     /**
      * create poly from coordinate Array (aka dump)
@@ -1388,38 +1367,27 @@
      * @param {number[]} arr
      * @param {number} [z]
      */
-    PRO.fromXYArray = function(arr,z) {
+    fromXYArray(arr, z) {
         let i = 0;
         while (i < arr.length) {
             this.add(arr[i++], arr[i++], z || 0);
         }
         return this;
-    };
-
-    function fromClipperPath(path, z) {
-        let poly = newPolygon(), i = 0, l = path.length;
-        while (i < l) {
-            // poly.push(newPoint(null,null,z,null,path[i++]));
-            poly.push(BASE.pointFromClipper(path[i++], z));
-        }
-        return poly;
-    };
+    }
 
     /**
      * shortcut to de-rez poly
      */
-    PRO.simple = function() {
-        return this.clean(true, undefined, Math.min(CONF.clipper / 10, CONF.clipperClean * 5));
-    };
+    simple() {
+        return this.clean(true, undefined, Math.min(config.clipper / 10, config.clipperClean * 5));
+    }
 
     /**
      * simplify and merge collinear. only works for single
-     * non-nested polygons.  used primarily in slicer/connectLines.
+     * non-nested polygons. used primarily in slicer/connectLines.
      */
-    PRO.clean = function(deep, parent, merge = CONF.clipperClean) {
-        let clib = self.ClipperLib,
-            clip = clib.Clipper,
-            clean = clip.CleanPolygon(this.toClipper()[0], merge),
+    clean(deep, parent, merge = config.clipperClean) {
+        let clean = clip.CleanPolygon(this.toClipper()[0], merge),
             poly = fromClipperPath(clean, this.getZ());
         if (poly.length === 0) return this;
         if (deep && this.inner) {
@@ -1434,7 +1402,7 @@
             let points = poly.points;
             let length = points.length;
             let mi, min = Infinity;
-            for (let i=0; i<length; i++) {
+            for (let i = 0; i < length; i++) {
                 let d = points[i].distTo2D(start);
                 if (d < min) {
                     min = d;
@@ -1444,19 +1412,19 @@
             // mi > 0 means first point didn't match
             if (mi) {
                 let nupoints = [];
-                for (let i=mi; i<length; i++) {
+                for (let i = mi; i < length; i++) {
                     nupoints.push(points[i]);
                 }
-                for (let i=0; i<mi; i++) {
+                for (let i = 0; i < mi; i++) {
                     nupoints.push(points[i]);
                 }
                 poly.points = nupoints;
             }
         }
         return poly;
-    };
+    }
 
-    PRO.toClipper = function(inout) {
+    toClipper(inout) {
         let poly = this,
             cur = [],
             out = inout || [];
@@ -1467,7 +1435,7 @@
             });
         }
         return out;
-    };
+    }
 
     /**
      * return offset polygon(s) from original using distance.  may result in
@@ -1478,9 +1446,9 @@
      * @param {Polygon[]} [output]
      * @returns {?Polygon[]} returns output array provided as input or new array if not provided
      */
-    PRO.offset = function(offset, output) {
-        return POLY().expand([this], -offset, this.getZ(), output);
-    };
+    offset(offset, output) {
+        return POLY.expand([this], -offset, this.getZ(), output);
+    }
 
     /**
      * todo need something more clever for polygons that overlap with
@@ -1491,27 +1459,27 @@
      * @param {number} [precision]
      * @returns {boolean} true if polygons are, essentially, the same
      */
-    PRO.isEquivalent = function(poly, recurse, precision) {
+    isEquivalent(poly, recurse, precision) {
         // throw new Error("isEquivalent");
         let area1 = Math.abs(this.area());
         let area2 = Math.abs(poly.area());
-        if (UTIL.isCloseTo(area1, area2, precision || CONF.precision_poly_area) &&
-            this.bounds.equals(poly.bounds, precision || CONF.precision_poly_bounds))
-        {
+        if (util.isCloseTo(area1, area2, precision || config.precision_poly_area) &&
+            this.bounds.equals(poly.bounds, precision || config.precision_poly_bounds)) {
             // use circularity near 1 to eliminate the extensive check below
             let c1 = this.circularity(),
                 c2 = poly.circularity();
-            if (ABS(c1-c2) < CONF.precision_circularity && ((1-c1) < CONF.precision_circularity)) {
+            if (Math.abs(c1 - c2) < config.precision_circularity && ((1 - c1) < config.precision_circularity)) {
                 return true;
             }
 
             if (recurse) {
-                let i, ai = this.inner, bi = poly.inner;
+                let i, ai = this.inner,
+                    bi = poly.inner;
                 if (ai !== bi) {
                     if (ai === null || bi === null || ai.length != bi.length) {
                         return false;
                     }
-                    for (i=0; i < ai.length; i++) {
+                    for (i = 0; i < ai.length; i++) {
                         if (!ai[i].isEquivalent(bi[i])) {
                             return false;
                         }
@@ -1528,7 +1496,7 @@
                 pointok = false;
                 poly.forEachSegment(function(i1p1, i1p2) {
                     // if point is close to poly, terminate search, go to next point
-                    if ((dist = i2p.distToLine(i1p1, i1p2)) < CONF.precision_poly_merge) {
+                    if ((dist = i2p.distToLine(i1p1, i1p2)) < config.precision_poly_merge) {
                         return pointok = true;
                     }
                     // otherwise track min and keep searching
@@ -1546,7 +1514,7 @@
         }
 
         return false;
-    };
+    }
 
     /**
      * find the point of this polygon closest to
@@ -1556,14 +1524,14 @@
      * @param {Point} target
      * @return {Object} {point:point, distance:distance}
      */
-    PRO.findClosestPointTo = function(target) {
+    findClosestPointTo(target) {
         let dist,
             index,
             closest,
             mindist = Infinity;
 
         this.forEachPoint(function(point, pos) {
-            dist = SQRT(point.distToSq2D(target));
+            dist = Math.sqrt(point.distToSq2D(target));
             if (dist < mindist) {
                 index = pos;
                 mindist = dist;
@@ -1571,37 +1539,37 @@
             }
         });
 
-        return {point:closest, distance:mindist, index:index};
-    };
+        return {
+            point: closest,
+            distance: mindist,
+            index: index
+        };
+    }
 
     /**
      * @param {Polygon[]} out
      * @returns {Polygon[]}
      */
-    PRO.flattenTo = function(out) {
+    flattenTo(out) {
         out.push(this);
         if (this.inner) out.appendAll(this.inner);
         return out;
-    };
+    }
 
-    PRO.shortestSegmentLength = function() {
+    shortestSegmentLength() {
         let len = Infinity;
         this.forEachSegment(function(p1, p2) {
             len = Math.min(len, p1.distTo2D(p2));
         });
         return len;
-    };
+    }
 
     /**
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    PRO.diff = function(poly) {
+    diff(poly) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             sp1 = this.toClipper(),
@@ -1611,7 +1579,7 @@
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY().fromClipperTree(ctre, poly.getZ());
+            poly = POLY.fromClipperTree(ctre, poly.getZ());
             poly.forEach(function(p) {
                 p.fillang = fillang;
             })
@@ -1619,18 +1587,14 @@
         } else {
             return null;
         }
-    };
+    }
 
     /**
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    PRO.mask = function(poly, nullOnEquiv) {
+    mask(poly, nullOnEquiv) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             sp1 = this.toClipper(),
@@ -1640,7 +1604,7 @@
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY().fromClipperTree(ctre, poly.getZ());
+            poly = POLY.fromClipperTree(ctre, poly.getZ());
             poly.forEach(function(p) {
                 p.fillang = fillang;
             })
@@ -1651,9 +1615,9 @@
         } else {
             return null;
         }
-    };
+    }
 
-    PRO.cut = function(polys, inter) {
+    cut(polys, inter) {
         let target = this;
 
         if (!target.open) {
@@ -1667,21 +1631,17 @@
             }
         }
 
-        let clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
-            clip = new clib.Clipper(),
+        let clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             type = inter ? ctyp.ctIntersection : ctyp.ctDifference,
             sp1 = target.toClipper(),
-            sp2 = POLY().toClipper(polys);
+            sp2 = POLY.toClipper(polys);
 
         clip.AddPaths(sp1, ptyp.ptSubject, false);
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(type, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            let cuts = POLY().fromClipperTree(ctre, target.getZ(), null, null, 0);
+            let cuts = POLY.fromClipperTree(ctre, target.getZ(), null, null, 0);
             cuts.forEach(no => {
                 // heal open but really closed polygons because cutting
                 // has to open the poly to perform the cut. but the result
@@ -1696,64 +1656,61 @@
         } else {
             return null;
         }
-    };
+    }
 
 
-    PRO.intersect = function(poly, min) {
+    intersect(poly, min) {
         if (!this.overlaps(poly)) return null;
 
-        let clib = self.ClipperLib,
-            ctyp = clib.ClipType,
-            ptyp = clib.PolyType,
-            cfil = clib.PolyFillType,
-            clip = new clib.Clipper(),
+        let clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper(),
             minarea = min >= 0 ? min : 0.1;
 
         if (this.isInside(poly)) {
-            return [ this ];
+            return [this];
         }
 
         clip.AddPaths(sp1, ptyp.ptSubject, true);
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftNonZero)) {
-            let inter = POLY()
+            let inter = POLY
                 .fromClipperTreeUnion(ctre, poly.getZ(), minarea)
                 // .filter(p => p.isEquivalent(this) || p.isInside(this))
-                .filter(p => p.isInside(this))
-                ;
+                .filter(p => p.isInside(this));
             return inter;
         }
 
         return null;
     }
 
-    PRO.areaDiff = function(poly) {
+    areaDiff(poly) {
         let a1 = this.area(),
             a2 = poly.area();
         return (a1 > a2) ? a2 / a1 : a1 / a2;
-    };
+    }
 
     // does not work with nested polys
-    PRO.simplify = function(opt = {}) {
+    simplify(opt = {}) {
         let z = this.getZ();
 
         // use expand / deflate technique instead
         if (opt.pump) {
-            let p2 = POLY().offset([ this ], opt.pump, { z });
+            let p2 = POLY.offset([this], opt.pump, {
+                z
+            });
             if (p2) {
-                p2 = POLY().offset(p2, -opt.pump, { z });
+                p2 = POLY.offset(p2, -opt.pump, {
+                    z
+                });
                 return p2;
             }
             return null;
         }
 
-        let clib = self.ClipperLib,
-            cfil = clib.PolyFillType,
-            clip = this.toClipper(),
+        let clip = this.toClipper(),
             res = clib.Clipper.SimplifyPolygons(clip, cfil.pftNonZero);
 
         if (!(res && res.length)) {
@@ -1763,15 +1720,15 @@
         return res.map(array => {
             let poly = newPolygon();
             for (let pt of array) {
-                poly.push(BASE.pointFromClipper(pt, z));
+                poly.push(base.pointFromClipper(pt, z));
             }
             return poly;
         });
-    };
+    }
 
-    PRO.unionMatch = function(polys) {
+    unionMatch(polys) {
         return polys.filter(poly => poly.isEquivalent(this)).length;
-    };
+    }
 
     /**
      * return logical OR of two polygons' enclosed areas
@@ -1779,56 +1736,77 @@
      * @param {Polygon} poly
      * @returns {?Polygon} intersected polygon, null if no intersection, or all when indicated
      */
-    PRO.union = function(poly, min, all) {
+    union(poly, min, all) {
         if (!this.overlaps(poly)) return null;
 
-        PRO.union = function(poly, min, all) {
-            if (!this.overlaps(poly)) return null;
+        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
+            clip = new clib.Clipper(),
+            ctre = new clib.PolyTree(),
+            sp1 = this.toClipper(),
+            sp2 = poly.toClipper(),
+            minarea = min >= 0 ? min : 0.1;
 
-            let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-                clib = self.ClipperLib,
-                ctyp = clib.ClipType,
-                ptyp = clib.PolyType,
-                cfil = clib.PolyFillType,
-                clip = new clib.Clipper(),
-                ctre = new clib.PolyTree(),
-                sp1 = this.toClipper(),
-                sp2 = poly.toClipper(),
-                minarea = min >= 0 ? min : 0.1;
+        clip.AddPaths(sp1, ptyp.ptSubject, true);
+        clip.AddPaths(sp2, ptyp.ptClip, true);
 
-            clip.AddPaths(sp1, ptyp.ptSubject, true);
-            clip.AddPaths(sp2, ptyp.ptClip, true);
-
-            if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-                let union = POLY().fromClipperTreeUnion(ctre, poly.getZ(), minarea);
-                if (all) {
-                    if (union.length === 2) {
-                        return null;
-                        // if (this.unionMatch(union) || poly.unionMatch(union)) {
-                        //     return null;
-                        // }
-                    }
-                    return union;
+        if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
+            let union = POLY.fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+            if (all) {
+                if (union.length === 2) {
+                    return null;
+                    // if (this.unionMatch(union) || poly.unionMatch(union)) {
+                    //     return null;
+                    // }
                 }
-                if (union.length === 1) {
-                    union = union[0];
-                    union.fillang = fillang;
-                    return union;
-                } else {
-                    console.trace({check_union_call_path: union, this: this, poly});
-                }
+                return union;
             }
+            if (union.length === 1) {
+                union = union[0];
+                union.fillang = fillang;
+                return union;
+            } else {
+                console.trace({
+                    check_union_call_path: union,
+                    this: this,
+                    poly
+                });
+            }
+        }
 
-            return null;
-         };
-     };
-
-    /** ******************************************************************
-     * Connect to base and Helpers
-     ******************************************************************* */
-
-    function newPolygon(points) {
-        return new Polygon(points);
+        return null;
     }
+}
+
+// use Slope.angleDiff() then re-test path mitering / rendering
+function slopeDiff(s1, s2) {
+    const n1 = s1.angle;
+    const n2 = s2.angle;
+    let diff = n2 - n1;
+    while (diff < -180) diff += 360;
+    while (diff > 180) diff -= 360;
+    return Math.abs(diff);
+}
+
+function fromClipperPath(path, z) {
+    let poly = newPolygon(),
+        i = 0,
+        l = path.length;
+    while (i < l) {
+        // poly.push(newPoint(null,null,z,null,path[i++]));
+        poly.push(base.pointFromClipper(path[i++], z));
+    }
+    return poly;
+}
+
+function newPolygon(points) {
+    return new Polygon(points);
+}
+
+base.Polygon = Polygon;
+base.newPolygon = newPolygon;
+
+Polygon.fromArray = function(array) {
+    return newPolygon().fromArray(array);
+};
 
 })();
