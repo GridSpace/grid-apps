@@ -31,13 +31,15 @@ async function slice(points, options = {}) {
     let zMin = options.zmin || 0,
         zMax = options.zmax || 0,
         zInc = options.zinc || 0,
+        zGen = options.zGen,    // optional z index generator function
         zIndexes = options.indices || [],
         minStep = options.minstep || 0,
-        zFlat = {},         // map area of z index flat areas
-        zList = {},         // fast map of z indexes
-        zScale,             // bucket span in z units
-        zSum = 0.0,         // sanity check that points enclose non-zere volume
-        buckets = [],       // banded/grouped faces to speed up slice/search
+        zFlat = {},             // map area of z index flat areas
+        zList = {},             // fast map of z indexes
+        zLine = [],             // map of line counts co-linear to z plane
+        zScale,                 // bucket span in z units
+        zSum = 0.0,             // sanity check that points enclose non-zere volume
+        buckets = [],           // banded/grouped faces to speed up slice/search
         overlapMax = options.overlap || 0.75,
         bucketMax = options.bucketmax || 100,
         onupdate = options.onupdate || function() {},
@@ -85,6 +87,13 @@ async function slice(points, options = {}) {
             } else {
                 zFlat[zkey] += area;
             }
+            zLine[zkey] = (zLine[zkey] || 0) + 1;
+        } else if (p1.z === p2.z) {
+            zLine[p1.z] = (zLine[p1.z] || 0) + 1;
+        } else if (p2.z === p3.z) {
+            zLine[p2.z] = (zLine[p2.z] || 0) + 1;
+        } else if (p3.z === p1.z) {
+            zLine[p3.z] = (zLine[p3.z] || 0) + 1;
         }
         if (autoDim) {
             zMin = Math.min(zMin, p1.z, p2.z, p3.z);
@@ -112,6 +121,12 @@ async function slice(points, options = {}) {
                 }
             });
         }
+    }
+
+    // allow zGen to override or update zIndexes
+    // FDM, CAM, Laser slicers will use this to align or interpolate layers
+    if (zGen) {
+        zIndexes = zGen({ zMin, zMax, zLine, zFlat, zIndexes, options });
     }
 
     /**
@@ -189,10 +204,15 @@ async function slice(points, options = {}) {
         let count = 0;
         let opt = { ...options, zMin, zMax };
 
-        for (let bucket of buckets) {
+        for (let i = 0, l = buckets.length; i < l; i++) {
+            let bucket = buckets[i];
             let { points, slices } = bucket;
             for (let z of slices) {
-                output.push(await sliceFn(z, points, opt));
+                output.push(await sliceFn(z, points, {
+                    ...opt,
+                    bucket: i,  // pass which bucket we are (sharding)
+                    buckets: l  // pass total bucket count (sharding)
+                }));
                 onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
             }
         }
