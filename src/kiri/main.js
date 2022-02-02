@@ -1886,7 +1886,7 @@
             width = parseInt(dev.bedWidth),
             depth = parseInt(dev.bedDepth),
             height = parseFloat(dev.bedHeight),
-            parseFloat(dev.maxHeight)
+            parseFloat(dev.maxHeight || 100)
         );
         let proc = settings.process,
             ctrl = settings.controller,
@@ -2027,7 +2027,7 @@
         } else {
             forSelectedWidgets(w => {
                 w.setColor(color.selected);
-            });
+            }, true);
         }
     }
 
@@ -2980,11 +2980,11 @@
                 if (wid && anno) {
                     wid.anno = anno;
                     console.log('transfer settings annotations to widget', id);
-                    delete newset.widget[id];
                     wid.saveState();
                 } else {
                     console.log('missing widget for annotations', id);
                 }
+                delete newset.widget[id];
             }
         }
         settings = CONF.normalize(newset);
