@@ -44,6 +44,10 @@ gapp.broker = new class Broker {
             }
             return;
         }
+        if (typeof topic !== 'string') {
+            console.trace({invalid_topic: topic});
+            return;
+        }
         let topics = this.topics;
         let channel = topics[topic];
         if (!channel) {
