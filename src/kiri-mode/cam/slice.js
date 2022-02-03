@@ -195,6 +195,7 @@
         if (Array.isArray(poly)) {
             return poly.forEach(p => CAM.addDogbones(p, dist));
         }
+        if (poly.open) return;
         let isCW = poly.isClockwise();
         if (reverse || poly.parent) isCW = !isCW;
         let oldpts = poly.points.slice();

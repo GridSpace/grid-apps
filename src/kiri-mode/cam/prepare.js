@@ -397,7 +397,7 @@
             setTool(tool, rate, plunge);
             let traceTool = new CAM.Tool(settings, tool);
             let traceToolDiam = traceTool.fluteDiameter();
-            printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit);
+            printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, { swapdir: false });
             newLayer();
         }
 

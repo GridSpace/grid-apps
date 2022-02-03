@@ -2714,7 +2714,6 @@
                 clearWorkspace();
                 settings = CONF.normalize(data.settings);
                 SDB.setItem('ws-settings', JSON.stringify(settings));
-                restoreSettings();
                 if (LOCAL) console.log('settings',Object.clone(settings));
                 if (isWork) {
                     API.platform.clear();
@@ -2725,6 +2724,7 @@
                         SPACE.view.load(data.view);
                     }
                 }
+                restoreSettings();
                 restoreWorkspace(() => {
                     UI.sync();
                 }, true);
