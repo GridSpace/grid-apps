@@ -76,6 +76,7 @@
     const feature = {
         seed: true, // seed profiles on first use
         meta: true, // show selected widget metadata
+        frame: true, // receive frame events
         alert_event: false, // emit alerts as events instead of display
         controls: true, // show or not side menus
         device_filter: undefined, // function to limit devices shown
@@ -501,6 +502,7 @@
 
     // frame message api
     WIN.addEventListener('message', msg => {
+        if (!feature.frame) return;
         let { origin, source, target, data } = msg;
         if (source.window === target.window) return;
         let send = source.window.postMessage;
