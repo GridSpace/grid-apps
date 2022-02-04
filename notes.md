@@ -67,6 +67,7 @@
 
 # CAM
 
+* `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs are not cut to exact height
 * `B` tabs do not properly track widget mirror events
 * `B` first rough step too far down in certain circumstances?
