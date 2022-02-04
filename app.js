@@ -25,6 +25,7 @@ let setupFn;
 let cacheDir;
 let startTime;
 let oversion;
+let dversion;
 let lastmod;
 let logger;
 let debug;
@@ -43,6 +44,7 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
+    dversion = debug ? `_${version}` : version;
     cacheDir = mod.util.datadir("cache");
 
     let depcache = {};
@@ -527,7 +529,7 @@ function handleSetup(req, res, next) {
 }
 
 function handleVersion(req, res, next) {
-    let vstr = oversion || version;
+    let vstr = oversion || dversion || version;
     if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
@@ -668,7 +670,7 @@ function concatCode(array) {
     if (debug) {
         const code = [ '(function() { let load = [ ' ];
         direct.forEach(file => {
-            const vers = cachever[file] || version;
+            const vers = cachever[file] || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
         });
         code.push([
@@ -866,7 +868,7 @@ function rewriteHtmlVersion(req, res, next) {
         let real_write = res.write;
         let real_end = res.end;
         let mlen = '{{version}}'.length;
-        let vstr = version;
+        let vstr = dversion || version;
         if (vstr.length < mlen) {
             vstr = vstr.padStart(mlen,0);
         } else if (vstr.length > mlen) {
