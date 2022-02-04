@@ -8,6 +8,7 @@ let BASE = self.base,
     POLY = BASE.polygons,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
+    debug = self.debug === true,
     ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
     concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
     current = self.worker = {
@@ -42,7 +43,8 @@ if (concurrent) {
     }
 
     for (let i=0; i < concurrent; i++) {
-        let minion = new Worker(`/code/kiri_pool.js?${self.kiri.version}`);
+        let _ = debug ? '_' : '';
+        let minion = new Worker(`/code/kiri_pool.js?${_}${self.kiri.version}`);
         minion.onmessage = minhandler;
         minions.push(minion);
     }

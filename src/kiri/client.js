@@ -10,6 +10,7 @@ let KIRI = self.kiri = self.kiri || {},
     host = loc.hostname,
     port = loc.port,
     proto = loc.protocol,
+    debug = self.debug === true,
     time = function() { return new Date().getTime() },
     seqid = 1,
     syncd = {},
@@ -57,7 +58,8 @@ KIRI.work = {
         if (self.createWorker) {
             return self.createWorker();
         } else {
-            return new Worker(`/code/kiri_work.js?${gapp.version}`);
+            let _ = debug ? '_' : '';
+            return new Worker(`/code/kiri_work.js?${_}${gapp.version}`);
         }
     },
 

@@ -668,7 +668,10 @@ function concatCode(array) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        const code = [ '(function() { let load = [ ' ];
+        const code = [
+            'self.debug=true;',
+            '(function() { let load = [ '
+        ];
         direct.forEach(file => {
             const vers = cachever[file] || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
@@ -683,8 +686,7 @@ function concatCode(array) {
             's.src = file;',
             's.onload = load_next;',
             'document.head.appendChild(s);',
-            '} load_next(); })();',
-            'self.debug=true;'
+            '} load_next(); })();'
         ].join('\n'));
         inject.forEach(key => {
             code.push(synth[key]);
