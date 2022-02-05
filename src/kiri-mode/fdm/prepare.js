@@ -551,11 +551,6 @@
                 lastPoly = slice.lastPoly;
                 lastLayer = layerout;
 
-                // draft shield
-                if (brimout && draftShield) {
-                    print.addPrintPoints(brimout, layerout, null);
-                }
-
                 if (layerRetract && layerout.length) {
                     layerout.last().retract = true;
                 }
@@ -570,6 +565,12 @@
                 for (let slice of widget.slices) {
                     slice.prep = false;
                 }
+            }
+
+            // draft shield
+            if (layerno > 0 && brimout && draftShield) {
+                print.setType('brim');
+                print.addPrintPoints(brimout, layerout, null);
             }
 
             // if a declared extruder isn't used in a layer, use selected
