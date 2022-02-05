@@ -41,9 +41,11 @@
             firstLayerMult = process.firstLayerPrintMult,
             purgeTower = process.outputPurgeTower || 0,
             layerRetract = process.outputLayerRetract,
+            draftShield = process.outputDraftShield,
             layerno = 0,
             zoff = 0,
             zmin = 0,
+            brimout,
             layerout = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             beltfact = Math.cos(Math.PI/4);
@@ -154,7 +156,7 @@
             // if using brim vs raft
             if (process.outputBrimCount) {
                 let polys = [],
-                    preout = [];
+                    preout = brimout = [];
 
                 // offset specified # of brims
                 POLY.offset(brims, nozzle, {
@@ -548,6 +550,12 @@
                 lastExt = lastOut.extruder;
                 lastPoly = slice.lastPoly;
                 lastLayer = layerout;
+
+                // draft shield
+                if (brimout && draftShield) {
+                    print.addPrintPoints(brimout, layerout, null);
+                }
+
                 if (layerRetract && layerout.length) {
                     layerout.last().retract = true;
                 }

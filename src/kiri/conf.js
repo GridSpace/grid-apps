@@ -349,6 +349,7 @@
                     firstLayerFlatten: 0,
                     outputRaft: false,
                     outputRaftSpacing: 0.2,
+                    outputDraftShield: false,
                     outputTemp: 200,
                     outputBedTemp: 60,
                     outputFeedrate: 50,
