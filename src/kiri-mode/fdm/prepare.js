@@ -570,7 +570,9 @@
             // draft shield
             if (layerno > 0 && brimout && draftShield) {
                 print.setType('brim');
-                print.addPrintPoints(brimout, layerout, null);
+                print.addPrintPoints(brimout.map(o => o.clone(printPoint.z)), layerout, null);
+                layerout.last().retract = true;
+                printPoint = layerout.last().point;
             }
 
             // if a declared extruder isn't used in a layer, use selected

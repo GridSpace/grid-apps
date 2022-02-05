@@ -413,15 +413,28 @@
         return a !== undefined ? a : b;
     }
 
-    /**
-     * @constructor
-     */
-    function Output(point, emit, speed, tool, type) {
-        this.point = point; // point to emit
-        this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
-        this.speed = speed;
-        this.tool = tool;
-        this.type = type;
+    class Output {
+        constructor(point, emit, speed, tool, type) {
+            this.point = point; // point to emit
+            this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
+            this.speed = speed;
+            this.tool = tool;
+            this.type = type;
+        }
+
+        clone(z) {
+            let o = new Output(
+                this.point.clone(),
+                this.emit,
+                this.speed,
+                this.tool,
+                this.type
+            );
+            if (z !== undefined) {
+                o.point.setZ(z);
+            }
+            return o;
+        }
     }
 
     function setType(type) {
