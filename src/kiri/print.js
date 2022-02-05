@@ -1263,46 +1263,6 @@
     }
 
     /**
-     * flatten deeply nested polygons preserving inner arrays
-     *
-     * @param {Polygon | Polygon[]} poly or array to flatten
-     * @param {Polygon[]} to
-     * @returns {Polygon[]}
-     */
-    function flattenPolygons(poly, to) {
-        if (!poly) return;
-        if (!to) to = [];
-        if (Array.isArray(poly)) {
-            poly.forEach(function(p) {
-                flattenPolygons(p, to);
-            })
-        } else {
-            to.push(poly);
-            flattenPolygons(poly.inner, to);
-        }
-        return to;
-    }
-
-    function polygonFitsIn(inside, outside, tolerance) {
-        return inside.isInside(outside, tolerance);
-    }
-
-    function polygonWithinOffset(poly1, poly2, offset) {
-        return polygonMinOffset(poly1, poly2, offset) <= offset;
-    }
-
-    function polygonMinOffset(poly1, poly2, offset) {
-        let mindist = Infinity;
-        poly1.forEachPoint(function(p) {
-            const nextdist = p.distToPolySegments(poly2, offset);
-            mindist = Math.min(mindist, nextdist);
-            // returning true terminates forEachPoint()
-            if (mindist <= offset) return true;
-        });
-        return mindist;
-    }
-
-    /**
      * calculate mm of filament required for a given extrusion length and layer height.
      *
      * @param noz nozzle diameter
