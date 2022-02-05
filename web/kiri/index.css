@@ -1688,6 +1688,12 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
+.set-pop.xdown {
+    transform: translateY(-25%) !important;
+}
+.set-pop.fdmadv {
+    transform: translateY(-75%) !important;
+}
 .set-pop.rough {
     transform: translateY(-14%) !important;
 }
