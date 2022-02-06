@@ -156,7 +156,7 @@
             // if using brim vs raft
             if (process.outputBrimCount) {
                 let polys = [],
-                    preout = brimout = [];
+                    preout = [];
 
                 // offset specified # of brims
                 POLY.offset(brims, nozzle, {
@@ -167,6 +167,7 @@
                 });
 
                 print.setType('brim');
+                brimout = POLY.nest(polys.clone(), true).clone();
 
                 // output brim points
                 let brimStart = offset < nozzle * 2 ? newPoint(-bedWidth, -bedDepth, 0) : printPoint;
@@ -569,10 +570,21 @@
 
             // draft shield
             if (layerno > 0 && brimout && draftShield) {
-                print.setType('brim');
-                print.addPrintPoints(brimout.map(o => o.clone(printPoint.z)), layerout, null);
-                layerout.last().retract = true;
-                printPoint = layerout.last().point;
+                print.setType('shield');
+                brimout = POLY.setZ(brimout.clone(), printPoint.z);
+                let preout = [];
+                printPoint = print.poly2polyEmit(brimout, printPoint, (poly, index, count, startPoint) => {
+                    return print.polyPrintPath(poly, startPoint, preout, {
+                        onfirst: function(point) {
+                            if (preout.length && point.distTo2D(startPoint) > 2) {
+                                // retract between part and shield
+                                preout.last().retract = true;
+                            }
+                        }
+                    });
+                });
+                preout.last().retract = true;
+                layerout.appendAll(preout);
             }
 
             // if a declared extruder isn't used in a layer, use selected
