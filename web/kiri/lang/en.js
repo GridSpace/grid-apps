@@ -360,7 +360,7 @@ kiri.lang['en-us'] = {
     fr_nabl_s:      "raft enable",
     fr_nabl_l:      ["create a raft under the","model for better adhesion","uses skirt offset and","disables skirt output"],
     fr_draf_s:      "draft shield",
-    fr_draf_l:      ["extend brim to height of part","which acts as a shield","and traps hot air"],
+    fr_draf_l:      ["extend skirt to height of part","which acts as a shield against","drafts and traps hot air"],
 
     // FDM BELT ONLY
     fl_zoff_s:      "belt offset",

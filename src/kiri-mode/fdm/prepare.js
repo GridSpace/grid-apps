@@ -45,7 +45,7 @@
             layerno = 0,
             zoff = 0,
             zmin = 0,
-            brimout,
+            shield,
             layerout = [],
             print = self.worker.print = KIRI.newPrint(settings, widgets),
             beltfact = Math.cos(Math.PI/4);
@@ -167,7 +167,7 @@
                 });
 
                 print.setType('brim');
-                brimout = POLY.nest(polys.clone(), true).clone();
+                shield = POLY.nest(polys.clone(), true).clone();
 
                 // output brim points
                 let brimStart = offset < nozzle * 2 ? newPoint(-bedWidth, -bedDepth, 0) : printPoint;
@@ -569,11 +569,11 @@
             }
 
             // draft shield
-            if (layerno > 0 && brimout && draftShield) {
+            if (layerno > 0 && shield && draftShield) {
                 print.setType('shield');
-                brimout = POLY.setZ(brimout.clone(), printPoint.z);
+                shield = POLY.setZ(shield.clone(), printPoint.z);
                 let preout = [];
-                printPoint = print.poly2polyEmit(brimout, printPoint, (poly, index, count, startPoint) => {
+                printPoint = print.poly2polyEmit(shield, printPoint, (poly, index, count, startPoint) => {
                     return print.polyPrintPath(poly, startPoint, preout, {
                         onfirst: function(point) {
                             if (preout.length && point.distTo2D(startPoint) > 2) {
