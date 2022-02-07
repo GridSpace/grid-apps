@@ -74,15 +74,27 @@
             // compute first brim
             widgets.filter(w => w.slices.length).forEach(function(widget) {
                 let tops = [];
-                // collect top outer polygons
-                widget.slices[0].tops.forEach(function(top) {
-                    tops.push(top.poly.clone());
-                });
-                // collect support polygons
-                if (widget.slices[0].supports)
-                widget.slices[0].supports.forEach(function(support) {
-                    tops.push(support.clone());
-                });
+                let slices = [];
+                if (draftShield) {
+                    slices.appendAll(widget.slices);
+                } else {
+                    slices.push(widget.slices[0]);
+                }
+                for (let slice of slices) {
+                    // collect top outer polygons
+                    if (slice.tops)
+                    slice.tops.forEach(function(top) {
+                        tops.push(top.poly.clone());
+                    });
+                    // collect support polygons
+                    if (slice.supports)
+                    slice.supports.forEach(function(support) {
+                        tops.push(support.clone());
+                    });
+                }
+                if (draftShield) {
+                    tops = POLY.union(tops,1,true);
+                }
                 // nest and offset tops
                 POLY.nest(tops).forEach(function(poly) {
                     let off = poly.offset(-offset + nozzle / 2);
