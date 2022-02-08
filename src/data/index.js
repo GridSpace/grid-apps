@@ -23,7 +23,7 @@ try {
     IDB = self.indexedDB || self.mozIndexedDB || self.webkitIndexedDB || self.msIndexedDB;
     IRR = self.IDBKeyRange;
 } catch (e) {
-    console.log("in private or restricted browsing mode. database storage blocked. application may not function.");
+    console.log("IndexedDB disabled: application may not function properly");
 }
 
 /**
@@ -167,7 +167,7 @@ SP.init = function(options = {}) {
         request = null;
 
     function fallback() {
-        console.log("in private browsing mode or browser lacks support for IndexedDB. unable to setup storage for '" + name + "'.");
+        console.log(`IndexedDB disabled: unable to initialize '${name}'`);
         local = {};
         storage.runQueue();
     }
