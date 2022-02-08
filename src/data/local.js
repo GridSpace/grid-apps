@@ -41,7 +41,7 @@ try {
     local.removeItem(testkey);
 } catch (e) {
     data.Local = new Local();
-    let msg = "in private or restricted browsing mode. local storage blocked. application may not function properly.";
+    let msg = "localStorage disabled: application may not function properly";
     console.log(msg);
     alert(msg);
 }
