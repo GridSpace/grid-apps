@@ -511,6 +511,14 @@
                 if (firstExt === undefined) {
                     firstExt = slice.extruder;
                 }
+
+                // when layers switch between widgets, force retraction
+                let forceRetract = lastOut && lastOut.widget !== slice.widget;
+                if (forceRetract && output.length) {
+                    // selecet last output of last layer
+                    output.last().last().retract = true;
+                }
+
                 let params = getRangeParameters(process, slice.index);
                 slice.prep = true;
                 // retract between widgets or layers (when set)
@@ -559,6 +567,7 @@
                         }
                     }
                 );
+
                 lastOut = slice;
                 lastExt = lastOut.extruder;
                 lastPoly = slice.lastPoly;
