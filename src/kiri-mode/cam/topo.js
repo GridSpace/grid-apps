@@ -50,7 +50,7 @@
                 R2A = 180 / Math.PI,
                 stepsx = Math.ceil(boundsX / resolution),
                 stepsy = Math.ceil(boundsY / resolution),
-                topo = widget.topo = widget.topo || {
+                topo = widget.topo = {
                     data: new Float32Array(stepsx * stepsy),
                     stepsx: stepsx,
                     stepsy: stepsy,
