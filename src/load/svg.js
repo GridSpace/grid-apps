@@ -34,13 +34,14 @@ function parse(text) {
 
     let data = new THREE.SVGLoader().parse(text);
     let paths = data.paths;
+    let depth = data.xml.attributes.extrude || {value: 5};
 
     for (let i = 0; i < paths.length; i++) {
         let path = paths[i];
         let shapes = path.toShapes(true);
         let geom = new THREE.ExtrudeGeometry(shapes, {
             steps: 1,
-            depth: 5,
+            depth: parseFloat(depth.value),
             bevelEnabled: false
         });
         let array = geom.attributes.position.array;
