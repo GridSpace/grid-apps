@@ -4,7 +4,7 @@
 
 (function() {
     let KIRI = self.kiri = self.kiri || {};
-    let frame, cwin, onevent = {};
+    let frame, cwin, onevent = {}, targetOrigin;
 
     function $(id) { return document.getElementById(id) }
 
@@ -14,7 +14,7 @@
     }
 
     function send(msg) {
-        cwin.postMessage(msg);
+        cwin.postMessage(msg, targetOrigin);
     }
 
     function recv(msg) {
@@ -29,8 +29,9 @@
     }
 
     let API = KIRI.frame = {
-        setFrame: (io) => {
+        setFrame: (io, target) => {
             let type = typeof(io);
+            targetOrigin = target;
             switch (type) {
                 case 'string': setFrame($(io)); break;
                 case 'object': setFrame(io); break;
