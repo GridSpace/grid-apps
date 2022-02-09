@@ -34,7 +34,10 @@ function parse(text) {
 
     let data = new THREE.SVGLoader().parse(text);
     let paths = data.paths;
-    let depth = data.xml.attributes.extrude || {value: 5};
+    let xmlat = data.xml.attributes;
+    let depth = xmlat['data-km-extrude']
+        || xmlat['extrude']
+        || {value: 5};
 
     for (let i = 0; i < paths.length; i++) {
         let path = paths[i];
