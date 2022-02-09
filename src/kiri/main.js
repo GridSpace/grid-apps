@@ -2273,6 +2273,7 @@
 
     function platformLayout(event, space = settings.controller.spaceLayout) {
         let auto = UI.autoLayout.checked,
+            ctrl = settings.controller,
             proc = settings.process,
             dev = settings.device,
             isBelt = dev.bedBelt,
@@ -2356,6 +2357,21 @@
                     widget.move(0, movey, 0);
                 }
             });
+            if (ctrl.spaceLayout === 0) {
+                let sum = 0;
+                let sorted = WIDGETS.sort((a,b) => a.track.pos.y - b.track.pos.y);
+                sorted.forEach(w => {
+                    w.move(0, sum, 0);
+                    sum += w.track.box.d + 1;
+                });
+            }
+            if (ctrl.spaceRandoX) {
+                for (let w of WIDGETS) {
+                    w.move(
+                        (0.5 - Math.random()) * (dev.bedWidth - w.track.box.w - proc.firstLayerBrim),
+                        0, 0);
+                }
+            }
         }
 
         platform.update_origin();

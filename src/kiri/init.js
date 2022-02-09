@@ -170,6 +170,7 @@
         control.showRulers = UI.showRulers.checked;
         control.autoLayout = UI.autoLayout.checked;
         control.freeLayout = UI.freeLayout.checked;
+        control.spaceRandoX = UI.spaceRandoX.checked;
         control.autoSave = UI.autoSave.checked;
         control.antiAlias = UI.antiAlias.checked;
         control.reverseZoom = UI.reverseZoom.checked;
@@ -496,7 +497,9 @@
                 if (API.view.get() === VIEWS.ARRANGE) {
                     // auto arrange items on platform
                     platform.layout();
-                    API.space.set_focus(API.selection.widgets());
+                    if (!API.conf.get().controller.spaceRandoX) {
+                        API.space.set_focus(API.selection.widgets());
+                    }
                 } else {
                     // go to arrange view
                     API.view.set(VIEWS.ARRANGE);
@@ -1717,6 +1720,7 @@
             autoSave:         UC.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
+            spaceRandoX:      UC.newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
             spaceLayout:      UC.newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:UC.toFloat, size:3, units:true}),
 
             export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
@@ -1782,9 +1786,9 @@
             outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
             outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            outputDraftShield:   UC.newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, modes:FDM, trigger: true, show:() => !UI.outputRaft.checked && isNotBelt}),
+            outputDraftShield:   UC.newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, modes:FDM, trigger: true, show:() => !UI.outputRaft.checked && isNotBelt()}),
             outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked && isNotBelt() }),
-            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:() => !UI.outputDraftShield.checked && isNotBelt}),
+            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:() => !UI.outputDraftShield.checked && isNotBelt()}),
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM, trigger:true}, "infill"),
@@ -2536,6 +2540,7 @@
             UI.showSpeeds.checked = control.showSpeeds;
             UI.freeLayout.checked = control.freeLayout;
             UI.autoLayout.checked = control.autoLayout;
+            UI.spaceRandoX.checked = control.spaceRandoX;
             UI.antiAlias.checked = control.antiAlias;
             UI.reverseZoom.checked = control.reverseZoom;
             UI.autoSave.checked = control.autoSave;

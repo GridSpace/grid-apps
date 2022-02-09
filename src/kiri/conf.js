@@ -687,6 +687,7 @@
                 showSpeeds: true,
                 freeLayout: true,
                 autoLayout: true,
+                spaceRandoX: false,
                 spaceLayout: 1,
                 units: "mm",
                 exportOcto: false,
