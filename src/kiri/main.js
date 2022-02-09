@@ -508,7 +508,12 @@
         let send = source.window.postMessage;
         if (data.mode) { API.mode.set(data.mode.toUpperCase()) }
         if (data.view) { API.view.set(VIEWS[data.view.toUpperCase()]) }
-        if (data.function) { API.function[data.function.toLowerCase()]() }
+        if (data.function) {
+            let cb = data.callback ? (output) => {
+                send({event:`${data.function}.done`, data: output});
+            } : undefined;
+            API.function[data.function.toLowerCase()](cb);
+        }
         if (data.event) {
             API.event.on(data.event, (evd) => {
                 send({event: data.event, data: evd});
@@ -536,12 +541,39 @@
                 break;
         }
         if (data.parse) {
-            new load.STL().parse(data.parse, vertices => {
-                let widget = newWidget().loadVertices(vertices);
-                platform.add(widget);
-            });
+            let type = (data.type || 'stl').toLowerCase();
+            let bin = data.parse;
+            let widget;
+            switch (type) {
+                case 'stl':
+                    if (!bin.buffer) bin = new Float32Array(bin).buffer;
+                    new load.STL().parse(bin, vertices => {
+                        platform.add(widget = newWidget().loadVertices(vertices));
+                        send({event: "parsed", data: [ widget.id ]});
+                    });
+                    break;
+                case 'obj':
+                    // todo
+                    break;
+                case '3mf':
+                    // todo
+                    break;
+                case 'svg':
+                    let wid = [];
+                    for (let svg of LOAD.SVG.parse(bin)) {
+                        if (!(svg && svg.length)) continue;
+                        platform.add(widget = newWidget().loadVertices(svg.toFloat32()));
+                        wid.push(widget.id);
+                    }
+                    send({event: "parsed", data: wid});
+                    break;
+            }
         }
-        if (data.load) platformLoad(data.load);
+        if (data.load) {
+            platformLoad(data.load, (verts, widget) => {
+                send({event: "loaded", data: [ widget.id ]});
+            })
+        };
         if (data.clear) platform.clear();
         if (data.alert) alert2(data.alert, data.time);
         if (data.progress >= 0) setProgress(data.progress, data.message);

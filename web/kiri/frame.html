@@ -87,7 +87,17 @@
         let defc = [
             "let api = kiri.frame;",
             "api.setMode('FDM');",
-            "api.slice();"
+            "api.clear();",
+            "api.load('/obj/cube.stl');",
+            "api.on('loaded', () => {",
+            "    api.slice();",
+            "});",
+            "api.on('slice.done', () => {",
+            "  api.prepare();",
+            "});",
+            "api.on('prepare.done', () => {",
+            "    api.export();",
+            "});"
         ].join('\n');
         let msgs = [];
         let edit;
@@ -135,15 +145,16 @@
     <div id="api">
         <h2>Frame Message API</h2>
         <li><label>load(url)</label> - where URL points to an STL</li>
-        <li><label>parse(data)</label> - where data is a string or binary STL</li>
+        <li><label>clear()</label> - clear workspace</li>
+        <li><label>parse(data,type)</label> - data is string or binary. type is "stl" or "svg"</li>
         <li><label>setFrame(id_obj)</label> - id or object of iframe with Kiri:Moto loaded</li>
         <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
         <li><label>setDevice(options)</label> - change default object parameters</li>
         <li><label>setProcess(options)</label> - change default process parameters</li>
-        <li><label>slice()</label> - async slice loaded object</li>
-        <li><label>prepare()</label> - async path routing of slice data</li>
-        <li><label>export()</label> - async gcode generation from path routing</li>
-        <li><label>onmessage(fn)</label> - function to receive all messages</li>
+        <li><label>slice()</label> - async slice loaded object. event upon completion</li>
+        <li><label>prepare()</label> - async path routing of slice data. event upon completion</li>
+        <li><label>export(callback)</label> - async gcode generation. opens export dialog or event callback with gcode</li>
+        <li><label>onmessage = fn</label> - function to receive all messages</li>
         <li><label>onevent(event, fn)</label> - function to receive named messages</li>
         <li><label>emit(event, data)</label> - send named event with data</li>
         <li><label>alert(msg, time)</label> - show alert message with optional time in seconds</li>

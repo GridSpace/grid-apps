@@ -44,6 +44,10 @@ class Engine {
         });
     }
 
+    clear() {
+        KIRI.api.platform.clear();
+    }
+
     parse(data) {
         return new Promise((accept, reject) => {
             try {

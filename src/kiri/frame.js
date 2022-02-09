@@ -23,7 +23,9 @@
         if (efn) {
             efn(data.data, data.event);
         }
-        API.onmessage(data, msg);
+        if (API.onmessage) {
+            API.onmessage(data, msg);
+        }
     }
 
     let API = KIRI.frame = {
@@ -46,7 +48,9 @@
 
         load: (load) => { send({ load }) },
 
-        parse: (data) => { send({ parse })},
+        clear: () => { send({ clear: true }) },
+
+        parse: (data, type) => { send({ parse: data, type })},
 
         get: (scope) => { send({ get: scope })},
 
@@ -58,11 +62,11 @@
 
         setFeatures: (features) => { send({ features })},
 
-        slice: () => { send({ function: "slice" }) },
+        slice: () => { send({ function: "slice", callback: true }) },
 
-        prepare: () => { send({ function: "prepare" }) },
+        prepare: () => { send({ function: "prepare", callback: true }) },
 
-        export: () => { send({ function: "export" }) },
+        export: (cb) => { send({ function: "export", callback: cb ? true : false }) },
 
         onmessage: () => { },
 
@@ -77,4 +81,6 @@
             send({ event });
         }
     };
+
+    API.on = API.onevent;
 })();
