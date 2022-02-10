@@ -132,6 +132,12 @@
             purgeOn = 0,
             purgeOff = 0;
 
+        let tools_used = Object.keys(print.tools);
+        for (let tool of tools_used) {
+            subst[`tool_used_${tool}`] = true;
+        }
+        subst.tool_count = tools_used.length;
+
         // smallish band-aid. refactor above to remove redundancy
         function updateParams(layer) {
             let params = getRangeParameters(process, layer);
@@ -204,8 +210,31 @@
             appendSub(line, true);
         }
 
+        let subon = true;
+        let ifhit = false;
+
+        // eval() based var substitution (from print)
+        // with logic flow IF / ELIF / ELSE / END
+        // IF / IF is valid but will not nest
         function appendSub(line, pad) {
-            append(print.constReplace(line, subst, 0, pad));
+            if (line.indexOf(';; IF ') === 0) {
+                line = line.substring(6).trim();
+                let evil = print.constReplace(line, subst, 0, 666);
+                subon = evil;
+                ifhit = subon;
+            } else if (line.indexOf(';; ELIF ') === 0) {
+                line = line.substring(6).trim();
+                let evil = print.constReplace(line, subst, 0, 666);
+                subon = !subon && evil;
+                ifhit = ifhit || subon;
+            } else if (line.indexOf(';; ELSE') === 0) {
+                subon = !ifhit && !subon;
+            } else if (line.indexOf(';; END') === 0) {
+                subon = true;
+                ifhit = false;
+            } else if (subon) {
+                append(print.constReplace(line, subst, 0, pad));
+            }
         }
 
         function appendAll(arr) {
@@ -244,7 +273,6 @@
         }
         append("; --- process ---");
         for (let pk in process) {
-            // append("; " + pk + " = " + process[pk]);
             appendTok("; ", pk, " = ", process[pk]);
         }
         append("; --- startup ---");

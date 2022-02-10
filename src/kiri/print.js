@@ -27,6 +27,7 @@
         lastE,
         lastPos,
         nextType,
+        tools = {},
         debugE; // set to 1 to enable flow rate analysis (console)
 
     KIRI.Print = Print;
@@ -36,6 +37,7 @@
         lastEmit = null;
         lastOut = null;
         lastPos = null;
+        tools = {};
         return new Print(settings, widgets, id);
     };
 
@@ -49,6 +51,7 @@
         this.settings = settings;
         this.widgets = widgets;
         this.setType = setType;
+        this.tools = tools;
         debugE = settings ? (settings.controller.devel ? 1 : 0) : 0;
     }
 
@@ -420,6 +423,7 @@
             this.speed = speed;
             this.tool = tool;
             this.type = type;
+            if (tool !== undefined) tools[tool] = true;
         }
 
         clone(z) {
@@ -1295,11 +1299,15 @@
             tok = str.substring(cs+1,ce);
             let eva = [];
             for (let [k,v] of Object.entries(consts)) {
-                if (typeof v === 'number') {
-                    eva.push(`let ${k} = ${v};`);
-                } else {
-                    if (v === undefined) v = '';
-                    eva.push(`let ${k} = "${v.replace(/\"/g,"\\\"")}";`);
+                switch (typeof v) {
+                    case 'number':
+                    case 'boolean':
+                        eva.push(`let ${k} = ${v};`);
+                        break;
+                    default:
+                        if (v === undefined) v = '';
+                        eva.push(`let ${k} = "${v.replace(/\"/g,"\\\"")}";`);
+                        break;
                 }
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`)
@@ -1307,6 +1315,9 @@
             let scr = eva.join('');
             let evl = eval(`{ ${scr} }`);
             nutok = evl;
+            if (pad === 666) {
+                return evl;
+            }
             if (pad) {
                 nutok = nutok.toString();
                 let oldln = ce-cs+1;
