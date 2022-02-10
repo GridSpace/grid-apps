@@ -1,3 +1,4 @@
+/** example of how to use Kiri:Moto's slicer engine from the command-line */
 let fs = require('fs');
 let args = process.argv.slice(2);
 let dir = args[0] || ".";
@@ -85,6 +86,7 @@ let fetch = function(url) {
     });
 };
 
+// imitate worker process
 class Worker {
     constructor(url) {
         console.log({fake_worker: url});
@@ -186,7 +188,7 @@ fetch('/web/obj/cube.stl').then(data => {
         "sliceSupportExtra":0,
         "sliceSupportAngle":50,
         "sliceSupportNozzle":0,
-        "sliceSolidMinArea":10,
+        "sliceSolidMinArea":1,
         "sliceSolidLayers":3,
         "sliceBottomLayers":3,
         "sliceTopLayers":3,
