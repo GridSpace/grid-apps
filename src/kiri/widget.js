@@ -954,6 +954,10 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.setWireframe = function(set, color, opacity) {
+        if (!(KIRI.api && KIRI.api.conf)) {
+            // missing api features in engine mode
+            return;
+        }
         let mesh = this.mesh,
             widget = this;
         if (this.wire) {
