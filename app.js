@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// ensure each app gets a local version-specific copy, not shared
 function require_fresh(path) {
     const rpa = require.resolve(path);
     delete require.cache[rpa];
@@ -33,6 +34,10 @@ let http;
 let util;
 let dir;
 let log;
+
+const EventEmitter = require('events');
+class AppEmitter extends EventEmitter {}
+const events = new AppEmitter();
 
 function init(mod) {
     startTime = time();
@@ -202,11 +207,13 @@ function loadModule(mod, dir) {
 function initModule(mod, file, dir) {
     logger.log({module: file});
     require_fresh(file)({
+        // express functions added here show up at "/api/" url root
         api: api,
         adm: {
             reload: prepareScripts,
             setver: (ver) => { oversion = ver }
         },
+        events,
         const: {
             args: {},
             meta: mod.meta,
