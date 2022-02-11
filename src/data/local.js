@@ -43,7 +43,7 @@ try {
     data.Local = new Local();
     let msg = "localStorage disabled: application may not function properly";
     console.log(msg);
-    alert(msg);
+    // alert(msg);
 }
 
 })();
