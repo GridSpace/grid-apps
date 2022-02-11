@@ -2,12 +2,12 @@
 let fs = require('fs');
 let args = process.argv.slice(2);
 let opts = {
-    dir: ".",
+    dir: process.cwd(),
     output: "-",
-    model: "/web/obj/cube.stl",
-    source: "/src/cli/kiri-source.json",
-    process: "/src/cli/kiri-fdm-process.json",
-    device: "/src/cli/kiri-fdm-device.json",
+    model: "web/obj/cube.stl",
+    source: "src/cli/kiri-source.json",
+    process: "src/cli/kiri-fdm-process.json",
+    device: "src/cli/kiri-fdm-device.json",
 };
 for (let i=0; i<args.length; i++) {
     let arg = args[i].split('=');
@@ -68,7 +68,7 @@ let exports_save = exports,
 // fake fetch for worker to get wasm, if needed
 let fetch = function(url, opts = {}) {
     if (verbose) console.log({fetch: url});
-    let buf = fs.readFileSync(dir + url);
+    let buf = fs.readFileSync(`${dir}/${url}`);
     return new Promise((resolve, reject) => {
         resolve(new Promise((resolve, reject) => {
             if (opts.format === 'string') {
@@ -144,8 +144,8 @@ async function run() {
             module = undefined;
         }
         try {
-            if (verbose) console.log(`loading ... ${dir}/${file}`);
-            eval(fs.readFileSync(dir + "/" + file).toString());
+            if (verbose) console.log(`loading ... ${file}`);
+            eval(fs.readFileSync(`${file}`).toString());
         } catch (e) {
             throw e;
         }
