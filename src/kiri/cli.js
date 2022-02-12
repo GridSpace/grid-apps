@@ -69,7 +69,7 @@ let exports_save = exports,
 let fetch = function(url, opts = {}) {
     if (verbose) console.log({fetch: url});
     if (!url.startsWith('/')) {
-      url = `${dir}/${url}`;
+        url = `${dir}/${url}`;
     }
     let buf = fs.readFileSync(url);
     return new Promise((resolve, reject) => {

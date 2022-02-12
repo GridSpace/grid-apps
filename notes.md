@@ -9,18 +9,15 @@
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)
-* `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 * `P` do not move (average) endpoints connected to long lines in decimate
+* `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
-* `F` create event-driven do/undo stack and port relevant actions to this
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
-* `F` add % field type with conversion (like units)
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 * `F` warn if part hanging in negative Z space or off bed in general
-* `F` add instancing support for 3MF files on import
 
 # FDM
 
@@ -32,16 +29,15 @@
 * `F` support pillar should have solid top/bottom
 * `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
-* `F` control for size of purge block (with 0=disabled)
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
 * `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` first layer segment large flat areas for better fill reliability
-* `F` enable purge blocks when quick layers are detected
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
 * `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 
+* `P` enable purge blocks when quick layers are detected
 * `P` refactor skirt, brim, raft as synth widget instead of in path routing
 * `P` extruder + filament max flow rate cap in planner
 * `P` revisit path routing / optimization
@@ -60,10 +56,8 @@
 
 * `F` promote forced layer retraction to a range parameter
 * `F` test and enable arcs in belt more
-* `F` refactor brims to be generated at slice time
 * `F` anchors should be generated anywhere needed in the print, not just head
 * `F` slightly angle supports to lean into the Z of the part
-* `F` arrange should align down Z, not side to side.
 
 # CAM
 
@@ -72,10 +66,9 @@
 * `B` tabs do not properly track widget mirror events
 * `B` first rough step too far down in certain circumstances?
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
-* `B` contour does not honor clip to stock?
+* `B` contour does not honor clip to stock
 
 * `F` roughing flats should be constrained to flat region
-* `F` option to output discrete operations as a zip of .gcode files
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` add ease-down support to trace op
 * `F` add linear clearing strategy
@@ -103,12 +96,11 @@
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 
-* `P` clear void should cut inside-to-out when a part would be freed from stock
 * `P` decrease cutting speed when entire tool is engaged (start of roughing)
+* `P` clear void should cut inside-to-out when a part would be freed from stock
 * `P` port arc code from FDM export to CAM export
 * `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
-* `P` detect render message backlog and pause or warn?
 * `P` allow faster z movements when contouring (not plunging)
 * `P` common / faster shadow generator using vertices shared with ledges
 
