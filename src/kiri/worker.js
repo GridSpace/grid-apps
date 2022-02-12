@@ -318,8 +318,9 @@ KIRI.worker = {
             let xpos = track.pos.x;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
             let rotation = (Math.PI / 180) * 45;
+            let proc = settings.process;
             // move to accomodate anchor
-            ypos += (settings.process.beltAnchor || 0);
+            ypos += (proc.beltAnchor || proc.firstLayerBeltLead || 0);
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
@@ -345,8 +346,9 @@ KIRI.worker = {
             let widget = group[0];
             let { xpos, ypos } = widget.belt;
             let { dy, dz } = widget.belt;
+            let proc = settings.process;
             // move to accomodate anchor
-            dy -= (settings.process.beltAnchor || 0) ;
+            dy -= (proc.beltAnchor || proc.firstLayerBeltLead || 0) ;
             widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
             for (let others of group.slice(1)) {
                 others.rotinfo = widget.rotinfo;

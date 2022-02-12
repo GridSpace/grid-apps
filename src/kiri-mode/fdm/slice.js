@@ -409,7 +409,7 @@
                 }
                 // array of added top.fill_sparse arrays
                 let adds = [];
-                let anchorlen = process.beltAnchor * beltfact;
+                let anchorlen = (process.beltAnchor || process.firstLayerBeltLead) * beltfact;
                 while (anchorlen && start && anchorlen >= sliceHeight) {
                     let addto = start.down;
                     if (!addto) {
