@@ -68,7 +68,10 @@ let exports_save = exports,
 // fake fetch for worker to get wasm, if needed
 let fetch = function(url, opts = {}) {
     if (verbose) console.log({fetch: url});
-    let buf = fs.readFileSync(`${dir}/${url}`);
+    if (!url.startsWith('/')) {
+      url = `${dir}/${url}`;
+    }
+    let buf = fs.readFileSync(url);
     return new Promise((resolve, reject) => {
         resolve(new Promise((resolve, reject) => {
             if (opts.format === 'string') {
