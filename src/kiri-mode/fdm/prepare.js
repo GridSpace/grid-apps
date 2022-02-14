@@ -119,14 +119,17 @@
             // if raft is specified
             if (process.outputRaft) {
                 let offset = newPoint(0,0,0),
-                    height = nozzle;
+                    height = nozzle,
+                    rafts = process.outputBrimCount ?
+                        POLY.expand(brims, nozzle * 4, 0, null, 1) : brims;
+
 
                 // cause first point of raft to be used
                 printPoint = null;
 
                 let raft = function(height, angle, spacing, speed, extrude) {
                     let slice = KIRI.newSlice(zoff + height / 2);
-                    brims.forEach(function(brim) {
+                    rafts.forEach(function(brim) {
                         // use first point of first brim as start point
                         if (printPoint === null) printPoint = brim.first();
                         let t = slice.addTop(brim);
@@ -163,9 +166,8 @@
                 // retract after last raft layer
                 output.last().last().retract = true;
             }
-            // raft excludes brims
-            else
-            // if using brim vs raft
+
+            // if using brim or skirt
             if (process.outputBrimCount) {
                 let polys = [],
                     preout = [];

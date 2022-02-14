@@ -1786,9 +1786,9 @@
             outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
             outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),
             fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            outputDraftShield:   UC.newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, modes:FDM, trigger: true, show:() => !UI.outputRaft.checked && isNotBelt()}),
             outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked && isNotBelt() }),
-            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:() => !UI.outputDraftShield.checked && isNotBelt()}),
+            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:() => isNotBelt()}),
+            outputDraftShield:   UC.newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, modes:FDM, trigger: true, show:() => isNotBelt()}),
 
             fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
             sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM, trigger:true}, "infill"),
