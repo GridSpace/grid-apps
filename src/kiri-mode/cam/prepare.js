@@ -288,7 +288,7 @@
                 const bigXY = (deltaXY > moveLen);
                 const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
                 const midZ = (absDeltaZ >= tolerance);
-                if ((bigXY || bigZ) && (isMove || midZ)) {
+                if ((bigXY || bigZ) && midZ) {
                     let maxz = getZClearPath(
                             terrain,
                             lastPoint.x - wmx,
@@ -299,7 +299,7 @@
                             zadd,
                             maxToolDiam/2,
                             zclear
-                        ) + ztOff,
+                        ),
                         mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                         clearz = maxz;
                     // up if any point between higher than start/outline, go up first
