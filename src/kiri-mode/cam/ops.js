@@ -123,8 +123,9 @@
             // create facing slices
             if (roughTop) {
                 let shadow = tshadow.clone();
-                let inset = POLY.offset(shadow, (toolDiam / (roughIn ? 2 : 1)));
-                let facing = POLY.offset(inset, -(toolDiam * op.step), { count: 999, flat: true });
+                let step = toolDiam * op.step;
+                let inset = POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
+                let facing = POLY.offset(inset, -step, { count: 999, flat: true });
                 let zdiv = ztOff / roughDown;
                 let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
                 if (ztOff === 0) {
