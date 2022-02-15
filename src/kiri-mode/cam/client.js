@@ -140,6 +140,10 @@
 
         api.event.on("preview.end", () => {
             isParsed = false;
+            if (isCamMode && camStock) {
+                let bounds = STACKS.getStack("bounds");
+                if (bounds) bounds.button("animate", animate);
+            }
         });
 
         api.event.on("code.loaded", (info) => {
@@ -1253,9 +1257,6 @@
         if (x && y && z && !STACKS.getStack('bounds')) {
             const render = new KIRI.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
             const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
-            if (isCamMode && camStock) {
-                stack.button("animate", animate);
-            }
             stack.add(render.addPolys([
                 newPolygon().centerRectangle({x:csox, y:csoy, z:0}, x, y),
                 newPolygon().centerRectangle({x:csox, y:csoy, z}, x, y)
