@@ -547,13 +547,17 @@
 
                 // offset.xout(`slice ${slice.z}`);
                 slice.camLines = offset;
+            });
+
+            // project empty up and render
+            for (let slice of slices) {
                 if (false) slice.output()
                     .setLayer("slice", {line: 0xaaaa00}, false)
                     .addPolys(slice.topPolys())
                 slice.output()
                     .setLayer("outline", {face: color, line: color})
-                    .addPolys(offset);
-            });
+                    .addPolys(slice.camLines);
+            }
 
             sliceAll.appendAll(slices);
             this.sliceOut = slices;
