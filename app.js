@@ -243,16 +243,17 @@ function initModule(mod, file, dir) {
             getCookieValue: cookieValue,
             logger: log.new
         },
-        inject: (code, file, options) => {
-            if (!script[code]) {
+        inject: (code, file, opt = {}) => {
+            let codelist = script[code];
+            if (!codelist) {
                 return logger.log(`inject missing target "${code}"`);
             }
-            const opt = options || {};
             const path = `${dir}/${file}`;
             if (opt.end) {
-                script[code].push(path);
+                codelist.push(path);
             } else {
-                script[code].splice(0, 0, path);
+                let io = Math.max(0, codelist.indexOf('@inject'));
+                codelist.splice(io, 0, path);
             }
             if (opt.cachever) {
                 cachever[path] = opt.cachever;
@@ -306,6 +307,7 @@ const script = {
         "main/gapp",
         "moto/license",
         "main/kiri",
+        "@inject",
         "ext/three",
         "ext/three-bgu",
         "ext/three-svg",
@@ -377,6 +379,7 @@ const script = {
         "main/gapp",
         "moto/license",
         "main/kiri",
+        "@inject",
         "ext/three",
         "ext/pngjs",
         "ext/jszip",
@@ -431,6 +434,7 @@ const script = {
         "main/gapp",
         "moto/license",
         "main/kiri",
+        "@inject",
         "ext/clip2",
         "ext/earcut",
         "add/array",
@@ -458,6 +462,7 @@ const script = {
         "main/gapp",
         "moto/license",
         "main/kiri",
+        "@inject",
         "ext/clip2",
         "data/local",
         "ext/three",
@@ -674,6 +679,8 @@ function concatCode(array) {
     let code = [];
     let direct = array.filter(f => f.charAt(0) !== '@');
     let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
+
+    synth.inject = "/* injection point */";
 
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle

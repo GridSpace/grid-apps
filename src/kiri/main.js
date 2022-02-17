@@ -3337,14 +3337,8 @@
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
-    // run optional module functions NOW before kiri-init has run
-    if (Array.isArray(self.kirimod)) {
-        kirimod.forEach(function(mod) { mod(kiri.api) });
-    }
-
-    // new module loading
-    kiri.loader.forEach(mod => { mod(kiri.api)} );
-    kiri.load = (mod) => { mod(kiri.api) };
+    // complete module loading
+    kiri.load_exec();
 
     // upon restore, seed presets
     api.event.emit('preset', api.conf.dbo());

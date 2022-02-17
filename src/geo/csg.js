@@ -1,7 +1,6 @@
-// ## License
-//
-// Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
-// Modified for GridApps by Stewart Allen (sa@grid.space)
+/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
+
+"use strict";
 
 (function() {
 
