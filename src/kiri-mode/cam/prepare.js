@@ -7,10 +7,10 @@
     let KIRI = self.kiri,
         BASE = self.base,
         POLY = BASE.polygons,
-        UTIL = BASE.util,
+        PATH = BASE.path,
         CAM = KIRI.driver.CAM,
-        PRO = CAM.process,
-        newPoint = BASE.newPoint;
+        { newPoint } = BASE,
+        { tip2tipEmit, poly2polyEmit } = PATH;
 
     /**
      * DRIVER PRINT CONTRACT
@@ -103,8 +103,6 @@
             spindle = 0,
             spindleMax = device.spindleMax,
             addOutput = print.addOutput,
-            tip2tipEmit = print.tip2tipEmit,
-            poly2polyEmit = print.poly2polyEmit,
             maxToolDiam = widget.maxToolDiam,
             terrain = widget.terrain ? widget.terrain.map(data => {
                 return {
