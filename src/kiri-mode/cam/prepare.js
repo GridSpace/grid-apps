@@ -7,7 +7,7 @@
     let KIRI = self.kiri,
         BASE = self.base,
         POLY = BASE.polygons,
-        PATH = BASE.path,
+        PATH = BASE.paths,
         CAM = KIRI.driver.CAM,
         { newPoint } = BASE,
         { tip2tipEmit, poly2polyEmit } = PATH;

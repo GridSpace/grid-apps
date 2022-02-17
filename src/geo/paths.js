@@ -5,7 +5,7 @@
 (function() {
 
 const base = self.base;
-if (base.path) return;
+if (base.paths) return;
 
 const { util, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
@@ -103,7 +103,7 @@ function poly2polyEmit(array, startPoint, emitter, opt = {}) {
     return startPoint;
 }
 
-base.path = {
+base.paths = {
     poly2polyEmit,
     tip2tipEmit
 };

@@ -8,8 +8,8 @@
 
     const KIRI = self.kiri,
         BASE = self.base,
-        PATH = BASE.path,
         UTIL = BASE.util,
+        PATH = BASE.paths,
         SQR = UTIL.sqr,
         PI = Math.PI,
         PRO = Print.prototype,
