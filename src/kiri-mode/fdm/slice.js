@@ -209,7 +209,7 @@
         let heights = [];
 
         // handle z cutting (floor method) and base flattening
-        let zPress = process.firstLayerFlatten || 0;
+        let zPress = isBelt ? process.firstLayerFlatten || 0 : 0;
         let zCut = widget.track.zcut || 0;
         if (zCut || zPress) {
             for (let p of points) {
