@@ -10,15 +10,14 @@
         let kiri = self.kiri = {
             beta: 3301,
             driver: {}, // driver modules
-            loader: modfns, // module loading: array of functions
             load(fn) {
-                kiri.loader.push(fn);
+                modfns.push(fn);
             },
-            load_exec() {
+            load_exec(api) {
                 // complete module loading
-                modfns.forEach(modfn => { modfn(kiri.api)} );
+                modfns.forEach(modfn => { modfn(api || kiri.api)} );
                 // rewrite load() to be immediate post-finalize
-                kiri.load = (modfn) => { modfn(kiri.api) };
+                kiri.load = (modfn) => { modfn(api || kiri.api) };
             }
         };
     }

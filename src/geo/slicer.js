@@ -143,7 +143,7 @@ async function slice(points, options = {}) {
 
     zScale = 1 / (zSpan / bucketCount);
 
-    if (true || debug) {
+    if (debug) {
         console.log({
             zMin, zMax, zIndexes, zScale, zSum, zSpanAvg,
             points, bucketCount,

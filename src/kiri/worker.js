@@ -877,6 +877,4 @@ dispatch.onmessage = self.onmessage = function(e) {
 };
 
 // load kiri modules
-KIRI.loader.forEach(fn => {
-    fn(dispatch);
-});
+KIRI.load_exec(dispatch);

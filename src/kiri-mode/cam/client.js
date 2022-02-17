@@ -22,7 +22,6 @@
 
     let zaxis = { x: 0, y: 0, z: 1 },
         popOp = {},
-        noop = () => {},
         func = {
             hover: noop,
             hoverUp: noop
@@ -35,10 +34,10 @@
         FDM = KIRI.driver.FDM;
 
         // console.log({kiri,api})
+        SPACE = kiri.space;
+        MODES = kiri.consts.MODES;
+        VIEWS = kiri.consts.VIEWS;
         STACKS = api.const.STACKS;
-        SPACE = api.const.SPACE;
-        MODES = api.const.MODES;
-        VIEWS = api.const.VIEWS;
         LANG = api.const.LANG;
         UI = api.ui;
         UC = api.uc;

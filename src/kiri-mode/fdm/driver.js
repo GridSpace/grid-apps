@@ -37,7 +37,7 @@
     }
 
     // defer loading until KIRI.client and KIRI.worker exist
-    KIRI.loader.push(function(API) {
+    KIRI.load(function(API) {
 
         if (KIRI.client)
         // FDM.support_generate = KIRI.client.fdm_support_generate = function(ondone) {

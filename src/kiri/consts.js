@@ -122,12 +122,15 @@ const PMODES = {
     TOOLS: 2
 };
 
+const SEED = 'kiri-seed';
+
 kiri.consts = {
     PMODES,
     COLOR,
     LISTS,
     MODES,
     VIEWS,
+    SEED,
 };
 
 })();

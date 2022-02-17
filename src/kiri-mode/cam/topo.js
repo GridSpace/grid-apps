@@ -14,8 +14,7 @@
         newLine = BASE.newLine,
         newSlope = BASE.newSlope,
         newPoint = BASE.newPoint,
-        newPolygon = BASE.newPolygon,
-        noop = function() {};
+        newPolygon = BASE.newPolygon;
 
     class Topo {
         constructor(opt = {}) {

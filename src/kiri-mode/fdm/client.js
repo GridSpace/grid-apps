@@ -24,8 +24,8 @@
         UI = api.ui;
         UC = api.uc;
         API = api;
-        SPACE = api.const.SPACE;
-        VIEWS = api.const.VIEWS;
+        SPACE = kiri.space;
+        VIEWS = kiri.consts.VIEWS;
         LANG = KIRI.lang.current;
         PROC = Object.keys(kiri.conf.defaults.fdm.p);
 
@@ -79,7 +79,7 @@
         function filterSynth() {
             api.widgets.filter((widget) => {
                 if (widget.track.synth) {
-                    api.const.SPACE.world.remove(widget.mesh);
+                    kiri.space.world.remove(widget.mesh);
                     kiri.Widget.Groups.remove(widget);
                 }
                 return !widget.track.synth
@@ -295,7 +295,7 @@
                 sw._move(fwp.x, fwp.y, fwp.z);
                 api.widgets.add(sw);
                 sw.track.synth = true;
-                api.const.SPACE.world.add(sw.mesh);
+                KIRI.space.world.add(sw.mesh);
             }
         });
         api.event.on("slice.end", () => {

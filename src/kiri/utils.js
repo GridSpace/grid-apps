@@ -51,7 +51,7 @@ kiri.utils = {
     encodeOpt,
     ajax,
     o2js,
-    js2o
+    js2o,
 };
 
 })();

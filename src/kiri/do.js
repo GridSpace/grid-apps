@@ -37,7 +37,7 @@ kiri.load(function(API) {
     };
 
     function updateButtons() {
-        let isArrange = API.view.get() === API.const.VIEWS.ARRANGE;
+        let isArrange = API.view.get() === kiri.consts.VIEWS.ARRANGE;
         $('doit').style.display = isArrange && stack.length ? 'flex' : 'none';
         $('undo').disabled = stpos === 0;
         $('redo').disabled = stpos == stack.length;

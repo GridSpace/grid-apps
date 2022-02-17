@@ -2,7 +2,7 @@
 
 "use strict";
 
-self.kiri.loader.push(function() {
+kiri.load(function() {
 
     let KIRI = self.kiri,
         CAM = KIRI.driver.CAM,
@@ -25,8 +25,9 @@ self.kiri.loader.push(function() {
 
     if (KIRI.client)
     CAM.animate_clear = function(api) {
+        API = api;
         KIRI.client.animate_cleanup();
-        SPACE = (API = api).const.SPACE;
+        SPACE = KIRI.space;
         WORLD = SPACE.world;
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';

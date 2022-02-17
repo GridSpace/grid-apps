@@ -4,19 +4,14 @@
 
 (function() {
 
-    const KIRI = self.kiri,
-        BASE = self.base,
-        POLY = BASE.polygons,
-        UTIL = BASE.util,
-        CONF = BASE.config,
-        FDM = KIRI.driver.FDM,
-        SLICER = KIRI.slicer,
-        fillArea = POLY.fillArea,
-        newPoint = BASE.newPoint,
-        newSlice = KIRI.newSlice,
-        tracker = UTIL.pwait,
-        FILL = KIRI.fill,
-        FILLFIXED = KIRI.fill_fixed,
+    const { base, kiri } = self;
+    const { driver, fill, fill_fixed, newSlice, utils } = kiri;
+    const { config, polygons, util, newPoint } = base;
+    const { fillArea } = polygons;
+    const { FDM } = driver;
+
+    const POLY = polygons,
+        tracker = util.pwait,
         lopacity = 0.6,
         opacity = 1,
         COLOR = {
@@ -29,7 +24,6 @@
         },
         PROTO = Object.clone(COLOR),
         getRangeParameters = FDM.getRangeParameters,
-        noop = function() {},
         profile = false,
         profileStart = profile ? console.profile : noop,
         profileEnd = profile ? console.profileEnd : noop,
@@ -56,19 +50,22 @@
      * that will not quickly encode in threaded mode. add to existing
      * data object. return is ignored.
      */
-    BASE.slicePost.FDM = function(data, options) {
-        let { z, lines, groups } = data;
-        let { useAssembly, post_args, index } = options;
-        let { process, isSynth, isDanger, vaseMode } = post_args;
-        let { shellOffset, fillOffset, clipOffset } = post_args;
+    base.slicePost.FDM = function(data, options) {
+        const { z, lines, groups } = data;
+        const { useAssembly, post_args, index } = options;
+        const { process, isSynth, isDanger, vaseMode } = post_args;
+        const { shellOffset, fillOffset, clipOffset } = post_args;
+        const tops = POLY.nest(groups);
         if (isSynth) {
             // do not shell synth widgets because
             // they will be clipped against peers later
             // which requires shelling post-clip
+            // but we still need to generate tops
+            data.tops = tops;
+            delete data.groups;
             return;
         }
-        let tops = POLY.nest(groups);
-        let range = FDM.getRangeParameters(process, index);
+        const range = FDM.getRangeParameters(process, index);
         // calculate fractional shells
         let shellFrac = (range.sliceShells - (range.sliceShells | 0));
         let sliceShells = range.sliceShells | 0;
@@ -80,13 +77,13 @@
             let trg = shellFrac > 0.5 ? 1 : parts - 1;
             sliceShells += rem >= trg ? 1 : 0;
         }
-        let isFirst = index === 0;
-        let height = process.sliceHeight;
-        let spaceMult = isFirst ? process.firstLayerLineMult || 1 : 1;
-        let count = isSynth ? 1 : sliceShells;
-        let offset =  shellOffset * spaceMult;
-        let fillOff = fillOffset * spaceMult;
-        let nutops = [];
+        const isFirst = index === 0;
+        const height = process.sliceHeight;
+        const spaceMult = isFirst ? process.firstLayerLineMult || 1 : 1;
+        const count = isSynth ? 1 : sliceShells;
+        const offset =  shellOffset * spaceMult;
+        const fillOff = fillOffset * spaceMult;
+        const nutops = [];
         // co-locate shell processing with top generation in slicer
         for (let top of tops) {
             nutops.push(FDM.share.doTopShells(z, top, count, offset/2, offset, fillOff, {
@@ -103,7 +100,7 @@
 
     FDM.sliceAll = function(settings, onupdate) {
         // future home of brim and anchor generation
-        let widgets = Object.values(KIRI.worker.cache)
+        let widgets = Object.values(kiri.worker.cache)
             .filter(w => !w.meta.disabled)
             .sort((a,b) => {
                 return a.slices[0].z - b.slices[0].z
@@ -147,7 +144,7 @@
             isSynth = widget.track.synth,
             isDanger = controller.danger,
             useAssembly = controller.assembly,
-            isConcurrent = controller.threaded && KIRI.minions.concurrent,
+            isConcurrent = controller.threaded && kiri.minions.concurrent,
             solidMinArea = process.sliceSolidMinArea,
             solidLayers = process.sliceSolidLayers || 0,
             vaseMode = process.sliceFillType === 'vase' && !isSynth,
@@ -233,7 +230,7 @@
             }
         }
 
-        BASE.slice(points, {
+        base.slice(points, {
             debug: process.xray,
             xray: process.xray,
             zMin: bounds.min.z,
@@ -335,7 +332,7 @@
             },
             // slicer function (worker local or minion distributed)
             slicer(z, points, opts) {
-                return (isConcurrent ? KIRI.minions.sliceZ : BASE.sliceZ)(z, points, opts);
+                return (isConcurrent ? kiri.minions.sliceZ : base.sliceZ)(z, points, opts);
             },
             onupdate(update) {
                 return onupdate(0.0 + update * 0.5)
@@ -344,6 +341,7 @@
             // post process slices and re-incorporate missing meta-data
             return output.slices.map(data => {
                 let { z, clip, lines, groups } = data;
+                if (!data.tops) return null;
                 let slice = newSlice(z).addTops(data.tops);
                 slice.index = indices.indexOf(z);
                 slice.height = heights[slice.index];
@@ -354,7 +352,7 @@
                     slice.xray = process.xray;
                 }
                 return slice;
-            });
+            }).filter(s => s);
         }).then(slices => {
             return onSliceDone(slices);
         }).then(ondone);
@@ -374,7 +372,7 @@
                 .map(w => w.slices).flat()
                 .map(s => s.tops).flat().map(t => t.simple);
             let shadow = isConcurrent ?
-                await KIRI.minions.union(alltops, 0.1) :
+                await kiri.minions.union(alltops, 0.1) :
                 POLY.union(alltops, 0.1, true);
             // expand shadow when requested (support clipping)
             if (process.sliceSupportExtra) {
@@ -471,7 +469,7 @@
             }
 
             // do not hint polygon fill longer than a max span length
-            CONF.hint_len_max = UTIL.sqr(process.sliceBridgeMax);
+            config.hint_len_max = util.sqr(process.sliceBridgeMax);
 
             // reset for solids, support projections
             // and other annotations
@@ -565,7 +563,7 @@
                     addto.belt.touch = false;
                     let z = addto.z;
                     let y = z - smin - (nozzleSize / 2);
-                    let splat = BASE.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
+                    let splat = base.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                     let snew = addto.addTop(splat).fill_sparse = [ splat ];
                     adds.push(snew);
                     start = addto;
@@ -598,7 +596,7 @@
                             let fz = first.z;
                             let n2 = nozzleSize / 2;
                             for (let x = mp - dx; x <= mp + dx ; x += 3) {
-                                add.push( BASE.newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
+                                add.push( base.newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
                             }
                         }
                     }
@@ -774,7 +772,7 @@
             }
 
             if (isBelt) {
-                let bounds = BASE.newBounds();
+                let bounds = base.newBounds();
                 for (let top of slices[0].tops) {
                     bounds.merge(top.poly.bounds);
                 }
@@ -1038,7 +1036,7 @@
 
         // for diffing
         top.last = last;
-        // top.last_simple = last.map(p => p.clean(true, undefined, CONF.clipper / 10));
+        // top.last_simple = last.map(p => p.clean(true, undefined, config.clipper / 10));
 
         return top;
     }
@@ -1128,8 +1126,8 @@
             };
 
         // use specified fill type
-        if (type && FILL[type]) {
-            FILL[type](target);
+        if (type && fill[type]) {
+            fill[type](target);
         } else {
             console.log({missing_infill: type});
             return;
@@ -1148,7 +1146,7 @@
         // update fill fingerprint for this slice
         slice._fill_finger = POLY.fingerprint(polys);
 
-        let skippable = cache && FILLFIXED[type] ? true : false;
+        let skippable = cache && fill_fixed[type] ? true : false;
         let miss = false;
         // if the layer below has the same fingerprint,
         // we may be able to clone the infill instead of regenerating it
@@ -1214,7 +1212,7 @@
         }
 
         if (options.promises) {
-            options.promises.push(KIRI.minions.clip(slice, polys, lines));
+            options.promises.push(kiri.minions.clip(slice, polys, lines));
             return;
         }
 
@@ -1389,7 +1387,7 @@
 
     function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
         if (fillQ) {
-            fillQ.push(KIRI.minions.fill(polys, angle, spacing, output, minLen, maxLen));
+            fillQ.push(kiri.minions.fill(polys, angle, spacing, output, minLen, maxLen));
         } else {
             POLY.fillArea(polys, angle, spacing, output, minLen, maxLen);
         }
@@ -1421,7 +1419,7 @@
                 // use de-rez'd top shadow instead
                 down_tops = down.topSimples();
                 // de-rez trace polys because it's not that important for supports
-                down_traces = down_traces.map(p => p.clean(true, undefined, CONF.clipper / 10));
+                down_traces = down_traces.map(p => p.clean(true, undefined, config.clipper / 10));
             }
         }
 
@@ -1488,13 +1486,13 @@
 
             // for each point, create a bounding rectangle
             points.forEach(function(point) {
-                pillars.push(BASE.newPolygon().centerRectangle(point, size/2, size/2));
+                pillars.push(base.newPolygon().centerRectangle(point, size/2, size/2));
             });
 
             supports.appendAll(POLY.union(pillars, null, true, { wasm: false }));
             // merge pillars and replace with convex hull of outer points (aka smoothing)
             pillars = POLY.union(pillars, null, true, { wasm: false }).forEach(function(pillar) {
-                supports.push(BASE.newPolygon().createConvexHull(pillar.points));
+                supports.push(base.newPolygon().createConvexHull(pillar.points));
             });
         })();
 
@@ -1518,7 +1516,7 @@
 
         // then union supports
         if (supports.length > 10) {
-            supports = await KIRI.minions.union(supports);
+            supports = await kiri.minions.union(supports);
         } else {
             supports = POLY.union(supports, null, true, { wasm: false });
         }
@@ -1657,7 +1655,7 @@
                     if (bl.del) {
                         continue;
                     }
-                    if (UTIL.intersect(al.a, al.b, bl.a, bl.b, BASE.key.SEGINT)) {
+                    if (util.intersect(al.a, al.b, bl.a, bl.b, base.key.SEGINT)) {
                         if (al.l < bl.l) {
                             bl.del = true;
                         } else {
@@ -1722,12 +1720,12 @@
             let sortz = [p1,p2,p3].sort((a,b) => { return a.z - b.z });
             let xv = fld(sortx, 'x');
             let yv = fld(sorty, 'y');
-            let xa = BASE.util.lerp(xv.first.x + s4, xv.last.x - s4, s2, true);
-            let ya = BASE.util.lerp(yv.first.y + s4, yv.last.y - s4, s2, true);
+            let xa = base.util.lerp(xv.first.x + s4, xv.last.x - s4, s2, true);
+            let ya = base.util.lerp(yv.first.y + s4, yv.last.y - s4, s2, true);
             for (let x of xa) {
                 for (let y of ya) {
                     if (pointIn(x, y, p1, p2, p3)) {
-                        let z = BASE.util.zInPlane(p1, p2, p3, x, y);
+                        let z = base.util.zInPlane(p1, p2, p3, x, y);
                         tp(new THREE.Vector3(x, y, z));
                     }
                 }
@@ -1736,12 +1734,12 @@
         // test poly
         function tP(poly, face) {
             let bounds = poly.bounds;
-            let xa = BASE.util.lerp(bounds.minx + s4, bounds.maxx - s4, s2, true);
-            let ya = BASE.util.lerp(bounds.miny + s4, bounds.maxy - s4, s2, true);
+            let xa = base.util.lerp(bounds.minx + s4, bounds.maxx - s4, s2, true);
+            let ya = base.util.lerp(bounds.miny + s4, bounds.maxy - s4, s2, true);
             for (let x of xa) {
                 for (let y of ya) {
-                    if (BASE.newPoint(x, y, 0).isInPolygon(poly)) {
-                        let z = BASE.util.zInPlane(face[0], face[1], face[2], x, y);
+                    if (base.newPoint(x, y, 0).isInPolygon(poly)) {
+                        let z = base.util.zInPlane(face[0], face[1], face[2], x, y);
                         tp(new THREE.Vector3(x, y, z));
                     }
                 }
@@ -1788,7 +1786,7 @@
                 continue;
             }
             // skip tiny faces
-            let poly = BASE.newPolygon().addPoints([a,b,c].map(v => BASE.newPoint(v.x, v.y, v.z)));
+            let poly = base.newPolygon().addPoints([a,b,c].map(v => base.newPoint(v.x, v.y, v.z)));
             if (poly.area() < min && poly.perimeter() < size) {
                 continue;
             }
@@ -1879,7 +1877,7 @@
                     // convert groups of faces to contiguous polygon groups
                     groups = groups.map(group => {
                         let parr = group.map(arr => {
-                            return BASE.newPolygon()
+                            return base.newPolygon()
                                 .add(arr[0].x, arr[0].y, arr[0].z)
                                 .add(arr[1].x, arr[1].y, arr[1].z)
                                 .add(arr[2].x, arr[2].y, arr[2].z);

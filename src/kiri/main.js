@@ -25,7 +25,6 @@
         SPACE   = kiri.space = moto.Space,
         CATALOG = kiri.catalog = kiri.openCatalog(ODB),
         STATS   = new Stats(SDB),
-        SEED    = 'kiri-seed',
         // ---------------
         CONF    = kiri.conf,
         clone   = Object.clone;
@@ -52,8 +51,7 @@
         alerts = [],
         grouping = false,
         saveTimer = null,
-        version = kiri.version = gapp.version,
-        noop = () => { return false };
+        version = kiri.version = gapp.version;
 
     // add show() to catalog for API
     CATALOG.show = showCatalog;
@@ -167,13 +165,9 @@
         const: {
             LANG,
             LOCAL,
-            MODES,
-            SEED,
             SETUP,
             SECURE,
             STACKS,
-            SPACE,
-            VIEWS,
         },
         devel,
         doit: {
@@ -271,6 +265,7 @@
             save: saveWorkspace,
             set_focus: setFocus,
             update: SPACE.update,
+            is_dark() { return settings.controller.dark }
         },
         tweak,
         util: {

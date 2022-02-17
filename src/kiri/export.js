@@ -13,7 +13,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         SDB = API.sdb,
         UI = API.ui,
         STATS = API.stats,
-        MODES = API.const.MODES;
+        MODES = KIRI.consts.MODES;
 
     KIRI.export = exportFile;
 

@@ -22,7 +22,7 @@
         };
 
         // defer loading until KIRI.client and KIRI.worker exist
-        KIRI.loader.push(function(API) {
+        KIRI.load(function(API) {
 
             if (KIRI.client)
             CAM.traces = function(ondone, single) {
