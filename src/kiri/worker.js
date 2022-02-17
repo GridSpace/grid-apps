@@ -6,6 +6,7 @@ let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
     POLY = BASE.polygons,
+    CODEC = KIRI.codec,
     time = UTIL.time,
     qtpi = Math.cos(Math.PI/4),
     debug = self.debug === true,
@@ -46,6 +47,10 @@ if (concurrent) {
         let _ = debug ? '_' : '';
         let minion = new Worker(`/code/kiri_pool.js?${_}${self.kiri.version}`);
         minion.onmessage = minhandler;
+        minion.postMessage({
+            cmd: "label",
+            name: `#${i}`
+        });
         minions.push(minion);
     }
     console.log(`kiri | init pool | ${gapp.version || "rogue"} | ${concurrent + 1}`);
@@ -66,7 +71,7 @@ KIRI.minions = {
             let running = 0;
             let union = [];
             let receiver = function(data) {
-                let polys = KIRI.codec.decode(data.union);
+                let polys = CODEC.decode(data.union);
                 union.appendAll(polys);
                 if (--running === 0) {
                     resolve(POLY.union(union, minarea, true));
@@ -77,7 +82,7 @@ KIRI.minions = {
                 minwork.queue({
                     cmd: "union",
                     minarea,
-                    polys: KIRI.codec.encode(polys.slice(i, i + polyper))
+                    polys: CODEC.encode(polys.slice(i, i + polyper))
                 }, receiver);
             }
         });
@@ -91,7 +96,7 @@ KIRI.minions = {
             }
             minwork.queue({
                 cmd: "fill",
-                polys: KIRI.codec.encode(polys),
+                polys: CODEC.encode(polys),
                 angle, spacing, minLen, maxLen
             }, data => {
                 let arr = data.fill;
@@ -118,7 +123,7 @@ KIRI.minions = {
                 lines: lines.map(a => a.map(p => p.toClipper())),
                 z: slice.z
             }, data => {
-                let polys = KIRI.codec.decode(data.clips);
+                let polys = CODEC.decode(data.clips);
                 for (let top of slice.tops) {
                     for (let poly of polys) {
                         if (poly.isInside(top.poly)) {
@@ -131,12 +136,12 @@ KIRI.minions = {
         });
     },
 
-    sliceBucket: function(bucket, options, output) {
+    sliceZ: function(z, points, options) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 reject("concurrent slice unavaiable");
             }
-            let { points, slices } = bucket;
+            let { each } = options;
             let i = 0, floatP = new Float32Array(points.length * 3);
             for (let p of points) {
                 floatP[i++] = p.x;
@@ -144,15 +149,16 @@ KIRI.minions = {
                 floatP[i++] = p.z;
             }
             minwork.queue({
-                cmd: "sliceBucket",
+                cmd: "sliceZ",
+                z,
                 points: floatP,
-                slices,
-                options
+                options: CODEC.toCodable(options)
             }, data => {
-                let recs = KIRI.codec.decode(data.output);
-                for (let rec of recs) {
-                    let { params, data } = rec;
-                    output.push(KIRI.slicer.createSlice(params, data));
+                let recs = CODEC.decode(data.output);
+                if (each) {
+                    for (let rec of recs) {
+                        each(rec);
+                    }
                 }
                 resolve(recs);
             }, [ floatP.buffer ]);
@@ -429,7 +435,7 @@ KIRI.worker = {
             const state = { zeros: [] };
             const emit = { progress, message };
             if (layer) {
-                emit.layer = KIRI.codec.encode(layer, state)
+                emit.layer = CODEC.encode(layer, state)
             }
             send.data(emit);
         });
@@ -444,7 +450,7 @@ KIRI.worker = {
 
         send.done({
             done: true,
-            // output: KIRI.codec.encode(layers, state),
+            // output: CODEC.encode(layers, state),
             minSpeed,
             maxSpeed
         }, state.zeros);
@@ -513,7 +519,7 @@ KIRI.worker = {
             const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools });
-            send.done({parsed: KIRI.codec.encode(layers), maxSpeed, minSpeed});
+            send.done({parsed: CODEC.encode(layers), maxSpeed, minSpeed});
         }, {
             fdm: mode === 'FDM',
             belt: device.bedBelt
@@ -531,7 +537,7 @@ KIRI.worker = {
         const layers = KIRI.driver.FDM.prepareRender(parsed, progress => {
             send.data({ progress });
         }, { thin:  true });
-        send.done({parsed: KIRI.codec.encode(layers)});
+        send.done({parsed: CODEC.encode(layers)});
     },
 
     config: function(data, send) {

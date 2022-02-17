@@ -17,8 +17,28 @@
         registerDecoder: registerDecoder,
         allocFloat32Array: allocFloat32Array,
         encodePointArray,
-        decodePointArray
+        decodePointArray,
+        toCodable
     };
+
+    function toCodable(object) {
+        let o = {};
+        for (let [key, val] of Object.entries(object)) {
+            switch (typeof val) {
+                case 'function':
+                    break;
+                case 'object':
+                    if (Array.isArray(val)) {
+                        val = val.map(v => toCodable(v));
+                    } else {
+                        val = toCodable(val);
+                    }
+                default:
+                    o[key] = val;
+            }
+        }
+        return o;
+    }
 
     function allocFloat32Array(arg) {
         if (arg.byteLength) {

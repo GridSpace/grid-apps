@@ -28,9 +28,9 @@ function dval(v, dv) {
  * @param {Object} options slicing parameters
  */
 async function slice(points, options = {}) {
-    let zMin = options.zmin || 0,
-        zMax = options.zmax || 0,
-        zInc = options.zinc || 0,
+    let zMin = options.zMin || 0,
+        zMax = options.zMax || 0,
+        zInc = options.zInc || 0,
         zGen = options.zGen,    // optional z index generator function
         zIndexes = options.indices || [],
         minStep = options.minstep || 0,
@@ -41,7 +41,7 @@ async function slice(points, options = {}) {
         zSum = 0.0,             // sanity check that points enclose non-zere volume
         buckets = [],           // banded/grouped faces to speed up slice/search
         overlapMax = options.overlap || 0.75,
-        bucketMax = options.bucketmax || 100,
+        bucketMax = options.bucketMax || 100,
         onupdate = options.onupdate || function() {},
         sliceFn = dval(options.slicer, sliceZ),
         { debug, flat, autoDim } = options,
@@ -108,7 +108,7 @@ async function slice(points, options = {}) {
         for (i = zMin; i <= zMax; i += zInc) {
             zIndexes.push(i);
         }
-    } else {
+    } else if (!zIndexes.length) {
         zIndexes = Object.values(zList).sort((a,b) => a - b);
         if (minStep > 0) {
             let lastOut;
@@ -129,6 +129,9 @@ async function slice(points, options = {}) {
         zIndexes = zGen({ zMin, zMax, zLine, zFlat, zIndexes, options });
     }
 
+    // ensure bucket aligmnent
+    zIndexes = zIndexes.map(v => v.round(3));
+
     /**
      * bucket polygons into z-bounded groups (inside or crossing)
      * to reduce the search space in complex models
@@ -140,7 +143,7 @@ async function slice(points, options = {}) {
 
     zScale = 1 / (zSpan / bucketCount);
 
-    if (debug) {
+    if (true || debug) {
         console.log({
             zMin, zMax, zIndexes, zScale, zSum, zSpanAvg,
             points, bucketCount,
@@ -165,8 +168,8 @@ async function slice(points, options = {}) {
             p1 = points[i++];
             p2 = points[i++];
             p3 = points[i++];
-            let zm = Math.min(p1.z, p2.z, p3.z) - zMin,
-                zM = Math.max(p1.z, p2.z, p3.z) - zMin,
+            let zm = Math.min(p1.z, p2.z, p3.z),
+                zM = Math.max(p1.z, p2.z, p3.z),
                 bm = Math.floor(zm * zScale),
                 bM = Math.min(Math.ceil(zM * zScale), bucketCount);
             // add point to all buckets in range
@@ -192,10 +195,12 @@ async function slice(points, options = {}) {
     }
 
     // create buckets data structure
-    for (let z of zIndexes) {
-        let index = bucketCount <= 1 ? 0 :
-            Math.min( Math.floor((z - zMin) * zScale), bucketCount - 1 );
-        buckets[index].slices.push(z);
+    for (let i = 0, l = zIndexes.length; i < l; i++) {
+        let z = zIndexes[i],
+            index = bucketCount <= 1 ? 0 :
+            Math.min(Math.floor(z * zScale), bucketCount - 1),
+            bucket = buckets[index];
+        if (bucket) bucket.slices.push(z); else console.log({skip: index});
         onupdate((i / zIndexes.length) * 0.1);
     }
 
@@ -203,19 +208,23 @@ async function slice(points, options = {}) {
         let output = [];
         let count = 0;
         let opt = { ...options, zMin, zMax };
+        let ps = [];
 
         for (let i = 0, l = buckets.length; i < l; i++) {
             let bucket = buckets[i];
             let { points, slices } = bucket;
-            for (let z of slices) {
-                output.push(await sliceFn(z, points, {
-                    ...opt,
-                    bucket: i,  // pass which bucket we are (sharding)
-                    buckets: l  // pass total bucket count (sharding)
-                }));
-                onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
-            }
+            if (slices.length)
+            ps.push(sliceFn(slices, points, {
+                ...opt,
+                each(rval) {
+                    output.push(rval);
+                    onupdate(0.1 + (count++ / zIndexes.length) * 0.9);
+                }
+            }));
         }
+
+        // join all returned promises
+        await Promise.all(ps);
 
         return output;
     }
@@ -306,7 +315,11 @@ function makeZLine(phash, p1, p2, coplanar, edge) {
  * @param {number} z
  */
 async function sliceZ(z, points, options = {}) {
-    let { zMin, zMax, under, over, both } = options,
+    if (Array.isArray(z)) {
+        return Promise.all(z.map(z => sliceZ(z, points, options)));
+    }
+
+    let { zMin, zMax, under, over, both, each } = options,
         groupFn = dval(options.groupr, both ? null : sliceConnect),
         phash = {},
         lines = [],
@@ -364,8 +377,22 @@ async function sliceZ(z, points, options = {}) {
     lines = removeDuplicateLines(lines);
 
     let rval = { z, lines };
-    if (groupFn) rval.groups = groupFn(lines, z, options);
+    if (groupFn) {
+        let groups = groupFn(lines, z, options);
+        if (options.union) {
+            // simplistic healing of non-manifold meshes
+            groups = POLY.flatten(POLY.union(POLY.nest(groups), 0.1, true), null, true);
+        }
+        rval.groups = groups;
+    }
 
+    // look for driver-specific slice post-processor
+    if (options.post) {
+        let fn = base.slicePost[options.post];
+        if (fn) fn(rval, options);
+    }
+
+    if (each) each(rval);
     return rval;
 }
 
@@ -795,5 +822,6 @@ function removeDuplicateLines(lines) {
 
 base.slice = slice;
 base.sliceZ = sliceZ;
+base.slicePost = {};
 
 })();

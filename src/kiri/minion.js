@@ -10,7 +10,8 @@ let BASE = self.base,
     clib = self.ClipperLib,
     ctyp = clib.ClipType,
     ptyp = clib.PolyType,
-    cfil = clib.PolyFillType;
+    cfil = clib.PolyFillType,
+    name = "unknown";
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -27,12 +28,20 @@ function reply(msg, direct) {
     self.postMessage(msg, direct);
 }
 
+function log() {
+    console.log(`[${name}]`, ...arguments);
+}
+
 const funcs = {
+    label(data, seq) {
+        name = data.name;
+    },
+
     config: data => {
         if (data.base) {
             Object.assign(BASE.config, data.base);
         } else {
-            console.log({invalid: data});
+            log({invalid: data});
         }
     },
 
@@ -85,21 +94,23 @@ const funcs = {
         reply({ seq, clips });
     },
 
-    sliceBucket: (data, seq) => {
-        let { points, slices, options } = data;
+    sliceZ: (data, seq) => {
+        let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
-            realp[p++] = BASE.newPoint(points[i++], points[i++], points[i++]);
+            realp[p++] = BASE.newPoint(points[i++], points[i++], points[i++]).round(3);
         }
         let output = [];
-        for (let params of slices) {
-            let rec = KIRI.slicer.sliceZ(params.z, realp, options, params);
-            output.push({
-                params,
-                data: { tops: rec.tops, clip: rec.clip }
-            });
-        }
-        reply({ seq, output: CODEC.encode(output) });
+        BASE.sliceZ(z, realp, {
+            ...options,
+            each(out) { output.push(out) }
+        }).then(() => {
+            for (let rec of output) {
+                // lines do not pass codec properly (for now)
+                delete rec.lines;
+            }
+            reply({ seq, output: CODEC.encode(output) });
+        });
     },
 
     wasm: data => {

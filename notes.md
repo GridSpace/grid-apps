@@ -18,6 +18,7 @@
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 * `F` warn if part hanging in negative Z space or off bed in general
+* `F` date column and sorting in recent files list
 
 # FDM
 

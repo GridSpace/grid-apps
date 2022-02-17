@@ -249,11 +249,11 @@
     };
 
     const devel = {
-        xray: (layers) => {
+        xray: (layers, raw) => {
             let proc = API.conf.get().process;
             let size = proc.sliceHeight || proc.slaSlice || 1;
             layers = Array.isArray(layers) ? layers : [ layers ];
-            proc.xray = layers.map(l => l * size + size / 2);
+            proc.xray = layers.map(l => raw ? l : l * size + size / 2);
             API.function.slice();
         }
     };

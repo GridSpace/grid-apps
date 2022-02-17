@@ -22,7 +22,7 @@
             exportSVG,
             exportDXF
         },
-        SLICER = KIRI.slicer,
+        newSlice = KIRI.newSlice,
         newPoint = BASE.newPoint;
 
     function init(kiri, api) {
@@ -42,30 +42,66 @@
      */
     function slice(settings, widget, onupdate, ondone) {
         let proc = settings.process;
-        let offset = proc.laserOffset;
+        let offset = proc.laserOffset || 0;
         let color = settings.controller.dark ? 0xbbbbbb : 0;
 
         if (proc.laserSliceHeight < 0) {
             return ondone("invalid slice height");
         }
 
-        SLICER.sliceWidget(widget, {
-            single: proc.laserSliceSingle,
-            height: proc.laserSliceHeight,
-            minHeight: proc.laserSliceHeight === 0 ? proc.laserSliceHeightMin : 0
-        }, function(slices) {
-            widget.slices = slices;
-            slices.forEach(function(slice, index) {
-                let tops = slice.tops.map(t => t.poly);
+        let { laserSliceSingle, laserSliceHeight, laserSliceHeightMin } = proc;
+        let bounds = widget.getBoundingBox();
+        let points = widget.getPoints();
+        let indices = [];
+
+        BASE.slice(points, {
+            zMin: bounds.min.z,
+            zMax: bounds.max.z,
+            zGen(zopt) {
+                let { zMin, zMax, zIndexes } = zopt;
+                if (laserSliceSingle) {
+                    indices = [ laserSliceHeight ];
+                } else if (laserSliceHeight) {
+                    for (let z = zMin + laserSliceHeight / 2; z < zMax; z += laserSliceHeight) {
+                        indices.push(z);
+                    }
+                    indices;
+                } else {
+                    for (let i = 1; i < zIndexes.length; i++) {
+                        indices.push((zIndexes[i-1] + zIndexes[i]) / 2);
+                    }
+                    // discard layers too
+                    if (laserSliceHeightMin) {
+                        let last;
+                        indices = indices.filter(v => {
+                            let ok = true;
+                            if (last !== undefined && Math.abs(v - last) < laserSliceHeightMin) {
+                                ok = false;
+                            } else {
+                                last = v;
+                            }
+                            return ok;
+                        });
+                    }
+                }
+                return indices;
+            },
+            onupdate(v) {
+                onupdate(v);
+            }
+        }).then(output => {
+            let slices = widget.slices = output.slices.map(data => {
+                let { z, lines, groups } = data;
+                let tops = POLY.nest(groups);
+                let slice = newSlice(z).addTops(tops);
+                slice.index = indices.indexOf(z);
                 let offsets = slice.offset = offset ?
                     POLY.offset(tops, offset, {z: slice.z, miter: 2 / offset}) : tops;
                 slice.output().setLayer("layer", { line: 0x888800 }).addPolys(tops);
                 slice.output().setLayer("cut", { line: color }).addPolys(offsets);
-                onupdate(0.80 + (index/slices.length) * 0.20);
+                return slice;
             });
             ondone();
-        }, function(update) {
-            onupdate(0.0 + update * 0.80)
         });
     };
 

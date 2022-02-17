@@ -10,7 +10,6 @@
         UTIL = BASE.util,
         SLA = KIRI.driver.SLA,
         FDM = KIRI.driver.FDM.share,
-        SLICER = KIRI.slicer,
         tracker = UTIL.pwait,
         newTop = KIRI.newTop,
         newSlice = KIRI.newSlice,
@@ -78,13 +77,13 @@
         let height = process.slaSlice || 0.05;
 
         async function onSliceDone(slices) {
-            // hold onto last (empty) slice
-            let last = slices[slices.length-1];
             // remove empty slices
             slices = widget.slices = slices.filter(slice => slice.tops.length);
             if (!process.slaOpenTop && !process.xray) {
-                // re-add last empty slice for open top
-                slices.push(last);
+                // re-add last empty slice for closed top
+                let cap = newSlice(bounds.max.z + height);
+                cap.index = slices.last().index + 1;
+                slices.push(cap);
             }
             // prepend raft layers to slices array
             if (process.slaSupportEnable && process.slaSupportLayers) {
@@ -209,18 +208,31 @@
             doRender(widget);
         }
 
-        SLICER.sliceWidget(widget, {
-            height: height,
-            add: !process.slaOpenTop,
-            union: controller.healMesh,
-            concurrent: isConcurrent,
+        let bounds = widget.getBoundingBox();
+        let points = widget.getPoints();
+
+        BASE.slice(points, {
             indices: process.indices || process.xray,
+            union: controller.healMesh,
             debug: process.xray,
-            xray: process.xray
-        }, function(slices) {
+            xray: process.xray,
+            zMin: bounds.min.z + height / 2,
+            zMax: bounds.max.z,
+            zInc: height,
+            // slicer function (worker local or minion distributed)
+            slicer(z, points, opts) {
+                return (isConcurrent ? KIRI.minions.sliceZ : BASE.sliceZ)(z, points, opts);
+            },
+            onupdate(v) {
+                return onupdate(0.0 + v * 0.25);
+            }
+        }).then(output => {
+            let slices = widget.slices = output.slices.map(data => {
+                let { z, lines, groups } = data;
+                let tops = POLY.nest(groups);
+                return newSlice(z).addTops(tops);
+            });
             onSliceDone(slices).then(ondone);
-        }, function(update) {
-            return onupdate(0.0 + update * 0.25);
         });
     };
 

@@ -56,19 +56,19 @@
      * that will not quickly encode in threaded mode. add to existing
      * data object. return is ignored.
      */
-    FDM.slicePost = function(data, options, params) {
-        let { lines, groups, tops } = data;
-        let { z, index, total, height, thick } = params;
-        let { useAssembly, post } = options;
-        let { process, isSynth, isDanger, vaseMode } = post;
-        let { shellOffset, fillOffset, clipOffset } = post;
+    BASE.slicePost.FDM = function(data, options) {
+        let { z, lines, groups } = data;
+        let { useAssembly, post_args, index } = options;
+        let { process, isSynth, isDanger, vaseMode } = post_args;
+        let { shellOffset, fillOffset, clipOffset } = post_args;
         if (isSynth) {
             // do not shell synth widgets because
             // they will be clipped against peers later
             // which requires shelling post-clip
             return;
         }
-        let range = getRangeParameters(process, index);
+        let tops = POLY.nest(groups);
+        let range = FDM.getRangeParameters(process, index);
         // calculate fractional shells
         let shellFrac = (range.sliceShells - (range.sliceShells | 0));
         let sliceShells = range.sliceShells | 0;
@@ -80,7 +80,9 @@
             let trg = shellFrac > 0.5 ? 1 : parts - 1;
             sliceShells += rem >= trg ? 1 : 0;
         }
-        let spaceMult = index === 0 ? process.firstLayerLineMult || 1 : 1;
+        let isFirst = index === 0;
+        let height = process.sliceHeight;
+        let spaceMult = isFirst ? process.firstLayerLineMult || 1 : 1;
         let count = isSynth ? 1 : sliceShells;
         let offset =  shellOffset * spaceMult;
         let fillOff = fillOffset * spaceMult;
@@ -96,6 +98,7 @@
         }
         data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
         data.tops = nutops;
+        delete data.groups;
     };
 
     FDM.sliceAll = function(settings, onupdate) {
@@ -200,20 +203,47 @@
             sliceHeightBase = sliceMinHeight || sliceHeight;
         }
 
-        SLICER.sliceWidget(widget, {
-            mode: 'FDM',
-            zCut: widget.track.zcut || 0,
-            zPress: isBelt ? process.firstLayerFlatten || 0 : 0,
-            isBelt,
-            height: sliceHeight,
-            minHeight: sliceMinHeight,
-            firstHeight: sliceHeightBase,
+        let bounds = widget.getBoundingBox();
+        let points = widget.getPoints();
+        let indices = [];
+        let heights = [];
+
+        // handle z cutting (floor method) and base flattening
+        let zPress = process.firstLayerFlatten || 0;
+        let zCut = widget.track.zcut || 0;
+        if (zCut || zPress) {
+            for (let p of points) {
+                if (!p._z) {
+                    p._z = p.z;
+                    if (zPress) {
+                        if (isBelt) {
+                            let zb = (p.z - p.y) * beltfact;
+                            if (zb > 0 && zb <= zPress) {
+                                p.y += zb * beltfact;
+                                p.z -= zb * beltfact;
+                            }
+                        } else {
+                            if (p.z <= zPress) p.z = 0;
+                        }
+                    }
+                    if (zCut && !isBelt) {
+                        p.z -= zCut;
+                    }
+                }
+            }
+        }
+
+        BASE.slice(points, {
+            debug: process.xray,
+            xray: process.xray,
+            zMin: bounds.min.z,
+            zMax: bounds.max.z - zCut,
             // support/synth usually has overlapping boxes
             union: controller.healMesh || isSynth,
             indices: process.indices || process.xray,
-            concurrent: isConcurrent,
             useAssembly,
-            post: {
+            post: 'FDM',
+            post_args: {
                 shellOffset,
                 fillOffset,
                 clipOffset,
@@ -223,13 +253,111 @@
                 process,
                 isDanger,
             },
-            xray: process.xray,
-            debug: process.xray
-        }, slices => {
-            onSliceDone(slices).then(ondone);
-        }, update => {
-            return onupdate(0.0 + update * 0.5);
-        });
+            // z index generator
+            zGen(zopt) {
+                if (process.xray) {
+                    return zopt.zIndexes;
+                }
+                let { zMin, zMax } = zopt;
+                let h1 = sliceHeight;
+                let h0 = sliceHeightBase || h1;
+                let hm = sliceMinHeight || 0;
+                let h = h0;
+                let z = h0;
+                let zi = indices; // indices
+                let zh = heights; // heights
+                if (hm) {
+                    // adaptive increments based on z indices (var map to legacy code)
+                    let zIncFirst = h0;
+                    let zInc = h1;
+                    let zIncMin = hm;
+                    let zHeights = heights;
+                    let zIndexes = indices;
+                    let zOrdered = Object.values(zopt.zIndexes).map(v => parseFloat(v));
+                    // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
+                    let zPos = zIncFirst,
+                        zOI = 0,
+                        zDelta,
+                        zDivMin,
+                        zDivMax,
+                        zStep,
+                        nextZ,
+                        lzp = zPos;
+                    // adaptive slice height
+                    // first slice/height is fixed from base
+                    zHeights.push(zIncFirst);
+                    zIndexes.push(zIncFirst);
+                    // console.log({zIncFirst, zOrdered})
+                    while (zPos < zMax && zOI < zOrdered.length) {
+                        nextZ = zOrdered[zOI++];
+                        if (zPos >= nextZ) {
+                            // console.log('skip',{zPos},'>=',{nextZ});
+                            continue;
+                        }
+                        zDelta = nextZ - zPos;
+                        if (zDelta < zIncMin) {
+                            // console.log('skip',{zDelta},'<',{zIncMin});
+                            continue;
+                        }
+                        zDivMin = Math.floor(zDelta / zIncMin);
+                        zDivMax = Math.floor(zDelta / zInc);
+                        if (zDivMax && zDivMax <= zDivMin) {
+                            if (zDelta % zInc > 0.01) zDivMax++;
+                            zStep = zDelta / zDivMax;
+                            // console.log(`--- zDivMax <= zDivMin ---`, zStep, zDelta % zInc)
+                        } else {
+                            zStep = zDelta;
+                        }
+                        // console.log({nextZ, zPos, zDelta, zStep, zDivMin, zDivMax})
+                        while (zPos < nextZ) {
+                            zHeights.push(zStep);
+                            zIndexes.push(zPos + zStep);
+                            zPos += zStep;
+                            // console.log({D: zPos - lzp, zPos})
+                            // lzp = zPos;
+                        }
+                    }
+                    // console.log({zIndexes, zHeights});
+                } else {
+                    // simple based + fixed increment
+                    while (z <= zMax) {
+                        zh.push(h);
+                        zi.push(z);
+                        h = h1;
+                        z += h;
+                    }
+                }
+                // reduce slice position by half height
+                for (let i=0; i<zi.length; i++) {
+                    zi[i] = (zi[i] - zh[i] / 2).round(3);
+                }
+                return zi;
+            },
+            // slicer function (worker local or minion distributed)
+            slicer(z, points, opts) {
+                return (isConcurrent ? KIRI.minions.sliceZ : BASE.sliceZ)(z, points, opts);
+            },
+            onupdate(update) {
+                return onupdate(0.0 + update * 0.5)
+            }
+        }).then((output) => {
+            // post process slices and re-incorporate missing meta-data
+            return output.slices.map(data => {
+                let { z, clip, lines, groups } = data;
+                let slice = newSlice(z).addTops(data.tops);
+                slice.index = indices.indexOf(z);
+                slice.height = heights[slice.index];
+                slice.clips = clip;
+                if (process.xray) {
+                    slice.lines = lines;
+                    slice.groups = groups;
+                    slice.xray = process.xray;
+                }
+                return slice;
+            });
+        }).then(slices => {
+            return onSliceDone(slices);
+        }).then(ondone);
 
         async function doShadow(slices) {
             if (widget.shadow) {
@@ -270,6 +398,12 @@
                     return found;
                 }
             }).reverse();
+
+            // connect slices into linked list for island/bridge projections
+            for (let i=1; i<slices.length; i++) {
+                slices[i-1].up = slices[i];
+                slices[i].down = slices[i-1];
+            }
 
             widget.slices = slices;
 
