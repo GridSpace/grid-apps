@@ -1,0 +1,133 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+"use strict";
+
+(function () {
+
+const { kiri } = self;
+
+const COLOR = {
+    wireframe: 0x444444,
+    wireframe_opacity: 0.25,
+    selected: [ 0xbbff00, 0xbbee00, 0xbbdd00, 0xbb9900 ],
+    deselected: [ 0xffff00, 0xffdd00, 0xffbb00, 0xff9900 ],
+    slicing: 0xffaaaa,
+    preview_opacity: 0.0,
+    model_opacity: 1.0,
+    slicing_opacity: 0.5,
+    sliced_opacity: 0.0,
+    cam_preview: 0x0055bb,
+    cam_preview_opacity: 0.25,
+    cam_sliced_opacity: 0.25
+};
+
+const LISTS = {
+    shell: [
+        { name: "in-out" },
+        { name: "out-in" },
+    ],
+    start: [
+        { name: "last" },
+        { name: "center" },
+        { name: "origin" },
+    ],
+    infill: [
+        { name: "hex" },
+        { name: "grid" },
+        // { name: "cubic" },
+        { name: "linear" },
+        { name: "triangle" },
+        { name: "gyroid" },
+        { name: "vase" }
+    ],
+    units: [
+        { name: "mm" },
+        { name: "in" }
+    ],
+    antialias: [
+        { name: "1", id: 1 },
+        { name: "2", id: 2 },
+        { name: "4", id: 4 },
+        { name: "8", id: 8 }
+    ],
+    detail: [
+        { name: "100" },
+        { name: "75" },
+        { name: "50" },
+        { name: "25" },
+    ],
+    linetype: [
+        { name: "path" },
+        { name: "flat" },
+        { name: "line" }
+    ],
+    filasrc: [
+        { name: "direct" },
+        { name: "palette3" }
+    ],
+    animesh: [
+        { name: "100" },
+        { name: "200" },
+        { name: "300" },
+        { name: "400" },
+        { name: "500" },
+        { name: "600" },
+        { name: "700" },
+        { name: "800" },
+        { name: "900" }
+    ],
+    trace: [
+        { name: "follow" },
+        { name: "clear" }
+    ],
+    traceoff: [
+        { name: "center" },
+        { name: "inside" },
+        { name: "outside" }
+    ],
+    zanchor: [
+        { name: "top" },
+        { name: "middle" },
+        { name: "bottom" }
+    ],
+    regaxis: [
+        { name: "X" },
+        { name: "Y" },
+        { name: "-" }
+    ],
+    regpoints: [
+        { name: "2" },
+        { name: "3" }
+    ],
+};
+
+// primary device mode
+const MODES = {
+    FDM: 1,   // fused deposition modeling (also FFF)
+    LASER: 2, // laser cutters
+    CAM: 3,   // 3 axis milling/machining
+    SLA: 4    // cured resin printers
+};
+
+// view mode within device mode
+const VIEWS = {
+    ARRANGE: 1,
+    SLICE: 2,
+    PREVIEW: 3
+};
+
+// preview modes
+const PMODES = {
+    SPEED: 1,
+    TOOLS: 2
+};
+
+kiri.consts = {
+    PMODES,
+    COLOR,
+    LISTS,
+    MODES,
+    VIEWS,
+};
+
+})();

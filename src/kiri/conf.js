@@ -251,18 +251,6 @@
         normalize,
         device_from_code,
         fill_cull_once,
-        // ---------------
-        MODES: {
-            FDM: 1,   // fused deposition modeling (also FFF)
-            LASER: 2, // laser cutters
-            CAM: 3,   // 3 axis milling/machining
-            SLA: 4    // cured resin printers
-        },
-        VIEWS: {
-            ARRANGE: 1,
-            SLICE: 2,
-            PREVIEW: 3
-        },
         // --------------- device and process defaults
         defaults: {
             fdm:{

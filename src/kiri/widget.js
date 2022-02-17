@@ -976,7 +976,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
             mesh.add(wire);
         }
-        if (KIRI.api.view.get() === KIRI.conf.VIEWS.ARRANGE) {
+        if (KIRI.api.view.get() === KIRI.consts.VIEWS.ARRANGE) {
             this.setColor(this.color);
         } else {
             this.setColor(0x888888,undefined,false);

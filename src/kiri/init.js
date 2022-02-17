@@ -2374,7 +2374,7 @@
                 if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
                     return;
                 }
-                let full = API.view.isArrange();
+                let full = API.view.is_arrange();
                 for (let key of ["layflat","mirror","duplicate"]) {
                     $(`context-${key}`).disabled = !full;
                 }
@@ -2667,8 +2667,8 @@
         $('rot_z_gt').onclick = () => { API.selection.rotate(0,0,-d) };
         // rendering options
         $('render-hide').onclick = () => { API.view.wireframe(false, 0, 0); };
-        $('render-ghost').onclick = () => { API.view.wireframe(false, 0, API.view.isArrange() ? 0.4 : 0.25); };
-        $('render-wire').onclick = () => { API.view.wireframe(true, 0, API.space.isDark() ? 0.25 : 0.5); };
+        $('render-ghost').onclick = () => { API.view.wireframe(false, 0, API.view.is_arrange() ? 0.4 : 0.25); };
+        $('render-wire').onclick = () => { API.view.wireframe(true, 0, API.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
         // mesh buttons
         $('mesh-heal').onclick = () => { API.widgets.heal() };

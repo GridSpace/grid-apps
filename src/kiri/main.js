@@ -4,13 +4,13 @@
 
 (function () {
 
-    let MOTO    = self.moto,
-        DATA    = self.data,
-        KIRI    = self.kiri,
-        LOAD    = self.load,
-        BASE    = self.base,
-        UTIL    = BASE.util,
-        LANG    = KIRI.lang.current,
+    const { base, data, load, kiri, moto } = self;
+    const { api, consts, lang, Widget, newWidget } = kiri;
+    const { feature } = api;
+    const { COLOR, LISTS, PMODES, MODES, VIEWS } = kiri.consts;
+    const { parseOpt, encodeOpt, ajax, o2js, js2o } = kiri.utils;
+
+    const LANG = lang.current,
         WIN     = self.window,
         DOC     = self.document,
         LOC     = self.location,
@@ -18,29 +18,25 @@
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
-        EVENT   = KIRI.broker = gapp.broker,
-        SDB     = DATA.Local,
-        ODB     = KIRI.odb = new DATA.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
-        // K3DB    = KIRI.wdb = new DATA.Index('kiri3', { stores:["file","work"] }).init(),
-        SPACE   = KIRI.space = MOTO.Space,
-        WIDGETS = KIRI.widgets = [],
-        CATALOG = KIRI.catalog = KIRI.openCatalog(ODB),
+        EVENT   = kiri.broker = gapp.broker,
+        SDB     = data.Local,
+        ODB     = kiri.odb = new data.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
+        // K3DB    = kiri.wdb = new data.Index('kiri3', { stores:["file","work"] }).init(),
+        SPACE   = kiri.space = moto.Space,
+        CATALOG = kiri.catalog = kiri.openCatalog(ODB),
         STATS   = new Stats(SDB),
         SEED    = 'kiri-seed',
         // ---------------
-        CONF    = KIRI.conf,
-        MODES   = CONF.MODES,
-        VIEWS   = CONF.VIEWS,
-        clone   = Object.clone,
-        settings = clone(CONF.template),
-        // ---------------
-        Widget    = kiri.Widget,
-        newWidget = kiri.newWidget,
+        CONF    = kiri.conf,
+        clone   = Object.clone;
+
+    let settings = clone(CONF.template),
+        WIDGETS = kiri.widgets = [],
         // ---------------
         UI = {},
-        UC = KIRI.ui.prefix('kiri').inputAction(updateSettings),
+        UC = kiri.ui.prefix('kiri').inputAction(updateSettings),
         MODE = MODES.FDM,
-        STACKS = KIRI.stacks,
+        STACKS = kiri.stacks,
         DRIVER = undefined,
         complete = {},
         selectedMeshes = [],
@@ -56,8 +52,8 @@
         alerts = [],
         grouping = false,
         saveTimer = null,
-        version = KIRI.version = gapp.version,
-        noop = () => {};
+        version = kiri.version = gapp.version,
+        noop = () => { return false };
 
     // add show() to catalog for API
     CATALOG.show = showCatalog;
@@ -66,30 +62,6 @@
     EVENT.on = (topic, listener) => {
         EVENT.subscribe(topic, listener);
         return EVENT;
-    };
-
-    const PMODES = {
-        SPEED: 1,
-        TOOLS: 2
-    };
-
-    const feature = {
-        seed: true, // seed profiles on first use
-        meta: true, // show selected widget metadata
-        frame: true, // receive frame events
-        alert_event: false, // emit alerts as events instead of display
-        controls: true, // show or not side menus
-        device_filter: undefined, // function to limit devices shown
-        drop_group: undefined, // optional array to group multi drop
-        drop_layout: true, // layout on new drop
-        hover: false, // when true fires mouse hover events
-        hoverAdds: false, // when true only searches widget additions
-        on_key: undefined, // function override default key handlers
-        on_load: undefined, // function override file drop loads
-        on_add_stl: undefined, // legacy override stl drop loads
-        work_alerts: true, // allow disabling work progress alerts
-        modes: [ "fdm", "sla", "cam", "laser" ], // enable device modes
-        pmode: PMODES.SPEED // preview modes
     };
 
     const selection = {
@@ -148,117 +120,23 @@
         clear: () => { clearWorkspace(); saveWorkspace(true)  }
     };
 
-    const color = {
-        wireframe: 0x444444,
-        wireframe_opacity: 0.25,
-        selected: [ 0xbbff00, 0xbbee00, 0xbbdd00, 0xbb9900 ],
-        deselected: [ 0xffff00, 0xffdd00, 0xffbb00, 0xff9900 ],
-        slicing: 0xffaaaa,
-        preview_opacity: 0.0,
-        model_opacity: 1.0,
-        slicing_opacity: 0.5,
-        sliced_opacity: 0.0,
-        cam_preview: 0x0055bb,
-        cam_preview_opacity: 0.25,
-        cam_sliced_opacity: 0.25
-    };
-
-    const lists = {
-        shell: [
-            { name: "in-out" },
-            { name: "out-in" },
-        ],
-        start: [
-            { name: "last" },
-            { name: "center" },
-            { name: "origin" },
-        ],
-        infill: [
-            { name: "hex" },
-            { name: "grid" },
-            // { name: "cubic" },
-            { name: "linear" },
-            { name: "triangle" },
-            { name: "gyroid" },
-            { name: "vase" }
-        ],
-        units: [
-            { name: "mm" },
-            { name: "in" }
-        ],
-        antialias: [
-            { name: "1", id: 1 },
-            { name: "2", id: 2 },
-            { name: "4", id: 4 },
-            { name: "8", id: 8 }
-        ],
-        detail: [
-            { name: "100" },
-            { name: "75" },
-            { name: "50" },
-            { name: "25" },
-        ],
-        linetype: [
-            { name: "path" },
-            { name: "flat" },
-            { name: "line" }
-        ],
-        filasrc: [
-            { name: "direct" },
-            { name: "palette3" }
-        ],
-        animesh: [
-            { name: "100" },
-            { name: "200" },
-            { name: "300" },
-            { name: "400" },
-            { name: "500" },
-            { name: "600" },
-            { name: "700" },
-            { name: "800" },
-            { name: "900" }
-        ],
-        trace: [
-            { name: "follow" },
-            { name: "clear" }
-        ],
-        traceoff: [
-            { name: "center" },
-            { name: "inside" },
-            { name: "outside" }
-        ],
-        zanchor: [
-            { name: "top" },
-            { name: "middle" },
-            { name: "bottom" }
-        ],
-        regaxis: [
-            { name: "X" },
-            { name: "Y" },
-            { name: "-" }
-        ],
-        regpoints: [
-            { name: "2" },
-            { name: "3" }
-        ],
-    };
-
     const tweak = {
-        line_precision: (v) => { API.work.config({base:{clipperClean: v}}) },
-        gcode_decimals: (v) => { API.work.config({base:{gcode_decimals: v}}) }
+        line_precision: (v) => { api.work.config({base:{clipperClean: v}}) },
+        gcode_decimals: (v) => { api.work.config({base:{gcode_decimals: v}}) }
     };
 
     const devel = {
         xray: (layers, raw) => {
-            let proc = API.conf.get().process;
+            let proc = api.conf.get().process;
             let size = proc.sliceHeight || proc.slaSlice || 1;
             layers = Array.isArray(layers) ? layers : [ layers ];
             proc.xray = layers.map(l => raw ? l : l * size + size / 2);
-            API.function.slice();
+            api.function.slice();
         }
     };
 
-    const API = KIRI.api = {
+    // augment api
+    Object.assign(api, {
         ui: UI,
         uc: UC,
         sdb: SDB,
@@ -266,13 +144,13 @@
         js2o: js2o,
         ajax: ajax,
         clone: clone,
-        focus: () => {},
+        focus: noop,
         stats: STATS,
         catalog: CATALOG,
         busy: {
-            val: () => { return busy },
-            inc: () => { kiri.api.event.emit("busy", ++busy) },
-            dec: () => { kiri.api.event.emit("busy", --busy) }
+            val() { return busy },
+            inc() { kiri.api.event.emit("busy", ++busy) },
+            dec() { kiri.api.event.emit("busy", --busy) }
         },
         conf: {
             dbo: () => { return ls2o('ws-settings') },
@@ -286,17 +164,16 @@
             export: settingsExport,
             import: settingsImport
         },
-        color,
         const: {
-            SEED,
             LANG,
             LOCAL,
             MODES,
-            VIEWS,
+            SEED,
             SETUP,
             SECURE,
             STACKS,
-            SPACE
+            SPACE,
+            VIEWS,
         },
         devel,
         doit: {
@@ -323,9 +200,9 @@
             file: showHelpFile
         },
         event: {
-            on: (t,l) => { return EVENT.on(t,l) },
-            emit: (t,m,o) => { EVENT.publish(t,m,o) },
-            bind: (t,m,o) => { return EVENT.bind(t,m,o) },
+            on(t,l) { return EVENT.on(t,l) },
+            emit(t,m,o) { return EVENT.publish(t,m,o) },
+            bind(t,m,o) { return EVENT.bind(t,m,o) },
             import: loadFile,
             alerts: updateAlerts,
             settings: triggerSettingsEvent
@@ -338,7 +215,7 @@
             animate: prepareAnimation,
             export: prepareExport,
             cancel: cancelWorker,
-            clear: KIRI.client.clear,
+            clear: kiri.client.clear,
             parse: loadCode
         },
         group: {
@@ -346,29 +223,29 @@
             split: groupSplit,
         },
         hide: {
-            alert: function(rec,recs) { alert2cancel(rec,recs) },
-            import: function() { },
+            alert(rec,recs) { alert2cancel(rec,recs) },
+            import: noop,
             slider: hideSlider
         },
-        language: KIRI.lang,
-        lists,
+        language: kiri.lang,
+        lists: LISTS,
         modal: {
             show: showModal,
             hide: hideModal,
             visible: modalShowing
         },
         mode: {
+            get_id() { return MODE },
             get_lower: getModeLower,
-            get_id: function() { return MODE },
             get: getMode,
             set: setMode,
             switch: switchMode,
             set_expert: noop
         },
         probe: {
-            live : "https://live.grid.space",
-            grid : function() { return false },
-            local : function() { return false }
+            live: "https://live.grid.space",
+            grid: noop,
+            local: noop
         },
         process: {
             code: currentProcessCode,
@@ -394,7 +271,6 @@
             save: saveWorkspace,
             set_focus: setFocus,
             update: SPACE.update,
-            isDark() { return settings.controller.dark }
         },
         tweak,
         util: {
@@ -402,18 +278,23 @@
             ui2rec: updateSettingsFromFields,
             rec2ui: updateFieldsFromSettings,
             download: downloadBlob,
-            b64enc: obj => { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
-            b64dec: obj => { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
+            b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
+            b64dec(obj) { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
         },
         view: {
             get() { return viewMode },
-            set: setViewMode,
+            set() { setViewMode(...arguments) },
+            set_arrange() { api.view.set(VIEWS.ARRANGE) },
+            set_slice() { api.view.set(VIEWS.SLICE) },
+            set_preview() { api.view.set(VIEWS.PREVIEW) },
+            is_arrange() { return viewMode === VIEWS.ARRANGE },
+            is_slice() { return viewMode === VIEWS.SLICE },
+            is_preview() { return viewMode === VIEWS.PREVIEW },
             update_slider: updateSlider,
             update_fields: updateFields,
             wireframe: setWireframe,
             snapshot: null,
             unit_scale: unitScale,
-            isArrange() { return viewMode === VIEWS.ARRANGE }
         },
         widgets: {
             map: function() {
@@ -442,8 +323,8 @@
                 return (w.anno = w.anno || {});
             }
         },
-        work: KIRI.work
-    };
+        work: kiri.work
+    });
 
     function setFocus(widgets, point) {
         if (point) {
@@ -474,7 +355,7 @@
     }
 
     function reload() {
-        API.event.emit('reload');
+        api.event.emit('reload');
         do_reload(100);
     }
 
@@ -496,7 +377,7 @@
         }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
-            API.space.save(true);
+            api.space.save(true);
         }, 1000);
     }
 
@@ -506,20 +387,20 @@
         let { origin, source, target, data } = msg;
         if (source.window === target.window) return;
         let send = source.window.postMessage;
-        if (data.mode) { API.mode.set(data.mode.toUpperCase()) }
-        if (data.view) { API.view.set(VIEWS[data.view.toUpperCase()]) }
+        if (data.mode) { api.mode.set(data.mode.toUpperCase()) }
+        if (data.view) { api.view.set(VIEWS[data.view.toUpperCase()]) }
         if (data.function) {
             let cb = data.callback ? (output) => {
                 send({event:`${data.function}.done`, data: output});
             } : undefined;
-            API.function[data.function.toLowerCase()](cb);
+            api.function[data.function.toLowerCase()](cb);
         }
         if (data.event) {
-            API.event.on(data.event, (evd) => {
+            api.event.on(data.event, (evd) => {
                 send({event: data.event, data: evd});
             });
         }
-        if (data.emit) API.event.emit(data.emit, data.message)
+        if (data.emit) api.event.emit(data.emit, data.message)
         if (data.get) switch (data.get) {
             case "mode": send({mode: settings.mode}); break;
             case "device": send({device: settings.device}); break;
@@ -560,7 +441,7 @@
                     break;
                 case 'svg':
                     let wid = [];
-                    for (let svg of LOAD.SVG.parse(bin)) {
+                    for (let svg of load.SVG.parse(bin)) {
                         if (!(svg && svg.length)) continue;
                         platform.add(widget = newWidget().loadVertices(svg.toFloat32()));
                         wid.push(widget.id);
@@ -598,7 +479,7 @@
     Stats.prototype.save = function(quiet) {
         this.db['stats'] = o2js(this.obj);
         if (!quiet) {
-            API.event.emit('stats', this.obj);
+            api.event.emit('stats', this.obj);
         }
         return this;
     };
@@ -648,7 +529,7 @@
         }
         let rec = [message, Date.now(), time, true];
         if (feature.alert_event) {
-            API.event.emit('alert', rec);
+            api.event.emit('alert', rec);
         } else {
             alerts.push(rec);
             updateAlerts();
@@ -664,7 +545,7 @@
             return;
         }
         if (feature.alert_event) {
-            API.event.emit('alert.cancel', rec);
+            api.event.emit('alert.cancel', rec);
             return;
         }
         if (Array.isArray(rec)) {
@@ -708,51 +589,11 @@
     }
 
     function triggerSettingsEvent() {
-        API.event.emit('settings', settings);
+        api.event.emit('settings', settings);
     }
 
     function isSecure(proto) {
          return proto.toLowerCase().indexOf("https") === 0;
-    }
-
-    function parseOpt(ov) {
-        let opt = {}, kv, kva;
-        // handle kiri legacy and proper url encoding better
-        ov.replace(/&/g,',').split(',').forEach(function(el) {
-            kv = decodeURIComponent(el).split(':');
-            if (kv.length === 2) {
-                kva = opt[kv[0]] = opt[kv[0]] || [];
-                kva.push(decodeURIComponent(kv[1]));
-            }
-        });
-        return opt;
-    }
-
-    function encodeOpt(opt) {
-        let out = [];
-        Object.keys(opt).forEach(key => {
-            if (key === 'ver') return;
-            let val = opt[key];
-            out.push(encodeURIComponent(key) + ":" + encodeURIComponent(val));
-        });
-        return out.length ? '?' + out.join(',') : '';
-    }
-
-    function ajax(url, fn, rt, po, hd) {
-        return new MOTO.Ajax(fn, rt).request(url, po, hd);
-    }
-
-    function o2js(o,def) {
-        return o ? JSON.stringify(o) : def || null;
-    }
-
-    function js2o(s,def) {
-        try {
-            return s ? JSON.parse(s) : def || null;
-        } catch (e) {
-            console.log({malformed_json:s});
-            return def || null;
-        }
     }
 
     function ls2o(key,def) {
@@ -761,7 +602,7 @@
 
     function setProgress(value, msg) {
         if (value) {
-            value = UTIL.round(value*100,4);
+            value = (value * 100).round(4);
             UI.loading.display = 'block';
             UI.progress.width = value+'%';
             if (msg) UI.prostatus.innerHTML = msg;
@@ -799,8 +640,8 @@
                 lo, hi, fields: values
             });
             updateFieldsFromSettings(settings.process);
-            API.show.alert("update ranges", 2);
-            API.event.emit("range.updates", ranges);
+            api.show.alert("update ranges", 2);
+            api.event.emit("range.updates", ranges);
             return;
         }
 
@@ -817,7 +658,7 @@
                     }
                 }
             }
-            API.event.emit("range.updates", ranges);
+            api.event.emit("range.updates", ranges);
             return;
         }
 
@@ -865,8 +706,8 @@
         ranges.appendAll(exclude);
 
         updateFieldsFromSettings(settings.process);
-        API.show.alert("update ranges", 2);
-        API.event.emit("range.updates", ranges);
+        api.show.alert("update ranges", 2);
+        api.event.emit("range.updates", ranges);
     }
 
     let overrides = {};
@@ -885,8 +726,8 @@
         let match = 0;
         let values = {};
         let restores = Object.clone(overrides);
-        let { layer_lo, layer_hi } = API.var;
-        for (let range of getOverlappingRanges(API.var.layer_lo, API.var.layer_hi)) {
+        let { layer_lo, layer_hi } = api.var;
+        for (let range of getOverlappingRanges(api.var.layer_lo, api.var.layer_hi)) {
             for (let key of Object.keys(range.fields)) {
                 values[key] = range.fields[key];
                 overrides[key] = settings.process[key];
@@ -908,19 +749,19 @@
     }
 
     function updateSlider() {
-        API.event.emit("slider.set", {
-            start: (API.var.layer_lo / API.var.layer_max),
-            end: (API.var.layer_hi / API.var.layer_max)
+        api.event.emit("slider.set", {
+            start: (api.var.layer_lo / api.var.layer_max),
+            end: (api.var.layer_hi / api.var.layer_max)
         });
         updateFieldsFromRange();
     }
 
     function setVisibleLayer(h, l) {
-        h = h >= 0 ? h : API.var.layer_hi;
-        l = l >= 0 ? l : API.var.layer_lo;
-        API.var.layer_hi = bound(h, 0, API.var.layer_max);
-        API.var.layer_lo = bound(l, 0, h);
-        API.event.emit("slider.label");
+        h = h >= 0 ? h : api.var.layer_hi;
+        l = l >= 0 ? l : api.var.layer_lo;
+        api.var.layer_hi = bound(h, 0, api.var.layer_max);
+        api.var.layer_lo = bound(l, 0, h);
+        api.event.emit("slider.label");
         updateSlider();
         showSlices();
     }
@@ -937,7 +778,7 @@
     }
 
     function replaceVertices(vertices) {
-        let widgets = API.selection.widgets(true);
+        let widgets = api.selection.widgets(true);
         if (!widgets.length) {
             return;
         }
@@ -959,7 +800,7 @@
         } else {
             // dialog
             $('load-file').onchange = function(event) {
-                LOAD.File.load(event.target.files[0])
+                load.File.load(event.target.files[0])
                     .then(data => onload(data[0].mesh))
                     .catch(error => console.log({error}));
             };
@@ -968,21 +809,21 @@
     }
 
     function healWidgets() {
-        let widgets = API.widgets.all();
+        let widgets = api.widgets.all();
         let marker;
         if (widgets.length) {
-            marker = API.show.alert("Analyzing objects", 100000);
+            marker = api.show.alert("Analyzing objects", 100000);
         } else {
             return;
         }
         setTimeout(() => {
             Promise.all(widgets.map(w => w.heal())).then(mod => {
-                API.hide.alert(marker);
+                api.hide.alert(marker);
                 let healed = mod.filter(m => m).length;
                 if (healed) {
-                    API.show.alert(`${healed} Object${healed ? 's':''} healed`);
+                    api.show.alert(`${healed} Object${healed ? 's':''} healed`);
                 } else {
-                    API.show.alert('Nothing found to heal');
+                    api.show.alert('Nothing found to heal');
                 }
             });
         }, 1);
@@ -995,7 +836,7 @@
     }
 
     function forSelectedGroups(f) {
-        let groups = API.selection.widgets(true).map(w => w.group).uniq();
+        let groups = api.selection.widgets(true).map(w => w.group).uniq();
         for (let group of groups) {
             f(group[0]);
         }
@@ -1020,17 +861,17 @@
 
     function updateSliderMax(set) {
         let max = STACKS.getRange().tallest - 1;
-        API.var.layer_max = UI.sliderMax.innerText = max;
-        if (set || max < API.var.layer_hi) {
-            API.var.layer_hi = API.var.layer_max;
-            API.event.emit("slider.label");
+        api.var.layer_max = UI.sliderMax.innerText = max;
+        if (set || max < api.var.layer_hi) {
+            api.var.layer_hi = api.var.layer_max;
+            api.event.emit("slider.label");
             updateSlider();
         }
     }
 
     function hideSlices() {
         STACKS.clear();
-        setOpacity(color.model_opacity);
+        setOpacity(COLOR.model_opacity);
         forAllWidgets(function(widget) {
             widget.setWireframe(false);
         });
@@ -1061,28 +902,28 @@
         if (typeof(layer) === 'string' || typeof(layer) === 'number') {
             layer = parseInt(layer);
         } else {
-            layer = API.var.layer_hi;
+            layer = api.var.layer_hi;
         }
 
-        layer = bound(layer, 0, API.var.layer_max);
-        if (layer < API.var.layer_lo) API.var.layer_lo = layer;
-        API.var.layer_hi = layer;
-        API.event.emit("slider.label");
+        layer = bound(layer, 0, api.var.layer_max);
+        if (layer < api.var.layer_lo) api.var.layer_lo = layer;
+        api.var.layer_hi = layer;
+        api.event.emit("slider.label");
 
         let cam = MODE === MODES.CAM,
             sla = MODE === MODES.SLA,
-            hi = cam ? API.var.layer_max - API.var.layer_lo : API.var.layer_hi,
-            lo = cam ? API.var.layer_max - API.var.layer_hi : API.var.layer_lo;
+            hi = cam ? api.var.layer_max - api.var.layer_lo : api.var.layer_hi,
+            lo = cam ? api.var.layer_max - api.var.layer_hi : api.var.layer_lo;
 
         updateSlider();
-        STACKS.setRange(API.var.layer_lo, API.var.layer_hi);
+        STACKS.setRange(api.var.layer_lo, api.var.layer_hi);
 
         SPACE.update();
     }
 
     function cancelWorker() {
-        if (KIRI.work.isBusy()) {
-            KIRI.work.restart();
+        if (kiri.work.isBusy()) {
+            kiri.work.restart();
         }
     }
 
@@ -1109,7 +950,7 @@
             for (let i=0; i<= maxSpeed; i += maxSpeed/20) {
                 colors.push(Math.round(Math.max(i,1)));
             }
-            KIRI.client.colors(colors, maxSpeed, speedColors => {
+            kiri.client.colors(colors, maxSpeed, speedColors => {
                 const list = [];
                 Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
                     const color = speedColors[speed];
@@ -1122,15 +963,15 @@
                 });
                 UI.speedbar.innerHTML = list.join('');
             });
-            API.event.emit('preview.speeds', {min: minSpeed, max: maxSpeed});
+            api.event.emit('preview.speeds', {min: minSpeed, max: maxSpeed});
         }
     }
 
     function prepareSlices(callback, scale = 1, offset = 0) {
         if (viewMode == VIEWS.ARRANGE) {
             let snap = SPACE.screenshot();
-            API.view.snapshot = snap.substring(snap.indexOf(",") + 1);
-            KIRI.work.snap(SPACE.screenshot2({width: 640}));
+            api.view.snapshot = snap.substring(snap.indexOf(",") + 1);
+            kiri.work.snap(SPACE.screenshot2({width: 640}));
         }
         if (MODE === MODES.SLA && !callback) {
             callback = preparePreview;
@@ -1168,8 +1009,8 @@
         platform.deselect();
         setViewMode(VIEWS.SLICE);
 
-        API.conf.save();
-        API.event.emit('slice.begin', getMode());
+        api.conf.save();
+        api.event.emit('slice.begin', getMode());
 
         let slicing = WIDGETS.slice().filter(w => !w.track.ignore && !w.meta.disabled);
 
@@ -1179,7 +1020,7 @@
         }
         let defvert = totvert / slicing.length;
 
-        setOpacity(color.slicing_opacity);
+        setOpacity(COLOR.slicing_opacity);
 
         let segtimes = {},
             segNumber = 0,
@@ -1192,7 +1033,7 @@
 
         for (let widget of toSlice) {
             widget.stats.progress = 0;
-            widget.setColor(color.slicing);
+            widget.setColor(COLOR.slicing);
             extruders[widget.anno.extruder] = widget.anno.extruder;
         }
 
@@ -1209,10 +1050,10 @@
 
         STACKS.clear();
         if (isBelt) {
-            KIRI.client.clear();
+            kiri.client.clear();
         }
-        KIRI.client.sync();
-        KIRI.client.rotate(settings);
+        kiri.client.sync();
+        kiri.client.rotate(settings);
 
         sliceNext();
 
@@ -1220,7 +1061,7 @@
             if (toSlice.length) {
                 sliceWidget(toSlice.shift())
             } else {
-                KIRI.client.sliceAll(settings, sliceDone);
+                kiri.client.sliceAll(settings, sliceDone);
             }
         }
 
@@ -1240,16 +1081,16 @@
                     if (lastMsg) {
                         segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
                     }
-                    API.event.emit('slice', getMode());
+                    api.event.emit('slice', getMode());
                 }
                 // handle slicing errors
                 if (error && !errored) {
                     errored = true;
                     setViewMode(VIEWS.ARRANGE);
                     alert2(error, 5);
-                    API.show.progress(0);
-                    KIRI.client.restart();
-                    API.event.emit('slice.error', error);
+                    api.show.progress(0);
+                    kiri.client.restart();
+                    api.event.emit('slice.error', error);
                 }
                 if (errored) {
                     // terminate slicing
@@ -1273,16 +1114,16 @@
                 for (let w of slicing) {
                     totalProgress += (track[w.id] || 0);
                 }
-                API.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
+                api.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
             });
         }
 
         function sliceDone() {
             let alert = null;
             if (scale === 1 && feature.work_alerts && slicing.length) {
-                alert = API.show.alert("Rendering");
+                alert = api.show.alert("Rendering");
             };
-            KIRI.client.unrotate(settings, () => {
+            kiri.client.unrotate(settings, () => {
                 for (let widget of slicing) {
                     // on done
                     segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
@@ -1292,10 +1133,10 @@
                     }
                     if (scale === 1) {
                         // clear wireframe
-                        widget.setWireframe(false, color.wireframe, color.wireframe_opacity);
-                        widget.setOpacity(camOrLaser ? color.cam_sliced_opacity : color.sliced_opacity);
-                        widget.setColor(color.deselected);
-                        API.hide.alert(alert);
+                        widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
+                        widget.setOpacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
+                        widget.setColor(COLOR.deselected);
+                        api.hide.alert(alert);
                     }
                 }
                 updateSliderMax(true);
@@ -1308,13 +1149,13 @@
                 }
             });
             if (scale === 1) {
-                API.show.progress(0);
+                api.show.progress(0);
             }
             // cause visuals to update
             SPACE.scene.active();
             // mark slicing complete for prep/preview
             complete.slice = true;
-            API.event.emit('slice.end', getMode());
+            api.event.emit('slice.end', getMode());
             // print stats
             segtimes.total = Date.now() - now;
             console.log(segtimes);
@@ -1348,16 +1189,16 @@
         let isCam = MODE === MODES.CAM, pMode = getMode();
 
         setViewMode(VIEWS.PREVIEW);
-        API.conf.save();
-        API.event.emit('preview.begin', pMode);
+        api.conf.save();
+        api.event.emit('preview.begin', pMode);
 
         if (isCam) {
-            setOpacity(color.cam_preview_opacity);
+            setOpacity(COLOR.cam_preview_opacity);
             forAllWidgets(function(widget) {
-                widget.setColor(color.cam_preview);
+                widget.setColor(COLOR.cam_preview);
             });
         } else if (offset === 0) {
-            setOpacity(color.preview_opacity);
+            setOpacity(COLOR.preview_opacity);
         }
 
         let now = Date.now(),
@@ -1372,9 +1213,9 @@
         settings.pmode = feature.pmode;
         settings.render = true;
 
-        KIRI.client.prepare(settings, function(progress, message, layer) {
+        kiri.client.prepare(settings, function(progress, message, layer) {
             if (layer) {
-                output.push(KIRI.codec.decode(layer));
+                output.push(kiri.codec.decode(layer));
             }
             if (message && message !== lastMsg) {
                 let mark = Date.now();
@@ -1384,14 +1225,14 @@
                 lastMsg = message;
                 startTime = mark;
             }
-            API.show.progress(offset + progress * scale, message);
+            api.show.progress(offset + progress * scale, message);
         }, function (reply, maxSpeed, minSpeed) {
             // handle worker errors
             if (reply && reply.error) {
                 alert2(reply.error, 5);
                 setViewMode(VIEWS.ARRANGE);
-                API.event.emit('preview.error', reply.error);
-                API.show.progress(0);
+                api.event.emit('preview.error', reply.error);
+                api.show.progress(0);
                 SPACE.update();
                 return;
             }
@@ -1400,11 +1241,11 @@
                 segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
             }
 
-            API.show.progress(0);
+            api.show.progress(0);
             if (!isCam) setOpacity(0);
 
             if (output.length) {
-                let alert = feature.work_alerts ? API.show.alert("Rendering") : null;
+                let alert = feature.work_alerts ? api.show.alert("Rendering") : null;
                 startTime = Date.now();
                 STACKS.clear();
                 const stack = STACKS.create('print', SPACE.world)
@@ -1418,7 +1259,7 @@
                     ri.dy = settings.device.bedDepth / 2;
                     stack.obj.rotate(WIDGETS[0].rotinfo);
                 }
-                API.hide.alert(alert);
+                api.hide.alert(alert);
                 segtimes[`${segNumber}_draw`] = Date.now() - startTime;
             }
 
@@ -1426,8 +1267,8 @@
             segtimes.total = Date.now() - now;
             console.log(segtimes);
 
-            API.event.emit('print', pMode);
-            API.event.emit('preview.end', pMode);
+            api.event.emit('print', pMode);
+            api.event.emit('preview.end', pMode);
 
             SPACE.update();
             updateSliderMax(true);
@@ -1454,7 +1295,7 @@
     }
 
     function prepareAnimation() {
-        API.event.emit("function.animate", {mode: settings.mode});
+        api.event.emit("function.animate", {mode: settings.mode});
     }
 
     function prepareExport() {
@@ -1465,9 +1306,9 @@
             });
             return;
         }
-        API.event.emit("function.export", {mode: settings.mode});
+        api.event.emit("function.export", {mode: settings.mode});
         complete.export = true;
-        KIRI.export(...argsave);
+        kiri.export(...argsave);
     }
 
     function updateStackLabelState() {
@@ -1479,13 +1320,13 @@
     }
 
     function loadCode(code, type) {
-        API.event.emit("code.load", {code, type});
+        api.event.emit("code.load", {code, type});
         setViewMode(VIEWS.PREVIEW);
         setOpacity(0);
-        KIRI.client.parse({code, type, settings}, progress => {
-            API.show.progress(progress, "parsing");
+        kiri.client.parse({code, type, settings}, progress => {
+            api.show.progress(progress, "parsing");
         }, (layers, maxSpeed, minSpeed) => {
-            API.show.progress(0);
+            api.show.progress(0);
             STACKS.clear();
             const stack = STACKS.create('parse', SPACE.world);
             layers.forEach(layer => stack.add(layer));
@@ -1494,7 +1335,7 @@
             showSlices();
             updateStackLabelState();
             SPACE.update();
-            API.event.emit("code.loaded", {code, type});
+            api.event.emit("code.loaded", {code, type});
         });
     }
 
@@ -1540,10 +1381,10 @@
 
     function loadImage(image, opt = {}) {
         let info = Object.assign({settings, png:image}, opt);
-        KIRI.client.image2mesh(info, progress => {
-            API.show.progress(progress, "converting");
+        kiri.client.image2mesh(info, progress => {
+            api.show.progress(progress, "converting");
         }, output => {
-            API.show.progress(0);
+            api.show.progress(0);
             let {bigv, verts, index} = output;
             // let mat = new THREE.MeshPhongMaterial({
             //     shininess: 0x101010,
@@ -1576,11 +1417,11 @@
      ******************************************************************* */
 
     function groupMerge() {
-        Widget.Groups.merge(API.selection.widgets(true));
+        Widget.Groups.merge(api.selection.widgets(true));
     }
 
     function groupSplit() {
-        Widget.Groups.split(API.selection.widgets(false));
+        Widget.Groups.split(api.selection.widgets(false));
     }
 
     function updateSelectedInfo() {
@@ -1689,24 +1530,24 @@
     }
 
     function duplicateSelection() {
-        API.selection.for_widgets(function(widget) {
+        api.selection.for_widgets(function(widget) {
             let mesh = widget.mesh;
             let bb = mesh.getBoundingBox();
             let ow = widget;
-            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
+            let nw = api.widgets.new().loadGeometry(mesh.geometry.clone());
             nw.meta.file = ow.meta.file;
             nw.meta.vertices = ow.meta.vertices;
             nw.move(bb.max.x - bb.min.x + 1, 0, 0);
             platform.add(nw,true);
             nw.anno = ow.annotations();
-            API.event.emit("widget.duplicate", nw, ow);
+            api.event.emit("widget.duplicate", nw, ow);
         });
     }
 
     function mirrorSelection() {
-        API.selection.for_widgets(function(widget) {
+        api.selection.for_widgets(function(widget) {
             widget.mirror();
-            API.event.emit("widget.mirror", widget);
+            api.event.emit("widget.mirror", widget);
         });
         SPACE.update();
         auto_save();
@@ -1719,7 +1560,7 @@
         });
         updateSelectedBounds();
         platformUpdateBounds();
-        API.event.emit('selection.move', {x, y, z, abs});
+        api.event.emit('selection.move', {x, y, z, abs});
         SPACE.update();
         auto_save();
     }
@@ -1733,7 +1574,7 @@
         platform.compute_max_z();
         updateSelectedBounds();
         platformUpdateBounds();
-        API.event.emit('selection.scale', [...arguments]);
+        api.event.emit('selection.scale', [...arguments]);
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
             return;
@@ -1747,21 +1588,21 @@
         if (viewMode !== VIEWS.ARRANGE) return;
         forSelectedGroups(function (w) {
             w.rotate(x, y, z);
-            API.event.emit('widget.rotate', {widget: w, x, y, z});
+            api.event.emit('widget.rotate', {widget: w, x, y, z});
         });
         updateSelectedBounds();
         platformUpdateBounds();
         platform.compute_max_z();
-        API.event.emit('selection.rotate', {x, y, z});
+        api.event.emit('selection.rotate', {x, y, z});
         updateSelectedInfo();
         SPACE.update();
         auto_save();
     }
 
     function exportSelection(format = "stl") {
-        let widgets = API.selection.widgets();
+        let widgets = api.selection.widgets();
         if (widgets.length === 0) {
-            widgets = API.widgets.all();
+            widgets = api.widgets.all();
         }
         let facets = 0;
         let outs = [];
@@ -1990,8 +1831,8 @@
             if (!mesh.material.visible) return;
             if (!shift) platform.deselect(undefined, recurse);
             selectedMeshes.push(mesh);
-            API.event.emit('widget.select', widget);
-            widget.setColor(color.selected);
+            api.event.emit('widget.select', widget);
+            widget.setColor(COLOR.selected);
             updateSelectedInfo();
         }
         platformUpdateSelected();
@@ -2052,15 +1893,15 @@
                 if (b) b.classList.remove('pop-sel');
             }
             forSelectedWidgets(w => {
-                w.setColor(color.selected);
-                let ext = API.widgets.annotate(w.id).extruder || 0;
+                w.setColor(COLOR.selected);
+                let ext = api.widgets.annotate(w.id).extruder || 0;
                 let b = $(`sel-ext-${ext}`);
                 if (b) b.classList.add('pop-sel');
                 w.saveState();
             }, true);
         } else {
             forSelectedWidgets(w => {
-                w.setColor(color.selected);
+                w.setColor(COLOR.selected);
             }, true);
         }
     }
@@ -2089,9 +1930,9 @@
             sel = (si >= 0);
         if (sel) {
             selectedMeshes.splice(si,1);
-            API.event.emit('widget.deselect', widget);
+            api.event.emit('widget.deselect', widget);
         }
-        widget.setColor(color.deselected);
+        widget.setColor(COLOR.deselected);
         platformUpdateSelected();
         SPACE.update();
         updateSelectedInfo();
@@ -2113,7 +1954,7 @@
 
     function platformLoadSTL(url, onload, formdata) {
         let scale = 1 / unitScale();
-        new LOAD.STL().load(url, function(vertices, filename) {
+        new load.STL().load(url, function(vertices, filename) {
             if (vertices) {
                 let widget = newWidget().loadVertices(vertices);
                 widget.meta.file = filename;
@@ -2127,7 +1968,7 @@
 
     function platformLoadURL(url, options = {}) {
         platform.group();
-        LOAD.URL.load(url, options).then((objects) => {
+        load.URL.load(url, options).then((objects) => {
             let widgets = [];
             for (let object of objects) {
                 let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
@@ -2136,9 +1977,9 @@
                 widgets.push(widget);
             }
             platform.group_done();
-            API.event.emit("load.url", { url, options, widgets });
+            api.event.emit("load.url", { url, options, widgets });
         }).catch(error => {
-            API.show.alert(error);
+            api.show.alert(error);
         });
     }
 
@@ -2169,7 +2010,7 @@
         SPACE.world.add(widget.mesh);
         platform.select(widget, shift);
         platform.compute_max_z();
-        API.event.emit('widget.add', widget);
+        api.event.emit('widget.add', widget);
         platformChanged();
         auto_save();
         if (nolayout) {
@@ -2191,7 +2032,7 @@
         let wbb = widget.getBoundingBox();
         let dim = { x: wbb.max.x - wbb.min.x, y: wbb.max.y - wbb.min.y };
         let hdim = { x: dim.x / 2, y: dim.y / 2 };
-        let bounds = BASE.newBounds(), target = BASE.newBounds();
+        let bounds = base.newBounds(), target = base.newBounds();
         // look for best position for new widget that doesn't collide
         outer: for (let rad=10; rad<200; rad += 10) {
             inner: for (let d=0; d<360; d += 1) {
@@ -2228,7 +2069,7 @@
             }
             return;
         }
-        KIRI.work.clear(widget);
+        kiri.work.clear(widget);
         WIDGETS.remove(widget);
         Widget.Groups.remove(widget);
         SPACE.world.remove(widget.mesh);
@@ -2241,7 +2082,7 @@
         SPACE.update();
         platformUpdateSelected();
         if (feature.drop_layout) platform.layout();
-        API.event.emit('widget.delete', widget);
+        api.event.emit('widget.delete', widget);
         platformChanged();
         auto_save();
     }
@@ -2303,13 +2144,13 @@
 
         // only auto-layout when in arrange mode
         if (oldmode !== VIEWS.ARRANGE) {
-            API.event.emit('platform.layout');
+            api.event.emit('platform.layout');
             return SPACE.update();
         }
 
         // do not layout when switching back from slice view
         if (!auto || (!space && !layout)) {
-            API.event.emit('platform.layout');
+            api.event.emit('platform.layout');
             return SPACE.update();
         }
 
@@ -2317,7 +2158,7 @@
 
         // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
         if (MODE === MODES.CAM && WIDGETS.length > 1) {
-            let spacing = space || 1, CAM = KIRI.driver.CAM;
+            let spacing = space || 1, CAM = kiri.driver.CAM;
             if (proc.camRoughOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camRoughTool));
             if (proc.camOutlineOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camOutlineTool));
             gap = spacing * 1.5;
@@ -2331,13 +2172,13 @@
         let i, m, sz = isBelt ? {x:1, y:100000} : SPACE.platform.size(),
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
-            c = Widget.Groups.blocks().sort(MOTO.Sort),
-            p = new KIRI.Pack(ms[0], ms[1], gap).fit(c);
+            c = Widget.Groups.blocks().sort(moto.Sort),
+            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
             ms[0] *= 1.1;
             ms[1] *= 1.1;
-            p = new KIRI.Pack(ms[0], ms[1], gap).fit(c);
+            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
         }
 
         for (i = 0; i < c.length; i++) {
@@ -2376,7 +2217,7 @@
 
         platform.update_origin();
 
-        API.event.emit('platform.layout');
+        api.event.emit('platform.layout');
         SPACE.update();
     }
 
@@ -2409,7 +2250,7 @@
             } else if (typ === 'select-one') {
                 uie.innerHTML = '';
                 let source = uie.parentNode.getAttribute('source'),
-                    list = uie._source || settings[source] || lists[source],
+                    list = uie._source || settings[source] || api.lists[source],
                     chosen = null;
                 if (list) list.forEach(function(el, index) {
                     let id = el.id || el.name;
@@ -2570,7 +2411,7 @@
         if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
             let changes = {};
             let values = process;
-            let { layer_lo, layer_hi, layer_max } = API.var;
+            let { layer_lo, layer_hi, layer_max } = api.var;
             let range = { lo: layer_lo, hi: layer_hi };
             let add = false;
             if (layer_lo > 0 || layer_hi < layer_max) {
@@ -2587,7 +2428,7 @@
         if (device.extruders && device.extruders[device.internal]) {
             updateSettingsFromFields(device.extruders[device.internal]);
         }
-        API.conf.save();
+        api.conf.save();
         let compare = sproc[mode][cproc[mode]];
         let same = true;
         if (compare)
@@ -2624,16 +2465,16 @@
         settings.device.originCenter = UI.deviceOrigin.checked || UI.deviceRound.checked;
         settings.device.fwRetract = UI.fwRetract.checked;
         SDB.setItem('ws-settings', JSON.stringify(settings));
-        API.event.emit('settings.saved', settings);
+        api.event.emit('settings.saved', settings);
     }
 
     function settingsImportZip(data, ask) {
-        let alert = API.show.alert("Importing Workspace");
+        let alert = api.show.alert("Importing Workspace");
         JSZip.loadAsync(data).then(zip => {
             for (let [key,value] of Object.entries(zip.files)) {
                 if (key === "workspace.json") {
                     value.async("string").then(json => {
-                        API.hide.alert(alert);
+                        api.hide.alert(alert);
                         settingsImport(JSON.parse(json), ask);
                     });
                 }
@@ -2662,7 +2503,7 @@
             return UC.alert('invalid file');
         }
         // device setup
-        let device = Object.clone(KIRI.conf.defaults.fdm.d);
+        let device = Object.clone(kiri.conf.defaults.fdm.d);
         let dname = device.deviceName = map.printer_model;
         if (dname) {
             let mode = "FDM";
@@ -2679,7 +2520,7 @@
             }
         }
         // profile setup
-        let process = Object.clone(KIRI.conf.defaults.fdm.p);
+        let process = Object.clone(kiri.conf.defaults.fdm.p);
         let pname = process.processName = map.print_settings_id;
         if (pname) {
             process.sliceShells = parseInt(map.perimeters);
@@ -2706,7 +2547,7 @@
                 settings.process = settings.sproc.FDM[pname] = process;
                 settings.filter.FDM = dname;
                 settings.cproc.FDM = pname;
-                API.show.devices();
+                api.show.devices();
             }
         });
     }
@@ -2714,7 +2555,7 @@
     function settingsImport(data, ask) {
         if (typeof(data) === 'string') {
             try {
-                data = API.util.b64dec(data);
+                data = api.util.b64dec(data);
             } catch (e) {
                 UC.alert('invalid import format');
                 console.log('data',data);
@@ -2737,12 +2578,12 @@
                     UC.confirm(`Replace device ${data.device}?`).then(yes => {
                         if (yes) {
                             settings.devices[data.device] = data.code;
-                            API.show.devices();
+                            api.show.devices();
                         }
                     });
                 } else {
                     settings.devices[data.device] = data.code;
-                    API.show.devices();
+                    api.show.devices();
                 }
             }
             if (isProcess) {
@@ -2750,12 +2591,12 @@
                     UC.confirm(`Replace process ${data.name}?`).then(yes => {
                         if (yes) {
                             settings.sproc[data.mode][data.name] = data.process;
-                            API.conf.show();
+                            api.conf.show();
                         }
                     });
                 } else {
                     settings.sproc[data.mode][data.name] = data.process;
-                    API.conf.show();
+                    api.conf.show();
                 }
             }
             if (isSettings) {
@@ -2764,8 +2605,8 @@
                 SDB.setItem('ws-settings', JSON.stringify(settings));
                 if (LOCAL) console.log('settings',Object.clone(settings));
                 if (isWork) {
-                    API.platform.clear();
-                    KIRI.codec.decode(data.work).forEach(widget => {
+                    api.platform.clear();
+                    kiri.codec.decode(data.work).forEach(widget => {
                         platform.add(widget, 0, true);
                     });
                     if (data.view) {
@@ -2802,7 +2643,7 @@
     function settingsExport(opts = {}) {
         const note = opts.node || undefined;
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
-        const work = opts.work ? KIRI.codec.encode(WIDGETS,{_json_:true}) : undefined;
+        const work = opts.work ? kiri.codec.encode(WIDGETS,{_json_:true}) : undefined;
         const view = opts.work ? SPACE.view.save() : undefined;
         const setn = Object.clone(settings);
         // stuff in legacy annotations for re-import
@@ -2811,17 +2652,17 @@
         }
         const xprt = {
             settings: setn,
-            version: KIRI.version,
+            version: kiri.version,
             screen: shot,
             space: SPACE.info,
             note: note,
             work: work,
             view: view,
-            moto: MOTO.id,
+            moto: moto.id,
             init: SDB.getItem('kiri-init'),
             time: Date.now()
         };
-        return opts.clear ? xprt : API.util.b64enc(xprt);
+        return opts.clear ? xprt : api.util.b64enc(xprt);
     }
 
     function platformLoadFiles(files,group) {
@@ -2854,24 +2695,24 @@
                     );
                     load_dec();
                 }
-                else if (API.feature.on_load && (isstl || isobj || is3mf)) {
-                    API.feature.on_load(e.target.result, file);
+                else if (api.feature.on_load && (isstl || isobj || is3mf)) {
+                    api.feature.on_load(e.target.result, file);
                     load_dec();
                 }
                 else if (isstl) {
-                    if (API.feature.on_add_stl) {
-                        API.feature.on_add_stl(e.target.result, file);
+                    if (api.feature.on_add_stl) {
+                        api.feature.on_add_stl(e.target.result, file);
                     } else {
                         platform.add(
                             newWidget(undefined,group)
-                            .loadVertices(new LOAD.STL().parse(e.target.result,unitScale()))
+                            .loadVertices(new load.STL().parse(e.target.result,unitScale()))
                             .saveToCatalog(e.target.file.name)
                         );
                     }
                     load_dec();
                 }
                 else if (isobj) {
-                    let objs = LOAD.OBJ.parse(e.target.result);
+                    let objs = load.OBJ.parse(e.target.result);
                     let odon = function() {
                         for (let obj of objs) {
                             let name = e.target.file.name;
@@ -2899,7 +2740,7 @@
                 }
                 else if (is3mf) {
                     let odon = function(models) {
-                        let msg = API.show.alert('Adding Objects');
+                        let msg = api.show.alert('Adding Objects');
                         for (let model of models) {
                             let name = e.target.file.name;
                             if (model.name) {
@@ -2912,11 +2753,11 @@
                             );
                         }
                         load_dec();
-                        API.hide.alert(msg);
+                        api.hide.alert(msg);
                     }
-                    let msg = API.show.alert('Decoding 3MF');
-                    LOAD.TMF.parseAsync(e.target.result).then(models => {
-                        API.hide.alert(msg);
+                    let msg = api.show.alert('Decoding 3MF');
+                    load.TMF.parseAsync(e.target.result).then(models => {
+                        api.hide.alert(msg);
                         if (models.length > 1 && !group) {
                             UC.confirm(`group ${models.length} objects?`).then(ok => {
                                 if (ok) {
@@ -2935,7 +2776,7 @@
                 }
                 else if (issvg) {
                     let name = e.target.file.name;
-                    let svg = LOAD.SVG.parse(e.target.result);
+                    let svg = load.SVG.parse(e.target.result);
                     let ind = 0;
                     for (let v of svg) {
                         let num = ind++;
@@ -2952,7 +2793,7 @@
                 else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
                 else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
                 else if (isini) settingsPrusaConvert(e.target.result);
-                else API.show.alert(`Unsupported file: ${files[i].name}`);
+                else api.show.alert(`Unsupported file: ${files[i].name}`);
             };
             if (isstl || ispng || isjpg || iskmz) {
                 reader.readAsArrayBuffer(reader.file);
@@ -2991,7 +2832,7 @@
     }
 
     function saveWorkspace(quiet) {
-        API.conf.save();
+        api.conf.save();
         let newWidgets = [],
             oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
@@ -2999,7 +2840,7 @@
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
             widget.saveState();
-            let ann = API.widgets.annotate(widget.id);
+            let ann = api.widgets.annotate(widget.id);
             ann.file = widget.meta.file;
             ann.url = widget.meta.url;
         });
@@ -3050,7 +2891,7 @@
         });
         SDB.removeItem(localFilterKey);
         // save updated settings
-        if (save) API.conf.save();
+        if (save) api.conf.save();
 
         return newset;
     }
@@ -3095,7 +2936,7 @@
             Widget.loadFromState(widgetid, function(widget) {
                 if (widget) {
                     platform.add(widget, 0, position);
-                    let ann = API.widgets.annotate(widgetid);
+                    let ann = api.widgets.annotate(widgetid);
                     widget.meta.file = ann.file;
                     widget.meta.url = ann.url;
                 }
@@ -3117,7 +2958,7 @@
 
     function clearWorkspace() {
         // free up worker cache/mem
-        KIRI.work.clear();
+        kiri.work.clear();
         platform.select_all();
         platform.delete(selectedMeshes);
     }
@@ -3137,7 +2978,7 @@
         });
 
         function ondone() {
-            API.event.emit('modal.show', which);
+            api.event.emit('modal.show', which);
         }
 
         if (visible) {
@@ -3178,8 +3019,8 @@
 
     function putSettings(newset) {
         settings = CONF.normalize(newset);
-        API.conf.save()
-        API.space.restore(null, true);
+        api.conf.save()
+        api.space.restore(null, true);
     }
 
     function editSettings(e) {
@@ -3191,9 +3032,9 @@
             try {
                 settings.sproc[mode][name] = JSON.parse(edit);
                 if (name === settings.process.processName) {
-                    API.conf.load(null, name);
+                    api.conf.load(null, name);
                 }
-                API.conf.save();
+                api.conf.save();
             } catch (e) {
                 UC.alert('malformed settings object');
             }
@@ -3203,17 +3044,17 @@
     function exportSettings(e) {
         let mode = getMode(),
             name = e.target.getAttribute("name"),
-            data = API.util.b64enc({
+            data = api.util.b64enc({
                 process: settings.sproc[mode][name],
-                version: KIRI.version,
-                moto: MOTO.id,
+                version: kiri.version,
+                moto: moto.id,
                 time: Date.now(),
                 mode,
                 name
             });
         UC.prompt("Export Process Filename", name).then(name => {
             if (name) {
-                API.util.download(data, `${name}.km`);
+                api.util.download(data, `${name}.km`);
             }
         });
     }
@@ -3237,11 +3078,11 @@
             settings.cproc[mode] = name;
         }
         // allow mode driver to take any necessary actions
-        API.event.emit("settings.load", settings);
+        api.event.emit("settings.load", settings);
 
         // update UI fields to reflect current settings
         updateFields();
-        API.conf.update();
+        api.conf.update();
 
         if (e) triggerSettingsEvent();
     }
@@ -3250,7 +3091,7 @@
         let name = e.target.getAttribute("del");
         delete settings.sproc[getMode()][name];
         updateSettingsList();
-        API.conf.save();
+        api.conf.save();
         triggerSettingsEvent();
     }
 
@@ -3270,7 +3111,7 @@
 
             load.setAttribute('load', sk);
             load.onclick = (ev) => {
-                API.conf.load(undefined, sk);
+                api.conf.load(undefined, sk);
                 updateSettingsList();
                 hideModal();
             }
@@ -3319,14 +3160,14 @@
             WIN.open("//docs.grid.space/", "_help");
             return;
         }
-        $('kiri-version').innerHTML = `${LANG.version} ${KIRI.version}`;
+        $('kiri-version').innerHTML = `${LANG.version} ${kiri.version}`;
         showModal('help');
-        API.event.emit('help.show', local);
+        api.event.emit('help.show', local);
     }
 
     function showLocal() {
         showModal('local');
-        API.probe.local((err,data) => {
+        api.probe.local((err,data) => {
             let devc = 0;
             let bind = [];
             let html = ['<table>'];
@@ -3377,7 +3218,7 @@
                 complete = {};
                 UI.back.style.display = '';
                 UI.render.style.display = '';
-                KIRI.client.clear();
+                kiri.client.clear();
                 STACKS.clear();
                 hideSlider();
                 updateSpeeds();
@@ -3401,7 +3242,7 @@
                 console.log("invalid view mode: "+mode);
                 return;
         }
-        API.event.emit('view.set', mode);
+        api.event.emit('view.set', mode);
         DOC.activeElement.blur();
     }
 
@@ -3425,7 +3266,7 @@
         // change mode constants
         settings.mode = mode;
         MODE = MODES[mode];
-        DRIVER = KIRI.driver[mode];
+        DRIVER = kiri.driver[mode];
         // update mode display
         $('app-mode-name').innerHTML = mode === 'CAM' ? 'CNC' : mode;
         // highlight relevant device mode button
@@ -3440,7 +3281,7 @@
         // restore cached device profile for this mode
         if (settings.cdev[mode]) {
             settings.device = clone(settings.cdev[mode]);
-            API.event.emit('device.set', currentDeviceName());
+            api.event.emit('device.set', currentDeviceName());
         }
         // really belongs in CAM driver (lots of work / abstraction needed)
         // updateStockVisibility();
@@ -3448,8 +3289,8 @@
         setViewMode(VIEWS.ARRANGE);
         UC.setMode(MODE);
         // sanitize and persist settings
-        API.conf.load();
-        API.conf.save();
+        api.conf.load();
+        api.conf.save();
         // other housekeeping
         triggerSettingsEvent();
         platformUpdateSelected();
@@ -3457,10 +3298,10 @@
         updateFields();
         // because device dialog, if showing, needs to be updated
         if (modalShowing()) {
-            API.show.devices();
+            api.show.devices();
         }
-        API.space.restore(null, true);
-        API.event.emit("mode.set", mode);
+        api.space.restore(null, true);
+        api.event.emit("mode.set", mode);
         if (then) {
             then();
         }
@@ -3506,5 +3347,5 @@
     kiri.load = (mod) => { mod(kiri.api) };
 
     // upon restore, seed presets
-    API.event.emit('preset', API.conf.dbo());
+    api.event.emit('preset', api.conf.dbo());
 })();
