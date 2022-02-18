@@ -23,23 +23,18 @@
         SPACE   = kiri.space = moto.Space,
         FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
         STATS   = new Stats(SDB),
-        // ---------------
         CONF    = kiri.conf,
         clone   = Object.clone;
 
     let settings = clone(CONF.template),
-        WIDGETS = kiri.widgets = [],
-        // ---------------
         UI = {},
         UC = kiri.ui.prefix('kiri').inputAction(updateSettings),
         MODE = MODES.FDM,
         STACKS = kiri.stacks,
         DRIVER = undefined,
         complete = {},
-        // selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
-        // ---------------
         viewMode = VIEWS.ARRANGE,
         local = SETUP.local,
         busy = 0,
@@ -208,67 +203,32 @@
             unit_scale: unitScale,
             wireframe: setWireframe,
         },
-        widgets: {
-            new: newWidget,
-            all() { return WIDGETS.slice() },
-            add(widget) { WIDGETS.push(widget) },
-            remove(widget) { return WIDGETS.remove(widget) },
-            filter(fn) { WIDGETS = WIDGETS.filter(fn) },
-            count() { return WIDGETS.length },
-            heal: healWidgets,
-            for: forAllWidgets,
-            each: forAllWidgets,
-            load: Widget.loadFromCatalog,
-            replace: replaceVertices,
-            meshes: meshArray,
-            opacity: setOpacity,
-            annotate(id) {
-                let w = WIDGETS.filter(w => w.id === id)[0];
-                if (!w) {
-                    console.trace(`annotate missing widget ${id}`);
-                    return {};
-                }
-                return (w.anno = w.anno || {});
-            },
-            map() {
-                let map = {};
-                for (let widget of WIDGETS) {
-                    map[widget.id] = widget;
-                }
-                return map;
-            }
-        },
         work: kiri.work
     });
 
-    function setOpacity(value) {
-        api.widgets.each(w => w.setOpacity(value));
-        SPACE.update();
-    }
-
-    function setFocus(widgets, point) {
+    function setFocus(sel, point) {
         if (point) {
             SPACE.platform.setCenter(point.x, point.z, point.y);
             SPACE.view.setFocus(new THREE.Vector3(point.x, point.y, point.z));
             return;
         }
-        if (widgets === undefined) {
-            widgets = WIDGETS;
+        if (sel === undefined) {
+            sel = api.widgets.all();
         } else if (!Array.isArray) {
-            widgets = [ widgets ];
-        } else if (widgets.length === 0) {
-            widgets = WIDGETS;
+            sel = [ sel ];
+        } else if (sel.length === 0) {
+            sel = api.widgets.all();
         }
         let pos = { x:0, y:0, z:0 };
-        for (let widget of widgets) {
+        for (let widget of sel) {
             pos.x += widget.track.pos.x;
             pos.y += widget.track.pos.y;
             pos.z += widget.track.pos.z;
         }
-        if (widgets.length) {
-            pos.x /= widgets.length;
-            pos.y /= widgets.length;
-            pos.z /= widgets.length;
+        if (sel.length) {
+            pos.x /= sel.length;
+            pos.y /= sel.length;
+            pos.z /= sel.length;
         }
         SPACE.platform.setCenter(pos.x, -pos.y, platform.top_z() / 2);
         SPACE.view.setFocus(new THREE.Vector3(pos.x, platform.top_z() / 2, -pos.y));
@@ -719,77 +679,8 @@
         showSlices();
     }
 
-    function meshArray() {
-        let out = [];
-        forAllWidgets(function(widget) {
-            if (!feature.hoverAdds) {
-                out.push(widget.mesh);
-            }
-            out.appendAll(widget.adds);
-        });
-        return out;
-    }
-
-    function replaceVertices(vertices) {
-        let widgets = selection.widgets(true);
-        if (!widgets.length) {
-            return;
-        }
-        function onload(vertices) {
-            for (let w of widgets) {
-                let track = Object.clone(w.track);
-                let { scale, rot, pos } = track;
-                let roto = w.roto.slice();
-                w.loadVertices(vertices);
-                for (let m of roto) {
-                    w.mesh.geometry.applyMatrix4(m.clone());
-                }
-                w._scale(scale.x, scale.y, scale.z);
-            }
-            platform.update();
-        }
-        if (vertices) {
-            onload(vertices);
-        } else {
-            // dialog
-            $('load-file').onchange = function(event) {
-                load.File.load(event.target.files[0])
-                    .then(data => onload(data[0].mesh))
-                    .catch(error => console.log({error}));
-            };
-            $('load-file').click();
-        }
-    }
-
-    function healWidgets() {
-        let widgets = api.widgets.all();
-        let marker;
-        if (widgets.length) {
-            marker = api.show.alert("Analyzing objects", 100000);
-        } else {
-            return;
-        }
-        setTimeout(() => {
-            Promise.all(widgets.map(w => w.heal())).then(mod => {
-                api.hide.alert(marker);
-                let healed = mod.filter(m => m).length;
-                if (healed) {
-                    api.show.alert(`${healed} Object${healed ? 's':''} healed`);
-                } else {
-                    api.show.alert('Nothing found to heal');
-                }
-            });
-        }, 1);
-    }
-
-    function forAllWidgets(f) {
-        WIDGETS.slice().forEach(function(widget) {
-            f(widget);
-        });
-    }
-
     function setWireframe(bool, color, opacity) {
-        forAllWidgets(function(w) { w.setWireframe(bool, color, opacity) });
+        api.widgets.each(function(w) { w.setWireframe(bool, color, opacity) });
         SPACE.update();
     }
 
@@ -805,14 +696,14 @@
 
     function hideSlices() {
         STACKS.clear();
-        setOpacity(COLOR.model_opacity);
-        forAllWidgets(function(widget) {
+        api.widgets.opacity(COLOR.model_opacity);
+        api.widgets.each(function(widget) {
             widget.setWireframe(false);
         });
     }
 
     function setWidgetVisibility(bool) {
-        forAllWidgets(w => {
+        api.widgets.each(w => {
             if (bool) {
                 w.show();
             } else {
@@ -882,6 +773,8 @@
             callback = preparePreview;
         }
 
+        const WIDGETS = api.widgets.all();
+
         // force layout in belt mode when widget exceeds bed length
         if (WIDGETS.length && settings.device.bedBelt) {
             let doLayout = false;
@@ -925,7 +818,7 @@
         }
         let defvert = totvert / slicing.length;
 
-        setOpacity(COLOR.slicing_opacity);
+        api.widgets.opacity(COLOR.slicing_opacity);
 
         let segtimes = {},
             segNumber = 0,
@@ -1039,7 +932,7 @@
                     if (scale === 1) {
                         // clear wireframe
                         widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
-                        widget.setOpacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
+                        widget.setOacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
                         widget.setColor(COLOR.deselected);
                         api.hide.alert(alert);
                     }
@@ -1098,12 +991,12 @@
         api.event.emit('preview.begin', pMode);
 
         if (isCam) {
-            setOpacity(COLOR.cam_preview_opacity);
-            forAllWidgets(function(widget) {
+            api.widgets.opacity(COLOR.cam_preview_opacity);
+            api.widgets.each(function(widget) {
                 widget.setColor(COLOR.cam_preview);
             });
         } else if (offset === 0) {
-            setOpacity(COLOR.preview_opacity);
+            api.widgets.opacity(COLOR.preview_opacity);
         }
 
         let now = Date.now(),
@@ -1147,7 +1040,7 @@
             }
 
             api.show.progress(0);
-            if (!isCam) setOpacity(0);
+            if (!isCam) api.widgets.opacity(0);
 
             if (output.length) {
                 let alert = feature.work_alerts ? api.show.alert("Rendering") : null;
@@ -1227,7 +1120,7 @@
     function loadCode(code, type) {
         api.event.emit("code.load", {code, type});
         setViewMode(VIEWS.PREVIEW);
-        setOpacity(0);
+        api.widgets.opacity(0);
         kiri.client.parse({code, type, settings}, progress => {
             api.show.progress(progress, "parsing");
         }, (layers, maxSpeed, minSpeed) => {
@@ -1726,6 +1619,7 @@
     }
 
     function settingsExport(opts = {}) {
+        const WIDGETS = api.widgets.all();
         const note = opts.node || undefined;
         const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
         const work = opts.work ? kiri.codec.encode(WIDGETS,{_json_:true}) : undefined;
@@ -1782,7 +1676,7 @@
         api.conf.save();
         const newWidgets = [];
         const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
-        forAllWidgets(function(widget) {
+        api.widgets.each(function(widget) {
             if (widget.synth) return;
             newWidgets.push(widget.id);
             oldWidgets.remove(widget.id);
@@ -1803,7 +1697,8 @@
     }
 
     function restoreSettings(save) {
-        let newset = ls2o('ws-settings') || settings;
+        const WIDGETS = api.widgets.all();
+        const newset = ls2o('ws-settings') || settings;
         // extract legacy widget annotations into widgets
         if (newset.widget) {
             for (let id of Object.keys(newset.widget)) {
@@ -1862,7 +1757,7 @@
         }
 
         // remove any widgets from platform
-        forAllWidgets(function(widget) {
+        api.widgets.each(function(widget) {
             platform.delete(widget);
         });
 
@@ -2165,7 +2060,7 @@
                 updateSpeeds();
                 setVisibleLayer();
                 setWidgetVisibility(true);
-                setOpacity(1);
+                api.widgets.opacity(1);
                 break;
             case VIEWS.SLICE:
                 UI.back.style.display = 'flex';
@@ -2235,7 +2130,7 @@
         // other housekeeping
         triggerSettingsEvent();
         platform.update_selected();
-        selection.update_bounds(WIDGETS);
+        selection.update_bounds(api.widgets.all());
         updateFields();
         // because device dialog, if showing, needs to be updated
         if (modalShowing()) {
