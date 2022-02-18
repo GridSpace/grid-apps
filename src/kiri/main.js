@@ -4,10 +4,10 @@
 
 (function () {
 
-    const { base, data, load, kiri, moto } = self;
+    const { base, data, load, kiri, moto, noop } = self;
     const { api, consts, lang, Widget, newWidget, utils } = kiri;
     const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
-    const { feature, platform } = api;
+    const { feature, platform, selection } = api;
     const { COLOR, MODES, PMODES, VIEWS } = consts;
 
     const LANG = lang.current,
@@ -36,7 +36,7 @@
         STACKS = kiri.stacks,
         DRIVER = undefined,
         complete = {},
-        selectedMeshes = [],
+        // selectedMeshes = [],
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         // ---------------
@@ -55,37 +55,6 @@
     EVENT.on = (topic, listener) => {
         EVENT.subscribe(topic, listener);
         return EVENT;
-    };
-
-    const selection = {
-        opacity: setOpacity,
-        move: moveSelection,
-        scale: scaleSelection,
-        rotate: rotateSelection,
-        mirror: mirrorSelection,
-        duplicate: duplicateSelection,
-        meshes: function() { return selectedMeshes.slice() },
-        widgets: function(orall) {
-            let sel = selectedMeshes.slice().map(m => m.widget);
-            return sel.length ? sel : orall ? WIDGETS.slice() : []
-        },
-        for_groups: forSelectedGroups,
-        for_meshes: forSelectedMeshes,
-        for_widgets: forSelectedWidgets,
-        update_bounds: updateSelectedBounds,
-        update_info: updateSelectedInfo,
-        delete: function() { platform.delete(selection.widgets()) },
-        export: exportSelection,
-        add(w) { selectedMeshes.addOnce(w.mesh) },
-        remove(w) { return selectedMeshes.remove(w.mesh) },
-        count() { return selectedMeshes.length },
-        contains(w) { return selectedMeshes.indexOf(w.mesh) >= 0 },
-        enable() { selection.setDisabled(false) },
-        disable() { selection.setDisabled(true) },
-        setDisabled(bool) {
-            forSelectedWidgets(w => w.meta.disabled = bool);
-            platform.update_selected();
-        }
     };
 
     // augment api
@@ -187,8 +156,6 @@
             code: currentProcessCode,
             get: currentProcessName
         },
-        platform,
-        selection,
         settings: {
             import: settingsImport,
             import_zip: settingsImportZip,
@@ -273,6 +240,11 @@
         },
         work: kiri.work
     });
+
+    function setOpacity(value) {
+        api.widgets.each(w => w.setOpacity(value));
+        SPACE.update();
+    }
 
     function setFocus(widgets, point) {
         if (point) {
@@ -759,7 +731,7 @@
     }
 
     function replaceVertices(vertices) {
-        let widgets = api.selection.widgets(true);
+        let widgets = selection.widgets(true);
         if (!widgets.length) {
             return;
         }
@@ -814,25 +786,6 @@
         WIDGETS.slice().forEach(function(widget) {
             f(widget);
         });
-    }
-
-    function forSelectedGroups(f) {
-        let groups = api.selection.widgets(true).map(w => w.group).uniq();
-        for (let group of groups) {
-            f(group[0]);
-        }
-    }
-
-    function forSelectedWidgets(f,noauto) {
-        let m = selectedMeshes;
-        if (m.length === 0 && WIDGETS.length === 1) {
-            m = noauto ? [] : [ WIDGETS[0].mesh ];
-        }
-        m.slice().forEach(function (mesh) { f(mesh.widget) });
-    }
-
-    function forSelectedMeshes(f) {
-        selectedMeshes.slice().forEach(function (mesh) { f(mesh) });
     }
 
     function setWireframe(bool, color, opacity) {
@@ -1369,236 +1322,11 @@
      ******************************************************************* */
 
     function groupMerge() {
-        Widget.Groups.merge(api.selection.widgets(true));
+        Widget.Groups.merge(selection.widgets(true));
     }
 
     function groupSplit() {
-        Widget.Groups.split(api.selection.widgets(false));
-    }
-
-    function updateSelectedInfo() {
-        let bounds = new THREE.Box3(), track;
-        forSelectedMeshes(mesh => {
-            bounds = bounds.union(mesh.getBoundingBox());
-            track = mesh.widget.track;
-        });
-        if (bounds.min.x === Infinity) {
-            if (selectedMeshes.length === 0) {
-                UI.sizeX.value = 0;
-                UI.sizeY.value = 0;
-                UI.sizeZ.value = 0;
-                UI.scaleX.value = 1;
-                UI.scaleY.value = 1;
-                UI.scaleZ.value = 1;
-            }
-            return;
-        }
-        let dx = bounds.max.x - bounds.min.x,
-            dy = bounds.max.y - bounds.min.y,
-            dz = bounds.max.z - bounds.min.z,
-            scale = unitScale();
-        UI.sizeX.value = UI.sizeX.was = (dx / scale).round(2)
-        UI.sizeY.value = UI.sizeY.was = (dy / scale).round(2)
-        UI.sizeZ.value = UI.sizeZ.was = (dz / scale).round(2)
-        UI.scaleX.value = UI.scaleX.was = track.scale.x.round(2);
-        UI.scaleY.value = UI.scaleY.was = track.scale.y.round(2);
-        UI.scaleZ.value = UI.scaleZ.was = track.scale.z.round(2);
-        updateSelectedBounds();
-    }
-
-    function updateSelectedBounds(widgets) {
-        // update bounds on selection for drag limiting
-        let isBelt = settings.device.bedBelt;
-        if (isBelt) {
-            if (platform.fit()) {
-                platform.update_origin();
-                SPACE.update();
-            }
-        }
-        let dvy = settings.device.bedDepth;
-        let dvx = settings.device.bedWidth;
-        let bounds_sel = new THREE.Box3();
-        if (!widgets) {
-            widgets = selectedMeshes.map(m => m.widget);
-        }
-        for (let widget of widgets) {
-            let wp = widget.track.pos;
-            let bx = widget.track.box;
-            let miny = wp.y - bx.h/2 + dvy/2;
-            let maxy = wp.y + bx.h/2 + dvy/2;
-            let minx = wp.x - bx.w/2 + dvx/2;
-            let maxx = wp.x + bx.w/2 + dvx/2;
-
-            // keep widget in bounds when rotated or scaled
-            let ylo = miny < 0;
-            let yhi = !isBelt && maxy > dvy
-            if (ylo && !yhi) {
-                widget.move(0, -miny, 0);
-            } else if (yhi && !ylo) {
-                widget.move(0, dvy - maxy, 0);
-            }
-            let xlo = minx < 0;
-            let xhi = maxx > dvx;
-            if (xlo && !xhi) {
-                widget.move(-minx, 0, 0);
-            } else if (xhi && !xlo) {
-                widget.move(dvx - maxx, 0, 0);
-            }
-
-            let wb = widget.mesh.getBoundingBox().clone();
-            wb.min.x += wp.x;
-            wb.max.x += wp.x;
-            wb.min.y += wp.y;
-            wb.max.y += wp.y;
-            bounds_sel.union(wb);
-        }
-        settings.bounds_sel = bounds_sel;
-    }
-
-    function setOpacity(value) {
-        forAllWidgets(function (w) { w.setOpacity(value) });
-        SPACE.update();
-    }
-
-    function duplicateSelection() {
-        api.selection.for_widgets(function(widget) {
-            let mesh = widget.mesh;
-            let bb = mesh.getBoundingBox();
-            let ow = widget;
-            let nw = api.widgets.new().loadGeometry(mesh.geometry.clone());
-            nw.meta.file = ow.meta.file;
-            nw.meta.vertices = ow.meta.vertices;
-            nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-            platform.add(nw,true);
-            nw.anno = ow.annotations();
-            api.event.emit("widget.duplicate", nw, ow);
-        });
-    }
-
-    function mirrorSelection() {
-        api.selection.for_widgets(function(widget) {
-            widget.mirror();
-            api.event.emit("widget.mirror", widget);
-        });
-        SPACE.update();
-        auto_save();
-    }
-
-    function moveSelection(x, y, z, abs) {
-        if (viewMode !== VIEWS.ARRANGE) return;
-        forSelectedGroups(function (w) {
-            w.move(x, y, z, abs);
-        });
-        updateSelectedBounds();
-        platform.update_bounds();
-        api.event.emit('selection.move', {x, y, z, abs});
-        SPACE.update();
-        auto_save();
-    }
-
-    function scaleSelection() {
-        if (viewMode !== VIEWS.ARRANGE) return;
-        let args = arguments;
-        forSelectedGroups(function (w) {
-            w.scale(...args);
-        });
-        platform.compute_max_z();
-        updateSelectedBounds();
-        platform.update_bounds();
-        api.event.emit('selection.scale', [...arguments]);
-        // skip update if last argument is strictly 'false'
-        if ([...arguments].pop() === false) {
-            return;
-        }
-        updateSelectedInfo();
-        SPACE.update();
-        auto_save();
-    }
-
-    function rotateSelection(x, y, z) {
-        if (viewMode !== VIEWS.ARRANGE) return;
-        forSelectedGroups(function (w) {
-            w.rotate(x, y, z);
-            api.event.emit('widget.rotate', {widget: w, x, y, z});
-        });
-        updateSelectedBounds();
-        platform.update_bounds();
-        platform.compute_max_z();
-        api.event.emit('selection.rotate', {x, y, z});
-        updateSelectedInfo();
-        SPACE.update();
-        auto_save();
-    }
-
-    function exportSelection(format = "stl") {
-        let widgets = api.selection.widgets();
-        if (widgets.length === 0) {
-            widgets = api.widgets.all();
-        }
-        let facets = 0;
-        let outs = [];
-        widgets.forEach(widget => {
-            let mesh = widget.mesh;
-            let geo = mesh.geometry;
-            outs.push({geo, widget});
-            facets += geo.attributes.position.count;
-        });
-        if (format === "obj") {
-            let obj = [];
-            let vpad = 0;
-            for (let out of outs) {
-                let meta = out.widget.meta;
-                let name = meta.file || 'unnamed';
-                obj.push(`g ${name}`);
-                let { position } = out.geo.attributes;
-                let pvals = position.array;
-                for (let i=0, il=position.count; i<il; i += 3) {
-                    let pi = i * position.itemSize;
-                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                    obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                    obj.push(`f ${i+1+vpad} ${i+2+vpad} ${i+3+vpad}`);
-                }
-                vpad += position.count;
-            }
-            return obj.join('\n');
-        }
-        let stl = new Uint8Array(80 + 4 + facets/3 * 50);
-        let dat = new DataView(stl.buffer);
-        let pos = 84;
-        dat.setInt32(80, facets/3, true);
-        for (let out of outs) {
-            let { position } = out.geo.attributes;
-            let pvals = position.array;
-            for (let i=0, il=position.count; i<il; i += 3) {
-                let pi = i * position.itemSize;
-                let p0 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-                let p1 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-                let p2 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-                let norm = THREE.computeFaceNormal(p0, p1, p2);
-                let xo = 0, yo = 0, zo = 0;
-                if (outs.length > 1) {
-                    let {x, y, z} = out.widget.track.pos;
-                    xo = x;
-                    yo = y;
-                    zo = z;
-                }
-                dat.setFloat32(pos +  0, norm.x, true);
-                dat.setFloat32(pos +  4, norm.y, true);
-                dat.setFloat32(pos +  8, norm.z, true);
-                dat.setFloat32(pos + 12, p0.x + xo, true);
-                dat.setFloat32(pos + 16, p0.y + yo, true);
-                dat.setFloat32(pos + 20, p0.z + zo, true);
-                dat.setFloat32(pos + 24, p1.x + xo, true);
-                dat.setFloat32(pos + 28, p1.y + yo, true);
-                dat.setFloat32(pos + 32, p1.z + zo, true);
-                dat.setFloat32(pos + 36, p2.x + xo, true);
-                dat.setFloat32(pos + 40, p2.y + yo, true);
-                dat.setFloat32(pos + 44, p2.z + zo, true);
-                pos += 50;
-            }
-        }
-        return stl;
+        Widget.Groups.split(selection.widgets(false));
     }
 
     /** ******************************************************************
@@ -2173,7 +1901,7 @@
         // free up worker cache/mem
         kiri.work.clear();
         platform.select_all();
-        platform.delete(selectedMeshes);
+        platform.delete(selection.meshes());
     }
 
     function modalShowing() {
@@ -2423,7 +2151,7 @@
         const isCAM = settings.mode === 'CAM';
         viewMode = mode;
         platform.deselect();
-        updateSelectedInfo();
+        selection.update_info();
         // disable clear in non-arrange modes
         $('view-clear').style.display = mode === VIEWS.ARRANGE ? '' : 'none';
         switch (mode) {
@@ -2507,7 +2235,7 @@
         // other housekeeping
         triggerSettingsEvent();
         platform.update_selected();
-        updateSelectedBounds(WIDGETS);
+        selection.update_bounds(WIDGETS);
         updateFields();
         // because device dialog, if showing, needs to be updated
         if (modalShowing()) {

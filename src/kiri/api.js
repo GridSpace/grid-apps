@@ -4,7 +4,7 @@
 
 (function () {
 
-const { data, kiri } = self;
+const { data, kiri, noop } = self;
 const { consts, utils } = kiri;
 const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
 const { LISTS } = consts;
