@@ -36,7 +36,8 @@ kiri.load(function() {
 
     if (KIRI.client)
     CAM.animate = function(api, delay) {
-        SPACE = (API = api).const.SPACE;
+        API = api;
+        SPACE = KIRI.space;
         WORLD = SPACE.world;
         KIRI.client.animate_setup(API.conf.get(), data => {
             checkMeshCommands(data);

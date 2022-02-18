@@ -1000,7 +1000,7 @@
         }
     }
 
-    let Space = MOTO.Space = {
+    let Space = MOTO.Space = MOTO.space = {
         refresh: refresh,
         update: requestRefresh,
 

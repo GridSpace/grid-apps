@@ -366,6 +366,7 @@ const script = {
         "kiri/stack",
         "kiri/stacks",
         "kiri/widget",
+        "kiri/platform",
         "kiri/codec",
         "kiri/conf",
         "kiri/main",

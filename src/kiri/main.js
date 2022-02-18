@@ -6,7 +6,7 @@
 
     const { base, data, load, kiri, moto } = self;
     const { api, consts, lang, Widget, newWidget } = kiri;
-    const { feature } = api;
+    const { feature, platform } = api;
     const { COLOR, LISTS, PMODES, MODES, VIEWS } = kiri.consts;
     const { parseOpt, encodeOpt, ajax, o2js, js2o } = kiri.utils;
 
@@ -44,12 +44,9 @@
         // ---------------
         viewMode = VIEWS.ARRANGE,
         local = SETUP.local,
-        topZD = 0,
-        topZ = 0,
         busy = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
         alerts = [],
-        grouping = false,
         saveTimer = null,
         version = kiri.version = gapp.version;
 
@@ -81,41 +78,16 @@
         update_info: updateSelectedInfo,
         delete: function() { platform.delete(selection.widgets()) },
         export: exportSelection,
+        add(w) { selectedMeshes.addOnce(w.mesh) },
+        remove(w) { return selectedMeshes.remove(w.mesh) },
+        count() { return selectedMeshes.length },
+        contains(w) { return selectedMeshes.indexOf(w.mesh) >= 0 },
         enable() { selection.setDisabled(false) },
         disable() { selection.setDisabled(true) },
         setDisabled(bool) {
             forSelectedWidgets(w => w.meta.disabled = bool);
-            platformUpdateSelected();
+            platform.update_selected();
         }
-    };
-
-    const platform = {
-        add: platformAdd,
-        delete: platformDelete,
-        layout: platformLayout,
-        load: platformLoad,
-        load_stl: platformLoadSTL,
-        load_url: platformLoadURL,
-        deselect: platformDeselect,
-        select: platformSelect,
-        select_all: platformSelectAll,
-        selected_count: platformSelectedCount,
-        compute_max_z: platformComputeMaxZ,
-        update_origin: platformUpdateOrigin,
-        update_bounds: platformUpdateBounds,
-        update_size: platformUpdateSize,
-        update_top_z: platformUpdateTopZ,
-        update_selected: platformUpdateSelected,
-        update_speeds: updateSpeeds,
-        load_files: platformLoadFiles,
-        group: platformGroup,
-        group_done: platformGroupDone,
-        update: SPACE.platform.update,
-        set_font: SPACE.platform.setFont,
-        show_axes: SPACE.platform.showAxes,
-        show_volume: SPACE.platform.showVolume,
-        top_z: () => { return topZ },
-        clear: () => { clearWorkspace(); saveWorkspace(true)  }
     };
 
     const tweak = {
@@ -221,6 +193,10 @@
             import: noop,
             slider: hideSlider
         },
+        image: {
+            dialog: loadImageDialog,
+            convert: loadImageConvert
+        },
         language: kiri.lang,
         lists: LISTS,
         modal: {
@@ -247,6 +223,11 @@
         },
         platform,
         selection,
+        settings: {
+            import: settingsImport,
+            import_zip: settingsImportZip,
+            import_prusa: settingsPrusaConvert
+        },
         show: {
             alert: alert2,
             devices: noop, // set during init
@@ -259,7 +240,8 @@
             import: function() { UI.import.style.display = '' }
         },
         space: {
-            reload: reload,
+            reload,
+            auto_save,
             restore: restoreWorkspace,
             clear: clearWorkspace,
             save: saveWorkspace,
@@ -285,37 +267,43 @@
             is_arrange() { return viewMode === VIEWS.ARRANGE },
             is_slice() { return viewMode === VIEWS.SLICE },
             is_preview() { return viewMode === VIEWS.PREVIEW },
-            update_slider: updateSlider,
+            hide_slices: hideSlices,
+            update_speeds: updateSpeeds,
             update_fields: updateFields,
-            wireframe: setWireframe,
+            update_slider: updateSlider,
+            update_slider_max: updateSliderMax,
             snapshot: null,
             unit_scale: unitScale,
+            wireframe: setWireframe,
         },
         widgets: {
-            map: function() {
-                let map = {};
-                WIDGETS.forEach(widget => {
-                    map[widget.id] = widget;
-                });
-                return map;
-            },
             new: newWidget,
-            all: () => { return WIDGETS.slice() },
-            add: (widget) => { WIDGETS.push(widget) },
-            filter: (fn) => { WIDGETS = WIDGETS.filter(fn) },
-            for: forAllWidgets,
-            load: Widget.loadFromCatalog,
+            all() { return WIDGETS.slice() },
+            add(widget) { WIDGETS.push(widget) },
+            remove(widget) { return WIDGETS.remove(widget) },
+            filter(fn) { WIDGETS = WIDGETS.filter(fn) },
+            count() { return WIDGETS.length },
             heal: healWidgets,
+            for: forAllWidgets,
+            each: forAllWidgets,
+            load: Widget.loadFromCatalog,
             replace: replaceVertices,
             meshes: meshArray,
             opacity: setOpacity,
-            annotate: (id) => {
+            annotate(id) {
                 let w = WIDGETS.filter(w => w.id === id)[0];
                 if (!w) {
-                    console.log(`annotate missing widget ${id}`);
+                    console.trace(`annotate missing widget ${id}`);
                     return {};
                 }
                 return (w.anno = w.anno || {});
+            },
+            map() {
+                let map = {};
+                for (let widget of WIDGETS) {
+                    map[widget.id] = widget;
+                }
+                return map;
             }
         },
         work: kiri.work
@@ -345,8 +333,8 @@
             pos.y /= widgets.length;
             pos.z /= widgets.length;
         }
-        SPACE.platform.setCenter(pos.x, -pos.y, topZ / 2);
-        SPACE.view.setFocus(new THREE.Vector3(pos.x, topZ / 2, -pos.y));
+        SPACE.platform.setCenter(pos.x, -pos.y, platform.top_z() / 2);
+        SPACE.view.setFocus(new THREE.Vector3(pos.x, platform.top_z() / 2, -pos.y));
     }
 
     function reload() {
@@ -743,6 +731,39 @@
         UC.refresh();
     }
 
+    function updateSpeeds(maxSpeed, minSpeed) {
+        const { ui } = api;
+        ui.speeds.style.display =
+            maxSpeed &&
+            settings.mode !== 'SLA' &&
+            settings.mode !== 'LASER' &&
+            viewMode === VIEWS.PREVIEW &&
+            ui.showSpeeds.checked ? 'block' : '';
+        if (maxSpeed) {
+            const colors = [];
+            for (let i = 0; i <= maxSpeed; i += maxSpeed / 20) {
+                colors.push(Math.round(Math.max(i, 1)));
+            }
+            kiri.client.colors(colors, maxSpeed, speedColors => {
+                const list = [];
+                Object.keys(speedColors).map(v => parseInt(v)).sort((a, b) => b - a).forEach(speed => {
+                    const color = speedColors[speed];
+                    const hex = color.toString(16).padStart(6, 0);
+                    const r = (color >> 16) & 0xff;
+                    const g = (color >> 8) & 0xff;
+                    const b = (color >> 0) & 0xff;
+                    const style = `background-color:#${hex}`;
+                    list.push(`<label style="${style}">${speed}</label>`);
+                });
+                ui.speedbar.innerHTML = list.join('');
+            });
+            api.event.emit('preview.speeds', {
+                min: minSpeed,
+                max: maxSpeed
+            });
+        }
+    }
+
     function updateSlider() {
         api.event.emit("slider.set", {
             start: (api.var.layer_lo / api.var.layer_max),
@@ -931,35 +952,6 @@
         UI.layers.style.display = 'none';
         UI.slider.style.display = 'none';
         UI.speeds.style.display = 'none';
-    }
-
-    function updateSpeeds(maxSpeed, minSpeed) {
-        UI.speeds.style.display =
-            maxSpeed &&
-            settings.mode !== 'SLA' &&
-            settings.mode !== 'LASER' &&
-            viewMode === VIEWS.PREVIEW &&
-            UI.showSpeeds.checked ? 'block' : '';
-        if (maxSpeed) {
-            const colors = [];
-            for (let i=0; i<= maxSpeed; i += maxSpeed/20) {
-                colors.push(Math.round(Math.max(i,1)));
-            }
-            kiri.client.colors(colors, maxSpeed, speedColors => {
-                const list = [];
-                Object.keys(speedColors).map(v => parseInt(v)).sort((a,b) => b-a).forEach(speed => {
-                    const color = speedColors[speed];
-                    const hex = color.toString(16).padStart(6,0);
-                    const r = (color >> 16) & 0xff;
-                    const g = (color >>  8) & 0xff;
-                    const b = (color >>  0) & 0xff;
-                    const style = `background-color:#${hex}`;
-                    list.push(`<label style="${style}">${speed}</label>`);
-                });
-                UI.speedbar.innerHTML = list.join('');
-            });
-            api.event.emit('preview.speeds', {min: minSpeed, max: maxSpeed});
-        }
     }
 
     function prepareSlices(callback, scale = 1, offset = 0) {
@@ -1449,32 +1441,11 @@
         updateSelectedBounds();
     }
 
-    function fitDeviceToWidgets() {
-        let maxy = 0;
-        forAllWidgets(function(widget) {
-            let wb = widget.mesh.getBoundingBox().clone();
-            maxy = Math.max(maxy, wb.max.y - wb.min.y);
-        });
-        let dev = settings.device;
-        if (maxy > dev.bedDepth) {
-            dev.bedDepthSave = dev.bedDepth;
-            dev.bedDepth = maxy + 10;
-            SPACE.platform.setSize(
-                parseInt(dev.bedWidth),
-                parseInt(dev.bedDepth),
-                parseFloat(dev.bedHeight),
-                parseFloat(dev.maxHeight)
-            );
-            SPACE.platform.update();
-            return true;
-        }
-    }
-
     function updateSelectedBounds(widgets) {
         // update bounds on selection for drag limiting
         let isBelt = settings.device.bedBelt;
         if (isBelt) {
-            if (fitDeviceToWidgets()) {
+            if (platform.fit()) {
                 platform.update_origin();
                 SPACE.update();
             }
@@ -1554,7 +1525,7 @@
             w.move(x, y, z, abs);
         });
         updateSelectedBounds();
-        platformUpdateBounds();
+        platform.update_bounds();
         api.event.emit('selection.move', {x, y, z, abs});
         SPACE.update();
         auto_save();
@@ -1568,7 +1539,7 @@
         });
         platform.compute_max_z();
         updateSelectedBounds();
-        platformUpdateBounds();
+        platform.update_bounds();
         api.event.emit('selection.scale', [...arguments]);
         // skip update if last argument is strictly 'false'
         if ([...arguments].pop() === false) {
@@ -1586,7 +1557,7 @@
             api.event.emit('widget.rotate', {widget: w, x, y, z});
         });
         updateSelectedBounds();
-        platformUpdateBounds();
+        platform.update_bounds();
         platform.compute_max_z();
         api.event.emit('selection.rotate', {x, y, z});
         updateSelectedInfo();
@@ -1663,557 +1634,6 @@
             }
         }
         return stl;
-    }
-
-    /** ******************************************************************
-     * Platform Functions
-     ******************************************************************* */
-
-     function platformUpdateOrigin() {
-         platform.update_bounds();
-
-         let dev = settings.device;
-         let proc = settings.process;
-         let ruler = settings.controller.showRulers;
-         let stock = settings.stock;
-         let stockCenter = stock.center || {};
-         let hasStock = stock.x && stock.y && stock.z;
-         let isBelt = dev.bedBelt;
-         let center = MODE === MODES.FDM ? dev.originCenter || dev.bedRound :
-            MODE === MODES.SLA ? false :
-            MODE === MODES.CAM ? proc.outputOriginCenter :
-            dev.originCenter || proc.outputOriginCenter;
-         let x = 0;
-         let y = 0;
-         let z = 0;
-         if (MODE === MODES.CAM && proc.camOriginTop) {
-             z = (hasStock ? stock.z : topZ) + 0.01;
-         }
-         if (!center) {
-             if (hasStock) {
-                 x = (-stock.x / 2) + stockCenter.x;
-                 y = (stock.y / 2) - stockCenter.y;
-             } else {
-                 if (MODE === MODES.LASER && proc.outputOriginBounds) {
-                     let b = settings.bounds;
-                     x = b.min.x,
-                     y = -b.min.y
-                 } else {
-                     x = -dev.bedWidth / 2;
-                     y = dev.bedDepth / 2;
-                 }
-             }
-         } else if (hasStock) {
-             x = stockCenter.x;
-             y = -stockCenter.y;
-         } else if (isBelt) {
-             y = dev.bedDepth / 2;
-         }
-         settings.origin = {x, y, z};
-         SPACE.platform.setRulers(ruler, ruler, 1/unitScale(), 'X', isBelt ? 'Z' : 'Y');
-         if (settings.controller.showOrigin && MODE !== MODES.SLA) {
-             SPACE.platform.setOrigin(x,y,z,true);
-         } else {
-             SPACE.platform.setOrigin(x,y,z,false);
-         }
-     }
-
-     function platformUpdateTopZ(zdelta) {
-         // preserve topZD and re-use when not supplied as argument
-         topZD = zdelta !== undefined ? zdelta : topZD;
-         let stock = settings.stock;
-         let hasStock = stock.x && stock.y && stock.z;
-         forAllWidgets(function(widget) {
-             if (MODE === MODES.CAM) {
-                 let bounds = widget.getBoundingBox();
-                 let wzmax = bounds.max.z;
-                 let topz = hasStock ? stock.z : topZ;
-                 let zdelta = settings.process.camZOffset || 0;
-                 switch (settings.process.camZAnchor) {
-                    case 'top':
-                        widget.setTopZ(stock.z - zdelta);
-                        break;
-                    case 'middle':
-                        widget.setTopZ(stock.z - (stock.z - wzmax) / 2);
-                        break;
-                    case 'bottom':
-                        widget.setTopZ(wzmax + zdelta);
-                        break;
-                 }
-             } else {
-                 widget.setTopZ(0);
-             }
-         });
-     }
-
-    function platformUpdateSize(updateDark = true) {
-        let dev = settings.device,
-            isBelt = dev.bedBelt,
-            width, depth,
-            height = Math.round(Math.max(dev.bedHeight, dev.bedWidth/100, dev.bedDepth/100));
-        SPACE.platform.setRound(dev.bedRound);
-        SPACE.platform.setSize(
-            width = parseInt(dev.bedWidth),
-            depth = parseInt(dev.bedDepth),
-            height = parseFloat(dev.bedHeight),
-            parseFloat(dev.maxHeight || 100)
-        );
-        let proc = settings.process,
-            ctrl = settings.controller,
-            ruler = ctrl.showRulers,
-            unitMM = ctrl.units === 'mm',
-            gridMajor = unitMM ? 25 : 25.4,
-            gridMinor = unitMM ? 5 : 25.4 / 10;
-        if (updateDark) {
-            if (ctrl.dark) {
-                SPACE.platform.set({ light: 0.08 });
-                SPACE.platform.setFont({rulerColor:'#888888'});
-                SPACE.platform.setGrid(gridMajor, gridMinor, 0x666666, 0x333333);
-                SPACE.platform.opacity(0.05);
-                SPACE.sky.set({ color: 0, ambient: { intensity: 0.6 } });
-                DOC.body.classList.add('dark');
-            } else {
-                SPACE.platform.set({ light: 0.08 });
-                SPACE.platform.setFont({rulerColor:'#333333'});
-                SPACE.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
-                SPACE.platform.opacity(0.2);
-                SPACE.sky.set({ color: 0xffffff, ambient: { intensity: 1.1 } });
-                DOC.body.classList.remove('dark');
-            }
-            SPACE.platform.setSize();
-        }
-        SPACE.platform.setRulers(ruler, ruler, 1 / unitScale(), 'X', isBelt ? 'Z' : 'Y');
-        // SPACE.platform.setGZOff(height/2 - 0.1);
-        platform.update_origin();
-    }
-
-    function platformUpdateBounds() {
-        let bounds = new THREE.Box3();
-        forAllWidgets(function(widget) {
-            let wp = widget.track.pos;
-            let wb = widget.mesh.getBoundingBox().clone();
-            wb.min.x += wp.x;
-            wb.max.x += wp.x;
-            wb.min.y += wp.y;
-            wb.max.y += wp.y;
-            bounds.union(wb);
-        });
-        return settings.bounds = bounds;
-    }
-
-    function platformSelect(widget, shift, recurse = true) {
-        if (viewMode !== VIEWS.ARRANGE) {
-            return;
-        }
-        // apply select to entire group
-        if (recurse && widget && widget.group.length > 1) {
-            for (let w of widget.group) {
-                platformSelect(w, true, false);
-            }
-            return;
-        }
-        let mesh = widget.mesh,
-            sel = (selectedMeshes.indexOf(mesh) >= 0);
-        if (sel) {
-            if (shift) {
-                platform.deselect(widget, recurse)
-            } else if (selectedMeshes.length > 1) {
-                platform.deselect(undefined, recurse);
-                platform.select(widget, false, recurse);
-            }
-        } else {
-            // prevent selection in slice view
-            if (!mesh.material.visible) return;
-            if (!shift) platform.deselect(undefined, recurse);
-            selectedMeshes.push(mesh);
-            api.event.emit('widget.select', widget);
-            widget.setColor(COLOR.selected);
-            updateSelectedInfo();
-        }
-        platformUpdateSelected();
-        SPACE.update();
-    }
-
-    function platformSelectedCount() {
-        return viewMode === VIEWS.ARRANGE ? selectedMeshes.length : 0;
-    }
-
-    function platformUpdateSelected() {
-        let selreal = selection.widgets();
-        let selwid = selection.widgets(true);
-        let selcount = selwid.length;
-        let { extruders } = settings.device;
-        let { area, enable, disable } = UI.options;
-        area.style.display = selreal.length ? 'flex' : '';
-        if (selcount) {
-            let enaC = selwid.filter(w => w.meta.disabled !== true).length;
-            let disC = selwid.filter(w => w.meta.disabled === true).length;
-            enable.style.display = disC ? 'flex' : 'none';
-            disable.style.display = enaC ? 'flex' : 'none';
-            UI.nozzle.classList.add('lt-active');
-            if (feature.meta && selcount === 1) {
-                let sel = selwid[0];
-                let name = sel.meta.file || sel.meta.url;
-                if (name) {
-                    name = name
-                        .toLowerCase()
-                        .replace(/_/g,' ')
-                        .replace(/.png/,'')
-                        .replace(/.stl/,'');
-                    let sp = name.indexOf('/');
-                    if (sp >= 0) {
-                        name = name.substring(sp + 1);
-                    }
-                    UI.mesh.name.innerText = name;
-                }
-                UI.mesh.points.innerText = sel.meta.vertices;
-                UI.mesh.faces.innerText = sel.meta.vertices / 3;
-            } else {
-                UI.mesh.name.innerText = `[${selcount}]`;
-                UI.mesh.points.innerText = '-';
-                UI.mesh.faces.innerText = '-';
-            }
-        } else {
-            enable.style.display = 'none';
-            disable.style.display = 'none';
-            UI.mesh.name.innerText = '[0]';
-            UI.mesh.points.innerText = '-';
-            UI.mesh.faces.innerText = '-';
-            UI.nozzle.classList.remove('lt-active');
-        }
-        UI.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
-        if (extruders) {
-            for (let i=0; i<extruders.length; i++) {
-                let b = $(`sel-ext-${i}`);
-                if (b) b.classList.remove('pop-sel');
-            }
-            forSelectedWidgets(w => {
-                w.setColor(COLOR.selected);
-                let ext = api.widgets.annotate(w.id).extruder || 0;
-                let b = $(`sel-ext-${ext}`);
-                if (b) b.classList.add('pop-sel');
-                w.saveState();
-            }, true);
-        } else {
-            forSelectedWidgets(w => {
-                w.setColor(COLOR.selected);
-            }, true);
-        }
-    }
-
-    function platformDeselect(widget, recurse = true) {
-        if (viewMode !== VIEWS.ARRANGE) {
-            // don't de-select and re-color widgets in,
-            // for example, sliced or preview modes
-            return;
-        }
-        // apply deselect to entire group
-        if (recurse && widget && widget.group.length > 1) {
-            for (let w of widget.group) {
-                platformDeselect(w, false);
-            }
-            return;
-        }
-        if (!widget) {
-            forAllWidgets(function(widget) {
-                platform.deselect(widget);
-            });
-            return;
-        }
-        let mesh = widget.mesh,
-            si = selectedMeshes.indexOf(mesh),
-            sel = (si >= 0);
-        if (sel) {
-            selectedMeshes.splice(si,1);
-            api.event.emit('widget.deselect', widget);
-        }
-        widget.setColor(COLOR.deselected);
-        platformUpdateSelected();
-        SPACE.update();
-        updateSelectedInfo();
-    }
-
-    function platformLoad(url, onload) {
-        if (url.toLowerCase().indexOf(".stl") > 0) {
-            platform.load_stl(url, onload);
-        } else {
-            ajax(url, function(vertices) {
-                vertices = js2o(vertices).toFloat32();
-                let widget = newWidget().loadVertices(vertices);
-                widget.meta.url = url;
-                platform.add(widget);
-                if (onload) onload(vertices, widget);
-            });
-        }
-    }
-
-    function platformLoadSTL(url, onload, formdata) {
-        let scale = 1 / unitScale();
-        new load.STL().load(url, function(vertices, filename) {
-            if (vertices) {
-                let widget = newWidget().loadVertices(vertices);
-                widget.meta.file = filename;
-                platform.add(widget);
-                if (onload) {
-                    onload(vertices, widget);
-                }
-            }
-        }, formdata, scale);
-    }
-
-    function platformLoadURL(url, options = {}) {
-        platform.group();
-        load.URL.load(url, options).then((objects) => {
-            let widgets = [];
-            for (let object of objects) {
-                let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
-                widget.meta.file = object.file;
-                platform.add(widget);
-                widgets.push(widget);
-            }
-            platform.group_done();
-            api.event.emit("load.url", { url, options, widgets });
-        }).catch(error => {
-            api.show.alert(error);
-        });
-    }
-
-    function platformComputeMaxZ() {
-        topZ = 0;
-        forAllWidgets(function(widget) {
-            topZ = Math.max(topZ, widget.mesh.getBoundingBox().max.z);
-        });
-        SPACE.platform.setMaxZ(topZ);
-    }
-
-    function platformGroup() {
-        grouping = true;
-    }
-
-    // called after all new widgets are loaded to update group positions
-    function platformGroupDone(skipLayout) {
-        grouping = false;
-        Widget.Groups.loadDone();
-        if (feature.drop_layout && !skipLayout) {
-            platform.layout();
-        }
-    }
-
-    function platformAdd(widget, shift, nolayout) {
-        widget.anno.extruder = widget.anno.extruder || 0;
-        WIDGETS.push(widget);
-        SPACE.world.add(widget.mesh);
-        platform.select(widget, shift);
-        platform.compute_max_z();
-        api.event.emit('widget.add', widget);
-        platformChanged();
-        auto_save();
-        if (nolayout) {
-            return;
-        }
-        if (!grouping) {
-            platformGroupDone();
-            if (!settings.controller.autoLayout) {
-                positionNewWidget(widget);
-            }
-        }
-    }
-
-    function positionNewWidget(widget) {
-        if (WIDGETS.length <= 1) return;
-        let DEG2RAD = Math.PI / 180;
-        let { bedWidth, bedDepth } = settings.device;
-        let devOff = bedWidth / 2;
-        let wbb = widget.getBoundingBox();
-        let dim = { x: wbb.max.x - wbb.min.x, y: wbb.max.y - wbb.min.y };
-        let hdim = { x: dim.x / 2, y: dim.y / 2 };
-        let bounds = base.newBounds(), target = base.newBounds();
-        // look for best position for new widget that doesn't collide
-        outer: for (let rad=10; rad<200; rad += 10) {
-            inner: for (let d=0; d<360; d += 1) {
-                let dx = Math.cos(d * DEG2RAD) * rad;
-                let dy = Math.sin(d * DEG2RAD) * rad;
-                bounds.set(dx - hdim.x, dx + hdim.x, dy - hdim.y, dy + hdim.y);
-                for (let w=0, wl=WIDGETS.length; w<wl; w++) {
-                    let wt = WIDGETS[w];
-                    if (wt === widget) {
-                        continue;
-                    }
-                    let tpo = wt.track.pos;
-                    let tbb = wt.getBoundingBox();
-                    let dim = { x: (tbb.max.x - tbb.min.x) / 2, y : (tbb.max.y - tbb.min.y) / 2 };
-                    target.set(tpo.x - dim.x, tpo.x + dim.x, tpo.y - dim.y, tpo.y + dim.y);
-                    if (target.overlaps(bounds, 5)) {
-                        continue inner;
-                    }
-                }
-                widget._move(dx, dy, widget.track.pos.z, true);
-                break outer;
-            }
-        }
-    }
-
-    function platformDelete(widget) {
-        if (!widget) {
-            return;
-        }
-        if (Array.isArray(widget)) {
-            let mc = widget.slice(), i;
-            for (i=0; i<mc.length; i++) {
-                platform.delete(mc[i].widget || mc[i]);
-            }
-            return;
-        }
-        kiri.work.clear(widget);
-        WIDGETS.remove(widget);
-        Widget.Groups.remove(widget);
-        SPACE.world.remove(widget.mesh);
-        selectedMeshes.remove(widget.mesh);
-        updateSliderMax();
-        platform.compute_max_z();
-        if (MODE !== MODES.FDM) {
-            platform.layout();
-        }
-        SPACE.update();
-        platformUpdateSelected();
-        if (feature.drop_layout) platform.layout();
-        api.event.emit('widget.delete', widget);
-        platformChanged();
-        auto_save();
-    }
-
-    function platformChanged() {
-        h.bind($('ft-select'), WIDGETS.map(w => {
-            let color;
-            return [
-                h.button({ _: w.meta.file || 'no name',
-                    onmouseenter() {
-                        color = w.getColor();
-                        w.setColor(0x0088ff);
-                    },
-                    onmouseleave() {
-                        w.setColor(color);
-                    },
-                    onclick() {
-                        platformSelect(w, true, false);
-                        color = w.getColor();
-                    }
-                })
-            ]
-        }));
-    }
-
-    function platformSelectAll() {
-        forAllWidgets(function(w) { platform.select(w, true, false) })
-    }
-
-    function platformLayout(event, space = settings.controller.spaceLayout) {
-        let auto = UI.autoLayout.checked,
-            ctrl = settings.controller,
-            proc = settings.process,
-            dev = settings.device,
-            isBelt = dev.bedBelt,
-            oldmode = viewMode,
-            layout = (viewMode === VIEWS.ARRANGE && auto);
-
-        switch (MODE) {
-            case MODES.SLA:
-                space = space || (proc.slaSupportLayers && proc.slaSupportDensity ? 2 : 1);
-                break;
-            case MODES.CAM:
-            case MODES.LASER:
-                space = space || proc.outputTileSpacing || 1;
-                break;
-            case MODES.FDM:
-                space = space || ((proc.sliceSupportExtra || 0) * 2) + 1;
-                // auto resize device to support a larger object
-                if (isBelt) {
-                    fitDeviceToWidgets();
-                }
-                break;
-        }
-
-        setViewMode(VIEWS.ARRANGE);
-        hideSlices();
-        auto_save();
-
-        // only auto-layout when in arrange mode
-        if (oldmode !== VIEWS.ARRANGE) {
-            api.event.emit('platform.layout');
-            return SPACE.update();
-        }
-
-        // do not layout when switching back from slice view
-        if (!auto || (!space && !layout)) {
-            api.event.emit('platform.layout');
-            return SPACE.update();
-        }
-
-        let gap = space;
-
-        // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
-        if (MODE === MODES.CAM && WIDGETS.length > 1) {
-            let spacing = space || 1, CAM = kiri.driver.CAM;
-            if (proc.camRoughOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camRoughTool));
-            if (proc.camOutlineOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, proc.camOutlineTool));
-            gap = spacing * 1.5;
-        }
-
-        // space parts to account for anchor in belt mode
-        if (isBelt) {
-            gap += proc.firstLayerBeltLead || 0;
-        }
-
-        let i, m, sz = isBelt ? {x:1, y:100000} : SPACE.platform.size(),
-            mp = [sz.x, sz.y],
-            ms = [mp[0] / 2, mp[1] / 2],
-            c = Widget.Groups.blocks().sort(moto.Sort),
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
-
-        while (!p.packed) {
-            ms[0] *= 1.1;
-            ms[1] *= 1.1;
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
-        }
-
-        for (i = 0; i < c.length; i++) {
-            m = c[i];
-            m.fit.x += m.w / 2 + p.pad;
-            m.fit.y += m.h / 2 + p.pad;
-            m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
-            // m.material.visible = true;
-        }
-
-        if (isBelt) {
-            let bounds = platformUpdateBounds(),
-                movey = -(dev.bedDepth / 2 + bounds.min.y);
-            forAllWidgets(widget => {
-                // only move the root widget in the group
-                if (widget.id === widget.group.id) {
-                    widget.move(0, movey, 0);
-                }
-            });
-            if (ctrl.spaceLayout === 0) {
-                let sum = 0;
-                let sorted = WIDGETS.sort((a,b) => a.track.pos.y - b.track.pos.y);
-                sorted.forEach(w => {
-                    w.move(0, sum, 0);
-                    sum += w.track.box.d + 1;
-                });
-            }
-            if (ctrl.spaceRandoX) {
-                for (let w of WIDGETS) {
-                    w.move(
-                        (0.5 - Math.random()) * (dev.bedWidth - w.track.box.w - proc.firstLayerBrim),
-                        0, 0);
-                }
-            }
-        }
-
-        platform.update_origin();
-
-        api.event.emit('platform.layout');
-        SPACE.update();
     }
 
     /** ******************************************************************
@@ -2658,144 +2078,6 @@
             time: Date.now()
         };
         return opts.clear ? xprt : api.util.b64enc(xprt);
-    }
-
-    function platformLoadFiles(files,group) {
-        let loaded = files.length;
-        platform.group();
-        for (let i=0; i<files.length; i++) {
-            const file = files[i],
-                reader = new FileReader(),
-                lower = files[i].name.toLowerCase(),
-                israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
-                isstl = lower.indexOf(".stl") > 0,
-                isobj = lower.indexOf(".obj") > 0,
-                is3mf = lower.indexOf(".3mf") > 0,
-                issvg = lower.indexOf(".svg") > 0,
-                ispng = lower.indexOf(".png") > 0,
-                isjpg = lower.indexOf(".jpg") > 0,
-                isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
-                isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0,
-                iskmz = lower.indexOf(".kmz") > 0,
-                isini = lower.indexOf(".ini") > 0;
-            reader.file = files[i];
-            reader.onloadend = function (e) {
-                function load_dec() {
-                    if (--loaded === 0) platform.group_done(isgcode);
-                }
-                if (israw) {
-                    platform.add(
-                        newWidget(undefined,group)
-                        .loadVertices(JSON.parse(e.target.result).toFloat32())
-                    );
-                    load_dec();
-                }
-                else if (api.feature.on_load && (isstl || isobj || is3mf)) {
-                    api.feature.on_load(e.target.result, file);
-                    load_dec();
-                }
-                else if (isstl) {
-                    if (api.feature.on_add_stl) {
-                        api.feature.on_add_stl(e.target.result, file);
-                    } else {
-                        platform.add(
-                            newWidget(undefined,group)
-                            .loadVertices(new load.STL().parse(e.target.result,unitScale()))
-                            .saveToCatalog(e.target.file.name)
-                        );
-                    }
-                    load_dec();
-                }
-                else if (isobj) {
-                    let objs = load.OBJ.parse(e.target.result);
-                    let odon = function() {
-                        for (let obj of objs) {
-                            let name = e.target.file.name;
-                            if (obj.name) {
-                                name = obj.name + ' - ' + name;
-                            }
-                            platform.add(
-                                newWidget(undefined,group)
-                                .loadVertices(obj.toFloat32(), true)
-                                .saveToCatalog(name)
-                            );
-                        }
-                        load_dec();
-                    };
-                    if (objs.length > 1 && !group) {
-                        UC.confirm('group objects?').then(ok => {
-                            if (ok) {
-                                group = [];
-                            }
-                            odon();
-                        });
-                    } else {
-                        odon();
-                    }
-                }
-                else if (is3mf) {
-                    let odon = function(models) {
-                        let msg = api.show.alert('Adding Objects');
-                        for (let model of models) {
-                            let name = e.target.file.name;
-                            if (model.name) {
-                                name = model.name + ' - ' + name;
-                            }
-                            platform.add(
-                                newWidget(undefined,group)
-                                .loadVertices(model.faces.toFloat32())
-                                .saveToCatalog(name)
-                            );
-                        }
-                        load_dec();
-                        api.hide.alert(msg);
-                    }
-                    let msg = api.show.alert('Decoding 3MF');
-                    load.TMF.parseAsync(e.target.result).then(models => {
-                        api.hide.alert(msg);
-                        if (models.length > 1 && !group) {
-                            UC.confirm(`group ${models.length} objects?`).then(ok => {
-                                if (ok) {
-                                    group = [];
-                                }
-                                odon(models);
-                            });
-                        } else {
-                            odon(models);
-                        }
-                    });
-                }
-                else if (isgcode) {
-                    loadCode(e.target.result, 'gcode');
-                    load_dec();
-                }
-                else if (issvg) {
-                    let name = e.target.file.name;
-                    let svg = load.SVG.parse(e.target.result);
-                    let ind = 0;
-                    for (let v of svg) {
-                        let num = ind++;
-                        platform.add(
-                            newWidget(undefined, group)
-                            .loadVertices(svg[num].toFloat32())
-                            .saveToCatalog(num ? `${name}-${num}` : name)
-                        );
-                    }
-                    load_dec();
-                }
-                else if (iskmz) settingsImportZip(e.target.result, true);
-                else if (isset) settingsImport(e.target.result, true);
-                else if (ispng) loadImageDialog(e.target.result, e.target.file.name);
-                else if (isjpg) loadImageConvert(e.target.result, e.target.file.name);
-                else if (isini) settingsPrusaConvert(e.target.result);
-                else api.show.alert(`Unsupported file: ${files[i].name}`);
-            };
-            if (isstl || ispng || isjpg || iskmz) {
-                reader.readAsArrayBuffer(reader.file);
-            } else {
-                reader.readAsBinaryString(reader.file);
-            }
-        }
     }
 
     function loadImageConvert(res, name) {
@@ -3288,7 +2570,7 @@
         api.conf.save();
         // other housekeeping
         triggerSettingsEvent();
-        platformUpdateSelected();
+        platform.update_selected();
         updateSelectedBounds(WIDGETS);
         updateFields();
         // because device dialog, if showing, needs to be updated
