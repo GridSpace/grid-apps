@@ -7,7 +7,7 @@
 gapp.register('data.local');
 
 let data = self.data = self.data || {};
-if (data.Local) return;
+if (data.local) return;
 
 function Local() {
     this.__data__ = {};
@@ -34,13 +34,14 @@ LS.clear = function() {
 };
 
 try {
-    let local = data.Local = self.localStorage;
+    // deprecate 'Local' at some point
+    let local = data.local =self.localStorage;
     let testkey = '__test';
     local.setItem(testkey, 1);
     local.getItem(testkey);
     local.removeItem(testkey);
 } catch (e) {
-    data.Local = new Local();
+    data.local = new Local();
     let msg = "localStorage disabled: application may not function properly";
     console.log(msg);
     // alert(msg);

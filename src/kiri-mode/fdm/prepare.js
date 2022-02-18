@@ -8,10 +8,11 @@
         BASE = self.base,
         UTIL = BASE.util,
         POLY = BASE.polygons,
+        PATH = BASE.paths,
         FDM = KIRI.driver.FDM,
-        newPoint = BASE.newPoint,
-        newPolygon = BASE.newPolygon,
-        getRangeParameters = FDM.getRangeParameters,
+        { newPoint, newPolygon } = BASE,
+        { getRangeParameters } = FDM,
+        { poly2polyEmit } = PATH,
         debug = false;
 
     /**
@@ -185,7 +186,7 @@
 
                 // output brim points
                 let brimStart = offset < nozzle * 2 ? newPoint(-bedWidth, -bedDepth, 0) : printPoint;
-                printPoint = print.poly2polyEmit(polys, brimStart, (poly, index, count, startPoint) => {
+                printPoint = poly2polyEmit(polys, brimStart, (poly, index, count, startPoint) => {
                     return print.polyPrintPath(poly, startPoint, preout, {
                         rate: firstLayerRate,
                         onfirst: function(point) {
@@ -596,7 +597,7 @@
                 print.setType('shield');
                 shield = POLY.setZ(shield.clone(), printPoint.z);
                 let preout = [];
-                printPoint = print.poly2polyEmit(shield, printPoint, (poly, index, count, startPoint) => {
+                printPoint = poly2polyEmit(shield, printPoint, (poly, index, count, startPoint) => {
                     return print.polyPrintPath(poly, startPoint, preout, {
                         onfirst: function(point) {
                             if (preout.length && point.distTo2D(startPoint) > 2) {

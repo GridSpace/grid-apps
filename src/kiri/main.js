@@ -5,10 +5,10 @@
 (function () {
 
     const { base, data, load, kiri, moto } = self;
-    const { api, consts, lang, Widget, newWidget } = kiri;
+    const { api, consts, lang, Widget, newWidget, utils } = kiri;
+    const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
     const { feature, platform } = api;
-    const { COLOR, LISTS, PMODES, MODES, VIEWS } = kiri.consts;
-    const { parseOpt, encodeOpt, ajax, o2js, js2o } = kiri.utils;
+    const { COLOR, MODES, PMODES, VIEWS } = consts;
 
     const LANG = lang.current,
         WIN     = self.window,
@@ -19,7 +19,7 @@
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
         EVENT   = kiri.broker = gapp.broker,
-        SDB     = data.Local,
+        SDB     = data.local,
         ODB     = kiri.odb = new data.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
         // K3DB    = kiri.wdb = new data.Index('kiri3', { stores:["file","work"] }).init(),
         SPACE   = kiri.space = moto.Space,
@@ -90,30 +90,10 @@
         }
     };
 
-    const tweak = {
-        line_precision: (v) => { api.work.config({base:{clipperClean: v}}) },
-        gcode_decimals: (v) => { api.work.config({base:{gcode_decimals: v}}) }
-    };
-
-    const devel = {
-        xray: (layers, raw) => {
-            let proc = api.conf.get().process;
-            let size = proc.sliceHeight || proc.slaSlice || 1;
-            layers = Array.isArray(layers) ? layers : [ layers ];
-            proc.xray = layers.map(l => raw ? l : l * size + size / 2);
-            api.function.slice();
-        }
-    };
-
     // augment api
     Object.assign(api, {
         ui: UI,
         uc: UC,
-        sdb: SDB,
-        o2js: o2js,
-        js2o: js2o,
-        ajax: ajax,
-        clone: clone,
         focus: noop,
         stats: STATS,
         catalog: CATALOG,
@@ -141,16 +121,6 @@
             SECURE,
             STACKS,
         },
-        devel,
-        doit: {
-            undo: noop, // set in do.js
-            redo: noop  // set in do.js
-        },
-        var: {
-            layer_lo: 0,
-            layer_hi: 0,
-            layer_max: 0
-        },
         device: {
             code: currentDeviceCode,
             get: currentDeviceName,
@@ -173,7 +143,6 @@
             alerts: updateAlerts,
             settings: triggerSettingsEvent
         },
-        feature,
         function: {
             slice: prepareSlices,
             print: preparePreview,
@@ -198,7 +167,6 @@
             convert: loadImageConvert
         },
         language: kiri.lang,
-        lists: LISTS,
         modal: {
             show: showModal,
             hide: hideModal,
@@ -249,7 +217,6 @@
             update: SPACE.update,
             is_dark() { return settings.controller.dark }
         },
-        tweak,
         util: {
             isSecure,
             ui2rec: updateSettingsFromFields,
@@ -673,7 +640,7 @@
             let slice = slices[i];
             if (slice && !range) {
                 range = {lo: i, hi: i, fields: slice};
-            } else if (slice && range && isEquals(range.fields, slice)) {
+            } else if (slice && range && areEqual(range.fields, slice)) {
                 range.hi = i;
             } else if (range) {
                 ranges.push(range);
@@ -1691,29 +1658,6 @@
         }
     }
 
-    function isEquals(o1, o2) {
-        if (o1 == o2) return true;
-        if (Array.isArray(o1) && Array.isArray(o2)) {
-            if (o1.length === o2.length) {
-                for (let i=0; i<o1.length; i++) {
-                    if (o1[i] !== o2[i]) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        } else if (typeof(o1) === 'object' && typeof(o2) === 'object') {
-            let keys = Object.keys(Object.assign({}, o1, o2));
-            for (let key of keys) {
-                if (o1[key] !== o2[key]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
     /**
      * @returns {Object}
      */
@@ -1762,7 +1706,7 @@
             if (lastChange === uie) {
                 if (changes) changes[key] = nval;
             }
-            if (!isEquals(setrec[key], nval)) {
+            if (!areEqual(setrec[key], nval)) {
                 setrec[key] = nval;
                 if (changes) {
                     changes[key] = nval;

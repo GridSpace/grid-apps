@@ -4,8 +4,10 @@
 
 (function () {
 
-const { kiri } = self;
-const { consts } = kiri;
+const { data, kiri } = self;
+const { consts, utils } = kiri;
+const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
+const { LISTS } = consts;
 
 const feature = {
     seed: true, // seed profiles on first use
@@ -26,8 +28,40 @@ const feature = {
     pmode: consts.PMODES.SPEED // preview modes
 };
 
+const devel = {
+    xray: (layers, raw) => {
+        let proc = api.conf.get().process;
+        let size = proc.sliceHeight || proc.slaSlice || 1;
+        layers = Array.isArray(layers) ? layers : [ layers ];
+        proc.xray = layers.map(l => raw ? l : l * size + size / 2);
+        api.function.slice();
+    }
+};
+
+const tweak = {
+    line_precision(v) { api.work.config({base:{clipperClean: v}}) },
+    gcode_decimals(v) { api.work.config({base:{gcode_decimals: v}}) }
+};
+
 const api = kiri.api = {
-    feature
+    clone: Object.clone,
+    sdb: data.local,
+    ajax: ajax,
+    js2o: js2o,
+    o2js: o2js,
+    lists: LISTS,
+    doit: {
+        undo: noop, // set in do.js
+        redo: noop  // set in do.js
+    },
+    var: {
+        layer_lo: 0,
+        layer_hi: 0,
+        layer_max: 0
+    },
+    feature,
+    devel,
+    tweak,
 };
 
 })();

@@ -46,7 +46,31 @@ function js2o(s,def) {
     }
 }
 
+function areEqual(o1, o2) {
+    if (o1 == o2) return true;
+    if (Array.isArray(o1) && Array.isArray(o2)) {
+        if (o1.length === o2.length) {
+            for (let i=0; i<o1.length; i++) {
+                if (o1[i] !== o2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    } else if (typeof(o1) === 'object' && typeof(o2) === 'object') {
+        let keys = Object.keys(Object.assign({}, o1, o2));
+        for (let key of keys) {
+            if (o1[key] !== o2[key]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 kiri.utils = {
+    areEqual,
     parseOpt,
     encodeOpt,
     ajax,
