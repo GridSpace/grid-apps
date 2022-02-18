@@ -4,7 +4,7 @@
 
 (function() {
 
-    const { base, kiri } = self;
+    const { base, kiri, noop } = self;
     const { driver, fill, fill_fixed, newSlice, utils } = kiri;
     const { config, polygons, util, newPoint } = base;
     const { fillArea } = polygons;

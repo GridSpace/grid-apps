@@ -399,7 +399,7 @@
             }
         }
         if (data.load) {
-            platformLoad(data.load, (verts, widget) => {
+            api.platform.load(data.load, (verts, widget) => {
                 send({event: "loaded", data: [ widget.id ]});
             })
         };
@@ -2044,7 +2044,7 @@
     function loadFile() {
         $('load-file').onchange = function(event) {
             console.log(event);
-            platformLoadFiles(event.target.files);
+            api.platform.load_files(event.target.files);
         };
         $('load-file').click();
         // alert2("drag/drop STL files onto platform to import\nreload page to return to last saved state");

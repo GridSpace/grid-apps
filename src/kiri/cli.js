@@ -56,9 +56,8 @@ let exports_save = exports,
     gapp = {},
     geo = {},
     self = this.self = {
-        THREE,
         gapp,
-        kiri: { driver: {}, loader: [] },
+        THREE,
         location: { hostname: 'local', port: 0, protocol: 'fake' },
         postMessage: (msg) => {
             self.kiri.client.onmessage({data:msg});

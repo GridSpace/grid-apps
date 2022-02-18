@@ -46,6 +46,26 @@ function js2o(s,def) {
     }
 }
 
+// split 24 bit color into [ r, g, b ]
+function rgb(c) {
+    return [ (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff ];
+}
+
+// return 24 bit color from [ r, g, b ] array
+function a2c(a) {
+    return (a[0] << 16) | (a[1] << 8) | a[0];
+}
+
+// average two color arrays with weighting @ return 24 bit color
+function avgc(c1, c2, w = 3) {
+    let r1 = rgb(c1);
+    let r2 = rgb(c2);
+    let d = (w + 2);
+    return ((r1[0] * w + r2[0]) / d) << 16
+        | ((r1[1] * w + r2[1]) / d) << 8
+        | ((r1[2] * w + r2[2]) / d);
+}
+
 function areEqual(o1, o2) {
     if (o1 == o2) return true;
     if (Array.isArray(o1) && Array.isArray(o2)) {
@@ -76,6 +96,9 @@ kiri.utils = {
     ajax,
     o2js,
     js2o,
+    avgc,
+    rgb,
+    a2c
 };
 
 })();

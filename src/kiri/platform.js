@@ -793,7 +793,7 @@ const platform = api.platform = {
     show_axes: space.platform.showAxes,
     show_volume: space.platform.showVolume,
     top_z() { return topZ },
-    clear() { clearWorkspace(); saveWorkspace(true)  }
+    clear() { api.space.clear(); api.space.save(true)  }
 };
 
 })();
