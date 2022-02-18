@@ -349,7 +349,7 @@ const script = {
         "kiri/pack",
         "kiri/lang",
         "kiri/lang-en",
-        "kiri/catalog",
+        "kiri/files",
         "kiri/slice",
         "kiri/layers",
         "kiri/client",

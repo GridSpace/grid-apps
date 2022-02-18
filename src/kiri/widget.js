@@ -6,30 +6,33 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
     if (self.kiri.Widget) return;
 
-    const KIRI = self.kiri,
-        DRIVERS = KIRI.driver,
-        BASE = self.base,
-        CONF = BASE.config,
-        UTIL = BASE.util,
-        POLY = BASE.polygons,
-        MATH = Math,
-        PRO = Widget.prototype,
-        time = UTIL.time,
-        solid_opacity = 1.0;
+    const { base, kiri } = self;
+    const { driver } = kiri;
+    const { config, util, polygons } = base;
+    const { Mesh, newPoint, verticesToPoints } = base;
+    const { inRange, time } = util;
+
+    const POLY = polygons;
+    const PRO = Widget.prototype;
+    const solid_opacity = 1.0;
 
     let nextId = 0,
         groups = [];
 
-    KIRI.Widget = Widget;
-    KIRI.newWidget = newWidget;
+    kiri.Widget = Widget;
+    kiri.newWidget = newWidget;
 
     function newWidget(id,group) { return new Widget(id,group) }
+
+    function catalog() { return kiri.catalog }
+
+    function index() { return catalog().index }
 
     /** ******************************************************************
      * Group helpers
      ******************************************************************* */
 
-    let Group = Widget.Groups = {
+    const Group = Widget.Groups = {
 
         list: () => {
             return groups.slice()
@@ -129,9 +132,11 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
     };
 
-    /** ******************************************************************
-     * Constructor
-     ******************************************************************* */
+    // class Widget {
+    //     constructor(id, group) {
+    //
+    //     }
+    // }
 
     /**
      * @params {String} [id]
@@ -209,7 +214,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      ******************************************************************* */
 
     Widget.loadFromCatalog = function(filename, ondone) {
-        KIRI.catalog.getFile(filename, function(data) {
+        catalog().getFile(filename, function(data) {
             let widget = newWidget().loadVertices(data);
             widget.meta.file = filename;
             ondone(widget);
@@ -217,7 +222,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     Widget.loadFromState = function(id, ondone, move) {
-        KIRI.odb.get('ws-save-'+id, function(data) {
+        index().get('ws-save-'+id, function(data) {
             if (data) {
                 let vertices = data.geo || data,
                     indices = data.ind || undefined,
@@ -242,7 +247,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     Widget.deleteFromState = function(id,ondone) {
-        KIRI.odb.remove('ws-save-'+id, ondone);
+        index().remove('ws-save-'+id, ondone);
     };
 
     /** ******************************************************************
@@ -254,12 +259,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             return this;
         }
         let widget = this;
-        let time = UTIL.time();
+        let time = time();
         widget.meta.file = filename;
         widget.meta.save = time;
-        KIRI.catalog.putFile(filename, this.getGeoVertices(true), function(vertices) {
+        catalog().putFile(filename, this.getGeoVertices(true), function(vertices) {
             if (vertices && vertices.length) {
-                console.log("saving decimated mesh ["+vertices.length+"] time ["+(UTIL.time()-time)+"]");
+                console.log("saving decimated mesh ["+vertices.length+"] time ["+(time()-time)+"]");
                 widget.loadVertices(vertices);
             }
         });
@@ -276,7 +281,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             return;
         }
         let widget = this;
-        KIRI.odb.put('ws-save-'+this.id, {
+        index().put('ws-save-'+this.id, {
             geo: widget.getGeoVertices(false),
             ind: widget.getGeoIndices(),
             track: widget.track,
@@ -340,7 +345,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             }
         }
         if (options.index && !indices) {
-            let mesh = new BASE.Mesh({vertices});
+            let mesh = new Mesh({vertices});
             vertices = mesh.vertices.toFloat32();
             indices = Uint32Array.from(mesh.faces.map(v => v/3));
         }
@@ -379,7 +384,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     PRO.indexGeo = function() {
         let indices = this.getGeoIndices();
         if (!indices) {
-            let mesh = new BASE.Mesh({vertices: this.getGeoVertices()});
+            let mesh = new Mesh({vertices: this.getGeoVertices()});
             vertices = mesh.vertices.toFloat32();
             indices = Uint32Array.from(mesh.faces.map(v => v/3));
             this.loadData({vertices, indices});
@@ -392,12 +397,12 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             let verts = mesh.vertices;
             let edges = mesh.edges;
             let split = mesh.edges.filter(l => l.split);
-            let layrz = new KIRI.Layers();
+            let layrz = new kiri.Layers();
             layrz.setLayer("edges", {line: 0});
             for (let line of edges) {
                 layrz.addLine(
-                    BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2]),
-                    BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2])
+                    newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2]),
+                    newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2])
                 );
             }
             for (let l=0; l<mesh.loops.length; l++) {
@@ -405,24 +410,24 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 let zo = [0.15, 0.3, 0.45][l % 3];
                 for (let line of mesh.loops[l]) {
                     layrz.addLine(
-                        BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - zo),
-                        BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - zo)
+                        newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - zo),
+                        newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - zo)
                     );
                 }
             }
             layrz.setLayer("split", {line: 0xff00ff});
             for (let line of split) {
                 layrz.addLine(
-                    BASE.newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.6),
-                    BASE.newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.6)
+                    newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.6),
+                    newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.6)
                 );
             }
-            let stack = new KIRI.Stack(this.mesh);
+            let stack = new kiri.Stack(this.mesh);
             stack.addLayers(layrz);
             return { mesh, layrz, stack };
         }
         return new Promise((resolve, reject) => {
-            KIRI.client.heal(this.getVertices().array, data => {
+            kiri.client.heal(this.getVertices().array, data => {
                 if (data.vertices) {
                     this.loadVertices(data.vertices);
                     this.modified = true;
@@ -541,7 +546,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             mesh.material.transparent = solid_opacity < 1.0;
             mesh.material.opacity = solid_opacity;
             mesh.material.visible = false;
-        } else if (UTIL.inRange(value, 0.0, solid_opacity)) {
+        } else if (inRange(value, 0.0, solid_opacity)) {
             mesh.material.transparent = value < 1.0;
             mesh.material.opacity = value;
             mesh.material.visible = true;
@@ -655,7 +660,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
         }
         if (x || y || z) {
             this.setModified();
-            KIRI.api.event.emit('widget.move', {widget: this, pos});
+            kiri.api.event.emit('widget.move', {widget: this, pos});
         }
     };
 
@@ -798,7 +803,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 next: () => {
                     let done = index >= count;
                     return done ? { done } :
-                        { value: BASE.newPoint(verts[index++], verts[index++], verts[index++]) };
+                        { value: newPoint(verts[index++], verts[index++], verts[index++]) };
                 }
             } }
         };
@@ -807,7 +812,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     PRO.getPoints = function() {
         if (!this.points) {
             // convert and cache points from geometry vertices
-            this.points = BASE.verticesToPoints(this.getGeoVertices(), {
+            this.points = verticesToPoints(this.getGeoVertices(), {
                 maxpass: 0 // disable decimation
             });
         }
@@ -869,18 +874,18 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
      */
     PRO.slice = function(settings, ondone, onupdate) {
         let widget = this;
-        let startTime = UTIL.time();
+        let startTime = time();
 
         widget.settings = settings;
         widget.clearSlices();
         onupdate(0.0001, "slicing");
 
-        if (KIRI.client && !widget.inWorker) {
+        if (kiri.client && !widget.inWorker) {
             // in case result of slice is nothing, do not preserve previous
             widget.slices = []
 
             // executed from kiri.js
-            KIRI.client.slice(settings, this, function(reply) {
+            kiri.client.slice(settings, this, function(reply) {
                 if (reply.update) {
                     onupdate(reply.update, reply.updateStatus);
                 }
@@ -894,7 +899,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                     widget.stats.load_time = widget.xfer.start - reply.send_end;
                 }
                 if (reply.slice) {
-                    widget.slices.push(KIRI.codec.decode(reply.slice, {mesh:widget.mesh}));
+                    widget.slices.push(kiri.codec.decode(reply.slice, {mesh:widget.mesh}));
                 }
                 if (reply.rotinfo) {
                     widget.rotinfo = reply.rotinfo;
@@ -908,7 +913,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             });
         }
 
-        if (KIRI.server) {
+        if (kiri.server) {
             // executed from kiri-worker.js
             let catchdone = function(error) {
                 if (error) {
@@ -917,7 +922,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
                 onupdate(1.0, "transfer");
 
-                widget.stats.slice_time = UTIL.time() - startTime;
+                widget.stats.slice_time = time() - startTime;
 
                 ondone();
             };
@@ -926,10 +931,10 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
                 onupdate(progress, message);
             };
 
-            let driver = DRIVERS[settings.mode.toUpperCase()];
+            let drv = driver[settings.mode.toUpperCase()];
 
-            if (driver) {
-                driver.slice(settings, widget, catchupdate, catchdone);
+            if (drv) {
+                drv.slice(settings, widget, catchupdate, catchdone);
             } else {
                 console.log('invalid mode: '+settings.mode);
                 ondone('invalid mode: '+settings.mode);
@@ -954,7 +959,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
     };
 
     PRO.setWireframe = function(set, color, opacity) {
-        if (!(KIRI.api && KIRI.api.conf)) {
+        if (!(kiri.api && kiri.api.conf)) {
             // missing api features in engine mode
             return;
         }
@@ -966,7 +971,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             this.wire = null;
         }
         if (set) {
-            let dark = KIRI.api.conf.get().controller.dark;
+            let dark = kiri.api.conf.get().controller.dark;
             let mat = new THREE.MeshBasicMaterial({
                 wireframe: true,
                 color: dark ? 0xaaaaaa : 0,
@@ -976,7 +981,7 @@ console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
             let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
             mesh.add(wire);
         }
-        if (KIRI.api.view.get() === KIRI.consts.VIEWS.ARRANGE) {
+        if (kiri.api.view.get() === kiri.consts.VIEWS.ARRANGE) {
             this.setColor(this.color);
         } else {
             this.setColor(0x888888,undefined,false);

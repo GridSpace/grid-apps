@@ -4,12 +4,12 @@
 
 (function() {
 
-    const KIRI = self.kiri;
+    const { kiri } = self;
 
-    class Catalog {
-        constructor(motodb, options) {
+    class Files {
+        constructor(indexdb, options) {
             let store = this;
-            this.db = motodb;
+            this.db = indexdb;
             this.files = {};
             this.listeners = [];
             this.options = options || {};
@@ -21,6 +21,10 @@
         setOptions(options) {
             this.options = options;
             return this;
+        }
+
+        get index() {
+            return this.db;
         }
 
         refresh() {
@@ -60,7 +64,7 @@
             if (vertices.length < (options.threshold || 500000)) {
                 return callback(vertices);
             }
-            KIRI.work.decimate(vertices, this.options, function(reply) {
+            kiri.work.decimate(vertices, this.options, function(reply) {
                 callback(reply);
             });
         };
@@ -188,6 +192,16 @@
             }
             if (callback) callback(false);
         };
+
+        deleteFilter(fn, from, to) {
+            this.db.keys(keys => {
+                for (let key of keys) {
+                    if (fn(key)) {
+                        this.db.remove(key);
+                    }
+                }
+            }, from, to);
+        }
     }
 
     function saveFileList(store) {
@@ -201,8 +215,8 @@
         }
     }
 
-    KIRI.openCatalog = function(motodb, options) {
-        return new Catalog(motodb, options);
+    kiri.openFiles = function(indexdb, options) {
+        return new Files(indexdb, options);
     };
 
 })();

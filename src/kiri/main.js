@@ -20,10 +20,8 @@
         LOCAL   = self.debug && !SETUP.remote,
         EVENT   = kiri.broker = gapp.broker,
         SDB     = data.local,
-        ODB     = kiri.odb = new data.Index(SETUP.d ? SETUP.d[0] : 'kiri'),
-        // K3DB    = kiri.wdb = new data.Index('kiri3', { stores:["file","work"] }).init(),
         SPACE   = kiri.space = moto.Space,
-        CATALOG = kiri.catalog = kiri.openCatalog(ODB),
+        FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
         STATS   = new Stats(SDB),
         // ---------------
         CONF    = kiri.conf,
@@ -51,7 +49,7 @@
         version = kiri.version = gapp.version;
 
     // add show() to catalog for API
-    CATALOG.show = showCatalog;
+    FILES.show = showCatalog;
 
     // patch broker for api backward compatibility
     EVENT.on = (topic, listener) => {
@@ -96,7 +94,7 @@
         uc: UC,
         focus: noop,
         stats: STATS,
-        catalog: CATALOG,
+        catalog: FILES,
         busy: {
             val() { return busy },
             inc() { kiri.api.event.emit("busy", ++busy) },
@@ -2054,8 +2052,8 @@
 
     function saveWorkspace(quiet) {
         api.conf.save();
-        let newWidgets = [],
-            oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
+        const newWidgets = [];
+        const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         forAllWidgets(function(widget) {
             if (widget.synth) return;
             newWidgets.push(widget.id);
@@ -2070,13 +2068,7 @@
             Widget.deleteFromState(wid);
         });
         // eliminate dangling saved widgets
-        ODB.keys(keys => {
-            keys.forEach(key => {
-                if (newWidgets.indexOf(key.substring(8)) < 0) {
-                    ODB.remove(key);
-                }
-            })
-        }, "ws-save-" ,"ws-savf");
+        FILES.deleteFilter(key => newWidgets.indexOf(key.substring(8)) < 0, "ws-save-", "ws-savf");
         if (!quiet) {
             alert2("workspace saved", 1);
         }
