@@ -6,8 +6,8 @@
 
     const { base, data, load, kiri, moto, noop } = self;
     const { api, consts, lang, Widget, newWidget, utils } = kiri;
-    const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
-    const { feature, platform, selection } = api;
+    const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
+    const { feature, platform, selection, settings } = api;
     const { COLOR, MODES, PMODES, VIEWS } = consts;
 
     const LANG = lang.current,
@@ -26,14 +26,11 @@
         CONF    = kiri.conf,
         clone   = Object.clone;
 
-    let settings = clone(CONF.template),
-        UI = {},
-        UC = kiri.ui.prefix('kiri').inputAction(updateSettings),
+    let UI = {},
+        UC = kiri.ui.prefix('kiri').inputAction(api.conf.update),
         MODE = MODES.FDM,
         STACKS = kiri.stacks,
         DRIVER = undefined,
-        localFilterKey ='kiri-gcode-filters',
-        localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         viewMode = VIEWS.ARRANGE,
         local = SETUP.local,
         busy = 0,
@@ -63,18 +60,6 @@
             inc() { kiri.api.event.emit("busy", ++busy) },
             dec() { kiri.api.event.emit("busy", --busy) }
         },
-        conf: {
-            dbo: () => { return ls2o('ws-settings') },
-            get: getSettings,
-            put: putSettings,
-            load: loadSettings,
-            save: saveSettings,
-            show: showSettings,
-            update: updateSettings,
-            restore: restoreSettings,
-            export: settingsExport,
-            import: settingsImport
-        },
         const: {
             LANG,
             LOCAL,
@@ -90,7 +75,8 @@
         },
         dialog: {
             show: showModal,
-            hide: hideModal
+            hide: hideModal,
+            update_process_list: updateProcessList
         },
         help: {
             show: showHelp,
@@ -144,11 +130,6 @@
             code: currentProcessCode,
             get: currentProcessName
         },
-        settings: {
-            import: settingsImport,
-            import_zip: settingsImportZip,
-            import_prusa: settingsPrusaConvert
-        },
         show: {
             alert: alert2,
             devices: noop, // set during init
@@ -168,11 +149,11 @@
             save: saveWorkspace,
             set_focus: setFocus,
             update: SPACE.update,
-            is_dark() { return settings.controller.dark }
+            is_dark() { return settings.ctrl().dark }
         },
         util: {
             isSecure,
-            ui2rec: updateSettingsFromFields,
+            ui2rec() { api.conf.update_from(...arguments) },
             rec2ui: updateFieldsFromSettings,
             download: downloadBlob,
             b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
@@ -245,7 +226,7 @@
     }
 
     function auto_save() {
-        if (!settings.controller.autoSave) {
+        if (!settings.ctrl().autoSave) {
             return;
         }
         clearTimeout(saveTimer);
@@ -275,9 +256,9 @@
         }
         if (data.emit) api.event.emit(data.emit, data.message)
         if (data.get) switch (data.get) {
-            case "mode": send({mode: settings.mode}); break;
-            case "device": send({device: settings.device}); break;
-            case "process": send({process: settings.process}); break;
+            case "mode": send({mode: settings.mode()}); break;
+            case "device": send({device: settings.dev()}); break;
+            case "process": send({process: settings.proc()}); break;
             default: send({all: settings}); break;
 
         }
@@ -286,12 +267,12 @@
                 Object.assign(feature, data.features);
                 break;
             case "device":
-                Object.assign(settings.device, data.options);
-                saveSettings();
+                Object.assign(settings.dev(), data.options);
+                api.conf.save();
                 break;
             case "process":
-                Object.assign(settings.process, data.options);
-                saveSettings();
+                Object.assign(settings.proc(), data.options);
+                api.conf.save();
                 break;
         }
         if (data.parse) {
@@ -393,7 +374,7 @@
      ******************************************************************* */
 
     function unitScale() {
-        return MODE === MODES.CAM && settings.controller.units === 'in' ? 25.4 : 1;
+        return MODE === MODES.CAM && settings.ctrl().units === 'in' ? 25.4 : 1;
     }
 
     function alert2(message, time) {
@@ -469,10 +450,6 @@
          return proto.toLowerCase().indexOf("https") === 0;
     }
 
-    function ls2o(key,def) {
-        return js2o(SDB.getItem(key),def);
-    }
-
     function setProgress(value, msg) {
         if (value) {
             value = (value * 100).round(4);
@@ -490,7 +467,7 @@
 
     function getOverlappingRanges(lo, hi) {
         let ranges = [];
-        for (let range of settings.process.ranges || []) {
+        for (let range of settings.proc().ranges || []) {
             let in_lo = range.lo >= lo && range.lo <= hi;
             let in_hi = range.hi >= lo && range.hi <= hi;
             if (in_lo || in_hi) {
@@ -502,7 +479,7 @@
 
     // set process override values for a range
     function updateRange(lo, hi, values, add) {
-        let ranges = settings.process.ranges;
+        let ranges = settings.proc().ranges;
         let slices = {};
         let min = lo;
         let max = hi;
@@ -512,7 +489,7 @@
             ranges.push({
                 lo, hi, fields: values
             });
-            updateFieldsFromSettings(settings.process);
+            updateFieldsFromSettings(settings.proc());
             api.show.alert("update ranges", 2);
             api.event.emit("range.updates", ranges);
             return;
@@ -557,7 +534,7 @@
         }
 
         // merge contiguous matching ranges
-        ranges = settings.process.ranges = [];
+        ranges = settings.proc().ranges = [];
         let range;
         for (let i=min; i<=max; i++) {
             let slice = slices[i];
@@ -578,7 +555,7 @@
         ranges.push(range);
         ranges.appendAll(exclude);
 
-        updateFieldsFromSettings(settings.process);
+        updateFieldsFromSettings(settings.proc());
         api.show.alert("update ranges", 2);
         api.event.emit("range.updates", ranges);
     }
@@ -588,7 +565,7 @@
     // updates editable fields that are range dependent
     function updateFieldsFromRange() {
         return;
-        if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.process.ranges) {
+        if (settings.mode !== 'FDM' || viewMode !== VIEWS.SLICE || !settings.proc().ranges) {
             let okeys = Object.keys(overrides);
             if (okeys.length) {
                 updateFieldsFromSettings(overrides);
@@ -603,7 +580,7 @@
         for (let range of getOverlappingRanges(api.var.layer_lo, api.var.layer_hi)) {
             for (let key of Object.keys(range.fields)) {
                 values[key] = range.fields[key];
-                overrides[key] = settings.process[key];
+                overrides[key] = settings.proc()[key];
                 delete restores[key];
                 match++;
             }
@@ -870,70 +847,11 @@
         }
     }
 
-    /**
-     * @returns {Object}
-     */
-    function updateSettingsFromFields(setrec, uirec = UI, changes) {
-        if (!setrec) {
-            return console.trace("missing scope");
-        }
-
-        let lastChange = UC.lastChange();
-
-        // for each key in setrec object
-        for (let key in setrec) {
-            if (!setrec.hasOwnProperty(key)) {
-                // console.log({no_setrec: key});
-                continue;
-            }
-            if (!uirec.hasOwnProperty(key)) {
-                // console.log({no_uirec: key});
-                continue;
-            }
-            let nval = null, uie = uirec[key];
-            // skip empty UI values
-            if (!uie || uie === '') {
-                // console.log({uie_empty: key});
-                continue;
-            }
-            if (uie.type === 'text') {
-                nval = uirec[key].convert();
-            } else if (uie.type === 'checkbox') {
-                nval = uirec[key].checked;
-            } else if (uie.type === 'select-one') {
-                if (uie.selectedIndex >= 0) {
-                    nval = uie.options[uie.selectedIndex].value;
-                    let src = uie.parentNode.getAttribute('source');
-                    if (src === 'tools') {
-                        nval = parseInt(nval);
-                    }
-                } else {
-                    nval = setrec[key];
-                }
-            } else if (uie.type === 'textarea') {
-                nval = uie.value.trim().split('\n').filter(v => v !== '');
-            } else {
-                continue;
-            }
-            if (lastChange === uie) {
-                if (changes) changes[key] = nval;
-            }
-            if (!areEqual(setrec[key], nval)) {
-                setrec[key] = nval;
-                if (changes) {
-                    changes[key] = nval;
-                }
-            }
-        }
-
-        return settings;
-    }
-
     function updateFields() {
-        updateFieldsFromSettings(settings.device);
-        updateFieldsFromSettings(settings.process);
-        updateFieldsFromSettings(settings.controller);
-        updateExtruderFields(settings.device);
+        updateFieldsFromSettings(settings.dev());
+        updateFieldsFromSettings(settings.proc());
+        updateFieldsFromSettings(settings.ctrl());
+        updateExtruderFields(settings.dev());
     }
 
     function updateExtruderFields(device) {
@@ -965,276 +883,6 @@
                 updateExtruderFields(device);
             };
         }
-    }
-
-    function updateSettings(opt = {}) {
-        let { controller, device, process, mode, sproc, cproc } = settings;
-        updateSettingsFromFields(controller);
-        switch (controller.units) {
-            case 'mm': UC.setUnits(1); break;
-            case 'in': UC.setUnits(25.4); break;
-        }
-        if (opt.controller) {
-            return;
-        }
-        updateSettingsFromFields(device, undefined, undefined, true);
-        // range-specific values
-        if (settings.mode === 'FDM' && viewMode === VIEWS.SLICE) {
-            let changes = {};
-            let values = process;
-            let { layer_lo, layer_hi, layer_max } = api.var;
-            let range = { lo: layer_lo, hi: layer_hi };
-            let add = false;
-            if (layer_lo > 0 || layer_hi < layer_max) {
-                values = Object.clone(process);
-                add = true;
-            }
-            updateSettingsFromFields(values, undefined, changes);
-            if (range) {
-                updateRange(range.lo, range.hi, changes, add);
-            }
-        } else {
-            updateSettingsFromFields(process);
-        }
-        if (device.extruders && device.extruders[device.internal]) {
-            updateSettingsFromFields(device.extruders[device.internal]);
-        }
-        api.conf.save();
-        let compare = sproc[mode][cproc[mode]];
-        let same = true;
-        if (compare)
-        for (let [key, val] of Object.entries(compare).filter(v => v[0] !== 'processName')) {
-            let tval = process[key];
-            // outputLoopLayers misbehaving and setting null on empty
-            if (val === '' && tval == null) {
-                continue;
-            }
-            if (Array.isArray(tval) && Array.isArray(val)) {
-                if (JSON.stringify(tval) == JSON.stringify(val)) {
-                    continue;
-                }
-            }
-            if (tval != val) {
-                // console.log(key, 'expected', val, 'got', tval);
-                same = false;
-            }
-        }
-        $('mode-device').innerText = device.deviceName;
-        $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
-    }
-
-    function saveSettings() {
-        const view = SPACE.view.save();
-        if (view.left || view.up) {
-            settings.controller.view = view;
-        }
-        const mode = settings.mode;
-        settings.sproc[mode].default = settings.process;
-        settings.sproc[mode][settings.process.processName] = settings.process;
-        settings.device.bedBelt = UI.deviceBelt.checked;
-        settings.device.bedRound = UI.deviceRound.checked;
-        settings.device.originCenter = UI.deviceOrigin.checked || UI.deviceRound.checked;
-        settings.device.fwRetract = UI.fwRetract.checked;
-        SDB.setItem('ws-settings', JSON.stringify(settings));
-        api.event.emit('settings.saved', settings);
-    }
-
-    function settingsImportZip(data, ask) {
-        let alert = api.show.alert("Importing Workspace");
-        JSZip.loadAsync(data).then(zip => {
-            for (let [key,value] of Object.entries(zip.files)) {
-                if (key === "workspace.json") {
-                    value.async("string").then(json => {
-                        api.hide.alert(alert);
-                        settingsImport(JSON.parse(json), ask);
-                    });
-                }
-            }
-        });
-    }
-
-    // import and convert prusa ini file
-    function settingsPrusaConvert(data) {
-        let map = {};
-        try {
-            data.split('\n')
-                .filter(l => l.charAt(0) !== '#')
-                .map(l => l.split('=').map(v => v.trim()))
-                .map(l => {
-                    // convert gcode string into a string array
-                    if (l[0].indexOf('_gcode') > 0) {
-                        l[1] = l[1].replaceAll('\\n','\n').split('\n');
-                    }
-                    return l;
-                })
-                .forEach(l => {
-                    map[l[0]] = l[1];
-                });
-        } catch (e) {
-            return UC.alert('invalid file');
-        }
-        // device setup
-        let device = Object.clone(kiri.conf.defaults.fdm.d);
-        let dname = device.deviceName = map.printer_model;
-        if (dname) {
-            let mode = "FDM";
-            device.mode = mode;
-            device.extruders[0].extNozzle = parseFloat(map.nozzle_diameter);
-            device.gcodePre = map.start_gcode;
-            device.gcodePost = map.end_gcode;
-            device.gcodeLayer = map.layer_gcode || [];
-            device.maxHeight = parseInt(map.max_print_height || device.maxHeight);
-            if (map.bed_shape) {
-                let shape = map.bed_shape.split(',').map(l => l.split('x'));
-                device.bedWidth = parseInt(shape[2][0]);
-                device.bedDepth = parseInt(shape[2][1]);
-            }
-        }
-        // profile setup
-        let process = Object.clone(kiri.conf.defaults.fdm.p);
-        let pname = process.processName = map.print_settings_id;
-        if (pname) {
-            process.sliceShells = parseInt(map.perimeters);
-            process.sliceHeight = parseFloat(map.layer_height);
-            process.outputFeedrate = parseInt(map.perimeter_speed);
-            process.outputSeekrate = parseInt(map.travel_speed);
-            process.outputTemp = parseInt(map.temperature);
-            process.outputBedTemp = parseInt(map.bed_temperature);
-            process.sliceTopLayers = parseInt(map.top_solid_layers);
-            process.sliceBottomLayers = parseInt(map.bottom_solid_layers);
-            process.firstSliceHeight = parseFloat(map.first_layer_height);
-            process.firstLayerNozzleTemp = parseInt(map.first_layer_temperature);
-            process.firstLayerRate = (
-                (parseFloat(map.first_layer_speed) / 100) * process.outputFeedrate);
-            process.firstLayerBedTemp = parseInt(map.first_layer_bed_temperature);
-            process.outputRetractDist = parseFloat(map.retract_length);
-            process.outputRetractSpeed = parseFloat(map.retract_speed);
-        }
-        UC.confirm(`Import "${dname}"?`).then(yes => {
-            if (yes) {
-                // create device, associated profile, set as current and show dialog
-                settings.devices[dname] = device;
-                settings.devproc[dname] = pname;
-                settings.process = settings.sproc.FDM[pname] = process;
-                settings.filter.FDM = dname;
-                settings.cproc.FDM = pname;
-                api.show.devices();
-            }
-        });
-    }
-
-    function settingsImport(data, ask) {
-        if (typeof(data) === 'string') {
-            try {
-                data = api.util.b64dec(data);
-            } catch (e) {
-                UC.alert('invalid import format');
-                console.log('data',data);
-                return;
-            }
-        }
-        if (LOCAL) console.log('import',data);
-        let isSettings = (data.settings && data.version && data.time);
-        let isProcess = (data.process && data.version && data.time && data.mode && data.name);
-        let isDevice = (data.device && data.version && data.time);
-        let isWork = (data.work);
-        if (!isSettings && !isDevice && !isProcess) {
-            UC.alert('invalid settings or device format');
-            console.log('data',data);
-            return;
-        }
-        function doit() {
-            if (isDevice) {
-                if (settings.devices[data.device]) {
-                    UC.confirm(`Replace device ${data.device}?`).then(yes => {
-                        if (yes) {
-                            settings.devices[data.device] = data.code;
-                            api.show.devices();
-                        }
-                    });
-                } else {
-                    settings.devices[data.device] = data.code;
-                    api.show.devices();
-                }
-            }
-            if (isProcess) {
-                if (settings.sproc[data.mode][data.name]) {
-                    UC.confirm(`Replace process ${data.name}?`).then(yes => {
-                        if (yes) {
-                            settings.sproc[data.mode][data.name] = data.process;
-                            api.conf.show();
-                        }
-                    });
-                } else {
-                    settings.sproc[data.mode][data.name] = data.process;
-                    api.conf.show();
-                }
-            }
-            if (isSettings) {
-                clearWorkspace();
-                settings = CONF.normalize(data.settings);
-                SDB.setItem('ws-settings', JSON.stringify(settings));
-                if (LOCAL) console.log('settings',Object.clone(settings));
-                if (isWork) {
-                    api.platform.clear();
-                    kiri.codec.decode(data.work).forEach(widget => {
-                        platform.add(widget, 0, true);
-                    });
-                    if (data.view) {
-                        SPACE.view.load(data.view);
-                    }
-                }
-                restoreSettings();
-                restoreWorkspace(() => {
-                    UI.sync();
-                }, true);
-            }
-        }
-        if (ask) {
-            let opt = {};
-            let prompt = isDevice ?
-                `Import device "${data.device}"?` : isProcess ?
-                `Import process "${data.name}"?` :
-                `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
-            if (data.screen) {
-                opt.pre = [
-                    '<div class="f-col a-center">',
-                    `<img src="${data.screen}" style="width:300px"/>`,
-                    '</div>'
-                ];
-            }
-            UC.confirm(prompt,undefined,undefined,opt).then((yes) => {
-                if (yes) doit();
-            });
-        } else {
-            doit();
-        }
-    }
-
-    function settingsExport(opts = {}) {
-        const WIDGETS = api.widgets.all();
-        const note = opts.node || undefined;
-        const shot = opts.work || opts.screen ? SPACE.screenshot() : undefined;
-        const work = opts.work ? kiri.codec.encode(WIDGETS,{_json_:true}) : undefined;
-        const view = opts.work ? SPACE.view.save() : undefined;
-        const setn = Object.clone(settings);
-        // stuff in legacy annotations for re-import
-        for (let w of WIDGETS) {
-            setn.widget[w.id] = w.anno;
-        }
-        const xprt = {
-            settings: setn,
-            version: kiri.version,
-            screen: shot,
-            space: SPACE.info,
-            note: note,
-            work: work,
-            view: view,
-            moto: moto.id,
-            init: SDB.getItem('kiri-init'),
-            time: Date.now()
-        };
-        return opts.clear ? xprt : api.util.b64enc(xprt);
     }
 
     function loadImageConvert(res, name) {
@@ -1289,44 +937,8 @@
         }
     }
 
-    function restoreSettings(save) {
-        const WIDGETS = api.widgets.all();
-        const newset = ls2o('ws-settings') || settings;
-        // extract legacy widget annotations into widgets
-        if (newset.widget) {
-            for (let id of Object.keys(newset.widget)) {
-                let anno = newset.widget[id];
-                let wid = WIDGETS.filter(w => w.id === id)[0];
-                if (wid && anno) {
-                    wid.anno = anno;
-                    console.log('transfer settings annotations to widget', id);
-                    wid.saveState();
-                } else {
-                    console.log('missing widget for annotations', id);
-                }
-                delete newset.widget[id];
-            }
-        }
-        settings = CONF.normalize(newset);
-        // override camera from settings
-        if (settings.controller.view) {
-            SDB.removeItem('ws-camera');
-        }
-        // merge custom filters from localstorage into settings
-        localFilters.forEach(function(fname) {
-            let fkey = "gcode-filter-"+fname, ov = ls2o(fkey);
-            if (ov) settings.devices[fname] = ov;
-            SDB.removeItem(fkey)
-        });
-        SDB.removeItem(localFilterKey);
-        // save updated settings
-        if (save) api.conf.save();
-
-        return newset;
-    }
-
     function restoreWorkspace(ondone, skip_widget_load) {
-        let newset = restoreSettings(false),
+        let newset = api.conf.restore(false),
             camera = newset.controller.view,
             toload = ls2o('ws-widgets',[]),
             loaded = 0,
@@ -1352,12 +964,6 @@
         // remove any widgets from platform
         api.widgets.each(function(widget) {
             platform.delete(widget);
-        });
-
-        // remove widget keys if they are not going to be restored (TODO: remove in 3.1)
-        if (settings.widget)
-        Object.keys(settings.widget).filter(k => toload.indexOf(k) < 0).forEach(k => {
-            delete settings.widget[k];
         });
 
         // load any widget by name that was saved to the workspace
@@ -1442,25 +1048,16 @@
         showModal("files");
     }
 
-    function getSettings() {
-        return settings;
-    }
-
-    function putSettings(newset) {
-        settings = CONF.normalize(newset);
-        api.conf.save()
-        api.space.restore(null, true);
-    }
-
     function editSettings(e) {
-        let mode = getMode(),
+        let current = settings.get(),
+            mode = getMode(),
             name = e.target.getAttribute("name"),
-            load = settings.sproc[mode][name],
+            load = current.sproc[mode][name],
             edit = prompt(`settings for "${name}"`, JSON.stringify(load));
         if (edit) {
             try {
-                settings.sproc[mode][name] = JSON.parse(edit);
-                if (name === settings.process.processName) {
+                current.sproc[mode][name] = JSON.parse(edit);
+                if (name === current.proc().processName) {
                     api.conf.load(null, name);
                 }
                 api.conf.save();
@@ -1471,10 +1068,11 @@
     }
 
     function exportSettings(e) {
-        let mode = getMode(),
+        let current = settings.get(),
+            mode = getMode(),
             name = e.target.getAttribute("name"),
             data = api.util.b64enc({
-                process: settings.sproc[mode][name],
+                process: current.sproc[mode][name],
                 version: kiri.version,
                 moto: moto.id,
                 time: Date.now(),
@@ -1488,44 +1086,18 @@
         });
     }
 
-    function loadSettings(e, named) {
-        let mode = getMode(),
-            name = e ? e.target.getAttribute("load") : named || currentProcessName() || "default",
-            load = settings.sproc[mode][name];
-
-        if (!load) return;
-
-        // cloning loaded process into settings requires user to save
-        // process before switching devices or risk losing any changes
-        settings.process = clone(load);
-        // update process name
-        settings.process.processName = name;
-        // save named process with the current device
-        settings.devproc[currentDeviceName()] = name;
-        // preserve name of last library loaded
-        if (name !== 'default') {
-            settings.cproc[mode] = name;
-        }
-        // allow mode driver to take any necessary actions
-        api.event.emit("settings.load", settings);
-
-        // update UI fields to reflect current settings
-        updateFields();
-        api.conf.update();
-
-        if (e) triggerSettingsEvent();
-    }
-
     function deleteSettings(e) {
+        let current = settings.get();
         let name = e.target.getAttribute("del");
-        delete settings.sproc[getMode()][name];
-        updateSettingsList();
+        delete current.sproc[getMode()][name];
+        updateProcessList();
         api.conf.save();
         triggerSettingsEvent();
     }
 
-    function updateSettingsList() {
-        let list = [], s = settings, sp = s.sproc[getMode()] || {}, table = UI.settingsList;
+    function updateProcessList() {
+        let current = settings.get();
+        let list = [], s = current, sp = s.sproc[getMode()] || {}, table = UI.settingsList;
         table.innerHTML = '';
         for (let k in sp) {
             if (sp.hasOwnProperty(k)) list.push(k);
@@ -1541,14 +1113,14 @@
             load.setAttribute('load', sk);
             load.onclick = (ev) => {
                 api.conf.load(undefined, sk);
-                updateSettingsList();
+                updateProcessList();
                 hideModal();
             }
             load.appendChild(DOC.createTextNode(sk));
-            if (sk == settings.process.processName) {
+            if (sk == settings.proc().processName) {
                 load.setAttribute('class', 'selected')
             }
-            UI.settingsName.value = settings.process.processName;
+            UI.settingsName.value = settings.proc().processName;
 
             del.setAttribute('del', sk);
             del.setAttribute('title', "remove '"+sk+"'");
@@ -1572,12 +1144,6 @@
             row.appendChild(del);
             table.appendChild(row);
         });
-    }
-
-    function showSettings() {
-        updateSettingsList();
-        showModal("saves");
-        UI.settingsName.focus();
     }
 
     function showHelp() {
@@ -1636,7 +1202,7 @@
 
     function setViewMode(mode) {
         const oldMode = viewMode;
-        const isCAM = settings.mode === 'CAM';
+        const isCAM = settings.mode() === 'CAM';
         viewMode = mode;
         platform.deselect();
         selection.update_info();
@@ -1676,7 +1242,7 @@
     }
 
     function getMode() {
-        return settings.mode;
+        return settings.mode();
     }
 
     function getModeLower() {
@@ -1692,8 +1258,9 @@
             console.log("invalid mode: "+mode);
             mode = 'FDM';
         }
+        const current = settings.get();
         // change mode constants
-        settings.mode = mode;
+        current.mode = mode;
         MODE = MODES[mode];
         DRIVER = kiri.driver[mode];
         // update mode display
@@ -1708,8 +1275,8 @@
             }
         });
         // restore cached device profile for this mode
-        if (settings.cdev[mode]) {
-            settings.device = clone(settings.cdev[mode]);
+        if (current.cdev[mode]) {
+            current.device = clone(current.cdev[mode]);
             api.event.emit('device.set', currentDeviceName());
         }
         // really belongs in CAM driver (lots of work / abstraction needed)
@@ -1737,19 +1304,19 @@
     }
 
     function currentDeviceName() {
-        return settings.filter[getMode()];
+        return settings.get().filter[getMode()];
     }
 
     function currentDeviceCode() {
-        return settings.devices[currentDeviceName()];
+        return settings.get().devices[currentDeviceName()];
     }
 
     function currentProcessName() {
-        return settings.cproc[getMode()];
+        return settings.get().cproc[getMode()];
     }
 
     function currentProcessCode() {
-        return settings.sproc[getMode()][currentProcessName()];
+        return settings.get().sproc[getMode()][currentProcessName()];
     }
 
     function setControlsVisible(show) {

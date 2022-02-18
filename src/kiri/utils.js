@@ -4,7 +4,7 @@
 
 (function () {
 
-const { kiri, moto } = self;
+const { kiri, moto, data } = self;
 
 function parseOpt(ov) {
     let opt = {}, kv, kva;
@@ -44,6 +44,10 @@ function js2o(s,def) {
         console.log({malformed_json:s});
         return def || null;
     }
+}
+
+function ls2o(key,def) {
+    return js2o(data.local.getItem(key),def);
 }
 
 // split 24 bit color into [ r, g, b ]
@@ -96,6 +100,7 @@ kiri.utils = {
     ajax,
     o2js,
     js2o,
+    ls2o,
     avgc,
     rgb,
     a2c

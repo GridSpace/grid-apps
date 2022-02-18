@@ -46,9 +46,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         }
     }
 
-    // clear completion marks
-    complete = {};
-
+    functions.clear_progress();
     platform.deselect();
     hide.slider();
     view.set_slice();
@@ -406,7 +404,7 @@ function updateStackLabelState() {
     }
 }
 
-api.function = {
+const functions = api.function = {
     slice: prepareSlices,
     print: preparePreview,
     prepare: preparePreview,
