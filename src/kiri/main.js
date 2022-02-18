@@ -32,7 +32,6 @@
         MODE = MODES.FDM,
         STACKS = kiri.stacks,
         DRIVER = undefined,
-        complete = {},
         localFilterKey ='kiri-gcode-filters',
         localFilters = js2o(SDB.getItem(localFilterKey)) || [],
         viewMode = VIEWS.ARRANGE,
@@ -105,16 +104,6 @@
             alerts: updateAlerts,
             settings: triggerSettingsEvent
         },
-        function: {
-            slice: prepareSlices,
-            print: preparePreview,
-            prepare: preparePreview,
-            animate: prepareAnimation,
-            export: prepareExport,
-            cancel: cancelWorker,
-            clear: kiri.client.clear,
-            parse: loadCode
-        },
         group: {
             merge: groupMerge,
             split: groupSplit,
@@ -140,7 +129,11 @@
             get: getMode,
             set: setMode,
             switch: switchMode,
-            set_expert: noop
+            set_expert: noop,
+            is_fdm() { return MODE === MODES.FDM },
+            is_cam() { return MODE === MODES.CAM },
+            is_sla() { return MODE === MODES.SLA },
+            is_laser() { return MODE === MODES.LASER },
         },
         probe: {
             live: "https://live.grid.space",
@@ -746,395 +739,15 @@
         SPACE.update();
     }
 
-    function cancelWorker() {
-        if (kiri.work.isBusy()) {
-            kiri.work.restart();
-        }
-    }
-
     function showSlider() {
         UI.layers.style.display = 'flex';
         UI.slider.style.display = 'flex';
     }
 
-    function hideSlider(andmenu) {
+    function hideSlider() {
         UI.layers.style.display = 'none';
         UI.slider.style.display = 'none';
         UI.speeds.style.display = 'none';
-    }
-
-    function prepareSlices(callback, scale = 1, offset = 0) {
-        if (viewMode == VIEWS.ARRANGE) {
-            let snap = SPACE.screenshot();
-            api.view.snapshot = snap.substring(snap.indexOf(",") + 1);
-            kiri.work.snap(SPACE.screenshot2({width: 640}));
-        }
-        if (MODE === MODES.SLA && !callback) {
-            callback = preparePreview;
-        }
-
-        const WIDGETS = api.widgets.all();
-
-        // force layout in belt mode when widget exceeds bed length
-        if (WIDGETS.length && settings.device.bedBelt) {
-            let doLayout = false;
-            for (let w of WIDGETS) {
-                let bb = w.getBoundingBox();
-                let yspan = bb.max.y - bb.min.y;
-                if (yspan > settings.device.bedDepth) {
-                    doLayout = true;
-                }
-            }
-            if (doLayout) {
-                platformLayout();
-            }
-        }
-
-        let process = settings.process,
-            device = settings.device,
-            control = settings.controller,
-            isBelt = device.bedBelt,
-            mode = settings.mode,
-            now = Date.now(),
-            totvert = 0,
-            track = {},
-            totalProgress;
-
-        // clear completion marks
-        complete = {};
-
-        hideSlider(true);
-        platform.deselect();
-        setViewMode(VIEWS.SLICE);
-
-        api.conf.save();
-        api.event.emit('slice.begin', getMode());
-
-        let slicing = WIDGETS.slice().filter(w => !w.track.ignore && !w.meta.disabled);
-
-        // determing this widgets % of processing time estimated by vertex count
-        for (let widget of slicing) {
-            totvert += widget.getVertices().count;
-        }
-        let defvert = totvert / slicing.length;
-
-        api.widgets.opacity(COLOR.slicing_opacity);
-
-        let segtimes = {},
-            segNumber = 0,
-            errored = false,
-            startTime = Date.now(),
-            toSlice = slicing.slice(),
-            camOrLaser = mode === 'CAM' || mode === 'LASER',
-            extruders = {},
-            lastMsg;
-
-        for (let widget of toSlice) {
-            widget.stats.progress = 0;
-            widget.setColor(COLOR.slicing);
-            extruders[widget.anno.extruder] = widget.anno.extruder;
-        }
-
-        // in multi-material belt mode, the anchor needs to be extended
-        // to allow room for the purge tower to be built. calculate here
-        extruders = Object.values(extruders);
-        if (isBelt && extruders.length > 1 && process.outputPurgeTower) {
-            process.beltAnchor = Math.max(
-                process.firstLayerBeltLead,
-                Math.sqrt(process.outputPurgeTower) * extruders.length * (1/Math.sqrt(2)));
-        } else {
-            process.beltAnchor = process.firstLayerBeltLead;
-        }
-
-        STACKS.clear();
-        if (isBelt) {
-            kiri.client.clear();
-        }
-        kiri.client.sync();
-        kiri.client.rotate(settings);
-
-        sliceNext();
-
-        function sliceNext() {
-            if (toSlice.length) {
-                sliceWidget(toSlice.shift())
-            } else {
-                kiri.client.sliceAll(settings, sliceDone);
-            }
-        }
-
-        function sliceWidget(widget) {
-            widget.stack = STACKS.create(widget.id, widget.mesh);
-            let factor = (widget.getVertices().count / defvert);
-
-            // compensate for zcut (widget moved through floor)
-            widget.stack.obj.view.position.z = widget.track.zcut || 0;
-
-            widget.slice(settings, function(sliced, error) {
-                widget.rotinfo = null;
-                let mark = Date.now();
-                // update UI info
-                if (sliced) {
-                    // update segment time
-                    if (lastMsg) {
-                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
-                    }
-                    api.event.emit('slice', getMode());
-                }
-                // handle slicing errors
-                if (error && !errored) {
-                    errored = true;
-                    setViewMode(VIEWS.ARRANGE);
-                    alert2(error, 5);
-                    api.show.progress(0);
-                    kiri.client.restart();
-                    api.event.emit('slice.error', error);
-                }
-                if (errored) {
-                    // terminate slicing
-                    sliceDone();
-                } else {
-                    // start next widget slice
-                    sliceNext();
-                }
-            }, function(update, msg) {
-                if (msg && msg !== lastMsg) {
-                    let mark = Date.now();
-                    if (lastMsg) {
-                        segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
-                    }
-                    lastMsg = msg;
-                    startTime = mark;
-                }
-                // on update
-                track[widget.id] = (update || 0) * factor;
-                totalProgress = 0;
-                for (let w of slicing) {
-                    totalProgress += (track[w.id] || 0);
-                }
-                api.show.progress(offset + (totalProgress / WIDGETS.length) * scale, msg);
-            });
-        }
-
-        function sliceDone() {
-            let alert = null;
-            if (scale === 1 && feature.work_alerts && slicing.length) {
-                alert = api.show.alert("Rendering");
-            };
-            kiri.client.unrotate(settings, () => {
-                for (let widget of slicing) {
-                    // on done
-                    segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
-                    // rotate stack for belt beds
-                    if (widget.rotinfo) {
-                        widget.stack.obj.rotate(widget.rotinfo);
-                    }
-                    if (scale === 1) {
-                        // clear wireframe
-                        widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
-                        widget.setOacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
-                        widget.setColor(COLOR.deselected);
-                        api.hide.alert(alert);
-                    }
-                }
-                updateSliderMax(true);
-                setVisibleLayer(-1, 0);
-                if (scale === 1) {
-                    updateStackLabelState();
-                }
-                if (!isBelt && control.lineType === 'line' && !process.xray) {
-                    $('render-ghost').onclick();
-                }
-            });
-            if (scale === 1) {
-                api.show.progress(0);
-            }
-            // cause visuals to update
-            SPACE.scene.active();
-            // mark slicing complete for prep/preview
-            complete.slice = true;
-            api.event.emit('slice.end', getMode());
-            // print stats
-            segtimes.total = Date.now() - now;
-            console.log(segtimes);
-            if (callback && typeof callback === 'function') {
-                callback();
-            }
-        }
-    }
-
-    function preparePreview(callback, scale = 1, offset = 0) {
-        if (complete.preview === feature.pmode) {
-            if (settings.device.extruders.length > 1) {
-                if (++feature.pmode > 2) {
-                    feature.pmode = 1;
-                }
-            } else {
-                if (callback) callback();
-                return;
-            }
-        }
-        if (!complete.slice) {
-            settings.render = false;
-            prepareSlices(() => {
-                preparePreview(callback, 0.25, 0.75);
-            }, 0.75);
-            return;
-        }
-
-        hideSlider(true);
-
-        let isCam = MODE === MODES.CAM, pMode = getMode();
-
-        setViewMode(VIEWS.PREVIEW);
-        api.conf.save();
-        api.event.emit('preview.begin', pMode);
-
-        if (isCam) {
-            api.widgets.opacity(COLOR.cam_preview_opacity);
-            api.widgets.each(function(widget) {
-                widget.setColor(COLOR.cam_preview);
-            });
-        } else if (offset === 0) {
-            api.widgets.opacity(COLOR.preview_opacity);
-        }
-
-        let now = Date.now(),
-            isBelt = settings.device.bedBelt,
-            segNumber = 0,
-            segtimes = {},
-            startTime,
-            lastMsg,
-            output = [];
-
-        // pass preview mode to worker
-        settings.pmode = feature.pmode;
-        settings.render = true;
-
-        kiri.client.prepare(settings, function(progress, message, layer) {
-            if (layer) {
-                output.push(kiri.codec.decode(layer));
-            }
-            if (message && message !== lastMsg) {
-                let mark = Date.now();
-                if (lastMsg) {
-                    segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
-                }
-                lastMsg = message;
-                startTime = mark;
-            }
-            api.show.progress(offset + progress * scale, message);
-        }, function (reply, maxSpeed, minSpeed) {
-            // handle worker errors
-            if (reply && reply.error) {
-                alert2(reply.error, 5);
-                setViewMode(VIEWS.ARRANGE);
-                api.event.emit('preview.error', reply.error);
-                api.show.progress(0);
-                SPACE.update();
-                return;
-            }
-
-            if (lastMsg) {
-                segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
-            }
-
-            api.show.progress(0);
-            if (!isCam) api.widgets.opacity(0);
-
-            if (output.length) {
-                let alert = feature.work_alerts ? api.show.alert("Rendering") : null;
-                startTime = Date.now();
-                STACKS.clear();
-                const stack = STACKS.create('print', SPACE.world)
-                output.forEach(layer => {
-                    stack.add(layer);
-                });
-                // rotate stack for belt beds
-                if (isBelt && WIDGETS[0].rotinfo) {
-                    let ri = WIDGETS[0].rotinfo;
-                    ri.dz = 0;
-                    ri.dy = settings.device.bedDepth / 2;
-                    stack.obj.rotate(WIDGETS[0].rotinfo);
-                }
-                api.hide.alert(alert);
-                segtimes[`${segNumber}_draw`] = Date.now() - startTime;
-            }
-
-            // print stats
-            segtimes.total = Date.now() - now;
-            console.log(segtimes);
-
-            api.event.emit('print', pMode);
-            api.event.emit('preview.end', pMode);
-
-            SPACE.update();
-            updateSliderMax(true);
-            setVisibleLayer(-1, 0);
-            if (feature.pmode === PMODES.SPEED) {
-                updateSpeeds(maxSpeed, minSpeed);
-            } else {
-                updateSpeeds();
-            }
-            updateStackLabelState();
-
-            let { controller, process } = settings;
-            if (!isBelt && controller.lineType === 'line' && !process.xray) {
-                $('render-ghost').onclick();
-            }
-
-            // mark preview complete for export
-            complete.preview = feature.pmode;
-
-            if (typeof(callback) === 'function') {
-                callback();
-            }
-        });
-    }
-
-    function prepareAnimation() {
-        api.event.emit("function.animate", {mode: settings.mode});
-    }
-
-    function prepareExport() {
-        const argsave = arguments;
-        if (!complete.preview) {
-            preparePreview(() => {
-                prepareExport(...argsave);
-            });
-            return;
-        }
-        api.event.emit("function.export", {mode: settings.mode});
-        complete.export = true;
-        kiri.export(...argsave);
-    }
-
-    function updateStackLabelState() {
-        // match label checkboxes to preference
-        for (let label of STACKS.getLabels()) {
-            let check = `${settings.mode}-${viewMode}-${label}`;
-            STACKS.setVisible(label, settings.labels[check] !== false);
-        }
-    }
-
-    function loadCode(code, type) {
-        api.event.emit("code.load", {code, type});
-        setViewMode(VIEWS.PREVIEW);
-        api.widgets.opacity(0);
-        kiri.client.parse({code, type, settings}, progress => {
-            api.show.progress(progress, "parsing");
-        }, (layers, maxSpeed, minSpeed) => {
-            api.show.progress(0);
-            STACKS.clear();
-            const stack = STACKS.create('parse', SPACE.world);
-            layers.forEach(layer => stack.add(layer));
-            updateSliderMax(true);
-            updateSpeeds(maxSpeed, minSpeed);
-            showSlices();
-            updateStackLabelState();
-            SPACE.update();
-            api.event.emit("code.loaded", {code, type});
-        });
     }
 
     function loadImageDialog(image, name, force) {
@@ -1178,33 +791,13 @@
     }
 
     function loadImage(image, opt = {}) {
-        let info = Object.assign({settings, png:image}, opt);
+        const info = Object.assign({settings, png:image}, opt);
         kiri.client.image2mesh(info, progress => {
             api.show.progress(progress, "converting");
         }, output => {
             api.show.progress(0);
-            let {bigv, verts, index} = output;
-            // let mat = new THREE.MeshPhongMaterial({
-            //     shininess: 0x101010,
-            //     specular: 0x101010,
-            //     transparent: true,
-            //     opacity: 1,
-            //     color: 0x999999,
-            //     side: THREE.DoubleSide
-            // });
-            //
-            // let geo = new THREE.BufferGeometry();
-            // geo.setAttribute('position', new THREE.BufferAttribute(bigv, 3));
-            // // geo.setIndex([...index]); // doesn't like the Uint32Array
-            // geo.computeFaceNormals();
-            // geo.computeVertexNormals();
-            //
-            // let mesh = new THREE.Mesh(geo, mat);
-            // mesh.castShadow = true;
-            // mesh.receiveShadow = true;
-            //
-            // SPACE.world.add(mesh);
-            let widget = newWidget().loadVertices(bigv)
+            const { bigv, verts, index } = output;
+            const widget = newWidget().loadVertices(bigv)
             widget.meta.file = opt.file;
             platform.add(widget);
         });
@@ -2051,7 +1644,7 @@
         $('view-clear').style.display = mode === VIEWS.ARRANGE ? '' : 'none';
         switch (mode) {
             case VIEWS.ARRANGE:
-                complete = {};
+                api.function.clear_progress();
                 UI.back.style.display = '';
                 UI.render.style.display = '';
                 kiri.client.clear();

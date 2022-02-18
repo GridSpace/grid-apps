@@ -369,6 +369,7 @@ const script = {
         "kiri/widgets",
         "kiri/platform",
         "kiri/selection",
+        "kiri/function",
         "kiri/codec",
         "kiri/conf",
         "kiri/main",
