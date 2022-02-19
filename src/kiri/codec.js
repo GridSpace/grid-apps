@@ -22,6 +22,18 @@
     };
 
     function toCodable(object) {
+        switch (typeof object) {
+            case 'function':
+                return undefined;
+            case 'string':
+            case 'number':
+                return object;
+            case 'object':
+                if (Array.isArray(object)) {
+                    return object.map(v => toCodable(v));
+                }
+                break;
+        }
         let o = {};
         for (let [key, val] of Object.entries(object)) {
             switch (typeof val) {
@@ -35,6 +47,7 @@
                     }
                 default:
                     o[key] = val;
+                    break;
             }
         }
         return o;

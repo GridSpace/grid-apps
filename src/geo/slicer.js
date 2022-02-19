@@ -207,7 +207,7 @@ async function slice(points, options = {}) {
     async function sliceBuckets() {
         let output = [];
         let count = 0;
-        let opt = { ...options, zMin, zMax };
+        let opt = { ...options, zMin, zMax, zIndexes };
         let ps = [];
 
         for (let i = 0, l = buckets.length; i < l; i++) {

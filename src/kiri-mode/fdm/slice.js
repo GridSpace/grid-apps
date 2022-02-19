@@ -52,7 +52,7 @@
      */
     base.slicePost.FDM = function(data, options) {
         const { z, lines, groups } = data;
-        const { useAssembly, post_args, index } = options;
+        const { useAssembly, post_args, zIndexes } = options;
         const { process, isSynth, isDanger, vaseMode } = post_args;
         const { shellOffset, fillOffset, clipOffset } = post_args;
         const tops = POLY.nest(groups);
@@ -65,6 +65,7 @@
             delete data.groups;
             return;
         }
+        const index = zIndexes.indexOf(z);
         const range = FDM.getRangeParameters(process, index);
         // calculate fractional shells
         let shellFrac = (range.sliceShells - (range.sliceShells | 0));

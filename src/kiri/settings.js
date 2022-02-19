@@ -68,7 +68,7 @@ function loadSettings(evt, named) {
     api.event.emit("settings.load", settings);
 
     // update UI fields to reflect current settings
-    api.view.update_fields();
+    api.conf.update_fields();
     api.conf.update();
 
     // publish event when loading from ui event
@@ -86,15 +86,19 @@ function updateSettings(opt = {}) {
     const { uc } = api;
 
     updateSettingsFromFields(controller);
+
     switch (controller.units) {
         case 'mm': uc.setUnits(1); break;
         case 'in': uc.setUnits(25.4); break;
     }
+
+    // limit update to controller fields (ui prefs dialog)
     if (opt.controller) {
         return;
     }
 
-    updateSettingsFromFields(device, undefined, undefined, true);
+    updateSettingsFromFields(device);
+
     // range-specific values
     if (settings.mode === 'FDM' && api.view.is_slice()) {
         let changes = {};
@@ -106,6 +110,7 @@ function updateSettings(opt = {}) {
             values = Object.clone(process);
             add = true;
         }
+        // collect changes to pass to range updates
         updateSettingsFromFields(values, undefined, changes);
         if (range) {
             updateRange(range.lo, range.hi, changes, add);
@@ -113,10 +118,13 @@ function updateSettings(opt = {}) {
     } else {
         updateSettingsFromFields(process);
     }
+
     if (device.extruders && device.extruders[device.internal]) {
         updateSettingsFromFields(device.extruders[device.internal]);
     }
+
     api.conf.save();
+
     let compare = sproc[mode][cproc[mode]];
     let same = true;
     if (compare)
@@ -136,6 +144,7 @@ function updateSettings(opt = {}) {
             same = false;
         }
     }
+
     $('mode-device').innerText = device.deviceName;
     $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
 }
@@ -194,6 +203,227 @@ function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
     }
 
     return settings;
+}
+
+// given a settings region, update values of matching bound UI fields
+function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
+    if (!setrec) {
+        updateFieldsFromSettings(settings.device);
+        updateFieldsFromSettings(settings.process);
+        updateFieldsFromSettings(settings.controller);
+        updateExtruderFields(settings.device);
+        return;
+    }
+    for (let key in setrec) {
+        if (!setrec.hasOwnProperty(key)) {
+            continue;
+        }
+        let val = setrec[key];
+        if (!uirec.hasOwnProperty(key)) {
+            continue;
+        }
+        let uie = uirec[key], typ = uie ? uie.type : null;
+        if (typ === 'text') {
+            if (uie.setv) {
+                uie.setv(val);
+            } else {
+                uie.value = val;
+            }
+        } else if (typ === 'checkbox') {
+            uie.checked = val;
+        } else if (typ === 'select-one') {
+            uie.innerHTML = '';
+            let source = uie.parentNode.getAttribute('source'),
+                list = uie._source || settings[source] || api.lists[source],
+                chosen = null;
+            if (list) list.forEach(function(el, index) {
+                let id = el.id || el.name;
+                let ev = el.value || id;
+                if (val == id) {
+                    chosen = index;
+                }
+                let opt = document.createElement('option');
+                opt.appendChild(document.createTextNode(el.name));
+                opt.setAttribute('value', ev);
+                uie.appendChild(opt);
+            });
+            if (chosen) {
+                uie.selectedIndex = chosen;
+            }
+        } else if (typ === 'textarea') {
+            if (Array.isArray(val)) {
+                uie.value = val.join('\n');
+            } else {
+                uie.value = '';
+            }
+        }
+    }
+}
+
+function updateExtruderFields(device) {
+    const { ui } = api;
+    const { LANG } = api.const;
+    if (device.extruders && device.extruders[device.internal]) {
+        updateFieldsFromSettings(device.extruders[device.internal]);
+        ui.extruder.firstChild.innerText = `${LANG.dv_gr_ext} [${device.internal+1}/${device.extruders.length}]`;
+        ui.extPrev.disabled = device.internal === 0;
+        ui.extPrev.onclick = function() {
+            device.internal--;
+            updateExtruderFields(device);
+        };
+        ui.extNext.disabled = device.internal === device.extruders.length - 1;
+        ui.extNext.onclick = function() {
+            device.internal++;
+            updateExtruderFields(device);
+        };
+        ui.extDel.disabled = ui.extDel.disabled || device.extruders.length < 2;
+        ui.extDel.onclick = function() {
+            device.extruders.splice(device.internal,1);
+            device.internal = Math.min(device.internal, device.extruders.length-1);
+            updateExtruderFields(device);
+        };
+        ui.extAdd.onclick = function() {
+            let copy = clone(device.extruders[device.internal]);
+            copy.extSelect = [`T${device.extruders.length}`];
+            copy.extDeselect = [];
+            device.extruders.push(copy);
+            device.internal = device.extruders.length - 1;
+            updateExtruderFields(device);
+        };
+    }
+}
+
+function getOverlappingRanges(lo, hi) {
+    let ranges = [];
+    for (let range of settings.process.ranges || []) {
+        let in_lo = range.lo >= lo && range.lo <= hi;
+        let in_hi = range.hi >= lo && range.hi <= hi;
+        if (in_lo || in_hi) {
+            ranges.push(range);
+        }
+    }
+    return ranges;
+}
+
+// set process override values for a range
+function updateRange(lo, hi, values, add) {
+    let ranges = settings.process.ranges;
+    let slices = {};
+    let min = lo;
+    let max = hi;
+
+    // special case for belt loops which should not be flattened
+    if (values.outputLoops) {
+        ranges.push({
+            lo, hi, fields: values
+        });
+        api.conf.update_fields(settings.process);
+        api.show.alert("update ranges", 2);
+        api.event.emit("range.updates", ranges);
+        return;
+    }
+
+    // just remove values from matching ranges
+    if (!add) {
+        for (let range of getOverlappingRanges(lo, hi)) {
+            for (let key of Object.keys(values)) {
+                delete range.fields[key];
+            }
+            if (Object.keys(range.fields).length === 0) {
+                let pos = ranges.indexOf(range);
+                if (pos >= 0) {
+                    ranges.splice(pos,1);
+                }
+            }
+        }
+        api.event.emit("range.updates", ranges);
+        return;
+    }
+
+    // set aside belt loops and re-append later
+    // since we do not want to collapse/merge loops
+    let exclude = ranges.filter(r => r.fields.outputLoops);
+    ranges = ranges.filter(r => !r.fields.outputLoops);
+
+    // flatten ranges
+    ranges.push({lo, hi, fields: values});
+    for (let range of ranges) {
+        min = Math.min(range.lo, min);
+        max = Math.max(range.hi, max);
+        for (let i=range.lo; i<=range.hi; i++) {
+            let slice = slices[i];
+            if (!slice) {
+                slice = slices[i] = {};
+            }
+            for (let [key,val] of Object.entries(range.fields)) {
+                slice[key] = val;
+            }
+        }
+    }
+
+    // merge contiguous matching ranges
+    ranges = settings.process.ranges = [];
+    let range;
+    for (let i=min; i<=max; i++) {
+        let slice = slices[i];
+        if (slice && !range) {
+            range = {lo: i, hi: i, fields: slice};
+        } else if (slice && range && areEqual(range.fields, slice)) {
+            range.hi = i;
+        } else if (range) {
+            ranges.push(range);
+            if (slice) {
+                range = {lo: i, hi: i, fields: slice};
+            } else {
+                range = undefined;
+            }
+        }
+    }
+
+    ranges.push(range);
+    ranges.appendAll(exclude);
+
+    api.conf.update_fields(settings.process);
+    api.show.alert("update ranges", 2);
+    api.event.emit("range.updates", ranges);
+}
+
+let overrides = {};
+
+// updates editable fields that are range dependent
+function updateFieldsFromRange() {
+    return;
+    if (settings.mode !== 'FDM' || !api.view.is_slice() || !settings.process.ranges) {
+        let okeys = Object.keys(overrides);
+        if (okeys.length) {
+            api.conf.update_fields(overrides);
+            overrides = {};
+        }
+        return;
+    }
+    let match = 0;
+    let values = {};
+    let restores = Object.clone(overrides);
+    let { layer_lo, layer_hi } = api.var;
+    for (let range of getOverlappingRanges(api.var.layer_lo, api.var.layer_hi)) {
+        for (let key of Object.keys(range.fields)) {
+            values[key] = range.fields[key];
+            overrides[key] = settings.process[key];
+            delete restores[key];
+            match++;
+        }
+    }
+    if (match) {
+        api.conf.update_fields(values);
+    }
+    let rkeys = Object.keys(restores);
+    if (rkeys.length) {
+        api.conf.update_fields(restores);
+        for (let key of rkeys) {
+            delete overrides[key];
+        }
+    }
+    api.uc.refresh();
 }
 
 function restoreSettings(save) {
@@ -438,6 +668,8 @@ api.conf = {
     show: showSettings,
     update: updateSettings,
     update_from: updateSettingsFromFields,
+    update_fields: updateFieldsFromSettings,
+    update_fields_from_range: updateFieldsFromRange,
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,

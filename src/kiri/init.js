@@ -74,12 +74,12 @@
     }
 
     function unitsSave() {
-        api.conf.update({controller:true});
+        api.conf.update({ controller: true });
         platform.update_size();
     }
 
     function aniMeshSave() {
-        api.conf.update({controller:true});
+        api.conf.update({ controller: true });
         api.conf.save();
     }
 
@@ -835,7 +835,7 @@
             }
             ui.deviceAdd.disabled = dev.noclone;
 
-            api.view.update_fields();
+            api.conf.update_fields();
             platform.update_size();
             platform.update_origin();
             platform.update();
@@ -1272,7 +1272,7 @@
             });
             setToolChanged(false);
             api.conf.save();
-            api.view.update_fields();
+            api.conf.update_fields();
             api.event.settings();
         };
 
@@ -2555,7 +2555,7 @@
             selectDevice(DEVNAME || api.device.get());
 
             // update ui fields from settings
-            api.view.update_fields();
+            api.conf.update_fields();
 
             // default to ARRANGE view mode
             api.view.set(VIEWS.ARRANGE);
