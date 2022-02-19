@@ -5,9 +5,7 @@
 // path & routing output utilities
 (function() {
 
-const base = self.base;
-if (base.paths) return;
-
+const { base } = self;
 const { util, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
 
