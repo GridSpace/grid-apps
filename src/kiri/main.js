@@ -443,7 +443,7 @@
     }
 
     function triggerSettingsEvent() {
-        api.event.emit('settings', settings);
+        api.event.emit('settings', settings.get());
     }
 
     function isSecure(proto) {
