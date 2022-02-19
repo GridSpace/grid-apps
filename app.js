@@ -495,11 +495,11 @@ const script = {
         "kiri/layers",
         "kiri/widget",
         "kiri/codec",
-        "kiri/engine"
+        "kiri-run/engine"
     ],
     frame : [
         "main/gapp",
-        "kiri/frame"
+        "kiri-run/frame"
     ],
     meta : [
         "main/gapp",
