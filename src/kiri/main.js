@@ -34,7 +34,6 @@
         local = SETUP.local,
         busy = 0,
         showFavorites = SDB.getItem('dev-favorites') === 'true',
-        alerts = [],
         saveTimer = null,
         version = kiri.version = gapp.version;
 
@@ -85,8 +84,8 @@
             on(t,l) { return EVENT.on(t,l) },
             emit(t,m,o) { return EVENT.publish(t,m,o) },
             bind(t,m,o) { return EVENT.bind(t,m,o) },
+            alerts() { api.alerts.update() },
             import: loadFile,
-            alerts: updateAlerts,
             settings: triggerSettingsEvent
         },
         group: {
@@ -94,7 +93,7 @@
             split: groupSplit,
         },
         hide: {
-            alert(rec,recs) { alert2cancel(rec,recs) },
+            alert(rec, recs) { api.alerts.hide(...arguments) },
             import: noop,
             slider: hideSlider
         },
@@ -130,7 +129,7 @@
             get: currentProcessName
         },
         show: {
-            alert: alert2,
+            alert() { return api.alerts.show(...arguments) },
             devices: noop, // set during init
             progress: setProgress,
             controls: setControlsVisible,
@@ -248,62 +247,6 @@
 
     function unitScale() {
         return api.mode.is_cam() && settings.ctrl().units === 'in' ? 25.4 : 1;
-    }
-
-    function alert2(message, time) {
-        if (message === undefined || message === null) {
-            return updateAlerts(true);
-        }
-        let rec = [message, Date.now(), time, true];
-        if (feature.alert_event) {
-            api.event.emit('alert', rec);
-        } else {
-            alerts.push(rec);
-            updateAlerts();
-        }
-        return rec;
-    }
-
-    function alert2cancel(rec,recs) {
-        if (Array.isArray(recs)) {
-            for (let r of recs) {
-                alert2cancel(r);
-            }
-            return;
-        }
-        if (feature.alert_event) {
-            api.event.emit('alert.cancel', rec);
-            return;
-        }
-        if (Array.isArray(rec)) {
-            rec[3] = false;
-            updateAlerts();
-        }
-    }
-
-    function updateAlerts(clear) {
-        if (clear) {
-            alerts = [];
-        }
-        let now = Date.now();
-        // filter out by age and active flag
-        alerts = alerts.filter(alert => {
-            return alert[3] && (now - alert[1]) < ((alert[2] || 5) * 1000);
-        });
-        // limit to 5 showing
-        while (alerts.length > 5) {
-            alerts.shift();
-        }
-        // return if called before UI configured
-        if (!UI.alert) {
-            return;
-        }
-        if (alerts.length > 0) {
-            UI.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
-            UI.alert.dialog.style.display = 'flex';
-        } else {
-            UI.alert.dialog.style.display = 'none';
-        }
     }
 
     function getShowFavorites(bool) {
@@ -561,7 +504,7 @@
             api.platform.load_files(event.target.files);
         };
         $('load-file').click();
-        // alert2("drag/drop STL files onto platform to import\nreload page to return to last saved state");
+        // api.show.alert("drag/drop STL files onto platform to import\nreload page to return to last saved state");
     }
 
     function saveWorkspace(quiet) {
@@ -584,7 +527,7 @@
         // eliminate dangling saved widgets
         FILES.deleteFilter(key => newWidgets.indexOf(key.substring(8)) < 0, "ws-save-", "ws-savf");
         if (!quiet) {
-            alert2("workspace saved", 1);
+            api.show.alert("workspace saved", 1);
         }
     }
 

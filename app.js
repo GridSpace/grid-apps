@@ -365,6 +365,7 @@ const script = {
         "kiri-mode/cam/tool",
         "kiri-mode/cam/animate",
         "kiri-mode/laser/driver",
+        "kiri/alerts",
         "kiri/stack",
         "kiri/stacks",
         "kiri/widget",
