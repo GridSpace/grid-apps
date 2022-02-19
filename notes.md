@@ -13,6 +13,7 @@
 * `P` do not move (average) endpoints connected to long lines in decimate
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
+* `F` custom device vars for profiles / ranges / gcode
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
 * `F` complete and expose grouping feature
