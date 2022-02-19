@@ -5,7 +5,7 @@
 (function () {
 
     const { base, data, load, kiri, moto, noop } = self;
-    const { api, consts, lang, Widget, newWidget, utils } = kiri;
+    const { api, consts, lang, Widget, newWidget, utils, stats } = kiri;
     const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
     const { feature, platform, selection, settings } = api;
     const { COLOR, MODES, PMODES, VIEWS } = consts;
@@ -22,7 +22,6 @@
         SDB     = data.local,
         SPACE   = kiri.space = moto.Space,
         FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
-        STATS   = new Stats(SDB),
         CONF    = kiri.conf,
         clone   = Object.clone;
 
@@ -52,8 +51,8 @@
     Object.assign(api, {
         ui: UI,
         uc: UC,
+        stats,
         focus: noop,
-        stats: STATS,
         catalog: FILES,
         busy: {
             val() { return busy },
@@ -313,57 +312,11 @@
         if (data.progress >= 0) setProgress(data.progress, data.message);
     });
 
-    /** ******************************************************************
-     * Stats accumulator
-     ******************************************************************* */
-
-    function Stats(db) {
-        this.db = db;
-        this.obj = js2o(this.db['stats'] || '{}');
-        let o = this.obj, k;
-        for (k in o) {
-            if (!o.hasOwnProperty(k)) continue;
-            if (['dn','lo','re'].indexOf(k) >= 0 || k.indexOf('-') > 0 || k.indexOf('_') > 0) {
-                delete o[k];
-            }
-        }
-    }
-
-    Stats.prototype.save = function(quiet) {
-        this.db['stats'] = o2js(this.obj);
-        if (!quiet) {
-            api.event.emit('stats', this.obj);
-        }
-        return this;
-    };
-
-    Stats.prototype.get = function(k) {
-        return this.obj[k];
-    };
-
-    Stats.prototype.set = function(k,v,quiet) {
-        this.obj[k] = v;
-        this.save(quiet);
-        return this;
-    };
-
-    Stats.prototype.add = function(k,v,quiet) {
-        this.obj[k] = (this.obj[k] || 0) + (v || 1);
-        this.save(quiet);
-        return this;
-    };
-
-    Stats.prototype.del = function(k, quiet) {
-        delete this.obj[k];
-        this.save(quiet);
-        return this;
-    };
-
-    let inits = parseInt(SDB.getItem('kiri-init') || STATS.get('init') || 0) + 1;
+    // update version and init count
+    let inits = parseInt(SDB.getItem('kiri-init') || stats.get('init') || 0) + 1;
     SDB.setItem('kiri-init', inits);
-
-    STATS.set('init', inits);
-    STATS.set('kiri', kiri.version);
+    stats.set('init', inits);
+    stats.set('kiri', kiri.version);
 
     // remove version from url, preserve other settings
     WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);

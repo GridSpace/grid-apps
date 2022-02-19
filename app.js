@@ -344,6 +344,7 @@ const script = {
         "kiri/conf",
         "kiri/consts",
         "kiri/utils",
+        "kiri/stats",
         "kiri/api",
         "kiri/ui",
         "kiri/do",
