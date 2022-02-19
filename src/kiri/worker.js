@@ -2,13 +2,13 @@
 
 "use strict";
 
-let BASE = self.base,
-    KIRI = self.kiri,
-    UTIL = BASE.util,
-    POLY = BASE.polygons,
-    CODEC = KIRI.codec,
-    time = UTIL.time,
-    qtpi = Math.cos(Math.PI/4),
+const { base, kiri } = self;
+const { util, polygons } = base;
+const { codec } = kiri;
+const { time } = util;
+const POLY = polygons;
+
+let qtpi = Math.cos(Math.PI/4),
     debug = self.debug === true,
     ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
     concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
@@ -23,7 +23,7 @@ let BASE = self.base,
     minifns = {},
     miniseq = 0;
 
-KIRI.version = gapp.version;
+kiri.version = gapp.version;
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -58,7 +58,7 @@ if (concurrent) {
 
 // for concurrent operations
 const minwork =
-KIRI.minions = {
+kiri.minions = {
     concurrent,
 
     union: function(polys, minarea) {
@@ -71,7 +71,7 @@ KIRI.minions = {
             let running = 0;
             let union = [];
             let receiver = function(data) {
-                let polys = CODEC.decode(data.union);
+                let polys = codec.decode(data.union);
                 union.appendAll(polys);
                 if (--running === 0) {
                     resolve(POLY.union(union, minarea, true));
@@ -82,7 +82,7 @@ KIRI.minions = {
                 minwork.queue({
                     cmd: "union",
                     minarea,
-                    polys: CODEC.encode(polys.slice(i, i + polyper))
+                    polys: codec.encode(polys.slice(i, i + polyper))
                 }, receiver);
             }
         });
@@ -96,13 +96,13 @@ KIRI.minions = {
             }
             minwork.queue({
                 cmd: "fill",
-                polys: CODEC.encode(polys),
+                polys: codec.encode(polys),
                 angle, spacing, minLen, maxLen
             }, data => {
                 let arr = data.fill;
                 let fill = [];
                 for (let i=0; i<arr.length; ) {
-                    let pt = BASE.newPoint(arr[i++], arr[i++], arr[i++]);
+                    let pt = base.newPoint(arr[i++], arr[i++], arr[i++]);
                     pt.index = arr[i++];
                     fill.push(pt);
                 }
@@ -123,7 +123,7 @@ KIRI.minions = {
                 lines: lines.map(a => a.map(p => p.toClipper())),
                 z: slice.z
             }, data => {
-                let polys = CODEC.decode(data.clips);
+                let polys = codec.decode(data.clips);
                 for (let top of slice.tops) {
                     for (let poly of polys) {
                         if (poly.isInside(top.poly)) {
@@ -152,9 +152,9 @@ KIRI.minions = {
                 cmd: "sliceZ",
                 z,
                 points: floatP,
-                options: CODEC.toCodable(options)
+                options: codec.toCodable(options)
             }, data => {
-                let recs = CODEC.decode(data.output);
+                let recs = codec.decode(data.output);
                 if (each) {
                     for (let rec of recs) {
                         each(rec);
@@ -199,8 +199,8 @@ console.log(`kiri | init work | ${gapp.version || "rogue"}`);
 
 // code is running in the worker / server context
 const dispatch =
-KIRI.server =
-KIRI.worker = {
+kiri.server =
+kiri.worker = {
     group: wgroup,
 
     cache: wcache,
@@ -208,7 +208,7 @@ KIRI.worker = {
     decimate: function(data, send) {
         let { vertices, options } = data;
         vertices = new Float32Array(vertices),
-        vertices = BASE.pointsToVertices(BASE.verticesToPoints(vertices, options));
+        vertices = base.pointsToVertices(base.verticesToPoints(vertices, options));
         send.done(vertices);
     },
 
@@ -247,7 +247,7 @@ KIRI.worker = {
         current.print = null;
         dispatch.group = wgroup = {};
         dispatch.cache = wcache = {};
-        KIRI.Widget.Groups.clear();
+        kiri.Widget.Groups.clear();
         send.done({ clear: true });
     },
 
@@ -275,7 +275,7 @@ KIRI.worker = {
             wgroup[data.group] = group;
         }
         let vertices = new Float32Array(data.vertices),
-            widget = KIRI.newWidget(data.id, group).loadVertices(vertices).setInWorker();
+            widget = kiri.newWidget(data.id, group).loadVertices(vertices).setInWorker();
 
         // do it here so cancel can work
         wcache[data.id] = widget;
@@ -386,7 +386,7 @@ KIRI.worker = {
                     stats: widget.stats,
                     slices: slices.length,
                 });
-                slices.forEach(function(slice,index) {
+                slices.forEach((slice,index) => {
                     const state = { zeros: [] };
                     send.data({index: index, slice: slice.encode(state)}, state.zeros);
                 })
@@ -403,10 +403,9 @@ KIRI.worker = {
     },
 
     sliceAll: function(data, send) {
-        const drivers = KIRI.driver;
-        const settings = data.settings;
-        const mode = settings.mode;
-        const driver = drivers[mode];
+        const { settings } = data;
+        const { mode } = settings;
+        const driver = kiri.driver[mode];
 
         if (driver.sliceAll) {
             driver.sliceAll(settings, send.data);
@@ -422,10 +421,9 @@ KIRI.worker = {
         // let client know we've started
         send.data({update:0.05, updateStatus:"preview"});
 
-        const drivers = KIRI.driver;
-        const settings = data.settings;
-        const mode = settings.mode;
-        const driver = drivers[mode];
+        const { settings } = data;
+        const { mode } = settings;
+        const driver = kiri.driver[mode];
 
         if (!(driver && driver.prepare)) {
             return console.log({invalid_print_driver: mode, driver});
@@ -435,7 +433,7 @@ KIRI.worker = {
             const state = { zeros: [] };
             const emit = { progress, message };
             if (layer) {
-                emit.layer = CODEC.encode(layer, state)
+                emit.layer = codec.encode(layer, state)
             }
             send.data(emit);
         });
@@ -450,7 +448,7 @@ KIRI.worker = {
 
         send.done({
             done: true,
-            // output: CODEC.encode(layers, state),
+            // output: codec.encode(layers, state),
             minSpeed,
             maxSpeed
         }, state.zeros);
@@ -458,7 +456,7 @@ KIRI.worker = {
 
     export: function(data, send) {
         const mode = data.settings.mode;
-        const driver = KIRI.driver[mode];
+        const driver = kiri.driver[mode];
 
         if (!(driver && driver.export)) {
             console.log({missing_export_driver: mode});
@@ -492,7 +490,7 @@ KIRI.worker = {
         const { colors, max } = data;
         const colorMap = {};
         colors.forEach(color => {
-            colorMap[color] = KIRI.driver.FDM.rateToColor(color, max);
+            colorMap[color] = kiri.driver.FDM.rateToColor(color, max);
         });
         send.done(colorMap);
     },
@@ -506,7 +504,7 @@ KIRI.worker = {
             z: origin.z
         };
         const device = settings.device;
-        const print = current.print = KIRI.newPrint(settings, Object.values(wcache));
+        const print = current.print = kiri.newPrint(settings, Object.values(wcache));
         const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
@@ -516,10 +514,10 @@ KIRI.worker = {
         }, done => {
             const minSpeed = print.minSpeed;
             const maxSpeed = print.maxSpeed;
-            const layers = KIRI.driver.FDM.prepareRender(done.output, progress => {
+            const layers = kiri.driver.FDM.prepareRender(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools });
-            send.done({parsed: CODEC.encode(layers), maxSpeed, minSpeed});
+            send.done({parsed: codec.encode(layers), maxSpeed, minSpeed});
         }, {
             fdm: mode === 'FDM',
             belt: device.bedBelt
@@ -530,21 +528,21 @@ KIRI.worker = {
         parsed.forEach(layer => {
             layer.forEach(out => {
                 const { x, y, z } = out.point;
-                out.point = BASE.newPoint(x,y,z || 0);
+                out.point = base.newPoint(x,y,z || 0);
             });
         });
-        const print = current.print = KIRI.newPrint(null, Object.values(wcache));
-        const layers = KIRI.driver.FDM.prepareRender(parsed, progress => {
+        const print = current.print = kiri.newPrint(null, Object.values(wcache));
+        const layers = kiri.driver.FDM.prepareRender(parsed, progress => {
             send.data({ progress });
         }, { thin:  true });
-        send.done({parsed: CODEC.encode(layers)});
+        send.done({parsed: codec.encode(layers)});
     },
 
     config: function(data, send) {
         const update = {};
         if (data.base) {
             update.base = data.base;
-            Object.assign(BASE.config, data.base);
+            Object.assign(base.config, data.base);
         } else {
             console.log({invalid:data});
         }
@@ -877,4 +875,4 @@ dispatch.onmessage = self.onmessage = function(e) {
 };
 
 // load kiri modules
-KIRI.load_exec(dispatch);
+kiri.load_exec(dispatch);
