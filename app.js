@@ -378,6 +378,7 @@ const script = {
         "kiri/init",
         "kiri/export",
         "kiri/tools",
+        "kiri/frame",
         "@devices",
         "@icons"
     ],
