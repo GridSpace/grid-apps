@@ -6,7 +6,7 @@
 
 // add frame message api listener
 window.addEventListener('message', msg => {
-    const { kiri, moto } = self;
+    const { load, kiri, moto } = self;
     const { api, newWidget } = kiri;
     const { conf, event, feature, platform, settings, show } = api;
 
