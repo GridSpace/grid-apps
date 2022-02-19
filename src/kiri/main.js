@@ -166,6 +166,7 @@
             is_arrange() { return viewMode === VIEWS.ARRANGE },
             is_slice() { return viewMode === VIEWS.SLICE },
             is_preview() { return viewMode === VIEWS.PREVIEW },
+            update_stack_labels: updateStackLabelState,
             update_slider_max: updateSliderMax,
             update_slider: updateSlider,
             update_speeds: updateSpeeds,
@@ -176,6 +177,16 @@
         },
         work: kiri.work
     });
+
+    function updateStackLabelState() {
+        const settings = api.conf.get();
+        const { stacks } = kiri;
+        // match label checkboxes to preference
+        for (let label of stacks.getLabels()) {
+            let check = `${settings.mode}-${api.view.get()}-${label}`;
+            stacks.setVisible(label, settings.labels[check] !== false);
+        }
+    }
 
     function setFocus(sel, point) {
         if (point) {

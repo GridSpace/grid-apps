@@ -716,7 +716,7 @@ function platformLoadFiles(files, group) {
                     }
                 });
             } else if (isgcode) {
-                loadCode(e.target.result, 'gcode');
+                api.function.parse(e.target.result, 'gcode');
                 load_dec();
             } else if (issvg) {
                 let name = e.target.file.name;

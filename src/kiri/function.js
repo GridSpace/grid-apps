@@ -188,7 +188,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             view.update_slider_max(true);
             show.layer(-1, 0);
             if (scale === 1) {
-                updateStackLabelState();
+                view.update_stack_labels();
             }
             if (!isBelt && controller.lineType === 'line' && !process.xray) {
                 $('render-ghost').onclick();
@@ -337,7 +337,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
         } else {
             view.update_speeds();
         }
-        updateStackLabelState();
+        view.update_stack_labels();
 
         let { controller, process } = settings;
         if (!isBelt && controller.lineType === 'line' && !process.xray) {
@@ -354,10 +354,12 @@ function preparePreview(callback, scale = 1, offset = 0) {
 }
 
 function prepareAnimation() {
+    const settings = api.conf.get();
     api.event.emit("function.animate", {mode: settings.mode});
 }
 
 function prepareExport() {
+    const settings = api.conf.get();
     const argsave = arguments;
     if (!complete.preview) {
         preparePreview(() => { prepareExport(...argsave) });
@@ -374,12 +376,15 @@ function cancelWorker() {
     }
 }
 
-function loadCode(code, type) {
-    const { event, show, widgets, view } = api;
+function parseCode(code, type) {
+    const { conf, event, show, widgets, view } = api;
     const { stacks } = kiri;
+    const settings = conf.get();
+
     event.emit("code.load", {code, type});
     view.set_preview();
     widgets.opacity(0);
+
     client.parse({code, type, settings}, progress => {
         show.progress(progress, "parsing");
     }, (layers, maxSpeed, minSpeed) => {
@@ -390,20 +395,10 @@ function loadCode(code, type) {
         view.update_slider_max(true);
         view.update_speeds(maxSpeed, minSpeed);
         show.slices();
-        updateStackLabelState();
+        view.update_stack_labels();
         space.update();
         event.emit("code.loaded", {code, type});
     });
-}
-
-function updateStackLabelState() {
-    const settings = api.conf.get();
-    const { stacks } = kiri;
-    // match label checkboxes to preference
-    for (let label of stacks.getLabels()) {
-        let check = `${settings.mode}-${api.view.get()}-${label}`;
-        stacks.setVisible(label, settings.labels[check] !== false);
-    }
 }
 
 const functions = api.function = {
@@ -413,7 +408,7 @@ const functions = api.function = {
     animate: prepareAnimation,
     export: prepareExport,
     cancel: cancelWorker,
-    parse: loadCode,
+    parse: parseCode,
     clear: client.clear,
     clear_progress() { complete = {} }
 };
