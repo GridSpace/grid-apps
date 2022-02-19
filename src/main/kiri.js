@@ -8,7 +8,7 @@
         let modfns = self.kirimod = [];
 
         let kiri = self.kiri = {
-            beta: 3301,
+            beta: 3302,
             driver: {}, // driver modules
             load(fn) {
                 modfns.push(fn);
