@@ -2507,6 +2507,11 @@
             console.log({octoprint:ohost});
         }
 
+        // load workspace from url
+        if (SETUP.wrk) {
+            api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, true);
+        }
+
         // bind this to UI so main can call it on settings import
         ui.sync = function() {
             const current = settings();
