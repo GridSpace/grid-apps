@@ -141,7 +141,7 @@ async function slice(points, options = {}) {
     let bucketCount = options.bucket !== false ?
         Math.min(bucketMax, Math.max(1, Math.floor(zSpan / zSpanAvg))) : 1;
 
-    zScale = 1 / (zSpan / bucketCount);
+    zScale = 1 / (zMax / bucketCount);
 
     if (debug) {
         console.log({
@@ -191,7 +191,6 @@ async function slice(points, options = {}) {
     // fallback if we can't partition point space
     if (bucketCount === 1) {
         buckets = [{ points, slices: [] }];
-        console.log({fallback:  buckets});
     }
 
     // create buckets data structure

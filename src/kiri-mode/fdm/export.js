@@ -5,53 +5,43 @@
 (function() {
 
 const { base, kiri } = self;
-const { util } = base;
+const { util, config } = base;
 const { FDM } = kiri.driver;
 const { getRangeParameters } = FDM;
 
 FDM.export = function(print, online, ondone, ondebug) {
     const { settings, belty, tools } = print;
-    const { controller, device } = settings;
-    const { extruders } = device;
+    const { bounds, controller, device, process, filter, mode } = settings;
+    const { danger, exportThumb } = device;
+    const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
+    const { extruders, fwRetract } = device;
+    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause } = device;
 
     let layers = print.output,
-        thumbnails = controller.exportThumb,
         extras = device.extras || {},
+        { extrudeAbs } = device,
         extused = Object.keys(print.extruders).map(v => parseInt(v)),
-        gcodeFan = device.gcodeFan,
-        gcodeLayer = device.gcodeLayer,
-        gcodeTrack = device.gcodeTrack,
+        decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
-        tool = 0,
-        fwRetract = device.fwRetract,
-        isDanger = controller.danger,
-        isBelt = device.bedBelt,
+        isBelt = bedBelt,
         bedType = isBelt ? "belt" : "fixed",
-        extruder = extruders[tool],
-        offset_x = extruder.extOffsetX,
-        offset_y = extruder.extOffsetY,
-        extrudeAbs = device.extrudeAbs || false,
-        extrudeSet = false,
         time = 0,
         layer = 0,
         layerno = 0,
         pause = [],
-        pauseCmd = device.gcodePause,
         output = [],
         outputLength = 0, // absolute extruder position
         lastProgress = 0,
-        decimals = base.config.gcode_decimals || 4,
         progress = 0,
         distance = 0,
         emitted = 0,
         retracted = 0,
-        pos = {x:0, y:0, z:0, f:0},
-        lout = {x:0, y:0, z:0},
+        pos = { x:0, y:0, z:0, f:0 },
+        lout = { x:0, y:0, z:0 },
         last = null,
         zpos = 0,
         bmax = 0,
         blastz = 0,
-        process = settings.process,
         belt_add_y = (process.firstLayerYOffset || 0) - (belty || 0),
         oloops = process.outputLoops || 0,
         zhop = process.zHopDistance || 0, // range
@@ -61,21 +51,26 @@ FDM.export = function(print, online, ondone, ondebug) {
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
         timeDwell = retDwell / 1000,
-        arcDist = isBelt || !isDanger ? 0 : (process.arcTolerance || 0),
+        arcDist = isBelt || !danger ? 0 : (process.arcTolerance || 0),
         arcMin = 1,
         arcRes = 20,
         arcDev = 0.5,
         arcMax = 40,
-        originCenter = process.outputOriginCenter || device.bedRound,
+        originCenter = process.outputOriginCenter || bedRound,
         offset = originCenter ? {
             x: 0,
             y: 0,
             z: 0
         } : {
-            x: device.bedWidth/2,
-            y: isBelt ? 0 : device.bedDepth/2,
+            x: bedWidth/2,
+            y: isBelt ? 0 : bedDepth/2,
             z: 0
         },
+        tool = 0,
+        extruder = extruders[tool],
+        offset_x = extruder.extOffsetX,
+        offset_y = extruder.extOffsetY,
+        extrudeSet = false,
         nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
         bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
         fanSpeed = undefined,
@@ -83,7 +78,6 @@ FDM.export = function(print, online, ondone, ondebug) {
         lastNozzleTemp = nozzleTemp,
         lastBedTemp = bedTemp,
         lastFanSpeed = fanSpeed,
-        bounds = settings.bounds,
         subst = {
             minx: bounds.min.x + offset.x,
             maxx: bounds.max.x + offset.x,
@@ -97,11 +91,11 @@ FDM.export = function(print, online, ondone, ondebug) {
             bed_temp: bedTemp,
             fan_speed: fanSpeed,
             speed: fanSpeed, // legacy
-            top: offset.y ? device.bedDepth : device.bedDepth/2,
-            left: offset.x ? 0 : -device.bedWidth/2,
-            right: offset.x ? device.bedWidth : device.bedWidth/2,
-            bottom: offset.y ? 0 : -device.bedDepth/2,
-            z_max: device.maxHeight,
+            top: offset.y ? bedDepth : bedDepth/2,
+            left: offset.x ? 0 : -bedWidth/2,
+            right: offset.x ? bedWidth : bedWidth/2,
+            bottom: offset.y ? 0 : -bedDepth/2,
+            z_max: maxHeight,
             layers: layers.length,
             progress: 0,
             nozzle: 0,
@@ -110,7 +104,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
         bytes = 0,
-        bcos = Math.cos(Math.PI/4),
+        bcos = Math.cos(Math.PI / 4),
         icos = 1 / bcos,
         inloops = 0,
         arcQ = [],
@@ -255,9 +249,9 @@ FDM.export = function(print, online, ondone, ondebug) {
     append(`; ${new Date().toString()}`);
     appendSub("; Bed left:{left} right:{right} top:{top} bottom:{bottom}");
     append(`; Bed type: ${bedType}`);
-    append(`; Target: ${settings.filter[settings.mode]}`);
+    append(`; Target: ${filter[mode]}`);
     // inject thumbnail preview
-    if (thumbnails && worker.snap) {
+    if (exportThumb && worker.snap) {
         let { width, height, url } = worker.snap;
         let data = url.substring(url.indexOf(',') + 1);
         append(`; thumbnail begin ${width} ${height} ${data.length}`);
@@ -505,8 +499,8 @@ FDM.export = function(print, online, ondone, ondebug) {
             pos.z = zpos;
         }
 
-        if (pauseCmd && pause.indexOf(layer) >= 0) {
-            appendAllSub(pauseCmd)
+        if (gcodePause && pause.indexOf(layer) >= 0) {
+            appendAllSub(gcodePause)
         }
 
         let endloop = 0;

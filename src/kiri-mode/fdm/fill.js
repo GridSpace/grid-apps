@@ -4,13 +4,10 @@
 
 (function() {
 
-if (self.kiri.fill) return;
+const { base, kiri } = self;
+const { util } = base;
 
-const KIRI = self.kiri,
-    BASE = self.base,
-    UTIL = BASE.util,
-    ROUND = UTIL.round,
-    DEG2RAD = Math.PI / 180,
+const DEG2RAD = Math.PI / 180,
     FILL = self.kiri.fill = {
         hex: fillHexFull,
         grid: fillGrid,
@@ -40,8 +37,8 @@ function fillHex(target, full) {
     let spacing = target.offset();
     // let vhlen = (1 / target.density()) * (target.lineWidth() + spacing);
     let vhlen = (1 / target.density()) * target.lineWidth() * 0.5;
-    let anxlen = ROUND(Math.cos(30 * DEG2RAD) * vhlen, 7);
-    let anylen = ROUND(Math.sin(30 * DEG2RAD) * vhlen, 7);
+    let anxlen = (Math.cos(30 * DEG2RAD) * vhlen).round(7);
+    let anylen = (Math.sin(30 * DEG2RAD) * vhlen).round(7);
     let bounds = target.bounds();
     let even = true;
     let evenZ = target.zIndex() % 2 === 0;
@@ -109,7 +106,7 @@ function fillGyroid(target) {
     let tile_x = span_x / tile;
     let tile_y = span_y / tile;
     let tile_z = 1 / tile;
-    let gyroid = BASE.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
+    let gyroid = base.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
 
     // gyroid.polys.forEach(poly => {
     //     for (let tx=0; tx<=tile_x; tx++) {
@@ -136,7 +133,7 @@ function fillGyroid(target) {
                         z: 0
                     }
                 });
-                polys.push(BASE.newPolygon().setOpen(true).addObj(points));
+                polys.push(base.newPolygon().setOpen(true).addObj(points));
             }
         }
     }

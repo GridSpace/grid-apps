@@ -332,6 +332,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         },
         // slicer function (worker local or minion distributed)
         slicer(z, points, opts) {
+            // opts.debug = opts.debug || isSynth;
             return (isConcurrent ? kiri.minions.sliceZ : base.sliceZ)(z, points, opts);
         },
         onupdate(update) {

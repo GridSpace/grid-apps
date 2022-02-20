@@ -55,7 +55,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     // allow client.js to generate support widgets
     event.emit('slice.begin', settings.mode);
 
-    // refresh widget list because slice.begin may generate supports
+    // refresh widget list because 'slice.begin' may generate support widgets
     const slicing = api.widgets.all()
         .slice()
         .filter(w => !w.track.ignore && !w.meta.disabled);
