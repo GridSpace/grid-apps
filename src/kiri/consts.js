@@ -131,6 +131,7 @@ kiri.consts = {
     MODES,
     VIEWS,
     SEED,
+    beltfact: Math.cos(Math.PI / 4)
 };
 
 })();

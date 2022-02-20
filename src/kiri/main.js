@@ -10,7 +10,7 @@
     const { feature, platform, selection, settings } = api;
     const { COLOR, MODES, PMODES, VIEWS } = consts;
 
-    const LANG = lang.current,
+    const LANG  = lang.current,
         WIN     = self.window,
         DOC     = self.document,
         LOC     = self.location,

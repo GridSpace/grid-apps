@@ -4,69 +4,66 @@
 
 (function() {
 
-    const KIRI = self.kiri,
-        BASE = self.base,
-        UTIL = BASE.util,
-        POLY = BASE.polygons,
-        FDM = KIRI.driver.FDM = {
-            // init,           // src/mode/fdm/client.js
-            // slice,          // src/mode/fdm/slice.js
-            // prepare,        // src/mode/fdm/prepare.js
-            // export,         // src/mode/fdm/export.js
-            getRangeParameters
-        };
+const { kiri } = self;
+const FDM = kiri.driver.FDM = { getRangeParameters };
 
-    function getRangeParameters(process, index) {
-        if (index === undefined || index === null || index < 0) {
-            return process;
-        }
-        let ranges = process.ranges;
-        if (!(ranges && ranges.length)) {
-            return process;
-        }
-        let params = Object.clone(process);
-        for (let range of ranges) {
-            if (index >= range.lo && index <= range.hi) {
-                for (let [key,value] of Object.entries(range.fields)) {
-                    params[key] = value;
-                    params._range = true;
-                }
+// shared by client and worker contexts
+function getRangeParameters(process, index) {
+    if (index === undefined || index === null || index < 0) {
+        return process;
+    }
+    let ranges = process.ranges;
+    if (!(ranges && ranges.length)) {
+        return process;
+    }
+    let params = Object.clone(process);
+    for (let range of ranges) {
+        if (index >= range.lo && index <= range.hi) {
+            for (let [key, value] of Object.entries(range.fields)) {
+                params[key] = value;
+                params._range = true;
             }
         }
-        return params;
     }
+    return params;
+}
 
-    // defer loading until KIRI.client and KIRI.worker exist
-    KIRI.load(function(API) {
+// defer loading until client and worker exist
+kiri.load(function(api) {
 
-        if (KIRI.client)
-        // FDM.support_generate = KIRI.client.fdm_support_generate = function(ondone) {
+    const { client, worker } = kiri;
+
+    if (client) {
         FDM.support_generate = function(ondone) {
-            KIRI.client.clear();
-            KIRI.client.sync();
-            let settings = API.conf.get();
-            let widgets = API.widgets.map();
-            KIRI.client.send("fdm_support_generate", { settings }, (gen) => {
+            client.clear();
+            client.sync();
+            const settings = api.conf.get();
+            const widgets = api.widgets.map();
+            client.send("fdm_support_generate", { settings }, (gen) => {
                 if (gen && gen.error) {
-                    API.show.alert('support generation canceled');
+                    api.show.alert('support generation canceled');
                     return ondone([]);
                 }
-                for (let g of gen) g.widget = widgets[g.id];
+                for (let g of gen) {
+                    g.widget = widgets[g.id];
+                }
                 ondone(gen);
             });
         };
+    }
 
-        if (KIRI.worker)
-        KIRI.worker.fdm_support_generate = function(data, send) {
+    if (worker) {
+        worker.fdm_support_generate = function(data, send) {
             const { settings } = data;
             const widgets = Object.values(wcache);
             const fresh = widgets.filter(widget => FDM.supports(settings, widget));
-            send.done(KIRI.codec.encode(fresh.map(widget => { return {
+            send.done(kiri.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
                 supports: widget.supports,
             } } )));
         };
+    }
 
-    });
+});
 
 })();
