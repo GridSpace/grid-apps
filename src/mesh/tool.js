@@ -2,17 +2,12 @@
 
 "use strict";
 
-(function() {
-
 // dep: ext.earcut
-gapp.register("mesh.tool", [
-    "mesh.geom",    // dep: mesh.geom
-]);
+// dep: mesh.geom
+gapp.register("mesh.tool", [], (root, exports) => {
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.tool) return;
-
-let geom = mesh.geom;
+const { mesh } = root;
+const { geom } = mesh;
 
 /**
  * tool for identiying defects and healing them
@@ -470,4 +465,4 @@ mesh.tool = class MeshTool {
     }
 };
 
-})();
+});

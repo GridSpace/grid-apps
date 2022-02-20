@@ -2,41 +2,29 @@
 
 "use strict";
 
-(function() {
+gapp.register("moto.ajax", [], (root, exports) => {
 
-    gapp.register('moto.ajax');
+function rnd() {
+    return Math.round(Math.random()*0xffffffff).toString(36);
+}
 
-    let moto = self.moto = self.moto || {};
-    if (moto.Ajax) return;
+const KV = data.local,
+    KEY = "moto-ajax",
+    TIME = Date.now,
+    MOKEY = moto.id = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());
 
-    moto.Ajax = Ajax;
+KV.setItem(KEY, MOKEY);
 
-    moto.callAjax = function(url, handler) {
-        new Ajax(handler).request(url);
-    };
+const STATES = [
+    "request not initialized",        // 0
+    "server connection established",  // 1
+    "request recieved",               // 2
+    "processing request",             // 3
+    "request complete"                // 4
+];
 
-    const AP = Ajax.prototype,
-        KV = data.local,
-        KEY = "moto-ajax",
-        TIME = function() { return new Date().getTime() },
-        MOKEY = moto.id = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());
-
-    moto.restore = function(id) {
-        MOKEY = moto.id = id;
-        KV.setItem(KEY, MOKEY);
-    }
-
-    KV.setItem(KEY, MOKEY);
-
-    const STATES = [
-        "request not initialized",        // 0
-        "server connection established",  // 1
-        "request recieved",               // 2
-        "processing request",             // 3
-        "request complete"                // 4
-    ];
-
-    function Ajax(callback, responseType) {
+class Ajax {
+    constructor(callback, responseType) {
         this.ajax = new XMLHttpRequest();
         this.ajax.onreadystatechange = this.onStateChange.bind(this);
         this.ajax.withCredentials = true;
@@ -45,11 +33,7 @@
         this.responseType = responseType;
     }
 
-    function rnd() {
-        return Math.round(Math.random()*0xffffffff).toString(36);
-    }
-
-    AP.onStateChange = function() {
+    onStateChange() {
         this.state = STATES[this.ajax.readyState];
         if (this.ajax.readyState === 4 && this.callback) {
             let status = this.ajax.status;
@@ -59,14 +43,9 @@
                 this.callback(null, this.ajax);
             }
         }
-    };
+    }
 
-    /**
-     * @param {String} url
-     * @param {Object} [send]
-     * @param {Object} [headers]
-     */
-    AP.request = function(url, send, headers) {
+    request(url, send, headers) {
         this.ajax.open(send ? "POST" : "GET", url, true);
         if (this.responseType) this.ajax.responseType = this.responseType;
         headers = headers || {};
@@ -79,6 +58,23 @@
         } else {
             this.ajax.send();
         }
-    };
+        return this;
+    }
+}
 
-})();
+function call(url, handler) {
+    return new Ajax(handler).request(url);
+}
+
+function callAjax(url, handler) {
+    return new Ajax(handler).request(url);
+};
+
+function restore(id) {
+    MOKEY = moto.id = id;
+    KV.setItem(KEY, MOKEY);
+}
+
+exports({ Ajax, call, callAjax, restore });
+
+});

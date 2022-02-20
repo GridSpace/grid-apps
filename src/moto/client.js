@@ -2,10 +2,14 @@
 
 "use strict";
 
-(function() {
+gapp.register("moto.client", [
 
-let moto = self.moto = self.moto || {},
-    ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
+"add.array",    // dep: add.array
+"moto.broker",  // dep: moto.broker
+
+], (root, exports) => {
+
+let ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
     ccmax = ccvalue > 3 ? ccvalue - 1 : 1,
     workcc = false, // concurrent or not
     workurl = null, // url to load worker
@@ -14,13 +18,6 @@ let moto = self.moto = self.moto || {},
     queue = [],     // array of work requests
     topics = {};    // topic handler (broker lite for worker > client msgs)
 
-if (moto.client) return;
-
-gapp.register('moto.client', [
-    "add.array",    // dep: add.array
-    "moto.broker",  // dep: moto.broker
-]);
-
 function dispatch(topic, message) {
     for (let fn of topics[topic] || []) {
         fn(message);
@@ -28,7 +25,7 @@ function dispatch(topic, message) {
 }
 
 // code is running in the browser / client context
-let client = moto.client = {
+const client = exports({
 
     /** @returns [integer] total number of workers **/
     live: () => {
@@ -258,6 +255,6 @@ let client = moto.client = {
         client.kick();
     }
 
-};
+});
 
-})();
+});

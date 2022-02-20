@@ -62,6 +62,8 @@ if (gapp.load) return;
 let mods = [];
 let modn = {};
 
+gapp.overlay = Object.assign;
+
 // register module without a load function
 gapp.register = (name, deps, fn) => {
     gapp.load(undefined, name, deps);
@@ -70,14 +72,19 @@ gapp.register = (name, deps, fn) => {
         let root = self;
         let map = toks.pop();
         for (let tok of toks) {
-            root = root[tok];
-            if (!root) {
-                console.log({missing_root: tok, at: name});
+            if (!root[tok]) {
+                dbug.debug({creating_root: tok, for: name});
                 root = root[tok] = {};
+            } else {
+                root = root[tok];
             }
         }
-        map = root[map] = root[map] || {};
-        fn(self, exports => Object.assign(map, exports));
+        let tmp = root[map] || {};
+        fn(self, exports => {
+            if (exports) {
+                return root[map] = Object.assign(tmp, exports);
+            }
+        });
     }
 };
 
@@ -101,13 +108,15 @@ gapp.check = (name, deps = []) => {
 };
 
 // perform dependency checks and run module load functions
-gapp.finalize = (app, deps) => {
+gapp.main = (app, deps, fn) => {
     // app loader may also pass deps
     gapp.check(app, deps);
     // load mods after checking if dependency is present
     for (let mod of mods) {
         let { fn, name, deps } = mod;
-        gapp.check(name, deps);
+        if (deps) {
+            gapp.check(name, deps);
+        }
         // mods with no name can't be depended on, but are allowed
         if (name) {
             dbug.debug(`${app} | load | ${name}`);
@@ -117,9 +126,10 @@ gapp.finalize = (app, deps) => {
             mod.fn();
         }
     }
-    // produces an error if finalize is called twice
-    // or if load is called after finalize
+    // force runtime error if gapp.load() called gapp.main()
     mods = null;
+    // optional if not called inline with startup
+    if (fn) fn(self);
 };
 
 })();

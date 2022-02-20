@@ -2,19 +2,18 @@
 
 "use strict";
 
-(function() {
+gapp.register("moto.orbit", [
 
-let MOTO = self.moto = self.moto || {};
+'add.three',    // dep: add.three
 
-gapp.register('moto.orbit', [
-    'add.three',    // dep: add.three
-]);
+], (root, exports) => {
+
+const { moto } = root;
 
 /**
  * Adapted from THREE.OrbitControls
  */
-
-MOTO.Orbit = function (object, domElement, notify, slider) {
+moto.Orbit = function (object, domElement, notify, slider) {
 
     this.object = object;
     this.domElement = ( domElement !== undefined ) ? domElement : document;
@@ -630,6 +629,6 @@ MOTO.Orbit = function (object, domElement, notify, slider) {
     window.addEventListener('keydown', onKeyDown, false);
 };
 
-MOTO.Orbit.prototype = Object.create(THREE.EventDispatcher.prototype);
+moto.Orbit.prototype = Object.create(THREE.EventDispatcher.prototype);
 
-})();
+});

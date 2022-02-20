@@ -2,18 +2,12 @@
 
 "use strict";
 
-(function() {
-
-let moto = self.moto = self.moto || {};
-
-if (moto.worker) return;
-
-gapp.register('moto.worker');
+gapp.register("moto.worker", [], (root, exports) => {
 
 let endpoints = {};
 
 // code is running in the worker / server context
-const dispatch = moto.worker = {
+const dispatch = exports({
 
     // bind an endpoint name to a function
     bind(name, fn) {
@@ -100,9 +94,9 @@ const dispatch = moto.worker = {
         }
     }
 
-};
+});
 
 // attach onmessage hanler
 self.onmessage = dispatch.onmessage;
 
-})();
+});

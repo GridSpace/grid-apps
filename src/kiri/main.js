@@ -20,7 +20,7 @@
         LOCAL   = self.debug && !SETUP.remote,
         EVENT   = kiri.broker = gapp.broker,
         SDB     = data.local,
-        SPACE   = kiri.space = moto.Space,
+        SPACE   = kiri.space = moto.space,
         FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
         CONF    = kiri.conf,
         clone   = Object.clone;

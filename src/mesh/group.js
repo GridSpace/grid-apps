@@ -2,27 +2,24 @@
 
 "use strict";
 
-(function() {
+// dep: add.array
+// dep: add.three
+// dep: moto.license
+// dep: moto.broker
+// dep: moto.client
+// dep: mesh.object
+// use: mesh.api
+// use: mesh.model
+gapp.register("mesh.group", [], (root, exports) => {
 
-gapp.register("mesh.group", [
-    "add.array",    // dep: add.array
-    "add.three",    // dep: add.three
-    "moto.license", // dep: moto.license
-    "moto.broker",  // dep: moto.broker
-    "mesh.object",  // dep: mesh.object
-    "mesh.model",   // dep: mesh.model
-    "mesh.api",     // dep: mesh.api
-]);
+const { mesh, moto } = root;
+const { Quaternion, Group, Vector3 } = THREE;
+const { broker } = gapp;
+const { space } = moto;
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.group) return;
-
-let { Quaternion, Group, Vector3 } = THREE;
-let broker = gapp.broker;
-let call = broker.send;
-let space = moto.Space;
-let worker = moto.client.fn;
-let lookUp = new Vector3(0,0,-1);
+const call = broker.send;
+const worker = moto.client.fn;
+const lookUp = new Vector3(0,0,-1);
 
 mesh.group = class MeshGroup extends mesh.object {
 
@@ -165,4 +162,4 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 };
 
-})();
+});

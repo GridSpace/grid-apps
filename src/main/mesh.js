@@ -2,23 +2,34 @@
 
 "use strict";
 
-(function() {
+// dep: moto.license
+// dep: moto.webui
+// dep: moto.client
+// dep: moto.broker
+// dep: moto.space
+// dep: data.index
+// dep: mesh.api
+// dep: mesh.model
+// dep: mesh.build
+// dep: load.file
+gapp.main("main.mesh", [], (root) => {
 
-let broker = gapp.broker;
-let call = broker.send;
-let dbindex = [ "admin", "space" ];
-let { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide } = THREE;
+const { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide } = THREE;
+const { broker } = gapp;
+const { moto } = root;
+const { space } = moto;
+
+const call = broker.send;
+const dbindex = [ "admin", "space" ];
 
 // set below. called once the DOM readyState = complete
 // this is the main() entrypoint called after all dependents load
 function init() {
     let stores = data.open('mesh', { stores: dbindex, version: 4 }).init(),
-        moto = self.moto,
         dark = false,
         ortho = false,
         zoomrev = true,
         zoomspd = 1,
-        space = moto.Space,
         platform = space.platform,
         db = mesh.db = {
             admin: stores.promise('admin'),
@@ -75,7 +86,7 @@ function init() {
 function restore_space() {
     let { api } = mesh;
     let count = 0;
-    let space = moto.Space;
+    let space = moto.space;
     let mcache = {};
     mesh.db.admin.get("camera")
         .then(saved => {
@@ -142,7 +153,7 @@ let temp_mode;
 // split functions
 let split = {
     start() {
-        let space = moto.Space;
+        let space = moto.space;
         let { api, util } = mesh;
         // highlight button
         let button = event.target;
@@ -215,7 +226,7 @@ let split = {
     },
 
     end() {
-        let space = moto.Space;
+        let space = moto.space;
         let { button, obj } = split.state;
         button.classList.remove('selected');
         space.scene.remove(obj);
@@ -484,7 +495,7 @@ function object_destroy(id) {
 // listen for changes like dark mode toggle
 function set_darkmode(dark) {
     let { prefs, selection, model } = mesh.api;
-    let { sky, platform } = moto.Space;
+    let { sky, platform } = moto.space;
     prefs.map.space.dark = dark;
     if (dark) {
         mesh.material.wireframe.color.set(0xaaaaaa);
@@ -535,18 +546,4 @@ document.onreadystatechange = function() {
     }
 }
 
-// finalize modules
-gapp.finalize("main.mesh", [
-    "moto.license", // dep: moto.license
-    "moto.webui",   // dep: moto.webui
-    "moto.client",  // dep: moto.client
-    "moto.broker",  // dep: moto.broker
-    "moto.space",   // dep: moto.space
-    "data.index",   // dep: data.index
-    "mesh.api",     // dep: mesh.api
-    "mesh.model",   // dep: mesh.model
-    "mesh.build",   // dep: mesh.build
-    "load.file",    // dep: load.file
-]);
-
-})();
+});

@@ -54,7 +54,7 @@ function init(mod) {
 
     let depcache = {};
 
-    function find_deps(path, seen = []) {
+    function find_deps(path, seen = [], uses = []) {
         let cached = depcache[path];
         if (cached) {
             return cached;
@@ -71,13 +71,21 @@ function init(mod) {
             .toString()
             .split('\n');
         for (let line of lines) {
+            let upos = line.indexOf('// use:');
+            if (upos >= 0) {
+                let use = line.substring(upos + 7).trim().replace('.','/');
+                if (uses.indexOf(use) < 0) {
+                    uses.push(use);
+                }
+                continue;
+            }
             let dpos = line.indexOf('// dep:');
             if (dpos >= 0) {
-                let dep = line.substring(dpos+7).trim().replace('.','/');
+                let dep = line.substring(dpos + 7).trim().replace('.','/');
                 if (deps.indexOf(dep) < 0) {
                     deps.push(dep);
                 }
-                let deep = find_deps(dep, seen);
+                let deep = find_deps(dep, seen, uses);
                 deps = deps.filter(p => deep.indexOf(p) < 0);
                 // deeper dependencies go first
                 deps = [...deep, ...deps];
@@ -91,6 +99,7 @@ function init(mod) {
     for (let [key,val] of Object.entries(script)) {
         let nval = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
         let modd = false;
+        let uses = [];
         for (let path of val) {
             let fc = path.charAt(0);
             if (fc === '@') {
@@ -101,7 +110,16 @@ function init(mod) {
             } else {
                 continue;
             }
-            let deps = find_deps(path);
+            let uses = [];
+            let deps = find_deps(path, [], uses);
+            if (uses.length) {
+                let miss = uses.filter(u => deps.indexOf(u) < 0);
+                if (miss.length) {
+                    val.appendAll(miss);
+                }
+                // console.log({key, uses, miss, deps});
+                deps.appendAll(miss);
+            }
             if (deps) {
                 // remove deps already in list
                 deps = deps.filter(p => nval.indexOf(p) < 0);
@@ -110,7 +128,7 @@ function init(mod) {
                     throw `missing ${path} in nval`;
                 }
                 // inject deps
-                nval.splice(ppos,0,...deps);
+                nval.splice(ppos, 0, ...deps);
                 modd = true;
             }
             // if list is modified, substitute

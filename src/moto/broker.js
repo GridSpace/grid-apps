@@ -2,13 +2,10 @@
 
 "use strict";
 
-(function() {
+gapp.register("moto.broker", [], (root, exports) => {
 
-if (gapp.broker) return;
+class Broker {
 
-gapp.register('moto.broker');
-
-gapp.broker = new class Broker {
     constructor() {
         this.topics = {};
         this.used = {};
@@ -137,4 +134,7 @@ gapp.broker = new class Broker {
 
 }
 
-})();
+const { moto } = root;
+gapp.broker = moto.broker = new Broker();
+
+});

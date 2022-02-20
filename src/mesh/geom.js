@@ -2,22 +2,16 @@
 
 "use strict";
 
-(function() {
-
+// dep: moto.license
+// dep: add.array
 // dep: ext.three
 // dep: ext.three-bgu
-gapp.register("mesh.geom", [
-    "moto.license", // dep: moto.license
-    "add.array",    // dep: add.array
-]);
+gapp.register("mesh.geom", [], (root, exports) => {
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.geom) return;
-
-let { Matrix4, Matrix3, Vector3, Box3 } = THREE;
+const { Matrix4, Matrix3, Vector3, Box3 } = THREE;
 
 // geometry helper functions
-let geom = mesh.geom = {
+const geom = exports({
 
     // given a closed polyline as an expanded point array
     // return enclosed area with sign indicating winding order
@@ -100,6 +94,6 @@ let geom = mesh.geom = {
 
         return recs;
     }
-};
+});
 
-})();
+});

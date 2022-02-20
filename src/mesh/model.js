@@ -2,26 +2,23 @@
 
 "use strict";
 
-(function() {
+// dep: add.array
+// dep: add.three
+// dep: moto.license
+// dep: moto.client
+// dep: mesh.object
+// use: mesh.api
+// use: mesh.util
+// use: mesh.group
+gapp.register("mesh.model", [], (root, exports) => {
 
-gapp.register("mesh.model", [
-    "add.array",    // dep: add.array
-    "add.three",    // dep: add.three
-    "moto.license", // dep: moto.license
-    "mesh.object",  // dep: mesh.object
-    "mesh.group",   // dep: mesh.group
-    "mesh.util",    // dep: mesh.util
-    "mesh.api",     // dep: mesh.api
-]);
+const { MeshPhongMaterial, MeshBasicMaterial } = THREE;
+const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
+const { mesh, moto } = root;
+const { space } = moto;
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.model) return;
-
-let mapp = mesh;
-let space = moto.Space;
-let worker = moto.client.fn;
-let { MeshPhongMaterial, MeshBasicMaterial } = THREE;
-let { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
+const mapp = mesh;
+const worker = moto.client.fn;
 
 /** default materials **/
 let materials = mesh.material = {
@@ -606,4 +603,4 @@ mesh.model = class MeshModel extends mesh.object {
 
 };
 
-})();
+});

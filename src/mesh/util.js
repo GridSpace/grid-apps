@@ -2,25 +2,22 @@
 
 "use strict";
 
-(function() {
-
+// dep: moto.license
+// dep: add.array
 // dep: ext.three
 // dep: ext.three-bgu
-gapp.register("mesh.util", [
-    "moto.license", // dep: moto.license
-    "add.array",    // dep: add.array
-]);
+// use: mesh.api
+gapp.register("mesh.util", [], (root, exports) => {
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.util) return;
+const { Matrix4, Matrix3, Vector3, Box3 } = THREE;
+const { mesh } = root;
 
-let { Matrix4, Matrix3, Vector3, Box3 } = THREE;
-
-let deferFn = [];
-let boundsCache = {};
+const deferFn = [];
+const boundsCache = {};
 
 // util functions augmented in build (download)
-let util = mesh.util = {
+const util = exports({
+
     uuid(segs = 1) {
         let uid = [];
         while (segs-- > 0) {
@@ -62,7 +59,7 @@ let util = mesh.util = {
     },
 
     // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
-    // @returns bounds modified for moto.Space
+    // @returns bounds modified for moto.space
     bounds(object) {
         let box = new Box3();
         if (Array.isArray(object)) {
@@ -258,6 +255,6 @@ let util = mesh.util = {
         return new VertexNormalsHelper(mesh);
     }
 
-};
+});
 
-})();
+});

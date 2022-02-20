@@ -2,27 +2,24 @@
 
 "use strict";
 
+// dep: moto.license
+// dep: moto.client
+// dep: moto.broker
+// dep: moto.space
+// dep: mesh.util
+// dep: add.array
 // dep: ext.three
 // dep: ext.three-bgu
-gapp.register("mesh.api", [
-
-"moto.license", // dep: moto.license
-"moto.client",  // dep: moto.client
-"moto.broker",  // dep: moto.broker
-"moto.space",   // dep: moto.space
-"data.index",   // dep: data.index
-"mesh.tool",    // dep: mesh.tool
-"mesh.util",    // dep: mesh.util
-"add.array",    // dep: add.array
-
-], (root, exports) => {
+gapp.register("mesh.api", [], (root, exports) => {
 
 const { Matrix4, Vector3 } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
 const { util } = mesh;
 
-let groups = [];
+const worker = moto.client.fn
+const groups = [];
+
 let selected = [];
 
 const selection = {
@@ -628,7 +625,7 @@ const api = exports({
     }
 });
 
-const broker = gapp.broker;
+const { broker } = gapp;
 // publish messages when api functions are called
 broker.wrapObject(selection, 'selection');
 broker.wrapObject(model, 'model');

@@ -2,13 +2,15 @@
 
 "use strict";
 
-(function() {
-
-// start worker pool (disabled for now with *0)
-moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
-
+// dep: moto.license
+// dep: ext.clip2
 // dep: ext.three
 // dep: ext.three-bgu
+// dep: add.three
+// dep: add.array
+// dep: moto.client
+// dep: moto.worker
+// dep: mesh.util
 // dep: geo.base
 // dep: geo.line
 // dep: geo.point
@@ -17,24 +19,20 @@ moto.client.start(`/code/mesh_pool?${gapp.version}`, moto.client.max() * 0);
 // dep: geo.bounds
 // dep: geo.slicer
 // dep: geo.csg
-// dep: ext.clip2
-gapp.finalize("mesh.work", [
-    "moto.license", // dep: moto.license
-    "moto.client",  // dep: moto.client
-    "moto.worker",  // dep: moto.worker
-    "mesh.tool",    // dep: mesh.tool
-    "mesh.util",    // dep: mesh.util
-    "add.three",    // dep: add.three
-]);
+// dep: mesh.tool
+gapp.main("mesh.work", [], (root) => {
 
-let { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
+const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
+const { mesh, moto } = root;
+const { client, worker } = moto;
+const { util } = mesh;
+const cache = {};
 
 // compensation for space/world/platform rotation
-let core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
+const core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
-let { client, worker } = moto;
-let { util } = mesh;
-let cache = {};
+// start worker pool (disabled for now with *0)
+client.start(`/code/mesh_pool?${gapp.version}`, client.max() * 0);
 
 function log(msg) {
     return worker.publish("mesh.log", msg);
@@ -445,4 +443,4 @@ worker.bindObject({
 
 worker.ready();
 
-})();
+});

@@ -2,11 +2,8 @@
 
 "use strict";
 
-(function() {
-
-gapp.finalize("mesh.pool", [
-    "moto.license", // dep: moto.license
-    "moto.worker",  // dep: moto.worker
-]);
-
-})();
+// dep: moto.license
+// dep: moto.worker
+gapp.main("mesh.pool", [], (root) => {
+    // todo
+});

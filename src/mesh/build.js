@@ -2,19 +2,16 @@
 
 "use strict";
 
-(function() {
+// dep: moto.broker
+// dep: mesh.util
+// dep: mesh.api
+gapp.register("mesh.build", [], (root, exports) => {
 
-gapp.register("mesh.build",[
-    "moto.broker",  // dep: moto.broker
-    "mesh.util",    // dep: mesh.util
-    "mesh.api",     // dep: mesh.api
-]);
+const { broker } = gapp;
+const { mesh } = root;
+const { api, util } = mesh;
 
-let mesh = self.mesh = self.mesh || {};
-
-let broker = gapp.broker;
 let call = broker.send;
-let { api, util } = mesh;
 let rad = 180 / Math.PI;
 let und = undefined;
 
@@ -32,7 +29,7 @@ util.download = (data, filename = "mesh-data") => {
 };
 
 // add modal dialog functions to api
-let modal = api.modal = {
+const modal = api.modal = {
     show(title, contents) {
         if (this.info.showing) {
             throw `modal conflict showing "${title}"`;
@@ -118,7 +115,7 @@ let modal = api.modal = {
 };
 
 // transient logging window bottom/left
-let log = api.log = {
+const log = api.log = {
     age: 10000, // age out lines more than 10 seconds old
 
     data: [],   // last n messages
@@ -601,4 +598,4 @@ function ui_build() {
     });
 }
 
-})();
+});
