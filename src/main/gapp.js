@@ -63,8 +63,22 @@ let mods = [];
 let modn = {};
 
 // register module without a load function
-gapp.register = (name, deps) => {
+gapp.register = (name, deps, fn) => {
     gapp.load(undefined, name, deps);
+    if (fn) {
+        let toks = name.split('.');
+        let root = self;
+        let map = toks.pop();
+        for (let tok of toks) {
+            root = root[tok];
+            if (!root) {
+                console.log({missing_root: tok, at: name});
+                root = root[tok] = {};
+            }
+        }
+        map = root[map] = root[map] || {};
+        fn(self, exports => Object.assign(map, exports));
+    }
 };
 
 // register module with a load function

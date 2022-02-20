@@ -2,38 +2,30 @@
 
 "use strict";
 
-(function() {
-
 // dep: ext.three
 // dep: ext.three-bgu
 gapp.register("mesh.api", [
-    "moto.license", // dep: moto.license
-    "moto.client",  // dep: moto.client
-    "moto.broker",  // dep: moto.broker
-    "moto.space",   // dep: moto.space
-    "data.index",   // dep: data.index
-    "mesh.tool",    // dep: mesh.tool
-    "mesh.util",    // dep: mesh.util
-    "add.array",    // dep: add.array
-]);
 
-let mesh = self.mesh = self.mesh || {};
-if (mesh.api) return;
+"moto.license", // dep: moto.license
+"moto.client",  // dep: moto.client
+"moto.broker",  // dep: moto.broker
+"moto.space",   // dep: moto.space
+"data.index",   // dep: data.index
+"mesh.tool",    // dep: mesh.tool
+"mesh.util",    // dep: mesh.util
+"add.array",    // dep: add.array
 
-let { Matrix4, Vector3 } = THREE;
+], (root, exports) => {
 
-let space = moto.Space;
-let worker = moto.client.fn;
-let util = mesh.util;
+const { Matrix4, Vector3 } = THREE;
+const { mesh, moto } = root;
+const { space } = moto;
+const { util } = mesh;
 
 let groups = [];
 let selected = [];
-let toggle = {
-    wire: false,
-    bound: false
-};
 
-let selection = {
+const selection = {
     // @returns {MeshObject[]} or all groups if not strict and no selection
     list(strict = false) {
         return selected.length || strict ? selected.slice() : groups.slice();
@@ -208,7 +200,7 @@ let selection = {
     }
 };
 
-let group = {
+const group = {
     // @returns {MeshGroup[]}
     list() {
         return groups.slice();
@@ -292,7 +284,7 @@ function fallback(models, strict) {
     return Array.isArray(models) ? models : selection.models(strict);
 }
 
-let tool = {
+const tool = {
     merge(models) {
         models = fallback(models);
         if (models.length <= 1) {
@@ -457,10 +449,10 @@ let tool = {
     }
 };
 
-let modes = { object: "object", face: "face", line: "line", vertex: "vertex" };
+const modes = { object: "object", face: "face", line: "line", vertex: "vertex" };
 
 // edit mode
-let mode = {
+const mode = {
     set(mode) {
         prefs.save(prefs.map.mode = mode);
         for (let key of Object.values(modes)) {
@@ -495,7 +487,7 @@ let prefsig;
 let prefsignew;
 
 // persisted preference map
-let prefs = {
+const prefs = {
     map: {
         info: {
             group: "show",
@@ -541,7 +533,7 @@ let prefs = {
 };
 
 // api is augmented in mesh.build (log, modal, download)
-let api = mesh.api = {
+const api = exports({
     help() {
         window.open("https://docs.grid.space/projects/mesh-tool");
     },
@@ -634,9 +626,9 @@ let api = mesh.api = {
         // return model objects suitable for finding ray intersections
         return group.list().map(o => o.models).flat().map(o => o.mesh);
     }
-};
+});
 
-let broker = gapp.broker;
+const broker = gapp.broker;
 // publish messages when api functions are called
 broker.wrapObject(selection, 'selection');
 broker.wrapObject(model, 'model');
@@ -645,4 +637,4 @@ broker.wrapObject(group, 'group');
 // optimize db writes by merging updates
 prefs.save = util.deferWrap(prefs.save, 100);
 
-})();
+});

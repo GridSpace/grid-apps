@@ -11,7 +11,6 @@ gapp.register("mesh.build",[
 ]);
 
 let mesh = self.mesh = self.mesh || {};
-if (mesh.build) return;
 
 let broker = gapp.broker;
 let call = broker.send;
