@@ -102,7 +102,6 @@
             synthPlunge = false,
             spindle = 0,
             spindleMax = device.spindleMax,
-            addOutput = print.addOutput,
             maxToolDiam = widget.maxToolDiam,
             terrain = widget.terrain ? widget.terrain.map(data => {
                 return {
@@ -222,7 +221,7 @@
          */
         function layerPush(point, emit, speed, tool) {
             layerOut.mode = lastMode;
-            addOutput(layerOut, point, emit, speed, tool);
+            print.addOutput(layerOut, point, emit, speed, tool);
             return point;
         }
 
@@ -498,7 +497,7 @@
         // last layer/move is to zmax
         // injected into the last layer generated
         if (lastPoint && newOutput.length)
-        addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
+        print.addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
 
         // replace output single flattened layer with all points
         print.output = newOutput;

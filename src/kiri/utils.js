@@ -2,6 +2,9 @@
 
 "use strict";
 
+// dep: data.local
+// dep: main.kiri
+// use: moto.ajax
 (function () {
 
 const { kiri, moto, data } = self;
@@ -30,7 +33,7 @@ function encodeOpt(opt) {
 }
 
 function ajax(url, fn, rt, po, hd) {
-    return new moto.Ajax(fn, rt).request(url, po, hd);
+    return moto.ajax.new(fn, rt).request(url, po, hd);
 }
 
 function o2js(o,def) {

@@ -2,7 +2,12 @@
 
 "use strict";
 
-(function () {
+// dep: main.kiri
+// dep: data.local
+// dep: kiri.utils
+// use: kiri.client
+// use: kiri.settings
+gapp.register("kiri.api", [], (root, exports) => {
 
 const { data, kiri, noop } = self;
 const { consts, utils } = kiri;
@@ -43,7 +48,7 @@ const tweak = {
     gcode_decimals(v) { api.work.config({base:{gcode_decimals: v}}) }
 };
 
-const api = kiri.api = {
+const api = exports({
     clone: Object.clone,
     sdb: data.local,
     ajax: ajax,
@@ -62,6 +67,6 @@ const api = kiri.api = {
     feature,
     devel,
     tweak,
-};
+});
 
-})();
+});

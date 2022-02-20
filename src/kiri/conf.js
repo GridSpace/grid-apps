@@ -2,11 +2,11 @@
 
 "use strict";
 
-(function() {
+gapp.register("kiri.conf", [], (root, exports) => {
 
-    if (self.kiri.conf) return;
+    const { kiri } = root;
 
-    const KIRI = self.kiri, CVER = 185, clone = Object.clone;
+    const CVER = 185, clone = Object.clone;
 
     function genID() {
         while (true) {
@@ -96,7 +96,7 @@
         // presence of internal field indicates already converted
         if (code.internal >= 0) return code;
         // if (self.navigator) console.log({mode, convert: code});
-        let API = KIRI.api,
+        let API = kiri.api,
             cmd = code.cmd || {},
             set = code.settings || {},
             ext = code.extruders;
@@ -145,7 +145,7 @@
         if (ext) {
             // synthesize extruders from new style settings
             ext.forEach(rec => {
-                let e = API.clone(CONF.defaults.fdm.d.extruders[0]);
+                let e = API.clone(conf.defaults.fdm.d.extruders[0]);
                 if (rec.nozzle) e.extNozzle = rec.nozzle;
                 if (rec.filament) e.extFilament = rec.filament;
                 if (rec.offset_x) e.extOffsetX = rec.offset_x;
@@ -156,7 +156,7 @@
             });
         } else {
             // synthesize extruders from old style settings
-            device.extruders = [API.clone(CONF.defaults.fdm.d.extruders[0])];
+            device.extruders = [API.clone(conf.defaults.fdm.d.extruders[0])];
             device.extruders[0].extNozzle = valueOf(set.nozzle_size, 0.4);
             device.extruders[0].extFilament = valueOf(set.filament_diameter, 1.75);
         }
@@ -166,9 +166,9 @@
 
     // ensure settings structure is up-to-date
     function normalize(settings) {
-        let API = KIRI.api,
-            defaults = CONF.defaults,
-            template = CONF.template,
+        let API = kiri.api,
+            defaults = conf.defaults,
+            template = conf.template,
             mode = settings.mode.toLowerCase(),
             default_dev = defaults[mode].d,
             default_pro = defaults[mode].p;
@@ -246,7 +246,7 @@
         outputClockwise: "camConventional"
     };
 
-    let CONF = KIRI.conf = {
+    const conf = exports({
         // --------------- helper functions
         normalize,
         device_from_code,
@@ -707,9 +707,9 @@
             id: genID(),
             ver: CVER
         }
-    };
+    });
 
-    let settings = CONF.template;
+    const settings = conf.template;
 
     // seed defaults. will get culled on save
     settings.sproc.FDM.default = clone(settings.process);
@@ -721,4 +721,4 @@
     settings.cdev.CAM = clone(settings.device);
     settings.cdev.LASER = clone(settings.device);
 
-})();
+});

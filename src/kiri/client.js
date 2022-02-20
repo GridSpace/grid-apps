@@ -2,16 +2,18 @@
 
 "use strict";
 
-(function() {
+// use: kiri.api
+gapp.register("kiri.client", [], (root, exports) => {
+
+const { kiri } = root;
 
 // this code runs in kiri's main loop
-let KIRI = self.kiri = self.kiri || {},
-    loc = self.location,
+let loc = self.location,
     host = loc.hostname,
     port = loc.port,
     proto = loc.protocol,
     debug = self.debug === true,
-    time = function() { return new Date().getTime() },
+    time = Date.now,
     seqid = 1,
     syncd = {},
     running = {},
@@ -21,7 +23,7 @@ let KIRI = self.kiri = self.kiri || {},
     ;
 
 /**
- * @param {Function} fn name of function in KIRI.worker
+ * @param {Function} fn name of function in kiri.worker
  * @param {Object} data to send to server
  * @param {Function} onreply function to call on reply messages
  * @param {Object[]} zerocopy array of objects to pass using zerocopy
@@ -49,9 +51,7 @@ function send(fn, data, onreply, zerocopy) {
 }
 
 // code is running in the browser / client context
-const CLIENT =
-KIRI.client =
-KIRI.work = {
+const client = exports({
     send: send,
 
     newWorker: function() {
@@ -93,9 +93,9 @@ KIRI.work = {
 
         syncd = {};
         running = {};
-        worker = KIRI.work.newWorker();
+        worker = client.newWorker();
 
-        CLIENT.onmessage = worker.onmessage = function(e) {
+        client.onmessage = worker.onmessage = function(e) {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],
@@ -120,10 +120,10 @@ KIRI.work = {
     },
 
     decimate: function(vertices, options, callback) {
-        let alert = KIRI.api.show.alert('processing model', 1000);
+        let alert = kiri.api.show.alert('processing model', 1000);
         vertices = vertices.buffer.slice(0);
         send("decimate", {vertices, options}, function(output) {
-            KIRI.api.hide.alert(alert);
+            kiri.api.hide.alert(alert);
             callback(output);
         });
     },
@@ -154,7 +154,7 @@ KIRI.work = {
     // widget sync
     sync: function(widgets) {
         if (!widgets) {
-            widgets = KIRI.api.widgets.all();
+            widgets = kiri.api.widgets.all();
         }
         // send list of currently valid widgets
         send("sync", { valid: widgets.map(w => w.id) }, () =>  {});
@@ -180,7 +180,7 @@ KIRI.work = {
     rotate: function(settings, callback) {
         send("rotate", { settings }, reply => {
             if (reply.group) {
-                for (let widget of KIRI.Widget.Groups.forid(reply.group)) {
+                for (let widget of kiri.Widget.Groups.forid(reply.group)) {
                     widget.belt = reply.belt;
                 }
             } else if (callback) {
@@ -192,7 +192,7 @@ KIRI.work = {
     unrotate: function(settings, callback) {
         send("unrotate", { settings }, reply => {
             if (reply.group) {
-                for (let widget of KIRI.Widget.Groups.forid(reply.group)) {
+                for (let widget of kiri.Widget.Groups.forid(reply.group)) {
                     widget.rotinfo = reply.rotinfo;
                 }
             } else if (callback) {
@@ -247,7 +247,7 @@ KIRI.work = {
                 ondone(null, reply.error);
             }
             if (reply.debug) {
-                KIRI.api.event.emit("export.debug", reply.debug);
+                kiri.api.event.emit("export.debug", reply.debug);
             }
         });
     },
@@ -268,10 +268,10 @@ KIRI.work = {
                 y: -origin.y,
                 z: origin.z
             };
-            const output = KIRI.newPrint().parseSVG(code, offset);
+            const output = kiri.newPrint().parseSVG(code, offset);
             send("parse_svg", output, function(reply) {
                 if (reply.parsed) {
-                    done(KIRI.codec.decode(reply.parsed));
+                    done(kiri.codec.decode(reply.parsed));
                 }
             });
             return;
@@ -281,7 +281,7 @@ KIRI.work = {
                 progress(reply.progress);
             }
             if (reply.parsed) {
-                done(KIRI.codec.decode(reply.parsed), reply.maxSpeed, reply.minSpeed);
+                done(kiri.codec.decode(reply.parsed), reply.maxSpeed, reply.minSpeed);
             }
         });
     },
@@ -312,9 +312,9 @@ KIRI.work = {
             // console.log({wasm_worker_said: reply});
         });
     }
-};
+});
 
 // start worker
-KIRI.work.restart();
+client.restart();
 
-})();
+});

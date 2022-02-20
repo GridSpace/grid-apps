@@ -175,7 +175,7 @@
             unit_scale: unitScale,
             wireframe: setWireframe,
         },
-        work: kiri.work
+        work: kiri.client
     });
 
     function updateStackLabelState() {
@@ -598,7 +598,7 @@
 
     function clearWorkspace() {
         // free up worker cache/mem
-        kiri.work.clear();
+        kiri.client.clear();
         platform.select_all();
         platform.delete(selection.meshes());
     }

@@ -8,12 +8,13 @@ function rnd() {
     return Math.round(Math.random()*0xffffffff).toString(36);
 }
 
-const KV = data.local,
-    KEY = "moto-ajax",
-    TIME = Date.now,
-    MOKEY = moto.id = KV.getItem(KEY) || (TIME().toString(36)+rnd()+rnd());
+const { data } = root;
+const { local } = data;
 
-KV.setItem(KEY, MOKEY);
+const KEY = "moto-ajax";
+const MOID = moto.id = local.getItem(KEY) || (Date.now().toString(36)+rnd()+rnd());
+
+local.setItem(KEY, MOID);
 
 const STATES = [
     "request not initialized",        // 0
@@ -49,7 +50,7 @@ class Ajax {
         this.ajax.open(send ? "POST" : "GET", url, true);
         if (this.responseType) this.ajax.responseType = this.responseType;
         headers = headers || {};
-        headers["X-Moto-Ajax"] = MOKEY;
+        headers["X-Moto-Ajax"] = MOID;
         for (let k in headers) {
             this.ajax.setRequestHeader(k, headers[k]);
         }
@@ -66,15 +67,15 @@ function call(url, handler) {
     return new Ajax(handler).request(url);
 }
 
-function callAjax(url, handler) {
-    return new Ajax(handler).request(url);
-};
-
 function restore(id) {
-    MOKEY = moto.id = id;
-    KV.setItem(KEY, MOKEY);
+    MOID = moto.id = id;
+    local.setItem(KEY, MOID);
 }
 
-exports({ Ajax, call, callAjax, restore });
+exports({
+    new(cb, rt) { return new Ajax(cb, rt) },
+    call,
+    restore,
+});
 
 });

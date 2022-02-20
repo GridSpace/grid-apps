@@ -453,7 +453,7 @@ function platformDelete(widget) {
         }
         return;
     }
-    kiri.work.clear(widget);
+    kiri.client.clear(widget);
     api.widgets.remove(widget);
     api.selection.remove(widget);
     Widget.Groups.remove(widget);

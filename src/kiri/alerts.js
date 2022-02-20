@@ -2,7 +2,8 @@
 
 "use strict";
 
-(function () {
+// dep: kiri.api
+gapp.register("kiri.alerts", [], (root, exports) => {
 
 const { kiri } = self;
 const { api } = kiri;
@@ -72,4 +73,4 @@ api.alerts = {
     update
 };
 
-})();
+});

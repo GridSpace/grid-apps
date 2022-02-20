@@ -2,15 +2,15 @@
 
 "use strict";
 
-(function() {
-
-    if (self.kiri.codec) return;
+// dep: main.kiri
+// dep: geo.base
+gapp.register("kiri.codec", [], (root, exports) => {
 
     const BASE = self.base, KIRI = self.kiri, handlers = {};
     const freeMem = true;
     const zeroOut = true;
 
-    const codec = KIRI.codec = {
+    const codec = exports({
         undef: undefined,
         encode: encode,
         decode: decode,
@@ -19,7 +19,7 @@
         encodePointArray,
         decodePointArray,
         toCodable
-    };
+    });
 
     function toCodable(object) {
         switch (typeof object) {
@@ -389,5 +389,4 @@
         return poly;
     });
 
-
-})();
+});

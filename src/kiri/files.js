@@ -64,7 +64,7 @@
             if (vertices.length < (options.threshold || 500000)) {
                 return callback(vertices);
             }
-            kiri.work.decimate(vertices, this.options, function(reply) {
+            kiri.client.decimate(vertices, this.options, function(reply) {
                 callback(reply);
             });
         };
