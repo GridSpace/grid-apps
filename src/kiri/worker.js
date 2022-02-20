@@ -3,7 +3,7 @@
 "use strict";
 
 const { base, kiri } = self;
-const { util, polygons } = base;
+const { util, polygons, wasm_ctrl } = base;
 const { codec } = kiri;
 const { time } = util;
 const POLY = polygons;
@@ -798,9 +798,9 @@ kiri.worker = {
 
     wasm: function(data, send) {
         if (data.enable) {
-            geo.enable();
+            wasm_ctrl.enable();
         } else {
-            geo.disable();
+            wasm_ctrl.disable();
         }
         minwork.wasm(data.enable);
         send.done({ wasm: data });

@@ -3,12 +3,10 @@
 "use strict";
 
 // dep: geo.base
-(function() {
+gapp.register("geo.bounds", [], (root, exports) => {
 
-let base = self.base;
-if (base.Bounds) return;
-
-let { config, util } = base;
+const { base } = root;
+const { config, util } = base;
 
 class Bounds {
     constructor() {
@@ -132,9 +130,12 @@ class Bounds {
 
     centery() {
         return this.miny + this.height() / 2;
-    }}
+    }
+}
 
-base.Bounds = Bounds;
-base.newBounds = function() { return new Bounds() };
+gapp.overlay(base, {
+    Bounds,
+    newBounds() { return new Bounds() }
+});
 
-})();
+});

@@ -3,9 +3,12 @@
 "use strict";
 
 // path & routing output utilities
-(function() {
 
-const { base } = self;
+// dep: geo.base
+// dep: geo.point
+gapp.register("geo.paths", [], (root, exports) => {
+
+const { base } = root;
 const { util, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
 
@@ -107,4 +110,4 @@ base.paths = {
     tip2tipEmit
 };
 
-})();
+});

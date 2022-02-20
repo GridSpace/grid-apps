@@ -2,11 +2,9 @@
 
 "use strict";
 
-(function() {
+gapp.register("geo.base", [], (root, exports) => {
 
-if (self.base) return;
-
-const base = self.base = {};
+const base = root.base = {};
 const round_decimal_precision = 5;
 
 function time() {
@@ -580,4 +578,4 @@ base.util = {
     zInPlane
 };
 
-})();
+});

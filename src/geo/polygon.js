@@ -3,14 +3,14 @@
 "use strict";
 
 // dep: ext.clip2
+// dep: geo.point
 // dep: geo.bounds
-// dep: geo.polygons
-(function() {
+// use: geo.polygons
+gapp.register("geo.polygon", [], (root, exports) => {
 
-const base = self.base;
-if (base.Polygon) return;
-
+const { base } = root;
 const { config, util, polygons, newBounds, newPoint } = base;
+
 const POLY = polygons,
     DEG2RAD = Math.PI / 180,
     clib = self.ClipperLib,
@@ -1804,11 +1804,13 @@ function newPolygon(points) {
     return new Polygon(points);
 }
 
-base.Polygon = Polygon;
-base.newPolygon = newPolygon;
-
 Polygon.fromArray = function(array) {
     return newPolygon().fromArray(array);
 };
 
-})();
+gapp.overlay(base, {
+    Polygon,
+    newPolygon
+});
+
+});

@@ -2,10 +2,15 @@
 
 "use strict";
 
-// only active in workers
-if (!self.window) (function() {
+// dep: geo.base
+// dep: ext.clip2
+gapp.register("geo.wasm", [], (root, exports) => {
 
-if (!self.geo) self.geo = {
+const { base } = root;
+const { config } = base;
+
+const factor = config.clipper;
+const wasm_ctrl = {
     enable,
     disable,
     count: {
@@ -15,8 +20,7 @@ if (!self.geo) self.geo = {
     }
 };
 
-const factor = self.base.config.clipper;
-const geo = self.geo;
+gapp.overlay(base, { wasm_ctrl });
 
 function log() {
     console.log(...arguments);
@@ -76,9 +80,9 @@ function readPolys(view, z, out = []) {
 }
 
 function polyOffset(polys, offset, z, clean, simple) {
-    geo.count.offset++;
-    let wasm = geo.wasm,
-        buffer = geo.wasm.shared,
+    wasm_ctrl.count.offset++;
+    let wasm = base.wasm,
+        buffer = wasm.shared,
         pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
         resat = wasm.fn.offset(buffer, pcount, offset * factor, clean, simple),
         out = readPolys(new DataReader(wasm.heap, resat), z);
@@ -86,9 +90,9 @@ function polyOffset(polys, offset, z, clean, simple) {
 }
 
 function polyUnion(polys, z) {
-    geo.count.union++;
-    let wasm = geo.wasm,
-        buffer = geo.wasm.shared,
+    wasm_ctrl.count.union++;
+    let wasm = base.wasm,
+        buffer = wasm.shared,
         pcount = writePolys(new DataWriter(wasm.heap, buffer), polys),
         resat = wasm.fn.union(buffer, pcount),
         out = readPolys(new DataReader(wasm.heap, resat), z);
@@ -96,13 +100,13 @@ function polyUnion(polys, z) {
 }
 
 function polyDiff(polysA, polysB, z, AB, BA) {
-    geo.count.diff++;
-    let wasm = geo.wasm,
-        buffer = geo.wasm.shared,
+    wasm_ctrl.count.diff++;
+    let wasm = base.wasm,
+        buffer = wasm.shared,
         writer = new DataWriter(wasm.heap, buffer),
         pcountA = writePolys(writer, polysA),
         pcountB = writePolys(writer, polysB),
-        resat = wasm.fn.diff(buffer, pcountA, pcountB, AB?1:0, BA?1:0, base.config.clipperClean),
+        resat = wasm.fn.diff(buffer, pcountA, pcountB, AB?1:0, BA?1:0, config.clipperClean),
         reader = new DataReader(wasm.heap, resat);
     if (AB) {
         AB.appendAll(polyNest(readPolys(reader, z)));
@@ -141,7 +145,7 @@ function polyNest(polys) {
 }
 
 function readString(pos, len) {
-    let view = new DataReader(geo.wasm.heap, pos);
+    let view = new DataReader(base.wasm.heap, pos);
     let out = [];
     while (len-- > 0) {
         out.push(String.fromCharCode(view.readU8()));
@@ -150,10 +154,10 @@ function readString(pos, len) {
 }
 
 function enable() {
-    if (geo.wasm || geo._wasm) {
+    if (base.wasm || base._wasm) {
         return;
     }
-    geo._wasm = 'loading';
+    base._wasm = 'loading';
     fetch('/wasm/kiri-geo.wasm')
         .then(response => response.arrayBuffer())
         .then(bytes => WebAssembly.instantiate(bytes, {
@@ -169,12 +173,12 @@ function enable() {
             }
         }))
         .then(results => {
-            // console.log({enabled: geo.wasm});
-            delete geo._wasm;
+            // console.log({enabled: base.wasm});
+            delete base._wasm;
             let { module, instance } = results;
             let { exports } = instance;
             let heap = new DataView(exports.memory.buffer);
-            let wasm = geo.wasm = {
+            let wasm = base.wasm = {
                 heap,
                 exports,
                 memory: exports.memory,
@@ -197,10 +201,10 @@ function enable() {
 }
 
 function disable() {
-    if (geo.wasm) {
-        delete geo.wasm;
+    if (base.wasm) {
+        delete base.wasm;
         // console.log({disabled: geo});
     }
 }
 
-})();
+});

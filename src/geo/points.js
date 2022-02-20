@@ -2,13 +2,17 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.point
+gapp.register("geo.points", [], (root, exports) => {
 
-const base = self.base;
+const { base } = root;
 const { config } = base;
 
-base.verticesToPoints = verticesToPoints;
-base.pointsToVertices = pointsToVertices;
+gapp.overlay(base, {
+    verticesToPoints,
+    pointsToVertices
+});
 
 /**
  * converts a geometry point array into a kiri point array
@@ -125,4 +129,4 @@ function pointsToVertices(points) {
     return vertices;
 }
 
-})();
+});

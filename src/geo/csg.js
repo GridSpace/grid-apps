@@ -2,13 +2,12 @@
 
 "use strict";
 
-(function() {
-
 // dep: geo.base
-let base = self.base;
-if (base.CSG) return;
+gapp.register("geo.csg", [], (root, exports) => {
 
-base.CSG = {
+const { base } = root;
+
+const CSG = {
 
     union() {
         return jscadModeling.booleans.union(...arguments);
@@ -52,4 +51,8 @@ base.CSG = {
 
 };
 
-})();
+gapp.overlay(base, {
+    CSG
+});
+
+});

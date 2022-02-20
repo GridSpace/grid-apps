@@ -2,12 +2,9 @@
 
 "use strict";
 
-(function() {
+gapp.register("data.local", [], (root, exports) => {
 
-gapp.register('data.local');
-
-let data = self.data = self.data || {};
-if (data.local) return;
+const { data } = root;
 
 function Local() {
     this.__data__ = {};
@@ -47,4 +44,4 @@ try {
     // alert(msg);
 }
 
-})();
+});

@@ -2,11 +2,10 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+gapp.register("geo.point", [], (root, exports) => {
 
-if (self.base.Point) return;
-
-const base = self.base;
+const { base } = root;
 const { util, config, key } = base;
 const { round } = util;
 
@@ -564,14 +563,19 @@ function p2l(p, l1, l2) {
     };
     return d(p, pb);
 }
+
 function newPoint(x, y, z, key) {
     return new Point(x, y, z, key);
 }
 
-base.Point = Point;
-base.newPoint = newPoint;
-base.pointFromClipper = function(cp, z) {
+function pointFromClipper(cp, z) {
     return newPoint(cp.X / config.clipper, cp.Y / config.clipper, z);
-};
+}
 
-})();
+gapp.overlay(base, {
+    Point,
+    newPoint,
+    pointFromClipper
+});
+
+});

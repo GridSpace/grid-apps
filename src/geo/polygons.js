@@ -2,11 +2,12 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.point
+// use: geo.polygon
+gapp.register("base.polygons", [], (root, exports) => {
 
-const base = self.base;
-if (base.polygons) return;
-
+const { base } = root;
 const { util, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
 
@@ -954,4 +955,4 @@ function route(polys, start) {
     return routed.map(r => r.poly);
 }
 
-})();
+});

@@ -2,11 +2,10 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+gapp.register("geo.line", [], (root, exports) => {
 
-if (self.base.Line) return;
-
-const base = self.base;
+const { base } = root;
 
 class Line {
     constructor(p1, p2, key) {
@@ -63,8 +62,10 @@ function newOrderedLine(p1, p2, key) {
     return p1.key < p2.key ? newLine(p1,p2,key) : newLine(p2,p1,key);
 }
 
-base.Line = Line;
-base.newLine = newLine;
-base.newOrderedLine = newOrderedLine;
+gapp.overlay(base, {
+    Line,
+    newLine,
+    newOrderedLine
+});
 
-})();
+});

@@ -2,11 +2,10 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+gapp.register("geo.gyroid", [], (root, exports) => {
 
-if (self.base.gyroid) return;
-
-const base = self.base;
+const { base } = root;
 const PI2 = Math.PI * 2;
 
 let cache = {};
@@ -215,6 +214,8 @@ function distTo(a, b, dir) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-base.gyroid = { slice };
+gapp.overlay(base, {
+    gyroid: { slice }
+})
 
-})();
+});

@@ -2,12 +2,14 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// use: geo.line
+// use: geo.point
+gapp.register("geo.slope", [], (root, exports) => {
 
-const base = self.base;
-if (base.Slope) return;
-
+const { base } = root;
 const { config } = base;
+
 const ABS = Math.abs,
     DEG2RAD = Math.PI / 180,
     RAD2DEG = 180 / Math.PI;
@@ -96,13 +98,17 @@ function newSlope(p1, p2, dx, dy) {
     return new Slope(p1, p2, dx, dy);
 }
 
-base.Slope = Slope;
-base.newSlope = newSlope;
-base.newSlopeFromAngle = function(angle) {
+function newSlopeFromAngle(angle) {
     return newSlope(0,0,
         Math.cos(angle * DEG2RAD),
         Math.sin(angle * DEG2RAD)
     );
-};
+}
 
-})();
+gapp.overlay(base, {
+    Slope,
+    newSlope,
+    newSlopeFromAngle
+});
+
+});

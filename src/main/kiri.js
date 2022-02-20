@@ -2,24 +2,22 @@
 
 "use strict";
 
-(function () {
+gapp.register("main.kiri", [], (root) => {
 
-    if (!self.kiri) {
-        let modfns = self.kirimod = [];
+const modfns = root.kirimod = [];
 
-        let kiri = self.kiri = {
-            beta: 3303,
-            driver: {}, // driver modules
-            load(fn) {
-                modfns.push(fn);
-            },
-            load_exec(api) {
-                // complete module loading
-                modfns.forEach(modfn => { modfn(api || kiri.api)} );
-                // rewrite load() to be immediate post-finalize
-                kiri.load = (modfn) => { modfn(api || kiri.api) };
-            }
-        };
+const kiri = root.kiri = {
+    beta: 3303,
+    driver: {}, // driver modules
+    load(fn) {
+        modfns.push(fn);
+    },
+    load_exec(api) {
+        // complete module loading
+        modfns.forEach(modfn => { modfn(api || kiri.api)} );
+        // rewrite load() to be immediate post-finalize
+        kiri.load = (modfn) => { modfn(api || kiri.api) };
     }
+};
 
-})();
+});

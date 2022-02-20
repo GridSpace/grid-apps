@@ -399,7 +399,7 @@ const script = {
         "kiri/tools",
         "kiri/frame",
         "@devices",
-        "@icons"
+        "@icons",
     ],
     kiri_work : [
         "main/gapp",

@@ -2,12 +2,10 @@
 
 "use strict";
 
-(function() {
-
 // dep: ext.three
 // dep: ext.three-bgu
 // dep: ext.three-svg
-gapp.register('add.three');
+gapp.register("add.three", [], (root, exports) => {
 
 let MP = THREE.Mesh.prototype,
     XP = THREE.Box3.prototype,
@@ -129,4 +127,4 @@ THREE.Object3D.prototype.removeAll = function() {
     this.children = [];
 };
 
-})();
+});

@@ -3,9 +3,7 @@
 "use strict";
 
 // extend Array, String, Number, Math
-(function() {
-
-gapp.register('add.array');
+gapp.register("add.array", [], (root, exports) => {
 
 let AP = {};
 
@@ -234,4 +232,4 @@ Number.prototype.round = function(digits) {
     return Math.round(this.valueOf() * pow) / pow;
 };
 
-})();
+});

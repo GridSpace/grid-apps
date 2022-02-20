@@ -115,9 +115,9 @@ const funcs = {
 
     wasm: data => {
         if (data.enable) {
-            geo.enable();
+            base.wasm_ctrl.enable();
         } else {
-            geo.disable();
+            base.wasm_ctrl.disable();
         }
     },
 

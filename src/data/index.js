@@ -2,12 +2,9 @@
 
 "use strict";
 
-(function() {
+gapp.register("data.index", [], (root, exports) => {
 
-gapp.register('data.index');
-
-let data = self.data = self.data || {};
-if (data.Index) return;
+const { data } = root;
 
 data.Index = IDBStore;
 
@@ -322,4 +319,4 @@ SP.clear = function(key, store = this.current) {
         .objectStore(store).clear();
 };
 
-})();
+});

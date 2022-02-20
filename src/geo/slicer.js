@@ -6,11 +6,13 @@
  * basic slice and line connection. In future, replace kiri's fdm and cam slicers
  * with wrappers on this one.
  */
-(function() {
+// dep: geo.base
+// dep: geo.line
+// dep: geo.point
+// dep: geo.polygon
+gapp.register("geo.slicer", [], (root, exports) => {
 
-const base = self.base;
-if (base.slice) return;
-
+const { base } = root;
 const { config, util, polygons } = base
 const { newOrderedLine, newPolygon, newPoint } = base;
 
@@ -819,8 +821,10 @@ function removeDuplicateLines(lines) {
     return output;
 }
 
-base.slice = slice;
-base.sliceZ = sliceZ;
-base.slicePost = {};
+gapp.overlay(base, {
+    slice,
+    sliceZ,
+    slicePost: {}
+});
 
-})();
+});
