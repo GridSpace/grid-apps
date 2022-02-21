@@ -2,54 +2,55 @@
 
 "use strict";
 
-(function() {
+// dep: main.kiri
+// use: kiri.api
+// use: kiri.widgets
+gapp.register("kiri-mode.cam.driver", [], (root, exports) => {
 
-    const KIRI = self.kiri,
-        CAM = KIRI.driver.CAM = {
-            // init,        // src/mode/cam/client.js
-            // slice,       // src/mode/cam/slice.js
-            // prepare,     // src/mode/cam/prepare.js
-            // export       // src/mode/cam/export.js
-        },
-        CPRO = CAM.process = {
-            LEVEL: 1,
-            ROUGH: 2,
-            OUTLINE: 3,
-            CONTOUR_X: 4,
-            CONTOUR_Y: 5,
-            TRACE: 6,
-            DRILL: 7
-        };
+const { kiri } = root;
+const { driver } = kiri;
 
-        // defer loading until KIRI.client and KIRI.worker exist
-        KIRI.load(function(API) {
+const CAM = driver.CAM = {};
 
-            if (KIRI.client)
-            CAM.traces = function(ondone, single) {
-                KIRI.client.sync();
-                let settings = API.conf.get();
-                let widgets = API.widgets.map();
-                KIRI.client.send("cam_traces", { settings, single }, output => {
-                    let ids = [];
-                    KIRI.codec.decode(output).forEach(rec => {
-                        ids.push(rec.id);
-                        widgets[rec.id].traces = rec.traces;
-                    });
-                    ondone(ids);
-                });
-            };
+CAM.process = {
+    LEVEL: 1,
+    ROUGH: 2,
+    OUTLINE: 3,
+    CONTOUR_X: 4,
+    CONTOUR_Y: 5,
+    TRACE: 6,
+    DRILL: 7
+};
 
-            if (KIRI.worker)
-            KIRI.worker.cam_traces = function(data, send) {
-                const { settings, single } = data;
-                const widgets = Object.values(wcache);
-                const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
-                send.done(KIRI.codec.encode(fresh.map(widget => { return {
-                    id: widget.id,
-                    traces: widget.traces,
-                } } )));
-            };
+// defer loading until kiri.client and kiri.worker exist
+kiri.load(api => {
 
+    if (kiri.client)
+    CAM.traces = function(ondone, single) {
+        kiri.client.sync();
+        const settings = api.conf.get();
+        const widgets = api.widgets.map();
+        kiri.client.send("cam_traces", { settings, single }, output => {
+            const ids = [];
+            kiri.codec.decode(output).forEach(rec => {
+                ids.push(rec.id);
+                widgets[rec.id].traces = rec.traces;
+            });
+            ondone(ids);
         });
+    };
 
-})();
+    if (kiri.worker)
+    kiri.worker.cam_traces = function(data, send) {
+        const { settings, single } = data;
+        const widgets = Object.values(wcache);
+        const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
+        send.done(kiri.codec.encode(fresh.map(widget => { return {
+            id: widget.id,
+            traces: widget.traces,
+        } } )));
+    };
+
+});
+
+});
