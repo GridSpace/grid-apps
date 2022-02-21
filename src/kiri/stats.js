@@ -2,9 +2,12 @@
 
 "use strict";
 
-(function () {
+// dep: moto.broker
+// dep: kiri.api
+// dep: kiri.utils
+gapp.register("kiri.stats", [], (root, exports) => {
 
-const { data, kiri, gapp } = self;
+const { data, kiri, gapp } = root;
 const { broker } = gapp;
 const { api, utils } = kiri;
 const { js2o, o2js } = utils;
@@ -55,4 +58,4 @@ class Stats {
 
 kiri.stats = new Stats();
 
-})();
+});

@@ -8,6 +8,7 @@ const { base, kiri } = self;
 const { util, config } = base;
 const { FDM } = kiri.driver;
 const { getRangeParameters } = FDM;
+const debug = false;
 
 FDM.export = function(print, online, ondone, ondebug) {
     const { settings, belty, tools } = print;

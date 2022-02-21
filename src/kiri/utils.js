@@ -5,9 +5,9 @@
 // dep: data.local
 // dep: main.kiri
 // use: moto.ajax
-(function () {
+gapp.register("kiri.utils", [], (root, exports) => {
 
-const { kiri, moto, data } = self;
+const { kiri, moto, data } = root;
 
 function parseOpt(ov) {
     let opt = {}, kv, kva;
@@ -96,7 +96,7 @@ function areEqual(o1, o2) {
     return false;
 }
 
-kiri.utils = {
+exports({
     areEqual,
     parseOpt,
     encodeOpt,
@@ -107,6 +107,6 @@ kiri.utils = {
     avgc,
     rgb,
     a2c
-};
+});
 
-})();
+});

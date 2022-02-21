@@ -5,7 +5,7 @@
 // dep: kiri.api
 gapp.register("kiri.alerts", [], (root, exports) => {
 
-const { kiri } = self;
+const { kiri } = root;
 const { api } = kiri;
 
 let alerts = [];

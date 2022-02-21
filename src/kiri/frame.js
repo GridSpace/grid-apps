@@ -2,7 +2,14 @@
 
 "use strict";
 
-(function () {
+// use: load.stl
+// use: load.svg
+// use: kiri.api
+// use: kiri.feature
+// use: kiri.platform
+// use: kiri.settings
+// use: kiri.widget
+gapp.register("kiri.frame", [], (root, exports) => {
 
 // add frame message api listener
 window.addEventListener('message', msg => {
@@ -113,4 +120,4 @@ window.addEventListener('message', msg => {
     }
 });
 
-})();
+});

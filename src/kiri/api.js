@@ -9,7 +9,7 @@
 // use: kiri.settings
 gapp.register("kiri.api", [], (root, exports) => {
 
-const { data, kiri, noop } = self;
+const { data, kiri, noop } = root;
 const { consts, utils } = kiri;
 const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
 const { LISTS } = consts;

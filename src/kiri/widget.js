@@ -1,12 +1,10 @@
-console.log/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
-(function() {
+gapp.register("kiri.widget", [], (root, exports) => {
 
-if (self.kiri.Widget) return;
-
-const { base, kiri } = self;
+const { base, kiri } = root;
 const { api, driver, utils } = kiri;
 const { config, util, polygons } = base;
 const { Mesh, newPoint, verticesToPoints } = base;
@@ -963,4 +961,4 @@ Widget.deleteFromState = function(id,ondone) {
 kiri.Widget = Widget;
 kiri.newWidget = newWidget;
 
-})();
+});

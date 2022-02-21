@@ -2,9 +2,7 @@
 
 "use strict";
 
-(function () {
-
-const { kiri } = self;
+gapp.register("kiri.consts", [], (root, exports) => {
 
 const COLOR = {
     wireframe: 0x444444,
@@ -124,7 +122,7 @@ const PMODES = {
 
 const SEED = 'kiri-seed';
 
-kiri.consts = {
+exports({
     PMODES,
     COLOR,
     LISTS,
@@ -132,6 +130,6 @@ kiri.consts = {
     VIEWS,
     SEED,
     beltfact: Math.cos(Math.PI / 4)
-};
+});
 
-})();
+});

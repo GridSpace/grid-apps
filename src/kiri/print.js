@@ -2,17 +2,18 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.point
+// dep: geo.polygon
+// dep: geo.paths
+// dep: kiri.consts
+gapp.register("kiri.print", [], (root, evets) => {
 
 const { base, kiri } = self;
 const { paths, util, newPoint, Polygon } = base;
 const { tip2tipEmit } = paths;
 const { numOrDefault } = util;
 const { beltfact } = kiri.consts;
-
-kiri.newPrint = function(settings, widgets, id) {
-    return new Print(settings, widgets, id);
-};
 
 class Print {
     constructor(settings, widgets, id) {
@@ -523,7 +524,6 @@ class Print {
 
         done({ output: scope.output });
     }
-
 }
 
 class Output {
@@ -550,6 +550,13 @@ class Output {
     }
 }
 
-kiri.Print = Print;
+function newPrint(settings, widgets, id) {
+    return new Print(settings, widgets, id);
+};
 
-})();
+gapp.overlay(kiri, {
+    Print,
+    newPrint
+});
+
+});

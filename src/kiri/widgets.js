@@ -2,9 +2,9 @@
 
 "use strict";
 
-(function () {
+gapp.register("kiri.widgets", [], (root, exports) => {
 
-const { data, kiri, moto, noop } = self;
+const { data, kiri, moto, noop } = root;
 const { api, consts, utils, newWidget, Widget } = kiri;
 const { space } = moto;
 
@@ -110,4 +110,4 @@ const widgets = api.widgets = {
     for(fn)     { widgets.each(fn) },
 };
 
-})();
+});

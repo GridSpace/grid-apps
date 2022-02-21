@@ -2,9 +2,13 @@
 
 "use strict";
 
-(function () {
+// dep: moto.space
+// dep: kiri.api
+// dep: kiri.consts
+// dep: kiri.utils
+gapp.register("kiri.selection", [], (root, exports) => {
 
-const { data, kiri, moto, noop } = self;
+const { kiri, moto, noop } = self;
 const { api, consts, utils } = kiri;
 const { space } = moto;
 
@@ -293,4 +297,4 @@ const selection = api.selection = {
     meshes()    { return selectedMeshes.slice() },
 };
 
-}());
+});

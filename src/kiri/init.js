@@ -2,11 +2,15 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: kiri.api
+// dep: kiri.stats
+// dep: kiri.consts
+// dep: kiri.platform
+// dep: kiri.selection
+gapp.register("kiri.init", [], (root, exports) => {
 
-    if (self.kiri.init) return;
-
-    const { base, kiri, moto } = self;
+    const { base, kiri } = root;
     const { api, catalog, conf, consts, space } = kiri;
     const { sdb, stats, js2o, o2js, platform, selection, ui, uc } = api;
     const { VIEWS, MODES, SEED } = consts;
@@ -2287,11 +2291,9 @@
         uc.hoverPop(ui.ltact,   { group: hpops, target: $('pop-slice') });
         uc.hoverPop(ui.render,  { group: hpops, target: $('pop-render'), sticky: false });
         uc.hoverPop(ui.edit,    { group: hpops, target: $('pop-tools'), sticky: false });
-        // uc.hoverPop(ui.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
-        // uc.hoverPop(ui.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
         uc.hoverPop(ui.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
         uc.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
-        uc.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
+        // uc.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
         uc.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
 
         uc.onBlur([
@@ -2925,4 +2927,4 @@
         }
     }
 
-})();
+});

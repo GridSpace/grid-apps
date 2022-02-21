@@ -2,30 +2,25 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.polygons
+gapp.register("kiri.slice", [], (root, exports) => {
 
-    const KIRI = self.kiri,
-        PRO = Slice.prototype,
-        BASE = self.base,
-        UTIL = BASE.util,
-        POLY = BASE.polygons,
-        NOKEY = BASE.key.NONE;
+const { base, kiri } = root;
+const { key, polygons } = base;
+const { util } = base;
 
-    KIRI.Top = Top;
-    KIRI.Slice = Slice;
-    KIRI.newTop = newTop;
-    KIRI.newSlice = newSlice;
+const POLY = base.polygons;
+const NOKEY = key.NONE;
 
-    /**
-     * Object encapsulates a z-slice from an object.  This code is shared by the
-     * client and the worker thread.  As such, the view layers are ignored in the
-     * worker code paths.
-     *
-     * @param {number} z offset from ground
-     * @param {THREE.Group} [view] optional view parent object for layers
-     * @constructor
-     */
-    function Slice(z, view) {
+/**
+ * Object encapsulates a z-slice from an object.  This code is shared by the
+ * client and the worker thread.  As such, the view layers are ignored in the
+ * worker code paths.
+ */
+class Slice {
+
+    constructor (z, view) {
         this.z = z; // z-index
         this.index = 0; // slice index
         this.lines = null; // slice raw
@@ -39,62 +34,17 @@
     }
 
     /**
-     * Represents a top-level (outer) polygon in a slice.  Slices may contain
-     * multiple tops each with nested structures.  Top objects contain cached
-     * and computed objects for quick access for rendering and dependent computations.
-     *
-     * @param {Polygon} polygon
-     * @constructor
-     */
-    function Top(polygon) {
-        this.poly = polygon; // outline poly
-    }
-
-    Top.prototype.clone = function(deep) {
-        let top = new Top(this.poly.clone(deep));
-        return top;
-    };
-
-    /**
-     * return innermost traces under a given top. for FDM, this represents
-     * the outline shell that the fill touches. used by Print, Laser
-     */
-    Top.prototype.innerShells = function() {
-        let shells = this.shells,
-            array = [];
-        if (shells) shells.forEach(function(p) {
-            if (p.inner) array.appendAll(p.inner);
-        });
-        return array;
-    };
-
-    /**
-     * Returns shell polygons of a given depth
-     * used by Print (FDM)
-     *
-     * @param {Polygon[]} out array to populate
-     * @returns {Polygon[]} array of top polygons
-     */
-    Top.prototype.shellsAtDepth = function(depth) {
-        return this.shells ? this.shells.filter(poly => poly.depth === depth) : [];
-    };
-
-    /** ******************************************************************
-     * Slice Prototype Functions
-     ******************************************************************* */
-
-    /**
      * return Layers object for this slice. creates it if necessary.
      */
-    PRO.output = function() {
+    output() {
         if (this.layers) return this.layers;
-        return this.layers = new KIRI.Layers();
+        return this.layers = new kiri.Layers();
     };
 
     /**
      * returns a cloned slice the option of a deep clone on the top polys
      */
-    PRO.clone = function(deep) {
+    clone(deep) {
         const from = this, slice = newSlice(from.z, from.view);
         from.tops.forEach(function(top) {
             slice.addTop(top.poly.clone(deep));
@@ -102,16 +52,16 @@
         return slice;
     };
 
-    PRO.topPolys = function() {
+    topPolys() {
         return this.tops.map(top => top.poly);
     };
 
-    PRO.topSimples = function() {
+    topSimples() {
         return this.tops.map(top => top.simple);
     };
 
     // FDM top intersect optimization
-    PRO.topPolysFlat = function() {
+    topPolysFlat() {
         if (this.topFlatPolys) {
             return this.topFlatPolys;
         }
@@ -119,7 +69,7 @@
     };
 
     // FDM retract path routing using first shell
-    PRO.topRouteFlat = function() {
+    topRouteFlat() {
         if (this.topFlatRoutes) {
             return this.topFlatRoutes;
         }
@@ -128,27 +78,27 @@
     }
 
     // CAM only
-    PRO.topPolyInners = function() {
+    topPolyInners() {
         return this.tops.map(top => top.poly.inner).flat().filter(poly => poly);
     };
 
     // FDM / SLA only
-    PRO.topInners = function() {
+    topInners() {
         return this.tops.map(top => top.last).flat().filter(poly => poly);
     };
 
     // FDM / SLA only
-    PRO.topFillOff = function() {
+    topFillOff() {
         return this.tops.map(top => top.fill_off).flat().filter(poly => poly);
     };
 
     // FDM only
-    PRO.topFill = function() {
+    topFill() {
         return this.tops.map(top => top.fill_lines).flat().filter(poly => poly);
     };
 
     // FDM only
-    PRO.topShells = function() {
+    topShells() {
         return this.tops.map(top => top.shells).flat().filter(poly => poly);
     };
 
@@ -158,7 +108,7 @@
      * vertical wall regions. this allows us to eliminate expensive diffs
      * and infill computation when we detect the layers are the same.
      */
-    PRO.fingerprint = function() {
+    fingerprint() {
         if (this.finger) {
             return this.finger;
         }
@@ -168,18 +118,18 @@
     /**
      * returns true if the layers' fingerprints are the same
      */
-    PRO.fingerprintSame = function(slice) {
+    fingerprintSame(slice) {
         return slice ? POLY.fingerprintCompare(this.fingerprint(), slice.fingerprint()) : false;
     };
 
-    PRO.addTops = function(polys) {
+    addTops(polys) {
         polys.forEach(p => {
             this.addTop(p);
         });
         return this;
     }
 
-    PRO.addTop = function(poly) {
+    addTop(poly) {
         if (poly.length) {
             // standard legacy polygon
             let top = new Top(poly);
@@ -189,7 +139,7 @@
         } else {
             // frop top object passed back by slicePost()
             let top = new Top(poly.poly);
-            top.thin_fill = poly.thin_fill ? poly.thin_fill.map(p => BASE.newPoint(p.x,p.y,p.z)) : undefined;
+            top.thin_fill = poly.thin_fill ? poly.thin_fill.map(p => base.newPoint(p.x,p.y,p.z)) : undefined;
             top.fill_lines = poly.fill_lines;
             top.fill_off = poly.fill_off;
             top.last = poly.last;
@@ -202,7 +152,7 @@
         throw "invalid top";
     };
 
-    PRO.findClosestPointTo = function(target) {
+    findClosestPointTo(target) {
         let min, find;
 
         if (this.tops.length) {
@@ -224,7 +174,7 @@
         return min;
     };
 
-    PRO.xray = function(dash = 3) {
+    xray(dash = 3) {
         // console.log('xray', this);
         this.output().setLayer(`xp`, 0x888800).addPolys(this.topPolys());
         this.lines.forEach((line, i) => {
@@ -232,19 +182,65 @@
             const color = [ 0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff ][group];
             this.output().setLayer(`xl-${group}`, color).addLine(line.p1, line.p2);
         });
-    };
+    }
 
-    function newTop(poly) {
-        return new Top(poly);
+}
+
+/**
+ * Represents a top-level (outer) polygon in a slice.  Slices may contain
+ * multiple tops each with nested structures.  Top objects contain cached
+ * and computed objects for quick access for rendering and dependent computations.
+ */
+class Top {
+
+    constructor(polygon) {
+        this.poly = polygon; // outline poly
+    }
+
+    clone(deep) {
+        let top = new Top(this.poly.clone(deep));
+        return top;
     }
 
     /**
-     * @param {number} z
-     * @param {THREE.Group} view
-     * @returns {Slice}
+     * return innermost traces under a given top. for FDM, this represents
+     * the outline shell that the fill touches. used by Print, Laser
      */
-    function newSlice(z, view) {
-        return new Slice(z, view);
+    innerShells() {
+        let shells = this.shells,
+            array = [];
+        if (shells) shells.forEach(function(p) {
+            if (p.inner) array.appendAll(p.inner);
+        });
+        return array;
     }
 
-})();
+    /**
+     * Returns shell polygons of a given depth
+     * used by Print (FDM)
+     *
+     * @param {Polygon[]} out array to populate
+     * @returns {Polygon[]} array of top polygons
+     */
+    shellsAtDepth(depth) {
+        return this.shells ? this.shells.filter(poly => poly.depth === depth) : [];
+    }
+
+}
+
+function newTop(poly) {
+    return new Top(poly);
+}
+
+function newSlice(z, view) {
+    return new Slice(z, view);
+}
+
+gapp.overlay(kiri, {
+    Top,
+    Slice,
+    newTop,
+    newSlice
+});
+
+});

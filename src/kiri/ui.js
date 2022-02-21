@@ -2,7 +2,7 @@
 
 "use strict";
 
-(function() {
+gapp.register("kiri.ui", [], (root, exports) => {
 
     if (kiri.ui) return;
 
@@ -939,4 +939,4 @@
         });
     }
 
-})();
+});

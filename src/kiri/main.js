@@ -2,9 +2,9 @@
 
 "use strict";
 
-(function () {
+gapp.register("kiri.main", [], (root, exports) => {
 
-    const { base, data, load, kiri, moto, noop } = self;
+    const { base, data, load, kiri, moto, noop } = root;
     const { api, consts, lang, Widget, newWidget, utils, stats } = kiri;
     const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
     const { feature, platform, selection, settings } = api;
@@ -943,4 +943,5 @@
 
     // upon restore, seed presets
     api.event.emit('preset', api.conf.dbo());
-})();
+
+});

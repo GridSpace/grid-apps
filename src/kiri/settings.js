@@ -2,7 +2,12 @@
 
 "use strict";
 
-(function () {
+// dep: kiri.api
+// dep: kiri.conf
+// dep: kiri.utils
+// dep: moto.space
+// dep: data.local
+gapp.register("kiri.settings", [], (root, exports) => {
 
 const { data, kiri, moto, noop } = self;
 const { api, conf, consts, utils } = kiri;
@@ -147,6 +152,7 @@ function updateSettings(opt = {}) {
 
     $('mode-device').innerText = device.deviceName;
     $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
+    $('mode-info').style.display = 'flex';
 }
 
 function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
@@ -544,7 +550,7 @@ function settingsImport(data, ask) {
             if (isWork) {
                 api.platform.clear();
                 kiri.codec.decode(data.work).forEach(widget => {
-                    platform.add(widget, 0, true);
+                    api.platform.add(widget, 0, true);
                 });
                 if (data.view) {
                     space.view.load(data.view);
@@ -696,4 +702,4 @@ api.settings = {
     mode() { return settings.mode },
 };
 
-})();
+});

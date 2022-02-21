@@ -2,9 +2,11 @@
 
 "use strict";
 
-(function () {
+// dep: kiri.api
+// dep: moto.space
+gapp.register("kiri.function", [], (root, exports) => {
 
-const { data, kiri, noop } = self;
+const { kiri, noop } = root;
 const { api, client, consts, utils } = kiri;
 const { space } = moto;
 const { COLOR, PMODES } = consts;
@@ -59,6 +61,11 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     const slicing = api.widgets.all()
         .slice()
         .filter(w => !w.track.ignore && !w.meta.disabled);
+
+    if (slicing.length === 0) {
+        return api.show.alert('nothing to slice');
+    }
+
     const totalv = slicing.map(w => w.getVertices().count).reduce((a,v) => a + v);
     const defvert = totalv / slicing.length;
     const track = {};
@@ -413,4 +420,4 @@ const functions = api.function = {
     clear_progress() { complete = {} }
 };
 
-})();
+});

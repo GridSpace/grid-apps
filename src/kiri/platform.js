@@ -2,9 +2,14 @@
 
 "use strict";
 
-(function () {
+// dep: moto.space
+// dep: kiri.api
+// dep: kiri.consts
+// dep: kiri.utils
+// dep: kiri.widget
+gapp.register("kiri.platform", [], (root, exports) => {
 
-const { kiri, moto, load } = self;
+const { kiri, moto, load } = root;
 const { api, consts, driver, utils, newWidget, Widget } = kiri;
 const { ajax, js2o } = utils;
 const { space } = moto;
@@ -796,4 +801,4 @@ const platform = api.platform = {
     clear() { api.space.clear(); api.space.save(true)  }
 };
 
-})();
+});
