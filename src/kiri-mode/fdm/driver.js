@@ -2,10 +2,12 @@
 
 "use strict";
 
-(function() {
+// use: kiri.api
+gapp.register("kiri-mode.fdm.driver", [], (root, exports) => {
 
-const { kiri } = self;
-const FDM = kiri.driver.FDM = { getRangeParameters };
+const { kiri } = root;
+const { driver } = kiri;
+const FDM = driver.FDM = { getRangeParameters };
 
 // shared by client and worker contexts
 function getRangeParameters(process, index) {
@@ -29,7 +31,7 @@ function getRangeParameters(process, index) {
 }
 
 // defer loading until client and worker exist
-kiri.load(function(api) {
+kiri.load(api => {
 
     const { client, worker } = kiri;
 
@@ -66,4 +68,4 @@ kiri.load(function(api) {
 
 });
 
-})();
+});

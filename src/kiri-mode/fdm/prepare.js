@@ -2,9 +2,19 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.paths
+// dep: geo.point
+// dep: geo.polygons
+// dep: kiri.api
+// dep: kiri.utils
+// dep: kiri.slice
+// dep: kiri.consts
+// dep: kiri-mode.fdm.driver
+// use: kiri.worker
+gapp.register("kiri-mode.fdm.prepare", [], (root, exports) => {
 
-const { base, kiri, noop } = self;
+const { base, kiri, noop } = root;
 const { consts, driver, newSlice, utils } = kiri;
 const { config, polygons, paths, util, newPoint, newPolygon, Polygon } = base;
 const { poly2polyEmit, tip2tipEmit } = paths;
@@ -1742,4 +1752,4 @@ function color4(rgb, inc, seg) {
     }
 }
 
-})();
+});

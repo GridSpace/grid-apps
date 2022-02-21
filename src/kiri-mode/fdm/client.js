@@ -2,11 +2,18 @@
 
 "use strict";
 
-(function() {
+// dep: add.three
+// dep: geo.base
+// dep: moto.space
+// dep: kiri.api
+// dep: kiri.lang
+// dep: kiri.consts
+// dep: kiri-mode.fdm.driver
+gapp.register("kiri-mode.fdm.client", [], (root, exports) => {
 
 const { Quaternion, Matrix4, Vector3, BufferAttribute, BufferGeometryUtils } = THREE;
 const { Mesh, BoxGeometry, MeshPhongMaterial, Raycaster, Euler } = THREE;
-const { base, kiri, moto } = self;
+const { base, kiri, moto } = root;
 const { util } = base;
 const { api, consts, lang } = kiri;
 const { FDM } = kiri.driver;
@@ -682,4 +689,4 @@ FDM.delbox = delbox;
 FDM.addbox = addbox;
 FDM.restoreSupports = restoreSupports;
 
-})();
+});

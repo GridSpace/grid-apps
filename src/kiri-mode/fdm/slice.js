@@ -2,9 +2,18 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: geo.polygons
+// dep: kiri.api
+// dep: kiri.fill
+// dep: kiri.utils
+// dep: kiri.consts
+// dep: kiri-mode.fdm.driver
+// use: add.clip2
+// use: add.three
+gapp.register("kiri-mode.fdm.slice", [], (root, exports) => {
 
-const { base, kiri, noop } = self;
+const { base, kiri, noop } = root;
 const { consts, driver, fill, fill_fixed, newSlice, utils } = kiri;
 const { config, polygons, util, newPoint } = base;
 const { fillArea } = polygons;
@@ -1897,4 +1906,4 @@ class Coplanars {
     }
 }
 
-})();
+});

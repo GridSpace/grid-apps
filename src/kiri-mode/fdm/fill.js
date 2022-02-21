@@ -2,13 +2,16 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: kiri.api
+// dep: kiri-mode.fdm.driver
+gapp.register("kiri-mode.fdm.fill", [], (root, exports) => {
 
-const { base, kiri } = self;
+const { base, kiri } = root;
 const { util } = base;
 
 const DEG2RAD = Math.PI / 180,
-    FILL = self.kiri.fill = {
+    FILL = kiri.fill = {
         hex: fillHexFull,
         grid: fillGrid,
         gyroid: fillGyroid,
@@ -16,7 +19,7 @@ const DEG2RAD = Math.PI / 180,
         linear: fillLinear,
         cubic: fillCubic
     },
-    CACHE = self.kiri.fill_fixed = {
+    CACHE = kiri.fill_fixed = {
         hex: fillHexFull,
         grid: fillGrid,
         triangle: fillTriangle
@@ -314,4 +317,4 @@ function fillTriangle(target) {
     }
 }
 
-})();
+});

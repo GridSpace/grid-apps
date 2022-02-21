@@ -2,9 +2,13 @@
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: kiri.api
+// dep: kiri.util
+// dep: kiri-mode.fdm.driver
+gapp.register("kiri-mode.fdm.export", [], (root, exports) => {
 
-const { base, kiri } = self;
+const { base, kiri } = root;
 const { util, config } = base;
 const { FDM } = kiri.driver;
 const { getRangeParameters } = FDM;
@@ -935,4 +939,4 @@ FDM.export = function(print, online, ondone, ondebug) {
     }
 };
 
-})();
+});
