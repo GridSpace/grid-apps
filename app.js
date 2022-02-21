@@ -432,6 +432,7 @@ const script = {
         "kiri/pack",
         "kiri/utils",
         "kiri/slice",
+        "kiri/print",
         "kiri/layers",
         "kiri-mode/fdm/fill",
         "kiri-mode/fdm/driver",
@@ -454,7 +455,6 @@ const script = {
         "kiri-mode/cam/animate",
         "kiri-mode/laser/driver",
         "kiri/widget",
-        "kiri/print",
         "kiri/codec",
         "kiri/worker"
     ],
