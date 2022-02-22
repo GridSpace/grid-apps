@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: moto.license
 gapp.register("kiri-run.minion", [], (root, exports) => {
 
 let BASE = self.base,

@@ -4,8 +4,6 @@
 
 gapp.register("kiri.utils", [], (root, exports) => {
 
-const { kiri, data } = root;
-
 function parseOpt(ov) {
     let opt = {}, kv, kva;
     // handle kiri legacy and proper url encoding better
@@ -47,7 +45,8 @@ function js2o(s,def) {
 }
 
 function ls2o(key,def) {
-    return js2o(data.local.getItem(key),def);
+    // defer ref b/c it may run in a worker
+    return js2o(root.data.local.getItem(key),def);
 }
 
 // split 24 bit color into [ r, g, b ]

@@ -2,11 +2,8 @@
 
 "use strict";
 
-gapp.register("moto.orbit", [
-
-'add.three',    // dep: add.three
-
-], (root, exports) => {
+// dep: add.three
+gapp.register("moto.orbit", [], (root, exports) => {
 
 const { moto } = root;
 

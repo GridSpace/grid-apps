@@ -7,9 +7,8 @@
 let load = self.load = self.load || {};
 if (load.SVG) return;
 
-gapp.register('load.svg', [
-    'add.three',    // dep: add.three
-]);
+// dep: add.three
+gapp.register('load.svg', []);
 
 load.SVG = {
     parse,

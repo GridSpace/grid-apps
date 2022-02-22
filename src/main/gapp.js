@@ -98,7 +98,8 @@ gapp.main = (app, deps, post, pre) => {
     // load mods after checking if dependency is present
     for (let mod of mods) {
         let { fn, name, deps } = mod;
-        if (deps) {
+        if (deps && deps.length) {
+            dbug.warn({app, mod, deps});
             gapp.check(name, deps);
         }
         // mods with no name can't be depended on, but are allowed

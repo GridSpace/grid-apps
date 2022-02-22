@@ -2,12 +2,9 @@
 
 "use strict";
 
-gapp.register("moto.webui", [
-
-"moto.license", // dep: moto.license
-"add.array",    // dep: add.array
-
-], (root, exports) => {
+// dep: moto.license
+// dep: add.array
+gapp.register("moto.webui", [], (root, exports) => {
 
 let nextid = 1;
 
