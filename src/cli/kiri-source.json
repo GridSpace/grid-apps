@@ -52,7 +52,7 @@
     "kiri/widget",
     "kiri/print",
     "kiri/codec",
-    "kiri/worker",
+    "kiri-run/worker",
     "kiri-run/engine",
     "main/kiri",
 ]

@@ -2,7 +2,7 @@
 
 "use strict";
 
-gapp.register("kiri.minion", [], (root, exports) => {
+gapp.register("kiri-run.minion", [], (root, exports) => {
 
 let BASE = self.base,
     KIRI = self.kiri,

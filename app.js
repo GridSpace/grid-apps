@@ -397,7 +397,7 @@ const script = {
     ],
     kiri_work : [
         "@inject",
-        "kiri/worker",
+        "kiri-run/worker",
         "&main/kiri",
     ],
     kiri_pool : [
@@ -426,7 +426,7 @@ const script = {
         "kiri/layers",
         "kiri/widget",
         "kiri/codec",
-        "kiri/minion",
+        "kiri-run/minion",
         "main/kiri",
     ],
     engine : [

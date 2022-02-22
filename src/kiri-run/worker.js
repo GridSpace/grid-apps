@@ -23,7 +23,7 @@
 // use: kiri-mode.fdm.prepare
 // use: kiri-mode.fdm.export
 // use: kiri-mode.laser.driver
-gapp.register("kiri.worker", [], (root, exports) => {
+gapp.register("kiri-run.worker", [], (root, exports) => {
 
 const { base, kiri } = root;
 const { util, polygons, wasm_ctrl } = base;
