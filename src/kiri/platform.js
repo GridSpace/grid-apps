@@ -8,6 +8,9 @@
 // dep: kiri.consts
 // dep: kiri.utils
 // dep: kiri.widget
+// dep: load.stl
+// dep: load.obj
+// dep: load.3mf
 gapp.register("kiri.platform", [], (root, exports) => {
 
 const { kiri, moto, load } = root;

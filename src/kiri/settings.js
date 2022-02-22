@@ -518,30 +518,38 @@ function settingsImport(data, ask) {
         return;
     }
     function doit() {
+        function devset() {
+            settings.devices[data.device] = data.code;
+            settings.devproc[data.device] = data.name;
+            api.show.devices();
+        }
+        function procset() {
+            settings.sproc[data.mode][data.name] = data.process;
+            if (!isDevice) {
+                api.conf.show();
+            }
+        }
         if (isDevice) {
+            if (data.process && data.process.processName && data.code.mode) {
+                data.mode = data.code.mode;
+                data.name = data.process.processName;
+                isProcess = true;
+            }
             if (settings.devices[data.device]) {
                 uc.confirm(`Replace device ${data.device}?`).then(yes => {
-                    if (yes) {
-                        settings.devices[data.device] = data.code;
-                        api.show.devices();
-                    }
+                    if (yes) devset()
                 });
             } else {
-                settings.devices[data.device] = data.code;
-                api.show.devices();
+                devset();
             }
         }
         if (isProcess) {
             if (settings.sproc[data.mode][data.name]) {
                 uc.confirm(`Replace process ${data.name}?`).then(yes => {
-                    if (yes) {
-                        settings.sproc[data.mode][data.name] = data.process;
-                        api.conf.show();
-                    }
+                    if (yes) procset();
                 });
             } else {
-                settings.sproc[data.mode][data.name] = data.process;
-                api.conf.show();
+                procset();
             }
         }
         if (isSettings) {
