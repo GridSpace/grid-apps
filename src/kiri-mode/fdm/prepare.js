@@ -6,12 +6,10 @@
 // dep: geo.paths
 // dep: geo.point
 // dep: geo.polygons
-// dep: kiri.api
 // dep: kiri.utils
 // dep: kiri.slice
 // dep: kiri.consts
 // dep: kiri-mode.fdm.driver
-// use: kiri.client
 gapp.register("kiri-mode.fdm.prepare", [], (root, exports) => {
 
 const { base, kiri, noop } = root;

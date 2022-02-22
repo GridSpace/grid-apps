@@ -6,7 +6,6 @@ gapp.register("kiri.widgets", [], (root, exports) => {
 
 const { data, kiri, moto, noop } = root;
 const { api, consts, utils, newWidget, Widget } = kiri;
-const { space } = moto;
 
 let WIDGETS = [];
 
@@ -89,7 +88,7 @@ function meshes() {
 
 function opacity(value) {
     api.widgets.each(w => w.setOpacity(value));
-    space.update();
+    moto.space.update();
 }
 
 const widgets = api.widgets = {

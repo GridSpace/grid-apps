@@ -22,6 +22,7 @@
 // use: kiri.alerts
 // use: kiri.files
 // use: kiri.frame
+// use: moto.ajax
 gapp.register("kiri.main", [], (root, exports) => {
 
     const { base, data, kiri, moto, noop } = root;

@@ -2,8 +2,6 @@
 
 "use strict";
 
-// dep: data.local
-// use: moto.ajax
 gapp.register("kiri.utils", [], (root, exports) => {
 
 const { kiri, data } = root;

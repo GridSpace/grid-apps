@@ -2,8 +2,6 @@
 
 "use strict";
 
-// use: kiri.init
-// use: kiri.main
 gapp.main("main.kiri", [], (root) => {
 
     const { kiri } = root;

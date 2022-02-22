@@ -2,7 +2,6 @@
     "main/gapp",
     "moto/license",
     "moto/broker",
-    "main/kiri",
     "ext/three",
     "ext/pngjs",
     "ext/jszip",
@@ -55,4 +54,5 @@
     "kiri/codec",
     "kiri/worker",
     "kiri-run/engine",
+    "main/kiri",
 ]

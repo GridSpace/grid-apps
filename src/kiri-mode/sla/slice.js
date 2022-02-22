@@ -8,6 +8,7 @@
 // dep: geo.polygons
 // dep: kiri.slice
 // dep: kiri-mode.sla.driver
+// use: ext.pngjs
 gapp.register("kiri-mode.sla.slice", [], (root, exports) => {
 
 const { base, kiri } = root;

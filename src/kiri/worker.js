@@ -2,6 +2,27 @@
 
 "use strict";
 
+// dep: geo.base
+// dep: geo.polygons
+// dep: geo.wasm
+// dep: kiri.codec
+// use: kiri-mode.cam.driver
+// use: kiri-mode.cam.animate
+// use: kiri-mode.cam.slice
+// use: kiri-mode.cam.prepare
+// use: kiri-mode.cam.export
+// use: kiri-mode.cam.tool
+// use: kiri-mode.fdm.driver
+// use: kiri-mode.fdm.slice
+// use: kiri-mode.fdm.prepare
+// use: kiri-mode.fdm.export
+// use: kiri-mode.sla.driver
+// use: kiri-mode.sla.slice
+// use: kiri-mode.sla.export
+// use: kiri-mode.fdm.slice
+// use: kiri-mode.fdm.prepare
+// use: kiri-mode.fdm.export
+// use: kiri-mode.laser.driver
 gapp.register("kiri.worker", [], (root, exports) => {
 
 const { base, kiri } = root;

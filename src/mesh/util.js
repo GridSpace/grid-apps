@@ -6,7 +6,6 @@
 // dep: add.array
 // dep: ext.three
 // dep: ext.three-bgu
-// use: mesh.api
 gapp.register("mesh.util", [], (root, exports) => {
 
 const { Matrix4, Matrix3, Vector3, Box3 } = THREE;

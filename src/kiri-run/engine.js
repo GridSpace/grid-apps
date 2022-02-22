@@ -2,29 +2,20 @@
 
 "use strict";
 
-(function() {
+gapp.register("kiri-run.engine", [], (root, exports) => {
 
-let KIRI = self.kiri = self.kiri || {};
-KIRI.newEngine = ()=> { return new Engine ()};
-
-if (!KIRI.api) {
-    KIRI.api = {
-        event: {
-            emit: () => {}
-        }
-    };
-}
+const { kiri } = root;
 
 class Engine {
     constructor() {
-        this.widget = KIRI.newWidget();
+        this.widget = kiri.newWidget();
         this.settings = {
             mode: "FDM",
             controller: {},
             render: false,
             filter: { FDM: "internal" },
-            device: KIRI.conf.defaults.fdm.d, // device profile
-            process: KIRI.conf.defaults.fdm.p, // slicing settings
+            device: kiri.conf.defaults.fdm.d, // device profile
+            process: kiri.conf.defaults.fdm.p, // slicing settings
             widget: { [ this.widget.id ]: {} }
         };
         this.listener = () => {};
@@ -45,7 +36,7 @@ class Engine {
     }
 
     clear() {
-        KIRI.api.platform.clear();
+        kiri.api.platform.clear();
     }
 
     parse(data) {
@@ -123,10 +114,10 @@ class Engine {
 
     slice() {
         return new Promise((accept, reject) => {
-            KIRI.client.clear();
-            KIRI.client.sync([ this.widget ]);
-            KIRI.client.rotate(this.settings);
-            KIRI.client.slice(this.settings, this.widget, msg => {
+            kiri.client.clear();
+            kiri.client.sync([ this.widget ]);
+            kiri.client.rotate(this.settings);
+            kiri.client.slice(this.settings, this.widget, msg => {
                 this.listener({slice:msg});
                 if (msg.error) {
                     reject(msg.error);
@@ -135,13 +126,13 @@ class Engine {
                     accept(this);
                 }
             });
-            KIRI.client.unrotate(this.settings);
+            kiri.client.unrotate(this.settings);
         });
     }
 
     prepare() {
         return new Promise((accept, reject) => {
-            KIRI.client.prepare(this.settings, update => {
+            kiri.client.prepare(this.settings, update => {
                 this.listener({prepare:{update}});
             }, done => {
                 this.listener({prepare:{done:true}});
@@ -153,7 +144,7 @@ class Engine {
     export() {
         return new Promise((accept, reject) => {
             let output = [];
-            KIRI.client.export(this.settings, segment => {
+            kiri.client.export(this.settings, segment => {
                 this.listener({export:{segment}});
                 output.push(segment);
             }, done => {
@@ -164,4 +155,12 @@ class Engine {
     }
 }
 
-})();
+function newEngine() {
+    return new Engine();
+}
+
+gapp.overlay(kiri, {
+    newEngine
+});
+
+});

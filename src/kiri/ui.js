@@ -2,6 +2,8 @@
 
 "use strict";
 
+// use: kiri.init
+// use: kiri.main
 gapp.register("kiri.ui", [], (root, exports) => {
 
     const { kiri } = root;

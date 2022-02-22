@@ -7,6 +7,7 @@
 // dep: kiri.utils
 // dep: moto.space
 // dep: data.local
+// use: kiri.widgets
 gapp.register("kiri.settings", [], (root, exports) => {
 
 const { data, kiri, moto, noop } = self;

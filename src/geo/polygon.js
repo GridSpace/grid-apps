@@ -4,9 +4,10 @@
 
 // dep: geo.base
 // dep: ext.clip2
+// dep: ext.earcut
 // dep: geo.point
 // dep: geo.bounds
-// use: geo.polygons
+// dep: geo.polygons
 gapp.register("geo.polygon", [], (root, exports) => {
 
 const { base } = root;

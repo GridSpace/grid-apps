@@ -4,6 +4,8 @@
 
 // dep: geo.base
 // dep: geo.point
+// use: ext.clip2
+// use: geo.slope
 // use: geo.polygon
 gapp.register("base.polygons", [], (root, exports) => {
 

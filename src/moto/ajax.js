@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: data.local
 gapp.register("moto.ajax", [], (root, exports) => {
 
 function rnd() {

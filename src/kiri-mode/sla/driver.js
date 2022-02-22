@@ -3,10 +3,6 @@
 "use strict";
 
 // use: kiri.print
-// use: kiri.client
-// use: kiri-mode.sla.client
-// use: kiri-mode.sla.slice
-// use: kiri-mode.sla.export
 gapp.register("kiri-mode.sla.driver", [], (root, exports) => {
 
 const { kiri } = root

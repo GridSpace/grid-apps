@@ -2,11 +2,6 @@
 
 "use strict";
 
-// use: kiri.api
-// use: kiri-mode.fdm.client
-// use: kiri-mode.fdm.slice
-// use: kiri-mode.fdm.prepare
-// use: kiri-mode.fdm.export
 gapp.register("kiri-mode.fdm.driver", [], (root, exports) => {
 
 const { kiri } = root;

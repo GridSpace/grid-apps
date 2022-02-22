@@ -70,7 +70,7 @@ function init(mod) {
             if (!crec) {
                 cache[path] = rec;
                 for (let d of rec.deps) find_refs(cache, d);
-                for (let u of rec.deps) find_refs(cache, u);
+                for (let u of rec.uses) find_refs(cache, u);
             }
             return;
         }
@@ -112,6 +112,12 @@ function init(mod) {
             }
         }
         // if (xxxx) console.log({path, ...rec});
+        if (false) {
+            let seek = 'mesh/api';
+            if (rec.uses.indexOf(seek) >= 0 || rec.deps.indexOf(seek) >= 0) {
+                console.log({PULLS:seek, path});
+            }
+        }
         callstack.pop();
     }
 
@@ -170,7 +176,7 @@ function init(mod) {
         const list = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
         const cache = {};
         const roots = [];
-        // xxxx = key === "kiri_work";
+        // xxxx = key === "mesh_work";
         // for each path in the list, find deps and add to list
         for (let path of val) {
             let fc = path.charAt(0);
@@ -385,68 +391,16 @@ const script = {
         "@inject",
         "@devices",
         "@icons",
+        "kiri/ui",
         "&main/kiri",
         "&kiri/lang-en"
     ],
     kiri_work : [
-        // "main/gapp",
-        "moto/license",
         "@inject",
-        "ext/three",
-        "ext/pngjs",
-        "ext/jszip",
-        "ext/clip2",
-        "ext/earcut",
-        "add/array",
-        "add/three",
-        "add/class",
-        "geo/base",
-        "geo/wasm",
-        "geo/paths",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygons",
-        "geo/polygon",
-        "geo/gyroid",
-        "geo/slicer",
-        "geo/mesh",
-        // "moto/broker",
-        "kiri/consts",
-        "kiri/pack",
-        "kiri/utils",
-        "kiri/slice",
-        "kiri/print",
-        "kiri/layers",
-        "kiri-mode/fdm/fill",
-        "kiri-mode/fdm/driver",
-        "kiri-mode/fdm/slice",
-        "kiri-mode/fdm/prepare",
-        "kiri-mode/fdm/export",
-        "kiri-mode/sla/driver",
-        "kiri-mode/sla/slice",
-        "kiri-mode/sla/export",
-        "kiri-mode/sla/x_cxdlp",
-        "kiri-mode/sla/x_photon",
-        "kiri-mode/cam/slicer",
-        "kiri-mode/cam/driver",
-        "kiri-mode/cam/ops",
-        "kiri-mode/cam/tool",
-        "kiri-mode/cam/topo",
-        "kiri-mode/cam/slice",
-        "kiri-mode/cam/prepare",
-        "kiri-mode/cam/export",
-        "kiri-mode/cam/animate",
-        "kiri-mode/laser/driver",
-        "kiri/widget",
-        "kiri/codec",
         "kiri/worker",
-        "main/kiri",
+        "&main/kiri",
     ],
     kiri_pool : [
-        // "main/gapp",
         "moto/license",
         "@inject",
         "ext/clip2",
@@ -476,9 +430,7 @@ const script = {
         "main/kiri",
     ],
     engine : [
-        // "main/gapp",
         "moto/license",
-        "main/kiri",
         "@inject",
         "ext/clip2",
         "data/local",
@@ -504,14 +456,13 @@ const script = {
         "kiri/layers",
         "kiri/widget",
         "kiri/codec",
-        "kiri-run/engine"
+        "kiri-run/engine",
+        "main/kiri",
     ],
     frame : [
-        // "main/gapp",
         "kiri-run/frame"
     ],
     meta : [
-        // "main/gapp",
         "moto/license",
         "main/meta",
     ],

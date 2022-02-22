@@ -3,7 +3,6 @@
 "use strict";
 
 // dep: geo.base
-// dep: kiri.api
 // dep: kiri-mode.fdm.driver
 gapp.register("kiri-mode.fdm.fill", [], (root, exports) => {
 

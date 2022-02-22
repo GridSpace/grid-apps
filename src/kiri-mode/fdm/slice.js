@@ -5,7 +5,6 @@
 // dep: geo.base
 // dep: geo.slicer
 // dep: geo.polygons
-// dep: kiri.api
 // dep: kiri.utils
 // dep: kiri.consts
 // dep: kiri-mode.fdm.driver

@@ -5,6 +5,7 @@
 // dep: geo.polygons
 // dep: geo.point
 // dep: kiri.slice
+// use: kiri.pack
 gapp.register("kiri-mode.laser.driver", [], (root, exports) => {
 
 const { base, kiri } = root;

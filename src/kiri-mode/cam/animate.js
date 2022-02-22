@@ -2,12 +2,11 @@
 
 "use strict";
 
-// dep: kiri.api
 // dep: kiri-mode.cam.driver
 gapp.register("kiri-mode.cam.animate", [], (root, exports) => {
 
 const { kiri } = root;
-const { api, driver } = kiri;
+const { driver } = kiri;
 const { CAM } = driver;
 
 let meshes = {},
@@ -33,14 +32,14 @@ kiri.load(() => {
 
     const { moto } = root;
     const { space } = moto;
-    const { world } = space;
+    const { api } = kiri;
 
     function animate_clear(api) {
         kiri.client.animate_cleanup();
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
-    }    
+    }
 
     function animate(api, delay) {
         kiri.client.animate_setup(api.conf.get(), data => {
@@ -82,13 +81,13 @@ kiri.load(() => {
         animate(data, ondone) {
             kiri.client.send("animate", data, ondone);
         },
-    
+
         animate_setup(settings, ondone) {
             color = settings.controller.dark ? 0x888888 : 0;
             unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
             kiri.client.send("animate_setup", {settings}, ondone);
         },
-    
+
         animate_cleanup(data, ondone) {
             kiri.client.send("animate_cleanup", data, ondone);
         }
@@ -109,7 +108,7 @@ kiri.load(() => {
             color
         });
         const mesh = new THREE.LineSegments(geo, mat);
-        world.add(mesh);
+        space.world.add(mesh);
         meshes[id] = mesh;
     }
 
@@ -129,7 +128,7 @@ kiri.load(() => {
     }
 
     function deleteMesh(id) {
-        world.remove(meshes[id]);
+        space.world.remove(meshes[id]);
         delete meshes[id];
     }
 
@@ -244,7 +243,7 @@ kiri.load(() => {
     kiri.worker.animate_setup = function(data, send) {
         const { settings } = data;
         const { process } = settings;
-        const print = current.print;
+        const print = worker.print;
         const density = parseInt(settings.controller.animesh) * 1000;
 
         pathIndex = 0;
@@ -519,7 +518,7 @@ kiri.load(() => {
             pos[(dx * pix + dy) * 3 + 2] = -dz;
         }
         send.data({ mesh_add: { id:++toolID, pos, ind }});
-    }    
+    }
 
     // load renderer code in worker context only
     if (kiri.worker && false)
