@@ -8,6 +8,7 @@
 // dep: moto.space
 // dep: data.local
 // use: kiri.widgets
+// use: ext.base64
 gapp.register("kiri.settings", [], (root, exports) => {
 
 const { data, kiri, moto, noop } = self;
@@ -502,7 +503,7 @@ function settingsImport(data, ask) {
             data = api.util.b64dec(data);
         } catch (e) {
             uc.alert('invalid import format');
-            console.log('data',data);
+            console.log('data',data,{type: typeof data},e);
             return;
         }
     }
