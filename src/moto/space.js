@@ -3,13 +3,10 @@
 "use strict";
 
 // dep: ext.tween
-gapp.register("moto.space", [
-
-'add.three',    // dep: add.three
-'add.array',    // dep: add.array
-'moto.orbit'    // dep: moto.orbit
-
-], (root, exports) => {
+// dep: add.three
+// dep: add.array
+// dep: moto.orbit
+gapp.register("moto.space", [], (root, exports) => {
 
     const { moto } = root;
 

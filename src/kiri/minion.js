@@ -2,6 +2,8 @@
 
 "use strict";
 
+gapp.register("kiri.minion", [], (root, exports) => {
+
 let BASE = self.base,
     KIRI = self.kiri,
     UTIL = BASE.util,
@@ -125,3 +127,5 @@ const funcs = {
         reply({ seq, error: "invalid command" });
     }
 };
+
+});

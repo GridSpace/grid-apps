@@ -4,11 +4,9 @@
 
 gapp.register("kiri.ui", [], (root, exports) => {
 
-    if (kiri.ui) return;
+    const { kiri } = root;
 
-    let SELF = self,
-        KIRI = self.kiri,
-        DOC = SELF.document,
+    let DOC = self.document,
         inputAction = null,
         lastGroup = null,
         lastDiv = null,
@@ -36,9 +34,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         lastPop = null,
         savePop = null;
 
-    SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
+    self.$ = (self.$ || function (id) { return DOC.getElementById(id) } );
 
-    KIRI.ui = {
+    kiri.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
         lastChange: function() { return lastChange },
@@ -128,7 +126,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
             }
             $('mod-any').innerHTML = html.join('');
             function done(value) {
-                KIRI.api.modal.hide();
+                kiri.api.modal.hide();
                 setTimeout(() => { resolve(value) }, 150);
             }
             if (iid) {
@@ -148,7 +146,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
             });
             setTimeout(() => {
-                KIRI.api.modal.show('any');
+                kiri.api.modal.show('any');
                 if (iid) {
                     iid.focus();
                     iid.selectionStart = iid.value.length;

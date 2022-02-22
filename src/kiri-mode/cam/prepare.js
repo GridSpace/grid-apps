@@ -5,6 +5,8 @@
 // dep: geo.paths
 // dep: geo.point
 // dep: geo.polygons
+// dep: kiri-mode.cam.driver
+// use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.prepare", [], (root, exports) => {
 
 const { base, kiri } = root;

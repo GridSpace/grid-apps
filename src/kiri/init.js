@@ -4,10 +4,13 @@
 
 // dep: geo.base
 // dep: kiri.api
+// dep: kiri.main
+// dep: kiri.lang
 // dep: kiri.stats
 // dep: kiri.consts
 // dep: kiri.platform
 // dep: kiri.selection
+// use: kiri.pack
 gapp.register("kiri.init", [], (root, exports) => {
 
     const { base, kiri } = root;
@@ -2891,7 +2894,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         // if a language needs to load, the script is injected and loaded
         // first.  once this loads, or doesn't, the initialization begins
         let lang = SETUP.ln ? SETUP.ln[0] : sdb.getItem('kiri-lang') || kiri.lang.get();
-
         // inject language script if not english
         if (lang && lang !== 'en' && lang !== 'en-us') {
             let map = kiri.lang.map(lang);

@@ -3,13 +3,14 @@
 "use strict";
 
 // dep: geo.base
+// dep: geo.slicer
 // dep: geo.polygons
 // dep: kiri.api
-// dep: kiri.fill
 // dep: kiri.utils
 // dep: kiri.consts
 // dep: kiri-mode.fdm.driver
-// use: add.clip2
+// use: kiri-mode.fdm.fill
+// use: ext.clip2
 // use: add.three
 gapp.register("kiri-mode.fdm.slice", [], (root, exports) => {
 

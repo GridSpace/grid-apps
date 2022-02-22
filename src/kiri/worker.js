@@ -2,7 +2,9 @@
 
 "use strict";
 
-const { base, kiri } = self;
+gapp.register("kiri.worker", [], (root, exports) => {
+
+const { base, kiri } = root;
 const { util, polygons, wasm_ctrl } = base;
 const { codec } = kiri;
 const { time } = util;
@@ -874,5 +876,7 @@ dispatch.onmessage = self.onmessage = function(e) {
     }
 };
 
+});
+
 // load kiri modules
-kiri.load_exec(dispatch);
+// kiri.load_exec(dispatch);

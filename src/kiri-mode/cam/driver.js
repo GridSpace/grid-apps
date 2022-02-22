@@ -5,11 +5,15 @@
 // dep: main.kiri
 // use: kiri.api
 // use: kiri.widgets
+// use: kiri-mode.cam.client
+// use: kiri-mode.cam.slice
+// use: kiri-mode.cam.prepare
+// use: kiri-mode.cam.export
+// use: kiri-mode.cam.tool
 gapp.register("kiri-mode.cam.driver", [], (root, exports) => {
 
 const { kiri } = root;
 const { driver } = kiri;
-
 const CAM = driver.CAM = {};
 
 CAM.process = {

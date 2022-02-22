@@ -7,9 +7,9 @@
 // dep: moto.broker
 // dep: moto.space
 // dep: mesh.util
-// dep: add.array
 // dep: ext.three
 // dep: ext.three-bgu
+// use: add.array
 gapp.register("mesh.api", [], (root, exports) => {
 
 const { Matrix4, Vector3 } = THREE;

@@ -3,11 +3,10 @@
 "use strict";
 
 // dep: data.local
-// dep: main.kiri
 // use: moto.ajax
 gapp.register("kiri.utils", [], (root, exports) => {
 
-const { kiri, moto, data } = root;
+const { kiri, data } = root;
 
 function parseOpt(ov) {
     let opt = {}, kv, kva;

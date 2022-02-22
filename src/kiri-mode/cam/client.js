@@ -2,6 +2,8 @@
 
 "use strict";
 
+// dep: kiri-mode.cam.driver
+// use: kiri-mode.cam.animate
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;

@@ -2,8 +2,8 @@
 
 "use strict";
 
-// dep: base.polygons
-// dep: base.point
+// dep: geo.polygons
+// dep: geo.point
 // dep: kiri.slice
 gapp.register("kiri-mode.laser.driver", [], (root, exports) => {
 

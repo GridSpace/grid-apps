@@ -10,11 +10,14 @@
 // dep: geo.line
 // dep: geo.point
 // dep: geo.polygon
+// dep: geo.polygons
 gapp.register("geo.slicer", [], (root, exports) => {
 
 const { base } = root;
 const { config, util, polygons } = base
 const { newOrderedLine, newPolygon, newPoint } = base;
+
+const POLY = base.polygons;
 
 function dval(v, dv) {
     return v !== undefined ? v : dv;

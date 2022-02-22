@@ -4,7 +4,7 @@
 
 // dep: geo.base
 // dep: kiri.api
-// dep: kiri.util
+// dep: kiri.utils
 // dep: kiri-mode.fdm.driver
 gapp.register("kiri-mode.fdm.export", [], (root, exports) => {
 

@@ -4,6 +4,10 @@
 
 // dep: main.kiri
 // dep: geo.base
+// dep: geo.polygon
+// dep: kiri.widget
+// dep: kiri.slice
+// dep: kiri.layers
 gapp.register("kiri.codec", [], (root, exports) => {
 
 const { base, kiri } = root;

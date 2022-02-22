@@ -6,6 +6,7 @@
 // dep: data.local
 // dep: kiri.consts
 // dep: kiri.api
+// dep: kiri.main
 gapp.register("kiri.export", [], (root, exports) => {
 
 const { base, data, kiri } = root;

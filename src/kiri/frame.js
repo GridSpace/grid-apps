@@ -5,7 +5,6 @@
 // use: load.stl
 // use: load.svg
 // use: kiri.api
-// use: kiri.feature
 // use: kiri.platform
 // use: kiri.settings
 // use: kiri.widget

@@ -66,26 +66,7 @@ gapp.overlay = Object.assign;
 
 // register module without a load function
 gapp.register = (name, deps, fn) => {
-    gapp.load(undefined, name, deps);
-    if (fn) {
-        let toks = name.split('.');
-        let root = self;
-        let map = toks.pop();
-        for (let tok of toks) {
-            if (!root[tok]) {
-                dbug.debug({creating_root: tok, for: name});
-                root = root[tok] = {};
-            } else {
-                root = root[tok];
-            }
-        }
-        let tmp = root[map] || {};
-        fn(self, exports => {
-            if (exports) {
-                return root[map] = Object.assign(tmp, exports);
-            }
-        });
-    }
+    gapp.load(fn, name, deps);
 };
 
 // register module with a load function
@@ -108,7 +89,10 @@ gapp.check = (name, deps = []) => {
 };
 
 // perform dependency checks and run module load functions
-gapp.main = (app, deps, fn) => {
+gapp.main = (app, deps, post, pre) => {
+    const root = self;
+    // optional fn to run before loading
+    if (pre) pre(root);
     // app loader may also pass deps
     gapp.check(app, deps);
     // load mods after checking if dependency is present
@@ -123,13 +107,29 @@ gapp.main = (app, deps, fn) => {
         }
         // mods with no function are allowed so they can be depended on
         if (fn) {
-            mod.fn();
+            let toks = name.split('.');
+            let map = toks.pop();
+            let path = root;
+            for (let tok of toks) {
+                if (!path[tok]) {
+                    dbug.debug({creating_root: tok, for: name});
+                    path = path[tok] = {};
+                } else {
+                    path = path[tok];
+                }
+            }
+            let tmp = path[map] || {};
+            fn(root, exports => {
+                if (exports) {
+                    return path[map] = Object.assign(tmp, exports);
+                }
+            });
         }
     }
     // force runtime error if gapp.load() called gapp.main()
     mods = null;
     // optional if not called inline with startup
-    if (fn) fn(self);
+    if (post) post(root);
 };
 
 })();

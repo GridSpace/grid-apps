@@ -2,6 +2,13 @@
 
 "use strict";
 
+// dep: geo.base
+// dep: geo.mesh
+// dep: geo.point
+// dep: geo.points
+// dep: geo.polygons
+// dep: kiri.utils
+// use: kiri.codec
 gapp.register("kiri.widget", [], (root, exports) => {
 
 const { base, kiri } = root;

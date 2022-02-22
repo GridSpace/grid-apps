@@ -3,7 +3,12 @@
 "use strict";
 
 // dep: kiri.api
+// dep: kiri.export
 // dep: moto.space
+// dep: kiri-mode.cam.driver
+// dep: kiri-mode.fdm.driver
+// dep: kiri-mode.sla.driver
+// dep: kiri-mode.laser.driver
 gapp.register("kiri.function", [], (root, exports) => {
 
 const { kiri, noop } = root;

@@ -2,12 +2,9 @@
 
 "use strict";
 
-gapp.register("moto.client", [
-
-"add.array",    // dep: add.array
-"moto.broker",  // dep: moto.broker
-
-], (root, exports) => {
+// dep: add.array
+// dep: moto.broker
+gapp.register("moto.client", [], (root, exports) => {
 
 let ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
     ccmax = ccvalue > 3 ? ccvalue - 1 : 1,

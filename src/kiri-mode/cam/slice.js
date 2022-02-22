@@ -5,6 +5,9 @@
 // dep: geo.point
 // dep: geo.polygons
 // dep: kiri.slice
+// dep: kiri-mode.cam.driver
+// use: kiri-mode.cam.slicer
+// use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
 
 const { base, kiri } = root;

@@ -11,7 +11,7 @@
 // dep: kiri.slice
 // dep: kiri.consts
 // dep: kiri-mode.fdm.driver
-// use: kiri.worker
+// use: kiri.client
 gapp.register("kiri-mode.fdm.prepare", [], (root, exports) => {
 
 const { base, kiri, noop } = root;
@@ -1403,7 +1403,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 }
 
 FDM.isDark = function() {
-    return current.print.settings.controller.dark ? true : false;
+    return worker.print.settings.controller.dark ? true : false;
 };
 
 FDM.rateToColor = function(rate, max) {

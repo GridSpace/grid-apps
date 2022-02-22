@@ -2,9 +2,9 @@
 
 "use strict";
 
-// dep: main.kiri
 // dep: data.local
 // dep: kiri.utils
+// dep: kiri.consts
 // use: kiri.client
 // use: kiri.settings
 gapp.register("kiri.api", [], (root, exports) => {

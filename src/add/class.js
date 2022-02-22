@@ -2,6 +2,7 @@
 
 "use strict";
 
+// use: add.array
 gapp.register("add.class", [], (root, exports) => {
 
 self.ArrayWriter = class ArrayWriter {

@@ -2,9 +2,29 @@
 
 "use strict";
 
+// dep: main.kiri
+// dep: moto.license
+// dep: geo.base
+// dep: kiri.ui
+// dep: kiri.api
+// dep: kiri.conf
+// dep: kiri.lang
+// dep: kiri.utils
+// dep: kiri.files
+// dep: kiri.consts
+// dep: kiri.widget
+// dep: kiri.stats
+// dep: kiri.stacks
+// dep: kiri.function
+// dep: kiri.platform
+// dep: kiri.selection
+// dep: kiri.settings
+// use: kiri.alerts
+// use: kiri.files
+// use: kiri.frame
 gapp.register("kiri.main", [], (root, exports) => {
 
-    const { base, data, load, kiri, moto, noop } = root;
+    const { base, data, kiri, moto, noop } = root;
     const { api, consts, lang, Widget, newWidget, utils, stats } = kiri;
     const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
     const { feature, platform, selection, settings } = api;
@@ -939,7 +959,7 @@ gapp.register("kiri.main", [], (root, exports) => {
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
     // complete module loading
-    kiri.load_exec();
+    // kiri.load_exec();
 
     // upon restore, seed presets
     api.event.emit('preset', api.conf.dbo());

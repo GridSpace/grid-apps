@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: geo.base
 // dep: ext.clip2
 // dep: geo.point
 // dep: geo.bounds

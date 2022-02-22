@@ -5,7 +5,7 @@
 // dep: geo.base
 // dep: kiri-mode.sla.driver
 // dep: kiri-mode.sla.x_cxdlp
-// dep: kiri-mode.sla.x_photons
+// dep: kiri-mode.sla.x_photon
 gapp.register("kiri-mode.sla.export", [], (root, exports) => {
 
 const { base, kiri } = root

@@ -1,7 +1,7 @@
 // English language map. Other localization maps will
 // defer to English map for any missing key/value pairs
-kiri.lang['en'] =
-kiri.lang['en-us'] = {
+self.kiri.lang['en'] =
+self.kiri.lang['en-us'] = {
     // common keys and menus
     animate:        "animate",      // CAM animate button
     arrange:        "arrange",      // layout workspace objects

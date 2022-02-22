@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: kiri-mode.cam.driver
 gapp.register("kiri-mode.cam.tools", [], (root, exports) => {
 
 const { kiri } = root;

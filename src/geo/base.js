@@ -2,6 +2,8 @@
 
 "use strict";
 
+// use: add.array
+// use: add.class
 gapp.register("geo.base", [], (root, exports) => {
 
 const base = root.base = {};

@@ -3,6 +3,7 @@
 "use strict";
 
 // dep: moto.space
+// dep: moto.webui
 // dep: kiri.api
 // dep: kiri.consts
 // dep: kiri.utils

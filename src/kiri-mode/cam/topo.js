@@ -2,6 +2,13 @@
 
 "use strict";
 
+// dep: geo.base
+// dep: geo.line
+// dep: geo.point
+// dep: geo.polygon
+// dep: geo.polygons
+// dep: kiri.slice
+// dep: kiri-mode.cam.driver
 gapp.register("kiri-mode.cam.tools", [], (root, exports) => {
 
 const { base, kiri } = root;
