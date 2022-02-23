@@ -7,6 +7,7 @@
 // dep: geo.point
 // dep: geo.polygons
 // dep: kiri.slice
+// use: kiri-mode.cam.topo
 gapp.register("kiri-mode.cam.ops", [], (root, exports) => {
 
 const { base, kiri } = root;
