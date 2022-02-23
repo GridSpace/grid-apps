@@ -8,6 +8,7 @@
 // dep: kiri.utils
 // dep: kiri.consts
 // dep: kiri-mode.fdm.driver
+// dep: kiri-mode.fdm.post
 // use: kiri-mode.fdm.fill
 // use: ext.clip2
 // use: add.three
@@ -19,7 +20,7 @@ const { config, polygons, util, newPoint } = base;
 const { fillArea } = polygons;
 const { beltfact } = consts;
 const { FDM } = driver;
-const { getRangeParameters } = FDM;
+const { doTopShells, getRangeParameters } = FDM;
 
 const POLY = polygons,
     tracker = util.pwait,
@@ -54,59 +55,6 @@ function vopt(opt) {
     }
     return opt;
 }
-
-/**
- * may run in minion or worker context. do not create objects
- * that will not quickly encode in threaded mode. add to existing
- * data object. return is ignored.
- */
-base.slicePost.FDM = function(data, options) {
-    const { z, lines, groups } = data;
-    const { useAssembly, post_args, zIndexes } = options;
-    const { process, isSynth, isDanger, vaseMode } = post_args;
-    const { shellOffset, fillOffset, clipOffset } = post_args;
-    data.tops = POLY.nest(groups);
-    if (isSynth) {
-        // do not shell synth widgets because
-        // they will be clipped against peers later
-        // which requires shelling post-clip
-        // but we still need to generate tops
-        delete data.groups;
-        return;
-    }
-    const index = zIndexes.indexOf(z);
-    const range = getRangeParameters(process, index);
-    // calculate fractional shells
-    let shellFrac = (range.sliceShells - (range.sliceShells | 0));
-    let sliceShells = range.sliceShells | 0;
-    if (shellFrac) {
-        let v1 = shellFrac > 0.5 ? 1 - shellFrac : shellFrac;
-        let v2 = 1 - v1;
-        let parts = Math.round(v2/v1) + 1;
-        let rem = index % parts;
-        let trg = shellFrac > 0.5 ? 1 : parts - 1;
-        sliceShells += rem >= trg ? 1 : 0;
-    }
-    const isFirst = index === 0;
-    const height = process.sliceHeight;
-    const spaceMult = isFirst ? process.firstLayerLineMult || 1 : 1;
-    const count = isSynth ? 1 : sliceShells;
-    const offset =  shellOffset * spaceMult;
-    const fillOff = fillOffset * spaceMult;
-    const nutops = [];
-    // co-locate shell processing with top generation in slicer
-    for (let top of data.tops) {
-        nutops.push(FDM.share.doTopShells(z, top, count, offset/2, offset, fillOff, {
-            vase: vaseMode,
-            thin: process.detectThinWalls && !isSynth,
-            wasm: useAssembly,
-            danger: isDanger
-        }));
-    }
-    data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
-    data.tops = nutops;
-    delete data.groups;
-};
 
 FDM.sliceAll = function(settings, onupdate) {
     // future home of brim and anchor generation
@@ -911,144 +859,6 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
     for (let top of slice.tops) {
         doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
     }
-}
-
-function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
-    // pretend we're a top object in minions
-    if (!top.poly) {
-        top = { poly: top };
-    }
-
-    // add simple (low rez poly) where less accuracy is OK
-    top.simple = top.poly.simple();
-
-    let wasm = opt.wasm;
-    let top_poly = [ top.poly ];
-
-    if (opt.vase) {
-        // remove top poly inners in vase mode
-        top.poly = top.poly.clone(false);
-    }
-
-    top.shells = [];
-    top.fill_off = [];
-    top.fill_lines = [];
-
-    let last = [],
-        gaps = [];
-
-    if (count) {
-        // permit offset of 0 for laser and drag knife
-        if (offset1 === 0 && count === 1) {
-            last = top_poly.clone(true);
-            top.shells = last;
-        } else {
-            // heal top open polygons if the ends are close (benchy tilt test)
-            top_poly.forEach(p => { if (p.open) {
-                let dist = p.first().distTo2D(p.last());
-                if (dist < 1) p.open = false;
-            } });
-            if (opt.danger && opt.thin) {
-                top.thin_fill = [];
-                top.fill_sparse = [];
-                let layers = POLY.inset(top_poly, offsetN, count, z, true);
-                last = layers.last().mid;
-                top.shells = layers.map(r => r.mid).flat();
-                top.gaps = layers.map(r => r.gap).flat();
-                let off = offsetN;
-                let min = off * 0.75;
-                let max = off * 4;
-                for (let poly of layers.map(r => r.gap).flat()) {
-                    let centers = poly.centers(off/2, z, min, max, {lines:false});
-                    top.fill_sparse.appendAll(centers);
-                    // top.fill_lines.appendAll(centers);
-                }
-            } else if (opt.thin) {
-                top.thin_fill = [];
-                let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
-                POLY.offset(top_poly, [-offset1, -offsetN], oso);
-
-                oso.outs.forEach((polys, i) => {
-                    polys.forEach(p => {
-                        p.depth = i;
-                        if (p.fill_off) {
-                            p.fill_off.forEach(pi => pi.depth = i);
-                        }
-                        if (p.inner) {
-                            for (let pi of p.inner) {
-                                pi.depth = p.depth;
-                            }
-                        }
-                        top.shells.push(p);
-                    });
-                    last = polys;
-                });
-
-                // slice.solids.trimmed = slice.solids.trimmed || [];
-                oso.gaps.forEach((polys, i) => {
-                    let off = (i == 0 ? offset1 : offsetN);
-                    polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
-                    top.thin_fill.appendAll(cullIntersections(
-                        fillArea(polys, 45, off/2, [], 0.01, off*2),
-                        fillArea(polys, 135, off/2, [], 0.01, off*2),
-                    ));
-                    gaps = polys;
-                });
-            } else {
-                // standard wall offsetting strategy
-                POLY.offset(
-                    top_poly,
-                    [-offset1, -offsetN],
-                    {
-                        z,
-                        wasm,
-                        count,
-                        outs: top.shells,
-                        flat: true,
-                        call: (polys, onCount) => {
-                            last = polys;
-                            // mark each poly with depth (offset #) starting at 0
-                            for (let p of polys) {
-                                p.depth = count - onCount;
-                                if (p.fill_off) p.fill_off.forEach(function(pi) {
-                                    // use negative offset for inners
-                                    pi.depth = -(count - onCount);
-                                });
-                                // mark inner depth to match parent
-                                if (p.inner) {
-                                    for (let pi of p.inner) {
-                                        pi.depth = p.depth;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                );
-            }
-        }
-    } else {
-        // no shells, just infill, is permitted
-        last = [top.poly];
-    }
-
-    // generate fill offset poly set from last offset to top.fill_off
-    if (fillOffset && last.length > 0) {
-        // if gaps present, remove that area from fill inset
-        if (gaps.length) {
-            let nulast = [];
-            POLY.subtract(last, gaps, nulast, null, z);
-            last = nulast;
-        }
-        last.forEach(function(inner) {
-            POLY.offset([inner], -fillOffset, {outs: top.fill_off, flat: true, z});
-        });
-    }
-
-    // for diffing
-    top.last = last;
-    // top.last_simple = last.map(p => p.clean(true, undefined, config.clipper / 10));
-
-    return top;
 }
 
 /**

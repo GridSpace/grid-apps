@@ -205,6 +205,7 @@ function init(mod) {
         // val.splice(1, 0, ...roots);
         if (xxxx) console.log({key, cache, refs, paths, roots, val});
         script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
+        // console.log({script: key, files: script[key]});
     }
 
     mod.on.test((req) => {
@@ -332,13 +333,7 @@ function initModule(mod, file, dir) {
                 return logger.log(`inject missing target "${code}"`);
             }
             const path = `${dir}/${file}`;
-            if (opt.end) {
-                codelist.push(path);
-            } else {
-                codelist.push(path);
-                // let io = Math.max(0, codelist.indexOf('@inject'));
-                // codelist.splice(io, 0, path);
-            }
+            codelist.push(path);
             if (opt.cachever) {
                 cachever[path] = opt.cachever;
             }
@@ -388,7 +383,6 @@ function initModule(mod, file, dir) {
 
 const script = {
     kiri : [
-        "@inject",
         "@devices",
         "@icons",
         "kiri/ui",
@@ -396,74 +390,21 @@ const script = {
         "&kiri/lang-en"
     ],
     kiri_work : [
-        "@inject",
         "kiri-run/worker",
         "&main/kiri",
     ],
     kiri_pool : [
-        "moto/license",
-        "@inject",
-        "ext/clip2",
-        "ext/earcut",
-        "add/array",
-        "add/class",
-        "geo/base",
-        "geo/wasm",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygons",
-        "geo/polygon",
-        "geo/gyroid",
-        "geo/slicer",
-        "kiri/consts",
-        "kiri-mode/fdm/driver",
-        "kiri-mode/fdm/slice",
-        "kiri/utils",
-        "kiri/slice",
-        "kiri/layers",
-        "kiri/widget",
-        "kiri/codec",
-        "kiri-run/minion",
-        "main/kiri",
+        "&kiri-run/minion",
+        "&main/kiri",
     ],
     engine : [
-        "moto/license",
-        "@inject",
-        "ext/clip2",
-        "data/local",
-        "ext/three",
-        "add/array",
-        "add/three",
-        "geo/base",
-        "geo/point",
-        "geo/points",
-        "geo/paths",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "moto/broker",
-        "load/obj",
-        "load/stl",
-        "kiri/conf",
-        "kiri/utils",
-        "kiri/client",
-        "kiri/slice",
-        "kiri/layers",
-        "kiri/widget",
-        "kiri/codec",
-        "kiri-run/engine",
-        "main/kiri",
+        "&kiri-run/engine",
+        "&main/kiri",
     ],
     frame : [
         "kiri-run/frame"
     ],
     meta : [
-        "moto/license",
         "main/meta",
     ],
     mesh : [

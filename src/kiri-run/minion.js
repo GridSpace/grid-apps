@@ -3,18 +3,26 @@
 "use strict";
 
 // dep: moto.license
+// dep: geo.base
+// dep: geo.polygons
+// dep: geo.slicer
+// dep: geo.wasm
+// dep: kiri.codec
+// dep: kiri-mode.fdm.post
+// dep: ext.clip2
 gapp.register("kiri-run.minion", [], (root, exports) => {
 
-let BASE = self.base,
-    KIRI = self.kiri,
-    UTIL = BASE.util,
-    POLY = BASE.polygons,
-    CODEC = KIRI.codec,
-    clib = self.ClipperLib,
-    ctyp = clib.ClipType,
-    ptyp = clib.PolyType,
-    cfil = clib.PolyFillType,
-    name = "unknown";
+const { base, kiri } = root;
+const { polygons } = base;
+const { codec } = kiri;
+
+const POLY = polygons;
+const clib = self.ClipperLib;
+const ctyp = clib.ClipType;
+const ptyp = clib.PolyType;
+const cfil = clib.PolyFillType;
+
+let name = "unknown";
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -42,7 +50,7 @@ const funcs = {
 
     config: data => {
         if (data.base) {
-            Object.assign(BASE.config, data.base);
+            Object.assign(base.config, data.base);
         } else {
             log({invalid: data});
         }
@@ -50,23 +58,23 @@ const funcs = {
 
     union: (data, seq) => {
         if (!(data.polys && data.polys.length)) {
-            reply({ seq, union: CODEC.encode([]) });
+            reply({ seq, union: codec.encode([]) });
             return;
         }
-        let polys = CODEC.decode(data.polys);
+        let polys = codec.decode(data.polys);
         let union = POLY.union(polys, data.minarea || 0, true);
-        reply({ seq, union: CODEC.encode(union) });
+        reply({ seq, union: codec.encode(union) });
     },
 
     topShells: (data, seq) => {
-        let top = CODEC.decode(data.top, {full: true});
+        let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
-        KIRI.driver.FDM.share.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
-        reply({ seq, top: CODEC.encode(top, {full: true}) });
+        kiri.driver.FDM.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        reply({ seq, top: codec.encode(top, {full: true}) });
     },
 
     fill: (data, seq) => {
-        let polys = CODEC.decode(data.polys);
+        let polys = codec.decode(data.polys);
         let { angle, spacing, minLen, maxLen } = data;
         let fill = POLY.fillArea(polys, angle, spacing, [], minLen, maxLen);
         let arr = new Float32Array(fill.length * 4);
@@ -90,7 +98,7 @@ const funcs = {
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
             for (let node of ctre.m_AllPolys) {
-                clips.push(CODEC.encode(POLY.fromClipperNode(node, data.z)));
+                clips.push(codec.encode(POLY.fromClipperNode(node, data.z)));
             }
         }
 
@@ -101,10 +109,10 @@ const funcs = {
         let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
-            realp[p++] = BASE.newPoint(points[i++], points[i++], points[i++]).round(3);
+            realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);
         }
         let output = [];
-        BASE.sliceZ(z, realp, {
+        base.sliceZ(z, realp, {
             ...options,
             each(out) { output.push(out) }
         }).then(() => {
@@ -112,7 +120,7 @@ const funcs = {
                 // lines do not pass codec properly (for now)
                 delete rec.lines;
             }
-            reply({ seq, output: CODEC.encode(output) });
+            reply({ seq, output: codec.encode(output) });
         });
     },
 

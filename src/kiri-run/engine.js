@@ -2,6 +2,12 @@
 
 "use strict";
 
+// dep: moto.license
+// dep: load.stl
+// dep: kiri.conf
+// dep: kiri.client
+// dep: kiri.widget
+// use: add.three
 gapp.register("kiri-run.engine", [], (root, exports) => {
 
 const { kiri } = root;

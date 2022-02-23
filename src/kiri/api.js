@@ -5,8 +5,6 @@
 // dep: data.local
 // dep: kiri.utils
 // dep: kiri.consts
-// use: kiri.client
-// use: kiri.settings
 gapp.register("kiri.api", [], (root, exports) => {
 
 const { data, kiri, noop } = root;
