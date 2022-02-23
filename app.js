@@ -176,7 +176,7 @@ function init(mod) {
         const list = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
         const cache = {};
         const roots = [];
-        // xxxx = key === "mesh_work";
+        // xxxx = key === "kiri_work";
         // for each path in the list, find deps and add to list
         for (let path of val) {
             let fc = path.charAt(0);
@@ -750,7 +750,9 @@ function minify(path) {
     if (path.indexOf("ext/three.js") > 0) {
         return code;
     }
-    let mini = uglify.minify(code.toString());
+    let mini = uglify.minify(code.toString(), {
+        compress: { unused: false }
+    });
     if (mini.error) {
         console.trace(mini.error);
         throw mini.error;

@@ -6,6 +6,7 @@
 // dep: geo.polygons
 // dep: geo.wasm
 // dep: kiri.codec
+// dep: kiri.slice
 // dep: moto.license
 // use: kiri-mode.cam.driver
 // use: kiri-mode.cam.animate
