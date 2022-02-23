@@ -8,6 +8,7 @@
 // dep: kiri.codec
 // dep: kiri.slice
 // dep: moto.license
+// use: kiri.render
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.slice
 // use: kiri-mode.cam.prepare
@@ -512,7 +513,7 @@ kiri.worker = {
         const { colors, max } = data;
         const colorMap = {};
         colors.forEach(color => {
-            colorMap[color] = kiri.driver.FDM.rateToColor(color, max);
+            colorMap[color] = kiri.render.rate_to_color(color, max);
         });
         send.done(colorMap);
     },
@@ -536,7 +537,7 @@ kiri.worker = {
         }, done => {
             const minSpeed = print.minSpeed;
             const maxSpeed = print.maxSpeed;
-            const layers = kiri.driver.FDM.prepareRender(done.output, progress => {
+            const layers = kiri.render.path(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools });
             send.done({parsed: codec.encode(layers), maxSpeed, minSpeed});
@@ -554,7 +555,7 @@ kiri.worker = {
             });
         });
         const print = current.print = kiri.newPrint(null, Object.values(wcache));
-        const layers = kiri.driver.FDM.prepareRender(parsed, progress => {
+        const layers = kiri.render.path(parsed, progress => {
             send.data({ progress });
         }, { thin:  true });
         send.done({parsed: codec.encode(layers)});

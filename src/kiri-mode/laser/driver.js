@@ -6,6 +6,7 @@
 // dep: geo.point
 // dep: kiri.slice
 // use: kiri.pack
+// use: kiri.render
 gapp.register("kiri-mode.laser.driver", [], (root, exports) => {
 
 const { base, kiri } = root;
@@ -365,7 +366,7 @@ function prepare(widgets, settings, update) {
         });
     }
 
-    return print.render = FDM.prepareRender(output, (progress, layer) => {
+    return print.render = kiri.render.path(output, (progress, layer) => {
         update(0.5 + progress * 0.5, "render", layer);
     }, { thin: true, z: 0, action: "cut", moves: process.knifeOn });
 };

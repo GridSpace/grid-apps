@@ -5,6 +5,7 @@
 // dep: geo.paths
 // dep: geo.point
 // dep: geo.polygons
+// dep: kiri.render
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.prepare", [], (root, exports) => {
@@ -12,7 +13,7 @@ gapp.register("kiri-mode.cam.prepare", [], (root, exports) => {
 const { base, kiri } = root;
 const { paths, polygons, newPoint } = base;
 const { tip2tipEmit, poly2polyEmit } = paths;
-const { driver } = kiri;
+const { driver, render } = kiri;
 const { CAM } = driver;
 
 const POLY = polygons;
@@ -40,7 +41,7 @@ CAM.prepare = function(widgets, settings, update) {
         });
     });
 
-    print.render = kiri.driver.FDM.prepareRender(print.output, (progress, layer) => {
+    print.render = render.path(print.output, (progress, layer) => {
         update(0.75 + progress * 0.25, "render", layer);
     }, {
         thin: true,
