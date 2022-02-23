@@ -117,6 +117,15 @@ gapp.register("kiri.init", [], (root, exports) => {
         filamentSourceEditUpdate();
     }
 
+    function thinWallSave() {
+        let opt = ui.sliceDetectThin;
+        let level = opt.options[opt.selectedIndex];
+        if (level) {
+            settings().process.sliceDetectThin = level.value;
+            api.conf.save();
+        }
+    }
+
     function detailSave() {
         let level = ui.detail.options[ui.detail.selectedIndex];
         if (level) {
@@ -1742,8 +1751,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceSolidLayers:    uc.newInput(LANG.sl_lsld_s, {title:LANG.sl_lsld_l, convert:uc.toInt, modes:FDM}),
             sliceBottomLayers:   uc.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:uc.toInt, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceDetectThin:     uc.newSelect(LANG.ad_thin_s, {title: LANG.ad_thin_l, action: thinWallSave}, "thin"),
             sliceAdaptive:       uc.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, trigger: true}),
-            detectThinWalls:     uc.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM}),
 
             laserOffset:         uc.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:uc.toFloat, modes:LASER}),
             laserSliceHeight:    uc.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:uc.toFloat, modes:LASER, trigger: true}),

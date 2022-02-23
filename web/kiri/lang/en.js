@@ -318,7 +318,7 @@ self.kiri.lang['en-us'] = {
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "layer start",
     sl_strt_l:      ["layer starting point","last = last layer end","center = part center","origin = device origin"],
-    ad_thin_s:      "thin walls",
+    ad_thin_s:      "thin wall",
     ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM FILL

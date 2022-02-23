@@ -364,7 +364,7 @@ const conf = exports({
                 outputLoops: 0,
                 outputInvertX: false,
                 outputInvertY: false,
-                detectThinWalls: false,
+                sliceDetectThin: "off",
                 sliceMinHeight: 0,
                 sliceAdaptive: false,
                 zHopDistance: 0.2,

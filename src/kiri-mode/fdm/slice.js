@@ -1446,56 +1446,6 @@ function projectSolid(slice, polys, count, up, first) {
     }
 }
 
-/**
- * given an array of arrays of points (lines), eliminate intersections
- * between groups, then return a unified array of shortest non-intersects.
- *
- * @returns {Point[]}
- */
-function cullIntersections() {
-    function toLines(pts) {
-        let lns = [];
-        for (let i=0, il=pts.length; i<il; i += 2) {
-            lns.push({a: pts[i], b: pts[i+1], l: pts[i].distTo2D(pts[i+1])});
-        }
-        return lns;
-    }
-    let aOa = [...arguments].filter(t => t);
-    if (aOa.length < 1) return;
-    let aa = toLines(aOa.shift());
-    while (aOa.length) {
-        let bb = toLines(aOa.shift());
-        loop: for (let i=0, il=aa.length; i<il; i++) {
-            let al = aa[i];
-            if (al.del) {
-                continue;
-            }
-            for (let j=0, jl=bb.length; j<jl; j++) {
-                let bl = bb[j];
-                if (bl.del) {
-                    continue;
-                }
-                if (util.intersect(al.a, al.b, bl.a, bl.b, base.key.SEGINT)) {
-                    if (al.l < bl.l) {
-                        bl.del = true;
-                    } else {
-                        al.del = true;
-                    }
-                    continue;
-                }
-            }
-        }
-        aa = aa.filter(l => !l.del).concat(bb.filter(l => !l.del));
-    }
-    let good = [];
-    for (let i=0, il=aa.length; i<il; i++) {
-        let al = aa[i];
-        good.push(al.a);
-        good.push(al.b);
-    }
-    return good.length > 2 ? good : [];
-}
-
 FDM.supports = function(settings, widget) {
     let isBelt = settings.device.bedBelt;
     let process = settings.process;

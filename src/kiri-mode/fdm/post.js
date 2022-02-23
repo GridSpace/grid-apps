@@ -53,14 +53,14 @@ base.slicePost.FDM = function(data, options) {
     const count = isSynth ? 1 : sliceShells;
     const offset =  shellOffset * spaceMult;
     const fillOff = fillOffset * spaceMult;
+    const thinType = isSynth ? undefined : process.sliceDetectThin;
     const nutops = [];
     // co-locate shell processing with top generation in slicer
     for (let top of data.tops) {
         nutops.push(FDM.doTopShells(z, top, count, offset/2, offset, fillOff, {
-            vase: vaseMode,
-            thin: process.detectThinWalls && !isSynth,
-            wasm: useAssembly,
-            danger: isDanger
+            thinType,
+            vaseMode,
+            useAssembly
         }));
     }
     data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
@@ -81,10 +81,10 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
     // add simple (low rez poly) where less accuracy is OK
     top.simple = top.poly.simple();
 
-    let wasm = opt.wasm;
+    let wasm = opt.useAssembly;
     let top_poly = [ top.poly ];
 
-    if (opt.vase) {
+    if (opt.vaseMode) {
         // remove top poly inners in vase mode
         top.poly = top.poly.clone(false);
     }
@@ -107,82 +107,86 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
                 let dist = p.first().distTo2D(p.last());
                 if (dist < 1) p.open = false;
             } });
-            if (opt.danger && opt.thin) {
-                top.thin_fill = [];
-                top.fill_sparse = [];
-                let layers = POLY.inset(top_poly, offsetN, count, z, true);
-                last = layers.last().mid;
-                top.shells = layers.map(r => r.mid).flat();
-                top.gaps = layers.map(r => r.gap).flat();
-                let off = offsetN;
-                let min = off * 0.75;
-                let max = off * 4;
-                for (let poly of layers.map(r => r.gap).flat()) {
-                    let centers = poly.centers(off/2, z, min, max, {lines:false});
-                    top.fill_sparse.appendAll(centers);
-                    // top.fill_lines.appendAll(centers);
-                }
-            } else if (opt.thin) {
-                top.thin_fill = [];
-                let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
-                POLY.offset(top_poly, [-offset1, -offsetN], oso);
+            switch (opt.thinType) {
+                case "type 1":
+                    top.thin_fill = [];
+                    top.fill_sparse = [];
+                    let layers = POLY.inset(top_poly, offsetN, count, z, true);
+                    last = layers.last().mid;
+                    top.shells = layers.map(r => r.mid).flat();
+                    top.gaps = layers.map(r => r.gap).flat();
+                    let off = offsetN;
+                    let min = off * 0.75;
+                    let max = off * 4;
+                    for (let poly of layers.map(r => r.gap).flat()) {
+                        let centers = poly.centers(off/2, z, min, max, {lines:false});
+                        top.fill_sparse.appendAll(centers);
+                        // top.fill_lines.appendAll(centers);
+                    }
+                    break;
+                case "type 2":
+                    top.thin_fill = [];
+                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
+                    POLY.offset(top_poly, [-offset1, -offsetN], oso);
 
-                oso.outs.forEach((polys, i) => {
-                    polys.forEach(p => {
-                        p.depth = i;
-                        if (p.fill_off) {
-                            p.fill_off.forEach(pi => pi.depth = i);
-                        }
-                        if (p.inner) {
-                            for (let pi of p.inner) {
-                                pi.depth = p.depth;
+                    oso.outs.forEach((polys, i) => {
+                        polys.forEach(p => {
+                            p.depth = i;
+                            if (p.fill_off) {
+                                p.fill_off.forEach(pi => pi.depth = i);
                             }
-                        }
-                        top.shells.push(p);
+                            if (p.inner) {
+                                for (let pi of p.inner) {
+                                    pi.depth = p.depth;
+                                }
+                            }
+                            top.shells.push(p);
+                        });
+                        last = polys;
                     });
-                    last = polys;
-                });
 
-                // slice.solids.trimmed = slice.solids.trimmed || [];
-                oso.gaps.forEach((polys, i) => {
-                    let off = (i == 0 ? offset1 : offsetN);
-                    polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
-                    top.thin_fill.appendAll(cullIntersections(
-                        fillArea(polys, 45, off/2, [], 0.01, off*2),
-                        fillArea(polys, 135, off/2, [], 0.01, off*2),
-                    ));
-                    gaps = polys;
-                });
-            } else {
-                // standard wall offsetting strategy
-                POLY.offset(
-                    top_poly,
-                    [-offset1, -offsetN],
-                    {
-                        z,
-                        wasm,
-                        count,
-                        outs: top.shells,
-                        flat: true,
-                        call: (polys, onCount) => {
-                            last = polys;
-                            // mark each poly with depth (offset #) starting at 0
-                            for (let p of polys) {
-                                p.depth = count - onCount;
-                                if (p.fill_off) p.fill_off.forEach(function(pi) {
-                                    // use negative offset for inners
-                                    pi.depth = -(count - onCount);
-                                });
-                                // mark inner depth to match parent
-                                if (p.inner) {
-                                    for (let pi of p.inner) {
-                                        pi.depth = p.depth;
+                    // slice.solids.trimmed = slice.solids.trimmed || [];
+                    oso.gaps.forEach((polys, i) => {
+                        let off = (i == 0 ? offset1 : offsetN);
+                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
+                        top.thin_fill.appendAll(cullIntersections(
+                            fillArea(polys, 45, off/2, [], 0.01, off*2),
+                            fillArea(polys, 135, off/2, [], 0.01, off*2),
+                        ));
+                        gaps = polys;
+                    });
+                    break;
+                default:
+                    // standard wall offsetting strategy
+                    POLY.offset(
+                        top_poly,
+                        [-offset1, -offsetN],
+                        {
+                            z,
+                            wasm,
+                            count,
+                            outs: top.shells,
+                            flat: true,
+                            call: (polys, onCount) => {
+                                last = polys;
+                                // mark each poly with depth (offset #) starting at 0
+                                for (let p of polys) {
+                                    p.depth = count - onCount;
+                                    if (p.fill_off) p.fill_off.forEach(function(pi) {
+                                        // use negative offset for inners
+                                        pi.depth = -(count - onCount);
+                                    });
+                                    // mark inner depth to match parent
+                                    if (p.inner) {
+                                        for (let pi of p.inner) {
+                                            pi.depth = p.depth;
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                );
+                    );
+                    break;
             }
         }
     } else {
@@ -208,6 +212,54 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
     // top.last_simple = last.map(p => p.clean(true, undefined, config.clipper / 10));
 
     return top;
+}
+
+/**
+ * given an array of arrays of points (lines), eliminate intersections
+ * between groups, then return a unified array of shortest non-intersects.
+ */
+function cullIntersections() {
+    function toLines(pts) {
+        let lns = [];
+        for (let i=0, il=pts.length; i<il; i += 2) {
+            lns.push({a: pts[i], b: pts[i+1], l: pts[i].distTo2D(pts[i+1])});
+        }
+        return lns;
+    }
+    let aOa = [...arguments].filter(t => t);
+    if (aOa.length < 1) return;
+    let aa = toLines(aOa.shift());
+    while (aOa.length) {
+        let bb = toLines(aOa.shift());
+        loop: for (let i=0, il=aa.length; i<il; i++) {
+            let al = aa[i];
+            if (al.del) {
+                continue;
+            }
+            for (let j=0, jl=bb.length; j<jl; j++) {
+                let bl = bb[j];
+                if (bl.del) {
+                    continue;
+                }
+                if (util.intersect(al.a, al.b, bl.a, bl.b, base.key.SEGINT)) {
+                    if (al.l < bl.l) {
+                        bl.del = true;
+                    } else {
+                        al.del = true;
+                    }
+                    continue;
+                }
+            }
+        }
+        aa = aa.filter(l => !l.del).concat(bb.filter(l => !l.del));
+    }
+    let good = [];
+    for (let i=0, il=aa.length; i<il; i++) {
+        let al = aa[i];
+        good.push(al.a);
+        good.push(al.b);
+    }
+    return good.length > 2 ? good : [];
 }
 
 });

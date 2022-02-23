@@ -97,6 +97,11 @@ const LISTS = {
         { name: "2" },
         { name: "3" }
     ],
+    thin: [
+        { name: "off" },
+        { name: "type 1" },
+        { name: "type 2" }
+    ]
 };
 
 // primary device mode
