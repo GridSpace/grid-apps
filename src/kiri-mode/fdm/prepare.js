@@ -561,14 +561,17 @@ FDM.prepare = function(widgets, settings, update) {
                     support: slice.widget.support,
                     onBelt: beltStart,
                     pretract: (wipeDist) => {
-                        if (lastLayer && lastLayer.length) {
-                            let lastOut = lastLayer.last();
-                            lastOut.retract = true;
-                            if (wipeDist && lastPoly && lastOut.point) {
-                                let endpoint = lastOut.point.followTo(lastPoly.center(true).add(offset), wipeDist);
-                                if (endpoint.inPolygon(lastPoly)) {
-                                    print.addOutput(lastLayer, endpoint);
-                                }
+                        if (!(lastLayer && lastLayer.length)) {
+                            return;
+                        }
+                        let lastOut = lastLayer.last().set_retract();
+                        if (wipeDist && lastPoly && lastOut.point) {
+                            let center = lastPoly.center(true).add(offset);
+                            let maxDist = lastOut.point.distTo2D(center);
+                            let useDist = Math.min(wipeDist, maxDist);
+                            let endpoint = lastOut.point.followTo(center, useDist);
+                            if (endpoint.inPolygon(lastPoly)) {
+                                print.addOutput(lastLayer, endpoint, null, null, lastOut.tool);
                             }
                         }
                     }
@@ -805,6 +808,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         beltFirst = process.outputBeltFirst || false,
         startClone = startPoint.clone(),
         seedPoint = opt.seedPoint || startPoint,
+        switchTop = print.lastPoly && print.lastPoly.perimeter() < process.outputShortPoly,
         z = slice.z,
         lastPoly;
 
@@ -821,9 +825,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             let last = array.last();
             last.retract = true;
             if (wipeDist && lastPoly && last.point) {
-                let endpoint = last.point.followTo(lastPoly.center(true), wipeDist);
+                let center = lastPoly.center(true);
+                let maxDist = last.point.distTo2D(center);
+                let useDist = Math.min(wipeDist, maxDist);
+                let endpoint = last.point.followTo(center, useDist);
                 if (endpoint.inPolygon(lastPoly)) {
-                    print.addOutput(array, endpoint);
+                    print.addOutput(array, endpoint, null, null, last.tool);
                 }
             }
         } else if (opt.pretract) {
@@ -1297,9 +1304,18 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             if (order.length === 0) {
                 return;
             }
-            order.sort((a,b) => {
-                return a.d - b.d;
-            });
+            // when previous top is under a certain length
+            // seek furthest top on layer switch
+            if (switchTop) {
+                switchTop = false;
+                order.sort((a,b) => {
+                    return b.d - a.d;
+                });
+            } else {
+                order.sort((a,b) => {
+                    return a.d - b.d;
+                });
+            }
             array[order[0].i] = null;
             fn(order[0].n);
         }

@@ -21,6 +21,7 @@ class Print {
         this.settings = settings;
         this.widgets = widgets;
         this.lastPoint = null;
+        this.lastPoly = null;
         this.lastEmit = null;
         this.lastOut = null;
         this.lastPos = null;
@@ -115,6 +116,8 @@ class Print {
             }
             last = point;
         }, close, closest.index);
+
+        this.lastPoly = poly;
 
         return output.last().point;
     }
@@ -547,6 +550,11 @@ class Output {
             o.point.setZ(z);
         }
         return o;
+    }
+
+    set_retract() {
+        this.retract = true;
+        return this;
     }
 }
 
