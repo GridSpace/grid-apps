@@ -24,6 +24,6 @@
 
 ## Mesh:Tool
 
-* `-` face selection and matchinbg preferences
+* `-` face selection and matching preferences
 * `-` add prefs for normal length, maybe color picker
 * `-` svg and image import conversion (share code with Kiri:Moto)

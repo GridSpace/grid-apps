@@ -56,81 +56,77 @@ self.noop = () => {};
 
 let gapp = self.gapp = self.gapp || {};
 
-if (gapp.load) return;
-
 // modules to load
 let mods = [];
-let modn = {};
 
 gapp.overlay = Object.assign;
 
+function exargs(args) {
+    return {
+        funcs: args.filter(a => typeof a === 'function'),
+        arrays: args.filter(a => Array.isArray(a)),
+        strings: args.filter(a => typeof a === 'string'),
+        objects: args.filter(a => typeof a === 'object' && !Array.isArray(a))
+    };
+}
+
 // register module without a load function
-gapp.register = (name, deps, fn) => {
-    gapp.load(fn, name, deps);
-};
-
-// register module with a load function
-gapp.load = (fn, name, deps) => {
-    let mod = {fn, name, deps};
+gapp.register = function() {
+    const args = exargs([...arguments]);
+    const name = args.strings[0];
+    const fn = args.funcs[0];
+    const mod = { fn, name };
     mods.push(mod);
-    if (name) {
-        modn[name] = mod;
-    }
-};
-
-// check dependency list and warn if one is missing
-gapp.check = (name, deps = []) => {
-    // warn if dependencies are not present
-    for (let dep of deps) {
-        if (!modn[dep]) {
-            dbug.warn(`'${name || 'module'}' missing dependency '${dep}'`);
-        }
-    }
 };
 
 // perform dependency checks and run module load functions
-gapp.main = (app, deps, post, pre) => {
+gapp.main = function() {
+    const args = exargs([...arguments]);
+    const app = args.strings[0];
+    const post = args.funcs[0];
+    const pre = args.funcs[1];
     const root = self;
     // optional fn to run before loading
-    if (pre) pre(root);
-    // app loader may also pass deps
-    gapp.check(app, deps);
+    if (pre) {
+        pre(root);
+    }
     // load mods after checking if dependency is present
     for (let mod of mods) {
-        let { fn, name, deps } = mod;
-        if (deps && deps.length) {
-            dbug.warn({app, mod, deps});
-            gapp.check(name, deps);
-        }
+        let { fn, name } = mod;
         // mods with no name can't be depended on, but are allowed
         if (name) {
             dbug.debug(`${app} | load | ${name}`);
         }
-        // mods with no function are allowed so they can be depended on
-        if (fn) {
-            let toks = name.split('.');
-            let map = toks.pop();
-            let path = root;
-            for (let tok of toks) {
-                if (!path[tok]) {
-                    dbug.debug({creating_root: tok, for: name});
-                    path = path[tok] = {};
-                } else {
-                    path = path[tok];
-                }
-            }
-            let tmp = path[map] || {};
-            fn(root, exports => {
-                if (exports) {
-                    return path[map] = Object.assign(tmp, exports);
-                }
-            });
+        // modules without functions allowed so they can be depended on
+        if (!fn) {
+            dbug.debug(`${app} | ${mod.name} | missing fn()`);
+            continue;
         }
+        // create namespace path in root and execute module load function
+        let toks = name.split('.');
+        let map = toks.pop();
+        let path = root;
+        for (let tok of toks) {
+            if (!path[tok]) {
+                dbug.debug({creating_root: tok, for: name});
+                path = path[tok] = {};
+            } else {
+                path = path[tok];
+            }
+        }
+        let tmp = path[map] || {};
+        fn(root, exports => {
+            if (exports) {
+                return path[map] = Object.assign(tmp, exports);
+            }
+        });
     }
     // force runtime error if gapp.load() called gapp.main()
     mods = null;
     // optional if not called inline with startup
-    if (post) post(root);
+    if (post) {
+        post(root);
+    }
 };
 
 })();
