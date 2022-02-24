@@ -1,8 +1,8 @@
 # Grid:Apps TODOs and Notes
 
-# Kiri:Moto
-
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
+
+# Kiri:Moto
 
 * `B` origin (and bed size) bug (Onshape?) when switching device modes
 * `B` can't drag slider bar on ipad / ios -- touch pad scrolling dodgy
@@ -133,8 +133,7 @@
 * rename analyze > patch
 * remove repair function?
 
-# Other / Links
+## Links
 
-* investigate libtess https://www.npmjs.com/package/libtess b/c earcut sometimes wrong
-* https://stackoverflow.com/questions/40927728/three-js-determine-if-points-are-co-planar-and-mapping-co-planar-points-onto-x
+* libtess https://www.npmjs.com/package/libtess ... earcut sometimes wrong
 * https://stackoverflow.com/questions/52818307/determine-whether-one-polygon-contains-another
