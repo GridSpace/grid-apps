@@ -1,4 +1,4 @@
-# Grid:Apps TODOs and Notes
+# Grid:Apps Future Notes
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
@@ -20,6 +20,8 @@
 * `F` add svgnest-like arrange algorithm
 * `F` warn if part hanging in negative Z space or off bed in general
 * `F` date column and sorting in recent files list
+
+* `C` reflow device dialog to add bottom tabbing, vertical macro list
 
 # FDM
 
@@ -129,11 +131,5 @@
 * fix mirror to work with groups (just models currently)
 * bounding box toggle should be global, not selection
 * add analyze results dialog
-
 * rename analyze > patch
-* remove repair function?
-
-## Links
-
-* libtess https://www.npmjs.com/package/libtess ... earcut sometimes wrong
-* https://stackoverflow.com/questions/52818307/determine-whether-one-polygon-contains-another
+* remove auto-repair function
