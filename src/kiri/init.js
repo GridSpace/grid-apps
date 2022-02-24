@@ -155,6 +155,15 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.platform.update_top_z();
     }
 
+    function setThreaded(bool) {
+        if (bool) {
+            kiri.client.pool.start();
+        } else {
+            kiri.client.pool.stop();
+        }
+        return bool;
+    }
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
@@ -183,7 +192,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         control.exportPreview = ui.exportPreview.checked;
         control.decimate = ui.decimate.checked;
         control.healMesh = ui.healMesh.checked;
-        control.threaded = ui.threaded.checked;
+        control.threaded = setThreaded(ui.threaded.checked);
         control.assembly = ui.assembly.checked;
         control.ortho = ui.ortho.checked;
         control.devel = ui.devel.checked;
@@ -2550,7 +2559,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.autoSave.checked = control.autoSave;
             ui.decimate.checked = control.decimate;
             ui.healMesh.checked = control.healMesh;
-            ui.threaded.checked = control.threaded;
+            ui.threaded.checked = setThreaded(control.threaded);
             ui.assembly.checked = control.assembly;
             ui.ortho.checked = control.ortho;
             ui.devel.checked = control.devel;

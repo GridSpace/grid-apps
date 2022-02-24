@@ -31,8 +31,7 @@ const { codec } = kiri;
 const { time } = util;
 const POLY = polygons;
 
-let qtpi = Math.cos(Math.PI/4),
-    debug = self.debug === true,
+let debug = self.debug === true,
     ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
     concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
     current = self.worker = {
@@ -53,30 +52,15 @@ self.alert = function(o) {
     console.log(o);
 };
 
-// start concurrent workers (minions)
-if (concurrent) {
-    function minhandler(msg) {
-        let data = msg.data;
-        let seq = data.seq;
-        let fn = minifns[seq];
-        if (!fn) {
-            throw `missing dispatch ${seq}`;
-        }
-        delete minifns[seq];
-        fn(data);
+function minhandler(msg) {
+    let data = msg.data;
+    let seq = data.seq;
+    let fn = minifns[seq];
+    if (!fn) {
+        throw `missing dispatch ${seq}`;
     }
-
-    for (let i=0; i < concurrent; i++) {
-        let _ = debug ? '_' : '';
-        let minion = new Worker(`/code/kiri_pool.js?${_}${self.kiri.version}`);
-        minion.onmessage = minhandler;
-        minion.postMessage({
-            cmd: "label",
-            name: `#${i}`
-        });
-        minions.push(minion);
-    }
-    console.log(`kiri | init pool | ${gapp.version || "rogue"} | ${concurrent + 1}`);
+    delete minifns[seq];
+    fn(data);
 }
 
 // for concurrent operations
@@ -84,7 +68,28 @@ const minwork =
 kiri.minions = {
     concurrent,
 
-    union: function(polys, minarea) {
+    start() {
+        if (minions.length || !concurrent) {
+            return;
+        }
+        for (let i=0; i < concurrent; i++) {
+            let _ = debug ? '_' : '';
+            let minion = new Worker(`/code/kiri_pool.js?${_}${self.kiri.version}`);
+            minion.onmessage = minhandler;
+            minion.postMessage({ cmd: "label", name: `#${i}` });
+            minions.push(minion);
+        }
+        console.log(`kiri | init pool | ${gapp.version || "rogue"} | ${concurrent + 1}`);
+    },
+
+    stop() {
+        for (let minion of minions) {
+            minion.terminate();
+        }
+        minions.length = 0;
+    },
+
+    union(polys, minarea) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2 || polys.length < concurrent * 2 || POLY.points(polys) < concurrent * 50) {
                 resolve(POLY.union(polys, minarea, true));
@@ -111,7 +116,7 @@ kiri.minions = {
         });
     },
 
-    fill: function(polys, angle, spacing, output, minLen, maxLen) {
+    fill(polys, angle, spacing, output, minLen, maxLen) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 resolve(POLY.fillArea(polys, angle, spacing, [], minLen, maxLen));
@@ -135,7 +140,7 @@ kiri.minions = {
         });
     },
 
-    clip: function(slice, polys, lines) {
+    clip(slice, polys, lines) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 reject("concurrent clip unavaiable");
@@ -159,7 +164,7 @@ kiri.minions = {
         });
     },
 
-    sliceZ: function(z, points, options) {
+    sliceZ(z, points, options) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 reject("concurrent slice unavaiable");
@@ -188,12 +193,12 @@ kiri.minions = {
         });
     },
 
-    queue: function(work, ondone, direct) {
+    queue(work, ondone, direct) {
         minionq.push({work, ondone, direct});
         minwork.kick();
     },
 
-    kick: function() {
+    kick() {
         if (minions.length && minionq.length) {
             let qrec = minionq.shift();
             let minion = minions.shift();
@@ -208,7 +213,7 @@ kiri.minions = {
         }
     },
 
-    wasm: function(enable) {
+    wasm(enable) {
         for (let minion of minions) {
             minion.postMessage({
                 cmd: "wasm",
@@ -224,18 +229,28 @@ console.log(`kiri | init work | ${gapp.version || "rogue"}`);
 const dispatch =
 kiri.server =
 kiri.worker = {
+    pool_start(data, send) {
+        minwork.start();
+        send.done({});
+    },
+
+    pool_stop(data, send) {
+        minwork.stop();
+        send.done({});
+    },
+
     group: wgroup,
 
     cache: wcache,
 
-    decimate: function(data, send) {
+    decimate(data, send) {
         let { vertices, options } = data;
         vertices = new Float32Array(vertices),
         vertices = base.pointsToVertices(base.verticesToPoints(vertices, options));
         send.done(vertices);
     },
 
-    heal: function(data, send) {
+    heal(data, send) {
         let { vertices, refresh } = data;
         let mesh = new base.Mesh({vertices}).heal();
         if (mesh.newFaces || refresh) {
@@ -246,12 +261,12 @@ kiri.worker = {
         }
     },
 
-    snap: function(data, send) {
+    snap(data, send) {
         current.snap = data;
         send.done();
     },
 
-    png: function(data, send) {
+    png(data, send) {
         if (current.snap) {
             let sws = current.snap.url;
             let b64 = atob(sws.substring(sws.indexOf(',') + 1));
@@ -265,7 +280,7 @@ kiri.worker = {
         }
     },
 
-    clear: function(data, send) {
+    clear(data, send) {
         // current.snap = null;
         current.print = null;
         dispatch.group = wgroup = {};
@@ -275,7 +290,7 @@ kiri.worker = {
     },
 
     // widget sync
-    sync: function(data, send) {
+    sync(data, send) {
         if (data.valid) {
             // remove widgets not present in valid list
             for (let key in wcache) {
@@ -311,7 +326,7 @@ kiri.worker = {
         send.done(data.id);
     },
 
-    rotate: function(data, send) {
+    rotate(data, send) {
         let { settings } = data;
         if (!settings.device.bedBelt) {
             return send.done({});
@@ -365,7 +380,7 @@ kiri.worker = {
         send.done({});
     },
 
-    unrotate: function(data, send) {
+    unrotate(data, send) {
         let { settings } = data;
         if (!settings.device.bedBelt) {
             return send.done({});
@@ -387,7 +402,7 @@ kiri.worker = {
         send.done({});
     },
 
-    slice: function(data, send) {
+    slice(data, send) {
         send.data({update:0.001, updateStatus:"slicing"});
 
         current.print = null;
@@ -425,7 +440,7 @@ kiri.worker = {
         });
     },
 
-    sliceAll: function(data, send) {
+    sliceAll(data, send) {
         const { settings } = data;
         const { mode } = settings;
         const driver = kiri.driver[mode];
@@ -437,7 +452,7 @@ kiri.worker = {
         send.done({done: true});
     },
 
-    prepare: function(data, send) {
+    prepare(data, send) {
         // create widget array from id:widget cache
         const widgets = Object.values(wcache);
 
@@ -477,7 +492,7 @@ kiri.worker = {
         }, state.zeros);
     },
 
-    export: function(data, send) {
+    export(data, send) {
         const mode = data.settings.mode;
         const driver = kiri.driver[mode];
 
@@ -509,7 +524,7 @@ kiri.worker = {
         });
     },
 
-    colors: function(data, send) {
+    colors(data, send) {
         const { colors, max } = data;
         const colorMap = {};
         colors.forEach(color => {
@@ -518,7 +533,7 @@ kiri.worker = {
         send.done(colorMap);
     },
 
-    parse: function(args, send) {
+    parse(args, send) {
         const { settings, code, type } = args;
         const origin = settings.origin;
         const offset = {
@@ -547,7 +562,7 @@ kiri.worker = {
         });
     },
 
-    parse_svg: function(parsed, send) {
+    parse_svg(parsed, send) {
         parsed.forEach(layer => {
             layer.forEach(out => {
                 const { x, y, z } = out.point;
@@ -561,7 +576,7 @@ kiri.worker = {
         send.done({parsed: codec.encode(layers)});
     },
 
-    config: function(data, send) {
+    config(data, send) {
         const update = {};
         if (data.base) {
             update.base = data.base;
@@ -578,7 +593,7 @@ kiri.worker = {
         send.done({config: update});
     },
 
-    image2mesh: function(info, send) {
+    image2mesh(info, send) {
         let img = new png.PNG();
         img.parse(info.png, (err, output) => {
             let { width, height, data } = output;
@@ -801,7 +816,7 @@ kiri.worker = {
         });
     },
 
-    zip: function(data, send) {
+    zip(data, send) {
         let { files } = data;
         let zip = new JSZip();
         for (let file of files) {
@@ -819,7 +834,7 @@ kiri.worker = {
         });
     },
 
-    wasm: function(data, send) {
+    wasm(data, send) {
         if (data.enable) {
             wasm_ctrl.enable();
         } else {

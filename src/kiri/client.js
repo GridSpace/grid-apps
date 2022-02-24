@@ -54,7 +54,17 @@ function send(fn, data, onreply, zerocopy) {
 const client = exports({
     send: send,
 
-    newWorker: function() {
+    pool: {
+        start() {
+            send("pool_start", {}, noop);
+        },
+
+        stop() {
+            send("pool_stop", {}, noop);
+        }
+    },
+
+    newWorker() {
         if (self.createWorker) {
             return self.createWorker();
         } else {
@@ -63,7 +73,7 @@ const client = exports({
         }
     },
 
-    isBusy: function() {
+    isBusy() {
         let current = 0;
 
         for (let rec of Object.values(running)) {
@@ -72,7 +82,7 @@ const client = exports({
         return current > 0;
     },
 
-    restart: function() {
+    restart() {
         // prevent re-entry from cancel callback
         if (restarting) {
             return;
@@ -119,40 +129,40 @@ const client = exports({
         restarting = false;
     },
 
-    decimate: function(vertices, options, callback) {
+    decimate(vertices, options, callback) {
         let alert = kiri.api.show.alert('processing model', 1000);
         vertices = vertices.buffer.slice(0);
-        send("decimate", {vertices, options}, function(output) {
+        send("decimate", {vertices, options}, (output) => {
             kiri.api.hide.alert(alert);
             callback(output);
         });
     },
 
-    heal: function(vertices, callback, refresh) {
-        send("heal", {vertices, refresh}, function(output) {
+    heal(vertices, callback, refresh) {
+        send("heal", {vertices, refresh}, (output) => {
             callback(output);
         });
     },
 
-    config: function(obj) {
-        send("config", obj, function(reply) { });
+    config(obj) {
+        send("config", obj, noop);
     },
 
-    clear: function() {
+    clear() {
         syncd = {};
-        send("clear", {}, function(reply) { });
+        send("clear", {}, noop);
     },
 
-    snap: function(data) {
-        send("snap", data, function(reply) { });
+    snap(data) {
+        send("snap", data, noop);
     },
 
-    png: function(data, ondone) {
+    png(data, ondone) {
         send("png", data, ondone);
     },
 
     // widget sync
-    sync: function(widgets) {
+    sync(widgets) {
         if (!widgets) {
             widgets = kiri.api.widgets.all();
         }
@@ -177,7 +187,7 @@ const client = exports({
         });
     },
 
-    rotate: function(settings, callback) {
+    rotate(settings, callback) {
         send("rotate", { settings }, reply => {
             if (reply.group) {
                 for (let widget of kiri.Widget.Groups.forid(reply.group)) {
@@ -189,7 +199,7 @@ const client = exports({
         });
     },
 
-    unrotate: function(settings, callback) {
+    unrotate(settings, callback) {
         send("unrotate", { settings }, reply => {
             if (reply.group) {
                 for (let widget of kiri.Widget.Groups.forid(reply.group)) {
@@ -201,12 +211,12 @@ const client = exports({
         });
     },
 
-    slice: function(settings, widget, callback) {
+    slice(settings, widget, callback) {
         send("slice", {
             id: widget.id,
             anno: widget.annotations(),
             settings: settings
-        }, function(reply) {
+        }, reply => {
             callback(reply);
             if (reply.done || reply.error) {
                 // in belt mode, slicing modifies a widget and requires re-sync
@@ -217,12 +227,12 @@ const client = exports({
         });
     },
 
-    sliceAll: function(settings, callback) {
+    sliceAll(settings, callback) {
         send("sliceAll", { settings }, callback);
     },
 
-    prepare: function(settings, update, done) {
-        send("prepare", { settings }, function(reply) {
+    prepare(settings, update, done) {
+        send("prepare", { settings }, reply => {
             if (reply.progress) {
                 update(reply.progress, reply.message, reply.layer);
             }
@@ -235,8 +245,8 @@ const client = exports({
         });
     },
 
-    export: function(settings, online, ondone) {
-        send("export", { settings }, function(reply) {
+    export(settings, online, ondone) {
+        send("export", { settings }, reply => {
             if (reply.line) {
                 online(reply.line);
             }
@@ -252,13 +262,13 @@ const client = exports({
         });
     },
 
-    colors: function(colors, max, done) {
-        send("colors", { colors, max }, function(reply) {
+    colors(colors, max, done) {
+        send("colors", { colors, max }, reply => {
             done(reply);
         });
     },
 
-    parse: function(args, progress, done) {
+    parse(args, progress, done) {
         // have to do this client side because DOMParser is not in workers
         if (args.type === 'svg') {
             const { settings, code, type } = args;
@@ -269,14 +279,14 @@ const client = exports({
                 z: origin.z
             };
             const output = kiri.newPrint().parseSVG(code, offset);
-            send("parse_svg", output, function(reply) {
+            send("parse_svg", output, reply => {
                 if (reply.parsed) {
                     done(kiri.codec.decode(reply.parsed));
                 }
             });
             return;
         }
-        send("parse", args, function(reply) {
+        send("parse", args, reply => {
             if (reply.progress) {
                 progress(reply.progress);
             }
@@ -286,7 +296,7 @@ const client = exports({
         });
     },
 
-    image2mesh: function(data, progress, output) {
+    image2mesh(data, progress, output) {
         send("image2mesh", data, reply => {
             if (reply.progress) {
                 progress(reply.progress);
@@ -297,7 +307,7 @@ const client = exports({
         }, [ data.png ]);
     },
 
-    zip: function(files, progress, output) {
+    zip(files, progress, output) {
         send("zip", {files}, reply => {
             if (reply.percent !== undefined) {
                 progress(reply);
@@ -307,7 +317,7 @@ const client = exports({
         });
     },
 
-    wasm: function(enable) {
+    wasm(enable) {
         send("wasm", {enable}, reply => {
             // console.log({wasm_worker_said: reply});
         });
