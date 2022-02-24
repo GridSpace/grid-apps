@@ -483,6 +483,7 @@ function sliceConnect(input, z, opt = {}) {
                     current = [ path ];
                     branches = [ ];
                 }
+                if (branches.length < 500)
                 for (let p of links) {
                     branches.push(nc = current.slice());
                     let rpath = findNextPath(p, nc, branches, depth + 1);
