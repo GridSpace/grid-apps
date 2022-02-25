@@ -19,6 +19,7 @@ const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
 
+const version = '1.0.0';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
@@ -144,6 +145,9 @@ function restore_space() {
     }).finally(() => {
         // hide loading curtain
         $d('curtain','none');
+        if (api.prefs.map.info.welcome !== false) {
+            api.welcome(version);
+        }
     });
 }
 
@@ -273,7 +277,7 @@ function space_init(data) {
                 return;
             }
             if (evt.key === '?') {
-                return api.help();
+                return api.welcome(version);
             }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
@@ -532,7 +536,6 @@ function set_normals_length(length) {
 }
 
 function set_normals_color(color) {
-console.log({color});
     let { prefs } = mesh.api;
     let { map } = prefs;
     if (map.space.dark) {

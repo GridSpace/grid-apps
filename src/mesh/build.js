@@ -176,6 +176,37 @@ const log = api.log = {
 // bind endpoint for worker to log in the ui
 gapp.broker.subscribe("mesh.log", log.emit);
 
+// welcome dialog
+api.welcome = function(version = "unknown") {
+    const { prefs } = api;
+    const { map } = prefs;
+    modal.show('About Mesh:Tool', h.div({ class:"welcome" }, [
+        h.a({
+            target: "docs",
+            _: "Guide & Documentation",
+            href: "https://docs.grid.space/projects/mesh-tool"
+        }),
+        h.a({
+            target: "docs",
+            _: "Grid.Space",
+            href: "https://grid.space/"
+        }),
+        h.div(`Version: ${version}`),
+        h.hr({ width: "100%" }),
+        h.div({ class: "choice" }, [
+            h.input({
+                type: "checkbox",
+                [ map.info.welcome !== false ? 'checked' : 'unchecked' ] : 1,
+                onchange: (ev) => {
+                    map.info.welcome = ev.target.checked;
+                    prefs.save();
+                }
+            }),
+            h.div("show at startup")
+        ]),
+    ]));
+};
+
 // bind settings endpoint to api
 api.settings = function() {
     const { util } = mesh;

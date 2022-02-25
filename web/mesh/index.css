@@ -27,6 +27,12 @@ body, div {
     margin: 0;
 }
 
+input {
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid black;
+}
+
 #app {
     position: fixed;
     overflow: hidden;
@@ -230,7 +236,7 @@ button:hover {
 
 #modal_frame {
     border-radius: 4px !important;
-    background-color: rgba(255,255,255,0.9) !important;
+    background-color: #fff !important;
     flex-direction: column;
     padding: 0 !important; /* override common below */
     z-index: 51;
@@ -262,6 +268,30 @@ button:hover {
 
 #modal_title_close:hover {
     color: black;
+}
+
+/** welcome dialog **/
+
+.welcome {
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    gap: 5px;
+    font-size: smaller;
+}
+
+.welcome a {
+    color: #038;
+    border-radius: 3px;
+    padding: 0 10px 0 10px;
+}
+
+.welcome a:hover {
+    background-color: #ddd;
+}
+
+.welcome .choice {
+    gap: 5px
 }
 
 /** settings dialog **/

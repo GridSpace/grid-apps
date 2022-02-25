@@ -105,7 +105,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             on(t,l) { return EVENT.on(t,l) },
             emit(t,m,o) { return EVENT.publish(t,m,o) },
             bind(t,m,o) { return EVENT.bind(t,m,o) },
-            alerts() { api.alerts.update() },
+            alerts(clr) { api.alerts.update(clr) },
             import: loadFile,
             settings: triggerSettingsEvent
         },
