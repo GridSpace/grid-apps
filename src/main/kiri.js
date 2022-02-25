@@ -6,7 +6,7 @@ gapp.main("main.kiri", [], (root) => {
 
     const { kiri } = root;
     const { api } = kiri;
-t
+
     // complete module loading
     kiri.load_exec();
 
