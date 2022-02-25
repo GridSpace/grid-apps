@@ -27,7 +27,7 @@ function annotate(id) {
 }
 
 function replace(vertices) {
-    let widgets = selection.widgets(true);
+    let widgets = api.selection.widgets(true);
     if (!widgets.length) {
         return;
     }
