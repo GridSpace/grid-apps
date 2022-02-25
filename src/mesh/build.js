@@ -226,6 +226,9 @@ function ui_build() {
 
     // add a help button
     h.bind($('top-right'), [
+        h.div({ id: "top-version", onclick: api.version }, [
+            h.div({ class: "fas fa-hashtag" }),
+        ]),
         h.div({ id: "top-settings", onclick: api.settings }, [
             h.div({ class: "fas fa-sliders-h" }),
         ]),

@@ -540,6 +540,10 @@ const api = exports({
         window.open("https://docs.grid.space/projects/mesh-tool");
     },
 
+    version() {
+        window.location = "/choose";
+    },
+
     clear() {
         for (let group of group.list()) {
             group.remove(group);
