@@ -178,13 +178,16 @@ gapp.broker.subscribe("mesh.log", log.emit);
 
 // bind settings endpoint to api
 api.settings = function() {
-    let { prefs } = api;
-    let { space } = prefs.map;
-    modal.show('settings', h.div({ class: "settings" }, [
+    const { util } = mesh;
+    const { prefs } = api;
+    const { normals, space } = prefs.map;
+    const { dark } = space;
+
+    const col1 = h.div([
         h.label('dark mode'),
         h.input({ type: "checkbox",
             onchange: ev => call.set_darkmode(ev.target.checked),
-            [ space.dark ? 'checked' : 'unchecked' ] : 1
+            [ dark ? 'checked' : 'unchecked' ] : 1
         }),
         h.label('auto floor'),
         h.input({ type: "checkbox",
@@ -196,7 +199,23 @@ api.settings = function() {
             onchange: ev => prefs.save( space.center = !space.center ),
             [ space.center !== false ? 'checked' : 'unchecked' ] : 1
         }),
-    ]));
+    ]);
+
+    const col2 = h.div([
+        h.label(''),
+        h.label('normals'),
+        h.label('length'),
+        h.input({ type: "text", size: 5, value: normals.length,
+            onchange: ev => call.set_normals_length(ev.target.value)
+        }),
+        h.label('color'),
+        h.input({ type: "text", size: 5,
+            value: util.toHexRGB(dark ? normals.color_dark : normals.color_lite),
+            onchange: ev => call.set_normals_color(util.fromHexRGB(ev.target.value))
+        }),
+    ]);
+
+    modal.show('settings', h.div({ class: "settings" }, [ col1, col2 ] ));
 }
 
 // create html elements

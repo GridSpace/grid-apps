@@ -504,6 +504,11 @@ const prefs = {
             dark: false,
             select: []
         },
+        normals: {
+            length: 0.5,
+            color_lite: 0xff0000,
+            color_dark: 0x00ffff
+        }
     },
 
     // look for changes in pref signature

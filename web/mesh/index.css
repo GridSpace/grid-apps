@@ -270,10 +270,23 @@ button:hover {
 /** settings dialog **/
 
 .settings {
+    gap: 5px;
+}
+
+.settings > div {
     display: grid;
     grid: min-content 1fr / min-content 1fr;
     white-space: nowrap;
     align-items: center;
+}
+
+.settings label {
+    padding: 0 5px 0 3px;
+}
+
+.settings input {
+    font-family: monospace;
+    text-align: center;
 }
 
 /** spinner animation **/

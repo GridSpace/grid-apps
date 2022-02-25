@@ -525,15 +525,35 @@ function set_darkmode(dark) {
     prefs.save();
 }
 
+function set_normals_length(length) {
+    let { prefs } = mesh.api;
+    prefs.map.normals.length = length || 1;
+    prefs.save();
+}
+
+function set_normals_color(color) {
+console.log({color});
+    let { prefs } = mesh.api;
+    let { map } = prefs;
+    if (map.space.dark) {
+        map.normals.color_dark = color || 0;
+    } else {
+        map.normals.color_lite = color || 0;
+    }
+    prefs.save();
+}
+
 // bind functions to topics
 broker.listeners({
+    edit_split,
     load_files,
-    space_init,
-    space_load,
     object_matrix,
     object_destroy,
+    space_init,
+    space_load,
     set_darkmode,
-    edit_split
+    set_normals_color,
+    set_normals_length,
 });
 
 // remove version cache bust from url

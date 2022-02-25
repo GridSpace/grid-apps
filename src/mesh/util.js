@@ -25,6 +25,21 @@ const util = exports({
         return uid.join('-');
     },
 
+    toHexRGB(v) {
+        return [
+            ((v >> 16) & 0xff).toString(16).padStart(2,0),
+            ((v >>  8) & 0xff).toString(16).padStart(2,0),
+            ((v >>  0) & 0xff).toString(16).padStart(2,0)
+        ].join('');
+    },
+
+    fromHexRGB(v) {
+        return 0 +
+            parseInt(v.substring(0,2), 16) << 16 |
+            parseInt(v.substring(2,4), 16) <<  8 |
+            parseInt(v.substring(4,6), 16);
+    },
+
     // add comma separator to 1000s
     comma(val) {
         let str = val.toString().split(".");
@@ -169,10 +184,13 @@ const util = exports({
         const _v1 = new THREE.Vector3();
         const _v2 = new THREE.Vector3();
         const _normalMatrix = new THREE.Matrix3();
-        const defcolor = mesh.api.prefs.map.space.dark ? 0x00ffff : 0xff0000;
+        const prefs = mesh.api.prefs.map;
+        const norms = prefs.normals;
+        const defcolor = prefs.space.dark ? norms.color_dark : norms.color_lite;
+        const normlen = norms.length || 1;
 
         class FaceNormalsHelper extends THREE.LineSegments {
-            constructor(object, size = opt.size || 1, color = opt.color || defcolor) {
+            constructor(object, size = opt.size || normlen, color = opt.color || defcolor) {
                 const objGeometry = object.geometry;
                 const nNormals = objGeometry.attributes.position.count / 3;
                 const geometry = new THREE.BufferGeometry();

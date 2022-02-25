@@ -22,12 +22,13 @@
 * `P` limit non-manifold solution search depth (parameterize)
 * `P` refactor slicers to use single improved slice core (cnc tbd)
 * `P` template vars: nozzles used and layers until next use (IDEX)
-* `-` improved vertex replacement
+* `-` improved vertex replacement and widget update matrix tracking
 * `-` workflow to edit in M:T and bounce back / replace vertices
 * `-` tighten export dialogs (reduce size for smaller screens)
 
 ## Mesh:Tool
 
-* `-` face selection and matching preferences
-* `-` add prefs for normal length, maybe color picker
+* `C` add preferences for normal length and color
+* `-` add preferences for face selection and matching
 * `-` svg and image import conversion (share code with Kiri:Moto)
+* `-` welcome help menu

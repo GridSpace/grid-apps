@@ -358,7 +358,7 @@ mesh.model = class MeshModel extends mesh.object {
             this._norm = undefined;
         }
         if (bool) {
-            this.mesh.add(this._norm = mesh.util.faceNormals(this.mesh, { size: 0.5 }));
+            this.mesh.add(this._norm = mesh.util.faceNormals(this.mesh));
         }
     }
 
