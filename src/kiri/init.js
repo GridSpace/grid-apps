@@ -1034,15 +1034,16 @@ gapp.register("kiri.init", [], (root, exports) => {
             removeLocalDevice(getSelectedDevice());
             showDevices();
         };
-        ui.deviceExport.onclick = function() {
-            let exp = api.util.b64enc({
+        ui.deviceExport.onclick = function(event) {
+            const record = {
                 version: kiri.version,
                 device: selected,
                 process: api.process.code(),
                 code: devs[selected],
                 time: Date.now()
-            });
-            deviceExport(exp, selected);
+            };
+            let exp = api.util.b64enc(record);
+            api.device.export(exp, selected, { event, record });
         };
 
         ui.deviceList.innerHTML = '';
@@ -1513,6 +1514,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         space.platform.onMove(conf.save);
         space.platform.setRound(true);
         space.useDefaultKeys(api.feature.on_key === undefined || api.feature.on_key_defaults);
+
+        // api augmentation with local functions
+        api.device.export = deviceExport;
 
         Object.assign(ui, {
             tracker:            tracker,

@@ -4,6 +4,7 @@
 // dep: kiri.api
 gapp.register("kiri.tools", [], (root, exports) => {
 
+const { Vector3, Quaternion } = THREE;
 const { kiri } = root;
 const { api } = kiri;
 
@@ -11,6 +12,7 @@ const { api } = kiri;
 let pgeo = new THREE.CircleGeometry(8, 30);
 let pmat = new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0.5, transparent: true});
 let pmesh = new THREE.Mesh(pgeo, pmat);
+
 // circle outline
 let pi = pgeo.index.array;
 let pp = pgeo.attributes.position.array;
@@ -88,9 +90,9 @@ api.event.on('mouse.hover', (ev) => {
         pmesh.position.x = point.x - opos.x + norm.x * 0.1;
         pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
         pmesh.position.z = point.y + norm.z * 0.1;
-        let q = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0,0,1),
-            new THREE.Vector3(norm.x,norm.y,norm.z)
+        let q = new Quaternion().setFromUnitVectors(
+            new Vector3(0,0,1),
+            new Vector3(norm.x,norm.y,norm.z)
         );
         pmesh.setRotationFromQuaternion(q);
     }
@@ -104,7 +106,7 @@ api.event.on('mouse.hover.up', (ev) => {
     if (!object) {
         return;
     }
-    let q = new THREE.Quaternion().setFromUnitVectors(lastface.normal, new THREE.Vector3(0,0,-1));
+    let q = new Quaternion().setFromUnitVectors(lastface.normal, new Vector3(0,0,-1));
     api.selection.rotate(q);
     endit();
 });

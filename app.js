@@ -367,6 +367,7 @@ function initModule(mod, file, dir) {
             addCORS: addCorsHeaders,
             redirect: http.redirect,
             reply404: http.reply404,
+            decodePost: http.decodePost,
             reply: quickReply
         },
         ws: {
