@@ -10,6 +10,7 @@
 // dep: kiri.consts
 // dep: kiri.platform
 // dep: kiri.selection
+// use: kiri.tools
 // use: kiri.pack
 gapp.register("kiri.init", [], (root, exports) => {
 
@@ -2359,15 +2360,20 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         api.platform.update_size();
 
-        space.mouse.onHover((int, event, ints) => {
+        function mouseOnHover(int, event, ints) {
             if (!api.feature.hover) return;
             if (!int) return api.feature.hovers || api.widgets.meshes();
             api.event.emit('mouse.hover', {int, ints, event, point: int.point, type: 'widget'});
-        });
+        }
 
-        space.platform.onHover((int, event) => {
+        function platformOnHover(int, event) {
             if (!api.feature.hover) return;
             if (int) api.event.emit('mouse.hover', {point: int, event, type: 'platform'});
+        }
+
+        api.event.on("feature.hover", enable => {
+            space.mouse.onHover(enable ? mouseOnHover : undefined);
+            space.platform.onHover(enable ? platformOnHover : undefined);
         });
 
         // block standard browser context menu

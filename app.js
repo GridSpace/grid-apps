@@ -690,6 +690,7 @@ function getCachedFile(file, fn) {
 function minify(path) {
     let code = fs.readFileSync(path);
     if (path.indexOf("ext/three.js") > 0) {
+        // console.log({skip_min: path});
         return code;
     }
     let mini = uglify.minify(code.toString(), {

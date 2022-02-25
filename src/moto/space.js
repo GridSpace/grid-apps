@@ -785,7 +785,10 @@ gapp.register("moto.space", [], (root, exports) => {
     }
 
     function intersect(objects, recurse) {
-        return raycaster.intersectObjects(objects, recurse);
+        // console.log(({int: objects}));
+        let ints = raycaster.intersectObjects(objects, recurse);
+        // console.trace({ints});
+        return ints;
     }
 
     /** ******************************************************************

@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: moto.broker
 // dep: data.local
 // dep: kiri.utils
 // dep: kiri.consts
@@ -12,6 +13,8 @@ const { consts, utils } = kiri;
 const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o } = utils;
 const { LISTS } = consts;
 
+let isHover = false;
+
 const feature = {
     seed: true, // seed profiles on first use
     meta: true, // show selected widget metadata
@@ -21,14 +24,21 @@ const feature = {
     device_filter: undefined, // function to limit devices shown
     drop_group: undefined, // optional array to group multi drop
     drop_layout: true, // layout on new drop
-    hover: false, // when true fires mouse hover events
     hoverAdds: false, // when true only searches widget additions
     on_key: undefined, // function override default key handlers
     on_load: undefined, // function override file drop loads
     on_add_stl: undefined, // legacy override stl drop loads
     work_alerts: true, // allow disabling work progress alerts
     modes: [ "fdm", "sla", "cam", "laser" ], // enable device modes
-    pmode: consts.PMODES.SPEED // preview modes
+    pmode: consts.PMODES.SPEED, // preview modes
+    // hover: false, // when true fires mouse hover events
+    get hover() {
+        return isHover;
+    },
+    set hover(b) {
+        isHover = b;
+        moto.broker.publish("feature.hover", b);
+    }
 };
 
 const devel = {
