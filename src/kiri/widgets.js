@@ -2,6 +2,9 @@
 
 "use strict";
 
+// use: load.file
+// use: kiri.selection
+// use: kiri.platform
 gapp.register("kiri.widgets", [], (root, exports) => {
 
 const { data, kiri, moto, noop } = root;
@@ -42,7 +45,7 @@ function replace(vertices) {
             }
             w._scale(scale.x, scale.y, scale.z);
         }
-        platform.update();
+        api.platform.update();
     }
     if (vertices) {
         onload(vertices);
