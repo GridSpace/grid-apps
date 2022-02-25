@@ -1320,7 +1320,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     function showDevices() {
         // disable device filter and show devices
-        ui.dev.search.onclick(true);
+        ui.dev.header.onclick(true);
         api.modal.show('setup');
         ui.deviceList.focus();
     }
@@ -1543,6 +1543,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 export:         $('acct-export')
             },
             dev: {
+                header:         $('dev-header'),
                 search:         $('dev-search'),
                 filter:         $('dev-filter')
             },
@@ -2108,7 +2109,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             if (!ev.buttons) api.event.emit('slider.unlabel');
         };
 
-        ui.dev.search.onclick = (hide) => {
+        ui.dev.header.onclick = (hide) => {
             let style = ui.dev.filter.style;
             if (style.display === 'flex' || hide === true) {
                 style.display = '';

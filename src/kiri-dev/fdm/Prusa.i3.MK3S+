@@ -1,19 +1,14 @@
 {
-    "noclone": false,
+    "deviceName": "Prusa i3 MK3S+",
+    "new": false,
     "mode": "FDM",
     "internal": 0,
-    "imageURL": "",
-    "imageScale": 0.75,
-    "imageAnchor": 0,
-    "bedHeight": 2.5,
     "bedWidth": 250,
     "bedDepth": 210,
+    "maxHeight": 210,
     "bedRound": false,
     "bedBelt": false,
-    "resolutionX": 1600,
-    "resolutionY": 900,
     "deviceZMax": 0,
-    "maxHeight": 210,
     "originCenter": false,
     "extrudeAbs": false,
     "spindleMax": 0,
@@ -76,21 +71,7 @@
             "extOffsetY": 0
         }
     ],
-    "new": false,
-    "deviceName": "Prusa i3 MK3S+",
     "fwRetract": false,
-    "extras": {
-        "palette": {
-            "printer": "3612e108c25c",
-            "ping": null,
-            "feed": null,
-            "push": null,
-            "offset": null,
-            "heat": null,
-            "cool": null,
-            "press": null
-        }
-    },
     "profiles": [
         {
             "processName": "MK3S+ PLA",
@@ -172,8 +153,7 @@
             "firstLayerFlatten": 0,
             "outputDraftShield": false,
             "outputAvoidGaps": true,
-            "sliceDetectThin": "off",
-            "beltAnchor": 200
+            "sliceDetectThin": "off"
         }
     ]
 }
