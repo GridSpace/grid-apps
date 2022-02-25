@@ -6,7 +6,7 @@ gapp.main("main.kiri", [], (root) => {
 
     const { kiri } = root;
     const { api } = kiri;
-
+t
     // complete module loading
     kiri.load_exec();
 
@@ -15,7 +15,7 @@ gapp.main("main.kiri", [], (root) => {
     const modfns = root.kirimod = [];
 
     const kiri = root.kiri = {
-        beta: 3305,
+        beta: 3306,
         driver: {}, // driver modules
         load(fn) {
             modfns.push(fn);

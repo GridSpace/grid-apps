@@ -16,11 +16,12 @@
 * `C` properly import profiles attached to devices
 * `C` improved routing on "fast" layers & layers with multiple islands
 * `C` start/stop minions depending on whether threading enabled
+* `C` abstract file loading (onshape import, mesh replace, etc)
 * `P` refactor slicers to use single improved slice core (cnc tbd)
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` workflow to edit in M:T and bounce back / replace vertices
-* `-` abstract file loading (onshape import, mesh replace, etc)
 * `-` tighten export dialogs (reduce size for smaller screens)
+* `-` parameterize non-manifold search depth
 
 ## Mesh:Tool
 
