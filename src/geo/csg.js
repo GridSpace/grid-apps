@@ -3,13 +3,20 @@
 "use strict";
 
 // dep: geo.base
+// jscad dep injected in app so it comes before everything else
 gapp.register("geo.csg", [], (root, exports) => {
 
 const { base } = root;
+const debug = false;
 
 const CSG = {
 
     union() {
+        if (debug) {
+            for (let p of [ ...arguments ].map(a => a.polygons.map(p => p.vertices))) {
+                console.log(JSON.stringify(p));
+            }
+        }
         return jscadModeling.booleans.union(...arguments);
     },
 
@@ -30,7 +37,10 @@ const CSG = {
 
     // Construct a CSG from a THREE Geometry BufferAttribute array (or similar)
     fromPositionArray(array) {
-        let polys = [];
+        const polys = [];
+        if (debug) {
+            array = [...array].map(v => v.round(3));
+        }
         for (let i=0, l=array.length; i<l; ) {
             polys.push([ [
                 array[i++],
