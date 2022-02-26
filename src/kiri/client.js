@@ -301,8 +301,8 @@ const client = exports({
             if (reply.progress) {
                 progress(reply.progress);
             }
-            if (reply.done) {
-                output(reply.done);
+            if (reply.vertices) {
+                output(reply.vertices);
             }
         }, [ data.png ]);
     },

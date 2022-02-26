@@ -1,24 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict';
+// use: add.three
+gapp.register("load.svg", (root, exports) => {
 
-(function() {
-
-let load = self.load = self.load || {};
-if (load.SVG) return;
-
-// dep: add.three
-gapp.register('load.svg', []);
+const { load } = root;
 
 load.SVG = {
     parse,
     parseAsync
 };
-
-/**
- * @param {String} text
- * @returns {Array} vertex face array
- */
 
 function parseAsync(text, opt) {
     return new Promise((resolve,reject) => {
@@ -27,10 +17,7 @@ function parseAsync(text, opt) {
 }
 
 function parse(text, opt = {}) {
-
-    let faces = [ ];
-    let objs = [ faces ];
-
+    let objs = [];
     let data = new THREE.SVGLoader().parse(text);
     let paths = data.paths;
     let xmlat = data.xml.attributes;
@@ -51,11 +38,10 @@ function parse(text, opt = {}) {
         for (let i=0; i<array.length; i+=3) {
             array[i+1] = -array[i+1];
         }
-        // objs.push(geom.attributes.position.array);
-        faces.appendAll(array);
+        objs.push([ ...array ]);
     }
 
     return objs;
 }
 
-})();
+});

@@ -483,13 +483,12 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function loadImage(image, opt = {}) {
-        const info = Object.assign({settings, png:image}, opt);
+        const info = Object.assign({settings: settings.get(), png:image}, opt);
         kiri.client.image2mesh(info, progress => {
             api.show.progress(progress, "converting");
-        }, output => {
+        }, vertices => {
             api.show.progress(0);
-            const { bigv, verts, index } = output;
-            const widget = newWidget().loadVertices(bigv)
+            const widget = newWidget().loadVertices(vertices);
             widget.meta.file = opt.file;
             platform.add(widget);
         });

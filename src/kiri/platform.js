@@ -728,6 +728,7 @@ function platformLoadFiles(files, group) {
                 api.function.parse(e.target.result, 'gcode');
                 load_dec();
             } else if (issvg) {
+                group = group || [];
                 let name = e.target.file.name;
                 let svg = load.SVG.parse(e.target.result);
                 let ind = 0;
