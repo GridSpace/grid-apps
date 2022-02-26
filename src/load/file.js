@@ -28,7 +28,7 @@ function nameOf(file, part, i) {
     return part ? part : `${file}_${i}`;
 }
 
-function load_data(data, file, ext) {
+function load_data(data, file, ext, opt = {}) {
     ext = ext || name.toLowerCase().split('.').pop();
     return new Promise((resolve, reject) => {
         let i = 1;
@@ -55,6 +55,7 @@ function load_data(data, file, ext) {
                 break;
             case "png":
                 load.PNG.parse(data, {
+                    ...opt,
                     done(data) {
                         resolve({ mesh: data, file });
                     }

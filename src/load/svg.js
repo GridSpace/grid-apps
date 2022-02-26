@@ -34,9 +34,17 @@ function parse(text, opt = {}) {
             bevelEnabled: false
         });
         let array = geom.attributes.position.array;
-        // invert y (todo: invert vertex order otherwise normals inverted)
+        // invert y
         for (let i=0; i<array.length; i+=3) {
             array[i+1] = -array[i+1];
+        }
+        // invert vertex order to compensate for inverted y
+        for (let i=0; i<array.length; i+=9) {
+            let tmp = array.slice(i,i+3);
+            for (let j=0; j<3; j++) {
+                array[i+j] = array[i+j+3];
+                array[i+j+3] = tmp[j];
+            }
         }
         objs.push([ ...array ]);
     }

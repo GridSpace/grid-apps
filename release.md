@@ -30,6 +30,6 @@
 
 * `C` add preferences for normal length and color
 * `-` add preferences for face selection and matching
-* `-` add svg and image import conversion (share code with Kiri:Moto)
+* `P` add svg and image import conversion (created shared load. libs)
 * `C` add version chooser
 * `C` add welcome menu
