@@ -12,6 +12,7 @@ if (load.File) return;
 // dep: load.stl
 // dep: load.svg
 // dep: load.url
+// dep: load.png
 gapp.register('load.file', []);
 
 load.File = {
@@ -52,6 +53,13 @@ function load_data(data, file, ext) {
             case "svg":
                 resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
                 break;
+            case "png":
+                load.PNG.parse(data, {
+                    done(data) {
+                        resolve({ mesh: data, file });
+                    }
+                });
+                break;
             default:
                 reject(`unknown file type: "${ext}" from ${file}`);
                 break;
@@ -76,7 +84,7 @@ function load_file(file) {
                 .then(data => resolve(data))
                 .catch(e => reject(e));
         };
-        if (ext === 'stl') {
+        if (["stl","png","3mf"].indexOf(ext) >= 0) {
             reader.readAsArrayBuffer(reader.file);
         } else {
             reader.readAsBinaryString(reader.file);

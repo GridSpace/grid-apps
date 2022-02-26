@@ -34,7 +34,7 @@ function parse(text, opt = {}) {
             bevelEnabled: false
         });
         let array = geom.attributes.position.array;
-        // invert y
+        // invert y (todo: invert vertex order otherwise normals inverted)
         for (let i=0; i<array.length; i+=3) {
             array[i+1] = -array[i+1];
         }
