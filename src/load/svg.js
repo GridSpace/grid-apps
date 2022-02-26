@@ -20,13 +20,13 @@ load.SVG = {
  * @returns {Array} vertex face array
  */
 
-function parseAsync(text) {
+function parseAsync(text, opt) {
     return new Promise((resolve,reject) => {
-        resolve(parse(text));
+        resolve(parse(text, opt));
     });
 }
 
-function parse(text) {
+function parse(text, opt = {}) {
 
     let faces = [ ];
     let objs = [ faces ];
@@ -34,7 +34,7 @@ function parse(text) {
     let data = new THREE.SVGLoader().parse(text);
     let paths = data.paths;
     let xmlat = data.xml.attributes;
-    let depth = xmlat['data-km-extrude']
+    let depth = opt.depth || xmlat['data-km-extrude']
         || xmlat['extrude']
         || {value: 5};
 

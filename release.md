@@ -32,4 +32,4 @@
 * `-` add preferences for face selection and matching
 * `-` add svg and image import conversion (share code with Kiri:Moto)
 * `C` add version chooser
-* `-` add welcome menu
+* `C` add welcome menu
