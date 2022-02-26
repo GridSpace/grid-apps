@@ -23,6 +23,7 @@
         "M117 Layer {layer} of {layers}"
     ],
     "gcodePre": [
+        "M107               ; disable cooling fan",
         "M104 S160          ; set extruder temp",
         "M140 S{bed_temp}   ; set bed temp",
         "M190 S{bed_temp}   ; wait for bed temp",
@@ -61,7 +62,7 @@
     "extruders": [
         {
             "extFilament": 1.75,
-            "extNozzle": 0.4,
+            "extNozzle": 0.45,
             "extSelect": [
                 "T0"
             ],
@@ -75,7 +76,7 @@
         {
             "processName": "MK2S PLA",
             "sliceHeight": 0.2,
-            "sliceShells": 3,
+            "sliceShells": 2,
             "sliceShellOrder": "in-out",
             "sliceLayerStart": "center",
             "sliceFillAngle": 45,
@@ -111,15 +112,15 @@
             "outputShellMult": 1,
             "outputFillMult": 1.1,
             "outputSparseMult": 1.1,
-            "outputRetractDist": 4,
-            "outputRetractSpeed": 60,
+            "outputRetractDist": 1,
+            "outputRetractSpeed": 100,
             "outputRetractWipe": 2,
             "outputRetractDwell": 0,
             "outputShortPoly": 50,
             "outputMinSpeed": 1,
-            "outputCoastDist": 0.05,
+            "outputCoastDist": 0,
             "outputLayerRetract": false,
-            "zHopDistance": 0.1,
+            "zHopDistance": 0,
             "antiBacklash": 0,
             "outputOriginCenter": false,
             "sliceFillWidth": 1,
@@ -152,7 +153,20 @@
             "firstLayerFlatten": 0,
             "outputDraftShield": false,
             "outputAvoidGaps": true,
-            "sliceDetectThin": "off"
+            "sliceDetectThin": "off",
+            "beltAnchor": 200
         }
-    ]
+    ],
+    "extras": {
+        "palette": {
+            "printer": "1b90bf063d90",
+            "ping": null,
+            "feed": null,
+            "push": null,
+            "offset": null,
+            "heat": null,
+            "cool": null,
+            "press": null
+        }
+    }
 }
