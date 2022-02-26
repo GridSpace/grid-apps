@@ -141,14 +141,16 @@
         api.event.on("preview.end", () => {
             isParsed = false;
             if (isCamMode && camStock) {
-                STACKS.getStack("bounds").button("animate", animate);
+                let bounds = STACKS.getStack("bounds");
+                if (bounds) bounds.button("animate", animate);
             }
         });
 
         api.event.on("code.loaded", (info) => {
             if (isCamMode && camStock) {
                 isParsed = true;
-                STACKS.getStack("parse", SPACE.world).button("animate", animate);
+                let parse = STACKS.getStack("parse", SPACE.world);
+                if (parse) parse.button("animate", animate);
             }
         });
 
