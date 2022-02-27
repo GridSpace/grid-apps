@@ -1165,10 +1165,12 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
                     stop.push(solid);
                 }
             }
-            let top_area = top.poly.areaDeep();
-            let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
-            if (stop_area / top_area > 0.5) {
-                make_solid_layer = true;
+            if (stop.length) {
+                let top_area = top.poly.areaDeep();
+                let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
+                if (stop_area / top_area > 0.5) {
+                    make_solid_layer = true;
+                }
             }
         }
     }
