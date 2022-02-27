@@ -110,8 +110,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         extruder = parseInt(isSynth ? process.sliceSupportNozzle : metadata.extruder || 0),
         sliceHeight = process.sliceHeight,
         sliceHeightBase = (isBelt ? sliceHeight : process.firstSliceHeight) || sliceHeight,
-        nozzleSize = device.extruders[extruder].extNozzle,
-        lineWidth = process.sliceLineWidth || nozzleSize,
+        lineWidth = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         fillOffsetMult = 1.0 - bound(process.sliceFillOverlap, 0, 0.8),
         shellOffset = lineWidth,
         fillSpacing = lineWidth,
@@ -144,7 +143,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     if (!(sliceHeight > 0 && sliceHeight < 100)) {
         return ondone("invalid slice height");
     }
-    if (!(nozzleSize >= 0.01 && nozzleSize < 100)) {
+    if (!(lineWidth >= 0.01 && lineWidth < 100)) {
         return ondone("invalid nozzle size");
     }
 
@@ -520,7 +519,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 // by removing the forced start-point in print.js
                 addto.belt.touch = false;
                 let z = addto.z;
-                let y = z - smin - (nozzleSize / 2);
+                let y = z - smin - (lineWidth / 2);
                 let splat = base.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                 let snew = addto.addTop(splat).fill_sparse = [ splat ];
                 adds.push(snew);
@@ -552,7 +551,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                         dx = (Math.floor(dx / 3) * 3) / 2;
                         let fy = first.y;
                         let fz = first.z;
-                        let n2 = nozzleSize / 2;
+                        let n2 = lineWidth / 2;
                         for (let x = mp - dx; x <= mp + dx ; x += 3) {
                             add.push( base.newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
                         }
@@ -649,7 +648,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                         resolve.push({top, offset});
                     } else {
                         let offset = [];
-                        POLY.expand(top.shells || [], -nozzleSize/4, slice.z, offset);
+                        POLY.expand(top.shells || [], -lineWidth/4, slice.z, offset);
                         fillSupportPolys(promises, offset, lineWidth, density, slice.z, isBelt);
                         resolve.push({top, offset});
                     }
