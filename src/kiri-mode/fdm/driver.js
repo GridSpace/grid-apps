@@ -56,7 +56,7 @@ kiri.load(api => {
     if (worker) {
         worker.fdm_support_generate = function(data, send) {
             const { settings } = data;
-            const widgets = Object.values(wcache);
+            const widgets = Object.values(worker.cache);
             const fresh = widgets.filter(widget => FDM.supports(settings, widget));
             send.done(kiri.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
