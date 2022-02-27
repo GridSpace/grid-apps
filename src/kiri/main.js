@@ -79,6 +79,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             inc() { kiri.api.event.emit("busy", ++busy) },
             dec() { kiri.api.event.emit("busy", --busy) }
         },
+        color: COLOR,
         const: {
             LANG,
             LOCAL,
