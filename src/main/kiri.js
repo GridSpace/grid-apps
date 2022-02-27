@@ -12,7 +12,7 @@ gapp.main("main.kiri", [], (root) => {
 
 }, (root) => {
 
-    const modfns = root.kirimod = [];
+    const modfns = root.kirimod = ( root.kirimod || [] );
 
     const kiri = root.kiri = {
         beta: 3308,
