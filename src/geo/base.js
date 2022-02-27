@@ -410,6 +410,7 @@ function orderClosest(array, fn, from) {
 // an unwrapped array in the original dimensions
 function triangulate(array, holes, dims) {
     let narray;
+    let info;
     if (dims === 2) {
         narray = array;
     } else {
@@ -434,6 +435,7 @@ function triangulate(array, holes, dims) {
                 d1 = i;
             }
         }
+        info = { d1, d2, dmax, delta: delta.slice() };
         delta[d1] = dmax = 0;
         for (let i = 0; i < dims; i++) {
             if (delta[i] > dmax) {
@@ -454,6 +456,9 @@ function triangulate(array, holes, dims) {
         for (let j = 0; j < dims; j++) {
             oa[e++] = array[ai + j];
         }
+    }
+    if (oa.length === 0) {
+        console.log('debug_triangulate', {array, oa, info});
     }
     return oa;
 }

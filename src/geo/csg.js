@@ -13,11 +13,13 @@ const CSG = {
 
     union() {
         if (debug) {
-            for (let p of [ ...arguments ].map(a => a.polygons.map(p => p.vertices))) {
-                console.log(JSON.stringify(p));
-            }
+            console.log(JSON.stringify([ ...arguments ]));
         }
-        return jscadModeling.booleans.union(...arguments);
+        let union = jscadModeling.booleans.union(...arguments);
+        if (debug) {
+            console.log(JSON.stringify(union));
+        }
+        return union;
     },
 
     subtract() {
@@ -29,10 +31,21 @@ const CSG = {
     },
 
     toPositionArray(geom) {
-        return geom.polygons
-            .map(p => p.vertices.flat())
-            .map(a => base.util.triangulate(a, undefined, 3))
-            .flat().toFloat32();
+        const out = [];
+        const poly = jscadModeling.geometries.geom3
+            .toPolygons(geom)
+            .map(p => p.vertices);
+        for (let p of poly) {
+            let p0 = p[0];
+            for (let i = 0; i<p.length - 2; i++) {
+                out.push(p0, p[i+1], p[i+2]);
+            }
+        }
+        return out.flat().toFloat32();
+        // return geom.polygons
+        //     .map(p => p.vertices.flat())
+        //     .map(a => base.util.triangulate(a, undefined, 3))
+        //     .flat().toFloat32();
     },
 
     // Construct a CSG from a THREE Geometry BufferAttribute array (or similar)
