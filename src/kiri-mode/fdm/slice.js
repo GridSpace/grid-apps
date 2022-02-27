@@ -1150,8 +1150,10 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
     slice.solids = solids = trims;
 
     // parent each solid polygon inside the smallest bounding top
+    let make_solid_layer = false;
     for (let solid of solids) {
         for (let top of tops) {
+            let stop = [];
             if (top.poly.overlaps(solid)) {
                 if (!solid.parent || solid.parent.area() > top.poly.area()) {
                     if (solid.areaDeep() < minarea) {
@@ -1160,9 +1162,24 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
                     }
                     solid.parent = top.poly;
                     top.solids.push(solid);
+                    stop.push(solid);
                 }
             }
+            let top_area = top.poly.areaDeep();
+            let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
+            if (stop_area / top_area > 0.5) {
+                make_solid_layer = true;
+            }
         }
+    }
+    // if 50% of top is filled with solids, trigger layer conversion to solid
+    // in future, this should be limited to a specific top, not entire layer
+    if (make_solid_layer) {
+        for (let top of tops) {
+            top.solids = [];
+        }
+        doSolidLayerFill(slice, spacing, angle);
+        return;
     }
 
     // for SLA to bypass line infill

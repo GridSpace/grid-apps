@@ -19,6 +19,7 @@
 * `C` abstract file loading (onshape import, mesh replace, etc)
 * `C` enable/disable ray intersect path on feature state change
 * `C` new and updated device profiles: Prusa MK2S/MK3S+, Ender 3
+* `C` trigger solid layer when transitions lead to 50% projected areas
 * `P` limit non-manifold solution search depth (parameterize)
 * `P` refactor slicers to use single improved slice core (cnc tbd)
 * `P` template vars: nozzles used and layers until next use (IDEX)

@@ -9,7 +9,16 @@ let AP = {};
 
 if (!AP.flat) {
     AP.flat = function() {
-        return [].concat.apply([], this);
+        try {
+            return [].concat.apply([], this);
+        } catch (e) {
+            // console.log({flat_error: e});
+            let out = [];
+            for (let e of this.slice()) {
+                out.push(...e);
+            }
+            return out;
+        }
     };
 }
 
