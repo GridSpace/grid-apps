@@ -788,7 +788,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         thinWall = nozzleSize * (opt.thinWall || 1.75),
         retractDist = opt.retractOver || 2,
         fillMult = opt.mult || process.outputFillMult,
-        solidWidth = fillMult, // deprecated: process.sliceFillWidth
         shellMult = opt.mult || process.outputShellMult || (process.laserSliceHeight >= 0 ? 1 : 0),
         shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
@@ -1383,7 +1382,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // then output solid and sparse fill
             print.setType('solid fill');
-            outputFills(next.fill_lines, {flow: solidWidth});
+            outputFills(next.fill_lines, {flow: fillMult});
 
             print.setType('sparse infill');
             outputSparse(next.fill_sparse, sparseMult, infillSpeed);
