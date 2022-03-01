@@ -103,7 +103,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         isDanger = controller.danger,
         useAssembly = controller.assembly,
         isConcurrent = controller.threaded && kiri.minions.concurrent,
-        solidMinArea = process.sliceSolidMinArea,
         solidLayers = process.sliceSolidLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
         metadata = widget.anno,
@@ -564,7 +563,10 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         if (solidLayers && !vaseMode && !isSynth) {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
-                if (slice.index > 0) doDiff(slice, solidMinArea);
+                let params = slice.params || process;
+                let solidMinArea = params.sliceSolidMinArea;
+                let sliceFillGrow = params.sliceFillGrow;
+                doDiff(slice, { min: solidMinArea, grow: sliceFillGrow });
             }, "layer deltas");
             profileEnd();
             profileStart("delta-project");
@@ -581,9 +583,12 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let solidWidth = params.sliceFillWidth || 1;
                 let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
+                let solidMinArea = params.sliceSolidMinArea;
                 doSolidsFill(slice, fillSpace, sliceFillAngle, solidMinArea, promises);
                 sliceFillAngle += 90.0;
             }, "fill solids");
+            // very last layer (top) is set to finish solid rate
+            slices.last().finishSolids = true
             if (promises) {
                 await tracker(promises, (i, t) => {
                     trackupdate(i / t, 0.4, 0.5);
@@ -1057,8 +1062,8 @@ function doSparseLayerFill(slice, options = {}) {
  * Used to calculate bridges, flats and then solid projections.
  * 'expand' is used for top offsets in SLA mode
  */
-function doDiff(slice, minArea, options = {}) {
-    const { sla, fakedown } = options;
+function doDiff(slice, options = {}) {
+    const { sla, fakedown, grow, min } = options;
     if (slice.index === 0 && !fakedown) {
         return;
     }
@@ -1076,9 +1081,25 @@ function doDiff(slice, minArea, options = {}) {
         return;
     }
 
-    POLY.subtract(topInner, downInner, bridges, flats, slice.z, minArea, {
+    let newBridges = [];
+    let newFlats = [];
+
+    POLY.subtract(topInner, downInner, newBridges, newFlats, slice.z, min, {
         wasm: true
     });
+
+    newBridges = newBridges.filter(p => p.areaDeep() >= min);
+    newFlats = newFlats.filter(p => p.areaDeep() >= min);
+
+    if (grow > 0 && newBridges.length) {
+        newBridges = POLY.offset(newBridges, grow);
+    }
+    if (grow > 0 && newFlats.length) {
+        newFlats = POLY.offset(newFlats, grow);
+    }
+
+    bridges.appendAll(newBridges);
+    flats.appendAll(newFlats);
 };
 
 /**
@@ -1099,6 +1120,8 @@ function addSolidFills(slice, polys) {
  */
 function projectFlats(slice, count) {
     if (!slice.down || !slice.flats) return;
+    // these flats are marked for finishing print speed
+    if (slice.flats.length) slice.finishSolids = true;
     projectSolid(slice, slice.flats, count, false, true);
 };
 
@@ -1107,6 +1130,8 @@ function projectFlats(slice, count) {
  */
 function projectBridges(slice, count) {
     if (!slice.up || !slice.bridges) return;
+    // these flats are marked for finishing print speed
+    if (slice.bridges.length) slice.finishSolids = true;
     projectSolid(slice, slice.bridges, count, true, true);
 };
 

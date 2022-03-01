@@ -1812,10 +1812,11 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceFillRepeat:     uc.newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:uc.toInt, bound:uc.bound(1,10), show:fillShow, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             sliceFillOverlap:    uc.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:uc.toFloat, bound:uc.bound(0.0,2.0), modes:FDM}),
-            sliceFillRate:       uc.newInput(LANG.ou_feed_s, {title:LANG.fi_rate_l, convert:uc.toInt, bound:uc.bound(0,300), modes:FDM}),
+            sliceFillRate:       uc.newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:uc.toInt, bound:uc.bound(0,500), modes:FDM}),
+            sliceSolidRate:      uc.newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:uc.toInt, bound:uc.bound(0,500), modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceFillGrow:       uc.newInput(LANG.fi_grow_s, {title:LANG.fi_grow_l, convert:uc.toFloat, modes:FDM}),
             sliceFillAngle:      uc.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:uc.toFloat, modes:FDM}),
-            // sliceFillWidth:      uc.newInput(LANG.fi_wdth_s, {title:LANG.fi_wdth_l, convert:uc.toFloat, modes:FDM}),
 
             fdmSupport:          uc.newGroup(LANG.sp_menu, null, {modes:FDM, marker:false}),
             sliceSupportNozzle:  uc.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM}, "extruders"),

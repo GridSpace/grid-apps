@@ -39,10 +39,8 @@
 * `F` first layer segment large flat areas for better fill reliability
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
-* `F` apply finish speed to exposed top and underside flat areas
 * `F` expand internal supporting flats / solids before projection
 
-* `P` expand projected flats (parameterize?)
 * `P` enable purge blocks when quick layers are detected
 * `P` refactor skirt, brim, raft as synth widget instead of in path routing
 * `P` extruder + filament max flow rate cap in planner

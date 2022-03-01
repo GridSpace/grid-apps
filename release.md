@@ -22,6 +22,8 @@
 * `C` trigger solid layer when transitions lead to 50% projected areas
 * `C` limit non-manifold solution search depth
 * `C` refactor slicers to use single improved slice core (cnc deferred)
+* `C` add parameterized solid projection expansion (infill -> solid expand)
+* `C` add parameterized control of bridge/flat and infill print speeds
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
 

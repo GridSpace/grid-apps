@@ -812,6 +812,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         z = slice.z,
         lastPoly;
 
+    if (slice.finishSolids) {
+        fillSpeed = process.sliceSolidRate || finishSpeed;
+    }
+
     // apply first layer extrusion multipliers
     if (firstLayer) {
         fillMult *= firstPrintMult;
