@@ -20,12 +20,10 @@
 * `C` enable/disable ray intersect path on feature state change
 * `C` new and updated device profiles: Prusa MK2S/MK3S+, Ender 3
 * `C` trigger solid layer when transitions lead to 50% projected areas
-* `P` limit non-manifold solution search depth (parameterize)
-* `P` refactor slicers to use single improved slice core (cnc tbd)
+* `C` limit non-manifold solution search depth
+* `C` refactor slicers to use single improved slice core (cnc deferred)
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
-* `-` workflow to edit in M:T and bounce back / replace vertices
-* `-` tighten export dialogs (reduce size for smaller screens)
 
 ## Mesh:Tool
 

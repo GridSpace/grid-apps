@@ -13,6 +13,7 @@
 * `P` do not move (average) endpoints connected to long lines in decimate
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 
+* `F` edit in Mesh:Tool
 * `F` custom device vars for profiles / ranges / gcode
 * `F` show slider range values in workspace units (on hover?)
 * `F` allow select of a range by typing in values in slices or workspace units
@@ -101,6 +102,7 @@
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 
+* `P` port slicing to common core & refactor accordingly
 * `P` decrease cutting speed when entire tool is engaged (start of roughing)
 * `P` clear void should cut inside-to-out when a part would be freed from stock
 * `P` port arc code from FDM export to CAM export
@@ -108,6 +110,10 @@
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 * `P` allow faster z movements when contouring (not plunging)
 * `P` common / faster shadow generator using vertices shared with ledges
+
+# SLA
+
+* `P` blit layers w/ 3JS ortho camera to canvas
 
 # Laser
 
@@ -121,12 +127,13 @@
 
 # Mesh:Tool
 
+* send to Kiri:Moto workspace (or update model vertices in place)
+* face selection: find regions with < delta to normal
+* better z snap using just vertexes from face intersected
 * add section view. local clip. raycast skip points above plane
 * add isolate op = separate bodies
 * add decimate op = face reduction
 * add flatten/crush op: for z bottoms
-* face selection: find regions with < delta to normal
-* better z snap using just vertexes from face intersected
 * allow setting model/group origin for scale/rotate
 * fix mirror to work with groups (just models currently)
 * bounding box toggle should be global, not selection
