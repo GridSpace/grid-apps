@@ -1098,7 +1098,7 @@ function addSolidFills(slice, polys) {
  * project bottom flats down
  */
 function projectFlats(slice, count) {
-    if (slice.isSolidLayer || !slice.down || !slice.flats) return;
+    if (!slice.down || !slice.flats) return;
     projectSolid(slice, slice.flats, count, false, true);
 };
 
@@ -1106,7 +1106,7 @@ function projectFlats(slice, count) {
  * project top bridges up
  */
 function projectBridges(slice, count) {
-    if (slice.isSolidLayer || !slice.up || !slice.bridges) return;
+    if (!slice.up || !slice.bridges) return;
     projectSolid(slice, slice.bridges, count, true, true);
 };
 
@@ -1120,6 +1120,10 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
         solids = slice.solids;
 
     if (!(tops && solids)) {
+        return;
+    }
+
+    if (slice.isSolidLayer) {
         return;
     }
 
@@ -1448,7 +1452,7 @@ function fillSupportPolys(promises, polys, linewidth, density, z, isBelt) {
  * @returns {*}
  */
 function projectSolid(slice, polys, count, up, first) {
-    if (!slice || slice.isSolidLayer || count <= 0) {
+    if (!slice || count <= 0) {
         return;
     }
     let clones = polys.clone(true);
