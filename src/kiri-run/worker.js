@@ -9,6 +9,7 @@
 // dep: kiri.slice
 // dep: moto.license
 // use: load.png
+// use: ext.jszip
 // use: kiri.render
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.slice
