@@ -41,6 +41,7 @@
 * `F` calculate filament use per extruder per print
 * `F` expand internal supporting flats / solids before projection
 
+* `P` reduce fan speed for bridging
 * `P` enable purge blocks when quick layers are detected
 * `P` refactor skirt, brim, raft as synth widget instead of in path routing
 * `P` extruder + filament max flow rate cap in planner
