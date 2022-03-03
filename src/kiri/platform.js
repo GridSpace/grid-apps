@@ -567,47 +567,23 @@ function platformLayout(event, gap) {
     // space parts to account for anchor in belt mode
     if (isBelt) {
         gap += process.firstLayerBeltLead || 0;
-    }
-
-    let i, m, sz = isBelt ? {
-            x: 1,
-            y: 100000
-        } : space.platform.size(),
-        mp = [sz.x, sz.y],
-        ms = [mp[0] / 2, mp[1] / 2],
-        c = Widget.Groups.blocks().sort(moto.Sort),
-        p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
-
-    while (!p.packed) {
-        ms[0] *= 1.1;
-        ms[1] *= 1.1;
-        p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
-    }
-
-    for (i = 0; i < c.length; i++) {
-        m = c[i];
-        m.fit.x += m.w / 2 + p.pad;
-        m.fit.y += m.h / 2 + p.pad;
-        m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
-        // m.material.visible = true;
-    }
-
-    if (isBelt) {
         const WIDGETS = api.widgets.all();
         let bounds = platformUpdateBounds(),
-            movey = -(device.bedDepth / 2 + bounds.min.y);
-        api.widgets.each(widget => {
+            movey = -(device.bedDepth / 2);
+        for (let widget of WIDGETS) {
+            let ylen = widget.track.box.h;
             // only move the root widget in the group
             if (widget.id === widget.group.id) {
-                widget.move(0, movey, 0);
+                widget.move(0, movey + ylen/2, 0, true);
+                movey += ylen + gap;
             }
-        });
+        }
         if (controller.spaceLayout === 0) {
             let sum = 0;
             let sorted = WIDGETS.sort((a, b) => a.track.pos.y - b.track.pos.y);
             sorted.forEach(w => {
                 w.move(0, sum, 0);
-                sum += w.track.box.d + 1;
+                sum += w.track.box.d + 1 + gap;
             });
         }
         if (controller.spaceRandoX) {
@@ -616,6 +592,25 @@ function platformLayout(event, gap) {
                     (0.5 - Math.random()) * (device.bedWidth - w.track.box.w - process.firstLayerBrim),
                     0, 0);
             }
+        }
+    } else {
+        let i, m, sz = space.platform.size(),
+            mp = [sz.x, sz.y],
+            ms = [mp[0] / 2, mp[1] / 2],
+            c = Widget.Groups.blocks().sort(moto.Sort),
+            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+
+        while (!p.packed) {
+            ms[0] *= 1.1;
+            ms[1] *= 1.1;
+            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+        }
+
+        for (i = 0; i < c.length; i++) {
+            m = c[i];
+            m.fit.x += m.w / 2 + p.pad;
+            m.fit.y += m.h / 2 + p.pad;
+            m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
         }
     }
 

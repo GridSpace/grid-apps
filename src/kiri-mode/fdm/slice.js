@@ -1064,7 +1064,7 @@ function doSparseLayerFill(slice, options = {}) {
  */
 function doDiff(slice, options = {}) {
     const { sla, fakedown, grow, min } = options;
-    if (slice.index === 0 && !fakedown) {
+    if (slice.index <= 0 && !fakedown) {
         return;
     }
     const top = slice,

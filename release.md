@@ -26,6 +26,7 @@
 * `C` add parameterized control of bridge/flat and infill print speeds
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
+* `-` api control over (non) threaded workloads and wasm
 
 ## Mesh:Tool
 
