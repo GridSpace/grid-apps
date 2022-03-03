@@ -63,6 +63,8 @@
 
         setFeatures: (features) => { send({ features })},
 
+        setController: (controller) => { send({ controller })},
+
         slice: () => { send({ function: "slice", callback: true }) },
 
         prepare: () => { send({ function: "prepare", callback: true }) },

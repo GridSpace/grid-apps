@@ -684,6 +684,18 @@ function settingsPrusaConvert(data) {
     });
 }
 
+function setThreaded(bool) {
+    bool = bool ? true : false;
+    settings.controller.threaded = bool;
+    api.event.emit("set.threaded", bool);
+}
+
+function setEnableWASM(bool) {
+    bool = bool ? true : false;
+    settings.controller.assembly = bool;
+    api.event.emit("set.assembly", bool);
+}
+
 api.conf = {
     dbo: () => { return ls2o('ws-settings') },
     get: getSettings,
@@ -695,6 +707,8 @@ api.conf = {
     update_from: updateSettingsFromFields,
     update_fields: updateFieldsFromSettings,
     update_fields_from_range: updateFieldsFromRange,
+    set_enable_wasm: setEnableWASM,
+    set_threaded: setThreaded,
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,

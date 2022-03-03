@@ -57,18 +57,25 @@ window.addEventListener('message', msg => {
 
     }
 
-    if (data.set) switch (data.set) {
-        case "features":
-            Object.assign(feature, data.features);
-            break;
-        case "device":
-            Object.assign(settings.dev(), data.options);
-            conf.save();
-            break;
-        case "process":
-            Object.assign(settings.proc(), data.options);
-            conf.save();
-            break;
+    if (data.features) {
+        Object.assign(feature, data.features);
+    }
+
+    if (data.device) {
+        Object.assign(settings.dev(), data.device);
+        conf.save();
+    }
+
+    if (data.process){
+        Object.assign(settings.proc(), data.process);
+        conf.save();
+    }
+
+    if (data.controller){
+        let ctrl = settings.ctrl();
+        Object.assign(ctrl, data.controller);
+        api.event.emit("set.threaded", ctrl.threaded);
+        conf.save();
     }
 
     if (data.parse) {

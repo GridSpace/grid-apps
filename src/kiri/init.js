@@ -165,6 +165,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         return bool;
     }
 
+    api.event.on("set.threaded", bool => setThreaded(bool));
+
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;

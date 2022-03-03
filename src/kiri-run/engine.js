@@ -83,6 +83,17 @@ class Engine {
         return this;
     }
 
+    setController(controller) {
+        let ctrl = this.settings.controller;
+        Object.assign(ctrl, controller);
+        if (ctrl.threaded) {
+            kiri.client.pool.start();
+        } else {
+            kiri.client.pool.stop();
+        }
+        return this;
+    }
+
     setTools(tools) {
         this.settings.tools = tools;
         return this;
