@@ -24,9 +24,9 @@
 * `C` refactor slicers to use single improved slice core (cnc deferred)
 * `C` add parameterized solid projection expansion (infill -> solid expand)
 * `C` add parameterized control of bridge/flat and infill print speeds
+* `C` add api control over threading workloads and use of wasm
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
-* `-` api control over (non) threaded workloads and wasm
 
 ## Mesh:Tool
 

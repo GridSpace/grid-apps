@@ -6,6 +6,7 @@ let opts = {
     output: "-",
     model: "web/obj/cube.stl",
     source: "src/cli/kiri-source.json",
+    controller: "src/cli/kiri-controller.json",
     process: "src/cli/kiri-fdm-process.json",
     device: "src/cli/kiri-fdm-device.json",
 };
@@ -39,6 +40,7 @@ if (opts.help) {
         "   --source=[file]     | source file list (defaults to kiri engine)",
         "   --device=[file]     | device definition file (json)",
         "   --process=[file]    | process definition file (json)",
+        "   --controller=[file] | controller definition file (json)",
         "   --output=[file]     | gcode output to file or '-' for stdout",
         "   --position=x,y,z    | move loaded model to position x,y,z",
         "   --rotate=x,y,z      | rotate loaded model x,y,z radians",
@@ -55,6 +57,7 @@ let exports_save = exports,
     THREE = {},
     gapp = {},
     geo = {},
+    noop = () => { },
     self = this.self = {
         gapp,
         THREE,
