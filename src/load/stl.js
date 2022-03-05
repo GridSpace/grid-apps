@@ -23,7 +23,6 @@ function STL() {
     this.colors = null;
 }
 
-
 SP.load = function(url, callback, formdata, scale) {
     let stl = this,
         xhr = new XMLHttpRequest();
