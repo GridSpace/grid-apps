@@ -493,7 +493,10 @@ class Widget {
         }
         if (x || y || z) {
             this.setModified();
-            api.event.emit('widget.move', {widget: this, pos});
+            // allow for use in engine / cli
+            if (api && api.event) {
+                api.event.emit('widget.move', {widget: this, pos});
+            }
         }
     }
 
