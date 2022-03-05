@@ -3,6 +3,7 @@
 "use strict";
 
 // dep: main.kiri
+// use: kiri.codec
 gapp.register("kiri-mode.cam.driver", [], (root, exports) => {
 
 const { kiri } = root;
@@ -40,7 +41,7 @@ kiri.load(api => {
     if (kiri.worker)
     kiri.worker.cam_traces = function(data, send) {
         const { settings, single } = data;
-        const widgets = Object.values(wcache);
+        const widgets = Object.values(kiri.worker.cache);
         const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
         send.done(kiri.codec.encode(fresh.map(widget => { return {
             id: widget.id,
