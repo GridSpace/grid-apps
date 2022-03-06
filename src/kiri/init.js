@@ -729,9 +729,14 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     // only for local filters
     function cloneDevice() {
-        let name = `${getSelectedDevice().replace(/\./g,' ')} Copy`;
+        let name = `${getSelectedDevice().replace(/\./g,' ')}`;
         let code = api.clone(settings().device);
         code.mode = api.mode.get();
+        if (name.toLowerCase().indexOf('my ') >= 0) {
+            name = `${name} copy`;
+        } else {
+            name = `My ${name}`;
+        }
         putLocalDevice(name, code);
         setDeviceCode(code, name);
     }

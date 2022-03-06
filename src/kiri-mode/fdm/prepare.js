@@ -127,26 +127,23 @@ FDM.prepare = function(widgets, settings, update) {
         if (useRaft) {
             let offset = newPoint(0,0,0),
                 height = nozzle,
+                angle = process.sliceFillAngle,
+                rate1 = firstLayerRate / 3,
+                rate2 = process.outputFeedrate,
                 rafts = process.outputBrimCount ?
                     POLY.expand(brims, nozzle * 4, 0, null, 1) : brims;
 
-            // cause first point of raft to be used
-            printPoint = null;
-
-            let raft = function(height, angle, spacing, speed, extrude, trace) {
+            function raft(height, angle, spacing, speed, extrude, outline) {
                 let slice = kiri.newSlice(zoff + height / 2);
-                rafts.forEach(function(brim) {
+                for (let brim of rafts) {
                     // use first point of first brim as start point
                     if (printPoint === null) printPoint = brim.first();
                     let t = slice.addTop(brim);
-                    if (trace) t.traces = [ brim ];
-                    t.inner = POLY.expand([ brim ], -nozzle * 0.5, 0, null, 1);
-                    // tweak bounds for fill to induce an offset
-                    t.inner[0].bounds.minx -= nozzle/2;
-                    t.inner[0].bounds.maxx += nozzle/2;
+                    if (outline) t.traces = [ brim ];
+                    t.inner = POLY.expand([ brim ], nozzle * -0.8, 0, null, 1);
                     t.fill_lines = POLY.fillArea(t.inner, angle, spacing, []);
                     t.isRaft = true;
-                })
+                }
                 offset.z = slice.z;
                 printPoint = slicePrintPath(print, slice, printPoint, offset, layerout, {
                     speed,
@@ -161,11 +158,14 @@ FDM.prepare = function(widgets, settings, update) {
                 zneg = height / 2;
             };
 
-            raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 5.0, firstLayerRate / 3, 4, true);
-            // raft(nozzle/1, process.sliceFillAngle + 0 , nozzle * 5.0, firstLayerRate / 2, 4, true);
-            raft(nozzle/2, process.sliceFillAngle + 90, nozzle * 3.0, process.outputFeedrate, 2.5, true);
-            raft(nozzle/2, process.sliceFillAngle + 0 , nozzle * 1.0, process.outputFeedrate, 1.5);
-            raft(nozzle/2, process.sliceFillAngle + 90 , nozzle * 0.7, process.outputFeedrate, 0.75);
+            // cause first point of raft to be used
+            printPoint = null;
+
+            // emit raft layers
+            raft(nozzle * 1.5, angle +  0, nozzle * 6.00, rate1, 2.50, true);
+            raft(nozzle * 0.5, angle + 90, nozzle * 2.00, rate2, 1.50, true);
+            raft(nozzle * 0.5, angle +  0, nozzle * 1.00, rate2, 1.00);
+            raft(nozzle * 0.5, angle + 90, nozzle * 0.75, rate2, 0.75);
 
             // raise first layer off raft slightly to lessen adhesion
             firstLayerHeight += process.outputRaftSpacing || 0;
