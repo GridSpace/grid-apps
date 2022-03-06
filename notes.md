@@ -77,6 +77,7 @@
 * `F` roughing flats should be constrained to flat region
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` add ease-down support to trace op
+* `F` change color of line selection in trace op when not a closed poly
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
 * `F` user-defined origin (issue #28)

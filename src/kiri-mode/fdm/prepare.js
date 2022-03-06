@@ -775,7 +775,6 @@ FDM.prepare = function(widgets, settings, update) {
     return print.render;
 };
 
-// fdm only
 function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     const { settings } = print;
     const { device } = settings;
@@ -1141,9 +1140,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             start = 0,
             skip = false,
             lastIndex = -1,
+            raft = opt.raft || false,
             flow = opt.flow || 1,
             near = opt.near || false,
-            fast = opt.fast || false,
+            fast = opt.fast || raft || false,
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
@@ -1234,6 +1234,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             }
             skip = false;
 
+            // re-seek a new start index within fill array
+            let restart = lastIndex < 0;
+
             // mark as used (temporarily)
             p1.del = true;
             p2.del = true;
@@ -1261,6 +1264,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
                 // bridge ends of fill when they're close together
                 if (dist < thinDist) {
+                    print.addOutput(preout, p1, fill, fillSpeed, extruder);
+                } else if (raft && !restart) {
+                    // connect raft lines unless it's a restart
                     print.addOutput(preout, p1, fill, fillSpeed, extruder);
                 } else {
                     print.addOutput(preout, p1, 0, moveSpeed, extruder);
@@ -1328,7 +1334,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     let out = [];
     if (slice.tops) {
         out.appendAll(slice.tops);
-    };
+    }
     if (opt.support && slice.supports) {
         out.appendAll(slice.supports);
     }
@@ -1345,6 +1351,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 outputFills(next.fill, {fast: true});
             }
         } else {
+            let top = next;
+            let isRaft = top.traces && top.traces.length;
+
             print.setType('shells');
             if (lastTop && lastTop !== next) {
                 retract();
@@ -1369,6 +1378,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 }
             }
 
+            // raft
+            if (isRaft) outputTraces(top.traces);
+
             // innermost shells
             let inner = next.innerShells() || [];
 
@@ -1386,7 +1398,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // then output solid and sparse fill
             print.setType('solid fill');
-            outputFills(next.fill_lines, {flow: fillMult});
+            outputFills(next.fill_lines, { flow: fillMult, raft: isRaft });
 
             print.setType('sparse infill');
             outputSparse(next.fill_sparse, sparseMult, infillSpeed);

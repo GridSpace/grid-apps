@@ -25,6 +25,7 @@
 * `C` add parameterized solid projection expansion (infill -> solid expand)
 * `C` add parameterized control of bridge/flat and infill print speeds
 * `C` add api control over threading workloads and use of wasm
+* `C` updates to raft generation: add border, connect infill lines
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
 
