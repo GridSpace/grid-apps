@@ -1001,6 +1001,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
     }
 
+    function updateDeviceSize() {
+        api.conf.update();
+        platform.update_size();
+        platform.update_origin();
+    }
+
     function renderDevices(devices) {
         let selectedIndex = -1,
             selected = api.device.get(),
@@ -1663,9 +1669,9 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             device:           uc.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true, class:"noshow"}),
             deviceName:       uc.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"65%", text:true, action:updateDeviceName}),
-            bedWidth:         uc.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:uc.toFloat, size:6, units:true, round:2}),
-            bedDepth:         uc.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:uc.toFloat, size:6, units:true, round:2}),
-            maxHeight:        uc.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:uc.toFloat, size:6, modes:FDM_SLA}),
+            bedWidth:         uc.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:uc.toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            bedDepth:         uc.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:uc.toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            maxHeight:        uc.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:uc.toFloat, size:6, modes:FDM_SLA, action:updateDeviceSize}),
             resolutionX:      uc.newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:uc.toInt, size:6, modes:SLA}),
             resolutionY:      uc.newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:uc.toInt, size:6, modes:SLA}),
             spindleMax:       uc.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:uc.toInt, size: 6, modes:CAM}),
