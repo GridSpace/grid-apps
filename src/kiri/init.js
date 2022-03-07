@@ -995,7 +995,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (newname !== selected) {
             devs[newname] = devs[selected];
             delete devs[selected];
-            ui.deviceSave.onclick();
             selectDevice(newname);
             updateDeviceList();
         }
