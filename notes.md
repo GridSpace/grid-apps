@@ -12,6 +12,7 @@
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 * `P` do not move (average) endpoints connected to long lines in decimate
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
+* `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
 
 * `F` edit in Mesh:Tool
 * `F` custom device vars for profiles / ranges / gcode
@@ -30,6 +31,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` add layer start position as a range option
 * `F` support pillar top/bottom should conform to part
 * `F` support pillar should have solid top/bottom
 * `F` more explicit line width control with ranges and min/max adaptive

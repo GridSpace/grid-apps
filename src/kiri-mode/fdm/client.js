@@ -386,7 +386,7 @@ FDM.init = function(kiri, api) {
             removeWidgetSupport(lastPillar.widget, lastPillar);
             return;
         }
-        if (!iw) return;
+        if (!(iw && lastBox)) return;
         let { point, dim } = lastBox;
         p1.y = Math.max(0, p1.y);
         p2.y = Math.max(0, p2.y);
@@ -504,6 +504,8 @@ FDM.init = function(kiri, api) {
             addbox({x:p1.x, y:hy, z:p1.z}, 0x0000dd, 'supp', {
                 x:dw, y:dw, z:dy, rz
             });
+        } else {
+            lastBox = null;
         }
         if (event && event.altKey) {
             return func.hoverup();
