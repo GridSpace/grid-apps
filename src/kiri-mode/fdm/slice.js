@@ -600,7 +600,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         if (!isSynth && !vaseMode) {
             // sparse layers only present when non-vase mose and sparse % > 0
             let lastType;
-            let promises = isConcurrent ? [] : undefined;
+            // disabled until memory issue tracked down
+            let promises = false && isConcurrent ? [] : undefined;
             forSlices(0.5, promises ? 0.55 : 0.7, slice => {
                 let params = slice.params || process;
                 if (!params.sliceFillSparse) {

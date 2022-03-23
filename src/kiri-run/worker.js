@@ -145,7 +145,7 @@ kiri.minions = {
     clip(slice, polys, lines) {
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
-                reject("concurrent clip unavaiable");
+                reject("concurrent clip unavailable");
             }
             minwork.queue({
                 cmd: "clip",
