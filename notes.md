@@ -6,6 +6,7 @@
 
 * `B` origin (and bed size) bug (Onshape?) when switching device modes
 * `B` can't drag slider bar on ipad / ios -- touch pad scrolling dodgy
+* `B` prevent or ask for really large models when scaling (crash ui)
 
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)

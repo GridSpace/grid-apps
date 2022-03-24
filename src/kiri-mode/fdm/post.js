@@ -241,7 +241,7 @@ function cullIntersections() {
                 if (bl.del) {
                     continue;
                 }
-                if (util.intersect(al.a, al.b, bl.a, bl.b, base.key.SEGINT)) {
+                if (base.util.intersect(al.a, al.b, bl.a, bl.b, base.key.SEGINT)) {
                     if (al.l < bl.l) {
                         bl.del = true;
                     } else {
