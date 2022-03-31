@@ -590,9 +590,16 @@ mesh.model = class MeshModel extends mesh.object {
         let { point, face } = int;
         let { x, y, z } = point;
         let { a, b, c } = face;
+        let timer = setTimeout(() => {
+            timer = undefined;
+            mesh.api.log.emit("matching surface...");
+        }, 500);
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, radians
         }).then(data => {
+            if (timer) {
+                clearTimeout(timer);
+            }
             let { faces, edges, verts, point } = data;
             // console.log({data});
             // this.toggleSelectedVertices(verts);
