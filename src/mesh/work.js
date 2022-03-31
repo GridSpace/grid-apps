@@ -28,6 +28,9 @@ const { client, worker } = moto;
 const { util } = mesh;
 const cache = {};
 
+// add scoped access to cache
+mesh.work = { cache };
+
 // compensation for space/world/platform rotation
 const core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
@@ -57,15 +60,33 @@ function translate_encode(id, matrix) {
 }
 
 function analyze(id, opt = {}) {
-    log(`${id} | analyzing...`);
-    let geo = cache[id].geo;
-    let tool = new mesh.tool({
-        vertices: geo.attributes.position.array,
-        debug: false
-    });
-    log(`${id} | patching...`);
-    tool.patch(opt);
-    dbug.log(tool);
+    let rec = cache[id];
+    let { geo, tool } = rec;
+    if (!tool) {
+        tool = rec.tool = new mesh.tool();
+    }
+    if (tool.faces) {
+        log(`${id} | analysis cached`);
+    } else {
+        log(`${id} | analyzing...`);
+        tool.generateFaces(geo.attributes.position.array);
+        log(`${id} | patching...`);
+        tool.patch(opt);
+    }
+    return tool;
+}
+
+function mapFaces(id, opt = {}) {
+    let rec = cache[id];
+    let { geo, tool } = rec;
+    if (!tool) {
+        tool = rec.tool = new mesh.tool();
+    }
+    const vertices = geo.attributes.position.array;
+    if (!tool.normals) {
+        log(`${id} | generating face map`);
+        tool.generateFaceMap(vertices);
+    }
     return tool;
 }
 
@@ -74,7 +95,7 @@ let model = {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        cacheUpdate(id, { name, geo, xmatrix: core_matrix.clone(), trans: undefined });
+        cacheUpdate(id, { name, geo, xmatrix: core_matrix.clone(), trans: undefined, tool: undefined });
     },
 
     // return new vertices in world coordinates
@@ -253,20 +274,27 @@ let model = {
         };
     },
 
+    mapFaces(data) {
+        let { id, opt } = data;
+        let tool = mapFaces(id, opt);
+        return { mapped: true };
+    },
+
     // given model and point, locate matching vertices, lines, and faces
     select(data) {
-        let { id, x, y, z, a, b, c, matrix } = data;
+        let { id, x, y, z, a, b, c, matrix, radians } = data;
         // translate point into mesh matrix space
         let v3 = new Vector3(x,y,z).applyMatrix4(
             core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert()
         );
         x = v3.x; y = v3.y; z = v3.z;
-        let arr = cache[id].geo.attributes.position.array;
+        const rec = cache[id];
+        const arr = rec.geo.attributes.position.array;
         // distance tolerance for click to vertex (rough distance)
-        let eps = 0.25;
-        let faces = [];
-        let verts = [];
-        let edges = [];
+        const eps = 0.25;
+        const faces = [];
+        const verts = [];
+        const edges = [];
         let point;
         for (let i=0, l=arr.length; i<l; ) {
             // matches here are within radius of a vertex
@@ -294,6 +322,11 @@ let model = {
         // if no lines match, select the provided face (from min vertex index)
         if (faces.length === 0) {
             faces.push(Math.min(a,b,c) / 3);
+        }
+        const tool = rec.tool;
+        if (tool && tool.sides && radians) {
+            const surface = tool.findConnectedSurface(faces, radians);
+            // console.log({surface});
         }
         return { faces, edges, verts, point };
     },

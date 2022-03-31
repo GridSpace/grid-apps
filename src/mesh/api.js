@@ -378,7 +378,7 @@ const tool = {
 
     analyze(models, opt = { compound: true }) {
         models = fallback(models);
-        api.log.emit('analyzing mesh(es)...').pin();
+        api.log.emit('analyzing mesh(es)').pin();
         let promises = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
@@ -397,6 +397,21 @@ const tool = {
         }
         Promise.all(promises).then(() => {
             api.log.emit('analysis complete').unpin();
+        });
+    },
+
+    mapFaces(models) {
+        models = fallback(models);
+        api.log.emit('mapping faces').pin();
+        let promises = [];
+        for (let m of models) {
+            let p = worker.model_mapFaces({ id: m.id }).then(data => {
+                // console.log({map_info: data});
+            });
+            promises.push(p);
+        }
+        Promise.all(promises).then(() => {
+            api.log.emit('mapping complete').unpin();
         });
     },
 
@@ -426,7 +441,7 @@ const tool = {
 
     repair(models) {
         models = fallback(models);
-        api.log.emit('repairing mesh(es)...').pin();
+        api.log.emit('repairing mesh(es)').pin();
         tool.heal(models, { merge: true }).then(() => {
             api.log.emit('repair commplete').unpin();
             api.selection.update();
@@ -462,10 +477,17 @@ const mode = {
             $(`mode-${key}`).classList.remove('selected');
         }
         $(`mode-${mode}`).classList.add('selected');
+        api.mode.check();
     },
 
     get() {
         return prefs.map.mode;
+    },
+
+    check() {
+        if (prefs.map.mode === modes.surface) {
+            tool.mapFaces();
+        }
     },
 
     object() {
@@ -518,6 +540,9 @@ const prefs = {
             length: 0.5,
             color_lite: 0xff0000,
             color_dark: 0x00ffff
+        },
+        surface: {
+            radians: 0.1
         }
     },
 

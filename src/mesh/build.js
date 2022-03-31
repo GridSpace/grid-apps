@@ -214,7 +214,7 @@ api.welcome = function(version = "unknown") {
 api.settings = function() {
     const { util } = mesh;
     const { prefs } = api;
-    const { normals, space } = prefs.map;
+    const { surface, normals, space } = prefs.map;
     const { dark } = space;
 
     const col1 = h.div([
@@ -249,7 +249,18 @@ api.settings = function() {
         }),
     ]);
 
-    modal.show('settings', h.div({ class: "settings" }, [ col1, col2 ] ));
+    const col3 = h.div([
+        h.label(''),
+        h.label('surface'),
+        h.label('radians'),
+        h.input({ type: "text", size: 5, value: surface.radians,
+            onchange: ev => call.set_surface_radians(ev.target.value)
+        }),
+        h.label('&nbsp;'),
+        h.label('&nbsp;')
+    ]);
+
+    modal.show('settings', h.div({ class: "settings" }, [ col1, col2, col3 ] ));
 }
 
 // create html elements

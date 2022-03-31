@@ -105,7 +105,7 @@ function restore_space() {
     mesh.db.space.iterate({ map: true }).then(cached => {
         for (let [id, data] of Object.entries(cached)) {
             if (count++ === 0) {
-                mesh.api.log.emit(`restoring workspace...`);
+                mesh.api.log.emit(`restoring workspace`);
             }
             // restore group
             if (Array.isArray(data)) {
@@ -359,6 +359,8 @@ function space_init(data) {
                     if (mode !== api.modes.object) {
                         for (let m of selection.models()) {
                             m.deleteSelections(mode);
+                            // re-gen face index
+                            api.mode.check();
                         }
                     } else {
                         for (let s of selection.list(true)) {
@@ -427,17 +429,21 @@ function space_init(data) {
                     selection.update();
                 } else {
                     let { modes } = api;
+                    let radians = 0;
                     switch(api.mode.get()) {
                         case modes.object:
                             selection.toggle(shiftKey ? model : model.group);
                             break;
+                        case modes.surface:
+                            radians = api.prefs.map.surface.radians;
                         case modes.face:
                         case modes.line:
                         case modes.vertex:
                             // find faces adjacent to point/line clicked
                             model.find(int,
                                 altKey ? { toggle: true } :
-                                shiftKey ? { clear: true } : { select: true });
+                                shiftKey ? { clear: true } : { select: true },
+                                radians);
                             break;
                     }
                 }
@@ -546,6 +552,12 @@ function set_normals_color(color) {
     prefs.save();
 }
 
+function set_surface_radians(radians) {
+    let { prefs } = mesh.api;
+    prefs.map.surface.radians = radians || 0.1;
+    prefs.save();
+}
+
 // bind functions to topics
 broker.listeners({
     edit_split,
@@ -557,6 +569,7 @@ broker.listeners({
     set_darkmode,
     set_normals_color,
     set_normals_length,
+    set_surface_radians
 });
 
 // remove version cache bust from url

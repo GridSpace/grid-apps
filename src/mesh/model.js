@@ -586,12 +586,12 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // find adjacent faces to clicked point/line on a face
-    find(int, action) {
+    find(int, action, radians = 0) {
         let { point, face } = int;
         let { x, y, z } = point;
         let { a, b, c } = face;
         worker.model_select({
-            id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix
+            id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, radians
         }).then(data => {
             let { faces, edges, verts, point } = data;
             // console.log({data});
