@@ -131,6 +131,9 @@ const log = api.log = {
             text: `${dbug.since()} | ${msg}`,
             time: now
         });
+        if (api.isDebug) {
+            console.log(data.peek().text);
+        }
         while (!log.pinned && data.length && (data.length > lines || now - data[0].time > age)) {
             data.shift();
         }
@@ -308,6 +311,7 @@ function ui_build() {
         h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
         h.button({ _: 'line', id: "mode-line", onclick() { mode.line() } }),
         h.button({ _: 'vertex', id: "mode-vertex", onclick() { mode.vertex() } }),
+        h.button({ _: 'surface', id: "mode-surface", onclick() { mode.surface() } }),
     ]);
 
     // create hotkey/action menu (top/left)
@@ -334,7 +338,7 @@ function ui_build() {
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
         ]),
         h.div([
-            h.div({ _: "edit", class: "head" }),
+            h.div({ _: "models", class: "head" }),
             // h.div({ class: "vsep" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'regroup', onclick: tool.regroup }),
@@ -344,12 +348,15 @@ function ui_build() {
             h.button({ _: 'split', onclick: call.edit_split }),
         ]),
         h.div([
-            h.div({ _: "fix", class: "head" }),
-            // h.div({ class: "vsep" }),
-            h.button({ _: 'automatic', onclick: tool.repair }),
-            h.button({ _: 'analyze', onclick: tool.analyze }),
-            // h.button({ _: 'rebuild', onclick: tool.rebuild }),
+            h.div({ _: "normal", class: "head" }),
             h.button({ _: 'invert', onclick: tool.invert }),
+        ]),
+        h.div([
+            h.div({ _: "repair", class: "head" }),
+            // h.div({ class: "vsep" }),
+            h.button({ _: 'analyze', onclick: tool.analyze }),
+            h.button({ _: 'patch', onclick: tool.repair }),
+            // h.button({ _: 'rebuild', onclick: tool.rebuild }),
             h.button({ _: 'clean', onclick: tool.clean }),
         ]),
     ]);

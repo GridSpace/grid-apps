@@ -16,10 +16,10 @@ const { geom } = mesh;
  * to base.util.triagulate
  */
 mesh.tool = class MeshTool {
-    constructor(params = {}) {
+    constructor(params = {}, opt = { clean: true }) {
         this.precision = Math.pow(10, params.precision || 6);
         if (params.vertices) {
-            this.setVertices(params.vertices);
+            this.setVertices(params.vertices, opt);
         }
     }
 
@@ -27,12 +27,8 @@ mesh.tool = class MeshTool {
      * @param {number[]} vertices
      */
     setVertices(vertices, opt = {}) {
-        if (!vertices) {
-            throw "missing vertices";
-        }
-        if (vertices.length % 3 !== 0) {
-            throw "invalid vertices";
-        }
+        this.checkVertices(vertices);
+        let doClean = opt.clean !== false;
         let faces = [];
         let fcac = {}; // seen face hash
         let fnew = []; // accumulate vertex triplets
@@ -58,25 +54,29 @@ mesh.tool = class MeshTool {
                 nuvt.push(y);
                 nuvt.push(z);
             }
-            // add vertex position to face accumulator
-            fnew.push(vpos);
-            if (fnew.length === 3) {
-                // check and emit face if it's unique
-                // cull invalid faces (has 2 or more shared vertices)
-                if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+            if (doClean) {
+                // add vertex position to face accumulator
+                fnew.push(vpos);
+                if (fnew.length === 3) {
+                    // check and emit face if it's unique
+                    // cull invalid faces (has 2 or more shared vertices)
+                    if (fnew[0] === fnew[1] || fnew[0] === fnew[2] || fnew[1] === fnew[2]) {
+                        fnew = [];
+                        cull++;
+                        continue;
+                    }
+                    let key = fnew.slice().sort().join('-');
+                    // drop duplicate faces (sort handles reverse order)
+                    if (!fcac[key]) {
+                        faces.appendAll(fnew);
+                        fcac[key] = key;
+                    } else {
+                        dups++;
+                    }
                     fnew = [];
-                    cull++;
-                    continue;
                 }
-                let key = fnew.slice().sort().join('-');
-                // drop duplicate faces (sort handles reverse order)
-                if (!fcac[key]) {
-                    faces.appendAll(fnew);
-                    fcac[key] = key;
-                } else {
-                    dups++;
-                }
-                fnew = [];
+            } else {
+                faces.push(vpos);
             }
         }
         vertices = nuvt;
@@ -88,13 +88,40 @@ mesh.tool = class MeshTool {
         return this;
     }
 
+    checkVertices(v) {
+        const vertices = v || this.vertices;
+        if (!vertices) {
+            throw "missing vertices";
+        }
+        if (vertices.length % 3 !== 0) {
+            throw "invalid vertices";
+        }
+        return vertices;
+    }
+
+    generateFaceNormals() {
+        const vertices = this.checkVertices(this.vertices);
+        const normals = this.normals = [];
+        const _va = new THREE.Vector3();
+        const _vb = new THREE.Vector3();
+        const _vc = new THREE.Vector3();
+        for (let i=0, l=vertices.length; i<l; ) {
+            _va.set(vertices[i++], vertices[i++], vertices[i++]);
+            _vb.set(vertices[i++], vertices[i++], vertices[i++]);
+            _vc.set(vertices[i++], vertices[i++], vertices[i++]);
+            let vn = THREE.computeFaceNormal(_va, _vb, _vc);
+            normals.push(vn.x, vn.y, vn.z);
+        }
+        return normals;
+    }
+
     /**
      * finds edge lines which are line segments on a single face.
      * construct ordered line maps with array of connected edges.
      * connect lines into polys. earcut polys into new faces.
      */
     patch(opt = { merge: true }) {
-        let vertices = this.vertices;
+        let vertices = this.checkVertices(this.vertices);
         let faces = this.faces;
         let hash = {}; // key to line map
         let vmap = {}; // vertext to line map
@@ -457,7 +484,6 @@ mesh.tool = class MeshTool {
     // return non-indexed vertex list (for compatibility)
     unrolled() {
         let out = [];
-        let vertices = this.vertices;
         for (let face of this.faces) {
             this.appendVertex(face, out);
         }

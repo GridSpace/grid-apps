@@ -446,7 +446,13 @@ const tool = {
     }
 };
 
-const modes = { object: "object", face: "face", line: "line", vertex: "vertex" };
+const modes = {
+    object: "object",
+    face: "face",
+    line: "line",
+    vertex: "vertex",
+    surface: "surface"
+};
 
 // edit mode
 const mode = {
@@ -477,6 +483,10 @@ const mode = {
     vertex() {
         mode.set(modes.vertex);
     },
+
+    surface() {
+        mode.set(modes.surface);
+    }
 };
 
 // cache pref signature so we know when it changes
@@ -631,7 +641,9 @@ const api = exports({
     objects() {
         // return model objects suitable for finding ray intersections
         return group.list().map(o => o.models).flat().map(o => o.mesh);
-    }
+    },
+
+    isDebug: self.debug === true
 });
 
 const { broker } = gapp;

@@ -238,7 +238,7 @@ let model = {
         let tool = analyze(id, { mapped: true, ...opt });
         let { stats, mapped } = tool;
         let { cull, dups, faces } = stats;
-        log(`${id} | face count=${faces} bad=${cull} dup=${dups}`);
+        log(`${id} | face count=${faces} cull=${cull} dup=${dups}`);
         log(`${id} | open loops=${tool.loops.length} edges=${tool.edges.length}`);
         return { stats, mapped };
     },
