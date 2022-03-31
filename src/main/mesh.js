@@ -359,6 +359,7 @@ function space_init(data) {
                     if (mode !== api.modes.object) {
                         for (let m of selection.models()) {
                             m.deleteSelections(mode);
+                            space.refresh()
                             // re-gen face index
                             api.mode.check();
                         }
