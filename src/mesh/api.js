@@ -542,7 +542,8 @@ const prefs = {
             color_dark: 0x00ffff
         },
         surface: {
-            radians: 0.1
+            radians: 0.1,
+            radius: 0.2
         }
     },
 

@@ -428,13 +428,14 @@ function space_init(data) {
                     selection.update();
                 } else {
                     let { modes } = api;
-                    let radians = 0;
+                    let { surface } = api.prefs.map;
+                    let opt = { radians: 0, radius: surface.radius };
                     switch(api.mode.get()) {
                         case modes.object:
                             selection.toggle(shiftKey ? model : model.group);
                             break;
                         case modes.surface:
-                            radians = api.prefs.map.surface.radians;
+                            opt.radians = surface.radians;
                         case modes.face:
                         case modes.line:
                         case modes.vertex:
@@ -442,7 +443,7 @@ function space_init(data) {
                             model.find(int,
                                 altKey ? { toggle: true } :
                                 shiftKey ? { clear: true } : { select: true },
-                                radians);
+                                opt);
                             break;
                     }
                 }
@@ -553,7 +554,13 @@ function set_normals_color(color) {
 
 function set_surface_radians(radians) {
     let { prefs } = mesh.api;
-    prefs.map.surface.radians = radians || 0.1;
+    prefs.map.surface.radians = parseFloat(radians || 0.1);
+    prefs.save();
+}
+
+function set_surface_radius(radius) {
+    let { prefs } = mesh.api;
+    prefs.map.surface.radius = parseFloat(radius || 0.2);
     prefs.save();
 }
 
@@ -568,7 +575,8 @@ broker.listeners({
     set_darkmode,
     set_normals_color,
     set_normals_length,
-    set_surface_radians
+    set_surface_radians,
+    set_surface_radius
 });
 
 // remove version cache bust from url

@@ -282,7 +282,7 @@ let model = {
 
     // given model and point, locate matching vertices, lines, and faces
     select(data) {
-        let { id, x, y, z, a, b, c, matrix, radians } = data;
+        let { id, x, y, z, a, b, c, matrix, radians, radius } = data;
         // translate point into mesh matrix space
         let v3 = new Vector3(x,y,z).applyMatrix4(
             core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert()
@@ -291,11 +291,12 @@ let model = {
         const rec = cache[id];
         const arr = rec.geo.attributes.position.array;
         // distance tolerance for click to vertex (rough distance)
-        const eps = 0.25;
+        const eps = radius || 0.2;
         const faces = [];
         const verts = [];
         const edges = [];
         let point;
+        if (!radians)
         for (let i=0, l=arr.length; i<l; ) {
             // matches here are within radius of a vertex
             // select all faces that share a matched vertex
@@ -323,6 +324,7 @@ let model = {
         if (faces.length === 0) {
             faces.push(Math.min(a,b,c) / 3);
         }
+        // if the geometry has indexed faces and radians are set, find surface
         const tool = rec.tool;
         if (tool && tool.sides && radians) {
             tool.findConnectedSurface(faces, radians);

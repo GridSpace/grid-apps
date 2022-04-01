@@ -248,7 +248,7 @@ api.settings = function() {
         h.label(''),
         h.label('normals'),
         h.label('length'),
-        h.input({ type: "text", size: 5, value: normals.length,
+        h.input({ type: "text", size: 5, value: parseFloat(normals.length),
             onchange: ev => call.set_normals_length(ev.target.value)
         }),
         h.label('color'),
@@ -262,11 +262,13 @@ api.settings = function() {
         h.label(''),
         h.label('surface'),
         h.label('radians'),
-        h.input({ type: "text", size: 5, value: surface.radians,
+        h.input({ type: "text", size: 5, value: parseFloat(surface.radians),
             onchange: ev => call.set_surface_radians(ev.target.value)
         }),
-        h.label('&nbsp;'),
-        h.label('&nbsp;')
+        h.label('radius'),
+        h.input({ type: "text", size: 5, value: parseFloat(surface.radius || 0.2),
+            onchange: ev => call.set_surface_radius(ev.target.value)
+        }),
     ]);
 
     modal.show('settings', h.div({ class: "settings" }, [ col1, col2, col3 ] ));
