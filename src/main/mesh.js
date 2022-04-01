@@ -360,8 +360,6 @@ function space_init(data) {
                         for (let m of selection.models()) {
                             m.deleteSelections(mode);
                             space.refresh()
-                            // re-gen face index
-                            api.mode.check();
                         }
                     } else {
                         for (let s of selection.list(true)) {

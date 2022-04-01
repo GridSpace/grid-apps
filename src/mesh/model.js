@@ -221,6 +221,8 @@ mesh.model = class MeshModel extends mesh.object {
         this.wireframe(was);
         // fixup normals
         this.normals({refresh: true});
+        // re-gen face index in surface mode
+        mesh.api.mode.check();
     }
 
     rename(file) {
