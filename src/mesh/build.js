@@ -114,6 +114,7 @@ const modal = api.modal = {
     }
 };
 
+let pinner;
 // transient logging window bottom/left
 const log = api.log = {
     age: 10000, // age out lines more than 10 seconds old
@@ -149,16 +150,20 @@ const log = api.log = {
         return log.pinned ? log.unpin() && log.hide() : log.pin(opt);
     },
 
-    pin(opt = { spinner: true }) {
+    pin(opt = { spinner: 100 }) {
         log.pinned = true;
-        if (opt.spinner) {
-            $('pinner').style.display = 'inline-block';
+        if (opt.spinner > 0) {
+            clearTimeout(pinner);
+            pinner = setTimeout(() => {
+                $('pinner').style.display = 'inline-block';
+            }, opt.spinner);
         }
         return log.show();
     },
 
     unpin() {
         log.pinned = false;
+        clearTimeout(pinner);
         $('pinner').style.display = 'none';
         return log.show();
     },

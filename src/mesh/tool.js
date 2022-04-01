@@ -8,6 +8,7 @@ gapp.register("mesh.tool", [], (root, exports) => {
 
 const { mesh } = root;
 const { geom } = mesh;
+const { Vector3 } = THREE;
 
 /**
  * tool for identiying defects and healing them
@@ -163,14 +164,27 @@ mesh.tool = class MeshTool {
         for (let face of faces) {
             found[face] = 1;
         }
+        // const _v1 = new Vector3();
+        // const _v2 = new Vector3();
         while (check.length) {
             const face = check.shift();
             const norm = this.normals[face];
             const fadj = this.getAdjacentFaces(face).filter(f => !found[f]);
             for (let f of fadj) {
-                const fn = this.normals[f]
-                    .map((v,i) => Math.abs(norm[i] - v))
-                    .reduce((a,v) => a + v);
+                // #1 most accurate
+                // const nf = this.normals[f];
+                // _v1.set(nf[0], nf[1], nf[2]);
+                // _v2.set(norm[0], norm[1], norm[2]);
+                // const fn = _v1.angleTo(_v2);
+                // #2 slightly less so
+                // const pf = Math.PI / 4;
+                // const fn = Math.sin(pf * Math.sqrt(this.normals[f]
+                //     .map((v,i) => Math.pow(norm[i] - v, 2))
+                //     .reduce((a,v) => a + v)));
+                // #3 fastest, still good
+                const fn = Math.sqrt(this.normals[f]
+                    .map((v,i) => Math.pow(norm[i] - v, 2))
+                    .reduce((a,v) => a + v));
                 if (fn <= radians) {
                     faces.push(f);
                     check.push(f)

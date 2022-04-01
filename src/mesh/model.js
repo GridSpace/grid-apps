@@ -595,7 +595,7 @@ mesh.model = class MeshModel extends mesh.object {
         let timer = setTimeout(() => {
             timer = undefined;
             mesh.api.log.emit("matching surface").pin();
-        }, 500);
+        }, 150);
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, radians
         }).then(data => {
