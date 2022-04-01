@@ -325,8 +325,7 @@ let model = {
         }
         const tool = rec.tool;
         if (tool && tool.sides && radians) {
-            const surface = tool.findConnectedSurface(faces, radians);
-            // console.log({surface});
+            tool.findConnectedSurface(faces, radians);
         }
         return { faces, edges, verts, point };
     },

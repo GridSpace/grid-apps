@@ -158,11 +158,15 @@ mesh.tool = class MeshTool {
     }
 
     findConnectedSurface(faces, radians) {
+        const found = {};
         const check = faces.slice();
+        for (let face of faces) {
+            found[face] = 1;
+        }
         while (check.length) {
             const face = check.shift();
             const norm = this.normals[face];
-            const fadj = this.getAdjacentFaces(face).filter(f => !faces.contains(f));
+            const fadj = this.getAdjacentFaces(face).filter(f => !found[f]);
             for (let f of fadj) {
                 const fn = this.normals[f]
                     .map((v,i) => Math.abs(norm[i] - v))
@@ -170,6 +174,7 @@ mesh.tool = class MeshTool {
                 if (fn <= radians) {
                     faces.push(f);
                     check.push(f)
+                    found[f] = 1;
                 }
             }
         }
