@@ -2,11 +2,12 @@
 
 ## `C` complete, `P` partial, `-` todo
 
-# Release 3.3
+
+# Release 3.3 (2022/04/01)
 
 ## Kiri:Moto
 
-* `C` reorganization of code to use updated dependency loader
+* `C` reorganization of code to use updated dependency loader (gapp)
 * `C` refactor main into supporting classes (part of a larger ui re-org)
 * `C` group "main" entry points under "kiri-run"
 * `C` extract and group utilities from print and other modules
@@ -30,11 +31,47 @@
 * `P` template vars: nozzles used and layers until next use (IDEX)
 * `-` improved vertex replacement and widget update matrix tracking
 
-## Mesh:Tool
+## Mesh:Tool (1.1.0)
 
+* `C` add surface selection mode
 * `C` add preferences for normal length and color
-* `C` add preferences for face selection and surface matching
+* `C` add preferences for face selection and surface matching (radians/radius)
 * `P` add svg and image import conversion (created shared load. libs)
 * `C` replace triangulation algorithm that was causing some union failures
+* `C` add pinned log busy spinner
 * `C` add version chooser
 * `C` add welcome menu
+
+
+# Release 3.2 (2022/02/12)
+
+https://forum.grid.space/t/kiri-moto-version-3-2/580
+
+## General
+
+* Better memory management
+* Rendering speedups
+* 3MF instancing support
+* SVG import improvements
+* Enable/Disable individual models
+
+## FDM
+
+* Improved non-manifold handling
+* Gcode macro if/then/else code flow
+* Updated CLI utility
+* Draft Shields
+
+## Belt
+
+* Height-based spacing
+* Random X layout
+
+## CNC
+
+* Drill marking option
+* Numerous bug fixes
+
+## Onshape
+
+* Improved session management
