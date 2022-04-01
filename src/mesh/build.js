@@ -145,17 +145,21 @@ const log = api.log = {
         return log;
     },
 
-    toggle() {
-        return log.pinned ? log.unpin() && log.hide() : log.pin();
+    toggle(opt) {
+        return log.pinned ? log.unpin() && log.hide() : log.pin(opt);
     },
 
-    pin() {
+    pin(opt = { spinner: true }) {
         log.pinned = true;
+        if (opt.spinner) {
+            $('pinner').style.display = 'inline-block';
+        }
         return log.show();
     },
 
     unpin() {
         log.pinned = false;
+        $('pinner').style.display = 'none';
         return log.show();
     },
 

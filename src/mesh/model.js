@@ -592,7 +592,7 @@ mesh.model = class MeshModel extends mesh.object {
         let { a, b, c } = face;
         let timer = setTimeout(() => {
             timer = undefined;
-            mesh.api.log.emit("matching surface...");
+            mesh.api.log.emit("matching surface").pin();
         }, 500);
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, radians
@@ -605,6 +605,10 @@ mesh.model = class MeshModel extends mesh.object {
             // this.toggleSelectedVertices(verts);
             this.selectFaces(faces, action);
             this.updateSelections();
+            if (!timer) {
+                mesh.api.log.emit("surface match complete").unpin();
+                moto.space.refresh();
+            }
         });
     }
 

@@ -587,3 +587,21 @@ button.selected:hover {
     color: #000;
     background-color: rgba(0,128,255,0.5) !important;
 }
+
+#pinner {
+    z-index: 5000;
+    display: none;
+    position: absolute;
+    left: 5px;
+    bottom: 5px;
+    width: 25px;
+    height: 25px;
+    border: 6px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: rgba(0,0,0,0.5);
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  to { -webkit-transform: rotate(360deg); }
+}

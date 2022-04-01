@@ -317,7 +317,7 @@ function space_init(data) {
                     if (shiftKey) return api.tool.regroup();
                     return api.grid();
                 case 'KeyL':
-                    return api.log.toggle();
+                    return api.log.toggle({ spinner: false });
                 case 'KeyS':
                     if (shiftKey) return selection.visible({toggle:true});
                     return call.edit_split();
