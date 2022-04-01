@@ -3,7 +3,7 @@
 ## `C` complete, `P` partial, `-` todo
 
 
-# Release 3.3 (2022/04/01)
+# Release 3.3 (2022-04-01)
 
 ## Kiri:Moto
 
@@ -29,7 +29,7 @@
 * `C` updates to raft generation: add border, connect infill lines
 * `C` fix phantom support generation off part or under bed
 * `P` template vars: nozzles used and layers until next use (IDEX)
-* `-` improved vertex replacement and widget update matrix tracking
+* `C` fdm export control of preamble comments position (for ultimaker)
 
 ## Mesh:Tool (1.1.0)
 
@@ -43,7 +43,7 @@
 * `C` add welcome menu
 
 
-# Release 3.2 (2022/02/12)
+# Release 3.2 (2022-02-12)
 
 https://forum.grid.space/t/kiri-moto-version-3-2/580
 
