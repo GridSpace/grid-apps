@@ -2905,6 +2905,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             });
             api.event.on("device.save", editDone);
         }
+
+        API.show.alert("<a href='/choose'>this version is out of date</a>");
+        API.show.alert("<a href='/choose'>click here to update</a>");
     }
 
     // update static html elements with language overrides
