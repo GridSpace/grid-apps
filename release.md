@@ -2,14 +2,14 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
-# Release 3.4 (tbd)
+# Release 3.4 (in progress)
 
 ## `C` complete, `P` partial, `-` todo
 
 ## Kiri:moto
 
 * `-` refactor cnc to use new core slicer engine
-* `-` improved vertex replacement and widget update matrix tracking
+* `-` improve vertex replacement and widget update matrix tracking
 
 ## Mesh:Tool
 

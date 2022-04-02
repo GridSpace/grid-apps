@@ -132,8 +132,8 @@ FDM.export = function(print, online, ondone, ondebug) {
     subst.tool_count = tools_used.length;
 
     // smallish band-aid. refactor above to remove redundancy
-    function updateParams(layer) {
-        let params = getRangeParameters(process, layer);
+    function updateParams(layer, params) {
+        // let params = getRangeParameters(process, layer);
         zhop = params.zHopDistance || 0; // range
         retDist = params.outputRetractDist || 0; // range
         retSpeed = params.outputRetractSpeed * 60 || 1; // range
@@ -499,10 +499,9 @@ FDM.export = function(print, online, ondone, ondebug) {
     while (layer < layers.length) {
         path = layers[layer];
         layerno = path.slice.index;
-
         // range overrides
         if (path.layer >= 0) {
-            updateParams(path.layer);
+            updateParams(path.layer, path.params);
         }
 
         emitPerMM = print.extrudePerMM(

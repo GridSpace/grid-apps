@@ -539,6 +539,7 @@ FDM.prepare = function(widgets, settings, update) {
             layerout.z = z + slice.height / 2;
             layerout.height = layerout.height || slice.height;
             layerout.slice = slice;
+            layerout.params = params;
             // mark layer as anchor if slice is belt and flag set
             layerout.anchor = slice.belt && slice.belt.anchor;
             // detect extruder change and print purge block
