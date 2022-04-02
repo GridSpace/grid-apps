@@ -132,15 +132,13 @@
 # Mesh:Tool
 
 * send to Kiri:Moto workspace (or update model vertices in place)
-* face selection: find regions with < delta to normal
 * better z snap using just vertexes from face intersected
 * add section view. local clip. raycast skip points above plane
 * add isolate op = separate bodies
 * add decimate op = face reduction
-* add flatten/crush op: for z bottoms
+* add flatten/crush op: for z bottoms (or surfaces?)
 * allow setting model/group origin for scale/rotate
 * fix mirror to work with groups (just models currently)
 * bounding box toggle should be global, not selection
 * add analyze results dialog
-* rename analyze > patch
-* remove auto-repair function
+* remove/hide auto-repair function

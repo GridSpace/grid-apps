@@ -1,46 +1,59 @@
 # Release Notes
 
+Full docs @ https://docs.grid.space/projects/kiri-moto
+
+# Release 3.4 (tbd)
+
 ## `C` complete, `P` partial, `-` todo
+
+## Kiri:moto
+
+* `-` refactor cnc to use new core slicer engine
+* `-` improved vertex replacement and widget update matrix tracking
+
+## Mesh:Tool
+
+* `-` parameterize svg and image import
 
 
 # Release 3.3 (2022-04-01)
 
 ## Kiri:Moto
 
-* `C` reorganization of code to use updated dependency loader (gapp)
-* `C` refactor main into supporting classes (part of a larger ui re-org)
-* `C` group "main" entry points under "kiri-run"
-* `C` extract and group utilities from print and other modules
-* `C` add thin wall pull-down & allow for newer strategies
-* `C` extract preview render engine from FDM
-* `C` allow loading of workspaces from url on page load
-* `C` properly import profiles attached to devices
-* `C` improved routing on "fast" layers & layers with multiple islands
-* `C` start/stop minions depending on whether threading enabled
-* `C` abstract file loading (onshape import, mesh replace, etc)
-* `C` enable/disable ray intersect path on feature state change
-* `C` new and updated device profiles: Prusa MK2S/MK3S+, Ender 3
-* `C` trigger solid layer when transitions lead to 50% projected areas
-* `C` limit non-manifold solution search depth
-* `C` refactor slicers to use single improved slice core (cnc deferred)
-* `C` add parameterized solid projection expansion (infill -> solid expand)
-* `C` add parameterized control of bridge/flat and infill print speeds
-* `C` add api control over threading workloads and use of wasm
-* `C` updates to raft generation: add border, connect infill lines
-* `C` fix phantom support generation off part or under bed
-* `P` template vars: nozzles used and layers until next use (IDEX)
-* `C` fdm export control of preamble comments position (for ultimaker)
+* reorganization of code to use updated dependency loader (gapp)
+* refactor main into supporting classes (part of a larger ui re-org)
+* group "main" entry points under "kiri-run"
+* extract and group utilities from print and other modules
+* add thin wall pull-down & allow for newer strategies
+* extract preview render engine from FDM
+* allow loading of workspaces from url on page load
+* properly import profiles attached to devices
+* improved routing on "fast" layers & layers with multiple islands
+* start/stop minions depending on whether threading enabled
+* abstract file loading (onshape import, mesh replace, etc)
+* enable/disable ray intersect path on feature state change
+* new and updated device profiles: Prusa MK2S/MK3S+, Ender 3
+* trigger solid layer when transitions lead to 50% projected areas
+* limit non-manifold solution search depth
+* refactor slicers to use single improved slice core (cnc deferred)
+* add parameterized solid projection expansion (infill -> solid expand)
+* add parameterized control of bridge/flat and infill print speeds
+* add api control over threading workloads and use of wasm
+* updates to raft generation: add border, connect infill lines
+* fix phantom support generation off part or under bed
+* template vars: nozzles used and layers until next use (IDEX)
+* fdm export control of preamble comments position (for ultimaker)
 
 ## Mesh:Tool (1.1.0)
 
-* `C` add surface selection mode
-* `C` add preferences for normal length and color
-* `C` add preferences for face selection and surface matching (radians/radius)
-* `P` add svg and image import conversion (created shared load. libs)
-* `C` replace triangulation algorithm that was causing some union failures
-* `C` add pinned log busy spinner
-* `C` add version chooser
-* `C` add welcome menu
+* add surface selection mode
+* add preferences for normal length and color
+* add preferences for face selection and surface matching (radians/radius)
+* add svg and image import conversion (created shared load. libs)
+* replace triangulation algorithm that was causing some union failures
+* add pinned log busy spinner
+* add version chooser
+* add welcome menu
 
 
 # Release 3.2 (2022-02-12)
