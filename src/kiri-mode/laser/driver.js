@@ -591,7 +591,7 @@ function exportSVG(settings, data, cut_color) {
         },
         function(point) {
             z = point.z;
-            return util.round(point.x - dx, 3) + "," + util.round(my - point.y - dy, 3);
+            return base.util.round(point.x - dx, 3) + "," + base.util.round(my - point.y - dy, 3);
         },
         function(layer, z, thick, layers) {
             if (zcolor) {
