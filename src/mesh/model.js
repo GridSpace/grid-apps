@@ -387,6 +387,7 @@ mesh.model = class MeshModel extends mesh.object {
                     swap(i);
                 }
                 break;
+            case modes.surface:
             case modes.face:
                 for (let face of this.sel.faces) {
                     swap(face * 9);
