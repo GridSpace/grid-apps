@@ -612,7 +612,7 @@ CAM.init = function(kiri, api) {
                     }
                 });
             });
-        }, poppedRec.single);
+        }, poppedRec.select === 'lines');
         api.feature.hover = true;
         api.feature.hoverAdds = true;
         func.hover = func.traceHover;
@@ -954,7 +954,8 @@ CAM.init = function(kiri, api) {
         down:    'camTraceDown',
         rate:    'camTraceSpeed',
         plunge:  'camTracePlunge',
-        single:  'camTraceLines',
+        // single:  'camTraceLines',
+        select:  'camTraceMode'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -966,8 +967,9 @@ CAM.init = function(kiri, api) {
         rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        single:   UC.newBoolean(LANG.cc_sngl_s, undefined, {title:LANG.cc_sngl_l}),
-        select: UC.newRow([
+        // single:   UC.newBoolean(LANG.cc_sngl_s, undefined, {title:LANG.cc_sngl_l}),
+        select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
+        menu: UC.newRow([
             UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
             UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
         ], {class:"ext-buttons f-row"}),

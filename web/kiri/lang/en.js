@@ -436,6 +436,8 @@ self.kiri.lang['en-us'] = {
     cc_plng_l:      ["max z axis speed in","workspace units / minute"],
     cc_sngl_s:      "select lines only",
     cc_sngl_l:      ["select only single edges","instead of connected polylines"],
+    cc_sele_s:      "select",
+    cc_sele_l:      ["select lines for follow","select loops for clear","select surface for pocket"],
 
     // CNC COMMON
     cc_menu:        "limits",

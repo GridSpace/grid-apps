@@ -263,9 +263,8 @@ function platformSelect(widget, shift, recurse = true) {
             platform.select(widget, false, recurse);
         }
     } else {
-        let { mesh } = widget;
         // prevent selection in slice view
-        if (!mesh.material.visible) {
+        if (!widget.isVisible()) {
             return;
         }
         if (!shift) {

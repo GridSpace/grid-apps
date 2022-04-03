@@ -74,6 +74,11 @@ const LISTS = {
         { name: "800" },
         { name: "900" }
     ],
+    select: [
+        { name: "loops" },
+        { name: "lines" },
+        // { name: "surface" }
+    ],
     trace: [
         { name: "follow" },
         { name: "clear" }
