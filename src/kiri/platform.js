@@ -11,6 +11,7 @@
 // dep: load.stl
 // dep: load.obj
 // dep: load.3mf
+// use: kiri-mode.cam.tool
 gapp.register("kiri.platform", [], (root, exports) => {
 
 const { kiri, moto, load } = root;
