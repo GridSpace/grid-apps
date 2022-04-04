@@ -158,8 +158,12 @@ mesh.tool = class MeshTool {
         return sides.map(side => this.side2face[side].filter(v => v != face)).flat();
     }
 
-    findConnectedSurface(faces, radians) {
+    findConnectedSurface(faces, radians, filterZ) {
         const found = {};
+        const norms = this.normals;
+        if (filterZ) {
+            faces = faces.filter(f => norms[f][2] >= filterZ);
+        }
         const check = faces.slice();
         for (let face of faces) {
             found[face] = 1;
@@ -168,7 +172,10 @@ mesh.tool = class MeshTool {
         // const _v2 = new Vector3();
         while (check.length) {
             const face = check.shift();
-            const norm = this.normals[face];
+            const norm = norms[face];
+            if (filterZ !== undefined && norm[2] < filterZ) {
+                continue;
+            }
             const fadj = this.getAdjacentFaces(face).filter(f => !found[f]);
             for (let f of fadj) {
                 // #1 most accurate
@@ -182,7 +189,7 @@ mesh.tool = class MeshTool {
                 //     .map((v,i) => Math.pow(norm[i] - v, 2))
                 //     .reduce((a,v) => a + v)));
                 // #3 fastest, still good
-                const fn = Math.sqrt(this.normals[f]
+                const fn = Math.sqrt(norms[f]
                     .map((v,i) => Math.pow(norm[i] - v, 2))
                     .reduce((a,v) => a + v));
                 if (fn <= radians) {

@@ -282,7 +282,8 @@ let model = {
 
     // given model and point, locate matching vertices, lines, and faces
     select(data) {
-        let { id, x, y, z, a, b, c, matrix, radians, radius } = data;
+        let { id, x, y, z, a, b, c, matrix, surface } = data;
+        let { radians, radius, filterZ } = surface;
         // translate point into mesh matrix space
         let v3 = new Vector3(x,y,z).applyMatrix4(
             core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert()
@@ -327,7 +328,8 @@ let model = {
         // if the geometry has indexed faces and radians are set, find surface
         const tool = rec.tool;
         if (tool && tool.sides && radians) {
-            tool.findConnectedSurface(faces, radians);
+            const match = tool.findConnectedSurface(faces, radians, filterZ);
+            return { faces: match, edges, verts, point };
         }
         return { faces, edges, verts, point };
     },

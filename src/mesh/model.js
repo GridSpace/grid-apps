@@ -589,8 +589,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // find adjacent faces to clicked point/line on a face
-    find(int, action, opt) {
-        let { radians, radius } = opt;
+    find(int, action, surface) {
         let { point, face } = int;
         let { x, y, z } = point;
         let { a, b, c } = face;
@@ -599,7 +598,7 @@ mesh.model = class MeshModel extends mesh.object {
             mesh.api.log.emit("matching surface").pin();
         }, 150);
         worker.model_select({
-            id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, radians, radius
+            id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, surface
         }).then(data => {
             if (timer) {
                 clearTimeout(timer);
