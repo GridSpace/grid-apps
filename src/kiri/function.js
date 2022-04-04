@@ -92,7 +92,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     for (let widget of toSlice) {
         widget.stats.progress = 0;
         widget.setColor(COLOR.slicing);
-        extruders[widget.anno.extruder] = widget.anno.extruder;
+        let { extruder } = widget.anno;
+        if (extruder >= 0) {
+            extruders[extruder] = extruder;
+        }
     }
 
     // in multi-material belt mode, the anchor needs to be extended
