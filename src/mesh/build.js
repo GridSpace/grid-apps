@@ -377,6 +377,7 @@ function ui_build() {
             h.div({ _: "repair", class: "head" }),
             // h.div({ class: "vsep" }),
             h.button({ _: 'analyze', onclick: tool.analyze }),
+            h.button({ _: 'isolate', onclick: tool.isolate }),
             h.button({ _: 'patch', onclick: tool.repair }),
             // h.button({ _: 'rebuild', onclick: tool.rebuild }),
             h.button({ _: 'clean', onclick: tool.clean }),

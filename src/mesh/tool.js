@@ -101,7 +101,7 @@ mesh.tool = class MeshTool {
     }
 
     generateFaceMap(vertices) {
-        this.checkVertices(vertices, 3);
+        this.vertices = this.checkVertices(vertices, 3);
         const normals = this.normals = [];
         const sides = this.sides = [];
         const _va = new THREE.Vector3();
@@ -158,12 +158,13 @@ mesh.tool = class MeshTool {
         return sides.map(side => this.side2face[side].filter(v => v != face)).flat();
     }
 
-    findConnectedSurface(faces, radians, filterZ) {
-        const found = {};
+    // depends on generateFaceMap() being run first
+    findConnectedSurface(faces, radians, filterZ, found = {}) {
         const norms = this.normals;
         if (filterZ) {
             faces = faces.filter(f => norms[f][2] >= filterZ);
         }
+        const checked = {};
         const check = faces.slice();
         for (let face of faces) {
             found[face] = 1;
@@ -173,11 +174,17 @@ mesh.tool = class MeshTool {
         while (check.length) {
             const face = check.shift();
             const norm = norms[face];
+            // if (!norm || norm.length < 3) {
+            //     throw `invalid face ${face}`;
+            // }
             if (filterZ !== undefined && norm[2] < filterZ) {
                 continue;
             }
-            const fadj = this.getAdjacentFaces(face).filter(f => !found[f]);
+            const fadj = this.getAdjacentFaces(face);
             for (let f of fadj) {
+                if (found[f] || checked[f]) {
+                    continue;
+                }
                 // #1 most accurate
                 // const nf = this.normals[f];
                 // _v1.set(nf[0], nf[1], nf[2]);
@@ -195,11 +202,35 @@ mesh.tool = class MeshTool {
                 if (fn <= radians) {
                     faces.push(f);
                     check.push(f)
+                    checked[f] = 1;
                     found[f] = 1;
                 }
             }
         }
         return faces;
+    }
+
+    // depends on generateFaceMap() being run first
+    isolateBodies() {
+        const verts = this.checkVertices(this.vertices);
+        const bodies = [];
+        const used = {};
+        for (let i=0, l=this.normals.length-1; i<l; i++) {
+            if (used[i]) {
+                continue;
+            }
+            const body = this.findConnectedSurface([i], Infinity, undefined, used);
+            if (body.length) {
+                // todo: pre-allocate known length
+                // then copy array regions from verts to bverts
+                const bverts = [];
+                for (let f of body) {
+                    bverts.push(...verts.slice(f*9, f*9+9));
+                }
+                bodies.push(bverts);
+            }
+        }
+        return bodies;
     }
 
     /**

@@ -14,6 +14,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Mesh:Tool
 
+* `C` multi-body identification and isolation
 * `-` parameterize svg and image import
 
 

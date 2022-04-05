@@ -76,16 +76,21 @@ function analyze(id, opt = {}) {
     return tool;
 }
 
-function mapFaces(id, opt = {}) {
+function isolateBodies(id) {
+    let tool = mapFaces(id);
+    log(`${id} | isolating bodies`);
+    return tool.isolateBodies();
+}
+
+function mapFaces(id) {
     let rec = cache[id];
     let { geo, tool } = rec;
     if (!tool) {
         tool = rec.tool = new mesh.tool();
     }
-    const vertices = geo.attributes.position.array;
     if (!tool.normals) {
         log(`${id} | generating face map`);
-        tool.generateFaceMap(vertices);
+        tool.generateFaceMap(geo.attributes.position.array);
     }
     return tool;
 }
@@ -275,9 +280,14 @@ let model = {
     },
 
     mapFaces(data) {
-        let { id, opt } = data;
-        let tool = mapFaces(id, opt);
+        let { id } = data;
+        let tool = mapFaces(id);
         return { mapped: true };
+    },
+
+    isolate(data) {
+        let { id } = data;
+        return isolateBodies(id);
     },
 
     // given model and point, locate matching vertices, lines, and faces

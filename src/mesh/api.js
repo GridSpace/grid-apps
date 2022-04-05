@@ -400,6 +400,26 @@ const tool = {
         });
     },
 
+    isolate(models) {
+        models = fallback(models);
+        api.log.emit('isolating bodies').pin();
+        let promises = [];
+        let mcore = new Matrix4().makeRotationX(Math.PI / 2);
+        for (let m of models) {
+            let p = worker.model_isolate({ id: m.id }).then(bodies => {
+                bodies = bodies.map(vert => new mesh.model({
+                    file: m.file,
+                    mesh: vert.toFloat32()
+                })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
+                mesh.api.group.new(bodies, undefined, "isolate").setSelected();
+            });
+            promises.push(p);
+        }
+        Promise.all(promises).then(() => {
+            api.log.emit('isolation complete').unpin();
+        });
+    },
+
     mapFaces(models) {
         models = fallback(models);
         api.log.emit('mapping faces').pin();
