@@ -177,6 +177,7 @@ CAM.init = function(kiri, api) {
             case "register": return func.opAddRegister('X', 2);
             case "drill": return func.opAddDrill();
             case "trace": return func.opAddTrace();
+            case "pocket": return func.opAddPocket();
             case "flip":
                 // only one flip op permitted
                 for (let op of current.process.ops) {
@@ -198,6 +199,10 @@ CAM.init = function(kiri, api) {
 
     func.opAddOutline = () => {
         func.opAdd(popOp.outline.new());
+    };
+
+    func.opAddPocket = () => {
+        func.opAdd(popOp.pocket.new());
     };
 
     func.opAddContour = (axis) => {
@@ -553,15 +558,55 @@ CAM.init = function(kiri, api) {
         iw.saveState();
     };
 
+    // SURFACE FUNCS
+    let surfaceOn = false, lastWidget;
+    func.surfaceAdd = (ev) => {
+        func.unpop();
+        func.tabDone();
+        func.traceDone();
+        func.surfaceDone();
+        alert = api.show.alert("analyzing surfaces...", 1000);
+        CAM.surfaces(data => {
+            api.hide.alert(alert);
+            alert = api.show.alert("[esc] cancels surface editing");
+        });
+        surfaceOn = hoveredOp;
+        surfaceOn.classList.add("editing");
+        api.feature.on_mouse_up = (obj, ev) => {
+            let { face } = obj;
+            let min = Math.min(face.a, face.b, face.c);
+            let widget = lastWidget = obj.object.widget;
+            CAM.surface_find(widget.id, min / 3, faces => {
+                if (faces && faces.length) {
+                    widget.selectFaces(faces);
+                }
+            });
+        };
+    };
+    func.surfaceDone = () => {
+        if (!surfaceOn) {
+            return;
+        }
+        lastWidget.selectFaces([]);
+        api.feature.on_mouse_up = undefined;
+        surfaceOn.classList.remove("editing");
+        surfaceOn = false;
+    };
+
     // TRACE FUNCS
     let traceOn = false, lastTrace;
     func.traceAdd = (ev) => {
         func.unpop();
         func.tabDone();
         func.traceDone();
+        func.surfaceDone();
         alert = api.show.alert("analyzing parts...", 1000);
         traceOn = hoveredOp;
         traceOn.classList.add("editing");
+        api.feature.hover = true;
+        api.feature.hoverAdds = true;
+        func.hover = func.traceHover;
+        func.hoverUp = func.traceHoverUp;
         CAM.traces((ids) => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels trace editing");
@@ -613,10 +658,6 @@ CAM.init = function(kiri, api) {
                 });
             });
         }, poppedRec.select === 'lines');
-        api.feature.hover = true;
-        api.feature.hoverAdds = true;
-        func.hover = func.traceHover;
-        func.hoverUp = func.traceHoverUp;
     };
     func.traceDone = () => {
         if (!traceOn) {
@@ -726,12 +767,14 @@ CAM.init = function(kiri, api) {
         if (isCamMode) {
             func.tabDone();
             func.traceDone();
+            func.surfaceDone();
         }
     });
     api.event.on("key.esc", () => {
         if (isCamMode) {
             func.tabDone();
             func.traceDone();
+            func.surfaceDone();
         }
     });
     api.event.on("selection.scale", () => {
@@ -954,7 +997,6 @@ CAM.init = function(kiri, api) {
         down:    'camTraceDown',
         rate:    'camTraceSpeed',
         plunge:  'camTracePlunge',
-        // single:  'camTraceLines',
         select:  'camTraceMode'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -967,11 +1009,32 @@ CAM.init = function(kiri, api) {
         rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        // single:   UC.newBoolean(LANG.cc_sngl_s, undefined, {title:LANG.cc_sngl_l}),
         select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
         menu: UC.newRow([
             UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
             UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
+        ], {class:"ext-buttons f-row"}),
+    };
+
+    createPopOp('pocket', {
+        spindle: 'camPocketSpindle',
+        tool:    'camPocketTool',
+        step:    'camPocketOver',
+        down:    'camPocketDown',
+        rate:    'camPocketSpeed',
+        plunge:  'camPocketPlunge',
+    }).inputs = {
+        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+        step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
+        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
+        rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+        plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        menu: UC.newRow([
+            UC.newButton(undefined, func.surfaceAdd, {icon:'<i class="fas fa-plus"></i>'}),
+            UC.newButton(undefined, func.surfaceDone, {icon:'<i class="fas fa-check"></i>'}),
         ], {class:"ext-buttons f-row"}),
     };
 

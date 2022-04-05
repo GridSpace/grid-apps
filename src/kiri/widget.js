@@ -9,16 +9,16 @@
 // dep: geo.polygons
 // dep: kiri.utils
 // use: kiri.codec
+// use: mesh.util
 gapp.register("kiri.widget", [], (root, exports) => {
 
 const { base, kiri } = root;
 const { api, driver, utils } = kiri;
-const { config, util, polygons } = base;
+const { util, polygons } = base;
 const { Mesh, newPoint, verticesToPoints } = base;
 const { inRange, time } = util;
-const { rgb, avgc } = utils;
+const { avgc } = utils;
 
-const POLY = polygons;
 const solid_opacity = 1.0;
 const groups = [];
 
@@ -299,15 +299,22 @@ class Widget {
      */
     loadGeometry(geometry) {
         const mesh = new THREE.Mesh(
-            geometry,
-            [ new THREE.MeshPhongMaterial({
+            geometry, [
+            new THREE.MeshPhongMaterial({
                 color: 0xffff00,
                 specular: 0x202020,
                 shininess: 125,
                 transparent: true,
                 opacity: solid_opacity
-            }) ]
-        );
+            }),
+            new THREE.MeshPhongMaterial({
+                color: 0x0088ee,
+                specular: 0x202020,
+                shininess: 100,
+                transparent: true,
+                opacity: solid_opacity
+            }),
+        ]);
         mesh.renderOrder = 1;
         geometry.computeVertexNormals();
         geometry.addGroup(0, Infinity, 0);
@@ -375,6 +382,15 @@ class Widget {
 
     isVisible() {
         return this.getMaterial().visible;
+    }
+
+    selectFaces(faces) {
+        let groups = mesh.util.facesToGroups(faces || []);
+        let geo = this.mesh.geometry;
+        geo.clearGroups();
+        for (let group of groups) {
+            geo.addGroup(group.start*3, group.count*3, group.mat || 0);
+        }
     }
 
     /**

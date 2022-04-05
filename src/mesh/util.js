@@ -270,6 +270,31 @@ const util = exports({
         }
 
         return new VertexNormalsHelper(mesh);
+    },
+
+    facesToGroups(faces) {
+        let groups = [];
+        if (faces && faces.length) {
+            faces = faces.sort((a,b) => a - b).slice();
+            let first = faces.shift();
+            if (first > 0) {
+                groups.push({ start: 0, count: first, mat: 0 });
+            }
+            let range = { start: first, count: 1, mat: 1 };
+            groups.push(range);
+            for (let face of faces) {
+                if (face === range.start + range.count) {
+                    range.count++;
+                } else {
+                    groups.push(range = { start: range.start + range.count, count: face - range.start - range.count });
+                    groups.push(range = { start: face, count: 1, mat: 1 });
+                }
+            }
+            groups.push({ start: range.start + range.count, count: Infinity });
+        } else {
+            groups.push({ start: 0, count: Infinity });
+        }
+        return groups;
     }
 
 });

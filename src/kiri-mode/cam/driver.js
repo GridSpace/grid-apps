@@ -4,6 +4,7 @@
 
 // dep: main.kiri
 // use: kiri.codec
+// use: mesh.tool
 gapp.register("kiri-mode.cam.driver", [], (root, exports) => {
 
 const { kiri } = root;
@@ -49,6 +50,42 @@ kiri.load(api => {
         } } )));
     };
 
+    if (kiri.client)
+    CAM.surfaces = function(ondone) {
+        kiri.client.sync();
+        const settings = api.conf.get();
+        kiri.client.send("cam_surfaces", { settings }, output => {
+            ondone(output);
+        });
+    };
+
+    if (kiri.worker)
+    kiri.worker.cam_surfaces = function(data, send) {
+        const { settings } = data;
+        const widgets = Object.values(kiri.worker.cache);
+        for (let widget of widgets) {
+            if (!widget.tool) {
+                let tool = widget.tool = new mesh.tool();
+                tool.generateFaceMap(widget.getVertices().array);
+            }
+        }
+        send.done({});
+    };
+
+    if (kiri.client)
+    CAM.surface_find = function(id, face, ondone) {
+        kiri.client.send("cam_surface_find", { id, face }, faces => {
+            ondone(faces);
+        });
+    };
+
+    if (kiri.worker)
+    kiri.worker.cam_surface_find = function(data, send) {
+        const { id, face } = data;
+        const widget = kiri.worker.cache[id];
+        const faces = widget.tool.findConnectedSurface([face], 0.1, 0.001);
+        send.done(faces);
+    };
 });
 
 });

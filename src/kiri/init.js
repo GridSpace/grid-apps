@@ -2423,13 +2423,19 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
         });
 
-        space.mouse.downSelect((int,event) => {
-            if (api.feature.hover) {
+        space.mouse.downSelect((int, event) => {
+            if (api.feature.on_mouse_down) {
                 if (int) {
-                    api.event.emit('mouse.hover.down', {int, point: int.point});
+                    api.feature.on_mouse_down(int, event);
                     return;
                 }
-                return;
+            }
+            if (api.feature.hover) {
+                if (int) {
+                    return api.event.emit('mouse.hover.down', {int, point: int.point});
+                } else {
+                    return api.selection.meshes();
+                }
             }
             // lay flat with meta or ctrl clicking a selected face
             if (int && (event.ctrlKey || event.metaKey || api.feature.on_face_select)) {
@@ -2447,7 +2453,14 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
         });
 
-        space.mouse.upSelect(function(object, event) {
+        space.mouse.upSelect((object, event) => {
+            if (api.feature.on_mouse_up) {
+                if (event && object) {
+                    return api.feature.on_mouse_up(object, event);
+                } else {
+                    return api.widgets.meshes();
+                }
+            }
             if (event && api.feature.hover) {
                 api.event.emit('mouse.hover.up', { object, event });
                 return;

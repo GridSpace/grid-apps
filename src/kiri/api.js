@@ -28,6 +28,8 @@ const feature = {
     on_key: undefined, // function override default key handlers
     on_load: undefined, // function override file drop loads
     on_add_stl: undefined, // legacy override stl drop loads
+    on_mouse_up: undefined, // function intercepts mouse up select
+    on_mouse_down: undefined, // function intercepts mouse down
     work_alerts: true, // allow disabling work progress alerts
     modes: [ "fdm", "sla", "cam", "laser" ], // enable device modes
     pmode: consts.PMODES.SPEED, // preview modes
