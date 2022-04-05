@@ -560,7 +560,7 @@ function settingsImport(data, ask) {
             if (isWork) {
                 api.platform.clear();
                 kiri.codec.decode(data.work).forEach(widget => {
-                    api.platform.add(widget, 0, true);
+                    api.platform.add(widget, 0, true, true);
                 });
                 if (data.view) {
                     space.view.load(data.view);

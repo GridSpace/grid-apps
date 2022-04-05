@@ -596,7 +596,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         toload.forEach(function(widgetid) {
             Widget.loadFromState(widgetid, function(widget) {
                 if (widget) {
-                    platform.add(widget, 0, position);
+                    platform.add(widget, 0, position, true);
                     let ann = api.widgets.annotate(widgetid);
                     widget.meta.file = ann.file;
                     widget.meta.url = ann.url;

@@ -383,24 +383,52 @@ function platformGroupDone(skipLayout) {
     }
 }
 
-function platformAdd(widget, shift, nolayout) {
+let deferred = [];
+let deferTimeout;
+
+function platformAdd(widget, shift, nolayout, defer) {
     api.widgets.add(widget);
     space.world.add(widget.mesh);
     widget.anno.extruder = widget.anno.extruder || 0;
-    platform.select(widget, shift);
-    platform.compute_max_z();
-    api.event.emit('widget.add', widget);
-    api.space.auto_save();
-    platformChanged();
-    if (nolayout) {
-        return;
+    if (defer) {
+        deferred.push({widget, shift, nolayout});
+        clearTimeout(deferTimeout);
+        deferTimeout = setTimeout(platformAddDeferred, 150);
+    } else {
+        platform.select(widget, shift);
+        platform.compute_max_z();
+        api.space.auto_save();
+        platformChanged();
+        api.event.emit('widget.add', widget);
+        if (nolayout) {
+            return;
+        }
+        if (!grouping) {
+            platformGroupDone();
+            if (!current().controller.autoLayout) {
+                positionNewWidget(widget);
+            }
+        }
     }
-    if (!grouping) {
-        platformGroupDone();
-        if (!current().controller.autoLayout) {
+}
+
+function platformAddDeferred() {
+    console.log('platform_add_deferred');
+    for (let rec of deferred) {
+        let { widget, shift, nolayout } = rec;
+        // platform.select(widget, shift);
+        if (!nolayout && !current().controller.autoLayout) {
             positionNewWidget(widget);
         }
     }
+    if (!grouping) {
+        platformGroupDone();
+    }
+    api.event.emit('widget.add', deferred.map(r => r.widget));
+    platform.compute_max_z();
+    api.space.auto_save();
+    platformChanged();
+    deferred = [];
 }
 
 function positionNewWidget(widget) {
@@ -451,15 +479,17 @@ function positionNewWidget(widget) {
     }
 }
 
-function platformDelete(widget) {
+function platformDelete(widget, defer) {
     if (!widget) {
         return;
     }
     if (Array.isArray(widget)) {
         const mc = widget.slice();
         for (let i = 0; i < mc.length; i++) {
-            platform.delete(mc[i].widget || mc[i]);
+            platform.delete(mc[i].widget || mc[i], true);
         }
+        platformDeletePost();
+        api.event.emit('widget.delete', widget);
         return;
     }
     kiri.client.clear(widget);
@@ -467,6 +497,13 @@ function platformDelete(widget) {
     api.selection.remove(widget);
     Widget.Groups.remove(widget);
     space.world.remove(widget.mesh);
+    if (!defer) {
+        platformDeletePost();
+        api.event.emit('widget.delete', widget);
+    }
+}
+
+function platformDeletePost() {
     api.view.update_slider_max();
     platform.compute_max_z();
     if (get_mode() !== MODES.FDM) {
@@ -477,7 +514,6 @@ function platformDelete(widget) {
     if (api.feature.drop_layout) {
         platform.layout();
     }
-    api.event.emit('widget.delete', widget);
     api.space.auto_save();
     platformChanged();
 }
