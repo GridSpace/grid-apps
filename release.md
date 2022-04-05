@@ -4,10 +4,11 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.4 (in progress)
 
-## `C` complete, `P` partial, `-` todo
+## `C` complete, `I` in progress, `-` todo
 
 ## Kiri:moto
 
+* `I` add CAM pocket operation using surface selection
 * `-` refactor cnc to use new core slicer engine
 * `-` improve vertex replacement and widget update matrix tracking
 

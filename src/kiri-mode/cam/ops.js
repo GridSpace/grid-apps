@@ -917,6 +917,88 @@ class OpTrace extends CamOp {
     }
 }
 
+class OpPocket extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    slice(progress) {
+        let { op, state } = this;
+        let { tool, rate, down, plunge } = op;
+        let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
+        let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
+        let { process, stock } = settings;
+        // generate tracing offsets from chosen features
+        let sliceOut = this.sliceOut = [];
+        let areas = op.areas[widget.id] || [];
+        let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
+        let toolOver = toolDiam * op.step;
+        let cutdir = process.camConventional;
+        let polys = [];
+        updateToolDiams(toolDiam);
+        if (tabs) {
+            tabs.forEach(tab => {
+                tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+            });
+        }
+        for (let arr of areas) {
+            let poly = newPolygon().fromArray(arr);
+            POLY.setWinding([ poly ], cutdir, false);
+            polys.push(poly);
+        }
+        function newSliceOut(z) {
+            let slice = newSlice(z);
+            sliceAll.push(slice);
+            sliceOut.push(slice);
+            return slice;
+        }
+        function clearZ(polys, z, down) {
+            let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            let nested = POLY.nest(polys);
+            for (let poly of nested) {
+                for (let z of zs) {
+                    let slice = newSliceOut(z);
+                    slice.camTrace = { tool, rate, plunge };
+                    POLY.offset([ poly ], -toolOver, {
+                        count:999, outs: slice.camLines = [], flat:true, z
+                    });
+                    if (tabs) {
+                        slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
+                    } else {
+                        slice.camLines = POLY.flatten(slice.camLines, null, true);
+                    }
+                    POLY.setWinding(slice.camLines, cutdir, false);
+                    slice.output()
+                        .setLayer("clear", {line: 0xaa00aa}, false)
+                        .addPolys(slice.camLines)
+                }
+            }
+        }
+        // connect selected segments if open and touching
+        polys = healPolys(polys);
+        let zmap = {};
+        for (let poly of polys) {
+            let z = poly.getZ();
+            (zmap[z] = zmap[z] || []).push(poly);
+        }
+        for (let [zv, polys] of Object.entries(zmap)) {
+            clearZ(polys, parseFloat(zv), down);
+        }
+    }
+
+    prepare(ops, progress) {
+        let { op, state } = this;
+        let { settings } = state;
+        let { setTool, setSpindle } = ops;
+
+        setTool(op.tool, op.rate);
+        setSpindle(op.spindle);
+        for (let slice of this.sliceOut) {
+            ops.emitTrace(slice);
+        }
+    }
+}
+
 class OpDrill extends CamOp {
     constructor(state, op) {
         super(state, op);

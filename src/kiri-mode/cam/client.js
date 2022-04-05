@@ -202,7 +202,9 @@ CAM.init = function(kiri, api) {
     };
 
     func.opAddPocket = () => {
-        func.opAdd(popOp.pocket.new());
+        let rec = popOp.pocket.new();
+        rec.surfaces = { /* widget.id: [ faces... ] */ };
+        func.opAdd(rec);
     };
 
     func.opAddContour = (axis) => {
@@ -588,6 +590,7 @@ CAM.init = function(kiri, api) {
             return;
         }
         lastWidget.selectFaces([]);
+        api.hide.alert(alert);
         api.feature.on_mouse_up = undefined;
         surfaceOn.classList.remove("editing");
         surfaceOn = false;
