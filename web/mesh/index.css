@@ -588,14 +588,17 @@ button.selected:hover {
     background-color: rgba(0,128,255,0.5) !important;
 }
 
+#pinner-box {
+    position: absolute;
+    z-index: 5000;
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+}
+
 #pinner {
     z-index: 5000;
     display: none;
-    position: absolute;
-    left: 50%;
-    bottom: 50%;
-    translateX: -50%;
-    translateX: -50%;
     width: 25px;
     height: 25px;
     border: 6px solid rgba(0,0,0,0.1);
@@ -605,5 +608,5 @@ button.selected:hover {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to { transform: rotate(360deg) }
 }
