@@ -9,6 +9,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 ## Kiri:moto
 
 * `C` added batch processing to object adds/removes to speedup complex workspace restore
+* `C` fix CAM output order for tool changes an spindle speed updates
 * `I` add CAM pocket operation using surface selection
 * `-` refactor cnc to use new core slicer engine
 * `-` improve vertex replacement and widget update matrix tracking

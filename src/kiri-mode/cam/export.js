@@ -33,6 +33,7 @@ CAM.export = function(print, online) {
         factor = 1,
         output = [],
         spindle = 0,
+        newSpindle = 0,
         origin = settings.origin || { x: 0, y: 0, z: 0 },
         space = device.gcodeSpace ? ' ' : '',
         isRML = device.gcodeFExt.toLowerCase() === 'rml',
@@ -161,7 +162,18 @@ CAM.export = function(print, online) {
             pos.t = out.tool;
             consts.tool = pos.t;
             consts.tool_name = toolNameByNumber(out.tool);
-            filterEmit(cmdToolChange, consts);
+            filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
+        }
+
+        // on spindle change (deferred from layer transition so it's post-toolchange)
+        if (newSpindle && newSpindle !== spindle) {
+            spindle = newSpindle;
+            if (spindle > 0) {
+                let speed = Math.abs(spindle);
+                filterEmit(cmdSpindle, { speed, spindle: speed, rpm: speed });
+            } else {
+                append("M4");
+            }
         }
 
         // first point out sets the current position (but not Z)
@@ -296,30 +308,28 @@ CAM.export = function(print, online) {
     filterEmit(device.gcodePre, consts);
 
     // emit all points in layer/point order
-    print.output.forEach(function (layerout) {
+    for (let layerout of print.output) {
         if (mode !== layerout.mode) {
-            if (mode && !stripComments) append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
-            mode = layerout.mode;
-            if (mode) section(`op-${opnum++}-${mode}`);
-            if (!stripComments) append("; starting " + mode + " op");
-        }
-        if (layerout.spindle && layerout.spindle !== spindle) {
-            spindle = layerout.spindle;
-            if (spindle > 0) {
-                let speed = Math.abs(spindle);
-                filterEmit(cmdSpindle, {
-                    speed, spindle: speed, rpm: speed
-                });
-            } else {
-                append("M4");
+            if (mode && !stripComments) {
+                append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
             }
-            // append((spindle > 0 ? "M3" : "M4") + " S" + Math.abs(spindle));
+            mode = layerout.mode;
+            if (mode) {
+                section(`op-${opnum++}-${mode}`);
+            }
+            if (!stripComments) {
+                append("; starting " + mode + " op");
+            }
         }
-        layerout.forEach(function(out) {
+        newSpindle = layerout.spindle;
+        for (let out of layerout) {
             moveTo(out);
-        });
-    });
-    if (mode && !stripComments) append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
+        }
+    }
+
+    if (mode && !stripComments) {
+        append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
+    }
 
     // emit gcode post
     section('footer');
