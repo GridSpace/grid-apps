@@ -34,6 +34,7 @@ CAM.export = function(print, online) {
         output = [],
         spindle = 0,
         newSpindle = 0,
+        spindleMax = device.spindleMax,
         origin = settings.origin || { x: 0, y: 0, z: 0 },
         space = device.gcodeSpace ? ' ' : '',
         isRML = device.gcodeFExt.toLowerCase() === 'rml',
@@ -158,7 +159,8 @@ CAM.export = function(print, online) {
         newpos.z = util.round(newpos.z, decimals);
 
         // on tool change
-        if (out.tool != pos.t) {
+        let changeTool = out.tool != pos.t;
+        if (changeTool) {
             pos.t = out.tool;
             consts.tool = pos.t;
             consts.tool_name = toolNameByNumber(out.tool);
@@ -166,7 +168,7 @@ CAM.export = function(print, online) {
         }
 
         // on spindle change (deferred from layer transition so it's post-toolchange)
-        if (newSpindle && newSpindle !== spindle) {
+        if ((changeTool && spindleMax) || (newSpindle && newSpindle !== spindle)) {
             spindle = newSpindle;
             if (spindle > 0) {
                 let speed = Math.abs(spindle);
