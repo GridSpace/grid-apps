@@ -233,6 +233,7 @@ function setWinding(array, CW, recurse) {
         if (poly.isClockwise() !== CW) poly.reverse();
         if (recurse && poly.inner) setWinding(poly.inner, !CW, false);
     }
+    return array;
 }
 
 /**

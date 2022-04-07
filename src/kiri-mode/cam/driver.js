@@ -25,7 +25,7 @@ CAM.process = {
 kiri.load(api => {
 
     if (kiri.client) {
-        CAM.surfaces = function(ondone) {
+        CAM.surface_prep = function(ondone) {
             kiri.client.sync();
             const settings = api.conf.get();
             kiri.client.send("cam_surfaces", { settings }, output => {
@@ -33,7 +33,7 @@ kiri.load(api => {
             });
         };
 
-        function select_face_groups(widget) {
+        CAM.surface_show = function(widget) {
             widget.selectFaces(Object.values(widget._surfaces).flat());
         };
 
@@ -43,14 +43,16 @@ kiri.load(api => {
                 if (faces.contains(face)) {
                     // delete this face group
                     delete surfaces[root];
-                    select_face_groups(widget);
+                    CAM.surface_show(widget);
                     ondone(Object.keys(surfaces));
                     return;
                 }
             }
             kiri.client.send("cam_surface_find", { id: widget.id, face }, faces => {
-                surfaces[face] = faces;
-                select_face_groups(widget);
+                if (faces.length) {
+                    surfaces[face] = faces;
+                    CAM.surface_show(widget);
+                }
                 ondone(Object.keys(surfaces));
             });
         };
@@ -76,14 +78,23 @@ kiri.load(api => {
     }
 
     if (kiri.worker) {
+        CAM.surface_prep = function(widget) {
+            if (!widget.tool) {
+                let tool = widget.tool = new mesh.tool();
+                tool.generateFaceMap(widget.getVertices().array);
+            }
+        };
+
+        CAM.surface_find = function(widget, faces) {
+            CAM.surface_prep(widget);
+            return widget.tool.findConnectedSurface(faces, 0.1, 0.001);
+        };
+
         kiri.worker.cam_surfaces = function(data, send) {
             const { settings } = data;
             const widgets = Object.values(kiri.worker.cache);
             for (let widget of widgets) {
-                if (!widget.tool) {
-                    let tool = widget.tool = new mesh.tool();
-                    tool.generateFaceMap(widget.getVertices().array);
-                }
+                CAM.surface_prep(widget);
             }
             send.done({});
         };
@@ -91,7 +102,7 @@ kiri.load(api => {
         kiri.worker.cam_surface_find = function(data, send) {
             const { id, face } = data;
             const widget = kiri.worker.cache[id];
-            const faces = widget.tool.findConnectedSurface([face], 0.1, 0.001);
+            const faces = CAM.surface_find(widget, [face]);
             send.done(faces);
         }
 

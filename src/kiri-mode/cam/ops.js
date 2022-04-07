@@ -930,22 +930,29 @@ class OpPocket extends CamOp {
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
-        let areas = op.areas[widget.id] || [];
+        let surface = op.surfaces[widget.id] || [];
+        let faces = CAM.surface_find(widget, surface);
         let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
-        let polys = [];
         updateToolDiams(toolDiam);
         if (tabs) {
             tabs.forEach(tab => {
                 tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
             });
         }
-        for (let arr of areas) {
-            let poly = newPolygon().fromArray(arr);
-            POLY.setWinding([ poly ], cutdir, false);
-            polys.push(poly);
+        let vert = widget.getVertices().array;
+        let polys = [];
+        for (let face of faces) {
+            let i = face * 9;
+            polys.push(newPolygon()
+                .add(vert[i++], vert[i++], vert[i++])
+                .add(vert[i++], vert[i++], vert[i++])
+                .add(vert[i++], vert[i++], vert[i++])
+            );
         }
+        polys = POLY.union(polys, undefined, true);
+        polys = POLY.setWinding(polys, cutdir, false);
         function newSliceOut(z) {
             let slice = newSlice(z);
             sliceAll.push(slice);
@@ -1423,6 +1430,7 @@ CAM.OPS = CamOp.MAP = {
     "rough":    OpRough,
     "outline":  OpOutline,
     "contour":  OpContour,
+    "pocket":   OpPocket,
     "trace":    OpTrace,
     "drill":    OpDrill,
     "register": OpRegister,

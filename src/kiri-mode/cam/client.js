@@ -562,13 +562,10 @@ CAM.init = function(kiri, api) {
     // SURFACE FUNCS
     let surfaceOn = false, lastWidget;
     func.surfaceAdd = (ev) => {
-        func.unpop();
-        func.tabDone();
-        func.traceDone();
-        func.surfaceDone();
+        func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
         let surfaces = poppedRec.surfaces;
-        CAM.surfaces(() => {
+        CAM.surface_prep(() => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels surface editing");
             for (let [wid, arr] of Object.entries(surfaces)) {
@@ -597,10 +594,13 @@ CAM.init = function(kiri, api) {
         if (!surfaceOn) {
             return;
         }
-        if (lastWidget) {
-            let surfaces = poppedRec.surfaces;
-            for (let wid of Object.keys(surfaces)) {
-                CAM.surface_clear(api.widgets.forid(wid));
+        let surfaces = poppedRec.surfaces;
+        for (let wid of Object.keys(surfaces)) {
+            let widget = api.widgets.forid(wid);
+            if (widget) {
+                CAM.surface_clear(widget);
+            } else {
+                delete surfaces[wid];
             }
         }
         api.hide.alert(alert);
@@ -612,10 +612,7 @@ CAM.init = function(kiri, api) {
     // TRACE FUNCS
     let traceOn = false, lastTrace;
     func.traceAdd = (ev) => {
-        func.unpop();
-        func.tabDone();
-        func.traceDone();
-        func.surfaceDone();
+        func.clearPops();
         alert = api.show.alert("analyzing parts...", 1000);
         traceOn = hoveredOp;
         traceOn.classList.add("editing");
@@ -692,6 +689,12 @@ CAM.init = function(kiri, api) {
                 widget.adds.removeAll(widget.trace_stack.meshes);
             }
         });
+    };
+    func.clearPops = () => {
+        if (func.unpop) func.unpop();
+        func.tabDone();
+        func.traceDone();
+        func.surfaceDone();
     };
     api.event.on("cam.trace.clear", func.traceClear = () => {
         func.traceDone();
@@ -781,22 +784,17 @@ CAM.init = function(kiri, api) {
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (isCamMode) {
-            func.tabDone();
-            func.traceDone();
-            func.surfaceDone();
+            func.clearPops();
         }
     });
     api.event.on("key.esc", () => {
         if (isCamMode) {
-            func.tabDone();
-            func.traceDone();
-            func.surfaceDone();
+            func.clearPops();
         }
     });
     api.event.on("selection.scale", () => {
         if (isCamMode) {
-            func.tabClear();
-            func.traceClear();
+            func.clearPops();
         }
     });
     api.event.on("widget.duplicate", (widget, oldwidget) => {

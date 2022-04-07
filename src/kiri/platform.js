@@ -413,7 +413,6 @@ function platformAdd(widget, shift, nolayout, defer) {
 }
 
 function platformAddDeferred() {
-    console.log('platform_add_deferred');
     for (let rec of deferred) {
         let { widget, shift, nolayout } = rec;
         // platform.select(widget, shift);
