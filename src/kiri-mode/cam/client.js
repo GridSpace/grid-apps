@@ -11,8 +11,7 @@ const { newPoint, newPolygon } = base;
 const { driver } = kiri;
 const { CAM } = driver;
 
-let PRO = CAM.process,
-    isAnimate,
+let isAnimate,
     isArrange,
     isCamMode,
     isParsed,
@@ -568,20 +567,29 @@ CAM.init = function(kiri, api) {
         func.traceDone();
         func.surfaceDone();
         alert = api.show.alert("analyzing surfaces...", 1000);
-        CAM.surfaces(data => {
+        let surfaces = poppedRec.surfaces;
+        CAM.surfaces(() => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels surface editing");
+            for (let [wid, arr] of Object.entries(surfaces)) {
+                let widget = api.widgets.forid(wid);
+                if (widget && arr.length)
+                for (let faceid of arr) {
+                    CAM.surface_toggle(widget, faceid, faceids => {
+                        // surfaces[widget.id] = faceids;
+                    });
+                }
+            }
         });
         surfaceOn = hoveredOp;
         surfaceOn.classList.add("editing");
         api.feature.on_mouse_up = (obj, ev) => {
             let { face } = obj;
             let min = Math.min(face.a, face.b, face.c);
+            let faceid = min / 3;
             let widget = lastWidget = obj.object.widget;
-            CAM.surface_find(widget.id, min / 3, faces => {
-                if (faces && faces.length) {
-                    widget.selectFaces(faces);
-                }
+            CAM.surface_toggle(widget, faceid, faceids => {
+                surfaces[widget.id] = faceids;
             });
         };
     };
@@ -589,7 +597,12 @@ CAM.init = function(kiri, api) {
         if (!surfaceOn) {
             return;
         }
-        lastWidget.selectFaces([]);
+        if (lastWidget) {
+            let surfaces = poppedRec.surfaces;
+            for (let wid of Object.keys(surfaces)) {
+                CAM.surface_clear(api.widgets.forid(wid));
+            }
+        }
         api.hide.alert(alert);
         api.feature.on_mouse_up = undefined;
         surfaceOn.classList.remove("editing");

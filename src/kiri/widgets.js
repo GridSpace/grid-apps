@@ -110,6 +110,7 @@ const widgets = api.widgets = {
     count()     { return WIDGETS.length },
     each(fn)    { WIDGETS.slice().forEach(widget => fn(widget)) },
     for(fn)     { widgets.each(fn) },
+    forid(id)   { return WIDGETS.filter(w => w.id === id)[0] }
 };
 
 });
