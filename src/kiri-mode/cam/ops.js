@@ -947,22 +947,28 @@ class OpPocket extends CamOp {
         }
         let shadows = {};
         function genShadows(zs) {
-            let lastShadow, lastZ;
             for (let z of zs) {
                 if (shadows[z]) continue;
-                let shadow = CAM.shadowAt(widget, z, lastZ);
-                lastZ = z;
-                if (lastShadow) {
-                    shadow = POLY.union([...shadow, ...lastShadow], undefined, true);
+                // find closest shadow above and use
+                let minzkey;
+                let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
+                for (let zkey of zover) {
+                    if (minzkey && zkey < minzkey) {
+                        minzkey = zkey;
+                    } else {
+                        minzkey = zkey;
+                    }
                 }
-                lastShadow = shadow;
-                shadows[z] = shadow;
+                let shadow = CAM.shadowAt(widget, z + 0.001, minzkey);
+                if (minzkey) {
+                    shadow = POLY.union([...shadow, ...shadows[minzkey]], undefined, true);
+                }
+                shadows[z] = POLY.setZ(shadow, z);
             }
         }
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
-            let nested = POLY.nest(polys);
-            for (let poly of nested) {
+            for (let poly of polys) {
                 genShadows(zs);
                 for (let z of zs) {
                     let shadow = shadows[z];
@@ -980,8 +986,11 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     slice.output()
-                        .setLayer("clear", {line: 0xaa00aa}, false)
+                        .setLayer("pocket cut", {line: 0xaa00aa}, false)
                         .addPolys(slice.camLines)
+                    if (false) slice.output()
+                        .setLayer("pocket shadow", {line: 0xff8811}, false)
+                        .addPolys(shadow)
                 }
             }
         }
@@ -999,9 +1008,12 @@ class OpPocket extends CamOp {
                     .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
                 );
             }
-            outline = POLY.union(outline, undefined, true);
+            outline = POLY.union(outline, 0.0001, true);
             outline = POLY.setWinding(outline, cutdir, false);
             outline = healPolys(outline);
+            if (false) newSliceOut(zmin).output()
+                .setLayer("pocket area", {line: 0x1188ff}, false)
+                .addPolys(outline)
             clearZ(outline, zmin, down);
         }
     }
@@ -1375,6 +1387,11 @@ CAM.shadowAt = function(widget, z, ztop) {
     let found = [];
     let { position } = geo.attributes;
     let { itemSize, count, array } = position;
+    if (widget._shadow_array) {
+        array = widget._shadow_array;
+    } else {
+        array = widget._shadow_array = [...array].map(v => v.round(3));
+    }
     for (let i = 0; i<count; i += 3) {
         let ip = i * itemSize;
         let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
