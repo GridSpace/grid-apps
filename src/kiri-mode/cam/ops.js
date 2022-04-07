@@ -946,13 +946,26 @@ class OpPocket extends CamOp {
             return slice;
         }
         let shadows = {};
+        function genShadows(zs) {
+            let lastShadow, lastZ;
+            for (let z of zs) {
+                if (shadows[z]) continue;
+                let shadow = CAM.shadowAt(widget, z, lastZ);
+                lastZ = z;
+                if (lastShadow) {
+                    shadow = POLY.union([...shadow, ...lastShadow], undefined, true);
+                }
+                lastShadow = shadow;
+                shadows[z] = shadow;
+            }
+        }
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             let nested = POLY.nest(polys);
             for (let poly of nested) {
+                genShadows(zs);
                 for (let z of zs) {
-                    let shadow = shadows[z] || CAM.shadowAt(widget, z);
-                    shadows[z] = shadow;
+                    let shadow = shadows[z];
                     let clip = [];
                     POLY.subtract([poly], shadow, clip);
                     let slice = newSliceOut(z);
