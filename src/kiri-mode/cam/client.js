@@ -252,6 +252,7 @@ CAM.init = function(kiri, api) {
     // OPS FUNCS
     api.event.on("cam.op.add", func.opAdd = (rec) => {
         if (!isCamMode) return;
+        func.clearPops();
         let oplist = current.process.ops;
         if (oplist.indexOf(rec) < 0) {
             oplist.push(rec);
@@ -262,6 +263,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on("cam.op.del", func.opDel = (rec) => {
         if (!isCamMode) return;
+        func.clearPops();
         let oplist = current.process.ops;
         let pos = oplist.indexOf(rec);
         if (pos >= 0) {
