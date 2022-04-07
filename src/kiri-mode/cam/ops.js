@@ -924,7 +924,7 @@ class OpPocket extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { tool, rate, down, plunge } = op;
+        let { tool, rate, down, plunge, expand } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
         let { process, stock } = settings;
@@ -968,12 +968,13 @@ class OpPocket extends CamOp {
         }
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            if (expand) polys = POLY.offset(polys, expand);
             for (let poly of polys) {
                 genShadows(zs);
                 for (let z of zs) {
                     let shadow = shadows[z];
                     let clip = [];
-                    POLY.subtract([poly], shadow, clip);
+                    POLY.subtract([ poly ], shadow, clip);
                     let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
                     POLY.offset(clip, -toolOver, {

@@ -498,6 +498,7 @@ const conf = exports({
                 camPocketDown: 1,
                 camPocketSpeed: 250,
                 camPocketPlunge: 200,
+                camPocketExpand: 0,
                 camDrillTool: 1000,
                 camDrillSpindle: 1000,
                 camDrillDownSpeed: 250,
