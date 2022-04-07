@@ -930,8 +930,6 @@ class OpPocket extends CamOp {
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
-        let surface = op.surfaces[widget.id] || [];
-        let faces = CAM.surface_find(widget, surface);
         let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
@@ -941,32 +939,25 @@ class OpPocket extends CamOp {
                 tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
             });
         }
-        let vert = widget.getVertices().array;
-        let polys = [];
-        for (let face of faces) {
-            let i = face * 9;
-            polys.push(newPolygon()
-                .add(vert[i++], vert[i++], vert[i++])
-                .add(vert[i++], vert[i++], vert[i++])
-                .add(vert[i++], vert[i++], vert[i++])
-            );
-        }
-        polys = POLY.union(polys, undefined, true);
-        polys = POLY.setWinding(polys, cutdir, false);
         function newSliceOut(z) {
             let slice = newSlice(z);
             sliceAll.push(slice);
             sliceOut.push(slice);
             return slice;
         }
+        let shadows = {};
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             let nested = POLY.nest(polys);
             for (let poly of nested) {
                 for (let z of zs) {
+                    let shadow = shadows[z] || CAM.shadowAt(widget, z);
+                    shadows[z] = shadow;
+                    let clip = [];
+                    POLY.subtract([poly], shadow, clip);
                     let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
-                    POLY.offset([ poly ], -toolOver, {
+                    POLY.offset(clip, -toolOver, {
                         count:999, outs: slice.camLines = [], flat:true, z
                     });
                     if (tabs) {
@@ -981,15 +972,24 @@ class OpPocket extends CamOp {
                 }
             }
         }
-        // connect selected segments if open and touching
-        polys = healPolys(polys);
-        let zmap = {};
-        for (let poly of polys) {
-            let z = poly.getZ();
-            (zmap[z] = zmap[z] || []).push(poly);
-        }
-        for (let [zv, polys] of Object.entries(zmap)) {
-            clearZ(polys, parseFloat(zv), down);
+        let polys = [];
+        let vert = widget.getVertices().array.map(v => v.round(4));
+        for (let surface of op.surfaces[widget.id] || []) {
+            let outline = [];
+            let faces = CAM.surface_find(widget, [surface]);
+            let zmin = Infinity;
+            for (let face of faces) {
+                let i = face * 9;
+                outline.push(newPolygon()
+                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+                );
+            }
+            outline = POLY.union(outline, undefined, true);
+            outline = POLY.setWinding(outline, cutdir, false);
+            outline = healPolys(outline);
+            clearZ(outline, zmin, down);
         }
     }
 

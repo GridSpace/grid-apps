@@ -44,7 +44,7 @@ kiri.load(api => {
                     // delete this face group
                     delete surfaces[root];
                     CAM.surface_show(widget);
-                    ondone(Object.keys(surfaces));
+                    ondone(Object.keys(surfaces).map(v => parseInt(v)));
                     return;
                 }
             }
@@ -53,7 +53,7 @@ kiri.load(api => {
                     surfaces[face] = faces;
                     CAM.surface_show(widget);
                 }
-                ondone(Object.keys(surfaces));
+                ondone(Object.keys(surfaces).map(v => parseInt(v)));
             });
         };
 
