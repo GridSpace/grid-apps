@@ -987,7 +987,7 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     slice.output()
-                        .setLayer("pocket cut", {line: 0xaa00aa}, false)
+                        .setLayer("pocket", {line: 0xaa00aa}, false)
                         .addPolys(slice.camLines)
                     if (false) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
