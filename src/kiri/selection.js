@@ -291,8 +291,8 @@ const selection = api.selection = {
     remove(w)   { return selectedMeshes.remove(w.mesh) },
     count()     { return selectedMeshes.length },
     contains(w) { return selectedMeshes.indexOf(w.mesh) >= 0 },
-    enable()    { selection.setDisabled(false) },
-    disable()   { selection.setDisabled(true) },
+    enable()    { setDisabled(false) },
+    disable()   { setDisabled(true) },
     opacity()   { api.widgets.opacity(...arguments) },
     meshes()    { return selectedMeshes.slice() },
 };
