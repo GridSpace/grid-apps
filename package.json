@@ -21,7 +21,7 @@
         "slicer"
     ],
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.15.4",
+        "@fortawesome/fontawesome-free": "^6.1.1",
         "@tweenjs/tween.js": "^16.6.0",
         "base64-js": "^1.5.1",
         "buffer-crc32": "^0.2.13",
