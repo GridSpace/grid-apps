@@ -1,7 +1,7 @@
 {
-    "deviceName": "IMADE3D JellyBOX Original Nozzle.4",
-    "bedWidth": 170,
-    "bedDepth": 145,
+    "deviceName": "IMADE3D JellyBOX3 Nozzle.4",
+    "bedWidth": 180,
+    "bedDepth": 165,
     "maxHeight": 140,
     "mode": "FDM",
     "new": false,
