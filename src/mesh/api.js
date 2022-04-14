@@ -420,12 +420,12 @@ const tool = {
         });
     },
 
-    mapFaces(models) {
+    mapFaces(models, opt = {}) {
         models = fallback(models);
         api.log.emit('mapping faces').pin();
         let promises = [];
         for (let m of models) {
-            let p = worker.model_mapFaces({ id: m.id }).then(data => {
+            let p = worker.model_mapFaces({ id: m.id, opt }).then(data => {
                 // console.log({map_info: data});
             });
             promises.push(p);

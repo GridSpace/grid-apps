@@ -104,9 +104,9 @@ mesh.tool = class MeshTool {
         this.vertices = this.checkVertices(vertices, 3);
         const normals = this.normals = [];
         const sides = this.sides = [];
-        const _va = new THREE.Vector3();
-        const _vb = new THREE.Vector3();
-        const _vc = new THREE.Vector3();
+        const _va = new Vector3();
+        const _vb = new Vector3();
+        const _vc = new Vector3();
         for (let i=0, l=vertices.length; i<l; ) {
             _va.set(vertices[i++], vertices[i++], vertices[i++]);
             _vb.set(vertices[i++], vertices[i++], vertices[i++]);
@@ -141,6 +141,98 @@ mesh.tool = class MeshTool {
             face++;
         }
         return this;
+    }
+
+    // combines generatedFaces() and generateFaceMap()
+    // face record: vi1, vi2, vi3, nx, ny, nz
+    // vi = vertex index
+    // n = normal
+    // af = adjacent face index
+    index(vertices) {
+        const prec = this.precision;
+        const vcount = vertices.length / 3;
+        const fcount = vcount / 3;
+        const vround = vertices.map(v => (v * prec) | 0);
+        // new compressed vertex array
+        const verts = [];
+        // new compressed normals array
+        const norms = [];
+        // side records [ fcount, f1, f2 ]
+        const sides = new Uint32Array(fcount * 3);
+        // side extended records when face count exceeds 2 (bad mesh)
+        const sideExt = {};
+        // face record array [ v0, v1, v2, ni, s0, s1, s2 ]
+        const faces = new Uint32Array(fcount * 7);
+        // vertex key to vertex index
+        const vimap = {};
+        // normal key to normal index
+        const nimap = {};
+        // side key to side index
+        const simap = {};
+        // tmp face vertex indices
+        const vinds = [ 0, 0, 0 ];
+        // tmp vector array
+        const vects = [ new Vector3(), new Vector3(), new Vector3() ];
+        // i=vround index, fi=faces record index
+        // vi=vinds index % 3, x,y,z = tmp vars
+        // fn=next face index, vn=next vertex index, sn=next side index
+        for (let i=0, l=vround.length, fn=0, vn=0, sn=0, fi=0, vi=0, x, y, z; i<l; ) {
+            // create unique vertex map
+            vects[vi].set(x = vround[i++], y = vround[i++], z = vround[i++]);
+            let key = [ x, y, z ].join(',');
+            // vertex index
+            let vid = vimap[key];
+            if (vid === undefined) {
+                vid = vimap[key] = vn++;
+                verts.push(x / prec, y / prec, z / prec);
+            }
+            vinds[vi++] = vid;
+            // completed record for a face
+            if (vi === 3) {
+                // create indexed unique normal map
+                const vn = THREE.computeFaceNormal(...vects);
+                const vnk = [ vn.x, vn.y, vn.z ].map(v => (v * prec) | 0).join(',');
+                let vni = nimap[vnk];
+                if (vni === undefined) {
+                    vni = nimap[vnk] = norms.length / 3;
+                    norms.push(vn.x, vn.y, vn.z);
+                }
+                const [ v0, v1, v2 ] = vinds;
+                // create consistent side order for index key
+                const s0 = (v0 < v1 ? [ v0, v1 ] : [ v1, v0 ]).join(',');
+                const s1 = (v1 < v2 ? [ v1, v2 ] : [ v2, v1 ]).join(',');
+                const s2 = (v2 < v0 ? [ v2, v0 ] : [ v0, v2 ]).join(',');
+                const vv = [ v0, v1, v1, v2, v2, v0 ];
+                // store face indexes into sdrec array for each side
+                const smap = [ s0, s1, s2 ].map(key => {
+                    let sid = simap[key];
+                    if (sid === undefined) {
+                        sid = simap[key] = sn++;
+                    }
+                    let sdoff = sid * 3;
+                    let sdcnt = ++sides[sdoff];
+                    if (sdcnt > 2) {
+                        (sideExt[sid] = sideExt[sid] || [ sides[sdoff + 1], sides[sdoff + 2] ]).push(fn);
+                    } else {
+                        sides[sdoff + sdcnt] = fn;
+                    }
+                    return sid;
+                });
+                faces[fi++] = v0;
+                faces[fi++] = v1;
+                faces[fi++] = v2;
+                faces[fi++] = vni;
+                faces[fi++] = smap[0];
+                faces[fi++] = smap[1];
+                faces[fi++] = smap[2];
+                vi = 0;
+                fn++;
+            }
+        }
+        this.indexed = {
+            faces, verts, norms, sides, sideExt
+        };
+        // console.log({ fcount, faces, sides, sideExt, norms, vround, verts });
     }
 
     getAdjacentFaces(face) {

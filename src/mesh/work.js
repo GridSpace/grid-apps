@@ -95,6 +95,19 @@ function mapFaces(id) {
     return tool;
 }
 
+function indexFaces(id) {
+    let rec = cache[id];
+    let { geo, tool } = rec;
+    if (!tool) {
+        tool = rec.tool = new mesh.tool();
+    }
+    if (!tool.normals) {
+        log(`${id} | indexing mesh`);
+        tool.index(geo.attributes.position.array);
+    }
+    return tool;
+}
+
 let model = {
     load(data) {
         let { vertices, name, id } = data;
@@ -280,8 +293,8 @@ let model = {
     },
 
     mapFaces(data) {
-        let { id } = data;
-        let tool = mapFaces(id);
+        let { id, opt } = data;
+        let tool = opt.index ? indexFaces(id) : mapFaces(id);
         return { mapped: true };
     },
 
