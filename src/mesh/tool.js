@@ -149,20 +149,17 @@ mesh.tool = class MeshTool {
     // n = normal
     // af = adjacent face index
     index(vertices) {
+        this.vertices = this.checkVertices(vertices, 3);
         const prec = this.precision;
         const vcount = vertices.length / 3;
         const fcount = vcount / 3;
         const vround = vertices.map(v => (v * prec) | 0);
-        // new compressed vertex array
-        const verts = [];
-        // new compressed normals array
-        const norms = [];
         // side records [ fcount, f1, f2 ]
         const sides = new Uint32Array(fcount * 3);
         // side extended records when face count exceeds 2 (bad mesh)
         const sideExt = {};
-        // face record array [ v0, v1, v2, ni, s0, s1, s2 ]
-        const faces = new Uint32Array(fcount * 7);
+        // face record array [ ni, s0, s1, s2 ]
+        const faces = new Float32Array(fcount * 6);
         // vertex key to vertex index
         const vimap = {};
         // normal key to normal index
@@ -184,25 +181,17 @@ mesh.tool = class MeshTool {
             let vid = vimap[key];
             if (vid === undefined) {
                 vid = vimap[key] = vn++;
-                verts.push(x / prec, y / prec, z / prec);
             }
             vinds[vi++] = vid;
             // completed record for a face
             if (vi === 3) {
                 // create indexed unique normal map
-                const vn = THREE.computeFaceNormal(...vects);
-                const vnk = [ vn.x, vn.y, vn.z ].map(v => (v * prec) | 0).join(',');
-                let vni = nimap[vnk];
-                if (vni === undefined) {
-                    vni = nimap[vnk] = norms.length / 3;
-                    norms.push(vn.x, vn.y, vn.z);
-                }
+                const cfn = THREE.computeFaceNormal(...vects);
                 const [ v0, v1, v2 ] = vinds;
                 // create consistent side order for index key
                 const s0 = (v0 < v1 ? [ v0, v1 ] : [ v1, v0 ]).join(',');
                 const s1 = (v1 < v2 ? [ v1, v2 ] : [ v2, v1 ]).join(',');
                 const s2 = (v2 < v0 ? [ v2, v0 ] : [ v0, v2 ]).join(',');
-                const vv = [ v0, v1, v1, v2, v2, v0 ];
                 // store face indexes into sdrec array for each side
                 const smap = [ s0, s1, s2 ].map(key => {
                     let sid = simap[key];
@@ -218,10 +207,9 @@ mesh.tool = class MeshTool {
                     }
                     return sid;
                 });
-                faces[fi++] = v0;
-                faces[fi++] = v1;
-                faces[fi++] = v2;
-                faces[fi++] = vni;
+                faces[fi++] = cfn.x;
+                faces[fi++] = cfn.y;
+                faces[fi++] = cfn.z;
                 faces[fi++] = smap[0];
                 faces[fi++] = smap[1];
                 faces[fi++] = smap[2];
@@ -230,9 +218,8 @@ mesh.tool = class MeshTool {
             }
         }
         this.indexed = {
-            faces, verts, norms, sides, sideExt
+            faces, sides, sideExt
         };
-        // console.log({ fcount, faces, sides, sideExt, norms, vround, verts });
     }
 
     getAdjacentFaces(face) {
