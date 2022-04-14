@@ -424,6 +424,7 @@ const tool = {
         models = fallback(models);
         api.log.emit('mapping faces').pin();
         let promises = [];
+        // let mark = Date.now();
         for (let m of models) {
             let p = worker.model_mapFaces({ id: m.id, opt }).then(data => {
                 // console.log({map_info: data});
@@ -432,6 +433,7 @@ const tool = {
         }
         Promise.all(promises).then(() => {
             api.log.emit('mapping complete').unpin();
+            // api.log.emit(`... time = ${Date.now() - mark}`);
         });
     },
 

@@ -107,7 +107,7 @@ mesh.tool = class MeshTool {
         const _va = new Vector3();
         const _vb = new Vector3();
         const _vc = new Vector3();
-        for (let i=0, l=vertices.length; i<l; ) {
+        for (let i=0, ni=0, l=vertices.length; i<l; ) {
             _va.set(vertices[i++], vertices[i++], vertices[i++]);
             _vb.set(vertices[i++], vertices[i++], vertices[i++]);
             _vc.set(vertices[i++], vertices[i++], vertices[i++]);
@@ -154,11 +154,13 @@ mesh.tool = class MeshTool {
         const vcount = vertices.length / 3;
         const fcount = vcount / 3;
         const vround = vertices.map(v => (v * prec) | 0);
-        // side records [ fcount, f1, f2 ]
-        const sides = new Uint32Array(fcount * 3);
+        // side records [ vi0, vi1, fn1, fn2 ]
+        const sides = new Uint32Array(fcount * 4);
+        // map of side index to face count
+        const srecs = {};
         // side extended records when face count exceeds 2 (bad mesh)
         const sideExt = {};
-        // face record array [ ni, s0, s1, s2 ]
+        // face record array [ nx, ny, nz, sn0, sn1, sn2 ]
         const faces = new Float32Array(fcount * 6);
         // vertex key to vertex index
         const vimap = {};
@@ -168,20 +170,24 @@ mesh.tool = class MeshTool {
         const simap = {};
         // tmp face vertex indices
         const vinds = [ 0, 0, 0 ];
+        // tmp face raw vertex offset
+        const viraw = [ 0, 0, 0 ];
         // tmp vector array
         const vects = [ new Vector3(), new Vector3(), new Vector3() ];
         // i=vround index, fi=faces record index
         // vi=vinds index % 3, x,y,z = tmp vars
         // fn=next face index, vn=next vertex index, sn=next side index
         for (let i=0, l=vround.length, fn=0, vn=0, sn=0, fi=0, vi=0, x, y, z; i<l; ) {
+            const vroot = i;
             // create unique vertex map
             vects[vi].set(x = vround[i++], y = vround[i++], z = vround[i++]);
-            let key = [ x, y, z ].join(',');
+            let key = x + ',' + y + ',' + z;
             // vertex index
             let vid = vimap[key];
             if (vid === undefined) {
                 vid = vimap[key] = vn++;
             }
+            viraw[vi] = vroot;
             vinds[vi++] = vid;
             // completed record for a face
             if (vi === 3) {
@@ -189,21 +195,31 @@ mesh.tool = class MeshTool {
                 const cfn = THREE.computeFaceNormal(...vects);
                 const [ v0, v1, v2 ] = vinds;
                 // create consistent side order for index key
-                const s0 = (v0 < v1 ? [ v0, v1 ] : [ v1, v0 ]).join(',');
-                const s1 = (v1 < v2 ? [ v1, v2 ] : [ v2, v1 ]).join(',');
-                const s2 = (v2 < v0 ? [ v2, v0 ] : [ v0, v2 ]).join(',');
+                const s0 = (v0 < v1 ? v0 + "," + v1 : v1 + ","  +v0);
+                const s1 = (v1 < v2 ? v1 + "," + v2 : v2 + ","  +v1);
+                const s2 = (v2 < v0 ? v2 + "," + v0 : v0 + ","  +v2);
+                // for storing raw vertex offset in side record
+                const [ vr0, vr1, vr2 ] = viraw;
+                const vv = [ vr0, vr1, vr1, vr2, vr2, vr0 ];
                 // store face indexes into sdrec array for each side
-                const smap = [ s0, s1, s2 ].map(key => {
-                    let sid = simap[key];
+                const smap = [ s0, s1, s2 ].map((key,ki) => {
+                    let sid = simap[key], sdoff, sdcnt;
                     if (sid === undefined) {
                         sid = simap[key] = sn++;
-                    }
-                    let sdoff = sid * 3;
-                    let sdcnt = ++sides[sdoff];
-                    if (sdcnt > 2) {
-                        (sideExt[sid] = sideExt[sid] || [ sides[sdoff + 1], sides[sdoff + 2] ]).push(fn);
+                        sdcnt = srecs[sid] = 1;
+                        sdoff = sid * 4;
+                        sides[sdoff] = vv[ki * 2];
+                        sides[sdoff + 1] = vv[ki * 2 + 1];
                     } else {
-                        sides[sdoff + sdcnt] = fn;
+                        sdoff = sid * 4;
+                        sdcnt = ++srecs[sid];
+                    }
+                    if (sdcnt > 2) {
+                        (sideExt[sid] = sideExt[sid] ||
+                            [ sides[sdoff], sides[sdoff + 1], sides[sdoff + 2], sides[sdoff + 3] ]
+                        ).push(fn);
+                    } else {
+                        sides[sdoff + sdcnt + 1] = fn;
                     }
                     return sid;
                 });
@@ -220,6 +236,7 @@ mesh.tool = class MeshTool {
         this.indexed = {
             faces, sides, sideExt
         };
+        // console.log(this.indexed);
     }
 
     getAdjacentFaces(face) {
