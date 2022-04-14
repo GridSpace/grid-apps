@@ -405,6 +405,7 @@ const tool = {
         api.log.emit('isolating bodies').pin();
         let promises = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
+        let mark = Date.now();
         for (let m of models) {
             let p = worker.model_isolate({ id: m.id }).then(bodies => {
                 bodies = bodies.map(vert => new mesh.model({
@@ -417,23 +418,24 @@ const tool = {
         }
         Promise.all(promises).then(() => {
             api.log.emit('isolation complete').unpin();
+            // api.log.emit(`... isolate time = ${Date.now() - mark}`);
         });
     },
 
-    mapFaces(models, opt = {}) {
+    indexFaces(models, opt = {}) {
         models = fallback(models);
         api.log.emit('mapping faces').pin();
         let promises = [];
         let mark = Date.now();
         for (let m of models) {
-            let p = worker.model_mapFaces({ id: m.id, opt }).then(data => {
+            let p = worker.model_indexFaces({ id: m.id, opt }).then(data => {
                 // console.log({map_info: data});
             });
             promises.push(p);
         }
         Promise.all(promises).then(() => {
             api.log.emit('mapping complete').unpin();
-            api.log.emit(`... map time = ${Date.now() - mark}`);
+            // api.log.emit(`... index time = ${Date.now() - mark}`);
         });
     },
 
@@ -508,7 +510,7 @@ const mode = {
 
     check() {
         if (prefs.map.mode === modes.surface) {
-            tool.mapFaces();
+            tool.indexFaces();
         }
     },
 

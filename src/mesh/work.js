@@ -77,22 +77,9 @@ function analyze(id, opt = {}) {
 }
 
 function isolateBodies(id) {
-    let tool = mapFaces(id);
+    let tool = indexFaces(id);
     log(`${id} | isolating bodies`);
     return tool.isolateBodies();
-}
-
-function mapFaces(id) {
-    let rec = cache[id];
-    let { geo, tool } = rec;
-    if (!tool) {
-        tool = rec.tool = new mesh.tool();
-    }
-    if (!tool.normals) {
-        log(`${id} | generating face map`);
-        tool.generateFaceMap(geo.attributes.position.array);
-    }
-    return tool;
 }
 
 function indexFaces(id) {
@@ -101,7 +88,7 @@ function indexFaces(id) {
     if (!tool) {
         tool = rec.tool = new mesh.tool();
     }
-    if (!tool.normals) {
+    if (!tool.indexed) {
         log(`${id} | indexing mesh`);
         tool.index(geo.attributes.position.array);
     }
@@ -292,9 +279,9 @@ let model = {
         };
     },
 
-    mapFaces(data) {
+    indexFaces(data) {
         let { id, opt } = data;
-        let tool = opt.index ? indexFaces(id) : mapFaces(id);
+        let tool = indexFaces(id);
         return { mapped: true };
     },
 
@@ -350,7 +337,7 @@ let model = {
         }
         // if the geometry has indexed faces and radians are set, find surface
         const tool = rec.tool;
-        if (tool && tool.sides && radians) {
+        if (tool && tool.indexed && radians) {
             const match = tool.findConnectedSurface(faces, radians, filterZ);
             return { faces: match, edges, verts, point };
         }
