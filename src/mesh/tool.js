@@ -32,6 +32,13 @@ mesh.tool = class MeshTool {
         return vertices;
     }
 
+    getIndex() {
+        if (!this.indexed) {
+            throw "missing index";
+        }
+        return this.indexed;
+    }
+
     /**
      * @param {number[]} vertices non-indexed
      */
@@ -196,10 +203,7 @@ mesh.tool = class MeshTool {
     }
 
     getAdjacentFaces(face) {
-        if (!this.indexed) {
-            throw "missing index";
-        }
-        const { faces, sides } = this.indexed;
+        const { faces, sides } = this.getIndex();
         const foff = face * 6;
         const s0 = faces[foff + 3];
         const s1 = faces[foff + 4];
@@ -221,10 +225,7 @@ mesh.tool = class MeshTool {
 
     // depends on generateFaceMap() being run first
     findConnectedSurface(faces, radians, filterZ, found = {}) {
-        if (!this.indexed) {
-            throw "missing index";
-        }
-        const norms = this.indexed.faces;
+        const norms = this.getIndex().faces;
         if (filterZ) {
             // optional filter to z normal >= value
             faces = faces.filter(f => norms[f * 6 + 2] >= filterZ);
@@ -259,7 +260,82 @@ mesh.tool = class MeshTool {
                 }
             }
         }
+        this.generateOutlines(faces);
         return faces;
+    }
+
+    generateOutlines(list) {
+        const { faces, sides } = this.getIndex();
+        const prec = this.precision;
+        const verts = this.vertices;
+        const lines = {};
+        const point = {};
+        const pindx = {};
+        let pnext = 0;
+        function vert2point(v) {
+            const x = verts[v];
+            const y = verts[v + 1];
+            const z = verts[v + 2];
+            const key = ((x * prec) | 0) + ',' + ((y * prec) | 0) + ',' + ((z * prec) | 0);
+            const rec = point[key];
+            if (rec === undefined) {
+                pindx[pnext] = { x, y, z, to: [] };
+                return point[key] = pnext++;
+            } else {
+                return rec;
+            }
+        }
+        function addLine(s) {
+            if (s === empty) return;
+            const v0 = vert2point(sides[s * 4]);
+            const v1 = vert2point(sides[s * 4 + 1]);
+            const key = v0 < v1 ? v0 + ',' + v1 : v1 +',' + v0;
+            const rec = lines[key];
+            if (rec) {
+                rec.del = true;
+            } else {
+                lines[key] = { v0, v1 };
+            }
+        }
+        for (let face of list) {
+            const foff = face * 6;
+            addLine(faces[foff + 3]);
+            addLine(faces[foff + 4]);
+            addLine(faces[foff + 5]);
+        }
+        const pairs = Object.values(lines).filter(l => !l.del);
+        for (let line of pairs) {
+            const { v0, v1 } = line;
+            const p0 = pindx[v0];
+            const p1 = pindx[v1];
+            p0.to.push(v1);
+            p1.to.push(v0);
+        }
+        let curr;
+        let outs = [ ];
+        for (let prec of Object.values(pindx)) {
+            if (prec.used || prec.to.length === 0) continue;
+            outs.push(curr = []);
+            while (prec) {
+                let { to, x, y, z } = prec;
+                if (to.length < 2) {
+                    throw `invalid to ${to.length} @ ${x},${y},${z}`;
+                }
+                prec.used = true;
+                curr.push({ x, y, z });
+                const t0 = pindx[to[0]];
+                const t1 = pindx[to[1]];
+                if (!t0.used) {
+                    prec = t0;
+                } else if (!t1.used) {
+                    prec = t1;
+                } else {
+                    prec = undefined;
+                }
+            }
+        }
+        // console.log({lines, pairs, pindx, outs});
+        return outs;
     }
 
     // depends on generateFaceMap() being run first
