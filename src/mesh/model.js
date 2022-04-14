@@ -529,14 +529,32 @@ mesh.model = class MeshModel extends mesh.object {
 
     selectFaces(list = [], action = {}) {
         let faces = this.sel.faces;
-        for (let t of list) {
-            if (action.toggle) {
-                faces.remove(t) || faces.addOnce(t);
-            } else if (action.clear) {
-                faces.remove(t);
-            } else if (action.select) {
-                faces.addOnce(t);
+        let map = {};
+        for (let f of list) {
+            map[f] = f;
+        }
+        if (action.toggle) {
+            faces = faces.filter(f => {
+                if (map[f] !== undefined) {
+                    map[f] = undefined;
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            faces.appendAll(Object.entries(map).filter(kv => {
+                return kv[1] !== undefined;
+            }).map(kv => {
+                return kv[1];
+            }));
+            this.sel.faces = faces;
+        } else if (action.clear) {
+            this.sel.faces = faces.filter(f => map[f] === undefined);
+        } else if (action.select) {
+            for (let f of faces) {
+                map[f] = undefined;
             }
+            faces.appendAll(Object.values(map).filter(f => f !== undefined));
         }
     }
 
@@ -576,9 +594,11 @@ mesh.model = class MeshModel extends mesh.object {
             timer = undefined;
             mesh.api.log.emit("matching surface").pin();
         }, 150);
+        // let mark = Date.now();
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, surface
         }).then(data => {
+            // mesh.api.log.emit(`... data time = ${Date.now() - mark}`); mark = Date.now();
             if (timer) {
                 clearTimeout(timer);
             }
@@ -586,11 +606,13 @@ mesh.model = class MeshModel extends mesh.object {
             // console.log({data});
             // this.toggleSelectedVertices(verts);
             this.selectFaces(faces, action);
+            // mesh.api.log.emit(`... select time = ${Date.now() - mark}`); mark = Date.now();
             this.updateSelections();
             if (!timer) {
                 mesh.api.log.emit("surface match complete").unpin();
                 moto.space.refresh();
             }
+            // mesh.api.log.emit(`... paint time = ${Date.now() - mark}`);
         });
     }
 

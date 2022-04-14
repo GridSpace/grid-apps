@@ -9,6 +9,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 ## Kiri:moto
 
 * `C` added batch processing to object adds/removes to speedup complex workspace restore
+* `C` substitute some prusa slicer [variables] with KM {variables} on import
 * `C` fix CAM output order for tool changes an spindle speed updates
 * `I` add CAM pocket operation using surface selection
 * `-` refactor cnc to use new core slicer engine
@@ -16,6 +17,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Mesh:Tool
 
+* `C` significant speed-up for large surface selections
 * `C` multi-body identification and isolation
 * `-` parameterize svg and image import
 

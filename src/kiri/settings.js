@@ -618,6 +618,11 @@ function settingsImportZip(data, ask) {
 function settingsPrusaConvert(data) {
     const { uc } = api;
     const map = {};
+    const vsub = {
+        '[first_layer_bed_temperature]': '{bed_temp}',
+        '[first_layer_temperature]': '{temp}',
+        '[layer_z]': '{z}'
+    };
     try {
         data.split('\n')
             .filter(l => l.charAt(0) !== '#')
@@ -625,7 +630,13 @@ function settingsPrusaConvert(data) {
             .map(l => {
                 // convert gcode string into a string array
                 if (l[0].indexOf('_gcode') > 0) {
-                    l[1] = l[1].replaceAll('\\n','\n').split('\n');
+                    l[1] = l[1].replaceAll('\\n','\n').split('\n')
+                        .map(line => {
+                            for (let [k,v] of Object.entries(vsub)) {
+                                line = line.replace(k,v);
+                            }
+                            return line;
+                        });
                 }
                 return l;
             })

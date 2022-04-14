@@ -200,7 +200,7 @@ mesh.tool = class MeshTool {
                 const s2 = (v2 < v0 ? v2 + "," + v0 : v0 + ","  +v2);
                 // for storing raw vertex offset in side record
                 const [ vr0, vr1, vr2 ] = viraw;
-                const vv = [ vr0, vr1, vr1, vr2, vr2, vr0 ];
+                // const vv = [ vr0, vr1, vr1, vr2, vr2, vr0 ];
                 // store face indexes into sdrec array for each side
                 const smap = [ s0, s1, s2 ].map((key,ki) => {
                     let sid = simap[key], sdoff, sdcnt;
@@ -208,8 +208,10 @@ mesh.tool = class MeshTool {
                         sid = simap[key] = sn++;
                         sdcnt = srecs[sid] = 1;
                         sdoff = sid * 4;
-                        sides[sdoff] = vv[ki * 2];
-                        sides[sdoff + 1] = vv[ki * 2 + 1];
+                        // sides[sdoff] = vv[ki * 2];
+                        // sides[sdoff + 1] = vv[ki * 2 + 1];
+                        sides[sdoff] = viraw[ki];
+                        sides[sdoff + 1] = viraw[(ki + 1) % 3];
                     } else {
                         sdoff = sid * 4;
                         sdcnt = ++srecs[sid];
@@ -236,7 +238,7 @@ mesh.tool = class MeshTool {
         this.indexed = {
             faces, sides, sideExt
         };
-        // console.log(this.indexed);
+        console.log(this.indexed);
     }
 
     getAdjacentFaces(face) {
