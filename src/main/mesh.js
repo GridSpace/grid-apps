@@ -19,7 +19,7 @@ const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
 
-const version = '1.1.0';
+const version = '1.2.0';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
@@ -528,6 +528,7 @@ function set_darkmode(dark) {
             colorMinor: 0xeeeeee,
         },
     });
+    mesh.api.updateFog();
     platform.setSize();
     for (let m of model.list()) {
         m.normals({ refresh: true });

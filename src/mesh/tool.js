@@ -108,7 +108,7 @@ mesh.tool = class MeshTool {
         return this;
     }
 
-    // combines generatedFaces() and generateFaceMap()
+    // todo: supercede generatedFaces() for patch()
     // face record: vi1, vi2, vi3, nx, ny, nz
     // vi = vertex index
     // n = normal
@@ -223,7 +223,7 @@ mesh.tool = class MeshTool {
         return farr;
     }
 
-    // depends on generateFaceMap() being run first
+    // depends on index() being run first
     findConnectedSurface(faces, radians, filterZ, found = {}) {
         const norms = this.getIndex().faces;
         if (filterZ) {
@@ -260,10 +260,11 @@ mesh.tool = class MeshTool {
                 }
             }
         }
-        this.generateOutlines(faces);
         return faces;
     }
 
+    // given a list of faces (indices), return an array of closed
+    // polylines that represent the outlines of each discrete island
     generateOutlines(list) {
         const { faces, sides } = this.getIndex();
         const prec = this.precision;
@@ -338,7 +339,7 @@ mesh.tool = class MeshTool {
         return outs;
     }
 
-    // depends on generateFaceMap() being run first
+    // depends on index() being run first
     isolateBodies() {
         const verts = this.checkVertices(this.vertices);
         const bodies = [];
