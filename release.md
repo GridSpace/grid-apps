@@ -17,6 +17,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Mesh:Tool
 
+* `C` auto-fog in wireframe view to aid close mesh inspections
 * `C` significant speed-up for large surface selections
 * `C` multi-body identification and isolation
 * `-` parameterize svg and image import
