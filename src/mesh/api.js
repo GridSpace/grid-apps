@@ -120,6 +120,7 @@ const selection = {
             group.wireframe(prefs.map.space.wire || false);
             group.normals(prefs.map.space.norm || false);
         }
+        api.updateFog();
         // prevent selection of model and its group
         let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
         selected = selected.filter(sel => !mgsel.contains(sel)).filter(v => v);
@@ -647,7 +648,8 @@ const api = exports({
     },
 
     wireframe(state = {toggle:true}, opt = { }) {
-        let wire = prefs.map.space.wire;
+        const mspace = prefs.map.space;
+        let wire = mspace.wire;
         if (state.toggle) {
             wire = !wire;
         } else {
@@ -656,7 +658,17 @@ const api = exports({
         for (let m of model.list()) {
             m.wireframe(wire, opt);
         }
-        prefs.save( prefs.map.space.wire = wire );
+        prefs.save( mspace.wire = wire );
+        api.updateFog();
+    },
+
+    updateFog() {
+        const mspace = prefs.map.space;
+        if (mspace.wire) {
+            space.scene.setFog(3, mspace.dark ? 0 : 0xffffff);
+        } else {
+            space.scene.setFog(false);
+        }
     },
 
     normals(state = {toggle:true}) {

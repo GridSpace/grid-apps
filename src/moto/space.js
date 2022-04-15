@@ -1044,7 +1044,26 @@ gapp.register("moto.space", [], (root, exports) => {
                 return SCENE.remove(o);
             },
 
-            active: updateLastAction
+            active: updateLastAction,
+
+            setFog: function(mult, color) {
+                if (mult) {
+                    SCENE.fog = new THREE.Fog(color, 100, 1000);
+                    SCENE.fog.mult = mult > 0 ? mult : 3;
+                } else {
+                    SCENE.fog = undefined;
+                }
+                Space.scene.updateFog();
+            },
+
+            updateFog: function() {
+                const { fog } = SCENE;
+                if (fog) {
+                    const dist = camera.position.distanceTo(viewControl.target);
+                    fog.near = dist;
+                    fog.far = dist * fog.mult;
+                }
+            }
         },
 
         world: {
@@ -1230,6 +1249,7 @@ gapp.register("moto.space", [], (root, exports) => {
                 if (moved && platformOnMove) {
                     clearTimeout(platformMoveTimer);
                     platformMoveTimer = setTimeout(platformOnMove, 500);
+                    Space.scene.updateFog();
                 }
                 updateLastAction();
             }, (val) => {
