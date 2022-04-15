@@ -81,7 +81,7 @@ kiri.load(api => {
         CAM.surface_prep = function(widget) {
             if (!widget.tool) {
                 let tool = widget.tool = new mesh.tool();
-                tool.generateFaceMap(widget.getVertices().array);
+                tool.index(widget.getVertices().array);
             }
         };
 
