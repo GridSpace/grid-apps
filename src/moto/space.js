@@ -1063,6 +1063,9 @@ gapp.register("moto.space", [], (root, exports) => {
                     fog.near = dist;
                     fog.far = dist * fog.mult;
                 }
+                // todo: option to clip for close views
+                // camera.near = dist / 2;
+                // camera.updateProjectionMatrix();
             }
         },
 

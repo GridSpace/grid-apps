@@ -602,7 +602,7 @@ const api = exports({
     },
 
     version() {
-        window.location = "/choose";
+        window.location = "/choose?back";
     },
 
     clear() {

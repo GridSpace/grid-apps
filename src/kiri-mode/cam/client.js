@@ -73,8 +73,7 @@ CAM.init = function(kiri, api) {
         updateStock(undefined, 'internal');
         UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
-            func.tabClear();
-            func.traceDone();
+            func.clearPops();
             UI.label.slice.innerText = LANG.slice;
             UI.label.preview.innerText = LANG.preview;
             UI.label.export.innerText = LANG.export;
@@ -90,9 +89,7 @@ CAM.init = function(kiri, api) {
         isArrange = (mode === VIEWS.ARRANGE);
         isAnimate = false;
         CAM.animate_clear(api);
-        func.tabDone();
-        func.traceDone();
-        func.opRender();
+        func.clearPops();
     });
 
     api.event.on("settings.saved", (settings) => {

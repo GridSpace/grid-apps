@@ -21,6 +21,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * `C` significant speed-up for large surface selections
 * `C` multi-body identification and isolation
 * `-` parameterize svg and image import
+* `-` control wireframe transparency
+* `-` show camera focal point
 
 
 # Release 3.3 (2022-04-01)
