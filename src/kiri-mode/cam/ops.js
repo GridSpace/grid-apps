@@ -969,6 +969,7 @@ class OpPocket extends CamOp {
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             if (expand) polys = POLY.offset(polys, expand);
+            let zpro = 0, zinc = pinc / (polys.length *  zs.length);
             for (let poly of polys) {
                 genShadows(zs);
                 for (let z of zs) {
@@ -992,15 +993,18 @@ class OpPocket extends CamOp {
                     if (false) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
+                    progress(prog + (zpro += zinc), "pocket");
                 }
             }
         }
-        let polys = [];
+        let surfaces = op.surfaces[widget.id];
         let vert = widget.getVertices().array.map(v => v.round(4));
-        for (let surface of op.surfaces[widget.id] || []) {
+        let prog = 0, pinc= 1 / surfaces.length;
+        for (let surface of surfaces || []) {
             let outline = [];
             let faces = CAM.surface_find(widget, [surface]);
             let zmin = Infinity;
+            let j=0, k=faces.length;
             for (let face of faces) {
                 let i = face * 9;
                 outline.push(newPolygon()
@@ -1016,18 +1020,20 @@ class OpPocket extends CamOp {
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
             clearZ(outline, zmin, down);
+            progress(prog += pinc, "pocket");
         }
     }
 
     prepare(ops, progress) {
-        let { op, state } = this;
-        let { settings } = state;
+        let { op, state, sliceOut } = this;
         let { setTool, setSpindle } = ops;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
-        for (let slice of this.sliceOut) {
+        let i=0, l=sliceOut.length;
+        for (let slice of sliceOut) {
             ops.emitTrace(slice);
+            progress(++i / l, "pocket");
         }
     }
 }
