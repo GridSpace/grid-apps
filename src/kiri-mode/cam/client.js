@@ -1303,7 +1303,7 @@ function updateStock(args, event) {
             let geo = new THREE.BoxGeometry(1, 1, 1);
             let mat = new THREE.MeshBasicMaterial({
                 color: 0x777777,
-                opacity: 0.2,
+                opacity: 0.05,
                 transparent: true,
                 side:THREE.DoubleSide
             });
