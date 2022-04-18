@@ -117,7 +117,7 @@ const selection = {
     update() {
         for (let group of groups) {
             group.select(false);
-            group.wireframe(prefs.map.space.wire || false);
+            group.wireframe(prefs.map.space.wire || false, prefs.map.wireframe.opacity);
             group.normals(prefs.map.space.norm || false);
         }
         api.updateFog();
@@ -569,6 +569,10 @@ const prefs = {
         surface: {
             radians: 0.1,
             radius: 0.2
+        },
+        wireframe: {
+            opacity: 0.4,
+            fog: 3
         }
     },
 
@@ -632,7 +636,7 @@ const api = exports({
         space.view.panTo(center.x, center.z, -center.y, left, up);
     },
 
-    grid(state = {toggle:true}) {
+    grid(state = { toggle:true }) {
         let { platform } = space;
         let { map, save } = prefs;
         if (state.toggle) {
@@ -644,7 +648,7 @@ const api = exports({
         save();
     },
 
-    wireframe(state = {toggle:true}, opt = { }) {
+    wireframe(state = { toggle:true }, opt = { opacity: prefs.map.wireframe.opacity }) {
         const mspace = prefs.map.space;
         let wire = mspace.wire;
         if (state.toggle) {
@@ -661,8 +665,9 @@ const api = exports({
 
     updateFog() {
         const mspace = prefs.map.space;
+        const mwire = prefs.map.wireframe;
         if (mspace.wire) {
-            space.scene.setFog(3, mspace.dark ? 0 : 0xffffff);
+            space.scene.setFog(mwire.fog, mspace.dark ? 0 : 0xffffff);
         } else {
             space.scene.setFog(false);
         }

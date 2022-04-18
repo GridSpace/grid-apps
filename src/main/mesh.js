@@ -565,6 +565,18 @@ function set_surface_radius(radius) {
     prefs.save();
 }
 
+function set_wireframe_opacity(opacity) {
+    let { prefs } = mesh.api;
+    prefs.map.wireframe.opacity = parseFloat(opacity || 0.15);
+    prefs.save();
+}
+
+function set_wireframe_fog(fogx) {
+    let { prefs } = mesh.api;
+    prefs.map.wireframe.fog = parseFloat(fogx || 3);
+    prefs.save();
+}
+
 // bind functions to topics
 broker.listeners({
     edit_split,
@@ -577,7 +589,9 @@ broker.listeners({
     set_normals_color,
     set_normals_length,
     set_surface_radians,
-    set_surface_radius
+    set_surface_radius,
+    set_wireframe_opacity,
+    set_wireframe_fog
 });
 
 // remove version cache bust from url

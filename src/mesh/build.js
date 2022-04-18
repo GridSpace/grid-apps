@@ -223,7 +223,7 @@ api.welcome = function(version = "unknown") {
 api.settings = function() {
     const { util } = mesh;
     const { prefs } = api;
-    const { surface, normals, space } = prefs.map;
+    const { surface, normals, space, wireframe } = prefs.map;
     const { dark } = space;
 
     const col1 = h.div([
@@ -246,7 +246,7 @@ api.settings = function() {
 
     const col2 = h.div([
         h.label(''),
-        h.label('normals'),
+        h.label('normal'),
         h.label('length'),
         h.input({ type: "text", size: 5, value: parseFloat(normals.length),
             onchange: ev => call.set_normals_length(ev.target.value)
@@ -271,7 +271,20 @@ api.settings = function() {
         }),
     ]);
 
-    modal.show('settings', h.div({ class: "settings" }, [ col1, col2, col3 ] ));
+    const col4 = h.div([
+        h.label(''),
+        h.label('wire'),
+        h.label('opacity'),
+        h.input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
+            onchange: ev => call.set_wireframe_opacity(ev.target.value)
+        }),
+        h.label('fog x'),
+        h.input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
+            onchange: ev => call.set_wireframe_fog(ev.target.value)
+        }),
+    ]);
+
+    modal.show('settings', h.div({ class: "settings" }, [ col1, col2, col3, col4 ] ));
 }
 
 // create html elements
