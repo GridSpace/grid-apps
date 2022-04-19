@@ -226,7 +226,7 @@ api.settings = function() {
     const { surface, normals, space, wireframe } = prefs.map;
     const { dark } = space;
 
-    const col1 = h.div([
+    const set1 = h.div([
         h.label('dark mode'),
         h.input({ type: "checkbox",
             onchange: ev => call.set_darkmode(ev.target.checked),
@@ -244,9 +244,20 @@ api.settings = function() {
         }),
     ]);
 
-    const col2 = h.div([
-        h.label(''),
-        h.label('normal'),
+    const set2 = h.div([
+        h.label({ class: "header", _: 'wire'}),
+        h.label('opacity'),
+        h.input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
+            onchange: ev => call.set_wireframe_opacity(ev.target.value)
+        }),
+        h.label('fog x'),
+        h.input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
+            onchange: ev => call.set_wireframe_fog(ev.target.value)
+        }),
+    ]);
+
+    const set3 = h.div([
+        h.label({ class: "header", _: 'normal'}),
         h.label('length'),
         h.input({ type: "text", size: 5, value: parseFloat(normals.length),
             onchange: ev => call.set_normals_length(ev.target.value)
@@ -258,9 +269,8 @@ api.settings = function() {
         }),
     ]);
 
-    const col3 = h.div([
-        h.label(''),
-        h.label('surface'),
+    const set4 = h.div([
+        h.label({ class: "header", _: 'surface'}),
         h.label('radians'),
         h.input({ type: "text", size: 5, value: parseFloat(surface.radians),
             onchange: ev => call.set_surface_radians(ev.target.value)
@@ -271,20 +281,7 @@ api.settings = function() {
         }),
     ]);
 
-    const col4 = h.div([
-        h.label(''),
-        h.label('wire'),
-        h.label('opacity'),
-        h.input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
-            onchange: ev => call.set_wireframe_opacity(ev.target.value)
-        }),
-        h.label('fog x'),
-        h.input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
-            onchange: ev => call.set_wireframe_fog(ev.target.value)
-        }),
-    ]);
-
-    modal.show('settings', h.div({ class: "settings" }, [ col1, col2, col3, col4 ] ));
+    modal.show('settings', h.div({ class: "settings" }, [ set1, set2, set3, set4 ] ));
 }
 
 // create html elements
