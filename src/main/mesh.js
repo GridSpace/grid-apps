@@ -288,39 +288,33 @@ function space_init(data) {
                 case 'KeyX':
                     return api.file.export();
                 case 'KeyD':
-                    if (shiftKey) return api.tool.duplicate();
-                    break;
+                    return shiftKey && api.tool.duplicate();
                 case 'KeyC':
                     return selection.centerXY().focus();
                 case 'KeyF':
                     return selection.floor().focus();
                 case 'KeyM':
-                    if (shiftKey) return api.tool.merge();
-                    return api.tool.mirror();
+                    return shiftKey ? api.tool.merge() : api.tool.mirror();
                 case 'KeyU':
                     return shiftKey && api.tool.union();
                 case 'KeyA':
-                    return shiftKey ? api.tool.analyze() : undefined;
+                    return shiftKey && api.tool.analyze();
                 case 'KeyR':
-                    if (shiftKey) return api.tool.rebuild();
-                    return api.tool.repair();
+                    return shiftKey ? api.tool.rebuild() : api.tool.repair();
                 case 'KeyE':
                     return api.tool.clean();
                 case 'KeyV':
                     return selection.focus();
                 case 'KeyN':
-                    if (shiftKey) return estop(evt, api.tool.rename());
-                    return api.normals();
+                    return shiftKey ? estop(evt, api.tool.rename()) : api.normals();
                 case 'KeyW':
                     return api.wireframe();
                 case 'KeyG':
-                    if (shiftKey) return api.tool.regroup();
-                    return api.grid();
+                    return shiftKey ? api.tool.regroup() : api.grid();
                 case 'KeyL':
                     return api.log.toggle({ spinner: false });
                 case 'KeyS':
-                    if (shiftKey) return selection.visible({toggle:true});
-                    return call.edit_split();
+                    return shiftKey ? selection.visible({toggle:true}) : call.edit_split();
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':

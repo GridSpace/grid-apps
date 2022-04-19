@@ -11,11 +11,11 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * `C` added batch processing to object adds/removes to speedup complex workspace restore
 * `C` substitute some prusa slicer [variables] with KM {variables} on import
 * `C` fix CAM output order for tool changes an spindle speed updates
-* `I` add CAM pocket operation using surface selection
+* `C` add CAM pocket operation using surface selection
 * `-` refactor cnc to use new core slicer engine
 * `-` improve vertex replacement and widget update matrix tracking
 
-## Mesh:Tool
+## Mesh:Tool (1.2.0)
 
 * `C` auto-fog in wireframe view to aid close mesh inspections
 * `C` significant speed-up for large surface selections

@@ -233,6 +233,45 @@ let model = {
     }
 };
 
+let add = {
+    cube() {
+        const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
+        const vert = box.attributes.position.array;
+        const nmdl = new mesh.model({ file: "box", mesh: vert });
+        const ngrp = group.new([ nmdl ]);
+        ngrp.scale(5, 5, 5).floor();
+    },
+
+    cylinder(opt = { facets: 30 }) {
+        function gencyl(facets) {
+            api.modal.hide();
+            facets = parseInt(facets);
+            if (facets > 3) {
+                api.log.emit(`add cylinder with ${facets} facets`);
+                const cyl = new THREE.CylinderGeometry(5,5,1,facets).toNonIndexed();
+                const vert = cyl.attributes.position.array;
+                const nmdl = new mesh.model({ file: "cylinder", mesh: vert });
+                const ngrp = group.new([ nmdl ]);
+                ngrp.floor();
+            }
+        }
+        if (opt.facets > 2) {
+            gencyl(opt.facets);
+        } else {
+            api.modal.dialog({
+                title: "cylinder",
+                body: [ h.div({ class: "cylinder" }, [
+                    h.label('facets'),
+                    h.input({ value: opt.facets || 30, size: 5, id: "gencyl" }),
+                    h.button({ _: "create", onclick() {
+                        gencyl(api.modal.bound.gencyl.value)
+                    } })
+                ]) ]
+            });
+        }
+    }
+};
+
 let file = {
     import() {
         // binding created in mesh.build
@@ -695,6 +734,8 @@ const api = exports({
     group,
 
     model,
+
+    add,
 
     file,
 

@@ -199,6 +199,8 @@ button:hover {
     color: white;
 }
 
+/** specific modal dialogs */
+
 .export {
     flex-direction: column;
     font-family: monospace;
@@ -219,7 +221,15 @@ button:hover {
     padding: 4px;
 }
 
-/** modal dialogs **/
+.cylinder {
+    gap: 4px;
+}
+
+.cylinder input {
+    text-align: center;
+}
+
+/** generic modal dialogs **/
 
 #modal_page {
     background-color: rgba(0,0,0,0.25);
@@ -262,7 +272,7 @@ button:hover {
 #modal_title_close {
     position: absolute;
     color: #555;
-    right: 2px;
+    right: 3px;
     top: 2px;
 }
 

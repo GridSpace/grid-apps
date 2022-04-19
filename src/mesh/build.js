@@ -335,7 +335,7 @@ function ui_build() {
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
 
     // a few shortcuts to api calls
-    let { file, selection, mode, tool, prefs } = api;
+    let { file, selection, mode, tool, prefs, add } = api;
 
     // top/center mode selector
     h.bind(modes, [
@@ -351,7 +351,6 @@ function ui_build() {
         h.div([
             // create and bind file loading elements
             h.div({ _: "file", class: "head" }),
-            // h.div({ class: "vsep" }),
             h.button({ _: 'import', onclick: file.import }, [
                 h.input({
                     id: "import", type: "file", class: ["hide"], multiple: true,
@@ -362,7 +361,6 @@ function ui_build() {
         ]),
         h.div([
             h.div({ _: "view", class: "head" }),
-            // h.div({ class: "vsep" }),
             h.button({ _: 'visible', onclick() { selection.visible({ toggle: true }) } }),
             h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
@@ -370,8 +368,7 @@ function ui_build() {
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
         ]),
         h.div([
-            h.div({ _: "models", class: "head" }),
-            // h.div({ class: "vsep" }),
+            h.div({ _: "model", class: "head" }),
             h.button({ _: 'duplicate', onclick: tool.duplicate }),
             h.button({ _: 'regroup', onclick: tool.regroup }),
             h.button({ _: 'merge', onclick: tool.merge }),
@@ -384,8 +381,12 @@ function ui_build() {
             h.button({ _: 'invert', onclick: tool.invert }),
         ]),
         h.div([
+            h.div({ _: "add", class: "head" }),
+            h.button({ _: 'cylinder', onclick: add.cylinder }),
+            h.button({ _: 'cube', onclick: add.cube }),
+        ]),
+        h.div([
             h.div({ _: "repair", class: "head" }),
-            // h.div({ class: "vsep" }),
             h.button({ _: 'analyze', onclick: tool.analyze }),
             h.button({ _: 'isolate', onclick: tool.isolate }),
             h.button({ _: 'patch', onclick: tool.repair }),
