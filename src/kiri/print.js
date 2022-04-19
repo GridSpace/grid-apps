@@ -396,7 +396,8 @@ class Print {
             // the old sequence and start a new one
             if (newlayer || (autolayer && seq.Z != pos.Z)) {
                 newlayer = false;
-                let nh = (pos.Z - seq.Z || defh);
+                let dz = pos.Z - seq.Z;
+                let nh = dz > 0 ? dz : defh;
                 seq = [];
                 seq.height = height = nh;
                 if (fdm) dz = -height / 2;
