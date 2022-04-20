@@ -557,6 +557,13 @@ const mode = {
         return prefs.map.mode;
     },
 
+    is(modelist) {
+        for (let m of modelist) {
+            if (prefs.map.mode === m) return true;
+        }
+        return false;
+    },
+
     check() {
         if (prefs.map.mode === modes.surface) {
             tool.indexFaces();
@@ -564,10 +571,16 @@ const mode = {
     },
 
     object() {
+        if (mode.is([ modes.face, modes.surface ])) {
+            selection.clear();
+        }
         mode.set(modes.object);
     },
 
     face() {
+        if (mode.is([ modes.object ])) {
+            selection.clear();
+        }
         mode.set(modes.face);
     },
 
@@ -580,6 +593,9 @@ const mode = {
     },
 
     surface() {
+        if (mode.is([ modes.object ])) {
+            selection.clear();
+        }
         mode.set(modes.surface);
     }
 };
