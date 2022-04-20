@@ -16,7 +16,10 @@ function build(data, context) {
         }
         return html;
     }
-    let { type, attr, innr } = data;
+    let { type, attr, innr, raw } = data;
+    if (raw) {
+        return [ raw ];
+    }
     // auto text content
     if (typeof attr === 'string') {
         attr = { _: attr };
@@ -93,6 +96,10 @@ let h = exports({
             attr = {};
         }
         return { type, attr, innr };
+    },
+
+    raw: ( text ) => {
+        return { raw: text }
     }
 });
 

@@ -394,7 +394,7 @@ button.selected {
 }
 
 button.selected:hover {
-    background-color: rgba(0,255,0,1);
+    background-color: rgba(0,255,0,0.8);
 }
 
 .dark .head {
@@ -510,21 +510,38 @@ button.selected:hover {
 }
 
 #grouplist .models {
-    gap: 2px;
+    display: grid;
+    grid-template-columns: auto auto;
     max-height: 200px;
     overflow-y: auto;
+    gap: 2px;
+}
+
+#grouplist .models .square {
+    align-items: center;
+    justify-content: center;
+}
+
+.dark #grouplist .models .square > svg {
+    color: #333;
+}
+
+#grouplist .models .square > svg {
+    aspect-ratio: 1;
+    color: #666;
+}
+
+#grouplist .models .square > svg:hover {
+    color: black;
+}
+
+#grouplist .models > div {
+    flex-direction: row;
 }
 
 #grouplist .models button {
     text-align: left;
-}
-
-#grouplist .hidden {
-    background-color: rgba(0,0,255,0.2);
-}
-
-#grouplist .hidden:hover {
-    background-color: rgba(0,0,255,0.1);
+    margin-right: 2px;
 }
 
 /** selection info bottom/right of workspace **/

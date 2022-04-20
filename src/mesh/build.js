@@ -11,6 +11,9 @@ const { broker } = gapp;
 const { mesh } = root;
 const { api, util } = mesh;
 
+const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
+const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
+
 let call = broker.send;
 let rad = 180 / Math.PI;
 let und = undefined;
@@ -361,7 +364,6 @@ function ui_build() {
         ]),
         h.div([
             h.div({ _: "view", class: "head" }),
-            h.button({ _: 'visible', onclick() { selection.visible({ toggle: true }) } }),
             h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
             h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'normals', onclick() { api.normals() } }),
@@ -436,18 +438,24 @@ function ui_build() {
                 h.div({ class: "vsep" }),
                 h.div({ class: "models"},
                     // map models to buttons
-                    g.models.map(m => h.button({ _: m.file || m.id,
-                        class: [
-                            selHas(m) ? 'selected' : undefined,
-                            m.visible() ? undefined : 'hidden'
-                        ],
-                        onclick(e) {
-                            let sel = selection.list();
-                            e.shiftKey || (sel.length === 1 && m === sel[0]) ?
-                                selection.toggle(m) :
-                                selection.set([m])
-                        }
-                    }))
+                    g.models.map(m => [
+                        h.button({ _: m.file || m.id,
+                            class: [ selHas(m) ? 'selected' : undefined ],
+                            onclick(e) {
+                                let sel = selection.list();
+                                e.shiftKey || (sel.length === 1 && m === sel[0]) ?
+                                    selection.toggle(m) :
+                                    selection.set([m])
+                            }
+                        }),
+                        h.div({
+                            class: [ 'square' ],
+                            onclick(e) {
+                                m.visible({ toggle: true });
+                                update_selector();
+                            }
+                        }, [ h.raw(m.visible() ? eye_open : eye_closed) ])
+                    ])
                 )
             ]));
         h.bind(grouplist, groups);
