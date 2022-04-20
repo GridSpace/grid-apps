@@ -511,15 +511,16 @@ button.selected:hover {
 
 #grouplist .models {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto min-content;
     max-height: 200px;
     overflow-y: auto;
-    gap: 2px;
+    gap: 1px;
 }
 
 #grouplist .models .square {
     align-items: center;
     justify-content: center;
+    margin: 0;
 }
 
 .dark #grouplist .models .square > svg {
@@ -528,11 +529,8 @@ button.selected:hover {
 
 #grouplist .models .square > svg {
     aspect-ratio: 1;
+    height: 90%;
     color: #666;
-}
-
-#grouplist .models .square > svg:hover {
-    color: black;
 }
 
 #grouplist .models > div {

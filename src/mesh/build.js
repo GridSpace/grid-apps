@@ -449,7 +449,7 @@ function ui_build() {
                                     selection.set([m])
                             }
                         }),
-                        h.div({
+                        h.button({
                             class: [ 'square' ],
                             onclick(e) {
                                 m.visible({ toggle: true });
