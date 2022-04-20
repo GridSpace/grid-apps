@@ -11,6 +11,7 @@ const { broker } = gapp;
 const { mesh } = root;
 const { api, util } = mesh;
 
+const trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
 const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
 const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
 
@@ -365,8 +366,8 @@ function ui_build() {
         h.div([
             h.div({ _: "view", class: "head" }),
             h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
-            h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'normals', onclick() { api.normals() } }),
+            h.button({ _: 'gridlines', onclick() { api.grid() } }),
             h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
         ]),
         h.div([
@@ -504,6 +505,7 @@ function ui_build() {
         if (s_mdl.length === 0) {
             return h.bind(selectlist, []);
         }
+
         // toggle-able stat block generator
         let sdata = {};
         function sblock(label, title, grid) {
@@ -520,6 +522,7 @@ function ui_build() {
                 ])
             ];
         }
+
         // map selection to divs
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
@@ -563,13 +566,31 @@ function ui_build() {
                 h.label({ _: util.comma(t_face) }),
             ])
         ])];
+
+        let m_viz = !s_mdl.map(m => !m.visible()).reduce((v,b) => v || b);
+        let h_ops = [h.div([
+            h.button({ _: `ops` }),
+            h.div({ class: ["grid","grid1"]}, [
+                h.div({ class: [ 'square' ],
+                    onclick(e) {
+                        api.selection.visible(!m_viz);
+                        update_selector();
+                    }
+                }, [ h.raw(m_viz ? eye_open : eye_closed) ]),
+                h.div({ class: [ 'square' ],
+                    onclick(e) { api.selection.delete() }
+                }, [ h.raw(trash) ])
+            ])
+        ])];
+
         // bind elements to selectlist div
         let bound = h.bind(selectlist, [
             ...h_grp,
             ...h_mdl,
             ...h_bnd,
             ...h_ara,
-            ...h_msh
+            ...h_msh,
+            ...h_ops
         ]);
 
         // bind rotation editable fields

@@ -356,11 +356,7 @@ function space_init(data) {
                             space.refresh()
                         }
                     } else {
-                        for (let s of selection.list(true)) {
-                            selection.remove(s);
-                            s.showBounds(false);
-                            s.remove();
-                        }
+                        selection.delete();
                     }
                     estop(evt);
                     break;

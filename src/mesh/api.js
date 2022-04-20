@@ -88,6 +88,15 @@ const selection = {
         util.defer(selection.update);
     },
 
+    // remove all
+    delete() {
+        for (let s of selection.list()) {
+            selection.remove(s);
+            s.showBounds(false);
+            s.remove();
+        }
+    },
+
     // @param group {MeshObject}
     toggle(object) {
         if (selected.contains(object)) {

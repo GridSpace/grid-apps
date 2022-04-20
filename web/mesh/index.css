@@ -574,6 +574,10 @@ button.selected:hover {
     gap: 2px;
 }
 
+#selectlist > button, #selectlist > div > button {
+    border-radius: 3px;
+}
+
 #selectlist label {
     border-radius: 3px;
     font-family: monospace;
@@ -604,6 +608,15 @@ button.selected:hover {
     display: grid;
     gap: 2px 2px;
     grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
+}
+
+#selectlist .grid1 {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 
 #selectlist .grid2 {
