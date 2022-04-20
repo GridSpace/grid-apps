@@ -150,6 +150,13 @@ let model = {
         return base.CSG.toPositionArray(union);
     },
 
+    intersect(recs) {
+        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+        let solids = arrays.map(a => base.CSG.fromPositionArray(a));
+        let union = base.CSG.intersect(...solids);
+        return base.CSG.toPositionArray(union);
+    },
+
     subtract(recs) {
         let bases = recs.filter(rec => !rec.tool)
             .map(rec => translate_encode(rec.id, rec.matrix))

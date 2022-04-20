@@ -382,6 +382,7 @@ function ui_build() {
             h.div({ _: "bool", class: "head" }),
             h.button({ _: 'union', onclick: tool.union }),
             h.button({ _: 'subtract', onclick: tool.subtract }),
+            h.button({ _: 'intersect', onclick: tool.intersect }),
         ]),
         h.div([
             h.div({ _: "normal", class: "head" }),

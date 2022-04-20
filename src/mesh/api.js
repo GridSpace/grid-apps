@@ -79,7 +79,7 @@ const selection = {
             // if model, remove selcted group
             if (selected.contains(object.group)) {
                 selection.remove(object.group);
-                tools.remove(objec.group);
+                tools.remove(object.group);
             }
         }
         selected.addOnce(object);
@@ -369,11 +369,27 @@ const tool = {
         }))
         .then(data => {
             let group = api.group.new([new mesh.model({
-                file: `unioned`,
+                file: `union`,
                 mesh: data
             })]).promote();
             api.selection.set([group]);
             api.log.emit('union complete').unpin();
+        });
+    },
+
+    intersect(models) {
+        models = fallback(models);
+        api.log.emit(`intersect ${models.length} model(s)`).pin();
+        worker.model_intersect(models.map(m => {
+            return { id: m.id, matrix: m.matrix }
+        }))
+        .then(data => {
+            let group = api.group.new([new mesh.model({
+                file: `intersect`,
+                mesh: data
+            })]).promote();
+            api.selection.set([group]);
+            api.log.emit('intersect complete').unpin();
         });
     },
 
@@ -385,7 +401,7 @@ const tool = {
         }))
         .then(data => {
             let group = api.group.new([new mesh.model({
-                file: `subtracted`,
+                file: `subtract`,
                 mesh: data
             })]).promote();
             api.selection.set([group]);
