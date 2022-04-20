@@ -533,15 +533,15 @@ class OpOutline extends CamOp {
                 }
             }
 
+            if (op.dogbones && !op.wide) {
+                CAM.addDogbones(offset, toolDiam / 5);
+            }
+
             if (tabs) {
                 tabs.forEach(tab => {
                     tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                 });
                 offset = cutTabs(tabs, offset, slice.z);
-            }
-
-            if (op.dogbones && !op.wide) {
-                CAM.addDogbones(offset, toolDiam / 5);
             }
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
