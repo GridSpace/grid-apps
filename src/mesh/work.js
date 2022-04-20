@@ -160,9 +160,9 @@ let model = {
         let subs = [];
         for (let obj of bases) {
             let sub = base.CSG.subtract(obj, ...tools);
-            subs.append(base.CSG.toPositionArray(sub));
+            subs.appendAll(base.CSG.toPositionArray(sub));
         }
-        return subs;
+        return subs.toFloat32();
     },
 
     // used to generate a list for split snapping
