@@ -12,6 +12,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * `C` substitute some prusa slicer [variables] with KM {variables} on import
 * `C` fix CAM output order for tool changes an spindle speed updates
 * `C` add CAM pocket operation using surface selection
+* `C` fix dogbones on outlines cut by tabs
 * `-` refactor cnc to use new core slicer engine
 * `-` improve vertex replacement and widget update matrix tracking
 

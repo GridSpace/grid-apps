@@ -342,13 +342,13 @@ function ui_build() {
     let { file, selection, mode, tool, prefs, add } = api;
 
     // top/center mode selector
-    h.bind(modes, [
+    h.bind(modes, [ h.div([
         h.button({ _: 'object', id: "mode-object", onclick() { mode.object() } }),
-        h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
-        h.button({ _: 'line', id: "mode-line", onclick() { mode.line() } }),
-        h.button({ _: 'vertex', id: "mode-vertex", onclick() { mode.vertex() } }),
+        h.button({ _: 'tool', id: "mode-tool", onclick() { mode.tool() } }),
+    ]), h.div([
         h.button({ _: 'surface', id: "mode-surface", onclick() { mode.surface() } }),
-    ]);
+        h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
+    ]) ]);
 
     // create hotkey/action menu (top/left)
     h.bind(actions, [
@@ -376,8 +376,12 @@ function ui_build() {
             h.button({ _: 'regroup', onclick: tool.regroup }),
             h.button({ _: 'merge', onclick: tool.merge }),
             h.button({ _: 'mirror', onclick: tool.mirror }),
-            h.button({ _: 'union', onclick: tool.union }),
             h.button({ _: 'split', onclick: call.edit_split }),
+        ]),
+        h.div([
+            h.div({ _: "bool", class: "head" }),
+            h.button({ _: 'union', onclick: tool.union }),
+            h.button({ _: 'subtract', onclick: tool.subtract }),
         ]),
         h.div([
             h.div({ _: "normal", class: "head" }),

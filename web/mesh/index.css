@@ -408,6 +408,9 @@ button.selected:hover {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
+}
+
+#modes > div {
     align-items: center;
     justify-content: center;
     background-color: rgba(255,255,255,0.5);
@@ -416,10 +419,6 @@ button.selected:hover {
     margin-top: 2px;
     padding: 3px;
     gap: 2px;
-}
-
-#mode-line, #mode-vertex {
-    display: none;
 }
 
 /** slide in/out logging window **/
@@ -518,6 +517,7 @@ button.selected:hover {
 }
 
 #grouplist .models .square {
+    display: flex;
     align-items: center;
     justify-content: center;
     margin: 0;

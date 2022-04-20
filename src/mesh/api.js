@@ -21,6 +21,7 @@ const worker = moto.client.fn
 const groups = [];
 
 let selected = [];
+let tools = [];
 
 const selection = {
     // @returns {MeshObject[]} or all groups if not strict and no selection
@@ -57,28 +58,32 @@ const selection = {
     },
 
     // @param group {MeshObject[]}
-    set(objects) {
+    set(objects, toolist) {
         selected = objects;
+        tools = toolist || [];
         util.defer(selection.update);
     },
 
     // @param group {MeshObject}
-    add(object) {
+    add(object, tool) {
         // pendantic code necessary to minimize re-entrant api calls
         if (object.models) {
             // if group, remove discrete selected members
             for (let m of object.models) {
                 if (selected.contains(m)) {
                     selection.remove(m);
+                    tools.remove(m);
                 }
             }
         } else {
             // if model, remove selcted group
             if (selected.contains(object.group)) {
                 selection.remove(object.group);
+                tools.remove(objec.group);
             }
         }
         selected.addOnce(object);
+        if (tool) tools.addOnce(object);
         util.defer(selection.update);
     },
 
@@ -92,23 +97,27 @@ const selection = {
     delete() {
         for (let s of selection.list()) {
             selection.remove(s);
+            tools.remove(s);
             s.showBounds(false);
             s.remove();
         }
     },
 
     // @param group {MeshObject}
-    toggle(object) {
+    toggle(object, tool) {
         if (selected.contains(object)) {
             selection.remove(object);
+            tools.remove(object);
         } else {
             selection.add(object);
+            if (tool) tools.addOnce(object);
         }
     },
 
     clear() {
         for (let s of selection.list()) {
             selection.remove(s);
+            tools.remove(s);
         }
         for (let m of api.model.list()) {
             m.clearSelections();
@@ -135,10 +144,11 @@ const selection = {
         selected = selected.filter(sel => !mgsel.contains(sel)).filter(v => v);
         // highlight selected
         for (let object of selected) {
-            object.select(true);
+            object.select(true, tools.contains(object));
         }
         // update saved selection id list
         prefs.save( prefs.map.space.select = selected.map(s => s.id) );
+        prefs.save( prefs.map.space.tools = tools.map(s => s.id) );
         // force repaint in case of idle
         space.update();
         return selection;
@@ -277,6 +287,7 @@ let add = {
                     } })
                 ]) ]
             });
+            api.modal.bound.gencyl.focus();
         }
     }
 };
@@ -363,6 +374,22 @@ const tool = {
             })]).promote();
             api.selection.set([group]);
             api.log.emit('union complete').unpin();
+        });
+    },
+
+    subtract(models) {
+        models = fallback(models);
+        api.log.emit(`subtract ${models.length} model(s)`).pin();
+        worker.model_subtract(models.map(m => {
+            return { id: m.id, matrix: m.matrix, tool: m.tool() }
+        }))
+        .then(data => {
+            let group = api.group.new([new mesh.model({
+                file: `subtracted`,
+                mesh: data
+            })]).promote();
+            api.selection.set([group]);
+            api.log.emit('subtract complete').unpin();
         });
     },
 
@@ -536,9 +563,8 @@ const tool = {
 
 const modes = {
     object: "object",
+    tool: "tool",
     face: "face",
-    line: "line",
-    vertex: "vertex",
     surface: "surface"
 };
 
@@ -577,23 +603,22 @@ const mode = {
         mode.set(modes.object);
     },
 
+    tool() {
+        if (mode.is([ modes.face, modes.surface ])) {
+            selection.clear();
+        }
+        mode.set(modes.tool);
+    },
+
     face() {
-        if (mode.is([ modes.object ])) {
+        if (mode.is([ modes.object, modes.tool ])) {
             selection.clear();
         }
         mode.set(modes.face);
     },
 
-    line() {
-        mode.set(modes.line);
-    },
-
-    vertex() {
-        mode.set(modes.vertex);
-    },
-
     surface() {
-        if (mode.is([ modes.object ])) {
+        if (mode.is([ modes.object, modes.tool ])) {
             selection.clear();
         }
         mode.set(modes.surface);

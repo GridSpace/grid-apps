@@ -136,7 +136,10 @@ function restore_space() {
             let selist = space.select || [];
             let smodel = api.model.list().filter(m => selist.contains(m.id));
             let sgroup = api.group.list().filter(m => selist.contains(m.id));
-            api.selection.set([...smodel, ...sgroup]);
+            let tolist = space.tools || [];
+            let tmodel = api.model.list().filter(m => tolist.contains(m.id));
+            let tgroup = api.group.list().filter(m => tolist.contains(m.id));
+            api.selection.set([...smodel, ...sgroup], [...tmodel, ...tgroup]);
             // restore edit mode
             api.mode.set(mode);
             // restore dark mode
@@ -350,13 +353,13 @@ function space_init(data) {
                 case 'Backspace':
                 case 'Delete':
                     let mode = api.mode.get();
-                    if (mode !== api.modes.object) {
+                    if ([api.modes.object, api.modes.tool].contains(mode)) {
+                        selection.delete();
+                    } else {
                         for (let m of selection.models()) {
                             m.deleteSelections(mode);
                             space.refresh()
                         }
-                    } else {
-                        selection.delete();
                     }
                     estop(evt);
                     break;
@@ -397,19 +400,19 @@ function space_init(data) {
 
     space.mouse.upSelect((int, event) => {
         if (event && event.target.nodeName === "CANVAS") {
-            let model = int && int.object.model ? int.object.model : undefined;
+            const model = int && int.object.model ? int.object.model : undefined;
             if (temp_mode) {
                 return temp_mode.select(model);
             }
             if (model) {
-                let group = model.group;
-                let { altKey, ctrlKey, metaKey, shiftKey } = event;
+                const group = model.group;
+                const { altKey, ctrlKey, metaKey, shiftKey } = event;
                 if (metaKey) {
                     // set focus on intersected face
-                    let { x, y, z } = int.point;
-                    let q = new Quaternion().setFromRotationMatrix(group.object.matrix);
+                    const { x, y, z } = int.point;
+                    const q = new Quaternion().setFromRotationMatrix(group.object.matrix);
                     // rotate normal using group's matrix
-                    let normal = int.face.normal.applyQuaternion(q);
+                    const normal = int.face.normal.applyQuaternion(q);
                     // y,z swap due to world rotation for orbit controls
                     api.focus({center: { x, y:-z, z:y }, normal});
                 } else if (ctrlKey) {
@@ -417,18 +420,18 @@ function space_init(data) {
                     group.faceDown(int.face.normal);
                     selection.update();
                 } else {
-                    let { modes } = api;
-                    let { surface } = api.prefs.map;
-                    let opt = { radians: 0, radius: surface.radius };
-                    switch(api.mode.get()) {
+                    const { modes } = api;
+                    const { surface } = api.prefs.map;
+                    const opt = { radians: 0, radius: surface.radius };
+                    const mode = api.mode.get();
+                    switch(mode) {
                         case modes.object:
-                            selection.toggle(shiftKey ? model : model.group);
+                        case modes.tool:
+                            selection.toggle(shiftKey ? model : model.group, mode === modes.tool);
                             break;
                         case modes.surface:
                             opt.radians = surface.radians;
                         case modes.face:
-                        case modes.line:
-                        case modes.vertex:
                             // find faces adjacent to point/line clicked
                             model.find(int,
                                 altKey ? { toggle: true } :

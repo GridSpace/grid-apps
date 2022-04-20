@@ -150,6 +150,20 @@ let model = {
         return base.CSG.toPositionArray(union);
     },
 
+    subtract(recs) {
+        let bases = recs.filter(rec => !rec.tool)
+            .map(rec => translate_encode(rec.id, rec.matrix))
+            .map(a => base.CSG.fromPositionArray(a));
+        let tools = recs.filter(rec => rec.tool)
+            .map(rec => translate_encode(rec.id, rec.matrix))
+            .map(a => base.CSG.fromPositionArray(a));
+        let subs = [];
+        for (let obj of bases) {
+            subs.appendAll(base.CSG.subtract(obj, ...tools));
+        }
+        return base.CSG.toPositionArray(subs);
+    },
+
     // used to generate a list for split snapping
     zlist(data) {
         let { id, matrix, round } = data;

@@ -40,6 +40,15 @@ let materials = mesh.material = {
         color: 0x00e000,
         opacity: 1
     }),
+    // model selected as tool
+    tool: new MeshPhongMaterial({
+        side: DoubleSide,
+        transparent: true,
+        shininess: 125,
+        specular: 0x202020,
+        color: 0xe00000,
+        opacity: 1
+    }),
     // face selected (for groups ranges)
     face: new MeshPhongMaterial({
         side: DoubleSide,
@@ -78,6 +87,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.mats = {
             normal: materials.normal.clone(),
             select: materials.select.clone(),
+            tool: materials.tool.clone(),
             face: materials.face.clone()
         };
 
@@ -266,20 +276,29 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // get, set, or toggle selection of model (coloring)
-    select(bool) {
+    select(bool, stool) {
+        const cmat = this.mesh.material[0];
+        const { normal, select, tool } = this.mats;
         if (bool === undefined) {
-            return this.mesh.material[0] === this.mats.normal;
+            return cmat !== normal;
         }
         if (bool.toggle) {
-            return this.select(!this.select());
+            return this.select(!this.select(), cmat === tool);
         }
-        this.mesh.material[0] = bool ? this.mats.select : this.mats.normal;
+        this.mesh.material[0] = bool ? (stool ? tool : select) : normal;
         return bool;
     }
 
     // return selected state
     selected() {
         return this.select();
+    }
+
+    tool(bool) {
+        if (bool === undefined) {
+            return this.mesh.material[0] === this.mats.tool;
+        }
+        return this.select(this.selected(), bool);
     }
 
     opacity(ov, opt = {}) {
