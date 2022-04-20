@@ -31,6 +31,9 @@ const CSG = {
     },
 
     toPositionArray(geom) {
+        if (!geom || geom.length === 0) {
+            return [].toFloat32();
+        }
         const out = [];
         const poly = jscadModeling.geometries.geom3
             .toPolygons(geom)

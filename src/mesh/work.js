@@ -159,9 +159,10 @@ let model = {
             .map(a => base.CSG.fromPositionArray(a));
         let subs = [];
         for (let obj of bases) {
-            subs.appendAll(base.CSG.subtract(obj, ...tools));
+            let sub = base.CSG.subtract(obj, ...tools);
+            subs.append(base.CSG.toPositionArray(sub));
         }
-        return base.CSG.toPositionArray(subs);
+        return subs;
     },
 
     // used to generate a list for split snapping

@@ -384,10 +384,10 @@ const tool = {
             return { id: m.id, matrix: m.matrix, tool: m.tool() }
         }))
         .then(data => {
-            let group = api.group.new([new mesh.model({
+            let group = api.group.new(data.map(el => new mesh.model({
                 file: `subtracted`,
-                mesh: data
-            })]).promote();
+                mesh: el
+            }) )).promote();
             api.selection.set([group]);
             api.log.emit('subtract complete').unpin();
         });
