@@ -374,7 +374,7 @@ const tool = {
 
     union(models) {
         models = fallback(models);
-        api.log.emit(`union ${models.length} model(s)`).pin();
+        api.log.emit(`union ${models.length} models`).pin();
         worker.model_union(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -390,7 +390,7 @@ const tool = {
 
     intersect(models) {
         models = fallback(models);
-        api.log.emit(`intersect ${models.length} model(s)`).pin();
+        api.log.emit(`intersect ${models.length} models`).pin();
         worker.model_intersect(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -406,7 +406,7 @@ const tool = {
 
     subtract(models) {
         models = fallback(models);
-        api.log.emit(`subtract ${models.length} model(s)`).pin();
+        api.log.emit(`subtract ${models.length} models`).pin();
         worker.model_subtract(models.map(m => {
             return { id: m.id, matrix: m.matrix, tool: m.tool() }
         }))

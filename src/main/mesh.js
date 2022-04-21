@@ -447,9 +447,10 @@ function space_init(data) {
     });
 
     space.mouse.onDrag((delta, offset, up = false) => {
+        const { mode, modes } = api;
         if (delta && delta.event.shiftKey) {
             selection.move(delta.x, delta.y, 0);
-        } else {
+        } else if (mode.is([ modes.object, modes.tool ])) {
             return api.objects().length > 0;
         }
     });

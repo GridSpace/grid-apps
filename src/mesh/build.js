@@ -439,13 +439,29 @@ function ui_build() {
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick(e) { selection.toggle(g) }
                 }),
-                h.div({ class: "vsep" }),
                 h.div({ class: "models"},
                     // map models to buttons
                     g.models.map(m => [
                         h.button({ _: m.file || m.id,
                             class: [ selHas(m) ? 'selected' : undefined ],
-                            onclick(e) { selection.toggle(m) }
+                            onclick(e) {
+                                if (e.shiftKey) {
+                                    console.log({m, selection});
+                                    tool.rename([ m ]);
+                                } else {
+                                    selection.toggle(m);
+                                }
+                            },
+                            onmouseover(e) {
+                                if (!m.wireframe().enabled) {
+                                    m.opacity({temp: 0.5});
+                                }
+                            },
+                            onmouseleave(e) {
+                                if (!m.wireframe().enabled) {
+                                    m.opacity({restore: true});
+                                }
+                            }
                         }),
                         h.button({
                             class: [ 'square' ],
@@ -534,17 +550,8 @@ function ui_build() {
         let m_pos = util.average(s_mdl.map(m => m.object.position));
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-        // let h_mdl = sblock('model', m_id, grid(
-        //     util.extract(m_pos, map),
-        //     util.extract(m_rot, map)
-        // ));
 
         let bounds = util.bounds(s_mdl);
-        // let h_bnd = sblock('bounds', m_id, grid(
-        //     util.extract(bounds.min, map),
-        //     util.extract(bounds.max, map),
-        //     [ "min", "max" ]
-        // ));
         let h_ara = sblock('span', m_id, grid(
             util.extract(bounds.center, map),
             util.extract(bounds.size, map),
@@ -584,8 +591,6 @@ function ui_build() {
         // bind elements to selectlist div
         let bound = h.bind(selectlist, [
             ...h_grp,
-            // ...h_mdl,
-            // ...h_bnd,
             ...h_ara,
             ...h_msh,
             ...h_ops
